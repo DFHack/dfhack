@@ -1009,6 +1009,10 @@ General-purpose selections
 
   Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
 
+* ``dfhack.gui.getSelectedCivZone([silent])``
+
+  Returns the zone currently selected via :kbd:`z`
+
 * ``dfhack.gui.getSelectedPlant([silent])``
 
   Returns the plant selected via :kbd:`k`.

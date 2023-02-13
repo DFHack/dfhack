@@ -105,11 +105,17 @@ namespace DFHack
         DFHACK_EXPORT df::item *getAnyItem(df::viewscreen *top);
         DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
 
-        // A building is selected via 'q', 't' or 'i' (civzone)
+        // A building is selected via 'q', 't' or 'i' (?)
         DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
 
+        // A (civ)zone is selected via 'z'
+        DFHACK_EXPORT bool any_civzone_hotkey(df::viewscreen* top);
+        DFHACK_EXPORT df::building_civzonest *getAnyCivZone(df::viewscreen* top);
+        DFHACK_EXPORT df::building_civzonest *getSelectedCivZone(color_ostream& out, bool quiet = false);
+
+        // A stockpile is selected via 'p'
         DFHACK_EXPORT bool any_stockpile_hotkey(df::viewscreen* top);
         DFHACK_EXPORT df::building_stockpilest *getAnyStockpile(df::viewscreen* top);
         DFHACK_EXPORT df::building_stockpilest *getSelectedStockpile(color_ostream& out, bool quiet = false);

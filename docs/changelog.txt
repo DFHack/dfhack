@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- ``Gui::any_civzone_hotkey``, ``Gui::getAnyCivZone``, ``Gui::getSelectedCivZone``:  new functions to operate on the new zone system
 
 - Units module: added new predicates for:
   - ``isGeldable()``
@@ -56,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
   - ``isPet()``
 
 ## Lua
+- ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
 
 - ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
 

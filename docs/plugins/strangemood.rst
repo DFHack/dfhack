@@ -22,18 +22,18 @@ Examples
 Options
 -------
 
-``-force``
+``--force``
     Ignore normal strange mood preconditions (no recent mood, minimum moodable
     population, artifact limit not reached, etc.).
-``-unit``
+``--unit``
     Make the strange mood strike the selected unit instead of picking one
     randomly. Unit eligibility is still enforced (unless ``-force`` is also
     specified).
-``-type <type>``
+``--type <type>``
     Force the mood to be of a particular type instead of choosing randomly based
     on happiness. Valid values are "fey", "secretive", "possessed", "fell", and
     "macabre".
-``-skill <skill>``
+``--skill <skill>``
     Force the mood to use a specific skill instead of choosing the highest
     moodable skill. Valid values are "miner", "carpenter", "engraver", "mason",
     "tanner", "weaver", "clothier", "weaponsmith",  "armorsmith", "metalsmith",

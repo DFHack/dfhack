@@ -4149,7 +4149,7 @@ underlying map, or even other DFHack ZScreen windows! That is, even when the
 DFHack tool window is visible, players will be able to use vanilla designation
 tools, select units, and scan/drag the map around.
 
-At most one ZScreen can have keyboard focus at a time. That ZScreen's widgets
+At most one ZScreen can have input focus at a time. That ZScreen's widgets
 will have a chance to handle the input before anything else. If unhandled, the
 input skips all unfocused ZScreens under that ZScreen and is passed directly to
 the first non-ZScreen viewscreen. There are class attributes that can be set to
@@ -4168,8 +4168,8 @@ is dismissed.
 
 All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
 **must not override**. Instead, ZScreen subclasses should delegate all input
-processing to subviews. Consider using a `Window class`_ widget as your top
-level input processor.
+processing to subviews. Consider using a `Window class`_ widget subview as your
+top level input processor.
 
 When rendering, the parent viewscreen is automatically rendered first, so
 subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
@@ -4179,8 +4179,8 @@ that passing ``logic()`` calls through to the underlying map is required for
 allowing the player to drag the map with the mouse. ZScreen subclasses can set
 attributes that control whether the game is paused when the ZScreen is shown and
 whether the game is forced to continue being paused while the ZScreen is shown.
-If pausing is forced, child ``Window`` widgets will show a force-pause icon to
-indicate which tool is forcing the pausing.
+If pausing is forced, child ``Window`` widgets will show a force-pause indicator
+to show which tool is forcing the pausing.
 
 ZScreen provides the following functions:
 
@@ -4195,8 +4195,9 @@ ZScreen provides the following functions:
 * ``zscreen:isMouseOver()``
 
   The default implementation iterates over the direct subviews of the ZScreen
-  subclass and sees if ``getMouseFramePos()`` returns a position for any of
-  them. Subclasses can override this function if that logic is not appropriate.
+  subclass (which usually only includes a single Window subview) and sees if
+  ``getMouseFramePos()`` returns a position for any of them. Subclasses can
+  override this function if that logic is not appropriate.
 
 * ``zscreen:hasFocus()``
 
@@ -4212,16 +4213,23 @@ ZScreen subclasses can set the following attributes:
   of the screen other than the tool window. If the player clicks on a different
   ZScreen window, focus still transfers to that other ZScreen.
 
-* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
+* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE or not pass_mouse_clicks``)
 
-  Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``
-  defaults to ``true`` but can be set via running a command like::
+  Whether to pause the game when the ZScreen is shown. If not explicitly set,
+  this attribute will be true if the system-wide ``DEFAULT_INITIAL_PAUSE`` is
+  ``true`` (which is its default value) or if the ``pass_mouse_clicks`` attribute
+  is ``false`` (see below). It depends on ``pass_mouse_clicks`` because if the
+  player normally pauses/unpauses the game with the mouse, they will not be able
+  to pause the game like they usually do while the ZScreen has focus.
+  ``DEFAULT_INITIAL_PAUSE`` can be customized permanently via `gui/control-panel`
+  or set for the session by running a command like::
 
     :lua require('gui.widgets').DEFAULT_INITIAL_PAUSE = false
 
 * ``force_pause`` (default: ``false``)
 
-  Whether to ensure the game *stays* paused while the ZScreen is shown.
+  Whether to ensure the game *stays* paused while the ZScreen is shown,
+  regardless of whether it has input focus.
 
 * ``pass_pause`` (default: ``true``)
 
@@ -4230,7 +4238,7 @@ ZScreen subclasses can set the following attributes:
 
 * ``pass_movement_keys`` (default: ``false``)
 
-  Whether to pass the map movement keys to the lower viewscreens if they ar not
+  Whether to pass the map movement keys to the lower viewscreens if they are not
   handled by this ZScreen.
 
 * ``pass_mouse_clicks`` (default: ``true``)
@@ -4238,7 +4246,7 @@ ZScreen subclasses can set the following attributes:
   Whether to pass mouse clicks to the lower viewscreens if they are not handled
   by this ZScreen.
 
-Here is an example skeleton for a ZScreen tool dialog::
+Here is an example skeleton for a ZScreen tool window::
 
     local gui = require('gui')
     local widgets = require('gui.widgets')
@@ -4265,6 +4273,7 @@ Here is an example skeleton for a ZScreen tool dialog::
     MyScreen.ATTRS {
         focus_path='myscreen',
         -- set pause and passthrough attributes as appropriate
+        -- (but most tools can use the defaults)
     }
 
     function MyScreen:init()

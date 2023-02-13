@@ -79,7 +79,7 @@ hover list.
 The second place to check is the DFHack control panel: `gui/control-panel`. It
 will give you an overview of which tools are currently enabled, and will allow
 you to toggle them on or off, see help text for them, or launch their dedicated
-configuration UIs. You can launch the control panel from anywhere with the
+configuration UIs. You can open the control panel from anywhere with the
 Ctrl-Shift-E hotkey or by selecting it from the logo hover list.
 
 In the control panel, you can also select which tools you'd like to be
@@ -105,7 +105,7 @@ The bottom panel will show the full help text for the command you are running,
 allowing you to refer to the usage documentation and examples when you are typing
 your command. After you run a command, the bottom panel switches to command output
 mode, but you can get back to the help text by hitting Ctrl-T or clicking on the
-``Showing`` selector.
+``Help`` tab.
 
 How do DFHack in-game windows work?
 -----------------------------------
@@ -134,12 +134,12 @@ game is unpaused, it can continue to run while a DFHack window is open. If confi
 to do so in `gui/control-panel`, tools will initially pause the game to let you
 focus on the task at hand, but you can unpause like normal if you want. You can
 also interact with the map, scrolling it with the keyboard or mouse and selecting
-units, buildings, and items. Some tools will capture all keyboard input, such as
-tools with editable text fields, and some will force-pause the game if it makes
-sense to, like `gui/quickfort`, since you cannot interact with the map normally
-while trying to apply a blueprint. Windows for tools that force-pause the game
-will have a pause icon in their upper right corner to indicate which tool is
-preventing you from unpausing.
+units, buildings, and items. Some tools will intercept all mouse clicks to allow
+you to select regions on the map. When these tools have focus, you will not be able
+to use the mouse to interact with map elements or pause/unpause the game. Therefore,
+these tools will pause the game when they open, regardless of your settings in
+`gui/control-panel`. You can still unpause with the keyboard (spacebar by default),
+though.
 
 Where do I go next?
 -------------------
@@ -156,7 +156,7 @@ You can get to the launcher and its integrated autocomplete, history search,
 and help text by hitting backtick (\`) or Ctrl-Shift-D, or, of course, by
 running it from the logo hover list.
 
-With those three tools, you have the complete DFHack tool suite at your
+With those three interfaces, you have the complete DFHack tool suite at your
 fingertips. So what to run first? Here are a few commands to get you started.
 You can run them all from the launcher.
 
@@ -168,13 +168,13 @@ using the DFHack `overlay` widget at the bottom of the manager orders panel.
 
 Next, try setting up `autochop` to automatically designate trees for chopping when
 you get low on usable logs. Run `gui/control-panel` and select ``autochop`` in the
-list. Click on the button to the left of the name or hit Enter to enable it. You
-can then click on the ``[configure]`` button to launch `gui/autochop` if you'd
-like to customize its settings. If you have the extra screen space, you can go
-ahead and set the `gui/autochop` window to minimal mode (click on the hint near
-the upper right corner of the window or hit Alt-M) and click on the map so the
-window loses keyboard focus. As you play the game, you can glance at the live
-status panel to check on your stocks of wood.
+``Fort`` list. Click on the button to the left of the name or hit Enter to enable
+it. You can then click on the configure button (the gear icon) to launch
+`gui/autochop` if you'd like to customize its settings. If you have the extra
+screen space, you can go ahead and set the `gui/autochop` window to minimal mode
+(click on the hint near the upper right corner of the window or hit Alt-M) and
+click on the map so the window loses keyboard focus. As you play the game, you can
+glance at the live status panel to check on your stocks of wood.
 
 Finally, let's do some fort design copy-pasting. Go to some bedrooms that you have
 set up in your fort. Run `gui/blueprint`, set a name for your blueprint by
@@ -197,6 +197,9 @@ had designated the tiles yourself.
 
 Once the area is dug out, run `gui/quickfort` again and select the "/build" blueprint
 this time. Apply the blueprint in the dug-out area, and your furniture will be
-designated. It's just that easy!
+designated. It's just that easy! Note that `quickfort` uses `buildingplan` to place
+buildings, so you don't even need to have the relevant furniture or building
+materials in stock. The planned furniture/buildings will get built whenever you are
+able to produce the building materials.
 
 There are many, many more tools to explore. Have fun!

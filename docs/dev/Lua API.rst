@@ -4975,6 +4975,7 @@ supports:
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
 :edit_ignore_keys: If specified, will be passed to the filter edit field as its ``ignore_keys`` attribute.
+:edit_on_change: If specified, will be passed to the filter edit field as its ``on_change`` attribute.
 :edit_on_char: If specified, will be passed to the filter edit field as its ``on_char`` attribute.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 

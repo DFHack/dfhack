@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
 
 ## Misc Improvements
+- `showmood`: now shows the number of items needed for cloth and bars in addition to the technically correct but always confusing "total dimension" (150 per bar or 10,000 per cloth)
 
 ## Documentation
 

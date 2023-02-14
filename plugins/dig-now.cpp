@@ -15,6 +15,7 @@
 #include "modules/Random.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/EventManager.h"
 
 #include <df/historical_entity.h>
 #include <df/map_block.h>
@@ -28,6 +29,7 @@
 #include <df/world_site.h>
 
 #include <cinttypes>
+#include <unordered_set>
 
 DFHACK_PLUGIN("dig-now");
 REQUIRE_GLOBAL(plotinfo);
@@ -45,6 +47,31 @@ namespace DFHack {
 // todo: integrate logging for debugging the layered channel problem
 
 using namespace DFHack;
+
+struct designation{
+    df::coord pos;
+    df::tile_designation type;
+    df::tile_occupancy occupancy;
+    designation(const df::coord &c, const df::tile_designation &td, const df::tile_occupancy &to) : pos(c), type(td), occupancy(to) {}
+
+    bool operator==(const designation &rhs) const {
+        return pos == rhs.pos;
+    }
+
+    bool operator!=(const designation &rhs) const {
+        return !(rhs == *this);
+    }
+};
+
+namespace std {
+    template<>
+    struct hash<designation> {
+        std::size_t operator()(const designation &c) const {
+            std::hash<df::coord> hash_coord;
+            return hash_coord(c.pos);
+        }
+    };
+}
 
 struct boulder_percent_options {
     // percent chance ([0..100]) for creating a boulder for the given rock type
@@ -367,7 +394,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             // todo: does can_dig_channel return false?
             if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
                     && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
-                TRACE(channels).print("dig_tile: channeling at (" COORD ")\n",COORDARGS(pos_below));
+                TRACE(channels).print("dig_tile: channeling at (" COORD ") [can_dig_channel: true]\n",COORDARGS(pos_below));
                 target_type = df::tiletype::OpenSpace;
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above)) {
@@ -375,17 +402,16 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 }
                 df::tile_dig_designation td_below = map.designationAt(pos_below).bits.dig;
 
-                // todo: what is this chain of dig_tile(below)?
+                // todo: digging to floor below?
                 if (dig_tile(out, map, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
                     if (td_below == df::tile_dig_designation::Default) {
-                        // todo: removing ramp?
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
                     }
                     return true;
                 }
             } else {
-                DEBUG(channels).print("dig_tile: failed to channel at (" COORD ")\n", COORDARGS(pos_below));
+                DEBUG(channels).print("dig_tile: failed to channel at (" COORD ") [can_dig_channel: false]\n", COORDARGS(pos_below));
             }
             break;
         }
@@ -630,6 +656,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
 
     rng.init();
 
+    std::unordered_set<designation> buffer;
     // go down levels instead of up so stacked ramps behave as expected
     for (int16_t z = options.end.z; z >= options.start.z; --z) {
         for (int16_t y = options.start.y; y <= options.end.y; ++y) {
@@ -646,47 +673,57 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
-                if (td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked) {
-                    std::vector<dug_tile_info> dug_tiles;
 
-                    // todo: check why dig_tile doesn't dig the second layer of channels
-                    if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
-                        for (auto info: dug_tiles) {
-                            td = map.designationAt(info.pos);
-                            td.bits.dig = df::tile_dig_designation::No;
-                            map.setDesignationAt(info.pos, td);
+                // we're only buffering designations, so that processing doesn't affect what we're buffering
+                buffer.emplace(pos, td, to);
+            }
+        }
+    }
 
-                            dug_coords.push_back(info.pos);
-                            refresh_adjacent_smooth_walls(map, info.pos);
-                            if (info.imat < 0)
-                                continue;
-                            if (produces_item(options.boulder_percents,
-                                              map, rng, info)) {
-                                auto k = std::make_pair(info.itype, info.imat);
-                                item_coords[k].push_back(info.pos);
-                            }
-                        }
-                    }
-                    // todo: check mark mode of smooth designations
-                } else if (td.bits.smooth == 1) {
-                    if (smooth_tile(out, map, pos)) {
-                        to = map.occupancyAt(pos);
-                        td.bits.smooth = 0;
-                        map.setDesignationAt(pos, td);
-                    }
-                } else if (to.bits.carve_track_north == 1
-                           || to.bits.carve_track_east == 1
-                           || to.bits.carve_track_south == 1
-                           || to.bits.carve_track_west == 1) {
-                    if (carve_tile(map, pos, to)) {
-                        to = map.occupancyAt(pos);
-                        to.bits.carve_track_north = 0;
-                        to.bits.carve_track_east = 0;
-                        to.bits.carve_track_south = 0;
-                        to.bits.carve_track_west = 0;
-                        map.setOccupancyAt(pos, to);
+    // process designations
+    for(auto &d : buffer) {
+        auto pos = d.pos;
+        auto td = d.type;
+        auto to = d.occupancy;
+
+        if (td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked) {
+            std::vector<dug_tile_info> dug_tiles;
+
+            if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
+                for (auto info: dug_tiles) {
+                    td = map.designationAt(info.pos);
+                    td.bits.dig = df::tile_dig_designation::No;
+                    map.setDesignationAt(info.pos, td);
+
+                    dug_coords.push_back(info.pos);
+                    refresh_adjacent_smooth_walls(map, info.pos);
+                    if (info.imat < 0)
+                        continue;
+                    if (produces_item(options.boulder_percents,
+                                      map, rng, info)) {
+                        auto k = std::make_pair(info.itype, info.imat);
+                        item_coords[k].push_back(info.pos);
                     }
                 }
+            }
+            // todo: check mark mode of smooth designations
+        } else if (td.bits.smooth == 1) {
+            if (smooth_tile(out, map, pos)) {
+                to = map.occupancyAt(pos);
+                td.bits.smooth = 0;
+                map.setDesignationAt(pos, td);
+            }
+        } else if (to.bits.carve_track_north == 1
+                   || to.bits.carve_track_east == 1
+                   || to.bits.carve_track_south == 1
+                   || to.bits.carve_track_west == 1) {
+            if (carve_tile(map, pos, to)) {
+                to = map.occupancyAt(pos);
+                to.bits.carve_track_north = 0;
+                to.bits.carve_track_east = 0;
+                to.bits.carve_track_south = 0;
+                to.bits.carve_track_west = 0;
+                map.setOccupancyAt(pos, to);
             }
         }
     }

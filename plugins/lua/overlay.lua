@@ -488,8 +488,12 @@ local function _feed_viewscreen_widgets(vs_name, keys)
 end
 
 function feed_viewscreen_widgets(vs_name, keys)
-    return _feed_viewscreen_widgets(vs_name, keys) or
-            _feed_viewscreen_widgets('all', keys)
+    if not _feed_viewscreen_widgets(vs_name, keys) and
+            not _feed_viewscreen_widgets('all', keys) then
+        return false
+    end
+    gui.markMouseClicksHandled(keys)
+    return true
 end
 
 local function _render_viewscreen_widgets(vs_name, dc)

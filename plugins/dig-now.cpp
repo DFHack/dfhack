@@ -16,6 +16,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 #include "modules/EventManager.h"
+#include "modules/Job.h"
 
 #include <df/historical_entity.h>
 #include <df/map_block.h>
@@ -30,6 +31,7 @@
 
 #include <cinttypes>
 #include <unordered_set>
+#include <unordered_map>
 
 DFHACK_PLUGIN("dig-now");
 REQUIRE_GLOBAL(plotinfo);
@@ -72,6 +74,56 @@ namespace std {
         }
     };
 }
+
+class DigJobs {
+private:
+    std::unordered_map<df::coord, df::tile_dig_designation> designations;
+    std::unordered_map<df::coord, df::job*> jobs;
+public:
+    void load() {
+        designations.clear();
+        df::job_list_link* node = df::global::world->jobs.list.next;
+        while (node) {
+            df::job* job = node->item;
+            jobs.emplace(job->pos, job);
+            node = node->next;
+            switch (job->job_type){
+                case df::enums::job_type::Dig:
+                    designations.emplace(job->pos, df::tile_dig_designation::Default);
+                    break;
+                case df::enums::job_type::DigChannel:
+                    designations.emplace(job->pos, df::tile_dig_designation::Channel);
+                    break;
+                case df::enums::job_type::CarveRamp:
+                    designations.emplace(job->pos, df::tile_dig_designation::Ramp);
+                    break;
+                case df::enums::job_type::CarveUpwardStaircase:
+                    designations.emplace(job->pos, df::tile_dig_designation::UpStair);
+                    break;
+                case df::enums::job_type::CarveDownwardStaircase:
+                    designations.emplace(job->pos, df::tile_dig_designation::DownStair);
+                    break;
+                case df::enums::job_type::CarveUpDownStaircase:
+                    designations.emplace(job->pos, df::tile_dig_designation::UpDownStair);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    void remove(const df::coord &pos) {
+        if(jobs.count(pos)) {
+            Job::removeJob(jobs[pos]);
+            jobs.erase(pos);
+        }
+    }
+    df::tile_dig_designation get(const df::coord &pos) {
+        if (designations.count(pos)) {
+            return designations[pos];
+        }
+        return df::enums::tile_dig_designation::No;
+    }
+};
 
 struct boulder_percent_options {
     // percent chance ([0..100]) for creating a boulder for the given rock type
@@ -653,7 +705,9 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                    item_coords_t &item_coords, const dig_now_options &options) {
     MapExtras::MapCache map;
     Random::MersenneRNG rng;
+    DigJobs jobs;
 
+    jobs.load();
     rng.init();
 
     std::unordered_set<designation> buffer;
@@ -666,16 +720,25 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 if (!Maps::getTileBlock(x, y, z))
                     continue;
 
-                // todo: check if tile is in the job list with a dig type
-                // todo: if it is cancel the job. Then check if the designation is removed on the map
-                // todo: if the designation does disappear on the map, just rewrite things to queue the designation info that needs to be processed
-
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
+                if (jobs.get(pos) != df::enums::tile_dig_designation::No) {
+                    // todo: check if the designation is removed from the map
+                    jobs.remove(pos);
+                    // if it does get removed, then we're gonna buffer the jobs info then remove the job
+                }
 
-                // we're only buffering designations, so that processing doesn't affect what we're buffering
-                buffer.emplace(pos, td, to);
+                if ((td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked)
+                    || td.bits.smooth == 1
+                    || to.bits.carve_track_north == 1
+                    || to.bits.carve_track_east == 1
+                    || to.bits.carve_track_south == 1
+                    || to.bits.carve_track_west == 1) {
+
+                    // we're only buffering designations, so that processing doesn't affect what we're buffering
+                    buffer.emplace(pos, td, to);
+                }
             }
         }
     }

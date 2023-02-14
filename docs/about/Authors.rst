@@ -26,6 +26,7 @@ Ariphaos                Ariphaos
 arzyu                   arzyu
 Atkana                  Atkana
 AtomicChicken           AtomicChicken
+Batt Mush               hobotron-df
 Bearskie                Bearskie
 belal                   jimhester
 Ben Lubar               BenLubar

@@ -98,14 +98,15 @@ namespace DFHack
 
 using namespace df::enums;
 
+using df::building_civzonest;
+using df::global::game;
 using df::global::gamemode;
 using df::global::gps;
 using df::global::gview;
 using df::global::init;
-using df::global::selection_rect;
 using df::global::plotinfo;
+using df::global::selection_rect;
 using df::global::ui_menu_width;
-using df::global::game;
 using df::global::world;
 
 /* TODO: understand how this changes for v50
@@ -1109,6 +1110,26 @@ df::building_stockpilest* Gui::getSelectedStockpile(color_ostream& out, bool qui
         out.printerr("No stockpile is selected in the UI.\n");
 
     return stockpile;
+}
+
+bool Gui::any_civzone_hotkey(df::viewscreen* top) {
+    return getAnyCivZone(top) != NULL;
+}
+
+df::building_civzonest *Gui::getAnyCivZone(df::viewscreen* top) {
+    if (matchFocusString("dwarfmode/Zone")) {
+        return game->main_interface.civzone.cur_bld;
+    }
+    return NULL;
+}
+
+df::building_civzonest *Gui::getSelectedCivZone(color_ostream &out, bool quiet) {
+    df::building_civzonest *civzone = getAnyCivZone(Core::getTopViewscreen());
+
+    if (!civzone && !quiet)
+        out.printerr("No zone is selected in the UI");
+
+    return civzone;
 }
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)

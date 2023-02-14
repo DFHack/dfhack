@@ -511,6 +511,23 @@ bool Units::isMarkedForSlaughter(df::unit* unit)
     return unit->flags2.bits.slaughter == 1;
 }
 
+bool Units::isMarkedForGelding(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags3.bits.marked_for_gelding == 1;
+}
+
+bool Units::isGeldable(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(world->raws.creatures.all[unit->race]->caste[unit->caste]->flags.is_set(caste_raw_flags::GELDABLE)) {
+        return true;
+    }
+
+    return false;
+}
+
 bool Units::isGelded(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -587,6 +604,15 @@ bool Units::isAvailableForAdoption(df::unit* unit)
     return false;
 }
 
+bool Units::isPet(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+        return true;
+
+    return false;
+}
 
 bool Units::hasExtravision(df::unit *unit)
 {

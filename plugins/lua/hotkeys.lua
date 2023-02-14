@@ -262,12 +262,14 @@ function Menu:onInput(keys)
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
+            df.global.enabler.mouse_lbut = 0
             return true
         end
         if not self:getMouseFramePos() and not self.hotspot:getMousePos() then
             self.parent_view:dismiss()
             return true
         end
+        df.global.enabler.mouse_lbut = 0
     end
     self:inputToSubviews(keys)
     return true -- we're modal

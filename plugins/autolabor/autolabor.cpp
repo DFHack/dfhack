@@ -761,7 +761,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            INFO(cycle,out).print(trader_requested
+            TRACE(cycle,out).print(trader_requested
                 ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
                 : "Trade depot found but trader is not requested.\n"
                 );

@@ -143,8 +143,7 @@ local function to_title_case(str)
     return str
 end
 
--- returns a reasonable label for the item based on the qualities of the filter
-function get_item_label(idx)
+function get_item_line_text(idx)
     local filter = get_cur_filters()[idx]
     local desc = 'Unknown'
     if filter.has_tool_use then
@@ -154,15 +153,22 @@ function get_item_label(idx)
         desc = to_title_case(df.item_type[filter.item_type])
     end
     if filter.flags2 and filter.flags2.building_material then
-        desc = "Generic building material";
+        desc = "Generic material";
         if filter.flags2.fire_safe then
-            desc = "Fire-safe building material";
+            desc = "Fire-safe material";
         end
         if filter.flags2.magma_safe then
-            desc = "Magma-safe building material";
+            desc = "Magma-safe material";
         end
     elseif filter.vector_id then
         desc = to_title_case(df.job_item_vector_id[filter.vector_id])
+    end
+
+    if desc:endswith('s') then
+        desc = desc:sub(1,-2)
+    end
+    if desc == 'Trappart' then
+        desc = 'Mechanism'
     end
 
     local quantity = filter.quantity or 1
@@ -172,7 +178,14 @@ function get_item_label(idx)
     else
         quantity = quantity * dimx * dimy * dimz
     end
-    return ('%s (need: %d)'):format(desc, quantity)
+    desc = ('%d %s%s'):format(quantity, desc, quantity == 1 and '' or 's')
+
+    local available = countAvailableItems(uibs.building_type,
+            uibs.building_subtype, uibs.custom_type, idx - 1)
+    local note = available >= quantity and
+            'Can build now' or 'Will wait for item'
+
+    return ('%-21s%s%s'):format(desc:sub(1,21), (' '):rep(13), note)
 end
 
 ItemLine = defclass(ItemLine, widgets.Panel)
@@ -186,7 +199,11 @@ function ItemLine:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text={{text=function() return get_item_label(self.idx) end}}
+            text={{text=function() return get_item_line_text(self.idx) end}},
+        },
+        widgets.Label{
+            frame={t=0, l=22},
+            text='[filter][x]',
         },
     }
 end
@@ -215,7 +232,7 @@ function PlannerOverlay:init()
         ItemLine{frame={t=6, l=0}, idx=4},
         widgets.CycleHotkeyLabel{
             view_id="stairs_top_subtype",
-            frame={t=2, l=0},
+            frame={t=3, l=0},
             key="CUSTOM_R",
             label="Top Stair Type: ",
             visible=is_stairs,
@@ -227,7 +244,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id="stairs_bottom_subtype",
-            frame={t=3, l=0},
+            frame={t=4, l=0},
             key="CUSTOM_B",
             label="Bottom Stair Type: ",
             visible=is_stairs,
@@ -242,7 +259,7 @@ function PlannerOverlay:init()
             text={
                 'Selected area: ',
                 {text=function()
-                     return ('%d x %d x %d'):format(get_cur_area_dims())
+                     return ('%dx%dx%d'):format(get_cur_area_dims())
                  end
                 },
             },
@@ -401,6 +418,7 @@ function PlannerOverlay:place_building()
     for _,bld in ipairs(blds) do
         addPlannedBuilding(bld)
     end
+    scheduleCycle()
 end
 
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)

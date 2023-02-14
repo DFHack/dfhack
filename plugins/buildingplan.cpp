@@ -707,6 +707,11 @@ static void scheduleCycle(color_ostream &out) {
     cycle_requested = true;
 }
 
+static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering countAvailableItems\n");
+    return 10;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(printStatus),
     DFHACK_LUA_FUNCTION(setSetting),
@@ -715,5 +720,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
+    DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_END
 };

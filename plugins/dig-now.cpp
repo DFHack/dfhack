@@ -54,6 +54,7 @@ struct designation{
     df::coord pos;
     df::tile_designation type;
     df::tile_occupancy occupancy;
+    designation() = default;
     designation(const df::coord &c, const df::tile_designation &td, const df::tile_occupancy &to) : pos(c), type(td), occupancy(to) {}
 
     bool operator==(const designation &rhs) const {
@@ -75,39 +76,61 @@ namespace std {
     };
 }
 
-class DigJobs {
+class DesignationJobs {
 private:
-    std::unordered_map<df::coord, df::tile_dig_designation> designations;
+    std::unordered_map<df::coord, designation> designations;
     std::unordered_map<df::coord, df::job*> jobs;
 public:
-    void load() {
+    void load(MapExtras::MapCache &map) {
         designations.clear();
         df::job_list_link* node = df::global::world->jobs.list.next;
         while (node) {
             df::job* job = node->item;
             jobs.emplace(job->pos, job);
             node = node->next;
+            df::tile_designation td = map.designationAt(job->pos);
+            df::tile_occupancy to = map.occupancyAt(job->pos);
+            const auto ctd = td.whole;
+            const auto cto = to.whole;
             switch (job->job_type){
-                case df::enums::job_type::Dig:
-                    designations.emplace(job->pos, df::tile_dig_designation::Default);
+                case job_type::Dig:
+                    td.bits.dig = tile_dig_designation::Default;
                     break;
-                case df::enums::job_type::DigChannel:
-                    designations.emplace(job->pos, df::tile_dig_designation::Channel);
+                case job_type::DigChannel:
+                    td.bits.dig = tile_dig_designation::Channel;
                     break;
-                case df::enums::job_type::CarveRamp:
-                    designations.emplace(job->pos, df::tile_dig_designation::Ramp);
+                case job_type::CarveRamp:
+                    td.bits.dig = tile_dig_designation::Ramp;
                     break;
-                case df::enums::job_type::CarveUpwardStaircase:
-                    designations.emplace(job->pos, df::tile_dig_designation::UpStair);
+                case job_type::CarveUpwardStaircase:
+                    td.bits.dig = tile_dig_designation::UpStair;
                     break;
-                case df::enums::job_type::CarveDownwardStaircase:
-                    designations.emplace(job->pos, df::tile_dig_designation::DownStair);
+                case job_type::CarveDownwardStaircase:
+                    td.bits.dig = tile_dig_designation::DownStair;
                     break;
-                case df::enums::job_type::CarveUpDownStaircase:
-                    designations.emplace(job->pos, df::tile_dig_designation::UpDownStair);
+                case job_type::CarveUpDownStaircase:
+                    td.bits.dig = tile_dig_designation::UpDownStair;
+                    break;
+                case job_type::DetailWall:
+                case job_type::DetailFloor: {
+                    df::tiletype tt = map.tiletypeAt(job->pos);
+                    if (tileSpecial(tt) != df::tiletype_special::SMOOTH) {
+                        td.bits.smooth = 1;
+                    }
+                    break;
+                }
+                case job_type::CarveTrack:
+                    to.bits.carve_track_north = 0 < (job->item_category.whole & 18);
+                    to.bits.carve_track_south = 0 < (job->item_category.whole & 19);
+                    to.bits.carve_track_west = 0 < (job->item_category.whole & 20);
+                    to.bits.carve_track_east = 0 < (job->item_category.whole & 21);
                     break;
                 default:
                     break;
+            }
+            if (ctd != td.whole || cto != to.whole) {
+                // we found a designation job
+                designations.emplace(job->pos, designation(job->pos, td, to));
             }
         }
     }
@@ -117,11 +140,14 @@ public:
             jobs.erase(pos);
         }
     }
-    df::tile_dig_designation get(const df::coord &pos) {
+    designation get(const df::coord &pos) {
         if (designations.count(pos)) {
             return designations[pos];
         }
-        return df::enums::tile_dig_designation::No;
+        return {};
+    }
+    bool count(const df::coord &pos) {
+        return jobs.count(pos);
     }
 };
 
@@ -705,9 +731,9 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                    item_coords_t &item_coords, const dig_now_options &options) {
     MapExtras::MapCache map;
     Random::MersenneRNG rng;
-    DigJobs jobs;
+    DesignationJobs jobs;
 
-    jobs.load();
+    jobs.load(map);
     rng.init();
 
     std::unordered_set<designation> buffer;
@@ -723,13 +749,11 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
-                if (jobs.get(pos) != df::enums::tile_dig_designation::No) {
-                    // todo: check if the designation is removed from the map
+                if (jobs.count(pos)) {
+                    buffer.emplace(jobs.get(pos));
                     jobs.remove(pos);
                     // if it does get removed, then we're gonna buffer the jobs info then remove the job
-                }
-
-                if ((td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked)
+                } else if ((td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked)
                     || td.bits.smooth == 1
                     || to.bits.carve_track_north == 1
                     || to.bits.carve_track_east == 1
@@ -772,7 +796,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
             // todo: check mark mode of smooth designations
         } else if (td.bits.smooth == 1) {
             if (smooth_tile(out, map, pos)) {
-                to = map.occupancyAt(pos);
+                td = map.designationAt(pos);
                 td.bits.smooth = 0;
                 map.setDesignationAt(pos, td);
             }

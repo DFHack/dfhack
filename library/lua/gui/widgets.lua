@@ -1274,9 +1274,15 @@ function Label:getTextWidth()
     return self.text_width
 end
 
+-- Overridden by subclasses that also want to add new mouse handlers, see
+-- HotkeyLabel.
+function Label:shouldHover()
+    return self.on_click or self.on_rclick
+end
+
 function Label:onRenderBody(dc)
     local text_pen = self.text_pen
-    if self:getMousePos() and (self.on_click or self.on_rclick) then
+    if self:getMousePos() and self:shouldHover() then
         text_pen = self.text_hpen
     end
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
@@ -1432,6 +1438,11 @@ function HotkeyLabel:setLabel(label)
     self:initializeLabel()
 end
 
+function HotkeyLabel:shouldHover()
+    -- When on_activate is set, text should also hover on mouseover
+    return HotkeyLabel.super.shouldHover(self) or self.on_activate
+end
+
 function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
@@ -1473,6 +1484,12 @@ function CycleHotkeyLabel:init()
         {text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
+end
+
+-- CycleHotkeyLabels are always clickable and therefore should always change
+-- color when hovered.
+function CycleHotkeyLabel:shouldHover()
+    return true
 end
 
 function CycleHotkeyLabel:cycle(backwards)

@@ -1643,10 +1643,10 @@ StockpileIterator& StockpileIterator::operator++() {
 
         while (current >= block->items.size()) {
             // Out of items in this block; find the next block to search.
-            if (block->map_pos.x + 16 < stockpile->x2) {
+            if (block->map_pos.x + 16 <= stockpile->x2) {
                 block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
                 current = 0;
-            } else if (block->map_pos.y + 16 < stockpile->y2) {
+            } else if (block->map_pos.y + 16 <= stockpile->y2) {
                 block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
                 current = 0;
             } else {

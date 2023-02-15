@@ -697,6 +697,19 @@ DEFAULT_INITIAL_PAUSE = true
 
 local zscreen_inhibit_mouse_l = false
 
+-- ensure underlying DF screens don't also react to handled clicks
+function markMouseClicksHandled(keys)
+    if keys._MOUSE_L_DOWN then
+        -- note we can't clear mouse_lbut here. otherwise we break dragging,
+        df.global.enabler.mouse_lbut_down = 0
+        zscreen_inhibit_mouse_l = true
+    end
+    if keys._MOUSE_R_DOWN then
+        df.global.enabler.mouse_rbut_down = 0
+        df.global.enabler.mouse_rbut = 0
+    end
+end
+
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -782,16 +795,7 @@ function ZScreen:onInput(keys)
     end
 
     if ZScreen.super.onInput(self, keys) then
-        -- ensure underlying DF screens don't also react to handled clicks
-        if keys._MOUSE_L_DOWN then
-            -- note we can't clear mouse_lbut here. otherwise we break dragging,
-            df.global.enabler.mouse_lbut_down = 0
-            zscreen_inhibit_mouse_l = true
-        end
-        if keys._MOUSE_R_DOWN then
-            df.global.enabler.mouse_rbut_down = 0
-            df.global.enabler.mouse_rbut = 0
-        end
+        markMouseClicksHandled(keys)
         return
     end
 
@@ -801,9 +805,7 @@ function ZScreen:onInput(keys)
         return
     elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
-        -- ensure underlying DF screens don't also react to the rclick
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
+        markMouseClicksHandled(keys)
         return
     else
         if zscreen_inhibit_mouse_l then

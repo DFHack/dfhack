@@ -2188,7 +2188,8 @@ TabBar.ATTRS{
     active_tab_pens=DEFAULT_ACTIVE_TAB_PENS,
     inactive_tab_pens=DEFAULT_INACTIVE_TAB_PENS,
     get_pens=DEFAULT_NIL,
-    switch_tab_key=DEFAULT_NIL,
+    key=DEFAULT_NIL,
+    key_back=DEFAULT_NIL,
 }
 
 function TabBar:init()
@@ -2228,10 +2229,16 @@ end
 
 function TabBar:onInput(keys)
     if TabBar.super.onInput(self, keys) then return true end
-    if self.switch_tab_key and keys[self.switch_tab_key] then
+    if self.key and keys[self.key] then
         local zero_idx = self.get_cur_page() - 1
         local next_zero_idx = (zero_idx + 1) % #self.labels
         self.on_select(next_zero_idx + 1)
+        return true
+    end
+    if self.key_back and keys[self.key_back] then
+        local zero_idx = self.get_cur_page() - 1
+        local prev_zero_idx = (zero_idx - 1) % #self.labels
+        self.on_select(prev_zero_idx + 1)
         return true
     end
 end

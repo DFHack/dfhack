@@ -5038,11 +5038,11 @@ the width of the window and will continue rendering on the next line(s) if all t
 :key_back: Specifies a keybinding that can be used to switch to the previous tab.
 :labels: A table of strings; entry representing the label text for a single tab. The order of the entries
          determines the order the tabs will appear in.
-:get_cur_page: Returns the current "page". This function does not have a default implementation; you must provide
-               an implementation that returns the current value of whichever variable your script uses to keep track of the
-               current "page" (this does not need to relate to an actual Pages widget).
-:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. Your implementation
-            should likely update the value of whichever variable your script uses to keep track of the current page.
+:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. The provided function
+            should update the value of whichever variable your script uses to keep track of the currently selected tab.
+:get_cur_page: The function used by the TabBar to determine which Tab is currently selected. The function you provide should
+               return an integer that corresponds to the non-zero index of the currently selected Tab (i.e. whatever variable
+               you update in your ``on_select`` callback)
 :active_tab_pens: A table of pens used to render active tabs. See the default implementation in widgets.lua for an example
                   of how to construct the table. Leave unspecified to use the default pens.
 :inactive_tab_pens: A table of pens used to render inactive tabs. See the default implementation in widgets.lua for an example

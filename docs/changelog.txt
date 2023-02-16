@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - DFHack tool windows that capture mouse clicks (and therefore prevent you from clicking on the "pause" button) now unconditionally pause the game when they open (but you can still unpause with the keyboard if you want to). Examples of this behavior: `gui/quickfort`, `gui/blueprint`, `gui/liquids`
 - `showmood`: now shows the number of items needed for cloth and bars in addition to the technically correct but always confusing "total dimension" (150 per bar or 10,000 per cloth)
 -@ Stopped mouse clicks from affecting the map when a click on a DFHack screen dismisses the window
+- `confirm`: configuration data is now persisted globally.
 
 ## Documentation
 

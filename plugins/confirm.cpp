@@ -612,15 +612,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 {
-    if (is_enabled != enable)
-    {
-        for (auto c : confirmations)
-        {
-            if (!c.second->apply(enable))
-                return CR_FAILURE;
-        }
-        is_enabled = enable;
-    }
+    is_enabled = enable;
     if (is_enabled)
     {
         conf_lua::simple_call("check");

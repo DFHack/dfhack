@@ -56,6 +56,7 @@ enum ConfigValues {
     CONFIG_CLOTH_IDX = 2,
     CONFIG_YARN_IDX = 3,
     CONFIG_LEATHER_IDX = 4,
+    CONFIG_ADAMANTINE_IDX = 5,
 };
 
 static int get_config_val(PersistentDataItem &c, int index) {
@@ -119,10 +120,11 @@ static const MatType
     M_SILK = MatType("silk", df::job_material_category::mask_silk, df::armor_general_flags::SOFT),
     M_CLOTH = MatType("cloth", df::job_material_category::mask_cloth, df::armor_general_flags::SOFT),
     M_YARN = MatType("yarn", df::job_material_category::mask_yarn, df::armor_general_flags::SOFT),
-    M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER);
+    M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER),
+    M_ADAMANTINE = MatType("adamantine", df::job_material_category::mask_strand, df::armor_general_flags::SOFT);
 
-static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER };
-static std::list<MatType> material_order = all_materials;
+static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
+static std::list<MatType> material_order = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // M_ADAMANTINE is not included by default
 
 static struct BadFlags {
     uint32_t whole;
@@ -208,11 +210,13 @@ public:
                     supply[M_CLOTH] += ss;
                 else if (mat.material->flags.is_set(df::material_flags::YARN))
                     supply[M_YARN] += ss;
+                else if (mat.material->flags.is_set(df::material_flags::STOCKPILE_THREAD_METAL))
+                    supply[M_ADAMANTINE] += ss;
                 else
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    WARN(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d), material_flags = %0x\n", d.c_str(), i->id);
                 }
             }
         }
@@ -224,7 +228,8 @@ public:
             supply[M_LEATHER] += i->getStackSize();
         }
 
-        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d\n", supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER]);
+        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d adamantine %d\n",
+            supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER], supply[M_ADAMANTINE]);
     }
 
     void scan_replacements()

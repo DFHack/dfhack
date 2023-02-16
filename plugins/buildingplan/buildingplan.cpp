@@ -47,11 +47,37 @@ void set_config_bool(PersistentDataItem &c, int index, bool value) {
     set_config_val(c, index, value ? 1 : 0);
 }
 
+// building type, subtype, custom
+typedef std::tuple<df::building_type, int16_t, int32_t> BuildingTypeKey;
+
+// rotates a size_t value left by count bits
+// assumes count is not 0 or >= size_t_bits
+// replace this with std::rotl when we move to C++20
+static std::size_t rotl_size_t(size_t val, uint32_t count)
+{
+    static const int size_t_bits = CHAR_BIT * sizeof(std::size_t);
+    return val << count | val >> (size_t_bits - count);
+}
+
+struct BuildingTypeKeyHash {
+    std::size_t operator() (const BuildingTypeKey & key) const {
+        // cast first param to appease gcc-4.8, which is missing the enum
+        // specializations for std::hash
+        std::size_t h1 = std::hash<int32_t>()(static_cast<int32_t>(std::get<0>(key)));
+        std::size_t h2 = std::hash<int16_t>()(std::get<1>(key));
+        std::size_t h3 = std::hash<int32_t>()(std::get<2>(key));
+
+        return h1 ^ rotl_size_t(h2, 8) ^ rotl_size_t(h3, 16);
+    }
+};
+
 static PersistentDataItem config;
+// for use in counting available materials for the UI
+static unordered_map<BuildingTypeKey, vector<df::job_item *>, BuildingTypeKeyHash> job_item_repo;
 // building id -> PlannedBuilding
-unordered_map<int32_t, PlannedBuilding> planned_buildings;
+static unordered_map<int32_t, PlannedBuilding> planned_buildings;
 // vector id -> filter bucket -> queue of (building id, job_item index)
-Tasks tasks;
+static Tasks tasks;
 
 // note that this just removes the PlannedBuilding. the tasks will get dropped
 // as we discover them in the tasks queues and they fail to be found in planned_buildings.
@@ -61,7 +87,7 @@ Tasks tasks;
 // no chance of duplicate tasks getting added to the tasks queues.
 void PlannedBuilding::remove(color_ostream &out) {
     DEBUG(status,out).print("removing persistent data for building %d\n", id);
-    World::DeletePersistentData(config);
+    World::DeletePersistentData(bld_config);
     if (planned_buildings.count(id) > 0)
         planned_buildings.erase(id);
 }
@@ -106,6 +132,31 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
+static void validate_config(color_ostream &out, bool verbose = false) {
+    if (get_config_bool(config, CONFIG_BLOCKS)
+            || get_config_bool(config, CONFIG_BOULDERS)
+            || get_config_bool(config, CONFIG_LOGS)
+            || get_config_bool(config, CONFIG_BARS))
+        return;
+
+    if (verbose)
+        out.printerr("all contruction materials disabled; resetting config\n");
+
+    set_config_bool(config, CONFIG_BLOCKS, true);
+    set_config_bool(config, CONFIG_BOULDERS, true);
+    set_config_bool(config, CONFIG_LOGS, true);
+    set_config_bool(config, CONFIG_BARS, false);
+}
+
+static void clear_job_item_repo() {
+    for (auto &entry : job_item_repo) {
+        for (auto &jitem : entry.second) {
+            delete jitem;
+        }
+    }
+    job_item_repo.clear();
+}
+
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentData(CONFIG_KEY);
@@ -113,15 +164,13 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_BLOCKS, true);
-        set_config_bool(config, CONFIG_BOULDERS, true);
-        set_config_bool(config, CONFIG_LOGS, true);
-        set_config_bool(config, CONFIG_BARS, false);
     }
+    validate_config(out);
 
     DEBUG(status,out).print("loading persisted state\n");
     planned_buildings.clear();
     tasks.clear();
+    clear_job_item_repo();
     vector<PersistentDataItem> building_configs;
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
@@ -138,27 +187,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         DEBUG(status,out).print("world unloaded; clearing state for %s\n", plugin_name);
         planned_buildings.clear();
         tasks.clear();
+        clear_job_item_repo();
     }
-    return CR_OK;
-}
-
-static bool cycle_requested = false;
-
-static void do_cycle(color_ostream &out) {
-    // mark that we have recently run
-    cycle_timestamp = world->frame_counter;
-    cycle_requested = false;
-
-    buildingplan_cycle(out, tasks, planned_buildings);
-}
-
-DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!Core::getInstance().isWorldLoaded())
-        return CR_OK;
-
-    if (is_enabled &&
-            (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
-        do_cycle(out);
     return CR_OK;
 }
 
@@ -180,6 +210,27 @@ static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
             nargs, nres,
             std::forward<Lua::LuaLambda&&>(args_lambda),
             std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static bool cycle_requested = false;
+
+static void do_cycle(color_ostream &out) {
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+    cycle_requested = false;
+
+    buildingplan_cycle(out, tasks, planned_buildings);
+    call_buildingplan_lua(&out, "reset_counts");
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (!Core::getInstance().isWorldLoaded())
+        return CR_OK;
+
+    if (is_enabled &&
+            (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
+        do_cycle(out);
+    return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
@@ -228,8 +279,7 @@ static string getBucket(const df::job_item & ji) {
 }
 
 // get a list of item vectors that we should search for matches
-static vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_item *job_item)
-{
+static vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_item *job_item) {
     std::vector<df::job_item_vector_id> ret;
 
     // if the filter already has the vector_id set to something specific, use it
@@ -344,7 +394,7 @@ static void printStatus(color_ostream &out) {
         }
     }
 
-    out.print("Waiting for %d item(s) to be produced or %zd building(s):\n",
+    out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
               total, planned_buildings.size());
     for (auto &count : counts)
         out.print("  %3d %s\n", count.second, count.first.c_str());
@@ -365,6 +415,9 @@ static bool setSetting(color_ostream &out, string name, bool value) {
         out.printerr("unrecognized setting: '%s'\n", name.c_str());
         return false;
     }
+
+    validate_config(out, true);
+    call_buildingplan_lua(&out, "reset_counts");
     return true;
 }
 
@@ -412,7 +465,49 @@ static void scheduleCycle(color_ostream &out) {
 
 static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     DEBUG(status,out).print("entering countAvailableItems\n");
-    return 10;
+    DEBUG(status,out).print(
+            "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    BuildingTypeKey key(type, subtype, custom);
+    auto &job_items = job_item_repo[key];
+    if (index >= job_items.size()) {
+        for (int i = job_items.size(); i <= index; ++i) {
+            bool failed = false;
+            if (!call_buildingplan_lua(&out, "get_job_item", 4, 1,
+                    [&](lua_State *L) {
+                        Lua::Push(L, type);
+                        Lua::Push(L, subtype);
+                        Lua::Push(L, custom);
+                        Lua::Push(L, index+1);
+                    },
+                    [&](lua_State *L) {
+                        df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
+                        DEBUG(status,out).print("retrieving job_item for index=%d: %p\n",
+                                index, jitem);
+                        if (!jitem)
+                            failed = true;
+                        else
+                            job_items.emplace_back(jitem);
+                    }) || failed) {
+                return 0;
+            }
+        }
+    }
+
+    auto &jitem = job_items[index];
+    auto vector_ids = getVectorIds(out, jitem);
+
+    int count = 0;
+    for (auto vector_id : vector_ids) {
+        auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
+        for (auto &item : df::global::world->items.other[other_id]) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem))
+                ++count;
+        }
+    }
+
+    DEBUG(status,out).print("found matches %d\n", count);
+    return count;
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

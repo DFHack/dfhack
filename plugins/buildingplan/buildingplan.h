@@ -2,6 +2,7 @@
 
 #include "modules/Persistence.h"
 
+#include "df/job_item.h"
 #include "df/job_item_vector_id.h"
 
 #include <deque>
@@ -26,3 +27,6 @@ int get_config_val(DFHack::PersistentDataItem &c, int index);
 bool get_config_bool(DFHack::PersistentDataItem &c, int index);
 void set_config_val(DFHack::PersistentDataItem &c, int index, int value);
 void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
+
+bool itemPassesScreen(df::item * item);
+bool matchesFilters(df::item * item, df::job_item * job_item);

@@ -56,6 +56,19 @@ function get_num_filters(btype, subtype, custom)
     return filters and #filters or 0
 end
 
+function get_job_item(btype, subtype, custom, index)
+    local filters = dfhack.buildings.getFiltersByType({}, btype, subtype, custom)
+    if not filters or not filters[index] then return nil end
+    local obj = df.job_item:new()
+    obj:assign(filters[index])
+    return obj
+end
+
+local reset_counts_flag = false
+function reset_counts()
+    reset_counts_flag = true
+end
+
 --------------------------------
 -- Planner Overlay
 --
@@ -143,8 +156,32 @@ local function to_title_case(str)
     return str
 end
 
-function get_item_line_text(idx)
-    local filter = get_cur_filters()[idx]
+ItemLine = defclass(ItemLine, widgets.Panel)
+ItemLine.ATTRS{
+    idx=DEFAULT_NIL,
+}
+
+function ItemLine:init()
+    self.frame.h = 1
+    self.visible = function() return #get_cur_filters() >= self.idx end
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text={{text=function() return self:get_item_line_text() end}},
+        },
+        widgets.Label{
+            frame={t=0, l=22},
+            text='[filter][x]',
+        },
+    }
+end
+
+function ItemLine:reset()
+    self.desc = nil
+    self.available = nil
+end
+
+local function get_desc(filter)
     local desc = 'Unknown'
     if filter.has_tool_use then
         desc = to_title_case(df.tool_uses[filter.has_tool_use])
@@ -170,7 +207,10 @@ function get_item_line_text(idx)
     if desc == 'Trappart' then
         desc = 'Mechanism'
     end
+    return desc
+end
 
+local function get_quantity(filter)
     local quantity = filter.quantity or 1
     local dimx, dimy, dimz = get_cur_area_dims()
     if quantity < 1 then
@@ -178,34 +218,29 @@ function get_item_line_text(idx)
     else
         quantity = quantity * dimx * dimy * dimz
     end
-    desc = ('%d %s%s'):format(quantity, desc, quantity == 1 and '' or 's')
-
-    local available = countAvailableItems(uibs.building_type,
-            uibs.building_subtype, uibs.custom_type, idx - 1)
-    local note = available >= quantity and
-            'Can build now' or 'Will wait for item'
-
-    return ('%-21s%s%s'):format(desc:sub(1,21), (' '):rep(13), note)
+    return quantity
 end
 
-ItemLine = defclass(ItemLine, widgets.Panel)
-ItemLine.ATTRS{
-    idx=DEFAULT_NIL,
-}
+function ItemLine:get_item_line_text()
+    local idx = self.idx
+    local filter = get_cur_filters()[idx]
+    local quantity = get_quantity(filter)
 
-function ItemLine:init()
-    self.frame.h = 1
-    self.visible = function() return #get_cur_filters() >= self.idx end
-    self:addviews{
-        widgets.Label{
-            frame={t=0, l=0},
-            text={{text=function() return get_item_line_text(self.idx) end}},
-        },
-        widgets.Label{
-            frame={t=0, l=22},
-            text='[filter][x]',
-        },
-    }
+    self.desc = self.desc or get_desc(filter)
+    local line = ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
+
+    self.available = self.available or countAvailableItems(uibs.building_type,
+            uibs.building_subtype, uibs.custom_type, idx - 1)
+    local note = self.available >= quantity and
+            'Can build now' or 'Will wait for item'
+
+    return ('%-21s%s%s'):format(line:sub(1,21), (' '):rep(13), note)
+end
+
+function ItemLine:reduce_quantity()
+    if not self.available then return end
+    local filter = get_cur_filters()[self.idx]
+    self.available = math.max(0, self.available - get_quantity(filter))
 end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
@@ -226,10 +261,10 @@ function PlannerOverlay:init()
             text='No items required.',
             visible=function() return #get_cur_filters() == 0 end,
         },
-        ItemLine{frame={t=0, l=0}, idx=1},
-        ItemLine{frame={t=2, l=0}, idx=2},
-        ItemLine{frame={t=4, l=0}, idx=3},
-        ItemLine{frame={t=6, l=0}, idx=4},
+        ItemLine{view_id='item1', frame={t=0, l=0}, idx=1},
+        ItemLine{view_id='item2', frame={t=2, l=0}, idx=2},
+        ItemLine{view_id='item3', frame={t=4, l=0}, idx=3},
+        ItemLine{view_id='item4', frame={t=6, l=0}, idx=4},
         widgets.CycleHotkeyLabel{
             view_id="stairs_top_subtype",
             frame={t=3, l=0},
@@ -268,13 +303,22 @@ function PlannerOverlay:init()
     }
 end
 
-function PlannerOverlay:do_config()
-    dfhack.run_script('gui/buildingplan')
+function PlannerOverlay:reset()
+    self.subviews.item1:reset()
+    self.subviews.item2:reset()
+    self.subviews.item3:reset()
+    self.subviews.item4:reset()
+    reset_counts_flag = false
 end
 
 function PlannerOverlay:onInput(keys)
     if not is_plannable() then return false end
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if uibs.selection_pos:isValid() then
+            uibs.selection_pos:clear()
+            return true
+        end
+        self:reset()
         return false
     end
     if PlannerOverlay.super.onInput(self, keys) then
@@ -290,6 +334,10 @@ function PlannerOverlay:onInput(keys)
                 if #get_cur_filters() == 0 then
                     return false -- we don't add value; let the game place it
                 end
+                self.subviews.item1:reduce_quantity()
+                self.subviews.item2:reduce_quantity()
+                self.subviews.item3:reduce_quantity()
+                self.subviews.item4:reduce_quantity()
                 self:place_building()
                 uibs.selection_pos:clear()
                 return true
@@ -314,6 +362,10 @@ local BAD_PEN = to_pen{ch='X', fg=COLOR_RED,
 
 function PlannerOverlay:onRenderFrame(dc, rect)
     PlannerOverlay.super.onRenderFrame(self, dc, rect)
+
+    if reset_counts_flag then
+        self:reset()
+    end
 
     if not is_choosing_area() then return end
 

@@ -10,7 +10,6 @@
 #include "df/building_design.h"
 #include "df/item.h"
 #include "df/job.h"
-#include "df/job_item.h"
 #include "df/world.h"
 
 #include <unordered_map>
@@ -41,13 +40,13 @@ struct BadFlags {
     }
 };
 
-static bool itemPassesScreen(df::item * item) {
+bool itemPassesScreen(df::item * item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile();
 }
 
-static bool matchesFilters(df::item * item, df::job_item * job_item) {
+bool matchesFilters(df::item * item, df::job_item * job_item) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;

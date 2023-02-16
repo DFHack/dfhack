@@ -1226,7 +1226,7 @@ function Label:init(args)
     self:setText(args.text or self.text)
 
     -- Inverts the brightness of the color
-    invert = function(color)
+    local invert = function(color)
         return (color + 8) % 16
     end
     -- default pen is an inverted foreground/background
@@ -1604,6 +1604,7 @@ List = defclass(List, Widget)
 
 List.ATTRS{
     text_pen = COLOR_CYAN,
+    text_hpen = DEFAULT_NIL, -- pen to render list item when mouse is hovered over; defaults to text_pen with inverted brightness
     cursor_pen = COLOR_LIGHTCYAN,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
@@ -1633,6 +1634,23 @@ function List:init(info)
     end
 
     self.last_select_click_ms = 0 -- used to track double-clicking on an item
+
+    -- Inverts the brightness of the color
+    invert = function(color)
+        return (color + 8) % 16
+    end
+    -- default pen is an inverted foreground/background
+    if not self.text_hpen then
+        local text_pen = dfhack.pen.parse(self.text_pen)
+        self.text_hpen = dfhack.pen.make(invert(text_pen.fg), nil, invert(text_pen.bg))
+    end
+
+    -- text_hpen needs a character in order to paint the background using
+    -- Painter:fill(), so let's make it paint a space to show the background
+    -- color
+    local hpen_parsed = dfhack.pen.parse(self.text_hpen)
+    hpen_parsed.ch = string.byte(' ')
+    self.text_hpen = hpen_parsed
 end
 
 function List:setChoices(choices, selected)
@@ -1784,12 +1802,19 @@ function List:onRenderBody(dc)
         end
     end
 
+    local hoveridx = self:getIdxUnderMouse()
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
-        local cur_pen = self.cursor_pen
-        local cur_dpen = self.text_pen
-        local active_pen = current and cur_pen or cur_dpen
+        local hovered = (i == hoveridx)
+        local cur_pen = to_pen(self.cursor_pen)
+        local cur_dpen = to_pen(self.text_pen)
+        local active_pen = (current and cur_pen or cur_dpen)
+
+        -- when mouse is over, always highlight it
+        if hovered then
+            cur_dpen = self.text_hpen
+        end
 
         if not getval(self.active) then
             cur_pen = self.inactive_pen or self.cursor_pen

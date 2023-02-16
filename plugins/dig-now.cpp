@@ -86,6 +86,9 @@ public:
         df::job_list_link* node = df::global::world->jobs.list.next;
         while (node) {
             df::job* job = node->item;
+            if(!Maps::isValidTilePos(job->pos))
+                continue;
+
             jobs.emplace(job->pos, job);
             node = node->next;
             df::tile_designation td = map.designationAt(job->pos);

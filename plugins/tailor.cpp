@@ -216,7 +216,7 @@ public:
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d), material_flags = %0x\n", d.c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
                 }
             }
         }

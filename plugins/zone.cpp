@@ -57,14 +57,8 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(plotinfo);
-REQUIRE_GLOBAL(ui_building_item_cursor);
-REQUIRE_GLOBAL(ui_building_assign_type);
-REQUIRE_GLOBAL(ui_building_assign_is_marked);
-REQUIRE_GLOBAL(ui_building_assign_units);
-REQUIRE_GLOBAL(ui_building_assign_items);
-REQUIRE_GLOBAL(ui_building_in_assign);
-REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(game);
 
 static void doMarkForSlaughter(df::unit* unit)
 {
@@ -346,8 +340,9 @@ static bool isInBuiltCageRoom(df::unit* unit)
         // !!! building->isRoom() returns true if the building can be made a room but currently isn't
         // !!! except for coffins/tombs which always return false
         // !!! using the bool is_room however gives the correct state/value
-        if(!building->is_room)
-            continue;
+        // TODO: fixme
+        /*if(!building->is_room)
+            continue;*/
 
         if(building->getType() == df::building_type::Cage)
         {
@@ -736,15 +731,16 @@ static void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     else
         out << "not active";
 
-    if(civ->zone_flags.bits.pen_pasture)
+    if(civ->type == df::civzone_type::Pen)
         out << ", pen/pasture";
-    else if (civ->zone_flags.bits.pit_pond)
+    else if (civ->type == df::civzone_type::AnimalPit)
     {
-        out << " (pit flags:" << civ->pit_flags.whole << ")";
-        if(civ->pit_flags.bits.is_pond)
-            out << ", pond";
-        else
-            out << ", pit";
+        // TODO: fixme
+        //out << " (pit flags:" << civ->pit_flags.whole << ")";
+        out << ", pit";
+    }
+    else if (civ-> type == df::civzone_type::Pond) {
+        out << ", pond";
     }
     out << endl;
     out << "x1:" <<building->x1
@@ -840,38 +836,39 @@ static void chainInfo(color_ostream & out, df::building* building, bool list_ref
     }
 }
 
-static df::building* getAssignableBuildingAtCursor(color_ostream& out)
+static df::building* getSelectedAssignableBuilding(color_ostream& out)
 {
-    // set building at cursor position to be new target building
-    if (cursor->x == -30000)
-    {
-        out.printerr("No cursor; place cursor over activity zone, pen,"
-                " pasture, pit, pond, chain, or cage.\n");
-        return NULL;
-    }
-
-    auto building_at_tile = Buildings::findAtTile(Gui::getCursorPos());
-
     // cagezone wants a pen/pit as starting point
-    if (isCage(building_at_tile))
-    {
-        out << "Target building type: cage." << endl;
-        return building_at_tile;
-    }
-    else
-    {
-        auto zone_at_tile = Buildings::findPenPitAt(Gui::getCursorPos());
-        if(!zone_at_tile)
-        {
-            out << "No pen/pasture, pit, or cage under cursor!" << endl;
+    df::building *selected_building = Gui::getSelectedBuilding(out, true);
+    if (selected_building) {
+        if (isCage(selected_building)) {
+            out << "Target building type: cage.\n";
+            return selected_building;
+        }
+        else {
+            out << "No cage selected. \n";
             return NULL;
         }
-        else
-        {
-            out << "Target building type: pen/pasture or pit." << endl;
-            return zone_at_tile;
+    }
+    
+    df::building_civzonest *selected_civzone = Gui::getSelectedCivZone(out, true);
+    if(selected_civzone) {
+        if (Buildings::isPitPond((df::building*)selected_civzone)) {
+            out << "Target zone type: pit/pond.\n";
+            return selected_civzone;
+        }
+        else if(Buildings::isPenPasture((df::building*)selected_civzone)) {
+            out << "Target zone type: pen/pasture.\n";
+            return selected_civzone;
+        }
+        else {
+            out << "No pit/pond or pen/pasture selected. \n";
+            return NULL;
         }
     }
+
+    out.printerr("No pen/pasture, pit, or cage selected!\n");
+    return NULL;
 }
 
 // ZONE FILTERS (as in, filters used by 'zone')
@@ -927,7 +924,7 @@ static pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &
     return make_pair(
         "race of " + race,
         [race](df::unit *unit) -> bool {
-            return Units::getRaceName(unit) == race;
+            return toLower(Units::getRaceName(unit)) == toLower(race);
         }
     );
 }
@@ -1043,6 +1040,7 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
 
     int target_count = 0;
 
+    bool zone_info = false;
     bool unit_info = false;
     bool unit_slaughter = false;
     bool building_assign = false;
@@ -1066,7 +1064,9 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
         }
         else if(p0 == "zinfo")
         {
-            if (cursor->x == -30000) {
+            df::building* civzone = Gui::getSelectedCivZone(out);
+
+            if (!civzone && cursor->x == -30000) {
                 out.color(COLOR_RED);
                 out << "No cursor; place cursor over activity zone, chain, or cage." << endl;
                 out.reset_color();
@@ -1077,18 +1077,28 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
             // give info on zone(s), chain or cage under cursor
             // (doesn't use the findXyzAtCursor() methods because zones might
             // overlap and contain a cage or chain)
-            vector<df::building_civzonest*> zones;
-            Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
-            for (auto zone = zones.begin(); zone != zones.end(); ++zone)
-                zoneInfo(out, *zone, verbose);
-            df::building* building = Buildings::findAtTile(Gui::getCursorPos());
-            chainInfo(out, building, verbose);
-            cageInfo(out, building, verbose);
-            return CR_OK;
+            if(!civzone) {
+                vector<df::building_civzonest*> zones;
+                Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
+                for (auto zone = zones.begin(); zone != zones.end(); ++zone)
+                    zoneInfo(out, *zone, verbose);
+                df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+                chainInfo(out, building, verbose);
+                cageInfo(out, building, verbose);
+                zone_info = true;
+                return CR_OK;
+            }
+            else {
+                zoneInfo(out, civzone, verbose);
+                chainInfo(out, civzone, verbose);
+                cageInfo(out, civzone, verbose);
+                zone_info = true;
+                return CR_OK;
+            }
         }
         else if(p0 == "set")
         {
-            target_building = getAssignableBuildingAtCursor(out);
+            target_building = getSelectedAssignableBuilding(out);
             if (target_building) {
                 out.color(COLOR_BLUE);
                 out << "Current building set to #"
@@ -1154,15 +1164,26 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
             }
             if (!target_building_given)
             {
-                if(target_building) {
-                    out << "No building id specified. Will use #"
-                        << target_building->id << endl;
-                } else {
-                    out.color(COLOR_RED);
-                    out << "No building id specified and current one is invalid!" << endl;
-                    out.reset_color();
+                df::building_civzonest *selected_building = Gui::getSelectedCivZone(out);
 
-                    return CR_WRONG_USAGE;
+                if(selected_building) {
+                    out << "No building id specified and none set. Will use UI selected building #"
+                        << selected_building->id << endl;
+                    building_assign = true;
+                    start_index = 1;
+                    target_building = (df::building*)selected_building;
+                }
+                else {
+                    if(target_building) {
+                        out << "No building id specified. Will use #"
+                            << target_building->id << endl;
+                    } else {
+                        out.color(COLOR_RED);
+                        out << "No building id specified and current one is invalid!" << endl;
+                        out.reset_color();
+
+                        return CR_WRONG_USAGE;
+                    }
                 }
             }
 
@@ -1203,18 +1224,30 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
             }
             if(!target_building_given)
             {
-                if(target_building) {
-                    out << "No " << building_type << " id specified. Will use #"
-                        << target_building->id << endl;
+                df::building_civzonest *selected_building = Gui::getSelectedCivZone(out);
+
+                if(selected_building) {
+                    out << "No " << building_type << " id specified and none set. Will use UI selected #"
+                        << selected_building->id << endl;
                     building_assign = true;
                     start_index = 1;
-                } else {
-                    out.color(COLOR_RED);
-                    out << "No " << building_type
-                        << " id specified and current one is invalid!" << endl;
-                    out.reset_color();
+                    target_building = (df::building*)selected_building;
+                }
+                else {
+                    if(target_building) {
+                        out << "No " << building_type << " id specified. Will use #"
+                            << target_building->id << endl;
+                        building_assign = true;
+                        start_index = 1;
+                    }
+                    else {
+                        out.color(COLOR_RED);
+                        out << "No " << building_type
+                            << " id specified and current one is invalid!" << endl;
+                        out.reset_color();
 
-                    return CR_WRONG_USAGE;
+                        return CR_WRONG_USAGE;
+                    }
                 }
             }
 
@@ -1553,7 +1586,7 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
         );
     }
 
-    if (target_count == 0)
+    if (target_count == 0 && !unit_info && !zone_info)
     {
         out.color(COLOR_RED);
         out << "No target count! 'zone " << parameters[0]
@@ -1763,7 +1796,7 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
         df::unit *unit = Gui::getSelectedUnit(out, true);
         if (!unit) {
             out.color(COLOR_RED);
-            out << "Error: no unit selected!" << endl;
+            out << "Error: no unit selected! Must provide count/filter if no unit is selected." << endl;
             out.reset_color();
 
             return CR_WRONG_USAGE;
@@ -1788,390 +1821,8 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
     return CR_OK;
 }
 
-//START zone filters
-
-class zone_filter
-{
-public:
-    zone_filter()
-    {
-        initialized = false;
-    }
-
-    void initialize(const df::ui_sidebar_mode &mode)
-    {
-        if (!initialized)
-        {
-            this->mode = mode;
-            saved_ui_building_assign_type.clear();
-            saved_ui_building_assign_units.clear();
-            saved_ui_building_assign_items.clear();
-            saved_ui_building_assign_is_marked.clear();
-            saved_indexes.clear();
-
-            for (size_t i = 0; i < ui_building_assign_units->size(); i++)
-            {
-                saved_ui_building_assign_type.push_back(ui_building_assign_type->at(i));
-                saved_ui_building_assign_units.push_back(ui_building_assign_units->at(i));
-                saved_ui_building_assign_items.push_back(ui_building_assign_items->at(i));
-                saved_ui_building_assign_is_marked.push_back(ui_building_assign_is_marked->at(i));
-            }
-
-            search_string.clear();
-            show_non_grazers = show_pastured = show_noncaged = show_male = show_female = show_other_zones = true;
-            entry_mode = false;
-
-            initialized = true;
-        }
-    }
-
-    void deinitialize()
-    {
-        initialized = false;
-    }
-
-    void apply_filters()
-    {
-        if (saved_indexes.size() > 0)
-        {
-            bool list_has_been_sorted = (ui_building_assign_units->size() == reference_list.size()
-                && *ui_building_assign_units != reference_list);
-
-            for (size_t i = 0; i < saved_indexes.size(); i++)
-            {
-                int adjusted_item_index = i;
-                if (list_has_been_sorted)
-                {
-                    for (size_t j = 0; j < ui_building_assign_units->size(); j++)
-                    {
-                        if (ui_building_assign_units->at(j) == reference_list[i])
-                        {
-                            adjusted_item_index = j;
-                            break;
-                        }
-                    }
-                }
-
-                saved_ui_building_assign_is_marked[saved_indexes[i]] = ui_building_assign_is_marked->at(adjusted_item_index);
-            }
-        }
-
-        string search_string_l = toLower(search_string);
-        saved_indexes.clear();
-        ui_building_assign_type->clear();
-        ui_building_assign_is_marked->clear();
-        ui_building_assign_units->clear();
-        ui_building_assign_items->clear();
-
-        for (size_t i = 0; i < saved_ui_building_assign_units.size(); i++)
-        {
-            df::unit *curr_unit = saved_ui_building_assign_units[i];
-
-            if (!curr_unit)
-                continue;
-
-            if (!show_non_grazers && !Units::isGrazer(curr_unit))
-                continue;
-
-            if (!show_pastured && isAssignedToZone(curr_unit))
-                continue;
-
-            if (!show_noncaged)
-            {
-                // must be in a container
-                if(!isContainedInItem(curr_unit))
-                    continue;
-                // but exclude built cages (zoos, traps, ...) to avoid "accidental" pitting of creatures you'd prefer to keep
-                if (isInBuiltCage(curr_unit))
-                    continue;
-            }
-
-            if (!show_male && Units::isMale(curr_unit))
-                continue;
-
-            if (!show_female && Units::isFemale(curr_unit))
-                continue;
-
-            if (!search_string_l.empty())
-            {
-                string desc = Translation::TranslateName(
-                    Units::getVisibleName(curr_unit), false);
-
-                desc += Units::getProfessionName(curr_unit);
-                desc = toLower(desc);
-
-                if (desc.find(search_string_l) == string::npos)
-                    continue;
-            }
-
-            ui_building_assign_type->push_back(saved_ui_building_assign_type[i]);
-            ui_building_assign_units->push_back(curr_unit);
-            ui_building_assign_items->push_back(saved_ui_building_assign_items[i]);
-            ui_building_assign_is_marked->push_back(saved_ui_building_assign_is_marked[i]);
-
-            saved_indexes.push_back(i); // Used to map filtered indexes back to original, if needed
-        }
-
-        reference_list = *ui_building_assign_units;
-        *ui_building_item_cursor = 0;
-    }
-
-    bool handle_input(const set<df::interface_key> *input)
-    {
-        if (!initialized)
-            return false;
-
-        bool key_processed = true;
-
-        if (entry_mode)
-        {
-            // Query typing mode
-
-            if  (input->count(interface_key::SECONDSCROLL_UP) || input->count(interface_key::SECONDSCROLL_DOWN) ||
-                input->count(interface_key::SECONDSCROLL_PAGEUP) || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
-            {
-                // Arrow key pressed. Leave entry mode and allow screen to process key
-                entry_mode = false;
-                return false;
-            }
-
-            df::interface_key last_token = get_string_key(input);
-            int charcode = Screen::keyToChar(last_token);
-            if (charcode >= 32 && charcode <= 126)
-            {
-                // Standard character
-                search_string += char(charcode);
-                apply_filters();
-            }
-            else if (last_token == interface_key::STRING_A000)
-            {
-                // Backspace
-                if (search_string.length() > 0)
-                {
-                    search_string.erase(search_string.length()-1);
-                    apply_filters();
-                }
-            }
-            else if (input->count(interface_key::SELECT) || input->count(interface_key::LEAVESCREEN))
-            {
-                // ENTER or ESC: leave typing mode
-                entry_mode = false;
-            }
-        }
-        // Not in query typing mode
-        else if (input->count(interface_key::CUSTOM_SHIFT_G) &&
-            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding))
-        {
-            show_non_grazers = !show_non_grazers;
-            apply_filters();
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_C) &&
-            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
-        {
-            show_noncaged = !show_noncaged;
-            apply_filters();
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_P) &&
-            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
-        {
-            show_pastured = !show_pastured;
-            apply_filters();
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_M) &&
-            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
-        {
-            show_male = !show_male;
-            apply_filters();
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_F) &&
-            (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
-        {
-            show_female = !show_female;
-            apply_filters();
-        }
-        else if (input->count(interface_key::CUSTOM_S))
-        {
-            // Hotkey pressed, enter typing mode
-            entry_mode = true;
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_S))
-        {
-            // Shift + Hotkey pressed, clear query
-            search_string.clear();
-            apply_filters();
-        }
-        else
-        {
-            // Not a key for us, pass it on to the screen
-            key_processed = false;
-        }
-
-        return key_processed || entry_mode; // Only pass unrecognized keys down if not in typing mode
-    }
-
-    void do_render()
-    {
-        if (!initialized)
-            return;
-
-        int left_margin = gps->dimx - 30;
-        int8_t a = (*ui_menu_width)[0];
-        int8_t b = (*ui_menu_width)[1];
-        if ((a == 1 && b > 1) || (a == 2 && b == 2))
-            left_margin -= 24;
-
-        int x = left_margin;
-        int y = 24;
-
-        OutputString(COLOR_BROWN, x, y, "DFHack Filtering");
-        x = left_margin;
-        ++y;
-        OutputString(COLOR_LIGHTGREEN, x, y, "s");
-        OutputString(COLOR_WHITE, x, y, ": Search");
-        if (!search_string.empty() || entry_mode)
-        {
-            OutputString(COLOR_WHITE, x, y, ": ");
-            if (!search_string.empty())
-                OutputString(COLOR_WHITE, x, y, search_string);
-            if (entry_mode)
-                OutputString(COLOR_LIGHTGREEN, x, y, "_");
-        }
-
-        if (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding)
-        {
-            x = left_margin;
-            y += 2;
-            OutputString(COLOR_LIGHTGREEN, x, y, "G");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_non_grazers) ? COLOR_WHITE : COLOR_GREY, x, y, "Non-Grazing");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "C");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "P");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "F");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "M");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
-        }
-
-        // pits don't have grazer filter because it seems pointless
-        if (mode == ui_sidebar_mode::ZonesPitInfo)
-        {
-            x = left_margin;
-            y += 2;
-            OutputString(COLOR_LIGHTGREEN, x, y, "C");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_noncaged) ? COLOR_WHITE : COLOR_GREY, x, y, "Not Caged");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "P");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_pastured) ? COLOR_WHITE : COLOR_GREY, x, y, "Currently Pastured");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "F");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_female) ? COLOR_WHITE : COLOR_GREY, x, y, "Female");
-
-            x = left_margin;
-            ++y;
-            OutputString(COLOR_LIGHTGREEN, x, y, "M");
-            OutputString(COLOR_WHITE, x, y, ": ");
-            OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
-        }
-    }
-
-private:
-    df::ui_sidebar_mode mode;
-    string search_string;
-    bool initialized;
-    bool entry_mode;
-    bool show_non_grazers, show_pastured, show_noncaged, show_male, show_female, show_other_zones;
-
-    std::vector<int8_t> saved_ui_building_assign_type;
-    std::vector<df::unit*> saved_ui_building_assign_units, reference_list;
-    std::vector<df::item*> saved_ui_building_assign_items;
-    std::vector<char> saved_ui_building_assign_is_marked;
-
-    vector <int> saved_indexes;
-
-};
-
-struct zone_hook : public df::viewscreen_dwarfmodest
-{
-    typedef df::viewscreen_dwarfmodest interpose_base;
-    static zone_filter filter;
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (!filter.handle_input(input))
-            INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        if ( ( (plotinfo->main.mode == ui_sidebar_mode::ZonesPenInfo || plotinfo->main.mode == ui_sidebar_mode::ZonesPitInfo) &&
-            ui_building_assign_type && ui_building_assign_units &&
-            ui_building_assign_is_marked && ui_building_assign_items &&
-            ui_building_assign_type->size() == ui_building_assign_units->size() &&
-            ui_building_item_cursor)
-            // allow mode QueryBuilding, but only for cages (bedrooms will crash DF with this code, chains don't work either etc)
-            ||
-            (   plotinfo->main.mode == ui_sidebar_mode::QueryBuilding &&
-                ui_building_in_assign && *ui_building_in_assign &&
-                ui_building_assign_type && ui_building_assign_units &&
-                ui_building_assign_type->size() == ui_building_assign_units->size() &&
-                ui_building_assign_type->size() == ui_building_assign_items->size() &&
-                ui_building_assign_type->size() == ui_building_assign_is_marked->size() &&
-                ui_building_item_cursor &&
-                world->selected_building && isCage(world->selected_building) )
-            )
-        {
-            if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
-                filter.initialize(plotinfo->main.mode);
-        }
-        else
-        {
-            filter.deinitialize();
-        }
-
-        INTERPOSE_NEXT(render)();
-
-        filter.do_render();
-
-    }
-};
-
-zone_filter zone_hook::filter;
-
-IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, render);
-//END zone filters
-
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (enable != is_enabled) {
-        if (!INTERPOSE_HOOK(zone_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(zone_hook, render).apply(enable))
-            return CR_FAILURE;
-
+    if (is_enabled != enable) {
         is_enabled = enable;
     }
 

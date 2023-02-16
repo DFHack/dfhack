@@ -98,7 +98,8 @@ enable automelt
 
 # Other interface improvement tools
 enable \
- confirm
+ confirm \
+ zone
 # dwarfmonitor \
 # mousequery \
 # autogems \
@@ -107,7 +108,6 @@ enable \
 # autotrade \
 # buildingplan \
 # trackstop \
-# zone \
 # stocks \
 # autochop \
 # stockpiles

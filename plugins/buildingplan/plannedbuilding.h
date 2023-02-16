@@ -5,13 +5,17 @@
 #include "modules/Persistence.h"
 
 #include "df/building.h"
+#include "df/job_item_vector_id.h"
 
 class PlannedBuilding {
 public:
     const df::building::key_field_type id;
 
+    // job_item idx -> list of vectors the task is linked to
+    const std::vector<std::vector<df::job_item_vector_id>> vector_ids;
+
     PlannedBuilding(DFHack::color_ostream &out, df::building *building);
-    PlannedBuilding(DFHack::PersistentDataItem &bld_config);
+    PlannedBuilding(DFHack::color_ostream &out, DFHack::PersistentDataItem &bld_config);
 
     void remove(DFHack::color_ostream &out);
 

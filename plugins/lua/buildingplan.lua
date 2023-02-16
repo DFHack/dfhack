@@ -70,7 +70,7 @@ function reset_counts()
 end
 
 --------------------------------
--- Planner Overlay
+-- PlannerOverlay
 --
 
 local uibs = df.global.buildreq
@@ -181,7 +181,7 @@ function ItemLine:reset()
     self.available = nil
 end
 
-local function get_desc(filter)
+function get_desc(filter)
     local desc = 'Unknown'
     if filter.has_tool_use then
         desc = to_title_case(df.tool_uses[filter.has_tool_use])
@@ -190,13 +190,15 @@ local function get_desc(filter)
         desc = to_title_case(df.item_type[filter.item_type])
     end
     if filter.flags2 and filter.flags2.building_material then
-        desc = "Generic material";
+        desc = 'Generic material';
         if filter.flags2.fire_safe then
-            desc = "Fire-safe material";
+            desc = 'Fire-safe material';
         end
         if filter.flags2.magma_safe then
-            desc = "Magma-safe material";
+            desc = 'Magma-safe material';
         end
+    elseif filter.flags2 and filter.flags2.screw then
+        desc = 'Screw'
     elseif filter.vector_id then
         desc = to_title_case(df.job_item_vector_id[filter.vector_id])
     end
@@ -249,27 +251,30 @@ PlannerOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
     frame={w=54, h=9},
-    frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
 function PlannerOverlay:init()
     self:addviews{
+        widgets.Panel{
+            frame={},
+            frame_style=gui.MEDIUM_FRAME,
+        },
         widgets.Label{
             frame={},
             auto_width=true,
             text='No items required.',
             visible=function() return #get_cur_filters() == 0 end,
         },
-        ItemLine{view_id='item1', frame={t=0, l=0}, idx=1},
-        ItemLine{view_id='item2', frame={t=2, l=0}, idx=2},
-        ItemLine{view_id='item3', frame={t=4, l=0}, idx=3},
-        ItemLine{view_id='item4', frame={t=6, l=0}, idx=4},
+        ItemLine{view_id='item1', frame={t=1, l=1, r=1}, idx=1},
+        ItemLine{view_id='item2', frame={t=3, l=1, r=1}, idx=2},
+        ItemLine{view_id='item3', frame={t=5, l=1, r=1}, idx=3},
+        ItemLine{view_id='item4', frame={t=7, l=1, r=1}, idx=4},
         widgets.CycleHotkeyLabel{
-            view_id="stairs_top_subtype",
-            frame={t=3, l=0},
-            key="CUSTOM_R",
-            label="Top Stair Type: ",
+            view_id='stairs_top_subtype',
+            frame={t=4, l=1},
+            key='CUSTOM_R',
+            label='Top Stair Type: ',
             visible=is_stairs,
             options={
                 {label='Auto', value='auto'},
@@ -278,10 +283,10 @@ function PlannerOverlay:init()
             },
         },
         widgets.CycleHotkeyLabel {
-            view_id="stairs_bottom_subtype",
-            frame={t=4, l=0},
-            key="CUSTOM_B",
-            label="Bottom Stair Type: ",
+            view_id='stairs_bottom_subtype',
+            frame={t=5, l=1},
+            key='CUSTOM_B',
+            label='Bottom Stair Type: ',
             visible=is_stairs,
             options={
                 {label='Auto', value='auto'},
@@ -290,7 +295,7 @@ function PlannerOverlay:init()
             },
         },
         widgets.Label{
-            frame={b=0, l=17},
+            frame={b=1, l=17},
             text={
                 'Selected area: ',
                 {text=function()
@@ -299,6 +304,17 @@ function PlannerOverlay:init()
                 },
             },
             visible=is_choosing_area,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='safety',
+            frame={b=0, l=1},
+            key='CUSTOM_F',
+            label='Extra safety: ',
+            options={
+                {label='None', value='none'},
+                {label='Magma', value='magma'},
+                {label='Fire', value='fire'},
+            },
         },
     }
 end
@@ -473,12 +489,50 @@ function PlannerOverlay:place_building()
     scheduleCycle()
 end
 
+--------------------------------
+-- InspectorOverlay
+--
+
+local function get_building_filters()
+    local bld = dfhack.gui.getSelectedBuilding()
+    return dfhack.buildings.getFiltersByType({},
+            bld:getType(), bld:getSubtype(), bld:getCustomType())
+end
+
+InspectorLine = defclass(InspectorLine, widgets.Panel)
+InspectorLine.ATTRS{
+    idx=DEFAULT_NIL,
+}
+
+function InspectorLine:init()
+    self.frame.h = 2
+    self.visible = function() return #get_building_filters() >= self.idx end
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text={{text=function() return get_desc(get_building_filters()[self.idx]) end}},
+        },
+        widgets.Label{
+            frame={t=1, l=2},
+            text={{text=self:callback('get_status_line')}},
+        },
+    }
+end
+
+function InspectorLine:get_status_line()
+    local queue_pos = getQueuePosition(dfhack.gui.getSelectedBuilding(), self.idx-1)
+    if queue_pos <= 0 then
+        return 'Item attached'
+    end
+    return ('Position in line: %d'):format(queue_pos)
+end
+
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
 InspectorOverlay.ATTRS{
     default_pos={x=-41,y=14},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
-    frame={w=30, h=9},
+    frame={w=30, h=14},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
@@ -489,29 +543,17 @@ function InspectorOverlay:init()
             frame={t=0, l=0},
             text='Waiting for items:',
         },
-        widgets.Label{
-            frame={t=1, l=0},
-            text='item1',
-        },
-        widgets.Label{
-            frame={t=2, l=0},
-            text='item2',
-        },
-        widgets.Label{
-            frame={t=3, l=0},
-            text='item3',
-        },
-        widgets.Label{
-            frame={t=4, l=0},
-            text='item4',
-        },
+        InspectorLine{view_id='item1', frame={t=2, l=0}, idx=1},
+        InspectorLine{view_id='item2', frame={t=4, l=0}, idx=2},
+        InspectorLine{view_id='item3', frame={t=6, l=0}, idx=3},
+        InspectorLine{view_id='item4', frame={t=8, l=0}, idx=4},
         widgets.HotkeyLabel{
-            frame={t=5, l=0},
+            frame={t=10, l=0},
             label='adjust filters',
             key='CUSTOM_CTRL_F',
         },
         widgets.HotkeyLabel{
-            frame={t=6, l=0},
+            frame={t=11, l=0},
             label='make top priority',
             key='CUSTOM_CTRL_T',
         },
@@ -578,7 +620,7 @@ end
 -- does not need the core suspended.
 function show_global_settings_dialog(settings)
     GlobalSettings{
-        frame_title="Buildingplan Global Settings",
+        frame_title='Buildingplan Global Settings',
         settings=settings,
     }:show()
 end

@@ -175,7 +175,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
     for (size_t idx = 0; idx < num_building_configs; ++idx) {
-        PlannedBuilding pb(building_configs[idx]);
+        PlannedBuilding pb(out, building_configs[idx]);
         registerPlannedBuilding(out, pb);
     }
 
@@ -279,7 +279,7 @@ static string getBucket(const df::job_item & ji) {
 }
 
 // get a list of item vectors that we should search for matches
-static vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_item *job_item) {
+vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_item *job_item) {
     std::vector<df::job_item_vector_id> ret;
 
     // if the filter already has the vector_id set to something specific, use it
@@ -310,6 +310,7 @@ static vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_i
         ret.push_back(df::job_item_vector_id::IN_PLAY);
     return ret;
 }
+
 static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
     df::building * bld = pb.getBuildingIfValidOrRemoveIfNot(out);
     if (!bld)
@@ -385,7 +386,10 @@ static void printStatus(color_ostream &out) {
                 auto *jitem = bld->jobs[0]->job_items[task.second];
                 int32_t quantity = jitem->quantity;
                 if (quantity) {
-                    string desc = toLower(ENUM_KEY_STR(item_type, jitem->item_type));
+                    string desc = "none";
+                    call_buildingplan_lua(&out, "get_desc", 1, 1,
+                            [&](lua_State *L) { Lua::Push(L, jitem); },
+                            [&](lua_State *L) { desc = lua_tostring(L, -1); });
                     counts[desc] += quantity;
                     total += quantity;
                 }
@@ -510,6 +514,42 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     return count;
 }
 
+static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
+    DEBUG(status,out).print("entering getQueuePosition\n");
+    if (!isPlannedBuilding(out, bld) || bld->jobs.size() != 1)
+        return 0;
+
+    auto &job_items = bld->jobs[0]->job_items;
+    if (job_items.size() <= index)
+        return 0;
+
+    PlannedBuilding &pb = planned_buildings.at(bld->id);
+    if (pb.vector_ids.size() <= index)
+        return 0;
+
+    auto &job_item = job_items[index];
+
+    int min_pos = -1;
+    for (auto &vec_id : pb.vector_ids[index]) {
+        if (!tasks.count(vec_id))
+            continue;
+        auto &buckets = tasks.at(vec_id);
+        string bucket_id = getBucket(*job_item);
+        if (!buckets.count(bucket_id))
+            continue;
+        int bucket_pos = -1;
+        for (auto &task : buckets.at(bucket_id)) {
+            ++bucket_pos;
+            if (bld->id == task.first && index == task.second)
+                break;
+        }
+        if (bucket_pos++ >= 0)
+            min_pos = min_pos < 0 ? bucket_pos : std::min(min_pos, bucket_pos);
+    }
+
+    return min_pos < 0 ? 0 : min_pos;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(printStatus),
     DFHACK_LUA_FUNCTION(setSetting),
@@ -519,5 +559,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
+    DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_END
 };

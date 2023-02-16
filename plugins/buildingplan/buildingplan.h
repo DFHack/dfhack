@@ -28,5 +28,6 @@ bool get_config_bool(DFHack::PersistentDataItem &c, int index);
 void set_config_val(DFHack::PersistentDataItem &c, int index, int value);
 void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
+std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, df::job_item *job_item);
 bool itemPassesScreen(df::item * item);
 bool matchesFilters(df::item * item, df::job_item * job_item);

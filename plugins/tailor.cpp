@@ -405,6 +405,13 @@ public:
             std::tie(ty, sub, size) = o.first;
             int count = o.second;
 
+            if (sizes.count(size) == 0)
+            {
+                WARN(cycle).print("tailor: cannot determine race for clothing of size %d, skipped\n",
+                    size);
+                continue;
+            }
+
             if (count > 0)
             {
                 std::vector<int16_t> v;

@@ -835,8 +835,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         for (auto& act : plotinfo->activities)
         {
             if (!act) continue;
-            bool p1 = act->unit_actor == dwarfs[dwarf];
-            bool p2 = act->unit_noble == dwarfs[dwarf];
+            bool p1 = act->unit_actor == dwarfs[dwarf]->id;
+            bool p2 = act->unit_noble == dwarfs[dwarf]->id;
 
             if (p1 || p2)
             {

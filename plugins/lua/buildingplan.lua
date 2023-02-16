@@ -183,13 +183,15 @@ end
 
 function get_desc(filter)
     local desc = 'Unknown'
-    if filter.has_tool_use then
+    if filter.has_tool_use and filter.has_tool_use > -1 then
         desc = to_title_case(df.tool_uses[filter.has_tool_use])
-    end
-    if filter.item_type then
+    elseif filter.flags2 and filter.flags2.screw then
+        desc = 'Screw'
+    elseif filter.item_type and filter.item_type > -1 then
         desc = to_title_case(df.item_type[filter.item_type])
-    end
-    if filter.flags2 and filter.flags2.building_material then
+    elseif filter.vector_id and filter.vector_id > -1 then
+        desc = to_title_case(df.job_item_vector_id[filter.vector_id])
+    elseif filter.flags2 and filter.flags2.building_material then
         desc = 'Generic material';
         if filter.flags2.fire_safe then
             desc = 'Fire-safe material';
@@ -197,10 +199,6 @@ function get_desc(filter)
         if filter.flags2.magma_safe then
             desc = 'Magma-safe material';
         end
-    elseif filter.flags2 and filter.flags2.screw then
-        desc = 'Screw'
-    elseif filter.vector_id then
-        desc = to_title_case(df.job_item_vector_id[filter.vector_id])
     end
 
     if desc:endswith('s') then
@@ -208,6 +206,8 @@ function get_desc(filter)
     end
     if desc == 'Trappart' then
         desc = 'Mechanism'
+    elseif desc == 'Wood' then
+        desc = 'Log'
     end
     return desc
 end
@@ -510,7 +510,7 @@ function InspectorLine:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text={{text=function() return get_desc(get_building_filters()[self.idx]) end}},
+            text={{text=function() return getDescString(dfhack.gui.getSelectedBuilding(), self.idx-1) end}},
         },
         widgets.Label{
             frame={t=1, l=2},

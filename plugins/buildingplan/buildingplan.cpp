@@ -357,6 +357,20 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
     return true;
 }
 
+static string get_desc_string(color_ostream &out, df::job_item *jitem,
+        const vector<df::job_item_vector_id> &vec_ids) {
+    vector<string> descs;
+    for (auto &vec_id : vec_ids) {
+        df::job_item jitem_copy = *jitem;
+        jitem_copy.vector_id = vec_id;
+        call_buildingplan_lua(&out, "get_desc", 1, 1,
+                [&](lua_State *L) { Lua::Push(L, &jitem_copy); },
+                [&](lua_State *L) {
+                    descs.emplace_back(lua_tostring(L, -1)); });
+    }
+    return join_strings(" or ", descs);
+}
+
 static void printStatus(color_ostream &out) {
     DEBUG(status,out).print("entering buildingplan_printStatus\n");
     out.print("buildingplan is %s\n\n", is_enabled ? "enabled" : "disabled");
@@ -369,31 +383,21 @@ static void printStatus(color_ostream &out) {
 
     map<string, int32_t> counts;
     int32_t total = 0;
-    for (auto &buckets : tasks) {
-        for (auto &bucket_queue : buckets.second) {
-            Bucket &tqueue = bucket_queue.second;
-            for (auto it = tqueue.begin(); it != tqueue.end();) {
-                auto & task = *it;
-                auto id = task.first;
-                df::building *bld = NULL;
-                if (!planned_buildings.count(id) ||
-                        !(bld = planned_buildings.at(id).getBuildingIfValidOrRemoveIfNot(out))) {
-                    DEBUG(status,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n",
-                                            id, task.second);
-                    it = tqueue.erase(it);
-                    continue;
-                }
-                auto *jitem = bld->jobs[0]->job_items[task.second];
-                int32_t quantity = jitem->quantity;
-                if (quantity) {
-                    string desc = "none";
-                    call_buildingplan_lua(&out, "get_desc", 1, 1,
-                            [&](lua_State *L) { Lua::Push(L, jitem); },
-                            [&](lua_State *L) { desc = lua_tostring(L, -1); });
-                    counts[desc] += quantity;
-                    total += quantity;
-                }
-                ++it;
+    for (auto &entry : planned_buildings) {
+        auto &pb = entry.second;
+        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out);
+        if (!bld || bld->jobs.size() != 1)
+            continue;
+        auto &job_items = bld->jobs[0]->job_items;
+        if (job_items.size() != pb.vector_ids.size())
+            continue;
+        int job_item_idx = 0;
+        for (auto &vec_ids : pb.vector_ids) {
+            auto &jitem = job_items[job_item_idx++];
+            int32_t quantity = jitem->quantity;
+            if (quantity) {
+                counts[get_desc_string(out, jitem, vec_ids)] += quantity;
+                total += quantity;
             }
         }
     }
@@ -514,20 +518,41 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     return count;
 }
 
-static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
-    DEBUG(status,out).print("entering getQueuePosition\n");
+static bool validate_pb(color_ostream &out, df::building *bld, int index) {
     if (!isPlannedBuilding(out, bld) || bld->jobs.size() != 1)
-        return 0;
+        return false;
 
     auto &job_items = bld->jobs[0]->job_items;
     if (job_items.size() <= index)
-        return 0;
+        return false;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
     if (pb.vector_ids.size() <= index)
+        return false;
+
+    return true;
+}
+
+static string getDescString(color_ostream &out, df::building *bld, int index) {
+    DEBUG(status,out).print("entering getDescString\n");
+    if (!validate_pb(out, bld, index))
         return 0;
 
-    auto &job_item = job_items[index];
+    PlannedBuilding &pb = planned_buildings.at(bld->id);
+    auto &jitem = bld->jobs[0]->job_items[index];
+    return get_desc_string(out, jitem, pb.vector_ids[index]);
+}
+
+static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
+    DEBUG(status,out).print("entering getQueuePosition\n");
+    if (!validate_pb(out, bld, index))
+        return 0;
+
+    PlannedBuilding &pb = planned_buildings.at(bld->id);
+    auto &job_item = bld->jobs[0]->job_items[index];
+
+    if (job_item->quantity <= 0)
+        return 0;
 
     int min_pos = -1;
     for (auto &vec_id : pb.vector_ids[index]) {
@@ -559,6 +584,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
+    DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_END
 };

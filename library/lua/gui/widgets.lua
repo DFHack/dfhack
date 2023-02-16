@@ -1224,9 +1224,23 @@ function Label:init(args)
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
-    if not self.text_hpen then
-        self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
+
+    -- Inverts the brightness of the color
+    invert = function(color)
+        return (color + 8) % 16
     end
+    -- default pen is an inverted foreground/background
+    if not self.text_hpen then
+        local text_pen = dfhack.pen.parse(self.text_pen)
+        self.text_hpen = dfhack.pen.make(invert(text_pen.fg), nil, invert(text_pen.bg))
+    end
+
+    -- text_hpen needs a character in order to paint the background using
+    -- Painter:fill(), so let's make it paint a space to show the background
+    -- color
+    local hpen_parsed = dfhack.pen.parse(self.text_hpen)
+    hpen_parsed.ch = string.byte(' ')
+    self.text_hpen = hpen_parsed
 end
 
 local function update_label_scrollbar(label)
@@ -1278,6 +1292,14 @@ end
 -- HotkeyLabel.
 function Label:shouldHover()
     return self.on_click or self.on_rclick
+end
+
+function Label:onRenderFrame(dc, rect)
+    Label.super.onRenderFrame(self, dc, rect)
+    -- Fill the background with text_hpen on hover
+    if self:getMousePos() and self:shouldHover() then
+        dc:fill(rect, self.text_hpen)
+    end
 end
 
 function Label:onRenderBody(dc)

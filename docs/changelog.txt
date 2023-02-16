@@ -41,7 +41,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ `seedwatch`: fix saving and loading of seed stock targets
 - `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
 -@ `autochop`: generate default names for burrows with no assigned names
-- ``Buildings::StockpileIterator``: check for stockpile items on block boundary.
 
 ## Misc Improvements
 - DFHack tool windows that capture mouse clicks (and therefore prevent you from clicking on the "pause" button) now unconditionally pause the game when they open (but you can still unpause with the keyboard if you want to). Examples of this behavior: `gui/quickfort`, `gui/blueprint`, `gui/liquids`

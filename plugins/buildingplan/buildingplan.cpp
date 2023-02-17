@@ -330,12 +330,11 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx) {
         auto job_item = job_items[job_item_idx];
         auto bucket = getBucket(*job_item);
-        auto vector_ids = getVectorIds(out, job_item);
 
         // if there are multiple vector_ids, schedule duplicate tasks. after
         // the correct number of items are matched, the extras will get popped
         // as invalid
-        for (auto vector_id : vector_ids) {
+        for (auto vector_id : pb.vector_ids[job_item_idx]) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
                 tasks[vector_id][bucket].push_back(std::make_pair(id, job_item_idx));
                 DEBUG(status,out).print("added task: %s/%s/%d,%d; "
@@ -402,10 +401,14 @@ static void printStatus(color_ostream &out) {
         }
     }
 
-    out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
-              total, planned_buildings.size());
-    for (auto &count : counts)
-        out.print("  %3d %s\n", count.second, count.first.c_str());
+    if (planned_buildings.size()) {
+        out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
+                total, planned_buildings.size());
+        for (auto &count : counts)
+            out.print("  %3d %s\n", count.second, count.first.c_str());
+    } else {
+        out.print("Currently no planned buildings\n");
+    }
     out.print("\n");
 }
 

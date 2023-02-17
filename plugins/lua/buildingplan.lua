@@ -192,7 +192,7 @@ function get_desc(filter)
     elseif filter.vector_id and filter.vector_id > -1 then
         desc = to_title_case(df.job_item_vector_id[filter.vector_id])
     elseif filter.flags2 and filter.flags2.building_material then
-        desc = 'Generic material';
+        desc = 'Building material';
         if filter.flags2.fire_safe then
             desc = 'Fire-safe material';
         end
@@ -236,7 +236,7 @@ function ItemLine:get_item_line_text()
     local note = self.available >= quantity and
             'Can build now' or 'Will wait for item'
 
-    return ('%-21s%s%s'):format(line:sub(1,21), (' '):rep(13), note)
+    return ('%-21s%s%s'):format(line:sub(1,21), (' '):rep(14), note)
 end
 
 function ItemLine:reduce_quantity()
@@ -245,34 +245,44 @@ function ItemLine:reduce_quantity()
     self.available = math.max(0, self.available - get_quantity(filter))
 end
 
+local function get_placement_errors()
+    local out = ''
+    for _,str in ipairs(uibs.errors) do
+        if #out > 0 then out = out .. NEWLINE end
+        out = out .. str.value
+    end
+    return out
+end
+
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
-    default_pos={x=6,y=9},
+    default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
-    frame={w=54, h=9},
-    frame_background=gui.CLEAR_PEN,
+    frame={w=56, h=18},
 }
 
 function PlannerOverlay:init()
-    self:addviews{
-        widgets.Panel{
-            frame={},
-            frame_style=gui.MEDIUM_FRAME,
-        },
+    local main_panel = widgets.Panel{
+        frame={t=0, l=0, r=0, h=14},
+        frame_style=gui.MEDIUM_FRAME,
+        frame_background=gui.CLEAR_PEN,
+    }
+
+    main_panel:addviews{
         widgets.Label{
             frame={},
             auto_width=true,
             text='No items required.',
             visible=function() return #get_cur_filters() == 0 end,
         },
-        ItemLine{view_id='item1', frame={t=1, l=1, r=1}, idx=1},
-        ItemLine{view_id='item2', frame={t=3, l=1, r=1}, idx=2},
-        ItemLine{view_id='item3', frame={t=5, l=1, r=1}, idx=3},
-        ItemLine{view_id='item4', frame={t=7, l=1, r=1}, idx=4},
+        ItemLine{view_id='item1', frame={t=0, l=0, r=0}, idx=1},
+        ItemLine{view_id='item2', frame={t=2, l=0, r=0}, idx=2},
+        ItemLine{view_id='item3', frame={t=4, l=0, r=0}, idx=3},
+        ItemLine{view_id='item4', frame={t=6, l=0, r=0}, idx=4},
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={t=4, l=1},
+            frame={t=4, l=4},
             key='CUSTOM_R',
             label='Top Stair Type: ',
             visible=is_stairs,
@@ -284,7 +294,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={t=5, l=1},
+            frame={t=5, l=4},
             key='CUSTOM_B',
             label='Bottom Stair Type: ',
             visible=is_stairs,
@@ -295,7 +305,7 @@ function PlannerOverlay:init()
             },
         },
         widgets.Label{
-            frame={b=1, l=17},
+            frame={b=3, l=17},
             text={
                 'Selected area: ',
                 {text=function()
@@ -307,15 +317,54 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='safety',
-            frame={b=0, l=1},
-            key='CUSTOM_F',
-            label='Extra safety: ',
+            frame={b=0, l=2},
+            key='CUSTOM_G',
+            label='Safety: ',
             options={
                 {label='None', value='none'},
                 {label='Magma', value='magma'},
                 {label='Fire', value='fire'},
             },
         },
+        widgets.HotkeyLabel{
+            frame={b=1, l=0},
+            key='SELECT',
+            label='Choose item',
+        },
+        widgets.HotkeyLabel{
+            frame={b=1, l=21},
+            key='CUSTOM_F',
+            label='Filter',
+        },
+        widgets.HotkeyLabel{
+            frame={b=1, l=33},
+            key='CUSTOM_X',
+            label='Clear filter',
+        },
+    }
+
+    local error_panel = widgets.ResizingPanel{
+        view_id='errors',
+        frame={t=14, l=0, r=0, h=3},
+        frame_style=gui.MEDIUM_FRAME,
+        frame_background=gui.CLEAR_PEN,
+    }
+
+    error_panel:addviews{
+        widgets.WrappedLabel{
+            text_pen=COLOR_LIGHTRED,
+            text_to_wrap=get_placement_errors,
+        },
+        widgets.Label{
+            text_pen=COLOR_GREEN,
+            text='OK to build',
+            visible=function() return #uibs.errors == 0 end,
+        },
+    }
+
+    self:addviews{
+        main_panel,
+        error_panel,
     }
 end
 
@@ -367,6 +416,7 @@ end
 
 function PlannerOverlay:render(dc)
     if not is_plannable() then return end
+    self.subviews.errors:updateLayout()
     PlannerOverlay.super.render(self, dc)
 end
 

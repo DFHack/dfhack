@@ -258,8 +258,8 @@ public:
                     wearing.insert(inv->item->getType());
             }
 
-            int size = world->raws.creatures.all[u->race]->adultsize;
-            sizes[size] = u->race;
+            int usize = world->raws.creatures.all[u->race]->adultsize;
+            sizes[usize] = u->race;
 
             for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
             {
@@ -267,9 +267,9 @@ public:
                 {
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
-                        size,
+                        usize,
                         Translation::TranslateName(&u->name, false).c_str());
-                    needed[std::make_pair(ty, size)] += 1;
+                    needed[std::make_pair(ty, usize)] += 1;
                 }
             }
 
@@ -283,11 +283,11 @@ public:
                 }
                 const df::job_type o = oo->second;
 
-                int size = world->raws.creatures.all[w->getMakerRace()]->adultsize;
+                int isize = world->raws.creatures.all[w->getMakerRace()]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (available[std::make_pair(ty, size)] > 0)
+                if (available[std::make_pair(ty, usize)] > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -303,10 +303,10 @@ public:
 
                     if (wearing.count(ty) == 0)
                     {
-                        DEBUG(cycle).print("tailor: allocating a %s to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(),
+                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
+                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
                             Translation::TranslateName(&u->name, false).c_str());
-                        available[std::make_pair(ty, size)] -= 1;
+                        available[std::make_pair(ty, usize)] -= 1;
                     }
 
                     if (w->getWear() > 1)
@@ -314,10 +314,10 @@ public:
                 }
                 else
                 {
-                    DEBUG(cycle).print ("tailor: %s worn by %s needs replacement, but none available\n",
-                                        description.c_str(),
-                                        Translation::TranslateName(&u->name, false).c_str());
-                    orders[std::make_tuple(o, w->getSubtype(), size)] += 1;
+                    DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
+                                        description.c_str(), isize,
+                                        Translation::TranslateName(&u->name, false).c_str(), usize);
+                    orders[std::make_tuple(o, w->getSubtype(), usize)] += 1;
                 }
             }
         }

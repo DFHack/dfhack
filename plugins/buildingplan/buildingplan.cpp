@@ -481,7 +481,7 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &job_items = job_item_repo[key];
-    if (index >= job_items.size()) {
+    if (index >= (int)job_items.size()) {
         for (int i = job_items.size(); i <= index; ++i) {
             bool failed = false;
             if (!call_buildingplan_lua(&out, "get_job_item", 4, 1,
@@ -526,11 +526,11 @@ static bool validate_pb(color_ostream &out, df::building *bld, int index) {
         return false;
 
     auto &job_items = bld->jobs[0]->job_items;
-    if (job_items.size() <= index)
+    if ((int)job_items.size() <= index)
         return false;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    if (pb.vector_ids.size() <= index)
+    if ((int)pb.vector_ids.size() <= index)
         return false;
 
     return true;
@@ -586,7 +586,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
     PlannedBuilding &pb = planned_buildings.at(bld->id);
     auto &job_items = bld->jobs[0]->job_items;
 
-    for (int index = 0; index < job_items.size(); ++index) {
+    for (int index = 0; index < (int)job_items.size(); ++index) {
         for (auto &vec_id : pb.vector_ids[index]) {
             if (!tasks.count(vec_id))
                 continue;

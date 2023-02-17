@@ -1472,7 +1472,8 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+            and not is_disabled(self) then
         self.on_activate()
         return true
     end

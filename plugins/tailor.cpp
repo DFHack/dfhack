@@ -585,6 +585,8 @@ static void set_material_order() {
             material_order.push_back(M_YARN);
         else if (i == (size_t)get_config_val(config, CONFIG_LEATHER_IDX))
             material_order.push_back(M_LEATHER);
+        else if (i == (size_t)get_config_val(config, CONFIG_ADAMANTINE_IDX))
+            material_order.push_back(M_ADAMANTINE);
     }
     if (!material_order.size())
         std::copy(all_materials.begin(), all_materials.end(), std::back_inserter(material_order));
@@ -710,6 +712,7 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
     set_config_val(config, CONFIG_CLOTH_IDX, clothIdx - 1);
     set_config_val(config, CONFIG_YARN_IDX, yarnIdx - 1);
     set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx - 1);
+    set_config_val(config, CONFIG_ADAMANTINE_IDX, leatherIdx - 1);
 
     set_material_order();
 }

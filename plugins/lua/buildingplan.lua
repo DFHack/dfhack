@@ -64,9 +64,11 @@ function get_job_item(btype, subtype, custom, index)
     return obj
 end
 
+local texpos_base = -1
 local reset_counts_flag = false
 local reset_inspector_flag = false
-function reset_counts()
+function signal_reset()
+    texpos_base = dfhack.textures.getControlPanelTexposStart()
     reset_counts_flag = true
     reset_inspector_flag = true
 end
@@ -168,12 +170,22 @@ function ItemLine:init()
     self.visible = function() return #get_cur_filters() >= self.idx end
     self:addviews{
         widgets.Label{
-            frame={t=0, l=0},
-            text={{text=function() return self:get_item_line_text() end}},
+            frame={t=0, l=23},
+            text={
+                {tile=2600},
+                {gap=6, tile=2602},
+                {tile=2600},
+                {gap=1, tile=2602},
+            },
         },
         widgets.Label{
-            frame={t=0, l=22},
-            text='[filter][x]',
+            frame={t=0, l=0},
+            text={
+                {width=21, text=function() return self:get_item_line_text() end},
+                {gap=3, text='filter'},
+                {gap=2, text='x'},
+                {gap=3, text=function() return self.note end},
+            },
         },
     }
 end
@@ -231,14 +243,13 @@ function ItemLine:get_item_line_text()
     local quantity = get_quantity(filter)
 
     self.desc = self.desc or get_desc(filter)
-    local line = ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 
     self.available = self.available or countAvailableItems(uibs.building_type,
             uibs.building_subtype, uibs.custom_type, idx - 1)
-    local note = self.available >= quantity and
-            'Can build now' or 'Will wait for item'
+    self.note = self.available >= quantity and
+            'Can build now' or 'Will build later'
 
-    return ('%-21s%s%s'):format(line:sub(1,21), (' '):rep(14), note)
+    return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
 
 function ItemLine:reduce_quantity()

@@ -220,7 +220,7 @@ static void do_cycle(color_ostream &out) {
     cycle_requested = false;
 
     buildingplan_cycle(out, tasks, planned_buildings);
-    call_buildingplan_lua(&out, "reset_counts");
+    call_buildingplan_lua(&out, "signal_reset");
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
@@ -428,7 +428,7 @@ static bool setSetting(color_ostream &out, string name, bool value) {
     }
 
     validate_config(out, true);
-    call_buildingplan_lua(&out, "reset_counts");
+    call_buildingplan_lua(&out, "signal_reset");
     return true;
 }
 

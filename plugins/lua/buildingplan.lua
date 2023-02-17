@@ -266,6 +266,7 @@ PlannerOverlay.ATTRS{
 
 function PlannerOverlay:init()
     local main_panel = widgets.Panel{
+        view_id='main',
         frame={t=0, l=0, r=0, h=14},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
@@ -396,7 +397,14 @@ function PlannerOverlay:onInput(keys)
     end
     if keys._MOUSE_L_DOWN then
         if is_over_options_panel() then return false end
-        if self:getMouseFramePos() then return true end
+        local detect_rect = copyall(self.frame_rect)
+        detect_rect.height = self.subviews.main.frame_rect.height +
+                self.subviews.errors.frame_rect.height
+        detect_rect.y2 = detect_rect.y1 + detect_rect.height - 1
+        if self.subviews.main:getMousePos(gui.ViewRect{rect=detect_rect})
+                or self.subviews.errors:getMousePos() then
+            return true
+        end
         if #uibs.errors > 0 then return true end
         local pos = dfhack.gui.getMousePos()
         if pos then

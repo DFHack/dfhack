@@ -1080,7 +1080,26 @@ local function is_disabled(token)
            (token.enabled ~= nil and not getval(token.enabled))
 end
 
-function render_text(obj,dc,x0,y0,pen,dpen,disabled)
+-- Make the hover pen -- that is a pen that should render elements that has the
+-- mouse hovering over it. if hpen is specified, it just checks the fields and
+-- returns it (in parsed pen form)
+local function make_hpen(pen, hpen)
+    if not hpen then
+        pen = dfhack.pen.parse(pen)
+
+        -- Swap the foreground and background
+        hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
+    end
+
+    -- text_hpen needs a character in order to paint the background using
+    -- Painter:fill(), so let's make it paint a space to show the background
+    -- color
+    local hpen_parsed = dfhack.pen.parse(hpen)
+    hpen_parsed.ch = string.byte(' ')
+    return hpen_parsed
+end
+
+function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
     local width = 0
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]
@@ -1120,16 +1139,25 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
                 if dc then
                     local tpen = getval(token.pen)
+                    local dcpen = tpen or pen
+
+                    -- If disabled, figure out which dpen to use
                     if disabled or is_disabled(token) then
-                        dc:pen(getval(token.dpen) or tpen or dpen)
+                        dccpen = getval(token.dpen) or tpen or dpen
                         if keypen.fg ~= COLOR_BLACK then
                             keypen.bold = false
                         end
-                    else
-                        dc:pen(tpen or pen)
-                    end
-                end
 
+                        -- if hovered *and* disabled, combine both effects
+                        if hovered then
+                            dcpen = make_hpen(dcpen)
+                        end
+                    elseif hovered then
+                        dcpen = make_hpen(dcpen, getval(token.hpen) or hpen)
+                    end
+
+                    dc:pen(dcpen)
+                end
                 local width = getval(token.width)
                 local padstr
                 if width then
@@ -1221,26 +1249,9 @@ function Label:init(args)
 
     self:addviews{self.scrollbar}
 
-    -- use existing saved text if no explicit text was specified. this avoids
-    -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
 
-    -- Inverts the brightness of the color
-    local invert = function(color)
-        return (color + 8) % 16
-    end
-    -- default pen is an inverted foreground/background
-    if not self.text_hpen then
-        local text_pen = dfhack.pen.parse(self.text_pen)
-        self.text_hpen = dfhack.pen.make(invert(text_pen.fg), nil, invert(text_pen.bg))
-    end
-
-    -- text_hpen needs a character in order to paint the background using
-    -- Painter:fill(), so let's make it paint a space to show the background
-    -- color
-    local hpen_parsed = dfhack.pen.parse(self.text_hpen)
-    hpen_parsed.ch = string.byte(' ')
-    self.text_hpen = hpen_parsed
+    -- self.text_hpen = make_hpen(self.text_pen, self.text_hpen)
 end
 
 local function update_label_scrollbar(label)
@@ -1298,16 +1309,15 @@ function Label:onRenderFrame(dc, rect)
     Label.super.onRenderFrame(self, dc, rect)
     -- Fill the background with text_hpen on hover
     if self:getMousePos() and self:shouldHover() then
-        dc:fill(rect, self.text_hpen)
+        local hpen = make_hpen(self.text_pen, self.text_hpen)
+        dc:fill(rect, hpen)
     end
 end
 
 function Label:onRenderBody(dc)
     local text_pen = self.text_pen
-    if self:getMousePos() and self:shouldHover() then
-        text_pen = self.text_hpen
-    end
-    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
+    local hovered = self:getMousePos() and self:shouldHover()
+    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self), self.text_hpen, hovered)
 end
 
 function Label:on_scrollbar(scroll_spec)
@@ -1635,22 +1645,7 @@ function List:init(info)
 
     self.last_select_click_ms = 0 -- used to track double-clicking on an item
 
-    -- Inverts the brightness of the color
-    invert = function(color)
-        return (color + 8) % 16
-    end
-    -- default pen is an inverted foreground/background
-    if not self.text_hpen then
-        local text_pen = dfhack.pen.parse(self.text_pen)
-        self.text_hpen = dfhack.pen.make(invert(text_pen.fg), nil, invert(text_pen.bg))
-    end
-
-    -- text_hpen needs a character in order to paint the background using
-    -- Painter:fill(), so let's make it paint a space to show the background
-    -- color
-    local hpen_parsed = dfhack.pen.parse(self.text_hpen)
-    hpen_parsed.ch = string.byte(' ')
-    self.text_hpen = hpen_parsed
+    -- self.text_hpen = make_hpen(self.text_pen, self.text_hpen)
 end
 
 function List:setChoices(choices, selected)
@@ -1807,14 +1802,11 @@ function List:onRenderBody(dc)
         local obj = choices[i]
         local current = (i == self.selected)
         local hovered = (i == hoveridx)
+        -- cur_pen and cur_dpen can't be integers or background colors get
+        -- messed up in render_text for subsequent renders
         local cur_pen = to_pen(self.cursor_pen)
         local cur_dpen = to_pen(self.text_pen)
         local active_pen = (current and cur_pen or cur_dpen)
-
-        -- when mouse is over, always highlight it
-        if hovered then
-            cur_dpen = self.text_hpen
-        end
 
         if not getval(self.active) then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -1828,7 +1820,7 @@ function List:onRenderBody(dc)
             paint_icon(icon, obj)
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current, self.text_hpen, hovered)
 
         local ip = dc.width
 

@@ -46,8 +46,6 @@ namespace DFHack {
 #define COORD "%" PRIi16 " %" PRIi16 " %" PRIi16
 #define COORDARGS(id) id.x, id.y, id.z
 
-// todo: integrate logging for debugging the layered channel problem
-
 using namespace DFHack;
 
 struct designation{
@@ -86,10 +84,9 @@ public:
         df::job_list_link* node = df::global::world->jobs.list.next;
         while (node) {
             df::job* job = node->item;
-            if(!Maps::isValidTilePos(job->pos))
+            if(!job || !Maps::isValidTilePos(job->pos))
                 continue;
 
-            jobs.emplace(job->pos, job);
             node = node->next;
             df::tile_designation td = map.designationAt(job->pos);
             df::tile_occupancy to = map.occupancyAt(job->pos);
@@ -123,10 +120,10 @@ public:
                     break;
                 }
                 case job_type::CarveTrack:
-                    to.bits.carve_track_north = 0 < (job->item_category.whole & 18);
-                    to.bits.carve_track_south = 0 < (job->item_category.whole & 19);
-                    to.bits.carve_track_west = 0 < (job->item_category.whole & 20);
-                    to.bits.carve_track_east = 0 < (job->item_category.whole & 21);
+                    to.bits.carve_track_north = (job->item_category.whole >> 18) & 1;
+                    to.bits.carve_track_south = (job->item_category.whole >> 19) & 1;
+                    to.bits.carve_track_west = (job->item_category.whole >> 20) & 1;
+                    to.bits.carve_track_east = (job->item_category.whole >> 21) & 1;
                     break;
                 default:
                     break;
@@ -134,6 +131,7 @@ public:
             if (ctd != td.whole || cto != to.whole) {
                 // we found a designation job
                 designations.emplace(job->pos, designation(job->pos, td, to));
+                jobs.emplace(job->pos, job);
             }
         }
     }
@@ -472,7 +470,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         case df::tile_dig_designation::Channel:
         {
             DFCoord pos_below(pos.x, pos.y, pos.z-1);
-            // todo: does can_dig_channel return false?
             if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
                     && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
                 TRACE(channels).print("dig_tile: channeling at (" COORD ") [can_dig_channel: true]\n",COORDARGS(pos_below));
@@ -482,8 +479,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     remove_ramp_top(map, pos_above);
                 }
                 df::tile_dig_designation td_below = map.designationAt(pos_below).bits.dig;
-
-                // todo: digging to floor below?
                 if (dig_tile(out, map, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
                     if (td_below == df::tile_dig_designation::Default) {
@@ -796,7 +791,6 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                     }
                 }
             }
-            // todo: check mark mode of smooth designations
         } else if (td.bits.smooth == 1) {
             if (smooth_tile(out, map, pos)) {
                 td = map.designationAt(pos);

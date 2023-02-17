@@ -703,7 +703,8 @@ static void tailor_doCycle(color_ostream &out) {
 
 // remember, these are ONE-based indices from Lua
 static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
-                        int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx) {
+                        int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx,
+                        int32_t adamantineIdx) {
     DEBUG(config,out).print("entering tailor_setMaterialPreferences\n");
 
     // it doesn't really matter if these are invalid. set_material_order will do
@@ -712,7 +713,7 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
     set_config_val(config, CONFIG_CLOTH_IDX, clothIdx - 1);
     set_config_val(config, CONFIG_YARN_IDX, yarnIdx - 1);
     set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx - 1);
-    set_config_val(config, CONFIG_ADAMANTINE_IDX, leatherIdx - 1);
+    set_config_val(config, CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
 
     set_material_order();
 }

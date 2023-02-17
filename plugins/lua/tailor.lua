@@ -28,7 +28,8 @@ function setMaterials(names)
             idxs.silk or -1,
             idxs.cloth or -1,
             idxs.yarn or -1,
-            idxs.leather or -1)
+            idxs.leather or -1,
+            idxs.adamantine or -1)
 end
 
 function parse_commandline(...)

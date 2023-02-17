@@ -182,6 +182,10 @@ end
 ItemLine = defclass(ItemLine, widgets.Panel)
 ItemLine.ATTRS{
     idx=DEFAULT_NIL,
+    is_selected_fn=DEFAULT_NIL,
+    on_select=DEFAULT_NIL,
+    on_filter=DEFAULT_NIL,
+    on_clear_filter=DEFAULT_NIL,
 }
 
 function ItemLine:init()
@@ -189,16 +193,38 @@ function ItemLine:init()
     self.visible = function() return #get_cur_filters() >= self.idx end
     self:addviews{
         widgets.Label{
-            frame={t=0, l=23},
+            frame={t=0, l=0},
+            text='*',
+            auto_width=true,
+            visible=self.is_selected_fn,
+        },
+        widgets.Label{
+            frame={t=0, r=0},
+            text='*',
+            auto_width=true,
+            visible=self.is_selected_fn,
+            on_click=self.on_filter,
+        },
+        widgets.Label{
+            frame={t=0, l=25},
             text={
                 {tile=get_button_start_pen},
                 {gap=6, tile=get_button_end_pen},
+            },
+            auto_width=true,
+            on_click=function() self.on_filter(self.idx) end,
+        },
+        widgets.Label{
+            frame={t=0, l=33},
+            text={
                 {tile=get_button_start_pen},
                 {gap=1, tile=get_button_end_pen},
             },
+            auto_width=true,
+            on_click=function() self.on_clear_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=0},
+            frame={t=0, l=2},
             text={
                 {width=21, text=self:callback('get_item_line_text')},
                 {gap=3, text='filter', pen=COLOR_GREEN},
@@ -213,6 +239,13 @@ end
 function ItemLine:reset()
     self.desc = nil
     self.available = nil
+end
+
+function ItemLine:onInput(keys)
+    if keys._MOUSE_L_DOWN and self:getMousePos() then
+        self.on_select(self.idx)
+    end
+    return ItemLine.super.onInput(self, keys)
 end
 
 function get_desc(filter)
@@ -301,12 +334,22 @@ PlannerOverlay.ATTRS{
 }
 
 function PlannerOverlay:init()
+    self.selected = 1
+
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=0, l=0, r=0, h=14},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
     }
+
+    local function make_is_selected_fn(idx)
+        return function() return self.selected == idx end
+    end
+
+    local function on_select_fn(idx)
+        self.selected = idx
+    end
 
     main_panel:addviews{
         widgets.Label{
@@ -315,10 +358,22 @@ function PlannerOverlay:init()
             text='No items required.',
             visible=function() return #get_cur_filters() == 0 end,
         },
-        ItemLine{view_id='item1', frame={t=0, l=0, r=0}, idx=1},
-        ItemLine{view_id='item2', frame={t=2, l=0, r=0}, idx=2},
-        ItemLine{view_id='item3', frame={t=4, l=0, r=0}, idx=3},
-        ItemLine{view_id='item4', frame={t=6, l=0, r=0}, idx=4},
+        ItemLine{view_id='item1', frame={t=0, l=0, r=0}, idx=1,
+                 is_selected_fn=make_is_selected_fn(1), on_select=on_select_fn,
+                 on_filter=self:callback('filter'),
+                 on_clear_filter=self:callback('clear_filter')},
+        ItemLine{view_id='item2', frame={t=2, l=0, r=0}, idx=2,
+                 is_selected_fn=make_is_selected_fn(2), on_select=on_select_fn,
+                 on_filter=self:callback('filter'),
+                 on_clear_filter=self:callback('clear_filter')},
+        ItemLine{view_id='item3', frame={t=4, l=0, r=0}, idx=3,
+                 is_selected_fn=make_is_selected_fn(3), on_select=on_select_fn,
+                 on_filter=self:callback('filter'),
+                 on_clear_filter=self:callback('clear_filter')},
+        ItemLine{view_id='item4', frame={t=6, l=0, r=0}, idx=4,
+                 is_selected_fn=make_is_selected_fn(4), on_select=on_select_fn,
+                 on_filter=self:callback('filter'),
+                 on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
             frame={t=4, l=4},
@@ -354,31 +409,42 @@ function PlannerOverlay:init()
             },
             visible=is_choosing_area,
         },
-        widgets.CycleHotkeyLabel{
-            view_id='safety',
-            frame={b=0, l=2},
-            key='CUSTOM_G',
-            label='Safety: ',
-            options={
-                {label='None', value='none'},
-                {label='Magma', value='magma'},
-                {label='Fire', value='fire'},
+        widgets.Panel{
+            visible=function() return #get_cur_filters() > 0 end,
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={b=1, l=0},
+                    key='SELECT',
+                    label='Choose item',
+                    on_activate=function() self:choose(self.selected) end,
+                    enabled=function()
+                        return (self.subviews['item'..self.selected].available or 0) > 0
+                    end,
+                },
+                widgets.HotkeyLabel{
+                    frame={b=1, l=21},
+                    key='CUSTOM_F',
+                    label='Filter',
+                    on_activate=function() self:filter(self.selected) end,
+                },
+                widgets.HotkeyLabel{
+                    frame={b=1, l=33},
+                    key='CUSTOM_X',
+                    label='Clear filter',
+                    on_activate=function() self:clear_filter(self.selected) end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='safety',
+                    frame={b=0, l=2},
+                    key='CUSTOM_G',
+                    label='Safety: ',
+                    options={
+                        {label='None', value='none'},
+                        {label='Magma', value='magma'},
+                        {label='Fire', value='fire'},
+                    },
+                },
             },
-        },
-        widgets.HotkeyLabel{
-            frame={b=1, l=0},
-            key='SELECT',
-            label='Choose item',
-        },
-        widgets.HotkeyLabel{
-            frame={b=1, l=21},
-            key='CUSTOM_F',
-            label='Filter',
-        },
-        widgets.HotkeyLabel{
-            frame={b=1, l=33},
-            key='CUSTOM_X',
-            label='Clear filter',
         },
     }
 
@@ -418,6 +484,18 @@ function PlannerOverlay:reset()
     reset_counts_flag = false
 end
 
+function PlannerOverlay:choose(idx)
+    print('choose', idx)
+end
+
+function PlannerOverlay:filter(idx)
+    print('filter', idx)
+end
+
+function PlannerOverlay:clear_filter(idx)
+    print('clear_filter', idx)
+end
+
 function PlannerOverlay:onInput(keys)
     if not is_plannable() then return false end
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
@@ -425,6 +503,7 @@ function PlannerOverlay:onInput(keys)
             uibs.selection_pos:clear()
             return true
         end
+        self.selected = 1
         self:reset()
         return false
     end

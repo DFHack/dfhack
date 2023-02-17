@@ -148,7 +148,30 @@ static void validate_config(color_ostream &out, bool verbose = false) {
     set_config_bool(config, CONFIG_BARS, false);
 }
 
-static void clear_job_item_repo() {
+static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(status).print("calling buildingplan lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.buildingplan", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static void clear_state(color_ostream &out) {
+    call_buildingplan_lua(&out, "signal_reset");
+    planned_buildings.clear();
+    tasks.clear();
     for (auto &entry : job_item_repo) {
         for (auto &jitem : entry.second) {
             delete jitem;
@@ -168,9 +191,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     validate_config(out);
 
     DEBUG(status,out).print("loading persisted state\n");
-    planned_buildings.clear();
-    tasks.clear();
-    clear_job_item_repo();
+    clear_state(out);
     vector<PersistentDataItem> building_configs;
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
@@ -185,31 +206,9 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == SC_WORLD_UNLOADED) {
         DEBUG(status,out).print("world unloaded; clearing state for %s\n", plugin_name);
-        planned_buildings.clear();
-        tasks.clear();
-        clear_job_item_repo();
+        clear_state(out);
     }
     return CR_OK;
-}
-
-static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(status).print("calling buildingplan lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.buildingplan", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
 }
 
 static bool cycle_requested = false;

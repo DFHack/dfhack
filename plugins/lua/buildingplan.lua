@@ -64,13 +64,32 @@ function get_job_item(btype, subtype, custom, index)
     return obj
 end
 
-local texpos_base = -1
+local BUTTON_START_PEN, BUTTON_END_PEN = nil, nil
 local reset_counts_flag = false
 local reset_inspector_flag = false
 function signal_reset()
-    texpos_base = dfhack.textures.getControlPanelTexposStart()
+    BUTTON_START_PEN = nil
+    BUTTON_END_PEN = nil
     reset_counts_flag = true
     reset_inspector_flag = true
+end
+
+local to_pen = dfhack.pen.parse
+local function get_button_start_pen()
+    if not BUTTON_START_PEN then
+        local texpos_base = dfhack.textures.getControlPanelTexposStart()
+        BUTTON_START_PEN = to_pen{ch='[', fg=COLOR_YELLOW,
+                tile=texpos_base > 0 and texpos_base + 13 or nil}
+    end
+    return BUTTON_START_PEN
+end
+local function get_button_end_pen()
+    if not BUTTON_END_PEN then
+        local texpos_base = dfhack.textures.getControlPanelTexposStart()
+        BUTTON_END_PEN = to_pen{ch=']', fg=COLOR_YELLOW,
+                tile=texpos_base > 0 and texpos_base + 15 or nil}
+    end
+    return BUTTON_END_PEN
 end
 
 --------------------------------
@@ -172,19 +191,20 @@ function ItemLine:init()
         widgets.Label{
             frame={t=0, l=23},
             text={
-                {tile=2600},
-                {gap=6, tile=2602},
-                {tile=2600},
-                {gap=1, tile=2602},
+                {tile=get_button_start_pen},
+                {gap=6, tile=get_button_end_pen},
+                {tile=get_button_start_pen},
+                {gap=1, tile=get_button_end_pen},
             },
         },
         widgets.Label{
             frame={t=0, l=0},
             text={
-                {width=21, text=function() return self:get_item_line_text() end},
-                {gap=3, text='filter'},
-                {gap=2, text='x'},
-                {gap=3, text=function() return self.note end},
+                {width=21, text=self:callback('get_item_line_text')},
+                {gap=3, text='filter', pen=COLOR_GREEN},
+                {gap=2, text='x', pen=COLOR_GREEN},
+                {gap=3, text=function() return self.note end,
+                 pen=function() return self.note_pen end},
             },
         },
     }
@@ -246,8 +266,13 @@ function ItemLine:get_item_line_text()
 
     self.available = self.available or countAvailableItems(uibs.building_type,
             uibs.building_subtype, uibs.custom_type, idx - 1)
-    self.note = self.available >= quantity and
-            'Can build now' or 'Will build later'
+    if self.available >= quantity then
+        self.note_pen = COLOR_GREEN
+        self.note = 'Available now'
+    else
+        self.note_pen = COLOR_YELLOW
+        self.note = 'Will link later'
+    end
 
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
@@ -298,7 +323,7 @@ function PlannerOverlay:init()
             view_id='stairs_top_subtype',
             frame={t=4, l=4},
             key='CUSTOM_R',
-            label='Top Stair Type: ',
+            label='Top Stair Type:    ',
             visible=is_stairs,
             options={
                 {label='Auto', value='auto'},
@@ -444,7 +469,6 @@ function PlannerOverlay:render(dc)
     PlannerOverlay.super.render(self, dc)
 end
 
-local to_pen = dfhack.pen.parse
 local GOOD_PEN = to_pen{ch='o', fg=COLOR_GREEN,
                         tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
 local BAD_PEN = to_pen{ch='X', fg=COLOR_RED,

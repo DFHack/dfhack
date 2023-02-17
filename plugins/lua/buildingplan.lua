@@ -65,8 +65,10 @@ function get_job_item(btype, subtype, custom, index)
 end
 
 local reset_counts_flag = false
+local reset_inspector_flag = false
 function reset_counts()
     reset_counts_flag = true
+    reset_inspector_flag = true
 end
 
 --------------------------------
@@ -560,7 +562,7 @@ function InspectorLine:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text={{text=function() return getDescString(dfhack.gui.getSelectedBuilding(), self.idx-1) end}},
+            text={{text=self:callback('get_desc_string')}},
         },
         widgets.Label{
             frame={t=1, l=2},
@@ -569,12 +571,24 @@ function InspectorLine:init()
     }
 end
 
+function InspectorLine:get_desc_string()
+    if self.desc then return self.desc end
+    self.desc = getDescString(dfhack.gui.getSelectedBuilding(), self.idx-1)
+    return self.desc
+end
+
 function InspectorLine:get_status_line()
+    if self.status then return self.status end
     local queue_pos = getQueuePosition(dfhack.gui.getSelectedBuilding(), self.idx-1)
     if queue_pos <= 0 then
         return 'Item attached'
     end
-    return ('Position in line: %d'):format(queue_pos)
+    self.status = ('Position in line: %d'):format(queue_pos)
+    return self.status
+end
+
+function InspectorLine:reset()
+    self.status = nil
 end
 
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
@@ -606,13 +620,30 @@ function InspectorOverlay:init()
             frame={t=11, l=0},
             label='make top priority',
             key='CUSTOM_CTRL_T',
+            on_activate=self:callback('make_top_priority'),
         },
     }
+end
+
+function InspectorOverlay:reset()
+    self.subviews.item1:reset()
+    self.subviews.item2:reset()
+    self.subviews.item3:reset()
+    self.subviews.item4:reset()
+    reset_inspector_flag = false
+end
+
+function InspectorOverlay:make_top_priority()
+    makeTopPriority(dfhack.gui.getSelectedBuilding())
+    self:reset()
 end
 
 function InspectorOverlay:onInput(keys)
     if not isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
         return false
+    end
+    if keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+        self:reset()
     end
     return InspectorOverlay.super.onInput(self, keys)
 end
@@ -620,6 +651,9 @@ end
 function InspectorOverlay:render(dc)
     if not isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
         return
+    end
+    if reset_inspector_flag then
+        self:reset()
     end
     InspectorOverlay.super.render(self, dc)
 end

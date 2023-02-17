@@ -336,7 +336,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         // as invalid
         for (auto vector_id : pb.vector_ids[job_item_idx]) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
-                tasks[vector_id][bucket].push_back(std::make_pair(id, job_item_idx));
+                tasks[vector_id][bucket].emplace_back(id, job_item_idx);
                 DEBUG(status,out).print("added task: %s/%s/%d,%d; "
                       "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
                       ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
@@ -578,6 +578,36 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
     return min_pos < 0 ? 0 : min_pos;
 }
 
+static void makeTopPriority(color_ostream &out, df::building *bld) {
+    DEBUG(status,out).print("entering makeTopPriority\n");
+    if (!validate_pb(out, bld, 0))
+        return;
+
+    PlannedBuilding &pb = planned_buildings.at(bld->id);
+    auto &job_items = bld->jobs[0]->job_items;
+
+    for (int index = 0; index < job_items.size(); ++index) {
+        for (auto &vec_id : pb.vector_ids[index]) {
+            if (!tasks.count(vec_id))
+                continue;
+            auto &buckets = tasks.at(vec_id);
+            string bucket_id = getBucket(*job_items[index]);
+            if (!buckets.count(bucket_id))
+                continue;
+            auto &bucket = buckets.at(bucket_id);
+            for (auto taskit = bucket.begin(); taskit != bucket.end(); ++taskit) {
+                if (bld->id == taskit->first && index == taskit->second) {
+                    auto task_bld_id = taskit->first;
+                    auto task_job_item_idx = taskit->second;
+                    bucket.erase(taskit);
+                    bucket.emplace_front(task_bld_id, task_job_item_idx);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(printStatus),
     DFHACK_LUA_FUNCTION(setSetting),
@@ -589,5 +619,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
+    DFHACK_LUA_FUNCTION(makeTopPriority),
     DFHACK_LUA_END
 };

@@ -261,7 +261,7 @@ PlannerOverlay.ATTRS{
     default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
-    frame={w=56, h=18},
+    frame={w=56, h=20},
 }
 
 function PlannerOverlay:init()
@@ -347,17 +347,20 @@ function PlannerOverlay:init()
 
     local error_panel = widgets.ResizingPanel{
         view_id='errors',
-        frame={t=14, l=0, r=0, h=3},
+        frame={t=14, l=0, r=0},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
     }
 
     error_panel:addviews{
         widgets.WrappedLabel{
+            frame={t=0, l=0, r=0},
             text_pen=COLOR_LIGHTRED,
             text_to_wrap=get_placement_errors,
+            visible=function() return #uibs.errors > 0 end,
         },
         widgets.Label{
+            frame={t=0, l=0, r=0},
             text_pen=COLOR_GREEN,
             text='OK to build',
             visible=function() return #uibs.errors == 0 end,

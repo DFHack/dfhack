@@ -1139,11 +1139,11 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
 
                 if dc then
                     local tpen = getval(token.pen)
-                    local dcpen = tpen or pen
+                    local dcpen = to_pen(tpen or pen)
 
                     -- If disabled, figure out which dpen to use
                     if disabled or is_disabled(token) then
-                        dccpen = getval(token.dpen) or tpen or dpen
+                        dcpen = to_pen(getval(token.dpen) or tpen or dpen)
                         if keypen.fg ~= COLOR_BLACK then
                             keypen.bold = false
                         end

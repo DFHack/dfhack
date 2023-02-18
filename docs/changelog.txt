@@ -43,7 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ `autochop`: generate default names for burrows with no assigned names
 - ``Buildings::StockpileIterator``: check for stockpile items on block boundary.
 - `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment; add support for adamantine cloth (off by default); improve logging
-- `confirm`: fix fps drop when enabled
+-@ `confirm`: fix fps drop when enabled
 
 ## Misc Improvements
 - DFHack tool windows that capture mouse clicks (and therefore prevent you from clicking on the "pause" button) now unconditionally pause the game when they open (but you can still unpause with the keyboard if you want to). Examples of this behavior: `gui/quickfort`, `gui/blueprint`, `gui/liquids`

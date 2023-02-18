@@ -72,9 +72,9 @@ bool matchesFilters(df::item * item, df::job_item * job_item) {
             item->getType());
 }
 
-static bool isJobReady(color_ostream &out, df::job * job) {
+bool isJobReady(color_ostream &out, const std::vector<df::job_item *> &jitems) {
     int needed_items = 0;
-    for (auto job_item : job->job_items) { needed_items += job_item->quantity; }
+    for (auto job_item : jitems) { needed_items += job_item->quantity; }
     if (needed_items) {
         DEBUG(cycle,out).print("building needs %d more item(s)\n", needed_items);
         return false;
@@ -91,7 +91,7 @@ static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b) {
 // now all at 0, so there is no risk of having extra items attached. we don't
 // remove them to keep the "finalize with buildingplan active" path as similar
 // as possible to the "finalize with buildingplan disabled" path.
-static void finalizeBuilding(color_ostream &out, df::building * bld) {
+void finalizeBuilding(color_ostream &out, df::building *bld) {
     DEBUG(cycle,out).print("finalizing building %d\n", bld->id);
     auto job = bld->jobs[0];
 
@@ -194,7 +194,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 // be completed with the correct number of items.
                 --job->job_items[filter_idx]->quantity;
                 task_queue.pop_front();
-                if (isJobReady(out, job)) {
+                if (isJobReady(out, job->job_items)) {
                     finalizeBuilding(out, bld);
                     planned_buildings.at(id).remove(out);
                 }

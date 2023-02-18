@@ -319,12 +319,15 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         DEBUG(status,out).print("unexpected number of jobs: want 1, got %zu\n", bld->jobs.size());
         return false;
     }
+
     auto job_items = bld->jobs[0]->job_items;
-    int num_job_items = job_items.size();
-    if (num_job_items < 1) {
-        DEBUG(status,out).print("unexpected number of job items: want >0, got %d\n", num_job_items);
-        return false;
+    if (isJobReady(out, job_items)) {
+        // all items are already attached
+        finalizeBuilding(out, bld);
+        return true;
     }
+
+    int num_job_items = job_items.size();
     int32_t id = bld->id;
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx) {
         auto job_item = job_items[job_item_idx];
@@ -520,6 +523,19 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     return count;
 }
 
+static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering hasFilter\n");
+    return false;
+}
+
+static void setFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering setFilter\n");
+}
+
+static void clearFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering clearFilter\n");
+}
+
 static bool validate_pb(color_ostream &out, df::building *bld, int index) {
     if (!isPlannedBuilding(out, bld) || bld->jobs.size() != 1)
         return false;
@@ -616,6 +632,9 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
+    DFHACK_LUA_FUNCTION(hasFilter),
+    DFHACK_LUA_FUNCTION(setFilter),
+    DFHACK_LUA_FUNCTION(clearFilter),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),

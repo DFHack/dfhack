@@ -199,13 +199,6 @@ function ItemLine:init()
             visible=self.is_selected_fn,
         },
         widgets.Label{
-            frame={t=0, r=0},
-            text='*',
-            auto_width=true,
-            visible=self.is_selected_fn,
-            on_click=self.on_filter,
-        },
-        widgets.Label{
             frame={t=0, l=25},
             text={
                 {tile=get_button_start_pen},
@@ -228,7 +221,7 @@ function ItemLine:init()
             text={
                 {width=21, text=self:callback('get_item_line_text')},
                 {gap=3, text='filter', pen=COLOR_GREEN},
-                {gap=2, text='x', pen=COLOR_GREEN},
+                {gap=2, text='x', pen=self:callback('get_x_pen')},
                 {gap=3, text=function() return self.note end,
                  pen=function() return self.note_pen end},
             },
@@ -246,6 +239,10 @@ function ItemLine:onInput(keys)
         self.on_select(self.idx)
     end
     return ItemLine.super.onInput(self, keys)
+end
+
+function ItemLine:get_x_pen()
+    return hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx) and COLOR_GREEN or COLOR_GREY
 end
 
 function get_desc(filter)
@@ -414,32 +411,52 @@ function PlannerOverlay:init()
             subviews={
                 widgets.HotkeyLabel{
                     frame={b=1, l=0},
-                    key='SELECT',
-                    label='Choose item',
-                    on_activate=function() self:choose(self.selected) end,
-                    enabled=function()
-                        return (self.subviews['item'..self.selected].available or 0) > 0
-                    end,
+                    key='STRING_A042',
+                    enabled=function() return #get_cur_filters() > 1 end,
+                    on_activate=function() self.selected = ((self.selected - 2) % #get_cur_filters()) + 1 end,
+                },
+                widgets.HotkeyLabel{
+                    frame={b=1, l=1},
+                    key='STRING_A047',
+                    label='Prev/next item',
+                    enabled=function() return #get_cur_filters() > 1 end,
+                    on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
                 },
                 widgets.HotkeyLabel{
                     frame={b=1, l=21},
                     key='CUSTOM_F',
-                    label='Filter',
+                    label='Set filter',
                     on_activate=function() self:filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=1, l=33},
+                    frame={b=1, l=37},
                     key='CUSTOM_X',
                     label='Clear filter',
                     on_activate=function() self:clear_filter(self.selected) end,
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='choose',
+                    frame={b=0, l=0},
+                    key='CUSTOM_I',
+                    label='Choose exact items:',
+                    options={{label='Yes', value=true},
+                             {label='No', value=false}},
+                    initial_option=false,
+                    enabled=function()
+                        for idx = 1,4 do
+                            if (self.subviews['item'..idx].available or 0) > 0 then
+                                return true
+                            end
+                        end
+                    end,
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='safety',
-                    frame={b=0, l=2},
+                    frame={b=0, l=29},
                     key='CUSTOM_G',
-                    label='Safety: ',
+                    label='Building safety:',
                     options={
-                        {label='None', value='none'},
+                        {label='Any', value='none'},
                         {label='Magma', value='magma'},
                         {label='Fire', value='fire'},
                     },
@@ -484,10 +501,6 @@ function PlannerOverlay:reset()
     reset_counts_flag = false
 end
 
-function PlannerOverlay:choose(idx)
-    print('choose', idx)
-end
-
 function PlannerOverlay:filter(idx)
     print('filter', idx)
 end
@@ -504,6 +517,8 @@ function PlannerOverlay:onInput(keys)
             return true
         end
         self.selected = 1
+        self.subviews.choose:setOption(false)
+        self.subviews.safety:setOption('none')
         self:reset()
         return false
     end
@@ -527,10 +542,6 @@ function PlannerOverlay:onInput(keys)
                 if #get_cur_filters() == 0 then
                     return false -- we don't add value; let the game place it
                 end
-                self.subviews.item1:reduce_quantity()
-                self.subviews.item2:reduce_quantity()
-                self.subviews.item3:reduce_quantity()
-                self.subviews.item4:reduce_quantity()
                 self:place_building()
                 uibs.selection_pos:clear()
                 return true
@@ -607,6 +618,11 @@ function PlannerOverlay:place_building()
         max_y = min_y + height - 1
         max_z = math.max(uibs.selection_pos.z, uibs.pos.z)
     end
+    if self.subviews.choose:getOptionValue() then
+        -- TODO
+        -- open dialog, showing all items (restricted to current filters)
+        -- select items (doesn't have to be all required items)
+    end
     local blds = {}
     local subtype = uibs.building_subtype
     for z=min_z,max_z do for y=min_y,max_y do for x=min_x,max_x do
@@ -660,7 +676,12 @@ function PlannerOverlay:place_building()
         end
         table.insert(blds, bld)
     end end end
+    self.subviews.item1:reduce_quantity()
+    self.subviews.item2:reduce_quantity()
+    self.subviews.item3:reduce_quantity()
+    self.subviews.item4:reduce_quantity()
     for _,bld in ipairs(blds) do
+        -- TODO: attach chosen items and reduce job_item quantity
         addPlannedBuilding(bld)
     end
     scheduleCycle()

@@ -407,7 +407,7 @@ static void printStatus(color_ostream &out) {
         out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
                 total, planned_buildings.size());
         for (auto &count : counts)
-            out.print("  %3d %s\n", count.second, count.first.c_str());
+            out.print("  %3d %s%s\n", count.second, count.first.c_str(), count.second == 1 ? "" : "s");
     } else {
         out.print("Currently no planned buildings\n");
     }

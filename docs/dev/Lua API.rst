@@ -1219,6 +1219,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.attachJobItem(job, item, role, filter_idx, insert_idx)``
+
+  Attach a real item to this job. If the item is intended to satisfy a job_item
+  filter, the index of that filter should be passed in ``filter_idx``; otherwise,
+  pass ``-1``. Similarly, if you don't care where the item is inserted, pass
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  If the item needs to be brought to the job site, then the value should be
+  ``df.job_item_ref.T_role.Hauled``.
+
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
   Does basic sanity checks to verify if the suggested item type matches

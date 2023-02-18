@@ -712,7 +712,7 @@ function PlannerOverlay:onInput(keys)
                         chosen_items[idx] = {}
                         if (self.subviews['item'..idx].available or 0) > 0 then
                             ItemSelectionScreen{
-                                index=self.selected,
+                                index=idx,
                                 on_submit=function(items)
                                     chosen_items[idx] = items
                                     pending = pending - 1

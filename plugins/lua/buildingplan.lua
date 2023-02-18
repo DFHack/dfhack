@@ -75,11 +75,12 @@ local function is_choosing_area()
     return uibs.selection_pos.x >= 0
 end
 
-local function get_cur_area_dims()
+local function get_cur_area_dims(pos)
     if not is_choosing_area() then return 1, 1, 1 end
-    return math.abs(uibs.selection_pos.x - uibs.pos.x) + 1,
-            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1,
-            math.abs(uibs.selection_pos.z - uibs.pos.z) + 1
+    pos = pos or uibs.pos
+    return math.abs(uibs.selection_pos.x - pos.x) + 1,
+            math.abs(uibs.selection_pos.y - pos.y) + 1,
+            math.abs(uibs.selection_pos.z - pos.z) + 1
 end
 
 local function get_quantity(filter)
@@ -716,7 +717,7 @@ function PlannerOverlay:onInput(keys)
                                     chosen_items[idx] = items
                                     pending = pending - 1
                                     if pending == 0 then
-                                        self:place_building(chosen_items)
+                                        self:place_building(pos, chosen_items)
                                     end
                                 end,
                             }:show()
@@ -725,7 +726,7 @@ function PlannerOverlay:onInput(keys)
                         end
                     end
                 else
-                    self:place_building()
+                    self:place_building(pos)
                 end
                 return true
             elseif not is_choosing_area() then
@@ -756,11 +757,12 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     if not is_choosing_area() then return end
 
+    local pos = uibs.pos
     local bounds = {
-        x1 = math.min(uibs.selection_pos.x, uibs.pos.x),
-        x2 = math.max(uibs.selection_pos.x, uibs.pos.x),
-        y1 = math.min(uibs.selection_pos.y, uibs.pos.y),
-        y2 = math.max(uibs.selection_pos.y, uibs.pos.y),
+        x1 = math.min(uibs.selection_pos.x, pos.x),
+        x2 = math.max(uibs.selection_pos.x, pos.x),
+        y1 = math.min(uibs.selection_pos.y, pos.y),
+        y2 = math.max(uibs.selection_pos.y, pos.y),
     }
 
     local pen = #uibs.errors > 0 and BAD_PEN or GOOD_PEN
@@ -772,18 +774,18 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     guidm.renderMapOverlay(get_overlay_pen, bounds)
 end
 
-function PlannerOverlay:place_building(chosen_items)
+function PlannerOverlay:place_building(pos, chosen_items)
     local direction = uibs.direction
-    local width, height, depth = get_cur_area_dims()
+    local width, height, depth = get_cur_area_dims(pos)
     local _, adjusted_width, adjusted_height = dfhack.buildings.getCorrectSize(
             width, height, uibs.building_type, uibs.building_subtype,
             uibs.custom_type, direction)
     -- get the upper-left corner of the building/area at min z-level
     local has_selection = is_choosing_area()
     local start_pos = xyz2pos(
-        has_selection and math.min(uibs.selection_pos.x, uibs.pos.x) or uibs.pos.x - adjusted_width//2,
-        has_selection and math.min(uibs.selection_pos.y, uibs.pos.y) or uibs.pos.y - adjusted_height//2,
-        has_selection and math.min(uibs.selection_pos.z, uibs.pos.z) or uibs.pos.z
+        has_selection and math.min(uibs.selection_pos.x, pos.x) or pos.x - adjusted_width//2,
+        has_selection and math.min(uibs.selection_pos.y, pos.y) or pos.y - adjusted_height//2,
+        has_selection and math.min(uibs.selection_pos.z, pos.z) or pos.z
     )
     if uibs.building_type == df.building_type.ScrewPump then
         if direction == df.screw_pump_direction.FromSouth then
@@ -799,7 +801,7 @@ function PlannerOverlay:place_building(chosen_items)
             and (width > 1 or height > 1 or depth > 1) then
         max_x = min_x + width - 1
         max_y = min_y + height - 1
-        max_z = math.max(uibs.selection_pos.z, uibs.pos.z)
+        max_z = math.max(uibs.selection_pos.z, pos.z)
     end
     local blds = {}
     local subtype = uibs.building_subtype

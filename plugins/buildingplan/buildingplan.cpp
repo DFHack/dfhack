@@ -476,8 +476,8 @@ static void scheduleCycle(color_ostream &out) {
     cycle_requested = true;
 }
 
-static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering countAvailableItems\n");
+static int scanAvailableItems(color_ostream &out, df::building_type type, int16_t subtype,
+        int32_t custom, int index, vector<int> *item_ids = NULL) {
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
@@ -514,13 +514,40 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            if (itemPassesScreen(item) && matchesFilters(item, jitem))
+            if (itemPassesScreen(item) && matchesFilters(item, jitem)) {
+                if (item_ids)
+                    item_ids->emplace_back(item->id);
                 ++count;
+            }
         }
     }
 
     DEBUG(status,out).print("found matches %d\n", count);
     return count;
+}
+
+static int getAvailableItems(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    int index = luaL_checkint(L, 4);
+    DEBUG(status,*out).print(
+            "entering getAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    vector<int> item_ids;
+    scanAvailableItems(*out, type, subtype, custom, index, &item_ids);
+    Lua::PushVector(L, item_ids);
+    return 1;
+}
+
+static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print(
+            "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    return scanAvailableItems(out, type, subtype, custom, index);
 }
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
@@ -638,5 +665,10 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(getAvailableItems),
     DFHACK_LUA_END
 };

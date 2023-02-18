@@ -20,6 +20,8 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 require('dfhack.buildings')
 
+local uibs = df.global.buildreq
+
 local function process_args(opts, args)
     if args[1] == 'help' then
         opts.help = true
@@ -64,12 +66,40 @@ function get_job_item(btype, subtype, custom, index)
     return obj
 end
 
-local BUTTON_START_PEN, BUTTON_END_PEN = nil, nil
+local function get_cur_filters()
+    return dfhack.buildings.getFiltersByType({}, uibs.building_type,
+            uibs.building_subtype, uibs.custom_type)
+end
+
+local function is_choosing_area()
+    return uibs.selection_pos.x >= 0
+end
+
+local function get_cur_area_dims()
+    if not is_choosing_area() then return 1, 1, 1 end
+    return math.abs(uibs.selection_pos.x - uibs.pos.x) + 1,
+            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1,
+            math.abs(uibs.selection_pos.z - uibs.pos.z) + 1
+end
+
+local function get_quantity(filter)
+    local quantity = filter.quantity or 1
+    local dimx, dimy, dimz = get_cur_area_dims()
+    if quantity < 1 then
+        quantity = (((dimx * dimy) // 4) + 1) * dimz
+    else
+        quantity = quantity * dimx * dimy * dimz
+    end
+    return quantity
+end
+
+local BUTTON_START_PEN, BUTTON_END_PEN, SELECTED_ITEM_PEN = nil, nil, nil
 local reset_counts_flag = false
 local reset_inspector_flag = false
 function signal_reset()
     BUTTON_START_PEN = nil
     BUTTON_END_PEN = nil
+    SELECTED_ITEM_PEN = nil
     reset_counts_flag = true
     reset_inspector_flag = true
 end
@@ -91,12 +121,169 @@ local function get_button_end_pen()
     end
     return BUTTON_END_PEN
 end
+local function get_selected_item_pen()
+    if not SELECTED_ITEM_PEN then
+        local texpos_base = dfhack.textures.getControlPanelTexposStart()
+        SELECTED_ITEM_PEN = to_pen{ch='x', fg=COLOR_GREEN,
+                tile=texpos_base > 0 and texpos_base + 9 or nil}
+    end
+    return SELECTED_ITEM_PEN
+end
+
+--------------------------------
+-- ItemSelection
+--
+
+ItemSelection = defclass(ItemSelection, widgets.Window)
+ItemSelection.ATTRS{
+    frame_title='Choose items',
+    frame={w=60, h=30, l=4, t=8},
+    resizable=true,
+    resize_min={w=56, h=20},
+    index=DEFAULT_NIL,
+    selected_set=DEFAULT_NIL,
+}
+
+function ItemSelection:init()
+    local filter = get_cur_filters()[self.index]
+    self.quantity = get_quantity(filter)
+    self.num_selected = 0
+
+    self:addviews{
+        widgets.Label{
+            frame={t=0},
+            text={
+                get_desc(filter),
+                self.quantity == 1 and '' or 's',
+                NEWLINE,
+                ('Select up to %d items ('):format(self.quantity),
+                {text=function() return self.num_selected end},
+                ' selected)',
+            },
+        },
+        widgets.FilteredList{
+            frame={t=3, l=0, r=0, b=0},
+            case_sensitive=false,
+            choices=self:get_choices(),
+            icon_width=2,
+            on_submit=self:callback('toggle_item'),
+        },
+    }
+end
+
+local function make_search_key(str)
+    local out = ''
+    for c in str:gmatch("[%w%s]") do
+        out = out .. c
+    end
+    return out
+end
+
+function ItemSelection:get_choices()
+    local item_ids = getAvailableItems(uibs.building_type,
+            uibs.building_subtype, uibs.custom_type, self.index - 1)
+    local buckets, selected_buckets = {}, {}
+    for _,item_id in ipairs(item_ids) do
+        local item = df.item.find(item_id)
+        if not item then goto continue end
+        local desc = dfhack.items.getDescription(item, 0, true)
+        if buckets[desc] then
+            local bucket = buckets[desc]
+            table.insert(bucket.item_ids, item_id)
+            bucket.quantity = bucket.quantity + 1
+        else
+            local entry = {
+                text=desc,
+                search_key=make_search_key(desc),
+                icon=self:callback('get_entry_icon', item_id),
+                item_ids={item_id},
+                item_type=item:getType(),
+                item_subtype=item:getSubtype(),
+                quantity=1,
+                selected=false,
+            }
+            buckets[desc] = entry
+        end
+        ::continue::
+    end
+    local selected_qty = 0
+    for bucket in pairs(selected_buckets) do
+        for _,item_id in ipairs(bucket.item_ids) do
+            self.selected_set[item_id] = true
+        end
+        selected_qty = selected_qty + bucket.quantity
+        bucket.selected = true
+        if selected_qty >= self.quantity then break end
+    end
+    self.num_selected = selected_qty
+    local choices = {}
+    for _,choice in pairs(buckets) do
+        choice.text = ('(%d) %s'):format(choice.quantity, choice.text)
+        table.insert(choices, choice)
+    end
+    local function choice_sort(a, b)
+        return a.item_type < b.item_type or
+                (a.item_type == b.item_type and a.item_subtype < b.item_subtype) or
+                (a.item_type == b.item_type and a.item_subtype == b.item_subtype and a.search_key < b.search_key)
+    end
+    table.sort(choices, choice_sort)
+    return choices
+end
+
+function ItemSelection:toggle_item(_, choice)
+    if choice.selected then
+        for _,item_id in ipairs(choice.item_ids) do
+            self.selected_set[item_id] = nil
+        end
+        self.num_selected = self.num_selected - choice.quantity
+        choice.selected = false
+    elseif self.quantity > self.num_selected then
+        for _,item_id in ipairs(choice.item_ids) do
+            self.selected_set[item_id] = true
+        end
+        self.num_selected = self.num_selected + choice.quantity
+        choice.selected = true
+    end
+end
+
+function ItemSelection:get_entry_icon(item_id)
+    return self.selected_set[item_id] and get_selected_item_pen() or nil
+end
+
+ItemSelectionScreen = defclass(ItemSelectionScreen, gui.ZScreen)
+ItemSelectionScreen.ATTRS {
+    focus_path='buildingplan/itemselection',
+    force_pause=true,
+    pass_pause=false,
+    pass_movement_keys=true,
+    pass_mouse_clicks=false,
+    defocusable=false,
+    index=DEFAULT_NIL,
+    on_submit=DEFAULT_NIL,
+}
+
+function ItemSelectionScreen:init()
+    self.selected_set = {}
+
+    self:addviews{
+        ItemSelection{
+            index=self.index,
+            selected_set=self.selected_set,
+        }
+    }
+end
+
+function ItemSelectionScreen:onDismiss()
+    local selected_items = {}
+    for item_id in pairs(self.selected_set) do
+        table.insert(selected_items, item_id)
+    end
+    self.on_submit(selected_items)
+end
 
 --------------------------------
 -- PlannerOverlay
 --
-
-local uibs = df.global.buildreq
 
 local function cur_building_has_no_area()
     if uibs.building_type == df.building_type.Construction then return false end
@@ -105,22 +292,6 @@ local function cur_building_has_no_area()
     -- this works because all variable-size buildings have either no item
     -- filters or a quantity of -1 for their first (and only) item
     return filters and filters[1] and (not filters[1].quantity or filters[1].quantity > 0)
-end
-
-local function is_choosing_area()
-    return uibs.selection_pos.x >= 0
-end
-
-local function get_cur_area_dims()
-    if not is_choosing_area() then return 1, 1, 1 end
-    return math.abs(uibs.selection_pos.x - uibs.pos.x) + 1,
-            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1,
-            math.abs(uibs.selection_pos.z - uibs.pos.z) + 1
-end
-
-local function get_cur_filters()
-    return dfhack.buildings.getFiltersByType({}, uibs.building_type,
-            uibs.building_subtype, uibs.custom_type)
 end
 
 local function is_plannable()
@@ -276,17 +447,6 @@ function get_desc(filter)
     return desc
 end
 
-local function get_quantity(filter)
-    local quantity = filter.quantity or 1
-    local dimx, dimy, dimz = get_cur_area_dims()
-    if quantity < 1 then
-        quantity = (((dimx * dimy) // 4) + 1) * dimz
-    else
-        quantity = quantity * dimx * dimy * dimz
-    end
-    return quantity
-end
-
 function ItemLine:get_item_line_text()
     local idx = self.idx
     local filter = get_cur_filters()[idx]
@@ -357,19 +517,19 @@ function PlannerOverlay:init()
         },
         ItemLine{view_id='item1', frame={t=0, l=0, r=0}, idx=1,
                  is_selected_fn=make_is_selected_fn(1), on_select=on_select_fn,
-                 on_filter=self:callback('filter'),
+                 on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item2', frame={t=2, l=0, r=0}, idx=2,
                  is_selected_fn=make_is_selected_fn(2), on_select=on_select_fn,
-                 on_filter=self:callback('filter'),
+                 on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item3', frame={t=4, l=0, r=0}, idx=3,
                  is_selected_fn=make_is_selected_fn(3), on_select=on_select_fn,
-                 on_filter=self:callback('filter'),
+                 on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item4', frame={t=6, l=0, r=0}, idx=4,
                  is_selected_fn=make_is_selected_fn(4), on_select=on_select_fn,
-                 on_filter=self:callback('filter'),
+                 on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
@@ -426,7 +586,7 @@ function PlannerOverlay:init()
                     frame={b=1, l=21},
                     key='CUSTOM_F',
                     label='Set filter',
-                    on_activate=function() self:filter(self.selected) end,
+                    on_activate=function() self:set_filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
                     frame={b=1, l=37},
@@ -501,8 +661,8 @@ function PlannerOverlay:reset()
     reset_counts_flag = false
 end
 
-function PlannerOverlay:filter(idx)
-    print('filter', idx)
+function PlannerOverlay:set_filter(idx)
+    print('set_filter', idx)
 end
 
 function PlannerOverlay:clear_filter(idx)
@@ -539,11 +699,34 @@ function PlannerOverlay:onInput(keys)
         local pos = dfhack.gui.getMousePos()
         if pos then
             if is_choosing_area() or cur_building_has_no_area() then
-                if #get_cur_filters() == 0 then
+                local num_filters = #get_cur_filters()
+                if num_filters == 0 then
                     return false -- we don't add value; let the game place it
                 end
-                self:place_building()
-                uibs.selection_pos:clear()
+                local choose = self.subviews.choose
+                if choose.enabled() and choose:getOptionValue() then
+                    local chosen_items = {}
+                    local pending = num_filters
+                    for idx = num_filters,1,-1 do
+                        chosen_items[idx] = {}
+                        if (self.subviews['item'..idx].available or 0) > 0 then
+                            ItemSelectionScreen{
+                                index=self.selected,
+                                on_submit=function(items)
+                                    chosen_items[idx] = items
+                                    pending = pending - 1
+                                    if pending == 0 then
+                                        self:place_building(chosen_items)
+                                    end
+                                end,
+                            }:show()
+                        else
+                            pending = pending - 1
+                        end
+                    end
+                else
+                    self:place_building()
+                end
                 return true
             elseif not is_choosing_area() then
                 return false
@@ -589,7 +772,7 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     guidm.renderMapOverlay(get_overlay_pen, bounds)
 end
 
-function PlannerOverlay:place_building()
+function PlannerOverlay:place_building(chosen_items)
     local direction = uibs.direction
     local width, height, depth = get_cur_area_dims()
     local _, adjusted_width, adjusted_height = dfhack.buildings.getCorrectSize(
@@ -617,11 +800,6 @@ function PlannerOverlay:place_building()
         max_x = min_x + width - 1
         max_y = min_y + height - 1
         max_z = math.max(uibs.selection_pos.z, uibs.pos.z)
-    end
-    if self.subviews.choose:getOptionValue() then
-        -- TODO
-        -- open dialog, showing all items (restricted to current filters)
-        -- select items (doesn't have to be all required items)
     end
     local blds = {}
     local subtype = uibs.building_subtype
@@ -681,10 +859,32 @@ function PlannerOverlay:place_building()
     self.subviews.item3:reduce_quantity()
     self.subviews.item4:reduce_quantity()
     for _,bld in ipairs(blds) do
-        -- TODO: attach chosen items and reduce job_item quantity
+        -- attach chosen items and reduce job_item quantity
+        if chosen_items then
+            local job = bld.jobs[0]
+            local jitems = job.job_items
+            for idx=1,#get_cur_filters() do
+                local item_ids = chosen_items[idx]
+                while jitems[idx-1].quantity > 0 and #item_ids > 0 do
+                    local item_id = item_ids[#item_ids]
+                    local item = df.item.find(item_id)
+                    if not item then
+                        dfhack.printerr(('item no longer available: %d'):format(item_id))
+                        break
+                    end
+                    if not dfhack.job.attachJobItem(job, item, df.job_item_ref.T_role.Hauled, idx-1, -1) then
+                        dfhack.printerr(('cannot attach item: %d'):format(item_id))
+                        break
+                    end
+                    jitems[idx-1].quantity = jitems[idx-1].quantity - 1
+                    item_ids[#item_ids] = nil
+                end
+            end
+        end
         addPlannedBuilding(bld)
     end
     scheduleCycle()
+    uibs.selection_pos:clear()
 end
 
 --------------------------------

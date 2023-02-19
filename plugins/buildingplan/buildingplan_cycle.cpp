@@ -46,7 +46,7 @@ bool itemPassesScreen(df::item * item) {
         && !item->isAssignedToStockpile();
 }
 
-bool matchesFilters(df::item * item, df::job_item * job_item) {
+bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;
@@ -65,10 +65,17 @@ bool matchesFilters(df::item * item, df::job_item * job_item) {
         && !item->hasToolUse(job_item->has_tool_use))
         return false;
 
+    df::job_item jitem = *job_item;
+    if (heat == HEAT_SAFETY_MAGMA) {
+        jitem.flags2.bits.magma_safe = true;
+        jitem.flags2.bits.fire_safe = false;
+    } else if (heat == HEAT_SAFETY_FIRE && !jitem.flags2.bits.magma_safe)
+        jitem.flags2.bits.fire_safe = true;
+
     return Job::isSuitableItem(
-            job_item, item->getType(), item->getSubtype())
+            &jitem, item->getType(), item->getSubtype())
         && Job::isSuitableMaterial(
-            job_item, item->getMaterial(), item->getMaterialIndex(),
+            &jitem, item->getMaterial(), item->getMaterialIndex(),
             item->getType());
 }
 
@@ -173,7 +180,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto id = task.first;
             auto job = bld->jobs[0];
             auto filter_idx = task.second;
-            if (matchesFilters(item, job->job_items[filter_idx])
+            if (matchesFilters(item, job->job_items[filter_idx], planned_buildings.at(id).heat_safety)
                && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {

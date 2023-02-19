@@ -2,6 +2,7 @@
 
 #include "modules/Persistence.h"
 
+#include "df/building.h"
 #include "df/job_item.h"
 #include "df/job_item_vector_id.h"
 
@@ -21,6 +22,13 @@ enum ConfigValues {
 
 enum BuildingConfigValues {
     BLD_CONFIG_ID = 0,
+    BLD_CONFIG_HEAT = 1,
+};
+
+enum HeatSafety {
+    HEAT_SAFETY_ANY = 0,
+    HEAT_SAFETY_FIRE = 1,
+    HEAT_SAFETY_MAGMA = 2,
 };
 
 int get_config_val(DFHack::PersistentDataItem &c, int index);
@@ -30,6 +38,6 @@ void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
 std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, df::job_item *job_item);
 bool itemPassesScreen(df::item * item);
-bool matchesFilters(df::item * item, df::job_item * job_item);
+bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
 void finalizeBuilding(DFHack::color_ostream &out, df::building *bld);

@@ -251,14 +251,18 @@ function ItemSelection:get_entry_icon(item_id)
     return self.selected_set[item_id] and get_selected_item_pen() or nil
 end
 
-ItemSelectionScreen = defclass(ItemSelectionScreen, gui.ZScreen)
-ItemSelectionScreen.ATTRS {
-    focus_path='buildingplan/itemselection',
+BuildingplanScreen = defclass(BuildingplanScreen, gui.ZScreen)
+BuildingplanScreen.ATTRS {
     force_pause=true,
     pass_pause=false,
     pass_movement_keys=true,
     pass_mouse_clicks=false,
     defocusable=false,
+}
+
+ItemSelectionScreen = defclass(ItemSelectionScreen, BuildingplanScreen)
+ItemSelectionScreen.ATTRS {
+    focus_path='buildingplan/itemselection',
     index=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
 }
@@ -414,7 +418,8 @@ function ItemLine:onInput(keys)
 end
 
 function ItemLine:get_x_pen()
-    return hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx) and COLOR_GREEN or COLOR_GREY
+    return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx) and
+            COLOR_GREEN or COLOR_GREY
 end
 
 function get_desc(filter)
@@ -599,7 +604,7 @@ function PlannerOverlay:init()
                     view_id='choose',
                     frame={b=0, l=0},
                     key='CUSTOM_I',
-                    label='Choose exact items:',
+                    label='Choose from items:',
                     options={{label='Yes', value=true},
                              {label='No', value=false}},
                     initial_option=false,
@@ -617,10 +622,13 @@ function PlannerOverlay:init()
                     key='CUSTOM_G',
                     label='Building safety:',
                     options={
-                        {label='Any', value='none'},
-                        {label='Magma', value='magma'},
-                        {label='Fire', value='fire'},
+                        {label='Any', value=0},
+                        {label='Magma', value=2, pen=COLOR_RED},
+                        {label='Fire', value=1, pen=COLOR_LIGHTRED},
                     },
+                    on_change=function(heat)
+                        setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
+                    end,
                 },
             },
         },
@@ -663,11 +671,11 @@ function PlannerOverlay:reset()
 end
 
 function PlannerOverlay:set_filter(idx)
-    print('set_filter', idx)
+    print('TODO: set_filter', idx)
 end
 
 function PlannerOverlay:clear_filter(idx)
-    print('clear_filter', idx)
+    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx, "")
 end
 
 function PlannerOverlay:onInput(keys)
@@ -679,8 +687,8 @@ function PlannerOverlay:onInput(keys)
         end
         self.selected = 1
         self.subviews.choose:setOption(false)
-        self.subviews.safety:setOption('none')
         self:reset()
+        reset_counts_flag = true
         return false
     end
     if PlannerOverlay.super.onInput(self, keys) then
@@ -753,6 +761,8 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     if reset_counts_flag then
         self:reset()
+        self.subviews.safety:setOption(getHeatSafetyFilter(
+                uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end
 
     if not is_choosing_area() then return end

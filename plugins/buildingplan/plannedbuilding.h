@@ -1,5 +1,7 @@
 #pragma once
 
+#include "buildingplan.h"
+
 #include "Core.h"
 
 #include "modules/Persistence.h"
@@ -14,7 +16,9 @@ public:
     // job_item idx -> list of vectors the task is linked to
     const std::vector<std::vector<df::job_item_vector_id>> vector_ids;
 
-    PlannedBuilding(DFHack::color_ostream &out, df::building *building);
+    const HeatSafety heat_safety;
+
+    PlannedBuilding(DFHack::color_ostream &out, df::building *bld, HeatSafety heat);
     PlannedBuilding(DFHack::color_ostream &out, DFHack::PersistentDataItem &bld_config);
 
     void remove(DFHack::color_ostream &out);

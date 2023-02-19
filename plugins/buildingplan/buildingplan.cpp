@@ -74,6 +74,7 @@ struct BuildingTypeKeyHash {
 static PersistentDataItem config;
 // for use in counting available materials for the UI
 static unordered_map<BuildingTypeKey, vector<df::job_item *>, BuildingTypeKeyHash> job_item_repo;
+static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
 // building id -> PlannedBuilding
 static unordered_map<int32_t, PlannedBuilding> planned_buildings;
 // vector id -> filter bucket -> queue of (building id, job_item index)
@@ -456,13 +457,20 @@ static bool isPlannedBuilding(color_ostream &out, df::building *bld) {
     return bld && planned_buildings.count(bld->id) > 0;
 }
 
+static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
+    if (cur_heat_safety.count(key))
+        return cur_heat_safety.at(key);
+    return HEAT_SAFETY_ANY;
+}
+
 static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
     DEBUG(status,out).print("entering addPlannedBuilding\n");
     if (!bld || planned_buildings.count(bld->id)
             || !isPlannableBuilding(out, bld->getType(), bld->getSubtype(),
                                     bld->getCustomType()))
         return false;
-    PlannedBuilding pb(out, bld);
+    BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
+    PlannedBuilding pb(out, bld, get_heat_safety_filter(key));
     return registerPlannedBuilding(out, pb);
 }
 
@@ -482,6 +490,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
+    HeatSafety heat = get_heat_safety_filter(key);
     auto &job_items = job_item_repo[key];
     if (index >= (int)job_items.size()) {
         for (int i = job_items.size(); i <= index; ++i) {
@@ -514,7 +523,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            if (itemPassesScreen(item) && matchesFilters(item, jitem)) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 ++count;
@@ -550,17 +559,56 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     return scanAvailableItems(out, type, subtype, custom, index);
 }
 
-static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering hasFilter\n");
+static bool hasMaterialFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering hasMaterialFilter\n");
     return false;
 }
 
-static void setFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering setFilter\n");
+static void setMaterialFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index, string filter) {
+    DEBUG(status,out).print("entering setMaterialFilter\n");
+    call_buildingplan_lua(&out, "signal_reset");
 }
 
-static void clearFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering clearFilter\n");
+static int getMaterialFilter(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    int index = luaL_checkint(L, 4);
+    DEBUG(status,*out).print(
+            "entering getMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    vector<string> filter;
+    Lua::PushVector(L, filter);
+    return 1;
+}
+
+static void setHeatSafetyFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int heat) {
+    DEBUG(status,out).print("entering setHeatSafetyFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    if (heat == HEAT_SAFETY_FIRE || heat == HEAT_SAFETY_MAGMA)
+        cur_heat_safety[key] = (HeatSafety)heat;
+    else
+        cur_heat_safety.erase(key);
+    call_buildingplan_lua(&out, "signal_reset");
+}
+
+static int getHeatSafetyFilter(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    DEBUG(status,*out).print(
+            "entering getHeatSafetyFilter building_type=%d subtype=%d custom=%d\n",
+            type, subtype, custom);
+    BuildingTypeKey key(type, subtype, custom);
+    HeatSafety heat = get_heat_safety_filter(key);
+    Lua::Push(L, heat);
+    return 1;
 }
 
 static bool validate_pb(color_ostream &out, df::building *bld, int index) {
@@ -659,9 +707,9 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
-    DFHACK_LUA_FUNCTION(hasFilter),
-    DFHACK_LUA_FUNCTION(setFilter),
-    DFHACK_LUA_FUNCTION(clearFilter),
+    DFHACK_LUA_FUNCTION(hasMaterialFilter),
+    DFHACK_LUA_FUNCTION(setMaterialFilter),
+    DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
@@ -670,5 +718,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getAvailableItems),
+    DFHACK_LUA_COMMAND(getMaterialFilter),
+    DFHACK_LUA_COMMAND(getHeatSafetyFilter),
     DFHACK_LUA_END
 };

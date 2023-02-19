@@ -62,11 +62,12 @@ static string serialize(const vector<vector<df::job_item_vector_id>> &vector_ids
     return join_strings("|", joined);
 }
 
-PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *building)
-        : id(building->id), vector_ids(get_vector_ids(out, id)) {
+PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafety heat)
+        : id(bld->id), vector_ids(get_vector_ids(out, id)), heat_safety(heat) {
     DEBUG(status,out).print("creating persistent data for building %d\n", id);
     bld_config = World::AddPersistentData(BLD_CONFIG_KEY);
     set_config_val(bld_config, BLD_CONFIG_ID, id);
+    set_config_val(bld_config, BLD_CONFIG_HEAT, heat_safety);
     bld_config.val() = serialize(vector_ids);
     DEBUG(status,out).print("serialized state for building %d: %s\n", id, bld_config.val().c_str());
 }
@@ -74,6 +75,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *building)
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)
     : id(get_config_val(bld_config, BLD_CONFIG_ID)),
         vector_ids(deserialize(out, bld_config)),
+        heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
         bld_config(bld_config) { }
 
 // Ensure the building still exists and is in a valid state. It can disappear

@@ -135,24 +135,29 @@ end
 -- ItemSelection
 --
 
+local BUILD_TEXT_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREEN, keep_lower=true}
+local BUILD_TEXT_HPEN = to_pen{fg=COLOR_WHITE, bg=COLOR_GREEN, keep_lower=true}
+
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
     frame_title='Choose items',
-    frame={w=60, h=30, l=4, t=8},
+    frame={w=56, h=20, l=4, t=8},
+    draggable=false,
     resizable=true,
-    resize_min={w=56, h=20},
     index=DEFAULT_NIL,
-    selected_set=DEFAULT_NIL,
+    on_submit=DEFAULT_NIL,
+    on_cancel=DEFAULT_NIL,
 }
 
 function ItemSelection:init()
     local filter = get_cur_filters()[self.index]
     self.quantity = get_quantity(filter)
     self.num_selected = 0
+    self.selected_set = {}
 
     self:addviews{
         widgets.Label{
-            frame={t=0},
+            frame={t=0, l=0, r=10},
             text={
                 get_desc(filter),
                 self.quantity == 1 and '' or 's',
@@ -161,6 +166,17 @@ function ItemSelection:init()
                 {text=function() return self.num_selected end},
                 ' selected)',
             },
+        },
+        widgets.Label{
+            frame={r=0, w=9, t=0, h=3},
+            text_pen=BUILD_TEXT_PEN,
+            text_hpen=BUILD_TEXT_HPEN,
+            text={
+                '         ', NEWLINE,
+                '  Build  ', NEWLINE,
+                '         ',
+            },
+            on_click=self:callback('submit'),
         },
         widgets.FilteredList{
             frame={t=3, l=0, r=0, b=0},
@@ -251,6 +267,22 @@ function ItemSelection:get_entry_icon(item_id)
     return self.selected_set[item_id] and get_selected_item_pen() or nil
 end
 
+function ItemSelection:submit()
+    local selected_items = {}
+    for item_id in pairs(self.selected_set) do
+        table.insert(selected_items, item_id)
+    end
+    self.on_submit(selected_items)
+end
+
+function ItemSelection:onInput(keys)
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        self.on_cancel()
+        return true
+    end
+    return ItemSelection.super.onInput(self, keys)
+end
+
 BuildingplanScreen = defclass(BuildingplanScreen, gui.ZScreen)
 BuildingplanScreen.ATTRS {
     force_pause=true,
@@ -265,25 +297,17 @@ ItemSelectionScreen.ATTRS {
     focus_path='buildingplan/itemselection',
     index=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
+    on_cancel=DEFAULT_NIL,
 }
 
 function ItemSelectionScreen:init()
-    self.selected_set = {}
-
     self:addviews{
         ItemSelection{
             index=self.index,
-            selected_set=self.selected_set,
+            on_submit=self.on_submit,
+            on_cancel=self.on_cancel,
         }
     }
-end
-
-function ItemSelectionScreen:onDismiss()
-    local selected_items = {}
-    for item_id in pairs(self.selected_set) do
-        table.insert(selected_items, item_id)
-    end
-    self.on_submit(selected_items)
 end
 
 --------------------------------
@@ -714,18 +738,25 @@ function PlannerOverlay:onInput(keys)
                 end
                 local choose = self.subviews.choose
                 if choose.enabled() and choose:getOptionValue() then
-                    local chosen_items = {}
+                    local chosen_items, active_screens = {}, {}
                     local pending = num_filters
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         if (self.subviews['item'..idx].available or 0) > 0 then
-                            ItemSelectionScreen{
+                            active_screens[idx] = ItemSelectionScreen{
                                 index=idx,
                                 on_submit=function(items)
                                     chosen_items[idx] = items
+                                    active_screens[idx]:dismiss()
+                                    active_screens[idx] = nil
                                     pending = pending - 1
                                     if pending == 0 then
                                         self:place_building(pos, chosen_items)
+                                    end
+                                end,
+                                on_cancel=function()
+                                    for i,scr in pairs(active_screens) do
+                                        scr:dismiss()
                                     end
                                 end,
                             }:show()

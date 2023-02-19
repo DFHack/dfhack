@@ -18,6 +18,20 @@ An automated labor management tool that only addressed hauling labors, leaving t
 of skilled labors entirely up to the player. Fundamentally incompatible with the work detail
 system of labor management in v50 of Dwarf Fortress.
 
+.. _combine-drinks:
+
+combine-drinks
+==============
+Replaced by the new `combine` script. Run
+``combine here --types=drink``
+
+.. _combine-plants:
+
+combine-plants
+==============
+Replaced by the new `combine` script. Run
+``combine here --types=plants``
+
 .. _command-prompt:
 
 command-prompt

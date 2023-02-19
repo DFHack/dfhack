@@ -650,6 +650,7 @@ function PlannerOverlay:init()
                         {label='Magma', value=2, pen=COLOR_RED},
                         {label='Fire', value=1, pen=COLOR_LIGHTRED},
                     },
+                    initial_option=0,
                     on_change=function(heat)
                         setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
                     end,

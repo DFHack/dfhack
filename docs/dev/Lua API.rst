@@ -4917,6 +4917,8 @@ item to call the ``on_submit`` callback for that item.
 It has the following attributes:
 
 :text_pen: Specifies the pen for deselected list entries.
+:text_hpen: Specifies the pen for entries that the mouse is hovered over.
+            Defaults to swapping the background/foreground colors.
 :cursor_pen: Specifies the pen for the selected entry.
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.

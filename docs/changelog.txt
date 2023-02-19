@@ -54,6 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autobutcher`: implemented work-around for Dwarf Fortress not setting nicknames properly, so that nicknames created in the in-game interface are detected & protect animals from being butchered properly. Note that nicknames for unnamed units are not currently saved by dwarf fortress - use ``enable fix/protect-nicks`` to fix any nicknames created/removed within dwarf fortress so they can be saved/reloaded when you reload the game.
 -@ `seedwatch`: fix saving and loading of seed stock targets
 - `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
+- ``dfhack.job.isSuitableMaterial``: now properly detects lack of fire and magma safety for vulnerable materials with high melting points
 -@ `autochop`: generate default names for burrows with no assigned names
 - ``Buildings::StockpileIterator``: fix check for stockpile items on block boundary.
 - `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment

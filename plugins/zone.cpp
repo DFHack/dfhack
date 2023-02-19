@@ -850,7 +850,7 @@ static df::building* getSelectedAssignableBuilding(color_ostream& out)
             return NULL;
         }
     }
-    
+
     df::building_civzonest *selected_civzone = Gui::getSelectedCivZone(out, true);
     if(selected_civzone) {
         if (Buildings::isPitPond((df::building*)selected_civzone)) {

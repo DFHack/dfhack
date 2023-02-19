@@ -71,7 +71,7 @@ function ZoneOverlay:init()
     self:setDirty(false)
     self.search_focused = false
 
-    -- used to store 
+    -- used to store
     self.original_unit_table = nil
     self.original_selected_table = nil
 

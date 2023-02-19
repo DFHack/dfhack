@@ -56,6 +56,7 @@ enum ConfigValues {
     CONFIG_CLOTH_IDX = 2,
     CONFIG_YARN_IDX = 3,
     CONFIG_LEATHER_IDX = 4,
+    CONFIG_ADAMANTINE_IDX = 5,
 };
 
 static int get_config_val(PersistentDataItem &c, int index) {
@@ -119,10 +120,11 @@ static const MatType
     M_SILK = MatType("silk", df::job_material_category::mask_silk, df::armor_general_flags::SOFT),
     M_CLOTH = MatType("cloth", df::job_material_category::mask_cloth, df::armor_general_flags::SOFT),
     M_YARN = MatType("yarn", df::job_material_category::mask_yarn, df::armor_general_flags::SOFT),
-    M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER);
+    M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER),
+    M_ADAMANTINE = MatType("adamantine", df::job_material_category::mask_strand, df::armor_general_flags::SOFT);
 
-static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER };
-static std::list<MatType> material_order = all_materials;
+static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
+static std::list<MatType> material_order = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // M_ADAMANTINE is not included by default
 
 static struct BadFlags {
     uint32_t whole;
@@ -208,11 +210,13 @@ public:
                     supply[M_CLOTH] += ss;
                 else if (mat.material->flags.is_set(df::material_flags::YARN))
                     supply[M_YARN] += ss;
+                else if (mat.material->flags.is_set(df::material_flags::STOCKPILE_THREAD_METAL))
+                    supply[M_ADAMANTINE] += ss;
                 else
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    WARN(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
                 }
             }
         }
@@ -224,7 +228,8 @@ public:
             supply[M_LEATHER] += i->getStackSize();
         }
 
-        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d\n", supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER]);
+        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d adamantine %d\n",
+            supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER], supply[M_ADAMANTINE]);
     }
 
     void scan_replacements()
@@ -253,8 +258,8 @@ public:
                     wearing.insert(inv->item->getType());
             }
 
-            int size = world->raws.creatures.all[u->race]->adultsize;
-            sizes[size] = u->race;
+            int usize = world->raws.creatures.all[u->race]->adultsize;
+            sizes[usize] = u->race;
 
             for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
             {
@@ -262,9 +267,9 @@ public:
                 {
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
-                        size,
+                        usize,
                         Translation::TranslateName(&u->name, false).c_str());
-                    needed[std::make_pair(ty, size)] += 1;
+                    needed[std::make_pair(ty, usize)] += 1;
                 }
             }
 
@@ -278,11 +283,11 @@ public:
                 }
                 const df::job_type o = oo->second;
 
-                int size = world->raws.creatures.all[w->getMakerRace()]->adultsize;
+                int isize = world->raws.creatures.all[w->getMakerRace()]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (available[std::make_pair(ty, size)] > 0)
+                if (available[std::make_pair(ty, usize)] > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -298,10 +303,10 @@ public:
 
                     if (wearing.count(ty) == 0)
                     {
-                        DEBUG(cycle).print("tailor: allocating a %s to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(),
+                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
+                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
                             Translation::TranslateName(&u->name, false).c_str());
-                        available[std::make_pair(ty, size)] -= 1;
+                        available[std::make_pair(ty, usize)] -= 1;
                     }
 
                     if (w->getWear() > 1)
@@ -309,10 +314,10 @@ public:
                 }
                 else
                 {
-                    DEBUG(cycle).print ("tailor: %s worn by %s needs replacement, but none available\n",
-                                        description.c_str(),
-                                        Translation::TranslateName(&u->name, false).c_str());
-                    orders[std::make_tuple(o, w->getSubtype(), size)] += 1;
+                    DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
+                                        description.c_str(), isize,
+                                        Translation::TranslateName(&u->name, false).c_str(), usize);
+                    orders[std::make_tuple(o, w->getSubtype(), usize)] += 1;
                 }
             }
         }
@@ -404,6 +409,13 @@ public:
 
             std::tie(ty, sub, size) = o.first;
             int count = o.second;
+
+            if (sizes.count(size) == 0)
+            {
+                WARN(cycle).print("tailor: cannot determine race for clothing of size %d, skipped\n",
+                    size);
+                continue;
+            }
 
             if (count > 0)
             {
@@ -573,6 +585,8 @@ static void set_material_order() {
             material_order.push_back(M_YARN);
         else if (i == (size_t)get_config_val(config, CONFIG_LEATHER_IDX))
             material_order.push_back(M_LEATHER);
+        else if (i == (size_t)get_config_val(config, CONFIG_ADAMANTINE_IDX))
+            material_order.push_back(M_ADAMANTINE);
     }
     if (!material_order.size())
         std::copy(all_materials.begin(), all_materials.end(), std::back_inserter(material_order));
@@ -689,7 +703,8 @@ static void tailor_doCycle(color_ostream &out) {
 
 // remember, these are ONE-based indices from Lua
 static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
-                        int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx) {
+                        int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx,
+                        int32_t adamantineIdx) {
     DEBUG(config,out).print("entering tailor_setMaterialPreferences\n");
 
     // it doesn't really matter if these are invalid. set_material_order will do
@@ -698,6 +713,7 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
     set_config_val(config, CONFIG_CLOTH_IDX, clothIdx - 1);
     set_config_val(config, CONFIG_YARN_IDX, yarnIdx - 1);
     set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx - 1);
+    set_config_val(config, CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
 
     set_material_order();
 }

@@ -66,6 +66,7 @@ bool set_conf_paused (string name, bool pause);
 
 class confirmation_base {
 public:
+    bool dirty = false;
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
     virtual string get_focus_string() = 0;
@@ -281,6 +282,7 @@ public:
         }
 
         state = s;
+        dirty = true;
         if (s == INACTIVE) {
             active_id = "";
             confirmation_base::active = nullptr;
@@ -371,17 +373,18 @@ public:
         return state == ACTIVE;
     }
     void render() {
-        static vector<string> lines;
-        static const std::string pause_message =
-               "Pause confirmations until you exit this screen";
-        Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_dr = Screen::Pen((char)188, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen border_ud = Screen::Pen((char)205, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen border_lr = Screen::Pen((char)186, COLOR_GREY, COLOR_BLACK);
         if (state == ACTIVE)
         {
+            static vector<string> lines;
+            static const std::string pause_message =
+                   "Pause confirmations until you exit this screen";
+            Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_dr = Screen::Pen((char)188, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen border_ud = Screen::Pen((char)205, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen border_lr = Screen::Pen((char)186, COLOR_GREY, COLOR_BLACK);
+
             split_string(&lines, get_message(), "\n");
             size_t max_length = 40;
             for (string line : lines)
@@ -463,8 +466,10 @@ public:
             }
             set_state(INACTIVE);
         }
-        // clean up any artifacts
-        df::global::gps->force_full_display_count = 1;
+        if(dirty) {
+            dirty = false;
+            df::global::gps->force_full_display_count = 1;
+        }
     }
     string get_id() override = 0;
     string get_focus_string() override = 0;
@@ -612,15 +617,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 {
-    if (is_enabled != enable)
-    {
-        for (auto c : confirmations)
-        {
-            if (!c.second->apply(enable))
-                return CR_FAILURE;
-        }
-        is_enabled = enable;
-    }
+    is_enabled = enable;
     if (is_enabled)
     {
         conf_lua::simple_call("check");

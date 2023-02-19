@@ -1232,7 +1232,7 @@ Label = defclass(Label, Widget)
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY, -- disabled
-    text_hpen = DEFAULT_NIL, -- highlight - default is text_pen with reversed brightness
+    text_hpen = DEFAULT_NIL, -- hover - default is to invert the fg/bg colors
     disabled = DEFAULT_NIL,
     enabled = DEFAULT_NIL,
     auto_height = true,
@@ -1250,8 +1250,6 @@ function Label:init(args)
     self:addviews{self.scrollbar}
 
     self:setText(args.text or self.text)
-
-    -- self.text_hpen = make_hpen(self.text_pen, self.text_hpen)
 end
 
 local function update_label_scrollbar(label)
@@ -1303,15 +1301,6 @@ end
 -- HotkeyLabel.
 function Label:shouldHover()
     return self.on_click or self.on_rclick
-end
-
-function Label:onRenderFrame(dc, rect)
-    Label.super.onRenderFrame(self, dc, rect)
-    -- Fill the background with text_hpen on hover
-    if self:getMousePos() and self:shouldHover() then
-        local hpen = make_hpen(self.text_pen, self.text_hpen)
-        dc:fill(rect, hpen)
-    end
 end
 
 function Label:onRenderBody(dc)
@@ -1614,7 +1603,7 @@ List = defclass(List, Widget)
 
 List.ATTRS{
     text_pen = COLOR_CYAN,
-    text_hpen = DEFAULT_NIL, -- pen to render list item when mouse is hovered over; defaults to text_pen with inverted brightness
+    text_hpen = DEFAULT_NIL, -- hover color, defaults to inverting the FG/BG pens for each text object
     cursor_pen = COLOR_LIGHTCYAN,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
@@ -1644,8 +1633,6 @@ function List:init(info)
     end
 
     self.last_select_click_ms = 0 -- used to track double-clicking on an item
-
-    -- self.text_hpen = make_hpen(self.text_pen, self.text_hpen)
 end
 
 function List:setChoices(choices, selected)

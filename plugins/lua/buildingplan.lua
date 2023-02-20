@@ -555,7 +555,7 @@ function ItemLine:onInput(keys)
 end
 
 function ItemLine:get_x_pen()
-    return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx) and
+    return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1) and
             COLOR_GREEN or COLOR_GREY
 end
 
@@ -707,11 +707,13 @@ function PlannerOverlay:init()
             text={
                 'Selected area: ',
                 {text=function()
-                     return ('%dx%dx%d'):format(get_cur_area_dims())
+                     return ('%dx%dx%d'):format(get_cur_area_dims(self.saved_placement))
                  end
                 },
             },
-            visible=is_choosing_area,
+            visible=function()
+                return not cur_building_has_no_area() and (self.saved_placement or is_choosing_area())
+            end,
         },
         widgets.Panel{
             visible=function() return #get_cur_filters() > 0 end,
@@ -719,6 +721,7 @@ function PlannerOverlay:init()
                 widgets.HotkeyLabel{
                     frame={b=1, l=0},
                     key='STRING_A042',
+                    auto_width=true,
                     enabled=function() return #get_cur_filters() > 1 end,
                     on_activate=function() self.selected = ((self.selected - 2) % #get_cur_filters()) + 1 end,
                 },
@@ -726,6 +729,7 @@ function PlannerOverlay:init()
                     frame={b=1, l=1},
                     key='STRING_A047',
                     label='Prev/next item',
+                    auto_width=true,
                     enabled=function() return #get_cur_filters() > 1 end,
                     on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
                 },
@@ -733,17 +737,22 @@ function PlannerOverlay:init()
                     frame={b=1, l=21},
                     key='CUSTOM_F',
                     label='Set filter',
+                    auto_width=true,
                     on_activate=function() self:set_filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
                     frame={b=1, l=37},
                     key='CUSTOM_X',
                     label='Clear filter',
+                    auto_width=true,
                     on_activate=function() self:clear_filter(self.selected) end,
+                    enabled=function()
+                        return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+                    end
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='choose',
-                    frame={b=0, l=0},
+                    frame={b=0, l=0, w=25},
                     key='CUSTOM_I',
                     label='Choose from items:',
                     options={{label='Yes', value=true},
@@ -759,7 +768,7 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='safety',
-                    frame={b=0, l=29},
+                    frame={b=0, l=29, w=25},
                     key='CUSTOM_G',
                     label='Building safety:',
                     options={
@@ -817,7 +826,7 @@ function PlannerOverlay:set_filter(idx)
 end
 
 function PlannerOverlay:clear_filter(idx)
-    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx, "")
+    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1, "")
 end
 
 local function get_placement_data()

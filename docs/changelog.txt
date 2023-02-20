@@ -90,6 +90,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
 - ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
 - ``widgets.TabBar``: new library widget (migrated from control-panel.lua)
+- ``maps.getBiomeType``: exposed preexisting function to Lua
 
 # 50.07-alpha1
 
@@ -187,7 +188,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
 - `tiletypes`: now has a Lua API! ``tiletypes_setTile``
-- ``maps.getBiomeType``: exposed preexisting function to Lua
 
 ## Removed
 - `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system

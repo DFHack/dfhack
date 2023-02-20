@@ -134,8 +134,6 @@ end
 
 BuildingplanScreen = defclass(BuildingplanScreen, gui.ZScreen)
 BuildingplanScreen.ATTRS {
-    force_pause=true,
-    pass_pause=false,
     pass_movement_keys=true,
     pass_mouse_clicks=false,
     defocusable=false,
@@ -366,6 +364,8 @@ end
 ItemSelectionScreen = defclass(ItemSelectionScreen, BuildingplanScreen)
 ItemSelectionScreen.ATTRS {
     focus_path='dwarfmode/Building/Placement/dfhack/lua/buildingplan/itemselection',
+    force_pause=true,
+    pass_pause=false,
     index=DEFAULT_NIL,
     placement_data=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
@@ -403,7 +403,7 @@ end
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
     frame_title='Choose filters',
-    frame={w=60, h=40, l=4, t=8},
+    frame={w=60, h=40, l=30, t=8},
     resizable=true,
     index=DEFAULT_NIL,
 }
@@ -822,7 +822,7 @@ function PlannerOverlay:reset()
 end
 
 function PlannerOverlay:set_filter(idx)
-    print('TODO: set_filter', idx)
+    FilterSelectionScreen{index=idx}:show()
 end
 
 function PlannerOverlay:clear_filter(idx)

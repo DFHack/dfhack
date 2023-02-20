@@ -101,7 +101,6 @@ df::squad* Military::makeSquad(int32_t assignment_id)
     {
         //construct for squad_position seems to set all the attributes correctly
         df::squad_position* pos = new df::squad_position();
-        pos->flags.whole = 0;
 
         result->positions.push_back(pos);
     }

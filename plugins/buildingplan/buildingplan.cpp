@@ -171,6 +171,7 @@ static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
 
 static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "signal_reset");
+    call_buildingplan_lua(&out, "reload_cursors");
     planned_buildings.clear();
     tasks.clear();
     for (auto &entry : job_item_repo) {

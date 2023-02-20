@@ -131,6 +131,15 @@ local function get_selected_item_pen()
     return SELECTED_ITEM_PEN
 end
 
+BuildingplanScreen = defclass(BuildingplanScreen, gui.ZScreen)
+BuildingplanScreen.ATTRS {
+    force_pause=true,
+    pass_pause=false,
+    pass_movement_keys=true,
+    pass_mouse_clicks=false,
+    defocusable=false,
+}
+
 --------------------------------
 -- ItemSelection
 --
@@ -154,15 +163,16 @@ function ItemSelection:init()
     self.quantity = get_quantity(filter)
     self.num_selected = 0
     self.selected_set = {}
+    local plural = self.quantity == 1 and '' or 's'
 
     self:addviews{
         widgets.Label{
             frame={t=0, l=0, r=10},
             text={
                 get_desc(filter),
-                self.quantity == 1 and '' or 's',
+                plural,
                 NEWLINE,
-                ('Select up to %d items ('):format(self.quantity),
+                ('Select up to %d item%s ('):format(self.quantity, plural),
                 {text=function() return self.num_selected end},
                 ' selected)',
             },
@@ -179,11 +189,52 @@ function ItemSelection:init()
             on_click=self:callback('submit'),
         },
         widgets.FilteredList{
-            frame={t=3, l=0, r=0, b=0},
+            view_id='flist',
+            frame={t=3, l=0, r=0, b=4},
             case_sensitive=false,
             choices=self:get_choices(),
             icon_width=2,
-            on_submit=self:callback('toggle_item'),
+            on_submit=self:callback('toggle_group'),
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=2},
+            key='SELECT',
+            label='Use all/none selected',
+            auto_width=true,
+            on_activate=function() self:toggle_group(self.subviews.flist.list:getSelected()) end,
+        },
+        widgets.HotkeyLabel{
+            frame={l=32, b=2},
+            key='LEAVESCREEN',
+            label='Cancel build',
+            auto_width=true,
+            on_activate=function() self.on_cancel() end,
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=1},
+            key='KEYBOARD_CURSOR_RIGHT_FAST',
+            key_sep='    : ',
+            label='Use one selected',
+            auto_width=true,
+            on_activate=function() self:increment_group(self.subviews.flist.list:getSelected()) end,
+        },
+        widgets.Label{
+            frame={l=6, b=1, w=5},
+            text_pen=COLOR_LIGHTGREEN,
+            text='Right',
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=0},
+            key='KEYBOARD_CURSOR_LEFT_FAST',
+            key_sep='   : ',
+            label='Use one fewer selected',
+            auto_width=true,
+            on_activate=function() self:decrement_group(self.subviews.flist.list:getSelected()) end,
+        },
+        widgets.Label{
+            frame={l=6, b=0, w=4},
+            text_pen=COLOR_LIGHTGREEN,
+            text='Left',
         },
     }
 end
@@ -199,67 +250,79 @@ end
 function ItemSelection:get_choices()
     local item_ids = getAvailableItems(uibs.building_type,
             uibs.building_subtype, uibs.custom_type, self.index - 1)
-    local buckets, selected_buckets = {}, {}
+    local buckets = {}
     for _,item_id in ipairs(item_ids) do
         local item = df.item.find(item_id)
         if not item then goto continue end
         local desc = dfhack.items.getDescription(item, 0, true)
         if buckets[desc] then
             local bucket = buckets[desc]
-            table.insert(bucket.item_ids, item_id)
-            bucket.quantity = bucket.quantity + 1
+            table.insert(bucket.data.item_ids, item_id)
+            bucket.data.quantity = bucket.data.quantity + 1
         else
             local entry = {
-                text=desc,
                 search_key=make_search_key(desc),
                 icon=self:callback('get_entry_icon', item_id),
-                item_ids={item_id},
-                item_type=item:getType(),
-                item_subtype=item:getSubtype(),
-                quantity=1,
-                selected=false,
+                data={
+                    item_ids={item_id},
+                    item_type=item:getType(),
+                    item_subtype=item:getSubtype(),
+                    quantity=1,
+                    quality=item:getQuality(),
+                    selected=0,
+                },
             }
             buckets[desc] = entry
         end
         ::continue::
     end
-    local selected_qty = 0
-    for bucket in pairs(selected_buckets) do
-        for _,item_id in ipairs(bucket.item_ids) do
-            self.selected_set[item_id] = true
-        end
-        selected_qty = selected_qty + bucket.quantity
-        bucket.selected = true
-        if selected_qty >= self.quantity then break end
-    end
-    self.num_selected = selected_qty
     local choices = {}
-    for _,choice in pairs(buckets) do
-        choice.text = ('(%d) %s'):format(choice.quantity, choice.text)
+    for desc,choice in pairs(buckets) do
+        local data = choice.data
+        choice.text = {
+            {width=10, text=function() return ('[%d/%d]'):format(data.selected, data.quantity) end},
+            {gap=2, text=desc},
+        }
         table.insert(choices, choice)
     end
     local function choice_sort(a, b)
-        return a.item_type < b.item_type or
-                (a.item_type == b.item_type and a.item_subtype < b.item_subtype) or
-                (a.item_type == b.item_type and a.item_subtype == b.item_subtype and a.search_key < b.search_key)
+        local ad, bd = a.data, b.data
+        return ad.item_type < bd.item_type or
+                (ad.item_type == bd.item_type and ad.item_subtype < bd.item_subtype) or
+                (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key < b.search_key) or
+                (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key == b.search_key and ad.quality > bd.quality)
     end
     table.sort(choices, choice_sort)
     return choices
 end
 
-function ItemSelection:toggle_item(_, choice)
-    if choice.selected then
-        for _,item_id in ipairs(choice.item_ids) do
-            self.selected_set[item_id] = nil
-        end
-        self.num_selected = self.num_selected - choice.quantity
-        choice.selected = false
-    elseif self.quantity > self.num_selected then
-        for _,item_id in ipairs(choice.item_ids) do
-            self.selected_set[item_id] = true
-        end
-        self.num_selected = self.num_selected + choice.quantity
-        choice.selected = true
+function ItemSelection:increment_group(idx, choice)
+    local data = choice.data
+    if self.quantity <= self.num_selected then return false end
+    if data.selected >= data.quantity then return false end
+    data.selected = data.selected + 1
+    self.num_selected = self.num_selected + 1
+    local item_id = data.item_ids[data.selected]
+    self.selected_set[item_id] = true
+    return true
+end
+
+function ItemSelection:decrement_group(idx, choice)
+    local data = choice.data
+    if data.selected <= 0 then return false end
+    local item_id = data.item_ids[data.selected]
+    self.selected_set[item_id] = nil
+    self.num_selected = self.num_selected - 1
+    data.selected = data.selected - 1
+    return true
+end
+
+function ItemSelection:toggle_group(idx, choice)
+    local data = choice.data
+    if data.selected > 0 then
+        while self:decrement_group(idx, choice) do end
+    else
+        while self:increment_group(idx, choice) do end
     end
 end
 
@@ -279,18 +342,25 @@ function ItemSelection:onInput(keys)
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self.on_cancel()
         return true
+    elseif keys._MOUSE_L_DOWN then
+        local list = self.subviews.flist.list
+        local idx = list:getIdxUnderMouse()
+        if idx then
+            list:setSelected(idx)
+            local modstate = dfhack.internal.getModstate()
+            if modstate & 2 > 0 then -- ctrl
+                local choice = list:getChoices()[idx]
+                if modstate & 1 > 0 then -- shift
+                    self:decrement_group(idx, choice)
+                else
+                    self:increment_group(idx, choice)
+                end
+                return true
+            end
+        end
     end
     return ItemSelection.super.onInput(self, keys)
 end
-
-BuildingplanScreen = defclass(BuildingplanScreen, gui.ZScreen)
-BuildingplanScreen.ATTRS {
-    force_pause=true,
-    pass_pause=false,
-    pass_movement_keys=true,
-    pass_mouse_clicks=false,
-    defocusable=false,
-}
 
 ItemSelectionScreen = defclass(ItemSelectionScreen, BuildingplanScreen)
 ItemSelectionScreen.ATTRS {
@@ -311,7 +381,48 @@ function ItemSelectionScreen:init()
 end
 
 --------------------------------
--- PlannerOverlay
+-- FilterSelection
+--
+
+-- returns whether the items matched by the specified filter can have a quality
+-- rating. This also conveniently indicates whether an item can be decorated.
+local function can_be_improved(idx)
+    local filter = get_cur_filters()[idx]
+    if filter.flags2 and filter.flags2.building_material then
+        return false;
+    end
+    return filter.item_type ~= df.item_type.WOOD and
+            filter.item_type ~= df.item_type.BLOCKS and
+            filter.item_type ~= df.item_type.BAR and
+            filter.item_type ~= df.item_type.BOULDER
+end
+
+FilterSelection = defclass(FilterSelection, widgets.Window)
+FilterSelection.ATTRS{
+    frame_title='Choose filters',
+    frame={w=60, h=40, l=4, t=8},
+    draggable=false,
+    resizable=true,
+    index=DEFAULT_NIL,
+}
+
+function FilterSelection:init()
+end
+
+FilterSelectionScreen = defclass(FilterSelectionScreen, BuildingplanScreen)
+FilterSelectionScreen.ATTRS {
+    focus_path='buildingplan/filterselection',
+    index=DEFAULT_NIL,
+}
+
+function FilterSelectionScreen:init()
+    self:addviews{
+        FilterSelection{index=self.index}
+    }
+end
+
+--------------------------------
+-- ItemLine
 --
 
 local function cur_building_has_no_area()
@@ -511,6 +622,10 @@ local function get_placement_errors()
     end
     return out
 end
+
+--------------------------------
+-- PlannerOverlay
+--
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
@@ -932,7 +1047,7 @@ function PlannerOverlay:place_building(pos, chosen_items)
 end
 
 --------------------------------
--- InspectorOverlay
+-- InspectorLine
 --
 
 local function get_building_filters()
@@ -980,6 +1095,10 @@ end
 function InspectorLine:reset()
     self.status = nil
 end
+
+--------------------------------
+-- InspectorOverlay
+--
 
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
 InspectorOverlay.ATTRS{
@@ -1052,20 +1171,5 @@ OVERLAY_WIDGETS = {
     planner=PlannerOverlay,
     inspector=InspectorOverlay,
 }
-
--- returns whether the items matched by the specified filter can have a quality
--- rating. This also conveniently indicates whether an item can be decorated.
--- does not need the core suspended
--- reverse_idx is 0-based and is expected to be counted from the *last* filter
-function item_can_be_improved(btype, subtype, custom, reverse_idx)
-    local filter = get_filter(btype, subtype, custom, reverse_idx)
-    if filter.flags2 and filter.flags2.building_material then
-        return false;
-    end
-    return filter.item_type ~= df.item_type.WOOD and
-            filter.item_type ~= df.item_type.BLOCKS and
-            filter.item_type ~= df.item_type.BAR and
-            filter.item_type ~= df.item_type.BOULDER
-end
 
 return _ENV

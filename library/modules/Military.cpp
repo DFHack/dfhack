@@ -92,18 +92,15 @@ df::squad* Military::makeSquad(int32_t assignment_id)
     result->entity_id = df::global::plotinfo->group_id;
     result->leader_position = corresponding_position->id;
     result->leader_assignment = found_assignment->id;
-    result->unk_1 = -1;
     result->name = name;
-    result->ammo.unk_v50_1 = 0;
+    result->ammo.update = 0;
 
     int16_t squad_size = corresponding_position->squad_size;
 
     for (int i=0; i < squad_size; i++)
     {
         //construct for squad_position seems to set all the attributes correctly
-        //except I've observed unk_2 is -1 generally
         df::squad_position* pos = new df::squad_position();
-        pos->unk_2 = -1;
         pos->flags.whole = 0;
 
         result->positions.push_back(pos);
@@ -137,12 +134,9 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
             df::squad_order* s_order = df::allocate<df::squad_order_trainst>();
 
-            s_order->unk_v40_1 = -1;
-            s_order->unk_v40_2 = -1;
             s_order->year = *df::global::cur_year;
             s_order->year_tick = *df::global::cur_year_tick;
             s_order->unk_v40_3 = -1;
-            s_order->unk_1 = 0;
 
             order->order = s_order;
 

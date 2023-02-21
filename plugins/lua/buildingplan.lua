@@ -146,6 +146,8 @@ BuildingplanScreen.ATTRS {
 local BUILD_TEXT_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREEN, keep_lower=true}
 local BUILD_TEXT_HPEN = to_pen{fg=COLOR_WHITE, bg=COLOR_GREEN, keep_lower=true}
 
+local recently_selected = {}
+
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
     frame_title='Choose items',
@@ -442,8 +444,12 @@ local function is_plannable()
                  and uibs.building_subtype == df.construction_type.TrackNSEW)
 end
 
-local function is_stairs()
+local function is_construction()
     return uibs.building_type == df.building_type.Construction
+end
+
+local function is_stairs()
+    return is_construction
             and uibs.building_subtype == df.construction_type.UpDownStair
 end
 
@@ -555,7 +561,7 @@ function ItemLine:onInput(keys)
 end
 
 function ItemLine:get_x_pen()
-    return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1) and
+    return hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1) and
             COLOR_GREEN or COLOR_GREY
 end
 
@@ -679,6 +685,17 @@ function PlannerOverlay:init()
                  on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
+            view_id='hollow',
+            frame={t=3, l=4},
+            key='CUSTOM_H',
+            label='Hollow area:',
+            visible=is_construction,
+            options={
+                {label='No', value=false},
+                {label='Yes', value=true},
+            },
+        },
+        widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
             frame={t=4, l=4},
             key='CUSTOM_R',
@@ -747,7 +764,7 @@ function PlannerOverlay:init()
                     auto_width=true,
                     on_activate=function() self:clear_filter(self.selected) end,
                     enabled=function()
-                        return hasMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+                        return hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
                     end
                 },
                 widgets.CycleHotkeyLabel{
@@ -904,6 +921,7 @@ function PlannerOverlay:onInput(keys)
             return true
         end
         self.selected = 1
+        self.subviews.hollow:setOption(false)
         self.subviews.choose:setOption(false)
         self:reset()
         reset_counts_flag = true
@@ -1005,10 +1023,16 @@ function PlannerOverlay:onRenderFrame(dc, rect)
         y2 = math.max(selection_pos.y, pos.y),
     }
 
+    local hollow = self.subviews.hollow:getOptionValue()
     local pen = (self.saved_selection_pos or #uibs.errors == 0) and GOOD_PEN or BAD_PEN
 
     local function get_overlay_pen(pos)
-        return pen
+        if not hollow then return pen end
+        if pos.x == bounds.x1 or pos.x == bounds.x2 or
+                pos.y == bounds.y1 or pos.y == bounds.y2 then
+            return pen
+        end
+        return gui.TRANSPARENT_PEN
     end
 
     guidm.renderMapOverlay(get_overlay_pen, bounds)
@@ -1045,8 +1069,12 @@ end
 function PlannerOverlay:place_building(placement_data, chosen_items)
     local p1, p2 = placement_data.p1, placement_data.p2
     local blds = {}
+    local hollow = self.subviews.hollow:getOptionValue()
     local subtype = uibs.building_subtype
     for z=p1.z,p2.z do for y=p1.y,p2.y do for x=p1.x,p2.x do
+        if hollow and x ~= p1.x and x ~= p2.x and y ~= p1.y and y ~= p2.y then
+            goto continue
+        end
         local pos = xyz2pos(x, y, z)
         if is_stairs() then
             subtype = self:get_stairs_subtype(pos, p1, p2)
@@ -1073,6 +1101,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             if k == 'speed' then bld.speed = uibs.speed end
         end
         table.insert(blds, bld)
+        ::continue::
     end end end
     self.subviews.item1:reduce_quantity()
     self.subviews.item2:reduce_quantity()

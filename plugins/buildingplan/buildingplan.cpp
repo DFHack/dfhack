@@ -560,8 +560,8 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     return scanAvailableItems(out, type, subtype, custom, index);
 }
 
-static bool hasMaterialFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering hasMaterialFilter\n");
+static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    DEBUG(status,out).print("entering hasFilter\n");
     return false;
 }
 
@@ -708,7 +708,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
-    DFHACK_LUA_FUNCTION(hasMaterialFilter),
+    DFHACK_LUA_FUNCTION(hasFilter),
     DFHACK_LUA_FUNCTION(setMaterialFilter),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
     DFHACK_LUA_FUNCTION(getDescString),

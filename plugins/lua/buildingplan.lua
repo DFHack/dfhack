@@ -146,7 +146,40 @@ BuildingplanScreen.ATTRS {
 local BUILD_TEXT_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREEN, keep_lower=true}
 local BUILD_TEXT_HPEN = to_pen{fg=COLOR_WHITE, bg=COLOR_GREEN, keep_lower=true}
 
-local recently_selected = {}
+-- map of building type -> {set=set of recently used, list=list of recently used}
+-- most recent entries are at the *end* of the list
+local recently_used = {}
+
+local function sort_by_type(a, b)
+    local ad, bd = a.data, b.data
+    return ad.item_type < bd.item_type or
+            (ad.item_type == bd.item_type and ad.item_subtype < bd.item_subtype) or
+            (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key < b.search_key) or
+            (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key == b.search_key and ad.quality > bd.quality)
+end
+
+local function sort_by_recency(a, b)
+    local tracker = recently_used[uibs.building_type]
+    if not tracker then return sort_by_type(a, b) end
+    local recent_a, recent_b = tracker.set[a.search_key], tracker.set[b.search_key]
+    -- if they're both in the set, return the one with the greater index,
+    -- indicating more recent
+    if recent_a and recent_b then return recent_a > recent_b end
+    if recent_a and not recent_b then return true end
+    if not recent_a and recent_b then return false end
+    return sort_by_type(a, b)
+end
+
+local function sort_by_name(a, b)
+    return a.search_key < b.search_key or
+            (a.search_key == b.search_key and sort_by_type(a, b))
+end
+
+local function sort_by_quantity(a, b)
+    local ad, bd = a.data, b.data
+    return ad.quantity > bd.quantity or
+            (ad.quantity == bd.quantity and sort_by_type(a, b))
+end
 
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
@@ -193,51 +226,78 @@ function ItemSelection:init()
             view_id='flist',
             frame={t=3, l=0, r=0, b=4},
             case_sensitive=false,
-            choices=self:get_choices(),
+            choices=self:get_choices(sort_by_recency),
             icon_width=2,
             on_submit=self:callback('toggle_group'),
         },
-        widgets.HotkeyLabel{
+        widgets.CycleHotkeyLabel{
             frame={l=0, b=2},
+            key='CUSTOM_CTRL_X',
+            label='Sort by:',
+            options={
+                {label='Recently used', value=sort_by_recency},
+                {label='Name', value=sort_by_name},
+                {label='Amount', value=sort_by_quantity},
+            },
+            on_change=self:callback('on_sort'),
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=1},
             key='SELECT',
-            label='Use all/none selected',
+            label='Use all/none',
             auto_width=true,
             on_activate=function() self:toggle_group(self.subviews.flist.list:getSelected()) end,
         },
         widgets.HotkeyLabel{
-            frame={l=32, b=2},
-            key='LEAVESCREEN',
-            label='Cancel build',
+            frame={l=22, b=1},
+            key='CUSTOM_CTRL_D',
+            label='Build',
             auto_width=true,
-            on_activate=function() self.on_cancel() end,
+            on_activate=self:callback('submit'),
         },
         widgets.HotkeyLabel{
-            frame={l=0, b=1},
+            frame={l=38, b=1},
+            key='LEAVESCREEN',
+            label='Go back',
+            auto_width=true,
+            on_activate=self:callback('on_cancel'),
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=0},
             key='KEYBOARD_CURSOR_RIGHT_FAST',
             key_sep='    : ',
-            label='Use one selected',
+            label='Use one',
             auto_width=true,
             on_activate=function() self:increment_group(self.subviews.flist.list:getSelected()) end,
         },
         widgets.Label{
-            frame={l=6, b=1, w=5},
+            frame={l=6, b=0, w=5},
             text_pen=COLOR_LIGHTGREEN,
             text='Right',
         },
         widgets.HotkeyLabel{
-            frame={l=0, b=0},
+            frame={l=23, b=0},
             key='KEYBOARD_CURSOR_LEFT_FAST',
             key_sep='   : ',
-            label='Use one fewer selected',
+            label='Use one fewer',
             auto_width=true,
             on_activate=function() self:decrement_group(self.subviews.flist.list:getSelected()) end,
         },
         widgets.Label{
-            frame={l=6, b=0, w=4},
+            frame={l=29, b=0, w=4},
             text_pen=COLOR_LIGHTGREEN,
             text='Left',
         },
     }
+end
+
+-- resort and restore selection
+function ItemSelection:on_sort(sort_fn)
+    local flist = self.subviews.flist
+    local saved_filter = flist:getFilter()
+    flist:setFilter('')
+    flist:setChoices(self:get_choices(sort_fn), flist:getSelected())
+    flist:setFilter(saved_filter)
 end
 
 local function make_search_key(str)
@@ -248,7 +308,7 @@ local function make_search_key(str)
     return out
 end
 
-function ItemSelection:get_choices()
+function ItemSelection:get_choices(sort_fn)
     local item_ids = getAvailableItems(uibs.building_type,
             uibs.building_subtype, uibs.custom_type, self.index - 1)
     local buckets = {}
@@ -286,14 +346,7 @@ function ItemSelection:get_choices()
         }
         table.insert(choices, choice)
     end
-    local function choice_sort(a, b)
-        local ad, bd = a.data, b.data
-        return ad.item_type < bd.item_type or
-                (ad.item_type == bd.item_type and ad.item_subtype < bd.item_subtype) or
-                (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key < b.search_key) or
-                (ad.item_type == bd.item_type and ad.item_subtype == bd.item_subtype and a.search_key == b.search_key and ad.quality > bd.quality)
-    end
-    table.sort(choices, choice_sort)
+    table.sort(choices, sort_fn)
     return choices
 end
 
@@ -331,10 +384,46 @@ function ItemSelection:get_entry_icon(item_id)
     return self.selected_set[item_id] and get_selected_item_pen() or nil
 end
 
+local function track_recently_used(choices)
+    -- use same set for all subtypes
+    local tracker = ensure_key(recently_used, uibs.building_type)
+    for _,choice in ipairs(choices) do
+        local data = choice.data
+        if data.selected <= 0 then goto continue end
+        local key = choice.search_key
+        local recent_set = ensure_key(tracker, 'set')
+        local recent_list = ensure_key(tracker, 'list')
+        if recent_set[key] then
+            if recent_list[#recent_list] ~= key then
+                for i,v in ipairs(recent_list) do
+                    if v == key then
+                        table.remove(recent_list, i)
+                        table.insert(recent_list, key)
+                        break
+                    end
+                end
+                tracker.set = utils.invert(recent_list)
+            end
+        else
+            -- only keep most recent 10
+            if #recent_list >= 10 then
+                -- remove least recently used from list and set
+                recent_set[table.remove(recent_list, 1)] = nil
+            end
+            table.insert(recent_list, key)
+            recent_set[key] = #recent_list
+        end
+        ::continue::
+    end
+end
+
 function ItemSelection:submit()
     local selected_items = {}
     for item_id in pairs(self.selected_set) do
         table.insert(selected_items, item_id)
+    end
+    if #selected_items > 0 then
+        track_recently_used(self.subviews.flist:getChoices())
     end
     self.on_submit(selected_items)
 end

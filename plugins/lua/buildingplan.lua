@@ -84,15 +84,16 @@ local function get_cur_area_dims(placement_data)
             math.abs(selection_pos.z - pos.z) + 1
 end
 
-local function get_quantity(filter, placement_data)
+local function get_quantity(filter, hollow, placement_data)
     local quantity = filter.quantity or 1
     local dimx, dimy, dimz = get_cur_area_dims(placement_data)
     if quantity < 1 then
-        quantity = (((dimx * dimy) // 4) + 1) * dimz
-    else
-        quantity = quantity * dimx * dimy * dimz
+        return (((dimx * dimy) // 4) + 1) * dimz
     end
-    return quantity
+    if hollow and dimx > 2 and dimy > 2 then
+        return quantity * (2*dimx + 2*dimy - 4) * dimz
+    end
+    return quantity * dimx * dimy * dimz
 end
 
 local BUTTON_START_PEN, BUTTON_END_PEN, SELECTED_ITEM_PEN = nil, nil, nil
@@ -187,14 +188,13 @@ ItemSelection.ATTRS{
     frame={w=56, h=20, l=4, t=8},
     resizable=true,
     index=DEFAULT_NIL,
-    placement_data=DEFAULT_NIL,
+    quantity=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
     on_cancel=DEFAULT_NIL,
 }
 
 function ItemSelection:init()
     local filter = get_cur_filters()[self.index]
-    self.quantity = get_quantity(filter, self.placement_data)
     self.num_selected = 0
     self.selected_set = {}
     local plural = self.quantity == 1 and '' or 's'
@@ -458,7 +458,7 @@ ItemSelectionScreen.ATTRS {
     force_pause=true,
     pass_pause=false,
     index=DEFAULT_NIL,
-    placement_data=DEFAULT_NIL,
+    quantity=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
     on_cancel=DEFAULT_NIL,
 }
@@ -467,7 +467,7 @@ function ItemSelectionScreen:init()
     self:addviews{
         ItemSelection{
             index=self.index,
-            placement_data=self.placement_data,
+            quantity=self.quantity,
             on_submit=self.on_submit,
             on_cancel=self.on_cancel,
         }
@@ -591,6 +591,7 @@ ItemLine = defclass(ItemLine, widgets.Panel)
 ItemLine.ATTRS{
     idx=DEFAULT_NIL,
     is_selected_fn=DEFAULT_NIL,
+    is_hollow_fn=DEFAULT_NIL,
     on_select=DEFAULT_NIL,
     on_filter=DEFAULT_NIL,
     on_clear_filter=DEFAULT_NIL,
@@ -688,7 +689,7 @@ end
 function ItemLine:get_item_line_text()
     local idx = self.idx
     local filter = get_cur_filters()[idx]
-    local quantity = get_quantity(filter)
+    local quantity = get_quantity(filter, self.is_hollow_fn())
 
     self.desc = self.desc or get_desc(filter)
 
@@ -708,7 +709,7 @@ end
 function ItemLine:reduce_quantity()
     if not self.available then return end
     local filter = get_cur_filters()[self.idx]
-    self.available = math.max(0, self.available - get_quantity(filter))
+    self.available = math.max(0, self.available - get_quantity(filter, self.is_hollow_fn()))
 end
 
 local function get_placement_errors()
@@ -750,6 +751,10 @@ function PlannerOverlay:init()
         self.selected = idx
     end
 
+    local function is_hollow_fn()
+        return self.subviews.hollow:getOptionValue()
+    end
+
     main_panel:addviews{
         widgets.Label{
             frame={},
@@ -758,20 +763,20 @@ function PlannerOverlay:init()
             visible=function() return #get_cur_filters() == 0 end,
         },
         ItemLine{view_id='item1', frame={t=0, l=0, r=0}, idx=1,
-                 is_selected_fn=make_is_selected_fn(1), on_select=on_select_fn,
-                 on_filter=self:callback('set_filter'),
+                 is_selected_fn=make_is_selected_fn(1), is_hollow_fn=is_hollow_fn,
+                 on_select=on_select_fn, on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item2', frame={t=2, l=0, r=0}, idx=2,
-                 is_selected_fn=make_is_selected_fn(2), on_select=on_select_fn,
-                 on_filter=self:callback('set_filter'),
+                 is_selected_fn=make_is_selected_fn(2), is_hollow_fn=is_hollow_fn,
+                 on_select=on_select_fn, on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item3', frame={t=4, l=0, r=0}, idx=3,
-                 is_selected_fn=make_is_selected_fn(3), on_select=on_select_fn,
-                 on_filter=self:callback('set_filter'),
+                 is_selected_fn=make_is_selected_fn(3), is_hollow_fn=is_hollow_fn,
+                 on_select=on_select_fn, on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         ItemLine{view_id='item4', frame={t=6, l=0, r=0}, idx=4,
-                 is_selected_fn=make_is_selected_fn(4), on_select=on_select_fn,
-                 on_filter=self:callback('set_filter'),
+                 is_selected_fn=make_is_selected_fn(4), is_hollow_fn=is_hollow_fn,
+                 on_select=on_select_fn, on_filter=self:callback('set_filter'),
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='hollow',
@@ -1032,13 +1037,15 @@ function PlannerOverlay:onInput(keys)
         if #uibs.errors > 0 then return true end
         if dfhack.gui.getMousePos() then
             if is_choosing_area() or cur_building_has_no_area() then
-                local num_filters = #get_cur_filters()
+                local filters = get_cur_filters()
+                local num_filters = #filters
                 if num_filters == 0 then
                     return false -- we don't add value; let the game place it
                 end
                 local choose = self.subviews.choose
                 if choose.enabled() and choose:getOptionValue() then
                     self:save_placement()
+                    local is_hollow = self.subviews.hollow:getOptionValue()
                     local chosen_items, active_screens = {}, {}
                     local pending = num_filters
                     for idx = num_filters,1,-1 do
@@ -1046,7 +1053,8 @@ function PlannerOverlay:onInput(keys)
                         if (self.subviews['item'..idx].available or 0) > 0 then
                             active_screens[idx] = ItemSelectionScreen{
                                 index=idx,
-                                placement_data=self.saved_placement,
+                                quantity=get_quantity(filters[idx], is_hollow,
+                                        self.saved_placement),
                                 on_submit=function(items)
                                     chosen_items[idx] = items
                                     active_screens[idx]:dismiss()

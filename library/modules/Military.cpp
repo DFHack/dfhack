@@ -135,7 +135,6 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
             s_order->year = *df::global::cur_year;
             s_order->year_tick = *df::global::cur_year_tick;
-            s_order->unk_v40_3 = -1;
 
             order->order = s_order;
 

@@ -61,8 +61,10 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
-        message(SEND_ERROR "MSVC 2022 is required")
+    if(NOT MSVC)
+		message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1935 is required.")
+	elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1935))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1935 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 

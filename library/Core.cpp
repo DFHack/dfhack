@@ -89,6 +89,23 @@ using namespace DFHack;
 #include <dlfcn.h>
 #endif
 
+#include <iostream>
+#include <cstdlib>
+#include <signal.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <DbgHelp.h>
+#pragma comment(lib, "dbghelp.lib")
+#elif __linux__
+#include <execinfo.h>
+#include <cxxabi.h>
+#elif __APPLE__
+#include <execinfo.h>
+#include <dlfcn.h>
+#include <cxxabi.h>
+#endif
+
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
@@ -1437,8 +1454,99 @@ std::string Core::getHackPath()
 #endif
 }
 
+
+void signal_handler(int sig) {
+    std::cerr << "Handling signal " << sig << std::endl;
+
+    // open a file for the stack trace
+    std::ofstream traceFile("stacktrace.txt");
+    if (!traceFile.is_open()) {
+        std::cerr << "Failed to open stacktrace file" << std::endl;
+        return;
+    }
+
+    void* stackFrames[256];
+    int stackFrameCount = 0;
+
+#ifdef _WIN32
+    HANDLE process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+    stackFrameCount = CaptureStackBackTrace(0, 256, stackFrames, NULL);
+#elif __linux__
+    stackFrameCount = backtrace(stackFrames, 256);
+#elif __APPLE__
+    stackFrameCount = backtrace(stackFrames, 256);
+#endif
+
+    for (int i = 0; i < stackFrameCount; i++) {
+        void* address = stackFrames[i];
+        std::string symbolName = "(unknown)";
+
+#ifdef _WIN32
+        DWORD64 symbolBuffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+        PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+        symbol->MaxNameLen = MAX_SYM_NAME;
+
+        DWORD64 displacement = 0;
+        if (SymFromAddr(process, (DWORD64)address, &displacement, symbol)) {
+            symbolName = symbol->Name;
+        }
+#elif __linux__
+        Dl_info info;
+        if (dladdr(address, &info) && info.dli_sname) {
+            int status;
+            char* demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
+            if (status == 0) {
+                symbolName = demangled;
+                std::free(demangled);
+            }
+            else {
+                symbolName = info.dli_sname;
+            }
+        }
+#elif __APPLE__
+        Dl_info info;
+        if (dladdr(address, &info) && info.dli_sname) {
+            int status;
+            char* demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
+            if (status == 0) {
+                symbolName = demangled;
+                std::free(demangled);
+            }
+            else {
+                symbolName = info.dli_sname;
+            }
+        }
+#endif
+
+        traceFile << "#" << i << " " << symbolName << " at " << address << std::endl;
+    }
+
+    // close the stack trace file
+    traceFile.close();
+
+    // re-raise the signal to terminate the program
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+
+// define a function to install the crash handler
+void install_signal_handler() {
+    // register the handle_crash function as the signal handler for common crash signals
+    //todo: disable handling for any undesired signals
+    signal(SIGSEGV, signal_handler); // segmentation fault
+    signal(SIGABRT, signal_handler); // abort
+    signal(SIGILL, signal_handler); // illegal instruction
+    signal(SIGFPE, signal_handler); // floating-point exception
+    signal(SIGTERM, signal_handler); // termination request
+    signal(SIGINT, signal_handler); // interrupt signal
+}
+
 bool Core::Init()
 {
+    install_signal_handler();
     if(started)
         return true;
     if(errorstate)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "itemfilter.h"
+
 #include "modules/Persistence.h"
 
 #include "df/building.h"
@@ -38,6 +40,6 @@ void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
 std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, df::job_item *job_item);
 bool itemPassesScreen(df::item * item);
-bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat);
+bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
 void finalizeBuilding(DFHack::color_ostream &out, df::building *bld);

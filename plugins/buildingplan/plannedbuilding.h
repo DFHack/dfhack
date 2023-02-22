@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buildingplan.h"
+#include "itemfilter.h"
 
 #include "Core.h"
 
@@ -18,7 +19,9 @@ public:
 
     const HeatSafety heat_safety;
 
-    PlannedBuilding(DFHack::color_ostream &out, df::building *bld, HeatSafety heat);
+    const std::vector<ItemFilter> item_filters;
+
+    PlannedBuilding(DFHack::color_ostream &out, df::building *bld, HeatSafety heat, const std::vector<ItemFilter> &item_filters);
     PlannedBuilding(DFHack::color_ostream &out, DFHack::PersistentDataItem &bld_config);
 
     void remove(DFHack::color_ostream &out);

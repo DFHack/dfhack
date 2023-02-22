@@ -1292,7 +1292,7 @@ InspectorOverlay.ATTRS{
     default_pos={x=-41,y=14},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
-    frame={w=30, h=14},
+    frame={w=30, h=15},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
@@ -1308,12 +1308,12 @@ function InspectorOverlay:init()
         InspectorLine{view_id='item3', frame={t=6, l=0}, idx=3},
         InspectorLine{view_id='item4', frame={t=8, l=0}, idx=4},
         widgets.HotkeyLabel{
-            frame={t=10, l=0},
+            frame={t=11, l=0},
             label='adjust filters',
             key='CUSTOM_CTRL_F',
         },
         widgets.HotkeyLabel{
-            frame={t=11, l=0},
+            frame={t=12, l=0},
             label='make top priority',
             key='CUSTOM_CTRL_T',
             on_activate=self:callback('make_top_priority'),

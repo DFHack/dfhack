@@ -73,8 +73,9 @@ struct BuildingTypeKeyHash {
 
 static PersistentDataItem config;
 // for use in counting available materials for the UI
-static unordered_map<BuildingTypeKey, vector<df::job_item *>, BuildingTypeKeyHash> job_item_repo;
+static unordered_map<BuildingTypeKey, vector<df::job_item *>, BuildingTypeKeyHash> job_item_cache;
 static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
+static unordered_map<BuildingTypeKey, vector<ItemFilter>, BuildingTypeKeyHash> cur_item_filters;
 // building id -> PlannedBuilding
 static unordered_map<int32_t, PlannedBuilding> planned_buildings;
 // vector id -> filter bucket -> queue of (building id, job_item index)
@@ -95,6 +96,87 @@ void PlannedBuilding::remove(color_ostream &out) {
 
 static const int32_t CYCLE_TICKS = 600; // twice per game day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(status).print("calling buildingplan lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.buildingplan", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
+    int num_filters = 0;
+    if (!call_buildingplan_lua(&out, "get_num_filters", 3, 1,
+            [&](lua_State *L) {
+                Lua::Push(L, std::get<0>(key));
+                Lua::Push(L, std::get<1>(key));
+                Lua::Push(L, std::get<2>(key));
+            },
+            [&](lua_State *L) {
+                num_filters = lua_tonumber(L, -1);
+            })) {
+        return 0;
+    }
+    return num_filters;
+}
+
+static vector<df::job_item *> & get_job_items(color_ostream &out, BuildingTypeKey key) {
+    if (job_item_cache.count(key))
+        return job_item_cache[key];
+    const int num_filters = get_num_filters(out, key);
+    auto &jitems = job_item_cache[key];
+    for (int index = 0; index < num_filters; ++index) {
+        bool failed = false;
+        if (!call_buildingplan_lua(&out, "get_job_item", 4, 1,
+                [&](lua_State *L) {
+                    Lua::Push(L, std::get<0>(key));
+                    Lua::Push(L, std::get<1>(key));
+                    Lua::Push(L, std::get<2>(key));
+                    Lua::Push(L, index+1);
+                },
+                [&](lua_State *L) {
+                    df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
+                    DEBUG(status,out).print("retrieving job_item for (%d, %d, %d) index=%d: %p\n",
+                            std::get<0>(key), std::get<1>(key), std::get<2>(key), index, jitem);
+                    if (!jitem)
+                        failed = true;
+                    else
+                        jitems.emplace_back(jitem);
+                }) || failed) {
+            jitems.clear();
+            break;
+        }
+    }
+    return jitems;
+}
+
+static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
+    if (cur_heat_safety.count(key))
+        return cur_heat_safety.at(key);
+    return HEAT_SAFETY_ANY;
+}
+
+static vector<ItemFilter> & get_item_filters(color_ostream &out, const BuildingTypeKey &key) {
+    if (cur_item_filters.count(key))
+        return cur_item_filters[key];
+
+    vector<ItemFilter> &filters = cur_item_filters[key];
+    filters.resize(get_job_items(out, key).size());
+    return filters;
+}
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
@@ -149,37 +231,19 @@ static void validate_config(color_ostream &out, bool verbose = false) {
     set_config_bool(config, CONFIG_BARS, false);
 }
 
-static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(status).print("calling buildingplan lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.buildingplan", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "signal_reset");
     call_buildingplan_lua(&out, "reload_cursors");
     planned_buildings.clear();
     tasks.clear();
-    for (auto &entry : job_item_repo) {
+    cur_heat_safety.clear();
+    cur_item_filters.clear();
+    for (auto &entry : job_item_cache ) {
         for (auto &jitem : entry.second) {
             delete jitem;
         }
     }
-    job_item_repo.clear();
+    job_item_cache.clear();
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
@@ -199,7 +263,15 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     const size_t num_building_configs = building_configs.size();
     for (size_t idx = 0; idx < num_building_configs; ++idx) {
         PlannedBuilding pb(out, building_configs[idx]);
-        registerPlannedBuilding(out, pb);
+        df::building *bld = df::building::find(pb.id);
+        if (!bld) {
+            WARN(status).print("cannot find building %d; halting load\n", pb.id);
+        }
+        BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
+        if (pb.item_filters.size() != get_item_filters(out, key).size())
+            WARN(status).print("loaded state for building %d doesn't match world\n", pb.id);
+        else
+            registerPlannedBuilding(out, pb);
     }
 
     return CR_OK;
@@ -438,30 +510,12 @@ static bool setSetting(color_ostream &out, string name, bool value) {
 
 static bool isPlannableBuilding(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom) {
     DEBUG(status,out).print("entering isPlannableBuilding\n");
-    int num_filters = 0;
-    if (!call_buildingplan_lua(&out, "get_num_filters", 3, 1,
-            [&](lua_State *L) {
-                Lua::Push(L, type);
-                Lua::Push(L, subtype);
-                Lua::Push(L, custom);
-            },
-            [&](lua_State *L) {
-                num_filters = lua_tonumber(L, -1);
-            })) {
-        return false;
-    }
-    return num_filters >= 1;
+    return get_num_filters(out, BuildingTypeKey(type, subtype, custom)) >= 1;
 }
 
 static bool isPlannedBuilding(color_ostream &out, df::building *bld) {
     TRACE(status,out).print("entering isPlannedBuilding\n");
-    return bld && planned_buildings.count(bld->id) > 0;
-}
-
-static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
-    if (cur_heat_safety.count(key))
-        return cur_heat_safety.at(key);
-    return HEAT_SAFETY_ANY;
+    return bld && planned_buildings.count(bld->id);
 }
 
 static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
@@ -471,7 +525,7 @@ static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
                                     bld->getCustomType()))
         return false;
     BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
-    PlannedBuilding pb(out, bld, get_heat_safety_filter(key));
+    PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key));
     return registerPlannedBuilding(out, pb);
 }
 
@@ -492,30 +546,10 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
-    auto &job_items = job_item_repo[key];
-    if (index >= (int)job_items.size()) {
-        for (int i = job_items.size(); i <= index; ++i) {
-            bool failed = false;
-            if (!call_buildingplan_lua(&out, "get_job_item", 4, 1,
-                    [&](lua_State *L) {
-                        Lua::Push(L, type);
-                        Lua::Push(L, subtype);
-                        Lua::Push(L, custom);
-                        Lua::Push(L, index+1);
-                    },
-                    [&](lua_State *L) {
-                        df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
-                        DEBUG(status,out).print("retrieving job_item for index=%d: %p\n",
-                                index, jitem);
-                        if (!jitem)
-                            failed = true;
-                        else
-                            job_items.emplace_back(jitem);
-                    }) || failed) {
-                return 0;
-            }
-        }
-    }
+    auto &job_items = get_job_items(out, key);
+    if (job_items.size() <= index)
+        return 0;
+    auto &item_filters = get_item_filters(out, key);
 
     auto &jitem = job_items[index];
     auto vector_ids = getVectorIds(out, jitem);
@@ -524,7 +558,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat)) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, item_filters[index])) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 ++count;

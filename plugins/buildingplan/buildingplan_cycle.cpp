@@ -46,7 +46,7 @@ bool itemPassesScreen(df::item * item) {
         && !item->isAssignedToStockpile();
 }
 
-bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat) {
+bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;
@@ -76,7 +76,8 @@ bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat) {
             &jitem, item->getType(), item->getSubtype())
         && Job::isSuitableMaterial(
             &jitem, item->getMaterial(), item->getMaterialIndex(),
-            item->getType());
+            item->getType())
+        && item_filter.matches(item);
 }
 
 bool isJobReady(color_ostream &out, const std::vector<df::job_item *> &jitems) {
@@ -180,7 +181,9 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto id = task.first;
             auto job = bld->jobs[0];
             auto filter_idx = task.second;
-            if (matchesFilters(item, job->job_items[filter_idx], planned_buildings.at(id).heat_safety)
+            auto &pb = planned_buildings.at(id);
+            if (matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
+                        pb.item_filters[filter_idx])
                && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {

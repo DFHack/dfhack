@@ -1465,30 +1465,29 @@ void signal_handler(int sig) {
     HANDLE process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
     stackFrameCount = CaptureStackBackTrace(0, 256, stackFrames, NULL);
+    for (int i = 0; i < stackFrameCount; i++) {
+        void* address = stackFrames[i];
+        char symbolName[1024];
+
+        DWORD64 symbolBuffer[(sizeof(SYMBOL_INFO) + 1024 * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+        PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+        symbol->MaxNameLen = 1024;
+
+        DWORD64 displacement = 0;
+        if (SymFromAddr(process, (DWORD64)address, &displacement, symbol)) {
+            strncpy(symbolName, symbol->Name, 1023);
+            symbolName[1023] = 0;
+        } else {
+            symbolName[0] = 0;
+        }
+        std::cerr << "#" << i << " " << symbolName << " at " << address << std::endl;
+    }
 #elif __linux__
     stackFrameCount = backtrace(stackFrames, 256);
     backtrace_symbols_fd(stackFrames, stackFrameCount, STDERR_FILENO);
 #elif __APPLE__
-    stackFrameCount = backtrace(stackFrames, 256);
-    backtrace_symbols_fd(stackFrames, stackFrameCount, STDERR_FILENO);
-#endif
-
-#ifdef _WIN32
-    for (int i = 0; i < stackFrameCount; i++) {
-        void* address = stackFrames[i];
-        char symbolName[1024];
-        DWORD64 symbolBuffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
-        PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
-        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-        symbol->MaxNameLen = 1023;
-        symbol->Name = symbolName;
-
-        DWORD64 displacement = 0;
-        if (SymFromAddr(process, (DWORD64)address, &displacement, symbol)) {
-            // symbolName = symbol->Name; redundant
-        }
-        std::cerr << "#" << i << " " << symbolName << " at " << address << std::endl;
-    }
+    // todo: find signal-safe bactrace
 #endif
 }
 
@@ -1498,7 +1497,7 @@ void install_signal_handler() {
     // register the handle_crash function as the signal handler for common crash signals
     //todo: disable handling for any undesired signals
 #ifdef _WIN32
-        SetUnhandledExceptionFilter(signal_handler);
+        SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)signal_handler);
 #else
         struct sigaction sa;
         sa.sa_handler = signal_handler;

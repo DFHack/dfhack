@@ -1,5 +1,7 @@
-#include "plannedbuilding.h"
 #include "buildingplan.h"
+#include "buildingtypekey.h"
+#include "defaultitemfilters.h"
+#include "plannedbuilding.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -29,6 +31,7 @@ namespace DFHack {
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
+const string FILTER_CONFIG_KEY = string(plugin_name) + "/filter";
 const string BLD_CONFIG_KEY = string(plugin_name) + "/building";
 
 int get_config_val(PersistentDataItem &c, int index) {
@@ -47,35 +50,11 @@ void set_config_bool(PersistentDataItem &c, int index, bool value) {
     set_config_val(c, index, value ? 1 : 0);
 }
 
-// building type, subtype, custom
-typedef std::tuple<df::building_type, int16_t, int32_t> BuildingTypeKey;
-
-// rotates a size_t value left by count bits
-// assumes count is not 0 or >= size_t_bits
-// replace this with std::rotl when we move to C++20
-static std::size_t rotl_size_t(size_t val, uint32_t count)
-{
-    static const int size_t_bits = CHAR_BIT * sizeof(std::size_t);
-    return val << count | val >> (size_t_bits - count);
-}
-
-struct BuildingTypeKeyHash {
-    std::size_t operator() (const BuildingTypeKey & key) const {
-        // cast first param to appease gcc-4.8, which is missing the enum
-        // specializations for std::hash
-        std::size_t h1 = std::hash<int32_t>()(static_cast<int32_t>(std::get<0>(key)));
-        std::size_t h2 = std::hash<int16_t>()(std::get<1>(key));
-        std::size_t h3 = std::hash<int32_t>()(std::get<2>(key));
-
-        return h1 ^ rotl_size_t(h2, 8) ^ rotl_size_t(h3, 16);
-    }
-};
-
 static PersistentDataItem config;
 // for use in counting available materials for the UI
-static unordered_map<BuildingTypeKey, vector<df::job_item *>, BuildingTypeKeyHash> job_item_cache;
+static unordered_map<BuildingTypeKey, vector<const df::job_item *>, BuildingTypeKeyHash> job_item_cache;
 static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
-static unordered_map<BuildingTypeKey, vector<ItemFilter>, BuildingTypeKeyHash> cur_item_filters;
+static unordered_map<BuildingTypeKey, DefaultItemFilters, BuildingTypeKeyHash> cur_item_filters;
 // building id -> PlannedBuilding
 static unordered_map<int32_t, PlannedBuilding> planned_buildings;
 // vector id -> filter bucket -> queue of (building id, job_item index)
@@ -133,7 +112,7 @@ static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
     return num_filters;
 }
 
-static vector<df::job_item *> & get_job_items(color_ostream &out, BuildingTypeKey key) {
+static const vector<const df::job_item *> & get_job_items(color_ostream &out, BuildingTypeKey key) {
     if (job_item_cache.count(key))
         return job_item_cache[key];
     const int num_filters = get_num_filters(out, key);
@@ -169,13 +148,11 @@ static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
     return HEAT_SAFETY_ANY;
 }
 
-static vector<ItemFilter> & get_item_filters(color_ostream &out, const BuildingTypeKey &key) {
+static DefaultItemFilters & get_item_filters(color_ostream &out, const BuildingTypeKey &key) {
     if (cur_item_filters.count(key))
-        return cur_item_filters[key];
-
-    vector<ItemFilter> &filters = cur_item_filters[key];
-    filters.resize(get_job_items(out, key).size());
-    return filters;
+        return cur_item_filters.at(key);
+    cur_item_filters.emplace(key, DefaultItemFilters(out, key, get_job_items(out, key)));
+    return cur_item_filters.at(key);
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
@@ -258,6 +235,14 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 
     DEBUG(status,out).print("loading persisted state\n");
     clear_state(out);
+
+    vector<PersistentDataItem> filter_configs;
+    World::GetPersistentData(&filter_configs, FILTER_CONFIG_KEY);
+    for (auto &cfg : filter_configs) {
+        BuildingTypeKey key = DefaultItemFilters::getKey(cfg);
+        cur_item_filters.emplace(key, DefaultItemFilters(out, cfg, get_job_items(out, key)));
+    }
+
     vector<PersistentDataItem> building_configs;
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
@@ -265,13 +250,17 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
         if (!bld) {
-            WARN(status).print("cannot find building %d; halting load\n", pb.id);
+            INFO(status).print("building %d no longer exists; skipping\n", pb.id);
+            pb.remove(out);
+            continue;
         }
         BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
-        if (pb.item_filters.size() != get_item_filters(out, key).size())
+        if (pb.item_filters.size() != get_item_filters(out, key).getItemFilters().size()) {
             WARN(status).print("loaded state for building %d doesn't match world\n", pb.id);
-        else
-            registerPlannedBuilding(out, pb);
+            pb.remove(out);
+            continue;
+        }
+        registerPlannedBuilding(out, pb);
     }
 
     return CR_OK;
@@ -352,7 +341,7 @@ static string getBucket(const df::job_item & ji) {
 }
 
 // get a list of item vectors that we should search for matches
-vector<df::job_item_vector_id> getVectorIds(color_ostream &out, df::job_item *job_item) {
+vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_item *job_item) {
     std::vector<df::job_item_vector_id> ret;
 
     // if the filter already has the vector_id set to something specific, use it
@@ -525,7 +514,7 @@ static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
                                     bld->getCustomType()))
         return false;
     BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
-    PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key));
+    PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key).getItemFilters());
     return registerPlannedBuilding(out, pb);
 }
 
@@ -549,7 +538,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     auto &job_items = get_job_items(out, key);
     if (index < 0 || job_items.size() <= (size_t)index)
         return 0;
-    auto &item_filters = get_item_filters(out, key);
+    auto &item_filters = get_item_filters(out, key).getItemFilters();
 
     auto &jitem = job_items[index];
     auto vector_ids = getVectorIds(out, jitem);
@@ -595,7 +584,13 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
 }
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
-    DEBUG(status,out).print("entering hasFilter\n");
+    TRACE(status,out).print("entering hasFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key);
+    for (auto &filter : filters.getItemFilters()) {
+        if (filter.isEmpty())
+            return true;
+    }
     return false;
 }
 

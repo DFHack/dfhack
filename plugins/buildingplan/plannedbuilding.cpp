@@ -58,25 +58,14 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
     return ret;
 }
 
-static std::vector<ItemFilter> deserialize_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
+static std::vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
     std::vector<ItemFilter> ret;
 
     vector<string> rawstrs;
     split_string(&rawstrs, bld_config.val(), "|");
     if (rawstrs.size() < 2)
         return ret;
-    const string &serialized = rawstrs[1];
-
-    DEBUG(status,out).print("deserializing item filters for building %d: %s\n",
-            get_config_val(bld_config, BLD_CONFIG_ID), serialized.c_str());
-
-    vector<string> filterstrs;
-    split_string(&filterstrs, serialized, ";");
-    for (auto &str : filterstrs) {
-        ret.emplace_back(str);
-    }
-
-    return ret;
+    return deserialize_item_filters(out, rawstrs[1]);
 }
 
 static string serialize(const vector<vector<df::job_item_vector_id>> &vector_ids, const vector<ItemFilter> &item_filters) {
@@ -85,14 +74,7 @@ static string serialize(const vector<vector<df::job_item_vector_id>> &vector_ids
         joined.emplace_back(join_strings(",", vec_list));
     }
     std::ostringstream out;
-    out << join_strings(";", joined) << "|";
-
-    joined.clear();
-    for (auto &filter : item_filters) {
-        joined.emplace_back(filter.serialize());
-    }
-    out << join_strings(";", joined);
-
+    out << join_strings(";", joined) << "|" << serialize_item_filters(item_filters);
     return out.str();
 }
 
@@ -111,7 +93,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_con
     : id(get_config_val(bld_config, BLD_CONFIG_ID)),
         vector_ids(deserialize_vector_ids(out, bld_config)),
         heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
-        item_filters(deserialize_item_filters(out, bld_config)),
+        item_filters(get_item_filters(out, bld_config)),
         bld_config(bld_config) { }
 
 // Ensure the building still exists and is in a valid state. It can disappear

@@ -8,10 +8,10 @@
 class ItemFilter {
 public:
     ItemFilter();
-    ItemFilter(std::string serialized);
+    ItemFilter(DFHack::color_ostream &out, std::string serialized);
 
     void clear();
-    bool isEmpty();
+    bool isEmpty() const;
     std::string serialize() const;
 
     void setMinQuality(int quality);
@@ -37,3 +37,6 @@ private:
     df::dfhack_material_category mat_mask;
     std::vector<DFHack::MaterialInfo> materials;
 };
+
+std::vector<ItemFilter> deserialize_item_filters(DFHack::color_ostream &out, const std::string &serialized);
+std::string serialize_item_filters(const std::vector<ItemFilter> &filters);

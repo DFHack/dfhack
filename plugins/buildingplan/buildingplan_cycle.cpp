@@ -46,7 +46,7 @@ bool itemPassesScreen(df::item * item) {
         && !item->isAssignedToStockpile();
 }
 
-bool matchesFilters(df::item * item, df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter) {
+bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;

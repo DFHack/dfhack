@@ -4,11 +4,14 @@
 
 #include "df/item.h"
 
-using namespace DFHack;
-
 namespace DFHack {
     DBG_EXTERN(buildingplan, status);
 }
+
+using std::string;
+using std::vector;
+
+using namespace DFHack;
 
 ItemFilter::ItemFilter() {
     clear();
@@ -22,7 +25,7 @@ void ItemFilter::clear() {
     materials.clear();
 }
 
-bool ItemFilter::isEmpty() {
+bool ItemFilter::isEmpty() const {
     return min_quality == df::item_quality::Ordinary
             && max_quality == df::item_quality::Masterful
             && !decorated_only
@@ -30,7 +33,7 @@ bool ItemFilter::isEmpty() {
             && materials.empty();
 }
 
-static bool deserializeMaterialMask(std::string ser, df::dfhack_material_category mat_mask) {
+static bool deserializeMaterialMask(string ser, df::dfhack_material_category mat_mask) {
     if (ser.empty())
         return true;
 
@@ -41,11 +44,11 @@ static bool deserializeMaterialMask(std::string ser, df::dfhack_material_categor
     return true;
 }
 
-static bool deserializeMaterials(std::string ser, std::vector<DFHack::MaterialInfo> &materials) {
+static bool deserializeMaterials(string ser, vector<DFHack::MaterialInfo> &materials) {
     if (ser.empty())
         return true;
 
-    std::vector<std::string> mat_names;
+    vector<string> mat_names;
     split_string(&mat_names, ser, ",");
     for (auto m = mat_names.begin(); m != mat_names.end(); m++) {
         DFHack::MaterialInfo material;
@@ -58,13 +61,13 @@ static bool deserializeMaterials(std::string ser, std::vector<DFHack::MaterialIn
     return true;
 }
 
-ItemFilter::ItemFilter(std::string serialized) {
+ItemFilter::ItemFilter(color_ostream &out, string serialized) {
     clear();
 
-    std::vector<std::string> tokens;
+    vector<string> tokens;
     split_string(&tokens, serialized, "/");
     if (tokens.size() != 5) {
-        DEBUG(status).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
+        DEBUG(status,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
         return;
     }
 
@@ -77,7 +80,7 @@ ItemFilter::ItemFilter(std::string serialized) {
 }
 
 // format: mat,mask,elements/materials,list/minq/maxq/decorated
-std::string ItemFilter::serialize() const {
+string ItemFilter::serialize() const {
     std::ostringstream ser;
     ser << bitfield_to_string(mat_mask, ",") << "/";
     if (!materials.empty()) {
@@ -124,15 +127,15 @@ void ItemFilter::setMaterialMask(uint32_t mask) {
     mat_mask.whole = mask;
 }
 
-void ItemFilter::setMaterials(const std::vector<DFHack::MaterialInfo> &materials) {
+void ItemFilter::setMaterials(const vector<DFHack::MaterialInfo> &materials) {
     this->materials = materials;
 }
 
-std::string ItemFilter::getMinQuality() const {
+string ItemFilter::getMinQuality() const {
     return ENUM_KEY_STR(item_quality, min_quality);
 }
 
-std::string ItemFilter::getMaxQuality() const {
+string ItemFilter::getMaxQuality() const {
     return ENUM_KEY_STR(item_quality, max_quality);
 }
 
@@ -144,10 +147,10 @@ uint32_t ItemFilter::getMaterialMask() const {
     return mat_mask.whole;
 }
 
-static std::string material_to_string_fn(const MaterialInfo &m) { return m.toString(); }
+static string material_to_string_fn(const MaterialInfo &m) { return m.toString(); }
 
-std::vector<std::string> ItemFilter::getMaterials() const {
-    std::vector<std::string> descriptions;
+vector<string> ItemFilter::getMaterials() const {
+    vector<string> descriptions;
     transform_(materials, descriptions, material_to_string_fn);
 
     if (descriptions.size() == 0)
@@ -186,4 +189,24 @@ bool ItemFilter::matches(df::item *item) const {
     auto item_mat = DFHack::MaterialInfo(imattype, imatindex);
 
     return (materials.size() == 0) ? matchesMask(item_mat, mat_mask) : matches(item_mat);
+}
+
+vector<ItemFilter> deserialize_item_filters(color_ostream &out, const string &serialized) {
+    std::vector<ItemFilter> filters;
+
+    vector<string> filter_strs;
+    split_string(&filter_strs, serialized, ";");
+    for (auto &str : filter_strs) {
+        filters.emplace_back(out, str);
+    }
+
+    return filters;
+}
+
+string serialize_item_filters(const vector<ItemFilter> &filters) {
+    vector<string> strs;
+    for (auto &filter : filters) {
+        strs.emplace_back(filter.serialize());
+    }
+    return join_strings(";", strs);
 }

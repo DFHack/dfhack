@@ -24,17 +24,27 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
+#ifdef LINUX_BUILD
+#include <dlfcn.h>
+#endif
+
+#include <condition_variable>
 #include <cstdio>
-#include <cstring>
-#include <iterator>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
+#include <cstdlib>
+#include <csignal>
 #include <cstdarg>
+#include <cstring>
+#include <forward_list>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <map>
+#include <mutex>
+#include <set>
+#include <sstream>
+#include <string>
+#include <type_traits>
 
 #include "Error.h"
 #include "MemAccess.h"
@@ -74,37 +84,9 @@ using namespace DFHack;
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
-#include <stdio.h>
-#include <iomanip>
-#include <stdlib.h>
-#include <fstream>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include "md5wrapper.h"
-
 #include "SDL_events.h"
 
-#ifdef LINUX_BUILD
-#include <dlfcn.h>
-#endif
-
-#include <iostream>
-#include <cstdlib>
-#include <csignal>
-
-#ifdef _WIN32
-#include <windows.h>
-#include <DbgHelp.h>
-#pragma comment(lib, "dbghelp.lib")
-#elif __linux__
-#include <execinfo.h>
-#include <cxxabi.h>
-#elif __APPLE__
-#include <execinfo.h>
-#include <dlfcn.h>
-#include <cxxabi.h>
-#endif
 
 using namespace df::enums;
 using df::global::init;
@@ -1451,63 +1433,6 @@ std::string Core::getHackPath()
     return p->getPath() + "/hack/";
 #else
     return p->getPath() + "\\hack\\";
-#endif
-}
-
-
-void signal_handler(int sig) {
-    std::cerr << "Handling signal " << sig << std::endl;
-
-    void* stackFrames[256];
-    int stackFrameCount = 0;
-
-#ifdef _WIN32
-    HANDLE process = GetCurrentProcess();
-    SymInitialize(process, NULL, TRUE);
-    stackFrameCount = CaptureStackBackTrace(0, 256, stackFrames, NULL);
-    for (int i = 0; i < stackFrameCount; i++) {
-        void* address = stackFrames[i];
-        char symbolName[1024];
-
-        DWORD64 symbolBuffer[(sizeof(SYMBOL_INFO) + 1024 * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
-        PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
-        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-        symbol->MaxNameLen = 1024;
-
-        DWORD64 displacement = 0;
-        if (SymFromAddr(process, (DWORD64)address, &displacement, symbol)) {
-            strncpy(symbolName, symbol->Name, 1023);
-            symbolName[1023] = 0;
-        } else {
-            symbolName[0] = 0;
-        }
-        std::cerr << "#" << i << " " << symbolName << " at " << address << std::endl;
-    }
-#elif __linux__
-    stackFrameCount = backtrace(stackFrames, 256);
-    backtrace_symbols_fd(stackFrames, stackFrameCount, STDERR_FILENO);
-#elif __APPLE__
-    // todo: find signal-safe bactrace
-#endif
-}
-
-
-// define a function to install the crash handler
-void install_signal_handler() {
-    // register the handle_crash function as the signal handler for common crash signals
-    //todo: disable handling for any undesired signals
-#ifdef _WIN32
-        SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)signal_handler);
-#else
-        struct sigaction sa;
-        sa.sa_handler = signal_handler;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;
-
-        sigaction(SIGSEGV, &sa, NULL);
-        sigaction(SIGABRT, &sa, NULL);
-        sigaction(SIGFPE, &sa, NULL);
-        sigaction(SIGILL, &sa, NULL);
 #endif
 }
 

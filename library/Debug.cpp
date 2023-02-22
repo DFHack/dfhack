@@ -39,6 +39,58 @@ static tm* localtime_r(const time_t* time, tm* result)
 #endif
 
 namespace DFHack {
+
+void signal_handler(int sig) {
+    std::cerr << "Handling signal " << sig << std::endl;
+
+    void* stackFrames[256];
+    int stackFrameCount = 0;
+
+#ifdef _WIN32
+    HANDLE process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+    stackFrameCount = CaptureStackBackTrace(0, 256, stackFrames, NULL);
+    for (int i = 0; i < stackFrameCount; i++) {
+        void* address = stackFrames[i];
+        char symbolName[1024];
+
+        DWORD64 symbolBuffer[(sizeof(SYMBOL_INFO) + 1024 * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+        PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+        symbol->MaxNameLen = 1024;
+
+        DWORD64 displacement = 0;
+        if (SymFromAddr(process, (DWORD64)address, &displacement, symbol)) {
+            strncpy(symbolName, symbol->Name, 1023);
+            symbolName[1023] = 0;
+        } else {
+            symbolName[0] = 0;
+        }
+        std::cerr << "#" << i << " " << symbolName << " at " << address << std::endl;
+    }
+#else
+    stackFrameCount = backtrace(stackFrames, 256);
+    backtrace_symbols_fd(stackFrames, stackFrameCount, STDERR_FILENO);
+#endif
+}
+
+void install_signal_handler() {
+    // register the handle_signal function
+    //todo: disable handling for any undesired signals
+#ifdef _WIN32
+    SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)signal_handler);
+#else
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGABRT, &sa, NULL);
+    sigaction(SIGFPE, &sa, NULL);
+    sigaction(SIGILL, &sa, NULL);
+#endif
+}
 DBG_DECLARE(core,debug);
 
 void DebugManager::registerCategory(DebugCategory& cat)

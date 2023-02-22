@@ -547,7 +547,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
     auto &job_items = get_job_items(out, key);
-    if (job_items.size() <= index)
+    if (index < 0 || job_items.size() <= (size_t)index)
         return 0;
     auto &item_filters = get_item_filters(out, key);
 

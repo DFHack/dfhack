@@ -130,8 +130,7 @@ static bool doSetTile_map(const Pen &pen, int x, int y) {
     long texpos = pen.tile;
     if (!texpos && pen.ch)
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
-    else
-        vp->screentexpos_interface[index] = texpos;
+    vp->screentexpos_interface[index] = texpos;
     return true;
 }
 

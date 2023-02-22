@@ -28,14 +28,6 @@ redistribute it freely, subject to the following restrictions:
 #include <atomic>
 #include "Core.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#include <DbgHelp.h>
-#pragma comment(lib, "dbghelp.lib")
-#else
-#include <execinfo.h>
-#endif
-
 namespace DFHack {
 
 void signal_handler(int sig);

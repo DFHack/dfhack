@@ -24,10 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#ifdef LINUX_BUILD
-#include <dlfcn.h>
-#endif
-
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -42,6 +38,8 @@ distribution.
 #include <map>
 #include <mutex>
 #include <set>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -83,6 +81,10 @@ using namespace DFHack;
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
+
+#ifdef LINUX_BUILD
+#include <dlfcn.h>
+#endif
 
 #include "md5wrapper.h"
 #include "SDL_events.h"

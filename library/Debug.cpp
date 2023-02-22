@@ -38,6 +38,15 @@ static tm* localtime_r(const time_t* time, tm* result)
 }
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#include <DbgHelp.h>
+#pragma comment(lib, "dbghelp.lib")
+#else
+#include <execinfo.h>
+#include <unistd.h>
+#endif
+
 namespace DFHack {
 
 void signal_handler(int sig) {

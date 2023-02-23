@@ -47,7 +47,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
 }
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {
-    if (item_filters.size() <= index) {
+    if (index < 0 || item_filters.size() <= (size_t)index) {
         WARN(status,out).print("invalid index for filter key %d,%d,%d: %d\n",
                 std::get<0>(key), std::get<1>(key), std::get<2>(key), index);
         return;

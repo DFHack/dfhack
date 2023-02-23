@@ -494,7 +494,7 @@ end
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
     frame_title='Choose filters',
-    frame={w=60, h=40, l=30, t=8},
+    frame={w=80, h=53, l=30, t=8},
     resizable=true,
     index=DEFAULT_NIL,
 }
@@ -503,38 +503,122 @@ function FilterSelection:init()
     self:addviews{
         widgets.Panel{
             view_id='options_panel',
-            frame={l=0, t=0, b=5, w=10},
+            frame={l=0, t=0, b=5, w=30},
             autoarrange_subviews=true,
             subviews={
                 widgets.Panel{
                     view_id='quality_panel',
-                    frame={},
-                    frame_style=gui.MEDIUM_FRAME,
+                    frame={l=0, r=0, h=23},
+                    frame_style=gui.INTERIOR_FRAME,
                     frame_title='Item quality',
                     subviews={
+                        widgets.Label{
+                            frame={l=0, t=0},
+                            text='updown hotkeys',
+                        },
+                        widgets.Panel{
+                            view_id='quality_slider',
+                            frame={l=0, t=2, w=3, h=15},
+                            frame_background=to_pen{fg=COLOR_GREEN, bg=COLOR_GREEN, ch=' '},
+                        },
+                        widgets.Label{
+                            frame={l=3, t=3},
+                            text='- Artifact (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=5},
+                            text='- Masterful (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=7},
+                            text='- Exceptional (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=9},
+                            text='- Superior (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=11},
+                            text='- FinelyCrafted (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=13},
+                            text='- WellCrafted (num)',
+                        },
+                        widgets.Label{
+                            frame={l=3, t=15},
+                            text='- Ordinary (num)',
+                        },
+                        widgets.Label{
+                            frame={l=0, t=18},
+                            text='updown hotkeys',
+                        },
+                        widgets.CycleHotkeyLabel{
+                            frame={l=0, t=20},
+                            label='Decorated only:',
+                            options={'No', 'Yes'},
+                        },
                     },
                 },
-                widgets.Panel{
+                widgets.ResizingPanel{
                     view_id='building_panel',
-                    frame={},
-                    frame_style=gui.MEDIUM_FRAME,
+                    frame={l=0, r=0},
+                    frame_style=gui.INTERIOR_FRAME,
                     frame_title='Building options',
+                    autoarrange_subviews=true,
+                    autoarrange_gap=1,
                     subviews={
+                        widgets.WrappedLabel{
+                            frame={l=0},
+                            text_to_wrap='These options will affect all items for the current building type.',
+                        },
+                        widgets.CycleHotkeyLabel{
+                            frame={l=0},
+                            key='CUSTOM_G',
+                            label='Building safety:',
+                            options={
+                                {label='Any', value=0},
+                                {label='Magma', value=2, pen=COLOR_RED},
+                                {label='Fire', value=1, pen=COLOR_LIGHTRED},
+                            },
+                        },
                     },
                 },
                 widgets.Panel{
                     view_id='global_panel',
-                    frame={},
-                    frame_style=gui.MEDIUM_FRAME,
+                    frame={l=0, r=0, b=0},
+                    frame_style=gui.INTERIOR_FRAME,
                     frame_title='Global options',
+                    autoarrange_subviews=true,
+                    autoarrange_gap=1,
                     subviews={
+                        widgets.WrappedLabel{
+                            frame={l=0},
+                            text_to_wrap='These options will affect the selection of "Generic Materials" for future buildings.',
+                        },
+                        widgets.ToggleHotkeyLabel{
+                            frame={l=0},
+                            label='Blocks',
+                        },
+                        widgets.ToggleHotkeyLabel{
+                            frame={l=0},
+                            label='Logs',
+                        },
+                        widgets.ToggleHotkeyLabel{
+                            frame={l=0},
+                            label='Boulders',
+                        },
+                        widgets.ToggleHotkeyLabel{
+                            frame={l=0},
+                            label='Bars',
+                        },
                     },
                 },
             },
         },
         widgets.Panel{
             view_id='materials_panel',
-            frame={l=10, t=0, b=5, r=0},
+            frame={l=30, t=0, b=5, r=0},
             subviews={
                 widgets.Panel{
                     view_id='materials_top',
@@ -545,7 +629,7 @@ function FilterSelection:init()
                 widgets.Panel{
                     view_id='materials_lists',
                     frame={l=0, t=5, r=0, b=0},
-                    frame_style=gui.MEDIUM_FRAME,
+                    frame_style=gui.INTERIOR_FRAME,
                     subviews={
                         widgets.Panel{
                             view_id='materials_categories',

@@ -1461,7 +1461,7 @@ end
 
 function HotkeyLabel:shouldHover()
     -- When on_activate is set, text should also hover on mouseover
-    return HotkeyLabel.super.shouldHover(self) or self.on_activate
+    return self.on_activate or HotkeyLabel.super.shouldHover(self)
 end
 
 function HotkeyLabel:initializeLabel()

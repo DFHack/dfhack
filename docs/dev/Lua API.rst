@@ -3757,6 +3757,12 @@ Misc
   Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
 
 
+* ``invert_color(color, bold)``
+
+  This inverts the brightness of ``color``. If this color is coming from a pen's
+  foreground color, include ``pen.bold`` in ``bold`` for this to work properly.
+
+
 ViewRect class
 --------------
 

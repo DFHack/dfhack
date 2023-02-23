@@ -694,7 +694,7 @@ local function is_construction()
 end
 
 local function is_stairs()
-    return is_construction
+    return is_construction()
             and uibs.building_subtype == df.construction_type.UpDownStair
 end
 

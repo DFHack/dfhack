@@ -491,6 +491,11 @@ local function can_be_improved(idx)
             filter.item_type ~= df.item_type.BOULDER
 end
 
+local OPTIONS_COL_WIDTH = 28
+local TYPE_COL_WIDTH = 20
+local HEADER_HEIGHT = 5
+local FOOTER_HEIGHT = 4
+
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
     frame_title='Choose filters',
@@ -499,62 +504,76 @@ FilterSelection.ATTRS{
     index=DEFAULT_NIL,
 }
 
+local STANDIN_PEN = to_pen{fg=COLOR_GREEN, bg=COLOR_GREEN, ch=' '}
+
 function FilterSelection:init()
     self:addviews{
         widgets.Panel{
             view_id='options_panel',
-            frame={l=0, t=0, b=5, w=30},
+            frame={l=0, t=0, b=FOOTER_HEIGHT, w=OPTIONS_COL_WIDTH},
             autoarrange_subviews=true,
             subviews={
                 widgets.Panel{
                     view_id='quality_panel',
-                    frame={l=0, r=0, h=23},
+                    frame={l=0, r=0, h=24},
+                    frame_inset={t=1},
                     frame_style=gui.INTERIOR_FRAME,
                     frame_title='Item quality',
                     subviews={
-                        widgets.Label{
+                        widgets.HotkeyLabel{
                             frame={l=0, t=0},
-                            text='updown hotkeys',
+                            key='CUSTOM_SHIFT_Q',
+                        },
+                        widgets.HotkeyLabel{
+                            frame={l=1, t=0},
+                            key='CUSTOM_SHIFT_W',
+                            label='Set max quality',
                         },
                         widgets.Panel{
                             view_id='quality_slider',
                             frame={l=0, t=2, w=3, h=15},
-                            frame_background=to_pen{fg=COLOR_GREEN, bg=COLOR_GREEN, ch=' '},
+                            frame_background=STANDIN_PEN,
                         },
                         widgets.Label{
                             frame={l=3, t=3},
-                            text='- Artifact (num)',
+                            text='- Artifact (1)',
                         },
                         widgets.Label{
                             frame={l=3, t=5},
-                            text='- Masterful (num)',
+                            text='- Masterful (3)',
                         },
                         widgets.Label{
                             frame={l=3, t=7},
-                            text='- Exceptional (num)',
+                            text='- Exceptional (34)',
                         },
                         widgets.Label{
                             frame={l=3, t=9},
-                            text='- Superior (num)',
+                            text='- Superior (50)',
                         },
                         widgets.Label{
                             frame={l=3, t=11},
-                            text='- FinelyCrafted (num)',
+                            text='- FinelyCrafted (67)',
                         },
                         widgets.Label{
                             frame={l=3, t=13},
-                            text='- WellCrafted (num)',
+                            text='- WellCrafted (79)',
                         },
                         widgets.Label{
                             frame={l=3, t=15},
-                            text='- Ordinary (num)',
+                            text='- Ordinary (206)',
                         },
-                        widgets.Label{
+                        widgets.HotkeyLabel{
                             frame={l=0, t=18},
-                            text='updown hotkeys',
+                            key='CUSTOM_SHIFT_Z',
+                        },
+                        widgets.HotkeyLabel{
+                            frame={l=1, t=18},
+                            key='CUSTOM_SHIFT_X',
+                            label='Set min quality',
                         },
                         widgets.CycleHotkeyLabel{
                             frame={l=0, t=20},
+                            key='CUSTOM_SHIFT_D',
                             label='Decorated only:',
                             options={'No', 'Yes'},
                         },
@@ -563,6 +582,7 @@ function FilterSelection:init()
                 widgets.ResizingPanel{
                     view_id='building_panel',
                     frame={l=0, r=0},
+                    frame_inset={t=1},
                     frame_style=gui.INTERIOR_FRAME,
                     frame_title='Building options',
                     autoarrange_subviews=true,
@@ -574,7 +594,7 @@ function FilterSelection:init()
                         },
                         widgets.CycleHotkeyLabel{
                             frame={l=0},
-                            key='CUSTOM_G',
+                            key='CUSTOM_SHIFT_G',
                             label='Building safety:',
                             options={
                                 {label='Any', value=0},
@@ -587,30 +607,41 @@ function FilterSelection:init()
                 widgets.Panel{
                     view_id='global_panel',
                     frame={l=0, r=0, b=0},
+                    frame_inset={t=1},
                     frame_style=gui.INTERIOR_FRAME,
                     frame_title='Global options',
                     autoarrange_subviews=true,
-                    autoarrange_gap=1,
                     subviews={
                         widgets.WrappedLabel{
                             frame={l=0},
                             text_to_wrap='These options will affect the selection of "Generic Materials" for future buildings.',
                         },
+                        widgets.Panel{
+                            frame={h=1},
+                        },
                         widgets.ToggleHotkeyLabel{
                             frame={l=0},
+                            key='CUSTOM_SHIFT_B',
                             label='Blocks',
+                            label_width=8,
                         },
                         widgets.ToggleHotkeyLabel{
                             frame={l=0},
+                            key='CUSTOM_SHIFT_L',
                             label='Logs',
+                            label_width=8,
                         },
                         widgets.ToggleHotkeyLabel{
                             frame={l=0},
+                            key='CUSTOM_SHIFT_O',
                             label='Boulders',
+                            label_width=8,
                         },
                         widgets.ToggleHotkeyLabel{
                             frame={l=0},
+                            key='CUSTOM_SHIFT_P',
                             label='Bars',
+                            label_width=8,
                         },
                     },
                 },
@@ -618,36 +649,136 @@ function FilterSelection:init()
         },
         widgets.Panel{
             view_id='materials_panel',
-            frame={l=30, t=0, b=5, r=0},
+            frame={l=OPTIONS_COL_WIDTH, t=0, b=FOOTER_HEIGHT, r=0},
             subviews={
                 widgets.Panel{
-                    view_id='materials_top',
-                    frame={l=0, t=0, r=0, h=5},
+                    view_id='header',
+                    frame={l=0, t=0, h=HEADER_HEIGHT, r=0},
                     subviews={
+                        widgets.EditField{
+                            frame={l=1, t=0},
+                            label_text='Search: ',
+                            on_char=function(ch) return ch:match('%l') end,
+                        },
+                        widgets.CycleHotkeyLabel{
+                            frame={l=1, t=2, w=21},
+                            label='Sort by:',
+                            key='CUSTOM_SHIFT_R',
+                            options={'name', 'available'},
+                        },
+                        widgets.ToggleHotkeyLabel{
+                            frame={l=24, t=2, w=24},
+                            label='Hide unavailable:',
+                            key='CUSTOM_SHIFT_H',
+                            initial_option=false,
+                        },
+                        widgets.Label{
+                            frame={l=1, b=0},
+                            text='Type',
+                            text_pen=COLOR_LIGHTRED,
+                        },
+                        widgets.Label{
+                            frame={l=TYPE_COL_WIDTH, b=0},
+                            text='Material',
+                            text_pen=COLOR_LIGHTRED,
+                        },
                     },
                 },
                 widgets.Panel{
                     view_id='materials_lists',
-                    frame={l=0, t=5, r=0, b=0},
+                    frame={l=0, t=HEADER_HEIGHT, r=0, b=0},
                     frame_style=gui.INTERIOR_FRAME,
                     subviews={
-                        widgets.Panel{
+                        widgets.List{
                             view_id='materials_categories',
-                            frame={l=0, t=0, b=0, w=20},
-                            subviews={
+                            frame={l=1, t=0, b=0, w=TYPE_COL_WIDTH-3},
+                            scroll_keys={},
+                            choices={
+                                {text='Stone', key='CUSTOM_SHIFT_S'},
+                                {text='Wood', key='CUSTOM_SHIFT_W'},
+                                {text='Metal', key='CUSTOM_SHIFT_M'},
+                                {text='Other', key='CUSTOM_SHIFT_O'},
                             },
                         },
-                        widgets.Panel{
+                        widgets.List{
                             view_id='materials_mats',
-                            frame={l=21, t=0, r=0, b=0},
-                            subviews={
+                            frame={l=TYPE_COL_WIDTH, t=0, r=0, b=0},
+                            choices={
+                                {text='9    - granite'},
+                                {text='0    - graphite'},
                             },
                         },
                     },
                 },
+                widgets.Panel{
+                    view_id='divider',
+                    frame={l=TYPE_COL_WIDTH-1, t=HEADER_HEIGHT, b=0, w=1},
+                    on_render=self:callback('draw_divider'),
+                }
             },
         },
+        widgets.Panel{
+            view_id='footer',
+            frame={l=0, r=0, b=0, h=FOOTER_HEIGHT},
+            frame_inset={l=20, t=1},
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={l=0, t=0},
+                    label='Toggle',
+                    auto_width=true,
+                    key='SELECT',
+                },
+                widgets.HotkeyLabel{
+                    frame={l=0, t=2},
+                    label='Done',
+                    auto_width=true,
+                    key='LEAVESCREEN',
+                },
+                widgets.HotkeyLabel{
+                    frame={l=30, t=0},
+                    label='Select all',
+                    auto_width=true,
+                    key='CUSTOM_SHIFT_A',
+                },
+                widgets.HotkeyLabel{
+                    frame={l=30, t=1},
+                    label='Invert selection',
+                    auto_width=true,
+                    key='CUSTOM_SHIFT_I',
+                },
+                widgets.HotkeyLabel{
+                    frame={l=30, t=2},
+                    label='Clear selection',
+                    auto_width=true,
+                    key='CUSTOM_SHIFT_C',
+                },
+            },
+        }
     }
+end
+
+local texpos = dfhack.textures.getThinBordersTexposStart()
+local tp = function(offset)
+    if texpos == -1 then return nil end
+    return texpos + offset
+end
+
+local TOP_PEN = to_pen{tile=tp(10), ch=194, fg=COLOR_GREY, bg=COLOR_BLACK}
+local MID_PEN = to_pen{tile=tp(4), ch=192, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOT_PEN = to_pen{tile=tp(11), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+
+function FilterSelection:draw_divider(dc)
+    local y2 = dc.height - 1
+    for y=0,y2 do
+        dc:seek(0, y)
+        if y == 0 then
+            dc:char(nil, TOP_PEN)
+        elseif y == y2 then
+            dc:char(nil, BOT_PEN)
+        else
+            dc:char(nil, MID_PEN)
+        end
+    end
 end
 
 FilterSelectionScreen = defclass(FilterSelectionScreen, BuildingplanScreen)

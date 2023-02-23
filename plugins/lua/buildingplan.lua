@@ -500,6 +500,70 @@ FilterSelection.ATTRS{
 }
 
 function FilterSelection:init()
+    self:addviews{
+        widgets.Panel{
+            view_id='options_panel',
+            frame={l=0, t=0, b=5, w=10},
+            autoarrange_subviews=true,
+            subviews={
+                widgets.Panel{
+                    view_id='quality_panel',
+                    frame={},
+                    frame_style=gui.MEDIUM_FRAME,
+                    frame_title='Item quality',
+                    subviews={
+                    },
+                },
+                widgets.Panel{
+                    view_id='building_panel',
+                    frame={},
+                    frame_style=gui.MEDIUM_FRAME,
+                    frame_title='Building options',
+                    subviews={
+                    },
+                },
+                widgets.Panel{
+                    view_id='global_panel',
+                    frame={},
+                    frame_style=gui.MEDIUM_FRAME,
+                    frame_title='Global options',
+                    subviews={
+                    },
+                },
+            },
+        },
+        widgets.Panel{
+            view_id='materials_panel',
+            frame={l=10, t=0, b=5, r=0},
+            subviews={
+                widgets.Panel{
+                    view_id='materials_top',
+                    frame={l=0, t=0, r=0, h=5},
+                    subviews={
+                    },
+                },
+                widgets.Panel{
+                    view_id='materials_lists',
+                    frame={l=0, t=5, r=0, b=0},
+                    frame_style=gui.MEDIUM_FRAME,
+                    subviews={
+                        widgets.Panel{
+                            view_id='materials_categories',
+                            frame={l=0, t=0, b=0, w=20},
+                            subviews={
+                            },
+                        },
+                        widgets.Panel{
+                            view_id='materials_mats',
+                            frame={l=21, t=0, r=0, b=0},
+                            subviews={
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
 end
 
 FilterSelectionScreen = defclass(FilterSelectionScreen, BuildingplanScreen)
@@ -512,6 +576,14 @@ function FilterSelectionScreen:init()
     self:addviews{
         FilterSelection{index=self.index}
     }
+end
+
+function FilterSelectionScreen:onShow()
+    df.global.game.main_interface.bottom_mode_selected = -1
+end
+
+function FilterSelectionScreen:onDismiss()
+    df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
 end
 
 --------------------------------
@@ -1048,6 +1120,7 @@ function PlannerOverlay:onInput(keys)
                     local is_hollow = self.subviews.hollow:getOptionValue()
                     local chosen_items, active_screens = {}, {}
                     local pending = num_filters
+                    df.global.game.main_interface.bottom_mode_selected = -1
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         if (self.subviews['item'..idx].available or 0) > 0 then
@@ -1061,6 +1134,7 @@ function PlannerOverlay:onInput(keys)
                                     active_screens[idx] = nil
                                     pending = pending - 1
                                     if pending == 0 then
+                                        df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
                                         self:place_building(self:restore_placement(), chosen_items)
                                     end
                                 end,
@@ -1068,6 +1142,7 @@ function PlannerOverlay:onInput(keys)
                                     for i,scr in pairs(active_screens) do
                                         scr:dismiss()
                                     end
+                                    df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
                                     self:restore_placement()
                                 end,
                             }:show()

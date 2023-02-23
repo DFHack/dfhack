@@ -3757,6 +3757,12 @@ Misc
   Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
 
 
+* ``invert_color(color, bold)``
+
+  This inverts the brightness of ``color``. If this color is coming from a pen's
+  foreground color, include ``pen.bold`` in ``bold`` for this to work properly.
+
+
 ViewRect class
 --------------
 
@@ -4662,7 +4668,9 @@ It has the following attributes:
 
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
-:text_hpen: Specifies the pen for text hovered over by the mouse, if a click handler is registered.
+:text_hpen: Specifies the pen for text hovered over by the mouse, if a click
+            handler is registered. By default, this will invert the foreground
+            and background colors.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
@@ -4768,6 +4776,18 @@ The Label widget implements the following methods:
   integers or one of the following keywords: ``+page``, ``-page``,
   ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
   lines that were actually scrolled (negative for scrolling up).
+
+* ``label:shouldHover()``
+
+  This method returns whether or not this widget should show a hover effect,
+  generally you want to return ``true`` if there is some type of mouse handler
+  present. For example, for a ``HotKeyLabel``::
+
+    function HotkeyLabel:shouldHover()
+        -- When on_activate is set, text should also hover on mouseover
+        return HotkeyLabel.super.shouldHover(self) or self.on_activate
+    end
+
 
 WrappedLabel class
 ------------------
@@ -4903,6 +4923,8 @@ item to call the ``on_submit`` callback for that item.
 It has the following attributes:
 
 :text_pen: Specifies the pen for deselected list entries.
+:text_hpen: Specifies the pen for entries that the mouse is hovered over.
+            Defaults to swapping the background/foreground colors.
 :cursor_pen: Specifies the pen for the selected entry.
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.

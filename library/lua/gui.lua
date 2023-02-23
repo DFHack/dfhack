@@ -987,4 +987,10 @@ function FramedScreen:onRenderFrame(dc, rect)
     paint_frame(dc,rect,self.frame_style,self.frame_title)
 end
 
+-- Inverts the brightness of the color, optionally taking a "bold" parameter,
+-- which you should include if you're reading the fg color of a pen.
+function invert_color(color, bold)
+    color = bold and (color + 8) or color
+    return (color + 8) % 16
+end
 return _ENV

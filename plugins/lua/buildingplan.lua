@@ -1355,6 +1355,7 @@ function InspectorLine:get_status_line()
 end
 
 function InspectorLine:reset()
+    self.desc = nil
     self.status = nil
 end
 

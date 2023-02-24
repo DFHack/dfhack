@@ -36,6 +36,20 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.07-alpha2
+
+## Fixes
 -@ `nestboxes`: fixed bug causing nestboxes themselves to be forbidden, which prevented citizens from using them to lay eggs. Now only eggs are forbidden.
 - `autobutcher`: implemented work-around for Dwarf Fortress not setting nicknames properly, so that nicknames created in the in-game interface are detected & protect animals from being butchered properly. Note that nicknames for unnamed units are not currently saved by dwarf fortress - use ``enable fix/protect-nicks`` to fix any nicknames created/removed within dwarf fortress so they can be saved/reloaded when you reload the game.
 -@ `seedwatch`: fix saving and loading of seed stock targets
@@ -53,8 +67,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `confirm`: configuration data is now persisted globally.
 - `tailor`: add support for adamantine cloth (off by default); improve logging
 
-## Documentation
-
 ## API
 - ``Gui::any_civzone_hotkey``, ``Gui::getAnyCivZone``, ``Gui::getSelectedCivZone``:  new functions to operate on the new zone system
 - Units module: added new predicates for ``isGeldable()``, ``isMarkedForGelding()``, and ``isPet()``
@@ -63,8 +75,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
 - ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
 - ``widgets.TabBar``: new library widget (migrated from control-panel.lua)
-
-## Removed
 
 # 50.07-alpha1
 

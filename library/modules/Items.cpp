@@ -1647,5 +1647,5 @@ bool Items::isSquadEquipment(df::item *item)
         return false;
 
     auto &vec = plotinfo->equipment.items_assigned[item->getType()];
-    return binsearch_index(vec, &df::item::id, item->id) >= 0;
+    return binsearch_index(vec, item->id) >= 0;
 }

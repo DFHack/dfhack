@@ -41,9 +41,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ `seedwatch`: fix saving and loading of seed stock targets
 - `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
 -@ `autochop`: generate default names for burrows with no assigned names
-- ``Buildings::StockpileIterator``: check for stockpile items on block boundary.
+- ``Buildings::StockpileIterator``: fix check for stockpile items on block boundary.
 - `dig-now`: fixed multi-layer channel designations only channeling every second layer
-- `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment; add support for adamantine cloth (off by default); improve logging
+- `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment
 -@ `confirm`: fix fps drop when enabled
 
 ## Misc Improvements
@@ -52,20 +52,18 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ Stopped mouse clicks from affecting the map when a click on a DFHack screen dismisses the window
 - `confirm`: configuration data is now persisted globally.
 - `dig-now`: added handling of dig designations that have been converted into active jobs
+- `tailor`: add support for adamantine cloth (off by default); improve logging
 
 ## Documentation
 
 ## API
 - ``Gui::any_civzone_hotkey``, ``Gui::getAnyCivZone``, ``Gui::getSelectedCivZone``:  new functions to operate on the new zone system
-- Units module: added new predicates for:
-  - ``isGeldable()``
-  - ``isMarkedForGelding()``
-  - ``isPet()``
+- Units module: added new predicates for ``isGeldable()``, ``isMarkedForGelding()``, and ``isPet()``
 
 ## Lua
 - ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
 - ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
-- Added ``widgets.TabBar`` and ``widgets.Tab`` (migrated from control-panel.lua)
+- ``widgets.TabBar``: new library widget (migrated from control-panel.lua)
 
 ## Removed
 

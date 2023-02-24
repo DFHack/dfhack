@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Buildings::StockpileIterator``: fix check for stockpile items on block boundary.
 - `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment
 -@ `confirm`: fix fps drop when enabled
+- `channel-safely`: fix an out of bounds error regarding the REPORT event listener receiving (presumably) stale id's
 
 ## Misc Improvements
 - `autobutcher`: logs activity to the console terminal instead of making disruptive in-game announcements

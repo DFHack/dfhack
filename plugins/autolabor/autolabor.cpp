@@ -841,7 +841,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
+                DEBUG(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
                     dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }

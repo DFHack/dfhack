@@ -1870,15 +1870,15 @@ void Core::doUpdate(color_ostream &out)
     // if the world changes
     if (new_wdata != last_world_data_ptr)
     {
-        // we check for std::map change too
+        // we check for map change too
         bool had_map = isMapLoaded();
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        // and if the world is going away, we report the std::map change first
+        // and if the world is going away, we report the map change first
         if(had_map)
             onStateChange(out, SC_MAP_UNLOADED);
-        // and if the world is appearing, we report std::map change after that
+        // and if the world is appearing, we report map change after that
         onStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
         if(isMapLoaded())
             onStateChange(out, SC_MAP_LOADED);

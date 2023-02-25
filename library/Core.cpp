@@ -1648,7 +1648,7 @@ bool Core::Init()
     }
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
-    // create std::mutex for syncing with interactive tasks
+    // create mutex for syncing with interactive tasks
     std::cerr << "Initializing plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
@@ -1883,7 +1883,7 @@ void Core::doUpdate(color_ostream &out)
         if(isMapLoaded())
             onStateChange(out, SC_MAP_LOADED);
     }
-    // otherwise just check for std::map change...
+    // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
     {
         bool had_map = isMapLoaded();
@@ -2029,7 +2029,7 @@ namespace DFHack {
                     const char *v = va_arg(list, const char *);
                     if (!v || !v[0])
                         break;
-                    val.push_back(std::string(v));
+                    val.emplace_back(v);
                 }
                 result.push_back(Entry(key,val));
             }
@@ -2164,7 +2164,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     if (event == SC_WORLD_LOADED && Version::is_prerelease())
     {
         runCommand(out, "gui/prerelease-warning");
-        std::cerr << "loaded std::map in prerelease build" << std::endl;
+        std::cerr << "loaded map in prerelease build" << std::endl;
     }
 
     if (event == SC_WORLD_LOADED)
@@ -2424,7 +2424,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
             if (!binding.focus.empty()) {
                 if (!Gui::matchFocusString(binding.focus)) {
                     std::vector<std::string> focusStrings = Gui::getCurFocus(true);
-                    DEBUG(keybinding).print("skipping keybinding due to focus std::string mismatch: '%s' !~ '%s'\n",
+                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
                         join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
                     continue;
                 }

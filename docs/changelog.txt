@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+-@ ``widgets.HotkeyLabel``: don't trigger on click if the widget is disabled
 
 ## Misc Improvements
 

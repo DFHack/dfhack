@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``widgets.Label``: token ``tile`` properties can now be functions that return a value
 
 ## Removed
 

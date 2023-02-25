@@ -404,6 +404,22 @@ DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
                                 bool squash_empty = false);
 DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::vector<std::string> &items);
 
+template<typename T>
+inline std::string join_strings(const std::string &separator, T &items) {
+    std::stringstream ss;
+
+    bool first = true;
+    for (auto &item : items) {
+        if (first)
+            first = false;
+        else
+            ss << separator;
+        ss << item;
+    }
+
+    return ss.str();
+}
+
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);

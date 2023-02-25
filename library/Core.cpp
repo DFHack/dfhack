@@ -239,7 +239,7 @@ void fHKthread(void * iodata)
     bool keep_going = true;
     while(keep_going)
     {
-        std::string stuff = core->getHotkeyCmd(keep_going); // waits on std::mutex!
+        std::string stuff = core->getHotkeyCmd(keep_going); // waits on mutex!
         if(!stuff.empty())
         {
             color_ostream_proxy out(core->getConsole());

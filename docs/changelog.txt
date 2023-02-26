@@ -45,8 +45,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+-@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
 
 ## Removed
+-@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
 
 # 50.07-alpha2
 

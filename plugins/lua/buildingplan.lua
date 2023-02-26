@@ -498,7 +498,7 @@ local FOOTER_HEIGHT = 4
 
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
-    frame_title='Choose filters',
+    frame_title='Choose filters [MOCK -- NOT FUNCTIONAL]',
     frame={w=80, h=53, l=30, t=8},
     resizable=true,
     index=DEFAULT_NIL,

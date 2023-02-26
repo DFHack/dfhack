@@ -60,8 +60,6 @@ distribution.
 #include "LuaTools.h"
 #include "DFHackVersion.h"
 
-#include "MiscUtils.h"
-
 using namespace DFHack;
 
 #include "df/plotinfost.h"

@@ -4325,9 +4325,11 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
-* ``THIN_FRAME``
+* ``INTERIOR_FRAME``
 
-  A frame suitable for light accent elements.
+  A frame suitable for light interior accent elements. This frame does *not* have
+  a visible ``DFHack`` signature on it, so it must not be used as the most external
+  frame for a DFHack-owned UI.
 
 gui.widgets
 ===========
@@ -4704,8 +4706,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.tile = pen``
 
-  Specifies a pen or texture index to paint as one tile before the main part of
-  the token.
+  Specifies a pen or texture index (or a function that returns a pen or texture
+  index) to paint as one tile before the main part of the token.
 
 * ``token.width = ...``
 

@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- Gui focus strings will no longer get the "dfhack/" prefix if the string "dfhack/" already exists in the focus string
 
 ## Lua
 -@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI

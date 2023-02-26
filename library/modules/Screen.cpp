@@ -877,7 +877,7 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
 
     if (focus.empty())
         focus = "lua";
-    else
+    else if (string::npos == focus.find("lua/"))
         focus = "lua/"+focus;
 }
 

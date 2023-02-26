@@ -37,16 +37,21 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 -@ ``widgets.HotkeyLabel``: don't trigger on click if the widget is disabled
+- ``dfhack.job.isSuitableMaterial``: now properly detects lack of fire and magma safety for vulnerable materials with high melting points
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
+- Gui focus strings will no longer get the "dfhack/" prefix if the string "dfhack/" already exists in the focus string
 
 ## Lua
+- ``widgets.Label``: token ``tile`` properties can now be functions that return a value
+-@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
 
 ## Removed
+-@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
 
 # 50.07-alpha2
 

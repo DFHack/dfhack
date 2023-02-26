@@ -4706,8 +4706,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.tile = pen``
 
-  Specifies a pen or texture index to paint as one tile before the main part of
-  the token.
+  Specifies a pen or texture index (or a function that returns a pen or texture
+  index) to paint as one tile before the main part of the token.
 
 * ``token.width = ...``
 

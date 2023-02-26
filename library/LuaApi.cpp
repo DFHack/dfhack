@@ -1659,6 +1659,7 @@ static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
 }
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
+    WRAPM(Job,attachJobItem),
     WRAPM(Job,cloneJobStruct),
     WRAPM(Job,printItemDetails),
     WRAPM(Job,printJobDetails),

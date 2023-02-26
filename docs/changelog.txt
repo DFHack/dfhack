@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - ``dfhack.screen.paintTile()``: you can now explicitly clear the interface cursor from a map tile by passing ``0`` as the tile value
 - ``widgets.Label``: token ``tile`` properties can now be functions that return a value
+-@ ``widgets.FilteredList``: search key matching is now case insensitive by default
 -@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
 
 ## Removed

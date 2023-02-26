@@ -34,6 +34,7 @@ DFSDL_Surface * (*g_SDL_ConvertSurface)(DFSDL_Surface *, const DFSDL_PixelFormat
 void (*g_SDL_FreeSurface)(DFSDL_Surface *);
 int (*g_SDL_SemWait)(DFSDL_sem *);
 int (*g_SDL_SemPost)(DFSDL_sem *);
+int (*g_SDL_PushEvent)(DFSDL_Event *);
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -69,6 +70,7 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_FreeSurface);
     bind(g_sdl_handle, SDL_SemWait);
     bind(g_sdl_handle, SDL_SemPost);
+    bind(g_sdl_handle, SDL_PushEvent);
     #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -117,4 +119,8 @@ int DFSDL::DFSDL_SemWait(DFSDL_sem *sem) {
 
 int DFSDL::DFSDL_SemPost(DFSDL_sem *sem) {
     return g_SDL_SemPost(sem);
+}
+
+int DFSDL::DFSDL_PushEvent(DFSDL_Event *event) {
+    return g_SDL_PushEvent(event);
 }

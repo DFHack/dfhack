@@ -8,6 +8,7 @@ namespace DFHack
     // SDL stand-in type definitions
     typedef signed short SINT16;
     typedef void DFSDL_sem;
+    typedef void DFSDL_Event;
 
     typedef struct
     {
@@ -86,6 +87,7 @@ DFHACK_EXPORT DFSDL_Surface * DFSDL_ConvertSurface(DFSDL_Surface *src, const DFS
 DFHACK_EXPORT void DFSDL_FreeSurface(DFSDL_Surface *surface);
 DFHACK_EXPORT int DFSDL_SemWait(DFSDL_sem *sem);
 DFHACK_EXPORT int DFSDL_SemPost(DFSDL_sem *sem);
+DFHACK_EXPORT int DFSDL_PushEvent(DFSDL_Event *event);
 
 }
 

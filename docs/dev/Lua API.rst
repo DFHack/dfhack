@@ -4325,9 +4325,11 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
-* ``THIN_FRAME``
+* ``INTERIOR_FRAME``
 
-  A frame suitable for light accent elements.
+  A frame suitable for light interior accent elements. This frame does *not* have
+  a visible ``DFHack`` signature on it, so it must not be used as the most external
+  frame for a DFHack-owned UI.
 
 gui.widgets
 ===========

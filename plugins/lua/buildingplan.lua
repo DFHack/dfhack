@@ -906,30 +906,54 @@ function GlobalSettingsPage:init()
             frame={h=1},
         },
         widgets.ToggleHotkeyLabel{
+            view_id='blocks',
             frame={l=0},
             key='CUSTOM_B',
             label='Blocks',
             label_width=8,
+            on_change=self:callback('update_setting', 'blocks'),
         },
         widgets.ToggleHotkeyLabel{
+            view_id='logs',
             frame={l=0},
             key='CUSTOM_L',
             label='Logs',
             label_width=8,
+            on_change=self:callback('update_setting', 'logs'),
         },
         widgets.ToggleHotkeyLabel{
+            view_id='boulders',
             frame={l=0},
             key='CUSTOM_O',
             label='Boulders',
             label_width=8,
+            on_change=self:callback('update_setting', 'boulders'),
         },
         widgets.ToggleHotkeyLabel{
+            view_id='bars',
             frame={l=0},
             key='CUSTOM_R',
             label='Bars',
             label_width=8,
+            on_change=self:callback('update_setting', 'bars'),
         },
     }
+
+    self:init_settings()
+end
+
+function GlobalSettingsPage:init_settings()
+    local settings = getGlobalSettings()
+    local subviews = self.subviews
+    subviews.blocks:setOption(settings.blocks)
+    subviews.logs:setOption(settings.logs)
+    subviews.boulders:setOption(settings.boulders)
+    subviews.bars:setOption(settings.bars)
+end
+
+function GlobalSettingsPage:update_setting(setting, val)
+    dfhack.run_command('buildingplan', 'set', setting, tostring(val))
+    self:init_settings()
 end
 
 --------------------------------

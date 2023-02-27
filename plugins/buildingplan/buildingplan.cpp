@@ -603,6 +603,20 @@ static int getAvailableItems(lua_State *L) {
     return 1;
 }
 
+static int getGlobalSettings(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering getGlobalSettings\n");
+    map<string, bool> settings;
+    settings.emplace("blocks", get_config_bool(config, CONFIG_BLOCKS));
+    settings.emplace("logs", get_config_bool(config, CONFIG_LOGS));
+    settings.emplace("boulders", get_config_bool(config, CONFIG_BOULDERS));
+    settings.emplace("bars", get_config_bool(config, CONFIG_BARS));
+    Lua::Push(L, settings);
+    return 1;
+}
+
 static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
@@ -762,8 +776,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isPlannedBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),
-    DFHACK_LUA_FUNCTION(scheduleCycle),
-    DFHACK_LUA_FUNCTION(countAvailableItems),
+    DFHACK_LUA_FUNCTION(scheduleCycle),    DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(hasFilter),
     DFHACK_LUA_FUNCTION(setMaterialFilter),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
@@ -774,6 +787,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 };
 
 DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(getGlobalSettings),
     DFHACK_LUA_COMMAND(getAvailableItems),
     DFHACK_LUA_COMMAND(getMaterialFilter),
     DFHACK_LUA_COMMAND(getHeatSafetyFilter),

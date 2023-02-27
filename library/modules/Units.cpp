@@ -588,19 +588,7 @@ bool Units::isMischievous(df::unit *unit)
 bool Units::isAvailableForAdoption(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    auto refs = unit->specific_refs;
-    for(size_t i=0; i<refs.size(); i++)
-    {
-        auto ref = refs[i];
-        auto reftype = ref->type;
-        if( reftype == df::specific_ref_type::PETINFO_PET )
-        {
-            //df::pet_info* pet = ref->pet;
-            return true;
-        }
-    }
-
-    return false;
+    return unit->flags3.bits.available_for_adoption;
 }
 
 bool Units::isPet(df::unit* unit)

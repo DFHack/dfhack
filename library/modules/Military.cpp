@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include "MiscUtils.h"
 #include "modules/Military.h"
 #include "modules/Translation.h"
 #include "df/building.h"
@@ -258,18 +259,16 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
     {
         room_from_squad = new df::squad::T_rooms();
         room_from_squad->building_id = civzone_id;
-        squad->rooms.push_back(room_from_squad);
 
-        std::sort(squad->rooms.begin(), squad->rooms.end(), [](df::squad::T_rooms* a, df::squad::T_rooms* b){return a->building_id < b->building_id;});
+        insert_into_vector(squad->rooms, &df::squad::T_rooms::building_id, room_from_squad);
     }
 
     if (room_from_building == nullptr)
     {
         room_from_building = new df::building_civzonest::T_squad_room_info();
         room_from_building->squad_id = squad_id;
-        zone->squad_room_info.push_back(room_from_building);
 
-        std::sort(zone->squad_room_info.begin(), zone->squad_room_info.end(), [](df::building_civzonest::T_squad_room_info* a, df::building_civzonest::T_squad_room_info* b){return a->squad_id < b->squad_id;});
+        insert_into_vector(zone->squad_room_info, &df::building_civzonest::T_squad_room_info::squad_id, room_from_building);
     }
 
     if (room_from_squad)

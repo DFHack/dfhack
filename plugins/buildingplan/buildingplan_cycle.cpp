@@ -5,6 +5,7 @@
 
 #include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Maps.h"
 #include "modules/Materials.h"
 
 #include "df/building_design.h"
@@ -151,6 +152,10 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
+static bool isAccessibleFrom(df::item *item, df::job *job) {
+    return Maps::canWalkBetween(Items::getPosition(item), job->pos);
+}
+
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
@@ -182,9 +187,10 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto job = bld->jobs[0];
             auto filter_idx = task.second;
             auto &pb = planned_buildings.at(id);
-            if (matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
+            if (isAccessibleFrom(item, job)
+                    && matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
                         pb.item_filters[filter_idx])
-               && Job::attachJobItem(job, item,
+                    && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {
                 MaterialInfo material;

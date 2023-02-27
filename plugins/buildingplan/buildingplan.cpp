@@ -629,10 +629,20 @@ static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtyp
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     for (auto &filter : filters.getItemFilters()) {
-        if (filter.isEmpty())
+        if (!filter.isEmpty())
             return true;
     }
     return false;
+}
+
+static void clearFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    TRACE(status,out).print("entering clearFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key);
+    if (filters.getItemFilters().size() <= index)
+        return;
+    filters.setItemFilter(out, ItemFilter(), index);
+    call_buildingplan_lua(&out, "signal_reset");
 }
 
 static void setMaterialFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index, string filter) {
@@ -679,6 +689,45 @@ static int getHeatSafetyFilter(lua_State *L) {
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
     Lua::Push(L, heat);
+    return 1;
+}
+
+static void setQualityFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index,
+        int decorated, int min_quality, int max_quality) {
+    DEBUG(status,out).print("entering setQualityFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key).getItemFilters();
+    if (filters.size() <= index)
+        return;
+    ItemFilter filter = filters[index];
+    filter.setDecoratedOnly(decorated != 0);
+    filter.setMinQuality(min_quality);
+    filter.setMaxQuality(max_quality);
+    get_item_filters(out, key).setItemFilter(out, filter, index);
+    call_buildingplan_lua(&out, "signal_reset");
+}
+
+static int getQualityFilter(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    int index = luaL_checkint(L, 4);
+    DEBUG(status,*out).print(
+            "entering getQualityFilter building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(*out, key).getItemFilters();
+    if (filters.size() <= index)
+        return 0;
+    auto &filter = filters[index];
+    map<string, int> ret;
+    ret.emplace("decorated", filter.getDecoratedOnly());
+    ret.emplace("min_quality", filter.getMinQuality());
+    ret.emplace("max_quality", filter.getMaxQuality());
+    Lua::Push(L, ret);
     return 1;
 }
 
@@ -778,8 +827,10 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),    DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(hasFilter),
+    DFHACK_LUA_FUNCTION(clearFilter),
     DFHACK_LUA_FUNCTION(setMaterialFilter),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
+    DFHACK_LUA_FUNCTION(setQualityFilter),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
@@ -791,5 +842,6 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getAvailableItems),
     DFHACK_LUA_COMMAND(getMaterialFilter),
     DFHACK_LUA_COMMAND(getHeatSafetyFilter),
+    DFHACK_LUA_COMMAND(getQualityFilter),
     DFHACK_LUA_END
 };

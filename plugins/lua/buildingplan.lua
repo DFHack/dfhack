@@ -310,7 +310,7 @@ end
 
 function ItemSelection:get_choices(sort_fn)
     local item_ids = getAvailableItems(uibs.building_type,
-            uibs.building_subtype, uibs.custom_type, self.index - 1)
+            uibs.building_subtype, uibs.custom_type, self.index-1)
     local buckets = {}
     for _,item_id in ipairs(item_ids) do
         local item = df.item.find(item_id)
@@ -641,6 +641,9 @@ end
 
 function QualityAndMaterialsPage:init()
     self.lowest_other_item_heat_safety = 2
+    self.dirty = true
+
+    local enable_item_quality =  can_be_improved(self.index)
 
     self:addviews{
         widgets.Panel{
@@ -665,6 +668,7 @@ function QualityAndMaterialsPage:init()
                         {label='Fire Magma', value=2, pen=COLOR_RED},
                         {label='Fire', value=1, pen=COLOR_LIGHTRED},
                     },
+                    on_change=self:callback('set_heat_safety'),
                 },
                 widgets.Label{
                     frame={t=2, l=30},
@@ -745,11 +749,16 @@ function QualityAndMaterialsPage:init()
             frame_title='Item quality',
             subviews={
                 widgets.CycleHotkeyLabel{
+                    view_id='decorated',
                     frame={l=0, t=1, w=23},
                     key='CUSTOM_SHIFT_D',
                     label='Decorated only:',
-                    options={'No', 'Yes'},
-                    enabled=function() return can_be_improved(self.index) end,
+                    options={
+                        {label='No', value=false},
+                        {label='Yes', value=true},
+                    },
+                    enabled=enable_item_quality,
+                    on_change=self:callback('set_decorated'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality',
@@ -767,6 +776,7 @@ function QualityAndMaterialsPage:init()
                         {label='Masterful', value=5},
                         {label='Artifact', value=6},
                     },
+                    enabled=enable_item_quality,
                     on_change=function(val) self:set_min_quality(val+1) end,
                 },
                 widgets.CycleHotkeyLabel{
@@ -785,6 +795,7 @@ function QualityAndMaterialsPage:init()
                         {label='Masterful', value=5},
                         {label='Artifact', value=6},
                     },
+                    enabled=enable_item_quality,
                     on_change=function(val) self:set_max_quality(val+1) end,
                 },
                 Slider{
@@ -798,6 +809,7 @@ function QualityAndMaterialsPage:init()
                     end,
                     on_left_change=self:callback('set_min_quality'),
                     on_right_change=self:callback('set_max_quality'),
+                    active=enable_item_quality,
                 },
             },
         },
@@ -841,20 +853,64 @@ function QualityAndMaterialsPage:init()
     }
 end
 
+function QualityAndMaterialsPage:refresh()
+    local summary = ''
+    local subviews = self.subviews
+
+    local heat = getHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type)
+    subviews.safety:setOption(heat)
+    if heat >= 2 then summary = summary .. 'Magma safe '
+    elseif heat == 1 then summary = summary .. 'Fire safe '
+    end
+
+    local quality = getQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
+    subviews.decorated:setOption(quality.decorated ~= 0)
+    subviews.min_quality:setOption(quality.min_quality)
+    subviews.max_quality:setOption(quality.max_quality)
+
+    self.summary = summary
+    self.dirty = false
+end
+
+function QualityAndMaterialsPage:get_summary()
+    -- TODO: summarize materials
+    return self.summary
+end
+
+function QualityAndMaterialsPage:set_heat_safety(heat)
+    setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
+    self.dirty = true
+end
+
+function QualityAndMaterialsPage:set_decorated(decorated)
+    local subviews = self.subviews
+    setQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1,
+            decorated and 1 or 0, subviews.min_quality:getOptionValue(), subviews.max_quality:getOptionValue())
+    self.dirty = true
+end
+
 function QualityAndMaterialsPage:set_min_quality(idx)
     idx = math.min(6, math.max(0, idx-1))
-    self.subviews.min_quality:setOption(idx)
-    if self.subviews.max_quality:getOptionValue() < idx then
-        self.subviews.max_quality:setOption(idx)
+    local subviews = self.subviews
+    subviews.min_quality:setOption(idx)
+    if subviews.max_quality:getOptionValue() < idx then
+        subviews.max_quality:setOption(idx)
     end
+    setQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1,
+            subviews.decorated:getOptionValue() and 1 or 0, idx, subviews.max_quality:getOptionValue())
+    self.dirty = true
 end
 
 function QualityAndMaterialsPage:set_max_quality(idx)
     idx = math.min(6, math.max(0, idx-1))
-    self.subviews.max_quality:setOption(idx)
-    if self.subviews.min_quality:getOptionValue() > idx then
-        self.subviews.min_quality:setOption(idx)
+    local subviews = self.subviews
+    subviews.max_quality:setOption(idx)
+    if subviews.min_quality:getOptionValue() > idx then
+        subviews.min_quality:setOption(idx)
     end
+    setQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1,
+            subviews.decorated:getOptionValue() and 1 or 0, subviews.min_quality:getOptionValue(), idx)
+    self.dirty = true
 end
 
 local texpos = dfhack.textures.getThinBordersTexposStart()
@@ -881,8 +937,11 @@ function QualityAndMaterialsPage:draw_divider(dc)
     end
 end
 
-function QualityAndMaterialsPage:get_summary()
-    return 'filter summary'
+function QualityAndMaterialsPage:onRenderFrame(dc, rect)
+    QualityAndMaterialsPage.super.onRenderFrame(self, dc, rect)
+    if self.dirty then
+        self:refresh()
+    end
 end
 
 --------------------------------
@@ -1444,7 +1503,7 @@ function PlannerOverlay:set_filter(idx)
 end
 
 function PlannerOverlay:clear_filter(idx)
-    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1, "")
+    clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
 end
 
 local function get_placement_data()

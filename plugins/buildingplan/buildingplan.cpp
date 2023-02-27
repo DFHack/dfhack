@@ -323,8 +323,33 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 // core will already be suspended when coming in through here
 //
 
-static string getBucket(const df::job_item & ji) {
+static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int idx) {
+    if (idx < 0 || (size_t)idx < pb.item_filters.size())
+        return "INVALID";
+
     std::ostringstream ser;
+
+    // put elements in front that significantly affect the difficulty of matching
+    // the filter. ensure the lexicographically "less" value is the pickier value.
+    const ItemFilter & item_filter = pb.item_filters[idx];
+
+    if (item_filter.getDecoratedOnly())
+        ser << "Da";
+    else
+        ser << "Db";
+
+    if (ji.flags2.bits.magma_safe || pb.heat_safety == HEAT_SAFETY_MAGMA)
+        ser << "Ha";
+    else if (ji.flags2.bits.fire_safe || pb.heat_safety == HEAT_SAFETY_FIRE)
+        ser << "Hb";
+    else
+        ser << "Hc";
+
+    size_t num_materials = item_filter.getMaterials().size();
+    if (num_materials == 0 || num_materials >= 9 || item_filter.getMaterialMask().whole)
+        ser << "M9";
+    else
+        ser << "M" << num_materials;
 
     // pull out and serialize only known relevant fields. if we miss a few, then
     // the filter bucket will be slighly less specific than it could be, but
@@ -336,6 +361,8 @@ static string getBucket(const df::job_item & ji) {
         << ji.mat_index << ':' << ji.flags1.whole << ':' << ji.flags2.whole
         << ':' << ji.flags3.whole << ':' << ji.flags4 << ':' << ji.flags5 << ':'
         << ji.metal_ore << ':' << ji.has_tool_use;
+
+    ser << ':' << item_filter.serialize();
 
     return ser.str();
 }
@@ -394,7 +421,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
     int32_t id = bld->id;
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx) {
         auto job_item = job_items[job_item_idx];
-        auto bucket = getBucket(*job_item);
+        auto bucket = getBucket(*job_item, pb, job_item_idx);
 
         // if there are multiple vector_ids, schedule duplicate tasks. after
         // the correct number of items are matched, the extras will get popped
@@ -682,7 +709,7 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         if (!tasks.count(vec_id))
             continue;
         auto &buckets = tasks.at(vec_id);
-        string bucket_id = getBucket(*job_item);
+        string bucket_id = getBucket(*job_item, pb, index);
         if (!buckets.count(bucket_id))
             continue;
         int bucket_pos = -1;
@@ -711,7 +738,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
             if (!tasks.count(vec_id))
                 continue;
             auto &buckets = tasks.at(vec_id);
-            string bucket_id = getBucket(*job_items[index]);
+            string bucket_id = getBucket(*job_items[index], pb, index);
             if (!buckets.count(bucket_id))
                 continue;
             auto &bucket = buckets.at(bucket_id);

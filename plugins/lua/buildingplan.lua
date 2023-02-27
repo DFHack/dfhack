@@ -1625,11 +1625,27 @@ function InspectorOverlay:make_top_priority()
     self:reset()
 end
 
+local RESUME_BUTTON_FRAME = {t=15, h=3, r=73, w=25}
+
+local function mouse_is_over_resume_button(rect)
+    local x,y = dfhack.screen.getMousePos()
+    if not x then return false end
+    if y < RESUME_BUTTON_FRAME.t or y > RESUME_BUTTON_FRAME.t + RESUME_BUTTON_FRAME.h - 1 then
+        return false
+    end
+    if x > rect.x2 - RESUME_BUTTON_FRAME.r + 1 or x < rect.x2 - RESUME_BUTTON_FRAME.r - RESUME_BUTTON_FRAME.w + 2 then
+        return false
+    end
+    return true
+end
+
 function InspectorOverlay:onInput(keys)
     if not isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
         return false
     end
-    if keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+    if keys._MOUSE_L_DOWN and mouse_is_over_resume_button(self.frame_parent_rect) then
+        return true
+    elseif keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
         self:reset()
     end
     return InspectorOverlay.super.onInput(self, keys)

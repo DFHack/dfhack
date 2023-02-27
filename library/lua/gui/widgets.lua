@@ -1490,6 +1490,7 @@ CycleHotkeyLabel.ATTRS{
     key_back=DEFAULT_NIL,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
+    label_below=false,
     options=DEFAULT_NIL,
     initial_option=1,
     on_change=DEFAULT_NIL,
@@ -1498,12 +1499,17 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
+    local val_gap = 1
+    if self.label_below then
+        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+    end
+
     self:setText{
         self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        ' ',
-        {text=self:callback('getOptionLabel'),
+        self.label_below and NEWLINE or '',
+        {gap=val_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end
@@ -1580,7 +1586,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end

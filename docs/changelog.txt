@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.job.attachJobItem()``: allows you to attach specific items to a job
 - ``dfhack.screen.paintTile()``: you can now explicitly clear the interface cursor from a map tile by passing ``0`` as the tile value
 - ``widgets.Label``: token ``tile`` properties can now be functions that return a value
+- ``widgets.CycleHotkeyLabel``: add ``label_below`` attribute for compact 2-line output
 -@ ``widgets.FilteredList``: search key matching is now case insensitive by default
 -@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
 

@@ -1594,8 +1594,10 @@ Military module
 
 * ``dfhack.military.makeSquad(assignment_id)``
 
-  Creates a new squad associated with the assignment. Fails if one already exists.
-  Note: This function does not name the squad, but they are otherwise complete.
+  Creates a new squad associated with the assignment (ie df::entity_position_assignment, via `id``) and returns it.
+  Fails if a squad already exists that is associated with that assignment, or if the assignment is not a fort mode player controlled squad.
+  Note: This function does not name the squad: consider setting a nickname (under result.name.nickname), and/or filling out the language_name object at result.name.
+  The returned squad is otherwise complete and requires no more setup to work correctly.
 
 * ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
 
@@ -1603,7 +1605,7 @@ Military module
 
 * ``dfhack.military.getSquadName(squad_id)``
 
-  Returns the name of a squad.
+  Returns the name of a squad as a string.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~

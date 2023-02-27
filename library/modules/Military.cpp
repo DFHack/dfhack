@@ -84,16 +84,13 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
     df::squad* result = new df::squad();
     result->id = *df::global::squad_next_id;
-    result->cur_routine_idx = 0;
     result->uniform_priority = result->id + 1; //no idea why, but seems to hold
-    result->activity = -1; //??
     result->carry_food = 2;
     result->carry_water = 1;
     result->entity_id = df::global::plotinfo->group_id;
     result->leader_position = corresponding_position->id;
     result->leader_assignment = found_assignment->id;
     result->name = name;
-    result->ammo.update = 0;
 
     int16_t squad_size = corresponding_position->squad_size;
 
@@ -143,7 +140,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
             asched[month].uniform_mode = 0;
         };
 
-        //I thought this was a terrible hack, but its literally how dwarf fortress does it 1:1
+        //Dwarf fortress does do this via a series of string comparisons
         //Off duty: No orders, Sleep/room at will. Equip/orders only
         if (routine->name == "Off duty")
         {
@@ -153,8 +150,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
                 asched[i].uniform_mode = 1;
             }
         }
-        //Staggered Training: Training orders at 3 4 5, 9 10 11, sleep/room at will. Equip/orders only, except train months which are equip/always
-        //always seen the training indices 0 1 2 6 7 8, so its unclear. Check if squad id matters
+        //Staggered Training: Training orders at months 3 4 5 9 10 11, *or* 0 1 2 6 7 8, sleep/room at will. Equip/orders only, except train months which are equip/always
         else if (routine->name == "Staggered training")
         {
             //this is semi randomised for different squads
@@ -209,14 +205,11 @@ df::squad* Military::makeSquad(int32_t assignment_id)
         result->schedule.push_back(reinterpret_cast<df::squad::T_schedule*>(asched));
     }
 
-    //all we've done so far is leak memory if anything goes wrong
-    //modify state
+    //Modify necessary world state
     (*df::global::squad_next_id)++;
     fort->squads.push_back(result->id);
     df::global::world->squads.all.push_back(result);
     found_assignment->squad_id = result->id;
-
-    //todo: find and modify old squad
 
     return result;
 }

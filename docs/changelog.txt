@@ -82,7 +82,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `Military`: New module for military functionality
 - `Military`: new ``makeSquad`` to create a squad
 - `Military`: changed ``getSquadName`` to take a squad identifier
-- `Military`: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range- ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
+- `Military`: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range
 - ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
 - ``Maps::GetBiomeTypeRef`` renamed to ``Maps::getBiomeTypeRef`` for consistency
 

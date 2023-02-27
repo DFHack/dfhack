@@ -55,6 +55,7 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Military.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
@@ -1812,7 +1813,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getGoalType),
     WRAPM(Units, getGoalName),
     WRAPM(Units, isGoalAchieved),
-    WRAPM(Units, getSquadName),
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1934,6 +1934,15 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
     { "getStressCutoffs", units_getStressCutoffs },
+    { NULL, NULL }
+};
+
+/***** Military Module *****/
+
+static const LuaWrapper::FunctionReg dfhack_military_module[] = {
+    WRAPM(Military, makeSquad),
+    WRAPM(Military, updateRoomAssignments),
+    WRAPM(Military, getSquadName),
     { NULL, NULL }
 };
 
@@ -3447,6 +3456,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_module);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
+    OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);

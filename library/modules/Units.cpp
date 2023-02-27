@@ -71,7 +71,6 @@ using namespace std;
 #include "df/identity.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
-#include "df/squad.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
 #include "df/unit_inventory_item.h"
@@ -1957,19 +1956,6 @@ bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
     return unit->status.current_soul
         && unit->status.current_soul->personality.dreams.size() > goalIndex
         && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
-}
-
-std::string Units::getSquadName(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->military.squad_id == -1)
-        return "";
-    df::squad *squad = df::squad::find(unit->military.squad_id);
-    if (!squad)
-        return "";
-    if (squad->alias.size() > 0)
-        return squad->alias;
-    return Translation::TranslateName(&squad->name, true);
 }
 
 df::activity_entry *Units::getMainSocialActivity(df::unit *unit)

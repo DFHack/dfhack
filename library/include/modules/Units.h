@@ -222,8 +222,6 @@ DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
 
-DFHACK_EXPORT std::string getSquadName(df::unit *unit);
-
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
 

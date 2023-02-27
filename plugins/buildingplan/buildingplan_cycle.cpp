@@ -241,6 +241,7 @@ struct VectorsToScanLast {
         vectors.push_back(df::job_item_vector_id::BOULDER);
         vectors.push_back(df::job_item_vector_id::WOOD);
         vectors.push_back(df::job_item_vector_id::BAR);
+        vectors.push_back(df::job_item_vector_id::IN_PLAY);
     }
 };
 
@@ -254,7 +255,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
 
     for (auto it = tasks.begin(); it != tasks.end(); ) {
         auto vector_id = it->first;
-        // we could make this a set, but it's only three elements
+        // we could make this a set, but it's only a few elements
         if (std::find(vectors_to_scan_last.vectors.begin(),
                       vectors_to_scan_last.vectors.end(),
                       vector_id) != vectors_to_scan_last.vectors.end()) {

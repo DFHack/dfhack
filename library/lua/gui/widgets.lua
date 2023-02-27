@@ -1926,7 +1926,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
-    case_sensitive = true,
+    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,

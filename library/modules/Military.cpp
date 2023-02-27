@@ -50,6 +50,9 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
     df::historical_entity* fort = df::historical_entity::find(df::global::plotinfo->group_id);
 
+    if (fort == nullptr)
+        return nullptr;
+
     df::entity_position_assignment* found_assignment = nullptr;
 
     for (auto* assignment : fort->positions.assignments)

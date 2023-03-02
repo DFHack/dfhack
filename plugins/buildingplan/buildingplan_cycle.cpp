@@ -11,6 +11,7 @@
 #include "df/building_design.h"
 #include "df/item.h"
 #include "df/job.h"
+#include "df/map_block.h"
 #include "df/world.h"
 
 #include <unordered_map>
@@ -154,17 +155,18 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
 
 // This is tricky. we want to choose an item that can be brought to the job site, but that's not
 // necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
-// up or down (e.g. for stairs).
-static bool isAccessibleFrom(df::item *item, df::job *job) {
-    // stub this out for now until we have a good algorithm.
-    // df::coord item_pos = Items::getPosition(item);
-    // const df::coord &job_pos = job->pos;
-    // return Maps::canWalkBetween(item_pos, job_pos) ||
-    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x-1, job_pos.y, job_pos.z}) ||
-    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x+1, job_pos.y, job_pos.z}) ||
-    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x, job_pos.y-1, job_pos.z}) ||
-    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x, job_pos.y+1, job_pos.z});
-    return true;
+// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
+static bool isAccessibleFrom(color_ostream &out, df::item *item, df::job *job) {
+    df::coord item_pos = Items::getPosition(item);
+    df::map_block *block = Maps::getTileBlock(item_pos);
+    bool is_walkable = false;
+    if (block) {
+        uint16_t walkability_group = index_tile(block->walkable, item_pos);
+        is_walkable = walkability_group != 0;
+        TRACE(cycle,out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+                item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "" : "not ");
+    }
+    return is_walkable;
 }
 
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
@@ -198,7 +200,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto job = bld->jobs[0];
             auto filter_idx = task.second;
             auto &pb = planned_buildings.at(id);
-            if (isAccessibleFrom(item, job)
+            if (isAccessibleFrom(out, item, job)
                     && matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
                         pb.item_filters[filter_idx])
                     && Job::attachJobItem(job, item,

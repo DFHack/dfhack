@@ -765,7 +765,7 @@ static int getQualityFilter(lua_State *L) {
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key).getItemFilters();
-    if (filters.size() <= index)
+    if (index < 0 || filters.size() <= (size_t)index)
         return 0;
     auto &filter = filters[index];
     map<string, int> ret;

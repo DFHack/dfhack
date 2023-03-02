@@ -20,6 +20,17 @@ BuildingTypeKey DefaultItemFilters::getKey(PersistentDataItem &filter_config) {
                            get_config_val(filter_config, FILTER_CONFIG_CUSTOM));
 }
 
+static int get_max_quality(const df::job_item *jitem) {
+    if (jitem->flags2.bits.building_material ||
+            jitem->item_type == df::item_type::WOOD ||
+            jitem->item_type == df::item_type::BLOCKS ||
+            jitem->item_type == df::item_type::BAR ||
+            jitem->item_type == df::item_type::BOULDER)
+        return df::item_quality::Ordinary;
+
+    return df::item_quality::Masterful;
+}
+
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
         : key(key) {
     DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
@@ -29,6 +40,9 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
     set_config_val(filter_config, FILTER_CONFIG_SUBTYPE, std::get<1>(key));
     set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));
     item_filters.resize(jitems.size());
+    for (size_t idx = 0; idx < jitems.size(); ++idx) {
+        item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]));
+    }
     filter_config.val() = serialize_item_filters(item_filters);
 }
 

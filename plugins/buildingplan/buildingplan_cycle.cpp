@@ -152,8 +152,19 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
+// This is tricky. we want to choose an item that can be brought to the job site, but that's not
+// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
+// up or down (e.g. for stairs).
 static bool isAccessibleFrom(df::item *item, df::job *job) {
-    return Maps::canWalkBetween(Items::getPosition(item), job->pos);
+    // stub this out for now until we have a good algorithm.
+    // df::coord item_pos = Items::getPosition(item);
+    // const df::coord &job_pos = job->pos;
+    // return Maps::canWalkBetween(item_pos, job_pos) ||
+    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x-1, job_pos.y, job_pos.z}) ||
+    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x+1, job_pos.y, job_pos.z}) ||
+    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x, job_pos.y-1, job_pos.z}) ||
+    //         Maps::canWalkBetween(item_pos, df::coord{job_pos.x, job_pos.y+1, job_pos.z});
+    return true;
 }
 
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,

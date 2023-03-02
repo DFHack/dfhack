@@ -868,6 +868,8 @@ function QualityAndMaterialsPage:refresh()
     subviews.min_quality:setOption(quality.min_quality)
     subviews.max_quality:setOption(quality.max_quality)
 
+    local materials = getMaterialFilter(ibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
+
     self.summary = summary
     self.dirty = false
 end

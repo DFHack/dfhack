@@ -52,6 +52,7 @@ void set_config_bool(PersistentDataItem &c, int index, bool value) {
 
 static PersistentDataItem config;
 // for use in counting available materials for the UI
+static vector<MaterialInfo> mat_cache;
 static unordered_map<BuildingTypeKey, vector<const df::job_item *>, BuildingTypeKeyHash> job_item_cache;
 static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
 static unordered_map<BuildingTypeKey, DefaultItemFilters, BuildingTypeKeyHash> cur_item_filters;
@@ -142,6 +143,47 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
     return jitems;
 }
 
+static void cache_matched(int16_t type, int32_t index) {
+    static const df::dfhack_material_category building_material_categories(
+        df::dfhack_material_category::mask_glass |
+        df::dfhack_material_category::mask_metal |
+        df::dfhack_material_category::mask_soap  |
+        df::dfhack_material_category::mask_stone |
+        df::dfhack_material_category::mask_wood
+    );
+
+    MaterialInfo mi;
+    mi.decode(type, index);
+    if (mi.matches(building_material_categories)) {
+        DEBUG(status).print("cached material: %s\n", mi.toString().c_str());
+        mat_cache.emplace_back(mi);
+    }
+    else
+        TRACE(status).print("not matched: %s\n", mi.toString().c_str());
+}
+
+static void load_material_cache() {
+    df::world_raws &raws = world->raws;
+    for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; ++i)
+        if (raws.mat_table.builtin[i])
+            cache_matched(i, -1);
+
+    for (size_t i = 0; i < raws.inorganics.size(); i++)
+        cache_matched(0, i);
+
+    for (size_t i = 0; i < raws.plants.all.size(); i++) {
+        df::plant_raw *p = raws.plants.all[i];
+        if (p->material.size() <= 1)
+            continue;
+        for (size_t j = 0; j < p->material.size(); j++) {
+            if (p->material[j]->id == "WOOD") {
+                cache_matched(DFHack::MaterialInfo::PLANT_BASE+j, i);
+                break;
+            }
+        }
+    }
+}
+
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
     if (cur_heat_safety.count(key))
         return cur_heat_safety.at(key);
@@ -221,6 +263,7 @@ static void clear_state(color_ostream &out) {
         }
     }
     job_item_cache.clear();
+    mat_cache.clear();
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
@@ -236,6 +279,8 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     DEBUG(status,out).print("loading persisted state\n");
     clear_state(out);
 
+    load_material_cache();
+
     vector<PersistentDataItem> filter_configs;
     World::GetPersistentData(&filter_configs, FILTER_CONFIG_KEY);
     for (auto &cfg : filter_configs) {
@@ -250,7 +295,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
         if (!bld) {
-            INFO(status).print("building %d no longer exists; skipping\n", pb.id);
+            INFO(status,out).print("building %d no longer exists; skipping\n", pb.id);
             pb.remove(out);
             continue;
         }
@@ -639,7 +684,7 @@ static void clearFilter(color_ostream &out, df::building_type type, int16_t subt
     TRACE(status,out).print("entering clearFilter\n");
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
-    if (filters.getItemFilters().size() <= index)
+    if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
         return;
     filters.setItemFilter(out, ItemFilter(), index);
     call_buildingplan_lua(&out, "signal_reset");
@@ -661,8 +706,8 @@ static int getMaterialFilter(lua_State *L) {
     DEBUG(status,*out).print(
             "entering getMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
-    vector<string> filter;
-    Lua::PushVector(L, filter);
+    map<MaterialInfo, int> counts_per_material;
+    Lua::Push(L, counts_per_material);
     return 1;
 }
 
@@ -697,7 +742,7 @@ static void setQualityFilter(color_ostream &out, df::building_type type, int16_t
     DEBUG(status,out).print("entering setQualityFilter\n");
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key).getItemFilters();
-    if (filters.size() <= index)
+    if (index < 0 || filters.size() <= (size_t)index)
         return;
     ItemFilter filter = filters[index];
     filter.setDecoratedOnly(decorated != 0);
@@ -825,7 +870,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isPlannedBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),
-    DFHACK_LUA_FUNCTION(scheduleCycle),    DFHACK_LUA_FUNCTION(countAvailableItems),
+    DFHACK_LUA_FUNCTION(scheduleCycle),
+    DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(hasFilter),
     DFHACK_LUA_FUNCTION(clearFilter),
     DFHACK_LUA_FUNCTION(setMaterialFilter),

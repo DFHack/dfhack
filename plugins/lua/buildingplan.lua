@@ -952,7 +952,7 @@ GlobalSettingsPage = defclass(GlobalSettingsPage, widgets.ResizingPanel)
 GlobalSettingsPage.ATTRS{
     autoarrange_subviews=true,
     frame={t=0, l=0},
-    frame_inset={l=1, r=1},
+    frame_style=gui.INTERIOR_FRAME,
 }
 
 function GlobalSettingsPage:init()

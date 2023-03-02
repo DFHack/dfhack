@@ -20,11 +20,11 @@ public:
     void setMaterialMask(uint32_t mask);
     void setMaterials(const std::vector<DFHack::MaterialInfo> &materials);
 
-    std::string getMinQuality() const;
-    std::string getMaxQuality() const;
-    bool getDecoratedOnly() const;
-    uint32_t getMaterialMask() const;
-    std::vector<std::string> getMaterials() const;
+    df::item_quality getMinQuality() const { return min_quality; }
+    df::item_quality getMaxQuality() const {return max_quality; }
+    bool getDecoratedOnly() const { return decorated_only; }
+    df::dfhack_material_category getMaterialMask() const { return mat_mask; }
+    std::vector<DFHack::MaterialInfo> getMaterials() const { return materials; }
 
     bool matches(df::dfhack_material_category mask) const;
     bool matches(DFHack::MaterialInfo &material) const;

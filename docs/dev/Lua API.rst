@@ -4896,6 +4896,8 @@ It has the following attributes:
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
+:label_below: If ``true``, then the option value will apear below the label
+    instead of to the right of it. Defaults to ``false``.
 :options: A list of strings or tables of
     ``{label=string, value=string[, pen=pen]}``. String options use the same
     string for the label and value and the default pen. The optional ``pen``

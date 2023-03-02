@@ -52,6 +52,7 @@ void set_config_bool(PersistentDataItem &c, int index, bool value) {
 
 static PersistentDataItem config;
 // for use in counting available materials for the UI
+static vector<MaterialInfo> mat_cache;
 static unordered_map<BuildingTypeKey, vector<const df::job_item *>, BuildingTypeKeyHash> job_item_cache;
 static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
 static unordered_map<BuildingTypeKey, DefaultItemFilters, BuildingTypeKeyHash> cur_item_filters;
@@ -142,6 +143,47 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
     return jitems;
 }
 
+static void cache_matched(int16_t type, int32_t index) {
+    static const df::dfhack_material_category building_material_categories(
+        df::dfhack_material_category::mask_glass |
+        df::dfhack_material_category::mask_metal |
+        df::dfhack_material_category::mask_soap  |
+        df::dfhack_material_category::mask_stone |
+        df::dfhack_material_category::mask_wood
+    );
+
+    MaterialInfo mi;
+    mi.decode(type, index);
+    if (mi.matches(building_material_categories)) {
+        DEBUG(status).print("cached material: %s\n", mi.toString().c_str());
+        mat_cache.emplace_back(mi);
+    }
+    else
+        TRACE(status).print("not matched: %s\n", mi.toString().c_str());
+}
+
+static void load_material_cache() {
+    df::world_raws &raws = world->raws;
+    for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; ++i)
+        if (raws.mat_table.builtin[i])
+            cache_matched(i, -1);
+
+    for (size_t i = 0; i < raws.inorganics.size(); i++)
+        cache_matched(0, i);
+
+    for (size_t i = 0; i < raws.plants.all.size(); i++) {
+        df::plant_raw *p = raws.plants.all[i];
+        if (p->material.size() <= 1)
+            continue;
+        for (size_t j = 0; j < p->material.size(); j++) {
+            if (p->material[j]->id == "WOOD") {
+                cache_matched(DFHack::MaterialInfo::PLANT_BASE+j, i);
+                break;
+            }
+        }
+    }
+}
+
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
     if (cur_heat_safety.count(key))
         return cur_heat_safety.at(key);
@@ -221,6 +263,7 @@ static void clear_state(color_ostream &out) {
         }
     }
     job_item_cache.clear();
+    mat_cache.clear();
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
@@ -236,6 +279,8 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     DEBUG(status,out).print("loading persisted state\n");
     clear_state(out);
 
+    load_material_cache();
+
     vector<PersistentDataItem> filter_configs;
     World::GetPersistentData(&filter_configs, FILTER_CONFIG_KEY);
     for (auto &cfg : filter_configs) {
@@ -250,7 +295,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
         if (!bld) {
-            INFO(status).print("building %d no longer exists; skipping\n", pb.id);
+            INFO(status,out).print("building %d no longer exists; skipping\n", pb.id);
             pb.remove(out);
             continue;
         }
@@ -323,8 +368,33 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 // core will already be suspended when coming in through here
 //
 
-static string getBucket(const df::job_item & ji) {
+static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int idx) {
+    if (idx < 0 || (size_t)idx < pb.item_filters.size())
+        return "INVALID";
+
     std::ostringstream ser;
+
+    // put elements in front that significantly affect the difficulty of matching
+    // the filter. ensure the lexicographically "less" value is the pickier value.
+    const ItemFilter & item_filter = pb.item_filters[idx];
+
+    if (item_filter.getDecoratedOnly())
+        ser << "Da";
+    else
+        ser << "Db";
+
+    if (ji.flags2.bits.magma_safe || pb.heat_safety == HEAT_SAFETY_MAGMA)
+        ser << "Ha";
+    else if (ji.flags2.bits.fire_safe || pb.heat_safety == HEAT_SAFETY_FIRE)
+        ser << "Hb";
+    else
+        ser << "Hc";
+
+    size_t num_materials = item_filter.getMaterials().size();
+    if (num_materials == 0 || num_materials >= 9 || item_filter.getMaterialMask().whole)
+        ser << "M9";
+    else
+        ser << "M" << num_materials;
 
     // pull out and serialize only known relevant fields. if we miss a few, then
     // the filter bucket will be slighly less specific than it could be, but
@@ -336,6 +406,8 @@ static string getBucket(const df::job_item & ji) {
         << ji.mat_index << ':' << ji.flags1.whole << ':' << ji.flags2.whole
         << ':' << ji.flags3.whole << ':' << ji.flags4 << ':' << ji.flags5 << ':'
         << ji.metal_ore << ':' << ji.has_tool_use;
+
+    ser << ':' << item_filter.serialize();
 
     return ser.str();
 }
@@ -394,7 +466,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
     int32_t id = bld->id;
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx) {
         auto job_item = job_items[job_item_idx];
-        auto bucket = getBucket(*job_item);
+        auto bucket = getBucket(*job_item, pb, job_item_idx);
 
         // if there are multiple vector_ids, schedule duplicate tasks. after
         // the correct number of items are matched, the extras will get popped
@@ -576,6 +648,20 @@ static int getAvailableItems(lua_State *L) {
     return 1;
 }
 
+static int getGlobalSettings(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering getGlobalSettings\n");
+    map<string, bool> settings;
+    settings.emplace("blocks", get_config_bool(config, CONFIG_BLOCKS));
+    settings.emplace("logs", get_config_bool(config, CONFIG_LOGS));
+    settings.emplace("boulders", get_config_bool(config, CONFIG_BOULDERS));
+    settings.emplace("bars", get_config_bool(config, CONFIG_BARS));
+    Lua::Push(L, settings);
+    return 1;
+}
+
 static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
@@ -588,10 +674,20 @@ static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtyp
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     for (auto &filter : filters.getItemFilters()) {
-        if (filter.isEmpty())
+        if (!filter.isEmpty())
             return true;
     }
     return false;
+}
+
+static void clearFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
+    TRACE(status,out).print("entering clearFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key);
+    if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
+        return;
+    filters.setItemFilter(out, ItemFilter(), index);
+    call_buildingplan_lua(&out, "signal_reset");
 }
 
 static void setMaterialFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index, string filter) {
@@ -610,8 +706,8 @@ static int getMaterialFilter(lua_State *L) {
     DEBUG(status,*out).print(
             "entering getMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
-    vector<string> filter;
-    Lua::PushVector(L, filter);
+    map<MaterialInfo, int> counts_per_material;
+    Lua::Push(L, counts_per_material);
     return 1;
 }
 
@@ -638,6 +734,45 @@ static int getHeatSafetyFilter(lua_State *L) {
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
     Lua::Push(L, heat);
+    return 1;
+}
+
+static void setQualityFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index,
+        int decorated, int min_quality, int max_quality) {
+    DEBUG(status,out).print("entering setQualityFilter\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key).getItemFilters();
+    if (index < 0 || filters.size() <= (size_t)index)
+        return;
+    ItemFilter filter = filters[index];
+    filter.setDecoratedOnly(decorated != 0);
+    filter.setMinQuality(min_quality);
+    filter.setMaxQuality(max_quality);
+    get_item_filters(out, key).setItemFilter(out, filter, index);
+    call_buildingplan_lua(&out, "signal_reset");
+}
+
+static int getQualityFilter(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    int index = luaL_checkint(L, 4);
+    DEBUG(status,*out).print(
+            "entering getQualityFilter building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(*out, key).getItemFilters();
+    if (index < 0 || filters.size() <= (size_t)index)
+        return 0;
+    auto &filter = filters[index];
+    map<string, int> ret;
+    ret.emplace("decorated", filter.getDecoratedOnly());
+    ret.emplace("min_quality", filter.getMinQuality());
+    ret.emplace("max_quality", filter.getMaxQuality());
+    Lua::Push(L, ret);
     return 1;
 }
 
@@ -682,7 +817,7 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         if (!tasks.count(vec_id))
             continue;
         auto &buckets = tasks.at(vec_id);
-        string bucket_id = getBucket(*job_item);
+        string bucket_id = getBucket(*job_item, pb, index);
         if (!buckets.count(bucket_id))
             continue;
         int bucket_pos = -1;
@@ -711,7 +846,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
             if (!tasks.count(vec_id))
                 continue;
             auto &buckets = tasks.at(vec_id);
-            string bucket_id = getBucket(*job_items[index]);
+            string bucket_id = getBucket(*job_items[index], pb, index);
             if (!buckets.count(bucket_id))
                 continue;
             auto &bucket = buckets.at(bucket_id);
@@ -738,8 +873,10 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(scheduleCycle),
     DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(hasFilter),
+    DFHACK_LUA_FUNCTION(clearFilter),
     DFHACK_LUA_FUNCTION(setMaterialFilter),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
+    DFHACK_LUA_FUNCTION(setQualityFilter),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
@@ -747,8 +884,10 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 };
 
 DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(getGlobalSettings),
     DFHACK_LUA_COMMAND(getAvailableItems),
     DFHACK_LUA_COMMAND(getMaterialFilter),
     DFHACK_LUA_COMMAND(getHeatSafetyFilter),
+    DFHACK_LUA_COMMAND(getQualityFilter),
     DFHACK_LUA_END
 };

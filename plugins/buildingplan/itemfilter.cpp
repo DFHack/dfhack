@@ -131,37 +131,6 @@ void ItemFilter::setMaterials(const vector<DFHack::MaterialInfo> &materials) {
     this->materials = materials;
 }
 
-string ItemFilter::getMinQuality() const {
-    return ENUM_KEY_STR(item_quality, min_quality);
-}
-
-string ItemFilter::getMaxQuality() const {
-    return ENUM_KEY_STR(item_quality, max_quality);
-}
-
-bool ItemFilter::getDecoratedOnly() const {
-    return decorated_only;
-}
-
-uint32_t ItemFilter::getMaterialMask() const {
-    return mat_mask.whole;
-}
-
-static string material_to_string_fn(const MaterialInfo &m) { return m.toString(); }
-
-vector<string> ItemFilter::getMaterials() const {
-    vector<string> descriptions;
-    transform_(materials, descriptions, material_to_string_fn);
-
-    if (descriptions.size() == 0)
-        bitfield_to_string(&descriptions, mat_mask);
-
-    if (descriptions.size() == 0)
-        descriptions.push_back("any");
-
-    return descriptions;
-}
-
 static bool matchesMask(DFHack::MaterialInfo &mat, df::dfhack_material_category mat_mask) {
     return mat_mask.whole ? mat.matches(mat_mask) : true;
 }

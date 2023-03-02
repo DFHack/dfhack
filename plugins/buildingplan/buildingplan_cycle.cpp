@@ -5,11 +5,13 @@
 
 #include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Maps.h"
 #include "modules/Materials.h"
 
 #include "df/building_design.h"
 #include "df/item.h"
 #include "df/job.h"
+#include "df/map_block.h"
 #include "df/world.h"
 
 #include <unordered_map>
@@ -151,6 +153,22 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
+// This is tricky. we want to choose an item that can be brought to the job site, but that's not
+// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
+// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
+static bool isAccessibleFrom(color_ostream &out, df::item *item, df::job *job) {
+    df::coord item_pos = Items::getPosition(item);
+    df::map_block *block = Maps::getTileBlock(item_pos);
+    bool is_walkable = false;
+    if (block) {
+        uint16_t walkability_group = index_tile(block->walkable, item_pos);
+        is_walkable = walkability_group != 0;
+        TRACE(cycle,out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+                item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "" : "not ");
+    }
+    return is_walkable;
+}
+
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
@@ -182,9 +200,10 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto job = bld->jobs[0];
             auto filter_idx = task.second;
             auto &pb = planned_buildings.at(id);
-            if (matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
+            if (isAccessibleFrom(out, item, job)
+                    && matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
                         pb.item_filters[filter_idx])
-               && Job::attachJobItem(job, item,
+                    && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {
                 MaterialInfo material;
@@ -235,6 +254,7 @@ struct VectorsToScanLast {
         vectors.push_back(df::job_item_vector_id::BOULDER);
         vectors.push_back(df::job_item_vector_id::WOOD);
         vectors.push_back(df::job_item_vector_id::BAR);
+        vectors.push_back(df::job_item_vector_id::IN_PLAY);
     }
 };
 
@@ -248,7 +268,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
 
     for (auto it = tasks.begin(); it != tasks.end(); ) {
         auto vector_id = it->first;
-        // we could make this a set, but it's only three elements
+        // we could make this a set, but it's only a few elements
         if (std::find(vectors_to_scan_last.vectors.begin(),
                       vectors_to_scan_last.vectors.end(),
                       vector_id) != vectors_to_scan_last.vectors.end()) {

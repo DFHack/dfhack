@@ -868,8 +868,6 @@ function QualityAndMaterialsPage:refresh()
     subviews.min_quality:setOption(quality.min_quality)
     subviews.max_quality:setOption(quality.max_quality)
 
-    local materials = getMaterialFilter(ibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
-
     self.summary = summary
     self.dirty = false
 end
@@ -1274,10 +1272,11 @@ function ItemLine:get_item_line_text()
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
 
-function ItemLine:reduce_quantity()
+function ItemLine:reduce_quantity(used_quantity)
     if not self.available then return end
     local filter = get_cur_filters()[self.idx]
-    self.available = math.max(0, self.available - get_quantity(filter, self.is_hollow_fn()))
+    used_quantity = used_quantity or get_quantity(filter, self.is_hollow_fn())
+    self.available = math.max(0, self.available - used_quantity)
 end
 
 local function get_placement_errors()
@@ -1602,7 +1601,7 @@ function PlannerOverlay:onInput(keys)
                 or self.subviews.errors:getMousePos() then
             return true
         end
-        if #uibs.errors > 0 then return true end
+        if not is_construction() and #uibs.errors > 0 then return true end
         if dfhack.gui.getMousePos() then
             if is_choosing_area() or cur_building_has_no_area() then
                 local filters = get_cur_filters()
@@ -1671,6 +1670,8 @@ function reload_cursors()
 end
 reload_cursors()
 
+local ONE_BY_ONE = xy2pos(1, 1)
+
 function PlannerOverlay:onRenderFrame(dc, rect)
     PlannerOverlay.super.onRenderFrame(self, dc, rect)
 
@@ -1685,20 +1686,26 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     local pos = self.saved_pos or uibs.pos
     local bounds = {
-        x1 = math.min(selection_pos.x, pos.x),
-        x2 = math.max(selection_pos.x, pos.x),
-        y1 = math.min(selection_pos.y, pos.y),
-        y2 = math.max(selection_pos.y, pos.y),
+        x1 = math.max(0, math.min(selection_pos.x, pos.x)),
+        x2 = math.min(df.global.world.map.x_count-1, math.max(selection_pos.x, pos.x)),
+        y1 = math.max(0, math.min(selection_pos.y, pos.y)),
+        y2 = math.min(df.global.world.map.y_count-1, math.max(selection_pos.y, pos.y)),
     }
 
     local hollow = self.subviews.hollow:getOptionValue()
-    local pen = (self.saved_selection_pos or #uibs.errors == 0) and GOOD_PEN or BAD_PEN
+    local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and GOOD_PEN or BAD_PEN
+
+    local get_pen_fn = is_construction() and function(pos)
+        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and GOOD_PEN or BAD_PEN
+    end or function()
+        return default_pen
+    end
 
     local function get_overlay_pen(pos)
-        if not hollow then return pen end
+        if not hollow then return get_pen_fn(pos) end
         if pos.x == bounds.x1 or pos.x == bounds.x2 or
                 pos.y == bounds.y1 or pos.y == bounds.y2 then
-            return pen
+            return get_pen_fn(pos)
         end
         return gui.TRANSPARENT_PEN
     end
@@ -1752,11 +1759,8 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             width=placement_data.width, height=placement_data.height,
             direction=uibs.direction}
         if err then
-            for _,b in ipairs(blds) do
-                dfhack.buildings.deconstruct(b)
-            end
-            dfhack.printerr(err .. (' (%d, %d, %d)'):format(pos.x, pos.y, pos.z))
-            return
+            -- it's ok if some buildings fail to build
+            goto continue
         end
         -- assign fields for the types that need them. we can't pass them all in
         -- to the call to constructBuilding since attempting to assign unrelated
@@ -1771,10 +1775,11 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         table.insert(blds, bld)
         ::continue::
     end end end
-    self.subviews.item1:reduce_quantity()
-    self.subviews.item2:reduce_quantity()
-    self.subviews.item3:reduce_quantity()
-    self.subviews.item4:reduce_quantity()
+    local used_quantity = is_construction() and #blds or false
+    self.subviews.item1:reduce_quantity(used_quantity)
+    self.subviews.item2:reduce_quantity(used_quantity)
+    self.subviews.item3:reduce_quantity(used_quantity)
+    self.subviews.item4:reduce_quantity(used_quantity)
     for _,bld in ipairs(blds) do
         -- attach chosen items and reduce job_item quantity
         if chosen_items then

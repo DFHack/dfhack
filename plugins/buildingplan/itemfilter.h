@@ -18,13 +18,13 @@ public:
     void setMaxQuality(int quality);
     void setDecoratedOnly(bool decorated);
     void setMaterialMask(uint32_t mask);
-    void setMaterials(const std::vector<DFHack::MaterialInfo> &materials);
+    void setMaterials(const std::set<DFHack::MaterialInfo> &materials);
 
     df::item_quality getMinQuality() const { return min_quality; }
     df::item_quality getMaxQuality() const {return max_quality; }
     bool getDecoratedOnly() const { return decorated_only; }
     df::dfhack_material_category getMaterialMask() const { return mat_mask; }
-    std::vector<DFHack::MaterialInfo> getMaterials() const { return materials; }
+    std::set<DFHack::MaterialInfo> getMaterials() const { return materials; }
 
     bool matches(df::dfhack_material_category mask) const;
     bool matches(DFHack::MaterialInfo &material) const;
@@ -35,7 +35,7 @@ private:
     df::item_quality max_quality;
     bool decorated_only;
     df::dfhack_material_category mat_mask;
-    std::vector<DFHack::MaterialInfo> materials;
+    std::set<DFHack::MaterialInfo> materials;
 };
 
 std::vector<ItemFilter> deserialize_item_filters(DFHack::color_ostream &out, const std::string &serialized);

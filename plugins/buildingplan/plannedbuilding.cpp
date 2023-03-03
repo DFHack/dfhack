@@ -12,8 +12,10 @@ namespace DFHack {
     DBG_EXTERN(buildingplan, status);
 }
 
+using std::set;
 using std::string;
 using std::vector;
+
 using namespace DFHack;
 
 static vector<vector<df::job_item_vector_id>> get_vector_ids(color_ostream &out, int bld_id) {
@@ -58,13 +60,11 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
     return ret;
 }
 
-static std::vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
-    std::vector<ItemFilter> ret;
-
+static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
     vector<string> rawstrs;
     split_string(&rawstrs, bld_config.val(), "|");
     if (rawstrs.size() < 2)
-        return ret;
+        return vector<ItemFilter>();
     return deserialize_item_filters(out, rawstrs[1]);
 }
 

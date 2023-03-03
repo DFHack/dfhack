@@ -169,6 +169,9 @@ namespace DFHack
     inline bool operator!= (const MaterialInfo &a, const MaterialInfo &b) {
         return a.type != b.type || a.index != b.index;
     }
+    inline bool operator< (const MaterialInfo &a, const MaterialInfo &b) {
+        return a.type < b.type || (a.type == b.type && a.index < b.index);
+    }
 
     DFHACK_EXPORT bool isSoilInorganic(int material);
     DFHACK_EXPORT bool isStoneInorganic(int material);

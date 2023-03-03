@@ -726,7 +726,7 @@ static int setMaterialMaskFilter(lua_State *L) {
         return 0;
     uint32_t mask = 0;
     vector<string> cats;
-    Lua::GetVector(L, cats);
+    Lua::GetVector(L, cats, 5);
     for (auto &cat : cats) {
         if (cat == "stone")
             mask |= df::dfhack_material_category::mask_stone;

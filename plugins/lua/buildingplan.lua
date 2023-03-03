@@ -639,6 +639,15 @@ local function can_be_improved(idx)
             filter.item_type ~= df.item_type.BOULDER
 end
 
+local function mat_sort_by_name(a, b)
+    return a.name < b.name
+end
+
+local function mat_sort_by_quantity(a, b)
+    return a.quantity > b.quantity or
+            (a.quantity == b.quantity and mat_sort_by_name(a, b))
+end
+
 function QualityAndMaterialsPage:init()
     self.lowest_other_item_heat_safety = 2
     self.dirty = true
@@ -688,16 +697,23 @@ function QualityAndMaterialsPage:init()
                     on_char=function(ch) return ch:match('%l') end,
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='mat_sort',
                     frame={l=24, t=4, w=21},
                     label='Sort by:',
                     key='CUSTOM_SHIFT_R',
-                    options={'name', 'available'},
+                    options={
+                        {label='name', value=mat_sort_by_name},
+                        {label='available', value=mat_sort_by_quantity}
+                    },
+                    on_change=function() self.dirty = true end,
                 },
                 widgets.ToggleHotkeyLabel{
+                    view_id='hide_zero',
                     frame={l=24, t=5, w=24},
                     label='Hide unavailable:',
                     key='CUSTOM_SHIFT_H',
                     initial_option=false,
+                    on_change=function() self.dirty = true end,
                 },
                 widgets.Label{
                     frame={l=1, b=0},
@@ -720,20 +736,14 @@ function QualityAndMaterialsPage:init()
                     view_id='materials_categories',
                     frame={l=1, t=0, b=0, w=TYPE_COL_WIDTH-3},
                     scroll_keys={},
-                    choices={
-                        {text='Stone', key='CUSTOM_SHIFT_S'},
-                        {text='Wood', key='CUSTOM_SHIFT_O'},
-                        {text='Metal', key='CUSTOM_SHIFT_M'},
-                        {text='Other', key='CUSTOM_SHIFT_T'},
-                    },
+                    icon_width=2,
+                    cursor_pen=COLOR_CYAN,
+                    on_double_click=self:callback('toggle_category'),
                 },
                 widgets.List{
                     view_id='materials_mats',
                     frame={l=TYPE_COL_WIDTH, t=0, r=0, b=0},
-                    choices={
-                        {text='9    - granite'},
-                        {text='0    - graphite'},
-                    },
+                    icon_width=2,
                 },
             },
         },
@@ -853,6 +863,32 @@ function QualityAndMaterialsPage:init()
     }
 end
 
+local MAT_ENABLED_PEN = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
+local MAT_DISABLED_PEN = to_pen{ch='x', fg=COLOR_RED}
+
+local function make_cat_choice(label, cat, key, enabled_cats)
+    local enabled = enabled_cats[cat]
+    return {
+        text=label,
+        key=key,
+        enabled=enabled,
+        cat=cat,
+        icon=enabled and MAT_ENABLED_PEN or MAT_DISABLED_PEN
+    }
+end
+
+local function make_mat_choice(name, props)
+    local quantity = tonumber(props.count)
+    local text = ('%5d - %s'):format(quantity, name)
+    local enabled = props.enabled == 'true'
+    return {
+        text=text,
+        icon=enabled and MAT_ENABLED_PEN or MAT_DISABLED_PEN,
+        name=name,
+        quantity=quantity,
+    }
+end
+
 function QualityAndMaterialsPage:refresh()
     local summary = ''
     local subviews = self.subviews
@@ -868,6 +904,26 @@ function QualityAndMaterialsPage:refresh()
     subviews.min_quality:setOption(quality.min_quality)
     subviews.max_quality:setOption(quality.max_quality)
 
+    local categories = utils.invert(getMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1))
+    local category_choices={
+        make_cat_choice('Stone', 'stone', 'CUSTOM_SHIFT_S', categories),
+        make_cat_choice('Wood', 'wood', 'CUSTOM_SHIFT_O', categories),
+        make_cat_choice('Metal', 'metal', 'CUSTOM_SHIFT_M', categories),
+        make_cat_choice('Other', 'other', 'CUSTOM_SHIFT_T', categories),
+    }
+    self.subviews.materials_categories:setChoices(category_choices)
+
+    local mat_filter = getMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
+    local mat_choices = {}
+    local hide_zero = self.subviews.hide_zero:getOptionValue()
+    for name,props in pairs(mat_filter) do
+        if not hide_zero or tonumber(props.count) > 0 then
+            table.insert(mat_choices, make_mat_choice(name, props))
+        end
+    end
+    table.sort(mat_choices, self.subviews.mat_sort:getOptionValue())
+    self.subviews.materials_mats:setChoices(mat_choices)
+
     self.summary = summary
     self.dirty = false
 end
@@ -875,6 +931,18 @@ end
 function QualityAndMaterialsPage:get_summary()
     -- TODO: summarize materials
     return self.summary
+end
+
+function QualityAndMaterialsPage:toggle_category(idx, choice)
+    choice.enabled = not choice.enabled
+    local cats = {}
+    for _,c in ipairs(self.subviews.materials_categories:getChoices()) do
+        if c.enabled then
+            table.insert(cats, c.cat)
+        end
+    end
+    setMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, cats)
+    self.dirty = true
 end
 
 function QualityAndMaterialsPage:set_heat_safety(heat)
@@ -1022,7 +1090,7 @@ end
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
     frame_title='Choose filters [MOCK -- NOT FUNCTIONAL]',
-    frame={w=53, h=53, l=30, t=8},
+    frame={w=55, h=53, l=30, t=8},
     frame_inset={t=1},
     resizable=true,
     index=DEFAULT_NIL,

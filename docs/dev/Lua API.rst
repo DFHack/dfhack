@@ -1219,6 +1219,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.attachJobItem(job, item, role, filter_idx, insert_idx)``
+
+  Attach a real item to this job. If the item is intended to satisfy a job_item
+  filter, the index of that filter should be passed in ``filter_idx``; otherwise,
+  pass ``-1``. Similarly, if you don't care where the item is inserted, pass
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  If the item needs to be brought to the job site, then the value should be
+  ``df.job_item_ref.T_role.Hauled``.
+
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
   Does basic sanity checks to verify if the suggested item type matches
@@ -1579,6 +1588,24 @@ Units module
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
+
+Military module
+~~~~~~~~~~~~~~~~~~~
+
+* ``dfhack.military.makeSquad(assignment_id)``
+
+  Creates a new squad associated with the assignment (ie ``df::entity_position_assignment``, via ``id``) and returns it.
+  Fails if a squad already exists that is associated with that assignment, or if the assignment is not a fort mode player controlled squad.
+  Note: This function does not name the squad: consider setting a nickname (under ``squad.name.nickname``), and/or filling out the ``language_name`` object at ``squad.name``.
+  The returned squad is otherwise complete and requires no more setup to work correctly.
+
+* ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
+
+  Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks.
+
+* ``dfhack.military.getSquadName(squad_id)``
+
+  Returns the name of a squad as a string.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~
@@ -3757,6 +3784,12 @@ Misc
   Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
 
 
+* ``invert_color(color, bold)``
+
+  This inverts the brightness of ``color``. If this color is coming from a pen's
+  foreground color, include ``pen.bold`` in ``bold`` for this to work properly.
+
+
 ViewRect class
 --------------
 
@@ -4319,9 +4352,11 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
-* ``THIN_FRAME``
+* ``INTERIOR_FRAME``
 
-  A frame suitable for light accent elements.
+  A frame suitable for light interior accent elements. This frame does *not* have
+  a visible ``DFHack`` signature on it, so it must not be used as the most external
+  frame for a DFHack-owned UI.
 
 gui.widgets
 ===========
@@ -4662,7 +4697,9 @@ It has the following attributes:
 
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
-:text_hpen: Specifies the pen for text hovered over by the mouse, if a click handler is registered.
+:text_hpen: Specifies the pen for text hovered over by the mouse, if a click
+            handler is registered. By default, this will invert the foreground
+            and background colors.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
@@ -4696,8 +4733,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.tile = pen``
 
-  Specifies a pen or texture index to paint as one tile before the main part of
-  the token.
+  Specifies a pen or texture index (or a function that returns a pen or texture
+  index) to paint as one tile before the main part of the token.
 
 * ``token.width = ...``
 
@@ -4768,6 +4805,18 @@ The Label widget implements the following methods:
   integers or one of the following keywords: ``+page``, ``-page``,
   ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
   lines that were actually scrolled (negative for scrolling up).
+
+* ``label:shouldHover()``
+
+  This method returns whether or not this widget should show a hover effect,
+  generally you want to return ``true`` if there is some type of mouse handler
+  present. For example, for a ``HotKeyLabel``::
+
+    function HotkeyLabel:shouldHover()
+        -- When on_activate is set, text should also hover on mouseover
+        return HotkeyLabel.super.shouldHover(self) or self.on_activate
+    end
+
 
 WrappedLabel class
 ------------------
@@ -4847,6 +4896,8 @@ It has the following attributes:
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
+:label_below: If ``true``, then the option value will apear below the label
+    instead of to the right of it. Defaults to ``false``.
 :options: A list of strings or tables of
     ``{label=string, value=string[, pen=pen]}``. String options use the same
     string for the label and value and the default pen. The optional ``pen``
@@ -4903,6 +4954,8 @@ item to call the ``on_submit`` callback for that item.
 It has the following attributes:
 
 :text_pen: Specifies the pen for deselected list entries.
+:text_hpen: Specifies the pen for entries that the mouse is hovered over.
+            Defaults to swapping the background/foreground colors.
 :cursor_pen: Specifies the pen for the selected entry.
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
@@ -4983,7 +5036,7 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
-:case_sensitive: If true, matching is case sensitive. Defaults to true.
+:case_sensitive: If ``true``, matching is case sensitive. Defaults to ``false``.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.

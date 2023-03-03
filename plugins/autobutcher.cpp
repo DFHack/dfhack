@@ -19,8 +19,6 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
-#include "modules/Gui.h"
-#include "modules/Maps.h"
 #include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -805,8 +803,8 @@ static void autobutcher_cycle(color_ostream &out) {
             w->UpdateConfig(out);
             watched_races.emplace(unit->race, w);
 
-            string announce = "New race added to autobutcher watchlist: " + Units::getRaceNamePluralById(unit->race);
-            Gui::showAnnouncement(announce, 2, false);
+            INFO(cycle,out).print("New race added to autobutcher watchlist: %s\n",
+                Units::getRaceNamePluralById(unit->race).c_str());
         }
 
         if (w->isWatched) {
@@ -828,9 +826,8 @@ static void autobutcher_cycle(color_ostream &out) {
         if (slaughter_count) {
             std::stringstream ss;
             ss << slaughter_count;
-            string announce = Units::getRaceNamePluralById(w.first) + " marked for slaughter: " + ss.str();
-            DEBUG(cycle,out).print("%s\n", announce.c_str());
-            Gui::showAnnouncement(announce, 2, false);
+            INFO(cycle,out).print("%s marked for slaughter: %s\n",
+                Units::getRaceNamePluralById(w.first).c_str(), ss.str().c_str());
         }
     }
 }
@@ -954,10 +951,8 @@ static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsign
     WatchedRace * w = new WatchedRace(out, id, watched, fk, mk, fa, ma);
     w->UpdateConfig(out);
     watched_races.emplace(id, w);
-
-    string announce;
-    announce = "New race added to autobutcher watchlist: " + Units::getRaceNamePluralById(id);
-    Gui::showAnnouncement(announce, 2, false);
+    INFO(status,out).print("New race added to autobutcher watchlist: %s\n",
+        Units::getRaceNamePluralById(id).c_str());
 }
 
 // remove entry from watchlist

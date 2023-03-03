@@ -27,6 +27,7 @@
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/DFSDL.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -2897,7 +2898,7 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
     e.key.ksym.scancode = in->scancode();
     e.key.ksym.sym = (SDL::Key)in->sym();
     e.key.ksym.unicode = in->unicode();
-    SDL_PushEvent(&e);
+    DFHack::DFSDL::DFSDL_PushEvent(&e);
 #endif
     return CR_OK;
 }

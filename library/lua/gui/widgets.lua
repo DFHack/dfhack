@@ -1080,7 +1080,26 @@ local function is_disabled(token)
            (token.enabled ~= nil and not getval(token.enabled))
 end
 
-function render_text(obj,dc,x0,y0,pen,dpen,disabled)
+-- Make the hover pen -- that is a pen that should render elements that has the
+-- mouse hovering over it. if hpen is specified, it just checks the fields and
+-- returns it (in parsed pen form)
+local function make_hpen(pen, hpen)
+    if not hpen then
+        pen = dfhack.pen.parse(pen)
+
+        -- Swap the foreground and background
+        hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
+    end
+
+    -- text_hpen needs a character in order to paint the background using
+    -- Painter:fill(), so let's make it paint a space to show the background
+    -- color
+    local hpen_parsed = dfhack.pen.parse(hpen)
+    hpen_parsed.ch = string.byte(' ')
+    return hpen_parsed
+end
+
+function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
     local width = 0
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]
@@ -1105,8 +1124,8 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             if token.tile then
                 x = x + 1
                 if dc then
-                    local tile_pen = tonumber(token.tile) and
-                            to_pen{tile=token.tile} or token.tile
+                    local tile = getval(token.tile)
+                    local tile_pen = tonumber(tile) and to_pen{tile=tile} or tile
                     dc:char(nil, tile_pen)
                     if token.width then
                         dc:advance(token.width-1)
@@ -1120,16 +1139,25 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
                 if dc then
                     local tpen = getval(token.pen)
+                    local dcpen = to_pen(tpen or pen)
+
+                    -- If disabled, figure out which dpen to use
                     if disabled or is_disabled(token) then
-                        dc:pen(getval(token.dpen) or tpen or dpen)
+                        dcpen = to_pen(getval(token.dpen) or tpen or dpen)
                         if keypen.fg ~= COLOR_BLACK then
                             keypen.bold = false
                         end
-                    else
-                        dc:pen(tpen or pen)
-                    end
-                end
 
+                        -- if hovered *and* disabled, combine both effects
+                        if hovered then
+                            dcpen = make_hpen(dcpen)
+                        end
+                    elseif hovered then
+                        dcpen = make_hpen(dcpen, getval(token.hpen) or hpen)
+                    end
+
+                    dc:pen(dcpen)
+                end
                 local width = getval(token.width)
                 local padstr
                 if width then
@@ -1204,7 +1232,7 @@ Label = defclass(Label, Widget)
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY, -- disabled
-    text_hpen = DEFAULT_NIL, -- highlight - default is text_pen with reversed brightness
+    text_hpen = DEFAULT_NIL, -- hover - default is to invert the fg/bg colors
     disabled = DEFAULT_NIL,
     enabled = DEFAULT_NIL,
     auto_height = true,
@@ -1221,12 +1249,7 @@ function Label:init(args)
 
     self:addviews{self.scrollbar}
 
-    -- use existing saved text if no explicit text was specified. this avoids
-    -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
-    if not self.text_hpen then
-        self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
-    end
 end
 
 local function update_label_scrollbar(label)
@@ -1274,12 +1297,16 @@ function Label:getTextWidth()
     return self.text_width
 end
 
+-- Overridden by subclasses that also want to add new mouse handlers, see
+-- HotkeyLabel.
+function Label:shouldHover()
+    return self.on_click or self.on_rclick
+end
+
 function Label:onRenderBody(dc)
     local text_pen = self.text_pen
-    if self:getMousePos() and (self.on_click or self.on_rclick) then
-        text_pen = self.text_hpen
-    end
-    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
+    local hovered = self:getMousePos() and self:shouldHover()
+    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self), self.text_hpen, hovered)
 end
 
 function Label:on_scrollbar(scroll_spec)
@@ -1432,6 +1459,11 @@ function HotkeyLabel:setLabel(label)
     self:initializeLabel()
 end
 
+function HotkeyLabel:shouldHover()
+    -- When on_activate is set, text should also hover on mouseover
+    return self.on_activate or HotkeyLabel.super.shouldHover(self)
+end
+
 function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
@@ -1440,7 +1472,8 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+            and not is_disabled(self) then
         self.on_activate()
         return true
     end
@@ -1457,6 +1490,7 @@ CycleHotkeyLabel.ATTRS{
     key_back=DEFAULT_NIL,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
+    label_below=false,
     options=DEFAULT_NIL,
     initial_option=1,
     on_change=DEFAULT_NIL,
@@ -1465,14 +1499,25 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
+    local val_gap = 1
+    if self.label_below then
+        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+    end
+
     self:setText{
         self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        ' ',
-        {text=self:callback('getOptionLabel'),
+        self.label_below and NEWLINE or '',
+        {gap=val_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
+end
+
+-- CycleHotkeyLabels are always clickable and therefore should always change
+-- color when hovered.
+function CycleHotkeyLabel:shouldHover()
+    return true
 end
 
 function CycleHotkeyLabel:cycle(backwards)
@@ -1541,7 +1586,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end
@@ -1565,6 +1610,7 @@ List = defclass(List, Widget)
 
 List.ATTRS{
     text_pen = COLOR_CYAN,
+    text_hpen = DEFAULT_NIL, -- hover color, defaults to inverting the FG/BG pens for each text object
     cursor_pen = COLOR_LIGHTCYAN,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
@@ -1745,12 +1791,16 @@ function List:onRenderBody(dc)
         end
     end
 
+    local hoveridx = self:getIdxUnderMouse()
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
-        local cur_pen = self.cursor_pen
-        local cur_dpen = self.text_pen
-        local active_pen = current and cur_pen or cur_dpen
+        local hovered = (i == hoveridx)
+        -- cur_pen and cur_dpen can't be integers or background colors get
+        -- messed up in render_text for subsequent renders
+        local cur_pen = to_pen(self.cursor_pen)
+        local cur_dpen = to_pen(self.text_pen)
+        local active_pen = (current and cur_pen or cur_dpen)
 
         if not getval(self.active) then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -1764,7 +1814,7 @@ function List:onRenderBody(dc)
             paint_icon(icon, obj)
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current, self.text_hpen, hovered)
 
         local ip = dc.width
 
@@ -1882,7 +1932,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
-    case_sensitive = true,
+    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,

@@ -491,7 +491,12 @@ bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
 static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)
 {
     auto name = vs->getFocusString();
-    focusStrings.push_back(name.empty() ? "dfhack" : "dfhack/" + name);
+    if (name.empty())
+        name = "dfhack";
+    else if (string::npos == name.find("dfhack/"))
+        name = "dfhack/" + name;
+
+    focusStrings.push_back(name);
 }
 
 std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)

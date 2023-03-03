@@ -493,6 +493,9 @@ function feed_viewscreen_widgets(vs_name, keys)
         return false
     end
     gui.markMouseClicksHandled(keys)
+    if keys._MOUSE_L_DOWN then
+        df.global.enabler.mouse_lbut = 0
+    end
     return true
 end
 

@@ -1308,7 +1308,7 @@ legacy Python Quickfort. This setting has no effect on DFHack Quickfort, which
 will use buildingplan to manage everything designated in a ``#build`` blueprint
 regardless of the buildingplan UI settings.
 
-However, quickfort *does* use `buildingplan's filters <buildingplan-filters>`
+However, quickfort *does* use `buildingplan's filters <buildingplan>`
 for each building type. For example, you can use the buildingplan UI to set the
 type of stone you want your walls made out of. Or you can specify that all
 buildingplan-managed chairs and tables must be of Masterful quality. The current

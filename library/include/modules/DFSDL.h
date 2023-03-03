@@ -8,6 +8,7 @@ namespace DFHack
     // SDL stand-in type definitions
     typedef signed short SINT16;
     typedef void DFSDL_sem;
+    typedef void DFSDL_Event;
 
     typedef struct
     {
@@ -80,12 +81,15 @@ void cleanup();
 
 DFHACK_EXPORT DFSDL_Surface * DFIMG_Load(const char *file);
 DFHACK_EXPORT int DFSDL_SetAlpha(DFSDL_Surface *surface, uint32_t flag, uint8_t alpha);
+DFHACK_EXPORT DFSDL_Surface * DFSDL_GetVideoSurface(void);
 DFHACK_EXPORT DFSDL_Surface * DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
+DFHACK_EXPORT DFSDL_Surface * DFSDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
 DFHACK_EXPORT int DFSDL_UpperBlit(DFSDL_Surface *src, const DFSDL_Rect *srcrect, DFSDL_Surface *dst, DFSDL_Rect *dstrect);
 DFHACK_EXPORT DFSDL_Surface * DFSDL_ConvertSurface(DFSDL_Surface *src, const DFSDL_PixelFormat *fmt, uint32_t flags);
 DFHACK_EXPORT void DFSDL_FreeSurface(DFSDL_Surface *surface);
 DFHACK_EXPORT int DFSDL_SemWait(DFSDL_sem *sem);
 DFHACK_EXPORT int DFSDL_SemPost(DFSDL_sem *sem);
+DFHACK_EXPORT int DFSDL_PushEvent(DFSDL_Event *event);
 
 }
 

@@ -61,8 +61,10 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
-        message(SEND_ERROR "MSVC 2022 is required")
+    if(NOT MSVC)
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1935 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1935))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1935 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
@@ -190,7 +192,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "50.07")
-set(DFHACK_RELEASE "alpha1")
+set(DFHACK_RELEASE "alpha2")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

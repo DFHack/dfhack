@@ -81,6 +81,7 @@ private:
 public:
     void load(MapExtras::MapCache &map) {
         designations.clear();
+        DEBUG(general).print("DesignationJobs: reading jobs list\n");
         df::job_list_link* node = df::global::world->jobs.list.next;
         while (node) {
             df::job* job = node->item;
@@ -134,6 +135,7 @@ public:
                 jobs.emplace(job->pos, job);
             }
         }
+        DEBUG(general).print("DesignationJobs: DONE reading jobs list\n");
     }
     void remove(const df::coord &pos) {
         if(jobs.count(pos)) {
@@ -731,9 +733,11 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
     Random::MersenneRNG rng;
     DesignationJobs jobs;
 
+    DEBUG(general).print("do_dig(): starting..\n");
     jobs.load(map);
     rng.init();
 
+    DEBUG(general).print("do_dig(): reading map..\n");
     std::unordered_set<designation> buffer;
     // go down levels instead of up so stacked ramps behave as expected
     for (int16_t z = options.end.z; z >= options.start.z; --z) {
@@ -765,6 +769,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
         }
     }
 
+    DEBUG(general).print("do_dig(): processing designations..\n");
     // process designations
     for(auto &d : buffer) {
         auto pos = d.pos;
@@ -812,6 +817,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
         }
     }
 
+    DEBUG(general).print("do_dig(): write changes to map..\n");
     map.WriteAll();
 }
 

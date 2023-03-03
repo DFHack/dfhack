@@ -121,10 +121,10 @@ void DFHack::Lua::Push(lua_State *state, const df::coord2d &pos)
     lua_setfield(state, -2, "y");
 }
 
-void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
+void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec, int idx)
 {
     lua_pushnil(state);   // first key
-    while (lua_next(state, 1) != 0)
+    while (lua_next(state, idx) != 0)
     {
         pvec.push_back(lua_tostring(state, -1));
         lua_pop(state, 1);  // remove value, leave key

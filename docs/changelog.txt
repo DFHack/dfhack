@@ -58,6 +58,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 -@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
+- `automaterial`: all functionality has been merged into `buildingplan`
 
 # 50.07-alpha2
 

@@ -96,6 +96,44 @@ local function get_quantity(filter, hollow, placement_data)
     return quantity * dimx * dimy * dimz
 end
 
+local function to_title_case(str)
+    str = str:gsub('(%a)([%w_]*)',
+        function (first, rest) return first:upper()..rest:lower() end)
+    str = str:gsub('_', ' ')
+    return str
+end
+
+function get_desc(filter)
+    local desc = 'Unknown'
+    if filter.has_tool_use and filter.has_tool_use > -1 then
+        desc = to_title_case(df.tool_uses[filter.has_tool_use])
+    elseif filter.flags2 and filter.flags2.screw then
+        desc = 'Screw'
+    elseif filter.item_type and filter.item_type > -1 then
+        desc = to_title_case(df.item_type[filter.item_type])
+    elseif filter.vector_id and filter.vector_id > -1 then
+        desc = to_title_case(df.job_item_vector_id[filter.vector_id])
+    elseif filter.flags2 and filter.flags2.building_material then
+        desc = 'Building material';
+        if filter.flags2.fire_safe then
+            desc = 'Fire-safe material';
+        end
+        if filter.flags2.magma_safe then
+            desc = 'Magma-safe material';
+        end
+    end
+
+    if desc:endswith('s') then
+        desc = desc:sub(1,-2)
+    end
+    if desc == 'Trappart' then
+        desc = 'Mechanism'
+    elseif desc == 'Wood' then
+        desc = 'Log'
+    end
+    return desc
+end
+
 local BUTTON_START_PEN, BUTTON_END_PEN, SELECTED_ITEM_PEN = nil, nil, nil
 local reset_counts_flag = false
 local reset_inspector_flag = false
@@ -229,10 +267,11 @@ function ItemSelection:init()
             choices=self:get_choices(sort_by_recency),
             icon_width=2,
             on_submit=self:callback('toggle_group'),
+            edit_on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.CycleHotkeyLabel{
             frame={l=0, b=2},
-            key='CUSTOM_CTRL_X',
+            key='CUSTOM_SHIFT_R',
             label='Sort by:',
             options={
                 {label='Recently used', value=sort_by_recency},
@@ -250,7 +289,7 @@ function ItemSelection:init()
         },
         widgets.HotkeyLabel{
             frame={l=22, b=1},
-            key='CUSTOM_CTRL_D',
+            key='CUSTOM_SHIFT_B',
             label='Build',
             auto_width=true,
             on_activate=self:callback('submit'),
@@ -622,7 +661,7 @@ QualityAndMaterialsPage.ATTRS{
 }
 
 local TYPE_COL_WIDTH = 20
-local HEADER_HEIGHT = 8
+local HEADER_HEIGHT = 7
 local QUALITY_HEIGHT = 9
 local FOOTER_HEIGHT = 4
 
@@ -639,11 +678,20 @@ local function can_be_improved(idx)
             filter.item_type ~= df.item_type.BOULDER
 end
 
-function QualityAndMaterialsPage:init()
-    self.lowest_other_item_heat_safety = 2
-    self.dirty = true
+local function mat_sort_by_name(a, b)
+    return a.name < b.name
+end
 
-    local enable_item_quality =  can_be_improved(self.index)
+local function mat_sort_by_quantity(a, b)
+    return a.quantity > b.quantity or
+            (a.quantity == b.quantity and mat_sort_by_name(a, b))
+end
+
+function QualityAndMaterialsPage:init()
+    self.dirty = true
+    self.summary = ''
+
+    local enable_item_quality = can_be_improved(self.index)
 
     self:addviews{
         widgets.Panel{
@@ -652,52 +700,39 @@ function QualityAndMaterialsPage:init()
             frame_inset={l=1},
             subviews={
                 widgets.Label{
-                    frame={l=0, t=0, h=1, r=0},
-                    text={
-                        'Current filter:',
-                        {gap=1, pen=COLOR_LIGHTCYAN, text=self:callback('get_summary')}
-                    },
+                    frame={l=0, t=0},
+                    text='Current filter:',
+                },
+                widgets.WrappedLabel{
+                    frame={l=16, t=0, h=2, r=0},
+                    text_pen=COLOR_LIGHTCYAN,
+                    text_to_wrap=function() return self.summary end,
+                    auto_height=false,
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='safety',
-                    frame={t=2, l=0, w=35},
-                    key='CUSTOM_SHIFT_G',
-                    label='Building heat safety:',
-                    options={
-                        {label='Fire Magma', value=0, pen=COLOR_GREY},
-                        {label='Fire Magma', value=2, pen=COLOR_RED},
-                        {label='Fire', value=1, pen=COLOR_LIGHTRED},
-                    },
-                    on_change=self:callback('set_heat_safety'),
-                },
-                widgets.Label{
-                    frame={t=2, l=30},
-                    text='Magma',
-                    auto_width=true,
-                    text_pen=COLOR_GREY,
-                    visible=function() return self.subviews.safety:getOptionValue() == 1 end,
-                },
-                widgets.Label{
-                    frame={t=3, l=3},
-                    text='Other items for this building may not be able to use all of their selected materials.',
-                    visible=function() return self.subviews.safety:getOptionValue() > self.lowest_other_item_heat_safety end,
-                },
-                widgets.EditField{
-                    frame={l=0, t=4, w=23},
-                    label_text='Search: ',
-                    on_char=function(ch) return ch:match('%l') end,
-                },
-                widgets.CycleHotkeyLabel{
-                    frame={l=24, t=4, w=21},
+                    view_id='mat_sort',
+                    frame={l=0, t=3, w=21},
                     label='Sort by:',
                     key='CUSTOM_SHIFT_R',
-                    options={'name', 'available'},
+                    options={
+                        {label='name', value=mat_sort_by_name},
+                        {label='available', value=mat_sort_by_quantity}
+                    },
+                    on_change=function() self.dirty = true end,
                 },
                 widgets.ToggleHotkeyLabel{
-                    frame={l=24, t=5, w=24},
+                    view_id='hide_zero',
+                    frame={l=0, t=4, w=24},
                     label='Hide unavailable:',
                     key='CUSTOM_SHIFT_H',
                     initial_option=false,
+                    on_change=function() self.dirty = true end,
+                },
+                widgets.EditField{
+                    view_id='search',
+                    frame={l=26, t=3},
+                    label_text='Search: ',
+                    on_char=function(ch) return ch:match('[%l -]') end,
                 },
                 widgets.Label{
                     frame={l=1, b=0},
@@ -720,20 +755,15 @@ function QualityAndMaterialsPage:init()
                     view_id='materials_categories',
                     frame={l=1, t=0, b=0, w=TYPE_COL_WIDTH-3},
                     scroll_keys={},
-                    choices={
-                        {text='Stone', key='CUSTOM_SHIFT_S'},
-                        {text='Wood', key='CUSTOM_SHIFT_O'},
-                        {text='Metal', key='CUSTOM_SHIFT_M'},
-                        {text='Other', key='CUSTOM_SHIFT_T'},
-                    },
+                    icon_width=2,
+                    cursor_pen=COLOR_CYAN,
+                    on_submit=self:callback('toggle_category'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id='materials_mats',
                     frame={l=TYPE_COL_WIDTH, t=0, r=0, b=0},
-                    choices={
-                        {text='9    - granite'},
-                        {text='0    - graphite'},
-                    },
+                    icon_width=2,
+                    on_submit=self:callback('toggle_material'),
                 },
             },
         },
@@ -832,35 +862,72 @@ function QualityAndMaterialsPage:init()
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=0},
-                    label='Select all',
-                    auto_width=true,
-                    key='CUSTOM_SHIFT_A',
-                },
-                widgets.HotkeyLabel{
-                    frame={l=30, t=1},
                     label='Invert selection',
                     auto_width=true,
                     key='CUSTOM_SHIFT_I',
+                    on_activate=self:callback('invert_materials'),
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=2},
-                    label='Clear selection',
+                    label='Reset filter',
                     auto_width=true,
-                    key='CUSTOM_SHIFT_C',
+                    key='CUSTOM_SHIFT_X',
+                    on_activate=self:callback('clear_filter'),
                 },
             },
         }
     }
+
+    -- replace the FilteredList's built-in EditField with our own
+    self.subviews.materials_mats.list.frame.t = 0
+    self.subviews.materials_mats.edit.visible = false
+    self.subviews.materials_mats.edit = self.subviews.search
+    self.subviews.search.on_change = self.subviews.materials_mats:callback('onFilterChange')
+end
+
+local MAT_ENABLED_PEN = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
+local MAT_DISABLED_PEN = to_pen{ch='x', fg=COLOR_RED}
+
+local function make_cat_choice(label, cat, key, cats)
+    local enabled = cats[cat]
+    local icon = nil
+    if not cats.unset then
+        icon = enabled and MAT_ENABLED_PEN or MAT_DISABLED_PEN
+    end
+    return {
+        text=label,
+        key=key,
+        enabled=enabled,
+        cat=cat,
+        icon=icon,
+    }
+end
+
+local function make_mat_choice(name, props, enabled, cats)
+    local quantity = tonumber(props.count)
+    local text = ('%5d - %s'):format(quantity, name)
+    local icon = nil
+    if not cats.unset then
+        icon = enabled and MAT_ENABLED_PEN or MAT_DISABLED_PEN
+    end
+    return {
+        text=text,
+        enabled=enabled,
+        icon=icon,
+        name=name,
+        cat=props.category,
+        quantity=quantity,
+    }
 end
 
 function QualityAndMaterialsPage:refresh()
-    local summary = ''
+    local summary = get_desc(get_cur_filters()[self.index])
     local subviews = self.subviews
 
     local heat = getHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type)
-    subviews.safety:setOption(heat)
-    if heat >= 2 then summary = summary .. 'Magma safe '
-    elseif heat == 1 then summary = summary .. 'Fire safe '
+    if heat >= 2 then summary = 'Magma safe ' .. summary
+    elseif heat == 1 then summary = 'Fire safe ' .. summary
+    else summary = 'Any ' .. summary
     end
 
     local quality = getQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
@@ -868,17 +935,95 @@ function QualityAndMaterialsPage:refresh()
     subviews.min_quality:setOption(quality.min_quality)
     subviews.max_quality:setOption(quality.max_quality)
 
+    local cats = getMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
+    local category_choices={
+        make_cat_choice('Stone', 'stone', 'CUSTOM_SHIFT_S', cats),
+        make_cat_choice('Wood', 'wood', 'CUSTOM_SHIFT_O', cats),
+        make_cat_choice('Metal', 'metal', 'CUSTOM_SHIFT_M', cats),
+        make_cat_choice('Glass', 'glass', 'CUSTOM_SHIFT_G', cats),
+    }
+    self.subviews.materials_categories:setChoices(category_choices)
+
+    local mats = getMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
+    local mat_choices = {}
+    local hide_zero = self.subviews.hide_zero:getOptionValue()
+    local enabled_mat_names = {}
+    for name,props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if not cats.unset and enabled then
+            table.insert(enabled_mat_names, name)
+        end
+        if not hide_zero or tonumber(props.count) > 0 then
+            table.insert(mat_choices, make_mat_choice(name, props, enabled, cats))
+        end
+    end
+    table.sort(mat_choices, self.subviews.mat_sort:getOptionValue())
+
+    local prev_filter = self.subviews.search.text
+    self.subviews.materials_mats:setChoices(mat_choices)
+    self.subviews.materials_mats:setFilter(prev_filter)
+
+    if #enabled_mat_names > 0 then
+        table.sort(enabled_mat_names)
+        summary = summary .. (' of %s'):format(table.concat(enabled_mat_names, ', '))
+    end
+
     self.summary = summary
     self.dirty = false
+    self:updateLayout()
 end
 
-function QualityAndMaterialsPage:get_summary()
-    -- TODO: summarize materials
-    return self.summary
+function QualityAndMaterialsPage:toggle_category(_, choice)
+    local cats = {}
+    if not choice.icon then
+        -- toggling from unset to something is set
+        table.insert(cats, choice.cat)
+    else
+        choice.enabled = not choice.enabled
+        for _,c in ipairs(self.subviews.materials_categories:getChoices()) do
+            if c.enabled then
+                table.insert(cats, c.cat)
+            end
+        end
+    end
+    setMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, cats)
+    self.dirty = true
 end
 
-function QualityAndMaterialsPage:set_heat_safety(heat)
-    setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
+function QualityAndMaterialsPage:toggle_material(_, choice)
+    local mats = {}
+    if not choice.icon then
+        -- toggling from unset to something is set
+        table.insert(mats, choice.name)
+    else
+        for _,c in ipairs(self.subviews.materials_mats:getChoices()) do
+            local enabled = c.enabled
+            if choice.name == c.name then
+                enabled = not c.enabled
+            end
+            if enabled then
+                table.insert(mats, c.name)
+            end
+        end
+    end
+    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, mats)
+    self.dirty = true
+end
+
+function QualityAndMaterialsPage:invert_materials()
+    local mats = {}
+    for _,c in ipairs(self.subviews.materials_mats:getChoices()) do
+        if not c.icon then return end
+        if not c.enabled then
+            table.insert(mats, c.name)
+        end
+    end
+    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, mats)
+    self.dirty = true
+end
+
+function QualityAndMaterialsPage:clear_filter()
+    clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
     self.dirty = true
 end
 
@@ -952,7 +1097,7 @@ GlobalSettingsPage = defclass(GlobalSettingsPage, widgets.ResizingPanel)
 GlobalSettingsPage.ATTRS{
     autoarrange_subviews=true,
     frame={t=0, l=0},
-    frame_inset={l=1, r=1},
+    frame_style=gui.INTERIOR_FRAME,
 }
 
 function GlobalSettingsPage:init()
@@ -1021,8 +1166,8 @@ end
 
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
-    frame_title='Choose filters [MOCK -- NOT FUNCTIONAL]',
-    frame={w=53, h=53, l=30, t=8},
+    frame_title='Choose filters',
+    frame={w=55, h=53, l=30, t=8},
     frame_inset={t=1},
     resizable=true,
     index=DEFAULT_NIL,
@@ -1146,13 +1291,6 @@ local function is_over_options_panel()
     return v:getMousePos()
 end
 
-local function to_title_case(str)
-    str = str:gsub('(%a)([%w_]*)',
-        function (first, rest) return first:upper()..rest:lower() end)
-    str = str:gsub('_', ' ')
-    return str
-end
-
 ItemLine = defclass(ItemLine, widgets.Panel)
 ItemLine.ATTRS{
     idx=DEFAULT_NIL,
@@ -1219,37 +1357,6 @@ end
 function ItemLine:get_x_pen()
     return hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1) and
             COLOR_GREEN or COLOR_GREY
-end
-
-function get_desc(filter)
-    local desc = 'Unknown'
-    if filter.has_tool_use and filter.has_tool_use > -1 then
-        desc = to_title_case(df.tool_uses[filter.has_tool_use])
-    elseif filter.flags2 and filter.flags2.screw then
-        desc = 'Screw'
-    elseif filter.item_type and filter.item_type > -1 then
-        desc = to_title_case(df.item_type[filter.item_type])
-    elseif filter.vector_id and filter.vector_id > -1 then
-        desc = to_title_case(df.job_item_vector_id[filter.vector_id])
-    elseif filter.flags2 and filter.flags2.building_material then
-        desc = 'Building material';
-        if filter.flags2.fire_safe then
-            desc = 'Fire-safe material';
-        end
-        if filter.flags2.magma_safe then
-            desc = 'Magma-safe material';
-        end
-    end
-
-    if desc:endswith('s') then
-        desc = desc:sub(1,-2)
-    end
-    if desc == 'Trappart' then
-        desc = 'Mechanism'
-    elseif desc == 'Wood' then
-        desc = 'Log'
-    end
-    return desc
 end
 
 function ItemLine:get_item_line_text()
@@ -1654,7 +1761,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L
+   return keys._MOUSE_L or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)
@@ -1888,6 +1995,7 @@ function InspectorOverlay:init()
             frame={t=11, l=0},
             label='adjust filters',
             key='CUSTOM_CTRL_F',
+            visible=false, -- until implemented
         },
         widgets.HotkeyLabel{
             frame={t=12, l=0},

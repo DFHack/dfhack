@@ -474,7 +474,6 @@ void StockpileSerializer::write_general()
     mBuffer.set_max_wheelbarrows ( mPile->max_wheelbarrows );
     mBuffer.set_max_barrels ( mPile->max_barrels );
     mBuffer.set_use_links_only ( mPile->use_links_only );
-    mBuffer.set_unknown1 ( mPile->settings.unk1 );
     mBuffer.set_allow_inorganic ( mPile->settings.allow_inorganic );
     mBuffer.set_allow_organic ( mPile->settings.allow_organic );
     mBuffer.set_corpses ( mPile->settings.flags.bits.corpses );
@@ -490,8 +489,6 @@ void StockpileSerializer::read_general()
         mPile->max_barrels = mBuffer.max_barrels();
     if ( mBuffer.has_use_links_only() )
         mPile->use_links_only = mBuffer.use_links_only();
-    if ( mBuffer.has_unknown1() )
-        mPile->settings.unk1 = mBuffer.unknown1();
     if ( mBuffer.has_allow_inorganic() )
         mPile->settings.allow_inorganic = mBuffer.allow_inorganic();
     if ( mBuffer.has_allow_organic() )

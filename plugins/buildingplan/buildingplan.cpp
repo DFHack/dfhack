@@ -742,17 +742,17 @@ static int setMaterialMaskFilter(lua_State *L) {
             type, subtype, custom, index, mask);
     ItemFilter filter = filters[index];
     filter.setMaterialMask(mask);
+    set<MaterialInfo> new_mats;
     if (mask) {
         // remove materials from the list that don't match the mask
         const auto &mats = filter.getMaterials();
-        set<MaterialInfo> new_mats;
         const df::dfhack_material_category mat_mask(mask);
         for (auto & mat : mats) {
             if (mat.matches(mat_mask))
                 new_mats.emplace(mat);
         }
-        filter.setMaterials(new_mats);
     }
+    filter.setMaterials(new_mats);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);
     call_buildingplan_lua(out, "signal_reset");
     return 0;
@@ -813,6 +813,8 @@ static int setMaterialFilter(lua_State *L) {
     filter.setMaterials(mats);
     // ensure relevant masks are explicitly enabled
     df::dfhack_material_category mask = filter.getMaterialMask();
+    if (!mats.size())
+        mask.whole = 0; // if all materials are disabled, reset the mask
     for (auto & mat : mats) {
         if (mat.matches(stone_cat))
             mask.whole |= stone_cat.whole;

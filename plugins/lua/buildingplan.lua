@@ -267,10 +267,11 @@ function ItemSelection:init()
             choices=self:get_choices(sort_by_recency),
             icon_width=2,
             on_submit=self:callback('toggle_group'),
+            edit_on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.CycleHotkeyLabel{
             frame={l=0, b=2},
-            key='CUSTOM_CTRL_X',
+            key='CUSTOM_SHIFT_R',
             label='Sort by:',
             options={
                 {label='Recently used', value=sort_by_recency},
@@ -288,7 +289,7 @@ function ItemSelection:init()
         },
         widgets.HotkeyLabel{
             frame={l=22, b=1},
-            key='CUSTOM_CTRL_D',
+            key='CUSTOM_SHIFT_B',
             label='Build',
             auto_width=true,
             on_activate=self:callback('submit'),
@@ -1760,7 +1761,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L
+   return keys._MOUSE_L or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)
@@ -1994,6 +1995,7 @@ function InspectorOverlay:init()
             frame={t=11, l=0},
             label='adjust filters',
             key='CUSTOM_CTRL_F',
+            visible=false, -- until implemented
         },
         widgets.HotkeyLabel{
             frame={t=12, l=0},

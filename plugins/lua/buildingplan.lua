@@ -728,6 +728,7 @@ function QualityAndMaterialsPage:init()
                     on_change=function() self.dirty = true end,
                 },
                 widgets.EditField{
+                    view_id='search',
                     frame={l=26, t=3},
                     label_text='Search: ',
                     on_char=function(ch) return ch:match('[%l -]') end,
@@ -744,7 +745,8 @@ function QualityAndMaterialsPage:init()
                 },
             },
         },
-        widgets.Panel{view_id='materials_lists',
+        widgets.Panel{
+            view_id='materials_lists',
             frame={l=0, t=HEADER_HEIGHT, r=0, b=FOOTER_HEIGHT+QUALITY_HEIGHT},
             frame_style=gui.INTERIOR_FRAME,
             subviews={
@@ -756,7 +758,7 @@ function QualityAndMaterialsPage:init()
                     cursor_pen=COLOR_CYAN,
                     on_submit=self:callback('toggle_category'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id='materials_mats',
                     frame={l=TYPE_COL_WIDTH, t=0, r=0, b=0},
                     icon_width=2,
@@ -874,6 +876,12 @@ function QualityAndMaterialsPage:init()
             },
         }
     }
+
+    -- replace the FilteredList's built-in EditField with our own
+    self.subviews.materials_mats.list.frame.t = 0
+    self.subviews.materials_mats.edit.visible = false
+    self.subviews.materials_mats.edit = self.subviews.search
+    self.subviews.search.on_change = self.subviews.materials_mats:callback('onFilterChange')
 end
 
 local MAT_ENABLED_PEN = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
@@ -949,7 +957,10 @@ function QualityAndMaterialsPage:refresh()
         end
     end
     table.sort(mat_choices, self.subviews.mat_sort:getOptionValue())
+
+    local prev_filter = self.subviews.search.text
     self.subviews.materials_mats:setChoices(mat_choices)
+    self.subviews.materials_mats:setFilter(prev_filter)
 
     if #enabled_mat_names > 0 then
         table.sort(enabled_mat_names)
@@ -984,9 +995,12 @@ function QualityAndMaterialsPage:toggle_material(_, choice)
         -- toggling from unset to something is set
         table.insert(mats, choice.name)
     else
-        choice.enabled = not choice.enabled
         for _,c in ipairs(self.subviews.materials_mats:getChoices()) do
-            if c.enabled then
+            local enabled = c.enabled
+            if choice.name == c.name then
+                enabled = not c.enabled
+            end
+            if enabled then
                 table.insert(mats, c.name)
             end
         end

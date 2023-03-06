@@ -705,7 +705,9 @@ static void clearFilter(color_ostream &out, df::building_type type, int16_t subt
     auto &filters = get_item_filters(out, key);
     if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
         return;
-    filters.setItemFilter(out, ItemFilter(), index);
+    ItemFilter filter = filters.getItemFilters()[index];
+    filter.clear();
+    filters.setItemFilter(out, filter, index);
     call_buildingplan_lua(&out, "signal_reset");
 }
 

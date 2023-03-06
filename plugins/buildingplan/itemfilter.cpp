@@ -14,13 +14,13 @@ using std::vector;
 
 using namespace DFHack;
 
-ItemFilter::ItemFilter() {
+ItemFilter::ItemFilter() : default_max_quality(df::item_quality::Masterful) {
     clear();
 }
 
 void ItemFilter::clear() {
     min_quality = df::item_quality::Ordinary;
-    max_quality = df::item_quality::Masterful;
+    max_quality = default_max_quality;
     decorated_only = false;
     mat_mask.whole = 0;
     materials.clear();
@@ -28,7 +28,7 @@ void ItemFilter::clear() {
 
 bool ItemFilter::isEmpty() const {
     return min_quality == df::item_quality::Ordinary
-            && max_quality == df::item_quality::Masterful
+            && max_quality == default_max_quality
             && !decorated_only
             && !mat_mask.whole
             && materials.empty();
@@ -62,12 +62,10 @@ static bool deserializeMaterials(string ser, set<DFHack::MaterialInfo> &material
     return true;
 }
 
-ItemFilter::ItemFilter(color_ostream &out, string serialized) {
-    clear();
-
+ItemFilter::ItemFilter(color_ostream &out, string serialized) : ItemFilter() {
     vector<string> tokens;
     split_string(&tokens, serialized, "/");
-    if (tokens.size() != 5) {
+    if (tokens.size() < 5) {
         DEBUG(status,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
         return;
     }
@@ -78,6 +76,9 @@ ItemFilter::ItemFilter(color_ostream &out, string serialized) {
     setMinQuality(atoi(tokens[2].c_str()));
     setMaxQuality(atoi(tokens[3].c_str()));
     decorated_only = static_cast<bool>(atoi(tokens[4].c_str()));
+
+    if (tokens.size() >= 6)
+        default_max_quality = static_cast<df::item_quality>(atoi(tokens[5].c_str()));
 }
 
 // format: mat,mask,elements/materials,list/minq/maxq/decorated
@@ -93,6 +94,7 @@ string ItemFilter::serialize() const {
     ser << "/" << static_cast<int>(min_quality);
     ser << "/" << static_cast<int>(max_quality);
     ser << "/" << static_cast<int>(decorated_only);
+    ser << "/" << static_cast<int>(default_max_quality);
     return ser.str();
 }
 
@@ -114,11 +116,13 @@ void ItemFilter::setMinQuality(int quality) {
         max_quality = min_quality;
 }
 
-void ItemFilter::setMaxQuality(int quality) {
+void ItemFilter::setMaxQuality(int quality, bool is_default) {
     max_quality = static_cast<df::item_quality>(quality);
     clampItemQuality(&max_quality);
     if (max_quality < min_quality)
         min_quality = max_quality;
+    if (is_default)
+        default_max_quality = max_quality;
 }
 
 void ItemFilter::setDecoratedOnly(bool decorated) {

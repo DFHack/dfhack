@@ -41,7 +41,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
     set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));
     item_filters.resize(jitems.size());
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
-        item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]));
+        item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
     }
     filter_config.val() = serialize_item_filters(item_filters);
 }

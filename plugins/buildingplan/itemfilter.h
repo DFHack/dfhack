@@ -15,7 +15,7 @@ public:
     std::string serialize() const;
 
     void setMinQuality(int quality);
-    void setMaxQuality(int quality);
+    void setMaxQuality(int quality, bool is_default = false);
     void setDecoratedOnly(bool decorated);
     void setMaterialMask(uint32_t mask);
     void setMaterials(const std::set<DFHack::MaterialInfo> &materials);
@@ -33,6 +33,7 @@ public:
 private:
     df::item_quality min_quality;
     df::item_quality max_quality;
+    df::item_quality default_max_quality;
     bool decorated_only;
     df::dfhack_material_category mat_mask;
     std::set<DFHack::MaterialInfo> materials;

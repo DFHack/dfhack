@@ -85,10 +85,11 @@ public:
         df::job_list_link* node = df::global::world->jobs.list.next;
         while (node) {
             df::job* job = node->item;
+            node = node->next;
+
             if(!job || !Maps::isValidTilePos(job->pos))
                 continue;
 
-            node = node->next;
             df::tile_designation td = map.designationAt(job->pos);
             df::tile_occupancy to = map.occupancyAt(job->pos);
             const auto ctd = td.whole;

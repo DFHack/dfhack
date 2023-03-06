@@ -2835,76 +2835,91 @@ static std::string internal_md5(std::string s) { return md5_wrap.getHashFromStri
 
 struct heap_pointer_info
 {
+    size_t address = 0;
     size_t size = 0;
     int status = 0;
 };
 
-static std::map<uintptr_t, heap_pointer_info> snapshot;
+//fixed sized, sorted
+static std::vector<heap_pointer_info> heap_data;
 
+//when dfhack upgrades to c++17, this would do well as a std::optional
+static std::pair<bool, heap_pointer_info> heap_find(uintptr_t address)
+{
+    auto it = std::lower_bound(heap_data.begin(), heap_data.end(), address,
+    [](heap_pointer_info t, uintptr_t address)
+    {
+        return t.address < address;
+    });
+
+    if (it == heap_data.end() || it->address != address)
+        return {false, heap_pointer_info()};
+
+    return {true, *it};
+}
+
+//this function only allocates the first time it is called
 static int heap_take_snapshot()
 {
     #ifdef _WIN32
-    snapshot.clear();
+    size_t max_entries = 256 * 1024 * 1024 / sizeof(heap_pointer_info);
 
-    std::vector<std::pair<void*, heap_pointer_info>> entries;
-    //heap allocating while iterating the heap is suboptimal
-    entries.reserve(256*1024*1024);
+    //clearing the vector is guaranteed not to deallocate the memory
+    heap_data.clear();
+    heap_data.reserve(max_entries);
 
     _HEAPINFO hinfo;
-    int heapstatus;
-    int numLoops;
-    hinfo._pentry = NULL;
-    numLoops = 0;
-    while((heapstatus = _heapwalk(&hinfo)) == _HEAPOK &&
-          numLoops < 1024*1024*1024)
+    hinfo._pentry = nullptr;
+    int heap_status = 0;
+
+    while ((heap_status = _heapwalk(&hinfo)) == _HEAPOK && heap_data.size() < max_entries)
     {
         heap_pointer_info inf;
+        inf.address = reinterpret_cast<uintptr_t>(hinfo._pentry);
         inf.size = hinfo._size;
         inf.status = hinfo._useflag; //0 == _FREEENTRY, 1 == _USEDENTRY
 
-        entries.push_back({hinfo._pentry, inf});
-
-        numLoops++;
+        heap_data.push_back(inf);
     }
 
-    for (auto i : entries)
+    //sort by address
+    std::sort(heap_data.begin(), heap_data.end(),
+    [](heap_pointer_info t1, heap_pointer_info t2)
     {
-        uintptr_t val = reinterpret_cast<uintptr_t>(i.first);
-        snapshot[val] = i.second;
-    }
+        return t1.address < t2.address;
+    });
 
-    if (heapstatus == _HEAPEMPTY || heapstatus == _HEAPEND)
+    if (heap_status == _HEAPEMPTY || heap_status == _HEAPEND)
         return 0;
 
-    if (heapstatus == _HEAPBADPTR)
+    if (heap_status == _HEAPBADPTR)
         return 1;
 
-    if (heapstatus == _HEAPBADBEGIN)
+    if (heap_status == _HEAPBADBEGIN)
         return 2;
 
-    if (heapstatus == _HEAPBADNODE)
+    if (heap_status == _HEAPBADNODE)
         return 3;
     #endif
 
     return 0;
 }
 
-//this function probably should not allocate. Then again we're shimming through lua which.... probably does
 static int get_heap_state()
 {
     #ifdef _WIN32
-    int heapstatus = _heapchk();
+    int heap_status = _heapchk();
 
-    if (heapstatus == _HEAPEMPTY || heapstatus == _HEAPOK)
+    if (heap_status == _HEAPEMPTY || heap_status == _HEAPOK)
         return 0;
 
-    if (heapstatus == _HEAPBADPTR)
+    if (heap_status == _HEAPBADPTR)
         return 1;
 
-    if (heapstatus == _HEAPBADBEGIN)
+    if (heap_status == _HEAPBADBEGIN)
         return 2;
 
-    if (heapstatus == _HEAPBADNODE)
+    if (heap_status == _HEAPBADNODE)
         return 3;
     #endif
 
@@ -2913,56 +2928,59 @@ static int get_heap_state()
 
 static bool is_address_in_heap(uintptr_t ptr)
 {
-    return snapshot.find(ptr) != snapshot.end();
+    return heap_find(ptr).first;
 }
 
 static bool is_address_active_in_heap(uintptr_t ptr)
 {
-    auto it = snapshot.find(ptr);
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
 
-    if (it == snapshot.end())
+    if (!inf.first)
         return false;
 
-    return it->second.status == 1;
+    return inf.second.status == 1;
 }
 
 static bool is_address_used_after_free_in_heap(uintptr_t ptr)
 {
-    auto it = snapshot.find(ptr);
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
 
-    if (it == snapshot.end())
+    if (!inf.first)
         return false;
 
-    return it->second.status != 1;
+    return inf.second.status != 1;
 }
 
 static int get_address_size_in_heap(uintptr_t ptr)
 {
-    auto it = snapshot.find(ptr);
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
 
-    if (it == snapshot.end())
+    if (!inf.first)
         return -1;
 
-    return it->second.size;
+    return inf.second.size;
 }
 
 //eg if I have a struct, does any address lie within the struct?
 static uintptr_t get_root_address_of_heap_object(uintptr_t ptr)
 {
     //find the first element strictly greater than our pointer
-    auto it = snapshot.upper_bound(ptr);
+    auto it = std::upper_bound(heap_data.begin(), heap_data.end(), ptr, [](uintptr_t ptr, heap_pointer_info t1)
+    {
+        return ptr < t1.address;
+    });
 
     //if we're at the start of the snapshot, no elements are less than our pointer
     //therefore it is invalid
-    if (it == snapshot.begin())
+    if (it == heap_data.begin())
         return 0;
 
     //get the first element less than or equal to ours
     it--;
 
     //our pointer is only valid if we lie in the first pointer lower in memory than it
-    if (ptr >= it->first && ptr < it->first + it->second.size)
-        return it->first;
+    if (ptr >= it->address && ptr < it->address + it->size)
+        return it->address;
 
     return 0;
 }

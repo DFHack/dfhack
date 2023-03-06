@@ -7,8 +7,8 @@ overlay
 
 The overlay framework manages the on-screen widgets that other tools (including
 3rd party plugins and scripts) can register for display. For a graphical
-configuration interface, please see `gui/overlay`. If you are a developer who
-wants to write an overlay widget, please see the `overlay-dev-guide`.
+configuration interface, please see `gui/control-panel`. If you are a developer
+who wants to write an overlay widget, please see the `overlay-dev-guide`.
 
 Usage
 -----

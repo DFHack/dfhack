@@ -66,6 +66,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
 -@ `autochop`: generate default names for burrows with no assigned names
 - ``Buildings::StockpileIterator``: fix check for stockpile items on block boundary.
+- `dig-now`: fixed multi-layer channel designations only channeling every second layer
 - `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment
 -@ `confirm`: fix fps drop when enabled
 - `channel-safely`: fix an out of bounds error regarding the REPORT event listener receiving (presumably) stale id's
@@ -76,6 +77,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `showmood`: now shows the number of items needed for cloth and bars in addition to the technically correct but always confusing "total dimension" (150 per bar or 10,000 per cloth)
 -@ Stopped mouse clicks from affecting the map when a click on a DFHack screen dismisses the window
 - `confirm`: configuration data is now persisted globally.
+- `dig-now`: added handling of dig designations that have been converted into active jobs
 - `tailor`: add support for adamantine cloth (off by default); improve logging
 
 ## API

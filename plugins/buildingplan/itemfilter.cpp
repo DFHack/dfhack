@@ -8,18 +8,19 @@ namespace DFHack {
     DBG_EXTERN(buildingplan, status);
 }
 
+using std::set;
 using std::string;
 using std::vector;
 
 using namespace DFHack;
 
-ItemFilter::ItemFilter() {
+ItemFilter::ItemFilter() : default_max_quality(df::item_quality::Masterful) {
     clear();
 }
 
 void ItemFilter::clear() {
     min_quality = df::item_quality::Ordinary;
-    max_quality = df::item_quality::Masterful;
+    max_quality = default_max_quality;
     decorated_only = false;
     mat_mask.whole = 0;
     materials.clear();
@@ -27,7 +28,7 @@ void ItemFilter::clear() {
 
 bool ItemFilter::isEmpty() const {
     return min_quality == df::item_quality::Ordinary
-            && max_quality == df::item_quality::Masterful
+            && max_quality == default_max_quality
             && !decorated_only
             && !mat_mask.whole
             && materials.empty();
@@ -44,7 +45,7 @@ static bool deserializeMaterialMask(string ser, df::dfhack_material_category mat
     return true;
 }
 
-static bool deserializeMaterials(string ser, vector<DFHack::MaterialInfo> &materials) {
+static bool deserializeMaterials(string ser, set<DFHack::MaterialInfo> &materials) {
     if (ser.empty())
         return true;
 
@@ -56,17 +57,15 @@ static bool deserializeMaterials(string ser, vector<DFHack::MaterialInfo> &mater
             DEBUG(status).print("invalid material name serialization: '%s'", ser.c_str());
             return false;
         }
-        materials.push_back(material);
+        materials.emplace(material);
     }
     return true;
 }
 
-ItemFilter::ItemFilter(color_ostream &out, string serialized) {
-    clear();
-
+ItemFilter::ItemFilter(color_ostream &out, string serialized) : ItemFilter() {
     vector<string> tokens;
     split_string(&tokens, serialized, "/");
-    if (tokens.size() != 5) {
+    if (tokens.size() < 5) {
         DEBUG(status,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
         return;
     }
@@ -77,20 +76,25 @@ ItemFilter::ItemFilter(color_ostream &out, string serialized) {
     setMinQuality(atoi(tokens[2].c_str()));
     setMaxQuality(atoi(tokens[3].c_str()));
     decorated_only = static_cast<bool>(atoi(tokens[4].c_str()));
+
+    if (tokens.size() >= 6)
+        default_max_quality = static_cast<df::item_quality>(atoi(tokens[5].c_str()));
 }
 
 // format: mat,mask,elements/materials,list/minq/maxq/decorated
 string ItemFilter::serialize() const {
     std::ostringstream ser;
     ser << bitfield_to_string(mat_mask, ",") << "/";
+    vector<string> matstrs;
     if (!materials.empty()) {
-        ser << materials[0].getToken();
-        for (size_t i = 1; i < materials.size(); ++i)
-            ser << "," << materials[i].getToken();
+        for (auto &mat : materials)
+            matstrs.emplace_back(mat.getToken());
+        ser << join_strings(",", matstrs);
     }
     ser << "/" << static_cast<int>(min_quality);
     ser << "/" << static_cast<int>(max_quality);
     ser << "/" << static_cast<int>(decorated_only);
+    ser << "/" << static_cast<int>(default_max_quality);
     return ser.str();
 }
 
@@ -112,11 +116,13 @@ void ItemFilter::setMinQuality(int quality) {
         max_quality = min_quality;
 }
 
-void ItemFilter::setMaxQuality(int quality) {
+void ItemFilter::setMaxQuality(int quality, bool is_default) {
     max_quality = static_cast<df::item_quality>(quality);
     clampItemQuality(&max_quality);
     if (max_quality < min_quality)
         min_quality = max_quality;
+    if (is_default)
+        default_max_quality = max_quality;
 }
 
 void ItemFilter::setDecoratedOnly(bool decorated) {
@@ -127,7 +133,7 @@ void ItemFilter::setMaterialMask(uint32_t mask) {
     mat_mask.whole = mask;
 }
 
-void ItemFilter::setMaterials(const vector<DFHack::MaterialInfo> &materials) {
+void ItemFilter::setMaterials(const set<DFHack::MaterialInfo> &materials) {
     this->materials = materials;
 }
 
@@ -140,8 +146,8 @@ bool ItemFilter::matches(df::dfhack_material_category mask) const {
 }
 
 bool ItemFilter::matches(DFHack::MaterialInfo &material) const {
-    for (auto it = materials.begin(); it != materials.end(); ++it)
-        if (material.matches(*it))
+    for (auto &mat : materials)
+        if (material.matches(mat))
             return true;
     return false;
 }
@@ -161,7 +167,7 @@ bool ItemFilter::matches(df::item *item) const {
 }
 
 vector<ItemFilter> deserialize_item_filters(color_ostream &out, const string &serialized) {
-    std::vector<ItemFilter> filters;
+    vector<ItemFilter> filters;
 
     vector<string> filter_strs;
     split_string(&filter_strs, serialized, ";");

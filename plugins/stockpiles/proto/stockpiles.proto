@@ -136,7 +136,7 @@ message StockpileSettings {
   optional AnimalsSet animals = 1;
   optional FoodSet food = 2;
   optional FurnitureSet furniture = 3;
-  optional int32 unknown1 = 4;
+  optional int32 unknown1 = 4 [deprecated=true];
   optional RefuseSet refuse = 5;
   optional StoneSet stone = 6;
   optional OreSet ore = 7;

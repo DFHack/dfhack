@@ -1165,7 +1165,7 @@ end
 
 FilterSelection = defclass(FilterSelection, widgets.Window)
 FilterSelection.ATTRS{
-    frame_title='Choose filters [MOCK -- NOT FUNCTIONAL]',
+    frame_title='Choose filters',
     frame={w=55, h=53, l=30, t=8},
     frame_inset={t=1},
     resizable=true,

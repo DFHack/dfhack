@@ -10,32 +10,29 @@ regardless of whether the required materials are available. This allows you to
 focus purely on design elements when you are laying out your fort, and defers
 item production concerns to a more convenient time.
 
-Buildingplan is as an alternative to the vanilla building placement UI. It
-appears after you have selected the type of building, furniture, or construction
-that you want to place in the vanilla build menu. Buildingplan then takes over
-for the actual placement step. If any building materials are not available yet
-for the placed building, it will be created in a suspended state. Buildingplan
-will periodically scan for appropriate items and attach them. Once all items are
-attached, the construction job will be unsuspended and a dwarf will come and
-build the building. If you have the `unsuspend` overlay enabled (it is enabled
-by default), then buildingplan-suspended buildings will appear with a ``P``
-marker on the main map, as opposed to the usual ``x`` marker for "regular"
-suspended buildings.
+Buildingplan is an alternative to the vanilla building placement UI. It appears
+after you have selected the type of building, furniture, or construction that
+you want to place in the vanilla build menu. Buildingplan then takes over for
+the actual placement step. If the placed building requires materials that
+aren't available yet, it will be created in a suspended state. Buildingplan will
+periodically scan for appropriate items and attach them to the planned
+building. Once all items are attached, the construction job will be unsuspended
+and a dwarf will come and build the building. If you have the `unsuspend`
+overlay enabled (it is enabled by default), then buildingplan-suspended
+buildings will appear with a ``P`` marker on the main map, as opposed to the
+usual ``x`` marker for "regular" suspended buildings.
 
 If you want to impose restrictions on which items are chosen for the buildings,
-buildingplan has full support for quality and material filters. Before you place
-a building, you can select a component item in the list and hit ``f`` or click
-on the ``filter`` button next to the item description. This will let you choose
-your desired item quality range, whether the item must be decorated, and even
-which specific materials the item must be made out of. This lets you create
-layouts with a consistent color, if that is part of your design.
+buildingplan has full support for quality and material filters (see `below
+<Setting quality and material filters>`_). This lets you create layouts with a
+consistent color, if that is part of your design.
 
 If you just care about the heat sensitivity of the building, you can set the
-building to be fire- or magma-proof in the placement UI screen or in any item
-filter screen, and the restriction will apply to all building items. This makes
-it very easy to create magma-safe pump stacks, for example.
+building to be fire- or magma-proof in the placement UI screen. This makes it
+very easy to ensure that your pump stacks and floodgates, for example, are
+magma-safe.
 
-Buildingplan works very well in conjuction with other design tools like
+Buildingplan works well in conjuction with other design tools like
 `gui/quickfort`, which allow you to apply a building layout from a blueprint.
 You can apply very large, complicated layouts, and the buildings will simply be
 built when your dwarves get around to producing the needed materials. If you
@@ -47,13 +44,14 @@ One way to integrate buildingplan into your gameplay is to create manager
 workorders to ensure you always have a few blocks/doors/beds/etc. available. You
 can then place as many of each building as you like. Produced items will be used
 to build the planned buildings as they are produced, with minimal space
-dedicated to stockpiles. The DFHack `orders` library can help with setting up
-these manager workorders for you.
+dedicated to stockpiles. The DFHack `orders` library can help with setting
+these manager workorders up for you.
 
 If you do not wish to use the ``buildingplan`` interface, you can turn off the
-``buildingplan.planner`` overlay in `gui/control-panel`. You should not disable
-the ``buildingplan`` service entirely in `gui/control-panel` since existing
-planned buildings in loaded forts will stop functioning.
+``buildingplan.planner`` overlay in `gui/control-panel` (on the "Overlays"
+tab). You should not disable the ``buildingplan`` "System service" in
+`gui/control-panel` since existing planned buildings in loaded forts will stop
+functioning.
 
 Usage
 -----
@@ -69,6 +67,10 @@ Examples
 ``buildingplan``
     Print a report of current settings, which kinds of buildings are planned,
     and what kinds of materials the buildings are waiting for.
+
+``buildingplan set boulders false``
+    When finding items to satisfy "building materials" requirements, don't
+    select boulders. Use blocks or logs (if enabled) instead.
 
 .. _buildingplan-settings:
 
@@ -129,15 +131,15 @@ filter dialog.
 
 You can select whether the item must be decorated, and you can drag the ends of
 the "Item quality" slider to set your desired quality range. Note that blocks,
-boulders, logs, and bars don't have a quality and the quality options are
+boulders, logs, and bars don't have a quality, and the quality options are
 disabled for those types. As you change the quality settings, the number of
-currently available matched items of each material appears in the materials
+currently available matched items of each material is adjusted in the materials
 list.
 
 You can click on specific materials to allow only items of those materials when
 building the current type of building. You can also allow or disallow entire
 categories of materials by clicking on the "Type" options on the left. Note
-that it is perfectly fine to choose materials that currently show 0 quantity.
+that it is perfectly fine to choose materials that currently show zero quantity.
 `buildingplan` will patiently watch for items made of materials you have
 selected.
 
@@ -168,7 +170,7 @@ Building status
 
 When viewing a planned building, a separate `overlay` widget appears on the
 building info sheet, showing you which items have been attached and which items
-are still pending. For the pending items, you can see its position in the
+are still pending. For a pending item, you can see its position in the
 fulfillment queue. If there is a particular building that you need built ASAP,
 you can click on the "make top priority" button (or hit :kbd:`Ctrl`:kbd:`T`) to
 bump the items for this building to the front of their respective queues.

@@ -144,12 +144,12 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
     return jitems;
 }
 
-static void cache_matched(int16_t type, int32_t index) {
-    static const df::dfhack_material_category stone_cat(df::dfhack_material_category::mask_stone);
-    static const df::dfhack_material_category wood_cat(df::dfhack_material_category::mask_wood);
-    static const df::dfhack_material_category metal_cat(df::dfhack_material_category::mask_metal);
-    static const df::dfhack_material_category other_cat(df::dfhack_material_category::mask_glass | df::dfhack_material_category::mask_soap);
+static const df::dfhack_material_category stone_cat(df::dfhack_material_category::mask_stone);
+static const df::dfhack_material_category wood_cat(df::dfhack_material_category::mask_wood);
+static const df::dfhack_material_category metal_cat(df::dfhack_material_category::mask_metal);
+static const df::dfhack_material_category glass_cat(df::dfhack_material_category::mask_glass);
 
+static void cache_matched(int16_t type, int32_t index) {
     MaterialInfo mi;
     mi.decode(type, index);
     if (mi.matches(stone_cat)) {
@@ -161,9 +161,9 @@ static void cache_matched(int16_t type, int32_t index) {
     } else if (mi.matches(metal_cat)) {
         DEBUG(status).print("cached metal material: %s\n", mi.toString().c_str());
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "metal"));
-    } else if (mi.matches(other_cat)) {
-        DEBUG(status).print("cached other material: %s\n", mi.toString().c_str());
-        mat_cache.emplace(mi.toString(), std::make_pair(mi, "other"));
+    } else if (mi.matches(glass_cat)) {
+        DEBUG(status).print("cached glass material: %s\n", mi.toString().c_str());
+        mat_cache.emplace(mi.toString(), std::make_pair(mi, "glass"));
     }
     else
         TRACE(status).print("not matched: %s\n", mi.toString().c_str());
@@ -729,19 +729,30 @@ static int setMaterialMaskFilter(lua_State *L) {
     Lua::GetVector(L, cats, 5);
     for (auto &cat : cats) {
         if (cat == "stone")
-            mask |= df::dfhack_material_category::mask_stone;
+            mask |= stone_cat.whole;
         else if (cat == "wood")
-            mask |= df::dfhack_material_category::mask_wood;
+            mask |= wood_cat.whole;
         else if (cat == "metal")
-            mask |= df::dfhack_material_category::mask_metal;
-        else if (cat == "other")
-            mask |= df::dfhack_material_category::mask_glass | df::dfhack_material_category::mask_soap;
+            mask |= metal_cat.whole;
+        else if (cat == "glass")
+            mask |= glass_cat.whole;
     }
     DEBUG(status,*out).print(
             "setting material mask filter for building_type=%d subtype=%d custom=%d index=%d to %x\n",
             type, subtype, custom, index, mask);
     ItemFilter filter = filters[index];
     filter.setMaterialMask(mask);
+    if (mask) {
+        // remove materials from the list that don't match the mask
+        const auto &mats = filter.getMaterials();
+        set<MaterialInfo> new_mats;
+        const df::dfhack_material_category mat_mask(mask);
+        for (auto & mat : mats) {
+            if (mat.matches(mat_mask))
+                new_mats.emplace(mat);
+        }
+        filter.setMaterials(new_mats);
+    }
     get_item_filters(*out, key).setItemFilter(*out, filter, index);
     call_buildingplan_lua(out, "signal_reset");
     return 0;
@@ -762,17 +773,14 @@ static int getMaterialMaskFilter(lua_State *L) {
     auto &filters = get_item_filters(*out, key);
     if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
         return 0;
-    vector<string> cat_names;
+    map<string, bool> ret;
     uint32_t bits = filters.getItemFilters()[index].getMaterialMask().whole;
-    if (!bits || bits & df::dfhack_material_category::mask_stone)
-        cat_names.emplace_back("stone");
-    if (!bits || bits & df::dfhack_material_category::mask_wood)
-        cat_names.emplace_back("wood");
-    if (!bits || bits & df::dfhack_material_category::mask_metal)
-        cat_names.emplace_back("metal");
-    if (!bits || bits & (df::dfhack_material_category::mask_glass | df::dfhack_material_category::mask_soap))
-        cat_names.emplace_back("other");
-    Lua::PushVector(L, cat_names);
+    ret.emplace("unset", !bits);
+    ret.emplace("stone", !bits || bits & stone_cat.whole);
+    ret.emplace("wood", !bits || bits & wood_cat.whole);
+    ret.emplace("metal", !bits || bits & metal_cat.whole);
+    ret.emplace("glass", !bits || bits & glass_cat.whole);
+    Lua::Push(L, ret);
     return 1;
 }
 
@@ -793,7 +801,7 @@ static int setMaterialFilter(lua_State *L) {
         return 0;
     set<MaterialInfo> mats;
     vector<string> matstrs;
-    Lua::GetVector(L, matstrs);
+    Lua::GetVector(L, matstrs, 5);
     for (auto &mat : matstrs) {
         if (mat_cache.count(mat))
             mats.emplace(mat_cache.at(mat).first);
@@ -803,6 +811,19 @@ static int setMaterialFilter(lua_State *L) {
             type, subtype, custom, index, mats.size());
     ItemFilter filter = filters[index];
     filter.setMaterials(mats);
+    // ensure relevant masks are explicitly enabled
+    df::dfhack_material_category mask = filter.getMaterialMask();
+    for (auto & mat : mats) {
+        if (mat.matches(stone_cat))
+            mask.whole |= stone_cat.whole;
+        else if (mat.matches(wood_cat))
+            mask.whole |= wood_cat.whole;
+        else if (mat.matches(metal_cat))
+            mask.whole |= metal_cat.whole;
+        else if (mat.matches(glass_cat))
+            mask.whole |= glass_cat.whole;
+    }
+    filter.setMaterialMask(mask.whole);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);
     call_buildingplan_lua(out, "signal_reset");
     return 0;

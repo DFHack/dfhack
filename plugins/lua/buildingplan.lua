@@ -712,7 +712,6 @@ function QualityAndMaterialsPage:init()
                     scroll_keys={},
                     icon_width=2,
                     cursor_pen=COLOR_CYAN,
-                    on_double_click=self:callback('toggle_category'),
                     on_submit=self:callback('toggle_category'),
                 },
                 widgets.List{
@@ -818,21 +817,17 @@ function QualityAndMaterialsPage:init()
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=0},
-                    label='Select all',
-                    auto_width=true,
-                    key='CUSTOM_SHIFT_A',
-                },
-                widgets.HotkeyLabel{
-                    frame={l=30, t=1},
                     label='Invert selection',
                     auto_width=true,
                     key='CUSTOM_SHIFT_I',
+                    on_activate=self:callback('invert_materials'),
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=2},
-                    label='Clear selection',
+                    label='Reset filter',
                     auto_width=true,
-                    key='CUSTOM_SHIFT_C',
+                    key='CUSTOM_SHIFT_X',
+                    on_activate=self:callback('clear_filter'),
                 },
             },
         }
@@ -949,6 +944,23 @@ function QualityAndMaterialsPage:toggle_material(_, choice)
         end
     end
     setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, mats)
+    self.dirty = true
+end
+
+function QualityAndMaterialsPage:invert_materials()
+    local mats = {}
+    for _,c in ipairs(self.subviews.materials_mats:getChoices()) do
+        if not c.icon then return end
+        if not c.enabled then
+            table.insert(mats, c.name)
+        end
+    end
+    setMaterialFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1, mats)
+    self.dirty = true
+end
+
+function QualityAndMaterialsPage:clear_filter()
+    clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
     self.dirty = true
 end
 

@@ -376,7 +376,7 @@ df::craft_material_class MaterialInfo::getCraftClass()
     return craft_material_class::None;
 }
 
-bool MaterialInfo::isAnyCloth()
+bool MaterialInfo::isAnyCloth() const
 {
     using namespace df::enums::material_flags;
 
@@ -387,7 +387,7 @@ bool MaterialInfo::isAnyCloth()
     );
 }
 
-bool MaterialInfo::matches(const df::job_material_category &cat)
+bool MaterialInfo::matches(const df::job_material_category &cat) const
 {
     if (!material)
         return false;
@@ -416,7 +416,7 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
     return false;
 }
 
-bool MaterialInfo::matches(const df::dfhack_material_category &cat)
+bool MaterialInfo::matches(const df::dfhack_material_category &cat) const
 {
     if (!material)
         return false;
@@ -444,7 +444,7 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
+bool MaterialInfo::matches(const df::job_item &item, df::item_type itype) const
 {
     if (!isValid()) return false;
 
@@ -465,7 +465,7 @@ bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
            bits_match(item.flags3.whole, ok3.whole, mask3.whole);
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -500,7 +500,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     //04000000 - "milkable" - vtable[107],1,1
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -538,7 +538,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(yarn, MAT_FLAG(YARN));
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;

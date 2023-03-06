@@ -10,15 +10,14 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ubuntu-18.04
+        - ubuntu-22.04
         gcc:
         - 4.8
         - 7
         plugins:
         - default
         include:
-        - os: ubuntu-22.04
-          gcc: 12
+        - gcc: 12
           plugins: all
     steps:
     - name: Set up Python 3
@@ -159,7 +158,7 @@ jobs:
           path: build/win64-cross/output/*
 
   docs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -182,7 +181,7 @@ jobs:
         path: docs/html
 
   lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2

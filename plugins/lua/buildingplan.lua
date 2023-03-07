@@ -1713,9 +1713,6 @@ function PlannerOverlay:onInput(keys)
             if is_choosing_area() or cur_building_has_no_area() then
                 local filters = get_cur_filters()
                 local num_filters = #filters
-                if num_filters == 0 then
-                    return false -- we don't add value; let the game place it
-                end
                 local choose = self.subviews.choose
                 if choose.enabled() and choose:getOptionValue() then
                     self:save_placement()

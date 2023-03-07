@@ -21,7 +21,7 @@ endif()
 
 option(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
-    #add_subdirectory(devel)
+    add_subdirectory(devel)
 endif()
 
 install(DIRECTORY lua/

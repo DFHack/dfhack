@@ -29,6 +29,7 @@ redistribute it freely, subject to the following restrictions:
 #include <chrono>
 #include <iomanip>
 #include <thread>
+#include <csignal>
 
 #ifdef _MSC_VER
 static tm* localtime_r(const time_t* time, tm* result)
@@ -87,17 +88,25 @@ void install_signal_handler() {
     // register the handle_signal function
     //todo: disable handling for any undesired signals
 #ifdef _WIN32
-    SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)signal_handler);
+    //SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)signal_handler);
+    signal(SIGSEGV, signal_handler); // segmentation fault
+    signal(SIGABRT, signal_handler); // abort
+    signal(SIGILL, signal_handler); // illegal instruction
+    signal(SIGFPE, signal_handler); // floating-point exception
+    signal(SIGTERM, signal_handler); // termination request
+    signal(SIGINT, signal_handler); // interrupt signal
 #else
-    struct sigaction sa;
+    struct sigaction sa{};
     sa.sa_handler = signal_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
 
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
-    sigaction(SIGFPE, &sa, NULL);
     sigaction(SIGILL, &sa, NULL);
+    sigaction(SIGFPE, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
 #endif
 }
 DBG_DECLARE(core,debug);

@@ -52,6 +52,6 @@ jobs:
           ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
           appId: 2346660
           buildDescription: ${{ github.event.inputs.version }}
-          rootPath: build/win64-cross/output
-          depot1Path: dfhack-windows-x64
+          rootPath: build
+          depot1Path: win64-cross/output
           releaseBranch: ${{ github.event.inputs.release_channel }}

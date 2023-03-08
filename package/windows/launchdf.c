@@ -9,20 +9,6 @@ int WINAPI wWinMain(HINSTANCE hi, HINSTANCE hpi, PWSTR cmd, int ns)
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    CHAR dfdir[1024];
-
-    if (GetFullPathNameA("..", 1024, dfdir, NULL) == 0)
-    {
-        MessageBoxA(NULL, "could not get current directory", NULL, 0);
-        exit(1);
-    }
-
-    if (SetCurrentDirectoryA(dfdir) == 0)
-    {
-        MessageBoxA(NULL, "could not change to DF directory", NULL, 0);
-        exit(1);
-    }
-
     if (CreateProcessA("Dwarf Fortress.exe",
         NULL,
         NULL,

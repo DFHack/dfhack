@@ -34,7 +34,7 @@ jobs:
           path: build/win64-cross/ccache
           key: ccache-win64-cross-msvc-${{ github.event.inputs.commit_hash }}
           restore-keys: |
-            ccache-win64-cross-msvc-${{ github.event.inputs.commit_hash }}
+            ccache-win64-cross-msvc-develop-${{ github.event.inputs.commit_hash }}
             ccache-win64-cross-msvc
       - name: Cross-compile win64 artifacts
         env:

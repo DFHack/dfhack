@@ -32,7 +32,17 @@ local function get_cur_area_dims(placement_data)
             math.abs(selection_pos.z - pos.z) + 1
 end
 
+local function is_pressure_plate()
+    return uibs.building_type == df.building_type.Trap
+            and uibs.building_subtype == df.trap_type.PressurePlate
+end
+
 local function get_quantity(filter, hollow, placement_data)
+    if is_pressure_plate() then
+        local flags = uibs.plate_info.flags
+        return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
+                    (flags.magma and 1 or 0) + (flags.track and 1 or 0)
+    end
     local quantity = filter.quantity or 1
     local dimx, dimy, dimz = get_cur_area_dims(placement_data)
     if quantity < 1 then
@@ -87,8 +97,7 @@ end
 local pressure_plate_panel_frame = {t=4, h=37, w=46, r=28}
 
 local function has_pressure_plate_panel()
-    return uibs.building_type == df.building_type.Trap
-            and uibs.building_subtype == df.trap_type.PressurePlate
+    return is_pressure_plate()
 end
 
 local function is_over_options_panel()
@@ -667,6 +676,10 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     local blds = {}
     local hollow = self.subviews.hollow:getOptionValue()
     local subtype = uibs.building_subtype
+    local filters = get_cur_filters()
+    if is_pressure_plate() then
+        filters[1].quantity = get_quantity()
+    end
     for z=p1.z,p2.z do for y=p1.y,p2.y do for x=p1.x,p2.x do
         if hollow and x ~= p1.x and x ~= p2.x and y ~= p1.y and y ~= p2.y then
             goto continue
@@ -678,7 +691,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         local bld, err = dfhack.buildings.constructBuilding{pos=pos,
             type=uibs.building_type, subtype=subtype, custom=uibs.custom_type,
             width=placement_data.width, height=placement_data.height,
-            direction=uibs.direction}
+            direction=uibs.direction, filters=filters}
         if err then
             -- it's ok if some buildings fail to build
             goto continue

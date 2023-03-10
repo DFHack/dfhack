@@ -614,10 +614,10 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     }
 
     local hollow = self.subviews.hollow:getOptionValue()
-    local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and GOOD_PEN or BAD_PEN
+    local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
 
     local get_pen_fn = is_construction() and function(pos)
-        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and GOOD_PEN or BAD_PEN
+        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
     end or function()
         return default_pen
     end

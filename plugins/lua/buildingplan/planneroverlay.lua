@@ -692,6 +692,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
             if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
             if k == 'speed' then bld.speed = uibs.speed end
+            if k == 'plate_info' then utils.assign(bld.plate_info, uibs.plate_info) end
         end
         table.insert(blds, bld)
         ::continue::

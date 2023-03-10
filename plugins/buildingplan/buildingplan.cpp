@@ -847,11 +847,25 @@ static int getMaterialFilter(lua_State *L) {
     const auto &mat_filter = filters[index].getMaterials();
     map<MaterialInfo, int32_t> counts;
     scanAvailableItems(*out, type, subtype, custom, index, NULL, &counts);
-    // name -> {count=int, enabled=bool, category=string}
+    HeatSafety heat = get_heat_safety_filter(key);
+    df::job_item jitem_cur_heat = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], heat);
+    df::job_item jitem_fire = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_FIRE);
+    df::job_item jitem_magma = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_MAGMA);
+    // name -> {count=int, enabled=bool, category=string, heat=string}
     map<string, map<string, string>> ret;
     for (auto & entry : mat_cache) {
-        auto &name = entry.first;
         auto &mat = entry.second.first;
+        if (!mat.matches(jitem_cur_heat))
+            continue;
+        string heat_safety = "";
+        if (mat.matches(jitem_magma))
+            heat_safety = "magma-safe";
+        else if (mat.matches(jitem_fire))
+            heat_safety = "fire-safe";
+        auto &name = entry.first;
         auto &cat = entry.second.second;
         map<string, string> props;
         string count = "0";

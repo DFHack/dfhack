@@ -48,6 +48,16 @@ bool itemPassesScreen(df::item * item) {
         && !item->isAssignedToStockpile();
 }
 
+df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat) {
+    df::job_item jitem = *job_item;
+    if (heat >= HEAT_SAFETY_MAGMA) {
+        jitem.flags2.bits.magma_safe = true;
+        jitem.flags2.bits.fire_safe = false;
+    } else if (heat == HEAT_SAFETY_FIRE && !jitem.flags2.bits.magma_safe)
+        jitem.flags2.bits.fire_safe = true;
+    return jitem;
+}
+
 bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
@@ -67,12 +77,7 @@ bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety h
         && !item->hasToolUse(job_item->has_tool_use))
         return false;
 
-    df::job_item jitem = *job_item;
-    if (heat == HEAT_SAFETY_MAGMA) {
-        jitem.flags2.bits.magma_safe = true;
-        jitem.flags2.bits.fire_safe = false;
-    } else if (heat == HEAT_SAFETY_FIRE && !jitem.flags2.bits.magma_safe)
-        jitem.flags2.bits.fire_safe = true;
+    df::job_item jitem = getJobItemWithHeatSafety(job_item, heat);
 
     return Job::isSuitableItem(
             &jitem, item->getType(), item->getSubtype())

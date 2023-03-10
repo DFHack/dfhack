@@ -37,11 +37,21 @@ local function is_pressure_plate()
             and uibs.building_subtype == df.trap_type.PressurePlate
 end
 
+local function is_weapon_trap()
+    return uibs.building_type == df.building_type.Trap
+            and uibs.building_subtype == df.trap_type.WeaponTrap
+end
+
+-- adjusted from CycleHotkeyLabel on the planner panel
+local weapon_quantity = 1
+
 local function get_quantity(filter, hollow, placement_data)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
         return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
                     (flags.magma and 1 or 0) + (flags.track and 1 or 0)
+    elseif is_weapon_trap() and filter.vector_id == df.job_item_vector_id.ANY_WEAPON then
+        return weapon_quantity
     end
     local quantity = filter.quantity or 1
     local dimx, dimy, dimz = get_cur_area_dims(placement_data)
@@ -298,7 +308,7 @@ function PlannerOverlay:init()
             view_id='stairs_top_subtype',
             frame={t=4, l=4},
             key='CUSTOM_R',
-            label='Top Stair Type:    ',
+            label='Top Stair Type:   ',
             visible=is_stairs,
             options={
                 {label='Auto', value='auto'},
@@ -310,13 +320,23 @@ function PlannerOverlay:init()
             view_id='stairs_bottom_subtype',
             frame={t=5, l=4},
             key='CUSTOM_B',
-            label='Bottom Stair Type: ',
+            label='Bottom Stair Type:',
             visible=is_stairs,
             options={
                 {label='Auto', value='auto'},
                 {label='UpDown', value=df.construction_type.UpDownStair},
                 {label='Up', value=df.construction_type.UpStair},
             },
+        },
+        widgets.CycleHotkeyLabel {
+            view_id='weapons',
+            frame={t=5, l=4},
+            key='CUSTOM_T',
+            key_back='CUSTOM_SHIFT_T',
+            label='Num weapons:',
+            visible=is_weapon_trap,
+            options={1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+            on_change=function(val) weapon_quantity = val end,
         },
         widgets.Label{
             frame={b=3, l=17},
@@ -678,7 +698,9 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     local subtype = uibs.building_subtype
     local filters = get_cur_filters()
     if is_pressure_plate() then
-        filters[1].quantity = get_quantity()
+        filters[1].quantity = get_quantity(filters[1])
+    elseif is_weapon_trap() then
+        filters[2].quantity = get_quantity(filters[2])
     end
     for z=p1.z,p2.z do for y=p1.y,p2.y do for x=p1.x,p2.x do
         if hollow and x ~= p1.x and x ~= p2.x and y ~= p1.y and y ~= p2.y then
@@ -721,9 +743,11 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         if chosen_items then
             local job = bld.jobs[0]
             local jitems = job.job_items
-            for idx=1,#get_cur_filters() do
+            local num_filters = #get_cur_filters()
+            for idx=1,num_filters do
                 local item_ids = chosen_items[idx]
-                while jitems[idx-1].quantity > 0 and #item_ids > 0 do
+                local jitem = jitems[num_filters-idx]
+                while jitem.quantity > 0 and #item_ids > 0 do
                     local item_id = item_ids[#item_ids]
                     local item = df.item.find(item_id)
                     if not item then
@@ -734,7 +758,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
                         dfhack.printerr(('cannot attach item: %d'):format(item_id))
                         break
                     end
-                    jitems[idx-1].quantity = jitems[idx-1].quantity - 1
+                    jitem.quantity = jitem.quantity - 1
                     item_ids[#item_ids] = nil
                 end
             end

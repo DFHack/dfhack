@@ -516,16 +516,20 @@ static void printStatus(color_ostream &out) {
     out.print("  use bars:     %s\n", get_config_bool(config, CONFIG_BARS) ? "yes" : "no");
     out.print("\n");
 
+    size_t bld_count = 0;
     map<string, int32_t> counts;
     int32_t total = 0;
     for (auto &entry : planned_buildings) {
         auto &pb = entry.second;
-        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out);
+        // don't actually remove bad buildings from the list while we're
+        // actively iterating through that list
+        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
         auto &job_items = bld->jobs[0]->job_items;
         if (job_items.size() != pb.vector_ids.size())
             continue;
+        ++bld_count;
         int job_item_idx = 0;
         for (auto &vec_ids : pb.vector_ids) {
             auto &jitem = job_items[job_item_idx++];
@@ -537,9 +541,9 @@ static void printStatus(color_ostream &out) {
         }
     }
 
-    if (planned_buildings.size()) {
+    if (bld_count) {
         out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
-                total, planned_buildings.size());
+                total, bld_count);
         for (auto &count : counts)
             out.print("  %3d %s%s\n", count.second, count.first.c_str(), count.second == 1 ? "" : "s");
     } else {
@@ -949,7 +953,7 @@ static string getDescString(color_ostream &out, df::building *bld, int index) {
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
     auto &jitem = bld->jobs[0]->job_items[index];
-    return get_desc_string(out, jitem, pb.vector_ids[index]);
+    return int_to_string(jitem->quantity) + " " + get_desc_string(out, jitem, pb.vector_ids[index]);
 }
 
 static int getQueuePosition(color_ostream &out, df::building *bld, int index) {

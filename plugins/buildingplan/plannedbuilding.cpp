@@ -99,11 +99,12 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_con
 // Ensure the building still exists and is in a valid state. It can disappear
 // for lots of reasons, such as running the game with the buildingplan plugin
 // disabled, manually removing the building, modifying it via the API, etc.
-df::building * PlannedBuilding::getBuildingIfValidOrRemoveIfNot(color_ostream &out) {
+df::building * PlannedBuilding::getBuildingIfValidOrRemoveIfNot(color_ostream &out, bool skip_remove) {
     auto bld = df::building::find(id);
     bool valid = bld && bld->getBuildStage() == 0;
     if (!valid) {
-        remove(out);
+        if (!skip_remove)
+            remove(out);
         return NULL;
     }
     return bld;

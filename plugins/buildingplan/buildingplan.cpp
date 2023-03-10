@@ -259,7 +259,7 @@ static void validate_config(color_ostream &out, bool verbose = false) {
 
 static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "signal_reset");
-    call_buildingplan_lua(&out, "reload_cursors");
+    call_buildingplan_lua(&out, "reload_pens");
     planned_buildings.clear();
     tasks.clear();
     cur_heat_safety.clear();
@@ -315,14 +315,6 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         registerPlannedBuilding(out, pb);
     }
 
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (event == SC_WORLD_UNLOADED) {
-        DEBUG(status,out).print("world unloaded; clearing state for %s\n", plugin_name);
-        clear_state(out);
-    }
     return CR_OK;
 }
 

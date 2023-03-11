@@ -60,6 +60,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - Gui focus strings will no longer get the "dfhack/" prefix if the string "dfhack/" already exists in the focus string
+- ``Military``: New module for military functionality
+- ``Military``: new ``makeSquad`` to create a squad
+- ``Military``: changed ``getSquadName`` to take a squad identifier
+- ``Military``: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range
+- ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
+- ``Maps::GetBiomeTypeRef`` renamed to ``Maps::getBiomeTypeRef`` for consistency
 
 ## Lua
 - ``dfhack.job.attachJobItem()``: allows you to attach specific items to a job
@@ -68,6 +74,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.CycleHotkeyLabel``: add ``label_below`` attribute for compact 2-line output
 -@ ``widgets.FilteredList``: search key matching is now case insensitive by default
 -@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
+- ``maps.getBiomeType``: exposed preexisting function to Lua
 
 ## Removed
 -@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
@@ -97,18 +104,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - ``Gui::any_civzone_hotkey``, ``Gui::getAnyCivZone``, ``Gui::getSelectedCivZone``:  new functions to operate on the new zone system
 - Units module: added new predicates for ``isGeldable()``, ``isMarkedForGelding()``, and ``isPet()``
-- ``Military``: New module for military functionality
-- ``Military``: new ``makeSquad`` to create a squad
-- ``Military``: changed ``getSquadName`` to take a squad identifier
-- ``Military``: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range
-- ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
-- ``Maps::GetBiomeTypeRef`` renamed to ``Maps::getBiomeTypeRef`` for consistency
 
 ## Lua
 - ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
 - ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
 - ``widgets.TabBar``: new library widget (migrated from control-panel.lua)
-- ``maps.getBiomeType``: exposed preexisting function to Lua
 
 # 50.07-alpha1
 

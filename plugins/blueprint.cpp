@@ -46,6 +46,8 @@ using namespace DFHack;
 DFHACK_PLUGIN("blueprint");
 REQUIRE_GLOBAL(world);
 
+static const string BLUEPRINT_USER_DIR = "dfhack-config/blueprints/";
+
 namespace DFHack {
     DBG_DECLARE(blueprint,log);
 }
@@ -1091,7 +1093,7 @@ static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
-    string basename = "blueprints/" + opts.name;
+    string basename = BLUEPRINT_USER_DIR + opts.name;
     size_t last_slash = basename.find_last_of("/");
     string parent_path = basename.substr(0, last_slash);
 

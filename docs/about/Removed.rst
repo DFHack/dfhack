@@ -18,6 +18,14 @@ An automated labor management tool that only addressed hauling labors, leaving t
 of skilled labors entirely up to the player. Fundamentally incompatible with the work detail
 system of labor management in v50 of Dwarf Fortress.
 
+.. _automaterial:
+
+automaterial
+============
+Moved frequently used materials to the top of the materials list when building
+buildings. Also offered extended options when building constructions. All
+functionality has been merged into `buildingplan`.
+
 .. _combine-drinks:
 
 combine-drinks

@@ -38,8 +38,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 -@ ``widgets.HotkeyLabel``: don't trigger on click if the widget is disabled
 - ``dfhack.job.isSuitableMaterial``: now properly detects lack of fire and magma safety for vulnerable materials with high melting points
+- `dig-now`: fixed multi-layer channel designations only channeling every second layer
 
 ## Misc Improvements
+- `dig-now`: added handling of dig designations that have been converted into active jobs
 
 ## Documentation
 
@@ -56,6 +58,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 -@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
+- `automaterial`: all functionality has been merged into `buildingplan`
 
 # 50.07-alpha2
 

@@ -29,7 +29,7 @@ public:
     // Ensure the building still exists and is in a valid state. It can disappear
     // for lots of reasons, such as running the game with the buildingplan plugin
     // disabled, manually removing the building, modifying it via the API, etc.
-    df::building * getBuildingIfValidOrRemoveIfNot(DFHack::color_ostream &out);
+    df::building * getBuildingIfValidOrRemoveIfNot(DFHack::color_ostream &out, bool skip_remove = false);
 
 private:
     DFHack::PersistentDataItem bld_config;

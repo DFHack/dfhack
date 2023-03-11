@@ -259,7 +259,7 @@ static void validate_config(color_ostream &out, bool verbose = false) {
 
 static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "signal_reset");
-    call_buildingplan_lua(&out, "reload_cursors");
+    call_buildingplan_lua(&out, "reload_pens");
     planned_buildings.clear();
     tasks.clear();
     cur_heat_safety.clear();
@@ -315,14 +315,6 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         registerPlannedBuilding(out, pb);
     }
 
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (event == SC_WORLD_UNLOADED) {
-        DEBUG(status,out).print("world unloaded; clearing state for %s\n", plugin_name);
-        clear_state(out);
-    }
     return CR_OK;
 }
 
@@ -524,16 +516,20 @@ static void printStatus(color_ostream &out) {
     out.print("  use bars:     %s\n", get_config_bool(config, CONFIG_BARS) ? "yes" : "no");
     out.print("\n");
 
+    size_t bld_count = 0;
     map<string, int32_t> counts;
     int32_t total = 0;
     for (auto &entry : planned_buildings) {
         auto &pb = entry.second;
-        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out);
+        // don't actually remove bad buildings from the list while we're
+        // actively iterating through that list
+        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
         auto &job_items = bld->jobs[0]->job_items;
         if (job_items.size() != pb.vector_ids.size())
             continue;
+        ++bld_count;
         int job_item_idx = 0;
         for (auto &vec_ids : pb.vector_ids) {
             auto &jitem = job_items[job_item_idx++];
@@ -545,9 +541,9 @@ static void printStatus(color_ostream &out) {
         }
     }
 
-    if (planned_buildings.size()) {
+    if (bld_count) {
         out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
-                total, planned_buildings.size());
+                total, bld_count);
         for (auto &count : counts)
             out.print("  %3d %s%s\n", count.second, count.first.c_str(), count.second == 1 ? "" : "s");
     } else {
@@ -851,11 +847,25 @@ static int getMaterialFilter(lua_State *L) {
     const auto &mat_filter = filters[index].getMaterials();
     map<MaterialInfo, int32_t> counts;
     scanAvailableItems(*out, type, subtype, custom, index, NULL, &counts);
-    // name -> {count=int, enabled=bool, category=string}
+    HeatSafety heat = get_heat_safety_filter(key);
+    df::job_item jitem_cur_heat = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], heat);
+    df::job_item jitem_fire = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_FIRE);
+    df::job_item jitem_magma = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_MAGMA);
+    // name -> {count=int, enabled=bool, category=string, heat=string}
     map<string, map<string, string>> ret;
     for (auto & entry : mat_cache) {
-        auto &name = entry.first;
         auto &mat = entry.second.first;
+        if (!mat.matches(jitem_cur_heat))
+            continue;
+        string heat_safety = "";
+        if (mat.matches(jitem_magma))
+            heat_safety = "magma-safe";
+        else if (mat.matches(jitem_fire))
+            heat_safety = "fire-safe";
+        auto &name = entry.first;
         auto &cat = entry.second.second;
         map<string, string> props;
         string count = "0";
@@ -957,7 +967,7 @@ static string getDescString(color_ostream &out, df::building *bld, int index) {
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
     auto &jitem = bld->jobs[0]->job_items[index];
-    return get_desc_string(out, jitem, pb.vector_ids[index]);
+    return int_to_string(jitem->quantity) + " " + get_desc_string(out, jitem, pb.vector_ids[index]);
 }
 
 static int getQueuePosition(color_ostream &out, df::building *bld, int index) {

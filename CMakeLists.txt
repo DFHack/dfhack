@@ -615,3 +615,5 @@ if(BUILD_SIZECHECK)
     add_subdirectory(depends/sizecheck)
     add_dependencies(dfhack sizecheck)
 endif()
+
+add_subdirectory(package/windows)

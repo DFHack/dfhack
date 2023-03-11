@@ -5,19 +5,19 @@ Quickstart guide
 
 Welcome to DFHack! This guide will help get you oriented with the DFHack system
 and teach you how to find and use the tools productively. If you're reading this
-in `quickstart-guide`, hit the right arrow key or click on the hotkey hint in
-the lower right corner of the window to go to the next page.
+in the in-game `quickstart-guide` reader, hit the right arrow key or click on
+the hotkey hint in the lower right corner of the window to go to the next page.
 
 What is DFHack?
 ---------------
 
-DFHack is a framework for Dwarf Fortress that provides a unified, cross-platform
-environment that enables mods and tools to significantly extend the game. The
-default DFHack distribution contains a wide variety of tools, including bugfixes,
-interface improvements, automation agents, design blueprints, modding building
-blocks, and more. Third-party tools (e.g. mods downloaded from Steam Workshop or
-the forums) can also seamlessly integrate with the DFHack framework and extend
-the game far beyond what can be done by just modding the raws.
+DFHack is an add-on for Dwarf Fortress that enables mods and tools to
+significantly extend the game. The default DFHack distribution contains a wide
+variety of tools, including bugfixes, interface improvements, automation agents,
+design blueprints, modding building blocks, and more. Third-party tools (e.g.
+mods downloaded from Steam Workshop or the forums) can also seamlessly integrate
+with the DFHack framework and extend the game far beyond what can be done by
+just modding the raws.
 
 DFHack's mission is to provide tools and interfaces for players and modders to:
 

@@ -462,7 +462,7 @@ function PlannerOverlay:set_filter(idx)
 end
 
 function PlannerOverlay:clear_filter(idx)
-    clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+    desc=require('plugins.buildingplan').clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
 end
 
 local function get_placement_data()

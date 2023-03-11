@@ -971,7 +971,7 @@ static string getDescString(color_ostream &out, df::building *bld, int index) {
 }
 
 static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
-    DEBUG(status,out).print("entering getQueuePosition\n");
+    TRACE(status,out).print("entering getQueuePosition\n");
     if (!validate_pb(out, bld, index))
         return 0;
 

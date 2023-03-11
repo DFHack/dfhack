@@ -567,8 +567,9 @@ bool loadModScriptPaths(color_ostream &out) {
             mod_script_paths.emplace_back(installed_path);
         std::string slashless = *pathit;
         slashless.resize(slashless.size()-1);
-        if (0 == files.erase(slashless))
+        if (0 == files.erase(slashless)) {
             WARN(script,out).print("script path not found: '%s'\n", pathit->c_str());
+        }
     }
 
     for (auto & entry : files) {

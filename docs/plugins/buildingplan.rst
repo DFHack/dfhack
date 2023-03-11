@@ -3,7 +3,7 @@ buildingplan
 
 .. dfhack-tool::
     :summary: Plan building layouts with or without materials.
-    :tags: fort design buildings
+    :tags: fort design productivity buildings
 
 Buildingplan allows you to place furniture, constructions, and other buildings,
 regardless of whether the required materials are available. This allows you to

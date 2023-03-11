@@ -36,14 +36,27 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.07-alpha3
+
+## Fixes
 -@ ``widgets.HotkeyLabel``: don't trigger on click if the widget is disabled
 - ``dfhack.job.isSuitableMaterial``: now properly detects lack of fire and magma safety for vulnerable materials with high melting points
 - `dig-now`: fixed multi-layer channel designations only channeling every second layer
 
 ## Misc Improvements
 - `dig-now`: added handling of dig designations that have been converted into active jobs
-
-## Documentation
+- `buildingplan`: entirely new UI for building placement, item selection, and materials filtering!
 
 ## API
 - Gui focus strings will no longer get the "dfhack/" prefix if the string "dfhack/" already exists in the focus string

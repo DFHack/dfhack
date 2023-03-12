@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+-@ `buildingplan`: can now filter by clay materials
 
 ## Documentation
 

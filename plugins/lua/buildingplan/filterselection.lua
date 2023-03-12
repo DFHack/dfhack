@@ -443,6 +443,7 @@ function QualityAndMaterialsPage:refresh()
         make_cat_choice('Wood', 'wood', 'CUSTOM_SHIFT_O', cats),
         make_cat_choice('Metal', 'metal', 'CUSTOM_SHIFT_M', cats),
         make_cat_choice('Glass', 'glass', 'CUSTOM_SHIFT_G', cats),
+        make_cat_choice('Clay', 'clay', 'CUSTOM_SHIFT_C', cats),
     }
     self.subviews.materials_categories:setChoices(category_choices)
 

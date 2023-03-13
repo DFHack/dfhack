@@ -235,9 +235,40 @@ root DF folder):
 #. :file:`dfhack-config/scripts`
 #. :file:`save/{world}/scripts` (only if a save is loaded)
 #. :file:`hack/scripts`
+#. :file:`data/installed_mods/...` (see below)
 
 For example, if ``teleport`` is run, these folders are searched in order for
 ``teleport.lua``, and the first matching file is run.
+
+Scripts in installed mods
+.........................
+
+Script directories in installed mods are automatically added to the script path
+according to the following rules:
+
+**If a world is not loaded**, then directories matching the pattern
+``data/installed_mods/*/scripts_modinstalled/`` are added to the script path
+in alphabetical order of the mod name.
+
+**If a world is loaded**, then the ``scripts_modactive`` directories of active
+mods are also added to the script path according to the active mod load order,
+and scripts in active mods take precedence over scripts in
+``scripts_modinstalled`` in non-active mods. For example, the search paths for
+mods might look like this::
+
+    activemod1/scripts_modactive
+    activemod1/scripts_modinstalled
+    activemod2/scripts_modactive
+    activemod2/scripts_modinstalled
+    inactivemod1/scripts_modinstalled
+    inactivemod2/scripts_modinstalled
+
+Not all mods will have script directories, of course, and those mods will not be
+added to the script search path. Mods are re-scanned whenever a world is loaded
+or unloaded.
+
+Custom script paths
+...................
 
 Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
 Each line should start with one of these characters:

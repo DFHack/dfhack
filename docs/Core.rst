@@ -248,7 +248,7 @@ according to the following rules:
 
 **If a world is not loaded**, then directories matching the pattern
 ``data/installed_mods/*/scripts_modinstalled/`` are added to the script path
-in alphabetical order of the mod name.
+in alphabetical order.
 
 **If a world is loaded**, then the ``scripts_modactive`` directories of active
 mods are also added to the script path according to the active mod load order,
@@ -256,12 +256,14 @@ and scripts in active mods take precedence over scripts in
 ``scripts_modinstalled`` in non-active mods. For example, the search paths for
 mods might look like this::
 
-    activemod1/scripts_modactive
-    activemod1/scripts_modinstalled
-    activemod2/scripts_modactive
-    activemod2/scripts_modinstalled
+    activemod_last_in_load_order/scripts_modactive
+    activemod_last_in_load_order/scripts_modinstalled
+    activemod_second_to_last_in_load_order/scripts_modactive
+    activemod_second_to_last_in_load_order/scripts_modinstalled
+    ...
     inactivemod1/scripts_modinstalled
     inactivemod2/scripts_modinstalled
+    ...
 
 Not all mods will have script directories, of course, and those mods will not be
 added to the script search path. Mods are re-scanned whenever a world is loaded

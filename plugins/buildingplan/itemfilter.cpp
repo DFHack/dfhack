@@ -6,6 +6,7 @@
 
 namespace DFHack {
     DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, cycle);
 }
 
 using std::set;
@@ -153,11 +154,19 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const {
 }
 
 bool ItemFilter::matches(df::item *item) const {
-    if (item->getQuality() < min_quality || item->getQuality() > max_quality)
+    if (item->getQuality() < min_quality || item->getQuality() > max_quality) {
+        TRACE(cycle).print("item outside of quality range (%d not between %d and %d)\n",
+                item->getQuality(), min_quality, max_quality);
         return false;
+    }
 
-    if (decorated_only && !item->hasImprovements())
+    if (decorated_only && !item->hasImprovements()) {
+        TRACE(cycle).print("item needs improvements and doesn't have any\n");
         return false;
+    }
+
+    if (!mat_mask.whole)
+        return true;
 
     auto imattype = item->getActualMaterial();
     auto imatindex = item->getActualMaterialIndex();

@@ -372,7 +372,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 //
 
 static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int idx) {
-    if (idx < 0 || (size_t)idx < pb.item_filters.size())
+    if (idx < 0 || (size_t)idx >= pb.item_filters.size())
         return "INVALID";
 
     std::ostringstream ser;
@@ -428,7 +428,7 @@ vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_it
         return ret;
     }
 
-    // if the filer is for building material, refer to our global settings for
+    // if the filter is for building material, refer to our global settings for
     // which vectors to search
     if (job_item->flags2.bits.building_material)
     {
@@ -465,10 +465,11 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         return true;
     }
 
-    int num_job_items = job_items.size();
+    int num_job_items = (int)job_items.size();
     int32_t id = bld->id;
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx) {
-        auto job_item = job_items[job_item_idx];
+        int rev_jitem_index = num_job_items - (job_item_idx+1);
+        auto job_item = job_items[rev_jitem_index];
         auto bucket = getBucket(*job_item, pb, job_item_idx);
 
         // if there are multiple vector_ids, schedule duplicate tasks. after
@@ -476,11 +477,11 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         // as invalid
         for (auto vector_id : pb.vector_ids[job_item_idx]) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
-                tasks[vector_id][bucket].emplace_back(id, job_item_idx);
+                tasks[vector_id][bucket].emplace_back(id, rev_jitem_index);
                 DEBUG(status,out).print("added task: %s/%s/%d,%d; "
                       "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
                       ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                      bucket.c_str(), id, job_item_idx, tasks.size(),
+                      bucket.c_str(), id, rev_jitem_index, tasks.size(),
                       tasks[vector_id].size(), tasks[vector_id][bucket].size());
             }
         }
@@ -531,17 +532,19 @@ static void printStatus(color_ostream &out) {
         if (!bld || bld->jobs.size() != 1)
             continue;
         auto &job_items = bld->jobs[0]->job_items;
-        if (job_items.size() != pb.vector_ids.size())
+        const size_t num_job_items = job_items.size();
+        if (num_job_items != pb.vector_ids.size())
             continue;
         ++bld_count;
         int job_item_idx = 0;
         for (auto &vec_ids : pb.vector_ids) {
-            auto &jitem = job_items[job_item_idx++];
+            auto &jitem = job_items[num_job_items - (job_item_idx+1)];
             int32_t quantity = jitem->quantity;
             if (quantity) {
                 counts[get_desc_string(out, jitem, vec_ids)] += quantity;
                 total += quantity;
             }
+            ++job_item_idx;
         }
     }
 
@@ -692,11 +695,9 @@ static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtyp
     TRACE(status,out).print("entering hasFilter\n");
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
-    for (auto &filter : filters.getItemFilters()) {
-        if (!filter.isEmpty())
-            return true;
-    }
-    return false;
+    if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
+        return false;
+    return !filters.getItemFilters()[index].isEmpty();
 }
 
 static void clearFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
@@ -972,10 +973,13 @@ static bool validate_pb(color_ostream &out, df::building *bld, int index) {
 static string getDescString(color_ostream &out, df::building *bld, int index) {
     DEBUG(status,out).print("entering getDescString\n");
     if (!validate_pb(out, bld, index))
-        return 0;
+        return "INVALID";
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto &jitem = bld->jobs[0]->job_items[index];
+    auto & jitems = bld->jobs[0]->job_items;
+    const size_t num_job_items = jitems.size();
+    int rev_index = num_job_items - (index + 1);
+    auto &jitem = jitems[rev_index];
     return int_to_string(jitem->quantity) + " " + get_desc_string(out, jitem, pb.vector_ids[index]);
 }
 
@@ -985,7 +989,10 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         return 0;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto &job_item = bld->jobs[0]->job_items[index];
+    auto & jitems = bld->jobs[0]->job_items;
+    const size_t num_job_items = jitems.size();
+    int rev_index = num_job_items - (index + 1);
+    auto &job_item = jitems[rev_index];
 
     if (job_item->quantity <= 0)
         return 0;
@@ -1001,7 +1008,7 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         int bucket_pos = -1;
         for (auto &task : buckets.at(bucket_id)) {
             ++bucket_pos;
-            if (bld->id == task.first && index == task.second)
+            if (bld->id == task.first && rev_index == task.second)
                 break;
         }
         if (bucket_pos++ >= 0)
@@ -1018,18 +1025,20 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
     auto &job_items = bld->jobs[0]->job_items;
+    const int num_job_items = (int)job_items.size();
 
-    for (int index = 0; index < (int)job_items.size(); ++index) {
+    for (int index = 0; index < num_job_items; ++index) {
+        int rev_index = num_job_items - (index + 1);
         for (auto &vec_id : pb.vector_ids[index]) {
             if (!tasks.count(vec_id))
                 continue;
             auto &buckets = tasks.at(vec_id);
-            string bucket_id = getBucket(*job_items[index], pb, index);
+            string bucket_id = getBucket(*job_items[rev_index], pb, index);
             if (!buckets.count(bucket_id))
                 continue;
             auto &bucket = buckets.at(bucket_id);
             for (auto taskit = bucket.begin(); taskit != bucket.end(); ++taskit) {
-                if (bld->id == taskit->first && index == taskit->second) {
+                if (bld->id == taskit->first && rev_index == taskit->second) {
                     auto task_bld_id = taskit->first;
                     auto task_job_item_idx = taskit->second;
                     bucket.erase(taskit);

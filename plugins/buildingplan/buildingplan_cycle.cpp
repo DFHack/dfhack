@@ -190,6 +190,8 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         if (!itemPassesScreen(item))
             continue;
         for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
+            TRACE(cycle,out).print("scanning bucket: %s/%s\n",
+                    ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(), bucket_it->first.c_str());
             auto & task_queue = bucket_it->second;
             auto bld = popInvalidTasks(out, task_queue, planned_buildings);
             if (!bld) {
@@ -203,11 +205,14 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto & task = task_queue.front();
             auto id = task.first;
             auto job = bld->jobs[0];
+            auto & jitems = job->job_items;
+            const size_t num_filters = jitems.size();
             auto filter_idx = task.second;
+            const int rev_filter_idx = num_filters - (filter_idx+1);
             auto &pb = planned_buildings.at(id);
             if (isAccessibleFrom(out, item, job)
-                    && matchesFilters(item, job->job_items[filter_idx], pb.heat_safety,
-                        pb.item_filters[filter_idx])
+                    && matchesFilters(item, jitems[filter_idx], pb.heat_safety,
+                        pb.item_filters[rev_filter_idx])
                     && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {
@@ -226,9 +231,9 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 // keep quantity aligned with the actual number of remaining
                 // items so if buildingplan is turned off, the building will
                 // be completed with the correct number of items.
-                --job->job_items[filter_idx]->quantity;
+                --jitems[filter_idx]->quantity;
                 task_queue.pop_front();
-                if (isJobReady(out, job->job_items)) {
+                if (isJobReady(out, jitems)) {
                     finalizeBuilding(out, bld);
                     planned_buildings.at(id).remove(out);
                 }

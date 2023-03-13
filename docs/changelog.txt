@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+-@ `buildingplan`: items are now attached correctly to screw pumps and other multi-item buildings
 
 ## Misc Improvements
 -@ `buildingplan`: can now filter by clay materials

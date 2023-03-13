@@ -26,9 +26,10 @@ static vector<vector<df::job_item_vector_id>> get_vector_ids(color_ostream &out,
     if (!bld || bld->jobs.size() != 1)
         return ret;
 
-    auto &job = bld->jobs[0];
-    for (auto &jitem : job->job_items) {
-        ret.emplace_back(getVectorIds(out, jitem));
+    auto &jitems = bld->jobs[0]->job_items;
+    int num_job_items = (int)jitems.size();
+    for (int jitem_idx = num_job_items - 1; jitem_idx >= 0; --jitem_idx) {
+        ret.emplace_back(getVectorIds(out, jitems[jitem_idx]));
     }
     return ret;
 }

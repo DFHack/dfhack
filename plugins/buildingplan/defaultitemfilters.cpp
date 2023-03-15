@@ -31,6 +31,13 @@ static int get_max_quality(const df::job_item *jitem) {
     return df::item_quality::Masterful;
 }
 
+static string serialize(const std::vector<ItemFilter> &item_filters, const std::set<std::string> &specials) {
+    std::ostringstream out;
+    out << serialize_item_filters(item_filters);
+    out << "|" << join_strings(",", specials);
+    return out.str();
+}
+
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
         : key(key), choose_items(false) {
     DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
@@ -44,27 +51,43 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
         item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
     }
-    filter_config.val() = serialize_item_filters(item_filters);
+    filter_config.val() = serialize(item_filters, specials);
 }
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
         : key(getKey(filter_config)), filter_config(filter_config) {
     choose_items = get_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
     auto &serialized = filter_config.val();
-    DEBUG(status,out).print("deserializing item filters for key %d,%d,%d: %s\n",
+    DEBUG(status,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
-    std::vector<ItemFilter> filters = deserialize_item_filters(out, serialized);
+    std::vector<std::string> elems;
+    split_string(&elems, serialized, "|");
+    std::vector<ItemFilter> filters = deserialize_item_filters(out, elems[0]);
     if (filters.size() != jitems.size()) {
         WARN(status,out).print("ignoring invalid filters_str for key %d,%d,%d: '%s'\n",
             std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
         item_filters.resize(jitems.size());
     } else
         item_filters = filters;
+    if (elems.size() > 1) {
+        vector<string> specs;
+        split_string(&specs, elems[1], ",");
+        for (auto & special : specs)
+            specials.emplace(special);
+    }
 }
 
 void DefaultItemFilters::setChooseItems(bool choose) {
     choose_items = choose;
     set_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose);
+}
+
+void DefaultItemFilters::setSpecial(const std::string &special, bool val) {
+    if (val)
+        specials.emplace(special);
+    else
+        specials.erase(special);
+    filter_config.val() = serialize(item_filters, specials);
 }
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {
@@ -75,7 +98,7 @@ void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFil
     }
 
     item_filters[index] = filter;
-    filter_config.val() = serialize_item_filters(item_filters);
+    filter_config.val() = serialize(item_filters, specials);
     DEBUG(status,out).print("updated item filter and persisted for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), filter_config.val().c_str());
 }

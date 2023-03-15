@@ -10,6 +10,7 @@
 
 #include "df/building_design.h"
 #include "df/item.h"
+#include "df/item_slabst.h"
 #include "df/job.h"
 #include "df/map_block.h"
 #include "df/world.h"
@@ -58,7 +59,7 @@ df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety h
     return jitem;
 }
 
-bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter) {
+bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<string> &specials) {
     // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;
@@ -75,6 +76,10 @@ bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety h
 
     if (job_item->has_tool_use > df::tool_uses::NONE
         && !item->hasToolUse(job_item->has_tool_use))
+        return false;
+
+    if (item->getType() == df::item_type::SLAB && specials.count("engraved")
+        && static_cast<df::item_slabst *>(item)->engraving_type != df::slab_engraving_type::Memorial)
         return false;
 
     df::job_item jitem = getJobItemWithHeatSafety(job_item, heat);
@@ -212,7 +217,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto &pb = planned_buildings.at(id);
             if (isAccessibleFrom(out, item, job)
                     && matchesFilters(item, jitems[filter_idx], pb.heat_safety,
-                        pb.item_filters[rev_filter_idx])
+                        pb.item_filters[rev_filter_idx], pb.specials)
                     && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
             {

@@ -432,6 +432,15 @@ function QualityAndMaterialsPage:refresh()
     else summary = 'Any ' .. summary
     end
 
+    local specials = buildingplan.getSpecials(uibs.building_type, uibs.building_subtype, uibs.custom_type)
+    if next(specials) then
+        local specials_list = {}
+        for special in pairs(specials) do
+            table.insert(specials_list, special)
+        end
+        summary = summary .. ' [' .. table.concat(specials_list, ', ') .. ']'
+    end
+
     local quality = buildingplan.getQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1)
     subviews.decorated:setOption(quality.decorated ~= 0)
     subviews.min_quality:setOption(quality.min_quality)

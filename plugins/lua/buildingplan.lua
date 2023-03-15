@@ -42,6 +42,8 @@ function parse_commandline(...)
         printStatus()
     elseif command == 'set' and positionals then
         setSetting(positionals[1], positionals[2] == 'true')
+    elseif command == 'reset' then
+        resetFilters()
     else
         return false
     end

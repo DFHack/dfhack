@@ -261,13 +261,15 @@ static void validate_config(color_ostream &out, bool verbose = false) {
     set_config_bool(config, CONFIG_BARS, false);
 }
 
-static void clear_state(color_ostream &out) {
-    call_buildingplan_lua(&out, "signal_reset");
-    call_buildingplan_lua(&out, "reload_pens");
-    planned_buildings.clear();
-    tasks.clear();
+static void reset_filters(color_ostream &out) {
     cur_heat_safety.clear();
     cur_item_filters.clear();
+    call_buildingplan_lua(&out, "signal_reset");
+}
+
+static void clear_state(color_ostream &out) {
+    planned_buildings.clear();
+    tasks.clear();
     for (auto &entry : job_item_cache ) {
         for (auto &jitem : entry.second) {
             delete jitem;
@@ -275,6 +277,8 @@ static void clear_state(color_ostream &out) {
     }
     job_item_cache.clear();
     mat_cache.clear();
+    reset_filters(out);
+    call_buildingplan_lua(&out, "reload_pens");
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
@@ -580,6 +584,11 @@ static bool setSetting(color_ostream &out, string name, bool value) {
     validate_config(out, true);
     call_buildingplan_lua(&out, "signal_reset");
     return true;
+}
+
+static void resetFilters(color_ostream &out) {
+    DEBUG(status,out).print("entering resetFilters\n");
+    reset_filters(out);
 }
 
 static bool isPlannableBuilding(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom) {
@@ -1104,6 +1113,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(printStatus),
     DFHACK_LUA_FUNCTION(setSetting),
+    DFHACK_LUA_FUNCTION(resetFilters),
     DFHACK_LUA_FUNCTION(isPlannableBuilding),
     DFHACK_LUA_FUNCTION(isPlannedBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),

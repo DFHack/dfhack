@@ -60,6 +60,7 @@ Usage
 
     buildingplan [status]
     buildingplan set <setting> (true|false)
+    buildingplan reset
 
 Examples
 --------
@@ -71,6 +72,10 @@ Examples
 ``buildingplan set boulders false``
     When finding items to satisfy "building materials" requirements, don't
     select boulders. Use blocks or logs (if enabled) instead.
+
+``buildingplan reset``
+    Reset all settings and filters to their defaults. This command does not affect
+    existing planned buildings.
 
 .. _buildingplan-settings:
 

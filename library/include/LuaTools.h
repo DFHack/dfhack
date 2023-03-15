@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "df/interfacest.h"
 
@@ -363,6 +364,26 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, const df::coord &pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, const df::coord2d &pos);
+
+    template<typename T>
+    void Push(lua_State *L, const std::set<T> &pset) {
+        lua_createtable(L, 0, pset.size());
+        for (auto &entry : pset) {
+            Lua::Push(L, entry);
+            Lua::Push(L, true);
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T_Key, typename T_Hash>
+    void Push(lua_State *L, const std::unordered_set<T_Key, T_Hash> &pset) {
+        lua_createtable(L, 0, pset.size());
+        for (auto &entry : pset) {
+            Lua::Push(L, entry);
+            Lua::Push(L, true);
+            lua_settable(L, -3);
+        }
+    }
 
     template<typename T_Key, typename T_Value>
     void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {

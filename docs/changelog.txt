@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+-@ `buildingplan`: remember choice per building type for whether the player wants to choose specific items
 -@ `buildingplan`: items are now attached correctly to screw pumps and other multi-item buildings
 
 ## Misc Improvements

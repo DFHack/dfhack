@@ -37,6 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 -@ `buildingplan`: items are now attached correctly to screw pumps and other multi-item buildings
+-@ `buildingplan`: you can now attach multiple weapons to spike traps
 
 ## Misc Improvements
 -@ `buildingplan`: can now filter by clay materials

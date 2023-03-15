@@ -42,6 +42,14 @@ local function is_weapon_trap()
             and uibs.building_subtype == df.trap_type.WeaponTrap
 end
 
+local function is_spike_trap()
+    return uibs.building_type == df.building_type.Weapon
+end
+
+local function is_weapon_or_spike_trap()
+    return is_weapon_trap() or is_spike_trap()
+end
+
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
@@ -50,7 +58,7 @@ local function get_quantity(filter, hollow, placement_data)
         local flags = uibs.plate_info.flags
         return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
                     (flags.magma and 1 or 0) + (flags.track and 1 or 0)
-    elseif is_weapon_trap() and filter.vector_id == df.job_item_vector_id.ANY_WEAPON then
+    elseif (is_weapon_trap() and filter.vector_id == df.job_item_vector_id.ANY_WEAPON) or is_spike_trap() then
         return weapon_quantity
     end
     local quantity = filter.quantity or 1
@@ -334,7 +342,7 @@ function PlannerOverlay:init()
             key='CUSTOM_T',
             key_back='CUSTOM_SHIFT_T',
             label='Num weapons:',
-            visible=is_weapon_trap,
+            visible=is_weapon_or_spike_trap,
             options={1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
             on_change=function(val) weapon_quantity = val end,
         },
@@ -697,7 +705,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     local hollow = self.subviews.hollow:getOptionValue()
     local subtype = uibs.building_subtype
     local filters = get_cur_filters()
-    if is_pressure_plate() then
+    if is_pressure_plate() or is_spike_trap() then
         filters[1].quantity = get_quantity(filters[1])
     elseif is_weapon_trap() then
         filters[2].quantity = get_quantity(filters[2])

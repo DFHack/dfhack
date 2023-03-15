@@ -260,12 +260,17 @@ PlannerOverlay.ATTRS{
 
 function PlannerOverlay:init()
     self.selected = 1
+    self.minimized = false
+
+    local function is_minimized() return self.minimized end
+    local function not_is_minimized() return not self.minimized end
 
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=0, l=0, r=0, h=14},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
+        visible=function() return not self.minimized end,
     }
 
     local function make_is_selected_fn(idx)
@@ -451,6 +456,7 @@ function PlannerOverlay:init()
         frame={t=14, l=0, r=0},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
+        visible=function() return not self.minimized end,
     }
 
     error_panel:addviews{
@@ -565,10 +571,15 @@ function PlannerOverlay:onInput(keys)
             return true
         end
         self.selected = 1
+        self.minimized = false
         self.subviews.hollow:setOption(false)
         self:reset()
         reset_counts_flag = true
         return false
+    end
+    if keys.CUSTOM_ALT_M then
+        self.minimized = not self.minimized
+        return true
     end
     if PlannerOverlay.super.onInput(self, keys) then
         return true
@@ -579,10 +590,15 @@ function PlannerOverlay:onInput(keys)
         detect_rect.height = self.subviews.main.frame_rect.height +
                 self.subviews.errors.frame_rect.height
         detect_rect.y2 = detect_rect.y1 + detect_rect.height - 1
-        if self.subviews.main:getMousePos(gui.ViewRect{rect=detect_rect})
-                or self.subviews.errors:getMousePos() then
-            return true
+        local x, y = self.subviews.main:getMousePos(gui.ViewRect{rect=detect_rect})
+        if x or self.subviews.errors:getMousePos() then
+            if x and x == detect_rect.width-2 and y == 0 then
+                self.minimized = not self.minimized
+                return true
+            end
+            return not self.minimized
         end
+        if self.minimized then return false end
         if not is_construction() and #uibs.errors > 0 then return true end
         if dfhack.gui.getMousePos() then
             if is_choosing_area() or cur_building_has_no_area() then
@@ -642,6 +658,9 @@ function PlannerOverlay:render(dc)
     if not is_plannable() then return end
     self.subviews.errors:updateLayout()
     PlannerOverlay.super.render(self, dc)
+    -- render "minimize" button
+    dc:seek(self.frame_rect.x2-1, self.frame_rect.y1)
+    dc:char(string.char(self.minimized and 31 or 30), COLOR_RED)
 end
 
 local ONE_BY_ONE = xy2pos(1, 1)

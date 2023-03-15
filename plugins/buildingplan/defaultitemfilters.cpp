@@ -32,13 +32,14 @@ static int get_max_quality(const df::job_item *jitem) {
 }
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
-        : key(key) {
+        : key(key), choose_items(false) {
     DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key));
     filter_config = World::AddPersistentData(FILTER_CONFIG_KEY);
     set_config_val(filter_config, FILTER_CONFIG_TYPE, std::get<0>(key));
     set_config_val(filter_config, FILTER_CONFIG_SUBTYPE, std::get<1>(key));
     set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));
+    set_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose_items);
     item_filters.resize(jitems.size());
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
         item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
@@ -48,6 +49,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
         : key(getKey(filter_config)), filter_config(filter_config) {
+    choose_items = get_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
     auto &serialized = filter_config.val();
     DEBUG(status,out).print("deserializing item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
@@ -58,6 +60,11 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
         item_filters.resize(jitems.size());
     } else
         item_filters = filters;
+}
+
+void DefaultItemFilters::setChooseItems(bool choose) {
+    choose_items = choose;
+    set_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose);
 }
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {

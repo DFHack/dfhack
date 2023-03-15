@@ -27,6 +27,7 @@ enum FilterConfigValues {
     FILTER_CONFIG_TYPE = 0,
     FILTER_CONFIG_SUBTYPE = 1,
     FILTER_CONFIG_CUSTOM = 2,
+    FILTER_CONFIG_CHOOSE_ITEMS = 3,
 };
 
 enum BuildingConfigValues {

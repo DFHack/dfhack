@@ -55,7 +55,6 @@ static PersistentDataItem config;
 // for use in counting available materials for the UI
 static map<string, std::pair<MaterialInfo, string>> mat_cache;
 static unordered_map<BuildingTypeKey, vector<const df::job_item *>, BuildingTypeKeyHash> job_item_cache;
-static unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> cur_choose_items;
 static unordered_map<BuildingTypeKey, HeatSafety, BuildingTypeKeyHash> cur_heat_safety;
 static unordered_map<BuildingTypeKey, DefaultItemFilters, BuildingTypeKeyHash> cur_item_filters;
 // building id -> PlannedBuilding
@@ -267,7 +266,6 @@ static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "reload_pens");
     planned_buildings.clear();
     tasks.clear();
-    cur_choose_items.clear();
     cur_heat_safety.clear();
     cur_item_filters.clear();
     for (auto &entry : job_item_cache ) {
@@ -895,7 +893,8 @@ static int getMaterialFilter(lua_State *L) {
 static void setChooseItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, bool choose) {
     DEBUG(status,out).print("entering setChooseItems\n");
     BuildingTypeKey key(type, subtype, custom);
-    cur_choose_items[key] = choose;
+    auto &filters = get_item_filters(out, key);
+    filters.setChooseItems(choose);
     // no need to reset signal; no change to the state of any other UI element
 }
 
@@ -910,7 +909,7 @@ static int getChooseItems(lua_State *L) {
             "entering getChooseItems building_type=%d subtype=%d custom=%d\n",
             type, subtype, custom);
     BuildingTypeKey key(type, subtype, custom);
-    Lua::Push(L, cur_choose_items[key]);
+    Lua::Push(L, get_item_filters(*out, key).getChooseItems());
     return 1;
 }
 

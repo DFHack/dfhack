@@ -9,6 +9,7 @@
 #include "df/job_item_vector_id.h"
 
 #include <deque>
+#include <set>
 
 typedef std::deque<std::pair<int32_t, int>> Bucket;
 typedef std::map<df::job_item_vector_id, std::map<std::string, Bucket>> Tasks;
@@ -49,6 +50,6 @@ void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, const df::job_item *job_item);
 bool itemPassesScreen(df::item * item);
 df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat);
-bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter);
+bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<std::string> &special);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
 void finalizeBuilding(DFHack::color_ostream &out, df::building *bld);

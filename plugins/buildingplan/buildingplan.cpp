@@ -394,7 +394,7 @@ static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int
         ser << "Hc";
 
     size_t num_materials = item_filter.getMaterials().size();
-    if (num_materials == 0 || num_materials >= 9 || item_filter.getMaterialMask().whole)
+    if (num_materials == 0 || num_materials >= 9 || !item_filter.getMaterialMask().whole)
         ser << "M9";
     else
         ser << "M" << num_materials;
@@ -411,6 +411,9 @@ static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int
         << ji.metal_ore << ':' << ji.has_tool_use;
 
     ser << ':' << item_filter.serialize();
+
+    for (auto &special : pb.specials)
+        ser << ':' << special;
 
     return ser.str();
 }
@@ -596,7 +599,7 @@ static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
                                     bld->getCustomType()))
         return false;
     BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
-    PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key).getItemFilters());
+    PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key));
     return registerPlannedBuilding(out, pb);
 }
 
@@ -621,7 +624,9 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     auto &job_items = get_job_items(out, key);
     if (index < 0 || job_items.size() <= (size_t)index)
         return 0;
-    auto &item_filters = get_item_filters(out, key).getItemFilters();
+    auto &item_filters = get_item_filters(out, key);
+    auto &filters = item_filters.getItemFilters();
+    auto &specials = item_filters.getSpecials();
 
     auto &jitem = job_items[index];
     auto vector_ids = getVectorIds(out, jitem);
@@ -630,13 +635,13 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            ItemFilter filter = item_filters[index];
+            ItemFilter filter = filters[index];
             if (counts) {
                 // don't filter by material; we want counts for all materials
                 filter.setMaterialMask(0);
                 filter.setMaterials(set<MaterialInfo>());
             }
-            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter)) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter, specials)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 if (counts) {
@@ -939,6 +944,29 @@ static int getHeatSafetyFilter(lua_State *L) {
     return 1;
 }
 
+static void setSpecial(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, string special, bool val) {
+    DEBUG(status,out).print("entering setSpecial\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key);
+    filters.setSpecial(special, val);
+    call_buildingplan_lua(&out, "signal_reset");
+}
+
+static int getSpecials(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    DEBUG(status,*out).print(
+            "entering getSpecials building_type=%d subtype=%d custom=%d\n",
+            type, subtype, custom);
+    BuildingTypeKey key(type, subtype, custom);
+    Lua::Push(L, get_item_filters(*out, key).getSpecials());
+    return 1;
+}
+
 static void setQualityFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index,
         int decorated, int min_quality, int max_quality) {
     DEBUG(status,out).print("entering setQualityFilter\n");
@@ -1086,6 +1114,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(clearFilter),
     DFHACK_LUA_FUNCTION(setChooseItems),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
+    DFHACK_LUA_FUNCTION(setSpecial),
     DFHACK_LUA_FUNCTION(setQualityFilter),
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
@@ -1102,6 +1131,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getMaterialFilter),
     DFHACK_LUA_COMMAND(getChooseItems),
     DFHACK_LUA_COMMAND(getHeatSafetyFilter),
+    DFHACK_LUA_COMMAND(getSpecials),
     DFHACK_LUA_COMMAND(getQualityFilter),
     DFHACK_LUA_END
 };

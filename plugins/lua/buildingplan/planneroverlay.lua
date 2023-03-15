@@ -81,14 +81,18 @@ local function cur_building_has_no_area()
     return filters and filters[1] and (not filters[1].quantity or filters[1].quantity > 0)
 end
 
-local function is_plannable()
-    return get_cur_filters() and
-            not (uibs.building_type == df.building_type.Construction
-                 and uibs.building_subtype == df.construction_type.TrackNSEW)
-end
-
 local function is_construction()
     return uibs.building_type == df.building_type.Construction
+end
+
+local function is_plannable()
+    return get_cur_filters() and
+            not (is_construction() and
+                uibs.building_subtype == df.construction_type.TrackNSEW)
+end
+
+local function is_slab()
+    return uibs.building_type == df.building_type.Slab
 end
 
 local function is_stairs()
@@ -345,6 +349,16 @@ function PlannerOverlay:init()
             visible=is_weapon_or_spike_trap,
             options={1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
             on_change=function(val) weapon_quantity = val end,
+        },
+        widgets.ToggleHotkeyLabel {
+            view_id='engraved',
+            frame={t=5, l=4},
+            key='CUSTOM_T',
+            label='Engraved only:',
+            visible=is_slab,
+            on_change=function(val)
+                buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'engraved', val)
+            end,
         },
         widgets.Label{
             frame={b=3, l=17},
@@ -637,10 +651,13 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     if reset_counts_flag then
         self:reset()
-        self.subviews.choose:setOption(require('plugins.buildingplan').getChooseItems(
+        local buildingplan = require('plugins.buildingplan')
+        self.subviews.engraved:setOption(buildingplan.getSpecials(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type).engraved or false)
+        self.subviews.choose:setOption(buildingplan.getChooseItems(
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
-        self.subviews.safety:setOption(require('plugins.buildingplan').getHeatSafetyFilter(
-                uibs.building_type, uibs.building_subtype, uibs.custom_type))
+        self.subviews.safety:setOption(buildingplan.getHeatSafetyFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end
 
     local selection_pos = self.saved_selection_pos or uibs.selection_pos

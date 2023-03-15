@@ -16,12 +16,15 @@ public:
 
     void setChooseItems(bool choose);
     void setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index);
+    void setSpecial(const std::string &special, bool val);
 
     bool getChooseItems() const { return choose_items; }
     const std::vector<ItemFilter> & getItemFilters() const { return item_filters; }
+    const std::set<std::string> & getSpecials() const { return specials; }
 
 private:
     DFHack::PersistentDataItem filter_config;
     bool choose_items;
     std::vector<ItemFilter> item_filters;
+    std::set<std::string> specials;
 };

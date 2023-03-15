@@ -409,6 +409,9 @@ function PlannerOverlay:init()
                             end
                         end
                     end,
+                    on_change=function(choose)
+                        buildingplan.setChooseItems(uibs.building_type, uibs.building_subtype, uibs.custom_type, choose)
+                    end,
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='safety',
@@ -549,7 +552,6 @@ function PlannerOverlay:onInput(keys)
         end
         self.selected = 1
         self.subviews.hollow:setOption(false)
-        self.subviews.choose:setOption(false)
         self:reset()
         reset_counts_flag = true
         return false
@@ -635,6 +637,8 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     if reset_counts_flag then
         self:reset()
+        self.subviews.choose:setOption(require('plugins.buildingplan').getChooseItems(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type))
         self.subviews.safety:setOption(require('plugins.buildingplan').getHeatSafetyFilter(
                 uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end

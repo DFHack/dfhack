@@ -890,6 +890,29 @@ static int getMaterialFilter(lua_State *L) {
     return 1;
 }
 
+static void setChooseItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, bool choose) {
+    DEBUG(status,out).print("entering setChooseItems\n");
+    BuildingTypeKey key(type, subtype, custom);
+    auto &filters = get_item_filters(out, key);
+    filters.setChooseItems(choose);
+    // no need to reset signal; no change to the state of any other UI element
+}
+
+static int getChooseItems(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    DEBUG(status,*out).print(
+            "entering getChooseItems building_type=%d subtype=%d custom=%d\n",
+            type, subtype, custom);
+    BuildingTypeKey key(type, subtype, custom);
+    Lua::Push(L, get_item_filters(*out, key).getChooseItems());
+    return 1;
+}
+
 static void setHeatSafetyFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int heat) {
     DEBUG(status,out).print("entering setHeatSafetyFilter\n");
     BuildingTypeKey key(type, subtype, custom);
@@ -1061,6 +1084,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(countAvailableItems),
     DFHACK_LUA_FUNCTION(hasFilter),
     DFHACK_LUA_FUNCTION(clearFilter),
+    DFHACK_LUA_FUNCTION(setChooseItems),
     DFHACK_LUA_FUNCTION(setHeatSafetyFilter),
     DFHACK_LUA_FUNCTION(setQualityFilter),
     DFHACK_LUA_FUNCTION(getDescString),
@@ -1076,6 +1100,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getMaterialMaskFilter),
     DFHACK_LUA_COMMAND(setMaterialFilter),
     DFHACK_LUA_COMMAND(getMaterialFilter),
+    DFHACK_LUA_COMMAND(getChooseItems),
     DFHACK_LUA_COMMAND(getHeatSafetyFilter),
     DFHACK_LUA_COMMAND(getQualityFilter),
     DFHACK_LUA_END

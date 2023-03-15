@@ -151,7 +151,9 @@ or hit :kbd:`i` before placing the building. When you click to place the
 building, a dialog will come up that allows you choose which items to use. The
 list is sorted by most recently used materials for that building type by
 default, but you can change to sort by name or by available quantity by
-clicking on the "Sort by" selector or hitting :kbd:`R`.
+clicking on the "Sort by" selector or hitting :kbd:`R`. The configuration for
+whether you would like to choose specific items is saved per building type and
+will be restored when you plan more of that building type.
 
 You can select the maximum quantity of a specified item by clicking on the item
 name or selecting it with the arrow keys and hitting :kbd:`Enter`. You can

@@ -72,8 +72,10 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
     if (elems.size() > 1) {
         vector<string> specs;
         split_string(&specs, elems[1], ",");
-        for (auto & special : specs)
-            specials.emplace(special);
+        for (auto & special : specs) {
+            if (special.size())
+                specials.emplace(special);
+        }
     }
 }
 

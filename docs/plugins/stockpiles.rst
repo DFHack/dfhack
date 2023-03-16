@@ -53,9 +53,38 @@ Examples
 Options
 -------
 
+``-i``, ``--include <comma separated list of elements to include>``
+    When exporting, you can include this option to select only specific elements
+    of the stockpile to record. If not specified, everything is included. When
+    the file is later imported, only the included settings will be modified. The
+    options are explained below in the next section.
+``-d``, ``--disable``
+    When importing, treat the settings in the file as elements to *remove** from
+    the current stockpile configuration. Elements that are enabled in the file
+    will be *disabled* on the stockpile. No other stockpile configuration will
+    be changed.
+``-e``, ``--enable``
+    When importing, treat the settings in the file as elements to *add* to the
+    current stockpile configuration. Elements that are enabled in the file will
+    be enabled on the stockpile, but nothing currently enabled on the stockpile
+    will be disabled.
 ``-s``, ``--stockpile <id>``
     Specify a specific stockpile ID instead of using the one currently selected
     in the UI.
+
+Configuration elements
+----------------------
+
+The different configuration elements you can include in an exported settings file
+are:
+
+:general: Max bins, barrels, and wheelbarrows; whether the stockpile takes from
+    links only; whether organic and/or inorganic materials are allowed.
+:categories: The top-level categories of items that are enabled for the stockpile,
+    like Ammo, Finished goods, or Stone.
+:types: The elements below the categories, which include the sub-categories, the
+    specific item types, and any toggles the category might have (like Prepared
+    meals for the Food category).
 
 .. _stockpiles-library:
 

@@ -1,244 +1,135 @@
 local _ENV = mkmodule('plugins.stockpiles')
 
---[[
+local argparse = require('argparse')
 
- Native functions:
+local STOCKPILES_DIR = "dfhack-config/stockpiles";
+local STOCKPILES_LIBRARY_DIR = "hack/data/stockpiles";
 
- * stockpiles_list_settings(dir_path), list files in directory
- * stockpiles_load(file), with full path
- * stockpiles_save(file), with full path
- * isEnabled()
-
---]]
---
-function safe_require(module)
-    local status, module = pcall(require, module)
-    return status and module or nil
+local function get_sp_name(name, num)
+    if #name > 0 then return name end
+    return ('Stockpile %d'):format(num)
 end
 
-
-local gui = require 'gui'
-local widgets = require('gui.widgets')
-local dlg = require('gui.dialogs')
-local script = require 'gui.script'
-local persist = safe_require('persist-table')
-
-
-function ListFilterDialog(args)
-    args.text = args.prompt or 'Type or select an option'
-    args.text_pen = COLOR_WHITE
-    args.with_filter = true
-    args.icon_width = 2
-
-    local choices = {}
-
-    if not args.hide_none then
-        table.insert(choices, {
-            icon = '?', text = args.none_caption or 'none',
-            index = -1, name = -1
-        })
+local STATUS_FMT = '%6s %s'
+local function print_status()
+    local sps = df.global.world.buildings.other.STOCKPILE
+    print(('Current stockpiles: %d'):format(#sps))
+    if #sps > 0 then
+        print()
+        print(STATUS_FMT:format('ID', 'Name'))
+        print(STATUS_FMT:format('------', '----------'))
     end
-
-    local filter = args.item_filter
-
-    for i,v in ipairs(args.items) do
-        if not filter or filter(v,-1) then
-            local name = v
-            local icon
-            table.insert(choices, {
-                icon = icon, search_key = string.lower(name), text = name, index = i
-            })
-        end
-    end
-
-    args.choices = choices
-
-    if args.on_select then
-        local cb = args.on_select
-        args.on_select = function(idx, obj)
-            return cb(obj.index, args.items[obj.index])
-        end
-    end
-
-    return dlg.ListBox(args)
-end
-
-function showFilterPrompt(title, list, text,item_filter,hide_none)
-    ListFilterDialog{
-        frame_title=title,
-        items=list,
-        prompt=text,
-        item_filter=item_filter,
-        hide_none=hide_none,
-        on_select=script.mkresume(true),
-        on_cancel=script.mkresume(false),
-        on_close=script.qresume(nil)
-    }:show()
-
-    return script.wait()
-end
-
-function init()
-    if persist == nil then return end
-    if dfhack.isMapLoaded() then
-        if persist.GlobalTable.stockpiles == nil then
-            persist.GlobalTable.stockpiles = {}
-            persist.GlobalTable.stockpiles['settings_path'] = './stocksettings'
-        end
+    for _,sp in ipairs(sps) do
+        print(STATUS_FMT:format(sp.id, get_sp_name(sp.name, sp.stockpile_number)))
     end
 end
 
-function tablify(iterableObject)
-    t={}
-    for k,v in ipairs(iterableObject) do
-        t[k] = v~=nil and v or 'nil'
-    end
-    return t
-end
-
-local filename_invalid_regex = '[^A-Za-z0-9 ._-]'
-
-function valid_filename(filename)
-    return not filename:match(filename_invalid_regex)
-end
-
-function sanitize_filename(filename)
-    local ret = ''
-    for i = 1, #filename do
-        local ch = filename:sub(i, i)
-        if valid_filename(ch) then
-            ret = ret .. ch
-        else
-            ret = ret .. '-'
-        end
-    end
-    return ret
-end
-
-FilenameInputBox = defclass(FilenameInputBox, dlg.InputBox)
-function FilenameInputBox:onInput(keys)
-    if not valid_filename(string.char(keys._STRING or 0)) and not keys.STRING_A000 then
-        keys._STRING = nil
-    end
-    FilenameInputBox.super.onInput(self, keys)
-end
-
-function showFilenameInputPrompt(title, text, tcolor, input, min_width)
-    FilenameInputBox{
-        frame_title = title,
-        text = text,
-        text_pen = tcolor,
-        input = input,
-        frame_width = min_width,
-        on_input = script.mkresume(true),
-        on_cancel = script.mkresume(false),
-        on_close = script.qresume(nil)
-    }:show()
-
-    return script.wait()
-end
-
-function load_settings()
-    init()
-    local path = get_path()
-    local ok, list = pcall(stockpiles_list_settings, path)
-    if not ok then
-        show_message_box("Stockpile Settings", "The stockpile settings folder doesn't exist.", true)
+local function list_dir(path, prefix, filters)
+    local paths = dfhack.filesystem.listdir_recursive(path, 0, false)
+    if not paths then
+        dfhack.printerr(('Cannot find stockpile settings directory: "%s"'):format(path))
         return
     end
-    if #list == 0 then
-        show_message_box("Stockpile Settings", "There are no saved stockpile settings.", true)
-        return
+    local normalized_filters = {}
+    for _,filter in ipairs(filters or {}) do
+        table.insert(normalized_filters, filter:lower())
     end
-
-    local choice_list = {}
-    for i,v in ipairs(list) do
-        choice_list[i] = string.gsub(v, "/", "/ ")
-        choice_list[i] = string.gsub(choice_list[i], "-", " - ")
-        choice_list[i] = string.gsub(choice_list[i], "_", " ")
-    end
-
-    script.start(function()
-        local ok2,index,name=showFilterPrompt('Stockpile Settings', choice_list, 'Choose a stockpile', function(item) return true end, true)
-        if ok2 then
-            local filename = list[index];
-            stockpiles_load(path..'/'..filename)
-        end
-    end)
-end
-
-function save_settings(stockpile)
-    init()
-    script.start(function()
-        local suggested = stockpile.name
-        if #suggested == 0 then
-            suggested = 'Stock1'
-        end
-        suggested = sanitize_filename(suggested)
-        local path = get_path()
-        local sok,filename = showFilenameInputPrompt('Stockpile Settings', 'Enter filename', COLOR_WHITE, suggested)
-        if sok then
-            if filename == nil or filename == '' or not valid_filename(filename) then
-                script.showMessage('Stockpile Settings', 'Invalid File Name', COLOR_RED)
-            else
-                if not dfhack.filesystem.exists(path) then
-                    dfhack.filesystem.mkdir(path)
+    for _,v in ipairs(paths) do
+        local normalized_path = prefix .. v.path:lower()
+        if v.isdir or not normalized_path:endswith('.dfstock') then goto continue end
+        normalized_path = normalized_path:sub(1, -9)
+        if #normalized_filters > 0 then
+            local matched = false
+            for _,filter in ipairs(normalized_filters) do
+                if normalized_path:find(filter, 1, true) then
+                    matched = true
+                    break
                 end
-                stockpiles_save(path..'/'..filename)
             end
+            if not matched then goto continue end
         end
-    end)
-end
-
-function manage_settings(sp)
-    init()
-    if not guard() then return false end
-    script.start(function()
-        local list = {'Load', 'Save'}
-        local tok,i = script.showListPrompt('Stockpile Settings','Load or Save Settings?',COLOR_WHITE,tablify(list))
-        if tok then
-            if i == 1 then
-                load_settings()
-            else
-                save_settings(sp)
-            end
-        end
-    end)
-end
-
-function show_message_box(title, msg, iserror)
-    local color = COLOR_WHITE
-    if iserror then
-        color = COLOR_RED
+        print(('%s%s'):format(prefix, v.path:sub(1, -9)))
+        ::continue::
     end
-    script.start(function()
-        script.showMessage(title, msg, color)
-    end)
 end
 
-function guard()
-    if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Stockpile') then
-        qerror("This script requires a stockpile selected in the 'q' mode")
+local function list_settings_files(filters)
+    list_dir(STOCKPILES_DIR, '', filters)
+    list_dir(STOCKPILES_LIBRARY_DIR, 'library/', filters)
+end
+
+local function assert_safe_name(name)
+    if not name or #name == 0 then
+        qerror('name missing or empty')
+    end
+    if name:find('[^%a ._-]') then
+        qerror('name can only contain numbers, letters, periods, underscores, dashes, and spaces')
+    end
+end
+
+local function get_sp_id(opts)
+    if opts.id then return opts.id end
+    local sp = dfhack.gui.getSelectedStockpile()
+    if sp then return sp.id end
+    return nil
+end
+
+local function export_stockpile(name, opts)
+    assert_safe_name(name)
+    name = STOCKPILES_DIR .. '/' .. name
+    stockpiles_export(name, get_sp_id(opts))
+end
+
+local function import_stockpile(name, opts)
+    local is_library = false
+    if name:startswith('library/') then
+        name = name:sub(9)
+        is_library = true
+    end
+    assert_safe_name(name)
+    if not is_library and dfhack.filesystem.exists(STOCKPILES_DIR .. '/' .. name .. '.dfstock') then
+        name = STOCKPILES_DIR .. '/' .. name
+    else
+        name = STOCKPILES_LIBRARY_DIR .. '/' .. name
+    end
+    stockpiles_import(name, get_sp_id(opts))
+end
+
+local function process_args(opts, args)
+    if args[1] == 'help' then
+        opts.help = true
+        return
+    end
+
+    return argparse.processArgsGetopt(args, {
+            {'h', 'help', handler=function() opts.help = true end},
+            {'s', 'stockpile', has_arg=true,
+             handler=function(arg) opts.id = argparse.nonnegativeInt(art, 'stockpile') end},
+        })
+end
+
+function parse_commandline(args)
+    local opts = {}
+    local positionals = process_args(opts, args)
+
+    if opts.help or not positionals then
         return false
     end
+
+    local command = table.remove(positionals, 1)
+    if not command or command == 'status' then
+        print_status()
+    elseif command == 'list' then
+        list_settings_files(positionals)
+    elseif command == 'export' then
+        export_stockpile(positionals[1], opts)
+    elseif command == 'import' then
+        import_stockpile(positionals[1], opts)
+    else
+        return false
+    end
+
     return true
-end
-
-function set_path(path)
-    init()
-    if persist == nil then
-        qerror("This version of DFHack doesn't support setting the stockpile settings path. Sorry.")
-        return
-    end
-    persist.GlobalTable.stockpiles['settings_path'] = path
-end
-
-function get_path()
-    init()
-    if persist == nil then
-        return "stocksettings"
-    end
-    return persist.GlobalTable.stockpiles['settings_path']
 end
 
 return _ENV

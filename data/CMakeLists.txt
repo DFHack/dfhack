@@ -10,6 +10,9 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/base_command_counts.json
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/orders/
         DESTINATION "${DFHACK_DATA_DESTINATION}/data/orders")
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stockpiles/
+        DESTINATION "${DFHACK_DATA_DESTINATION}/data/stockpiles")
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/art/
         DESTINATION "${DFHACK_DATA_DESTINATION}/data/art")
 

@@ -74,10 +74,25 @@ local function get_sp_id(opts)
     return nil
 end
 
+local included_elements = {
+    containers=1,
+    general=2,
+    categories=4,
+    types=8,
+}
+
 local function export_stockpile(name, opts)
     assert_safe_name(name)
     name = STOCKPILES_DIR .. '/' .. name
-    stockpiles_export(name, get_sp_id(opts))
+
+    local includedElements = 0
+    for _,inc in ipairs(opts.includes) do
+        if included_elements[inc] then
+            includedElements = includedElements | included_elements[inc]
+        end
+    end
+
+    stockpiles_export(name, get_sp_id(opts), includedElements)
 end
 
 local function import_stockpile(name, opts)
@@ -92,7 +107,28 @@ local function import_stockpile(name, opts)
     else
         name = STOCKPILES_LIBRARY_DIR .. '/' .. name
     end
-    stockpiles_import(name, get_sp_id(opts))
+    stockpiles_import(name, get_sp_id(opts), opts.mode, opts.filter)
+end
+
+local valid_includes = {general=true, categories=true, types=true}
+
+local function parse_include(arg)
+    local includes = argparse.stringList(arg, 'include')
+    for _,v in ipairs(includes) do
+        if not valid_includes[v] then
+            qerror(('invalid included element: "%s"'):format(v))
+        end
+    end
+    return includes
+end
+
+local valid_modes = {set=true, enable=true, disable=true}
+
+local function parse_mode(arg)
+    if not valid_modes[arg] then
+        qerror(('invalid mode: "%s"'):format(arg))
+    end
+    return arg
 end
 
 local function process_args(opts, args)
@@ -101,10 +137,20 @@ local function process_args(opts, args)
         return
     end
 
+    opts.includes = {}
+    opts.mode = 'set'
+    opts.filter = ''
+
     return argparse.processArgsGetopt(args, {
+            {'f', 'filter', has_arg=true,
+            handler=function(arg) opts.filter = arg end},
             {'h', 'help', handler=function() opts.help = true end},
+            {'i', 'include', has_arg=true,
+             handler=function(arg) opts.includes = parse_include(arg) end},
+            {'m', 'mode', has_arg=true,
+             handler=function(arg) opts.mode = parse_mode(arg) end},
             {'s', 'stockpile', has_arg=true,
-             handler=function(arg) opts.id = argparse.nonnegativeInt(art, 'stockpile') end},
+             handler=function(arg) opts.id = argparse.nonnegativeInt(arg, 'stockpile') end},
         })
 end
 

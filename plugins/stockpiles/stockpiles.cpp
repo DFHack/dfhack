@@ -83,7 +83,7 @@ static df::building_stockpilest* get_stockpile(int id) {
     return virtual_cast<df::building_stockpilest>(df::building::find(id));
 }
 
-static bool stockpiles_export(color_ostream& out, string fname, int id) {
+static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t includedElements) {
     df::building_stockpilest* sp = get_stockpile(id);
     if (!sp) {
         out.printerr("Specified building isn't a stockpile: %d.\n", id);
@@ -95,7 +95,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id) {
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.serialize_to_file(fname)) {
+        if (!cereal.serialize_to_file(fname, includedElements)) {
             out.printerr("could not save to '%s'\n", fname.c_str());
             return false;
         }
@@ -108,7 +108,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id) {
     return true;
 }
 
-static bool stockpiles_import(color_ostream& out, string fname, int id) {
+static bool stockpiles_import(color_ostream& out, string fname, int id, string mode_str, string filter) {
     df::building_stockpilest* sp = get_stockpile(id);
     if (!sp) {
         out.printerr("Specified building isn't a stockpile: %d.\n", id);
@@ -123,9 +123,15 @@ static bool stockpiles_import(color_ostream& out, string fname, int id) {
         return false;
     }
 
+    DeserializeMode mode = DESERIALIZE_MODE_SET;
+    if (mode_str == "enable")
+        mode = DESERIALIZE_MODE_ENABLE;
+    else if (mode_str == "disable")
+        mode = DESERIALIZE_MODE_DISABLE;
+
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.unserialize_from_file(fname)) {
+        if (!cereal.unserialize_from_file(fname, mode, filter)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }

@@ -193,6 +193,13 @@ show-unit-syndromes
 ===================
 Replaced with a GUI version: `gui/unit-syndromes`.
 
+.. _stocksettings:
+
+stocksettings
+=============
+Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
+`stockpiles` API.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees

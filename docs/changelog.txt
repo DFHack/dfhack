@@ -64,7 +64,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ `buildingplan`: rename "Build" button to "Confirm" on the item selection dialog and change the hotkey from "B" to "C"
 - `blueprint`: now writes blueprints to the ``dfhack-config/blueprints`` directory
 - `blueprint-library-guide`: library blueprints have moved from ``blueprints`` to ``hack/data/blueprints``
-- player-created blueprints should now go in the ``dfhack-config/blueprints`` folder. please move your existing blueprints from ``blueprints`` to ``dfhack-config/blueprints``. you don't need to move the library blueprints -- those can be safely deleted from the old ``blueprints`` directory.
+- `blueprint-library-guide`: player-created blueprints should now go in the ``dfhack-config/blueprints`` folder. please move your existing blueprints from ``blueprints`` to ``dfhack-config/blueprints``. you don't need to move the library blueprints -- those can be safely deleted from the old ``blueprints`` directory.
 -@ `showmood`: clarify how many bars and/or cloth items are actually needed for the mood
 
 ## Removed

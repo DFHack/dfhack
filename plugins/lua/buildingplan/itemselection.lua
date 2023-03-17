@@ -76,13 +76,13 @@ function ItemSelection:init()
             },
         },
         widgets.Label{
-            frame={r=0, w=9, t=0, h=3},
+            frame={r=0, w=11, t=0, h=3},
             text_pen=BUILD_TEXT_PEN,
             text_hpen=BUILD_TEXT_HPEN,
             text={
-                '         ', NEWLINE,
-                '  Build  ', NEWLINE,
-                '         ',
+                '           ', NEWLINE,
+                '  Confirm  ', NEWLINE,
+                '           ',
             },
             on_click=self:callback('submit'),
         },
@@ -115,8 +115,8 @@ function ItemSelection:init()
         },
         widgets.HotkeyLabel{
             frame={l=22, b=1},
-            key='CUSTOM_SHIFT_B',
-            label='Build',
+            key='CUSTOM_SHIFT_C',
+            label='Confirm',
             auto_width=true,
             on_activate=self:callback('submit'),
         },

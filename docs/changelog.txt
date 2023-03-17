@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ `buildingplan`: can now filter by whether a slab is engraved
 -@ `buildingplan`: add "minimize" button to temporarily get the planner overlay out of the way if you would rather use the vanilla UI for placing the current building
 -@ `buildingplan`: add ``buildingplan reset`` command for resetting all filters to defaults
+-@ `buildingplan`: rename "Build" button to "Confirm" on the item selection dialog and change the hotkey from "B" to "C"
 - `blueprint`: now writes blueprints to the ``dfhack-config/blueprints`` directory
 - `blueprint-library-guide`: library blueprints have moved from ``blueprints`` to ``hack/data/blueprints``
 - player-created blueprints should now go in the ``dfhack-config/blueprints`` folder. please move your existing blueprints from ``blueprints`` to ``dfhack-config/blueprints``. you don't need to move the library blueprints -- those can be safely deleted from the old ``blueprints`` directory.

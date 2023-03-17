@@ -603,8 +603,9 @@ function PlannerOverlay:onInput(keys)
         self.minimized = not self.minimized
         return true
     end
+    if self.minimized then return false end
     if PlannerOverlay.super.onInput(self, keys) then
-        return not self.minimized
+        return true
     end
     if keys._MOUSE_L_DOWN then
         if is_over_options_panel() then return false end
@@ -616,7 +617,6 @@ function PlannerOverlay:onInput(keys)
                 or self.subviews.errors:getMousePos() then
             return true
         end
-        if self.minimized then return false end
         if not is_construction() and #uibs.errors > 0 then return true end
         if dfhack.gui.getMousePos() then
             if is_choosing_area() or cur_building_has_no_area() then

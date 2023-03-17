@@ -57,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 
 ## Removed
+-@ `buildingplan`: "heat safety" setting is temporarily removed while we investigate incorrect item matching
 
 # 50.07-alpha3
 

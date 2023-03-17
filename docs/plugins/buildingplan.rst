@@ -47,11 +47,14 @@ to build the planned buildings as they are produced, with minimal space
 dedicated to stockpiles. The DFHack `orders` library can help with setting
 these manager workorders up for you.
 
-If you do not wish to use the ``buildingplan`` interface, you can turn off the
+IF you don't want to use the ``buildingplan`` interface for the building you're
+currently trying to place, you can hit :kbd:`Alt`:kbd:`M` or click on the
+minimize toggle in the upper left corner of the panel. If you do not wish to
+ever use the ``buildingplan`` interface, you can turn off the
 ``buildingplan.planner`` overlay in `gui/control-panel` (on the "Overlays"
-tab). You should not disable the ``buildingplan`` "System service" in
-`gui/control-panel` since existing planned buildings in loaded forts will stop
-functioning.
+tab). Be sure to keep the ``buildingplan`` "System service" itself enabled in
+`gui/control-panel` since if you turn it off, existing planned buildings in
+saved forts will stop functioning.
 
 Usage
 -----
@@ -119,12 +122,8 @@ tiles selected in the construction area are not appropriate for building. For
 example, if you want to fill an area with flooring, you can select the entire
 area, and any tiles with existing buildings or walls will simply be skipped.
 
-Setting heat safety filters
-+++++++++++++++++++++++++++
-
-If you specifically need the building to be magma- or fire-safe, click on the
-"Building safety" button or hit :kbd:`g` until the desired heat safety is
-displayed. This filter applies to all items used to construct the building.
+For weapon and spike traps, you can choose how many weapons will be included
+on this panel.
 
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++
@@ -165,8 +164,8 @@ name or selecting it with the arrow keys and hitting :kbd:`Enter`. You can
 instead select items one at a time by Ctrl-clicking (:kbd:`Shift`:kbd:`Right`)
 to increment or Ctrl-Shift-clicking (:kbd:`Shift`:kbd:`Left`) to decrement.
 
-Once you are satisfied with your choices, click on the "Build" button or hit
-:kbd:`B` to continue building. Note that you don't have to select all the items
+Once you are satisfied with your choices, click on the "Confirm" button or hit
+:kbd:`C` to continue building. Note that you don't have to select all the items
 that the building needs. Any remaining items will be automatically chosen from
 other available items (or future items if not all items are available yet). If
 there are multiple item types to choose for the current building, one dialog

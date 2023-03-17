@@ -4,6 +4,7 @@ GOOD_TILE_PEN, BAD_TILE_PEN = nil, nil
 VERT_TOP_PEN, VERT_MID_PEN, VERT_BOT_PEN = nil, nil, nil
 BUTTON_START_PEN, BUTTON_END_PEN = nil, nil
 SELECTED_ITEM_PEN = nil
+MINIMIZED_LEFT_PEN, MINIMIZED_RIGHT_PEN = nil, nil
 
 local to_pen = dfhack.pen.parse
 
@@ -25,6 +26,10 @@ function reload_pens()
     BUTTON_START_PEN = to_pen{tile=tp(cp_texpos, 13), ch='[', fg=COLOR_YELLOW}
     BUTTON_END_PEN = to_pen{tile=tp(cp_texpos, 15), ch=']', fg=COLOR_YELLOW}
     SELECTED_ITEM_PEN = to_pen{tile=tp(cp_texpos, 9), ch=string.char(251), fg=COLOR_YELLOW}
+
+    local wb_texpos = dfhack.textures.getWindowBordersTexposStart()
+    MINIMIZED_LEFT_PEN = to_pen{tile=tp(wb_texpos, 0), ch=199, fg=COLOR_WHITE}
+    MINIMIZED_RIGHT_PEN = to_pen{tile=tp(wb_texpos, 2), ch=182, fg=COLOR_WHITE}
 end
 reload_pens()
 

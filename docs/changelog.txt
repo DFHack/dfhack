@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 -@ `buildingplan`: items are now attached correctly to screw pumps and other multi-item buildings
 -@ `buildingplan`: buildings with different material filters will no longer get "stuck" if one of the filters currently matches no items
+- `showmood` properly count required number of bars and cloth when they aren't the main item for the strange mood
 
 ## Misc Improvements
 -@ `buildingplan`: can now filter by clay materials
@@ -49,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: now writes blueprints to the ``dfhack-config/blueprints`` directory
 - `blueprint-library-guide`: library blueprints have moved from ``blueprints`` to ``hack/data/blueprints``
 - player-created blueprints should now go in the ``dfhack-config/blueprints`` folder. please move your existing blueprints from ``blueprints`` to ``dfhack-config/blueprints``. you don't need to move the library blueprints -- those can be safely deleted from the old ``blueprints`` directory.
+-@ `showmood`: clarify how many bars and/or cloth items are actually needed for the mood
 
 ## Documentation
 

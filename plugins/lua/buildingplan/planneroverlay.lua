@@ -270,15 +270,27 @@ function PlannerOverlay:init()
         visible=function() return not self.minimized end,
     }
 
-    local minimized_panel = widgets.Label{
-        frame={t=0, r=1, w=1, h=1},
-        text={
-            {
-                text=function() return string.char(self.minimized and 31 or 30) end,
-                pen=COLOR_RED,
+    local minimized_panel = widgets.Panel{
+        frame={t=0, r=0, w=4, h=1},
+        subviews={
+            widgets.Label{
+                frame={t=0, l=0, w=1, h=1},
+                text={{tile=pens.MINIMIZED_LEFT_PEN}},
+                visible=function() return self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, l=1, w=2, h=1},
+                text=string.char(31)..string.char(30),
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=0, w=1, h=1},
+                text={{tile=pens.MINIMIZED_RIGHT_PEN}},
+                visible=function() return self.minimized end,
             },
         },
-        on_click=function() self.minimized = not self.minimized end,
     }
 
     local function make_is_selected_fn(idx)

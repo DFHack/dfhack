@@ -196,8 +196,9 @@ static void load_material_cache() {
 }
 
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
-    if (cur_heat_safety.count(key))
-        return cur_heat_safety.at(key);
+    // comment out until we can get heat safety working as intended
+    // if (cur_heat_safety.count(key))
+    //     return cur_heat_safety.at(key);
     return HEAT_SAFETY_ANY;
 }
 
@@ -486,7 +487,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
                 tasks[vector_id][bucket].emplace_back(id, rev_jitem_index);
                 DEBUG(status,out).print("added task: %s/%s/%d,%d; "
-                      "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
+                      "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket\n",
                       ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
                       bucket.c_str(), id, rev_jitem_index, tasks.size(),
                       tasks[vector_id].size(), tasks[vector_id][bucket].size());

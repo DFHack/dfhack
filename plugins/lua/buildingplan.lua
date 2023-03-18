@@ -114,9 +114,7 @@ end
 
 -- for use during development to reload all buildingplan modules
 function reload_modules()
-    -- ensure circular deps are refreshed
     reload('plugins.buildingplan.pens')
-    reload('plugins.buildingplan')
     reload('plugins.buildingplan.filterselection')
     reload('plugins.buildingplan.itemselection')
     reload('plugins.buildingplan.planneroverlay')

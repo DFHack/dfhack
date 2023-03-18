@@ -8,28 +8,72 @@ DFHack modding guide
 What is the difference between a script and a mod?
 --------------------------------------------------
 
-A script is a single file that can be run as a command in DFHack, like something
-that modifies or displays game data on request. A mod is something you install
-to get persistent behavioural changes in the game and/or add new content. Mods
-can contain and use scripts in addition to (or instead of) modifications to the
-DF game raws.
+Well, sometimes there is no difference. A mod is anything you add to the game,
+which can be graphics overrides, content in the raws, DFHack scripts, or both.
+There are already resources out there for
+`raws modding <https://dwarffortresswiki.org/index.php/Modding>`__, so this
+guide will focus more on scripts, both standalone and as an extension to
+raws-based mods. A DFHack script is a Lua file that can be run as a command in
+DFHack. Scripts can do pretty much anything, from displaying information to
+enforcing new game mechanics.
 
-DFHack scripts are written in Lua. If you don't already know Lua, there's a
-great primer at `lua.org <https://www.lua.org/pil/contents.html>`__.
+If you don't already know Lua, there's a great primer at
+`lua.org <https://www.lua.org/pil/contents.html>`__.
 
 Why not just mod the raws?
 --------------------------
 
 It depends on what you want to do. Some mods *are* better to do in just the
-raws. You don't need DFHack to add a new race or modify attributes, for example.
-However, DFHack scripts can do many things that you just can't do in the raws,
-like make a creature that trails smoke. Some things *could* be done in the raws,
-but writing a script is less hacky, easier to maintain, easier to extend, and is
+raws. You don't need DFHack to add a new race or modify attributes. However,
+DFHack scripts can do many things that you just can't do in the raws, like make
+a creature that trails smoke. Some things *could* be done in the raws, but
+writing a script is less hacky, easier to maintain, easier to extend, and is
 not prone to side-effects. A great example is adding a syndrome when a reaction
 is performed. If done in the raws, you have to create an exploding boulder to
 apply the syndrome. DFHack scripts can add the syndrome directly and with much
 more flexibility. In the end, complex mods will likely require a mix of raw
 modding and DFHack scripting.
+
+The structure of a mod
+----------------------
+
+For reference, `Tachy Guns <https://www.github.com/wolfboyft/tachy-guns>`__ is a
+full mod that conforms to this guide.
+
+Create a folder for mod projects somewhere outside your Dwarf Fortress
+installation directory (e.g. ``/path/to/mymods/``) and use your mod IDs as the
+names for the mod folders within it. In the example below, we'll use a mod ID of
+``example-mod``. I'm sure your mods will have more creative names! The
+``example-mod`` mod will be developed in the ``/path/to/mymods/example-mod/``
+directory and has a basic structure that looks like this::
+
+    init.d/example-mod.lua
+    raw/objects/...
+    raw/scripts/example-mod.lua
+    raw/scripts/example-mod/...
+    README.md
+
+Let's go through that line by line.
+
+* A short (one-line) script in ``init.d/`` to initialise your
+  mod when a save is loaded.
+* Modifications to the game raws (potentially with custom raw tokens) go in
+  ``raw/objects/``.
+* A control script in ``scripts/`` that handles enabling and disabling your
+  mod.
+* A subfolder for your mod under ``scripts/`` will contain all the internal
+  scripts and/or modules used by your mod.
+
+It is a good idea to use a version control system to organize changes to your
+mod code. You can create a separate Git repository for each of your mods. The
+``README.md`` file will be your mod help text when people browse to your online
+repository.
+
+Unless you want to install your ``raw/`` folder into your DF game folder every
+time you make a change to your scripts, you should add your development scripts
+directory to your script paths in ``dfhack-config/script-paths.txt``::
+
+    +/path/to/mymods/example-mod/scripts/
 
 A mod-maker's development environment
 -------------------------------------
@@ -54,7 +98,7 @@ Then that directory will be searched when you run DFHack commands from inside
 the game. The ``+`` at the front of the path means to search that directory
 first, before any other script directory (like :file:`hack/scripts` or
 :file:`raw/scripts`). That way, your latest changes will always be used instead
-of older copies that you may have installed in a DF directory.
+of older copies that you may have in mods installed in the DF directory.
 
 For scripts with the same name, the `order of precedence <script-paths>` will
 be:

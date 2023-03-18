@@ -603,10 +603,10 @@ function PlannerOverlay:onInput(keys)
         self.minimized = not self.minimized
         return true
     end
-    if self.minimized then return false end
     if PlannerOverlay.super.onInput(self, keys) then
         return true
     end
+    if self.minimized then return false end
     if keys._MOUSE_L_DOWN then
         if is_over_options_panel() then return false end
         local detect_rect = copyall(self.frame_rect)

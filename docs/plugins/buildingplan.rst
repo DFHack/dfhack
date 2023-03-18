@@ -47,9 +47,9 @@ to build the planned buildings as they are produced, with minimal space
 dedicated to stockpiles. The DFHack `orders` library can help with setting
 these manager workorders up for you.
 
-IF you don't want to use the ``buildingplan`` interface for the building you're
+If you don't want to use the ``buildingplan`` interface for the building you're
 currently trying to place, you can hit :kbd:`Alt`:kbd:`M` or click on the
-minimize toggle in the upper left corner of the panel. If you do not wish to
+minimize toggle in the upper right corner of the panel. If you do not wish to
 ever use the ``buildingplan`` interface, you can turn off the
 ``buildingplan.planner`` overlay in `gui/control-panel` (on the "Overlays"
 tab). Be sure to keep the ``buildingplan`` "System service" itself enabled in

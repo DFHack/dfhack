@@ -17,7 +17,7 @@ reveal
    :summary: Switch between reveal and unreveal.
 
 .. dfhack-command:: revflood
-   :summary: Hide everything, then reveal tiles with a path to the cursor.
+   :summary: Hide everything, then reveal tiles with a path to a unit.
 
 .. dfhack-command:: nopause
    :summary: Disable pausing.
@@ -44,9 +44,10 @@ Usage
     where (for example) you abandoned with the fort revealed and no longer need
     the saved map data when you load a new fort.
 ``revflood``
-    Hide everything, then reveal tiles with a path to the cursor. This allows
-    reparing maps that you accidentally saved while they were revealed. Note
-    that tiles behind constructed walls are also revealed as a workaround for
+    Hide everything, then reveal tiles with a path to the keyboard cursor (if
+    enabled) or the selected unit (if a unit is selected) or else a random citizen.
+    This allows reparing maps that you accidentally saved while they were revealed.
+    Note that tiles behind constructed walls are also revealed as a workaround for
     :bug:`1871`.
 ``nopause 1|0``
     Disables pausing (both manual and automatic) with the exception of the pause

@@ -142,4 +142,4 @@ enable \
 # Default Aliases #
 ###################
 
-alias gui/dig gui/design
+alias add gui/dig gui/design

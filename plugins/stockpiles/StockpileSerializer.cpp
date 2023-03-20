@@ -1642,8 +1642,8 @@ bool StockpileSerializer::write_food(StockpileSettings::FoodSet* food) {
         food_pair p = food_map((organic_mat_category)mat_category);
         if (!p.valid)
             continue;
-        DEBUG(log).print("food: %s\n", traits::key_table[mat_category]);
-        all = serialize_list_organic_mat(p.set_value, p.stockpile_values, (organic_mat_category)mat_category) && all;
+        all = serialize_list_organic_mat(p.set_value, p.stockpile_values,
+                (organic_mat_category)mat_category) && all;
     }
 
     return all;

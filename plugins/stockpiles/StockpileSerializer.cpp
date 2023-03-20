@@ -222,6 +222,34 @@ static typename df::enum_traits<E>::base_type linear_index(df::enum_traits<E> tr
     return -1;
 }
 
+static void set_elem(bool all, char val, bool enabled, bool& elem) {
+    if (all || enabled)
+        elem = val;
+}
+
+static bool matches_filter(const string& filter, const string& name) {
+    if (!filter.size())
+        return true;
+    return std::search(name.begin(), name.end(), filter.begin(), filter.end(),
+        [](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+    ) != name.end();
+}
+
+static void set_filter_elem(const string& filter, char val, const string& name, const string& id, char& elem) {
+    if (matches_filter(filter, name)) {
+        DEBUG(log).print("setting %s (%s) to %d\n", name.c_str(), id.c_str(), val);
+        elem = val;
+    }
+}
+
+template<typename T>
+static void set_filter_elem(const string& filter, char val, const string& name, T id, char& elem) {
+    if (matches_filter(filter, name)) {
+        DEBUG(log).print("setting %s (%d) to %d\n", name.c_str(), (int32_t)id, val);
+        elem = val;
+    }
+}
+
 /**
  * There are many repeated (un)serialization cases throughout the stockpile_settings structure,
  * so the most common cases have been generalized into generic functions using lambdas.
@@ -252,29 +280,35 @@ static bool serialize_list_itemdef(FuncWriteExport add_value,
         ItemTypeInfo ii;
         if (!ii.decode(type, i))
             continue;
+        DEBUG(log).print("adding itemdef type %s\n", ii.getToken().c_str());
         add_value(ii.getToken());
-        DEBUG(log).print("itemdef type %zd is %s\n", i, ii.getToken().c_str());
     }
     return all;
 }
 
-static void unserialize_list_itemdef(FuncReadImport read_value,
-        int32_t list_size,
-        std::vector<char>* pile_list,
-        item_type::item_type type) {
-    pile_list->clear();
-    pile_list->resize(Items::getSubtypeCount(type), '\0');
-    for (int i = 0; i < list_size; ++i) {
-        std::string token = read_value(i);
+static void unserialize_list_itemdef(bool all, char val, const string& filter, FuncReadImport read_value,
+        int32_t list_size, std::vector<char>& pile_list, item_type::item_type type) {
+    int num_elems = Items::getSubtypeCount(type);
+    pile_list.resize(num_elems, '\0');
+    if (all) {
+        for (auto idx = 0; idx < num_elems; ++idx) {
+            ItemTypeInfo ii;
+            ii.decode(type, idx);
+            set_filter_elem(filter, val, ii.toString(), idx, pile_list.at(idx));
+        }
+        return;
+    }
+
+    for (auto i = 0; i < list_size; ++i) {
+        string id = read_value(i);
         ItemTypeInfo ii;
-        if (!ii.find(token))
+        if (!ii.find(id))
             continue;
-        DEBUG(log).print("itemdef %d is %s\n", ii.subtype, token.c_str());
-        if (size_t(ii.subtype) >= pile_list->size()) {
-            WARN(log).print("itemdef index too large! idx[%d] max_size[%zd]\n", ii.subtype, pile_list->size());
+        if (ii.subtype < 0 || size_t(ii.subtype) >= pile_list.size()) {
+            WARN(log).print("item type index invalid: %d\n", ii.subtype);
             continue;
         }
-        pile_list->at(ii.subtype) = 1;
+        set_filter_elem(filter, val, id, ii.subtype, pile_list.at(ii.subtype));
     }
 }
 
@@ -291,7 +325,7 @@ static bool serialize_list_quality(FuncWriteExport add_value,
         }
         const std::string f_type(quality_traits::key_table[i]);
         add_value(f_type);
-        DEBUG(log).print("quality: %zd is %s\n", i, f_type.c_str());
+        DEBUG(log).print("adding quality %s\n", f_type.c_str());
     }
     return all;
 }
@@ -485,38 +519,44 @@ static bool serialize_list_material(FuncMaterialAllowed is_allowed,
         mi.decode(0, i);
         if (!is_allowed(mi))
             continue;
-        DEBUG(log).print("material %zd is %s\n", i, mi.getToken().c_str());
+        DEBUG(log).print("adding material %s\n", mi.getToken().c_str());
         add_value(mi.getToken());
     }
     return all;
 }
 
-static void unserialize_list_material(FuncMaterialAllowed is_allowed,
-        FuncReadImport read_value, int32_t list_size,
-        std::vector<char>* pile_list) {
-    //  we initialize all possible (allowed) values to 0,
-    //  then all other not-allowed values to 1
-    //  why? because that's how the memory is in DF before
-    //  we muck with it.
-    std::set<int32_t> idx_set;
-    pile_list->clear();
-    pile_list->resize(world->raws.inorganics.size(), 0);
-    for (size_t i = 0; i < pile_list->size(); ++i) {
+static void unserialize_list_material(bool all, char val, const string& filter,
+        FuncMaterialAllowed is_allowed, FuncReadImport read_value, int32_t list_size,
+        std::vector<char>& pile_list) {
+    // we initialize all disallowed values to 1
+    // why? because that's how the memory is in DF before we muck with it.
+    size_t num_elems = world->raws.inorganics.size();
+    pile_list.resize(num_elems, 0);
+    for (size_t i = 0; i < pile_list.size(); ++i) {
         MaterialInfo mi(0, i);
-        pile_list->at(i) = is_allowed(mi) ? 0 : 1;
-    }
-    for (int i = 0; i < list_size; ++i) {
-        const std::string token = read_value(i);
-        MaterialInfo mi;
-        mi.find(token);
         if (!is_allowed(mi))
+            pile_list.at(i) = 1;
+    }
+
+    if (all) {
+        for (auto idx = 0; idx < num_elems; ++idx) {
+            MaterialInfo mi;
+            mi.decode(0, idx);
+            set_filter_elem(filter, val, mi.toString(), idx, pile_list.at(idx));
+        }
+        return;
+    }
+
+    for (auto i = 0; i < list_size; ++i) {
+        string id = read_value(i);
+        MaterialInfo mi;
+        if (!mi.find(id) || !is_allowed(mi))
             continue;
-        DEBUG(log).print("material %d is %s\n", mi.index, token.c_str());
-        if (size_t(mi.index) >= pile_list->size()) {
-            WARN(log).print("material index too large! idx[%d] max_size[%zd]\n", mi.index, pile_list->size());
+        if (mi.index < 0 || size_t(mi.index) >= pile_list.size()) {
+            WARN(log).print("material type index invalid: %d\n", mi.index);
             continue;
         }
-        pile_list->at(mi.index) = 1;
+        set_filter_elem(filter, val, id, mi.index, pile_list.at(mi.index));
     }
 }
 
@@ -732,26 +772,6 @@ static void read_category(const char *name, DeserializeMode mode,
     set_fn(all, val);
 }
 
-static void set_elem(bool all, char val, bool enabled, bool& elem) {
-    if (all || enabled)
-        elem = val;
-}
-
-static bool matches_filter(const std::string& filter, const std::string& name) {
-    if (!filter.size())
-        return true;
-    return std::search(name.begin(), name.end(), filter.begin(), filter.end(),
-        [](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
-    ) != name.end();
-}
-
-static void set_filter_elem(const std::string& filter, char val, df::creature_raw* r, char& elem) {
-    if (matches_filter(filter, r->name[0])) {
-        DEBUG(log).print("setting %s (%s) to %d\n", r->name[0].c_str(), r->creature_id.c_str(), val);
-        elem = val;
-    }
-}
-
 void StockpileSerializer::read_containers(DeserializeMode mode) {
     read_elem<int16_t, int32_t>("max_bins", mode,
             std::bind(&StockpileSettings::has_max_bins, mBuffer),
@@ -847,18 +867,17 @@ void StockpileSerializer::read_ammo(DeserializeMode mode, const std::string& fil
                 quality_clear(pammo.quality_core);
                 quality_clear(pammo.quality_total);
             },
-            [&](bool force, char val) {
+            [&](bool all, char val) {
                 auto & bammo = mBuffer.ammo();
 
-                unserialize_list_itemdef(
+                unserialize_list_itemdef(all, val, filter,
                     [&](const size_t& idx) -> const std::string& { return bammo.type(idx); },
-                    bammo.type_size(), &pammo.type, item_type::AMMO);
+                    bammo.type_size(), pammo.type, item_type::AMMO);
 
-                unserialize_list_material(ammo_mat_is_allowed,
+                unserialize_list_material(all, val, filter, ammo_mat_is_allowed,
                     [&](const size_t& idx) -> const std::string& { return bammo.mats(idx); },
-                    bammo.mats_size(), &pammo.mats);
+                    bammo.mats_size(), pammo.mats);
 
-                pammo.other_mats.clear();
                 pammo.other_mats.resize(2, '\0');
                 if (bammo.other_mats_size() > 0) {
                     // TODO remove hardcoded value
@@ -922,8 +941,10 @@ void StockpileSerializer::read_animals(DeserializeMode mode, const std::string& 
                 size_t num_animals = world->raws.creatures.all.size();
                 panimals.enabled.resize(num_animals, '\0');
                 if (all) {
-                    for (auto idx = 0; idx < num_animals; ++idx)
-                        set_filter_elem(filter, val, find_creature(idx), panimals.enabled.at(idx));
+                    for (auto idx = 0; idx < num_animals; ++idx) {
+                        auto r = find_creature(idx);
+                        set_filter_elem(filter, val, r->name[0], r->creature_id, panimals.enabled.at(idx));
+                    }
                 } else {
                     for (auto i = 0; i < banimals.enabled_size(); ++i) {
                         const std::string& id = banimals.enabled(i);
@@ -932,7 +953,8 @@ void StockpileSerializer::read_animals(DeserializeMode mode, const std::string& 
                             WARN(log).print("animal index invalid: %d\n", idx);
                             continue;
                         }
-                        set_filter_elem(filter, val, find_creature(idx), panimals.enabled.at(idx));
+                        auto r = find_creature(idx);
+                        set_filter_elem(filter, val, r->name[0], r->creature_id, panimals.enabled.at(idx));
                     }
                 }
             });

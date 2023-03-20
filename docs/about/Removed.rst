@@ -193,7 +193,7 @@ warn-stuck-trees
 ================
 The corresponding DF :bug:`9252` was fixed in DF 0.44.01.
 
-.. gui/dig:
+.. _gui/dig:
 
 gui/dig
 =======

@@ -92,6 +92,12 @@ local function export_stockpile(name, opts)
         end
     end
 
+    if includedElements == 0 then
+        for _,v in pairs(included_elements) do
+            includedElements = includedElements | v
+        end
+    end
+
     stockpiles_export(name, get_sp_id(opts), includedElements)
 end
 
@@ -142,14 +148,14 @@ local function process_args(opts, args)
     opts.filter = ''
 
     return argparse.processArgsGetopt(args, {
-            {'f', 'filter', has_arg=true,
+            {'f', 'filter', hasArg=true,
             handler=function(arg) opts.filter = arg end},
             {'h', 'help', handler=function() opts.help = true end},
-            {'i', 'include', has_arg=true,
+            {'i', 'include', hasArg=true,
              handler=function(arg) opts.includes = parse_include(arg) end},
-            {'m', 'mode', has_arg=true,
+            {'m', 'mode', hasArg=true,
              handler=function(arg) opts.mode = parse_mode(arg) end},
-            {'s', 'stockpile', has_arg=true,
+            {'s', 'stockpile', hasArg=true,
              handler=function(arg) opts.id = argparse.nonnegativeInt(arg, 'stockpile') end},
         })
 end

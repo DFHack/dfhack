@@ -10,6 +10,7 @@
 
 //  df
 #include "df/building_stockpilest.h"
+#include "df/creature_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/item_quality.h"
 #include <df/itemdef_ammost.h>
@@ -520,7 +521,7 @@ static void unserialize_list_material(FuncMaterialAllowed is_allowed,
 }
 
 template<typename T_cat_set>
-static void write_cat(bool include_types, uint32_t cat_flags,
+static void write_cat(const char *name, bool include_types, uint32_t cat_flags,
         enum df::stockpile_group_set::Mask cat_mask,
         std::function<T_cat_set*()> mutable_cat_fn,
         std::function<bool(T_cat_set*)> write_cat_fn) {
@@ -528,13 +529,17 @@ static void write_cat(bool include_types, uint32_t cat_flags,
         return;
 
     T_cat_set* cat_set = mutable_cat_fn();
+
     if (!include_types) {
+        DEBUG(log).print("including all for %s since only category is being recorded\n", name);
         cat_set->set_all(true);
         return;
     }
 
     if (write_cat_fn(cat_set)) {
-        // all fields were set. might as well clear them and use the "all" flag
+        // all fields were set. clear them and use the "all" flag instead so "all" can be applied
+        // to other worlds with other generated types
+        DEBUG(log).print("including all for %s since all fields were enabled\n", name);
         cat_set->Clear();
         cat_set->set_all(true);
     }
@@ -554,90 +559,90 @@ void StockpileSerializer::write(uint32_t includedElements) {
 
     bool include_types = 0 != (includedElements & INCLUDED_ELEMENTS_TYPES);
 
-    write_cat<StockpileSettings_AmmoSet>(include_types,
+    write_cat<StockpileSettings_AmmoSet>("ammo", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_ammo,
-        std::bind(&StockpileSettings::mutable_ammo, mBuffer),
+        std::bind(&StockpileSettings::mutable_ammo, &mBuffer),
         std::bind(&StockpileSerializer::write_ammo, this, _1));
-    write_cat<StockpileSettings_AnimalsSet>(include_types,
+    write_cat<StockpileSettings_AnimalsSet>("animals", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_animals,
-        std::bind(&StockpileSettings::mutable_animals, mBuffer),
+        std::bind(&StockpileSettings::mutable_animals, &mBuffer),
         std::bind(&StockpileSerializer::write_animals, this, _1));
-    write_cat<StockpileSettings_ArmorSet>(include_types,
+    write_cat<StockpileSettings_ArmorSet>("armor", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_armor,
-        std::bind(&StockpileSettings::mutable_armor, mBuffer),
+        std::bind(&StockpileSettings::mutable_armor, &mBuffer),
         std::bind(&StockpileSerializer::write_armor, this, _1));
-    write_cat<StockpileSettings_BarsBlocksSet>(include_types,
+    write_cat<StockpileSettings_BarsBlocksSet>("bars_blocks", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_bars_blocks,
-        std::bind(&StockpileSettings::mutable_barsblocks, mBuffer),
+        std::bind(&StockpileSettings::mutable_barsblocks, &mBuffer),
         std::bind(&StockpileSerializer::write_bars_blocks, this, _1));
-    write_cat<StockpileSettings_ClothSet>(include_types,
+    write_cat<StockpileSettings_ClothSet>("cloth", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_cloth,
-        std::bind(&StockpileSettings::mutable_cloth, mBuffer),
+        std::bind(&StockpileSettings::mutable_cloth, &mBuffer),
         std::bind(&StockpileSerializer::write_cloth, this, _1));
-    write_cat<StockpileSettings_CoinSet>(include_types,
+    write_cat<StockpileSettings_CoinSet>("coin", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_coins,
-        std::bind(&StockpileSettings::mutable_coin, mBuffer),
+        std::bind(&StockpileSettings::mutable_coin, &mBuffer),
         std::bind(&StockpileSerializer::write_coins, this, _1));
-    write_cat<StockpileSettings_FinishedGoodsSet>(include_types,
+    write_cat<StockpileSettings_FinishedGoodsSet>("finished_goods", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_finished_goods,
-        std::bind(&StockpileSettings::mutable_finished_goods, mBuffer),
+        std::bind(&StockpileSettings::mutable_finished_goods, &mBuffer),
         std::bind(&StockpileSerializer::write_finished_goods, this, _1));
-    write_cat<StockpileSettings_FoodSet>(include_types,
+    write_cat<StockpileSettings_FoodSet>("food", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_food,
-        std::bind(&StockpileSettings::mutable_food, mBuffer),
+        std::bind(&StockpileSettings::mutable_food, &mBuffer),
         std::bind(&StockpileSerializer::write_food, this, _1));
-    write_cat<StockpileSettings_FurnitureSet>(include_types,
+    write_cat<StockpileSettings_FurnitureSet>("furniture", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_furniture,
-        std::bind(&StockpileSettings::mutable_furniture, mBuffer),
+        std::bind(&StockpileSettings::mutable_furniture, &mBuffer),
         std::bind(&StockpileSerializer::write_furniture, this, _1));
-    write_cat<StockpileSettings_GemsSet>(include_types,
+    write_cat<StockpileSettings_GemsSet>("gems", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_gems,
-        std::bind(&StockpileSettings::mutable_gems, mBuffer),
+        std::bind(&StockpileSettings::mutable_gems, &mBuffer),
         std::bind(&StockpileSerializer::write_gems, this, _1));
-    write_cat<StockpileSettings_LeatherSet>(include_types,
+    write_cat<StockpileSettings_LeatherSet>("leather", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_leather,
-        std::bind(&StockpileSettings::mutable_leather, mBuffer),
+        std::bind(&StockpileSettings::mutable_leather, &mBuffer),
         std::bind(&StockpileSerializer::write_leather, this, _1));
-    write_cat<StockpileSettings_CorpsesSet>(include_types,
+    write_cat<StockpileSettings_CorpsesSet>("corpses", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_corpses,
-        std::bind(&StockpileSettings::mutable_corpses_v50, mBuffer),
+        std::bind(&StockpileSettings::mutable_corpses_v50, &mBuffer),
         std::bind(&StockpileSerializer::write_corpses, this, _1));
-    write_cat<StockpileSettings_RefuseSet>(include_types,
+    write_cat<StockpileSettings_RefuseSet>("refuse", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_refuse,
-        std::bind(&StockpileSettings::mutable_refuse, mBuffer),
+        std::bind(&StockpileSettings::mutable_refuse, &mBuffer),
         std::bind(&StockpileSerializer::write_refuse, this, _1));
-    write_cat<StockpileSettings_SheetSet>(include_types,
+    write_cat<StockpileSettings_SheetSet>("sheet", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_sheet,
-        std::bind(&StockpileSettings::mutable_sheet, mBuffer),
+        std::bind(&StockpileSettings::mutable_sheet, &mBuffer),
         std::bind(&StockpileSerializer::write_sheet, this, _1));
-    write_cat<StockpileSettings_StoneSet>(include_types,
+    write_cat<StockpileSettings_StoneSet>("stone", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_stone,
-        std::bind(&StockpileSettings::mutable_stone, mBuffer),
+        std::bind(&StockpileSettings::mutable_stone, &mBuffer),
         std::bind(&StockpileSerializer::write_stone, this, _1));
-    write_cat<StockpileSettings_WeaponsSet>(include_types,
+    write_cat<StockpileSettings_WeaponsSet>("weapons", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_weapons,
-        std::bind(&StockpileSettings::mutable_weapons, mBuffer),
+        std::bind(&StockpileSettings::mutable_weapons, &mBuffer),
         std::bind(&StockpileSerializer::write_weapons, this, _1));
-    write_cat<StockpileSettings_WoodSet>(include_types,
+    write_cat<StockpileSettings_WoodSet>("wood", include_types,
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_wood,
-        std::bind(&StockpileSettings::mutable_wood, mBuffer),
+        std::bind(&StockpileSettings::mutable_wood, &mBuffer),
         std::bind(&StockpileSerializer::write_wood, this, _1));
 }
 
@@ -672,6 +677,7 @@ void StockpileSerializer::read(DeserializeMode mode, const std::string& filter) 
 }
 
 void StockpileSerializer::write_containers() {
+    DEBUG(log).print("writing container settings\n");
     mBuffer.set_max_bins(mPile->max_bins);
     mBuffer.set_max_barrels(mPile->max_barrels);
     mBuffer.set_max_wheelbarrows(mPile->max_wheelbarrows);
@@ -682,18 +688,10 @@ static void read_elem(const char *name, DeserializeMode mode,
         std::function<bool()> has_elem_fn,
         std::function<T_elem_ret()> elem_fn,
         T_elem &setting) {
-    bool has_elem = has_elem_fn();
-    bool is_set = has_elem && elem_fn() != 0;
-    bool just_disable = is_set && mode == DESERIALIZE_MODE_DISABLE;
-
-    if (mode == DESERIALIZE_MODE_SET || just_disable) {
-        DEBUG(log).print("clearing %s\n", name);
-        setting = 0;
-    }
-
-    if (!has_elem || just_disable)
+    if (!has_elem_fn())
         return;
 
+    bool is_set = elem_fn() != 0;
     if (mode == DESERIALIZE_MODE_SET || is_set) {
         T_elem val = (mode == DESERIALIZE_MODE_DISABLE) ? 0 : elem_fn();
         DEBUG(log).print("setting %s=%d\n", name, val);
@@ -728,11 +726,30 @@ static void read_category(const char *name, DeserializeMode mode,
     if (mode == DESERIALIZE_MODE_SET || mode == DESERIALIZE_MODE_ENABLE)
         cat_flags |= cat_mask;
 
-    bool force = mode == DESERIALIZE_MODE_SET || all;
     char val = (mode == DESERIALIZE_MODE_DISABLE) ? (char)0 : (char)1;
     DEBUG(log).print("setting %s %s elements to %d\n",
             all ? "all" : "marked", name, val);
-    set_fn(force, val);
+    set_fn(all, val);
+}
+
+static void set_elem(bool all, char val, bool enabled, bool& elem) {
+    if (all || enabled)
+        elem = val;
+}
+
+static bool matches_filter(const std::string& filter, const std::string& name) {
+    if (!filter.size())
+        return true;
+    return std::search(name.begin(), name.end(), filter.begin(), filter.end(),
+        [](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+    ) != name.end();
+}
+
+static void set_filter_elem(const std::string& filter, char val, df::creature_raw* r, char& elem) {
+    if (matches_filter(filter, r->name[0])) {
+        DEBUG(log).print("setting %s (%s) to %d\n", r->name[0].c_str(), r->creature_id.c_str(), val);
+        elem = val;
+    }
 }
 
 void StockpileSerializer::read_containers(DeserializeMode mode) {
@@ -751,6 +768,7 @@ void StockpileSerializer::read_containers(DeserializeMode mode) {
 }
 
 void StockpileSerializer::write_general() {
+    DEBUG(log).print("writing general settings\n");
     mBuffer.set_use_links_only(mPile->use_links_only);
     mBuffer.set_allow_inorganic(mPile->settings.allow_inorganic);
     mBuffer.set_allow_organic(mPile->settings.allow_organic);
@@ -776,22 +794,17 @@ static bool ammo_mat_is_allowed(const MaterialInfo& mi) {
 }
 
 bool StockpileSerializer::write_ammo(StockpileSettings::AmmoSet* ammo) {
-    bool all = true;
-
-    //  ammo type
-    all = serialize_list_itemdef(
+    bool all = serialize_list_itemdef(
         [=](const std::string& token) { ammo->add_type(token); },
         mPile->settings.ammo.type,
         std::vector<df::itemdef*>(world->raws.itemdefs.ammo.begin(), world->raws.itemdefs.ammo.end()),
-        item_type::AMMO) && all;
+        item_type::AMMO);
 
-    // metal
     all = serialize_list_material(
         ammo_mat_is_allowed,
         [=](const std::string& token) { ammo->add_mats(token); },
         mPile->settings.ammo.mats) && all;
 
-    // other mats - only wood and bone are expected
     if (mPile->settings.ammo.other_mats.size() > 2) {
         WARN(log).print("ammo other materials > 2: %zd\n",
                 mPile->settings.ammo.other_mats.size());
@@ -809,12 +822,10 @@ bool StockpileSerializer::write_ammo(StockpileSettings::AmmoSet* ammo) {
         DEBUG(log).print("other mats %zd is %s\n", i, token.c_str());
     }
 
-    // quality core
     all = serialize_list_quality(
         [=](const std::string& token) { ammo->add_quality_core(token); },
         mPile->settings.ammo.quality_core) && all;
 
-    // quality total
     all = serialize_list_quality(
         [=](const std::string& token) { ammo->add_quality_total(token); },
         mPile->settings.ammo.quality_total) && all;
@@ -823,13 +834,13 @@ bool StockpileSerializer::write_ammo(StockpileSettings::AmmoSet* ammo) {
 }
 
 void StockpileSerializer::read_ammo(DeserializeMode mode, const std::string& filter) {
+        auto & pammo = mPile->settings.ammo;
         read_category<StockpileSettings_AmmoSet>("ammo", mode,
             std::bind(&StockpileSettings::has_ammo, mBuffer),
             std::bind(&StockpileSettings::ammo, mBuffer),
             mPile->settings.flags.whole,
             mPile->settings.flags.mask_ammo,
             [&]() {
-                auto & pammo = mPile->settings.ammo;
                 pammo.type.clear();
                 pammo.mats.clear();
                 pammo.other_mats.clear();
@@ -838,18 +849,15 @@ void StockpileSerializer::read_ammo(DeserializeMode mode, const std::string& fil
             },
             [&](bool force, char val) {
                 auto & bammo = mBuffer.ammo();
-                auto & pammo = mPile->settings.ammo;
-                //  ammo type
+
                 unserialize_list_itemdef(
-                    [=](const size_t& idx) -> const std::string& { return bammo.type(idx); },
+                    [&](const size_t& idx) -> const std::string& { return bammo.type(idx); },
                     bammo.type_size(), &pammo.type, item_type::AMMO);
 
-                //  materials metals
                 unserialize_list_material(ammo_mat_is_allowed,
-                    [=](const size_t& idx) -> const std::string& { return bammo.mats(idx); },
+                    [&](const size_t& idx) -> const std::string& { return bammo.mats(idx); },
                     bammo.mats_size(), &pammo.mats);
 
-                //  others
                 pammo.other_mats.clear();
                 pammo.other_mats.resize(2, '\0');
                 if (bammo.other_mats_size() > 0) {
@@ -859,16 +867,15 @@ void StockpileSerializer::read_ammo(DeserializeMode mode, const std::string& fil
                         const int32_t idx = token == "WOOD" ? 0 : token == "BONE" ? 1
                             : -1;
                         DEBUG(log).print("other mats %d is %s\n", idx, token.c_str());
-                        if (idx != -1)
-                            pammo.other_mats.at(idx) = 1;
+                        if (idx == -1)
+                            continue;
+                        pammo.other_mats.at(idx) = 1;
                     }
                 }
 
-                // core quality
                 unserialize_list_quality([=](const size_t& idx) -> const std::string& { return bammo.quality_core(idx); },
                     bammo.quality_core_size(), pammo.quality_core);
 
-                // total quality
                 unserialize_list_quality([=](const size_t& idx) -> const std::string& { return bammo.quality_total(idx); },
                     bammo.quality_total_size(), pammo.quality_total);
             });
@@ -886,43 +893,47 @@ bool StockpileSerializer::write_animals(StockpileSettings::AnimalsSet* animals) 
             continue;
         }
         df::creature_raw* r = find_creature(i);
-        DEBUG(log).print("creature %s %zd\n", r->creature_id.c_str(), i);
+        if (r->flags.is_set(creature_raw_flags::GENERATED)
+                || r->creature_id == "EQUIPMENT_WAGON")
+            continue;
+        DEBUG(log).print("saving creature %s\n", r->creature_id.c_str());
         animals->add_enabled(r->creature_id);
     }
     return all;
 }
 
 void StockpileSerializer::read_animals(DeserializeMode mode, const std::string& filter) {
+    auto & panimals = mPile->settings.animals;
     read_category<StockpileSettings_AnimalsSet>("animals", mode,
             std::bind(&StockpileSettings::has_animals, mBuffer),
             std::bind(&StockpileSettings::animals, mBuffer),
             mPile->settings.flags.whole,
             mPile->settings.flags.mask_animals,
             [&]() {
-                auto & panimals = mPile->settings.animals;
                 panimals.empty_cages = false;
                 panimals.empty_traps = false;
                 panimals.enabled.clear();
             },
-            [&](bool force, char val) {
+            [&](bool all, char val) {
                 auto & banimals = mBuffer.animals();
-                auto & panimals = mPile->settings.animals;
-                if (force || banimals.empty_cages())
-                    panimals.empty_cages = banimals.empty_cages() && val;
-                if (force || banimals.empty_traps())
-                    panimals.empty_traps = banimals.empty_traps() && val;
+                set_elem(all, val, banimals.empty_cages(), panimals.empty_cages);
+                set_elem(all, val, banimals.empty_traps(), panimals.empty_traps);
 
-                panimals.enabled.resize(world->raws.creatures.all.size(), '\0');
-                for (auto i = 0; i < banimals.enabled_size(); ++i) {
-                    const std::string& id = banimals.enabled(i);
-                    int idx = find_creature(id);
-                    DEBUG(log).print("%s %d\n", id.c_str(), idx);
-                    if (idx < 0 || size_t(idx) >= panimals.enabled.size()) {
-                        WARN(log).print("animal index invalid: %d\n", idx);
-                        continue;
+                size_t num_animals = world->raws.creatures.all.size();
+                panimals.enabled.resize(num_animals, '\0');
+                if (all) {
+                    for (auto idx = 0; idx < num_animals; ++idx)
+                        set_filter_elem(filter, val, find_creature(idx), panimals.enabled.at(idx));
+                } else {
+                    for (auto i = 0; i < banimals.enabled_size(); ++i) {
+                        const std::string& id = banimals.enabled(i);
+                        int idx = find_creature(id);
+                        if (idx < 0 || size_t(idx) >= num_animals) {
+                            WARN(log).print("animal index invalid: %d\n", idx);
+                            continue;
+                        }
+                        set_filter_elem(filter, val, find_creature(idx), panimals.enabled.at(idx));
                     }
-                    if (!filter.size() || id.find(filter) != id.npos)
-                        panimals.enabled.at(idx) = val;
                 }
             });
 }

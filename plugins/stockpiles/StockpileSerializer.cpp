@@ -1705,6 +1705,7 @@ bool StockpileSerializer::write_furniture(StockpileSettings::FurnitureSet* furni
         furniture->add_type(f_type);
         DEBUG(log).print("furniture_type %zd is %s\n", i, f_type.c_str());
     }
+
     all = serialize_list_material(
         furniture_mat_is_allowed,
         [&](const std::string& token) { furniture->add_mats(token); },

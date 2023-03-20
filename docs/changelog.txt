@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `prospector`: prospector tool in fort mode is now available. embark prospect is not yet available and is disabled at this time.
 
 ## Fixes
 

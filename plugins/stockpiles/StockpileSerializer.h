@@ -96,94 +96,44 @@ private:
     // parse serialized data into ui indices
     void read(DeserializeMode mode, const std::string& filter);
 
-    /**
-     * Given a list of other_materials and an index, return its corresponding token
-     * @return empty string if not found
-     * @see other_mats_token
-     */
-    std::string other_mats_index(const std::map<int, std::string> other_mats, int idx);
-
-    /**
-     * Given a list of other_materials and a token, return its corresponding index
-     * @return -1 if not found
-     * @see other_mats_index
-     */
-    int other_mats_token(const std::map<int, std::string> other_mats, const std::string& token);
-
     void write_containers();
     void read_containers(DeserializeMode mode);
     void write_general();
     void read_general(DeserializeMode mode);
 
-    void write_animals(dfstockpiles::StockpileSettings::AnimalsSet* animals);
-    void read_animals(DeserializeMode mode, const std::string& filter);
-
-    food_pair food_map(df::enums::organic_mat_category::organic_mat_category cat);
-
-    void write_food(dfstockpiles::StockpileSettings::FoodSet* food);
-    void read_food(DeserializeMode mode, const std::string& filter);
-
-    void write_furniture(dfstockpiles::StockpileSettings::FurnitureSet* furniture);
-    bool furniture_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void read_furniture(DeserializeMode mode, const std::string& filter);
-
-    bool refuse_creature_is_allowed(const df::creature_raw* raw);
-
-    void refuse_write_helper(std::function<void(const std::string&)> add_value, const std::vector<char>& list);
-
-    bool refuse_type_is_allowed(df::enums::item_type::item_type type);
-
-    void write_refuse(dfstockpiles::StockpileSettings::RefuseSet* refuse);
-    void refuse_read_helper(std::function<std::string(const size_t&)> get_value, size_t list_size, std::vector<char>* pile_list);
-
-    void read_refuse(DeserializeMode mode, const std::string& filter);
-
-    bool stone_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_stone(dfstockpiles::StockpileSettings::StoneSet* stone);
-
-    void read_stone(DeserializeMode mode, const std::string& filter);
-
     bool write_ammo(dfstockpiles::StockpileSettings::AmmoSet* ammo);
     void read_ammo(DeserializeMode mode, const std::string& filter);
-    bool coins_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_coins(dfstockpiles::StockpileSettings::CoinSet* coins);
-
-    void read_coins(DeserializeMode mode, const std::string& filter);
-    bool bars_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    bool blocks_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_bars_blocks(dfstockpiles::StockpileSettings::BarsBlocksSet* bars_blocks);
-    void read_bars_blocks(DeserializeMode mode, const std::string& filter);
-    bool gem_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    bool gem_cut_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    bool gem_other_mat_is_allowed(DFHack::MaterialInfo& mi);
-
-    void write_gems(dfstockpiles::StockpileSettings::GemsSet* gems);
-
-    void read_gems(DeserializeMode mode, const std::string& filter);
-
-    bool finished_goods_type_is_allowed(df::enums::item_type::item_type type);
-    bool finished_goods_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_finished_goods(dfstockpiles::StockpileSettings::FinishedGoodsSet* finished_goods);
-    void read_finished_goods(DeserializeMode mode, const std::string& filter);
-    void write_leather(dfstockpiles::StockpileSettings::LeatherSet* leather);
-    void read_leather(DeserializeMode mode, const std::string& filter);
-    void write_cloth(dfstockpiles::StockpileSettings::ClothSet* cloth);
-    void read_cloth(DeserializeMode mode, const std::string& filter);
-    bool wood_mat_is_allowed(const df::plant_raw* plant);
-    void write_wood(dfstockpiles::StockpileSettings::WoodSet* wood);
-    void read_wood(DeserializeMode mode, const std::string& filter);
-    bool weapons_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_weapons(dfstockpiles::StockpileSettings::WeaponsSet* weapons);
-    void read_weapons(DeserializeMode mode, const std::string& filter);
-    bool armor_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_armor(dfstockpiles::StockpileSettings::ArmorSet* armor);
+    bool write_animals(dfstockpiles::StockpileSettings::AnimalsSet* animals);
+    void read_animals(DeserializeMode mode, const std::string& filter);
+    bool write_armor(dfstockpiles::StockpileSettings::ArmorSet* armor);
     void read_armor(DeserializeMode mode, const std::string& filter);
-    void write_corpses(dfstockpiles::StockpileSettings::CorpsesSet* corpses);
+    bool write_bars_blocks(dfstockpiles::StockpileSettings::BarsBlocksSet* bars_blocks);
+    void read_bars_blocks(DeserializeMode mode, const std::string& filter);
+    bool write_cloth(dfstockpiles::StockpileSettings::ClothSet* cloth);
+    void read_cloth(DeserializeMode mode, const std::string& filter);
+    bool write_coins(dfstockpiles::StockpileSettings::CoinSet* coins);
+    void read_coins(DeserializeMode mode, const std::string& filter);
+    bool write_finished_goods(dfstockpiles::StockpileSettings::FinishedGoodsSet* finished_goods);
+    void read_finished_goods(DeserializeMode mode, const std::string& filter);
+    food_pair food_map(df::enums::organic_mat_category::organic_mat_category cat);
+    bool write_food(dfstockpiles::StockpileSettings::FoodSet* food);
+    void read_food(DeserializeMode mode, const std::string& filter);
+    bool write_furniture(dfstockpiles::StockpileSettings::FurnitureSet* furniture);
+    void read_furniture(DeserializeMode mode, const std::string& filter);
+    bool write_gems(dfstockpiles::StockpileSettings::GemsSet* gems);
+    void read_gems(DeserializeMode mode, const std::string& filter);
+    bool write_leather(dfstockpiles::StockpileSettings::LeatherSet* leather);
+    void read_leather(DeserializeMode mode, const std::string& filter);
+    bool write_corpses(dfstockpiles::StockpileSettings::CorpsesSet* corpses);
     void read_corpses(DeserializeMode mode, const std::string& filter);
-    void write_sheet(dfstockpiles::StockpileSettings::SheetSet* sheet);
+    bool write_refuse(dfstockpiles::StockpileSettings::RefuseSet* refuse);
+    void read_refuse(DeserializeMode mode, const std::string& filter);
+    bool write_sheet(dfstockpiles::StockpileSettings::SheetSet* sheet);
     void read_sheet(DeserializeMode mode, const std::string& filter);
+    bool write_stone(dfstockpiles::StockpileSettings::StoneSet* stone);
+    void read_stone(DeserializeMode mode, const std::string& filter);
+    bool write_weapons(dfstockpiles::StockpileSettings::WeaponsSet* weapons);
+    void read_weapons(DeserializeMode mode, const std::string& filter);
+    bool write_wood(dfstockpiles::StockpileSettings::WoodSet* wood);
+    void read_wood(DeserializeMode mode, const std::string& filter);
 };

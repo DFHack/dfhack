@@ -146,6 +146,12 @@ This script is no longer useful in current DF versions. The script required a
 binpatch <binpatches/needs-patch>`, which has not been available since DF
 0.34.11.
 
+.. _gui/dig:
+
+gui/dig
+=======
+Renamed to gui/design
+
 .. _gui/hack-wish:
 
 gui/hack-wish

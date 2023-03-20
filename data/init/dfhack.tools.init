@@ -137,3 +137,9 @@ enable \
 
 # a replacement for the "load game" screen
 #gui/load-screen enable
+
+###################
+# Default Aliases #
+###################
+
+alias add gui/dig gui/design

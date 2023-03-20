@@ -1866,9 +1866,13 @@ void StockpileSerializer::read_gems(DeserializeMode mode, const std::string& fil
             if (all) {
                 for (size_t idx = 0; idx < builtin_size; ++idx) {
                     MaterialInfo mi;
-                    mi.decode(0, idx);
-                    set_filter_elem(filter, val, mi.toString(), idx, pgems.rough_other_mats.at(idx));
-                    set_filter_elem(filter, val, mi.toString(), idx, pgems.cut_other_mats.at(idx));
+                    mi.decode(idx, -1);
+                    if (gem_other_mat_is_allowed(mi))
+                        set_filter_elem(filter, val, mi.getToken(), idx, pgems.rough_other_mats.at(idx));
+                    if (!mi.isValid())
+                        mi.decode(0, idx);
+                    if (gem_other_mat_is_allowed(mi))
+                        set_filter_elem(filter, val, mi.getToken(), idx, pgems.cut_other_mats.at(idx));
                 }
                 return;
             } else {

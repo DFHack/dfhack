@@ -148,9 +148,12 @@ message StockpileSettings {
   }
   message CorpsesSet {
       optional bool all = 1;
+      repeated string corpses = 2;
   }
   message SheetSet {
       optional bool all = 1;
+      repeated string paper = 2;
+      repeated string parchment = 3;
   }
 
   // general settings

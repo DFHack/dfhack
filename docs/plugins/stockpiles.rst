@@ -270,7 +270,7 @@ Settings files::
 Notes:
 
 * ``thread`` and ``cloth`` settings files set all materials that are not
-adamantine.
+    adamantine.
 
 Finished goods stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1090,6 +1090,8 @@ void StockpileSerializer::read_armor(DeserializeMode mode, const vector<string>&
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_armor,
         [&]() {
+            parmor.unusable = false;
+            parmor.usable = false;
             parmor.body.clear();
             parmor.head.clear();
             parmor.feet.clear();
@@ -2158,6 +2160,8 @@ void StockpileSerializer::read_weapons(DeserializeMode mode, const vector<string
         mPile->settings.flags.whole,
         mPile->settings.flags.mask_weapons,
         [&]() {
+            pweapons.unusable = false;
+            pweapons.usable = false;
             pweapons.weapon_type.clear();
             pweapons.trapcomp_type.clear();
             pweapons.other_mats.clear();

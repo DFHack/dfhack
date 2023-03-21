@@ -275,113 +275,204 @@ adamantine.
 Finished goods stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-stonetools
-woodtools
-crafts
-goblets
-toys
-masterworkfinishedgoods
-artifactfinishedgoods
+Subcategory prefixes::
+
+    type/
+    mats/
+    other/
+    core/
+    total/
+
+Settings files::
+
+    stonetools
+    woodtools
+    crafts
+    goblets
+    toys
+
+Example commands for a toy stockpile::
+
+    stockpiles import cat_furniture -f mats/,other/,core/,total/
+    stockpiles import -m enable toys
 
 Food stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-preparedmeals
-unpreparedfish
-plants
-booze
-seeds
-dye
-miscliquid
-wax
+Flags and subcategory prefixes::
+
+    preparedmeals
+    meat/
+    fish/prepared/
+    fish/unprepared/
+    egg/
+    plants/
+    drink/plant/
+    drink/animal/
+    cheese/plant/
+    cheese/animal/
+    seeds/
+    leaves/
+    powder/plant/
+    powder/animal/
+    glob/
+    liquid/plant/
+    liquid/animal/
+    liquid/misc/
+    paste/
+    pressed/
+
+Settings files::
+
+    preparedmeals
+    unpreparedfish
+    plants
+    booze
+    seeds
+    dye
+    miscliquid
+    wax
+
+Example commands for a kitchen ingredients stockpile::
+
+    stockpiles import cat_food -f meat/,fish/prepared/,egg/,cheese/,leaves/,powder/,glob/,liquid/plant/,paste/,pressed/
+    stockpiles import cat_food -m enable -f milk,royal_jelly
+    stockpiles import dye -m disable
+    stockpiles import cat_food -m disable -f tallow,thread,liquid/misc/
 
 Furniture stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pots
-bags
-buckets
-sand
-masterworkfurniture
-artifactfurniture
+Subcategory prefixes::
+
+    type/
+    mats/
+    other/
+    core/
+    total/
+
+Settings files::
+
+    pots
+    bags
+    buckets
+    sand
 
 * Because of the limitations of Dwarf Fortress, ``bags`` cannot distinguish
   between empty bags and bags filled with gypsum powder.
 
+Example commands for a sand bag stockpile::
+
+    stockpiles import cat_furniture
+    stockpiles import cat_furniture -m disable -f type/
+    stockpiles import sand -m enable
+
 Gem stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-roughgems
-roughglass
-cutgems
-cutglass
-cutstone
+Subcategory prefixes::
+
+    mats/rough/
+    mats/cut/
+    other/rough/
+    other/cut/
+
+Settings files::
+
+    roughgems
+    roughglass
+    cutgems
+    cutglass
+    cutstone
 
 Refuse stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-===========  ==================  ==================
-Exclusive    Forbid              Permit
-===========  ==================  ==================
-corpses      forbidcorpses       permitcorpses
-skulls       forbidskulls        permitskulls
-bones        forbidbones         permitbones
-shells       forbidshells        permitshells
-teeth        forbidteeth         permitteeth
-horns        forbidhorns         permithorns
-hair         forbidhair          permithair
-craftrefuse  forbidcraftrefuse   permitcraftrefuse
-===========  ==================  ==================
+Flags and subcategory prefixes::
+
+    rawhide/fresh
+    rawhide/rotten
+    type/
+    corpses/
+    bodyparts/
+    skulls/
+    bones/
+    hair/
+    shells/
+    teeth/
+    horns/
+
+Settings files::
+
+    rawhides
+    tannedhides
+    usablehair
 
 Notes:
 
 * ``usablehair`` Only hair and wool that can make usable clothing is included,
   i.e. from sheep, llamas, alpacas, and trolls.
-* ``craftrefuse`` includes everything a craftsdwarf or tailor can use: skulls,
-  bones, shells, teeth, horns, and "usable" hair/wool (defined above).
 
-rawhides
-tannedhides
-usablehair
+Example commands for a craftable refuse stockpile::
 
-You can get a stockpile of usable refuse with the following set of commands::
-
-    stockpiles import cat_refuse -m enable -f skulls
-    stockpiles import cat_refuse -m enable -f bones
-    stockpiles import cat_refuse -m enable -f shells
-    stockpiles import cat_refuse -m enable -f teeth
-    stockpiles import cat_refuse -m enable -f horns
+    stockpiles import cat_refuse -f skulls/,bones/,shells',teeth/,horns/
     stockpiles import usablehair -m enable
+
+Sheet stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Subcategory prefixes::
+
+    paper/
+    parchment/
 
 Stone stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-metalore
-ironore
-economic
-flux
-plasterproducing
-coalproducing
-otherstone
-bauxite
-clay
+Settings files::
+
+    metalore
+    ironore
+    economic
+    flux
+    plasterproducing
+    coalproducing
+    otherstone
+    bauxite
+    clay
 
 Weapon stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-weapons
-metalweapons
-stoneweapons
-otherweapons
-trapcomponents
-ironweapons
-silverweapons
-bronzeweapons
-copperweapons
-steelweapons
-platinumweapons
-adamantineweapons
-masterworkweapons
-artifactweapons
-usableweapons
-unusableweapons
+Flags and subcategory prefixes::
+
+    nouse
+    canuse
+    type/weapon/
+    type/trapcomp/
+    mats/
+    other/
+    core/
+    total/
+
+Settings files::
+
+    metalweapons
+    stoneweapons
+    otherweapons
+    trapcomponents
+    ironweapons
+    silverweapons
+    bronzeweapons
+    copperweapons
+    steelweapons
+    platinumweapons
+    adamantineweapons
+    usableweapons
+    unusableweapons
+
+Example commands for a non-metallic trap components stockpile::
+
+    stockpiles import cat_weapons
+    stockpiles import cat_weapons -m disable -f type/weapon/
+    stockpiles metalweapons -m disable

@@ -77,14 +77,15 @@ Options
     to the stockpile, but no other settings are changed. In ``disable`` mode,
     enabled settings in the file are *removed* from the current stockpile
     configuration, and nothing else is changed.
-``-f``, ``--filter <filter>``
-    When importing, only modify the settings that contain the given substring.
+``-f``, ``--filter <search>[,<search>...]``
+    When importing, only modify the settings that contain at least one of the
+    given substrings.
 
 Configuration elements
 ----------------------
 
-The different configuration elements you can include in an exported settings file
-are:
+The different configuration elements you can include in an exported settings
+file are:
 
 :containers: Max bins, max barrels, and num wheelbarrows.
 :general: Whether the stockpile takes from links only and whether organic
@@ -104,9 +105,9 @@ DFHack comes with a library of useful stockpile settings files that are ready
 for import. If the stockpile configuration that you need isn't directly
 represented, you can often use the ``enable`` and ``disable`` modes and/or
 the ``filter`` option to transform an existing saved stockpile setting. Some
-stockpile configurations can only be achieved with filters since the contents
-of the stockpile lists are different for each world. For example, to disable
-all tallow in your main food stockpile, you'd run this command::
+stockpile configurations can only be achieved with filters since the stockpile
+lists are different for each world. For example, to disable all tallow in your
+main food stockpile, you'd run this command::
 
     stockpiles import category_food -m disable -f tallow
 
@@ -134,18 +135,34 @@ entire category, or with a filter, any matchable subset thereof::
     category_weapons
     category_wood
 
-For many of the categories, there are also settings files that manipulate interesting
-subsets of that category.
+For many of the categories, there are also subcategory prefixes that you can
+match with filters and convenient pre-made settings files that manipulate
+interesting category subsets.
 
 Ammo stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-bolts
-metalammo
-boneammo
-woodammo
-masterworkammo
-artifactammo
+Subcategory prefixes::
+
+    type/
+    mats/
+    other/
+    core/
+    total/
+
+Convenience settings files::
+
+    bolts
+    metalammo
+    boneammo
+    woodammo
+
+Example commands for a stockpile of metal bolts::
+
+    stockpiles import category_ammo
+    stockpiles import -m disable -f other/ category_ammo
+    stockpiles import -m disable -f type/ category_ammo
+    stockpiles import -m enable bolts
 
 Animal stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

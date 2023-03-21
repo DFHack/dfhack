@@ -129,9 +129,12 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
     else if (mode_str == "disable")
         mode = DESERIALIZE_MODE_DISABLE;
 
+    vector<string> filters;
+    split_string(&filters, filter, ",", true);
+
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.unserialize_from_file(fname, mode, filter)) {
+        if (!cereal.unserialize_from_file(fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }

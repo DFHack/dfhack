@@ -113,7 +113,7 @@ local function import_stockpile(name, opts)
     else
         name = STOCKPILES_LIBRARY_DIR .. '/' .. name
     end
-    stockpiles_import(name, get_sp_id(opts), opts.mode, opts.filter)
+    stockpiles_import(name, get_sp_id(opts), opts.mode, table.concat(opts.filters, ','))
 end
 
 local valid_includes = {general=true, categories=true, types=true}
@@ -145,11 +145,11 @@ local function process_args(opts, args)
 
     opts.includes = {}
     opts.mode = 'set'
-    opts.filter = ''
+    opts.filters = {}
 
     return argparse.processArgsGetopt(args, {
             {'f', 'filter', hasArg=true,
-            handler=function(arg) opts.filter = arg end},
+            handler=function(arg) opts.filters = argparse.stringList(arg) end},
             {'h', 'help', handler=function() opts.help = true end},
             {'i', 'include', hasArg=true,
              handler=function(arg) opts.includes = parse_include(arg) end},

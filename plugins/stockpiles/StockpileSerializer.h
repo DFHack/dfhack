@@ -39,6 +39,7 @@ typedef std::function<bool(const DFHack::MaterialInfo&)> FuncMaterialAllowed;
 
 // convenient struct for parsing food stockpile items
 struct food_pair {
+    const char * name;
     // exporting
     FuncWriteExport set_value;
     std::vector<char>* stockpile_values;
@@ -47,8 +48,9 @@ struct food_pair {
     size_t serialized_count;
     bool valid;
 
-    food_pair(FuncWriteExport s, std::vector<char>* sp_v, FuncReadImport g, size_t count)
-        : set_value(s), stockpile_values(sp_v), get_value(g), serialized_count(count), valid(true) { }
+    food_pair(const char * n, FuncWriteExport s, std::vector<char>* sp_v, FuncReadImport g, size_t count)
+        : name(n), set_value(s), stockpile_values(sp_v), get_value(g), serialized_count(count),
+          valid(true) { }
     food_pair(): valid(false) { }
 };
 

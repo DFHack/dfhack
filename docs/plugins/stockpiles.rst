@@ -48,7 +48,7 @@ Examples
     exist.
 ``stockpiles import -m enable plants``
     Enables plants in the selected stockpile.
-``stockpiles import -m disable category_food -f tallow``
+``stockpiles import -m disable cat_food -f tallow``
     Disables all tallow in the selected food stockpile.
 ``stockpiles export mysettings``
     Export the settings for the currently selected stockpile to a file named
@@ -109,7 +109,7 @@ stockpile configurations can only be achieved with filters since the stockpile
 lists are different for each world. For example, to disable all tallow in your
 main food stockpile, you'd run this command::
 
-    stockpiles import category_food -m disable -f tallow
+    stockpiles import cat_food -m disable -f tallow
 
 Top-level categories
 ~~~~~~~~~~~~~~~~~~~~
@@ -117,27 +117,27 @@ Top-level categories
 Each stockpile category has a file that allows you to enable or disable the
 entire category, or with a filter, any matchable subset thereof::
 
-    category_ammo
-    category_animals
-    category_armor
-    category_bars_blocks
-    category_cloth
-    category_coins
-    category_corpses
-    category_finished_goods
-    category_food
-    category_furniture
-    category_gems
-    category_leather
-    category_refuse
-    category_sheets
-    category_stone
-    category_weapons
-    category_wood
+    cat_ammo
+    cat_animals
+    cat_armor
+    cat_bars_blocks
+    cat_cloth
+    cat_coins
+    cat_corpses
+    cat_finished_goods
+    cat_food
+    cat_furniture
+    cat_gems
+    cat_leather
+    cat_refuse
+    cat_sheets
+    cat_stone
+    cat_weapons
+    cat_wood
 
-For many of the categories, there are also subcategory prefixes that you can
-match with filters and convenient pre-made settings files that manipulate
-interesting category subsets.
+For many of the categories, there are also flags and subcategory prefixes that
+you can match with filters and convenient pre-made settings files that
+manipulate interesting category subsets.
 
 Ammo stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +150,7 @@ Subcategory prefixes::
     core/
     total/
 
-Convenience settings files::
+Settings files::
 
     bolts
     metalammo
@@ -159,59 +159,118 @@ Convenience settings files::
 
 Example commands for a stockpile of metal bolts::
 
-    stockpiles import category_ammo
-    stockpiles import -m disable -f other/ category_ammo
-    stockpiles import -m disable -f type/ category_ammo
+    stockpiles import cat_ammo -f mats/,core/,total/
     stockpiles import -m enable bolts
 
 Animal stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-traps
-cages
+Flags::
+
+    cages
+    traps
+
+Settings files::
+
+    cages
+    traps
+
+Example commands for a stockpile of empty cages::
+
+    stockpiles import cages
+
+Or, using the flag for the same effect::
+
+    stockpiles import cat_animals -f cages
 
 Armor stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-metalarmor
-otherarmor
-ironarmor
-bronzearmor
-copperarmor
-steelarmor
-masterworkarmor
-artifactarmor
-usablearmor
-unusablearmor
+Flags and subcategory prefixes::
 
+    nouse
+    canuse
+    body/
+    head/
+    feet/
+    hands/
+    legs/
+    shield/
+    mats/
+    other/
+    core/
+    total/
+
+Settings files::
+
+    metalarmor
+    otherarmor
+    ironarmor
+    bronzearmor
+    copperarmor
+    steelarmor
+    usablearmor
+    unusablearmor
+
+Example commands for a stockpile of sub-masterwork meltable armor::
+
+    stockpiles import cat_armor
+    stockpiles import -m disable -f other/,core/mas,core/art cat_armor
 
 Bar stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-bars
-metalbars
-ironbars
-pigironbars
-steelbars
-otherbars
-coal
-potash
-ash
-pearlash
-soap
-blocks
+Subcategory prefixes::
+
+    mats/bars/
+    other/bars/
+    mats/blocks/
+    other/blocks/
+
+Settings files::
+
+    bars
+    metalbars
+    ironbars
+    pigironbars
+    steelbars
+    otherbars
+    coal
+    potash
+    ash
+    pearlash
+    soap
+    blocks
+
+Example commands for a stockpile of blocks::
+
+    stockpiles import blocks
 
 Cloth stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-thread
-adamantinethread
-cloth
-adamantinecloth
+Subcategory prefixes::
+
+    thread/silk/
+    thread/plant/
+    thread/yarn/
+    thread/metal/
+    cloth/silk/
+    cloth/plant/
+    cloth/yarn/
+    cloth/metal/
+
+Settings files::
+
+    thread
+    adamantinethread
+    cloth
+    adamantinecloth
 
 Notes:
 
-* ``thread`` and ``cloth`` refers to all materials that are not adamantine.
+* ``thread`` and ``cloth`` settings files set all materials that are not
+adamantine.
 
 Finished goods stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -287,11 +346,11 @@ usablehair
 
 You can get a stockpile of usable refuse with the following set of commands::
 
-    stockpiles import category_refuse -m enable -f skulls
-    stockpiles import category_refuse -m enable -f bones
-    stockpiles import category_refuse -m enable -f shells
-    stockpiles import category_refuse -m enable -f teeth
-    stockpiles import category_refuse -m enable -f horns
+    stockpiles import cat_refuse -m enable -f skulls
+    stockpiles import cat_refuse -m enable -f bones
+    stockpiles import cat_refuse -m enable -f shells
+    stockpiles import cat_refuse -m enable -f teeth
+    stockpiles import cat_refuse -m enable -f horns
     stockpiles import usablehair -m enable
 
 Stone stockpile adjustments

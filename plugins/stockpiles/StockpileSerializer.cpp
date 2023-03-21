@@ -1457,7 +1457,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_fish(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().fish(idx); };
-        return food_pair("fish", setter, &mPile->settings.food.fish, getter, mBuffer.food().fish_size());
+        return food_pair("fish/prepared", setter, &mPile->settings.food.fish, getter, mBuffer.food().fish_size());
     }
     case organic_mat_category::UnpreparedFish:
     {
@@ -1465,7 +1465,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_unprepared_fish(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().unprepared_fish(idx); };
-        return food_pair("unpreparedfish", setter, &mPile->settings.food.unprepared_fish, getter, mBuffer.food().unprepared_fish_size());
+        return food_pair("fish/unprepared", setter, &mPile->settings.food.unprepared_fish, getter, mBuffer.food().unprepared_fish_size());
     }
     case organic_mat_category::Eggs:
     {

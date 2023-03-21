@@ -46,9 +46,18 @@ Examples
     Imports a player-exported settings file named ``plants``, or the library
     ``plants`` settings file if a player-exported file by that name doesn't
     exist.
+``stockpiles import -m enable plants``
+    Enables plants in the selected stockpile.
+``stockpiles import -m disable category_food -f tallow``
+    Disables all tallow in the selected food stockpile.
 ``stockpiles export mysettings``
     Export the settings for the currently selected stockpile to a file named
     ``dfhack-config/stockpiles/mysettings.dfstock``.
+``stockpiles export mysettings -i categories,types``
+    Export the stockpile category and item settings, but ignore the container
+    and general settings. This allows you to import the configuration later
+    without touching the container and general settings of the target
+    stockpile.
 
 Options
 -------
@@ -92,6 +101,211 @@ The stockpiles settings library
 -------------------------------
 
 DFHack comes with a library of useful stockpile settings files that are ready
-for import:
+for import. If the stockpile configuration that you need isn't directly
+represented, you can often use the ``enable`` and ``disable`` modes and/or
+the ``filter`` option to transform an existing saved stockpile setting. Some
+stockpile configurations can only be achieved with filters since the contents
+of the stockpile lists are different for each world. For example, to disable
+all tallow in your main food stockpile, you'd run this command::
 
-TODO: port alias library here
+    stockpiles import category_food -m disable -f tallow
+
+Top-level categories
+~~~~~~~~~~~~~~~~~~~~
+
+Each stockpile category has a file that allows you to enable or disable the
+entire category, or with a filter, any matchable subset thereof::
+
+    category_ammo
+    category_animals
+    category_armor
+    category_bars_blocks
+    category_cloth
+    category_coins
+    category_corpses
+    category_finished_goods
+    category_food
+    category_furniture
+    category_gems
+    category_leather
+    category_refuse
+    category_sheets
+    category_stone
+    category_weapons
+    category_wood
+
+For many of the categories, there are also settings files that manipulate interesting
+subsets of that category.
+
+Ammo stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+bolts
+metalammo
+boneammo
+woodammo
+masterworkammo
+artifactammo
+
+Animal stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+traps
+cages
+
+Armor stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+metalarmor
+otherarmor
+ironarmor
+bronzearmor
+copperarmor
+steelarmor
+masterworkarmor
+artifactarmor
+usablearmor
+unusablearmor
+
+
+Bar stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+bars
+metalbars
+ironbars
+pigironbars
+steelbars
+otherbars
+coal
+potash
+ash
+pearlash
+soap
+blocks
+
+Cloth stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+thread
+adamantinethread
+cloth
+adamantinecloth
+
+Notes:
+
+* ``thread`` and ``cloth`` refers to all materials that are not adamantine.
+
+Finished goods stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+stonetools
+woodtools
+crafts
+goblets
+toys
+masterworkfinishedgoods
+artifactfinishedgoods
+
+Food stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+preparedmeals
+unpreparedfish
+plants
+booze
+seeds
+dye
+miscliquid
+wax
+
+Furniture stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+pots
+bags
+buckets
+sand
+masterworkfurniture
+artifactfurniture
+
+* Because of the limitations of Dwarf Fortress, ``bags`` cannot distinguish
+  between empty bags and bags filled with gypsum powder.
+
+Gem stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+roughgems
+roughglass
+cutgems
+cutglass
+cutstone
+
+Refuse stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+===========  ==================  ==================
+Exclusive    Forbid              Permit
+===========  ==================  ==================
+corpses      forbidcorpses       permitcorpses
+skulls       forbidskulls        permitskulls
+bones        forbidbones         permitbones
+shells       forbidshells        permitshells
+teeth        forbidteeth         permitteeth
+horns        forbidhorns         permithorns
+hair         forbidhair          permithair
+craftrefuse  forbidcraftrefuse   permitcraftrefuse
+===========  ==================  ==================
+
+Notes:
+
+* ``usablehair`` Only hair and wool that can make usable clothing is included,
+  i.e. from sheep, llamas, alpacas, and trolls.
+* ``craftrefuse`` includes everything a craftsdwarf or tailor can use: skulls,
+  bones, shells, teeth, horns, and "usable" hair/wool (defined above).
+
+rawhides
+tannedhides
+usablehair
+
+You can get a stockpile of usable refuse with the following set of commands::
+
+    stockpiles import category_refuse -m enable -f skulls
+    stockpiles import category_refuse -m enable -f bones
+    stockpiles import category_refuse -m enable -f shells
+    stockpiles import category_refuse -m enable -f teeth
+    stockpiles import category_refuse -m enable -f horns
+    stockpiles import usablehair -m enable
+
+Stone stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+metalore
+ironore
+economic
+flux
+plasterproducing
+coalproducing
+otherstone
+bauxite
+clay
+
+Weapon stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+weapons
+metalweapons
+stoneweapons
+otherweapons
+trapcomponents
+ironweapons
+silverweapons
+bronzeweapons
+copperweapons
+steelweapons
+platinumweapons
+adamantineweapons
+masterworkweapons
+artifactweapons
+usableweapons
+unusableweapons

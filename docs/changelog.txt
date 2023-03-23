@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
+- `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
 - `tailor`: now properly discriminates between dyed and undyed cloth, no longer defaults to using adamantine, and properly tracks material requirements for already queued orders
 
 ## Misc Improvements

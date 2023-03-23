@@ -130,7 +130,7 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
                 },
                 [&](lua_State *L) {
                     df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
-                    DEBUG(status,out).print("retrieving job_item for (%d, %d, %d) index=%d: %p\n",
+                    DEBUG(status,out).print("retrieving job_item for (%d, %d, %d) index=%d: 0x%p\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key), index, jitem);
                     if (!jitem)
                         failed = true;
@@ -311,7 +311,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
         if (!bld) {
-            INFO(status,out).print("building %d no longer exists; skipping\n", pb.id);
+            DEBUG(status,out).print("building %d no longer exists; skipping\n", pb.id);
             pb.remove(out);
             continue;
         }

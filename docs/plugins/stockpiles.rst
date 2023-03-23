@@ -20,8 +20,7 @@ Usage
 
 Exported stockpile settings are saved in the ``dfhack-config/stockpiles``
 folder, where you can view and delete them, if desired. Names can only
-contain numbers, letters, periods, underscores, dashes, and spaces. If
-the name has spaces, be sure to surround it with double quotes (:kbd:`"`).
+contain numbers, letters, periods, and underscores.
 
 The names of library settings files are all prefixed by the string ``library/``.
 You can specify library files explicitly by including the prefix, or you can

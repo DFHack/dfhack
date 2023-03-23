@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
+- `orders`: add minimize button to overlay panel so you can get it out of the way to read long statue descriptions when choosing a subject in the details screen
 
 ## Documentation
 

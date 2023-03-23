@@ -46,37 +46,87 @@ OrdersOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS',
     frame={w=30, h=4},
-    frame_style=gui.MEDIUM_FRAME,
-    frame_background=gui.CLEAR_PEN,
 }
 
 function OrdersOverlay:init()
-    self:addviews{
-        widgets.HotkeyLabel{
-            frame={t=0, l=0},
-            label='import',
-            key='CUSTOM_CTRL_I',
-            on_activate=do_import,
-        },
-        widgets.HotkeyLabel{
-            frame={t=1, l=0},
-            label='export',
-            key='CUSTOM_CTRL_E',
-            on_activate=do_export,
-        },
-        widgets.HotkeyLabel{
-            frame={t=0, l=15},
-            label='sort',
-            key='CUSTOM_CTRL_O',
-            on_activate=do_sort,
-        },
-        widgets.HotkeyLabel{
-            frame={t=1, l=15},
-            label='clear',
-            key='CUSTOM_CTRL_C',
-            on_activate=do_clear,
+    self.minimized = false
+
+    local main_panel = widgets.Panel{
+        frame={t=0, l=0, r=0, h=4},
+        frame_style=gui.MEDIUM_FRAME,
+        frame_background=gui.CLEAR_PEN,
+        visible=function() return not self.minimized end,
+        subviews={
+            widgets.HotkeyLabel{
+                frame={t=0, l=0},
+                label='import',
+                key='CUSTOM_CTRL_I',
+                auto_width=true,
+                on_activate=do_import,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=0},
+                label='export',
+                key='CUSTOM_CTRL_E',
+                auto_width=true,
+                on_activate=do_export,
+            },
+            widgets.HotkeyLabel{
+                frame={t=0, l=15},
+                label='sort',
+                key='CUSTOM_CTRL_O',
+                auto_width=true,
+                on_activate=do_sort,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=15},
+                label='clear',
+                key='CUSTOM_CTRL_C',
+                auto_width=true,
+                on_activate=do_clear,
+            },
         },
     }
+
+    local minimized_panel = widgets.Panel{
+        frame={t=0, r=0, w=3, h=1},
+        subviews={
+            widgets.Label{
+                frame={t=0, l=0, w=1, h=1},
+                text='[',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, l=1, w=1, h=1},
+                text={{text=function() return self.minimized and string.char(31) or string.char(30) end}},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=0, w=1, h=1},
+                text=']',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+        },
+    }
+
+    self:addviews{
+        main_panel,
+        minimized_panel,
+    }
+end
+
+function OrdersOverlay:onInput(keys)
+    if keys.CUSTOM_ALT_M then
+        self.minimized = not self.minimized
+        return true
+    end
+    if OrdersOverlay.super.onInput(self, keys) then
+        return true
+    end
 end
 
 OVERLAY_WIDGETS = {

@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
 
 ## Misc Improvements
+- `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
 
 ## Documentation
 

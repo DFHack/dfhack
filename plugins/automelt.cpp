@@ -293,7 +293,7 @@ static inline bool can_melt(df::item *item)
 
     df::item_type t = item->getType();
 
-    if (t == df::enums::item_type::BOX || t == df::enums::item_type::BAR)
+    if (t == df::enums::item_type::BAR)
         return false;
 
     for (auto &g : item->general_refs)

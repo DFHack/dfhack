@@ -383,6 +383,17 @@ public:
 
             auto sub = o->item_subtype;
             int race = o->hist_figure_id;
+
+            for (auto& m : all_materials)
+            {
+                if (o->material_category.whole == m.job_material.whole)
+                {
+                    supply[m] -= o->amount_left;
+                    TRACE(cycle).print("tailor: supply of %s reduced by %d due to being required for an existing order\n",
+                        m.name.c_str(), o->amount_left);
+                }
+            }
+
             if (race == -1)
                 continue; // -1 means that the race of the worker will determine the size made; we must ignore these jobs
 
@@ -525,6 +536,18 @@ public:
         }
         return ordered;
     }
+
+    int do_cycle()
+    {
+        reset();
+        scan_clothing();
+        scan_materials();
+        scan_replacements();
+        create_orders();
+        scan_existing_orders();
+        return place_orders();
+    }
+
 };
 
 static std::unique_ptr<Tailor> tailor_instance;
@@ -684,13 +707,7 @@ static int do_cycle(color_ostream &out) {
 
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
-    tailor_instance->reset();
-    tailor_instance->scan_clothing();
-    tailor_instance->scan_materials();
-    tailor_instance->scan_replacements();
-    tailor_instance->create_orders();
-    tailor_instance->scan_existing_orders();
-    return tailor_instance->place_orders();
+    return tailor_instance->do_cycle();
 }
 
 /////////////////////////////////////////////////////

@@ -37,7 +37,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `prospector`: prospector tool in fort mode is now available. embark prospect is not yet available and is disabled at this time.
 
 ## Fixes
-- `tailor` now properly discriminates between dyed and undyed cloth and no longer defaults to using adamantine
+- `tailor`: now properly discriminates between dyed and undyed cloth and no longer defaults to using adamantine
+- `buildingplan`: upright spike traps are now placed extended rather than retracted
 
 ## Misc Improvements
 

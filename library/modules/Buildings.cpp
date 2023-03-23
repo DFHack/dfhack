@@ -68,6 +68,7 @@ using namespace DFHack;
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
+#include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
@@ -588,6 +589,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     case building_type::Bridge:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bridgest, bld))
+            obj->gate_flags.bits.closed = false;
+        break;
+    }
+    case building_type::Weapon:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
             obj->gate_flags.bits.closed = false;
         break;
     }

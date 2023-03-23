@@ -14,16 +14,54 @@ namespace df
     struct building_stockpilest;
 }
 
+enum IncludedElements {
+    INCLUDED_ELEMENTS_NONE = 0x00,
+    INCLUDED_ELEMENTS_CONTAINERS = 0x01,
+    INCLUDED_ELEMENTS_GENERAL = 0x02,
+    INCLUDED_ELEMENTS_CATEGORIES = 0x04,
+    INCLUDED_ELEMENTS_TYPES = 0x08,
+};
+
+enum DeserializeMode {
+    DESERIALIZE_MODE_SET = 0,
+    DESERIALIZE_MODE_ENABLE = 1,
+    DESERIALIZE_MODE_DISABLE = 2,
+};
+
+//  read the token from the serialized list during import
+typedef std::function<std::string(const size_t&)> FuncReadImport;
+//  add the token to the serialized list during export
+typedef std::function<void(const std::string&)> FuncWriteExport;
+//  are item's of item_type allowed?
+typedef std::function<bool(df::enums::item_type::item_type)> FuncItemAllowed;
+//  is this material allowed?
+typedef std::function<bool(const DFHack::MaterialInfo&)> FuncMaterialAllowed;
+
+// convenient struct for parsing food stockpile items
+struct food_pair {
+    const char * name;
+    // exporting
+    FuncWriteExport set_value;
+    std::vector<char>* stockpile_values;
+    // importing
+    FuncReadImport get_value;
+    size_t serialized_count;
+    bool valid;
+
+    food_pair(const char * n, FuncWriteExport s, std::vector<char>* sp_v, FuncReadImport g, size_t count)
+        : name(n), set_value(s), stockpile_values(sp_v), get_value(g), serialized_count(count),
+          valid(true) { }
+    food_pair(): valid(false) { }
+};
+
 /**
  * Class for serializing the stockpile_settings structure into a Google protobuf
  */
 class StockpileSerializer {
 public:
     /**
-     * @param out for debugging
      * @param stockpile stockpile to read or write settings to
      */
-
     StockpileSerializer(df::building_stockpilest* stockpile);
 
     ~StockpileSerializer();
@@ -32,252 +70,72 @@ public:
      * Since we depend on protobuf-lite, not the full lib, we copy this function from
      * protobuf message.cc
      */
-    bool serialize_to_ostream(std::ostream* output);
+    bool serialize_to_ostream(std::ostream* output, uint32_t includedElements);
 
     /**
      * Will serialize stockpile settings to a file (overwrites existing files)
      * @return success/failure
      */
-    bool serialize_to_file(const std::string& file);
+    bool serialize_to_file(const std::string& file, uint32_t includedElements);
 
     /**
      * Again, copied from message.cc
      */
-    bool parse_from_istream(std::istream* input);
+    bool parse_from_istream(std::istream* input, DeserializeMode mode, const std::vector<std::string>& filters);
 
     /**
      * Read stockpile settings from file
      */
-    bool unserialize_from_file(const std::string& file);
+    bool unserialize_from_file(const std::string& file, DeserializeMode mode, const std::vector<std::string>& filters);
 
 private:
     df::building_stockpilest* mPile;
     dfstockpiles::StockpileSettings mBuffer;
-    std::map<int, std::string> mOtherMatsFurniture;
-    std::map<int, std::string> mOtherMatsFinishedGoods;
-    std::map<int, std::string> mOtherMatsBars;
-    std::map<int, std::string> mOtherMatsBlocks;
-    std::map<int, std::string> mOtherMatsWeaponsArmor;
 
-    /**
-    read memory structures and serialize to protobuf
-     */
-    void write();
+    // read memory structures and serialize to protobuf
+    void write(uint32_t includedElements);
 
-    //  parse serialized data into ui indices
-    void read();
+    // parse serialized data into ui indices
+    void read(DeserializeMode mode, const std::vector<std::string>& filters);
 
-    /**
-     * Find an enum's value based off the string label.
-     * @param traits the enum's trait struct
-     * @param token the string value in key_table
-     * @return the enum's value,  -1 if not found
-     */
-    template <typename E>
-    static typename df::enum_traits<E>::base_type linear_index(df::enum_traits<E> traits, const std::string& token) {
-        auto j = traits.first_item_value;
-        auto limit = traits.last_item_value;
-        // sometimes enums start at -1, which is bad news for array indexing
-        if (j < 0) {
-            j += abs(traits.first_item_value);
-            limit += abs(traits.first_item_value);
-        }
-        for (; j <= limit; ++j) {
-            if (token.compare(traits.key_table[j]) == 0)
-                return j;
-        }
-        return -1;
-    }
-
-    //  read the token from the serailized list during import
-    typedef std::function<std::string(const size_t&)> FuncReadImport;
-    //  add the token to the serialized list during export
-    typedef std::function<void(const std::string&)> FuncWriteExport;
-    //  are item's of item_type allowed?
-    typedef std::function<bool(df::enums::item_type::item_type)> FuncItemAllowed;
-    //  is this material allowed?
-    typedef std::function<bool(const DFHack::MaterialInfo&)> FuncMaterialAllowed;
-
-    // convenient struct for parsing food stockpile items
-    struct food_pair {
-        // exporting
-        FuncWriteExport set_value;
-        std::vector<char>* stockpile_values;
-        // importing
-        FuncReadImport get_value;
-        size_t serialized_count;
-        bool valid;
-
-        food_pair(FuncWriteExport s, std::vector<char>* sp_v, FuncReadImport g, size_t count)
-            : set_value(s), stockpile_values(sp_v), get_value(g), serialized_count(count), valid(true) { }
-        food_pair(): valid(false) { }
-    };
-
-    /**
-     * There are many repeated (un)serialization cases throughout the stockpile_settings structure,
-     * so the most common cases have been generalized into generic functions using lambdas.
-     *
-     * The basic process to serialize a stockpile_settings structure is:
-     * 1. loop through the list
-     * 2. for every element that is TRUE:
-     * 3.   map the specific stockpile_settings index into a general material, creature, etc index
-     * 4.   verify that type is allowed in the list (e.g.,  no stone in gems stockpiles)
-     * 5.   add it to the protobuf using FuncWriteExport
-     *
-     * The unserialization process is the same in reverse.
-     */
-    void serialize_list_organic_mat(FuncWriteExport add_value, const std::vector<char>* list, df::enums::organic_mat_category::organic_mat_category cat);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_organic_mat(FuncReadImport get_value, size_t list_size, std::vector<char>* pile_list, df::enums::organic_mat_category::organic_mat_category cat);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void serialize_list_item_type(FuncItemAllowed is_allowed, FuncWriteExport add_value, const std::vector<char>& list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_item_type(FuncItemAllowed is_allowed, FuncReadImport read_value, int32_t list_size, std::vector<char>* pile_list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void serialize_list_material(FuncMaterialAllowed is_allowed, FuncWriteExport add_value, const std::vector<char>& list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_material(FuncMaterialAllowed is_allowed, FuncReadImport read_value, int32_t list_size, std::vector<char>* pile_list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void serialize_list_quality(FuncWriteExport add_value, const bool(&quality_list)[7]);
-
-    /**
-     * Set all values in a bool[7] to false
-     */
-    void quality_clear(bool(&pile_list)[7]);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_quality(FuncReadImport read_value, int32_t list_size, bool(&pile_list)[7]);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void serialize_list_other_mats(const std::map<int, std::string> other_mats, FuncWriteExport add_value, std::vector<char> list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_other_mats(const std::map<int, std::string> other_mats, FuncReadImport read_value, int32_t list_size, std::vector<char>* pile_list);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void serialize_list_itemdef(FuncWriteExport add_value, std::vector<char> list, std::vector<df::itemdef*> items, df::enums::item_type::item_type type);
-
-    /**
-     * @see serialize_list_organic_mat
-     */
-    void unserialize_list_itemdef(FuncReadImport read_value, int32_t list_size, std::vector<char>* pile_list, df::enums::item_type::item_type type);
-
-    /**
-     * Given a list of other_materials and an index,  return its corresponding token
-     * @return empty string if not found
-     * @see other_mats_token
-     */
-    std::string other_mats_index(const std::map<int, std::string> other_mats, int idx);
-
-    /**
-     * Given a list of other_materials and a token,  return its corresponding index
-     * @return -1 if not found
-     * @see other_mats_index
-     */
-    int other_mats_token(const std::map<int, std::string> other_mats, const std::string& token);
-
+    void write_containers();
+    void read_containers(DeserializeMode mode);
     void write_general();
-    void read_general();
+    void read_general(DeserializeMode mode);
 
-    void write_animals();
-    void read_animals();
-
+    bool write_ammo(dfstockpiles::StockpileSettings::AmmoSet* ammo);
+    void read_ammo(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_animals(dfstockpiles::StockpileSettings::AnimalsSet* animals);
+    void read_animals(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_armor(dfstockpiles::StockpileSettings::ArmorSet* armor);
+    void read_armor(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_bars_blocks(dfstockpiles::StockpileSettings::BarsBlocksSet* bars_blocks);
+    void read_bars_blocks(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_cloth(dfstockpiles::StockpileSettings::ClothSet* cloth);
+    void read_cloth(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_coins(dfstockpiles::StockpileSettings::CoinSet* coins);
+    void read_coins(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_finished_goods(dfstockpiles::StockpileSettings::FinishedGoodsSet* finished_goods);
+    void read_finished_goods(DeserializeMode mode, const std::vector<std::string>& filters);
     food_pair food_map(df::enums::organic_mat_category::organic_mat_category cat);
-
-    void write_food();
-    void read_food();
-
-    void furniture_setup_other_mats();
-    void write_furniture();
-    bool furniture_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void read_furniture();
-
-    bool refuse_creature_is_allowed(const df::creature_raw* raw);
-
-    void refuse_write_helper(std::function<void(const std::string&)> add_value, const std::vector<char>& list);
-
-    bool refuse_type_is_allowed(df::enums::item_type::item_type type);
-
-    void write_refuse();
-    void refuse_read_helper(std::function<std::string(const size_t&)> get_value, size_t list_size, std::vector<char>* pile_list);
-
-    void read_refuse();
-
-    bool stone_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_stone();
-
-    void read_stone();
-
-    bool ammo_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_ammo();
-    void read_ammo();
-    bool coins_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_coins();
-
-    void read_coins();
-
-    void bars_blocks_setup_other_mats();
-
-    bool bars_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    bool blocks_mat_is_allowed(const DFHack::MaterialInfo& mi);
-
-    void write_bars_blocks();
-    void read_bars_blocks();
-    bool gem_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    bool gem_cut_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    bool gem_other_mat_is_allowed(DFHack::MaterialInfo& mi);
-
-    void write_gems();
-
-    void read_gems();
-
-    bool finished_goods_type_is_allowed(df::enums::item_type::item_type type);
-    void finished_goods_setup_other_mats();
-    bool finished_goods_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_finished_goods();
-    void read_finished_goods();
-    void write_leather();
-    void read_leather();
-    void write_cloth();
-    void read_cloth();
-    bool wood_mat_is_allowed(const df::plant_raw* plant);
-    void write_wood();
-    void read_wood();
-    bool weapons_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_weapons();
-    void read_weapons();
-    void weapons_armor_setup_other_mats();
-    bool armor_mat_is_allowed(const DFHack::MaterialInfo& mi);
-    void write_armor();
-    void read_armor();
+    bool write_food(dfstockpiles::StockpileSettings::FoodSet* food);
+    void read_food(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_furniture(dfstockpiles::StockpileSettings::FurnitureSet* furniture);
+    void read_furniture(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_gems(dfstockpiles::StockpileSettings::GemsSet* gems);
+    void read_gems(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_leather(dfstockpiles::StockpileSettings::LeatherSet* leather);
+    void read_leather(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_corpses(dfstockpiles::StockpileSettings::CorpsesSet* corpses);
+    void read_corpses(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_refuse(dfstockpiles::StockpileSettings::RefuseSet* refuse);
+    void read_refuse(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_sheet(dfstockpiles::StockpileSettings::SheetSet* sheet);
+    void read_sheet(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_stone(dfstockpiles::StockpileSettings::StoneSet* stone);
+    void read_stone(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_weapons(dfstockpiles::StockpileSettings::WeaponsSet* weapons);
+    void read_weapons(DeserializeMode mode, const std::vector<std::string>& filters);
+    bool write_wood(dfstockpiles::StockpileSettings::WoodSet* wood);
+    void read_wood(DeserializeMode mode, const std::vector<std::string>& filters);
 };

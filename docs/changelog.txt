@@ -41,6 +41,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
 
 ## Misc Improvements
+- `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
+- `stockpiles`: support partial application of a saved config based on dynamic filtering
+- `stockpiles`: additive and subtractive modes when applying a second stockpile configuration on top of a first
+- `stockpiles`: write player-exported stockpile configurations to the ``dfhack-config/stockpiles`` folder. If you have any stockpile configs in other directories, please move them to that folder.
+- `stockpiles`: now includes a library of useful stockpile configs (see docs for details)
 - `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
 
 ## Documentation

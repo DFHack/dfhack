@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tailor` now properly discriminates between dyed and undyed cloth and no longer defaults to using adamantine
 
 ## Misc Improvements
+- `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
 
 ## Documentation
 

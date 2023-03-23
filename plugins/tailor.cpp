@@ -124,7 +124,8 @@ static const MatType
     M_ADAMANTINE = MatType("adamantine", df::job_material_category::mask_strand, df::armor_general_flags::SOFT);
 
 static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
-static std::list<MatType> material_order = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // M_ADAMANTINE is not included by default
+static const std::list<MatType> default_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // adamantine not included by default
+static std::list<MatType> material_order = default_materials;
 
 static struct BadFlags {
     uint32_t whole;
@@ -191,7 +192,7 @@ public:
             if (i->flags.whole & badFlags.whole)
                 continue;
 
-            if (require_dyed && !i->hasImprovements())
+            if (require_dyed && (!i->isDyed()))
             {
                 // only count dyed
                 std::string d;
@@ -589,7 +590,7 @@ static void set_material_order() {
             material_order.push_back(M_ADAMANTINE);
     }
     if (!material_order.size())
-        std::copy(all_materials.begin(), all_materials.end(), std::back_inserter(material_order));
+        std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {

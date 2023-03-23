@@ -694,6 +694,8 @@ function PlannerOverlay:onRenderFrame(dc, rect)
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end
 
+    if self.minimized then return end
+
     local selection_pos = self.saved_selection_pos or uibs.selection_pos
     if not selection_pos or selection_pos.x < 0 then return end
 

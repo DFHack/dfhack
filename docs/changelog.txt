@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `stockpiles`: write player-exported stockpile configurations to the ``dfhack-config/stockpiles`` folder. If you have any stockpile configs in other directories, please move them to that folder.
 - `stockpiles`: now includes a library of useful stockpile configs (see docs for details)
 - `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
+- `orders`: add minimize button to overlay panel so you can get it out of the way to read long statue descriptions when choosing a subject in the details screen
 
 ## Documentation
 

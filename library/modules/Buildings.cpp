@@ -799,10 +799,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             if (!allow_occupied &&
                 block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
-            else
+            else if (!allow_wall)
             {
-                auto tile = block->tiletype[btile.x][btile.y];
-                if (!allow_wall && !HighPassable(tile))
+                auto &tt = block->tiletype[btile.x][btile.y];
+                auto &des = block->designation[btile.x][btile.y];
+                if (!HighPassable(tt) ||
+                        des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma))
                     allowed = false;
             }
 

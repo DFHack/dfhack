@@ -9,6 +9,7 @@
 
 #include "modules/World.h"
 
+#include "df/construction_type.h"
 #include "df/item.h"
 #include "df/job_item.h"
 #include "df/world.h"
@@ -282,6 +283,18 @@ static void clear_state(color_ostream &out) {
     call_buildingplan_lua(&out, "reload_pens");
 }
 
+static int16_t get_subtype(df::building *bld) {
+    if (!bld)
+        return -1;
+
+    int16_t subtype = bld->getSubtype();
+    if (bld->getType() == df::building_type::Construction &&
+            subtype >= df::construction_type::UpStair &&
+            subtype <= df::construction_type::UpDownStair)
+        subtype = df::construction_type::UpDownStair;
+    return subtype;
+}
+
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentData(CONFIG_KEY);
@@ -315,7 +328,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
             pb.remove(out);
             continue;
         }
-        BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
+        BuildingTypeKey key(bld->getType(), get_subtype(bld), bld->getCustomType());
         if (pb.item_filters.size() != get_item_filters(out, key).getItemFilters().size()) {
             WARN(status).print("loaded state for building %d doesn't match world\n", pb.id);
             pb.remove(out);
@@ -604,11 +617,15 @@ static bool isPlannedBuilding(color_ostream &out, df::building *bld) {
 
 static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
     DEBUG(status,out).print("entering addPlannedBuilding\n");
-    if (!bld || planned_buildings.count(bld->id)
-            || !isPlannableBuilding(out, bld->getType(), bld->getSubtype(),
-                                    bld->getCustomType()))
+    if (!bld || planned_buildings.count(bld->id))
         return false;
-    BuildingTypeKey key(bld->getType(), bld->getSubtype(), bld->getCustomType());
+
+    int16_t subtype = get_subtype(bld);
+
+    if (!isPlannableBuilding(out, bld->getType(), subtype, bld->getCustomType()))
+        return false;
+
+    BuildingTypeKey key(bld->getType(), subtype, bld->getCustomType());
     PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key));
     return registerPlannedBuilding(out, pb);
 }

@@ -37,6 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `prospector`: prospector tool in fort mode is now available. embark prospect is not yet available and is disabled at this time.
 
 ## Fixes
+- `buildingplan`: filters are now properly applied to planned stairs
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
 - `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
 - `buildingplan`: respect building size limits (e.g. roads and bridges cannot be more than 31 tiles in any dimension)

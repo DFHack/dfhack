@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `buildingplan`: filters are now properly applied to planned stairs
+- `buildingplan`: existing carved up/down stairs are now taken into account when determining which stair shape to construct
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
 - `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
 - `buildingplan`: respect building size limits (e.g. roads and bridges cannot be more than 31 tiles in any dimension)

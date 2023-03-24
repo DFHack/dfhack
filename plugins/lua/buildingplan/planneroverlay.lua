@@ -782,7 +782,7 @@ function PlannerOverlay:get_stairs_subtype(pos, bounds)
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape
-            if shape ~= df.tiletype_shape.STAIR_DOWN then
+            if shape ~= df.tiletype_shape.STAIR_DOWN and shape ~= df.tiletype_shape.STAIR_UPDOWN then
                 subtype = df.construction_type.UpStair
             end
         else
@@ -793,7 +793,7 @@ function PlannerOverlay:get_stairs_subtype(pos, bounds)
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape
-            if shape ~= df.tiletype_shape.STAIR_UP then
+            if shape ~= df.tiletype_shape.STAIR_UP and shape ~= df.tiletype_shape.STAIR_UPDOWN then
                 subtype = df.construction_type.DownStair
             end
         else

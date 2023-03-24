@@ -1,14 +1,26 @@
 # list depends here.
 add_subdirectory(lodepng)
-add_subdirectory(lua)
 add_subdirectory(md5)
+
+add_subdirectory(lua)
 add_subdirectory(protobuf)
+if(UNIX)
+    set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
+    target_compile_options(protoc
+        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
+    target_compile_options(protoc-bin
+        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
+    target_compile_options(protobuf-lite
+        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
+    target_compile_options(protobuf
+        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
+endif()
 
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)
-    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")
+    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare -Wno-restrict")
 endif()
 endif()
 

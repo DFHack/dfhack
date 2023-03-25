@@ -419,15 +419,15 @@ Ok, you're all set up! Now, let's take a look at an example
 
     -- main file for example-mod
 
-    -- these lines indicate that the script supports the "enable" API so you
-    -- can start it by running "enable example-mod" and stop it by running
-    -- "disable example-mod"
+    -- these lines indicate that the script supports the "enable"
+    -- API so you can start it by running "enable example-mod" and
+    -- stop it by running "disable example-mod"
     --@module = true
     --@enable = true
 
-    -- this is the help text that will appear in `help` and `gui/launcher`
-    -- Documentation on how to format docs here:
-    -- see possible tags here: https://docs.dfhack.org/en/latest/docs/Tags.html
+    -- this is the help text that will appear in `help` and
+    -- `gui/launcher`. see possible tags here:
+    -- https://docs.dfhack.org/en/latest/docs/Tags.html
     --[====[
     example-mod
     ===========

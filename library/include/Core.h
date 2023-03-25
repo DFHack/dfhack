@@ -173,7 +173,7 @@ namespace DFHack
         bool RunAlias(color_ostream &out, const std::string &name,
             const std::vector<std::string> &parameters, command_result &result);
         std::map<std::string, std::vector<std::string>> ListAliases();
-        std::string GetAliasCommand(const std::string &name, const std::string &default_ = "");
+        std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
         std::string getHackPath();
 

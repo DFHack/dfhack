@@ -267,7 +267,8 @@ mods might look like this::
 
 Not all mods will have script directories, of course, and those mods will not be
 added to the script search path. Mods are re-scanned whenever a world is loaded
-or unloaded.
+or unloaded. For more information on scripts and mods, check out the
+`modding-guide`.
 
 Custom script paths
 ...................

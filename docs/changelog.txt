@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
 - `orders`: add minimize button to overlay panel so you can get it out of the way to read long statue descriptions when choosing a subject in the details screen
 - `enable`: can now interpret aliases defined with the `alias` command
+- scripts in installed mods are now automatically added to the DFHack script path. DFHack recognizes two directories in a mod's folder: ``scripts_modinstalled/`` and ``scripts_modactive/``. ``scripts_modinstalled/`` folders will always be added the script path, regardless of whether the mod is active in a world. ``scripts_modactive/`` folders will only be added to the script path when the mod is active in the current loaded world.
 
 ## Documentation
 - ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. all of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.

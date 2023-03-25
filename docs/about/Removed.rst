@@ -26,6 +26,12 @@ Moved frequently used materials to the top of the materials list when building
 buildings. Also offered extended options when building constructions. All
 functionality has been merged into `buildingplan`.
 
+.. _autounsuspend:
+
+autounsuspend
+=============
+Replaced by `suspendmanager`.
+
 .. _combine-drinks:
 
 combine-drinks

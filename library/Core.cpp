@@ -763,6 +763,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                     }
                 }
 
+                part = GetAliasCommand(part, true);
+
                 Plugin * plug = (*plug_mgr)[part];
 
                 if(!plug)
@@ -2657,13 +2659,14 @@ std::map<std::string, std::vector<std::string>> Core::ListAliases()
     return aliases;
 }
 
-std::string Core::GetAliasCommand(const std::string &name, const std::string &default_)
+std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
 {
     std::lock_guard<std::recursive_mutex> lock(alias_mutex);
-    if (IsAlias(name))
-        return join_strings(" ", aliases[name]);
-    else
-        return default_;
+    if (!IsAlias(name) || aliases[name].empty())
+        return name;
+    if (ignore_params)
+        return aliases[name][0];
+    return join_strings(" ", aliases[name]);
 }
 
 /////////////////

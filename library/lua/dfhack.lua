@@ -770,7 +770,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
             elseif ((type(v.required) == 'boolean' and v.required) or
                     (type(v.required) == 'function' and v.required(flags))) then
                 if not script_flags[flag] then
-                    local msg = v.error or 'Flag "' .. flag .. '" not recognized'
+                    local msg = v.error or ('Flag "' .. flag .. '" not recognized')
                     error(name .. ': ' .. msg)
                 end
             end

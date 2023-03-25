@@ -157,7 +157,14 @@ private:
 
     int default_reserve = 10;
 
+    bool inventory_sanity_checking = false;
+
 public:
+    void set_debug_flag(bool f)
+    {
+        inventory_sanity_checking = f;
+    }
+
     void reset()
     {
         available.clear();
@@ -170,16 +177,42 @@ public:
 
     void scan_clothing()
     {
-        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "clothing"
+        if (!inventory_sanity_checking)
         {
-            if (i->flags.whole & badFlags.whole)
-                continue;
-            if (i->getWear() >= 1)
-                continue;
-            df::item_type t = i->getType();
-            int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
+            for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "clothing"
+            {
+                if (i->flags.whole & badFlags.whole)
+                    continue;
+                if (i->getWear() >= 1)
+                    continue;
+                df::item_type t = i->getType();
+                int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 
-            available[std::make_pair(t, size)] += 1;
+                available[std::make_pair(t, size)] += 1;
+            }
+        }
+        else
+        {
+            auto& l = world->items.other[df::items_other_id::ANY_GENERIC37];
+
+            for (auto i : world->items.other[df::items_other_id::IN_PLAY])
+            {
+                if (i->flags.whole & badFlags.whole)
+                    continue;
+                if (!i->isClothing())
+                    continue;
+                if (std::find(std::begin(l), std::end(l), i) == std::end(l))
+                {
+                    DEBUG(cycle).print("tailor: clothing item %d missing from GENERIC37 list\n", i->id);
+                }
+                if (i->getWear() >= 1)
+                    continue;
+                df::item_type t = i->getType();
+                int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
+
+                available[std::make_pair(t, size)] += 1;
+            }
+
         }
     }
 
@@ -748,9 +781,18 @@ static int tailor_getMaterialPreferences(lua_State *L) {
     return 1;
 }
 
+static void tailor_setDebugFlag(color_ostream& out, bool enable)
+{
+    DEBUG(config, out).print("entering tailor_setDebugFlag\n");
+
+    tailor_instance->set_debug_flag(enable);
+
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_doCycle),
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
+    DFHACK_LUA_FUNCTION(tailor_setDebugFlag),
     DFHACK_LUA_END
 };
 

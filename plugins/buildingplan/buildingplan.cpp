@@ -437,7 +437,7 @@ static string getBucket(const df::job_item & ji, const PlannedBuilding & pb, int
 }
 
 // get a list of item vectors that we should search for matches
-vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_item *job_item) {
+vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_item *job_item, bool ignore_filters) {
     std::vector<df::job_item_vector_id> ret;
 
     // if the filter already has the vector_id set to something specific, use it
@@ -453,13 +453,13 @@ vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_it
     // which vectors to search
     if (job_item->flags2.bits.building_material)
     {
-        if (get_config_bool(config, CONFIG_BLOCKS))
+        if (ignore_filters || get_config_bool(config, CONFIG_BLOCKS))
             ret.push_back(df::job_item_vector_id::BLOCKS);
-        if (get_config_bool(config, CONFIG_BOULDERS))
+        if (ignore_filters || get_config_bool(config, CONFIG_BOULDERS))
             ret.push_back(df::job_item_vector_id::BOULDER);
-        if (get_config_bool(config, CONFIG_LOGS))
+        if (ignore_filters || get_config_bool(config, CONFIG_LOGS))
             ret.push_back(df::job_item_vector_id::WOOD);
-        if (get_config_bool(config, CONFIG_BARS))
+        if (ignore_filters || get_config_bool(config, CONFIG_BARS))
             ret.push_back(df::job_item_vector_id::BAR);
     }
 
@@ -641,7 +641,7 @@ static void scheduleCycle(color_ostream &out) {
 }
 
 static int scanAvailableItems(color_ostream &out, df::building_type type, int16_t subtype,
-        int32_t custom, int index, vector<int> *item_ids = NULL,
+        int32_t custom, int index, bool ignore_filters, vector<int> *item_ids = NULL,
         map<MaterialInfo, int32_t> *counts = NULL) {
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
@@ -656,7 +656,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     auto &specials = item_filters.getSpecials();
 
     auto &jitem = job_items[index];
-    auto vector_ids = getVectorIds(out, jitem);
+    auto vector_ids = getVectorIds(out, jitem, ignore_filters);
 
     int count = 0;
     for (auto vector_id : vector_ids) {
@@ -668,7 +668,8 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
                 filter.setMaterialMask(0);
                 filter.setMaterials(set<MaterialInfo>());
             }
-            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter, specials)) {
+            if (itemPassesScreen(item) &&
+                    (ignore_filters || matchesFilters(item, jitem, heat, filter, specials))) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 if (counts) {
@@ -697,7 +698,7 @@ static int getAvailableItems(lua_State *L) {
             "entering getAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
     vector<int> item_ids;
-    scanAvailableItems(*out, type, subtype, custom, index, &item_ids);
+    scanAvailableItems(*out, type, subtype, custom, index, true, &item_ids);
     Lua::PushVector(L, item_ids);
     return 1;
 }
@@ -720,7 +721,7 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
-    return scanAvailableItems(out, type, subtype, custom, index);
+    return scanAvailableItems(out, type, subtype, custom, index, false);
 }
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
@@ -888,7 +889,7 @@ static int getMaterialFilter(lua_State *L) {
         return 0;
     const auto &mat_filter = filters[index].getMaterials();
     map<MaterialInfo, int32_t> counts;
-    scanAvailableItems(*out, type, subtype, custom, index, NULL, &counts);
+    scanAvailableItems(*out, type, subtype, custom, index, false, NULL, &counts);
     HeatSafety heat = get_heat_safety_filter(key);
     df::job_item jitem_cur_heat = getJobItemWithHeatSafety(
             get_job_items(*out, key)[index], heat);

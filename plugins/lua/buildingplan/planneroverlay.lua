@@ -496,13 +496,6 @@ function PlannerOverlay:init()
                     options={{label='Yes', value=true},
                              {label='No', value=false}},
                     initial_option=false,
-                    enabled=function()
-                        for idx = 1,4 do
-                            if (self.subviews['item'..idx].available or 0) > 0 then
-                                return true
-                            end
-                        end
-                    end,
                     on_change=function(choose)
                         buildingplan.setChooseItems(uibs.building_type, uibs.building_subtype, uibs.custom_type, choose)
                     end,
@@ -678,7 +671,7 @@ function PlannerOverlay:onInput(keys)
                 local filters = get_cur_filters()
                 local num_filters = #filters
                 local choose = self.subviews.choose
-                if choose.enabled() and choose:getOptionValue() then
+                if choose:getOptionValue() then
                     local bounds = get_selected_bounds()
                     self:save_placement()
                     local is_hollow = self.subviews.hollow:getOptionValue()
@@ -687,33 +680,29 @@ function PlannerOverlay:onInput(keys)
                     df.global.game.main_interface.bottom_mode_selected = -1
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
-                        if (self.subviews['item'..idx].available or 0) > 0 then
-                            local filter = filters[idx]
-                            active_screens[idx] = itemselection.ItemSelectionScreen{
-                                index=idx,
-                                desc=require('plugins.buildingplan').get_desc(filter),
-                                quantity=get_quantity(filter, is_hollow, bounds),
-                                on_submit=function(items)
-                                    chosen_items[idx] = items
-                                    active_screens[idx]:dismiss()
-                                    active_screens[idx] = nil
-                                    pending = pending - 1
-                                    if pending == 0 then
-                                        df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
-                                        self:place_building(self:restore_placement(), chosen_items)
-                                    end
-                                end,
-                                on_cancel=function()
-                                    for i,scr in pairs(active_screens) do
-                                        scr:dismiss()
-                                    end
+                        local filter = filters[idx]
+                        active_screens[idx] = itemselection.ItemSelectionScreen{
+                            index=idx,
+                            desc=require('plugins.buildingplan').get_desc(filter),
+                            quantity=get_quantity(filter, is_hollow, bounds),
+                            on_submit=function(items)
+                                chosen_items[idx] = items
+                                active_screens[idx]:dismiss()
+                                active_screens[idx] = nil
+                                pending = pending - 1
+                                if pending == 0 then
                                     df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
-                                    self:restore_placement()
-                                end,
-                            }:show()
-                        else
-                            pending = pending - 1
-                        end
+                                    self:place_building(self:restore_placement(), chosen_items)
+                                end
+                            end,
+                            on_cancel=function()
+                                for i,scr in pairs(active_screens) do
+                                    scr:dismiss()
+                                end
+                                df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
+                                self:restore_placement()
+                            end,
+                        }:show()
                     end
                 else
                     self:place_building(get_placement_data())

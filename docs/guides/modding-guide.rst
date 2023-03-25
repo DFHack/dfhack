@@ -38,9 +38,6 @@ require a mix of raw modding and DFHack scripting.
 The structure of a mod
 ----------------------
 
-For reference, `Tachy Guns <https://www.github.com/wolfboyft/tachy-guns>`__ is a
-full mod that conforms to this guide.
-
 In the example below, we'll use a mod name of ``example-mod``. I'm sure your
 mods will have more creative names! Mods have a basic structure that looks like
 this::

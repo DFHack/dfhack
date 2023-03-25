@@ -49,4 +49,4 @@ for the tag assignment spreadsheet.
 
 "misc" tags
 -----------
-- `untested <untested-tag-index>`: Tools that are not yet tested with the current release.
+- `unavailable <unavailable-tag-index>`: Tools that are not yet available for the current release.

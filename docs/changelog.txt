@@ -54,6 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `enable`: can now interpret aliases defined with the `alias` command
 
 ## Documentation
+- ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. all of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
 
 ## API
 

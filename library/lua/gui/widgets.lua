@@ -1121,10 +1121,10 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
                 end
             end
 
-            if token.tile then
+            if token.tile or (hovered and token.htile) then
                 x = x + 1
                 if dc then
-                    local tile = getval(token.tile)
+                    local tile = hovered and getval(token.htile or token.tile) or getval(token.tile)
                     local tile_pen = tonumber(tile) and to_pen{tile=tile} or tile
                     dc:char(nil, tile_pen)
                     if token.width then

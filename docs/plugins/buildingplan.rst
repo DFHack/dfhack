@@ -20,7 +20,10 @@ building. Once all items are attached, the construction job will be unsuspended
 and a dwarf will come and build the building. If you have the `unsuspend`
 overlay enabled (it is enabled by default), then buildingplan-suspended
 buildings will appear with a ``P`` marker on the main map, as opposed to the
-usual ``x`` marker for "regular" suspended buildings.
+usual ``x`` marker for "regular" suspended buildings. If you have
+`suspendmanager` running, then buildings will be left suspended when their
+items are all attached and ``suspendmanager`` will unsuspend them for
+construction when it is safe to do so.
 
 If you want to impose restrictions on which items are chosen for the buildings,
 buildingplan has full support for quality and material filters (see `below

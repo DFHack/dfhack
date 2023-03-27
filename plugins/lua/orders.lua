@@ -19,15 +19,37 @@ local function do_clear()
         function() dfhack.run_command('orders', 'clear') end)
 end
 
+local function get_import_choices()
+    return dfhack.run_command_silent('orders', 'list'):split('\n')
+end
+
 local function do_import()
-    local output = dfhack.run_command_silent('orders', 'list')
-    dialogs.ListBox{
-        frame_title='Import Manager Orders',
+    local dlg
+    local function get_dlg() return dlg end
+    dlg = dialogs.ListBox{
+        frame_title='Import/Delete Manager Orders',
         with_filter=true,
-        choices=output:split('\n'),
-        on_select=function(idx, choice)
+        choices=get_import_choices(),
+        on_select=function(_, choice)
             dfhack.run_command('orders', 'import', choice.text)
         end,
+        dismiss_on_select2=false,
+        on_select2=function(_, choice)
+            if choice.text:startswith('library/') then return end
+            local fname = 'dfhack-config/orders/'..choice.text..'.json'
+            if not dfhack.filesystem.isfile(fname) then return end
+            dialogs.showYesNoPrompt('Delete orders file?',
+                'Are you sure you want to delete "' .. fname .. '"?', nil,
+                function()
+                    print('deleting ' .. fname)
+                    os.remove(fname)
+                    local list = get_dlg().subviews.list
+                    local filter = list:getFilter()
+                    list:setChoices(get_import_choices(), list:getSelected())
+                    list:setFilter(filter)
+                end)
+        end,
+        select2_hint='Delete file',
     }:show()
 end
 

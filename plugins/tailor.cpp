@@ -288,8 +288,6 @@ public:
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                bool allocated = false;
-
                 if (wearing.count(ty) == 0)
                 {
                     if (available[std::make_pair(ty, usize)] > 0)
@@ -404,7 +402,6 @@ public:
             if (f == jobTypeMap.end())
                 continue;
 
-            auto sub = o->item_subtype;
             int race = o->hist_figure_id;
 
             for (auto& m : all_materials)

@@ -44,7 +44,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: you can no longer designate constructions on tiles with magma or deep water
 - `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
 - `buildingplan`: respect building size limits (e.g. roads and bridges cannot be more than 31 tiles in any dimension)
-- `tailor`: now properly discriminates between dyed and undyed cloth, no longer defaults to using adamantine, properly tracks material requirements for already queued orders, skips units who can't wear clothes, and hopefully won't over-order items anymore
+- `tailor`: properly discriminates between dyed and undyed cloth
+- `tailor`: no longer defaults to using adamantine
+- `tailor`: properly tracks material requirements for already queued orders
+- `tailor`: skips units who can't wear clothes
+- `tailor`: hopefully won't over-order items any more
 
 ## Misc Improvements
 - `buildingplan`: filters and global settings are now ignored when manually choosing items for a building

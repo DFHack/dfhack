@@ -192,13 +192,16 @@ public:
             available[std::make_pair(t, size)] += 1;
         }
 
-        for (auto& i : available)
+        if (DBG_NAME(cycle).isEnabled(DebugCategory::LDEBUG))
         {
-            df::item_type t;
-            int size;
-            std::tie(t, size) = i.first;
-            DEBUG(cycle).print("tailor: %d %s of size %d found\n",
-                i.second, ENUM_KEY_STR(item_type, t).c_str(), size);
+            for (auto& i : available)
+            {
+                df::item_type t;
+                int size;
+                std::tie(t, size) = i.first;
+                DEBUG(cycle).print("tailor: %d %s of size %d found\n",
+                    i.second, ENUM_KEY_STR(item_type, t).c_str(), size);
+            }
         }
     }
 

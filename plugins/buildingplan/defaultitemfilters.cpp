@@ -60,6 +60,8 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
     auto &serialized = filter_config.val();
     DEBUG(status,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
+    if (!jitems.size())
+        return;
     std::vector<std::string> elems;
     split_string(&elems, serialized, "|");
     std::vector<ItemFilter> filters = deserialize_item_filters(out, elems[0]);

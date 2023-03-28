@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `buildingplan`: filters and global settings are now ignored when manually choosing items for a building
+- `buildingplan`: if `suspendmanager` is running, then planned buildings will be left suspended when their items are all attached. `suspendmanager` will unsuspsend them for construction when it is safe to do so.
 - `confirm`: adds confirmation for removing burrows via the repaint menu
 - `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
 - `stockpiles`: support partial application of a saved config based on dynamic filtering

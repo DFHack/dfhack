@@ -72,7 +72,7 @@ static Tasks tasks;
 void PlannedBuilding::remove(color_ostream &out) {
     DEBUG(status,out).print("removing persistent data for building %d\n", id);
     World::DeletePersistentData(bld_config);
-    if (planned_buildings.count(id) > 0)
+    if (planned_buildings.count(id))
         planned_buildings.erase(id);
 }
 
@@ -212,9 +212,9 @@ static DefaultItemFilters & get_item_filters(color_ostream &out, const BuildingT
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
-        unordered_map<int32_t, PlannedBuilding> &planned_buildings);
+        unordered_map<int32_t, PlannedBuilding> &planned_buildings, bool unsuspend_on_finalize);
 
-static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb);
+static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bool unsuspend_on_finalize);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(status,out).print("initializing %s\n", plugin_name);
@@ -295,6 +295,16 @@ static int16_t get_subtype(df::building *bld) {
     return subtype;
 }
 
+static bool is_suspendmanager_enabled(color_ostream &out) {
+    bool suspendmanager_enabled = false;
+    call_buildingplan_lua(&out, "is_suspendmanager_enabled", 0, 1,
+            Lua::DEFAULT_LUA_LAMBDA,
+            [&](lua_State *L){
+                suspendmanager_enabled = lua_toboolean(L, -1);
+            });
+    return suspendmanager_enabled;
+}
+
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentData(CONFIG_KEY);
@@ -320,6 +330,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     vector<PersistentDataItem> building_configs;
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
+    bool unsuspend_on_finalize = !is_suspendmanager_enabled(out);
     for (size_t idx = 0; idx < num_building_configs; ++idx) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
@@ -334,7 +345,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
             pb.remove(out);
             continue;
         }
-        registerPlannedBuilding(out, pb);
+        registerPlannedBuilding(out, pb, unsuspend_on_finalize);
     }
 
     return CR_OK;
@@ -347,7 +358,8 @@ static void do_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
     cycle_requested = false;
 
-    buildingplan_cycle(out, tasks, planned_buildings);
+    bool unsuspend_on_finalize = !is_suspendmanager_enabled(out);
+    buildingplan_cycle(out, tasks, planned_buildings, unsuspend_on_finalize);
     call_buildingplan_lua(&out, "signal_reset");
 }
 
@@ -469,7 +481,7 @@ vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_it
     return ret;
 }
 
-static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
+static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bool unsuspend_on_finalize) {
     df::building * bld = pb.getBuildingIfValidOrRemoveIfNot(out);
     if (!bld)
         return false;
@@ -479,10 +491,15 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         return false;
     }
 
+    // suspend jobs
+    for (auto job : bld->jobs)
+        job->flags.bits.suspend = true;
+
     auto job_items = bld->jobs[0]->job_items;
     if (isJobReady(out, job_items)) {
         // all items are already attached
-        finalizeBuilding(out, bld);
+        finalizeBuilding(out, bld, unsuspend_on_finalize);
+        pb.remove(out);
         return true;
     }
 
@@ -507,10 +524,6 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
             }
         }
     }
-
-    // suspend jobs
-    for (auto job : bld->jobs)
-        job->flags.bits.suspend = true;
 
     // add the planned buildings to our register
     planned_buildings.emplace(bld->id, pb);
@@ -627,7 +640,9 @@ static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
 
     BuildingTypeKey key(bld->getType(), subtype, bld->getCustomType());
     PlannedBuilding pb(out, bld, get_heat_safety_filter(key), get_item_filters(out, key));
-    return registerPlannedBuilding(out, pb);
+
+    bool unsuspend_on_finalize = !is_suspendmanager_enabled(out);
+    return registerPlannedBuilding(out, pb, unsuspend_on_finalize);
 }
 
 static void doCycle(color_ostream &out) {

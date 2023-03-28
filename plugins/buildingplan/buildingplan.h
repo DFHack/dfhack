@@ -52,4 +52,4 @@ bool itemPassesScreen(df::item * item);
 df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat);
 bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<std::string> &special);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
-void finalizeBuilding(DFHack::color_ostream &out, df::building *bld);
+void finalizeBuilding(DFHack::color_ostream &out, df::building *bld, bool unsuspend_on_finalize);

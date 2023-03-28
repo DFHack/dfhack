@@ -457,6 +457,8 @@ Ok, you're all set up! Now, let's take a look at an example
     enabled = enabled or false
 
     function isEnabled()
+        -- this function is for the enabled API, the script won't show up on the
+        -- control panel without it
         return enabled
     end
 
@@ -471,6 +473,10 @@ Ok, you're all set up! Now, let's take a look at an example
         end
 
         dfhack.run_command('enable', 'example-mod')
+    end
+
+    if dfhack_flags.module then
+        return
     end
 
     if not dfhack_flags.enable then

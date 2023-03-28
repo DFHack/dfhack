@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `buildingplan`: filters and global settings are now ignored when manually choosing items for a building
+- `confirm`: adds confirmation for removing burrows via the repaint menu
 - `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
 - `stockpiles`: support partial application of a saved config based on dynamic filtering
 - `stockpiles`: additive and subtractive modes when applying a second stockpile configuration on top of a first

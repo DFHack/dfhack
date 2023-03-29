@@ -4901,8 +4901,8 @@ It has the following attributes:
 :label_below: If ``true``, then the option value will apear below the label
     instead of to the right of it. Defaults to ``false``.
 :options: A list of strings or tables of
-    ``{label=string, value=string[, pen=pen]}``. String options use the same
-    string for the label and value and the default pen. The optional ``pen``
+    ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
+    string for the label and value and use the default pen. The optional ``pen``
     element could be a color like ``COLOR_RED``.
 :initial_option: The value or numeric index of the initial option.
 :on_change: The callback to call when the selected option changes. It is called

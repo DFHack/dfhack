@@ -72,6 +72,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``widget.Label``: tokens can now specify a ``htile`` property to indicate the tile that should be shown when the Label is hovered over with the mouse
+- ``widget.Label``: click handlers no longer get the label itself as the first param to the click handler
+- ``widget.CycleHotkeyLabel``: options that are bare integers will no longer be interpreted as the pen color in addition to being the label and value
+- ``widget.CycleHotkeyLabel``: option labels and pens can now be functions that return a label or pen
 
 ## Removed
 

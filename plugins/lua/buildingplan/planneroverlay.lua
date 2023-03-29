@@ -307,7 +307,7 @@ end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
-    default_pos={x=5,y=9},
+    default_pos={x=5,y=8},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
     frame={w=56, h=20},
@@ -319,31 +319,46 @@ function PlannerOverlay:init()
 
     local main_panel = widgets.Panel{
         view_id='main',
-        frame={t=0, l=0, r=0, h=14},
-        frame_style=gui.MEDIUM_FRAME,
+        frame={t=1, l=0, r=0, h=14},
+        frame_style=gui.MEDIUM_FRAME_2,
         frame_background=gui.CLEAR_PEN,
         visible=function() return not self.minimized end,
     }
 
     local minimized_panel = widgets.Panel{
-        frame={t=0, r=0, w=4, h=1},
+        frame={t=0, r=1, w=17, h=1},
         subviews={
             widgets.Label{
-                frame={t=0, l=0, w=1, h=1},
-                text={{tile=pens.MINIMIZED_LEFT_PEN}},
-                visible=function() return self.minimized end,
-            },
-            widgets.Label{
-                frame={t=0, l=1, w=2, h=1},
-                text=string.char(31)..string.char(30),
+                frame={t=0, r=3, w=14, h=1},
+                text={' show Planner '},
                 text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
                 text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                visible=function() return self.minimized end,
                 on_click=function() self.minimized = not self.minimized end,
             },
             widgets.Label{
-                frame={t=0, r=0, w=1, h=1},
-                text={{tile=pens.MINIMIZED_RIGHT_PEN}},
+                frame={t=0, r=0, w=3, h=1},
+                text={'['..string.char(31)..']'},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
+                text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_LIGHTRED},
                 visible=function() return self.minimized end,
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=3, w=14, h=1},
+                text={' hide Planner '},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                visible=function() return not self.minimized end,
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=0, w=3, h=1},
+                text={'['..string.char(30)..']'},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
+                text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_LIGHTRED},
+                visible=function() return not self.minimized end,
+                on_click=function() self.minimized = not self.minimized end,
             },
         },
     }
@@ -532,20 +547,20 @@ function PlannerOverlay:init()
     local error_panel = widgets.ResizingPanel{
         view_id='errors',
         frame={t=14, l=0, r=0},
-        frame_style=gui.MEDIUM_FRAME,
+        frame_style=gui.BOLD_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=function() return not self.minimized end,
     }
 
     error_panel:addviews{
         widgets.WrappedLabel{
-            frame={t=0, l=0, r=0},
+            frame={t=0, l=1, r=0},
             text_pen=COLOR_LIGHTRED,
             text_to_wrap=get_placement_errors,
             visible=function() return #uibs.errors > 0 end,
         },
         widgets.Label{
-            frame={t=0, l=0, r=0},
+            frame={t=0, l=1, r=0},
             text_pen=COLOR_GREEN,
             text='OK to build',
             visible=function() return #uibs.errors == 0 end,

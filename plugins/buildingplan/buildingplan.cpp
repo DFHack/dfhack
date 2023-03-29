@@ -938,8 +938,10 @@ static int getMaterialFilter(lua_State *L) {
     return 1;
 }
 
-static void setChooseItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, bool choose) {
-    DEBUG(status,out).print("entering setChooseItems\n");
+static void setChooseItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int choose) {
+    DEBUG(status,out).print(
+            "entering setChooseItems building_type=%d subtype=%d custom=%d choose=%d\n",
+            type, subtype, custom, choose);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     filters.setChooseItems(choose);

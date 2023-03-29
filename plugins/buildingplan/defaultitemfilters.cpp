@@ -57,6 +57,9 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
         : key(getKey(filter_config)), filter_config(filter_config) {
     choose_items = get_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
+    if (choose_items < ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER ||
+            choose_items > ItemSelectionChoice::ITEM_SELECTION_CHOICE_AUTOMATERIAL)
+        choose_items = ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER;
     auto &serialized = filter_config.val();
     DEBUG(status,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());

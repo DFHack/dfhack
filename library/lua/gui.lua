@@ -916,6 +916,9 @@ end
 WINDOW_FRAME = make_frame('Window', true)
 PANEL_FRAME = make_frame('Panel', false)
 MEDIUM_FRAME = make_frame('Medium', false)
+MEDIUM_FRAME_2 = make_frame('Medium', false)
+MEDIUM_FRAME_2.signature_pen = false
+--BOLD_FRAME = make_frame('Bold', false) --why does this cause a shitton of errors every frame?
 INTERIOR_FRAME = make_frame('Thin', false)
 INTERIOR_FRAME.signature_pen = false
 

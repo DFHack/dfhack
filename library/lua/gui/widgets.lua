@@ -1361,11 +1361,11 @@ function Label:onInput(keys)
         return true
     end
     if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
-        self:on_click()
+        self.on_click()
         return true
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
-        self:on_rclick()
+        self.on_rclick()
         return true
     end
     for k,v in pairs(self.scroll_keys) do
@@ -1560,17 +1560,17 @@ function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
     end
 end
 
-local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key, require_key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
         return option[key]
     end
-    return option
+    return not require_key and option or nil
 end
 
 function CycleHotkeyLabel:getOptionLabel(option_idx)
-    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+    return getval(cyclehotkeylabel_getOptionElem(self, option_idx, 'label'))
 end
 
 function CycleHotkeyLabel:getOptionValue(option_idx)
@@ -1578,7 +1578,7 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
 end
 
 function CycleHotkeyLabel:getOptionPen(option_idx)
-    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    local pen = getval(cyclehotkeylabel_getOptionElem(self, option_idx, 'pen', true))
     if type(pen) == 'string' then return nil end
     return pen
 end

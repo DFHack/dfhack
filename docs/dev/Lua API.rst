@@ -4354,7 +4354,7 @@ There are the following predefined frame style tables:
 
 * ``MEDIUM_FRAME_2``
 
-  This version of MEDIUM_FRAME does *not* have a visible ``DFHack`` signature on it, 
+  This version of MEDIUM_FRAME does *not* have a visible ``DFHack`` signature on it,
   so it must not be used as the most external frame for a DFHack-owned UI.
 
 * ``BOLD_FRAME``

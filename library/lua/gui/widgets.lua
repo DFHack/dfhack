@@ -808,7 +808,7 @@ local function scrollbar_get_max_pos_and_height(scrollbar)
     local frame_body = scrollbar.frame_body
     local scrollbar_body_height = (frame_body and frame_body.height or 3) - 2
 
-    local height = math.max(1, math.floor(
+    local height = math.max(2, math.floor(
         (math.min(scrollbar.elems_per_page, scrollbar.num_elems) * scrollbar_body_height) /
         scrollbar.num_elems))
 
@@ -851,40 +851,49 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=922, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=923, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=946, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_DOWN_RIGHT_PEN = to_pen{tile=947, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=930, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=931, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=954, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=955, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_UP_LEFT_PEN = to_pen{tile=932, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN = to_pen{tile=933, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=960, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=961, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_LEFT_PEN = to_pen{tile=940, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_RIGHT_PEN = to_pen{tile=941, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=966, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=967, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_UP_LEFT_HOVER_PEN = to_pen{tile=924, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_UP_RIGHT_HOVER_PEN = to_pen{tile=925, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=936, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=937, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_LEFT_HOVER_PEN = to_pen{tile=930, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN = to_pen{tile=931, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_LEFT_HOVER_PEN = to_pen{tile=954, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_RIGHT_HOVER_PEN = to_pen{tile=955, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN = to_pen{tile=956, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN = to_pen{tile=957, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN = to_pen{tile=968, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN = to_pen{tile=969, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN = to_pen{tile=942, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN = to_pen{tile=943, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=966, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=967, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_BG_LEFT_PEN = to_pen{tile=934, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_BG_RIGHT_PEN = to_pen{tile=935, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
+local SBSO = 922 --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
+local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=SBSO+0, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=SBSO+1, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+24, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_PEN = to_pen{tile=SBSO+25, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=SBSO+6, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=SBSO+7, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=SBSO+30, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=SBSO+31, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_PEN = to_pen{tile=SBSO+10, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN = to_pen{tile=SBSO+11, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=SBSO+22, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=SBSO+23, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_PEN = to_pen{tile=SBSO+18, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_PEN = to_pen{tile=SBSO+19, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+42, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=SBSO+43, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_PEN = to_pen{tile=SBSO+26, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN = to_pen{tile=SBSO+27, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN = to_pen{tile=SBSO+38, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN = to_pen{tile=SBSO+39, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+2, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+3, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+14, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+15, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+8, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+9, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_HOVER_PEN = to_pen{tile=SBSO+32, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_HOVER_PEN = to_pen{tile=SBSO+33, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+34, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+35, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+46, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+47, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN = to_pen{tile=SBSO+20, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN = to_pen{tile=SBSO+21, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+44, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+45, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+28, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+29, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+40, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+41, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_LEFT_PEN = to_pen{tile=SBSO+12, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_RIGHT_PEN = to_pen{tile=SBSO+13, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
 
 function Scrollbar:onRenderBody(dc)
     -- don't draw if all elements are visible
@@ -915,6 +924,12 @@ function Scrollbar:onRenderBody(dc)
             if y == starty and y <= midy - 1 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_UP_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_UP_RIGHT_PEN)
+            elseif y == midy - 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN)
+            elseif y == midy + 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN)
             elseif y == midy - 0.5 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN)
@@ -1065,7 +1080,26 @@ local function is_disabled(token)
            (token.enabled ~= nil and not getval(token.enabled))
 end
 
-function render_text(obj,dc,x0,y0,pen,dpen,disabled)
+-- Make the hover pen -- that is a pen that should render elements that has the
+-- mouse hovering over it. if hpen is specified, it just checks the fields and
+-- returns it (in parsed pen form)
+local function make_hpen(pen, hpen)
+    if not hpen then
+        pen = dfhack.pen.parse(pen)
+
+        -- Swap the foreground and background
+        hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
+    end
+
+    -- text_hpen needs a character in order to paint the background using
+    -- Painter:fill(), so let's make it paint a space to show the background
+    -- color
+    local hpen_parsed = dfhack.pen.parse(hpen)
+    hpen_parsed.ch = string.byte(' ')
+    return hpen_parsed
+end
+
+function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
     local width = 0
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]
@@ -1087,11 +1121,11 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 end
             end
 
-            if token.tile then
+            if token.tile or (hovered and token.htile) then
                 x = x + 1
                 if dc then
-                    local tile_pen = tonumber(token.tile) and
-                            to_pen{tile=token.tile} or token.tile
+                    local tile = hovered and getval(token.htile or token.tile) or getval(token.tile)
+                    local tile_pen = tonumber(tile) and to_pen{tile=tile} or tile
                     dc:char(nil, tile_pen)
                     if token.width then
                         dc:advance(token.width-1)
@@ -1105,16 +1139,25 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
                 if dc then
                     local tpen = getval(token.pen)
+                    local dcpen = to_pen(tpen or pen)
+
+                    -- If disabled, figure out which dpen to use
                     if disabled or is_disabled(token) then
-                        dc:pen(getval(token.dpen) or tpen or dpen)
+                        dcpen = to_pen(getval(token.dpen) or tpen or dpen)
                         if keypen.fg ~= COLOR_BLACK then
                             keypen.bold = false
                         end
-                    else
-                        dc:pen(tpen or pen)
-                    end
-                end
 
+                        -- if hovered *and* disabled, combine both effects
+                        if hovered then
+                            dcpen = make_hpen(dcpen)
+                        end
+                    elseif hovered then
+                        dcpen = make_hpen(dcpen, getval(token.hpen) or hpen)
+                    end
+
+                    dc:pen(dcpen)
+                end
                 local width = getval(token.width)
                 local padstr
                 if width then
@@ -1189,7 +1232,7 @@ Label = defclass(Label, Widget)
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY, -- disabled
-    text_hpen = DEFAULT_NIL, -- highlight - default is text_pen with reversed brightness
+    text_hpen = DEFAULT_NIL, -- hover - default is to invert the fg/bg colors
     disabled = DEFAULT_NIL,
     enabled = DEFAULT_NIL,
     auto_height = true,
@@ -1206,12 +1249,7 @@ function Label:init(args)
 
     self:addviews{self.scrollbar}
 
-    -- use existing saved text if no explicit text was specified. this avoids
-    -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
-    if not self.text_hpen then
-        self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
-    end
 end
 
 local function update_label_scrollbar(label)
@@ -1259,12 +1297,16 @@ function Label:getTextWidth()
     return self.text_width
 end
 
+-- Overridden by subclasses that also want to add new mouse handlers, see
+-- HotkeyLabel.
+function Label:shouldHover()
+    return self.on_click or self.on_rclick
+end
+
 function Label:onRenderBody(dc)
     local text_pen = self.text_pen
-    if self:getMousePos() and (self.on_click or self.on_rclick) then
-        text_pen = self.text_hpen
-    end
-    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
+    local hovered = self:getMousePos() and self:shouldHover()
+    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self), self.text_hpen, hovered)
 end
 
 function Label:on_scrollbar(scroll_spec)
@@ -1404,6 +1446,25 @@ HotkeyLabel.ATTRS{
 }
 
 function HotkeyLabel:init()
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setOnActivate(on_activate)
+    self.on_activate = on_activate
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setLabel(label)
+    self.label = label
+    self:initializeLabel()
+end
+
+function HotkeyLabel:shouldHover()
+    -- When on_activate is set, text should also hover on mouseover
+    return self.on_activate or HotkeyLabel.super.shouldHover(self)
+end
+
+function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
 end
@@ -1411,7 +1472,8 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+            and not is_disabled(self) then
         self.on_activate()
         return true
     end
@@ -1425,8 +1487,10 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
+    key_back=DEFAULT_NIL,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
+    label_below=false,
     options=DEFAULT_NIL,
     initial_option=1,
     on_change=DEFAULT_NIL,
@@ -1435,21 +1499,35 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
+    local val_gap = 1
+    if self.label_below then
+        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+    end
+
     self:setText{
+        self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        ' ',
-        {text=self:callback('getOptionLabel'),
+        self.label_below and NEWLINE or '',
+        {gap=val_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end
 
-function CycleHotkeyLabel:cycle()
+-- CycleHotkeyLabels are always clickable and therefore should always change
+-- color when hovered.
+function CycleHotkeyLabel:shouldHover()
+    return true
+end
+
+function CycleHotkeyLabel:cycle(backwards)
     local old_option_idx = self.option_idx
-    if self.option_idx == #self.options then
+    if self.option_idx == #self.options and not backwards then
         self.option_idx = 1
+    elseif self.option_idx == 1 and backwards then
+        self.option_idx = #self.options
     else
-        self.option_idx = self.option_idx + 1
+        self.option_idx = self.option_idx + (not backwards and 1 or -1)
     end
     if self.on_change then
         self.on_change(self:getOptionValue(),
@@ -1508,7 +1586,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end
@@ -1532,6 +1610,7 @@ List = defclass(List, Widget)
 
 List.ATTRS{
     text_pen = COLOR_CYAN,
+    text_hpen = DEFAULT_NIL, -- hover color, defaults to inverting the FG/BG pens for each text object
     cursor_pen = COLOR_LIGHTCYAN,
     inactive_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
@@ -1619,6 +1698,9 @@ end
 
 function List:postComputeFrame(body)
     self.page_size = math.max(1, math.floor(body.height / self.row_height))
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    end
     update_list_scrollbar(self)
 end
 
@@ -1709,12 +1791,16 @@ function List:onRenderBody(dc)
         end
     end
 
+    local hoveridx = self:getIdxUnderMouse()
     for i = top,iend do
         local obj = choices[i]
         local current = (i == self.selected)
-        local cur_pen = self.cursor_pen
-        local cur_dpen = self.text_pen
-        local active_pen = current and cur_pen or cur_dpen
+        local hovered = (i == hoveridx)
+        -- cur_pen and cur_dpen can't be integers or background colors get
+        -- messed up in render_text for subsequent renders
+        local cur_pen = to_pen(self.cursor_pen)
+        local cur_dpen = to_pen(self.text_pen)
+        local active_pen = (current and cur_pen or cur_dpen)
 
         if not getval(self.active) then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -1728,7 +1814,7 @@ function List:onRenderBody(dc)
             paint_icon(icon, obj)
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current)
+        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current, self.text_hpen, hovered)
 
         local ip = dc.width
 
@@ -1846,10 +1932,12 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
+    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
     edit_on_char = DEFAULT_NIL,
+    edit_on_change = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
@@ -1860,10 +1948,18 @@ function FilteredList:init(info)
         end
     end
 
+    local on_change = self:callback('onFilterChange')
+    if self.edit_on_change then
+        on_change = function(text)
+            self.edit_on_change(text)
+            self:onFilterChange(text)
+        end
+    end
+
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
-        on_change = self:callback('onFilterChange'),
+        on_change = on_change,
         on_char = on_char,
         key = self.edit_key,
         ignore_keys = self.edit_ignore_keys,
@@ -2006,11 +2102,17 @@ function FilteredList:setFilter(filter, pos)
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)
-                if key ~= '' and
-                        not search_key:match('%f[^%p\x00]'..key) and
+                if key ~= '' then
+                    if not self.case_sensitive then
+                        search_key = string.lower(search_key)
+                        key = string.lower(key)
+                    end
+
+                    if not search_key:match('%f[^%p\x00]'..key) and
                         not search_key:match('%f[^%s\x00]'..key) then
-                    ok = false
-                    break
+                            ok = false
+                            break
+                    end
                 end
             end
             if ok then
@@ -2037,6 +2139,158 @@ function FilteredList:onFilterChar(char, text)
         return string.match(text, '%S$')
     end
     return true
+end
+
+local DEFAULT_ACTIVE_TAB_PENS = {
+    text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
+    text_mode_label_pen=to_pen{fg=COLOR_WHITE},
+    lt=to_pen{tile=1005, write_to_lower=true},
+    lt2=to_pen{tile=1006, write_to_lower=true},
+    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=1008, write_to_lower=true},
+    rt=to_pen{tile=1009, write_to_lower=true},
+    lb=to_pen{tile=1015, write_to_lower=true},
+    lb2=to_pen{tile=1016, write_to_lower=true},
+    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=1018, write_to_lower=true},
+    rb=to_pen{tile=1019, write_to_lower=true},
+}
+
+local DEFAULT_INACTIVE_TAB_PENS = {
+    text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
+    text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
+    lt=to_pen{tile=1000, write_to_lower=true},
+    lt2=to_pen{tile=1001, write_to_lower=true},
+    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=1003, write_to_lower=true},
+    rt=to_pen{tile=1004, write_to_lower=true},
+    lb=to_pen{tile=1010, write_to_lower=true},
+    lb2=to_pen{tile=1011, write_to_lower=true},
+    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=1013, write_to_lower=true},
+    rb=to_pen{tile=1014, write_to_lower=true},
+}
+
+---------
+-- Tab --
+---------
+
+Tab = defclass(Tabs, Widget)
+Tab.ATTRS{
+    id=DEFAULT_NIL,
+    label=DEFAULT_NIL,
+    on_select=DEFAULT_NIL,
+    get_pens=DEFAULT_NIL,
+}
+
+function Tab:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.w = #init_table.label + 4
+    init_table.frame.h = 2
+end
+
+function Tab:onRenderBody(dc)
+    local pens = self.get_pens()
+    dc:seek(0, 0)
+    if dfhack.screen.inGraphicsMode() then
+        dc:char(nil, pens.lt):char(nil, pens.lt2)
+        for i=1,#self.label do
+            dc:char(self.label:sub(i,i), pens.t)
+        end
+        dc:char(nil, pens.rt2):char(nil, pens.rt)
+        dc:seek(0, 1)
+        dc:char(nil, pens.lb):char(nil, pens.lb2)
+        for i=1,#self.label do
+            dc:char(self.label:sub(i,i), pens.b)
+        end
+        dc:char(nil, pens.rb2):char(nil, pens.rb)
+    else
+        local tp = pens.text_mode_tab_pen
+        dc:char(' ', tp):char('/', tp)
+        for i=1,#self.label do
+            dc:char('-', tp)
+        end
+        dc:char('\\', tp):char(' ', tp)
+        dc:seek(0, 1)
+        dc:char('/', tp):char('-', tp)
+        dc:string(self.label, pens.text_mode_label_pen)
+        dc:char('-', tp):char('\\', tp)
+    end
+end
+
+function Tab:onInput(keys)
+    if Tab.super.onInput(self, keys) then return true end
+    if keys._MOUSE_L_DOWN and self:getMousePos() then
+        self.on_select(self.id)
+        return true
+    end
+end
+
+-------------
+-- Tab Bar --
+-------------
+
+TabBar = defclass(TabBar, ResizingPanel)
+TabBar.ATTRS{
+    labels=DEFAULT_NIL,
+    on_select=DEFAULT_NIL,
+    get_cur_page=DEFAULT_NIL,
+    active_tab_pens=DEFAULT_ACTIVE_TAB_PENS,
+    inactive_tab_pens=DEFAULT_INACTIVE_TAB_PENS,
+    get_pens=DEFAULT_NIL,
+    key=DEFAULT_NIL,
+    key_back=DEFAULT_NIL,
+}
+
+function TabBar:init()
+    for idx,label in ipairs(self.labels) do
+        self:addviews{
+            Tab{
+                frame={t=0, l=0},
+                id=idx,
+                label=label,
+                on_select=self.on_select,
+                get_pens=self.get_pens and function()
+                    return self.get_pens(idx, self)
+                end or function()
+                    if self.get_cur_page() == idx then
+                        return self.active_tab_pens
+                    end
+
+                    return self.inactive_tab_pens
+                end,
+            }
+        }
+    end
+end
+
+function TabBar:postComputeFrame(body)
+    local t, l, width = 0, 0, body.width
+    for _,tab in ipairs(self.subviews) do
+        if l > 0 and l + tab.frame.w > width then
+            t = t + 2
+            l = 0
+        end
+        tab.frame.t = t
+        tab.frame.l = l
+        l = l + tab.frame.w
+    end
+end
+
+function TabBar:onInput(keys)
+    if TabBar.super.onInput(self, keys) then return true end
+    if self.key and keys[self.key] then
+        local zero_idx = self.get_cur_page() - 1
+        local next_zero_idx = (zero_idx + 1) % #self.labels
+        self.on_select(next_zero_idx + 1)
+        return true
+    end
+    if self.key_back and keys[self.key_back] then
+        local zero_idx = self.get_cur_page() - 1
+        local prev_zero_idx = (zero_idx - 1) % #self.labels
+        self.on_select(prev_zero_idx + 1)
+        return true
+    end
 end
 
 return _ENV

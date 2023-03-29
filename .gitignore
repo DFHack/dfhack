@@ -9,7 +9,6 @@
 build*/
 nix
 buntu
-build/VC2010
 
 #except for the real one
 !build/
@@ -37,6 +36,7 @@ build/lua
 build/bin
 build/depends
 build/library
+build/package
 build/plugins
 build/scripts
 build/install_manifest.txt

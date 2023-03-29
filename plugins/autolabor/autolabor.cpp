@@ -35,7 +35,7 @@
 #include <df/plotinfost.h>
 #include <df/activity_info.h>
 #include <df/global_objects.h>
-#include <df/gamest.h>
+#include <df/gamest_extra.h>
 
 #include <MiscUtils.h>
 
@@ -51,7 +51,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("autolabor");
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(game);
+REQUIRE_GLOBAL(game_extra);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -414,7 +414,7 @@ static void enable_plugin(color_ostream &out)
     cleanup_state();
     init_state();
 
-    df::global::game->external_flag |= 1; // shut down DF's work detail system
+    df::global::game_extra->external_flag |= 1; // shut down DF's work detail system
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -761,7 +761,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            INFO(cycle,out).print(trader_requested
+            TRACE(cycle,out).print(trader_requested
                 ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
                 : "Trade depot found but trader is not requested.\n"
                 );
@@ -835,13 +835,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         for (auto& act : plotinfo->activities)
         {
             if (!act) continue;
-            bool p1 = act->unit_actor == dwarfs[dwarf];
-            bool p2 = act->unit_noble == dwarfs[dwarf];
+            bool p1 = act->unit_actor == dwarfs[dwarf]->id;
+            bool p2 = act->unit_noble == dwarfs[dwarf]->id;
 
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
+                DEBUG(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
                     dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }
@@ -1084,7 +1084,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
         enable_autolabor = false;
         setOptionEnabled(CF_ENABLED, false);
 
-        df::global::game->external_flag &= ~1; // reenable DF's work detail system
+        df::global::game_extra->external_flag &= ~1; // reenable DF's work detail system
 
         out << "Autolabor is disabled." << std::endl;
     }

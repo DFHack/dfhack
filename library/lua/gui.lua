@@ -697,6 +697,19 @@ DEFAULT_INITIAL_PAUSE = true
 
 local zscreen_inhibit_mouse_l = false
 
+-- ensure underlying DF screens don't also react to handled clicks
+function markMouseClicksHandled(keys)
+    if keys._MOUSE_L_DOWN then
+        -- note we can't clear mouse_lbut here. otherwise we break dragging,
+        df.global.enabler.mouse_lbut_down = 0
+        zscreen_inhibit_mouse_l = true
+    end
+    if keys._MOUSE_R_DOWN then
+        df.global.enabler.mouse_rbut_down = 0
+        df.global.enabler.mouse_rbut = 0
+    end
+end
+
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -708,8 +721,9 @@ ZScreen.ATTRS{
 }
 
 function ZScreen:preinit(args)
-    if args.initial_pause == nil then
-        args.initial_pause = DEFAULT_INITIAL_PAUSE
+    if self.ATTRS.initial_pause == nil then
+        args.initial_pause = DEFAULT_INITIAL_PAUSE or
+                (self.ATTRS.pass_mouse_clicks == false)
     end
 end
 
@@ -781,15 +795,7 @@ function ZScreen:onInput(keys)
     end
 
     if ZScreen.super.onInput(self, keys) then
-        -- ensure underlying DF screens don't also react to handled clicks
-        if keys._MOUSE_L_DOWN then
-            -- note we can't clear mouse_lbut here. otherwise we break dragging,
-            df.global.enabler.mouse_lbut_down = 0
-            zscreen_inhibit_mouse_l = true
-        end
-        if keys._MOUSE_R_DOWN then
-            df.global.enabler.mouse_rbut_down = 0
-        end
+        markMouseClicksHandled(keys)
         return
     end
 
@@ -799,9 +805,7 @@ function ZScreen:onInput(keys)
         return
     elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
-        -- ensure underlying DF screens don't also react to the rclick
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
+        markMouseClicksHandled(keys)
         return
     else
         if zscreen_inhibit_mouse_l then
@@ -912,7 +916,8 @@ end
 WINDOW_FRAME = make_frame('Window', true)
 PANEL_FRAME = make_frame('Panel', false)
 MEDIUM_FRAME = make_frame('Medium', false)
-THIN_FRAME = make_frame('Thin', false)
+INTERIOR_FRAME = make_frame('Thin', false)
+INTERIOR_FRAME.signature_pen = false
 
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = WINDOW_FRAME
@@ -983,4 +988,10 @@ function FramedScreen:onRenderFrame(dc, rect)
     paint_frame(dc,rect,self.frame_style,self.frame_title)
 end
 
+-- Inverts the brightness of the color, optionally taking a "bold" parameter,
+-- which you should include if you're reading the fg color of a pen.
+function invert_color(color, bold)
+    color = bold and (color + 8) or color
+    return (color + 8) % 16
+end
 return _ENV

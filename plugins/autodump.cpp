@@ -287,13 +287,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Destroy items marked for dumping under the keyboard cursor.",
         df_autodump_destroy_here,
         Gui::cursor_hotkey));
-    /* you can no longer select items
     commands.push_back(PluginCommand(
         "autodump-destroy-item",
         "Destroy the selected item.",
         df_autodump_destroy_item,
         Gui::any_item_hotkey));
-        */
     return CR_OK;
 }
 
@@ -335,7 +333,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         return CR_WRONG_USAGE;
     }
 
-    //DFHack::VersionInfo *mem = Core::getInstance().vinfo;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -399,18 +396,22 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         if (!need_forbidden && itm->flags.bits.forbid)
             continue;
 
-        if(!destroy) // move to cursor
+        if (!destroy) // move to cursor
         {
-            // Change flags to indicate the dump was completed, as if by super-dwarfs
-            itm->flags.bits.dump = false;
-            itm->flags.bits.forbid = true;
-
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
             {
-                if (!Items::moveToGround(MC, itm, pos_cursor))
+                if (Items::moveToGround(MC, itm, pos_cursor))
+                {
+                    // Change flags to indicate the dump was completed, as if by super-dwarfs
+                    itm->flags.bits.dump = false;
+                    itm->flags.bits.forbid = true;
+                }
+                else
+                {
                     out.print("Could not move item: %s\n",
-                              Items::getDescription(itm, 0, true).c_str());
+                        Items::getDescription(itm, 0, true).c_str());
+                }
             }
         }
         else // destroy
@@ -461,9 +462,10 @@ static int last_frame = 0;
 
 command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
 
     df::item *item = Gui::getSelectedItem(out);
     if (!item)

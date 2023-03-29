@@ -55,6 +55,7 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Military.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
@@ -478,7 +479,7 @@ static void OpenPersistent(lua_State *state)
 
 static int DFHACK_MATINFO_TOKEN = 0;
 
-void Lua::Push(lua_State *state, MaterialInfo &info)
+void Lua::Push(lua_State *state, const MaterialInfo &info)
 {
     if (!info.isValid())
     {
@@ -1471,13 +1472,13 @@ static int gui_getMousePos(lua_State *L)
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getDFViewscreen),
-    WRAPM(Gui, getFocusString),
-    WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, getSelectedBuilding),
+    WRAPM(Gui, getSelectedCivZone),
+    WRAPM(Gui, getSelectedStockpile),
     WRAPM(Gui, getSelectedPlant),
     WRAPM(Gui, getAnyUnit),
     WRAPM(Gui, getAnyItem),
@@ -1495,8 +1496,23 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
+    WRAPM(Gui, matchFocusString),
     { NULL, NULL }
 };
+
+static int gui_getFocusStrings(lua_State *state) {
+    df::viewscreen *r = Lua::GetDFObject<df::viewscreen>(state, 1);
+    std::vector<std::string> focusStrings = Gui::getFocusStrings(r);
+    Lua::PushVector(state, focusStrings);
+    return 1;
+}
+
+static int gui_getCurFocus(lua_State *state) {
+    bool skip_dismissed = lua_toboolean(state, 1);
+    std::vector<std::string> cur_focus = Gui::getCurFocus(skip_dismissed);
+    Lua::PushVector(state, cur_focus);
+    return 1;
+}
 
 static int gui_autoDFAnnouncement(lua_State *state)
 {
@@ -1623,6 +1639,8 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "pauseRecenter", gui_pauseRecenter },
     { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
+    { "getFocusStrings", gui_getFocusStrings },
+    { "getCurFocus", gui_getCurFocus },
     { NULL, NULL }
 };
 
@@ -1642,6 +1660,7 @@ static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
 }
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
+    WRAPM(Job,attachJobItem),
     WRAPM(Job,cloneJobStruct),
     WRAPM(Job,printItemDetails),
     WRAPM(Job,printJobDetails),
@@ -1740,6 +1759,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isTamable),
     WRAPM(Units, isDomesticated),
     WRAPM(Units, isMarkedForSlaughter),
+    WRAPM(Units, isMarkedForGelding),
+    WRAPM(Units, isGeldable),
     WRAPM(Units, isGelded),
     WRAPM(Units, isEggLayer),
     WRAPM(Units, isGrazer),
@@ -1747,6 +1768,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isForest),
     WRAPM(Units, isMischievous),
     WRAPM(Units, isAvailableForAdoption),
+    WRAPM(Units, isPet),
     WRAPM(Units, hasExtravision),
     WRAPM(Units, isOpposedToLife),
     WRAPM(Units, isBloodsucker),
@@ -1791,7 +1813,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getGoalType),
     WRAPM(Units, getGoalName),
     WRAPM(Units, isGoalAchieved),
-    WRAPM(Units, getSquadName),
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1913,6 +1934,15 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
     { "getStressCutoffs", units_getStressCutoffs },
+    { NULL, NULL }
+};
+
+/***** Military Module *****/
+
+static const LuaWrapper::FunctionReg dfhack_military_module[] = {
+    WRAPM(Military, makeSquad),
+    WRAPM(Military, updateRoomAssignments),
+    WRAPM(Military, getSquadName),
     { NULL, NULL }
 };
 
@@ -3426,6 +3456,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_module);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
+    OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);

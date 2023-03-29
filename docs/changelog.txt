@@ -34,23 +34,175 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `getplants`: getplants is now available
+- `prospector`: prospector tool in fort mode is now available. embark prospect is not yet available and is disabled at this time.
 
 ## Fixes
+- `buildingplan`: filters are now properly applied to planned stairs
+- `buildingplan`: existing carved up/down stairs are now taken into account when determining which stair shape to construct
+- `buildingplan`: upright spike traps are now placed extended rather than retracted
+- `buildingplan`: you can no longer designate constructions on tiles with magma or deep water
+- `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
+- `buildingplan`: respect building size limits (e.g. roads and bridges cannot be more than 31 tiles in any dimension)
+- `tailor`: properly discriminates between dyed and undyed cloth
+- `tailor`: no longer defaults to using adamantine
+- `tailor`: properly tracks material requirements for already queued orders
+- `tailor`: skips units who can't wear clothes
+- `tailor`: hopefully won't over-order items any more
 
 ## Misc Improvements
+- `buildingplan`: filters and global settings are now ignored when manually choosing items for a building
+- `buildingplan`: if `suspendmanager` is running, then planned buildings will be left suspended when their items are all attached. `suspendmanager` will unsuspsend them for construction when it is safe to do so.
+- `confirm`: adds confirmation for removing burrows via the repaint menu
+- `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
+- `stockpiles`: support partial application of a saved config based on dynamic filtering
+- `stockpiles`: additive and subtractive modes when applying a second stockpile configuration on top of a first
+- `stockpiles`: write player-exported stockpile configurations to the ``dfhack-config/stockpiles`` folder. If you have any stockpile configs in other directories, please move them to that folder.
+- `stockpiles`: now includes a library of useful stockpile configs (see docs for details)
+- `automelt`: now allows metal chests to be melted (workaround for DF bug 2493 is no longer needed)
+- `orders`: add minimize button to overlay panel so you can get it out of the way to read long statue descriptions when choosing a subject in the details screen
+- `orders`: add option to delete exported files from the import dialog
+- `enable`: can now interpret aliases defined with the `alias` command
+- scripts in installed mods are now automatically added to the DFHack script path. DFHack recognizes two directories in a mod's folder: ``scripts_modinstalled/`` and ``scripts_modactive/``. ``scripts_modinstalled/`` folders will always be added the script path, regardless of whether the mod is active in a world. ``scripts_modactive/`` folders will only be added to the script path when the mod is active in the current loaded world.
+
+## Documentation
+- ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. all of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
+
+## API
+
+## Lua
+- ``widget.Label``: tokens can now specify a ``htile`` property to indicate the tile that should be shown when the Label is hovered over with the mouse
+
+## Removed
+
+# 50.07-beta1
+
+## Fixes
+-@ `buildingplan`: items are now attached correctly to screw pumps and other multi-item buildings
+-@ `buildingplan`: buildings with different material filters will no longer get "stuck" if one of the filters currently matches no items
+- `showmood` properly count required number of bars and cloth when they aren't the main item for the strange mood
+
+## Misc Improvements
+-@ `buildingplan`: can now filter by clay materials
+-@ `buildingplan`: remember choice per building type for whether the player wants to choose specific items
+-@ `buildingplan`: you can now attach multiple weapons to spike traps
+-@ `buildingplan`: can now filter by whether a slab is engraved
+-@ `buildingplan`: add "minimize" button to temporarily get the planner overlay out of the way if you would rather use the vanilla UI for placing the current building
+-@ `buildingplan`: add ``buildingplan reset`` command for resetting all filters to defaults
+-@ `buildingplan`: rename "Build" button to "Confirm" on the item selection dialog and change the hotkey from "B" to "C"
+- `blueprint`: now writes blueprints to the ``dfhack-config/blueprints`` directory
+- `blueprint-library-guide`: library blueprints have moved from ``blueprints`` to ``hack/data/blueprints``
+- `blueprint-library-guide`: player-created blueprints should now go in the ``dfhack-config/blueprints`` folder. please move your existing blueprints from ``blueprints`` to ``dfhack-config/blueprints``. you don't need to move the library blueprints -- those can be safely deleted from the old ``blueprints`` directory.
+-@ `showmood`: clarify how many bars and/or cloth items are actually needed for the mood
+
+## Removed
+-@ `buildingplan`: "heat safety" setting is temporarily removed while we investigate incorrect item matching
+
+# 50.07-alpha3
+
+## Fixes
+-@ ``widgets.HotkeyLabel``: don't trigger on click if the widget is disabled
+- ``dfhack.job.isSuitableMaterial``: now properly detects lack of fire and magma safety for vulnerable materials with high melting points
+- `dig-now`: fixed multi-layer channel designations only channeling every second layer
+
+## Misc Improvements
+- `dig-now`: added handling of dig designations that have been converted into active jobs
+- `buildingplan`: entirely new UI for building placement, item selection, and materials filtering!
+
+## API
+- Gui focus strings will no longer get the "dfhack/" prefix if the string "dfhack/" already exists in the focus string
+- ``Military``: New module for military functionality
+- ``Military``: new ``makeSquad`` to create a squad
+- ``Military``: changed ``getSquadName`` to take a squad identifier
+- ``Military``: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range
+- ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
+- ``Maps::GetBiomeTypeRef`` renamed to ``Maps::getBiomeTypeRef`` for consistency
+
+## Lua
+- ``dfhack.job.attachJobItem()``: allows you to attach specific items to a job
+- ``dfhack.screen.paintTile()``: you can now explicitly clear the interface cursor from a map tile by passing ``0`` as the tile value
+- ``widgets.Label``: token ``tile`` properties can now be functions that return a value
+- ``widgets.CycleHotkeyLabel``: add ``label_below`` attribute for compact 2-line output
+-@ ``widgets.FilteredList``: search key matching is now case insensitive by default
+-@ ``gui.INTERIOR_FRAME``: a panel frame style for use in highlighting off interior areas of a UI
+- ``maps.getBiomeType``: exposed preexisting function to Lua
+
+## Removed
+-@ ``gui.THIN_FRAME``: replaced by ``gui.INTERIOR_FRAME``
+- `automaterial`: all functionality has been merged into `buildingplan`
+
+# 50.07-alpha2
+
+## Fixes
+-@ `nestboxes`: fixed bug causing nestboxes themselves to be forbidden, which prevented citizens from using them to lay eggs. Now only eggs are forbidden.
+- `autobutcher`: implemented work-around for Dwarf Fortress not setting nicknames properly, so that nicknames created in the in-game interface are detected & protect animals from being butchered properly. Note that nicknames for unnamed units are not currently saved by dwarf fortress - use ``enable fix/protect-nicks`` to fix any nicknames created/removed within dwarf fortress so they can be saved/reloaded when you reload the game.
+-@ `seedwatch`: fix saving and loading of seed stock targets
+- `autodump`: changed behaviour to only change ``dump`` and ``forbid`` flags if an item is successfully dumped.
+-@ `autochop`: generate default names for burrows with no assigned names
+- ``Buildings::StockpileIterator``: fix check for stockpile items on block boundary.
+- `tailor`: block making clothing sized for toads; make replacement clothing orders use the size of the wearer, not the size of the garment
+-@ `confirm`: fix fps drop when enabled
+- `channel-safely`: fix an out of bounds error regarding the REPORT event listener receiving (presumably) stale id's
+
+## Misc Improvements
+- `autobutcher`: logs activity to the console terminal instead of making disruptive in-game announcements
+- DFHack tool windows that capture mouse clicks (and therefore prevent you from clicking on the "pause" button) now unconditionally pause the game when they open (but you can still unpause with the keyboard if you want to). Examples of this behavior: `gui/quickfort`, `gui/blueprint`, `gui/liquids`
+- `showmood`: now shows the number of items needed for cloth and bars in addition to the technically correct but always confusing "total dimension" (150 per bar or 10,000 per cloth)
+-@ Stopped mouse clicks from affecting the map when a click on a DFHack screen dismisses the window
+- `confirm`: configuration data is now persisted globally.
+- `tailor`: add support for adamantine cloth (off by default); improve logging
+
+## API
+- ``Gui::any_civzone_hotkey``, ``Gui::getAnyCivZone``, ``Gui::getSelectedCivZone``:  new functions to operate on the new zone system
+- Units module: added new predicates for ``isGeldable()``, ``isMarkedForGelding()``, and ``isPet()``
+
+## Lua
+- ``dfhack.gui.getSelectedCivZone``: returns the Zone that the user has selected currently
+- ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
+- ``widgets.TabBar``: new library widget (migrated from control-panel.lua)
+
+# 50.07-alpha1
+
+## Fixes
+- ``Units::isFortControlled``: Account for agitated wildlife
+-@ Fix right click sometimes closing both a DFHack window and a vanilla panel
+- Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
+- `channel-safely`: fixed bug resulting in marker mode never being set for any designation
+-@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+-@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+- `nestboxes`: now cancels any in-progress hauling jobs when it protects a fertile egg
+-@ Fix persisted data not being written on manual save
+- `nestboxes`: now scans for eggs more frequently and cancels any in-progress hauling jobs when it protects a fertile egg
+
+## Misc Improvements
+-@ `automelt`: is now more resistent to vanilla savegame corruption
+-@ `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+- `misery`: now persists state with the fort
+-@ `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
+- `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
+-@ `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
+-@ `clean`: new hotkey for `spotclean`: Ctrl-C
+- `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
+- `autobutcher`: now immediately loads races available at game start into the watchlist
+-@ replaced DFHack logo used for the hover hotspot with a crisper image
+-@ `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
+- `stonesense`: added an ``INVERT_MOUSE_Z`` option to invert the mouse wheel direction
 
 ## Documentation
 
 ## API
 
 ## Lua
-
-## Removed
+- `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
+- ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
+- ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
+- ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
 
 # 50.05-alpha3.1
 
 ## Fixes
-- `seedwatch`: fix parameter parsing when setting targets
+-@ `seedwatch`: fix parameter parsing when setting targets
 
 # 50.05-alpha3
 
@@ -68,22 +220,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autochop`: fixed a crash when processing trees with corrupt data structures (e.g. when a trunk tile fails to fall when the rest of the tree is chopped down)
 
 ## Misc Improvements
-- DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
+-@ DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
 - `getplants`: ID values will now be accepted regardless of case
-- Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
+-@ Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
 -@ New borders for DFHack tool windows -- tell us what you think!
-- `autoclothing`: merged the two separate reports into the same command.
+-@ `autoclothing`: merged the two separate reports into the same command.
 - `automelt`: stockpile configuration can now be set from the commandline
 - `channel-safely`: new monitoring for cave-in prevention
-- `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
+-@ `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
 - `gui/control-panel`: new global hotkey for quick access: Ctrl-Shift-E
-- `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+-@ `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `nestboxes`: now saves enabled state in your savegame
 - `gui/launcher`: sped up initialization time for faster window appearance
 - `orders`: orders plugin functionality is now accessible via an `overlay` widget when the manager orders screen is open
 - `gui/quickcmd`: now has its own global keybinding for your convenience: Ctrl-Shift-A
 - `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
-- `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
+-@ `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
 
 ## Documentation
 - `compile`: instructions added for cross-compiling DFHack for Windows from a Linux Docker builder
@@ -102,7 +254,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 - ``widgets.List``: new callbacks for double click and shift double click
 - ``dfhack.units.getCitizens()``: gets a list of citizens
-- ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
+-@ ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
 - `tiletypes`: now has a Lua API! ``tiletypes_setTile``
 
@@ -113,7 +265,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `autofarm`: don't duplicate status line entries for crops with no current supply
-- `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
+-@ `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
 - `tailor`: now respects the setting of the "used dyed clothing" standing order toggle
 
 # 50.05-alpha1

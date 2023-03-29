@@ -56,6 +56,7 @@ DFHACK_EXPORT long getControlPanelTexposStart();
  */
 DFHACK_EXPORT long getThinBordersTexposStart();
 DFHACK_EXPORT long getMediumBordersTexposStart();
+DFHACK_EXPORT long getBoldBordersTexposStart();
 DFHACK_EXPORT long getPanelBordersTexposStart();
 DFHACK_EXPORT long getWindowBordersTexposStart();
 

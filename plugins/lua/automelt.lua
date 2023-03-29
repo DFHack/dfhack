@@ -17,8 +17,12 @@ end
 local function do_set_stockpile_config(var_name, val, stockpiles)
     for _,bspec in ipairs(argparse.stringList(stockpiles)) do
         local config = automelt_getStockpileConfig(bspec)
-        config[var_name] = val
-        automelt_setStockpileConfig(config.id, config.monitor, config.melt)
+        if not config then
+            dfhack.printerr('invalid stockpile: '..tostring(bspec))
+        else
+            config[var_name] = val
+            automelt_setStockpileConfig(config.id, config.monitor, config.melt)
+        end
     end
 end
 
@@ -60,8 +64,10 @@ function getItemCountsAndStockpileConfigs()
     ret.item_counts = table.remove(data, 1)
     ret.marked_item_counts = table.remove(data, 1)
     ret.premarked_item_counts = table.remove(data, 1)
-    ret.stockpile_configs = data
-    for _,c in ipairs(ret.stockpile_configs) do
+    local unparsed_stockpile_configs = table.remove(data, 1)
+    ret.stockpile_configs = {}
+
+    for idx,c in pairs(unparsed_stockpile_configs) do
         if not c.id or c.id == -1 then
             c.name = "ERROR"
             c.monitored = false
@@ -72,6 +78,7 @@ function getItemCountsAndStockpileConfigs()
             end
             c.monitored = c.monitored ~= 0
         end
+        table.insert(ret.stockpile_configs, c)
 
     end
     return ret

@@ -68,6 +68,7 @@ using namespace DFHack;
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
+#include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
@@ -591,6 +592,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
             obj->gate_flags.bits.closed = false;
         break;
     }
+    case building_type::Weapon:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
+            obj->gate_flags.bits.closed = false;
+        break;
+    }
     default:
         break;
     }
@@ -792,10 +799,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             if (!allow_occupied &&
                 block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
-            else
+            else if (!allow_wall)
             {
-                auto tile = block->tiletype[btile.x][btile.y];
-                if (!allow_wall && !HighPassable(tile))
+                auto &tt = block->tiletype[btile.x][btile.y];
+                auto &des = block->designation[btile.x][btile.y];
+                if (!HighPassable(tt) ||
+                        des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma))
                     allowed = false;
             }
 
@@ -1589,45 +1599,31 @@ bool Buildings::isPenPasture(df::building * building)
     if (!isActivityZone(building))
         return false;
 
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
-*/ return false;
+    return ((df::building_civzonest*)building)->type == civzone_type::Pen;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
-*/ return false;
+
+    return ((df::building_civzonest*)building)->type == civzone_type::Pond;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
-*/ return false;
+    // 8 is the value obtained by reverse engineering
+    return ((df::building_civzonest*)building)->is_active == 8;
 }
-
-bool Buildings::isHospital(df::building * building)
- {
-     if (!isActivityZone(building))
-         return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
-*/ return false;
- }
 
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
-*/ return false;
+
+     return ((df::building_civzonest*)building)->type == civzone_type::AnimalTraining;
  }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)
@@ -1657,10 +1653,10 @@ StockpileIterator& StockpileIterator::operator++() {
 
         while (current >= block->items.size()) {
             // Out of items in this block; find the next block to search.
-            if (block->map_pos.x + 16 < stockpile->x2) {
+            if (block->map_pos.x + 16 <= stockpile->x2) {
                 block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
                 current = 0;
-            } else if (block->map_pos.y + 16 < stockpile->y2) {
+            } else if (block->map_pos.y + 16 <= stockpile->y2) {
                 block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
                 current = 0;
             } else {

@@ -110,6 +110,8 @@ DFHACK_EXPORT bool isTame(df::unit* unit);
 DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isDomesticated(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForGelding(df::unit* unit);
+DFHACK_EXPORT bool isGeldable(df::unit* unit);
 DFHACK_EXPORT bool isGelded(df::unit* unit);
 DFHACK_EXPORT bool isEggLayer(df::unit* unit);
 DFHACK_EXPORT bool isGrazer(df::unit* unit);
@@ -117,6 +119,7 @@ DFHACK_EXPORT bool isMilkable(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMischievous(df::unit *unit);
 DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
+DFHACK_EXPORT bool isPet(df::unit* unit);
 
 DFHACK_EXPORT bool hasExtravision(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
@@ -218,8 +221,6 @@ DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession
 DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
-
-DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);

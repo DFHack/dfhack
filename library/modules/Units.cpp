@@ -71,7 +71,6 @@ using namespace std;
 #include "df/identity.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
-#include "df/squad.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
 #include "df/unit_inventory_item.h"
@@ -175,7 +174,8 @@ bool Units::isFortControlled(df::unit *unit)
     if (unit->flags2.bits.visitor ||
         unit->flags2.bits.visitor_uninvited ||
         unit->flags2.bits.underworld ||
-        unit->flags2.bits.resident)
+        unit->flags2.bits.resident ||
+        unit->flags4.bits.agitated_wilderness_creature)
         return false;
 
     return unit->civ_id != -1 && unit->civ_id == plotinfo->civ_id;
@@ -510,6 +510,23 @@ bool Units::isMarkedForSlaughter(df::unit* unit)
     return unit->flags2.bits.slaughter == 1;
 }
 
+bool Units::isMarkedForGelding(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags3.bits.marked_for_gelding == 1;
+}
+
+bool Units::isGeldable(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(world->raws.creatures.all[unit->race]->caste[unit->caste]->flags.is_set(caste_raw_flags::GELDABLE)) {
+        return true;
+    }
+
+    return false;
+}
+
 bool Units::isGelded(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -571,21 +588,18 @@ bool Units::isMischievous(df::unit *unit)
 bool Units::isAvailableForAdoption(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    auto refs = unit->specific_refs;
-    for(size_t i=0; i<refs.size(); i++)
-    {
-        auto ref = refs[i];
-        auto reftype = ref->type;
-        if( reftype == df::specific_ref_type::PETINFO_PET )
-        {
-            //df::pet_info* pet = ref->pet;
-            return true;
-        }
-    }
+    return unit->flags3.bits.available_for_adoption;
+}
+
+bool Units::isPet(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+        return true;
 
     return false;
 }
-
 
 bool Units::hasExtravision(df::unit *unit)
 {
@@ -1930,19 +1944,6 @@ bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
     return unit->status.current_soul
         && unit->status.current_soul->personality.dreams.size() > goalIndex
         && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
-}
-
-std::string Units::getSquadName(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->military.squad_id == -1)
-        return "";
-    df::squad *squad = df::squad::find(unit->military.squad_id);
-    if (!squad)
-        return "";
-    if (squad->alias.size() > 0)
-        return squad->alias;
-    return Translation::TranslateName(&squad->name, true);
 }
 
 df::activity_entry *Units::getMainSocialActivity(df::unit *unit)

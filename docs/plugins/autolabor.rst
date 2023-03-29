@@ -3,7 +3,7 @@ autolabor
 
 .. dfhack-tool::
     :summary: Automatically manage dwarf labors.
-    :tags: untested fort auto labors
+    :tags: fort auto labors
 
 Autolabor attempts to keep as many dwarves as possible busy while allowing
 dwarves to specialize in specific skills.

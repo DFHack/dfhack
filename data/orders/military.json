@@ -1142,42 +1142,6 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 64,
-		"is_active" : false,
-		"is_validated" : false,
-		"item_conditions" : 
-		[
-			{
-				"condition" : "AtLeast",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 20
-			},
-			{
-				"condition" : "AtLeast",
-				"item_type" : "BAR",
-				"material" : "COAL",
-				"value" : 100
-			},
-			{
-				"condition" : "AtMost",
-				"flags" : 
-				[
-					"metal"
-				],
-				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
-				"item_type" : "WEAPON",
-				"value" : 10
-			}
-		],
-		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
-		"job" : "MakeWeapon",
-		"material" : "INORGANIC:SILVER"
-	},
-	{
-		"amount_left" : 1,
-		"amount_total" : 1,
-		"frequency" : "Daily",
 		"id" : 37,
 		"is_active" : false,
 		"is_validated" : false,
@@ -1656,12 +1620,6 @@
 				"item_type" : "WEAPON",
 				"material" : "INORGANIC:STEEL",
 				"value" : 10
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			}
 		],
 		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
@@ -2356,12 +2314,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -3067,12 +3019,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -3855,12 +3801,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -4733,12 +4673,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",

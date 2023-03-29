@@ -950,25 +950,36 @@ Screens
   Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
   ignores screens already marked to be removed.
 
-* ``dfhack.gui.getFocusString(viewscreen)``
+* ``dfhack.gui.getFocusStrings(viewscreen)``
 
-  Returns a string representation of the current focus position
-  in the ui. The string has a "screen/foo/bar/baz..." format.
+  Returns a table of string representations of the current UI focuses.
+  The strings have a "screen/foo/bar/baz..." format e.g..::
+
+    [1] = "dwarfmode/Info/CREATURES/CITIZEN"
+    [2] = "dwardmode/Squads"
+
+* ``dfhack.gui.matchFocusString(focus_string[, viewscreen])``
+
+  Returns ``true`` if the given ``focus_string`` is found in the current
+  focus strings, or as a prefix to any of the focus strings, or ``false``
+  if no match is found. Matching is case insensitive. If ``viewscreen`` is
+  specified, gets the focus strings to match from the given viewscreen.
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
   Returns the focus string of the current viewscreen.
 
-* ``dfhack.gui.getViewscreenByType(type [, depth])``
+* ``dfhack.gui.getViewscreenByType(type[, depth])``
 
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
 
-* ``dfhack.gui.getDFViewscreen([skip_dismissed])``
+* ``dfhack.gui.getDFViewscreen([skip_dismissed[, viewscreen]])``
 
   Returns the topmost viewscreen not owned by DFHack. If ``skip_dismissed`` is
-  ``true``, ignores screens already marked to be removed.
+  ``true``, ignores screens already marked to be removed. If ``viewscreen`` is
+  specified, starts the scan at the given viewscreen.
 
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -997,6 +1008,10 @@ General-purpose selections
 * ``dfhack.gui.getSelectedBuilding([silent])``
 
   Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
+
+* ``dfhack.gui.getSelectedCivZone([silent])``
+
+  Returns the zone currently selected via :kbd:`z`
 
 * ``dfhack.gui.getSelectedPlant([silent])``
 
@@ -1204,6 +1219,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.attachJobItem(job, item, role, filter_idx, insert_idx)``
+
+  Attach a real item to this job. If the item is intended to satisfy a job_item
+  filter, the index of that filter should be passed in ``filter_idx``; otherwise,
+  pass ``-1``. Similarly, if you don't care where the item is inserted, pass
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  If the item needs to be brought to the job site, then the value should be
+  ``df.job_item_ref.T_role.Hauled``.
+
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
   Does basic sanity checks to verify if the suggested item type matches
@@ -1332,6 +1356,8 @@ Units module
 * ``dfhack.units.isTamable(unit)``
 * ``dfhack.units.isDomesticated(unit)``
 * ``dfhack.units.isMarkedForSlaughter(unit)``
+* ``dfhack.units.isMarkedForGelding(unit)``
+* ``dfhack.units.isGeldable(unit)``
 * ``dfhack.units.isGelded(unit)``
 * ``dfhack.units.isEggLayer(unit)``
 * ``dfhack.units.isGrazer(unit)``
@@ -1351,7 +1377,7 @@ Units module
 
   The unit is available for adoption.
 
-
+* ``dfhack.units.isPet(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.hasExtravision(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
@@ -1562,6 +1588,24 @@ Units module
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
+
+Military module
+~~~~~~~~~~~~~~~~~~~
+
+* ``dfhack.military.makeSquad(assignment_id)``
+
+  Creates a new squad associated with the assignment (ie ``df::entity_position_assignment``, via ``id``) and returns it.
+  Fails if a squad already exists that is associated with that assignment, or if the assignment is not a fort mode player controlled squad.
+  Note: This function does not name the squad: consider setting a nickname (under ``squad.name.nickname``), and/or filling out the ``language_name`` object at ``squad.name``.
+  The returned squad is otherwise complete and requires no more setup to work correctly.
+
+* ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
+
+  Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks.
+
+* ``dfhack.military.getSquadName(squad_id)``
+
+  Returns the name of a squad as a string.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~
@@ -3740,6 +3784,12 @@ Misc
   Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
 
 
+* ``invert_color(color, bold)``
+
+  This inverts the brightness of ``color``. If this color is coming from a pen's
+  foreground color, include ``pen.bold`` in ``bold`` for this to work properly.
+
+
 ViewRect class
 --------------
 
@@ -4136,7 +4186,7 @@ underlying map, or even other DFHack ZScreen windows! That is, even when the
 DFHack tool window is visible, players will be able to use vanilla designation
 tools, select units, and scan/drag the map around.
 
-At most one ZScreen can have keyboard focus at a time. That ZScreen's widgets
+At most one ZScreen can have input focus at a time. That ZScreen's widgets
 will have a chance to handle the input before anything else. If unhandled, the
 input skips all unfocused ZScreens under that ZScreen and is passed directly to
 the first non-ZScreen viewscreen. There are class attributes that can be set to
@@ -4155,8 +4205,8 @@ is dismissed.
 
 All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
 **must not override**. Instead, ZScreen subclasses should delegate all input
-processing to subviews. Consider using a `Window class`_ widget as your top
-level input processor.
+processing to subviews. Consider using a `Window class`_ widget subview as your
+top level input processor.
 
 When rendering, the parent viewscreen is automatically rendered first, so
 subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
@@ -4166,8 +4216,8 @@ that passing ``logic()`` calls through to the underlying map is required for
 allowing the player to drag the map with the mouse. ZScreen subclasses can set
 attributes that control whether the game is paused when the ZScreen is shown and
 whether the game is forced to continue being paused while the ZScreen is shown.
-If pausing is forced, child ``Window`` widgets will show a force-pause icon to
-indicate which tool is forcing the pausing.
+If pausing is forced, child ``Window`` widgets will show a force-pause indicator
+to show which tool is forcing the pausing.
 
 ZScreen provides the following functions:
 
@@ -4182,8 +4232,9 @@ ZScreen provides the following functions:
 * ``zscreen:isMouseOver()``
 
   The default implementation iterates over the direct subviews of the ZScreen
-  subclass and sees if ``getMouseFramePos()`` returns a position for any of
-  them. Subclasses can override this function if that logic is not appropriate.
+  subclass (which usually only includes a single Window subview) and sees if
+  ``getMouseFramePos()`` returns a position for any of them. Subclasses can
+  override this function if that logic is not appropriate.
 
 * ``zscreen:hasFocus()``
 
@@ -4199,16 +4250,23 @@ ZScreen subclasses can set the following attributes:
   of the screen other than the tool window. If the player clicks on a different
   ZScreen window, focus still transfers to that other ZScreen.
 
-* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
+* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE or not pass_mouse_clicks``)
 
-  Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``
-  defaults to ``true`` but can be set via running a command like::
+  Whether to pause the game when the ZScreen is shown. If not explicitly set,
+  this attribute will be true if the system-wide ``DEFAULT_INITIAL_PAUSE`` is
+  ``true`` (which is its default value) or if the ``pass_mouse_clicks`` attribute
+  is ``false`` (see below). It depends on ``pass_mouse_clicks`` because if the
+  player normally pauses/unpauses the game with the mouse, they will not be able
+  to pause the game like they usually do while the ZScreen has focus.
+  ``DEFAULT_INITIAL_PAUSE`` can be customized permanently via `gui/control-panel`
+  or set for the session by running a command like::
 
     :lua require('gui.widgets').DEFAULT_INITIAL_PAUSE = false
 
 * ``force_pause`` (default: ``false``)
 
-  Whether to ensure the game *stays* paused while the ZScreen is shown.
+  Whether to ensure the game *stays* paused while the ZScreen is shown,
+  regardless of whether it has input focus.
 
 * ``pass_pause`` (default: ``true``)
 
@@ -4217,7 +4275,7 @@ ZScreen subclasses can set the following attributes:
 
 * ``pass_movement_keys`` (default: ``false``)
 
-  Whether to pass the map movement keys to the lower viewscreens if they ar not
+  Whether to pass the map movement keys to the lower viewscreens if they are not
   handled by this ZScreen.
 
 * ``pass_mouse_clicks`` (default: ``true``)
@@ -4225,7 +4283,7 @@ ZScreen subclasses can set the following attributes:
   Whether to pass mouse clicks to the lower viewscreens if they are not handled
   by this ZScreen.
 
-Here is an example skeleton for a ZScreen tool dialog::
+Here is an example skeleton for a ZScreen tool window::
 
     local gui = require('gui')
     local widgets = require('gui.widgets')
@@ -4252,6 +4310,7 @@ Here is an example skeleton for a ZScreen tool dialog::
     MyScreen.ATTRS {
         focus_path='myscreen',
         -- set pause and passthrough attributes as appropriate
+        -- (but most tools can use the defaults)
     }
 
     function MyScreen:init()
@@ -4293,9 +4352,11 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
-* ``THIN_FRAME``
+* ``INTERIOR_FRAME``
 
-  A frame suitable for light accent elements.
+  A frame suitable for light interior accent elements. This frame does *not* have
+  a visible ``DFHack`` signature on it, so it must not be used as the most external
+  frame for a DFHack-owned UI.
 
 gui.widgets
 ===========
@@ -4636,7 +4697,9 @@ It has the following attributes:
 
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
-:text_hpen: Specifies the pen for text hovered over by the mouse, if a click handler is registered.
+:text_hpen: Specifies the pen for text hovered over by the mouse, if a click
+            handler is registered. By default, this will invert the foreground
+            and background colors.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
@@ -4668,10 +4731,12 @@ containing newlines, or a table with the following possible fields:
   Specifies the number of character positions to advance on the line
   before rendering the token.
 
-* ``token.tile = pen``
+* ``token.tile``, ``token.htile``
 
-  Specifies a pen or texture index to paint as one tile before the main part of
-  the token.
+  Specifies a pen or texture index (or a function that returns a pen or texture
+  index) to paint as one tile before the main part of the token. If ``htile``
+  is specified, that is used instead of ``tile`` when the Label is hovered over
+  with the mouse.
 
 * ``token.width = ...``
 
@@ -4699,10 +4764,10 @@ containing newlines, or a table with the following possible fields:
 
   Same as the attributes of the label itself, but applies only to the token.
 
-* ``token.pen``, ``token.dpen``
+* ``token.pen``, ``token.dpen``, ``token.hpen``
 
-  Specify the pen and disabled pen to be used for the token's text.
-  The field may be either the pen itself, or a callback that returns it.
+  Specify the pen, disabled pen, and hover pen to be used for the token's text.
+  The fields may be either the pen itself, or a callback that returns it.
 
 * ``token.on_activate``
 
@@ -4742,6 +4807,18 @@ The Label widget implements the following methods:
   integers or one of the following keywords: ``+page``, ``-page``,
   ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
   lines that were actually scrolled (negative for scrolling up).
+
+* ``label:shouldHover()``
+
+  This method returns whether or not this widget should show a hover effect,
+  generally you want to return ``true`` if there is some type of mouse handler
+  present. For example, for a ``HotKeyLabel``::
+
+    function HotkeyLabel:shouldHover()
+        -- When on_activate is set, text should also hover on mouseover
+        return HotkeyLabel.super.shouldHover(self) or self.on_activate
+    end
+
 
 WrappedLabel class
 ------------------
@@ -4797,6 +4874,16 @@ It has the following attributes:
 :on_activate: If specified, it is the callback that will be called whenever
     the hotkey is pressed or the label is clicked.
 
+The HotkeyLabel widget implements the following methods:
+
+* ``hotkeylabel:setLabel(label)``
+
+    Updates the label without altering the hotkey text.
+
+* ``hotkeylabel:setOnActivate(on_activate)``
+
+    Updates the on_activate callback.
+
 CycleHotkeyLabel class
 ----------------------
 
@@ -4806,10 +4893,13 @@ cycle through by pressing a specified hotkey or clicking on the text.
 It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key_back: Similar to ``key``, but will cycle backwards (optional)
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
+:label_below: If ``true``, then the option value will apear below the label
+    instead of to the right of it. Defaults to ``false``.
 :options: A list of strings or tables of
     ``{label=string, value=string[, pen=pen]}``. String options use the same
     string for the label and value and the default pen. The optional ``pen``
@@ -4823,9 +4913,10 @@ the ``option_idx`` instance variable.
 
 The CycleHotkeyLabel widget implements the following methods:
 
-* ``cyclehotkeylabel:cycle()``
+* ``cyclehotkeylabel:cycle([backwards])``
 
     Cycles the selected option and triggers the ``on_change`` callback.
+    If ``backwards`` is defined and is truthy, the cycle direction will be reversed
 
 * ``cyclehotkeylabel:setOption(value_or_index, call_on_change)``
 
@@ -4865,6 +4956,8 @@ item to call the ``on_submit`` callback for that item.
 It has the following attributes:
 
 :text_pen: Specifies the pen for deselected list entries.
+:text_hpen: Specifies the pen for entries that the mouse is hovered over.
+            Defaults to swapping the background/foreground colors.
 :cursor_pen: Specifies the pen for the selected entry.
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
@@ -4945,10 +5038,12 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
+:case_sensitive: If ``true``, matching is case sensitive. Defaults to ``false``.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
 :edit_ignore_keys: If specified, will be passed to the filter edit field as its ``ignore_keys`` attribute.
+:edit_on_change: If specified, will be passed to the filter edit field as its ``on_change`` attribute.
 :edit_on_char: If specified, will be passed to the filter edit field as its ``on_char`` attribute.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
@@ -4988,6 +5083,41 @@ The widget implements:
 
   Same as with an ordinary list.
 
+TabBar class
+------------
+
+This widget implements a set of one or more tabs to allow navigation between groups of content. Tabs automatically wrap on
+the width of the window and will continue rendering on the next line(s) if all tabs cannot fit on a single line.
+
+:key: Specifies a keybinding that can be used to switch to the next tab.
+:key_back: Specifies a keybinding that can be used to switch to the previous tab.
+:labels: A table of strings; entry representing the label text for a single tab. The order of the entries
+         determines the order the tabs will appear in.
+:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. The provided function
+            should update the value of whichever variable your script uses to keep track of the currently selected tab.
+:get_cur_page: The function used by the TabBar to determine which Tab is currently selected. The function you provide should
+               return an integer that corresponds to the non-zero index of the currently selected Tab (i.e. whatever variable
+               you update in your ``on_select`` callback)
+:active_tab_pens: A table of pens used to render active tabs. See the default implementation in widgets.lua for an example
+                  of how to construct the table. Leave unspecified to use the default pens.
+:inactive_tab_pens: A table of pens used to render inactive tabs. See the default implementation in widgets.lua for an example
+                    of how to construct the table. Leave unspecified to use the default pens.
+:get_pens: A function used to determine which pens should be used to render a tab. Receives the index of the tab as the first
+           argument and the TabBar widget itself as the second. The default implementation, which will handle most situations,
+           returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``, otherwise returns ``self.inactive_tab_pens``.
+
+Tab class
+---------
+
+This widget implements a single clickable tab and is the main component of the TabBar widget. Usage of the ``TabBar``
+widget does not require direct usage of ``Tab``.
+
+:id: The id of the tab.
+:label: The text displayed on the tab.
+:on_select: Callback executed when the tab is selected.
+:get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
+           usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
+           in ``TabBar`` for an example of how to construct pens.
 
 .. _lua-plugins:
 

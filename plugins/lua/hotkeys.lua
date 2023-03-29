@@ -14,7 +14,22 @@ HotspotMenuWidget.ATTRS{
     default_pos={x=2,y=2},
     default_enabled=true,
     hotspot=true,
-    viewscreens='all',
+    viewscreens={
+        -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'choose_game_type',
+        'dwarfmode',
+        'export_region',
+        'game_cleaner',
+        'initial_prep',
+        'legends',
+        'loadgame',
+        -- 'new_region', -- conflicts with vanilla panel layouts
+        'savegame',
+        'setupdwarfgame',
+        'title',
+        'update_region',
+        'world'
+    },
     overlay_onupdate_max_freq_seconds=0,
     frame={w=4, h=3}
 }
@@ -247,12 +262,14 @@ function Menu:onInput(keys)
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
+            df.global.enabler.mouse_lbut = 0
             return true
         end
         if not self:getMouseFramePos() and not self.hotspot:getMousePos() then
             self.parent_view:dismiss()
             return true
         end
+        df.global.enabler.mouse_lbut = 0
     end
     self:inputToSubviews(keys)
     return true -- we're modal

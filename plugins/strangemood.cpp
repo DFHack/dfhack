@@ -80,7 +80,7 @@ df::job_skill getMoodSkill (df::unit *unit)
         {
         case job_skill::MINING:
         case job_skill::CARPENTRY:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::TANNER:
         case job_skill::WEAVING:
@@ -288,15 +288,15 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
             return CR_WRONG_USAGE;
-        else if(parameters[i] == "-force")
+        else if(parameters[i] == "--force")
             force = true;
-        else if(parameters[i] == "-unit")
+        else if(parameters[i] == "--unit")
         {
             unit = DFHack::Gui::getSelectedUnit(out);
             if (!unit)
                 return CR_FAILURE;
         }
-        else if (parameters[i] == "-type")
+        else if (parameters[i] == "--type")
         {
             i++;
             if (i == parameters.size())
@@ -320,7 +320,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             }
         }
-        else if (parameters[i] == "-skill")
+        else if (parameters[i] == "--skill")
         {
             i++;
             if (i == parameters.size())
@@ -333,7 +333,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             else if (parameters[i] == "carpenter")
                 skill = job_skill::CARPENTRY;
             else if (parameters[i] == "engraver")
-                skill = job_skill::DETAILSTONE;
+                skill = job_skill::ENGRAVE_STONE;
             else if (parameters[i] == "mason")
                 skill = job_skill::MASONRY;
             else if (parameters[i] == "tanner")
@@ -549,9 +549,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (type == mood_type::None)
     {
         if (soul && (
-            (soul->personality.stress_level >= 500000) ||
-            (soul->personality.stress_level >= 250000 && !rng.df_trandom(2)) ||
-            (soul->personality.stress_level >= 100000 && !rng.df_trandom(10))
+            (soul->personality.stress >= 500000) ||
+            (soul->personality.stress >= 250000 && !rng.df_trandom(2)) ||
+            (soul->personality.stress >= 100000 && !rng.df_trandom(10))
             ))
         {
             switch (rng.df_trandom(2))
@@ -639,7 +639,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::CARPENTRY:
             job->job_type = job_type::StrangeMoodCarpenter;
             break;
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::WOODCRAFT:
         case job_skill::STONECRAFT:
         case job_skill::BONECARVE:
@@ -749,7 +749,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         switch (skill)
         {
         case job_skill::MINING:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
         case job_skill::MECHANICS:
@@ -1040,7 +1040,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         switch (skill)
         {
         case job_skill::MINING:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
             avoid_type = item_type::BLOCKS;

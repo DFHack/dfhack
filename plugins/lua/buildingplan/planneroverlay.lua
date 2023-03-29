@@ -490,12 +490,21 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='choose',
-                    frame={b=0, l=0, w=25},
+                    frame={b=0, l=0},
                     key='CUSTOM_I',
-                    label='Choose from items:',
-                    options={{label='Yes', value=true},
-                             {label='No', value=false}},
-                    initial_option=false,
+                    label='Item selection:',
+                    options={
+                        {label='Use filters', value=0},
+                        {
+                            label=function()
+                                local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
+                                return ('Last choice (%s)'):format(automaterial or 'Will ask')
+                            end,
+                            value=2,
+                        },
+                        {label='Manual choice', value=1},
+                    },
+                    initial_option=0,
                     on_change=function(choose)
                         buildingplan.setChooseItems(uibs.building_type, uibs.building_subtype, uibs.custom_type, choose)
                     end,
@@ -670,10 +679,11 @@ function PlannerOverlay:onInput(keys)
             if is_choosing_area() or cur_building_has_no_area() then
                 local filters = get_cur_filters()
                 local num_filters = #filters
-                local choose = self.subviews.choose
-                if choose:getOptionValue() then
+                local choose = self.subviews.choose:getOptionValue()
+                if choose > 0 then
                     local bounds = get_selected_bounds()
                     self:save_placement()
+                    local autoselect = choose == 2
                     local is_hollow = self.subviews.hollow:getOptionValue()
                     local chosen_items, active_screens = {}, {}
                     local pending = num_filters
@@ -681,14 +691,19 @@ function PlannerOverlay:onInput(keys)
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         local filter = filters[idx]
-                        active_screens[idx] = itemselection.ItemSelectionScreen{
+                        local selection_screen = itemselection.ItemSelectionScreen{
                             index=idx,
                             desc=require('plugins.buildingplan').get_desc(filter),
                             quantity=get_quantity(filter, is_hollow, bounds),
+                            autoselect=autoselect,
                             on_submit=function(items)
                                 chosen_items[idx] = items
-                                active_screens[idx]:dismiss()
-                                active_screens[idx] = nil
+                                if active_screens[idx] then
+                                    active_screens[idx]:dismiss()
+                                    active_screens[idx] = nil
+                                else
+                                    active_screens[idx] = true
+                                end
                                 pending = pending - 1
                                 if pending == 0 then
                                     df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
@@ -702,7 +717,13 @@ function PlannerOverlay:onInput(keys)
                                 df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
                                 self:restore_placement()
                             end,
-                        }:show()
+                        }
+                        if active_screens[idx] then
+                            -- we've already returned via autoselect
+                            active_screens[idx] = nil
+                        else
+                            active_screens[idx] = selection_screen:show()
+                        end
                     end
                 else
                     self:place_building(get_placement_data())

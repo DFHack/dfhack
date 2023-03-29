@@ -42,6 +42,12 @@ enum HeatSafety {
     HEAT_SAFETY_MAGMA = 2,
 };
 
+enum ItemSelectionChoice {
+    ITEM_SELECTION_CHOICE_FILTER = 0,
+    ITEM_SELECTION_CHOICE_MANUAL = 1,
+    ITEM_SELECTION_CHOICE_AUTOMATERIAL = 2,
+};
+
 int get_config_val(DFHack::PersistentDataItem &c, int index);
 bool get_config_bool(DFHack::PersistentDataItem &c, int index);
 void set_config_val(DFHack::PersistentDataItem &c, int index, int value);

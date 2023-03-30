@@ -55,7 +55,7 @@ end
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
     frame_title='Choose items',
-    frame={w=56, h=24, l=4, t=8},
+    frame={w=56, h=24, l=4, t=7},
     resizable=true,
     index=DEFAULT_NIL,
     desc=DEFAULT_NIL,
@@ -127,7 +127,7 @@ function ItemSelection:init()
         },
         widgets.FilteredList{
             view_id='flist',
-            frame={t=5, l=0, r=1, b=5},
+            frame={t=5, l=1, r=1, b=5},
             case_sensitive=false,
             choices=choices,
             icon_width=2,
@@ -135,7 +135,7 @@ function ItemSelection:init()
             edit_on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Label{
-            frame={l=0, t=5},
+            frame={l=1, t=5},
             text_pen=COLOR_LIGHTCYAN,
             text={">"},
         },
@@ -243,7 +243,7 @@ function ItemSelection:get_choices(sort_fn)
     for desc,choice in pairs(buckets) do
         local data = choice.data
         choice.text = {
-            {width=10, text=function() return ('[%d/%d]'):format(data.selected, data.quantity) end},
+            {width=10, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
             {gap=2, text=desc},
         }
         table.insert(choices, choice)

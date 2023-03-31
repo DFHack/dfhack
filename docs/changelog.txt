@@ -34,29 +34,45 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `getplants`: getplants is now available
-- `prospector`: prospector tool in fort mode is now available. embark prospect is not yet available and is disabled at this time.
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.07-beta2
+
+## New Plugins
+- `getplants`: designate trees for chopping and shrubs for gathering according to type
+- `prospector`: get stone, ore, gem, and other tile property counts in fort mode. embark site estimates are not yet available.
 
 ## Fixes
 - `buildingplan`: filters are now properly applied to planned stairs
 - `buildingplan`: existing carved up/down stairs are now taken into account when determining which stair shape to construct
 - `buildingplan`: upright spike traps are now placed extended rather than retracted
-- `buildingplan`: you can no longer designate constructions on tiles with magma or deep water
-- `buildingplan`: fixed material filter getting lost for planning buildings on save/reload
+- `buildingplan`: you can no longer designate constructions on tiles with magma or deep water, mirroring the vanilla restrictions
+- `buildingplan`: fixed material filters getting lost for planning buildings on save/reload
 - `buildingplan`: respect building size limits (e.g. roads and bridges cannot be more than 31 tiles in any dimension)
-- `tailor`: properly discriminates between dyed and undyed cloth
-- `tailor`: no longer defaults to using adamantine
-- `tailor`: properly tracks material requirements for already queued orders
-- `tailor`: skips units who can't wear clothes
-- `tailor`: hopefully won't over-order items any more
+- `tailor`: properly discriminate between dyed and undyed cloth
+- `tailor`: no longer default to using adamantine cloth for producing clothes
+- `tailor`: take queued orders into account when calculating available materials
+- `tailor`: skip units who can't wear clothes
+- `tailor`: identify more available items as available, solving issues with over-production
 
 ## Misc Improvements
-- `buildingplan`: filters and global settings are now ignored when manually choosing items for a building
+- `buildingplan`: filters and global settings are now ignored when manually choosing items for a building, allowing you to make custom choices independently of the filters that would otherwise be used
 - `buildingplan`: if `suspendmanager` is running, then planned buildings will be left suspended when their items are all attached. `suspendmanager` will unsuspsend them for construction when it is safe to do so.
 - `buildingplan`: add option for autoselecting the last manually chosen item (like `automaterial` used to do)
 - `confirm`: adds confirmation for removing burrows via the repaint menu
 - `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
-- `stockpiles`: support partial application of a saved config based on dynamic filtering
+- `stockpiles`: support partial application of a saved config based on dynamic filtering (e.g. disable all tallow in a food stockpile, even tallow from world-specific generated creatures)
 - `stockpiles`: additive and subtractive modes when applying a second stockpile configuration on top of a first
 - `stockpiles`: write player-exported stockpile configurations to the ``dfhack-config/stockpiles`` folder. If you have any stockpile configs in other directories, please move them to that folder.
 - `stockpiles`: now includes a library of useful stockpile configs (see docs for details)
@@ -64,20 +80,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: add minimize button to overlay panel so you can get it out of the way to read long statue descriptions when choosing a subject in the details screen
 - `orders`: add option to delete exported files from the import dialog
 - `enable`: can now interpret aliases defined with the `alias` command
-- scripts in installed mods are now automatically added to the DFHack script path. DFHack recognizes two directories in a mod's folder: ``scripts_modinstalled/`` and ``scripts_modactive/``. ``scripts_modinstalled/`` folders will always be added the script path, regardless of whether the mod is active in a world. ``scripts_modactive/`` folders will only be added to the script path when the mod is active in the current loaded world.
+- scripts in ``data/installed mods/`` subfolders are now automatically added to the DFHack script path. DFHack recognizes two directories in a mod's folder: ``scripts_modinstalled/`` and ``scripts_modactive/``. ``scripts_modinstalled/`` folders will always be added the script path, regardless of whether the mod is active in a world. ``scripts_modactive/`` folders will only be added to the script path when the mod is active in the current loaded world.
 
 ## Documentation
-- ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. all of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
-
-## API
+- `modding-guide`: guide updated to include information for 3rd party script developers
+- the ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. most of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
 
 ## Lua
 - ``widget.Label``: tokens can now specify a ``htile`` property to indicate the tile that should be shown when the Label is hovered over with the mouse
 - ``widget.Label``: click handlers no longer get the label itself as the first param to the click handler
 - ``widget.CycleHotkeyLabel``: options that are bare integers will no longer be interpreted as the pen color in addition to being the label and value
 - ``widget.CycleHotkeyLabel``: option labels and pens can now be functions that return a label or pen
-
-## Removed
 
 # 50.07-beta1
 

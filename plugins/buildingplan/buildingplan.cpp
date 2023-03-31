@@ -678,13 +678,14 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
             ItemFilter filter = filters[index];
-            if (counts) {
+            set<string> special = specials;
+            if (ignore_filters || counts) {
                 // don't filter by material; we want counts for all materials
                 filter.setMaterialMask(0);
                 filter.setMaterials(set<MaterialInfo>());
+                special.clear();
             }
-            if (itemPassesScreen(item) &&
-                    (ignore_filters || matchesFilters(item, jitem, heat, filter, specials))) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter, special)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 if (counts) {

@@ -685,7 +685,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
                 filter.setMaterials(set<MaterialInfo>());
                 special.clear();
             }
-            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter, specials)) {
+            if (itemPassesScreen(item) && matchesFilters(item, jitem, heat, filter, special)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);
                 if (counts) {

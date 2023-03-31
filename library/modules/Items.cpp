@@ -720,13 +720,13 @@ df::coord Items::getPosition(df::item *item)
     return item->pos;
 }
 
-static char quality_table[] = { 0, '-', '+', '*', '=', '@' };
+static int quality_table[] = { 0, 45, 43, 42, 240, 15 };
 
 static void addQuality(std::string &tmp, int quality)
 {
     if (quality > 0 && quality <= 5) {
-        char c = quality_table[quality];
-        tmp = c + tmp + c;
+        int c = quality_table[quality];
+        tmp = static_cast<char>(c) + tmp + static_cast<char>(c);
     }
 }
 
@@ -825,7 +825,7 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
         addQuality(tmp, item->getQuality());
 
         if (item->isImproved()) {
-            tmp = "<" + tmp + ">";
+            tmp = static_cast<char>(174) + tmp + static_cast<char>(175);
             addQuality(tmp, item->getImprovementQuality());
         }
     }

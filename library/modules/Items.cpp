@@ -720,12 +720,7 @@ df::coord Items::getPosition(df::item *item)
     return item->pos;
 }
 
-static const char MARKER_EXCEPTIONAL = static_cast<char>(240);
-static const char MARKER_MASTERWORK = static_cast<char>(15);
-static const char MARKER_IMPROVED_LEFT = static_cast<char>(174);
-static const char MARKER_IMPROVED_RIGHT = static_cast<char>(175);
-
-static char quality_table[] = { 0, '-', '+', '*', MARKER_EXCEPTIONAL, MARKER_MASTERWORK };
+static char quality_table[] = { 0, '-', '+', '*', '\xF0', '\x0F' };
 
 static void addQuality(std::string &tmp, int quality)
 {
@@ -830,7 +825,7 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
         addQuality(tmp, item->getQuality());
 
         if (item->isImproved()) {
-            tmp = MARKER_IMPROVED_LEFT + tmp + MARKER_IMPROVED_RIGHT;
+            tmp = '\xAE' + tmp + '\xAF';
             addQuality(tmp, item->getImprovementQuality());
         }
     }

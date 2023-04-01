@@ -36,7 +36,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
-- Steam launcher now launches Dwarf Fortress via the Steam client
+- ``launchdf``: launch Dwarf Fortress via the Steam client so Steam Workshop is functional
+- `blueprint`: interpret saplings, shrubs, and twigs as floors instead of walls
 
 ## Misc Improvements
 

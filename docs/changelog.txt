@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `faststart`: speeds up the "Loading..." screen so the Main Menu appears sooner
 
 ## Fixes
 - `hotkeys`: hotkey hints on menu popup will no longer get their last character cut off by the scrollbar

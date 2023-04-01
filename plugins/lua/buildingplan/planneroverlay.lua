@@ -331,7 +331,7 @@ function PlannerOverlay:init()
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=1, l=0, r=0, h=14},
-        frame_style=gui.MEDIUM_FRAME_2,
+        frame_style=gui.INTERIOR_MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=function() return not self.minimized end,
     }

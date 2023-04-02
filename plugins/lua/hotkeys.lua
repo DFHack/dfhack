@@ -107,7 +107,7 @@ local function get_bindings_to_hotkeys(hotkeys, bindings)
 end
 
 -- number of non-text tiles: icon, space, space between cmd and hk, scrollbar
-local LIST_BUFFER = 2 + 1 + 1
+local LIST_BUFFER = 2 + 1 + 1 + 2
 
 local function get_choices(hotkeys, bindings, is_inverted)
     local choices, max_width, seen = {}, 0, {}
@@ -143,7 +143,7 @@ local function get_choices(hotkeys, bindings, is_inverted)
     -- adjust width of command fields so the hotkey tokens are right justified
     for _,choice in ipairs(choices) do
         local command_token = choice.text[1]
-        command_token.width = max_width - choice.hk_width - 3
+        command_token.width = max_width - choice.hk_width - 5
     end
 
     return choices, max_width

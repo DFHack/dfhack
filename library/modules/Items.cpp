@@ -720,7 +720,13 @@ df::coord Items::getPosition(df::item *item)
     return item->pos;
 }
 
-static char quality_table[] = { 0, '-', '+', '*', '\xF0', '\x0F' };
+// These '\xFF' chars refer to quality markers from curses.png, namely: 250 (≡), 15 (☼), 174 («) and 175 (»).
+static const char MARKER_EXCEPTIONAL = '\xF0';
+static const char MARKER_MASTERWORK = '\x0F';
+static const char MARKER_IMPROVED_LEFT = '\xAE';
+static const char MARKER_IMPROVED_RIGHT = '\xAF';
+
+static char quality_table[] = { 0, '-', '+', '*', MARKER_EXCEPTIONAL, MARKER_MASTERWORK };
 
 static void addQuality(std::string &tmp, int quality)
 {
@@ -825,7 +831,7 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
         addQuality(tmp, item->getQuality());
 
         if (item->isImproved()) {
-            tmp = '\xAE' + tmp + '\xAF';
+            tmp = MARKER_IMPROVED_LEFT + tmp + MARKER_IMPROVED_RIGHT;
             addQuality(tmp, item->getImprovementQuality());
         }
     }

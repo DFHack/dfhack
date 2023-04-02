@@ -131,9 +131,10 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
         }
         DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
         i = handlers[e].erase(i);
-        if ( e == EventType::TICK )
-            removeFromTickQueue(handler);
     }
+    // we've removed it from the handlers multimap, all that's left is to make sure it's not in the tick queue
+    if ( e == EventType::TICK )
+        removeFromTickQueue(handler);
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {

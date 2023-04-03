@@ -1635,6 +1635,12 @@ StockpileIterator& StockpileIterator::operator++() {
         if (block) {
             // Check the next item in the current block.
             ++current;
+        }
+        else if (stockpile->x2 < 0 || stockpile->y2 < 0 || stockpile->z < 0 || stockpile->x1 > world->map.x_count - 1 || stockpile->y1 > world->map.y_count - 1 || stockpile->z > world->map.z_count - 1) {
+            // if the stockpile bounds exist outside of valid map plane then no items can be in the stockpile
+            block = NULL;
+            item = NULL;
+            return *this;
         } else {
             // Start with the top-left block covering the stockpile.
             block = Maps::getTileBlock(std::min(std::max(stockpile->x1, 0), world->map.x_count-1), std::min(std::max(stockpile->y1, 0), world->map.y_count-1), stockpile->z);

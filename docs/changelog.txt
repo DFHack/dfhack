@@ -42,7 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `buildingplan`: items in the item selection dialog should now use the same item quality symbols as the base game
-- `buildingplan`: rearranged elements of ``itemselection`` interface
+-@ `buildingplan`: rearranged elements of ``itemselection`` interface
 
 ## Documentation
 

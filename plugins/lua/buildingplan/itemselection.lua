@@ -55,7 +55,7 @@ end
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
     frame_title='Choose items',
-    frame={w=56, h=20, l=4, t=8},
+    frame={w=56, h=24, l=4, t=7},
     resizable=true,
     index=DEFAULT_NIL,
     desc=DEFAULT_NIL,
@@ -114,17 +114,8 @@ function ItemSelection:init()
             on_click=self:callback('submit'),
             visible=function() return self.num_selected >= self.quantity end,
         },
-        widgets.FilteredList{
-            view_id='flist',
-            frame={t=3, l=0, r=0, b=4},
-            case_sensitive=false,
-            choices=choices,
-            icon_width=2,
-            on_submit=self:callback('toggle_group'),
-            edit_on_char=function(ch) return ch:match('[%l -]') end,
-        },
         widgets.CycleHotkeyLabel{
-            frame={l=0, b=2},
+            frame={l=1, t=3},
             key='CUSTOM_SHIFT_R',
             label='Sort by:',
             options={
@@ -134,52 +125,70 @@ function ItemSelection:init()
             },
             on_change=self:callback('on_sort'),
         },
+        widgets.FilteredList{
+            view_id='flist',
+            frame={t=5, l=1, r=1, b=5},
+            case_sensitive=false,
+            choices=choices,
+            icon_width=2,
+            on_submit=self:callback('toggle_group'),
+            edit_on_char=function(ch) return ch:match('[%l -]') end,
+        },
+        widgets.Label{
+            frame={l=1, t=5},
+            text_pen=COLOR_LIGHTCYAN,
+            text={">"},
+        },
+        widgets.Panel{
+            frame={l=0, t=6, r=0, b=4},
+            frame_style=gui.INTERIOR_FRAME,
+        },
         widgets.HotkeyLabel{
-            frame={l=0, b=1},
+            frame={l=0, b=2},
+            key='KEYBOARD_CURSOR_RIGHT_FAST',
+            key_sep='ight: ',
+            label='Use one',
+            auto_width=true,
+            on_activate=function() self:increment_group(self.subviews.flist.list:getSelected()) end,
+        },
+        widgets.Label{
+            frame={l=6, b=2, w=5},
+            text_pen=COLOR_LIGHTGREEN,
+            text='Right',
+        },
+        widgets.HotkeyLabel{
+            frame={l=1, b=1},
+            key='KEYBOARD_CURSOR_LEFT_FAST',
+            key_sep='eft: ',
+            label='Use one fewer',
+            auto_width=true,
+            on_activate=function() self:decrement_group(self.subviews.flist.list:getSelected()) end,
+        },
+        widgets.Label{
+            frame={l=7, b=1, w=4},
+            text_pen=COLOR_LIGHTGREEN,
+            text='Left',
+        },
+        widgets.HotkeyLabel{
+            frame={l=6, b=0},
             key='SELECT',
             label='Use all/none',
             auto_width=true,
             on_activate=function() self:toggle_group(self.subviews.flist.list:getSelected()) end,
         },
         widgets.HotkeyLabel{
-            frame={l=22, b=1},
-            key='CUSTOM_SHIFT_C',
-            label='Continue',
-            auto_width=true,
-            on_activate=self:callback('submit'),
-        },
-        widgets.HotkeyLabel{
-            frame={l=38, b=1},
+            frame={r=5, b=2},
             key='LEAVESCREEN',
             label='Go back',
             auto_width=true,
             on_activate=self:callback('on_cancel'),
         },
         widgets.HotkeyLabel{
-            frame={l=0, b=0},
-            key='KEYBOARD_CURSOR_RIGHT_FAST',
-            key_sep='    : ',
-            label='Use one',
+            frame={r=4, b=0},
+            key='CUSTOM_SHIFT_C',
+            label='Continue',
             auto_width=true,
-            on_activate=function() self:increment_group(self.subviews.flist.list:getSelected()) end,
-        },
-        widgets.Label{
-            frame={l=6, b=0, w=5},
-            text_pen=COLOR_LIGHTGREEN,
-            text='Right',
-        },
-        widgets.HotkeyLabel{
-            frame={l=23, b=0},
-            key='KEYBOARD_CURSOR_LEFT_FAST',
-            key_sep='   : ',
-            label='Use one fewer',
-            auto_width=true,
-            on_activate=function() self:decrement_group(self.subviews.flist.list:getSelected()) end,
-        },
-        widgets.Label{
-            frame={l=29, b=0, w=4},
-            text_pen=COLOR_LIGHTGREEN,
-            text='Left',
+            on_activate=self:callback('submit'),
         },
     }
 end
@@ -234,7 +243,7 @@ function ItemSelection:get_choices(sort_fn)
     for desc,choice in pairs(buckets) do
         local data = choice.data
         choice.text = {
-            {width=10, text=function() return ('[%d/%d]'):format(data.selected, data.quantity) end},
+            {width=10, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
             {gap=2, text=desc},
         }
         table.insert(choices, choice)

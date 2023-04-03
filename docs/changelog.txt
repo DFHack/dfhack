@@ -48,6 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- added two new window borders: ``gui.BOLD_FRAME`` for accented elements and ``gui.INTERIOR_MEDIUM_FRAME`` for a signature-less frame that's thicker than the existing ``gui.INTERIOR_FRAME``
 
 ## Removed
 

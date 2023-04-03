@@ -48,7 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
-- `gui`: added two new window borders, "BOLD_FRAME" and "INTERIOR_MEDIUM_FRAME"
+- `widget`: added two new window borders, ``BOLD_FRAME`` and ``INTERIOR_MEDIUM_FRAME``
 
 ## Removed
 

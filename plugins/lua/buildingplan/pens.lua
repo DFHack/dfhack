@@ -19,8 +19,8 @@ function reload_pens()
 
     local tb_texpos = dfhack.textures.getThinBordersTexposStart()
     VERT_TOP_PEN = to_pen{tile=tp(tb_texpos, 10), ch=194, fg=COLOR_GREY, bg=COLOR_BLACK}
-    VERT_MID_PEN = to_pen{tile=tp(tb_texpos, 4), ch=192, fg=COLOR_GREY, bg=COLOR_BLACK}
-    VERT_BOT_PEN = to_pen{tile=tp(tb_texpos, 11), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+    VERT_MID_PEN = to_pen{tile=tp(tb_texpos, 4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+    VERT_BOT_PEN = to_pen{tile=tp(tb_texpos, 11), ch=193, fg=COLOR_GREY, bg=COLOR_BLACK}
 
     local cp_texpos = dfhack.textures.getControlPanelTexposStart()
     BUTTON_START_PEN = to_pen{tile=tp(cp_texpos, 13), ch='[', fg=COLOR_YELLOW}

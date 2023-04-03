@@ -8,7 +8,7 @@
 class ItemFilter {
 public:
     ItemFilter();
-    ItemFilter(DFHack::color_ostream &out, std::string serialized);
+    ItemFilter(DFHack::color_ostream &out, const std::string& serialized);
 
     void clear();
     bool isEmpty() const;

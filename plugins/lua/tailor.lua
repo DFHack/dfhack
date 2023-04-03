@@ -32,6 +32,11 @@ function setMaterials(names)
             idxs.adamantine or -1)
 end
 
+function setDebugMode(opt)
+    local fl = (opt[1] == "true" or opt[1] == "on")
+    tailor_setDebugFlag(fl)
+end
+
 function parse_commandline(...)
     local args, opts = {...}, {}
     local positionals = process_args(opts, args)
@@ -47,6 +52,8 @@ function parse_commandline(...)
         tailor_doCycle()
     elseif command == 'materials' then
         setMaterials(positionals)
+    elseif command == 'debugging' then
+        setDebugMode(positionals)
     else
         return false
     end

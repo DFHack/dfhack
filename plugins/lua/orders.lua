@@ -19,15 +19,37 @@ local function do_clear()
         function() dfhack.run_command('orders', 'clear') end)
 end
 
+local function get_import_choices()
+    return dfhack.run_command_silent('orders', 'list'):split('\n')
+end
+
 local function do_import()
-    local output = dfhack.run_command_silent('orders', 'list')
-    dialogs.ListBox{
-        frame_title='Import Manager Orders',
+    local dlg
+    local function get_dlg() return dlg end
+    dlg = dialogs.ListBox{
+        frame_title='Import/Delete Manager Orders',
         with_filter=true,
-        choices=output:split('\n'),
-        on_select=function(idx, choice)
+        choices=get_import_choices(),
+        on_select=function(_, choice)
             dfhack.run_command('orders', 'import', choice.text)
         end,
+        dismiss_on_select2=false,
+        on_select2=function(_, choice)
+            if choice.text:startswith('library/') then return end
+            local fname = 'dfhack-config/orders/'..choice.text..'.json'
+            if not dfhack.filesystem.isfile(fname) then return end
+            dialogs.showYesNoPrompt('Delete orders file?',
+                'Are you sure you want to delete "' .. fname .. '"?', nil,
+                function()
+                    print('deleting ' .. fname)
+                    os.remove(fname)
+                    local list = get_dlg().subviews.list
+                    local filter = list:getFilter()
+                    list:setChoices(get_import_choices(), list:getSelected())
+                    list:setFilter(filter)
+                end)
+        end,
+        select2_hint='Delete file',
     }:show()
 end
 
@@ -46,37 +68,87 @@ OrdersOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS',
     frame={w=30, h=4},
-    frame_style=gui.MEDIUM_FRAME,
-    frame_background=gui.CLEAR_PEN,
 }
 
 function OrdersOverlay:init()
-    self:addviews{
-        widgets.HotkeyLabel{
-            frame={t=0, l=0},
-            label='import',
-            key='CUSTOM_CTRL_I',
-            on_activate=do_import,
-        },
-        widgets.HotkeyLabel{
-            frame={t=1, l=0},
-            label='export',
-            key='CUSTOM_CTRL_E',
-            on_activate=do_export,
-        },
-        widgets.HotkeyLabel{
-            frame={t=0, l=15},
-            label='sort',
-            key='CUSTOM_CTRL_O',
-            on_activate=do_sort,
-        },
-        widgets.HotkeyLabel{
-            frame={t=1, l=15},
-            label='clear',
-            key='CUSTOM_CTRL_C',
-            on_activate=do_clear,
+    self.minimized = false
+
+    local main_panel = widgets.Panel{
+        frame={t=0, l=0, r=0, h=4},
+        frame_style=gui.MEDIUM_FRAME,
+        frame_background=gui.CLEAR_PEN,
+        visible=function() return not self.minimized end,
+        subviews={
+            widgets.HotkeyLabel{
+                frame={t=0, l=0},
+                label='import',
+                key='CUSTOM_CTRL_I',
+                auto_width=true,
+                on_activate=do_import,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=0},
+                label='export',
+                key='CUSTOM_CTRL_E',
+                auto_width=true,
+                on_activate=do_export,
+            },
+            widgets.HotkeyLabel{
+                frame={t=0, l=15},
+                label='sort',
+                key='CUSTOM_CTRL_O',
+                auto_width=true,
+                on_activate=do_sort,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=15},
+                label='clear',
+                key='CUSTOM_CTRL_C',
+                auto_width=true,
+                on_activate=do_clear,
+            },
         },
     }
+
+    local minimized_panel = widgets.Panel{
+        frame={t=0, r=0, w=3, h=1},
+        subviews={
+            widgets.Label{
+                frame={t=0, l=0, w=1, h=1},
+                text='[',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, l=1, w=1, h=1},
+                text={{text=function() return self.minimized and string.char(31) or string.char(30) end}},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=0, w=1, h=1},
+                text=']',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+        },
+    }
+
+    self:addviews{
+        main_panel,
+        minimized_panel,
+    }
+end
+
+function OrdersOverlay:onInput(keys)
+    if keys.CUSTOM_ALT_M then
+        self.minimized = not self.minimized
+        return true
+    end
+    if OrdersOverlay.super.onInput(self, keys) then
+        return true
+    end
 end
 
 OVERLAY_WIDGETS = {

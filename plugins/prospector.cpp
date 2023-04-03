@@ -565,6 +565,10 @@ static command_result embark_prospector(color_ostream &out,
                                         df::viewscreen_choose_start_sitest *screen,
                                         const prospect_options &options)
 {
+    out.printerr("prospector at embark is not currently available.\n");
+    return CR_FAILURE;
+
+/*
     if (!world || !world->world_data)
     {
         out.printerr("World data is not available.\n");
@@ -621,6 +625,7 @@ static command_result embark_prospector(color_ostream &out,
     out << std::endl << "Warning: the above data is only a very rough estimate." << std::endl;
 
     return CR_OK;
+*/
 }
 
 static command_result map_prospector(color_ostream &con,

@@ -111,7 +111,7 @@ static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b) {
 // now all at 0, so there is no risk of having extra items attached. we don't
 // remove them to keep the "finalize with buildingplan active" path as similar
 // as possible to the "finalize with buildingplan disabled" path.
-void finalizeBuilding(color_ostream &out, df::building *bld) {
+void finalizeBuilding(color_ostream &out, df::building *bld, bool unsuspend_on_finalize) {
     DEBUG(cycle,out).print("finalizing building %d\n", bld->id);
     auto job = bld->jobs[0];
 
@@ -143,8 +143,10 @@ void finalizeBuilding(color_ostream &out, df::building *bld) {
     }
 
     // we're good to go!
-    job->flags.bits.suspend = false;
-    Job::checkBuildingsNow();
+    if (unsuspend_on_finalize) {
+        job->flags.bits.suspend = false;
+        Job::checkBuildingsNow();
+    }
 }
 
 static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
@@ -181,7 +183,8 @@ static bool isAccessibleFrom(color_ostream &out, df::item *item, df::job *job) {
 
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
-        unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
+        unordered_map<int32_t, PlannedBuilding> &planned_buildings,
+        bool unsuspend_on_finalize) {
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
     auto item_vector = df::global::world->items.other[other_id];
     DEBUG(cycle,out).print("matching %zu item(s) in vector %s against %zu filter bucket(s)\n",
@@ -239,7 +242,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 --jitems[filter_idx]->quantity;
                 task_queue.pop_front();
                 if (isJobReady(out, jitems)) {
-                    finalizeBuilding(out, bld);
+                    finalizeBuilding(out, bld, unsuspend_on_finalize);
                     planned_buildings.at(id).remove(out);
                 }
                 if (task_queue.empty()) {
@@ -274,7 +277,7 @@ struct VectorsToScanLast {
 };
 
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
-        unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
+        unordered_map<int32_t, PlannedBuilding> &planned_buildings, bool unsuspend_on_finalize) {
     static const VectorsToScanLast vectors_to_scan_last;
 
     DEBUG(cycle,out).print(
@@ -292,7 +295,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         }
 
         auto & buckets = it->second;
-        doVector(out, vector_id, buckets, planned_buildings);
+        doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
             DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
@@ -306,7 +309,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         if (tasks.count(vector_id) == 0)
             continue;
         auto & buckets = tasks[vector_id];
-        doVector(out, vector_id, buckets, planned_buildings);
+        doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
             DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),

@@ -702,7 +702,7 @@ local warned_scripts = {}
 function dfhack.run_script(name,...)
     if not warned_scripts[name] then
         local helpdb = require('helpdb')
-        if helpdb.is_entry(name) and helpdb.get_entry_tags(name).untested then
+        if helpdb.is_entry(name) and helpdb.get_entry_tags(name).unavailable then
             warned_scripts[name] = true
             dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
             dfhack.printerr('It may not work as expected, or it may corrupt your game.')
@@ -770,7 +770,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
             elseif ((type(v.required) == 'boolean' and v.required) or
                     (type(v.required) == 'function' and v.required(flags))) then
                 if not script_flags[flag] then
-                    local msg = v.error or 'Flag "' .. flag .. '" not recognized'
+                    local msg = v.error or ('Flag "' .. flag .. '" not recognized')
                     error(name .. ': ' .. msg)
                 end
             end

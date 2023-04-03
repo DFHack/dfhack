@@ -207,20 +207,29 @@ ItemLine.ATTRS{
 }
 
 function ItemLine:init()
-    self.frame.h = 1
+    --self.frame.h = 2
     self.visible = function() return #get_cur_filters() >= self.idx end
     self:addviews{
         widgets.Label{
-            frame={t=0, l=0},
-            text='*',
-            auto_width=true,
+            frame={t=0, l=1},
+            text=string.char(26),
+            --auto_width=true,
             visible=self.is_selected_fn,
+        },
+        widgets.Label{
+            frame={t=0, l=2},
+            text={
+                {text=self:callback('get_item_line_text')},
+                --{text='[filter]', pen=self:callback('get_f_pen')},
+                --{text='[x]', pen=self:callback('get_x_pen')},
+            },
         },
         widgets.Label{
             frame={t=0, l=25},
             text={
-                {tile=pens.BUTTON_START_PEN},
-                {gap=6, tile=pens.BUTTON_END_PEN},
+                --{tile=pens.BUTTON_START_PEN},
+                --{gap=6, tile=pens.BUTTON_END_PEN},
+                {text='[filter]', pen=self:callback('get_f_pen')},
             },
             auto_width=true,
             on_click=function() self.on_filter(self.idx) end,
@@ -228,19 +237,17 @@ function ItemLine:init()
         widgets.Label{
             frame={t=0, l=33},
             text={
-                {tile=pens.BUTTON_START_PEN},
-                {gap=1, tile=pens.BUTTON_END_PEN},
+                --{tile=pens.BUTTON_START_PEN},
+                --{gap=1, tile=pens.BUTTON_END_PEN},
+                {text='[x]', pen=self:callback('get_x_pen')},
             },
             auto_width=true,
             on_click=function() self.on_clear_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=2},
+            frame={t=1, l=2},
             text={
-                {width=21, text=self:callback('get_item_line_text')},
-                {gap=3, text='filter', pen=COLOR_GREEN},
-                {gap=2, text='x', pen=self:callback('get_x_pen')},
-                {gap=3, text=function() return self.note end,
+                {gap=2, text=function() return self.note end,
                  pen=function() return self.note_pen end},
             },
         },
@@ -259,9 +266,13 @@ function ItemLine:onInput(keys)
     return ItemLine.super.onInput(self, keys)
 end
 
+function ItemLine:get_f_pen()
+    return self.is_selected_fn and COLOR_LIGHTCYAN or COLOR_CYAN
+end
+
 function ItemLine:get_x_pen()
     return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1) and
-            COLOR_GREEN or COLOR_GREY
+            COLOR_LIGHTRED or COLOR_BLACK
 end
 
 function ItemLine:get_item_line_text()
@@ -276,13 +287,13 @@ function ItemLine:get_item_line_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
-        self.note = 'Available now'
+        self.note = string.char(192)..' Available now'
     else
-        self.note_pen = COLOR_YELLOW
-        self.note = 'Will link later'
+        self.note_pen = COLOR_BROWN
+        self.note = string.char(192)..' Will link later'
     end
 
-    return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
+    return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and ' of ' or 's of ')
 end
 
 function ItemLine:reduce_quantity(used_quantity)
@@ -307,10 +318,10 @@ end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
-    default_pos={x=5,y=9},
+    default_pos={x=5,y=8},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
-    frame={w=56, h=20},
+    frame={w=56, h=22},
 }
 
 function PlannerOverlay:init()
@@ -319,31 +330,32 @@ function PlannerOverlay:init()
 
     local main_panel = widgets.Panel{
         view_id='main',
-        frame={t=0, l=0, r=0, h=14},
-        frame_style=gui.MEDIUM_FRAME,
+        frame={t=1, l=0, r=0, h=14},
+        frame_style=gui.INTERIOR_MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=function() return not self.minimized end,
     }
 
     local minimized_panel = widgets.Panel{
-        frame={t=0, r=0, w=4, h=1},
+        frame={t=0, r=1, w=17, h=1},
         subviews={
             widgets.Label{
-                frame={t=0, l=0, w=1, h=1},
-                text={{tile=pens.MINIMIZED_LEFT_PEN}},
+                frame={t=0, r=0, h=1},
+                text={
+                    {text=' show Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
+                    {text='['..string.char(31)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
+                },
                 visible=function() return self.minimized end,
-            },
-            widgets.Label{
-                frame={t=0, l=1, w=2, h=1},
-                text=string.char(31)..string.char(30),
-                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
-                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
                 on_click=function() self.minimized = not self.minimized end,
             },
             widgets.Label{
-                frame={t=0, r=0, w=1, h=1},
-                text={{tile=pens.MINIMIZED_RIGHT_PEN}},
-                visible=function() return self.minimized end,
+                frame={t=0, r=0, h=1},
+                text={
+                    {text=' hide Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
+                    {text='['..string.char(30)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
+                },
+                visible=function() return not self.minimized end,
+                on_click=function() self.minimized = not self.minimized end,
             },
         },
     }
@@ -387,7 +399,7 @@ function PlannerOverlay:init()
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='hollow',
-            frame={t=3, l=4},
+            frame={b=4, l=1, w=19},
             key='CUSTOM_H',
             label='Hollow area:',
             visible=is_construction,
@@ -398,7 +410,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={t=4, l=4},
+            frame={b=5, l=23, w=28},
             key='CUSTOM_R',
             label='Top Stair Type:   ',
             visible=is_stairs,
@@ -410,7 +422,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={t=5, l=4},
+            frame={b=4, l=23, w=28},
             key='CUSTOM_B',
             label='Bottom Stair Type:',
             visible=is_stairs,
@@ -422,17 +434,28 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='weapons',
-            frame={t=5, l=4},
+            frame={b=4, l=1, w=22},
             key='CUSTOM_T',
             key_back='CUSTOM_SHIFT_T',
-            label='Num weapons:',
+            label='# of weapons:',
             visible=is_weapon_or_spike_trap,
-            options={1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+            options={
+                        {label='(1)', value=1, pen=COLOR_YELLOW},
+                        {label='(2)', value=2, pen=COLOR_YELLOW},
+                        {label='(3)', value=3, pen=COLOR_YELLOW},
+                        {label='(4)', value=4, pen=COLOR_YELLOW},
+                        {label='(5)', value=5, pen=COLOR_YELLOW},
+                        {label='(6)', value=6, pen=COLOR_YELLOW},
+                        {label='(7)', value=7, pen=COLOR_YELLOW},
+                        {label='(8)', value=8, pen=COLOR_YELLOW},
+                        {label='(9)', value=9, pen=COLOR_YELLOW},
+                        {label='(10)', value=10, pen=COLOR_YELLOW},
+                    },
             on_change=function(val) weapon_quantity = val end,
         },
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
-            frame={t=5, l=4},
+            frame={b=4, l=1, w=22},
             key='CUSTOM_T',
             label='Engraved only:',
             visible=is_slab,
@@ -441,7 +464,8 @@ function PlannerOverlay:init()
             end,
         },
         widgets.Label{
-            frame={b=3, l=17},
+            frame={b=2, l=25},
+            text_pen=dfhack.pen.parse{fg=COLOR_DARKGREY},
             text={
                 'Selected area: ',
                 {text=function()
@@ -457,29 +481,29 @@ function PlannerOverlay:init()
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
                 widgets.HotkeyLabel{
-                    frame={b=1, l=0},
-                    key='STRING_A042',
+                    frame={b=2, l=1},
+                    key='CUSTOM_SHIFT_Q',
                     auto_width=true,
                     enabled=function() return #get_cur_filters() > 1 end,
                     on_activate=function() self.selected = ((self.selected - 2) % #get_cur_filters()) + 1 end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=1, l=1},
-                    key='STRING_A047',
-                    label='Prev/next item',
+                    frame={b=2, l=2},
+                    key='CUSTOM_Q',
+                    label='Prev/next',
                     auto_width=true,
                     enabled=function() return #get_cur_filters() > 1 end,
                     on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=1, l=21},
+                    frame={b=1, l=1},
                     key='CUSTOM_F',
                     label='Set filter',
                     auto_width=true,
                     on_activate=function() self:set_filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=1, l=37},
+                    frame={b=0, l=1},
                     key='CUSTOM_X',
                     label='Clear filter',
                     auto_width=true,
@@ -490,19 +514,20 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='choose',
-                    frame={b=0, l=0},
-                    key='CUSTOM_I',
-                    label='Item selection:',
+                    frame={b=0, l=23},
+                    key='CUSTOM_Z',
+                    label='Choose items:',
+                    label_below=true,
                     options={
-                        {label='Use filters', value=0},
+                        {label='with Filters', value=0},
                         {
                             label=function()
                                 local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
-                                return ('Last choice (%s)'):format(automaterial or 'Will ask')
+                                return ('Last used (%s)'):format(automaterial or 'n/a')
                             end,
                             value=2,
                         },
-                        {label='Manual choice', value=1},
+                        {label='Manually', value=1},
                     },
                     initial_option=0,
                     on_change=function(choose)
@@ -511,7 +536,7 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='safety',
-                    frame={b=0, l=29, w=25},
+                    frame={b=2, l=23, w=25},
                     key='CUSTOM_G',
                     label='Building safety:',
                     options={
@@ -529,23 +554,30 @@ function PlannerOverlay:init()
         },
     }
 
+    local divider_widget = widgets.Panel{
+        view_id='divider',
+        frame={t=10, l=0, r=0, h=1},
+        on_render=self:callback('draw_divider_h'),
+        visible=function() return not self.minimized end,
+    }
+
     local error_panel = widgets.ResizingPanel{
         view_id='errors',
-        frame={t=14, l=0, r=0},
-        frame_style=gui.MEDIUM_FRAME,
+        frame={t=15, l=0, r=0},
+        frame_style=gui.BOLD_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=function() return not self.minimized end,
     }
 
     error_panel:addviews{
         widgets.WrappedLabel{
-            frame={t=0, l=0, r=0},
+            frame={t=0, l=1, r=0},
             text_pen=COLOR_LIGHTRED,
             text_to_wrap=get_placement_errors,
             visible=function() return #uibs.errors > 0 end,
         },
         widgets.Label{
-            frame={t=0, l=0, r=0},
+            frame={t=0, l=1, r=0},
             text_pen=COLOR_GREEN,
             text='OK to build',
             visible=function() return #uibs.errors == 0 end,
@@ -556,7 +588,22 @@ function PlannerOverlay:init()
         main_panel,
         minimized_panel,
         error_panel,
+        divider_widget,
     }
+end
+
+function PlannerOverlay:draw_divider_h(dc)
+    local x2 = dc.width -1
+    for x=0,x2 do
+        dc:seek(x, 0)
+        if x == 0 then
+            dc:char(nil, pens.HORI_LEFT_PEN)
+        elseif x == x2 then
+            dc:char(nil, pens.HORI_RIGHT_PEN)
+        else
+            dc:char(nil, pens.HORI_MID_PEN)
+        end
+    end
 end
 
 function PlannerOverlay:reset()

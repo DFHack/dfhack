@@ -1637,17 +1637,17 @@ StockpileIterator& StockpileIterator::operator++() {
             ++current;
         } else {
             // Start with the top-left block covering the stockpile.
-            block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+            block = Maps::getTileBlock(std::min(std::max(stockpile->x1, 0), world->map.x_count-1), std::min(std::max(stockpile->y1, 0), world->map.y_count-1), stockpile->z);
             current = 0;
         }
 
         while (current >= block->items.size()) {
             // Out of items in this block; find the next block to search.
-            if (block->map_pos.x + 16 <= stockpile->x2) {
-                block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
+            if (std::max(block->map_pos.x + 16, 0) <= std::min(std::max(stockpile->x2, 0), world->map.x_count-1)) {
+                block = Maps::getTileBlock(std::min(std::max(block->map_pos.x + 16, 0), world->map.x_count-1), block->map_pos.y, stockpile->z);
                 current = 0;
-            } else if (block->map_pos.y + 16 <= stockpile->y2) {
-                block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+            } else if (std::max(block->map_pos.y + 16, 0) <= std::min(std::max(stockpile->y2, 0), world->map.y_count-1)) {
+                block = Maps::getTileBlock(std::min(std::max(stockpile->x1, 0), world->map.x_count-1), std::min(std::max(block->map_pos.y + 16, 0), world->map.y_count-1), stockpile->z);
                 current = 0;
             } else {
                 // All items in all blocks have been checked.

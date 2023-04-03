@@ -275,29 +275,17 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             // count how many items of this type the crafter already collected
             {
                 int count_got = 0;
-                int dimension_got = 0;
                 int divisor = 1;
-                bool has_dims = false;
-                if (item->item_type == item_type::BAR) {
+                if (item->item_type == item_type::BAR)
                     divisor = 150;
-                    has_dims = true;
-                } else if (item->item_type == item_type::CLOTH) {
+                else if (item->item_type == item_type::CLOTH)
                     divisor = 10000;
-                    has_dims = true;
-                }
-                for (size_t j = 0; j < job->items.size(); j++)
-                {
-                    if(job->items[j]->job_item_idx == int32_t(i))
-                    {
-                        if (has_dims)
-                            dimension_got += job->items[j]->item->getTotalDimension();
+                for (size_t j = 0; j < job->items.size(); j++) {
+                    if (job->items[j]->job_item_idx == int32_t(i))
                         count_got += 1;
-                    }
                 }
-                out.print(", got %i of %i", count_got, item->quantity/divisor);
-                if (has_dims)
-                    out.print(" (%i of %i sub-units)", dimension_got, item->quantity);
-                out.print("\n");
+                out.print(", got %i of %i\n", count_got,
+                    item->quantity < divisor ? item->quantity : item->quantity/divisor);
             }
         }
     }

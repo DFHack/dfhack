@@ -8,6 +8,7 @@ local widgets = require('gui.widgets')
 
 local OVERLAY_CONFIG_FILE = 'dfhack-config/overlay.json'
 local OVERLAY_WIDGETS_VAR = 'OVERLAY_WIDGETS'
+local GLOBAL_KEY = 'OVERLAY'
 
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
@@ -309,6 +310,14 @@ function reload()
     table.sort(widget_index)
 
     reposition_widgets()
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    reload()
 end
 
 local function dump_widget_config(name, widget)

@@ -15,6 +15,12 @@ local BUILD_TEXT_HPEN = to_pen{fg=COLOR_WHITE, bg=COLOR_GREEN, keep_lower=true}
 -- most recent entries are at the *end* of the list
 local recently_used = {}
 
+function get_automaterial_selection(building_type)
+    local tracker = recently_used[building_type]
+    if not tracker or not tracker.list then return end
+    return tracker.list[#tracker.list]
+end
+
 local function sort_by_type(a, b)
     local ad, bd = a.data, b.data
     return ad.item_type < bd.item_type or
@@ -54,6 +60,7 @@ ItemSelection.ATTRS{
     index=DEFAULT_NIL,
     desc=DEFAULT_NIL,
     quantity=DEFAULT_NIL,
+    autoselect=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
     on_cancel=DEFAULT_NIL,
 }
@@ -63,34 +70,55 @@ function ItemSelection:init()
     self.selected_set = {}
     local plural = self.quantity == 1 and '' or 's'
 
+    local choices = self:get_choices(sort_by_recency)
+
+    if self.autoselect then
+        self:do_autoselect(choices)
+        if self.num_selected >= self.quantity then
+            self:submit(choices)
+            return
+        end
+    end
+
     self:addviews{
         widgets.Label{
-            frame={t=0, l=0, r=10},
+            frame={t=0, l=0, r=16},
             text={
-                self.desc,
-                plural,
-                NEWLINE,
+                self.desc, plural, NEWLINE,
                 ('Select up to %d item%s ('):format(self.quantity, plural),
                 {text=function() return self.num_selected end},
                 ' selected)',
             },
         },
         widgets.Label{
-            frame={r=0, w=9, t=0, h=3},
+            frame={r=0, w=15, t=0, h=3},
             text_pen=BUILD_TEXT_PEN,
             text_hpen=BUILD_TEXT_HPEN,
             text={
-                '         ', NEWLINE,
-                '  Build  ', NEWLINE,
-                '         ',
+                '   Use filter  ', NEWLINE,
+                ' for remaining ', NEWLINE,
+                '     items     ',
             },
             on_click=self:callback('submit'),
+            visible=function() return self.num_selected < self.quantity end,
+        },
+        widgets.Label{
+            frame={r=0, w=15, t=0, h=3},
+            text_pen=BUILD_TEXT_PEN,
+            text_hpen=BUILD_TEXT_HPEN,
+            text={
+                '               ', NEWLINE,
+                '    Continue   ', NEWLINE,
+                '               ',
+            },
+            on_click=self:callback('submit'),
+            visible=function() return self.num_selected >= self.quantity end,
         },
         widgets.FilteredList{
             view_id='flist',
             frame={t=3, l=0, r=0, b=4},
             case_sensitive=false,
-            choices=self:get_choices(sort_by_recency),
+            choices=choices,
             icon_width=2,
             on_submit=self:callback('toggle_group'),
             edit_on_char=function(ch) return ch:match('[%l -]') end,
@@ -115,8 +143,8 @@ function ItemSelection:init()
         },
         widgets.HotkeyLabel{
             frame={l=22, b=1},
-            key='CUSTOM_SHIFT_B',
-            label='Build',
+            key='CUSTOM_SHIFT_C',
+            label='Continue',
             auto_width=true,
             on_activate=self:callback('submit'),
         },
@@ -215,6 +243,13 @@ function ItemSelection:get_choices(sort_fn)
     return choices
 end
 
+function ItemSelection:do_autoselect(choices)
+    if #choices == 0 then return end
+    local desired = get_automaterial_selection(uibs.building_type)
+    if choices[1].search_key ~= desired then return end
+    self:toggle_group(1, choices[1])
+end
+
 function ItemSelection:increment_group(idx, choice)
     local data = choice.data
     if self.quantity <= self.num_selected then return false end
@@ -282,13 +317,13 @@ local function track_recently_used(choices)
     end
 end
 
-function ItemSelection:submit()
+function ItemSelection:submit(choices)
     local selected_items = {}
     for item_id in pairs(self.selected_set) do
         table.insert(selected_items, item_id)
     end
     if #selected_items > 0 then
-        track_recently_used(self.subviews.flist:getChoices())
+        track_recently_used(choices or self.subviews.flist:getChoices())
     end
     self.on_submit(selected_items)
 end
@@ -328,6 +363,7 @@ ItemSelectionScreen.ATTRS {
     index=DEFAULT_NIL,
     desc=DEFAULT_NIL,
     quantity=DEFAULT_NIL,
+    autoselect=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
     on_cancel=DEFAULT_NIL,
 }
@@ -338,6 +374,7 @@ function ItemSelectionScreen:init()
             index=self.index,
             desc=self.desc,
             quantity=self.quantity,
+            autoselect=self.autoselect,
             on_submit=self.on_submit,
             on_cancel=self.on_cancel,
         }

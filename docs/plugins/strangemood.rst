@@ -10,7 +10,7 @@ Usage
 
 ::
 
-    stangemood [<options>]
+    strangemood [<options>]
 
 Examples
 --------

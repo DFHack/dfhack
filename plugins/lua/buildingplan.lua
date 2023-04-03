@@ -51,6 +51,11 @@ function parse_commandline(...)
     return true
 end
 
+function is_suspendmanager_enabled()
+    local ok, sm = pcall(reqscript, 'suspendmanager')
+    return ok and sm.isEnabled()
+end
+
 function get_num_filters(btype, subtype, custom)
     local filters = dfhack.buildings.getFiltersByType({}, btype, subtype, custom)
     return filters and #filters or 0
@@ -114,9 +119,7 @@ end
 
 -- for use during development to reload all buildingplan modules
 function reload_modules()
-    -- ensure circular deps are refreshed
     reload('plugins.buildingplan.pens')
-    reload('plugins.buildingplan')
     reload('plugins.buildingplan.filterselection')
     reload('plugins.buildingplan.itemselection')
     reload('plugins.buildingplan.planneroverlay')

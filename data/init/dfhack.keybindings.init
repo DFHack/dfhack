@@ -153,6 +153,10 @@ keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 #keybinding add Ctrl-Shift-N@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist gui/rename
 #keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
+# gui/design
+keybinding add Ctrl-D@dwarfmode gui/design
+
+
 
 #####################
 # adv mode bindings #

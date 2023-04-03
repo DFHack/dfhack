@@ -26,6 +26,12 @@ Moved frequently used materials to the top of the materials list when building
 buildings. Also offered extended options when building constructions. All
 functionality has been merged into `buildingplan`.
 
+.. _autounsuspend:
+
+autounsuspend
+=============
+Replaced by `suspendmanager`.
+
 .. _combine-drinks:
 
 combine-drinks
@@ -146,6 +152,12 @@ This script is no longer useful in current DF versions. The script required a
 binpatch <binpatches/needs-patch>`, which has not been available since DF
 0.34.11.
 
+.. _gui/dig:
+
+gui/dig
+=======
+Renamed to gui/design
+
 .. _gui/hack-wish:
 
 gui/hack-wish
@@ -186,6 +198,13 @@ the Ruby library causes when used as an embedded language.
 show-unit-syndromes
 ===================
 Replaced with a GUI version: `gui/unit-syndromes`.
+
+.. _stocksettings:
+
+stocksettings
+=============
+Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
+`stockpiles` API.
 
 .. _warn-stuck-trees:
 

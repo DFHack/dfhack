@@ -4731,10 +4731,12 @@ containing newlines, or a table with the following possible fields:
   Specifies the number of character positions to advance on the line
   before rendering the token.
 
-* ``token.tile = pen``
+* ``token.tile``, ``token.htile``
 
   Specifies a pen or texture index (or a function that returns a pen or texture
-  index) to paint as one tile before the main part of the token.
+  index) to paint as one tile before the main part of the token. If ``htile``
+  is specified, that is used instead of ``tile`` when the Label is hovered over
+  with the mouse.
 
 * ``token.width = ...``
 
@@ -4762,10 +4764,10 @@ containing newlines, or a table with the following possible fields:
 
   Same as the attributes of the label itself, but applies only to the token.
 
-* ``token.pen``, ``token.dpen``
+* ``token.pen``, ``token.dpen``, ``token.hpen``
 
-  Specify the pen and disabled pen to be used for the token's text.
-  The field may be either the pen itself, or a callback that returns it.
+  Specify the pen, disabled pen, and hover pen to be used for the token's text.
+  The fields may be either the pen itself, or a callback that returns it.
 
 * ``token.on_activate``
 
@@ -4899,8 +4901,8 @@ It has the following attributes:
 :label_below: If ``true``, then the option value will apear below the label
     instead of to the right of it. Defaults to ``false``.
 :options: A list of strings or tables of
-    ``{label=string, value=string[, pen=pen]}``. String options use the same
-    string for the label and value and the default pen. The optional ``pen``
+    ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
+    string for the label and value and use the default pen. The optional ``pen``
     element could be a color like ``COLOR_RED``.
 :initial_option: The value or numeric index of the initial option.
 :on_change: The callback to call when the selected option changes. It is called

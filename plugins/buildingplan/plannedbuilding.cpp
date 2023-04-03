@@ -29,7 +29,7 @@ static vector<vector<df::job_item_vector_id>> get_vector_ids(color_ostream &out,
     auto &jitems = bld->jobs[0]->job_items;
     int num_job_items = (int)jitems.size();
     for (int jitem_idx = num_job_items - 1; jitem_idx >= 0; --jitem_idx) {
-        ret.emplace_back(getVectorIds(out, jitems[jitem_idx]));
+        ret.emplace_back(getVectorIds(out, jitems[jitem_idx], false));
     }
     return ret;
 }
@@ -109,7 +109,8 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)
     : id(get_config_val(bld_config, BLD_CONFIG_ID)),
         vector_ids(deserialize_vector_ids(out, bld_config)),
-        heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
+        //heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)), // until this works
+        heat_safety(HEAT_SAFETY_ANY),
         item_filters(get_item_filters(out, bld_config)),
         specials(get_specials(out, bld_config)),
         bld_config(bld_config) { }

@@ -12,6 +12,7 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
+#include "modules/Units.h"
 #include "modules/Screen.h"
 
 #include "df/block_square_event_frozen_liquidst.h"
@@ -502,21 +503,32 @@ command_result revflood(color_ostream &out, vector<string> & params)
         out.printerr("Only in proper dwarf mode.\n");
         return CR_FAILURE;
     }
-    int32_t cx, cy, cz;
+    df::coord pos;
     Maps::getSize(x_max,y_max,z_max);
 
-    Gui::getCursorCoords(cx,cy,cz);
-    if(cx == -30000)
-    {
-        out.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");
+    Gui::getCursorCoords(pos);
+    if (!pos.isValid()) {
+        df::unit *unit = Gui::getSelectedUnit(out, true);
+        if (unit)
+            pos = Units::getPosition(unit);
+    }
+
+    if (!pos.isValid()) {
+        vector<df::unit *> citizens;
+        Units::getCitizens(citizens);
+        if (citizens.size())
+            pos = Units::getPosition(citizens[0]);
+    }
+
+    if(!pos.isValid()) {
+        out.printerr("Please select a unit or place the keyboard cursor at some empty space you want to be unhidden.\n");
         return CR_FAILURE;
     }
-    DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
     MapCache * MCache = new MapCache;
-    df::tiletype tt = MCache->tiletypeAt(xy);
+    df::tiletype tt = MCache->tiletypeAt(pos);
     if(isWallTerrain(tt))
     {
-        out.printerr("Point the cursor at some empty space you want to be unhidden.\n");
+        out.printerr("Please select a unit or place the keyboard cursor at some empty space you want to be unhidden.\n");
         delete MCache;
         return CR_FAILURE;
     }
@@ -534,7 +546,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
     }
     MCache->trash();
 
-    unhideFlood_internal(MCache, xy);
+    unhideFlood_internal(MCache, pos);
     MCache->WriteAll();
     delete MCache;
 

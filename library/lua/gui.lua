@@ -916,8 +916,11 @@ end
 WINDOW_FRAME = make_frame('Window', true)
 PANEL_FRAME = make_frame('Panel', false)
 MEDIUM_FRAME = make_frame('Medium', false)
+BOLD_FRAME = make_frame('Bold', true)
 INTERIOR_FRAME = make_frame('Thin', false)
 INTERIOR_FRAME.signature_pen = false
+INTERIOR_MEDIUM_FRAME = copyall(MEDIUM_FRAME)
+INTERIOR_MEDIUM_FRAME.signature_pen = false
 
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = WINDOW_FRAME

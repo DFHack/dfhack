@@ -4352,11 +4352,22 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
+* ``BOLD_FRAME``
+
+  A frame suitable for a non-draggable panel meant to capture the user's focus,
+  like an important notification, confirmation dialog or error message.
+
 * ``INTERIOR_FRAME``
 
-  A frame suitable for light interior accent elements. This frame does *not* have
-  a visible ``DFHack`` signature on it, so it must not be used as the most external
-  frame for a DFHack-owned UI.
+  A frame suitable for light interior accent elements. This frame does *not*
+  have a visible ``DFHack`` signature on it, so it must not be used as the most
+  external frame for a DFHack-owned UI.
+
+* ``INTERIOR_MEDIUM_FRAME``
+
+  A copy of ``MEDIUM_FRAME`` that lacks the ``DFHack`` signature. Suitable for
+  panels that are part of a larger widget cluster. Must *not* be used as the
+  most external frame for a DFHack-owned UI.
 
 gui.widgets
 ===========

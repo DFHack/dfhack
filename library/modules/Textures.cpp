@@ -26,6 +26,7 @@ static long g_on_off_texpos_start = -1;
 static long g_control_panel_texpos_start = -1;
 static long g_thin_borders_texpos_start = -1;
 static long g_medium_borders_texpos_start = -1;
+static long g_bold_borders_texpos_start = -1;
 static long g_panel_borders_texpos_start = -1;
 static long g_window_borders_texpos_start = -1;
 
@@ -134,6 +135,8 @@ void Textures::init(color_ostream &out) {
                                           &g_thin_borders_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-medium.png",
                                           &g_medium_borders_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/border-bold.png",
+                                          &g_bold_borders_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-panel.png",
                                           &g_panel_borders_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-window.png",
@@ -200,6 +203,10 @@ long Textures::getThinBordersTexposStart() {
 
 long Textures::getMediumBordersTexposStart() {
     return g_medium_borders_texpos_start;
+}
+
+long Textures::getBoldBordersTexposStart() {
+    return g_bold_borders_texpos_start;
 }
 
 long Textures::getPanelBordersTexposStart() {

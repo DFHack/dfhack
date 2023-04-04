@@ -207,38 +207,38 @@ ItemLine.ATTRS{
 }
 
 function ItemLine:init()
-    --self.frame.h = 2
+    self.frame.h = 2
     self.visible = function() return #get_cur_filters() >= self.idx end
     self:addviews{
         widgets.Label{
+            view_id='item_symbol',
             frame={t=0, l=1},
             text=string.char(26),
-            --auto_width=true,
+            auto_width=true,
             visible=self.is_selected_fn,
         },
+    }
+    self:addviews{
         widgets.Label{
+            view_id='item_info',
             frame={t=0, l=2},
             text={
                 {text=self:callback('get_item_line_text')},
-                --{text='[filter]', pen=self:callback('get_f_pen')},
-                --{text='[x]', pen=self:callback('get_x_pen')},
             },
         },
+    }
+    self:addviews{
         widgets.Label{
-            frame={t=0, l=25},
+            frame={t=0, l=28},
             text={
-                --{tile=pens.BUTTON_START_PEN},
-                --{gap=6, tile=pens.BUTTON_END_PEN},
                 {text='[filter]', pen=self:callback('get_f_pen')},
             },
             auto_width=true,
             on_click=function() self.on_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=33},
+            frame={t=0, l=36},
             text={
-                --{tile=pens.BUTTON_START_PEN},
-                --{gap=1, tile=pens.BUTTON_END_PEN},
                 {text='[x]', pen=self:callback('get_x_pen')},
             },
             auto_width=true,
@@ -266,8 +266,8 @@ function ItemLine:onInput(keys)
     return ItemLine.super.onInput(self, keys)
 end
 
-function ItemLine:get_f_pen()
-    return self.is_selected_fn and COLOR_LIGHTCYAN or COLOR_CYAN
+function ItemLine:get_f_pen() -- TODO: make this thing work. I've tried many things to no avail. -taxi
+    return self.selected and COLOR_LIGHTCYAN or COLOR_CYAN
 end
 
 function ItemLine:get_x_pen()
@@ -293,7 +293,7 @@ function ItemLine:get_item_line_text()
         self.note = string.char(192)..' Will link later'
     end
 
-    return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and ' of ' or 's of ')
+    return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
 
 function ItemLine:reduce_quantity(used_quantity)
@@ -318,7 +318,7 @@ end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
-    default_pos={x=5,y=8},
+    default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
     frame={w=56, h=22},
@@ -432,7 +432,7 @@ function PlannerOverlay:init()
                 {label='Up', value=df.construction_type.UpStair},
             },
         },
-        widgets.CycleHotkeyLabel {
+        widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
             view_id='weapons',
             frame={b=4, l=1, w=22},
             key='CUSTOM_T',
@@ -464,7 +464,7 @@ function PlannerOverlay:init()
             end,
         },
         widgets.Label{
-            frame={b=2, l=25},
+            frame={b=2, l=23},
             text_pen=dfhack.pen.parse{fg=COLOR_DARKGREY},
             text={
                 'Selected area: ',
@@ -519,9 +519,9 @@ function PlannerOverlay:init()
                     label='Choose items:',
                     label_below=true,
                     options={
-                        {label='with Filters', value=0},
+                        {label='with filters', value=0},
                         {
-                            label=function()
+                            label=function() -- TODO: hide this option if last used mat does not exist yet
                                 local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
                                 return ('Last used (%s)'):format(automaterial or 'n/a')
                             end,
@@ -589,6 +589,12 @@ function PlannerOverlay:init()
         minimized_panel,
         error_panel,
         divider_widget,
+        widgets.Panel{
+                frame={t=0, l=1, w=37, h=1},
+                frame_inset=0,
+                frame_background=gui.CLEAR_PEN,
+                visible=function() return not self.minimized end,
+            },
     }
 end
 

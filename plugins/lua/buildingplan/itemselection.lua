@@ -164,7 +164,7 @@ function ItemSelection:init()
             view_id='footer',
             frame={l=1, r=1, b=0, h=3},
             subviews={
-                --[[ 
+                --[[
                 add an explanation for this terribleness
                 --]]
                 widgets.HotkeyLabel{

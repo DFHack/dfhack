@@ -164,13 +164,10 @@ function ItemSelection:init()
             view_id='footer',
             frame={l=1, r=1, b=0, h=3},
             subviews={
-                --[[
-                add an explanation for this terribleness
-                --]]
                 widgets.HotkeyLabel{
                     frame={l=0, h=1, t=0},
                     key='KEYBOARD_CURSOR_RIGHT_FAST',
-                    key_sep='----: ', --these hypens are overwritten by the next Label
+                    key_sep='----: ', -- these hypens function as "padding" to be overwritten by the next Label
                     label='Use one',
                     auto_width=true,
                     on_activate=function() self:increment_group(self.subviews.flist.list:getSelected()) end,
@@ -178,12 +175,12 @@ function ItemSelection:init()
                 widgets.Label{
                     frame={l=6, w=5, t=0},
                     text_pen=COLOR_LIGHTGREEN,
-                    text='Right',
+                    text='Right', -- this overrides the "6----" characters from the previous HotkeyLabel
                 },
                 widgets.HotkeyLabel{
                     frame={l=1, h=1, t=1},
                     key='KEYBOARD_CURSOR_LEFT_FAST',
-                    key_sep='---: ', --these hypens are overwritten by the next Label
+                    key_sep='---: ', -- these hypens function as "padding" to be overwritten by the next Label
                     label='Use one fewer',
                     auto_width=true,
                     on_activate=function() self:decrement_group(self.subviews.flist.list:getSelected()) end,
@@ -191,7 +188,7 @@ function ItemSelection:init()
                 widgets.Label{
                     frame={l=7, w=4, t=1},
                     text_pen=COLOR_LIGHTGREEN,
-                    text='Left',
+                    text='Left', -- this overrides the "4---" characters from the previous HotkeyLabel
                 },
                 widgets.HotkeyLabel{
                     frame={l=6, t=2, h=2},

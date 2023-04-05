@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `hotkeys`: hotkey hints on menu popup will no longer get their last character cut off by the scrollbar
 - ``launchdf``: launch Dwarf Fortress via the Steam client so Steam Workshop is functional
 - `blueprint`: interpret saplings, shrubs, and twigs as floors instead of walls
+- ``Buildings::StockpileIterator:``: fix to use world map boundaries when stockpile coordinates exist outside of the world map. Fixes unhandled exception for `combine`.
 
 ## Misc Improvements
 - `buildingplan`: items in the item selection dialog should now use the same item quality symbols as the base game

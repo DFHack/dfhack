@@ -3,7 +3,7 @@ title-version
 
 .. dfhack-tool::
     :summary: Displays the DFHack version on DF's title screen.
-    :tags: untested interface
+    :tags: unavailable interface
     :no-command:
 
 Usage

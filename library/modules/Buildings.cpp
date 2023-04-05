@@ -68,6 +68,7 @@ using namespace DFHack;
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
+#include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
@@ -591,6 +592,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
             obj->gate_flags.bits.closed = false;
         break;
     }
+    case building_type::Weapon:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
+            obj->gate_flags.bits.closed = false;
+        break;
+    }
     default:
         break;
     }
@@ -792,10 +799,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             if (!allow_occupied &&
                 block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
-            else
+            else if (!allow_wall)
             {
-                auto tile = block->tiletype[btile.x][btile.y];
-                if (!allow_wall && !HighPassable(tile))
+                auto &tt = block->tiletype[btile.x][btile.y];
+                auto &des = block->designation[btile.x][btile.y];
+                if (!HighPassable(tt) ||
+                        des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma))
                     allowed = false;
             }
 

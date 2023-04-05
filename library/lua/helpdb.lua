@@ -12,6 +12,8 @@ local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
 
+local GLOBAL_KEY = 'HELPDB'
+
 -- enums
 local ENTRY_TYPES = {
     BUILTIN='builtin',
@@ -421,6 +423,14 @@ end
 function refresh()
     needs_refresh = true
     ensure_db()
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    refresh()
 end
 
 local function parse_blocks(text)

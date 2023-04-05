@@ -61,7 +61,25 @@ namespace DFHack {
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+};
 
+//static int get_config_val(PersistentDataItem& c, int index) {
+//    if (!c.isValid())
+//        return -1;
+//    return c.ival(index);
+//}
+//static bool get_config_bool(PersistentDataItem& c, int index) {
+//    return get_config_val(c, index) == 1;
+//}
+static void set_config_val(PersistentDataItem& c, int index, int value) {
+    if (c.isValid())
+        c.ival(index) = value;
+}
+static void set_config_bool(PersistentDataItem& c, int index, bool value) {
+    set_config_val(c, index, value ? 1 : 0);
+}
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -250,6 +268,29 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != autoclothing_enabled) {
+        auto enabled = World::GetPersistentData("autoclothing/enabled");
+        autoclothing_enabled = enable;
+        DEBUG(report, out).print("%s from the API; persisting\n",
+            autoclothing_enabled ? "enabled" : "disabled");
+        set_config_bool(enabled, CONFIG_IS_ENABLED, autoclothing_enabled);
+        if (enable)
+            do_autoclothing();
+    }
+    else {
+        DEBUG(report, out).print("%s from the API, but already %s; no action\n",
+            autoclothing_enabled ? "enabled" : "disabled",
+            autoclothing_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
 // Whatever you put here will be done in each game step. Don't abuse it.
 // It's optional, so you can just comment it out like this if you don't need it.
 
@@ -389,6 +430,7 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
     if (parameters.size() == 0)
     {
         CoreSuspender suspend;
+        out << "Automatic clothing management is currently " << (autoclothing_enabled ? "enabled" : "disabled") << "." << endl;
         out << "Currently set " << clothingOrders.size() << " automatic clothing orders" << endl;
         for (size_t i = 0; i < clothingOrders.size(); i++)
         {
@@ -523,7 +565,7 @@ static void find_needed_clothing_items()
 
                 if (!item)
                 {
-                    WARN(cycle).print("Invalid inventory item ID: %d\n", ownedItem);
+                    WARN(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
                     continue;
                 }
 
@@ -728,34 +770,28 @@ static void list_unit_counts(color_ostream& out, map<int, int>& unitList)
 
 static bool isAvailableItem(df::item* item)
 {
-    if (item->flags.bits.in_job)
+    static struct BadFlags {
+        uint32_t whole;
+
+        BadFlags() {
+            df::item_flags flags;
+#define F(x) flags.bits.x = true;
+            F(in_job); F(hostile); F(in_building); F(encased);
+            F(foreign); F(trader); F(owned); F(forbid);
+            F(dump); F(on_fire); F(melt); F(hidden);
+
+            F(garbage_collect); F(rotten); F(construction);
+            F(in_chest); F(removed); F(spider_web);
+
+            // F(artifact); -- TODO: should this be included?
+#undef F
+            whole = flags.whole;
+        }
+    } badFlags;
+
+    if ((item->flags.whole & badFlags.whole) != 0)
         return false;
-    if (item->flags.bits.hostile)
-        return false;
-    if (item->flags.bits.in_building)
-        return false;
-    if (item->flags.bits.in_building)
-        return false;
-    if (item->flags.bits.encased)
-        return false;
-    if (item->flags.bits.foreign)
-        return false;
-    if (item->flags.bits.trader)
-        return false;
-    if (item->flags.bits.owned)
-        return false;
-    if (item->flags.bits.artifact)
-        return false;
-    if (item->flags.bits.forbid)
-        return false;
-    if (item->flags.bits.dump)
-        return false;
-    if (item->flags.bits.on_fire)
-        return false;
-    if (item->flags.bits.melt)
-        return false;
-    if (item->flags.bits.hidden)
-        return false;
+
     if (item->getWear() > 1)
         return false;
     if (!item->isClothing())
@@ -782,7 +818,7 @@ static void generate_report(color_ostream& out)
             auto item = Items::findItemByID(itemId);
             if (!item)
             {
-                WARN(cycle,out).print("Invalid inventory item ID: %d\n", itemId);
+                WARN(cycle,out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
                 continue;
             }
             if (item->getWear() >= 1)
@@ -915,3 +951,23 @@ static void generate_report(color_ostream& out)
     }
 
 }
+
+/////////////////////////////////////////////////////
+// Lua API
+// TODO: implement Lua hooks to manipulate the persistent order configuration
+//
+
+static void autoclothing_doCycle(color_ostream& out) {
+    DEBUG(report, out).print("entering autoclothing_doCycle\n");
+    do_autoclothing();
+}
+
+
+DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(autoclothing_doCycle),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS{
+    DFHACK_LUA_END
+};

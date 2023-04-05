@@ -23,13 +23,68 @@ local function is_choosing_area()
     return uibs.selection_pos.x >= 0
 end
 
-local function get_cur_area_dims(placement_data)
-    if not placement_data and not is_choosing_area() then return 1, 1, 1 end
-    local selection_pos = placement_data and placement_data.p1 or uibs.selection_pos
-    local pos = placement_data and placement_data.p2 or uibs.pos
-    return math.abs(selection_pos.x - pos.x) + 1,
-            math.abs(selection_pos.y - pos.y) + 1,
-            math.abs(selection_pos.z - pos.z) + 1
+-- TODO: reuse data in quickfort database
+local function get_selection_size_limits()
+    local btype = uibs.building_type
+    if btype == df.building_type.Bridge
+            or btype == df.building_type.FarmPlot
+            or btype == df.building_type.RoadPaved
+            or btype == df.building_type.RoadDirt then
+        return {w=31, h=31}
+    elseif btype == df.building_type.AxleHorizontal
+            or btype == df.building_type.Rollers then
+        return uibs.direction == 1 and {w=1, h=31} or {w=31, h=1}
+    end
+end
+
+local function get_selected_bounds(selection_pos, pos)
+    selection_pos = selection_pos or uibs.selection_pos
+    if not is_choosing_area() then return end
+
+    pos = pos or uibs.pos
+
+    local bounds = {
+        x1=math.min(selection_pos.x, pos.x),
+        x2=math.max(selection_pos.x, pos.x),
+        y1=math.min(selection_pos.y, pos.y),
+        y2=math.max(selection_pos.y, pos.y),
+        z1=math.min(selection_pos.z, pos.z),
+        z2=math.max(selection_pos.z, pos.z),
+    }
+
+    -- clamp to map edges
+    bounds = {
+        x1=math.max(0, bounds.x1),
+        x2=math.min(df.global.world.map.x_count-1, bounds.x2),
+        y1=math.max(0, bounds.y1),
+        y2=math.min(df.global.world.map.y_count-1, bounds.y2),
+        z1=math.max(0, bounds.z1),
+        z2=math.min(df.global.world.map.z_count-1, bounds.z2),
+    }
+
+    local limits = get_selection_size_limits()
+    if limits then
+        -- clamp to building type area limit
+        bounds = {
+            x1=math.max(selection_pos.x - (limits.w-1), bounds.x1),
+            x2=math.min(selection_pos.x + (limits.w-1), bounds.x2),
+            y1=math.max(selection_pos.y - (limits.h-1), bounds.y1),
+            y2=math.min(selection_pos.y + (limits.h-1), bounds.y2),
+            z1=bounds.z1,
+            z2=bounds.z2,
+        }
+    end
+
+    return bounds
+end
+
+local function get_cur_area_dims(bounds)
+    if not bounds and not is_choosing_area() then return 1, 1, 1 end
+    bounds = bounds or get_selected_bounds()
+    if not bounds then return 1, 1, 1 end
+    return bounds.x2 - bounds.x1 + 1,
+            bounds.y2 - bounds.y1 + 1,
+            bounds.z2 - bounds.z1 + 1
 end
 
 local function is_pressure_plate()
@@ -53,7 +108,7 @@ end
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
-local function get_quantity(filter, hollow, placement_data)
+local function get_quantity(filter, hollow, bounds)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
         return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
@@ -62,7 +117,7 @@ local function get_quantity(filter, hollow, placement_data)
         return weapon_quantity
     end
     local quantity = filter.quantity or 1
-    local dimx, dimy, dimz = get_cur_area_dims(placement_data)
+    local dimx, dimy, dimz = get_cur_area_dims(bounds)
     if quantity < 1 then
         return (((dimx * dimy) // 4) + 1) * dimz
     end
@@ -435,19 +490,21 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='choose',
-                    frame={b=0, l=0, w=25},
+                    frame={b=0, l=0},
                     key='CUSTOM_I',
-                    label='Choose from items:',
-                    options={{label='Yes', value=true},
-                             {label='No', value=false}},
-                    initial_option=false,
-                    enabled=function()
-                        for idx = 1,4 do
-                            if (self.subviews['item'..idx].available or 0) > 0 then
-                                return true
-                            end
-                        end
-                    end,
+                    label='Item selection:',
+                    options={
+                        {label='Use filters', value=0},
+                        {
+                            label=function()
+                                local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
+                                return ('Last choice (%s)'):format(automaterial or 'Will ask')
+                            end,
+                            value=2,
+                        },
+                        {label='Manual choice', value=1},
+                    },
+                    initial_option=0,
                     on_change=function(choose)
                         buildingplan.setChooseItems(uibs.building_type, uibs.building_subtype, uibs.custom_type, choose)
                     end,
@@ -519,19 +576,18 @@ function PlannerOverlay:clear_filter(idx)
 end
 
 local function get_placement_data()
-    local pos = uibs.pos
     local direction = uibs.direction
-    local width, height, depth = get_cur_area_dims()
+    local bounds = get_selected_bounds()
+    local width, height, depth = get_cur_area_dims(bounds)
     local _, adjusted_width, adjusted_height = dfhack.buildings.getCorrectSize(
             width, height, uibs.building_type, uibs.building_subtype,
             uibs.custom_type, direction)
     -- get the upper-left corner of the building/area at min z-level
-    local has_selection = is_choosing_area()
-    local start_pos = xyz2pos(
-        has_selection and math.min(uibs.selection_pos.x, pos.x) or pos.x - adjusted_width//2,
-        has_selection and math.min(uibs.selection_pos.y, pos.y) or pos.y - adjusted_height//2,
-        has_selection and math.min(uibs.selection_pos.z, pos.z) or pos.z
-    )
+    local start_pos = bounds and xyz2pos(bounds.x1, bounds.y1, bounds.z1) or
+            xyz2pos(
+                uibs.pos.x - adjusted_width//2,
+                uibs.pos.y - adjusted_height//2,
+                uibs.pos.z)
     if uibs.building_type == df.building_type.ScrewPump then
         if direction == df.screw_pump_direction.FromSouth then
             start_pos.y = start_pos.y + 1
@@ -546,11 +602,11 @@ local function get_placement_data()
             and (width > 1 or height > 1 or depth > 1) then
         max_x = min_x + width - 1
         max_y = min_y + height - 1
-        max_z = math.max(uibs.selection_pos.z, pos.z)
+        max_z = math.max(uibs.selection_pos.z, uibs.pos.z)
     end
     return {
-        p1=xyz2pos(min_x, min_y, min_z),
-        p2=xyz2pos(max_x, max_y, max_z),
+        x1=min_x, y1=min_y, z1=min_z,
+        x2=max_x, y2=max_y, z2=max_z,
         width=adjusted_width,
         height=adjusted_height
     }
@@ -564,10 +620,11 @@ function PlannerOverlay:save_placement()
         self.saved_pos = copyall(uibs.pos)
         uibs.selection_pos:clear()
     else
-        self.saved_selection_pos = copyall(self.saved_placement.p1)
-        self.saved_pos = copyall(self.saved_placement.p2)
-        self.saved_pos.x = self.saved_pos.x + self.saved_placement.width - 1
-        self.saved_pos.y = self.saved_pos.y + self.saved_placement.height - 1
+        local sp = self.saved_placement
+        self.saved_selection_pos = xyz2pos(sp.x1, sp.y1, sp.z1)
+        self.saved_pos = xyz2pos(sp.x2, sp.y2, sp.z2)
+        self.saved_pos.x = self.saved_pos.x + sp.width - 1
+        self.saved_pos.y = self.saved_pos.y + sp.height - 1
     end
 end
 
@@ -622,42 +679,50 @@ function PlannerOverlay:onInput(keys)
             if is_choosing_area() or cur_building_has_no_area() then
                 local filters = get_cur_filters()
                 local num_filters = #filters
-                local choose = self.subviews.choose
-                if choose.enabled() and choose:getOptionValue() then
+                local choose = self.subviews.choose:getOptionValue()
+                if choose > 0 then
+                    local bounds = get_selected_bounds()
                     self:save_placement()
+                    local autoselect = choose == 2
                     local is_hollow = self.subviews.hollow:getOptionValue()
                     local chosen_items, active_screens = {}, {}
                     local pending = num_filters
                     df.global.game.main_interface.bottom_mode_selected = -1
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
-                        if (self.subviews['item'..idx].available or 0) > 0 then
-                            local filter = filters[idx]
-                            active_screens[idx] = itemselection.ItemSelectionScreen{
-                                index=idx,
-                                desc=require('plugins.buildingplan').get_desc(filter),
-                                quantity=get_quantity(filter, is_hollow,
-                                        self.saved_placement),
-                                on_submit=function(items)
-                                    chosen_items[idx] = items
+                        local filter = filters[idx]
+                        local selection_screen = itemselection.ItemSelectionScreen{
+                            index=idx,
+                            desc=require('plugins.buildingplan').get_desc(filter),
+                            quantity=get_quantity(filter, is_hollow, bounds),
+                            autoselect=autoselect,
+                            on_submit=function(items)
+                                chosen_items[idx] = items
+                                if active_screens[idx] then
                                     active_screens[idx]:dismiss()
                                     active_screens[idx] = nil
-                                    pending = pending - 1
-                                    if pending == 0 then
-                                        df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
-                                        self:place_building(self:restore_placement(), chosen_items)
-                                    end
-                                end,
-                                on_cancel=function()
-                                    for i,scr in pairs(active_screens) do
-                                        scr:dismiss()
-                                    end
+                                else
+                                    active_screens[idx] = true
+                                end
+                                pending = pending - 1
+                                if pending == 0 then
                                     df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
-                                    self:restore_placement()
-                                end,
-                            }:show()
+                                    self:place_building(self:restore_placement(), chosen_items)
+                                end
+                            end,
+                            on_cancel=function()
+                                for i,scr in pairs(active_screens) do
+                                    scr:dismiss()
+                                end
+                                df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
+                                self:restore_placement()
+                            end,
+                        }
+                        if active_screens[idx] then
+                            -- we've already returned via autoselect
+                            active_screens[idx] = nil
                         else
-                            pending = pending - 1
+                            active_screens[idx] = selection_screen:show()
                         end
                     end
                 else
@@ -694,16 +759,10 @@ function PlannerOverlay:onRenderFrame(dc, rect)
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end
 
-    local selection_pos = self.saved_selection_pos or uibs.selection_pos
-    if not selection_pos or selection_pos.x < 0 then return end
+    if self.minimized then return end
 
-    local pos = self.saved_pos or uibs.pos
-    local bounds = {
-        x1 = math.max(0, math.min(selection_pos.x, pos.x)),
-        x2 = math.min(df.global.world.map.x_count-1, math.max(selection_pos.x, pos.x)),
-        y1 = math.max(0, math.min(selection_pos.y, pos.y)),
-        y2 = math.min(df.global.world.map.y_count-1, math.max(selection_pos.y, pos.y)),
-    }
+    local bounds = get_selected_bounds(self.saved_selection_pos, self.saved_pos)
+    if not bounds then return end
 
     local hollow = self.subviews.hollow:getOptionValue()
     local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
@@ -726,25 +785,25 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     guidm.renderMapOverlay(get_overlay_pen, bounds)
 end
 
-function PlannerOverlay:get_stairs_subtype(pos, corner1, corner2)
+function PlannerOverlay:get_stairs_subtype(pos, bounds)
     local subtype = uibs.building_subtype
-    if pos.z == corner1.z then
+    if pos.z == bounds.z1 then
         local opt = self.subviews.stairs_bottom_subtype:getOptionValue()
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape
-            if shape ~= df.tiletype_shape.STAIR_DOWN then
+            if shape ~= df.tiletype_shape.STAIR_DOWN and shape ~= df.tiletype_shape.STAIR_UPDOWN then
                 subtype = df.construction_type.UpStair
             end
         else
             subtype = opt
         end
-    elseif pos.z == corner2.z then
+    elseif pos.z == bounds.z2 then
         local opt = self.subviews.stairs_top_subtype:getOptionValue()
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape
-            if shape ~= df.tiletype_shape.STAIR_UP then
+            if shape ~= df.tiletype_shape.STAIR_UP and shape ~= df.tiletype_shape.STAIR_UPDOWN then
                 subtype = df.construction_type.DownStair
             end
         else
@@ -755,7 +814,7 @@ function PlannerOverlay:get_stairs_subtype(pos, corner1, corner2)
 end
 
 function PlannerOverlay:place_building(placement_data, chosen_items)
-    local p1, p2 = placement_data.p1, placement_data.p2
+    local pd = placement_data
     local blds = {}
     local hollow = self.subviews.hollow:getOptionValue()
     local subtype = uibs.building_subtype
@@ -765,17 +824,17 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     elseif is_weapon_trap() then
         filters[2].quantity = get_quantity(filters[2])
     end
-    for z=p1.z,p2.z do for y=p1.y,p2.y do for x=p1.x,p2.x do
-        if hollow and x ~= p1.x and x ~= p2.x and y ~= p1.y and y ~= p2.y then
+    for z=pd.z1,pd.z2 do for y=pd.y1,pd.y2 do for x=pd.x1,pd.x2 do
+        if hollow and x ~= pd.x1 and x ~= pd.x2 and y ~= pd.y1 and y ~= pd.y2 then
             goto continue
         end
         local pos = xyz2pos(x, y, z)
         if is_stairs() then
-            subtype = self:get_stairs_subtype(pos, p1, p2)
+            subtype = self:get_stairs_subtype(pos, pd)
         end
         local bld, err = dfhack.buildings.constructBuilding{pos=pos,
             type=uibs.building_type, subtype=subtype, custom=uibs.custom_type,
-            width=placement_data.width, height=placement_data.height,
+            width=pd.width, height=pd.height,
             direction=uibs.direction, filters=filters}
         if err then
             -- it's ok if some buildings fail to build

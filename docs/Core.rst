@@ -243,18 +243,31 @@ For example, if ``teleport`` is run, these folders are searched in order for
 Scripts in installed mods
 .........................
 
-Script directories in installed mods are automatically added to the script path
-according to the following rules:
+Scripts in mods are automatically added to the script path. The following
+directories are searched for mods::
 
-**If a world is not loaded**, then directories matching the pattern
-``data/installed_mods/*/scripts_modinstalled/`` are added to the script path
-in alphabetical order.
+    ../../workshop/content/975370/ (the DF Steam workshop directory)
+    mods/
+    data/installed_mods/
 
-**If a world is loaded**, then the ``scripts_modactive`` directories of active
-mods are also added to the script path according to the active mod load order,
-and scripts in active mods take precedence over scripts in
-``scripts_modinstalled`` in non-active mods. For example, the search paths for
-mods might look like this::
+Each mod can have two directories that contain scripts:
+
+- ``scripts_modactive/`` is added to the script path if and only if the mod is
+    active in the loaded world.
+- ``scripts_modinstalled/`` is added to the script path as long as the mod is
+    installed in one of the searched mod directories.
+
+Multiple versions of a mod may be installed at the same time. If a mod is
+active in a loaded world, then the scripts for the version of the mod that is
+active will be added to the script path. Otherwise, the latest version of each
+mod is added to the script path.
+
+Scripts for active mods take precedence according to their load order when you
+generated the current world.
+
+Scripts for non-active mods are ordered by their containing mod's ID.
+
+For example, the search paths for mods might look like this::
 
     activemod_last_in_load_order/scripts_modactive
     activemod_last_in_load_order/scripts_modinstalled

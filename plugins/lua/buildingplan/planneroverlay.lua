@@ -108,7 +108,7 @@ end
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
-local function get_quantity(filter, hollow, bounds)
+local function get_quantity(filter, hollow, bounds) -- TODO: this should account for erroring constructions
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
         return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
@@ -411,12 +411,12 @@ function PlannerOverlay:init()
             visible=is_construction,
             options={
                 {label='No', value=false},
-                {label='Yes', value=true},
+                {label='Yes', value=true, pen=COLOR_GREEN},
             },
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={b=5, l=23, w=28},
+            frame={b=5, l=23, w=30},
             key='CUSTOM_R',
             label='Top Stair Type:   ',
             visible=is_stairs,
@@ -428,7 +428,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={b=4, l=23, w=28},
+            frame={b=4, l=23, w=30},
             key='CUSTOM_B',
             label='Bottom Stair Type:',
             visible=is_stairs,
@@ -471,7 +471,7 @@ function PlannerOverlay:init()
         },
         widgets.Label{
             frame={b=2, l=23},
-            text_pen=dfhack.pen.parse{fg=COLOR_DARKGREY},
+            text_pen=COLOR_DARKGREY,
             text={
                 'Selected area: ',
                 {text=function()
@@ -487,32 +487,18 @@ function PlannerOverlay:init()
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
                 widgets.HotkeyLabel{
-                    frame={b=2, l=1},
-                    key='CUSTOM_SHIFT_Q',
-                    auto_width=true,
-                    enabled=function() return #get_cur_filters() > 1 end,
-                    on_activate=function() self.selected = ((self.selected - 2) % #get_cur_filters()) + 1 end,
-                },
-                widgets.HotkeyLabel{
-                    frame={b=2, l=2},
-                    key='CUSTOM_Q',
-                    label='Prev/next item',
-                    auto_width=true,
-                    enabled=function() return #get_cur_filters() > 1 end,
-                    on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
-                },
-                widgets.HotkeyLabel{
-                    frame={b=1, l=1},
+                    frame={b=1, l=1, w=22},
                     key='CUSTOM_F',
-                    label='Set filter',
-                    auto_width=true,
+                    label=function()
+                        return buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+                        and 'Edit filter' or 'Set filter'
+                     end,
                     on_activate=function() self:set_filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=0, l=1},
+                    frame={b=0, l=1, w=22},
                     key='CUSTOM_X',
                     label='Clear filter',
-                    auto_width=true,
                     on_activate=function() self:clear_filter(self.selected) end,
                     enabled=function()
                         return buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
@@ -590,17 +576,47 @@ function PlannerOverlay:init()
         },
     }
 
-    self:addviews{
-        main_panel,
-        minimized_panel,
-        error_panel,
-        divider_widget,
-        widgets.Panel{
-                frame={t=0, l=1, w=37, h=1},
-                frame_inset=0,
-                frame_background=gui.CLEAR_PEN,
-                visible=function() return not self.minimized end,
+    local prev_next_selector = widgets.Panel{
+        frame={h=1},
+        auto_width=true,
+        subviews={
+                widgets.HotkeyLabel{
+                    frame={t=0, l=1, w=9},
+                    key='CUSTOM_SHIFT_Q',
+                    key_sep='\0',
+                    label=': Prev/',
+                    on_activate=function() self.selected = ((self.selected - 2) % #get_cur_filters()) + 1 end,
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=2, w=1},
+                    key='CUSTOM_Q',
+                    on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
+                },
+                widgets.Label{
+                    frame={t=0,l=10},
+                    text='next item',
+                    on_click=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
+                },
             },
+        visible=function() return #get_cur_filters() > 1 end,
+    }
+
+    local black_bar = widgets.Panel{
+        frame={t=0, l=1, w=37, h=1},
+        frame_inset=0,
+        frame_background=gui.CLEAR_PEN,
+        visible=function() return not self.minimized end,
+        subviews={
+            prev_next_selector,
+        },
+    }
+
+    self:addviews{
+        black_bar,
+        minimized_panel,
+        main_panel,
+        divider_widget,
+        error_panel,
     }
 end
 

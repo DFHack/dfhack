@@ -105,7 +105,6 @@ DBG_DECLARE(core,script,DebugCategory::LINFO);
 
 static const std::string CONFIG_PATH = "dfhack-config/";
 static const std::string CONFIG_DEFAULTS_PATH = "hack/data/dfhack-config-defaults/";
-static const std::string MOD_PATH = "data/installed_mods/";
 
 class MainThread {
 public:
@@ -534,60 +533,19 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
     return true;
 }
 
-bool loadModScriptPaths(color_ostream &out) {
-    std::map<std::string, bool> files;
-    Filesystem::listdir_recursive(MOD_PATH, files, 0);
-
-    DEBUG(script,out).print("found %zd installed mods\n", files.size());
-    if (!files.size())
-        return true;
-
-    for (auto & entry : files) {
-        DEBUG(script,out).print("  %s\n", entry.first.c_str());
-    }
-
-    std::vector<std::string> mod_paths;
-    if (Core::getInstance().isWorldLoaded()) {
-        DEBUG(script,out).print("active load order:\n");
-        for (auto & path : df::global::world->object_loader.object_load_order_src_dir) {
-            DEBUG(script,out).print("  %s\n", path->c_str());
-            if (0 == path->find(MOD_PATH))
-                mod_paths.emplace_back(*path);
-        }
-    }
-
+static void loadModScriptPaths(color_ostream &out) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
     std::vector<std::string> mod_script_paths;
-    for (auto pathit = mod_paths.rbegin(); pathit != mod_paths.rend(); ++pathit) {
-        std::string active_path = *pathit + "scripts_modactive";
-        std::string installed_path = *pathit + "scripts_modinstalled";
-        DEBUG(script,out).print("checking active path: %s\n", pathit->c_str());
-        if (Filesystem::isdir(active_path))
-            mod_script_paths.emplace_back(active_path);
-        if (Filesystem::isdir(installed_path))
-            mod_script_paths.emplace_back(installed_path);
-        std::string slashless = *pathit;
-        slashless.resize(slashless.size()-1);
-        if (0 == files.erase(slashless)) {
-            WARN(script,out).print("script path not found: '%s'\n", pathit->c_str());
-        }
-    }
-
-    for (auto & entry : files) {
-        if (!entry.second)
-            continue;
-        DEBUG(script,out).print("checking inactive path: %s\n", entry.first.c_str());
-        std::string installed_path = entry.first + "/scripts_modinstalled";
-        if (Filesystem::isdir(installed_path))
-            mod_script_paths.emplace_back(installed_path);
-    }
-
+    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
+            Lua::DEFAULT_LUA_LAMBDA,
+            [&](lua_State *L) {
+                Lua::GetVector(L, mod_script_paths);
+            });
     DEBUG(script,out).print("final mod script paths:\n");
     for (auto & path : mod_script_paths)
         DEBUG(script,out).print("  %s\n", path.c_str());
-
     Core::getInstance().setModScriptPaths(mod_script_paths);
-
-    return true;
 }
 
 static std::map<std::string, state_change_event> state_change_event_map;

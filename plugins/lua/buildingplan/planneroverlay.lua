@@ -212,36 +212,42 @@ function ItemLine:init()
     self:addviews{
         widgets.Label{
             view_id='item_symbol',
-            frame={t=0, l=1},
-            text=string.char(26),
+            frame={t=0, l=0},
+            text=string.char(16), -- this is the "►" character
+            text_pen=COLOR_YELLOW,
             auto_width=true,
             visible=self.is_selected_fn,
         },
     }
     self:addviews{
         widgets.Label{
-            view_id='item_info',
+            view_id='item_desc',
             frame={t=0, l=2},
             text={
-                {text=self:callback('get_item_line_text')},
+                {text=self:callback('get_item_line_text'),
+                 pen=function() return gui.invert_color(COLOR_WHITE, self.is_selected_fn()) end},
             },
         },
     }
     self:addviews{
         widgets.Label{
+            view_id='item_filter',
             frame={t=0, l=28},
             text={
-                {text='[filter]', pen=self:callback('get_f_pen')},
+                {text=self:callback('get_filter_text'), 
+                 pen=function() return gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
             },
             auto_width=true,
             on_click=function() self.on_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=36},
+            frame={t=0, l=42},
             text={
-                {text='[x]', pen=self:callback('get_x_pen')},
+                {text='[clear]', 
+                 pen=COLOR_LIGHTRED},
             },
             auto_width=true,
+            visible=self:callback('has_filter'),
             on_click=function() self.on_clear_filter(self.idx) end,
         },
         widgets.Label{
@@ -266,15 +272,6 @@ function ItemLine:onInput(keys)
     return ItemLine.super.onInput(self, keys)
 end
 
-function ItemLine:get_f_pen() -- TODO: make this thing work. I've tried many things to no avail. -taxi
-    return self.selected and COLOR_LIGHTCYAN or COLOR_CYAN
-end
-
-function ItemLine:get_x_pen()
-    return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1) and
-            COLOR_LIGHTRED or COLOR_BLACK
-end
-
 function ItemLine:get_item_line_text()
     local idx = self.idx
     local filter = get_cur_filters()[idx]
@@ -287,13 +284,22 @@ function ItemLine:get_item_line_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
-        self.note = string.char(192)..' Available now'
+        self.note = string.char(192)..' Available now' -- character 192 is "└"
     else
         self.note_pen = COLOR_BROWN
-        self.note = string.char(192)..' Will link later'
+        self.note = string.char(192)..' Will link later' -- character 192 is "└"
     end
 
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
+end
+
+function ItemLine:has_filter()
+    return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
+end
+
+function ItemLine:get_filter_text() -- TODO: reuse "has_filter()" instead of copying this whole string? (i couldnt make it work -taxi)
+    return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
+    and '[edit filters]' or '[any material]'  -- TODO: make this show the filter's materials instead of "edit filters"
 end
 
 function ItemLine:reduce_quantity(used_quantity)
@@ -399,7 +405,7 @@ function PlannerOverlay:init()
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='hollow',
-            frame={b=4, l=1, w=19},
+            frame={b=4, l=1, w=21},
             key='CUSTOM_H',
             label='Hollow area:',
             visible=is_construction,
@@ -490,7 +496,7 @@ function PlannerOverlay:init()
                 widgets.HotkeyLabel{
                     frame={b=2, l=2},
                     key='CUSTOM_Q',
-                    label='Prev/next',
+                    label='Prev/next item',
                     auto_width=true,
                     enabled=function() return #get_cur_filters() > 1 end,
                     on_activate=function() self.selected = (self.selected % #get_cur_filters()) + 1 end,
@@ -523,7 +529,7 @@ function PlannerOverlay:init()
                         {
                             label=function() -- TODO: hide this option if last used mat does not exist yet
                                 local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
-                                return ('Last used (%s)'):format(automaterial or 'n/a')
+                                return ('Last used (%s)'):format(automaterial or 'pick manually')
                             end,
                             value=2,
                         },

@@ -234,7 +234,7 @@ function ItemLine:init()
             view_id='item_filter',
             frame={t=0, l=28},
             text={
-                {text=self:callback('get_filter_text'), 
+                {text=self:callback('get_filter_text'),
                  pen=function() return gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
             },
             auto_width=true,
@@ -243,7 +243,7 @@ function ItemLine:init()
         widgets.Label{
             frame={t=0, l=42},
             text={
-                {text='[clear]', 
+                {text='[clear]',
                  pen=COLOR_LIGHTRED},
             },
             auto_width=true,

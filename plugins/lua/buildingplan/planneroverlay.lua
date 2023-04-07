@@ -108,7 +108,8 @@ end
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
-local function get_quantity(filter, hollow, bounds) -- TODO: this should account for erroring constructions
+-- TODO: this should account for erroring constructions
+local function get_quantity(filter, hollow, bounds)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
         return (flags.units and 1 or 0) + (flags.water and 1 or 0) +
@@ -218,8 +219,6 @@ function ItemLine:init()
             auto_width=true,
             visible=self.is_selected_fn,
         },
-    }
-    self:addviews{
         widgets.Label{
             view_id='item_desc',
             frame={t=0, l=2},
@@ -228,8 +227,6 @@ function ItemLine:init()
                  pen=function() return gui.invert_color(COLOR_WHITE, self.is_selected_fn()) end},
             },
         },
-    }
-    self:addviews{
         widgets.Label{
             view_id='item_filter',
             frame={t=0, l=28},
@@ -242,10 +239,8 @@ function ItemLine:init()
         },
         widgets.Label{
             frame={t=0, l=42},
-            text={
-                {text='[clear]',
-                 pen=COLOR_LIGHTRED},
-            },
+            text='[clear]',
+            text_pen=COLOR_LIGHTRED,
             auto_width=true,
             visible=self:callback('has_filter'),
             on_click=function() self.on_clear_filter(self.idx) end,
@@ -284,22 +279,24 @@ function ItemLine:get_item_line_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
-        self.note = string.char(192)..' Available now' -- character 192 is "└"
+        self.note = ' Available now'
     else
         self.note_pen = COLOR_BROWN
-        self.note = string.char(192)..' Will link later' -- character 192 is "└"
+        self.note = ' Will link later'
     end
+    self.note = string.char(192) .. self.note -- character 192 is "└"
 
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
 
 function ItemLine:has_filter()
-    return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
+    return require('plugins.buildingplan').hasFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
 end
 
-function ItemLine:get_filter_text() -- TODO: reuse "has_filter()" instead of copying this whole string? (i couldnt make it work -taxi)
-    return require('plugins.buildingplan').hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
-    and '[edit filters]' or '[any material]'  -- TODO: make this show the filter's materials instead of "edit filters"
+function ItemLine:get_filter_text()
+    -- TODO: make this show the filter's materials instead of "edit filters"
+    return self:has_filter() and '[edit filters]' or '[any material]'
 end
 
 function ItemLine:reduce_quantity(used_quantity)

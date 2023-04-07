@@ -49,14 +49,14 @@ static LPCWSTR launch_via_steam_windows() {
 // this method doesn't properly attribute Steam playtime metrics to DF,
 // but that's better than not having DF start at all.
 static BOOL launch_direct() {
-    STARTUPINFOA si;
+    STARTUPINFOW si;
     PROCESS_INFORMATION pi;
 
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    return CreateProcessA("Dwarf Fortress.exe",
+    return CreateProcessW(L"Dwarf Fortress.exe",
             NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 }
 

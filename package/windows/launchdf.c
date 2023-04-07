@@ -34,8 +34,6 @@ static LPCWSTR launch_via_steam_windows() {
     LONG retCode = RegGetValueW(HKEY_CURRENT_USER, L"SOFTWARE\\Valve\\Steam",
             L"SteamExe", RRF_RT_REG_SZ, NULL, &steamPath, &datasize);
 
-    MessageBoxW(NULL, steamPath, NULL, 0);
-
     if (retCode != ERROR_SUCCESS)
         return L"Could not find Steam client executable";
 

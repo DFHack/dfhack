@@ -2148,7 +2148,10 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
+            [](lua_State* L) {
+                Lua::Push(L, true);
+            });
         // fallthrough
     }
     case SC_WORLD_UNLOADED:

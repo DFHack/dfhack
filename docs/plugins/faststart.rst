@@ -3,7 +3,7 @@ faststart
 
 .. dfhack-tool::
     :summary: Makes the main menu appear sooner.
-    :tags: interface
+    :tags: dfhack interface
     :no-command:
 
 This plugin accelerates the initial "Loading..." screen that appears when the

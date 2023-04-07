@@ -6,22 +6,27 @@ local utils = require('utils')
 -- enabled API
 
 -- for each script that can be loaded as a module, calls cb(script_name, env)
-function foreach_module_script(cb)
+function foreach_module_script(cb, preprocess_script_file_fn)
     for _,script_path in ipairs(dfhack.internal.getScriptPaths()) do
         local files = dfhack.filesystem.listdir_recursive(
                                             script_path, nil, false)
         if not files then goto skip_path end
         for _,f in ipairs(files) do
-            if not f.isdir and
-                    f.path:endswith('.lua') and
-                    not f.path:startswith('test/') and
-                    not f.path:startswith('internal/') then
-                local script_name = f.path:sub(1, #f.path - 4) -- remove '.lua'
-                local ok, script_env = pcall(reqscript, script_name)
-                if ok then
-                    cb(script_name, script_env)
-                end
+            if f.isdir or not f.path:endswith('.lua') or
+                    f.path:startswith('.git') or
+                    f.path:startswith('test/') or
+                    f.path:startswith('internal/') then
+                goto continue
             end
+            if preprocess_script_file_fn then
+                preprocess_script_file_fn(script_path, f.path)
+            end
+            local script_name = f.path:sub(1, #f.path - 4) -- remove '.lua'
+            local ok, script_env = pcall(reqscript, script_name)
+            if ok then
+                cb(script_name, script_env)
+            end
+            ::continue::
         end
         ::skip_path::
     end
@@ -42,9 +47,17 @@ local function process_script(env_name, env)
     enabled_map[env_name] = fn
 end
 
-function reload()
+function reload(refresh_active_mod_scripts)
     enabled_map = utils.OrderedTable()
-    foreach_module_script(process_script)
+    local force_refresh_fn = refresh_active_mod_scripts and function(script_path, script_name)
+        if script_path:find('scripts_modactive') then
+            internal_script = dfhack.internal.scripts[script_path..'/'..script_name]
+            if internal_script then
+                internal_script.env = nil
+            end
+        end
+    end or nil
+    foreach_module_script(process_script, force_refresh_fn)
 end
 
 local function ensure_loaded()
@@ -97,7 +110,7 @@ end
 
 local function add_script_path(mod_script_paths, path)
     if dfhack.filesystem.isdir(path) then
-        print('indexing scripts from mod script path: ' .. path)
+        print('indexing mod scripts: ' .. path)
         table.insert(mod_script_paths, path)
     end
 end
@@ -120,7 +133,7 @@ function get_mod_script_paths()
     -- if a world is loaded, process active mods first, and lock to active version
     if dfhack.isWorldLoaded() then
         for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
-            path = tostring(path)
+            path = tostring(path.value)
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
             local id = get_mod_id_and_version(path)
             if not id then goto continue end

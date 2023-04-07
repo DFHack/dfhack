@@ -461,6 +461,11 @@ Ok, you're all set up! Now, let's take a look at an example
     dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if sc == SC_MAP_UNLOADED then
             dfhack.run_command('disable', 'example-mod')
+
+            -- ensure our mod doesn't try to enable itself when a different
+            -- world is loaded where we are *not* active
+            dfhack.onStateChange[GLOBAL_KEY] = nil
+
             return
         end
 

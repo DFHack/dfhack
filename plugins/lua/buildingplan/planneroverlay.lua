@@ -437,10 +437,10 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
             view_id='weapons',
-            frame={b=4, l=1, w=22},
+            frame={b=4, l=1, w=28},
             key='CUSTOM_T',
             key_back='CUSTOM_SHIFT_T',
-            label='# of weapons:',
+            label='Number of weapons:',
             visible=is_weapon_or_spike_trap,
             options={
                         {label='(1)', value=1, pen=COLOR_YELLOW},
@@ -508,9 +508,9 @@ function PlannerOverlay:init()
                     label='Choose items:',
                     label_below=true,
                     options={
-                        {label='with filters', value=0},
+                        {label='With filters', value=0},
                         {
-                            label=function() -- TODO: hide this option if last used mat does not exist yet
+                            label=function()
                                 local automaterial = itemselection.get_automaterial_selection(uibs.building_type)
                                 return ('Last used (%s)'):format(automaterial or 'pick manually')
                             end,

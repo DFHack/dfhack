@@ -18,7 +18,7 @@ using std::vector;
 // This has the side effect of removing the dwarf face animation
 // (and briefly making the game become unresponsive)
 
-//#define REALLY_FAST 
+//#define REALLY_FAST
 
 DFHACK_PLUGIN("faststart");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);

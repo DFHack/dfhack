@@ -77,8 +77,11 @@ Let's go through that line by line.
     If you develop your mod using version control (recommended!), that
     :file:`README.md` file can also serve as your git repository documentation.
 
-These files end up in a subdirectory under :file:`data/installed_mods/` when
-the mod is selected as "active" for the first time.
+These files end up in a subdirectory under :file:`mods/` when players copy them
+in or install them from the
+`Steam Workshop <https://steamcommunity.com/app/975370/workshop/>`__, and in
+:file:`data/installed_mods/` when the mod is selected as "active" for the first
+time.
 
 What if I just want to distribute a simple script?
 --------------------------------------------------
@@ -95,13 +98,6 @@ DFHack to find it and add your mod to the `script-paths`. Your script will be
 runnable from the title screen and in any loaded world, regardless of whether
 your mod is explicitly "active".
 
-Be sure to remind players to mark your mod as "active" at least once so it gets
-installed to the :file:`data/installed_mods/` folder. They may have to create a
-new world just so they can mark the mod as "active". This is true both for
-players who copied the mod into the :file:`mods/` folder manually and for
-players who subscribed via
-`Steam Workshop <https://steamcommunity.com/app/975370/workshop/>`__.
-
 A mod-maker's development environment
 -------------------------------------
 
@@ -109,11 +105,11 @@ Create a folder for development somewhere outside your Dwarf Fortress
 installation directory (e.g. ``/path/to/mymods/``). If you work on multiple
 mods, you might want to make a subdirectory for each mod.
 
-If you have changes to the raws, you'll have to copy them into DF's ``data/
-installed_mods/`` folder to have them take effect, but you can set things up so
-that scripts are run directly from your dev directory. This way, you can edit
-your scripts and have the changes available in the game immediately: no
-copying, no restarting.
+If you have changes to the raws, you'll have to copy them into DF's
+``data/installed_mods/`` folder to have them take effect, but you can set
+things up so that scripts are run directly from your dev directory. This way,
+you can edit your scripts and have the changes available in the game
+immediately: no copying, no restarting.
 
 How does this magic work? Just add a line like this to your
 ``dfhack-config/script-paths.txt`` file::
@@ -123,7 +119,7 @@ How does this magic work? Just add a line like this to your
 Then that directory will be searched when you run DFHack commands from inside
 the game. The ``+`` at the front of the path means to search that directory
 first, before any other script directory (like :file:`hack/scripts` or other
-versions of your mod in ``data/installed_mods/``).
+versions of your mod in the DF mod folders).
 
 The structure of the game
 -------------------------
@@ -465,6 +461,11 @@ Ok, you're all set up! Now, let's take a look at an example
     dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if sc == SC_MAP_UNLOADED then
             dfhack.run_command('disable', 'example-mod')
+
+            -- ensure our mod doesn't try to enable itself when a different
+            -- world is loaded where we are *not* active
+            dfhack.onStateChange[GLOBAL_KEY] = nil
+
             return
         end
 

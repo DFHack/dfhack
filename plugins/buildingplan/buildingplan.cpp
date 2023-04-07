@@ -742,6 +742,8 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     TRACE(status,out).print("entering hasFilter\n");
+    if (!Core::getInstance().isWorldLoaded())
+        return false;
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     if (index < 0 || filters.getItemFilters().size() <= (size_t)index)

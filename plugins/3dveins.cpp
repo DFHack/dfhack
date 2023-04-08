@@ -914,6 +914,7 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
         for (int y = 0; y < 16; y++)
         {
             df::coord2d tile(x,y);
+
             GeoLayer *layer = mapLayer(b, tile);
             if (!layer)
                 continue;
@@ -1363,7 +1364,7 @@ bool VeinGenerator::place_orphan(t_veinkey key, int size, GeoLayer *from)
             ENUM_KEY_STR(inclusion_type, key.second).c_str()
         );
 
-        return false;
+        return true;
     }
 
     for (auto it = best.begin(); size > 0 && it != best.end(); ++it)

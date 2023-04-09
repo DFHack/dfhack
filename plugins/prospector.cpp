@@ -168,12 +168,10 @@ static void printMatdata(color_ostream &con, const matdata &data, bool only_z = 
         con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
-        con <<"   Z:" << std::setw(4) << data.lower_z << " .." << std::setw(4) << data.upper_z
-            <<"   Elev:" << std::setw(4) << (data.lower_z - 100) << " .." << std::setw(4) << (data.upper_z - 100)
+        con <<"   Elev:" << std::setw(4) << (data.lower_z) << ".." << (data.upper_z)
             << std::endl;
     else
-        con <<"   Z:" << std::setw(4) << data.lower_z << "       "
-            <<"   Elev:" << std::setw(4) << (data.lower_z - 100)
+        con <<"   Elev:" << std::setw(4) << (data.lower_z)
             << std::endl;
 }
 
@@ -680,7 +678,8 @@ static command_result map_prospector(color_ostream &con,
                 b->GetGlobalFeature(&blockFeatureGlobal);
                 b->GetLocalFeature(&blockFeatureLocal);
 
-                int global_z = world->map.region_z + z;
+                // the '- 100' is because DF v50 and later have a 100 offset in reported elevation
+                int global_z = world->map.region_z + z - 100;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)

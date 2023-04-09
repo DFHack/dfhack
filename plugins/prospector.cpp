@@ -168,9 +168,13 @@ static void printMatdata(color_ostream &con, const matdata &data, bool only_z = 
         con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
-        con <<"   Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
+        con <<"   Z:" << std::setw(4) << data.lower_z << " .." << std::setw(4) << data.upper_z
+            <<"   Elev:" << std::setw(4) << (data.lower_z - 100) << " .." << std::setw(4) << (data.upper_z - 100)
+            << std::endl;
     else
-        con <<"   Z:" << std::setw(4) << data.lower_z << std::endl;
+        con <<"   Z:" << std::setw(4) << data.lower_z << "       "
+            <<"   Elev:" << std::setw(4) << (data.lower_z - 100)
+            << std::endl;
 }
 
 static int getValue(const df::inorganic_raw &info)

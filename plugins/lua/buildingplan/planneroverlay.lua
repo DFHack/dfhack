@@ -141,8 +141,15 @@ local function is_construction()
     return uibs.building_type == df.building_type.Construction
 end
 
+local function is_tutorial_open()
+    local help = df.global.game.main_interface.help
+    return help.open and
+            help.context == df.help_context_type.START_TUTORIAL_WORKSHOPS_AND_TASKS
+end
+
 local function is_plannable()
-    return get_cur_filters() and
+    return not is_tutorial_open() and
+            get_cur_filters() and
             not (is_construction() and
                 uibs.building_subtype == df.construction_type.TrackNSEW)
 end

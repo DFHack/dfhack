@@ -2281,6 +2281,7 @@ int Core::Shutdown ( void )
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
+    DFSteam::cleanup();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;

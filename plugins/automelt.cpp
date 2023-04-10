@@ -172,20 +172,6 @@ DFhackCExport command_result plugin_load_data(color_ostream &out)
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    if (event == DFHack::SC_WORLD_UNLOADED)
-    {
-        if (is_enabled)
-        {
-            DEBUG(status, out).print("world unloaded; disabling %s\n", plugin_name);
-            is_enabled = false;
-        }
-    }
-
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!Core::getInstance().isWorldLoaded())

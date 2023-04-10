@@ -21,7 +21,8 @@ static const std::vector<std::string> STEAM_LIBS {
 
 bool (*g_SteamAPI_Init)() = nullptr;
 void (*g_SteamAPI_Shutdown)() = nullptr;
-bool (*g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck)() = nullptr;
+void* (*g_SteamInternal_FindOrCreateUserInterface)(int, char *) = nullptr;
+bool (*g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck)(void*) = nullptr;
 
 bool DFSteam::init(color_ostream& out) {
     for (auto& lib_str : STEAM_LIBS) {
@@ -46,6 +47,7 @@ bool DFSteam::init(color_ostream& out) {
     if (!g_SteamAPI_Init || !g_SteamAPI_Shutdown || !g_SteamAPI_Init())
         return false;
 
+    bind(g_steam_handle, SteamInternal_FindOrCreateUserInterface);
     bind(g_steam_handle, SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck);
 #undef bind
 
@@ -67,5 +69,11 @@ void DFSteam::cleanup() {
 bool DFSteam::DFIsSteamRunningOnSteamDeck() {
     if (!g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck)
         return false;
-    return g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck();
+
+    if (!g_SteamInternal_FindOrCreateUserInterface)
+        return false;
+
+    void* SteamUtils = g_SteamInternal_FindOrCreateUserInterface(0, "SteamUtils010");
+
+    return g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck(SteamUtils);
 }

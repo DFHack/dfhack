@@ -21,7 +21,7 @@ static const std::vector<std::string> STEAM_LIBS {
 
 bool (*g_SteamAPI_Init)() = nullptr;
 void (*g_SteamAPI_Shutdown)() = nullptr;
-void* (*g_SteamInternal_FindOrCreateUserInterface)(int, char*) = nullptr;
+void* (*g_SteamInternal_FindOrCreateUserInterface)(int, const char*) = nullptr;
 bool (*g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck)(void*) = nullptr;
 
 bool DFSteam::init(color_ostream& out) {

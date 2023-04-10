@@ -49,6 +49,7 @@ distribution.
 #include "PluginManager.h"
 #include "ModuleFactory.h"
 #include "modules/DFSDL.h"
+#include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
@@ -1303,6 +1304,10 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         return;
     }
 
+    // if we're running on Steam Deck, hide the terminal by default
+    if (DFSteam::DFIsSteamRunningOnSteamDeck())
+        core->getConsole().hide();
+
     // load baseline defaults
     core->loadScriptFile(out, CONFIG_PATH + "init/default.dfhack.init", false);
 
@@ -1668,6 +1673,8 @@ bool Core::Init()
         fatal("cannot bind SDL libraries");
         return false;
     }
+    if (DFSteam::init(con))
+        std::cerr << "Found Steam.\n";
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
     // create mutex for syncing with interactive tasks

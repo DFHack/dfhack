@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Mods: scripts from only the most recent version of an installed mod are added to the script path
 - Mods: give active mods a chance to reattach their load hooks when a world is reloaded
 - `gui/control-panel`: bugfix services are now enabled by default
+- Core: hide DFHack terminal console by default when running on Steam Deck
 
 ## Documentation
 

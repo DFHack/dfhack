@@ -125,6 +125,7 @@ set(MODULE_HEADERS
     include/modules/Burrows.h
     include/modules/Constructions.h
     include/modules/DFSDL.h
+    include/modules/DFSteam.h
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
@@ -154,6 +155,7 @@ set(MODULE_SOURCES
     modules/Burrows.cpp
     modules/Constructions.cpp
     modules/DFSDL.cpp
+    modules/DFSteam.cpp
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp

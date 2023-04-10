@@ -39,6 +39,8 @@ bool DFSteam::init(color_ostream& out) {
         }
 
     bind(g_steam_handle, SteamAPI_Init);
+
+    // TODO: can we remove this initialization of the Steam API once we move to dfhooks?
     if (!g_SteamAPI_Init || !g_SteamAPI_Init())
         return false;
 

@@ -21,7 +21,7 @@ static const std::vector<std::string> STEAM_LIBS {
 
 bool (*g_SteamAPI_Init)() = nullptr;
 void (*g_SteamAPI_Shutdown)() = nullptr;
-void* (*g_SteamInternal_FindOrCreateUserInterface)(int, char *) = nullptr;
+void* (*g_SteamInternal_FindOrCreateUserInterface)(int, char*) = nullptr;
 bool (*g_SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck)(void*) = nullptr;
 
 bool DFSteam::init(color_ostream& out) {
@@ -44,8 +44,10 @@ bool DFSteam::init(color_ostream& out) {
     bind(g_steam_handle, SteamAPI_Shutdown);
 
     // TODO: can we remove this initialization of the Steam API once we move to dfhooks?
-    if (!g_SteamAPI_Init || !g_SteamAPI_Shutdown || !g_SteamAPI_Init())
+    if (!g_SteamAPI_Init || !g_SteamAPI_Shutdown || !g_SteamAPI_Init()) {
+        DEBUG(dfsteam, out).print("steam detected but cannot be initialized\n");
         return false;
+    }
 
     bind(g_steam_handle, SteamInternal_FindOrCreateUserInterface);
     bind(g_steam_handle, SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck);

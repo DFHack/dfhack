@@ -1,3 +1,4 @@
+#include "Debug.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
@@ -23,6 +24,11 @@ using std::set;
 
 using namespace DFHack;
 using namespace df::enums;
+
+namespace DFHack
+{
+DBG_DECLARE(getplants, log, DebugCategory::LINFO);
+}
 
 DFHACK_PLUGIN("getplants");
 REQUIRE_GLOBAL(plotinfo);
@@ -67,14 +73,13 @@ enum class selectability {
 //  is one of the issues in bug 6940 on the bug tracker (the others cases are detected and
 //  result in the plants not being usable for farming or even collectable at all).
 
-//selectability selectablePlant(color_ostream &out, const df::plant_raw *plant, bool farming)
-selectability selectablePlant(const df::plant_raw* plant, bool farming) {
+selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bool farming) {
     const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type[plant_material_def::basic_mat], plant->material_defs.idx[plant_material_def::basic_mat]);
     bool outOfSeason = false;
     selectability result = selectability::Nonselectable;
 
     if (plant->flags.is_set(plant_raw_flags::TREE)) {
-        //        out.print("%s is a selectable tree\n", plant->id.c_str());
+        DEBUG(log, out).print("%s is a selectable tree\n", plant->id.c_str());
         if (farming) {
             return selectability::Nonselectable;
         }
@@ -83,7 +88,7 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
         }
     }
     else if (plant->flags.is_set(plant_raw_flags::GRASS)) {
-        //        out.print("%s is a non selectable Grass\n", plant->id.c_str());
+        DEBUG(log, out).print("%s is a non selectable Grass\n", plant->id.c_str());
         return selectability::Grass;
     }
 
@@ -93,7 +98,7 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
 
     if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)) {
-        //        out.print("%s is edible\n", plant->id.c_str());
+        DEBUG(log, out).print("%s is edible\n", plant->id.c_str());
         if (farming) {
             if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW)) {
                 result = selectability::Selectable;
@@ -109,7 +114,7 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
         plant->flags.is_set(plant_raw_flags::EXTRACT_VIAL) ||
         plant->flags.is_set(plant_raw_flags::EXTRACT_BARREL) ||
         plant->flags.is_set(plant_raw_flags::EXTRACT_STILL_VIAL)) {
-        //        out.print("%s is thread/mill/extract\n", plant->id.c_str());
+        DEBUG(log, out).print("%s is thread/mill/extract\n", plant->id.c_str());
         if (farming) {
             result = selectability::Selectable;
         }
@@ -120,7 +125,7 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
 
     if (basic_mat.material->reaction_product.id.size() > 0 ||
         basic_mat.material->reaction_class.size() > 0) {
-        //        out.print("%s has a reaction\n", plant->id.c_str());
+        DEBUG(log, out).print("%s has a reaction\n", plant->id.c_str());
         if (farming) {
             result = selectability::Selectable;
         }
@@ -154,7 +159,7 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
                 if (*cur_year_tick >= plant->growths[i]->timing_1 &&
                     (plant->growths[i]->timing_2 == -1 ||
                         *cur_year_tick <= plant->growths[i]->timing_2)) {
-                    //                     out.print("%s has an edible seed or a stockpile growth\n", plant->id.c_str());
+                    DEBUG(log, out).print("%s has an edible seed or a stockpile growth\n", plant->id.c_str());
                     if (!farming || seedSource) {
                         return selectability::Selectable;
                     }
@@ -188,11 +193,11 @@ selectability selectablePlant(const df::plant_raw* plant, bool farming) {
     }
 
     if (outOfSeason) {
-        //        out.print("%s has an out of season growth\n", plant->id.c_str());
+        DEBUG(log, out).print("%s has an out of season growth\n", plant->id.c_str());
         return selectability::OutOfSeason;
     }
     else {
-        //        out.printerr("%s cannot be gathered\n", plant->id.c_str());
+        DEBUG(log, out).print("%s cannot be gathered\n", plant->id.c_str());
         return result;
     }
 }
@@ -368,13 +373,11 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
     for (size_t i = 0; i < world->raws.plants.all.size(); i++) {
         df::plant_raw* plant = world->raws.plants.all[i];
         if (all) {
-            //            plantSelections[i] = selectablePlant(out, plant, farming);
-            plantSelections[i] = selectablePlant(plant, farming);
+            plantSelections[i] = selectablePlant(out, plant, farming);
         }
         else if (plantNames.find(plant->id) != plantNames.end()) {
             plantNames.erase(plant->id);
-            //            plantSelections[i] = selectablePlant(out, plant, farming);
-            plantSelections[i] = selectablePlant(plant, farming);
+            plantSelections[i] = selectablePlant(out, plant, farming);
             switch (plantSelections[i]) {
             case selectability::Grass:
                 out.printerr("%s is a grass and cannot be gathered\n", plant->id.c_str());
@@ -421,8 +424,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         out.print("Valid plant IDs:\n");
         for (size_t i = 0; i < world->raws.plants.all.size(); i++) {
             df::plant_raw* plant = world->raws.plants.all[i];
-            //            switch (selectablePlant(out, plant, farming))
-            switch (selectablePlant(plant, farming)) {
+            switch (selectablePlant(out, plant, farming)) {
             case selectability::Grass:
             case selectability::Nonselectable:
                 continue;
@@ -486,7 +488,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             ++count;
         }
         if (!deselect && designate(plant, farming)) {
-            //            out.print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
+            DEBUG(log, out).print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
             collectionCount[plant->material]++;
             ++count;
         }

@@ -48,6 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `buildingplan`: items in the item selection dialog should now use the same item quality symbols as the base game
 - `buildingplan`: hide planner overlay while the DF tutorial is active so that it can detect when you have placed the carpenter's workshop and bed and allow you to finish the tutorial
+- `buildingplan`: can now filter by cloth and silk materials (for ropes)
 -@ `buildingplan`: rearranged elements of ``planneroverlay`` interface
 -@ `buildingplan`: rearranged elements of ``itemselection`` interface
 - Mods: scripts in mods that are only in the steam workshop directory are now accessible. this means that a script-only mod that you never mark as "active" when generating a world will still receive automatic updates and be usable from in-game

@@ -236,7 +236,15 @@ bool picked(const df::plant* plant, int32_t growth_subtype) {
     return false;
 }
 
-bool designate(const df::plant* plant, bool farming) {
+bool designate(color_ostream& out, const df::plant* plant, bool farming) {
+    TRACE(log, out).print("Attempting to designate %s at (%i, %i, %i)\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z);
+
+    if (!farming) {
+        bool istree = (tileMaterial(Maps::getTileBlock(plant->pos)->tiletype[plant->pos.x % 16][plant->pos.y % 16]) == tiletype_material::TREE);
+        if (istree)
+            return Designations::markPlant(plant);
+    }
+
     df::plant_raw* plant_raw = world->raws.plants.all[plant->material];
     const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant_raw->material_defs.type[plant_material_def::basic_mat], plant_raw->material_defs.idx[plant_material_def::basic_mat]);
 
@@ -263,34 +271,40 @@ bool designate(const df::plant* plant, bool farming) {
     }
 
     for (size_t i = 0; i < plant_raw->growths.size(); i++) {
-        if (plant_raw->growths[i]->item_type == df::item_type::SEEDS ||  //  Only trees have seed growths in vanilla, but raws can be modded...
-            plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH) {
-            const DFHack::MaterialInfo growth_mat = DFHack::MaterialInfo(plant_raw->growths[i]->mat_type, plant_raw->growths[i]->mat_index);
-            if ((plant_raw->growths[i]->item_type == df::item_type::SEEDS &&
-                (growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED) ||
-                    growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW))) ||
-                (plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
-                    growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
-            {
-                bool seedSource = plant_raw->growths[i]->item_type == df::item_type::SEEDS;
+        TRACE(log, out).print("growth item type=%d\n", plant_raw->growths[i]->item_type);
+        //  Only trees have seed growths in vanilla, but raws can be modded...
+        if (plant_raw->growths[i]->item_type != df::item_type::SEEDS &&
+            plant_raw->growths[i]->item_type != df::item_type::PLANT_GROWTH)
+            continue;
 
-                if (plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH) {
-                    for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++) {
-                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant_raw->material_defs.type[plant_material_def::seed] &&
-                            growth_mat.material->reaction_product.material.mat_index[k] == plant_raw->material_defs.idx[plant_material_def::seed]) {
-                            seedSource = true;
-                            break;
-                        }
-                    }
-                }
+        const DFHack::MaterialInfo growth_mat = DFHack::MaterialInfo(plant_raw->growths[i]->mat_type, plant_raw->growths[i]->mat_index);
+        TRACE(log, out).print("edible_cooked=%d edible_raw=%d leaf_mat=%d\n",
+            growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED),
+            growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW),
+            growth_mat.material->flags.is_set(material_flags::LEAF_MAT));
+        if (!(plant_raw->growths[i]->item_type == df::item_type::SEEDS &&
+            (growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED) ||
+                growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW))) &&
+            !(plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
+                growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
+            continue;
 
-                bool istree = (tileMaterial(Maps::getTileBlock(plant->pos)->tiletype[plant->pos.x % 16][plant->pos.y % 16]) == tiletype_material::TREE);
-                bool isripe = ripe(plant->pos.x, plant->pos.y, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2);
-                if ((!farming || seedSource) && (istree || isripe) && !picked(plant, i)) {
-                    return Designations::markPlant(plant);
+        bool seedSource = plant_raw->growths[i]->item_type == df::item_type::SEEDS;
+
+        if (plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH) {
+            for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++) {
+                if (growth_mat.material->reaction_product.material.mat_type[k] == plant_raw->material_defs.type[plant_material_def::seed] &&
+                    growth_mat.material->reaction_product.material.mat_index[k] == plant_raw->material_defs.idx[plant_material_def::seed]) {
+                    seedSource = true;
+                    break;
                 }
             }
         }
+
+        if ((!farming || seedSource) &&
+            ripe(plant->pos.x, plant->pos.y, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2) &&
+            !picked(plant, i))
+            return Designations::markPlant(plant);
     }
 
     return false;
@@ -460,6 +474,8 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         const df::plant* plant = world->plants.all[i];
         df::map_block* cur = Maps::getTileBlock(plant->pos);
 
+        TRACE(log, out).print("Examining %s at (%i, %i, %i) [index=%d]\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
+
         int x = plant->pos.x % 16;
         int y = plant->pos.y % 16;
         if (plantSelections[plant->material] == selectability::OutOfSeason ||
@@ -487,7 +503,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             collectionCount[plant->material]++;
             ++count;
         }
-        if (!deselect && designate(plant, farming)) {
+        if (!deselect && designate(out, plant, farming)) {
             DEBUG(log, out).print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
             collectionCount[plant->material]++;
             ++count;

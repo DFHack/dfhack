@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Core: hide DFHack terminal console by default when running on Steam Deck
 
 ## Documentation
+- `installing`: updated to include Steam installation instructions
 
 ## API
 

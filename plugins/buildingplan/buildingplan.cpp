@@ -12,6 +12,7 @@
 #include "df/construction_type.h"
 #include "df/item.h"
 #include "df/job_item.h"
+#include "df/organic_mat_category.h"
 #include "df/world.h"
 
 using std::map;
@@ -150,6 +151,8 @@ static const df::dfhack_material_category wood_cat(df::dfhack_material_category:
 static const df::dfhack_material_category metal_cat(df::dfhack_material_category::mask_metal);
 static const df::dfhack_material_category glass_cat(df::dfhack_material_category::mask_glass);
 static const df::dfhack_material_category clay_cat(df::dfhack_material_category::mask_clay);
+static const df::dfhack_material_category cloth_cat(df::dfhack_material_category::mask_cloth);
+static const df::dfhack_material_category silk_cat(df::dfhack_material_category::mask_silk);
 
 static void cache_matched(int16_t type, int32_t index) {
     MaterialInfo mi;
@@ -169,9 +172,24 @@ static void cache_matched(int16_t type, int32_t index) {
     } else if (mi.matches(clay_cat)) {
         DEBUG(status).print("cached clay material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "clay"));
+    } else if (mi.matches(cloth_cat)) {
+        DEBUG(status).print("cached cloth material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        mat_cache.emplace(mi.toString(), std::make_pair(mi, "cloth"));
+    } else if (mi.matches(silk_cat)) {
+        DEBUG(status).print("cached silk material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        mat_cache.emplace(mi.toString(), std::make_pair(mi, "silk"));
     }
     else
         TRACE(status).print("not matched: %s\n", mi.toString().c_str());
+}
+
+static void load_organic_material_cache(df::organic_mat_category cat) {
+    auto& mat_tab = world->raws.mat_table;
+    auto& cat_vec = mat_tab.organic_types[cat];
+    auto& cat_indices = mat_tab.organic_indexes[cat];
+    for (size_t i = 0; i < cat_vec.size(); i++) {
+        cache_matched(cat_vec[i], cat_indices[i]);
+    }
 }
 
 static void load_material_cache() {
@@ -183,17 +201,9 @@ static void load_material_cache() {
     for (size_t i = 0; i < raws.inorganics.size(); i++)
         cache_matched(0, i);
 
-    for (size_t i = 0; i < raws.plants.all.size(); i++) {
-        df::plant_raw *p = raws.plants.all[i];
-        if (p->material.size() <= 1)
-            continue;
-        for (size_t j = 0; j < p->material.size(); j++) {
-            if (p->material[j]->id == "WOOD") {
-                cache_matched(DFHack::MaterialInfo::PLANT_BASE+j, i);
-                break;
-            }
-        }
-    }
+    load_organic_material_cache(df::organic_mat_category::Wood);
+    load_organic_material_cache(df::organic_mat_category::PlantFiber);
+    load_organic_material_cache(df::organic_mat_category::Silk);
 }
 
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
@@ -792,6 +802,10 @@ static int setMaterialMaskFilter(lua_State *L) {
             mask |= glass_cat.whole;
         else if (cat == "clay")
             mask |= clay_cat.whole;
+        else if (cat == "cloth")
+            mask |= cloth_cat.whole;
+        else if (cat == "silk")
+            mask |= silk_cat.whole;
     }
     DEBUG(status,*out).print(
             "setting material mask filter for building_type=%d subtype=%d custom=%d index=%d to %x\n",
@@ -837,6 +851,8 @@ static int getMaterialMaskFilter(lua_State *L) {
     ret.emplace("metal", !bits || bits & metal_cat.whole);
     ret.emplace("glass", !bits || bits & glass_cat.whole);
     ret.emplace("clay", !bits || bits & clay_cat.whole);
+    ret.emplace("cloth", !bits || bits & cloth_cat.whole);
+    ret.emplace("silk", !bits || bits & silk_cat.whole);
     Lua::Push(L, ret);
     return 1;
 }
@@ -883,6 +899,10 @@ static int setMaterialFilter(lua_State *L) {
             mask.whole |= glass_cat.whole;
         else if (mat.matches(clay_cat))
             mask.whole |= clay_cat.whole;
+        else if (mat.matches(cloth_cat))
+            mask.whole |= cloth_cat.whole;
+        else if (mat.matches(silk_cat))
+            mask.whole |= silk_cat.whole;
     }
     filter.setMaterialMask(mask.whole);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);

@@ -75,7 +75,7 @@ The release archives contain a ``hack`` folder where DFHack binary and system
 data is stored, a ``stonesense`` folder that contains data specific to the
 `stonesense` 3d renderer, and various libraries and executable files. To
 install DFHack, copy all of the files from the DFHack archive into the root DF
-folder, which should already include a ``data`` folder and a ``mods`` folder,
+folder, which should already include a ``data`` folder and a ``save`` folder,
 among other things. Some redistributions of Dwarf Fortress may place DF in
 another folder, so ensure that the ``hack`` folder ends up next to the ``data``
 folder, and you'll be fine.

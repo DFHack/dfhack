@@ -42,6 +42,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: interpret saplings, shrubs, and twigs as floors instead of walls
 - `combine`: fix error processing stockpiles with boundaries that extend outside of the map
 - `prospector`: display both "raw" Z levels and "cooked" elevations
+- `stockpiles`: fix crash when importing settings for gems from other worlds
+- `stockpiles`: allow numbers in saved stockpile filenames
 
 ## Misc Improvements
 - `buildingplan`: items in the item selection dialog should now use the same item quality symbols as the base game

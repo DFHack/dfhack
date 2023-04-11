@@ -62,7 +62,7 @@ local function assert_safe_name(name)
     if not name or #name == 0 then
         qerror('name missing or empty')
     end
-    if name:find('[^%a._]') then
+    if name:find('[^%w._]') then
         qerror('name can only contain numbers, letters, periods, and underscores')
     end
 end

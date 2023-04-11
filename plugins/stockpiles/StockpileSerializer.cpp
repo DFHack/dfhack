@@ -1848,7 +1848,7 @@ void StockpileSerializer::read_gems(DeserializeMode mode, const vector<string>& 
 
             unserialize_list_material("mats/rough", all, val, filters, gem_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
-                bgems.rough_mats_size(),pgems.rough_mats);
+                bgems.rough_mats_size(), pgems.rough_mats);
 
             unserialize_list_material("mats/cut", all, val, filters, gem_cut_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
@@ -1871,13 +1871,17 @@ void StockpileSerializer::read_gems(DeserializeMode mode, const vector<string>& 
                 return;
             } else {
                 MaterialInfo mi;
-                for (size_t i = 0; i < builtin_size; ++i) {
-                    string id = bgems.rough_other_mats(i);
-                    if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
-                        set_filter_elem("other/rough", filters, val, id, mi.type, pgems.rough_other_mats.at(mi.type));
-                    id = bgems.cut_other_mats(i);
-                    if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
-                        set_filter_elem("other/cut", filters, val, id, mi.type, pgems.cut_other_mats.at(mi.type));
+                for (int i = 0; i < (int)builtin_size; ++i) {
+                    if (i < bgems.rough_other_mats_size()) {
+                        string id = bgems.rough_other_mats(i);
+                        if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
+                            set_filter_elem("other/rough", filters, val, id, mi.type, pgems.rough_other_mats.at(mi.type));
+                    }
+                    if (i < bgems.cut_other_mats_size()) {
+                        string id = bgems.cut_other_mats(i);
+                        if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
+                            set_filter_elem("other/cut", filters, val, id, mi.type, pgems.cut_other_mats.at(mi.type));
+                    }
                 }
             }
         });

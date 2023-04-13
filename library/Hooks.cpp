@@ -3,7 +3,7 @@
 
 // called before main event loop starts
 DFhackCExport void dfhooks_init() {
-    DFHack::Core::getInstance().Init();
+    // TODO: initialize things we need to do while still in the main thread
 }
 
 // called after main event loops exits

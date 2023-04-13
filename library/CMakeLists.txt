@@ -432,6 +432,10 @@ if(UNIX)
     install(TARGETS dfhooks
         LIBRARY DESTINATION .
         RUNTIME DESTINATION .)
+else()
+    # On windows, copy SDL.dll so DF can still run.
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDL.dll
+        DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 endif()
 
 # install the main lib

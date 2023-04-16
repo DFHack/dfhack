@@ -729,7 +729,6 @@ function PlannerOverlay:onInput(keys)
             return true
         end
         self.selected = 1
-        self.minimized = false
         self.subviews.hollow:setOption(false)
         self:reset()
         reset_counts_flag = true

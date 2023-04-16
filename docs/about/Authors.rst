@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 Abel                    abstern
 acwatkins               acwatkins
+Alex Blamey             Cubittus
 Alexander Collins       gearsix
 Alexander Gavrilov      angavrilov              ag
 Amber Brown             hawkowl
@@ -45,7 +46,6 @@ cjhammel                cjhammel
 Clayton Hughes
 Clément Vuchener        cvuchener
 Corey                   CoreyJ87
-Cubittus                Cubittus
 daedsidog               daedsidog
 Dan Amlund              danamlund
 Daniel Brooks           db48x
@@ -204,7 +204,7 @@ SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
 Shim Panze              Shim-Panze
-silverflyone            silverflyone
+Silver                  silverflyone
 simon
 Simon Jackson           sizeak
 Simon Lees              simotek

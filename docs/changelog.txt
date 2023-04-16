@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `buildingplan`: minimized planner panel stays minimized until you change it again
 - ``toggle-kbd-cursor``: add hotkey for toggling the keyboard cursor (Alt-K)
 
 ## Documentation

@@ -2083,7 +2083,8 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
     if (!df::global::world)
         return;
-    std::string rawFolder = "save/" + (df::global::world->cur_savegame.save_dir) + "/init";
+
+    std::string rawFolder = !isWorldLoaded() ? "" : "save/" + World::ReadWorldFolder() + "/init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {

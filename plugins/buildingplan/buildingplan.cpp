@@ -150,6 +150,7 @@ static const df::dfhack_material_category stone_cat(df::dfhack_material_category
 static const df::dfhack_material_category wood_cat(df::dfhack_material_category::mask_wood);
 static const df::dfhack_material_category metal_cat(df::dfhack_material_category::mask_metal);
 static const df::dfhack_material_category glass_cat(df::dfhack_material_category::mask_glass);
+static const df::dfhack_material_category gem_cat(df::dfhack_material_category::mask_gem);
 static const df::dfhack_material_category clay_cat(df::dfhack_material_category::mask_clay);
 static const df::dfhack_material_category cloth_cat(df::dfhack_material_category::mask_cloth);
 static const df::dfhack_material_category silk_cat(df::dfhack_material_category::mask_silk);
@@ -169,6 +170,9 @@ static void cache_matched(int16_t type, int32_t index) {
     } else if (mi.matches(glass_cat)) {
         DEBUG(status).print("cached glass material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "glass"));
+    } else if (mi.matches(gem_cat)) {
+        DEBUG(status).print("cached gem material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        mat_cache.emplace(mi.toString(), std::make_pair(mi, "gem"));
     } else if (mi.matches(clay_cat)) {
         DEBUG(status).print("cached clay material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "clay"));
@@ -800,6 +804,8 @@ static int setMaterialMaskFilter(lua_State *L) {
             mask |= metal_cat.whole;
         else if (cat == "glass")
             mask |= glass_cat.whole;
+        else if (cat == "gem")
+            mask |= gem_cat.whole;
         else if (cat == "clay")
             mask |= clay_cat.whole;
         else if (cat == "cloth")
@@ -850,6 +856,7 @@ static int getMaterialMaskFilter(lua_State *L) {
     ret.emplace("wood", !bits || bits & wood_cat.whole);
     ret.emplace("metal", !bits || bits & metal_cat.whole);
     ret.emplace("glass", !bits || bits & glass_cat.whole);
+    ret.emplace("gem", !bits || bits & gem_cat.whole);
     ret.emplace("clay", !bits || bits & clay_cat.whole);
     ret.emplace("cloth", !bits || bits & cloth_cat.whole);
     ret.emplace("silk", !bits || bits & silk_cat.whole);
@@ -897,6 +904,8 @@ static int setMaterialFilter(lua_State *L) {
             mask.whole |= metal_cat.whole;
         else if (mat.matches(glass_cat))
             mask.whole |= glass_cat.whole;
+        else if (mat.matches(gem_cat))
+            mask.whole |= gem_cat.whole;
         else if (mat.matches(clay_cat))
             mask.whole |= clay_cat.whole;
         else if (mat.matches(cloth_cat))

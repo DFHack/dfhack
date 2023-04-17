@@ -111,6 +111,8 @@ function get_desc(filter)
         desc = 'Ballista part'
     elseif desc == 'Catapultpart' then
         desc = 'Catapult part'
+    elseif desc == 'Smallgem' then
+        desc = 'Small, cut gem'
     end
 
     return desc

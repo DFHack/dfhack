@@ -12,10 +12,10 @@ local function get_command(cmdline)
 end
 
 function should_hide_armok(cmdline)
-    local first_word = get_command(cmdline)
+    local command = get_command(cmdline)
     return dfhack.getHideArmokTools() and
-            helpdb.is_entry(first_word) and
-            helpdb.get_entry_tags(first_word).armok
+            helpdb.is_entry(command) and
+            helpdb.get_entry_tags(command).armok
 end
 
 -- ----------------- --
@@ -245,10 +245,9 @@ end
 
 function Menu:onSelect(_, choice)
     if not choice or #self.subviews == 0 then return end
-    local first_word = choice.command:trim():split(' +')[1]
-    if first_word:startswith(':') then first_word = first_word:sub(2) end
-    self.subviews.help.text_to_wrap = helpdb.is_entry(first_word) and
-            helpdb.get_entry_short_help(first_word) or 'Command not found'
+    local command = get_command(choice.command)
+    self.subviews.help.text_to_wrap = helpdb.is_entry(command) and
+            helpdb.get_entry_short_help(command) or 'Command not found'
     self.subviews.help_panel:updateLayout()
 end
 

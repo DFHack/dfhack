@@ -162,7 +162,7 @@ You can run them all from the launcher.
 
 First, let's import some useful manager orders to keep your fort stocked with
 basic necessities. Run ``orders import library/basic``. If you go to your
-mangager orders screen, you can see all the orders that have been created for you.
+manager orders screen, you can see all the orders that have been created for you.
 Note that you could have imported the orders directly from this screen as well,
 using the DFHack `overlay` widget at the bottom of the manager orders panel.
 

@@ -58,6 +58,11 @@ function dfhack.getHideConsoleOnStartup()
     return dfhack.HIDE_CONSOLE_ON_STARTUP
 end
 
+dfhack.HIDE_ARMOK_TOOLS = false
+function dfhack.getHideArmokTools()
+    return dfhack.HIDE_ARMOK_TOOLS
+end
+
 -- Error handling
 
 safecall = dfhack.safecall

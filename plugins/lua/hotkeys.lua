@@ -5,6 +5,19 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
+local function get_command(cmdline)
+    local first_word = cmdline:trim():split(' +')[1]
+    if first_word:startswith(':') then first_word = first_word:sub(2) end
+    return first_word
+end
+
+function should_hide_armok(cmdline)
+    local first_word = get_command(cmdline)
+    return dfhack.getHideArmokTools() and
+            helpdb.is_entry(first_word) and
+            helpdb.get_entry_tags(first_word).armok
+end
+
 -- ----------------- --
 -- HotspotMenuWidget --
 -- ----------------- --

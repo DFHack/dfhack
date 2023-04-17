@@ -21,7 +21,7 @@ for the tag assignment spreadsheet.
 
 "why" tags
 ----------
-- `armok <armok-tag-index>`: Tools that give you complete control over an aspect of the game or provide access to information that the game intentionally keeps hidden.
+- `armok <armok-tag-index>`: Tools that give you complete control over an aspect of the game or provide access to information that the game intentionally keeps hidden. Players that do not wish to see these tools listed in DFHack command lists can hide them in the ``Preferences`` tab of `gui/control-panel`.
 - `auto <auto-tag-index>`: Tools that run in the background and automatically manage routine, toilsome aspects of your fortress.
 - `bugfix <bugfix-tag-index>`: Tools that fix specific bugs, either permanently or on-demand.
 - `design <design-tag-index>`: Tools that help you design your fort.

@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `buildingplan`: minimized planner panel stays minimized until you change it again
 - ``toggle-kbd-cursor``: add hotkey for toggling the keyboard cursor (Alt-K)
+- `gui/control-panel`: add option for hiding the terminal console by default
 
 ## Documentation
 

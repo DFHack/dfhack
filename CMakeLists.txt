@@ -314,10 +314,10 @@ if(WIN32)
     endif()
 
     # download Steam SDK
-    set (STEAMAPI_DIR ${dfhack_SOURCE_DIR}/depends/steam/)
-    download_file("https://partner.steamgames.com/downloads/steamworks_sdk_156.zip"
+    set (STEAMAPI_DIR ${dfhack_SOURCE_DIR}/depends/steam)
+    file(DOWNLOAD "https://partner.steamgames.com/downloads/steamworks_sdk_156.zip"
             ${STEAMAPI_DIR}/steamworks_sdk_156.zip
-            "af5a579990dbe5ae4c1b0689260d001b")
+            EXPECTED_HASH MD5=af5a579990dbe5ae4c1b0689260d001b)
     file(ARCHIVE_EXTRACT
             INPUT ${STEAMAPI_DIR}/steamworks_sdk_156.zip
             DESTINATION ${STEAMAPI_DIR})

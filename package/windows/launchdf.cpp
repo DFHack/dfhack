@@ -173,11 +173,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     char buf[2048] = "";
 
-    int b = SteamApps()->GetAppInstallDir(DFHACK_STEAM_APPID, (char*)&buf, 2048);
-    std::string dfhack_install_folder = (b != -1) ? std::string(buf) : "";
+    int b1 = SteamApps()->GetAppInstallDir(DFHACK_STEAM_APPID, (char*)&buf, 2048);
+    std::string dfhack_install_folder = (b1 != -1) ? std::string(buf) : "";
 
     int b2 = SteamApps()->GetAppInstallDir(DF_STEAM_APPID, (char*)&buf, 2048);
-    std::string df_install_folder = (b != -1) ? std::string(buf) : "";
+    std::string df_install_folder = (b2 != -1) ? std::string(buf) : "";
 
 
     if (df_install_folder != dfhack_install_folder)

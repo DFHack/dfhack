@@ -80,3 +80,6 @@ tags
 
 # external plugins
 /plugins/CMakeLists.custom.txt
+
+# steam api
+depends/steam

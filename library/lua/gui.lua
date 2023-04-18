@@ -745,6 +745,7 @@ end
 
 local NO_LOGIC_SCREENS = {
     'viewscreen_loadgamest',
+    'viewscreen_adopt_regionst',
     'viewscreen_export_regionst',
     'viewscreen_choose_game_typest',
     'viewscreen_worldst',

@@ -5,8 +5,8 @@ stockpiles
     :summary: Import, export, or modify stockpile settings and features.
     :tags: fort design productivity stockpiles
 
-If you are importing or exporting setting and don't want to specify a building
-ID, select a stockpile in the UI before running the command.
+Commands act upon the stockpile selected in the UI unless another stockpile
+identifier is specified on the commandline.
 
 Usage
 -----
@@ -15,8 +15,8 @@ Usage
 
     stockpiles [status]
     stockpiles list [<search>]
-    stockpiles export <name> [<options>]
     stockpiles import <name> [<options>]
+    stockpiles export <name> [<options>]
 
 Exported stockpile settings are saved in the ``dfhack-config/stockpiles``
 folder, where you can view and delete them, if desired. Names can only
@@ -61,9 +61,9 @@ Examples
 Options
 -------
 
-``-s``, ``--stockpile <id>``
-    Specify a specific stockpile ID instead of using the one currently selected
-    in the UI.
+``-s``, ``--stockpile <name or id>``
+    Specify a specific stockpile by name or internal ID instead of using the
+    stockpile currently selected in the UI.
 ``-i``, ``--include <comma separated list of elements to include>``
     When exporting, you can include this option to select only specific elements
     of the stockpile to record. If not specified, everything is included. When
@@ -94,6 +94,7 @@ file are:
 :types: The elements below the categories, which include the sub-categories, the
     specific item types, and any toggles the category might have (like Prepared
     meals for the Food category).
+:features: DFHack `logistics` features.
 
 .. _stockpiles-library:
 

@@ -183,6 +183,11 @@ message StockpileSettings {
   optional WeaponsSet weapons = 16;
   optional WoodSet wood = 15;
 
+  // DFHack features
+  optional bool melt = 27;
+  optional bool trade = 28;
+  optional bool dump = 29;
+
   // deprecated
   optional bool corpses = 24; // not marked as deprecated since we still read it
   optional OreSet ore = 7 [deprecated=true];

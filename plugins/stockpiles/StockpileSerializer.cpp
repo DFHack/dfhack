@@ -42,8 +42,9 @@ using df::global::world;
 
 using std::placeholders::_1;
 
-namespace DFHack {
-    DBG_EXTERN(stockpiles, log);
+namespace DFHack
+{
+DBG_EXTERN(stockpiles, log);
 }
 
 static struct OtherMatsFurniture {
@@ -903,6 +904,28 @@ void StockpileSerializer::read_general(DeserializeMode mode) {
             std::bind(&StockpileSettings::has_use_links_only, mBuffer),
             std::bind(&StockpileSettings::use_links_only, mBuffer),
             mPile->use_links_only);
+}
+
+void StockpileSerializer::write_features() {
+    DEBUG(log).print("writing feature settings\n");
+    mBuffer.set_melt(mPile->use_links_only);
+    mBuffer.set_trade(mPile->settings.allow_inorganic);
+    mBuffer.set_dump(mPile->settings.allow_organic);
+}
+
+void StockpileSerializer::read_features(DeserializeMode mode) {
+    read_elem<int32_t, bool>("use_links_only", mode,
+            std::bind(&StockpileSettings::has_use_links_only, mBuffer),
+            std::bind(&StockpileSettings::use_links_only, mBuffer),
+            mPile->use_links_only);
+    read_elem<bool, bool>("allow_inorganic", mode,
+            std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
+            std::bind(&StockpileSettings::allow_inorganic, mBuffer),
+            mPile->settings.allow_inorganic);
+    read_elem<bool, bool>("allow_organic", mode,
+            std::bind(&StockpileSettings::has_allow_organic, mBuffer),
+            std::bind(&StockpileSettings::allow_organic, mBuffer),
+            mPile->settings.allow_organic);
 }
 
 static bool ammo_mat_is_allowed(const MaterialInfo& mi) {

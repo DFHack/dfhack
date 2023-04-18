@@ -168,4 +168,6 @@ private:
 
     void write_containers();
     void read_containers(DeserializeMode mode);
+    void write_features();
+    void read_features(DeserializeMode mode);
 };

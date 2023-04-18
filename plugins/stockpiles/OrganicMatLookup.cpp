@@ -11,8 +11,9 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 
-namespace DFHack {
-    DBG_EXTERN(stockpiles, log);
+namespace DFHack
+{
+DBG_EXTERN(stockpiles, log);
 }
 
 /**

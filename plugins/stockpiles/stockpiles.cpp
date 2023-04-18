@@ -11,9 +11,6 @@
 #include "df/hauling_route.h"
 #include "df/hauling_stop.h"
 
-#include <string>
-#include <vector>
-
 using std::string;
 using std::vector;
 
@@ -23,14 +20,15 @@ DFHACK_PLUGIN("stockpiles");
 
 REQUIRE_GLOBAL(world);
 
-namespace DFHack {
-    DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
+namespace DFHack
+{
+DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
 }
 
-static command_result do_command(color_ostream &out, vector<string> &parameters);
+static command_result do_command(color_ostream& out, vector<string>& parameters);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
+    DEBUG(log, out).print("initializing %s\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,

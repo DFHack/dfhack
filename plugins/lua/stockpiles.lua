@@ -79,6 +79,7 @@ local included_elements = {
     general=2,
     categories=4,
     types=8,
+    features=16,
 }
 
 function export_stockpile(name, opts)
@@ -87,9 +88,7 @@ function export_stockpile(name, opts)
 
     local includedElements = 0
     for _,inc in ipairs(opts.includes) do
-        if included_elements[inc] then
-            includedElements = includedElements | included_elements[inc]
-        end
+        includedElements = includedElements | included_elements[inc]
     end
 
     if includedElements == 0 then
@@ -124,12 +123,10 @@ function import_route(name, route_id, stop_id, mode, filters)
     stockpiles_route_import(name, route_id, stop_id, mode, table.concat(filters or {}, ','))
 end
 
-local valid_includes = {general=true, categories=true, types=true}
-
 local function parse_include(arg)
     local includes = argparse.stringList(arg, 'include')
     for _,v in ipairs(includes) do
-        if not valid_includes[v] then
+        if not included_elements[v] then
             qerror(('invalid included element: "%s"'):format(v))
         end
     end

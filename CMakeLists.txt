@@ -313,18 +313,6 @@ if(WIN32)
             "5a09604daca6b2b5ce049d79af935d6a")
     endif()
 
-    # download Steam SDK
-    set (STEAMAPI_DIR ${dfhack_SOURCE_DIR}/depends/steam)
-    file(DOWNLOAD "https://partner.steamgames.com/downloads/steamworks_sdk_156.zip"
-            ${STEAMAPI_DIR}/steamworks_sdk_156.zip
-            EXPECTED_HASH MD5=af5a579990dbe5ae4c1b0689260d001b)
-    file(ARCHIVE_EXTRACT
-            INPUT ${STEAMAPI_DIR}/steamworks_sdk_156.zip
-            DESTINATION ${STEAMAPI_DIR})
-    set(STEAMAPI_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.lib")
-    set(STEAMAPI_SOURCE_DIR "${STEAMAPI_DIR}/sdk/public/steam")
-    set(STEAMAPI_SHARED_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.dll")
-
 endif()
 
 if(APPLE)

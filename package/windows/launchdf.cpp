@@ -1,13 +1,17 @@
 #include <process.h>
 #include <windows.h>
+#include "steam_api.h"
+
+const uint32 DFHACK_STEAM_APPID = 2346660;
 
 static BOOL is_running_on_wine() {
-    static const char *(CDECL *pwine_get_version)(void);
+    typedef const char* (CDECL wine_get_version)(void);
+    static wine_get_version* pwine_get_version;
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
     if(!hntdll)
         return FALSE;
 
-    pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
+    pwine_get_version = (wine_get_version*) GetProcAddress(hntdll, "wine_get_version");
     return !!pwine_get_version;
 }
 
@@ -61,6 +65,20 @@ static BOOL launch_direct() {
 }
 
 int WINAPI wWinMain(HINSTANCE hi, HINSTANCE hpi, PWSTR cmd, int ns) {
+
+    if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID)) // Replace with your App ID
+    {
+        return 1;
+    }
+
+        if (!SteamAPI_Init())
+        {
+            printf("Fatal Error - Steam must be running to play this game (SteamAPI_Init() failed).\n");
+            return 1;
+        }
+
+        return 0;
+
     LPCWSTR err =  is_running_on_wine() ? launch_via_steam_posix() : launch_via_steam_windows();
 
     if (err && !launch_direct()) {

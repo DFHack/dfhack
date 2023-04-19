@@ -191,8 +191,8 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
 endif()
 
 # set up versioning.
-set(DF_VERSION "50.07")
-set(DFHACK_RELEASE "r2rc1")
+set(DF_VERSION "50.08b1")
+set(DFHACK_RELEASE "beta2")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

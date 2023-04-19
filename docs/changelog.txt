@@ -49,7 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
-- `widgets`: "Slider" class has been moved from ``filterselection.lua`` into ``widgets.lua``
+- ``widgets``: "Slider" class has been moved from ``filterselection.lua`` into ``widgets.lua``
 
 ## Removed
 

@@ -14,7 +14,7 @@ on:
       release_channel:
         description: Release channel
         type: string
-        required: true
+        required: false
         default: beta
 
 jobs:

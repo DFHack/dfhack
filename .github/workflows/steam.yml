@@ -39,8 +39,8 @@ jobs:
       - name: Cross-compile win64 artifacts
         env:
           CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1'
-          steam_username: ${{ secrets.STEAM_USERNAME }}
-          steam_password: ${{ secrets.STEAM_PASSWORD }}
+          steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
+          steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
         run: |
           cd build
           bash -x build-win64-from-linux.sh

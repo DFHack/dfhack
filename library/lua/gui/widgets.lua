@@ -2331,7 +2331,7 @@ function RangeSlider:init()
     self.is_dragging_idx = nil -- offset from leftmost dragged tile
 end
 
-local function slider_get_width_per_idx(self)
+local function range_slider_get_width_per_idx(self)
     return math.max(5, (self.frame_body.width-7) // (self.num_stops-1))
 end
 
@@ -2340,7 +2340,7 @@ function RangeSlider:onInput(keys)
     local x = self:getMousePos()
     if not x then return false end
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
-    local width_per_idx = slider_get_width_per_idx(self)
+    local width_per_idx = range_slider_get_width_per_idx(self)
     local left_pos = width_per_idx*(left_idx-1)
     local right_pos = width_per_idx*(right_idx-1) + 4
     if x < left_pos then
@@ -2360,7 +2360,7 @@ function RangeSlider:onInput(keys)
     return true
 end
 
-local function slider_do_drag(self, width_per_idx)
+local function range_slider_do_drag(self, width_per_idx)
     local x = self.frame_body:localXY(dfhack.screen.getMousePos())
     local cur_pos = x - self.is_dragging_idx
     cur_pos = math.max(0, cur_pos)
@@ -2389,7 +2389,7 @@ end
 
 function RangeSlider:onRenderBody(dc, rect)
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
-    local width_per_idx = slider_get_width_per_idx(self)
+    local width_per_idx = range_slider_get_width_per_idx(self)
     -- draw track
     dc:seek(1,0)
     dc:char(nil, SLIDER_LEFT_END)
@@ -2426,7 +2426,7 @@ function RangeSlider:onRenderBody(dc, rect)
     dc:char(nil, SLIDER_TAB_RIGHT)
     -- manage dragging
     if self.is_dragging_target then
-        slider_do_drag(self, width_per_idx)
+        range_slider_do_drag(self, width_per_idx)
     end
     if df.global.enabler.mouse_lbut == 0 then
         self.is_dragging_target = nil

@@ -322,6 +322,113 @@ local function get_placement_errors()
     return out
 end
 
+---------------------------------------
+---- FUCK
+local to_pen = dfhack.pen.parse
+local SLIDER_TRACK = to_pen{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_SELECTED = to_pen{ch=205, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP = to_pen{ch=216, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP_SELECTED = to_pen{ch=216, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+
+local SLIDER_LEFTMOST_STOP = to_pen{ch=198, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_RIGHTMOST_STOP = to_pen{ch=181, fg=COLOR_GREY, bg=COLOR_BLACK}
+
+local SLIDER_TAB_LEFT = to_pen{ch=60, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_CENTER = to_pen{ch=9, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_RIGHT = to_pen{ch=62, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_RANGE_LEFT = to_pen{ch=91, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_RANGE_RIGHT = to_pen{ch=93, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+
+Slider = defclass(Slider, widgets.Widget)
+Slider.ATTRS{
+    num_stops=DEFAULT_NIL,
+    get_handle_idx_fn=DEFAULT_NIL,
+    on_change=DEFAULT_NIL,
+}
+
+function Slider:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+end
+
+function Slider:init()
+    if self.num_stops < 2 then error('too few Slider stops') end
+    self.is_dragging_target = nil -- 'handle'
+    self.is_dragging_idx = nil -- offset from leftmost dragged tile
+end
+
+local function slider_get_width_per_idx(self)
+    return math.max(3, (self.frame_body.width-5) // (self.num_stops-1))
+end
+
+function Slider:onInput(keys)
+    if not keys._MOUSE_L_DOWN then return false end
+    local x = self:getMousePos()
+    if not x then return false end
+    local handle_idx = self.get_handle_idx_fn()
+    local width_per_idx = slider_get_width_per_idx(self)
+    local handle_pos = width_per_idx*(handle_idx-1)
+    if x < handle_pos then
+        self.on_change(self.get_handle_idx_fn() - 1)
+    elseif x < handle_pos+3 then
+        self.is_dragging_target = 'handle'
+        self.is_dragging_idx = x - handle_pos
+    end
+    return true
+end
+
+local function slider_do_drag(self, width_per_idx)
+    local x = self.frame_body:localXY(dfhack.screen.getMousePos())
+    local cur_pos = x - self.is_dragging_idx
+    cur_pos = math.max(0, cur_pos)
+    cur_pos = math.min(width_per_idx*(self.num_stops-1)+5, cur_pos)
+    local offset = 1
+    local new_idx = math.max(0, cur_pos+offset)//width_per_idx + 1
+    local new_handle_idx
+    if new_handle_idx and new_handle_idx ~= self.get_handle_idx_fn() then
+        self.on_change(new_handle_idx)
+    end
+end
+
+function Slider:onRenderBody(dc, rect)
+    local handle_idx = self.get_handle_idx_fn()
+    local width_per_idx = slider_get_width_per_idx(self)
+    -- draw track
+    dc:seek(1,0)
+    for stop_idx=1,self.num_stops do
+        local track_stop_pen = SLIDER_TRACK_STOP_SELECTED
+        local track_pen = SLIDER_TRACK_SELECTED
+        if stop_idx == 1 then
+            track_stop_pen = SLIDER_LEFTMOST_STOP
+        elseif stop_idx == self.num_stops then
+            track_stop_pen = SLIDER_RIGHTMOST_STOP
+        elseif handle_idx <= stop_idx then
+            track_stop_pen = SLIDER_TRACK_STOP
+            track_pen = SLIDER_TRACK
+        end
+        dc:char(nil, track_stop_pen)
+        for i=2,width_per_idx do
+            if stop_idx < self.num_stops then
+                dc:char(nil, track_pen)
+            end
+        end
+    end
+    -- draw tabs
+    dc:seek(width_per_idx*(handle_idx-1))
+    dc:char(nil, SLIDER_TAB_LEFT)
+    dc:char(nil, SLIDER_TAB_CENTER)
+    dc:char(nil, SLIDER_TAB_RIGHT)
+    -- manage dragging
+    if self.is_dragging_target then
+        slider_do_drag(self, width_per_idx)
+    end
+    if df.global.enabler.mouse_lbut == 0 then
+        self.is_dragging_target = nil
+        self.is_dragging_idx = nil
+    end
+end
+
+
 --------------------------------
 -- PlannerOverlay
 --
@@ -444,10 +551,10 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
             view_id='weapons',
-            frame={b=4, l=1, w=28},
+            frame={b=5, l=1, w=22},
             key='CUSTOM_T',
             key_back='CUSTOM_SHIFT_T',
-            label='Number of weapons:',
+            label='Weap. amount:',
             visible=is_weapon_or_spike_trap,
             options={
                         {label='(1)', value=1, pen=COLOR_YELLOW},
@@ -462,6 +569,16 @@ function PlannerOverlay:init()
                         {label='(10)', value=10, pen=COLOR_YELLOW},
                     },
             on_change=function(val) weapon_quantity = val end,
+        },
+        Slider{
+            frame={b=5, l=23},
+            auto_width=true,
+            num_stops=10,
+            get_handle_idx_fn=function()
+                return self.subviews.weapons:getOptionValue()
+            end,
+            on_change=function(val) self.subviews.weapons:setOption(val) end, -- wat am i doing
+            visible=is_weapon_or_spike_trap,
         },
         widgets.ToggleHotkeyLabel {
             view_id='engraved',

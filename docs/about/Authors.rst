@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 Abel                    abstern
 acwatkins               acwatkins
+Alex Blamey             Cubittus
 Alexander Collins       gearsix
 Alexander Gavrilov      angavrilov              ag
 Amber Brown             hawkowl
@@ -133,6 +134,7 @@ Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+mrrho                   mrrho
 Murad Beybalaev         Erquint
 Myk Taylor              myk002
 napagokc                napagokc
@@ -158,6 +160,7 @@ Petr Mrázek             peterix
 Pfhreak                 Pfhreak
 Pierre Lulé             plule
 Pierre-David Bélanger   pierredavidbelanger
+PopnROFL                PopnROFL
 potato
 ppaawwll                ppaawwll                🐇🐇🐇🐇
 Priit Laes              plaes
@@ -201,6 +204,7 @@ SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
 Shim Panze              Shim-Panze
+Silver                  silverflyone
 simon
 Simon Jackson           sizeak
 Simon Lees              simotek
@@ -235,6 +239,7 @@ ViTuRaS                 ViTuRaS
 Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
+Will H                  TSM-EVO
 Will Rogers             wjrogers
 WoosterUK               WoosterUK
 XianMaeve               XianMaeve

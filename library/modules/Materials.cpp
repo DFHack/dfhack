@@ -439,6 +439,7 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat) const
         return true;
     if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
         return true;
+    TEST(gem, IS_GEM);
     return false;
 }
 

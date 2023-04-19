@@ -1314,6 +1314,15 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
+
+    // if the option is set, hide the terminal
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+    Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
+        Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
+            if (lua_toboolean(L, -1))
+                core->getConsole().hide();
+        }, false);
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
@@ -2083,7 +2092,8 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
     if (!df::global::world)
         return;
-    std::string rawFolder = "save/" + (df::global::world->cur_savegame.save_dir) + "/init";
+
+    std::string rawFolder = !isWorldLoaded() ? "" : "save/" + World::ReadWorldFolder() + "/init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {

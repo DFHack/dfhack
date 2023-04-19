@@ -38,6 +38,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `buildingplan`: minimized planner panel stays minimized until you change it again
+- ``toggle-kbd-cursor``: add hotkey for toggling the keyboard cursor (Alt-K)
+- `gui/control-panel`: add preference option for hiding the terminal console on startup
+- `gui/control-panel`: add preference option for hiding "armok" tools in command lists
 
 ## Documentation
 

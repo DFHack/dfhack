@@ -191,7 +191,7 @@ function QualityAndMaterialsPage:init()
                     enabled=enable_item_quality,
                     on_change=function(val) self:set_max_quality(val+1) end,
                 },
-                widgets.Slider{
+                widgets.RangeSlider{
                     frame={l=0, t=6},
                     num_stops=7,
                     get_left_idx_fn=function()

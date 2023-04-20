@@ -5130,6 +5130,17 @@ widget does not require direct usage of ``Tab``.
            usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
            in ``TabBar`` for an example of how to construct pens.
 
+RangeSlider class
+-----------------
+
+This widget implements a mouse-interactable range-slider. The user can move its two handles to set minimum and maximum values to define a range.
+
+:num_stops: Specifies the amount of "notches" in the range slider, the places where handles can stop.
+:get_left_idx_fn: The function used by the RangeSlider to determine what value to display on its left handle.
+:get_right_idx_fn: The function used by the RangeSlider to determine what value to display on its right handle.
+:on_left_change: Callback executed when a handle is moved leftwards.
+:on_right_change: Callback executed when a handle is moved rightwards.
+
 .. _lua-plugins:
 
 =======

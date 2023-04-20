@@ -2294,11 +2294,11 @@ function TabBar:onInput(keys)
 end
 
 --------------------------------
--- Slider
+-- RangeSlider
 --
 
-Slider = defclass(Slider, Widget)
-Slider.ATTRS{
+RangeSlider = defclass(RangeSlider, Widget)
+RangeSlider.ATTRS{
     num_stops=DEFAULT_NIL,
     get_left_idx_fn=DEFAULT_NIL,
     get_right_idx_fn=DEFAULT_NIL,
@@ -2306,27 +2306,27 @@ Slider.ATTRS{
     on_right_change=DEFAULT_NIL,
 }
 
-function Slider:preinit(init_table)
+function RangeSlider:preinit(init_table)
     init_table.frame = init_table.frame or {}
     init_table.frame.h = init_table.frame.h or 1
 end
 
-function Slider:init()
-    if self.num_stops < 2 then error('too few Slider stops') end
+function RangeSlider:init()
+    if self.num_stops < 2 then error('too few RangeSlider stops') end
     self.is_dragging_target = nil -- 'left', 'right', or 'both'
     self.is_dragging_idx = nil -- offset from leftmost dragged tile
 end
 
-local function slider_get_width_per_idx(self)
+local function rangeslider_get_width_per_idx(self)
     return math.max(5, (self.frame_body.width-7) // (self.num_stops-1))
 end
 
-function Slider:onInput(keys)
+function RangeSlider:onInput(keys)
     if not keys._MOUSE_L_DOWN then return false end
     local x = self:getMousePos()
     if not x then return false end
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
-    local width_per_idx = slider_get_width_per_idx(self)
+    local width_per_idx = rangeslider_get_width_per_idx(self)
     local left_pos = width_per_idx*(left_idx-1)
     local right_pos = width_per_idx*(right_idx-1) + 4
     if x < left_pos then
@@ -2346,7 +2346,7 @@ function Slider:onInput(keys)
     return true
 end
 
-local function slider_do_drag(self, width_per_idx)
+local function rangeslider_do_drag(self, width_per_idx)
     local x = self.frame_body:localXY(dfhack.screen.getMousePos())
     local cur_pos = x - self.is_dragging_idx
     cur_pos = math.max(0, cur_pos)
@@ -2383,9 +2383,9 @@ local SLIDER_TAB_LEFT = to_pen{ch=60, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 local SLIDER_TAB_CENTER = to_pen{ch=9, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 local SLIDER_TAB_RIGHT = to_pen{ch=62, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 
-function Slider:onRenderBody(dc, rect)
+function RangeSlider:onRenderBody(dc, rect)
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
-    local width_per_idx = slider_get_width_per_idx(self)
+    local width_per_idx = rangeslider_get_width_per_idx(self)
     -- draw track
     dc:seek(1,0)
     dc:char(nil, SLIDER_LEFT_END)
@@ -2422,7 +2422,7 @@ function Slider:onRenderBody(dc, rect)
     dc:char(nil, SLIDER_TAB_RIGHT)
     -- manage dragging
     if self.is_dragging_target then
-        slider_do_drag(self, width_per_idx)
+        rangeslider_do_drag(self, width_per_idx)
     end
     if df.global.enabler.mouse_lbut == 0 then
         self.is_dragging_target = nil

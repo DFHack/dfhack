@@ -456,6 +456,7 @@ function QualityAndMaterialsPage:refresh()
         make_cat_choice('Clay', 'clay', 'CUSTOM_SHIFT_C', cats),
         make_cat_choice('Cloth', 'cloth', 'CUSTOM_SHIFT_L', cats),
         make_cat_choice('Silk', 'silk', 'CUSTOM_SHIFT_K', cats),
+        make_cat_choice('Yarn', 'yarn', 'CUSTOM_SHIFT_Y', cats),
     }
     self.subviews.materials_categories:setChoices(category_choices)
 

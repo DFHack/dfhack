@@ -5133,13 +5133,16 @@ widget does not require direct usage of ``Tab``.
 RangeSlider class
 -----------------
 
-This widget implements a mouse-interactable range-slider. The user can move its two handles to set minimum and maximum values to define a range.
+This widget implements a mouse-interactable range-slider. The user can move its two handles to set minimum and maximum values
+to define a range, or they can drag the bar itself to move both handles at once.
+The handles mirror the state of its two parent ``CycleHotkeyLabels``.
 
-:num_stops: Specifies the amount of "notches" in the range slider, the places where handles can stop.
-:get_left_idx_fn: The function used by the RangeSlider to determine what value to display on its left handle.
-:get_right_idx_fn: The function used by the RangeSlider to determine what value to display on its right handle.
-:on_left_change: Callback executed when a handle is moved leftwards.
-:on_right_change: Callback executed when a handle is moved rightwards.
+:num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
+            (this should match the parents' number of options)
+:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which to display the left handle.
+:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
+:on_left_change: Callback executed when moving the left handle.
+:on_right_change: Callback executed when moving the right handle.
 
 .. _lua-plugins:
 

@@ -252,11 +252,11 @@ public:
     MeltStockProcessor(int32_t stockpile_number, bool enabled, ProcessorStats &stats)
             : StockProcessor("melt", stockpile_number, enabled, stats) { }
 
-    virtual bool is_designated(color_ostream &out, df::item *item) override {
+    bool is_designated(color_ostream &out, df::item *item) override {
         return item->flags.bits.melt;
     }
 
-    virtual bool can_designate(color_ostream &out, df::item *item) override {
+    bool can_designate(color_ostream &out, df::item *item) override {
         MaterialInfo mat(item);
         if (mat.getCraftClass() != df::craft_material_class::Metal)
             return false;
@@ -290,7 +290,7 @@ public:
         return true;
     }
 
-    virtual bool designate(color_ostream &out, df::item *item) override {
+    bool designate(color_ostream &out, df::item *item) override {
         insert_into_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item);
         item->flags.bits.melt = 1;
         return true;
@@ -303,17 +303,17 @@ public:
             : StockProcessor("trade", stockpile_number, enabled && get_active_trade_depot(), stats),
               depot(get_active_trade_depot()) { }
 
-    virtual bool is_designated(color_ostream& out, df::item* item) override {
+    bool is_designated(color_ostream& out, df::item* item) override {
         auto ref = Items::getSpecificRef(item, df::specific_ref_type::JOB);
         return ref && ref->data.job &&
                 ref->data.job->job_type == df::job_type::BringItemToDepot;
     }
 
-    virtual bool can_designate(color_ostream& out, df::item* item) override {
+    bool can_designate(color_ostream& out, df::item* item) override {
         return Items::canTradeWithContents(item);
     }
 
-    virtual bool designate(color_ostream& out, df::item* item) override {
+    bool designate(color_ostream& out, df::item* item) override {
         if (!depot)
             return false;
 
@@ -383,15 +383,15 @@ public:
     DumpStockProcessor(int32_t stockpile_number, bool enabled, ProcessorStats& stats)
         : StockProcessor("dump", stockpile_number, enabled, stats) { }
 
-    virtual bool is_designated(color_ostream& out, df::item* item) override {
+    bool is_designated(color_ostream& out, df::item* item) override {
         return item->flags.bits.dump;
     }
 
-    virtual bool can_designate(color_ostream& out, df::item* item) override {
+    bool can_designate(color_ostream& out, df::item* item) override {
         return true;
     }
 
-    virtual bool designate(color_ostream& out, df::item* item) override {
+    bool designate(color_ostream& out, df::item* item) override {
         item->flags.bits.dump = true;
         return true;
      }

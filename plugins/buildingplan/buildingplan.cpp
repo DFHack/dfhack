@@ -154,6 +154,7 @@ static const df::dfhack_material_category gem_cat(df::dfhack_material_category::
 static const df::dfhack_material_category clay_cat(df::dfhack_material_category::mask_clay);
 static const df::dfhack_material_category cloth_cat(df::dfhack_material_category::mask_cloth);
 static const df::dfhack_material_category silk_cat(df::dfhack_material_category::mask_silk);
+static const df::dfhack_material_category yarn_cat(df::dfhack_material_category::mask_yarn);
 
 static void cache_matched(int16_t type, int32_t index) {
     MaterialInfo mi;
@@ -182,6 +183,9 @@ static void cache_matched(int16_t type, int32_t index) {
     } else if (mi.matches(silk_cat)) {
         DEBUG(status).print("cached silk material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "silk"));
+    } else if (mi.matches(yarn_cat)) {
+        DEBUG(status).print("cached yarn material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        mat_cache.emplace(mi.toString(), std::make_pair(mi, "yarn"));
     }
     else
         TRACE(status).print("not matched: %s\n", mi.toString().c_str());
@@ -208,6 +212,7 @@ static void load_material_cache() {
     load_organic_material_cache(df::organic_mat_category::Wood);
     load_organic_material_cache(df::organic_mat_category::PlantFiber);
     load_organic_material_cache(df::organic_mat_category::Silk);
+    load_organic_material_cache(df::organic_mat_category::Yarn);
 }
 
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
@@ -812,6 +817,8 @@ static int setMaterialMaskFilter(lua_State *L) {
             mask |= cloth_cat.whole;
         else if (cat == "silk")
             mask |= silk_cat.whole;
+        else if (cat == "yarn")
+            mask |= yarn_cat.whole;
     }
     DEBUG(status,*out).print(
             "setting material mask filter for building_type=%d subtype=%d custom=%d index=%d to %x\n",
@@ -860,6 +867,7 @@ static int getMaterialMaskFilter(lua_State *L) {
     ret.emplace("clay", !bits || bits & clay_cat.whole);
     ret.emplace("cloth", !bits || bits & cloth_cat.whole);
     ret.emplace("silk", !bits || bits & silk_cat.whole);
+    ret.emplace("yarn", !bits || bits & yarn_cat.whole);
     Lua::Push(L, ret);
     return 1;
 }
@@ -912,6 +920,8 @@ static int setMaterialFilter(lua_State *L) {
             mask.whole |= cloth_cat.whole;
         else if (mat.matches(silk_cat))
             mask.whole |= silk_cat.whole;
+        else if (mat.matches(yarn_cat))
+            mask.whole |= yarn_cat.whole;
     }
     filter.setMaterialMask(mask.whole);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);

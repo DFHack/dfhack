@@ -39,7 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `buildingplan`: planner panel is minimized by default and now remembers minimized state
-- `buildingplan`: can now filter by gems (for gem windows)
+- `buildingplan`: can now filter by gems (for gem windows) and yarn (for ropes in wells)
 - ``toggle-kbd-cursor``: add hotkey for toggling the keyboard cursor (Alt-K)
 - `gui/control-panel`: add preference option for hiding the terminal console on startup
 - `gui/control-panel`: add preference option for hiding "armok" tools in command lists

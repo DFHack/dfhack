@@ -16,10 +16,10 @@ function getStockpileData()
     local data = {}
     for _,bld in ipairs(df.global.world.buildings.other.STOCKPILE) do
         local stockpile_number, name = bld.stockpile_number, bld.name
-        local sort_key = name
+        local sort_key = tostring(name):lower()
         if #name == 0 then
             name = ('Stockpile #%d'):format(bld.stockpile_number)
-            sort_key = ('Stockpile #%09d'):format(bld.stockpile_number)
+            sort_key = ('stockpile #%09d'):format(bld.stockpile_number)
         end
         table.insert(data, {
             stockpile_number=stockpile_number,

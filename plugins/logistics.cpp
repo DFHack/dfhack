@@ -663,6 +663,38 @@ static void logistics_clearAllStockpileConfigs(color_ostream &out) {
     watched_stockpiles.clear();
 }
 
+static int logistics_getGlobalCounts(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering logistics_getGlobalCounts\n");
+
+    size_t num_melt = df::global::world->items.other.ANY_MELT_DESIGNATED.size();
+
+    size_t num_trade = 0;
+    for (auto link = world->jobs.list.next; link; link = link->next) {
+        df::job *job = link->item;
+        if (job->job_type == df::job_type::BringItemToDepot)
+            ++num_trade;
+    }
+
+    size_t num_dump = 0;
+    for (auto item : world->items.other.IN_PLAY) {
+        if (item->flags.bits.dump)
+            ++num_dump;
+    }
+
+    unordered_map<string, size_t> results;
+    results.emplace("total_melt", num_melt);
+    results.emplace("total_trade", num_trade);
+    results.emplace("total_dump", num_dump);
+    Lua::Push(L, results);
+
+    TRACE(cycle, *out).print("exit logistics_getGlobalCounts\n");
+
+    return 1;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(logistics_cycle),
     DFHACK_LUA_FUNCTION(logistics_setStockpileConfig),
@@ -673,4 +705,5 @@ DFHACK_PLUGIN_LUA_COMMANDS{
     DFHACK_LUA_COMMAND(logistics_getStockpileData),
     DFHACK_LUA_COMMAND(logistics_getStockpileConfigs),
     DFHACK_LUA_COMMAND(logistics_clearStockpileConfig),
+    DFHACK_LUA_COMMAND(logistics_getGlobalCounts),
     DFHACK_LUA_END};

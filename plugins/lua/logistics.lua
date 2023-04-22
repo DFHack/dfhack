@@ -34,22 +34,7 @@ function getStockpileData()
     return data
 end
 
-local function print_status()
-    print(('logistics is %sactively monitoring stockpiles and marking items')
-            :format(isEnabled() and '' or 'not '))
-
-    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
-        return
-    end
-
-    local data = getStockpileData()
-
-    print()
-    if not data[1] then
-        print 'No stockpiles defined -- go make some!'
-        return
-    end
-
+local function print_stockpile_data(data)
     local name_len = 12
     for _,sp in ipairs(data) do
         name_len = math.min(40, math.max(name_len, #sp.name))
@@ -67,6 +52,29 @@ local function print_status()
         print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt), get_enab(sp.trade), get_enab(sp.dump)))
         print(fmt:format('', '', get_dstat(sp.melt), get_dstat(sp.trade), get_dstat(sp.dump)))
     end
+end
+
+local function print_status()
+    print(('logistics is %sactively monitoring stockpiles and marking items')
+            :format(isEnabled() and '' or 'not '))
+
+    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+        return
+    end
+
+    local data = getStockpileData()
+    print()
+    if not data[1] then
+        print 'No stockpiles defined -- go make some!'
+    else
+        print_stockpile_data(data)
+    end
+
+    local global_stats = logistics_getGlobalCounts()
+    print()
+    print(('Total items marked for melting: %5d'):format(global_stats.total_melt))
+    print(('Total items marked for trading: %5d'):format(global_stats.total_trade))
+    print(('Total items marked for dumping: %5d'):format(global_stats.total_dump))
 end
 
 local function for_stockpiles(opts, fn)

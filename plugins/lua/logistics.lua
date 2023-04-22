@@ -35,22 +35,21 @@ function getStockpileData()
 end
 
 local function print_stockpile_data(data)
-    local name_len = 12
+    local name_len = 4
     for _,sp in ipairs(data) do
         name_len = math.min(40, math.max(name_len, #sp.name))
     end
 
     print('Designated/designatable items in stockpiles:')
     print()
-    local fmt = '%6s  %-' .. name_len .. 's  %11s  %11s  %11s';
-    print(fmt:format('number', 'name', 'melt', 'trade', 'dump'))
+    local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s';
+    print(fmt:format('number', 'name', 'melt', 'melt items', 'trade', 'trade items', 'dump', 'dump items'))
     local function uline(len) return ('-'):rep(len) end
-    print(fmt:format(uline(6), uline(name_len), uline(11), uline(11), uline(11)))
+    print(fmt:format(uline(6), uline(name_len), uline(4), uline(10), uline(5), uline(11), uline(4), uline(10)))
     local function get_enab(stats) return ('[%s]'):format(stats.enabled and 'x' or ' ') end
-    local function get_dstat(stats) return ('%d/%d '):format(stats.designated, stats.designated + stats.can_designate) end
+    local function get_dstat(stats) return ('%d/%d'):format(stats.designated, stats.designated + stats.can_designate) end
     for _,sp in ipairs(data) do
-        print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt), get_enab(sp.trade), get_enab(sp.dump)))
-        print(fmt:format('', '', get_dstat(sp.melt), get_dstat(sp.trade), get_dstat(sp.dump)))
+        print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt), get_dstat(sp.melt), get_enab(sp.trade), get_dstat(sp.trade), get_enab(sp.dump), get_dstat(sp.dump)))
     end
 end
 

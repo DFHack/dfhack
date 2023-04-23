@@ -96,9 +96,9 @@ local function do_add_stockpile_config(features, opts)
         else
             for _,config in ipairs(configs) do
                 logistics_setStockpileConfig(config.stockpile_number,
-                        features.melt or config.melt,
-                        features.trade or config.trade,
-                        features.dump or config.dump)
+                    features.melt or config.melt == 1,
+                    features.trade or config.trade == 1,
+                    features.dump or config.dump == 1)
             end
         end
     end)

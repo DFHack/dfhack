@@ -1,10 +1,17 @@
 local _ENV = mkmodule('plugins.stockpiles')
 
 local argparse = require('argparse')
+local gui = require('gui')
+local logistics = require('plugins.logistics')
+local overlay = require('plugins.overlay')
+local widgets = require('gui.widgets')
 
 local STOCKPILES_DIR = "dfhack-config/stockpiles";
 local STOCKPILES_LIBRARY_DIR = "hack/data/stockpiles";
 
+--------------------
+-- plugin logic
+--------------------
 local function get_sp_name(name, num)
     if #name > 0 then return name end
     return ('Stockpile %d'):format(num)
@@ -189,4 +196,137 @@ function parse_commandline(args)
     return true
 end
 
+--------------------
+-- StockpilesOverlay
+--------------------
+
+StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
+StockpilesOverlay.ATTRS{
+    default_pos = {x = 53, y = -6},
+    default_enabled = true,
+    viewscreens = 'dwarfmode/Some/Stockpile',
+    frame = {w = 27, h = 10},
+}
+
+function StockpilesOverlay:init()
+    self.minimized = false
+
+    local main_panel = widgets.Panel{
+        frame = {t = 0, l = 0, r = 0, b = 0},
+        frame_style = gui.MEDIUM_FRAME,
+        frame_background = gui.CLEAR_PEN,
+        visible = function() return not self.minimized end,
+        subviews = {
+            widgets.HotkeyLabel{
+                frame = {t = 0, l = 0},
+                label = 'apply settings',
+                key = 'CUSTOM_CTRL_I',
+                auto_width = true,
+                on_activate = do_import,
+            },
+            widgets.HotkeyLabel{
+                frame = {t = 1, l = 0},
+                label = 'export settings',
+                key = 'CUSTOM_CTRL_E',
+                auto_width = true,
+                on_activate = do_export,
+            },
+            widgets.Label{
+                frame = {t = 3, l = 0},
+                text = {
+                    'Designate items brought', NEWLINE,
+                    'to this stockpile for:'
+                },
+            },
+            widgets.ToggleHotkeyLabel{
+                view_id = 'melt',
+                frame = {t = 5, l = 2},
+                label = 'melting',
+                key = 'CUSTOM_CTRL_M',
+                on_change = self:callback('toggleLogisticsFeature', 'melt'),
+            },
+            widgets.ToggleHotkeyLabel{
+                view_id = 'trade',
+                frame = {t = 6, l = 2},
+                label = 'trading',
+                key = 'CUSTOM_CTRL_T',
+                on_change = self:callback('toggleLogisticsFeature', 'trade'),
+            },
+            widgets.ToggleHotkeyLabel{
+                view_id = 'dump',
+                frame = {t = 7, l = 2},
+                label = 'dumping',
+                key = 'CUSTOM_CTRL_D',
+                on_change = self:callback('toggleLogisticsFeature', 'dump'),
+            },
+        },
+    }
+
+    local minimized_panel = widgets.Panel{
+        frame = {t = 0, r = 0, w = 3, h = 1},
+        subviews = {
+            widgets.Label{
+                frame = {t = 0, l = 0, w = 1, h = 1},
+                text = '[',
+                text_pen = COLOR_RED,
+                visible = function() return self.minimized end,
+            },
+            widgets.Label{
+                frame = {t = 0, l = 1, w = 1, h = 1},
+                text = {{text = function() return self.minimized and string.char(31) or string.char(30) end}},
+                text_pen = dfhack.pen.parse{fg = COLOR_BLACK, bg = COLOR_GREY},
+                text_hpen = dfhack.pen.parse{fg = COLOR_BLACK, bg = COLOR_WHITE},
+                on_click = function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame = {t = 0, r = 0, w = 1, h = 1},
+                text = ']',
+                text_pen = COLOR_RED,
+                visible = function() return self.minimized end,
+            },
+        },
+    }
+
+    self:addviews{
+        main_panel,
+        minimized_panel,
+    }
+end
+
+function StockpilesOverlay:overlay_onupdate()
+    self.cur_stockpile = nil
+end
+
+function StockpilesOverlay:onRenderFrame()
+    local sp = dfhack.gui.getSelectedStockpile()
+    if self.cur_stockpile ~= sp then
+        local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+        self.subviews.melt:setOption(config.melt == 1)
+        self.subviews.trade:setOption(config.trade == 1)
+        self.subviews.dump:setOption(config.dump == 1)
+        self.cur_stockpile = sp
+    end
+end
+
+function StockpilesOverlay:toggleLogisticsFeature(feature)
+    local sp = dfhack.gui.getSelectedStockpile()
+    local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+    -- logical xor
+    logistics.logistics_setStockpileConfig(config.stockpile_number,
+        (feature == 'melt') ~= (config.melt == 1),
+        (feature == 'trade') ~= (config.trade == 1),
+        (feature == 'dump') ~= (config.dump == 1))
+end
+
+function StockpilesOverlay:onInput(keys)
+    if keys.CUSTOM_ALT_M then
+        self.minimized = not self.minimized
+        return true
+    end
+    return StockpilesOverlay.super.onInput(self, keys)
+end
+
+OVERLAY_WIDGETS = {
+    overlay = StockpilesOverlay,
+}
 return _ENV

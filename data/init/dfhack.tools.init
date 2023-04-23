@@ -144,4 +144,3 @@ enable \
 
 alias add autounsuspend suspendmanager
 alias add gui/dig gui/design
-alias add toggle-kbd-cursor lua "local flags4 = df.global.d_init.flags4 if flags4.KEYBOARD_CURSOR then flags4.KEYBOARD_CURSOR = false else local guidm = require('gui.dwarfmode') guidm.setCursorPos(guidm.Viewport.get():getCenter()) flags4.KEYBOARD_CURSOR = true end"

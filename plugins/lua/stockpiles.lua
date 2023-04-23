@@ -205,21 +205,22 @@ function parse_commandline(args)
     return true
 end
 
---
+--------------------
 -- dialogs
 --------------------
 
 StockpilesExport = defclass(StockpilesExport, widgets.Window)
 StockpilesExport.ATTRS{
-    frame_title='My Window',
+    frame_title='Export stockpile settings',
     frame={w=50, h=45},
     resizable=true,
-    resize_min={w=50, h=20}, -- try to allow users to shrink your windows
+    resize_min={w=50, h=20},
 }
 
 function StockpilesExport:init()
     self:addviews{
-        -- add subview widgets here
+        widgets.EditField{}, widgets.Label{frame={}, text='Include which elements?'},
+        widgets.ToggleHotkeyLabel{},
     }
 end
 
@@ -242,9 +243,50 @@ local function do_export()
     export_view = export_view and export_view:raise() or StockpilesExportScreen{}:show()
 end
 
---
+--------------------
 -- StockpilesOverlay
 --------------------
+
+MinimizeButton = defclass(MinimizeButton, widgets.Panel)
+MinimizeButton.ATTRS{
+    label_pos='left',
+    get_minimized_fn=DEFAULT_NIL,
+    on_click=DEFAULT_NIL,
+}
+
+function MinimizeButton:init()
+    local show_label, hide_label = 'show', 'hide'
+    local label_width = math.max(#show_label, #hide_label)
+
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0, w=1, h=1},
+            text='['..string.char(30)..']',
+            text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
+            text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
+            visible=self.get_minimized_fn,
+        }, widgets.Label{
+            frame={t=0, l=1, w=1, h=1},
+            text={'[',
+                {
+                    text=function()
+                        return self.get_minimized_fn() and string.char(31) or string.char(30)
+                    end,
+                },']',
+            },
+            text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+            text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+            on_click=self:callback('toggleMinimized'),
+        }, widgets.Label{
+            frame={t=0, r=0, w=1, h=1},
+            text=']',
+            text_pen=COLOR_RED,
+            visible=function()
+                return self.minimized
+            end,
+        },
+    }
+end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{

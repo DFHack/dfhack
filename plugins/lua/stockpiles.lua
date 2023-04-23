@@ -248,11 +248,7 @@ end
 --------------------
 
 MinimizeButton = defclass(MinimizeButton, widgets.Panel)
-MinimizeButton.ATTRS{
-    label_pos='left',
-    get_minimized_fn=DEFAULT_NIL,
-    on_click=DEFAULT_NIL,
-}
+MinimizeButton.ATTRS{label_pos='left', get_minimized_fn=DEFAULT_NIL, on_click=DEFAULT_NIL}
 
 function MinimizeButton:init()
     local show_label, hide_label = 'show', 'hide'
@@ -261,22 +257,22 @@ function MinimizeButton:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0, w=1, h=1},
-            text='['..string.char(30)..']',
+            text='[' .. string.char(30) .. ']',
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
             visible=self.get_minimized_fn,
         }, widgets.Label{
             frame={t=0, l=1, w=1, h=1},
-            text={'[',
-                {
+            text={{width=label_width},
+                '[', {
                     text=function()
                         return self.get_minimized_fn() and string.char(31) or string.char(30)
                     end,
-                },']',
+                }, ']',
             },
-            text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
-            text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
-            on_click=self:callback('toggleMinimized'),
+            text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
+            text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
+            on_click=self.on_click,
         }, widgets.Label{
             frame={t=0, r=0, w=1, h=1},
             text=']',

@@ -252,6 +252,8 @@ MinimizeButton.ATTRS{
     label_unminimized='minimize',
     label_minimized='restore',
     label_pos='left',
+    symbol_minimize=string.char(31),
+    symbol_restore=string.char(30),
     get_minimized_fn=DEFAULT_NIL,
     on_click=DEFAULT_NIL,
 }
@@ -259,10 +261,12 @@ MinimizeButton.ATTRS{
 function MinimizeButton:init()
     self.hovered = false
 
+    ensure_key(self, 'frame').h = 1
+
     local is_hovered = function() return self.hovered end
     local is_not_hovered = function() return not self.hovered end
     local get_action_symbol = function()
-        return self.get_minimized_fn() and string.char(31) or string.char(30)
+        return self.get_minimized_fn() and self.symbol_minimize or self.symbol_restore
     end
     local get_label = function()
         local label = self.get_minimized_fn() and self.label_minimized or self.label_unminimized
@@ -271,13 +275,13 @@ function MinimizeButton:init()
 
     local hovered_text = {'[', {text=get_action_symbol}, ']'}
     table.insert(hovered_text,
-        self.label_pos == 'left' and 1 or nil,
+        self.label_pos == 'left' and 1 or #hovered_text + 1,
         {text=get_label, hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE}})
 
     self:addviews{
         widgets.Label{
             view_id='unhovered_label',
-            frame={t=0, r=0, w=3, h=1},
+            frame={t=0, w=3, h=1},
             text={'[', {text=get_action_symbol}, ']'},
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
@@ -285,7 +289,7 @@ function MinimizeButton:init()
             visible=is_not_hovered,
         }, widgets.Label{
             view_id='hovered_label',
-            frame={t=0, r=0, h=1},
+            frame={t=0, h=1},
             text=hovered_text,
             auto_width=true,
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
@@ -294,6 +298,14 @@ function MinimizeButton:init()
             visible=is_hovered,
         },
     }
+
+    if self.label_pos == 'left' then
+        self.subviews.unhovered_label.frame.r = 0
+        self.subviews.hovered_label.frame.r = 0
+    else
+        self.subviews.unhovered_label.frame.l = 0
+        self.subviews.hovered_label.frame.l = 0
+    end
 end
 
 function MinimizeButton:onRenderFrame()
@@ -327,7 +339,7 @@ function StockpilesOverlay:init()
 
     local main_panel = widgets.ResizingPanel{
         view_id='main',
-        frame={t=0, l=0, r=0},
+        frame={b=0, l=0, r=0},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
         autoarrange_subviews=true,
@@ -393,7 +405,10 @@ function StockpilesOverlay:init()
     self:addviews{
         main_panel,
         MinimizeButton{
-            frame={t=0, r=1},
+            frame={b=0, l=1},
+            label_pos='right',
+            symbol_minimize=string.char(30),
+            symbol_restore=string.char(31),
             get_minimized_fn=function() return self.minimized end,
             on_click=self:callback('toggleMinimized'),
         },

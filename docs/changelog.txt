@@ -37,6 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `buildingplan`: fixed size limit calculations for rollers
+- `dig-now`: properly detect and complete smoothing designations that have been converted into active jobs
 
 ## Misc Improvements
 - `buildingplan`: planner panel is minimized by default and now remembers minimized state

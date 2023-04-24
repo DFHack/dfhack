@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``widgets.RangeSlider``: new mouse-controlled two-headed slider widget
 
 ## Removed
 - `title-version`: replaced by an `overlay` widget

@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `buildingplan`: fixed size limit calculations for rollers
 
 ## Misc Improvements
 - `buildingplan`: planner panel is minimized by default and now remembers minimized state

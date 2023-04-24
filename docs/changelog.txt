@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `autoclothing`: eliminate game lag when there are many inventory items in the fort
 
 ## Misc Improvements
 - `buildingplan`: planner panel is minimized by default and now remembers minimized state

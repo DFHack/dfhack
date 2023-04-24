@@ -5133,9 +5133,9 @@ widget does not require direct usage of ``Tab``.
 RangeSlider class
 -----------------
 
-This widget implements a mouse-interactable range-slider. The user can move its two handles to set minimum and maximum values
+This widget implements a mouse-interactable range-slider. The player can move its two handles to set minimum and maximum values
 to define a range, or they can drag the bar itself to move both handles at once.
-The handles mirror the state of its two parent ``CycleHotkeyLabels``.
+The parent widget owns the range values, and can control them independently (e.g. with ``CycleHotkeyLabels``). If the range values change, the ``RangeSlider`` appearance will adjust automatically.
 
 :num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
             (this should match the parents' number of options)

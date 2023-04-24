@@ -4323,6 +4323,13 @@ Here is an example skeleton for a ZScreen tool window::
 
     view = view and view:raise() or MyScreen{}:show()
 
+ZScreenModal class
+------------------
+
+A ZScreen convenience subclass that sets the attributes to something
+appropriate for modal dialogs. The game is force paused, and no input is passed
+through to the underlying viewscreens.
+
 FramedScreen class
 ------------------
 
@@ -5129,6 +5136,20 @@ widget does not require direct usage of ``Tab``.
 :get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
            usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
            in ``TabBar`` for an example of how to construct pens.
+
+RangeSlider class
+-----------------
+
+This widget implements a mouse-interactable range-slider. The player can move its two handles to set minimum and maximum values
+to define a range, or they can drag the bar itself to move both handles at once.
+The parent widget owns the range values, and can control them independently (e.g. with ``CycleHotkeyLabels``). If the range values change, the ``RangeSlider`` appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
+            (this should match the parents' number of options)
+:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which to display the left handle.
+:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
+:on_left_change: Callback executed when moving the left handle.
+:on_right_change: Callback executed when moving the right handle.
 
 .. _lua-plugins:
 

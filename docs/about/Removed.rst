@@ -206,6 +206,12 @@ stocksettings
 Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
 `stockpiles` API.
 
+.. _title-version:
+
+title-version
+=============
+Replaced with an `overlay`.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees

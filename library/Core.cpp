@@ -273,7 +273,7 @@ static std::string dfhack_version_desc()
     if (Version::is_release())
         s << "(release)";
     else
-        s << "(development build " << Version::git_description() << ")";
+        s << "(git: " << Version::git_commit(true) << ")";
     s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
     if (strlen(Version::dfhack_build_id()))
         s << " [build ID: " << Version::dfhack_build_id() << "]";

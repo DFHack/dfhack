@@ -84,6 +84,7 @@ using namespace DFHack;
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_titlest.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -143,6 +144,17 @@ static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandle
         (getFocusStringsHandler)getFocusStrings_##screen_type \
     ); \
     static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
+
+DEFINE_GET_FOCUS_STRING_HANDLER(title)
+{
+    if (screen->managing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (game->main_interface.settings.open)
+        focusStrings.push_back(baseFocus + "/Settings");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
+}
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {

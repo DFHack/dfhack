@@ -34,9 +34,10 @@ local function get_selection_size_limits()
             or btype == df.building_type.RoadPaved
             or btype == df.building_type.RoadDirt then
         return {w=31, h=31}
-    elseif btype == df.building_type.AxleHorizontal
-            or btype == df.building_type.Rollers then
+    elseif btype == df.building_type.AxleHorizontal then
         return uibs.direction == 1 and {w=1, h=31} or {w=31, h=1}
+    elseif btype == df.building_type.Rollers then
+        return (uibs.direction == 1 or uibs.direction == 3) and {w=31, h=1} or {w=1, h=31}
     end
 end
 

@@ -1,6 +1,8 @@
 #define NO_DFHACK_VERSION_MACROS
 #include "DFHackVersion.h"
 #include "git-describe.h"
+#include <string>
+
 namespace DFHack {
     namespace Version {
         int dfhack_abi_version()
@@ -27,9 +29,10 @@ namespace DFHack {
         {
             return DFHACK_GIT_DESCRIPTION;
         }
-        const char *git_commit()
+        const char* git_commit(bool short_hash)
         {
-            return DFHACK_GIT_COMMIT;
+            static std::string shorty(DFHACK_GIT_COMMIT, 0, 7);
+            return short_hash ? shorty.c_str() : DFHACK_GIT_COMMIT;
         }
         const char *git_xml_commit()
         {

@@ -342,26 +342,6 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT void PushInterfaceKeys(lua_State *L, const std::set<df::interface_key> &keys);
 
-    template<class T>
-    void PushVector(lua_State *state, const T &pvec, bool addn = false)
-    {
-        lua_createtable(state,pvec.size(), addn?1:0);
-
-        if (addn)
-        {
-            lua_pushinteger(state, pvec.size());
-            lua_setfield(state, -2, "n");
-        }
-
-        for (size_t i = 0; i < pvec.size(); i++)
-        {
-            Push(state, pvec[i]);
-            lua_rawseti(state, -2, i+1);
-        }
-    }
-
-    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec, int idx = 1);
-
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, const df::coord &pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, const df::coord2d &pos);
 
@@ -411,6 +391,26 @@ namespace DFHack {namespace Lua {
         Lua::Push(state, value);
         lua_settable(state, -3);
     }
+
+    template<class T>
+    void PushVector(lua_State *state, const T &pvec, bool addn = false)
+    {
+        lua_createtable(state,pvec.size(), addn?1:0);
+
+        if (addn)
+        {
+            lua_pushinteger(state, pvec.size());
+            lua_setfield(state, -2, "n");
+        }
+
+        for (size_t i = 0; i < pvec.size(); i++)
+        {
+            Push(state, pvec[i]);
+            lua_rawseti(state, -2, i+1);
+        }
+    }
+
+    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec, int idx = 1);
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 

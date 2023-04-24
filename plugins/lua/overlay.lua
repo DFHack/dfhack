@@ -571,13 +571,13 @@ TitleVersionOverlay.ATTRS{
     default_pos={x=50, y=-2},
     default_enabled=true,
     viewscreens='title',
-    frame={w=30, h=3},
+    frame={w=35, h=3},
 }
 
 function TitleVersionOverlay:init()
     local text = {}
     table.insert(text, 'DFHack ' .. dfhack.getDFHackVersion() ..
-            (dfhack.isPrerelease() and (' (%s)'):format(dfhack.getGitCommit():sub(1,7)) or ''))
+            (dfhack.isPrerelease() and (' (git: %s)'):format(dfhack.getGitCommit(true)) or ''))
     if #dfhack.getDFHackBuildID() > 0 then
         table.insert(text, NEWLINE)
         table.insert(text, 'Build ID: ' .. dfhack.getDFHackBuildID())

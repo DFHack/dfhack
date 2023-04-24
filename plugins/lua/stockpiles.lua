@@ -244,45 +244,74 @@ local function do_export()
 end
 
 --------------------
--- StockpilesOverlay
+-- MinimizeButton
 --------------------
 
-MinimizeButton = defclass(MinimizeButton, widgets.Panel)
-MinimizeButton.ATTRS{label_pos='left', get_minimized_fn=DEFAULT_NIL, on_click=DEFAULT_NIL}
+MinimizeButton = defclass(MinimizeButton, widgets.Widget)
+MinimizeButton.ATTRS{
+    label_unminimized='minimize',
+    label_minimized='restore',
+    label_pos='left',
+    get_minimized_fn=DEFAULT_NIL,
+    on_click=DEFAULT_NIL,
+}
 
 function MinimizeButton:init()
-    local show_label, hide_label = 'show', 'hide'
-    local label_width = math.max(#show_label, #hide_label)
+    self.hovered = false
+
+    local is_hovered = function() return self.hovered end
+    local is_not_hovered = function() return not self.hovered end
+    local get_action_symbol = function()
+        return self.get_minimized_fn() and string.char(31) or string.char(30)
+    end
+    local get_label = function()
+        local label = self.get_minimized_fn() and self.label_minimized or self.label_unminimized
+        return (' %s '):format(label)
+    end
+
+    local hovered_text = {'[', {text=get_action_symbol}, ']'}
+    table.insert(hovered_text,
+        self.label_pos == 'left' and 1 or nil,
+        {text=get_label, hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE}})
 
     self:addviews{
         widgets.Label{
-            frame={t=0, l=0, w=1, h=1},
-            text='[' .. string.char(30) .. ']',
+            view_id='unhovered_label',
+            frame={t=0, r=0, w=3, h=1},
+            text={'[', {text=get_action_symbol}, ']'},
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
-            visible=self.get_minimized_fn,
+            on_click=function() self.on_click() self:updateLayout() end,
+            visible=is_not_hovered,
         }, widgets.Label{
-            frame={t=0, l=1, w=1, h=1},
-            text={{width=label_width},
-                '[', {
-                    text=function()
-                        return self.get_minimized_fn() and string.char(31) or string.char(30)
-                    end,
-                }, ']',
-            },
+            view_id='hovered_label',
+            frame={t=0, r=0, h=1},
+            text=hovered_text,
+            auto_width=true,
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
-            on_click=self.on_click,
-        }, widgets.Label{
-            frame={t=0, r=0, w=1, h=1},
-            text=']',
-            text_pen=COLOR_RED,
-            visible=function()
-                return self.minimized
-            end,
+            on_click=function() self.on_click() self:updateLayout() end,
+            visible=is_hovered,
         },
     }
 end
+
+function MinimizeButton:onRenderFrame()
+    local prev_hovered = self.hovered
+    if self.hovered then
+        self.hovered = self.subviews.hovered_label:getMousePos()
+    else
+        self.hovered = self.subviews.unhovered_label:getMousePos()
+    end
+    if self.hovered ~= prev_hovered then
+        self:updateLayout()
+        df.global.gps.force_full_display_count = 1
+    end
+end
+
+--------------------
+-- StockpilesOverlay
+--------------------
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
@@ -308,7 +337,7 @@ function StockpilesOverlay:init()
         subviews={
             widgets.HotkeyLabel{
                 frame={t=0, l=0},
-                label='apply settings',
+                label='import settings',
                 key='CUSTOM_CTRL_I',
                 on_activate=do_import,
             }, widgets.HotkeyLabel{
@@ -361,40 +390,14 @@ function StockpilesOverlay:init()
         },
     }
 
-    local minimized_panel = widgets.Panel{
-        frame={t=0, r=0, w=3, h=1},
-        subviews={
-            widgets.Label{
-                frame={t=0, l=0, w=1, h=1},
-                text='[',
-                text_pen=COLOR_RED,
-                visible=function()
-                    return self.minimized
-                end,
-            }, widgets.Label{
-                frame={t=0, l=1, w=1, h=1},
-                text={
-                    {
-                        text=function()
-                            return self.minimized and string.char(31) or string.char(30)
-                        end,
-                    },
-                },
-                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
-                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
-                on_click=self:callback('toggleMinimized'),
-            }, widgets.Label{
-                frame={t=0, r=0, w=1, h=1},
-                text=']',
-                text_pen=COLOR_RED,
-                visible=function()
-                    return self.minimized
-                end,
-            },
+    self:addviews{
+        main_panel,
+        MinimizeButton{
+            frame={t=0, r=1},
+            get_minimized_fn=function() return self.minimized end,
+            on_click=self:callback('toggleMinimized'),
         },
     }
-
-    self:addviews{main_panel, minimized_panel}
 end
 
 function StockpilesOverlay:overlay_onupdate()

@@ -570,7 +570,7 @@ TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
     default_pos={x=50, y=-2},
     default_enabled=true,
-    viewscreens='title',
+    viewscreens='title/Default',
     frame={w=35, h=3},
 }
 
@@ -589,7 +589,7 @@ function TitleVersionOverlay:init()
 
     self:addviews{
         widgets.Label{
-            frame={b=0, l=0},
+            frame={t=0, l=0},
             text=text,
             text_pen=COLOR_WHITE,
         },

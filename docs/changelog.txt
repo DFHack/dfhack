@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: planner panel is minimized by default and now remembers minimized state
 - `buildingplan`: can now filter by gems (for gem windows) and yarn (for ropes in wells)
 - ``toggle-kbd-cursor``: add hotkey for toggling the keyboard cursor (Alt-K)
+- ``version``: add alias to display the DFHack help (including the version number) so something happens when players try to run "version"
 - `gui/control-panel`: add preference option for hiding the terminal console on startup
 - `gui/control-panel`: add preference option for hiding "armok" tools in command lists
 - ``Dwarf Therapist``: add a warning to the Labors screen when Dwarf Therapist is active so players know that changes they make to that screen will have no effect. If you're starting a new embark and nobody seems to be doing anything, check your Labors tab for this warning to see if Dwarf Therapist thinks it is in control (even if it's not running).

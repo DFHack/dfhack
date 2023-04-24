@@ -4323,6 +4323,13 @@ Here is an example skeleton for a ZScreen tool window::
 
     view = view and view:raise() or MyScreen{}:show()
 
+ZScreenModal class
+------------------
+
+A ZScreen convenience subclass that sets the attributes to something
+appropriate for modal dialogs. The game is force paused, and no input is passed
+through to the underlying viewscreens.
+
 FramedScreen class
 ------------------
 

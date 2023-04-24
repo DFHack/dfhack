@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `autoclothing`: eliminate game lag when there are many inventory items in the fort
 - `buildingplan`: fixed size limit calculations for rollers
 - `dig-now`: properly detect and complete smoothing designations that have been converted into active jobs
 

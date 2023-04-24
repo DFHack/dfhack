@@ -1115,31 +1115,17 @@ static void createDesign(df::building *bld, bool rough)
 
 static int getMaxStockpileId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::STOCKPILE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_stockpilest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->stockpile_number);
-    }
-
+    for (auto bld : world->buildings.other.STOCKPILE)
+        max_id = std::max(max_id, bld->stockpile_number);
     return max_id;
 }
 
 static int getMaxCivzoneId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->zone_num);
-    }
-
+    for (auto bld : world->buildings.other.ANY_ZONE)
+        max_id = std::max(max_id, bld->zone_num);
     return max_id;
 }
 

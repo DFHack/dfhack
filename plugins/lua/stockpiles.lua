@@ -6,8 +6,10 @@ local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local STOCKPILES_DIR = 'dfhack-config/stockpiles';
-local STOCKPILES_LIBRARY_DIR = 'hack/data/stockpiles';
+local STOCKPILES_DIR = 'dfhack-config/stockpiles'
+local STOCKPILES_LIBRARY_DIR = 'hack/data/stockpiles'
+
+local BAD_FILENAME_REGEX = '[^%w._]'
 
 --------------------
 -- plugin logic
@@ -66,7 +68,7 @@ end
 
 local function assert_safe_name(name)
     if not name or #name == 0 then qerror('name missing or empty') end
-    if name:find('[^%w._]') then
+    if name:find(BAD_FILENAME_REGEX) then
         qerror('name can only contain numbers, letters, periods, and underscores')
     end
 end
@@ -212,20 +214,42 @@ end
 StockpilesExport = defclass(StockpilesExport, widgets.Window)
 StockpilesExport.ATTRS{
     frame_title='Export stockpile settings',
-    frame={w=50, h=45},
+    frame={w=33, h=15},
     resizable=true,
-    resize_min={w=50, h=20},
 }
 
 function StockpilesExport:init()
     self:addviews{
-        widgets.EditField{}, widgets.Label{frame={}, text='Include which elements?'},
-        widgets.ToggleHotkeyLabel{},
+        widgets.EditField{
+            view_id='edit',
+            frame={t=0, l=0, r=0},
+            label_text='name: ',
+            on_char=function(ch)
+                return not ch:match(BAD_FILENAME_REGEX)
+            end,
+        }, widgets.Label{frame={t=2, l=0}, text='Include which elements?'},
+        widgets.ToggleHotkeyLabel{frame={t=4, l=0}, label='General settings', initial_option=false},
+        widgets.ToggleHotkeyLabel{
+            frame={t=5, l=0},
+            label='Container settings',
+            initial_option=false,
+        }, widgets.ToggleHotkeyLabel{frame={t=6, l=0}, label='Categories', initial_option=true},
+        widgets.ToggleHotkeyLabel{frame={t=7, l=0}, label='Subtypes', initial_option=true},
+        widgets.ToggleHotkeyLabel{frame={t=8, l=0}, label='DFHack features', initial_option=true},
+        widgets.HotkeyLabel{
+            frame={t=10, l=0},
+            label='export',
+            key='SELECT',
+            enabled=function()
+                return #self.subviews.edit.text > 0
+            end,
+            on_activate=self:callback('on_submit'),
+        },
     }
 end
 
-function StockpilesExport:onInput(keys)
-    -- if required
+function StockpilesExport:on_submit(text)
+    self:dismiss()
 end
 
 StockpilesExportScreen = defclass(StockpilesExportScreen, gui.ZScreenModal)
@@ -263,8 +287,12 @@ function MinimizeButton:init()
 
     ensure_key(self, 'frame').h = 1
 
-    local is_hovered = function() return self.hovered end
-    local is_not_hovered = function() return not self.hovered end
+    local is_hovered = function()
+        return self.hovered
+    end
+    local is_not_hovered = function()
+        return not self.hovered
+    end
     local get_action_symbol = function()
         return self.get_minimized_fn() and self.symbol_minimize or self.symbol_restore
     end
@@ -274,9 +302,8 @@ function MinimizeButton:init()
     end
 
     local hovered_text = {'[', {text=get_action_symbol}, ']'}
-    table.insert(hovered_text,
-        self.label_pos == 'left' and 1 or #hovered_text + 1,
-        {text=get_label, hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE}})
+    table.insert(hovered_text, self.label_pos == 'left' and 1 or #hovered_text + 1,
+            {text=get_label, hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE}})
 
     self:addviews{
         widgets.Label{
@@ -285,7 +312,10 @@ function MinimizeButton:init()
             text={'[', {text=get_action_symbol}, ']'},
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
-            on_click=function() self.on_click() self:updateLayout() end,
+            on_click=function()
+                self.on_click()
+                self:updateLayout()
+            end,
             visible=is_not_hovered,
         }, widgets.Label{
             view_id='hovered_label',
@@ -294,7 +324,10 @@ function MinimizeButton:init()
             auto_width=true,
             text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
             text_hpen=dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED},
-            on_click=function() self.on_click() self:updateLayout() end,
+            on_click=function()
+                self.on_click()
+                self:updateLayout()
+            end,
             visible=is_hovered,
         },
     }
@@ -403,13 +436,14 @@ function StockpilesOverlay:init()
     }
 
     self:addviews{
-        main_panel,
-        MinimizeButton{
+        main_panel, MinimizeButton{
             frame={b=0, l=1},
             label_pos='right',
             symbol_minimize=string.char(30),
             symbol_restore=string.char(31),
-            get_minimized_fn=function() return self.minimized end,
+            get_minimized_fn=function()
+                return self.minimized
+            end,
             on_click=self:callback('toggleMinimized'),
         },
     }

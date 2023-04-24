@@ -39,7 +39,7 @@ HotspotMenuWidget.ATTRS{
         -- 'new_region', -- conflicts with vanilla panel layouts
         'savegame',
         'setupdwarfgame',
-        'title',
+        'title/Default',
         'update_region',
         'world'
     },

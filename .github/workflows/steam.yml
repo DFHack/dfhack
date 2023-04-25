@@ -37,7 +37,7 @@ jobs:
             ccache-win64-cross-msvc-develop-${{ github.event.inputs.commit_hash }}
             ccache-win64-cross-msvc
       - name: Restore steam SDK
-        uses: action/cache@v3
+        uses: actions/cache@v3
         with:
           path: depends/steam/steamworks_sdk_156.zip
           key: steam-sdk-156

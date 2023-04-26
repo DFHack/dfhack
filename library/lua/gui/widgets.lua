@@ -1488,6 +1488,8 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
     key_back=DEFAULT_NIL,
+    key_sep=': ',
+    val_gap=1,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     label_below=false,
@@ -1499,17 +1501,16 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
-    local val_gap = 1
     if self.label_below then
-        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+        self.val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
     end
 
     self:setText{
         self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
-        {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
+        {key=self.key, key_sep=self.key_sep, text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         self.label_below and NEWLINE or '',
-        {gap=val_gap, text=self:callback('getOptionLabel'),
+        {gap=self.val_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end

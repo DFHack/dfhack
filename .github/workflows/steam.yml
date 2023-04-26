@@ -48,6 +48,10 @@ jobs:
           steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
           steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
         run: |
+          echo "commit: ${{ github.event.inputs.commit_hash }}"
+          echo "version: ${{ github.event.inputs.version }}"
+          echo "release_channel: ${{ github.event.inputs.release_channel }}"
+          echo
           cd build
           bash -x build-win64-from-linux.sh
       - name: Steam deploy

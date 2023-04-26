@@ -745,6 +745,7 @@ end
 
 local NO_LOGIC_SCREENS = {
     'viewscreen_loadgamest',
+    'viewscreen_adopt_regionst',
     'viewscreen_export_regionst',
     'viewscreen_choose_game_typest',
     'viewscreen_worldst',
@@ -866,8 +867,17 @@ function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
 end
 
---------------------------
--- Framed screen object --
+-- convenience subclass for modal dialogs
+ZScreenModal = defclass(ZScreenModal, ZScreen)
+ZScreenModal.ATTRS{
+    defocusable = false,
+    force_pause = true,
+    pass_pause = false,
+    pass_movement_keys = false,
+    pass_mouse_clicks = false,
+}
+
+-- Framed screen object
 --------------------------
 
 -- Plain grey-colored frame.

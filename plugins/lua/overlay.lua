@@ -562,4 +562,42 @@ function OverlayWidget:init()
     self.frame.h = self.frame.h or 1
 end
 
+-- ------------------- --
+-- TitleVersionOverlay --
+-- ------------------- --
+
+TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
+TitleVersionOverlay.ATTRS{
+    default_pos={x=50, y=-2},
+    default_enabled=true,
+    viewscreens='title/Default',
+    frame={w=35, h=3},
+}
+
+function TitleVersionOverlay:init()
+    local text = {}
+    table.insert(text, 'DFHack ' .. dfhack.getDFHackVersion() ..
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true))))
+    if #dfhack.getDFHackBuildID() > 0 then
+        table.insert(text, NEWLINE)
+        table.insert(text, 'Build ID: ' .. dfhack.getDFHackBuildID())
+    end
+    if dfhack.isPrerelease() then
+        table.insert(text, NEWLINE)
+        table.insert(text, {text='Pre-release build', pen=COLOR_LIGHTRED})
+    end
+
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text=text,
+            text_pen=COLOR_WHITE,
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {
+    title_version = TitleVersionOverlay,
+}
+
 return _ENV

@@ -14,7 +14,7 @@ on:
       release_channel:
         description: Release channel
         type: string
-        required: true
+        required: false
         default: beta
 
 jobs:
@@ -36,9 +36,17 @@ jobs:
           restore-keys: |
             ccache-win64-cross-msvc-develop-${{ github.event.inputs.commit_hash }}
             ccache-win64-cross-msvc
+      - name: Restore steam SDK
+        uses: actions/cache@v3
+        with:
+          path: depends/steam/steamworks_sdk_156.zip
+          key: steam-sdk-156
+          enableCrossOsArchive: true
       - name: Cross-compile win64 artifacts
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1'
+          steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
+          steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
         run: |
           cd build
           bash -x build-win64-from-linux.sh

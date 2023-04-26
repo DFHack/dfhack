@@ -4,11 +4,14 @@ local itemselection = require('plugins.buildingplan.itemselection')
 local filterselection = require('plugins.buildingplan.filterselection')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local json = require('json')
 local overlay = require('plugins.overlay')
 local pens = require('plugins.buildingplan.pens')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 require('dfhack.buildings')
+
+config = config or json.open('dfhack-config/buildingplan.json')
 
 local uibs = df.global.buildreq
 
@@ -31,9 +34,10 @@ local function get_selection_size_limits()
             or btype == df.building_type.RoadPaved
             or btype == df.building_type.RoadDirt then
         return {w=31, h=31}
-    elseif btype == df.building_type.AxleHorizontal
-            or btype == df.building_type.Rollers then
+    elseif btype == df.building_type.AxleHorizontal then
         return uibs.direction == 1 and {w=1, h=31} or {w=31, h=1}
+    elseif btype == df.building_type.Rollers then
+        return (uibs.direction == 1 or uibs.direction == 3) and {w=31, h=1} or {w=1, h=31}
     end
 end
 
@@ -336,14 +340,14 @@ PlannerOverlay.ATTRS{
 
 function PlannerOverlay:init()
     self.selected = 1
-    self.minimized = false
+    self.state = ensure_key(config.data, 'planner')
 
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=1, l=0, r=0, h=14},
         frame_style=gui.INTERIOR_MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
-        visible=function() return not self.minimized end,
+        visible=self:callback('is_not_minimized'),
     }
 
     local minimized_panel = widgets.Panel{
@@ -355,8 +359,8 @@ function PlannerOverlay:init()
                     {text=' show Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(31)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
                 },
-                visible=function() return self.minimized end,
-                on_click=function() self.minimized = not self.minimized end,
+                visible=self:callback('is_minimized'),
+                on_click=self:callback('toggle_minimized'),
             },
             widgets.Label{
                 frame={t=0, r=0, h=1},
@@ -364,8 +368,8 @@ function PlannerOverlay:init()
                     {text=' hide Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(30)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
                 },
-                visible=function() return not self.minimized end,
-                on_click=function() self.minimized = not self.minimized end,
+                visible=self:callback('is_not_minimized'),
+                on_click=self:callback('toggle_minimized'),
             },
         },
     }
@@ -554,7 +558,7 @@ function PlannerOverlay:init()
         view_id='divider',
         frame={t=10, l=0, r=0, h=1},
         on_render=self:callback('draw_divider_h'),
-        visible=function() return not self.minimized end,
+        visible=self:callback('is_not_minimized'),
     }
 
     local error_panel = widgets.ResizingPanel{
@@ -562,7 +566,7 @@ function PlannerOverlay:init()
         frame={t=15, l=0, r=0},
         frame_style=gui.BOLD_FRAME,
         frame_background=gui.CLEAR_PEN,
-        visible=function() return not self.minimized end,
+        visible=self:callback('is_not_minimized'),
     }
 
     error_panel:addviews{
@@ -609,7 +613,7 @@ function PlannerOverlay:init()
         frame={t=0, l=1, w=37, h=1},
         frame_inset=0,
         frame_background=gui.CLEAR_PEN,
-        visible=function() return not self.minimized end,
+        visible=self:callback('is_not_minimized'),
         subviews={
             prev_next_selector,
         },
@@ -622,6 +626,19 @@ function PlannerOverlay:init()
         divider_widget,
         error_panel,
     }
+end
+
+function PlannerOverlay:is_minimized()
+    return self.state.minimized
+end
+
+function PlannerOverlay:is_not_minimized()
+    return not self.state.minimized
+end
+
+function PlannerOverlay:toggle_minimized()
+    self.state.minimized = not self.state.minimized
+    config:write()
 end
 
 function PlannerOverlay:draw_divider_h(dc)
@@ -729,20 +746,19 @@ function PlannerOverlay:onInput(keys)
             return true
         end
         self.selected = 1
-        self.minimized = false
         self.subviews.hollow:setOption(false)
         self:reset()
         reset_counts_flag = true
         return false
     end
     if keys.CUSTOM_ALT_M then
-        self.minimized = not self.minimized
+        self:toggle_minimized()
         return true
     end
     if PlannerOverlay.super.onInput(self, keys) then
         return true
     end
-    if self.minimized then return false end
+    if self:is_minimized() then return false end
     if keys._MOUSE_L_DOWN then
         if is_over_options_panel() then return false end
         local detect_rect = copyall(self.frame_rect)
@@ -838,7 +854,7 @@ function PlannerOverlay:onRenderFrame(dc, rect)
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
     end
 
-    if self.minimized then return end
+    if self:is_minimized() then return end
 
     local bounds = get_selected_bounds(self.saved_selection_pos, self.saved_pos)
     if not bounds then return end

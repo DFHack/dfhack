@@ -4323,6 +4323,13 @@ Here is an example skeleton for a ZScreen tool window::
 
     view = view and view:raise() or MyScreen{}:show()
 
+ZScreenModal class
+------------------
+
+A ZScreen convenience subclass that sets the attributes to something
+appropriate for modal dialogs. The game is force paused, and no input is passed
+through to the underlying viewscreens.
+
 FramedScreen class
 ------------------
 
@@ -4905,12 +4912,17 @@ It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
 :key_back: Similar to ``key``, but will cycle backwards (optional)
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation.
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
 :label_below: If ``true``, then the option value will apear below the label
     instead of to the right of it. Defaults to ``false``.
+:val_gap: The size of the gap between the label text and the option value.
+    Default is ``1``. If set to ``0``, there'll be no gap between the strings.
+    Note that ``val_gap`` is ignored if ``label_below`` is set to ``true``.
 :options: A list of strings or tables of
     ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
     string for the label and value and use the default pen. The optional ``pen``
@@ -5129,6 +5141,20 @@ widget does not require direct usage of ``Tab``.
 :get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
            usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
            in ``TabBar`` for an example of how to construct pens.
+
+RangeSlider class
+-----------------
+
+This widget implements a mouse-interactable range-slider. The player can move its two handles to set minimum and maximum values
+to define a range, or they can drag the bar itself to move both handles at once.
+The parent widget owns the range values, and can control them independently (e.g. with ``CycleHotkeyLabels``). If the range values change, the ``RangeSlider`` appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
+            (this should match the parents' number of options)
+:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which to display the left handle.
+:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
+:on_left_change: Callback executed when moving the left handle.
+:on_right_change: Callback executed when moving the right handle.
 
 .. _lua-plugins:
 

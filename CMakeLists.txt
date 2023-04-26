@@ -300,16 +300,19 @@ if(WIN32)
     file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
         DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
 
-    # Do the same for SDLreal.dll
+    # Do the same for SDL.dll
     # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    set(SDLREAL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
+    # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
+    # continue to include it so we don't break Steam players on update by removing
+    # the SDL.dll that DF needs.
+    set(SDL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
     if(${DFHACK_BUILD_ARCH} STREQUAL "64")
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
-            ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+            ${SDL_DOWNLOAD_DIR}/SDL.dll
             "1ae242c4b94cb03756a1288122a66faf")
     else()
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
-            ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+            ${SDL_DOWNLOAD_DIR}/SDL.dll
             "5a09604daca6b2b5ce049d79af935d6a")
     endif()
 

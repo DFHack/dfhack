@@ -4922,6 +4922,7 @@ It has the following attributes:
     instead of to the right of it. Defaults to ``false``.
 :val_gap: The size of the gap between the label text and the option value.
     Default is ``1``. If set to ``0``, there'll be no gap between the strings.
+    Note that ``val_gap`` is ignored if ``label_below`` is set to ``true``.
 :options: A list of strings or tables of
     ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
     string for the label and value and use the default pen. The optional ``pen``

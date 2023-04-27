@@ -6,17 +6,12 @@ work-now
     :tags: fort auto jobs
 
 After finishing a job, dwarves will wander away for a while before picking up a
-new job. This plugin will automatically poke the game to assign dwarves to new
-tasks.
+new job. This plugin will automatically poke them to pick up a new task quicker.
 
 Usage
 -----
 
-``workNow``
-    Print current plugin status.
-``workNow 0``
-    Stop monitoring and poking.
-``workNow 1``
-    Poke the game to assign dwarves to tasks whenever the game is paused.
-``workNow 2``
-    Poke the game to assign dwarves to tasks whenever a dwarf finishes a job.
+::
+
+    enable work-now
+    work-now [status]

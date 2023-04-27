@@ -510,7 +510,7 @@ end
 
 local function _render_viewscreen_widgets(vs_name, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
-    if not vs_widgets then return false end
+    if not vs_widgets then return end
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
@@ -518,11 +518,18 @@ local function _render_viewscreen_widgets(vs_name, dc)
             detect_frame_change(w, function() w:render(dc) end)
         end
     end
+    return dc
 end
+
+local force_refresh
 
 function render_viewscreen_widgets(vs_name)
     local dc = _render_viewscreen_widgets(vs_name, nil)
     _render_viewscreen_widgets('all', dc)
+    if force_refresh then
+        force_refresh = nil
+        df.global.gps.force_full_display_count = 1
+    end
 end
 
 -- called when the DF window is resized
@@ -531,6 +538,7 @@ function reposition_widgets()
     for _,db_entry in pairs(widget_db) do
         db_entry.widget:updateLayout(sr)
     end
+    force_refresh = true
 end
 
 -- ------------------------------------------------- --
@@ -568,7 +576,7 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
-    default_pos={x=50, y=-2},
+    default_pos={x=7, y=2},
     default_enabled=true,
     viewscreens='title/Default',
     frame={w=35, h=3},

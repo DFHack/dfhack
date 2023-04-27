@@ -43,10 +43,27 @@ struct BadFlags {
     }
 };
 
-bool itemPassesScreen(df::item * item) {
+// This is tricky. we want to choose an item that can be brought to the job site, but that's not
+// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
+// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
+static bool isAccessible(color_ostream& out, df::item* item) {
+    df::coord item_pos = Items::getPosition(item);
+    df::map_block* block = Maps::getTileBlock(item_pos);
+    bool is_walkable = false;
+    if (block) {
+        uint16_t walkability_group = index_tile(block->walkable, item_pos);
+        is_walkable = walkability_group != 0;
+        TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+            item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
+    }
+    return is_walkable;
+}
+
+bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
-        && !item->isAssignedToStockpile();
+        && !item->isAssignedToStockpile()
+        && isAccessible(out, item);
 }
 
 df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat) {
@@ -165,22 +182,6 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
-// This is tricky. we want to choose an item that can be brought to the job site, but that's not
-// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
-// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
-static bool isAccessibleFrom(color_ostream &out, df::item *item, df::job *job) {
-    df::coord item_pos = Items::getPosition(item);
-    df::map_block *block = Maps::getTileBlock(item_pos);
-    bool is_walkable = false;
-    if (block) {
-        uint16_t walkability_group = index_tile(block->walkable, item_pos);
-        is_walkable = walkability_group != 0;
-        TRACE(cycle,out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
-                item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "" : "not ");
-    }
-    return is_walkable;
-}
-
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings,
@@ -195,7 +196,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             item_it != item_vector.rend();
             ++item_it) {
         auto item = *item_it;
-        if (!itemPassesScreen(item))
+        if (!itemPassesScreen(out, item))
             continue;
         for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
             TRACE(cycle,out).print("scanning bucket: %s/%s\n",
@@ -218,8 +219,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto filter_idx = task.second;
             const int rev_filter_idx = num_filters - (filter_idx+1);
             auto &pb = planned_buildings.at(id);
-            if (isAccessibleFrom(out, item, job)
-                    && matchesFilters(item, jitems[filter_idx], pb.heat_safety,
+            if (matchesFilters(item, jitems[filter_idx], pb.heat_safety,
                         pb.item_filters[rev_filter_idx], pb.specials)
                     && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))

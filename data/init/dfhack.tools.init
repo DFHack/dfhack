@@ -142,4 +142,6 @@ enable \
 # Default Aliases #
 ###################
 
+alias add autounsuspend suspendmanager
 alias add gui/dig gui/design
+alias add version help

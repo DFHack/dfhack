@@ -39,14 +39,14 @@ static string serialize(const std::vector<ItemFilter> &item_filters, const std::
 }
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
-        : key(key), choose_items(false) {
+        : key(key), choose_items(ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER) {
     DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key));
     filter_config = World::AddPersistentData(FILTER_CONFIG_KEY);
     set_config_val(filter_config, FILTER_CONFIG_TYPE, std::get<0>(key));
     set_config_val(filter_config, FILTER_CONFIG_SUBTYPE, std::get<1>(key));
     set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));
-    set_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose_items);
+    set_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose_items);
     item_filters.resize(jitems.size());
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
         item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
@@ -56,10 +56,15 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
         : key(getKey(filter_config)), filter_config(filter_config) {
-    choose_items = get_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
+    choose_items = get_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
+    if (choose_items < ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER ||
+            choose_items > ItemSelectionChoice::ITEM_SELECTION_CHOICE_AUTOMATERIAL)
+        choose_items = ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER;
     auto &serialized = filter_config.val();
     DEBUG(status,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
+    if (!jitems.size())
+        return;
     std::vector<std::string> elems;
     split_string(&elems, serialized, "|");
     std::vector<ItemFilter> filters = deserialize_item_filters(out, elems[0]);
@@ -79,9 +84,9 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
     }
 }
 
-void DefaultItemFilters::setChooseItems(bool choose) {
+void DefaultItemFilters::setChooseItems(int choose) {
     choose_items = choose;
-    set_config_bool(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose);
+    set_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose);
 }
 
 void DefaultItemFilters::setSpecial(const std::string &special, bool val) {

@@ -3,7 +3,7 @@ rendermax
 
 .. dfhack-tool::
     :summary: Modify the map lighting.
-    :tags: untested adventure fort gameplay graphics
+    :tags: unavailable adventure fort gameplay graphics
 
 This plugin provides a collection of OpenGL lighting filters that affect how the
 map is drawn to the screen.

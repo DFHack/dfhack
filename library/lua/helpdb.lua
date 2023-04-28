@@ -12,6 +12,8 @@ local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
 
+local GLOBAL_KEY = 'HELPDB'
+
 -- enums
 local ENTRY_TYPES = {
     BUILTIN='builtin',
@@ -423,6 +425,14 @@ function refresh()
     ensure_db()
 end
 
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    refresh()
+end
+
 local function parse_blocks(text)
     local blocks = {}
     for line in text:gmatch('[^\n]*') do
@@ -778,7 +788,11 @@ function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
         table.insert(excludes, {str=argparse.stringList(exclude_strs)})
     end
     if not show_dev_commands then
-        table.insert(excludes, {tag='dev'})
+        local dev_tags = {'dev', 'unavailable'}
+        if dfhack.getHideArmokTools() then
+            table.insert(dev_tags, 'armok')
+        end
+        table.insert(excludes, {tag=dev_tags})
     end
     list_entries(skip_tags, include, excludes)
 end
@@ -803,7 +817,16 @@ function tags(tag)
 
     local skip_tags = true
     local include = {entry_type={ENTRY_TYPES.COMMAND}, tag=tag}
-    list_entries(skip_tags, include)
+
+    local excludes = {tag={}}
+    if tag ~= 'unavailable' then
+        table.insert(excludes.tag, 'unavailable')
+    end
+    if tag ~= 'armok' and dfhack.getHideArmokTools() then
+        table.insert(excludes.tag, 'armok')
+    end
+
+    list_entries(skip_tags, include, excludes)
 end
 
 return _ENV

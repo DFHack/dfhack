@@ -76,7 +76,9 @@
 #include "df/ocean_wave.h"
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
+#include "df/plant_tree_tile.h"
 #include "df/plant_raw_flags.h"
+#include "df/plant_root_tile.h"
 #include "df/projectile.h"
 #include "df/proj_itemst.h"
 #include "df/proj_unitst.h"
@@ -971,17 +973,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                     || yyy >= 16
                     )
                     continue;
-                df::plant_tree_tile tile;
                 if (-localPos.z < 0)
                 {
-                    tile = tree_info->roots[-1 + localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_root_tile tile = tree_info->roots[-1 + localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
                 else
                 {
-                    tile = tree_info->body[-localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_tree_tile tile = tree_info->body[-localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
-                if (!tile.whole || tile.bits.blocked)
-                    continue;
                 if (tree_info->body_height <= 1)
                     trunk_percent[xxx][yyy] = 0;
                 else

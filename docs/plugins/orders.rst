@@ -48,8 +48,11 @@ is open via an `overlay` widget. There are hotkeys assigned to export, import,
 sort, and clear. You can also click on the hotkey hints as if they were buttons.
 Clearing will ask for confirmation before acting.
 
-If you want to change where the hotkey hints appear, you can move them via
-`gui/overlay`.
+If you want to change where the overlay panel appears, you can move it via
+`gui/overlay`. If you just need to get the overlay out of the way temporarily,
+for example to read a long description of a historical figure when choosing a
+subject for a statue, click on the small arrow in the upper right corner of the
+overlay panel. Click on the arrow again to restore the panel.
 
 The orders library
 ------------------

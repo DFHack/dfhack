@@ -192,7 +192,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "50.07")
-set(DFHACK_RELEASE "beta1")
+set(DFHACK_RELEASE "r2rc3")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -312,6 +312,7 @@ if(WIN32)
             ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
             "5a09604daca6b2b5ce049d79af935d6a")
     endif()
+
 endif()
 
 if(APPLE)

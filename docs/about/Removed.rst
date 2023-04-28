@@ -26,6 +26,12 @@ Moved frequently used materials to the top of the materials list when building
 buildings. Also offered extended options when building constructions. All
 functionality has been merged into `buildingplan`.
 
+.. _autounsuspend:
+
+autounsuspend
+=============
+Replaced by `suspendmanager`.
+
 .. _combine-drinks:
 
 combine-drinks
@@ -192,6 +198,19 @@ the Ruby library causes when used as an embedded language.
 show-unit-syndromes
 ===================
 Replaced with a GUI version: `gui/unit-syndromes`.
+
+.. _stocksettings:
+
+stocksettings
+=============
+Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
+`stockpiles` API.
+
+.. _title-version:
+
+title-version
+=============
+Replaced with an `overlay`.
 
 .. _warn-stuck-trees:
 

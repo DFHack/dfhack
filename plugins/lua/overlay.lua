@@ -8,6 +8,7 @@ local widgets = require('gui.widgets')
 
 local OVERLAY_CONFIG_FILE = 'dfhack-config/overlay.json'
 local OVERLAY_WIDGETS_VAR = 'OVERLAY_WIDGETS'
+local GLOBAL_KEY = 'OVERLAY'
 
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
@@ -311,6 +312,14 @@ function reload()
     reposition_widgets()
 end
 
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    reload()
+end
+
 local function dump_widget_config(name, widget)
     local pos = overlay_config[name].pos
     print(('widget %s is positioned at x=%d, y=%d'):format(name, pos.x, pos.y))
@@ -501,7 +510,7 @@ end
 
 local function _render_viewscreen_widgets(vs_name, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
-    if not vs_widgets then return false end
+    if not vs_widgets then return end
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
@@ -509,11 +518,18 @@ local function _render_viewscreen_widgets(vs_name, dc)
             detect_frame_change(w, function() w:render(dc) end)
         end
     end
+    return dc
 end
+
+local force_refresh
 
 function render_viewscreen_widgets(vs_name)
     local dc = _render_viewscreen_widgets(vs_name, nil)
     _render_viewscreen_widgets('all', dc)
+    if force_refresh then
+        force_refresh = nil
+        df.global.gps.force_full_display_count = 1
+    end
 end
 
 -- called when the DF window is resized
@@ -522,6 +538,7 @@ function reposition_widgets()
     for _,db_entry in pairs(widget_db) do
         db_entry.widget:updateLayout(sr)
     end
+    force_refresh = true
 end
 
 -- ------------------------------------------------- --
@@ -552,5 +569,43 @@ function OverlayWidget:init()
     self.frame.w = self.frame.w or 5
     self.frame.h = self.frame.h or 1
 end
+
+-- ------------------- --
+-- TitleVersionOverlay --
+-- ------------------- --
+
+TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
+TitleVersionOverlay.ATTRS{
+    default_pos={x=7, y=2},
+    default_enabled=true,
+    viewscreens='title/Default',
+    frame={w=35, h=3},
+}
+
+function TitleVersionOverlay:init()
+    local text = {}
+    table.insert(text, 'DFHack ' .. dfhack.getDFHackVersion() ..
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true))))
+    if #dfhack.getDFHackBuildID() > 0 then
+        table.insert(text, NEWLINE)
+        table.insert(text, 'Build ID: ' .. dfhack.getDFHackBuildID())
+    end
+    if dfhack.isPrerelease() then
+        table.insert(text, NEWLINE)
+        table.insert(text, {text='Pre-release build', pen=COLOR_LIGHTRED})
+    end
+
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text=text,
+            text_pen=COLOR_WHITE,
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {
+    title_version = TitleVersionOverlay,
+}
 
 return _ENV

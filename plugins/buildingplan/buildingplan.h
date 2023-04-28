@@ -42,14 +42,20 @@ enum HeatSafety {
     HEAT_SAFETY_MAGMA = 2,
 };
 
+enum ItemSelectionChoice {
+    ITEM_SELECTION_CHOICE_FILTER = 0,
+    ITEM_SELECTION_CHOICE_MANUAL = 1,
+    ITEM_SELECTION_CHOICE_AUTOMATERIAL = 2,
+};
+
 int get_config_val(DFHack::PersistentDataItem &c, int index);
 bool get_config_bool(DFHack::PersistentDataItem &c, int index);
 void set_config_val(DFHack::PersistentDataItem &c, int index, int value);
 void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
-std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, const df::job_item *job_item);
-bool itemPassesScreen(df::item * item);
+std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, const df::job_item *job_item, bool ignore_filters);
+bool itemPassesScreen(DFHack::color_ostream& out, df::item* item);
 df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat);
 bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<std::string> &special);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
-void finalizeBuilding(DFHack::color_ostream &out, df::building *bld);
+void finalizeBuilding(DFHack::color_ostream &out, df::building *bld, bool unsuspend_on_finalize);

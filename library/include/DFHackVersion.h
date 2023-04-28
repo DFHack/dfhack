@@ -8,7 +8,7 @@ namespace DFHack {
         int dfhack_abi_version();
 
         const char *git_description();
-        const char *git_commit();
+        const char* git_commit(bool short_hash = false);
         const char *git_xml_commit();
         const char *git_xml_expected_commit();
         bool git_xml_match();

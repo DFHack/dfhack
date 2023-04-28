@@ -1718,6 +1718,7 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getControlPanelTexposStart),
     WRAPM(Textures, getThinBordersTexposStart),
     WRAPM(Textures, getMediumBordersTexposStart),
+    WRAPM(Textures, getBoldBordersTexposStart),
     WRAPM(Textures, getPanelBordersTexposStart),
     WRAPM(Textures, getWindowBordersTexposStart),
     { NULL, NULL }
@@ -2728,13 +2729,9 @@ static int filesystem_listdir_recursive(lua_State *L)
         include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
-    if (err)
-    {
+    if (err != 0 && err != -1) {
         lua_pushnil(L);
-        if (err == -1)
-            lua_pushfstring(L, "max depth exceeded: %d", depth);
-        else
-            lua_pushstring(L, strerror(err));
+        lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
         return 3;
     }

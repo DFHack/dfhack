@@ -4,9 +4,6 @@ local _ENV = mkmodule('gui.dialogs')
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local utils = require('utils')
-
-local dscreen = dfhack.screen
 
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
@@ -66,6 +63,7 @@ function MessageBox:onInput(keys)
         elseif (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) and self.on_cancel then
             self.on_cancel()
         end
+        gui.markMouseClicksHandled(keys)
         return true
     end
     return self:inputToSubviews(keys)
@@ -135,6 +133,7 @@ function InputBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
+        gui.markMouseClicksHandled(keys)
         return true
     end
     return self:inputToSubviews(keys)
@@ -218,9 +217,9 @@ end
 
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
-    --if self.select2_hint then
-    --    dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
-    --end
+    if self.select2_hint then
+       dc:seek(rect.x1+2,rect.y2):string('Shift-Click', COLOR_LIGHTGREEN):string(': '..self.select2_hint, COLOR_GREY)
+    end
 end
 
 function ListBox:getWantedFrameSize()
@@ -236,6 +235,7 @@ function ListBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
+        gui.markMouseClicksHandled(keys)
         return true
     end
     return self:inputToSubviews(keys)

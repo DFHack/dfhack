@@ -113,14 +113,10 @@ public:
                 case job_type::CarveUpDownStaircase:
                     td.bits.dig = tile_dig_designation::UpDownStair;
                     break;
-                case job_type::DetailWall:
-                case job_type::DetailFloor: {
-                    df::tiletype tt = map.tiletypeAt(job->pos);
-                    if (tileSpecial(tt) != df::tiletype_special::SMOOTH) {
-                        td.bits.smooth = 1;
-                    }
+                case job_type::SmoothWall:
+                case job_type::SmoothFloor:
+                    td.bits.smooth = 1;
                     break;
-                }
                 case job_type::CarveTrack:
                     to.bits.carve_track_north = (job->item_category.whole >> 18) & 1;
                     to.bits.carve_track_south = (job->item_category.whole >> 19) & 1;

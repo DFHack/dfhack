@@ -49,6 +49,9 @@ keybinding add Ctrl-H@dwarfmode autodump-destroy-here
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 
+# toggle keyboard cursor
+keybinding add Alt-K@dwarfmode toggle-kbd-cursor
+
 # show information collected by dwarfmonitor
 #keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
 #keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"

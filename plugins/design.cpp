@@ -11,6 +11,7 @@
 #include "PluginManager.h"
 #include "df/graphic_viewportst.h"
 #include "df/world.h"
+#include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/Screen.h"
 #include "modules/World.h"
@@ -49,8 +50,10 @@ DFhackCExport command_result plugin_init(color_ostream &out,
   DEBUG(status, out).print("initializing %s\n", plugin_name);
 
   // provide a configuration interface for the plugin
-  commands.push_back(
-      PluginCommand(plugin_name, "Designs stuff TBD", do_command));
+  commands.push_back(PluginCommand(
+      plugin_name,
+      "Plugin to handle performance sensitive functions of gui/design",
+      do_command));
 
   return CR_OK;
 }
@@ -152,150 +155,77 @@ static command_result do_command(color_ostream &out,
 
 static int32_t do_cycle(color_ostream &out, bool force_designate) { return 0; }
 
-// Assuming the existence of a class named Point, similar to the one in Lua
-class Point {
- public:
-  int x;
-  int y;
+std::map<uint32_t, Screen::Pen> PENS;
 
-  Point(int x, int y) : x(x), y(y) {}
+struct DrawingPoint {
+  uint32_t penKey = 0;
+  std::pair<int, int> cursor_coords;
 
-  bool operator==(const Point &other) const {
-    return x == other.x && y == other.y;
-  }
+  DrawingPoint() : penKey(0), cursor_coords({-1, -1}) {}
 };
 
-// Assuming the existence of a class named Color, similar to the one in Lua
-class Color {
- public:
-  // Define your color values here
+typedef std::map<int, std::map<int, DrawingPoint>> ShapeMap;
+ShapeMap arr;
+
+bool has_point(int x, int y) {
+  return arr.count(x) != 0 && arr.at(x).count(y) != 0;
 };
 
-// Assuming the existence of a class named Pen, similar to the one in Lua
-class Pen {
- public:
-  std::string ch;
-  int tile;
-  color_value fg;
-  // Define your pen properties and methods here
+// Key tuple is N, W, E, S
+typedef std::tuple<bool, bool, bool, bool> DirectionKey;
+std::map<DirectionKey, std::pair<int, int>> CURSORS_MAP = {
+    {{false, false, false, false}, {1, 2}},  // INSIDE
+    {{true, true, false, false}, {0, 1}},    // NW
+    {{true, false, false, false}, {1, 1}},   // NORTH
+    {{true, false, true, false}, {2, 1}},    // NE
+    {{false, true, false, false}, {0, 2}},   // WEST
+    {{false, false, true, false}, {2, 2}},   // EAST
+    {{false, true, false, true}, {0, 3}},    // SW
+    {{false, false, false, true}, {1, 3}},   // SOUTH
+    {{false, false, true, true}, {2, 3}},    // SE
+    {{true, true, true, false}, {3, 2}},     // N_NUB
+    {{true, false, true, true}, {5, 1}},     // E_NUB
+    {{true, true, false, true}, {3, 1}},     // W_NUB
+    {{false, true, true, true}, {4, 2}},     // S_NUB
+    {{false, true, true, false}, {3, 3}},    // VERT_NS
+    {{true, false, false, true}, {4, 1}},    // VERT_EW
+    {{true, true, true, true}, {4, 3}},      // POINT
 };
 
-class Design {
- public:
-  std::map<uint32_t, Pen> PENS;
-
-  enum PEN_MASK {
-    NORTH = 0,
-    SOUTH,
-    EAST,
-    WEST,
-    DRAG_POINT,
-    MOUSEOVER,
-    INSHAPE,
-    EXTRA_POINT,
-    NUM_FLAGS
-  };
-
-  // Define the function similar to the Lua version
-
-  uint32_t gen_pen_key(bool n, bool s, bool e, bool w, bool is_corner,
-                       bool is_mouse_over, bool inshape, bool extra_point) {
-    std::bitset<NUM_FLAGS> ret;
-    ret[NORTH] = n;
-    ret[SOUTH] = s;
-    ret[EAST] = e;
-    ret[WEST] = w;
-    ret[DRAG_POINT] = is_corner;
-    ret[MOUSEOVER] = is_mouse_over;
-    ret[INSHAPE] = inshape;
-    ret[EXTRA_POINT] = extra_point;
-
-    return static_cast<uint32_t>(ret.to_ulong());
-  }
-
-  Pen Design::get_pen(int x, int y,
-                      const std::map<int, std::map<int, bool>> &arr);
-  // Define the function similar to the Lua version
+enum PenMask {
+  North = 0,
+  South,
+  East,
+  West,
+  DragPoint,
+  MouseOver,
+  InShape,
+  ExtraPoint,
+  NumFlags
 };
 
-Design design;
+uint32_t gen_pen_key(bool n, bool s, bool e, bool w, bool is_drag_point,
+                     bool is_mouse_over, bool inshape, bool extra_point) {
+  std::bitset<static_cast<size_t>(PenMask::NumFlags)> ret;
+  ret[PenMask::North] = n;
+  ret[PenMask::South] = s;
+  ret[PenMask::East] = e;
+  ret[PenMask::West] = w;
+  ret[PenMask::DragPoint] = is_drag_point;
+  ret[PenMask::MouseOver] = is_mouse_over;
+  ret[PenMask::InShape] = inshape;
+  ret[PenMask::ExtraPoint] = extra_point;
 
-// Add other methods and member variables needed for the class
-
-static int design_getPen(lua_State *L) {
-  std::map<int, std::map<int, bool>> arr;
-  if (lua_istable(L, -1)) {
-    // Iterate over the outer table
-    lua_pushnil(L);  // First key
-    while (lua_next(L, -2) != 0) {
-      int x = lua_tointeger(L, -2);  // Convert key to an integer
-
-      if (lua_istable(L, -1)) {
-        // Iterate over the inner table
-        lua_pushnil(L);  // First key
-        while (lua_next(L, -2) != 0) {
-          int y = lua_tointeger(L, -2);  // Convert key to an integer
-          bool value = lua_toboolean(L, -1);
-
-          if (value) {
-            if (arr.count(x) == 0) arr[x] = {};
-            arr[x][y] = value;
-          }
-          lua_pop(L, 1);  // Remove value, keep the key for the next iteration
-        }
-      }
-      lua_pop(L, 1);  // Remove inner table, keep the key for the next iteration
-    }
-  }
-
-  for (auto x : arr) {
-    for (auto y : x.second) {
-      Screen::Pen cur_tile = Screen::readTile(x.first, y.first, true);
-      // cur_tile.tile = selected_tile_texpos;
-      Pen pen = design.get_pen(x.first, y.first, arr);
-      cur_tile.tile = pen.tile;
-      Screen::paintTile(cur_tile, x.first - *window_x, y.first - *window_y,
-                        true);
-    }
-  }
-  return 0;
+  return ret.to_ulong();
 }
-enum class CURSORS {
-  INSIDE,
-  NORTH,
-  N_NUB,
-  S_NUB,
-  W_NUB,
-  E_NUB,
-  NE,
-  NW,
-  WEST,
-  EAST,
-  SW,
-  SOUTH,
-  SE,
-  VERT_NS,
-  VERT_EW,
-  POINT
-};
 
-std::map<CURSORS, std::pair<int, int>> CURSORS_MAP = {
-    {CURSORS::INSIDE, {1, 2}},  {CURSORS::NORTH, {1, 1}},
-    {CURSORS::N_NUB, {3, 2}},   {CURSORS::S_NUB, {4, 2}},
-    {CURSORS::W_NUB, {3, 1}},   {CURSORS::E_NUB, {5, 1}},
-    {CURSORS::NE, {2, 1}},      {CURSORS::NW, {0, 1}},
-    {CURSORS::WEST, {0, 2}},    {CURSORS::EAST, {2, 2}},
-    {CURSORS::SW, {0, 3}},      {CURSORS::SOUTH, {1, 3}},
-    {CURSORS::SE, {2, 3}},      {CURSORS::VERT_NS, {3, 3}},
-    {CURSORS::VERT_EW, {4, 1}}, {CURSORS::POINT, {4, 3}},
-};
-Pen make_pen(const std::pair<int, int> &direction, bool is_corner,
-             bool is_mouse_over, bool inshape, bool extra_point) {
+Screen::Pen make_pen(const std::pair<int, int> &direction, bool is_drag_point,
+                     bool is_mouse_over, bool inshape, bool extra_point) {
   color_value color = COLOR_GREEN;
   int ycursor_mod = 0;
 
   if (!extra_point) {
-    if (is_corner) {
+    if (is_drag_point) {
       color = COLOR_CYAN;
       ycursor_mod += 6;
       if (is_mouse_over) {
@@ -313,140 +243,141 @@ Pen make_pen(const std::pair<int, int> &direction, bool is_corner,
     }
   }
 
-  Pen pen;
-  pen.ch = inshape ? "X" : "o";
+  Screen::Pen pen;
+  pen.ch = inshape ? 'X' : 'o';
   pen.fg = color;
   int selected_tile_texpos = 0;
-  Screen::findGraphicsTile("CURSORS", direction.first, direction.second, &selected_tile_texpos);
+  Screen::findGraphicsTile("CURSORS", direction.first,
+                           direction.second + ycursor_mod,
+                           &selected_tile_texpos);
   pen.tile = selected_tile_texpos;
-
-  // Assuming dfhack.screen.findGraphicsTile is replaced with a custom function
-  // findGraphicsTile pen.tile = findGraphicsTile("CURSORS", direction.first,
-  // direction.second + ycursor_mod);
 
   return pen;
 }
-Pen Design::get_pen(int x, int y,
-                    const std::map<int, std::map<int, bool>> &arr) {
-  auto has_point = [&arr](int _x, int _y) {
-    return arr.count(_x) != 0 && arr.at(_x).count(_y) != 0 && arr.at(_x).at(_y);
-  };
-  bool get_point = has_point(x, y);
 
-  // Basic shapes are bounded by rectangles and therefore can have corner drag
-  // points even if they're not real points in the shape if (marks.size() >=
-  // shape.min_points && shape.basic_shape) {
-  //     Point shape_top_left, shape_bot_right;
-  //     shape.get_point_dims(shape_top_left, shape_bot_right);
-
-  //     if (x == shape_top_left.x && y == shape_top_left.y &&
-  //     shape.drag_corners.nw) {
-  //         drag_point = true;
-  //     } else if (x == shape_bot_right.x && y == shape_top_left.y &&
-  //     shape.drag_corners.ne) {
-  //         drag_point = true;
-  //     } else if (x == shape_top_left.x && y == shape_bot_right.y &&
-  //     shape.drag_corners.sw) {
-  //         drag_point = true;
-  //     } else if (x == shape_bot_right.x && y == shape_bot_right.y &&
-  //     shape.drag_corners.se) {
-  //         drag_point = true;
-  //     }
-  // }
-
-  // for (const auto& mark : marks) {
-  //     if (mark == Point(x, y)) {
-  //         drag_point = true;
-  //     }
-  // }
-
-  // if (mirror_point && *mirror_point == Point(x, y)) {
-  //     drag_point = true;
-  // }
-
-  // // Check for an extra point
-  // bool extra_point = false;
-  // for (const auto& point : extra_points) {
-  //     if (x == point.x && y == point.y) {
-  //         extra_point = true;
-  //         break;
-  //     }
-  // }
-
-  // // Show center point if both marks are set
-  // if ((shape.basic_shape && marks.size() == shape.max_points) ||
-  //     (!shape.basic_shape && !placing_mark.active && !marks.empty())) {
-  //     int center_x, center_y;
-  //     shape.get_center(center_x, center_y);
-
-  //     if (x == center_x && y == center_y) {
-  //         extra_point = true;
-  //     }
-  // }
-
+Screen::Pen get_pen(int x, int y, ShapeMap &arr, const std::string &type = "") {
   bool n = false, w = false, e = false, s = false;
-  if (get_point) {
+  if (has_point(x, y)) {
     if (y == 0 || !has_point(x, y - 1)) n = true;
     if (x == 0 || !has_point(x - 1, y)) w = true;
-    if (!has_point(x + 1, y)) e = true;
-    if (!has_point(x, y + 1)) s = true;
+    if (!has_point(x + 1, y)) e = true;  // TODO check map size
+    if (!has_point(x, y + 1)) s = true;  // TODO check map size
   }
-  // DEBUG(status).print("jcosker %d %d %d %d\n", n, s, e, w);
 
-  // Get the bit field to use as a key for the PENS map
-  uint32_t pen_key = gen_pen_key(n, s, e, w, false, false, get_point, false);
-  // DEBUG(status).print("jcosker %zu\n", pen_key);
+  bool is_drag_point = type == "drag_point";
+  bool is_extra = type == "extra_point";
+  bool is_in_shape = has_point(x, y);
+  auto mouse_pos = Gui::getMousePos();
+  bool mouse_over = mouse_pos.x == x && mouse_pos.y == y;
+
+  uint32_t pen_key =
+      gen_pen_key(n, s, e, w, is_drag_point, mouse_over, is_in_shape, is_extra);
+
+  if (CURSORS_MAP.count({n, w, e, s}) > 0 && has_point(x,y)) {
+    arr[x][y].cursor_coords = CURSORS_MAP.at({n, w, e, s});
+  }
 
   if (PENS.find(pen_key) == PENS.end()) {
     std::pair<int, int> cursor{-1, -1};
-    // int cursor = -1; // Assuming -1 is an invalid cursor value
 
-    // Determine the cursor to use based on the input parameters
-    // The CURSORS enum or equivalent should be defined in your code
-    if (get_point && !n && !w && !e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::INSIDE);
-    else if (get_point && n && w && !e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::NW);
-    else if (get_point && n && !w && !e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::NORTH);
-    else if (get_point && n && e && !w && !s)
-      cursor = CURSORS_MAP.at(CURSORS::NE);
-    else if (get_point && !n && w && !e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::WEST);
-    else if (get_point && !n && !w && e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::EAST);
-    else if (get_point && !n && w && !e && s)
-      cursor = CURSORS_MAP.at(CURSORS::SW);
-    else if (get_point && !n && !w && !e && s)
-      cursor = CURSORS_MAP.at(CURSORS::SOUTH);
-    else if (get_point && !n && !w && e && s)
-      cursor = CURSORS_MAP.at(CURSORS::SE);
-    else if (get_point && n && w && e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::N_NUB);
-    else if (get_point && n && !w && e && s)
-      cursor = CURSORS_MAP.at(CURSORS::E_NUB);
-    else if (get_point && n && w && !e && s)
-      cursor = CURSORS_MAP.at(CURSORS::W_NUB);
-    else if (get_point && !n && w && e && s)
-      cursor = CURSORS_MAP.at(CURSORS::S_NUB);
-    else if (get_point && !n && w && e && !s)
-      cursor = CURSORS_MAP.at(CURSORS::VERT_NS);
-    else if (get_point && n && !w && !e && s)
-      cursor = CURSORS_MAP.at(CURSORS::VERT_EW);
-    else if (get_point && n && w && e && s)
-      cursor = CURSORS_MAP.at(CURSORS::POINT);
-    // else if (drag_point && !get_point) cursor = CURSORS::INSIDE;
-    // else if (extra_point) cursor = CURSORS::INSIDE;
-    // Create the pen if the cursor is set
+    if (type != "") {
+      return make_pen(CURSORS_MAP.at({n, w, e, s}), is_drag_point, mouse_over,
+                      is_in_shape, is_extra);
+    }
 
-    DEBUG(status).print("jcosker %d, %d\n", cursor.first, cursor.second);
-    if (cursor.first != -1) {
-      PENS[pen_key] = make_pen(cursor, false, false, get_point, false);
+    if (CURSORS_MAP.count({n, w, e, s}) > 0) {
+      PENS.emplace(pen_key,
+                   make_pen(CURSORS_MAP.at({n, w, e, s}), is_drag_point,
+                            mouse_over, is_in_shape, is_extra));
+      if (type == "" && has_point(x,y)) {
+        arr[x][y].penKey = pen_key;
+      }
     }
   }
 
-  // Return the pen for the caller
+  // DEBUG(status).print("not cached lmao\n");
   return PENS.at(pen_key);
 }
 
-DFHACK_PLUGIN_LUA_COMMANDS{DFHACK_LUA_COMMAND(design_getPen), DFHACK_LUA_END};
+static int design_load_shape(lua_State *L) {
+  if (lua_istable(L, -1)) {
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+      int x = lua_tointeger(L, -2);
+
+      if (lua_istable(L, -1)) {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+          int y = lua_tointeger(L, -2);
+          bool value = lua_toboolean(L, -1);
+
+          if (value) {
+            arr[x][y] = DrawingPoint();
+          }
+          lua_pop(L, 1);
+        }
+      }
+      lua_pop(L, 1);
+    }
+  }
+
+  return 0;
+}
+
+static int design_clear_shape(lua_State *L) {
+  arr.clear();
+
+  return 0;
+}
+
+static int design_draw_shape(lua_State *L) {
+  if (arr.size() == 0) {
+    design_load_shape(L);
+  }
+
+  for (auto x : arr) {
+    for (auto y : x.second) {
+      Screen::Pen cur_tile = Screen::readTile(x.first, y.first, true);
+      Screen::Pen pen = get_pen(x.first, y.first, arr);
+      cur_tile.tile = pen.tile;
+      Screen::paintTile(cur_tile, x.first - *window_x, y.first - *window_y,
+                        true);
+    }
+  }
+
+  return 0;
+}
+
+static int design_draw_points(lua_State *L) {
+  if (lua_istable(L, -1)) {
+    const char *str;
+    lua_rawgeti(L, -1, 2);
+    str = lua_tostring(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 1);
+    int n = luaL_len(L, -1);
+    for (int i = 1; i <= n; i++) {
+      lua_rawgeti(L, -1, i);
+      int x, y;
+      lua_getfield(L, -1, "y");
+      y = lua_tointeger(L, -1);
+      lua_getfield(L, -2, "x");
+      x = lua_tointeger(L, -1);
+      lua_pop(L, 3);
+
+      Screen::Pen cur_tile = Screen::readTile(x, y, true);
+      Screen::Pen pen = get_pen(x, y, arr, str);
+      cur_tile.tile = pen.tile;
+      Screen::paintTile(cur_tile, x - *window_x, y - *window_y, true);
+    }
+    lua_pop(L, 1);
+  }
+
+  return 0;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS{DFHACK_LUA_COMMAND(design_draw_shape),
+                           DFHACK_LUA_COMMAND(design_draw_points),
+                           DFHACK_LUA_COMMAND(design_clear_shape),
+                           DFHACK_LUA_END};

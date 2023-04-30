@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `hotkeys`: DFHack logo no longer disappears when hovered on the title screen
 
 ## Misc Improvements
 

@@ -22,6 +22,10 @@ jobs:
     name: Deploy to Steam
     runs-on: ubuntu-22.04
     steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ccache
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:

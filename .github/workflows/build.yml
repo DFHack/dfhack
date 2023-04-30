@@ -72,6 +72,12 @@ jobs:
           #    - name: Download DF
           #      run: |
           #        sh ci/download-df.sh
+    - name: Restore steam SDK
+      uses: actions/cache@v3
+      with:
+        path: depends/steam
+        key: steam-sdk-156
+        enableCrossOsArchive: true
     - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
@@ -94,6 +100,8 @@ jobs:
     - name: Build DFHack
       run: |
         ninja -C build-ci install
+        ccache --max-size 100M
+        ccache --cleanup
         ccache --show-stats
     - name: Run cpp unit tests
       id: run_tests_cpp

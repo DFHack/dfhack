@@ -100,7 +100,7 @@ jobs:
     - name: Build DFHack
       run: |
         ninja -C build-ci install
-        ccache --max-size 200M
+        ccache --max-size 50M
         ccache --cleanup
         ccache --show-stats
     - name: Run cpp unit tests
@@ -159,9 +159,9 @@ jobs:
         run: |
           cd build
           bash -x build-win64-from-linux.sh
-          ccache -d build/win64-cross/ccache --max-size 200M
-          ccache -d build/win64-cross/ccache --cleanup
-          ccache -d build/win64-cross/ccache --show-stats
+          ccache -d win64-cross/ccache --max-size 200M
+          ccache -d win64-cross/ccache --cleanup
+          ccache -d win64-cross/ccache --show-stats
       - name: Format artifact name
         id: artifactname
         run: |

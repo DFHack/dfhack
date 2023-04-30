@@ -58,9 +58,9 @@ jobs:
           echo
           cd build
           bash -x build-win64-from-linux.sh
-          ccache -d build/win64-cross/ccache --max-size 200M
-          ccache -d build/win64-cross/ccache --cleanup
-          ccache -d build/win64-cross/ccache --show-stats
+          ccache -d win64-cross/ccache --max-size 200M
+          ccache -d win64-cross/ccache --cleanup
+          ccache -d win64-cross/ccache --show-stats
       - name: Steam deploy
         uses: game-ci/steam-deploy@v2
         with:

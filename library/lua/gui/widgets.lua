@@ -1502,7 +1502,7 @@ function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
     if self.label_below then
-        self.val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+        self.val_gap = self.val_gap + (self.key_back and 1 or 0) + (self.key and 2 or 0)
     end
 
     self:setText{

@@ -80,28 +80,16 @@ among other things. Some redistributions of Dwarf Fortress may place DF in
 another folder, so ensure that the ``hack`` folder ends up next to the ``data``
 folder, and you'll be fine.
 
-.. note::
-
-    On Windows, installing DFHack will overwrite ``SDL.dll``. This is
-    intentional and necessary for DFHack to work, so be sure to choose to
-    overwrite ``SDL.dll`` if prompted. (If you are not prompted, you may be
-    installing DFHack in the wrong place.)
-
 Uninstalling DFHack
 ===================
 
-Manually uninstalling DFHack essentially involves reversing what you did to
-install. On Windows, replace ``SDL.dll`` with ``SDLreal.dll`` first. Then, you
-can remove any files that were part of the DFHack archive. DFHack does not
-currently maintain a list of these files, so if you want to completely remove
-them, you should consult the DFHack archive that you installed for a full list.
-Generally, any files left behind should not negatively affect DF.
+Just renaming or removing the ``dfhooks`` library file is enough to disable
+DFHack. If you would like to remove all DFHack files, consult the DFHack install
+archive to see the list of files and remove the corresponding files in the Dwarf
+Fortress folder. Any DFHack files left behind will not negatively affect DF.
 
 On Steam, uninstalling DFHack will cleanly remove everything that was installed
-with DFHack, **including** the ``SDL.dll`` file, which will render Dwarf
-Fortress inoperative. In your Steam client, open the properties window for
-Dwarf Fortress, select "Local Files", and click on "Verify integrity of game
-files...". This will get Dwarf Fortress working properly again.
+with DFHack, so there is nothing else for you to do.
 
 Note that Steam will leave behind the ``dfhack-config`` folder, which contains
 all your personal DFHack-related settings and data. If you keep this folder,
@@ -117,4 +105,4 @@ ensures that files that don't exist in the latest version are properly removed
 and don't affect your new installation.
 
 Then, extract the DFHack release archive into your Dwarf Fortress folder,
-overwriting any remaining top-level files (including SDL.dll).
+overwriting any remaining top-level files.

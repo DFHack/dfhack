@@ -100,7 +100,7 @@ jobs:
     - name: Build DFHack
       run: |
         ninja -C build-ci install
-        ccache --max-size 100M
+        ccache --max-size 200M
         ccache --cleanup
         ccache --show-stats
     - name: Run cpp unit tests
@@ -155,6 +155,9 @@ jobs:
         run: |
           cd build
           bash -x build-win64-from-linux.sh
+          ccache -d build/win64-cross/ccache --max-size 200M
+          ccache -d build/win64-cross/ccache --cleanup
+          ccache -d build/win64-cross/ccache --show-stats
       - name: Format artifact name
         id: artifactname
         run: |
@@ -182,11 +185,6 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -W --keep-going -j auto --color . docs/html
-    - name: Upload docs
-      uses: actions/upload-artifact@v1
-      with:
-        name: docs
-        path: docs/html
 
   lint:
     runs-on: ubuntu-22.04
@@ -195,10 +193,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: 3
-    - name: Set up Ruby 2.7
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.7
     - name: Install Lua
       run: |
         sudo apt-get update
@@ -223,10 +217,6 @@ jobs:
       if: success() || failure()
       run: |
         python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
-    - name: Check Ruby syntax
-      if: success() || failure()
-      run: |
-        python ci/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
 
   check-pr:
     runs-on: ubuntu-latest

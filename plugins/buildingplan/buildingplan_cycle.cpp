@@ -43,10 +43,27 @@ struct BadFlags {
     }
 };
 
-bool itemPassesScreen(df::item * item) {
+// This is tricky. we want to choose an item that can be brought to the job site, but that's not
+// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
+// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
+static bool isAccessible(color_ostream& out, df::item* item) {
+    df::coord item_pos = Items::getPosition(item);
+    df::map_block* block = Maps::getTileBlock(item_pos);
+    bool is_walkable = false;
+    if (block) {
+        uint16_t walkability_group = index_tile(block->walkable, item_pos);
+        is_walkable = walkability_group != 0;
+        TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+            item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
+    }
+    return is_walkable;
+}
+
+bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
-        && !item->isAssignedToStockpile();
+        && !item->isAssignedToStockpile()
+        && isAccessible(out, item);
 }
 
 df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat) {
@@ -111,7 +128,7 @@ static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b) {
 // now all at 0, so there is no risk of having extra items attached. we don't
 // remove them to keep the "finalize with buildingplan active" path as similar
 // as possible to the "finalize with buildingplan disabled" path.
-void finalizeBuilding(color_ostream &out, df::building *bld) {
+void finalizeBuilding(color_ostream &out, df::building *bld, bool unsuspend_on_finalize) {
     DEBUG(cycle,out).print("finalizing building %d\n", bld->id);
     auto job = bld->jobs[0];
 
@@ -143,8 +160,10 @@ void finalizeBuilding(color_ostream &out, df::building *bld) {
     }
 
     // we're good to go!
-    job->flags.bits.suspend = false;
-    Job::checkBuildingsNow();
+    if (unsuspend_on_finalize) {
+        job->flags.bits.suspend = false;
+        Job::checkBuildingsNow();
+    }
 }
 
 static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
@@ -163,25 +182,10 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
-// This is tricky. we want to choose an item that can be brought to the job site, but that's not
-// necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
-// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
-static bool isAccessibleFrom(color_ostream &out, df::item *item, df::job *job) {
-    df::coord item_pos = Items::getPosition(item);
-    df::map_block *block = Maps::getTileBlock(item_pos);
-    bool is_walkable = false;
-    if (block) {
-        uint16_t walkability_group = index_tile(block->walkable, item_pos);
-        is_walkable = walkability_group != 0;
-        TRACE(cycle,out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
-                item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "" : "not ");
-    }
-    return is_walkable;
-}
-
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
-        unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
+        unordered_map<int32_t, PlannedBuilding> &planned_buildings,
+        bool unsuspend_on_finalize) {
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
     auto item_vector = df::global::world->items.other[other_id];
     DEBUG(cycle,out).print("matching %zu item(s) in vector %s against %zu filter bucket(s)\n",
@@ -192,7 +196,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             item_it != item_vector.rend();
             ++item_it) {
         auto item = *item_it;
-        if (!itemPassesScreen(item))
+        if (!itemPassesScreen(out, item))
             continue;
         for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
             TRACE(cycle,out).print("scanning bucket: %s/%s\n",
@@ -215,8 +219,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             auto filter_idx = task.second;
             const int rev_filter_idx = num_filters - (filter_idx+1);
             auto &pb = planned_buildings.at(id);
-            if (isAccessibleFrom(out, item, job)
-                    && matchesFilters(item, jitems[filter_idx], pb.heat_safety,
+            if (matchesFilters(item, jitems[filter_idx], pb.heat_safety,
                         pb.item_filters[rev_filter_idx], pb.specials)
                     && Job::attachJobItem(job, item,
                         df::job_item_ref::Hauled, filter_idx))
@@ -239,7 +242,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 --jitems[filter_idx]->quantity;
                 task_queue.pop_front();
                 if (isJobReady(out, jitems)) {
-                    finalizeBuilding(out, bld);
+                    finalizeBuilding(out, bld, unsuspend_on_finalize);
                     planned_buildings.at(id).remove(out);
                 }
                 if (task_queue.empty()) {
@@ -274,7 +277,7 @@ struct VectorsToScanLast {
 };
 
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
-        unordered_map<int32_t, PlannedBuilding> &planned_buildings) {
+        unordered_map<int32_t, PlannedBuilding> &planned_buildings, bool unsuspend_on_finalize) {
     static const VectorsToScanLast vectors_to_scan_last;
 
     DEBUG(cycle,out).print(
@@ -292,7 +295,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         }
 
         auto & buckets = it->second;
-        doVector(out, vector_id, buckets, planned_buildings);
+        doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
             DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
@@ -306,7 +309,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         if (tasks.count(vector_id) == 0)
             continue;
         auto & buckets = tasks[vector_id];
-        doVector(out, vector_id, buckets, planned_buildings);
+        doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
             DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),

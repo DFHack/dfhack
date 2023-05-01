@@ -235,9 +235,56 @@ root DF folder):
 #. :file:`dfhack-config/scripts`
 #. :file:`save/{world}/scripts` (only if a save is loaded)
 #. :file:`hack/scripts`
+#. :file:`data/installed_mods/...` (see below)
 
 For example, if ``teleport`` is run, these folders are searched in order for
 ``teleport.lua``, and the first matching file is run.
+
+Scripts in installed mods
+.........................
+
+Scripts in mods are automatically added to the script path. The following
+directories are searched for mods::
+
+    ../../workshop/content/975370/ (the DF Steam workshop directory)
+    mods/
+    data/installed_mods/
+
+Each mod can have two directories that contain scripts:
+
+- ``scripts_modactive/`` is added to the script path if and only if the mod is
+    active in the loaded world.
+- ``scripts_modinstalled/`` is added to the script path as long as the mod is
+    installed in one of the searched mod directories.
+
+Multiple versions of a mod may be installed at the same time. If a mod is
+active in a loaded world, then the scripts for the version of the mod that is
+active will be added to the script path. Otherwise, the latest version of each
+mod is added to the script path.
+
+Scripts for active mods take precedence according to their load order when you
+generated the current world.
+
+Scripts for non-active mods are ordered by their containing mod's ID.
+
+For example, the search paths for mods might look like this::
+
+    activemod_last_in_load_order/scripts_modactive
+    activemod_last_in_load_order/scripts_modinstalled
+    activemod_second_to_last_in_load_order/scripts_modactive
+    activemod_second_to_last_in_load_order/scripts_modinstalled
+    ...
+    inactivemod1/scripts_modinstalled
+    inactivemod2/scripts_modinstalled
+    ...
+
+Not all mods will have script directories, of course, and those mods will not be
+added to the script search path. Mods are re-scanned whenever a world is loaded
+or unloaded. For more information on scripts and mods, check out the
+`modding-guide`.
+
+Custom script paths
+...................
 
 Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
 Each line should start with one of these characters:

@@ -6,11 +6,6 @@ if(UNIX)
     endif()
 endif()
 
-include_directories("${dfhack_SOURCE_DIR}/library/include")
-include_directories("${dfhack_SOURCE_DIR}/library/proto")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/proto")
-include_directories("${dfhack_SOURCE_DIR}/library/depends/xgetopt")
-
 macro(car var)
     set(${var} ${ARGV1})
 endmacro()
@@ -122,6 +117,11 @@ macro(dfhack_plugin)
 
     add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
     ide_folder(${PLUGIN_NAME} "Plugins")
+
+    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/include")
+    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/proto")
+    target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
+    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/depends/xgetopt")
 
     if(NUM_PROTO)
         add_dependencies(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})

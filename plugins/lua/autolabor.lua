@@ -10,7 +10,7 @@ AutolaborOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Info/LABOR',
     frame={w=29, h=5},
-    frame_style=gui.MEDIUM_FRAME,
+    frame_style=gui.THIN_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -18,9 +18,20 @@ function AutolaborOverlay:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text_pen=COLOR_RED,
+            text_pen=COLOR_LIGHTRED,
+            text='DFHack autolabor is active!',
+            visible=isEnabled,
+        },
+        widgets.Label{
+            frame={t=0, l=0},
+            text_pen=COLOR_LIGHTRED,
+            text='Dwarf Therapist is active!',
+            visible=function() return not isEnabled() end,
+        },
+        widgets.Label{
+            frame={t=1, l=0},
+            text_pen=COLOR_WHITE,
             text={
-                'DFHack autolabor is active!', NEWLINE,
                 'Any changes made on this', NEWLINE,
                 'screen will have no effect.'
             },
@@ -29,7 +40,7 @@ function AutolaborOverlay:init()
 end
 
 function AutolaborOverlay:render(dc)
-    if not isEnabled() then return false end
+    if df.global.game_extra.external_flag ~= 1 then return end
     AutolaborOverlay.super.render(self, dc)
 end
 

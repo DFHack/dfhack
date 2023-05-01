@@ -51,6 +51,11 @@ function parse_commandline(...)
     return true
 end
 
+function is_suspendmanager_enabled()
+    local ok, sm = pcall(reqscript, 'suspendmanager')
+    return ok and sm.isEnabled()
+end
+
 function get_num_filters(btype, subtype, custom)
     local filters = dfhack.buildings.getFiltersByType({}, btype, subtype, custom)
     return filters and #filters or 0
@@ -98,6 +103,16 @@ function get_desc(filter)
         desc = 'Mechanism'
     elseif desc == 'Wood' then
         desc = 'Log'
+    elseif desc == 'Any weapon' then
+        desc = 'Weapon'
+    elseif desc == 'Any spike' then
+        desc = 'Spike'
+    elseif desc == 'Ballistapart' then
+        desc = 'Ballista part'
+    elseif desc == 'Catapultpart' then
+        desc = 'Catapult part'
+    elseif desc == 'Smallgem' then
+        desc = 'Small, cut gem'
     end
 
     return desc

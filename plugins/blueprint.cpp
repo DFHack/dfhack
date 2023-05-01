@@ -229,6 +229,9 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     case tiletype_shape::BOULDER:
     case tiletype_shape::PEBBLES:
     case tiletype_shape::BROOK_TOP:
+    case tiletype_shape::SAPLING:
+    case tiletype_shape::SHRUB:
+    case tiletype_shape::TWIG:
         return "d";
     case tiletype_shape::STAIR_UP:
         return "u";

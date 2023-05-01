@@ -124,7 +124,8 @@ static const MatType
     M_ADAMANTINE = MatType("adamantine", df::job_material_category::mask_strand, df::armor_general_flags::SOFT);
 
 static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
-static std::list<MatType> material_order = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // M_ADAMANTINE is not included by default
+static const std::list<MatType> default_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // adamantine not included by default
+static std::list<MatType> material_order = default_materials;
 
 static struct BadFlags {
     uint32_t whole;
@@ -143,42 +144,64 @@ static struct BadFlags {
 } badFlags;
 
 class Tailor {
-private:
-    std::map<std::pair<df::item_type, int>, int> available; // key is item type & size
-    std::map<std::pair<df::item_type, int>, int> needed;    // same
-    std::map<std::pair<df::item_type, int>, int> queued;    // same
 
+private:
     std::map<int, int> sizes; // this maps body size to races
-    std::map<std::tuple<df::job_type, int, int>, int> orders;  // key is item type, item subtype, size
+
+    std::map<std::pair<df::item_type, int>, int> available;
+
+    std::map<std::pair<df::item_type, int>, int> needed;
+
+    std::map<std::tuple<df::job_type, int, int>, int> orders;
 
     std::map<MatType, int> supply;
     std::map<MatType, int> reserves;
 
     int default_reserve = 10;
 
+    bool inventory_sanity_checking = false;
+
 public:
+    void set_debug_flag(bool f)
+    {
+        inventory_sanity_checking = f;
+    }
+
     void reset()
     {
         available.clear();
         needed.clear();
-        queued.clear();
         sizes.clear();
-        orders.clear();
         supply.clear();
+        orders.clear();
     }
 
     void scan_clothing()
     {
-        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "clothing"
+        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "nontattered clothing"
         {
             if (i->flags.whole & badFlags.whole)
+            {
                 continue;
+            }
             if (i->getWear() >= 1)
                 continue;
             df::item_type t = i->getType();
             int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 
             available[std::make_pair(t, size)] += 1;
+        }
+
+        if (DBG_NAME(cycle).isEnabled(DebugCategory::LDEBUG))
+        {
+            for (auto& i : available)
+            {
+                df::item_type t;
+                int size;
+                std::tie(t, size) = i.first;
+                DEBUG(cycle).print("tailor: %d %s of size %d found\n",
+                    i.second, ENUM_KEY_STR(item_type, t).c_str(), size);
+            }
         }
     }
 
@@ -191,7 +214,7 @@ public:
             if (i->flags.whole & badFlags.whole)
                 continue;
 
-            if (require_dyed && !i->hasImprovements())
+            if (require_dyed && (!i->isDyed()))
             {
                 // only count dyed
                 std::string d;
@@ -239,14 +262,13 @@ public:
             if (!Units::isOwnCiv(u) ||
                 !Units::isOwnGroup(u) ||
                 !Units::isActive(u) ||
-                Units::isBaby(u))
-                continue; // skip units we don't control
+                Units::isBaby(u) ||
+                !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
+                continue; // skip units we don't control or that can't wear clothes
 
             std::set <df::item_type> wearing;
-            wearing.clear();
-
+            std::set <df::item_type> ordered;
             std::deque<df::item*> worn;
-            worn.clear();
 
             for (auto inv : u->inventory)
             {
@@ -261,33 +283,35 @@ public:
             int usize = world->raws.creatures.all[u->race]->adultsize;
             sizes[usize] = u->race;
 
-            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
-            {
-                if (wearing.count(ty) == 0)
-                {
-                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
-                        ENUM_KEY_STR(item_type, ty).c_str(),
-                        usize,
-                        Translation::TranslateName(&u->name, false).c_str());
-                    needed[std::make_pair(ty, usize)] += 1;
-                }
-            }
-
             for (auto w : worn)
             {
                 auto ty = w->getType();
-                auto oo = itemTypeMap.find(ty);
-                if (oo == itemTypeMap.end())
-                {
-                    continue;
-                }
-                const df::job_type o = oo->second;
 
                 int isize = world->raws.creatures.all[w->getMakerRace()]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (available[std::make_pair(ty, usize)] > 0)
+                if (wearing.count(ty) == 0)
+                {
+                    if (available[std::make_pair(ty, usize)] > 0)
+                    {
+                        available[std::make_pair(ty, usize)] -= 1;
+                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
+                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
+                            Translation::TranslateName(&u->name, false).c_str());
+                        wearing.insert(ty);
+                    }
+                    else if (ordered.count(ty) == 0)
+                    {
+                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
+                                            description.c_str(), isize,
+                                            Translation::TranslateName(&u->name, false).c_str(), usize);
+                        needed[std::make_pair(ty, usize)] += 1;
+                        ordered.insert(ty);
+                    }
+                }
+
+                if (wearing.count(ty) > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -301,23 +325,21 @@ public:
                         );
                     }
 
-                    if (wearing.count(ty) == 0)
-                    {
-                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
-                            Translation::TranslateName(&u->name, false).c_str());
-                        available[std::make_pair(ty, usize)] -= 1;
-                    }
-
                     if (w->getWear() > 1)
                         w->flags.bits.dump = true;
                 }
-                else
+
+            }
+
+            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
+            {
+                if (wearing.count(ty) == 0 && ordered.count(ty) == 0)
                 {
-                    DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
-                                        description.c_str(), isize,
-                                        Translation::TranslateName(&u->name, false).c_str(), usize);
-                    orders[std::make_tuple(o, w->getSubtype(), usize)] += 1;
+                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
+                        ENUM_KEY_STR(item_type, ty).c_str(),
+                        usize,
+                        Translation::TranslateName(&u->name, false).c_str());
+                    needed[std::make_pair(ty, usize)] += 1;
                 }
             }
         }
@@ -332,6 +354,9 @@ public:
             df::item_type ty = a.first.first;
             int size = a.first.second;
             int count = a.second;
+
+            if (count <= 0)
+                continue;
 
             int sub = 0;
             std::vector<int16_t> v;
@@ -380,14 +405,31 @@ public:
             if (f == jobTypeMap.end())
                 continue;
 
-            auto sub = o->item_subtype;
             int race = o->hist_figure_id;
+
+            for (auto& m : all_materials)
+            {
+                if (o->material_category.whole == m.job_material.whole)
+                {
+                    supply[m] -= o->amount_left;
+                    TRACE(cycle).print("tailor: supply of %s reduced by %d due to being required for an existing order\n",
+                        m.name.c_str(), o->amount_left);
+                }
+            }
+
             if (race == -1)
                 continue; // -1 means that the race of the worker will determine the size made; we must ignore these jobs
 
             int size = world->raws.creatures.all[race]->adultsize;
 
-            orders[std::make_tuple(o->job_type, sub, size)] -= o->amount_left;
+
+            auto tt = jobTypeMap.find(o->job_type);
+            if (tt == jobTypeMap.end())
+            {
+                continue;
+            }
+
+            needed[std::make_pair(tt->second, size)] -= o->amount_left;
             TRACE(cycle).print("tailor: existing order for %d %s of size %d detected\n",
                 o->amount_left,
                 ENUM_KEY_STR(job_type, o->job_type).c_str(),
@@ -524,6 +566,18 @@ public:
         }
         return ordered;
     }
+
+    int do_cycle()
+    {
+        reset();
+        scan_clothing();
+        scan_materials();
+        scan_replacements();
+        scan_existing_orders();
+        create_orders();
+        return place_orders();
+    }
+
 };
 
 static std::unique_ptr<Tailor> tailor_instance;
@@ -589,7 +643,7 @@ static void set_material_order() {
             material_order.push_back(M_ADAMANTINE);
     }
     if (!material_order.size())
-        std::copy(all_materials.begin(), all_materials.end(), std::back_inserter(material_order));
+        std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
@@ -683,13 +737,7 @@ static int do_cycle(color_ostream &out) {
 
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
-    tailor_instance->reset();
-    tailor_instance->scan_clothing();
-    tailor_instance->scan_materials();
-    tailor_instance->scan_replacements();
-    tailor_instance->create_orders();
-    tailor_instance->scan_existing_orders();
-    return tailor_instance->place_orders();
+    return tailor_instance->do_cycle();
 }
 
 /////////////////////////////////////////////////////
@@ -730,9 +778,18 @@ static int tailor_getMaterialPreferences(lua_State *L) {
     return 1;
 }
 
+static void tailor_setDebugFlag(color_ostream& out, bool enable)
+{
+    DEBUG(config, out).print("entering tailor_setDebugFlag\n");
+
+    tailor_instance->set_debug_flag(enable);
+
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_doCycle),
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
+    DFHACK_LUA_FUNCTION(tailor_setDebugFlag),
     DFHACK_LUA_END
 };
 

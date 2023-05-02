@@ -2302,12 +2302,13 @@ int Core::Shutdown ( void )
 #define KEY_F0      0410        /* Function keys.  Space for 64 */
 #define KEY_F(n)    (KEY_F0+(n))    /* Value of function key n */
 
+// returns true if the event has been handled
 bool Core::ncurses_wgetch(int in, int & out)
 {
     if(!started)
     {
         out = in;
-        return true;
+        return false;
     }
     if(in >= KEY_F(1) && in <= KEY_F(8))
     {
@@ -2322,18 +2323,18 @@ bool Core::ncurses_wgetch(int in, int & out)
                 df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
                 setHotkeyCmd(df::global::plotinfo->main.hotkeys[idx].name);
-                return false;
+                return true;
             }
             else
             {
                 out = in;
-                return true;
+                return false;
             }
         }
 */
     }
     out = in;
-    return true;
+    return false;
 }
 
 bool Core::DFH_ncurses_key(int key)
@@ -2341,7 +2342,7 @@ bool Core::DFH_ncurses_key(int key)
     if (getenv("DFHACK_HEADLESS"))
         return true;
     int dummy;
-    return !ncurses_wgetch(key, dummy);
+    return ncurses_wgetch(key, dummy);
 }
 
 int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
@@ -2392,21 +2393,19 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     return unicode;
 }
 
-
-//MEMO: return false if event is consumed
-int Core::DFH_SDL_Event(SDL::Event* ev)
+// returns true if the event is handled
+bool Core::DFH_SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
-    if(!started) return true;
-    if(!ev)
-        return true;
+    if(!started || !ev)
+        return false;
 
     if(ev->type == SDL::ET_ACTIVEEVENT && ev->active.gain)
     {
         // clear modstate when gaining focus in case alt-tab was used when
         // losing focus and modstate is now incorrectly set
         modstate = 0;
-        return true;
+        return false;
     }
 
     if(ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
@@ -2441,8 +2440,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
             hotkey_states[ke->ksym.sym] = false;
         }
     }
-    return true;
-    // do stuff with the events...
+    return false;
 }
 
 bool Core::SelectHotkey(int sym, int modifiers)

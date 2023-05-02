@@ -447,7 +447,7 @@ function update_hotspot_widgets()
     end
 end
 
-local function matches_focus_strings(db_entry, vs_name)
+local function matches_focus_strings(db_entry, vs_name, vs)
     if not db_entry.focus_strings then return true end
     local matched = true
     local simple_vs_name = simplify_viewscreen_name(vs_name)
@@ -465,9 +465,10 @@ end
 local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
+    local is_all = vs_name == 'all'
     now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
-        if matches_focus_strings(db_entry, vs_name) and
+        if (is_all or matches_focus_strings(db_entry, vs_name, vs)) and
                 do_update(name, db_entry, now_ms, vs) then
             return
         end
@@ -483,12 +484,12 @@ function update_viewscreen_widgets(vs_name, vs)
     end
 end
 
-local function _feed_viewscreen_widgets(vs_name, keys)
+local function _feed_viewscreen_widgets(vs_name, vs, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if matches_focus_strings(db_entry, vs_name) and
+        if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
@@ -496,9 +497,9 @@ local function _feed_viewscreen_widgets(vs_name, keys)
     return false
 end
 
-function feed_viewscreen_widgets(vs_name, keys)
-    if not _feed_viewscreen_widgets(vs_name, keys) and
-            not _feed_viewscreen_widgets('all', keys) then
+function feed_viewscreen_widgets(vs_name, vs, keys)
+    if not _feed_viewscreen_widgets(vs_name, vs, keys) and
+            not _feed_viewscreen_widgets('all', nil, keys) then
         return false
     end
     gui.markMouseClicksHandled(keys)
@@ -508,13 +509,13 @@ function feed_viewscreen_widgets(vs_name, keys)
     return true
 end
 
-local function _render_viewscreen_widgets(vs_name, dc)
+local function _render_viewscreen_widgets(vs_name, vs, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if matches_focus_strings(db_entry, vs_name) then
+        if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
     end
@@ -523,9 +524,9 @@ end
 
 local force_refresh
 
-function render_viewscreen_widgets(vs_name)
-    local dc = _render_viewscreen_widgets(vs_name, nil)
-    _render_viewscreen_widgets('all', dc)
+function render_viewscreen_widgets(vs_name, vs)
+    local dc = _render_viewscreen_widgets(vs_name, vs, nil)
+    _render_viewscreen_widgets('all', nil, dc)
     if force_refresh then
         force_refresh = nil
         df.global.gps.force_full_display_count = 1

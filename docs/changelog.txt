@@ -70,7 +70,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - ``widgets.RangeSlider``: new mouse-controlled two-headed slider widget
 - ``gui.ZScreenModal``: ZScreen subclass for modal dialogs
-- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "val_gap" attributes for improved stylistic control.
+- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "option_gap" attributes for improved stylistic control.
 
 ## Removed
 - `title-version`: replaced by an `overlay` widget

@@ -4920,7 +4920,7 @@ It has the following attributes:
     aligning a column of ``CycleHotkeyLabel`` labels).
 :label_below: If ``true``, then the option value will appear below the label
     instead of to the right of it. Defaults to ``false``.
-:val_gap: The size of the gap between the label text and the option value.
+:option_gap: The size of the gap between the label text and the option value.
     Default is ``1``. If set to ``0``, there'll be no gap between the strings.
     If ``label_below`` == ``true``, negative values will shift the value leftwards.
 :options: A list of strings or tables of

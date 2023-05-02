@@ -1491,7 +1491,7 @@ CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
     key_back=DEFAULT_NIL,
     key_sep=': ',
-    val_gap=1,
+    option_gap=1,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     label_below=false,
@@ -1504,7 +1504,7 @@ function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
     if self.label_below then
-        self.val_gap = self.val_gap + (self.key_back and 1 or 0) + (self.key and 2 or 0)
+        self.option_gap = self.option_gap + (self.key_back and 1 or 0) + (self.key and 2 or 0)
     end
 
     self:setText{
@@ -1512,7 +1512,7 @@ function CycleHotkeyLabel:init()
         {key=self.key, key_sep=self.key_sep, text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         self.label_below and NEWLINE or '',
-        {gap=self.val_gap, text=self:callback('getOptionLabel'),
+        {gap=self.option_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end

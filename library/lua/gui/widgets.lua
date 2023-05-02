@@ -836,7 +836,9 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
 end
 
 local function scrollbar_do_drag(scrollbar)
-    local _,y = scrollbar.frame_body:localXY(dfhack.screen.getMousePos())
+    local x,y = dfhack.screen.getMousePos()
+    if not y then return end
+    x,y = scrollbar.frame_body:localXY(x, y)
     local cur_pos = y - scrollbar.is_dragging
     local max_top = scrollbar.num_elems - scrollbar.elems_per_page + 1
     local max_pos = scrollbar_get_max_pos_and_height(scrollbar)

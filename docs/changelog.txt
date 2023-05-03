@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- Terminal console no longer appears in front of the game window on startup
 
 ## Documentation
 

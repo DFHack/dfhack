@@ -1304,10 +1304,6 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         return;
     }
 
-    // if we're running on Steam Deck, hide the terminal by default
-    if (DFSteam::DFIsSteamRunningOnSteamDeck())
-        core->getConsole().hide();
-
     // load baseline defaults
     core->loadScriptFile(out, CONFIG_PATH + "init/default.dfhack.init", false);
 
@@ -1315,13 +1311,13 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     std::vector<std::string> prefixes(1, "dfhack");
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 
-    // if the option is set, hide the terminal
+    // show the terminal if requested
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
-            if (lua_toboolean(L, -1))
-                core->getConsole().hide();
+            if (!lua_toboolean(L, -1))
+                core->getConsole().show();
         }, false);
 }
 

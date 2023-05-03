@@ -74,7 +74,7 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # see instructions for adding "external" plugins at the end of this file.
 
 #dfhack_plugin(3dveins 3dveins.cpp)
-#dfhack_plugin(add-spatter add-spatter.cpp)
+dfhack_plugin(add-spatter add-spatter.cpp)
 dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
 dfhack_plugin(autochop autochop.cpp LINK_LIBRARIES lua)
 dfhack_plugin(autoclothing autoclothing.cpp LINK_LIBRARIES lua)

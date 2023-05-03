@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `add-spatter`: allow mods to add poisons and magical effects to weapons
 - `work-now`: reduce the time that dwarves are left without a task after completing a job
 
 ## Fixes
@@ -49,8 +50,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Removed
 
 # 50.08-r1
-
-## New Plugins
 
 ## Fixes
 - `autoclothing`: eliminate game lag when there are many inventory items in the fort

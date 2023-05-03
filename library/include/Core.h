@@ -108,19 +108,6 @@ namespace DFHack
     // Better than tracking some weird variables all over the place.
     class DFHACK_EXPORT Core
     {
-#ifdef _DARWIN
-        friend int  ::DFH_SDL_NumJoysticks(void);
-        friend void ::DFH_SDL_Quit(void);
-        friend int  ::DFH_SDL_PollEvent(SDL::Event *);
-        friend int  ::DFH_SDL_Init(uint32_t flags);
-        friend int  ::DFH_wgetch(WINDOW * w);
-#else
-        friend int  ::SDL_NumJoysticks(void);
-        friend void ::SDL_Quit(void);
-        friend int  ::SDL_PollEvent(SDL::Event *);
-        friend int  ::SDL_Init(uint32_t flags);
-        friend int  ::wgetch(WINDOW * w);
-#endif
         friend void ::dfhooks_init();
         friend void ::dfhooks_shutdown();
         friend void ::dfhooks_update();
@@ -207,7 +194,7 @@ namespace DFHack
         bool Init();
         int Update (void);
         int Shutdown (void);
-        int DFH_SDL_Event(SDL::Event* event);
+        bool DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 

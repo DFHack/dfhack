@@ -74,7 +74,7 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # see instructions for adding "external" plugins at the end of this file.
 
 #dfhack_plugin(3dveins 3dveins.cpp)
-#dfhack_plugin(add-spatter add-spatter.cpp)
+dfhack_plugin(add-spatter add-spatter.cpp)
 dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
 dfhack_plugin(autochop autochop.cpp LINK_LIBRARIES lua)
 dfhack_plugin(autoclothing autoclothing.cpp LINK_LIBRARIES lua)
@@ -167,7 +167,7 @@ dfhack_plugin(tiletypes tiletypes.cpp Brushes.h LINK_LIBRARIES lua)
 #dfhack_plugin(tubefill tubefill.cpp)
 #add_subdirectory(tweak)
 #dfhack_plugin(workflow workflow.cpp LINK_LIBRARIES lua)
-#dfhack_plugin(workNow workNow.cpp)
+dfhack_plugin(work-now work-now.cpp)
 dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
 #dfhack_plugin(zone zone.cpp)
 

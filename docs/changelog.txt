@@ -34,6 +34,23 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `add-spatter`: allow mods to add poisons and magical effects to weapons
+- `work-now`: reduce the time that dwarves are left without a task after completing a job
+
+## Fixes
+
+## Misc Improvements
+- Terminal console no longer appears in front of the game window on startup
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.08-r1
 
 ## Fixes
 - `autoclothing`: eliminate game lag when there are many inventory items in the fort
@@ -52,14 +69,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `overlay`: add the DFHack version string to the DF title screen
 - `gui/design`: Improved performance for drawing shapes
 
-## Documentation
-
-## API
-
 ## Lua
 - ``widgets.RangeSlider``: new mouse-controlled two-headed slider widget
 - ``gui.ZScreenModal``: ZScreen subclass for modal dialogs
-- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "val_gap" attributes for improved stylistic control.
+- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "option_gap" attributes for improved stylistic control.
 
 ## Removed
 - `title-version`: replaced by an `overlay` widget

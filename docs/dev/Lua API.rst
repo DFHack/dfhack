@@ -4918,11 +4918,11 @@ It has the following attributes:
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
-:label_below: If ``true``, then the option value will apear below the label
+:label_below: If ``true``, then the option value will appear below the label
     instead of to the right of it. Defaults to ``false``.
-:val_gap: The size of the gap between the label text and the option value.
+:option_gap: The size of the gap between the label text and the option value.
     Default is ``1``. If set to ``0``, there'll be no gap between the strings.
-    Note that ``val_gap`` is ignored if ``label_below`` is set to ``true``.
+    If ``label_below`` == ``true``, negative values will shift the value leftwards.
 :options: A list of strings or tables of
     ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
     string for the label and value and use the default pen. The optional ``pen``

@@ -2,7 +2,7 @@ add-spatter
 ===========
 
 .. dfhack-tool::
-    :summary: Make tagged reactions produce contaminants.
+    :summary: Add poisons and magical effects to weapons.
     :tags: unavailable adventure fort gameplay items
     :no-command:
 

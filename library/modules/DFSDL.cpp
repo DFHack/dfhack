@@ -14,7 +14,7 @@ using namespace DFHack;
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
 static const std::vector<std::string> SDL_LIBS {
-    "SDLreal.dll", // TODO: change to SDL.dll once we move to dfhooks
+    "SDL.dll",
     "SDL.framework/Versions/A/SDL",
     "SDL.framework/SDL",
     "libSDL-1.2.so.0"

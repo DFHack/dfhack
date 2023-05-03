@@ -72,6 +72,12 @@ jobs:
           #    - name: Download DF
           #      run: |
           #        sh ci/download-df.sh
+    - name: Restore steam SDK
+      uses: actions/cache@v3
+      with:
+        path: depends/steam
+        key: steam-sdk-156
+        enableCrossOsArchive: true
     - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
@@ -94,6 +100,8 @@ jobs:
     - name: Build DFHack
       run: |
         ninja -C build-ci install
+        ccache --max-size 50M
+        ccache --cleanup
         ccache --show-stats
     - name: Run cpp unit tests
       id: run_tests_cpp
@@ -128,6 +136,10 @@ jobs:
     name: Build MSVC win64
     runs-on: ubuntu-22.04
     steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ccache
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:
@@ -147,6 +159,9 @@ jobs:
         run: |
           cd build
           bash -x build-win64-from-linux.sh
+          ccache -d win64-cross/ccache --max-size 200M
+          ccache -d win64-cross/ccache --cleanup
+          ccache -d win64-cross/ccache --show-stats
       - name: Format artifact name
         id: artifactname
         run: |
@@ -174,11 +189,6 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -W --keep-going -j auto --color . docs/html
-    - name: Upload docs
-      uses: actions/upload-artifact@v1
-      with:
-        name: docs
-        path: docs/html
 
   lint:
     runs-on: ubuntu-22.04
@@ -187,10 +197,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: 3
-    - name: Set up Ruby 2.7
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.7
     - name: Install Lua
       run: |
         sudo apt-get update
@@ -215,10 +221,6 @@ jobs:
       if: success() || failure()
       run: |
         python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
-    - name: Check Ruby syntax
-      if: success() || failure()
-      run: |
-        python ci/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
 
   check-pr:
     runs-on: ubuntu-latest

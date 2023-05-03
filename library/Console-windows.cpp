@@ -508,7 +508,7 @@ bool Console::init(bool)
     inited = true;
     // DOESN'T WORK - locks up DF!
     // ForceForegroundWindow(d->MainWindow);
-    SetForegroundWindow(d->MainWindow);
+    hide();
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
@@ -609,7 +609,6 @@ void Console::msleep (unsigned int msec)
 bool Console::hide()
 {
     ShowWindow( GetConsoleWindow(), SW_HIDE );
-    SetForegroundWindow(d->MainWindow);
     return true;
 }
 

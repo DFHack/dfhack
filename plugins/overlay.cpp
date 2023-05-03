@@ -72,9 +72,10 @@ struct viewscreen_overlay : T {
         bool input_is_handled = false;
         // don't send input to the overlays if there is a modal dialog up
         if (!world->status.popups.size())
-            call_overlay_lua(NULL, "feed_viewscreen_widgets", 2, 1,
+            call_overlay_lua(NULL, "feed_viewscreen_widgets", 3, 1,
                     [&](lua_State *L) {
                         Lua::Push(L, T::_identity.getName());
+                        Lua::Push(L, this);
                         Lua::PushInterfaceKeys(L, *input);
                     }, [&](lua_State *L) {
                         input_is_handled = lua_toboolean(L, -1);

@@ -35,10 +35,26 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Plugins
 - `add-spatter`: allow mods to add poisons and magical effects to weapons
+- `work-now`: reduce the time that dwarves are left without a task after completing a job
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.08-r1
 
 ## Fixes
 - `autoclothing`: eliminate game lag when there are many inventory items in the fort
 - `buildingplan`: fixed size limit calculations for rollers
+- `buildingplan`: fixed items not being checked for accessibility in the filter and item selection dialogs
 - `dig-now`: properly detect and complete smoothing designations that have been converted into active jobs
 
 ## Misc Improvements
@@ -51,14 +67,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Dwarf Therapist``: add a warning to the Labors screen when Dwarf Therapist is active so players know that changes they make to that screen will have no effect. If you're starting a new embark and nobody seems to be doing anything, check your Labors tab for this warning to see if Dwarf Therapist thinks it is in control (even if it's not running).
 - `overlay`: add the DFHack version string to the DF title screen
 
-## Documentation
-
-## API
-
 ## Lua
 - ``widgets.RangeSlider``: new mouse-controlled two-headed slider widget
 - ``gui.ZScreenModal``: ZScreen subclass for modal dialogs
-- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "val_gap" attributes for improved stylistic control.
+- ``widgets.CycleHotkeyLabel``: exposed "key_sep" and "option_gap" attributes for improved stylistic control.
 
 ## Removed
 - `title-version`: replaced by an `overlay` widget

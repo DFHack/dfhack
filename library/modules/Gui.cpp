@@ -84,6 +84,7 @@ using namespace DFHack;
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_titlest.h"
 #include "df/world.h"
 
@@ -154,6 +155,19 @@ DEFINE_GET_FOCUS_STRING_HANDLER(title)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus + "/Default");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
+{
+    if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (screen->doing_simple_params)
+        focusStrings.push_back(baseFocus + "/Basic");
+    else if (screen->doing_params)
+        focusStrings.push_back(baseFocus + "/Advanced");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)

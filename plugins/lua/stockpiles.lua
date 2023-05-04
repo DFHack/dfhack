@@ -207,6 +207,11 @@ function parse_commandline(args)
     return true
 end
 
+function get_stockpile_features(stockpile_number)
+    local config = logistics.logistics_getStockpileConfigs(stockpile_number)[1]
+    return config.melt, config.trade, config.dump
+end
+
 --------------------
 -- dialogs
 --------------------

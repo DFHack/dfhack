@@ -608,7 +608,7 @@ static int logistics_getStockpileConfigs(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(status, *out).print("entering logistics_getStockpileConfig\n");
+    DEBUG(status, *out).print("entering logistics_getStockpileConfigs\n");
 
     unordered_map<df::building_stockpilest*, PersistentDataItem> cache;
     validate_stockpile_configs(*out, cache);

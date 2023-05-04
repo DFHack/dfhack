@@ -38,10 +38,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     return CR_OK;
 }
 
-static bool call_stockpiles_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+bool call_stockpiles_lua(color_ostream* out, const char* fn_name,
+    int nargs, int nres, Lua::LuaLambda&& args_lambda, Lua::LuaLambda&& res_lambda) {
+
     DEBUG(log).print("calling stockpiles lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
@@ -95,7 +94,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.serialize_to_file(fname, includedElements)) {
+        if (!cereal.serialize_to_file(out, fname, includedElements)) {
             out.printerr("could not save to '%s'\n", fname.c_str());
             return false;
         }

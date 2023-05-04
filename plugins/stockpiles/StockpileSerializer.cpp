@@ -185,7 +185,7 @@ bool StockpileSettingsSerializer::serialize_to_file(const string& file, uint32_t
     return serialize_to_ostream(&output, includedElements);
 }
 
-bool StockpileSettingsSerializer::parse_from_istream(std::istream* input, DeserializeMode mode, const vector<string>& filters) {
+bool StockpileSettingsSerializer::parse_from_istream(color_ostream &out, std::istream* input, DeserializeMode mode, const vector<string>& filters) {
     if (input->fail())
         return false;
     mBuffer.Clear();
@@ -193,18 +193,18 @@ bool StockpileSettingsSerializer::parse_from_istream(std::istream* input, Deseri
     const bool res = mBuffer.ParseFromZeroCopyStream(&zero_copy_input)
             && input->eof();
     if (res)
-        read(mode, filters);
+        read(out, mode, filters);
     return res;
 }
 
-bool StockpileSettingsSerializer::unserialize_from_file(const string& file, DeserializeMode mode, const vector<string>& filters) {
+bool StockpileSettingsSerializer::unserialize_from_file(color_ostream &out, const string& file, DeserializeMode mode, const vector<string>& filters) {
     std::fstream input(file, std::ios::in | std::ios::binary);
     if (input.fail()) {
         WARN(log).print("failed to open file for reading: '%s'\n",
                 file.c_str());
         return false;
     }
-    return parse_from_istream(&input, mode, filters);
+    return parse_from_istream(out, &input, mode, filters);
 }
 
 /**
@@ -768,13 +768,15 @@ void StockpileSettingsSerializer::write(uint32_t includedElements) {
 }
 
 void StockpileSerializer::write(uint32_t includedElements) {
+    if (includedElements & INCLUDED_ELEMENTS_FEATURES)
+        write_features();
     if (includedElements & INCLUDED_ELEMENTS_CONTAINERS)
         write_containers();
 
     StockpileSettingsSerializer::write(includedElements);
 }
 
-void StockpileSettingsSerializer::read(DeserializeMode mode, const vector<string>& filters) {
+void StockpileSettingsSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
     DEBUG(log).print("==READ==\n");
     read_general(mode);
     read_ammo(mode, filters);
@@ -803,7 +805,8 @@ void StockpileSettingsSerializer::read(DeserializeMode mode, const vector<string
     read_wood(mode, filters);
 }
 
-void StockpileSerializer::read(DeserializeMode mode, const vector<string>& filters) {
+void StockpileSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
+    read_features(out, mode);
     read_containers(mode);
     StockpileSettingsSerializer::read(mode, filters);
 }
@@ -913,19 +916,25 @@ void StockpileSerializer::write_features() {
     mBuffer.set_dump(mPile->settings.allow_organic);
 }
 
-void StockpileSerializer::read_features(DeserializeMode mode) {
-    read_elem<int32_t, bool>("use_links_only", mode,
-            std::bind(&StockpileSettings::has_use_links_only, mBuffer),
-            std::bind(&StockpileSettings::use_links_only, mBuffer),
-            mPile->use_links_only);
-    read_elem<bool, bool>("allow_inorganic", mode,
-            std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
-            std::bind(&StockpileSettings::allow_inorganic, mBuffer),
-            mPile->settings.allow_inorganic);
-    read_elem<bool, bool>("allow_organic", mode,
-            std::bind(&StockpileSettings::has_allow_organic, mBuffer),
-            std::bind(&StockpileSettings::allow_organic, mBuffer),
-            mPile->settings.allow_organic);
+void StockpileSerializer::read_features(color_ostream &out, DeserializeMode mode) {
+    int32_t melt = -1, trade = -1, dump = -1;
+    read_elem<int32_t, bool>("melt", mode,
+            std::bind(&StockpileSettings::has_melt, mBuffer),
+            std::bind(&StockpileSettings::melt, mBuffer),
+            melt);
+    read_elem<int32_t, bool>("trade", mode,
+            std::bind(&StockpileSettings::has_trade, mBuffer),
+            std::bind(&StockpileSettings::trade, mBuffer),
+            trade);
+    read_elem<int32_t, bool>("dump", mode,
+            std::bind(&StockpileSettings::has_dump, mBuffer),
+            std::bind(&StockpileSettings::dump, mBuffer),
+            dump);
+
+    if (melt != -1 || trade != -1 || dump != -1) {
+        auto &core = Core::getInstance();
+        core.runCommand(out, "logistics clear -s " + int_to_string(mPile->stockpile_number));
+    }
 }
 
 static bool ammo_mat_is_allowed(const MaterialInfo& mi) {

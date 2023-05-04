@@ -134,7 +134,7 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+        if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }

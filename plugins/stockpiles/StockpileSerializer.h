@@ -21,6 +21,7 @@ enum IncludedElements {
     INCLUDED_ELEMENTS_GENERAL = 0x02,
     INCLUDED_ELEMENTS_CATEGORIES = 0x04,
     INCLUDED_ELEMENTS_TYPES = 0x08,
+    INCLUDED_ELEMENTS_FEATURES = 0x10,
 };
 
 enum DeserializeMode {
@@ -82,12 +83,12 @@ public:
     /**
      * Again, copied from message.cc
      */
-    bool parse_from_istream(std::istream* input, DeserializeMode mode, const std::vector<std::string>& filters);
+    bool parse_from_istream(DFHack::color_ostream &out, std::istream* input, DeserializeMode mode, const std::vector<std::string>& filters);
 
     /**
      * Read stockpile settings from file
      */
-    bool unserialize_from_file(const std::string& file, DeserializeMode mode, const std::vector<std::string>& filters);
+    bool unserialize_from_file(DFHack::color_ostream &out, const std::string& file, DeserializeMode mode, const std::vector<std::string>& filters);
 
 protected:
     dfstockpiles::StockpileSettings mBuffer;

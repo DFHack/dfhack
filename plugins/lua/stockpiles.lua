@@ -75,7 +75,7 @@ end
 
 local function get_sp_id(opts)
     if opts.id then return opts.id end
-    local sp = dfhack.gui.getSelectedStockpile()
+    local sp = dfhack.gui.getSelectedStockpile(true)
     if sp then return sp.id end
     return nil
 end
@@ -212,16 +212,16 @@ function get_stockpile_features(stockpile_number)
     return config.melt, config.trade, config.dump
 end
 
+function set_stockpile_features(stockpile_number, melt, trade, dump)
+    logistics.logistics_setStockpileConfig(stockpile_number, melt, trade, dump)
+end
+
 --------------------
 -- dialogs
 --------------------
 
 StockpilesExport = defclass(StockpilesExport, widgets.Window)
-StockpilesExport.ATTRS{
-    frame_title='Export stockpile settings',
-    frame={w=33, h=15},
-    resizable=true,
-}
+StockpilesExport.ATTRS{frame_title='Export stockpile settings', frame={w=33, h=15}, resizable=true}
 
 function StockpilesExport:init()
     self:addviews{
@@ -365,22 +365,19 @@ end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
-    default_pos={x=53, y=-6},
+    default_pos={x=24, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Some/Stockpile',
-    frame={w=27, h=11},
+    frame={w=73, h=4},
 }
 
 function StockpilesOverlay:init()
     self.minimized = false
-    self.hovered = false
 
-    local main_panel = widgets.ResizingPanel{
+    local main_panel = widgets.Panel{
         view_id='main',
-        frame={b=0, l=0, r=0},
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
-        autoarrange_subviews=true,
         visible=function()
             return not self.minimized
         end,
@@ -388,64 +385,59 @@ function StockpilesOverlay:init()
             widgets.HotkeyLabel{
                 frame={t=0, l=0},
                 label='import settings',
+                auto_width=true,
                 key='CUSTOM_CTRL_I',
                 on_activate=do_import,
             }, widgets.HotkeyLabel{
                 frame={t=1, l=0},
                 label='export settings',
+                auto_width=true,
                 key='CUSTOM_CTRL_E',
                 on_activate=do_export,
             }, widgets.Panel{
-                frame={t=2, h=4},
+                frame={t=0, l=25},
                 subviews={
                     widgets.Label{
-                        frame={t=1, l=0, h=2},
+                        frame={t=0, l=0, h=1},
                         auto_height=false,
-                        text={'Designate items brought', NEWLINE, 'to this stockpile for:'},
+                        text={'Designate items brought to this stockpile for:'},
+                        text_pen=COLOR_DARKGREY,
+                    }, widgets.ToggleHotkeyLabel{
+                        view_id='melt',
+                        frame={t=1, l=0},
+                        auto_width=true,
+                        key='CUSTOM_CTRL_M',
+                        option_gap=-1,
+                        options={{label='Melting', value=true, pen=COLOR_RED},
+                                {label='Melting', value=false}},
+                        on_change=self:callback('toggleLogisticsFeature', 'melt'),
+                    }, widgets.ToggleHotkeyLabel{
+                        view_id='trade',
+                        frame={t=1, l=16},
+                        auto_width=true,
+                        key='CUSTOM_CTRL_T',
+                        option_gap=-1,
+                        options={{label='Trading', value=true, pen=COLOR_YELLOW},
+                                {label='Trading', value=false}},
+                        on_change=self:callback('toggleLogisticsFeature', 'trade'),
+                    }, widgets.ToggleHotkeyLabel{
+                        view_id='dump',
+                        frame={t=1, l=32},
+                        auto_width=true,
+                        key='CUSTOM_CTRL_U',
+                        option_gap=-1,
+                        options={{label='Dumping', value=true, pen=COLOR_LIGHTMAGENTA},
+                                {label='Dumping', value=false}},
+                        on_change=self:callback('toggleLogisticsFeature', 'dump'),
                     },
                 },
-                visible=function()
-                    return self.hovered or self.subviews.melt:getOptionValue() or
-                                   self.subviews.trade:getOptionValue() or
-                                   self.subviews.dump:getOptionValue()
-                end,
-            }, widgets.ToggleHotkeyLabel{
-                view_id='melt',
-                frame={t=6, l=2},
-                label='melting',
-                key='CUSTOM_CTRL_M',
-                on_change=self:callback('toggleLogisticsFeature', 'melt'),
-                visible=function()
-                    return self.hovered or self.subviews.melt:getOptionValue()
-                end,
-            }, widgets.ToggleHotkeyLabel{
-                view_id='trade',
-                frame={t=7, l=2},
-                label='trading',
-                key='CUSTOM_CTRL_T',
-                on_change=self:callback('toggleLogisticsFeature', 'trade'),
-                visible=function()
-                    return self.hovered or self.subviews.trade:getOptionValue()
-                end,
-            }, widgets.ToggleHotkeyLabel{
-                view_id='dump',
-                frame={t=8, l=2},
-                label='dumping',
-                key='CUSTOM_CTRL_D',
-                on_change=self:callback('toggleLogisticsFeature', 'dump'),
-                visible=function()
-                    return self.hovered or self.subviews.dump:getOptionValue()
-                end,
             },
         },
     }
 
     self:addviews{
         main_panel, MinimizeButton{
-            frame={b=0, l=1},
-            label_pos='right',
-            symbol_minimize=string.char(30),
-            symbol_restore=string.char(31),
+            frame={t=0, r=1},
             get_minimized_fn=function()
                 return self.minimized
             end,
@@ -460,33 +452,25 @@ function StockpilesOverlay:overlay_onupdate()
 end
 
 function StockpilesOverlay:onRenderFrame()
-    local sp = dfhack.gui.getSelectedStockpile()
-    local sp_updated = false
-    if self.cur_stockpile ~= sp then
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    if sp and self.cur_stockpile ~= sp then
         local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
         self.subviews.melt:setOption(config.melt == 1)
         self.subviews.trade:setOption(config.trade == 1)
         self.subviews.dump:setOption(config.dump == 1)
         self.cur_stockpile = sp
-        sp_updated = true
-    end
-    local prev_hovered = self.hovered
-    self.hovered = not not (self.hovered and self:getMouseFramePos() or
-                           self.subviews.main:getMousePos())
-    if self.hovered ~= prev_hovered or sp_updated then
-        self:updateLayout()
-        df.global.gps.force_full_display_count = 1
     end
 end
 
 function StockpilesOverlay:toggleLogisticsFeature(feature)
-    local sp = dfhack.gui.getSelectedStockpile()
+    self.cur_stockpile = nil
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    if not sp then return end
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
             (feature == 'dump') ~= (config.dump == 1))
-    self.cur_stockpile = nil
 end
 
 function StockpilesOverlay:toggleMinimized()

@@ -68,7 +68,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/control-panel`: add preference option for hiding "armok" tools in command lists
 - ``Dwarf Therapist``: add a warning to the Labors screen when Dwarf Therapist is active so players know that changes they make to that screen will have no effect. If you're starting a new embark and nobody seems to be doing anything, check your Labors tab for this warning to see if Dwarf Therapist thinks it is in control (even if it's not running).
 - `overlay`: add the DFHack version string to the DF title screen
-- `gui/design`: Improved performance for drawing shapes
 
 ## Lua
 - ``widgets.RangeSlider``: new mouse-controlled two-headed slider widget

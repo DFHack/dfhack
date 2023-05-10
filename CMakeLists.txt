@@ -376,6 +376,9 @@ endif()
 
 #### expose depends ####
 
+# fix for pyenv: default to `python3` before `python3.x`
+set(Python_FIND_UNVERSIONED_NAMES FIRST)
+
 if(UNIX)
     # Rescan for pthread and zlib if the build arch changed
     if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")

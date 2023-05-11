@@ -3,7 +3,7 @@ add-spatter
 
 .. dfhack-tool::
     :summary: Add poisons and magical effects to weapons.
-    :tags: unavailable adventure fort gameplay items
+    :tags: adventure fort gameplay items
     :no-command:
 
 Give some use to all those poisons that can be bought from caravans! The plugin

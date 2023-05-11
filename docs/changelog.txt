@@ -34,8 +34,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `add-spatter`: allow mods to add poisons and magical effects to weapons
-- `work-now`: reduce the time that dwarves are left without a task after completing a job
+- `add-spatter`: reinstated: allow mods to add poisons and magical effects to weapons
+- `changeitem`: reinstated: change item material, quality, and subtype
+- `createitem`: reinstated: create arbitrary items, from the command line
+- `deramp`: reinstated: removes all ramps designated for removal from the map
+- `flows`: reinstated: counts map blocks with flowing liquids
+- `lair`: reinstated: mark the map as a monster lair (this avoids item scatter when the fortress is abandoned)
+- `luasocket`: reinstated: provides a Lua API for accessing network sockets
+- `work-now`: reinstated, renamed from ``workNow``: reduce the time that dwarves are left without a task after completing a job
 
 ## Fixes
 
@@ -112,8 +118,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # 50.07-beta2
 
 ## New Plugins
-- `getplants`: designate trees for chopping and shrubs for gathering according to type
-- `prospector`: get stone, ore, gem, and other tile property counts in fort mode.
+- `getplants`: reinstated: designate trees for chopping and shrubs for gathering according to type
+- `prospector`: reinstated: get stone, ore, gem, and other tile property counts in fort mode.
 
 ## Fixes
 -@ `buildingplan`: filters are now properly applied to planned stairs

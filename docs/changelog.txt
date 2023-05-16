@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `work-now`: reinstated, renamed from ``workNow``: reduce the time that dwarves are left without a task after completing a job
 
 ## Fixes
+- RemoteServer: fix crash on malformed json in ``dfhack-config/remote-server.json``
 
 ## Misc Improvements
 - Terminal console no longer appears in front of the game window on startup

@@ -104,13 +104,15 @@ Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 This collection adds high-volume smelting jobs for military-grade metal ores and
 produces weapons and armor:
 
-- leather backpacks/waterskins/cloaks/quivers/armor
+- leather backpacks/waterskins/quivers/armor
+- silk cloaks
 - bone/wooden bolts
 - smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
   their dependencies)
 - bronze/bismuth bronze/copper bolts
-- silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+- steel/silver/iron/bismuth bronze/bronze/copper weapons and armor,
   with checks to ensure only the best available materials are being used
+- wooden shields (if metal isn't available)
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
 and turn on `automelt` (like what `dreamfort` provides on its industry level),
@@ -119,16 +121,6 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 ``automelt`` on, though!
 
 This file should only be imported, of course, if you need to equip a military.
-
-:source:`library/military_include_artifact_materials <data/orders/military_include_artifact_materials.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As above, but this collection will also allow creation of platinum blunt weapons.
-Normally these are only created by artifact moods, work orders can't be created
-manually for them.
-
-- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
-  with checks to ensure only the best available materials are being used
 
 :source:`library/smelting <data/orders/smelting.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

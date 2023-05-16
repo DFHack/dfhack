@@ -53,7 +53,7 @@ double quotes.  To include a double quote character, use ``\"``.
 If the first non-whitespace character is ``:``, the command is parsed in
 an alternative mode.  The non-whitespace characters following the ``:`` are
 the command name, and the remaining part of the line is used verbatim as
-the first argument.  This is very useful for the `lua` and `rb` commands.
+the first argument.  This is very useful for the `lua` command.
 As an example, the following two command lines are exactly equivalent::
 
   :foo a b "c d" e f
@@ -306,6 +306,23 @@ the root DF folder.
 Note that ``script-paths.txt`` is only read at startup, but the paths can also be
 modified programmatically at any time through the `Lua API <lua-api-internal>`.
 
+Commandline options
+===================
+
+In addition to `Using an OS terminal`_ to execute commands on startup, DFHack
+also recognizes a single commandline option that can be specified on the
+commandline:
+
+- ``--disable-dfhack``: If this option is passed on the Dwarf Fortress
+  commandline, then DFHack will be disabled for the session. You will have to
+  restart Dwarf Fortress without specifying this option in order to use DFHack.
+  If you are launching Dwarf Fortress from Steam, you can enter the option in
+  the "Launch Options" text box in the properties for the Dwarf Fortress app.
+  Note that if you do this, DFHack will be disabled regardless of whether you
+  run Dwarf Fortress from its own app or DFHack's. You will have to clear the
+  DF Launch Options in order to use DFHack again. Note that even if DFHack is
+  disabled, :file:`stdout.txt` and :file:`stderr.txt` will still be redirected
+  to :file:`stdout.log` and :file:`stderr.log`, respectively.
 
 .. _env-vars:
 

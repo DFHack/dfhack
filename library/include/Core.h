@@ -191,7 +191,8 @@ namespace DFHack
         struct Private;
         std::unique_ptr<Private> d;
 
-        bool Init();
+        bool InitMainThread();
+        bool InitSimulationThread();
         int Update (void);
         int Shutdown (void);
         bool DFH_SDL_Event(SDL::Event* event);

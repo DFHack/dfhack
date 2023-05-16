@@ -8,6 +8,13 @@ static bool disabled = false;
 // called from the main thread before the simulation thread is started
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {
+    if (getenv("DFHACK_DISABLE")) {
+        fprintf(stdout, "dfhack: DFHACK_DISABLE detected in environment; disabling\n");
+        disabled = true;
+        return;
+    }
+
+    // we need to init DF globals before we can check the commandline
     if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game)
         return;
     const std::string & cmdline = df::global::game->command_line.original;

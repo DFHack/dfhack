@@ -336,6 +336,11 @@ on UNIX-like systems:
 
   DFHACK_SOME_VAR=1 ./dfhack
 
+- ``DFHACK_DISABLE``: if set, DFHack will not initialize, not even to redirect
+  :file:`stdout.txt` or :file:`stderr.txt`. This is provided as an alternative
+  to the ``--disable-dfhack`` commandline parameter above for when environment
+  variables are more convenient.
+
 - ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
   and `remotefortressreader` among others) instead of the default ``5000``. As
   with the default, if this port cannot be used, the server is not started.

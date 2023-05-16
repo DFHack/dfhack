@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `orders`: update orders in orders library for prepared meals, bins, archer uniforms, and weapons
 - Terminal console no longer appears in front of the game window on startup
 - `gui/design`: Improved performance for drawing shapes
 
@@ -56,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 
 ## Removed
+- `orders`: ``library/military_include_artifact_materials`` library file removed since recent research indicates that platinum blunt weapons and silver crossbows are not more effective than standard steel. the alternate military orders file was also causing unneeded confusion.
 
 # 50.08-r1
 

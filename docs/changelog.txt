@@ -48,7 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - Terminal console no longer appears in front of the game window on startup
 - `gui/design`: Improved performance for drawing shapes
-- ``Core``: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline to disable DFHack for the session.
+- Core: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline to disable DFHack for the session.
 
 ## Documentation
 

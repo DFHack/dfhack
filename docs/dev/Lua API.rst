@@ -5106,6 +5106,14 @@ The widget implements:
 
   Same as with an ordinary list.
 
+Filter behavior:
+
+By default, the filter matches substrings that start at the beginning of a word
+(or after any punctuation). You can instead configure filters to match any
+substring with a command like::
+
+  :lua require('gui.widgets').FILTER_FULL_TEXT=true
+
 TabBar class
 ------------
 

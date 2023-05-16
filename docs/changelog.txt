@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - Terminal console no longer appears in front of the game window on startup
+- `gui/control-panel`: new preference for whether filters in lists search for substrings in the middle of words (e.g. if set to true, then "ee" will match "steel")
 - `gui/design`: Improved performance for drawing shapes
 
 ## Documentation

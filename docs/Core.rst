@@ -337,7 +337,7 @@ on UNIX-like systems:
   DFHACK_SOME_VAR=1 ./dfhack
 
 - ``DFHACK_DISABLE``: if set, DFHack will not initialize, not even to redirect
-  :file:`stdout.txt` or :file:`stderr.txt`. This is provided as an alternative
+  standard output or standard error. This is provided as an alternative
   to the ``--disable-dfhack`` commandline parameter above for when environment
   variables are more convenient.
 

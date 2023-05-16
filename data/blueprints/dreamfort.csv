@@ -1890,7 +1890,7 @@ Workshops:
 - 1x Dyer
 - 1x Loom
 - 1x Clothier
-""
+
 ""
 Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes
@@ -1954,9 +1954,46 @@ Industry Walkthrough:
 
 
 "#meta label(industry2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build workshops and stockpiles, configure stockpiles"
+traffic/industry_traffic
 build/industry_build
 place/industry_place
 query/industry_query
+#dig label(industry_traffic) start(18; 18; central stairs) hidden()
+
+
+,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,oh,ol,ol,ol,oh,ol,ol,ol,oh,ol,ol,ol,oh
+,,,,oh,oh,oh,oh,oh,oh,oh,oh,ol,ol,ol,oh,ol,ol,ol,oh,ol,ol,ol,oh,oh,oh,oh,oh,oh,oh,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,oh,ol,ol,ol,oh,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,oh,oh,oh,oh,oh,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,oh,oh,`,oh,oh,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,oh,oh,`,oh,oh,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,`,`,`,`,`,`,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,oh,oh,oh,oh,oh,oh,oh,oh,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,oh,`,`,`,`,`,oh,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,oh,`,`,`,`,`,oh,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,,,`,,`,,,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,oh,oh,oh,oh,oh,oh,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,oh,oh,oh,oh,oh,oh,`
+,,`,ol,ol,ol,oh,oh,oh,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,oh,oh,oh,ol,ol,ol,`
+,,`,ol,ol,ol,oh,`,`,`,`,`,`,`,,`,,`,,`,,`,`,`,`,`,`,`,oh,ol,ol,ol,`
+,,`,ol,ol,ol,oh,oh,oh,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,oh,oh,oh,ol,ol,ol,`
+,,`,oh,oh,oh,oh,oh,oh,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,oh,oh,oh,oh,oh,oh,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,,,`,,`,,,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,oh,`,`,`,`,`,oh,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,ol,ol,ol,ol,ol,ol,ol,ol,ol,oh,oh,oh,`,`,`,`,`,oh,oh,oh,ol,ol,ol,ol,ol,ol,ol,ol,ol,`
+,,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,oh,oh,oh,oh,oh,oh,oh,oh,`
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,oh,oh,`,oh,oh,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,oh,oh,oh,oh,oh,oh,oh,oh,ol,ol,ol,`,oh,`,oh,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,`,`,`,`,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,`,ol,ol,ol,`,ol,ol,ol,oh,`,`,`,`,`,`,oh
+,,,,`,`,`,`,`,`,`,oh,ol,ol,ol,`,ol,ol,ol,`,ol,ol,ol,oh,oh,oh,oh,oh,oh,oh,oh
+,,,,,,,,,,,oh,ol,ol,ol,oh,ol,ol,ol,oh,ol,ol,ol,oh
+,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
+
+
 #build label(industry_build) start(18; 18) hidden()
 
 
@@ -2052,7 +2089,7 @@ query/industry_query
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
 ,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",g{Up 3}{Right 5}&,~,~,~,`,`,`,`,`,`,`
-,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}&",`,`,~,`,`
+,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}{Right 3}&",`,`,~,`,`
 ,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,forbidadamantinethread,~,~,~,~,`,`,`,`,`,`,`
 ,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,dye,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2206,6 +2243,7 @@ Services Walkthrough:
 
 "#meta label(services2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
+traffic/services_traffic
 zones/services_zones
 build/services_build
 place/services_place
@@ -2221,6 +2259,108 @@ build2/services_build2
 build3/services_build3
 place_jail/services_place_jail
 query_jail/services_query_jail
+#dig label(services_traffic) start(18; 18) hidden() keep lollygaggers out of the cisterns
+
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
+,,ol,,,,ol,,,,ol,,,,,,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,,or,,,,,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,,or,,or,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,or,,or,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,`,,oh,`,`,`,oh,,`,,oh,oh,oh,`,oh,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,or,,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,,,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,,,,oh,oh,,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+
+#>
+
+,,,,,,,,,,,,,or,or,or,,or,,or,or,or
+,,,,,,,,,,,,,or,or,or,or,or,or,or,or,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,or,or,or,,or,,or,or,or
+,,,,,,,,,,,,,or,or,or,or,or,or,or,or,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or,or,or,or,or,or,or,or,or,or
+,,,,,,,,,,,,,,,,,or,,,,,,,,,or
+,,,,,,,,,,,,,,,,,or,,,,,,,,,or
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,,or
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,or,or,or
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,or,or,or
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+
+#>
+
+,,,,,,,,,,,,,or,or,or,,,,or,or,or
+
+
+
+,,,,,,,,,,,,,or,or,or,,,,or,or,or
+
+
+
+
+
+
+
+
+
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,or,or,or
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+
+#>
+
+,,,,,,,,,,,,,,or,or,,,,or,or
+
+
+
+,,,,,,,,,,,,,,or,or,,,,or,or
+
+
+
+
+
+
+
+
+
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,or,or
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+
 "#zone label(services_zones) start(18; 18) hidden() message(If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, and pond zones"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
@@ -2575,42 +2715,6 @@ query_jail/services_query_jail
 ,,,,,,,,,,,,,,,`,`,`,`,`
 ,,,,,,,,,,,,,,,`,`,`,`,`
 
-#dig label(services_traffic) start(18; 18) hidden() promote the tavern as the place to eat
-
-,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
-,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,or,or,or,or,or,or
-,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
-,,ol,,,,ol,,,,ol,,,,,,,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,,or,,,,,,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,,,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,,or,,or,,or
-,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,or,,or,,,,,or,,or,,or,,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,`,,oh,`,`,`,oh,,`,,oh,oh,oh,`,oh,or,or,or,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,`,,,,,,or,,or,,or,,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,,,,,,,or,,or,,or,,or
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
-,,,,oh,oh,,oh,oh
-,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
-,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
-
 "#build label(services_build3) start(18; 18) hidden() jail, statues"
 
 ,~,~,~,,~,~,~,,~,~,~,,t,l,b,,`,,t,l,b
@@ -2946,8 +3050,47 @@ Apartments Walkthrough:
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 
-"#build label(suites2) start(18; 18; central ramp) message(Remember to enqueue manager orders for this blueprint.
-bedrooms are left unconfigured so you can assign them to specific nobles)"
+"#meta label(suites2) start(central ramp) message(Remember to enqueue manager orders for this blueprint.
+bedrooms are left unconfigured so you can assign them to specific nobles.) build furniture and set traffic patterns"
+traffic_suites/suites_traffic
+build_suites/suites_build
+#dig label(suites_traffic) start(18; 18; central ramp) hidden()
+
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,,,or,,,,,,or,,,,`,,`,,,,or,,,,,,or,,,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,,,or,,,,,,or,,,,`,`,`,,,,or,,,,,,or,,,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,,,or,,,,,,or,,,,`,`,`,,,,or,,,,,,or,,,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,`,`,,`,`
+,`,`,,,,or,,,,,,or,,,,`,,`,,,,or,,,,,,or,,,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+
+#build label(suites_build) start(18; 18; central ramp) hidden()
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`

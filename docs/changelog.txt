@@ -48,6 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - Terminal console no longer appears in front of the game window on startup
 - `gui/design`: Improved performance for drawing shapes
+- Dreamfort: improve traffic patterns throughout the fortress (stockpiles and zones are still not working, pending updates in `quickfort`)
 
 ## Documentation
 

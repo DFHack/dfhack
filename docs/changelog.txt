@@ -54,6 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``overlay.reload()``: has been renamed to ``overlay.rescan()`` so as not to conflict with the global ``reload()`` function. If you are developing an overlay, please take note of the new function name for reloading your overlay during development.
 
 ## Removed
 

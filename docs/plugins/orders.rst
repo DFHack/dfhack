@@ -67,7 +67,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets/mugs
+- pots/bins/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts, totems, and shleggings from otherwise unusable by-products
 - mechanisms/cages
@@ -80,7 +80,10 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-Armok's note: shleggings? Yes, `shleggings <https://youtu.be/bLN8cOcTjdo>`__.
+Note that the jugs are specifically made out of wood. This is so, as long as you don't may any other "Tools" out of wood, you can have a stockpile just for jugs by restricting a finished goods stockpile to only take wooden tools.
+
+Armok's additional note: "shleggings? Yes,
+`shleggings <https://youtu.be/bLN8cOcTjdo>`__."
 
 :source:`library/furnace <data/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

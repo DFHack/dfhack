@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `work-now`: reinstated, renamed from ``workNow``: reduce the time that dwarves are left without a task after completing a job
 
 ## Fixes
+- DFHack screen backgrounds now use appropriate tiles in DF Classic
 - RemoteServer: fix crash on malformed json in ``dfhack-config/remote-server.json``
 - `autolabor`: work detail override warning now only appears on the work details screen
 

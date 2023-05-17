@@ -1932,6 +1932,8 @@ end
 -- Filtered List --
 -------------------
 
+FILTER_FULL_TEXT = false
+
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
@@ -2102,19 +2104,22 @@ function FilteredList:setFilter(filter, pos)
             end
             for _,key in ipairs(tokens) do
                 key = key:escape_pattern()
-                -- start matches at non-space or non-punctuation. this allows
-                -- punctuation itself to be matched if that is useful (e.g.
-                -- filenames or parameter names)
                 if key ~= '' then
                     if not self.case_sensitive then
                         search_key = string.lower(search_key)
                         key = string.lower(key)
                     end
 
-                    if not search_key:match('%f[^%p\x00]'..key) and
-                        not search_key:match('%f[^%s\x00]'..key) then
-                            ok = false
-                            break
+                    -- the separate checks for non-space or non-punctuation allows
+                    -- punctuation itself to be matched if that is useful (e.g.
+                    -- filenames or parameter names)
+                    if not FILTER_FULL_TEXT and not search_key:match('%f[^%p\x00]'..key)
+                            and not search_key:match('%f[^%s\x00]'..key) then
+                        ok = false
+                        break
+                    elseif FILTER_FULL_TEXT and not search_key:find(key) then
+                        ok = false
+                        break
                     end
                 end
             end

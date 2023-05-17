@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autolabor`: work detail override warning now only appears on the work details screen
 
 ## Misc Improvements
+- `orders`: update orders in orders library for prepared meals, bins, archer uniforms, and weapons
 - Terminal console no longer appears in front of the game window on startup
 - `gui/design`: Improved performance for drawing shapes
 - Core: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline or specify ``DFHACK_DISABLE=1`` in the environment to disable DFHack for the current session.
@@ -59,6 +60,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``overlay.reload()``: has been renamed to ``overlay.rescan()`` so as not to conflict with the global ``reload()`` function. If you are developing an overlay, please take note of the new function name for reloading your overlay during development.
 
 ## Removed
+- `orders`: ``library/military_include_artifact_materials`` library file removed since recent research indicates that platinum blunt weapons and silver crossbows are not more effective than standard steel. the alternate military orders file was also causing unneeded confusion.
 
 # 50.08-r1
 

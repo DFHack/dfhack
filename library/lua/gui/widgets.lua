@@ -853,7 +853,7 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local SBSO = 922 --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
+local SBSO = df.global.init.scrollbar_texpos[0] --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
 local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=SBSO+0, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=SBSO+1, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+24, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
@@ -2144,34 +2144,35 @@ function FilteredList:onFilterChar(char, text)
     return true
 end
 
+local TSO = df.global.init.tabs_texpos[0] -- tab spritesheet offset
 local DEFAULT_ACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
     text_mode_label_pen=to_pen{fg=COLOR_WHITE},
-    lt=to_pen{tile=1005, write_to_lower=true},
-    lt2=to_pen{tile=1006, write_to_lower=true},
-    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1008, write_to_lower=true},
-    rt=to_pen{tile=1009, write_to_lower=true},
-    lb=to_pen{tile=1015, write_to_lower=true},
-    lb2=to_pen{tile=1016, write_to_lower=true},
-    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1018, write_to_lower=true},
-    rb=to_pen{tile=1019, write_to_lower=true},
+    lt=to_pen{tile=TSO+5, write_to_lower=true},
+    lt2=to_pen{tile=TSO+6, write_to_lower=true},
+    t=to_pen{tile=TSO+7, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+8, write_to_lower=true},
+    rt=to_pen{tile=TSO+9, write_to_lower=true},
+    lb=to_pen{tile=TSO+15, write_to_lower=true},
+    lb2=to_pen{tile=TSO+16, write_to_lower=true},
+    b=to_pen{tile=TSO+17, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+18, write_to_lower=true},
+    rb=to_pen{tile=TSO+19, write_to_lower=true},
 }
 
 local DEFAULT_INACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
     text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
-    lt=to_pen{tile=1000, write_to_lower=true},
-    lt2=to_pen{tile=1001, write_to_lower=true},
-    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1003, write_to_lower=true},
-    rt=to_pen{tile=1004, write_to_lower=true},
-    lb=to_pen{tile=1010, write_to_lower=true},
-    lb2=to_pen{tile=1011, write_to_lower=true},
-    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1013, write_to_lower=true},
-    rb=to_pen{tile=1014, write_to_lower=true},
+    lt=to_pen{tile=TSO+0, write_to_lower=true},
+    lt2=to_pen{tile=TSO+1, write_to_lower=true},
+    t=to_pen{tile=TSO+2, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+3, write_to_lower=true},
+    rt=to_pen{tile=TSO+4, write_to_lower=true},
+    lb=to_pen{tile=TSO+10, write_to_lower=true},
+    lb2=to_pen{tile=TSO+11, write_to_lower=true},
+    b=to_pen{tile=TSO+12, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+13, write_to_lower=true},
+    rb=to_pen{tile=TSO+14, write_to_lower=true},
 }
 
 ---------

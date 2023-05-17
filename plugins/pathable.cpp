@@ -7,6 +7,8 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
+#include "df/init.h"
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("pathable");
@@ -37,8 +39,8 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
     int selected_tile_texpos = 0;
     Screen::findGraphicsTile("CURSORS", 4, 3, &selected_tile_texpos);
 
-    long pathable_tile_texpos = 779;
-    long unpathable_tile_texpos = 782;
+    long pathable_tile_texpos = df::global::init->load_bar_texpos[1];
+    long unpathable_tile_texpos = df::global::init->load_bar_texpos[4];
     long on_off_texpos = Textures::getOnOffTexposStart();
     if (on_off_texpos > 0) {
         pathable_tile_texpos = on_off_texpos + 0;

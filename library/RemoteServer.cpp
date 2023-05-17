@@ -420,17 +420,20 @@ ServerMainImpl::ServerMainImpl(std::promise<bool> promise, int port) :
 
     Json::Value configJson;
 
-    std::ifstream inFile(filename, std::ios_base::in);
-
     bool allow_remote = false;
 
-    if (inFile.is_open())
-    {
-        inFile >> configJson;
-        inFile.close();
-
-        allow_remote = configJson.get("allow_remote", "false").asBool();
+    std::ifstream inFile(filename, std::ios_base::in);
+    try {
+        if (inFile.is_open())
+        {
+            inFile >> configJson;
+            allow_remote = configJson.get("allow_remote", "false").asBool();
+        }
+    } catch (const std::exception & e) {
+        std::cerr << "Error reading remote server config file: " << filename << ": " << e.what() << std::endl;
+        std::cerr << "Reverting to remote server config to defaults" << std::endl;
     }
+    inFile.close();
 
     // rewrite/normalize config file
     configJson["allow_remote"] = allow_remote;

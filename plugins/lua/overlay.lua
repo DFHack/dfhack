@@ -292,7 +292,7 @@ local function load_widgets(env_name, env)
 end
 
 -- called directly from cpp on plugin enable
-function reload()
+function rescan()
     reset()
 
     for _,plugin in ipairs(dfhack.internal.listPlugins()) do
@@ -317,7 +317,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
     -- pick up widgets from active mods
-    reload()
+    rescan()
 end
 
 local function dump_widget_config(name, widget)

@@ -2241,8 +2241,8 @@ TabBar.ATTRS{
     active_tab_pens=DEFAULT_ACTIVE_TAB_PENS,
     inactive_tab_pens=DEFAULT_INACTIVE_TAB_PENS,
     get_pens=DEFAULT_NIL,
-    key=DEFAULT_NIL,
-    key_back=DEFAULT_NIL,
+    key='CUSTOM_CTRL_T',
+    key_back='CUSTOM_CTRL_Y',
 }
 
 function TabBar:init()

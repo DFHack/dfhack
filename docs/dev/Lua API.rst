@@ -5113,7 +5113,9 @@ This widget implements a set of one or more tabs to allow navigation between gro
 the width of the window and will continue rendering on the next line(s) if all tabs cannot fit on a single line.
 
 :key: Specifies a keybinding that can be used to switch to the next tab.
-:key_back: Specifies a keybinding that can be used to switch to the previous tab.
+      Defaults to ``CUSTOM_CTRL_T``.
+:key_back: Specifies a keybinding that can be used to switch to the previous
+      tab. Defaults to ``CUSTOM_CTRL_Y``.
 :labels: A table of strings; entry representing the label text for a single tab. The order of the entries
          determines the order the tabs will appear in.
 :on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. The provided function

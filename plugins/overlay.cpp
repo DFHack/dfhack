@@ -128,7 +128,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable) {
         screenSize = Screen::getWindowSize();
-        call_overlay_lua(&out, "reload");
+        call_overlay_lua(&out, "rescan");
     }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");

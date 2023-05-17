@@ -1471,16 +1471,8 @@ std::string Core::getHackPath()
 #endif
 }
 
-bool Core::Init()
-{
-    if(started)
-        return true;
-    if(errorstate)
-        return false;
-
-    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
-    // Core::Update will temporary unlock when there is any commands queued
-    MainThread::suspend().lock();
+bool Core::InitMainThread() {
+    Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
@@ -1495,8 +1487,6 @@ bool Core::Init()
     fprintf(stderr, "dfhack: redirecting stderr to stderr.log\n");
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
-
-    Filesystem::init();
 
     std::cerr << "DFHack build: " << Version::git_description() << "\n"
          << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
@@ -1565,6 +1555,20 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    return true;
+}
+
+bool Core::InitSimulationThread()
+{
+    if(started)
+        return true;
+    if(errorstate)
+        return false;
+
+    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
+    // Core::Update will temporary unlock when there is any commands queued
+    MainThread::suspend().lock();
 
     std::cerr << "Initializing Console.\n";
     // init the console.
@@ -1965,7 +1969,7 @@ int Core::Update()
         if(!started)
         {
             // Initialize the core
-            Init();
+            InitSimulationThread();
             if(errorstate)
                 return -1;
         }

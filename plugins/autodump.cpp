@@ -280,8 +280,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     commands.push_back(PluginCommand(
         "autodump",
         "Teleport items marked for dumping to the keyboard cursor.",
-        df_autodump,
-        Gui::cursor_hotkey));
+        df_autodump));
     commands.push_back(PluginCommand(
         "autodump-destroy-here",
         "Destroy items marked for dumping under the keyboard cursor.",

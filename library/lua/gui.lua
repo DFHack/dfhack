@@ -905,7 +905,7 @@ local BASE_FRAME = {
 }
 
 local function make_frame(name, double_line)
-    local texpos = dfhack.textures['getBorder'..name..'TexposStart']()
+    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
     local tp = function(offset)
         if texpos == -1 then return nil end
         return texpos + offset

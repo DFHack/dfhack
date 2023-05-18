@@ -54,11 +54,11 @@ DFHACK_EXPORT long getControlPanelTexposStart();
 /**
  * Get the first texpos for the DFHack borders. Each is a 7x3 grid.
  */
-DFHACK_EXPORT long getBorderThinTexposStart();
-DFHACK_EXPORT long getBorderMediumTexposStart();
-DFHACK_EXPORT long getBorderBoldTexposStart();
-DFHACK_EXPORT long getBorderPanelTexposStart();
-DFHACK_EXPORT long getBorderWindowTexposStart();
+DFHACK_EXPORT long getThinBordersTexposStart();
+DFHACK_EXPORT long getMediumBordersTexposStart();
+DFHACK_EXPORT long getBoldBordersTexposStart();
+DFHACK_EXPORT long getPanelBordersTexposStart();
+DFHACK_EXPORT long getWindowBordersTexposStart();
 
 }
 }

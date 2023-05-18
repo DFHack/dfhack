@@ -38,7 +38,7 @@ jobs:
           repository: DFHack/3rdparty
           ref: main
           ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
-          path: depends
+          path: depends/steam
       - name: Fetch ccache
         uses: actions/cache@v3
         with:

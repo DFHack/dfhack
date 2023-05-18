@@ -43,8 +43,8 @@ keybinding add Ctrl-C spotclean
 # destroy the selected item
 keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
-# destroy items designated for dump in the selected tile
-keybinding add Ctrl-H@dwarfmode autodump-destroy-here
+# bring up the autodump UI
+keybinding add Ctrl-H@dwarfmode gui/autodump
 
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort

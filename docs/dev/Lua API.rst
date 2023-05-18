@@ -4347,32 +4347,32 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``WINDOW_FRAME``
+* ``FRAME_WINDOW``
 
   A frame suitable for a draggable, optionally resizable window.
 
-* ``PANEL_FRAME``
+* ``FRAME_PANEL``
 
   A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``MEDIUM_FRAME``
+* ``FRAME_MEDIUM``
 
   A frame suitable for overlay widget panels.
 
-* ``BOLD_FRAME``
+* ``FRAME_BOLD``
 
   A frame suitable for a non-draggable panel meant to capture the user's focus,
   like an important notification, confirmation dialog or error message.
 
-* ``INTERIOR_FRAME``
+* ``FRAME_INTERIOR``
 
   A frame suitable for light interior accent elements. This frame does *not*
   have a visible ``DFHack`` signature on it, so it must not be used as the most
   external frame for a DFHack-owned UI.
 
-* ``INTERIOR_MEDIUM_FRAME``
+* ``FRAME_INTERIOR_MEDIUM``
 
-  A copy of ``MEDIUM_FRAME`` that lacks the ``DFHack`` signature. Suitable for
+  A copy of ``FRAME_MEDIUM`` that lacks the ``DFHack`` signature. Suitable for
   panels that are part of a larger widget cluster. Must *not* be used as the
   most external frame for a DFHack-owned UI.
 

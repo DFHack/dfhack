@@ -72,12 +72,6 @@ jobs:
           #    - name: Download DF
           #      run: |
           #        sh ci/download-df.sh
-    - name: Restore steam SDK
-      uses: actions/cache@v3
-      with:
-        path: depends/steam
-        key: steam-sdk-156
-        enableCrossOsArchive: true
     - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}

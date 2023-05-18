@@ -40,7 +40,7 @@ function AutolaborOverlay:init()
 end
 
 function AutolaborOverlay:render(dc)
-    if df.global.game_extra.external_flag ~= 1 then return end
+    if df.global.game.external_flag ~= 1 then return end
     AutolaborOverlay.super.render(self, dc)
 end
 

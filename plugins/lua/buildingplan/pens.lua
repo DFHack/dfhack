@@ -18,12 +18,12 @@ function reload_pens()
     GOOD_TILE_PEN = to_pen{ch='o', fg=COLOR_GREEN, tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
     BAD_TILE_PEN = to_pen{ch='X', fg=COLOR_RED, tile=dfhack.screen.findGraphicsTile('CURSORS', 3, 0)}
 
-    local tb_texpos = dfhack.textures.getThinBordersTexposStart()
+    local tb_texpos = dfhack.textures.getBorderThinTexposStart()
     VERT_TOP_PEN = to_pen{tile=tp(tb_texpos, 10), ch=194, fg=COLOR_GREY, bg=COLOR_BLACK}
     VERT_MID_PEN = to_pen{tile=tp(tb_texpos, 4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
     VERT_BOT_PEN = to_pen{tile=tp(tb_texpos, 11), ch=193, fg=COLOR_GREY, bg=COLOR_BLACK}
 
-    local mb_texpos = dfhack.textures.getMediumBordersTexposStart()
+    local mb_texpos = dfhack.textures.getBorderMediumTexposStart()
     HORI_LEFT_PEN = to_pen{tile=tp(mb_texpos, 12), ch=195, fg=COLOR_GREY, bg=COLOR_BLACK}
     HORI_MID_PEN = to_pen{tile=tp(mb_texpos, 5), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
     HORI_RIGHT_PEN = to_pen{tile=tp(mb_texpos, 13), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}

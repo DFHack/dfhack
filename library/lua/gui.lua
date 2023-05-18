@@ -923,17 +923,26 @@ local function make_frame(name, double_line)
     return frame
 end
 
-WINDOW_FRAME = make_frame('Window', true)
-PANEL_FRAME = make_frame('Panel', false)
-MEDIUM_FRAME = make_frame('Medium', false)
-BOLD_FRAME = make_frame('Bold', true)
-INTERIOR_FRAME = make_frame('Thin', false)
-INTERIOR_FRAME.signature_pen = false
-INTERIOR_MEDIUM_FRAME = copyall(MEDIUM_FRAME)
-INTERIOR_MEDIUM_FRAME.signature_pen = false
+FRAME_WINDOW = make_frame('Window', true)
+FRAME_PANEL = make_frame('Panel', false)
+FRAME_MEDIUM = make_frame('Medium', false)
+FRAME_BOLD = make_frame('Bold', true)
+FRAME_INTERIOR = make_frame('Thin', false)
+FRAME_INTERIOR.signature_pen = false
+FRAME_INTERIOR_MEDIUM = copyall(FRAME_MEDIUM)
+FRAME_INTERIOR_MEDIUM.signature_pen = false
 
 -- for compatibility with pre-steam code
-GREY_LINE_FRAME = WINDOW_FRAME
+GREY_LINE_FRAME = FRAME_PANEL
+
+-- for compatibility with deprecated frame naming scheme
+WINDOW_FRAME = FRAME_WINDOW
+PANEL_FRAME = FRAME_PANEL
+MEDIUM_FRAME = FRAME_MEDIUM
+BOLD_FRAME = FRAME_BOLD
+INTERIOR_FRAME = FRAME_INTERIOR
+INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
+
 
 function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     local pen = style.frame_pen
@@ -942,8 +951,8 @@ function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
     local rb_frame_pen = style.rb_frame_pen
-    if rb_frame_pen == WINDOW_FRAME.rb_frame_pen and not resizable then
-        rb_frame_pen = PANEL_FRAME.rb_frame_pen
+    if rb_frame_pen == FRAME_WINDOW.rb_frame_pen and not resizable then
+        rb_frame_pen = FRAME_PANEL.rb_frame_pen
     end
     dscreen.paintTile(rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)

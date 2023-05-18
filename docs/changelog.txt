@@ -62,6 +62,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``overlay.reload()``: has been renamed to ``overlay.rescan()`` so as not to conflict with the global ``reload()`` function. If you are developing an overlay, please take note of the new function name for reloading your overlay during development.
+- `gui.lua`: changed frame naming scheme to `FRAME_X` rather than `X_FRAME`, and added aliases for backwards compatibility. (for example `BOLD_FRAME` is now called `FRAME_BOLD`)
 
 ## Removed
 - `orders`: ``library/military_include_artifact_materials`` library file removed since recent research indicates that platinum blunt weapons and silver crossbows are not more effective than standard steel. the alternate military orders file was also causing unneeded confusion.

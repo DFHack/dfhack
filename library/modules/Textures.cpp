@@ -24,11 +24,11 @@ static long g_red_pin_texpos_start = -1;
 static long g_icons_texpos_start = -1;
 static long g_on_off_texpos_start = -1;
 static long g_control_panel_texpos_start = -1;
-static long g_thin_borders_texpos_start = -1;
-static long g_medium_borders_texpos_start = -1;
-static long g_bold_borders_texpos_start = -1;
-static long g_panel_borders_texpos_start = -1;
-static long g_window_borders_texpos_start = -1;
+static long g_border_thin_texpos_start = -1;
+static long g_border_medium_texpos_start = -1;
+static long g_border_bold_texpos_start = -1;
+static long g_border_panel_texpos_start = -1;
+static long g_border_window_texpos_start = -1;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -132,15 +132,15 @@ void Textures::init(color_ostream &out) {
     g_num_dfhack_textures += load_textures(out, "hack/data/art/control-panel.png",
                                           &g_control_panel_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-thin.png",
-                                          &g_thin_borders_texpos_start);
+                                          &g_border_thin_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-medium.png",
-                                          &g_medium_borders_texpos_start);
+                                          &g_border_medium_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-bold.png",
-                                          &g_bold_borders_texpos_start);
+                                          &g_border_bold_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-panel.png",
-                                          &g_panel_borders_texpos_start);
+                                          &g_border_panel_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-window.png",
-                                          &g_window_borders_texpos_start);
+                                          &g_border_window_texpos_start);
 
     DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
@@ -197,22 +197,22 @@ long Textures::getControlPanelTexposStart() {
     return g_control_panel_texpos_start;
 }
 
-long Textures::getThinBordersTexposStart() {
-    return g_thin_borders_texpos_start;
+long Textures::getBorderThinTexposStart() {
+    return g_border_thin_texpos_start;
 }
 
-long Textures::getMediumBordersTexposStart() {
-    return g_medium_borders_texpos_start;
+long Textures::getBorderMediumTexposStart() {
+    return g_border_medium_texpos_start;
 }
 
-long Textures::getBoldBordersTexposStart() {
-    return g_bold_borders_texpos_start;
+long Textures::getBorderBoldTexposStart() {
+    return g_border_bold_texpos_start;
 }
 
-long Textures::getPanelBordersTexposStart() {
-    return g_panel_borders_texpos_start;
+long Textures::getBorderPanelTexposStart() {
+    return g_border_panel_texpos_start;
 }
 
-long Textures::getWindowBordersTexposStart() {
-    return g_window_borders_texpos_start;
+long Textures::getBorderWindowTexposStart() {
+    return g_border_window_texpos_start;
 }

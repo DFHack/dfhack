@@ -4509,7 +4509,7 @@ Has attributes:
   by 1. The attributes are identical to what is defined in the
   `FramedScreen class`_. When using the predefined frame styles in the ``gui``
   module, remember to ``require`` the gui module and prefix the identifier with
-  ``gui.``, e.g. ``gui.FRAME_GREY_LINE``.
+  ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
 
 Has functions:
 

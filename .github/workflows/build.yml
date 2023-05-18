@@ -139,13 +139,6 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - name: Get 3rd party SDKs
-        uses: actions/checkout@v3
-        with:
-          repository: DFHack/3rdparty
-          ref: main
-          token: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
-          path: depends
       - name: Fetch ccache
         uses: actions/cache@v3
         with:
@@ -156,7 +149,7 @@ jobs:
             ccache-win64-cross-msvc
       - name: Cross-compile win64 artifacts
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1'
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
         run: |
           cd build
           bash -x build-win64-from-linux.sh

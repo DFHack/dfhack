@@ -27,9 +27,9 @@ written by Joel Thornton, reused here with his permission.
 
 For those just looking to apply existing blueprints, check out the `quickfort
 command's documentation <quickfort>` for syntax. There are also many
-ready-to-use blueprints available in the ``blueprints/library`` subfolder in
+ready-to-use blueprints available in the ``hack/data/blueprints`` subfolder in
 your DFHack installation. Browse them on your computer or
-:source:`online <data/blueprints/library>`, or run `gui/quickfort` to browse
+:source:`online <data/blueprints>`, or run `gui/quickfort` to browse
 and apply them to your fort!
 
 Before you become an expert at writing blueprints, though, you should know that
@@ -248,7 +248,7 @@ You can save a lot of time and effort by using aliases instead of adding all
 key sequences directly to your blueprints. For more details, check out the
 `quickfort-alias-guide`. You can also see examples of aliases being used in the
 query blueprints in the
-:source:`DFHack blueprint library <data/blueprints/library>`. You can create
+:source:`DFHack blueprint library <data/blueprints>`. You can create
 your own aliases by adding them to :source:`dfhack-config/quickfort/aliases.txt`
 in your DFHack folder or you can package them
 `together with your blueprint files <quickfort-aliases-blueprints>`.
@@ -1308,7 +1308,7 @@ legacy Python Quickfort. This setting has no effect on DFHack Quickfort, which
 will use buildingplan to manage everything designated in a ``#build`` blueprint
 regardless of the buildingplan UI settings.
 
-However, quickfort *does* use `buildingplan's filters <buildingplan-filters>`
+However, quickfort *does* use `buildingplan's filters <buildingplan>`
 for each building type. For example, you can use the buildingplan UI to set the
 type of stone you want your walls made out of. Or you can specify that all
 buildingplan-managed chairs and tables must be of Masterful quality. The current
@@ -1467,7 +1467,7 @@ Dreamfort organization and packaging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Dreamfort blueprints are distributed with DFHack as
-:source:`one large .csv file <data/blueprints/library/dreamfort.csv>`, but
+:source:`one large .csv file <data/blueprints/dreamfort.csv>`, but
 editing in that format would be frustrating. Instead, the blueprints are
 edited `online as Google drive spreadsheets
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
@@ -1825,7 +1825,7 @@ Links
 -  `blueprint-library-guide`
 -  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`
--  :source:`Blueprint library source <data/blueprints/library>`
+-  :source:`Blueprint library source <data/blueprints>`
 -  :source-scripts:`Quickfort source code <internal/quickfort>`
 
 **Related tools:**

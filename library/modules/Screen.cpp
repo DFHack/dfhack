@@ -130,8 +130,7 @@ static bool doSetTile_map(const Pen &pen, int x, int y) {
     long texpos = pen.tile;
     if (!texpos && pen.ch)
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
-    if (texpos)
-        vp->screentexpos_interface[index] = texpos;
+    vp->screentexpos_interface[index] = texpos;
     return true;
 }
 
@@ -210,7 +209,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         }
     } else if (pen.ch) {
         screen[0] = uint8_t(pen.ch);
-        *texpos_lower = 909; // basic black background
+        *texpos_lower = df::global::init->texpos_border_interior; // basic black background
     }
 
     auto rgb_fg = &gps->uccolor[fg][0];
@@ -877,7 +876,7 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
 
     if (focus.empty())
         focus = "lua";
-    else
+    else if (string::npos == focus.find("lua/"))
         focus = "lua/"+focus;
 }
 

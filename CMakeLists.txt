@@ -61,8 +61,10 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
-        message(SEND_ERROR "MSVC 2022 is required")
+    if(NOT MSVC)
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1935 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1935))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1935 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
@@ -189,8 +191,8 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
 endif()
 
 # set up versioning.
-set(DF_VERSION "50.07")
-set(DFHACK_RELEASE "alpha1")
+set(DF_VERSION "50.08")
+set(DFHACK_RELEASE "r2rc1")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -298,18 +300,22 @@ if(WIN32)
     file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
         DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
 
-    # Do the same for SDLreal.dll
+    # Do the same for SDL.dll
     # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    set(SDLREAL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
+    # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
+    # continue to include it so we don't break Steam players on update by removing
+    # the SDL.dll that DF needs.
+    set(SDL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
     if(${DFHACK_BUILD_ARCH} STREQUAL "64")
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
-            ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+            ${SDL_DOWNLOAD_DIR}/SDL.dll
             "1ae242c4b94cb03756a1288122a66faf")
     else()
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
-            ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+            ${SDL_DOWNLOAD_DIR}/SDL.dll
             "5a09604daca6b2b5ce049d79af935d6a")
     endif()
+
 endif()
 
 if(APPLE)
@@ -369,6 +375,9 @@ if(APPLE)
 endif()
 
 #### expose depends ####
+
+# fix for pyenv: default to `python3` before `python3.x`
+set(Python_FIND_UNVERSIONED_NAMES FIRST)
 
 if(UNIX)
     # Rescan for pthread and zlib if the build arch changed
@@ -613,3 +622,5 @@ if(BUILD_SIZECHECK)
     add_subdirectory(depends/sizecheck)
     add_dependencies(dfhack sizecheck)
 endif()
+
+add_subdirectory(package/windows)

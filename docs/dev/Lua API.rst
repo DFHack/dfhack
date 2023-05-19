@@ -1219,6 +1219,15 @@ Job module
   if there are any jobs with ``first_id <= id < job_next_id``,
   a lua list containing them.
 
+* ``dfhack.job.attachJobItem(job, item, role, filter_idx, insert_idx)``
+
+  Attach a real item to this job. If the item is intended to satisfy a job_item
+  filter, the index of that filter should be passed in ``filter_idx``; otherwise,
+  pass ``-1``. Similarly, if you don't care where the item is inserted, pass
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  If the item needs to be brought to the job site, then the value should be
+  ``df.job_item_ref.T_role.Hauled``.
+
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
   Does basic sanity checks to verify if the suggested item type matches
@@ -1579,6 +1588,24 @@ Units module
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
+
+Military module
+~~~~~~~~~~~~~~~~~~~
+
+* ``dfhack.military.makeSquad(assignment_id)``
+
+  Creates a new squad associated with the assignment (ie ``df::entity_position_assignment``, via ``id``) and returns it.
+  Fails if a squad already exists that is associated with that assignment, or if the assignment is not a fort mode player controlled squad.
+  Note: This function does not name the squad: consider setting a nickname (under ``squad.name.nickname``), and/or filling out the ``language_name`` object at ``squad.name``.
+  The returned squad is otherwise complete and requires no more setup to work correctly.
+
+* ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
+
+  Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks.
+
+* ``dfhack.military.getSquadName(squad_id)``
+
+  Returns the name of a squad as a string.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~
@@ -3757,6 +3784,12 @@ Misc
   Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
 
 
+* ``invert_color(color, bold)``
+
+  This inverts the brightness of ``color``. If this color is coming from a pen's
+  foreground color, include ``pen.bold`` in ``bold`` for this to work properly.
+
+
 ViewRect class
 --------------
 
@@ -4290,6 +4323,13 @@ Here is an example skeleton for a ZScreen tool window::
 
     view = view and view:raise() or MyScreen{}:show()
 
+ZScreenModal class
+------------------
+
+A ZScreen convenience subclass that sets the attributes to something
+appropriate for modal dialogs. The game is force paused, and no input is passed
+through to the underlying viewscreens.
+
 FramedScreen class
 ------------------
 
@@ -4307,21 +4347,34 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``WINDOW_FRAME``
+* ``FRAME_WINDOW``
 
   A frame suitable for a draggable, optionally resizable window.
 
-* ``PANEL_FRAME``
+* ``FRAME_PANEL``
 
   A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``MEDIUM_FRAME``
+* ``FRAME_MEDIUM``
 
   A frame suitable for overlay widget panels.
 
-* ``THIN_FRAME``
+* ``FRAME_BOLD``
 
-  A frame suitable for light accent elements.
+  A frame suitable for a non-draggable panel meant to capture the user's focus,
+  like an important notification, confirmation dialog or error message.
+
+* ``FRAME_INTERIOR``
+
+  A frame suitable for light interior accent elements. This frame does *not*
+  have a visible ``DFHack`` signature on it, so it must not be used as the most
+  external frame for a DFHack-owned UI.
+
+* ``FRAME_INTERIOR_MEDIUM``
+
+  A copy of ``FRAME_MEDIUM`` that lacks the ``DFHack`` signature. Suitable for
+  panels that are part of a larger widget cluster. Must *not* be used as the
+  most external frame for a DFHack-owned UI.
 
 gui.widgets
 ===========
@@ -4662,7 +4715,9 @@ It has the following attributes:
 
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
-:text_hpen: Specifies the pen for text hovered over by the mouse, if a click handler is registered.
+:text_hpen: Specifies the pen for text hovered over by the mouse, if a click
+            handler is registered. By default, this will invert the foreground
+            and background colors.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
@@ -4694,10 +4749,12 @@ containing newlines, or a table with the following possible fields:
   Specifies the number of character positions to advance on the line
   before rendering the token.
 
-* ``token.tile = pen``
+* ``token.tile``, ``token.htile``
 
-  Specifies a pen or texture index to paint as one tile before the main part of
-  the token.
+  Specifies a pen or texture index (or a function that returns a pen or texture
+  index) to paint as one tile before the main part of the token. If ``htile``
+  is specified, that is used instead of ``tile`` when the Label is hovered over
+  with the mouse.
 
 * ``token.width = ...``
 
@@ -4725,10 +4782,10 @@ containing newlines, or a table with the following possible fields:
 
   Same as the attributes of the label itself, but applies only to the token.
 
-* ``token.pen``, ``token.dpen``
+* ``token.pen``, ``token.dpen``, ``token.hpen``
 
-  Specify the pen and disabled pen to be used for the token's text.
-  The field may be either the pen itself, or a callback that returns it.
+  Specify the pen, disabled pen, and hover pen to be used for the token's text.
+  The fields may be either the pen itself, or a callback that returns it.
 
 * ``token.on_activate``
 
@@ -4768,6 +4825,18 @@ The Label widget implements the following methods:
   integers or one of the following keywords: ``+page``, ``-page``,
   ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
   lines that were actually scrolled (negative for scrolling up).
+
+* ``label:shouldHover()``
+
+  This method returns whether or not this widget should show a hover effect,
+  generally you want to return ``true`` if there is some type of mouse handler
+  present. For example, for a ``HotKeyLabel``::
+
+    function HotkeyLabel:shouldHover()
+        -- When on_activate is set, text should also hover on mouseover
+        return HotkeyLabel.super.shouldHover(self) or self.on_activate
+    end
+
 
 WrappedLabel class
 ------------------
@@ -4843,13 +4912,20 @@ It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
 :key_back: Similar to ``key``, but will cycle backwards (optional)
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation.
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
+:label_below: If ``true``, then the option value will appear below the label
+    instead of to the right of it. Defaults to ``false``.
+:option_gap: The size of the gap between the label text and the option value.
+    Default is ``1``. If set to ``0``, there'll be no gap between the strings.
+    If ``label_below`` == ``true``, negative values will shift the value leftwards.
 :options: A list of strings or tables of
-    ``{label=string, value=string[, pen=pen]}``. String options use the same
-    string for the label and value and the default pen. The optional ``pen``
+    ``{label=string or fn, value=val[, pen=pen]}``. String options use the same
+    string for the label and value and use the default pen. The optional ``pen``
     element could be a color like ``COLOR_RED``.
 :initial_option: The value or numeric index of the initial option.
 :on_change: The callback to call when the selected option changes. It is called
@@ -4903,6 +4979,8 @@ item to call the ``on_submit`` callback for that item.
 It has the following attributes:
 
 :text_pen: Specifies the pen for deselected list entries.
+:text_hpen: Specifies the pen for entries that the mouse is hovered over.
+            Defaults to swapping the background/foreground colors.
 :cursor_pen: Specifies the pen for the selected entry.
 :inactive_pen: If specified, used for the cursor when the widget is not active.
 :icon_pen: Default pen for icons.
@@ -4983,7 +5061,7 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
-:case_sensitive: If true, matching is case sensitive. Defaults to true.
+:case_sensitive: If ``true``, matching is case sensitive. Defaults to ``false``.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
@@ -5028,6 +5106,65 @@ The widget implements:
 
   Same as with an ordinary list.
 
+Filter behavior:
+
+By default, the filter matches substrings that start at the beginning of a word
+(or after any punctuation). You can instead configure filters to match any
+substring with a command like::
+
+  :lua require('gui.widgets').FILTER_FULL_TEXT=true
+
+TabBar class
+------------
+
+This widget implements a set of one or more tabs to allow navigation between groups of content. Tabs automatically wrap on
+the width of the window and will continue rendering on the next line(s) if all tabs cannot fit on a single line.
+
+:key: Specifies a keybinding that can be used to switch to the next tab.
+      Defaults to ``CUSTOM_CTRL_T``.
+:key_back: Specifies a keybinding that can be used to switch to the previous
+      tab. Defaults to ``CUSTOM_CTRL_Y``.
+:labels: A table of strings; entry representing the label text for a single tab. The order of the entries
+         determines the order the tabs will appear in.
+:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. The provided function
+            should update the value of whichever variable your script uses to keep track of the currently selected tab.
+:get_cur_page: The function used by the TabBar to determine which Tab is currently selected. The function you provide should
+               return an integer that corresponds to the non-zero index of the currently selected Tab (i.e. whatever variable
+               you update in your ``on_select`` callback)
+:active_tab_pens: A table of pens used to render active tabs. See the default implementation in widgets.lua for an example
+                  of how to construct the table. Leave unspecified to use the default pens.
+:inactive_tab_pens: A table of pens used to render inactive tabs. See the default implementation in widgets.lua for an example
+                    of how to construct the table. Leave unspecified to use the default pens.
+:get_pens: A function used to determine which pens should be used to render a tab. Receives the index of the tab as the first
+           argument and the TabBar widget itself as the second. The default implementation, which will handle most situations,
+           returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``, otherwise returns ``self.inactive_tab_pens``.
+
+Tab class
+---------
+
+This widget implements a single clickable tab and is the main component of the TabBar widget. Usage of the ``TabBar``
+widget does not require direct usage of ``Tab``.
+
+:id: The id of the tab.
+:label: The text displayed on the tab.
+:on_select: Callback executed when the tab is selected.
+:get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
+           usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
+           in ``TabBar`` for an example of how to construct pens.
+
+RangeSlider class
+-----------------
+
+This widget implements a mouse-interactable range-slider. The player can move its two handles to set minimum and maximum values
+to define a range, or they can drag the bar itself to move both handles at once.
+The parent widget owns the range values, and can control them independently (e.g. with ``CycleHotkeyLabels``). If the range values change, the ``RangeSlider`` appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
+            (this should match the parents' number of options)
+:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which to display the left handle.
+:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
+:on_left_change: Callback executed when moving the left handle.
+:on_right_change: Callback executed when moving the right handle.
 
 .. _lua-plugins:
 

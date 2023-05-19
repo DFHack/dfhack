@@ -14,7 +14,7 @@ using namespace DFHack;
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
 static const std::vector<std::string> SDL_LIBS {
-    "SDLreal.dll", // TODO: change to SDL.dll once we move to dfhooks
+    "SDL.dll",
     "SDL.framework/Versions/A/SDL",
     "SDL.framework/SDL",
     "libSDL-1.2.so.0"
@@ -28,12 +28,15 @@ static const std::vector<std::string> SDL_IMAGE_LIBS {
 
 DFSDL_Surface * (*g_IMG_Load)(const char *) = nullptr;
 int (*g_SDL_SetAlpha)(DFSDL_Surface *, uint32_t, uint8_t) = nullptr;
-DFSDL_Surface * (*g_SDL_CreateRGBSurface)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t);
-int (*g_SDL_UpperBlit)(DFSDL_Surface *, const DFSDL_Rect *, DFSDL_Surface *, DFSDL_Rect *);
-DFSDL_Surface * (*g_SDL_ConvertSurface)(DFSDL_Surface *, const DFSDL_PixelFormat *, uint32_t);
-void (*g_SDL_FreeSurface)(DFSDL_Surface *);
-int (*g_SDL_SemWait)(DFSDL_sem *);
-int (*g_SDL_SemPost)(DFSDL_sem *);
+DFSDL_Surface * (*g_SDL_GetVideoSurface)(void) = nullptr;
+DFSDL_Surface * (*g_SDL_CreateRGBSurface)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t) = nullptr;
+DFSDL_Surface * (*g_SDL_CreateRGBSurfaceFrom)(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = nullptr;
+int (*g_SDL_UpperBlit)(DFSDL_Surface *, const DFSDL_Rect *, DFSDL_Surface *, DFSDL_Rect *) = nullptr;
+DFSDL_Surface * (*g_SDL_ConvertSurface)(DFSDL_Surface *, const DFSDL_PixelFormat *, uint32_t) = nullptr;
+void (*g_SDL_FreeSurface)(DFSDL_Surface *) = nullptr;
+int (*g_SDL_SemWait)(DFSDL_sem *) = nullptr;
+int (*g_SDL_SemPost)(DFSDL_sem *) = nullptr;
+int (*g_SDL_PushEvent)(DFSDL_Event *) = nullptr;
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -63,12 +66,15 @@ bool DFSDL::init(color_ostream &out) {
 
     bind(g_sdl_image_handle, IMG_Load);
     bind(g_sdl_handle, SDL_SetAlpha);
+    bind(g_sdl_handle, SDL_GetVideoSurface);
     bind(g_sdl_handle, SDL_CreateRGBSurface);
+    bind(g_sdl_handle, SDL_CreateRGBSurfaceFrom);
     bind(g_sdl_handle, SDL_UpperBlit);
     bind(g_sdl_handle, SDL_ConvertSurface);
     bind(g_sdl_handle, SDL_FreeSurface);
     bind(g_sdl_handle, SDL_SemWait);
     bind(g_sdl_handle, SDL_SemPost);
+    bind(g_sdl_handle, SDL_PushEvent);
     #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -95,8 +101,16 @@ int DFSDL::DFSDL_SetAlpha(DFSDL_Surface *surface, uint32_t flag, uint8_t alpha) 
     return g_SDL_SetAlpha(surface, flag, alpha);
 }
 
+DFSDL_Surface * DFSDL::DFSDL_GetVideoSurface(void) {
+    return g_SDL_GetVideoSurface();
+}
+
 DFSDL_Surface * DFSDL::DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) {
     return g_SDL_CreateRGBSurface(flags, width, height, depth, Rmask, Gmask, Bmask, Amask);
+}
+
+DFSDL_Surface * DFSDL::DFSDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) {
+    return g_SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
 }
 
 int DFSDL::DFSDL_UpperBlit(DFSDL_Surface *src, const DFSDL_Rect *srcrect, DFSDL_Surface *dst, DFSDL_Rect *dstrect) {
@@ -117,4 +131,8 @@ int DFSDL::DFSDL_SemWait(DFSDL_sem *sem) {
 
 int DFSDL::DFSDL_SemPost(DFSDL_sem *sem) {
     return g_SDL_SemPost(sem);
+}
+
+int DFSDL::DFSDL_PushEvent(DFSDL_Event *event) {
+    return g_SDL_PushEvent(event);
 }

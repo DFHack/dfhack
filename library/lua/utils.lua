@@ -2,9 +2,9 @@ local _ENV = mkmodule('utils')
 
 local df = df
 
-function getval(obj)
+function getval(obj, ...)
     if type(obj) == 'function' then
-        return obj()
+        return obj(...)
     else
         return obj
     end

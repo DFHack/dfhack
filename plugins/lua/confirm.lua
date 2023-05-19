@@ -12,10 +12,11 @@ setmetatable(keys, {
 -- Mouse keys will be sent as a string instead of interface_key
 local MOUSE_LEFT = "MOUSE_LEFT"
 local MOUSE_RIGHT = "MOUSE_RIGHT"
+
 --[[ The screen where a confirmation has been triggered
 Note that this is *not* necessarily the topmost viewscreen, so do not use
 gui.getCurViewscreen() or related functions. ]]
-screen = nil
+--screen = nil
 
 function if_nil(obj, default)
     if obj == nil then
@@ -118,7 +119,9 @@ zone_remove.message = "Are you sure you want to remove this zone?"
 
 burrow_remove = defconf('burrow-remove')
 function burrow_remove.intercept_key(key)
-    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 171
+    return key == MOUSE_LEFT and
+        (df.global.game.main_interface.current_hover == 171 or
+         df.global.game.main_interface.current_hover == 168)
 end
 burrow_remove.title = "Remove burrow"
 burrow_remove.message = "Are you sure you want to remove this burrow?"

@@ -55,6 +55,7 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Military.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
@@ -1659,6 +1660,7 @@ static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
 }
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
+    WRAPM(Job,attachJobItem),
     WRAPM(Job,cloneJobStruct),
     WRAPM(Job,printItemDetails),
     WRAPM(Job,printJobDetails),
@@ -1716,6 +1718,7 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getControlPanelTexposStart),
     WRAPM(Textures, getThinBordersTexposStart),
     WRAPM(Textures, getMediumBordersTexposStart),
+    WRAPM(Textures, getBoldBordersTexposStart),
     WRAPM(Textures, getPanelBordersTexposStart),
     WRAPM(Textures, getWindowBordersTexposStart),
     { NULL, NULL }
@@ -1811,7 +1814,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getGoalType),
     WRAPM(Units, getGoalName),
     WRAPM(Units, isGoalAchieved),
-    WRAPM(Units, getSquadName),
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1933,6 +1935,15 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
     { "getStressCutoffs", units_getStressCutoffs },
+    { NULL, NULL }
+};
+
+/***** Military Module *****/
+
+static const LuaWrapper::FunctionReg dfhack_military_module[] = {
+    WRAPM(Military, makeSquad),
+    WRAPM(Military, updateRoomAssignments),
+    WRAPM(Military, getSquadName),
     { NULL, NULL }
 };
 
@@ -2718,13 +2729,9 @@ static int filesystem_listdir_recursive(lua_State *L)
         include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
-    if (err)
-    {
+    if (err != 0 && err != -1) {
         lua_pushnil(L);
-        if (err == -1)
-            lua_pushfstring(L, "max depth exceeded: %d", depth);
-        else
-            lua_pushstring(L, strerror(err));
+        lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
         return 3;
     }
@@ -3446,6 +3453,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_module);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
+    OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);

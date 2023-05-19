@@ -8,6 +8,7 @@
 #include <modules/Screen.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
+#include <modules/Military.h>
 #include <modules/Filesystem.h>
 #include <modules/Job.h>
 #include <vector>
@@ -1305,7 +1306,7 @@ void viewscreen_unitlaborsst::refreshNames()
             cur->job_mode = UnitInfo::JOB;
         }
         if (unit->military.squad_id > -1) {
-            cur->squad_effective_name = Units::getSquadName(unit);
+            cur->squad_effective_name = Military::getSquadName(unit->military.squad_id);
             cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + cur->squad_effective_name;
         } else {
             cur->squad_effective_name = "";

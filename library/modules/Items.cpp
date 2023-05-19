@@ -720,7 +720,14 @@ df::coord Items::getPosition(df::item *item)
     return item->pos;
 }
 
-static char quality_table[] = { 0, '-', '+', '*', '=', '@' };
+static const char quality_table[] = {
+    '\0',   // (base)
+    '-',    // well-crafted
+    '+',    // finely-crafted
+    '*',    // superior quality
+    '\xF0', // (≡) exceptional
+    '\x0F'  // (☼) masterful
+};
 
 static void addQuality(std::string &tmp, int quality)
 {
@@ -825,7 +832,7 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
         addQuality(tmp, item->getQuality());
 
         if (item->isImproved()) {
-            tmp = "<" + tmp + ">";
+            tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
             addQuality(tmp, item->getImprovementQuality());
         }
     }
@@ -1647,5 +1654,5 @@ bool Items::isSquadEquipment(df::item *item)
         return false;
 
     auto &vec = plotinfo->equipment.items_assigned[item->getType()];
-    return binsearch_index(vec, &df::item::id, item->id) >= 0;
+    return binsearch_index(vec, item->id) >= 0;
 }

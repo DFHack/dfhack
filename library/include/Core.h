@@ -108,19 +108,6 @@ namespace DFHack
     // Better than tracking some weird variables all over the place.
     class DFHACK_EXPORT Core
     {
-#ifdef _DARWIN
-        friend int  ::DFH_SDL_NumJoysticks(void);
-        friend void ::DFH_SDL_Quit(void);
-        friend int  ::DFH_SDL_PollEvent(SDL::Event *);
-        friend int  ::DFH_SDL_Init(uint32_t flags);
-        friend int  ::DFH_wgetch(WINDOW * w);
-#else
-        friend int  ::SDL_NumJoysticks(void);
-        friend void ::SDL_Quit(void);
-        friend int  ::SDL_PollEvent(SDL::Event *);
-        friend int  ::SDL_Init(uint32_t flags);
-        friend int  ::wgetch(WINDOW * w);
-#endif
         friend void ::dfhooks_init();
         friend void ::dfhooks_shutdown();
         friend void ::dfhooks_update();
@@ -158,6 +145,7 @@ namespace DFHack
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 
         bool addScriptPath(std::string path, bool search_before = false);
+        bool setModScriptPaths(const std::vector<std::string> &mod_script_paths);
         bool removeScriptPath(std::string path);
         std::string findScript(std::string name);
         void getScriptPaths(std::vector<std::string> *dest);
@@ -173,7 +161,7 @@ namespace DFHack
         bool RunAlias(color_ostream &out, const std::string &name,
             const std::vector<std::string> &parameters, command_result &result);
         std::map<std::string, std::vector<std::string>> ListAliases();
-        std::string GetAliasCommand(const std::string &name, const std::string &default_ = "");
+        std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
         std::string getHackPath();
 
@@ -203,10 +191,11 @@ namespace DFHack
         struct Private;
         std::unique_ptr<Private> d;
 
-        bool Init();
+        bool InitMainThread();
+        bool InitSimulationThread();
         int Update (void);
         int Shutdown (void);
-        int DFH_SDL_Event(SDL::Event* event);
+        bool DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 
@@ -239,7 +228,7 @@ namespace DFHack
         std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
-        std::vector<std::string> script_paths[2];
+        std::vector<std::string> script_paths[3];
         std::mutex script_path_mutex;
 
         // hotkey-related stuff

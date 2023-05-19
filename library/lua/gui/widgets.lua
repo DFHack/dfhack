@@ -1660,6 +1660,15 @@ function List:setChoices(choices, selected)
     end
 
     self:setSelected(selected)
+
+    -- Check if page_top needs to be adjusted
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    elseif self.selected <= (self.page_size // 2) then
+        self.page_top = 1
+    elseif self.selected >= #self.choices - (self.page_size // 2) then
+        self.page_top = #self.choices - self.page_size + 1
+    end
 end
 
 function List:setSelected(selected)
@@ -1700,10 +1709,26 @@ local function update_list_scrollbar(list)
 end
 
 function List:postComputeFrame(body)
-    self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    if #self.choices - self.page_size < 0 then
+    local row_count = body.height // self.row_height
+    self.page_size = math.max(1, row_count)
+
+    local num_choices = #self.choices
+    if num_choices == 0 then
         self.page_top = 1
+        update_list_scrollbar(self)
+        return
     end
+
+    local max_page_top = math.max(1, num_choices - row_count + 1)
+
+    if self.selected > num_choices - row_count then
+        self.page_top = max_page_top
+    elseif self.selected < self.page_top then
+        self.page_top = self.selected
+    else
+        self.page_top = math.max(1, self.selected - row_count + 1)
+    end
+
     update_list_scrollbar(self)
 end
 

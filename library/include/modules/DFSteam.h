@@ -24,9 +24,9 @@ bool init(DFHack::color_ostream& out);
 /**
  * Call this when DFHack is being unloaded.
  */
-void cleanup();
+void cleanup(DFHack::color_ostream& out);
 
-DFHACK_EXPORT bool DFIsSteamRunningOnSteamDeck();
+DFHACK_EXPORT void launchSteamDFHackIfNecessary(DFHack::color_ostream& out);
 
 }
 }

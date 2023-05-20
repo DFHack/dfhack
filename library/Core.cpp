@@ -1682,8 +1682,10 @@ bool Core::InitSimulationThread()
         fatal("cannot bind SDL libraries");
         return false;
     }
-    if (DFSteam::init(con))
+    if (DFSteam::init(con)) {
         std::cerr << "Found Steam.\n";
+        DFSteam::launchSteamDFHackIfNecessary(con);
+    }
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
     // create mutex for syncing with interactive tasks
@@ -2291,7 +2293,7 @@ int Core::Shutdown ( void )
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
-    DFSteam::cleanup();
+    DFSteam::cleanup(getConsole());
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;

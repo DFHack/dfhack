@@ -113,6 +113,24 @@ DWORD findDwarfFortressProcess()
     return -1;
 }
 
+bool waitForDF() {
+    DWORD df_pid = findDwarfFortressProcess();
+
+    if (df_pid == -1)
+        return false;
+
+    HANDLE hDF = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, df_pid);
+
+    // in the future open an IPC connection so that we can proxy SteamAPI calls for the DFSteam module
+
+    // this will eventuallyh need to become a loop with a WaitForMultipleObjects call
+    WaitForSingleObject(hDF, INFINITE);
+
+    CloseHandle(hDF);
+
+    return true;
+}
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nShowCmd) {
 
     // initialize steam context
@@ -120,6 +138,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     {
         exit(0);
     }
+
+    if (waitForDF())
+        exit(0);
 
     if (!SteamAPI_Init())
     {
@@ -187,37 +208,25 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         exit(1);
     }
 
-    DWORD df_pid = findDwarfFortressProcess();
+    if (waitForDF())
+        exit(0);
 
-    if (df_pid == -1)
+    LPCWSTR err = launch_via_steam_windows();
+    if (err != NULL)
     {
-        LPCWSTR err = launch_via_steam_windows();
-        if (err != NULL)
-        {
-            MessageBoxW(NULL, err, NULL, 0);
-            exit(1);
-        }
-        int counter = 0;
-
-        do {
-            if (counter++ > 60)
-            {
-                MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);
-                exit(1);
-            }
-            Sleep(1000);
-            df_pid = findDwarfFortressProcess();
-        } while (df_pid == -1);
+        MessageBoxW(NULL, err, NULL, 0);
+        exit(1);
     }
 
-    HANDLE hDF = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, df_pid);
-
-    // in the future open an IPC connection so that we can proxy SteamAPI calls for the DFSteam module
-
-    // this will eventuallyh need to become a loop with a WaitForMultipleObjects call
-    WaitForSingleObject(hDF, INFINITE);
-
-    CloseHandle(hDF);
+    int counter = 0;
+    while (!waitForDF()) {
+        if (counter++ > 60)
+        {
+            MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);
+            exit(1);
+        }
+        Sleep(1000);
+    }
 
     exit(0);
 }

@@ -64,6 +64,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 
+## Internals
+- ``dfhack.internal``: added memory analysis functions: ``msizeAddress``, ``getHeapState``, ``heapTakeSnapshot``, ``isAddressInHeap``, ``isAddressActiveInHeap``, ``isAddressUsedAfterFreeInHeap``, ``getAddressSizeInHeap``, and ``getRootAddressOfHeapObject``
+
 ## Lua
 - ``overlay.reload()``: has been renamed to ``overlay.rescan()`` so as not to conflict with the global ``reload()`` function. If you are developing an overlay, please take note of the new function name for reloading your overlay during development.
 - ``gui``: changed frame naming scheme to ``FRAME_X`` rather than ``X_FRAME``, and added aliases for backwards compatibility. (for example ``BOLD_FRAME`` is now called ``FRAME_BOLD``)

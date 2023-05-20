@@ -57,6 +57,7 @@ using namespace std;
 #include "df/flow_info.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #include "df/region_map_entry.h"

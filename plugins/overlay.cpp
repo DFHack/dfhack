@@ -13,6 +13,7 @@
 #include "df/viewscreen_titlest.h"
 #include "df/viewscreen_update_regionst.h"
 #include "df/viewscreen_worldst.h"
+#include "df/world.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -26,6 +27,8 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     DBG_DECLARE(overlay, control, DebugCategory::LINFO);
@@ -67,13 +70,16 @@ struct viewscreen_overlay : T {
     }
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
         bool input_is_handled = false;
-        call_overlay_lua(NULL, "feed_viewscreen_widgets", 2, 1,
-                [&](lua_State *L) {
-                    Lua::Push(L, T::_identity.getName());
-                    Lua::PushInterfaceKeys(L, *input);
-                }, [&](lua_State *L) {
-                    input_is_handled = lua_toboolean(L, -1);
-                });
+        // don't send input to the overlays if there is a modal dialog up
+        if (!world->status.popups.size())
+            call_overlay_lua(NULL, "feed_viewscreen_widgets", 3, 1,
+                    [&](lua_State *L) {
+                        Lua::Push(L, T::_identity.getName());
+                        Lua::Push(L, this);
+                        Lua::PushInterfaceKeys(L, *input);
+                    }, [&](lua_State *L) {
+                        input_is_handled = lua_toboolean(L, -1);
+                    });
         if (!input_is_handled)
             INTERPOSE_NEXT(feed)(input);
     }
@@ -122,7 +128,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable) {
         screenSize = Screen::getWindowSize();
-        call_overlay_lua(&out, "reload");
+        call_overlay_lua(&out, "rescan");
     }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");

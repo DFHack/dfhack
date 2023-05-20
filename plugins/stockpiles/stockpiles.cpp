@@ -1,153 +1,154 @@
+#include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "StockpileUtils.h"
 #include "StockpileSerializer.h"
 
 #include "modules/Filesystem.h"
-#include "modules/Gui.h"
 
-using std::vector;
+#include "df/building.h"
+#include "df/building_stockpilest.h"
+
+#include <string>
+#include <vector>
+
 using std::string;
+using std::vector;
 
 using namespace DFHack;
 
 DFHACK_PLUGIN("stockpiles");
 
-static command_result savestock ( color_ostream &out, vector <string> & parameters );
-static command_result loadstock ( color_ostream &out, vector <string> & parameters );
+REQUIRE_GLOBAL(world);
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands )
-{
+namespace DFHack {
+    DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
+}
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(log,out).print("initializing %s\n", plugin_name);
+
     commands.push_back(PluginCommand(
-        "savestock",
-        "Save the active stockpile's settings to a file.",
-        savestock,
-        Gui::any_stockpile_hotkey));
-    commands.push_back(PluginCommand(
-        "loadstock",
-        "Load and apply stockpile settings from a file.",
-        loadstock,
-        Gui::any_stockpile_hotkey));
+        plugin_name,
+        "Import, export, or modify stockpile settings and features.",
+        do_command));
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
+static bool call_stockpiles_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(log).print("calling stockpiles lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.stockpiles", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
 }
 
-//  exporting
-static command_result savestock ( color_ostream &out, vector <string> & parameters )
-{
-    df::building_stockpilest *sp = Gui::getSelectedStockpile(out, true);
-    if ( !sp )
-    {
-        out.printerr ( "Selected building isn't a stockpile.\n" );
-        return CR_WRONG_USAGE;
-    }
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
 
-    if ( parameters.size() > 2 )
-    {
-        out.printerr ( "Invalid parameters\n" );
-        return CR_WRONG_USAGE;
-    }
-
-    bool debug = false;
-    std::string file;
-    for ( size_t i = 0; i < parameters.size(); ++i )
-    {
-        const std::string o = parameters.at ( i );
-        if ( o == "--debug"  ||  o ==  "-d" )
-            debug =  true;
-        else  if ( !o.empty() && o[0] !=  '-' )
-        {
-            file = o;
-        }
-    }
-    if ( file.empty() )
-    {
-        out.printerr ( "You must supply a valid filename.\n" );
-        return CR_WRONG_USAGE;
-    }
-
-    StockpileSerializer cereal ( sp );
-    if ( debug )
-        cereal.enable_debug ( out );
-
-    if ( !is_dfstockfile ( file ) ) file += ".dfstock";
-    try
-    {
-        if ( !cereal.serialize_to_file ( file ) )
-        {
-            out.printerr ( "could not save to %s\n", file.c_str() );
-            return CR_FAILURE;
-        }
-    }
-    catch ( std::exception &e )
-    {
-        out.printerr ( "serialization failed: protobuf exception: %s\n", e.what() );
+    bool show_help = false;
+    if (!call_stockpiles_lua(&out, "parse_commandline", 1, 1,
+            [&](lua_State *L) {
+                Lua::PushVector(L, parameters);
+            },
+            [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
         return CR_FAILURE;
     }
 
-    return CR_OK;
+    return show_help ? CR_WRONG_USAGE : CR_OK;
 }
 
+/////////////////////////////////////////////////////
+// Lua API
+//
 
-// importing
-static command_result loadstock ( color_ostream &out, vector <string> & parameters )
-{
-    df::building_stockpilest *sp = Gui::getSelectedStockpile(out, true);
-    if ( !sp )
-    {
-        out.printerr ( "Selected building isn't a stockpile.\n" );
-        return CR_WRONG_USAGE;
-    }
-
-    if ( parameters.size() < 1 ||  parameters.size() > 2 )
-    {
-        out.printerr ( "Invalid parameters\n" );
-        return CR_WRONG_USAGE;
-    }
-
-    bool debug = false;
-    std::string file;
-    for ( size_t i = 0; i < parameters.size(); ++i )
-    {
-        const std::string o = parameters.at ( i );
-        if ( o == "--debug"  ||  o ==  "-d" )
-            debug =  true;
-        else  if ( !o.empty() && o[0] !=  '-' )
-        {
-            file = o;
-        }
-    }
-    if ( file.empty() ) {
-        out.printerr ( "ERROR: missing .dfstock file parameter\n");
-        return DFHack::CR_WRONG_USAGE;
-    }
-    if ( !is_dfstockfile ( file ) )
-        file += ".dfstock";
-    if ( !Filesystem::exists ( file ) )
-    {
-        out.printerr ( "ERROR: the .dfstock file doesn't exist: %s\n",  file.c_str());
-        return CR_WRONG_USAGE;
-    }
-
-    StockpileSerializer cereal ( sp );
-    if ( debug )
-        cereal.enable_debug ( out );
-    try
-    {
-        if ( !cereal.unserialize_from_file ( file ) )
-        {
-            out.printerr ( "unserialization failed: %s\n", file.c_str() );
-            return CR_FAILURE;
-        }
-    }
-    catch ( std::exception &e )
-    {
-        out.printerr ( "unserialization failed: protobuf exception: %s\n", e.what() );
-        return CR_FAILURE;
-    }
-    return CR_OK;
+static df::building_stockpilest* get_stockpile(int id) {
+    return virtual_cast<df::building_stockpilest>(df::building::find(id));
 }
+
+static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t includedElements) {
+    df::building_stockpilest* sp = get_stockpile(id);
+    if (!sp) {
+        out.printerr("Specified building isn't a stockpile: %d.\n", id);
+        return false;
+    }
+
+    if (!is_dfstockfile(fname))
+        fname += ".dfstock";
+
+    try {
+        StockpileSerializer cereal(sp);
+        if (!cereal.serialize_to_file(fname, includedElements)) {
+            out.printerr("could not save to '%s'\n", fname.c_str());
+            return false;
+        }
+    }
+    catch (std::exception& e) {
+        out.printerr("serialization failed: protobuf exception: %s\n", e.what());
+        return false;
+    }
+
+    return true;
+}
+
+static bool stockpiles_import(color_ostream& out, string fname, int id, string mode_str, string filter) {
+    df::building_stockpilest* sp = get_stockpile(id);
+    if (!sp) {
+        out.printerr("Specified building isn't a stockpile: %d.\n", id);
+        return false;
+    }
+
+    if (!is_dfstockfile(fname))
+        fname += ".dfstock";
+
+    if (!Filesystem::exists(fname)) {
+        out.printerr("ERROR: file doesn't exist: '%s'\n", fname.c_str());
+        return false;
+    }
+
+    DeserializeMode mode = DESERIALIZE_MODE_SET;
+    if (mode_str == "enable")
+        mode = DESERIALIZE_MODE_ENABLE;
+    else if (mode_str == "disable")
+        mode = DESERIALIZE_MODE_DISABLE;
+
+    vector<string> filters;
+    split_string(&filters, filter, ",", true);
+
+    try {
+        StockpileSerializer cereal(sp);
+        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+            out.printerr("deserialization failed: '%s'\n", fname.c_str());
+            return false;
+        }
+    }
+    catch (std::exception& e) {
+        out.printerr("deserialization failed: protobuf exception: %s\n", e.what());
+        return false;
+    }
+
+    return true;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(stockpiles_export),
+    DFHACK_LUA_FUNCTION(stockpiles_import),
+    DFHACK_LUA_END
+};

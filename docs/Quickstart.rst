@@ -5,19 +5,19 @@ Quickstart guide
 
 Welcome to DFHack! This guide will help get you oriented with the DFHack system
 and teach you how to find and use the tools productively. If you're reading this
-in `quickstart-guide`, hit the right arrow key or click on the hotkey hint in
-the lower right corner of the window to go to the next page.
+in the in-game `quickstart-guide` reader, hit the right arrow key or click on
+the hotkey hint in the lower right corner of the window to go to the next page.
 
 What is DFHack?
 ---------------
 
-DFHack is a framework for Dwarf Fortress that provides a unified, cross-platform
-environment that enables mods and tools to significantly extend the game. The
-default DFHack distribution contains a wide variety of tools, including bugfixes,
-interface improvements, automation agents, design blueprints, modding building
-blocks, and more. Third-party tools (e.g. mods downloaded from Steam Workshop or
-the forums) can also seamlessly integrate with the DFHack framework and extend
-the game far beyond what can be done by just modding the raws.
+DFHack is an add-on for Dwarf Fortress that enables mods and tools to
+significantly extend the game. The default DFHack distribution contains a wide
+variety of tools, including bugfixes, interface improvements, automation agents,
+design blueprints, modding building blocks, and more. Third-party tools (e.g.
+mods downloaded from Steam Workshop or the forums) can also seamlessly integrate
+with the DFHack framework and extend the game far beyond what can be done by
+just modding the raws.
 
 DFHack's mission is to provide tools and interfaces for players and modders to:
 
@@ -162,7 +162,7 @@ You can run them all from the launcher.
 
 First, let's import some useful manager orders to keep your fort stocked with
 basic necessities. Run ``orders import library/basic``. If you go to your
-mangager orders screen, you can see all the orders that have been created for you.
+manager orders screen, you can see all the orders that have been created for you.
 Note that you could have imported the orders directly from this screen as well,
 using the DFHack `overlay` widget at the bottom of the manager orders panel.
 

@@ -6,6 +6,7 @@
 
 namespace DFHack {
     DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, cycle);
 }
 
 using std::set;
@@ -34,7 +35,7 @@ bool ItemFilter::isEmpty() const {
             && materials.empty();
 }
 
-static bool deserializeMaterialMask(string ser, df::dfhack_material_category mat_mask) {
+static bool deserializeMaterialMask(const string& ser, df::dfhack_material_category& mat_mask) {
     if (ser.empty())
         return true;
 
@@ -45,7 +46,7 @@ static bool deserializeMaterialMask(string ser, df::dfhack_material_category mat
     return true;
 }
 
-static bool deserializeMaterials(string ser, set<DFHack::MaterialInfo> &materials) {
+static bool deserializeMaterials(const string& ser, set<DFHack::MaterialInfo> &materials) {
     if (ser.empty())
         return true;
 
@@ -62,7 +63,7 @@ static bool deserializeMaterials(string ser, set<DFHack::MaterialInfo> &material
     return true;
 }
 
-ItemFilter::ItemFilter(color_ostream &out, string serialized) : ItemFilter() {
+ItemFilter::ItemFilter(color_ostream &out, const string& serialized) : ItemFilter() {
     vector<string> tokens;
     split_string(&tokens, serialized, "/");
     if (tokens.size() < 5) {
@@ -86,11 +87,9 @@ string ItemFilter::serialize() const {
     std::ostringstream ser;
     ser << bitfield_to_string(mat_mask, ",") << "/";
     vector<string> matstrs;
-    if (!materials.empty()) {
-        for (auto &mat : materials)
-            matstrs.emplace_back(mat.getToken());
-        ser << join_strings(",", matstrs);
-    }
+    for (auto &mat : materials)
+        matstrs.emplace_back(mat.getToken());
+    ser << join_strings(",", matstrs);
     ser << "/" << static_cast<int>(min_quality);
     ser << "/" << static_cast<int>(max_quality);
     ser << "/" << static_cast<int>(decorated_only);
@@ -153,11 +152,19 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const {
 }
 
 bool ItemFilter::matches(df::item *item) const {
-    if (item->getQuality() < min_quality || item->getQuality() > max_quality)
+    if (item->getQuality() < min_quality || item->getQuality() > max_quality) {
+        TRACE(cycle).print("item outside of quality range (%d not between %d and %d)\n",
+                item->getQuality(), min_quality, max_quality);
         return false;
+    }
 
-    if (decorated_only && !item->hasImprovements())
+    if (decorated_only && !item->hasImprovements()) {
+        TRACE(cycle).print("item needs improvements and doesn't have any\n");
         return false;
+    }
+
+    if (!mat_mask.whole)
+        return true;
 
     auto imattype = item->getActualMaterial();
     auto imatindex = item->getActualMaterialIndex();

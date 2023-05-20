@@ -3,7 +3,7 @@ buildingplan
 
 .. dfhack-tool::
     :summary: Plan building layouts with or without materials.
-    :tags: fort design buildings
+    :tags: fort design productivity buildings
 
 Buildingplan allows you to place furniture, constructions, and other buildings,
 regardless of whether the required materials are available. This allows you to
@@ -20,7 +20,10 @@ building. Once all items are attached, the construction job will be unsuspended
 and a dwarf will come and build the building. If you have the `unsuspend`
 overlay enabled (it is enabled by default), then buildingplan-suspended
 buildings will appear with a ``P`` marker on the main map, as opposed to the
-usual ``x`` marker for "regular" suspended buildings.
+usual ``x`` marker for "regular" suspended buildings. If you have
+`suspendmanager` running, then buildings will be left suspended when their
+items are all attached and ``suspendmanager`` will unsuspend them for
+construction when it is safe to do so.
 
 If you want to impose restrictions on which items are chosen for the buildings,
 buildingplan has full support for quality and material filters (see `below
@@ -47,11 +50,14 @@ to build the planned buildings as they are produced, with minimal space
 dedicated to stockpiles. The DFHack `orders` library can help with setting
 these manager workorders up for you.
 
-If you do not wish to use the ``buildingplan`` interface, you can turn off the
+If you don't want to use the ``buildingplan`` interface for the building you're
+currently trying to place, you can hit :kbd:`Alt`:kbd:`M` or click on the
+minimize toggle in the upper right corner of the panel. If you do not wish to
+ever use the ``buildingplan`` interface, you can turn off the
 ``buildingplan.planner`` overlay in `gui/control-panel` (on the "Overlays"
-tab). You should not disable the ``buildingplan`` "System service" in
-`gui/control-panel` since existing planned buildings in loaded forts will stop
-functioning.
+tab). Be sure to keep the ``buildingplan`` "System service" itself enabled in
+`gui/control-panel` since if you turn it off, existing planned buildings in
+saved forts will stop functioning.
 
 Usage
 -----
@@ -60,6 +66,7 @@ Usage
 
     buildingplan [status]
     buildingplan set <setting> (true|false)
+    buildingplan reset
 
 Examples
 --------
@@ -71,6 +78,10 @@ Examples
 ``buildingplan set boulders false``
     When finding items to satisfy "building materials" requirements, don't
     select boulders. Use blocks or logs (if enabled) instead.
+
+``buildingplan reset``
+    Reset all settings and filters to their defaults. This command does not affect
+    existing planned buildings.
 
 .. _buildingplan-settings:
 
@@ -114,12 +125,8 @@ tiles selected in the construction area are not appropriate for building. For
 example, if you want to fill an area with flooring, you can select the entire
 area, and any tiles with existing buildings or walls will simply be skipped.
 
-Setting heat safety filters
-+++++++++++++++++++++++++++
-
-If you specifically need the building to be magma- or fire-safe, click on the
-"Building safety" button or hit :kbd:`g` until the desired heat safety is
-displayed. This filter applies to all items used to construct the building.
+For weapon and spike traps, you can choose how many weapons will be included
+on this panel.
 
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++
@@ -151,15 +158,17 @@ or hit :kbd:`i` before placing the building. When you click to place the
 building, a dialog will come up that allows you choose which items to use. The
 list is sorted by most recently used materials for that building type by
 default, but you can change to sort by name or by available quantity by
-clicking on the "Sort by" selector or hitting :kbd:`R`.
+clicking on the "Sort by" selector or hitting :kbd:`R`. The configuration for
+whether you would like to choose specific items is saved per building type and
+will be restored when you plan more of that building type.
 
 You can select the maximum quantity of a specified item by clicking on the item
 name or selecting it with the arrow keys and hitting :kbd:`Enter`. You can
 instead select items one at a time by Ctrl-clicking (:kbd:`Shift`:kbd:`Right`)
 to increment or Ctrl-Shift-clicking (:kbd:`Shift`:kbd:`Left`) to decrement.
 
-Once you are satisfied with your choices, click on the "Build" button or hit
-:kbd:`B` to continue building. Note that you don't have to select all the items
+Once you are satisfied with your choices, click on the "Confirm" button or hit
+:kbd:`C` to continue building. Note that you don't have to select all the items
 that the building needs. Any remaining items will be automatically chosen from
 other available items (or future items if not all items are available yet). If
 there are multiple item types to choose for the current building, one dialog

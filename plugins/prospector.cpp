@@ -168,9 +168,11 @@ static void printMatdata(color_ostream &con, const matdata &data, bool only_z = 
         con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
-        con <<"   Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
+        con <<"   Elev:" << std::setw(4) << (data.lower_z) << ".." << (data.upper_z)
+            << std::endl;
     else
-        con <<"   Z:" << std::setw(4) << data.lower_z << std::endl;
+        con <<"   Elev:" << std::setw(4) << (data.lower_z)
+            << std::endl;
 }
 
 static int getValue(const df::inorganic_raw &info)
@@ -565,6 +567,10 @@ static command_result embark_prospector(color_ostream &out,
                                         df::viewscreen_choose_start_sitest *screen,
                                         const prospect_options &options)
 {
+    out.printerr("prospector at embark is not currently available.\n");
+    return CR_FAILURE;
+
+/*
     if (!world || !world->world_data)
     {
         out.printerr("World data is not available.\n");
@@ -621,6 +627,7 @@ static command_result embark_prospector(color_ostream &out,
     out << std::endl << "Warning: the above data is only a very rough estimate." << std::endl;
 
     return CR_OK;
+*/
 }
 
 static command_result map_prospector(color_ostream &con,
@@ -671,7 +678,8 @@ static command_result map_prospector(color_ostream &con,
                 b->GetGlobalFeature(&blockFeatureGlobal);
                 b->GetLocalFeature(&blockFeatureLocal);
 
-                int global_z = world->map.region_z + z;
+                // the '- 100' is because DF v50 and later have a 100 offset in reported elevation
+                int global_z = world->map.region_z + z - 100;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)

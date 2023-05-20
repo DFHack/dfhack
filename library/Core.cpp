@@ -49,6 +49,7 @@ distribution.
 #include "PluginManager.h"
 #include "ModuleFactory.h"
 #include "modules/DFSDL.h"
+#include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
@@ -272,7 +273,7 @@ static std::string dfhack_version_desc()
     if (Version::is_release())
         s << "(release)";
     else
-        s << "(development build " << Version::git_description() << ")";
+        s << "(git: " << Version::git_commit(true) << ")";
     s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
     if (strlen(Version::dfhack_build_id()))
         s << " [build ID: " << Version::dfhack_build_id() << "]";
@@ -440,6 +441,12 @@ bool Core::addScriptPath(std::string path, bool search_before)
     return true;
 }
 
+bool Core::setModScriptPaths(const std::vector<std::string> &mod_script_paths) {
+    std::lock_guard<std::mutex> lock(script_path_mutex);
+    script_paths[2] = mod_script_paths;
+    return true;
+}
+
 bool Core::removeScriptPath(std::string path)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
@@ -464,19 +471,20 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
     std::lock_guard<std::mutex> lock(script_path_mutex);
     dest->clear();
     std::string df_path = this->p->getPath() + "/";
-    for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
-        dest->push_back(*it);
+    for (auto & path : script_paths[0])
+        dest->emplace_back(path);
     dest->push_back(df_path + CONFIG_PATH + "scripts");
     if (df::global::world && isWorldLoaded()) {
         std::string save = World::ReadWorldFolder();
         if (save.size())
-            dest->push_back(df_path + "/save/" + save + "/scripts");
+            dest->emplace_back(df_path + "save/" + save + "/scripts");
     }
-    dest->push_back(df_path + "/hack/scripts");
-    for (auto it = script_paths[1].begin(); it != script_paths[1].end(); ++it)
-        dest->push_back(*it);
+    dest->emplace_back(df_path + "hack/scripts");
+    for (auto & path : script_paths[2])
+        dest->emplace_back(path);
+    for (auto & path : script_paths[1])
+        dest->emplace_back(path);
 }
-
 
 std::string Core::findScript(std::string name)
 {
@@ -524,6 +532,21 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
             out.printerr("%s:%i: Illegal character: %c\n", filename.c_str(), line, ch);
     }
     return true;
+}
+
+static void loadModScriptPaths(color_ostream &out) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+    std::vector<std::string> mod_script_paths;
+    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
+            Lua::DEFAULT_LUA_LAMBDA,
+            [&](lua_State *L) {
+                Lua::GetVector(L, mod_script_paths);
+            });
+    DEBUG(script,out).print("final mod script paths:\n");
+    for (auto & path : mod_script_paths)
+        DEBUG(script,out).print("  %s\n", path.c_str());
+    Core::getInstance().setModScriptPaths(mod_script_paths);
 }
 
 static std::map<std::string, state_change_event> state_change_event_map;
@@ -762,6 +785,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                             part[j] = '/';
                     }
                 }
+
+                part = GetAliasCommand(part, true);
 
                 Plugin * plug = (*plug_mgr)[part];
 
@@ -1285,6 +1310,15 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
+
+    // show the terminal if requested
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+    Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
+        Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
+            if (!lua_toboolean(L, -1))
+                core->getConsole().show();
+        }, false);
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
@@ -1437,16 +1471,8 @@ std::string Core::getHackPath()
 #endif
 }
 
-bool Core::Init()
-{
-    if(started)
-        return true;
-    if(errorstate)
-        return false;
-
-    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
-    // Core::Update will temporary unlock when there is any commands queued
-    MainThread::suspend().lock();
+bool Core::InitMainThread() {
+    Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
@@ -1461,8 +1487,6 @@ bool Core::Init()
     fprintf(stderr, "dfhack: redirecting stderr to stderr.log\n");
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
-
-    Filesystem::init();
 
     std::cerr << "DFHack build: " << Version::git_description() << "\n"
          << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
@@ -1531,6 +1555,20 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    return true;
+}
+
+bool Core::InitSimulationThread()
+{
+    if(started)
+        return true;
+    if(errorstate)
+        return false;
+
+    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
+    // Core::Update will temporary unlock when there is any commands queued
+    MainThread::suspend().lock();
 
     std::cerr << "Initializing Console.\n";
     // init the console.
@@ -1644,6 +1682,8 @@ bool Core::Init()
         fatal("cannot bind SDL libraries");
         return false;
     }
+    if (DFSteam::init(con))
+        std::cerr << "Found Steam.\n";
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
     // create mutex for syncing with interactive tasks
@@ -1929,7 +1969,7 @@ int Core::Update()
         if(!started)
         {
             // Initialize the core
-            Init();
+            InitSimulationThread();
             if(errorstate)
                 return -1;
         }
@@ -2052,7 +2092,8 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
     if (!df::global::world)
         return;
-    std::string rawFolder = "save/" + (df::global::world->cur_savegame.save_dir) + "/init";
+
+    std::string rawFolder = !isWorldLoaded() ? "" : "save/" + World::ReadWorldFolder() + "/init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {
@@ -2111,14 +2152,25 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     switch (event)
     {
     case SC_CORE_INITIALIZED:
-        {
-            auto L = Lua::Core::State;
-            Lua::StackUnwinder top(L);
-            Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
-            Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
-        }
+    {
+        loadModScriptPaths(out);
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
+        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
         break;
+    }
     case SC_WORLD_LOADED:
+    {
+        loadModScriptPaths(out);
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
+            [](lua_State* L) {
+                Lua::Push(L, true);
+            });
+        // fallthrough
+    }
     case SC_WORLD_UNLOADED:
     case SC_MAP_LOADED:
     case SC_MAP_UNLOADED:
@@ -2183,6 +2235,10 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     if (event == SC_WORLD_UNLOADED)
     {
         Persistence::Internal::clear();
+        loadModScriptPaths(out);
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
     }
 }
 
@@ -2235,6 +2291,7 @@ int Core::Shutdown ( void )
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
+    DFSteam::cleanup();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;
@@ -2245,12 +2302,13 @@ int Core::Shutdown ( void )
 #define KEY_F0      0410        /* Function keys.  Space for 64 */
 #define KEY_F(n)    (KEY_F0+(n))    /* Value of function key n */
 
+// returns true if the event has been handled
 bool Core::ncurses_wgetch(int in, int & out)
 {
     if(!started)
     {
         out = in;
-        return true;
+        return false;
     }
     if(in >= KEY_F(1) && in <= KEY_F(8))
     {
@@ -2265,18 +2323,18 @@ bool Core::ncurses_wgetch(int in, int & out)
                 df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
                 setHotkeyCmd(df::global::plotinfo->main.hotkeys[idx].name);
-                return false;
+                return true;
             }
             else
             {
                 out = in;
-                return true;
+                return false;
             }
         }
 */
     }
     out = in;
-    return true;
+    return false;
 }
 
 bool Core::DFH_ncurses_key(int key)
@@ -2284,7 +2342,7 @@ bool Core::DFH_ncurses_key(int key)
     if (getenv("DFHACK_HEADLESS"))
         return true;
     int dummy;
-    return !ncurses_wgetch(key, dummy);
+    return ncurses_wgetch(key, dummy);
 }
 
 int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
@@ -2335,21 +2393,19 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     return unicode;
 }
 
-
-//MEMO: return false if event is consumed
-int Core::DFH_SDL_Event(SDL::Event* ev)
+// returns true if the event is handled
+bool Core::DFH_SDL_Event(SDL::Event* ev)
 {
     // do NOT process events before we are ready.
-    if(!started) return true;
-    if(!ev)
-        return true;
+    if(!started || !ev)
+        return false;
 
     if(ev->type == SDL::ET_ACTIVEEVENT && ev->active.gain)
     {
         // clear modstate when gaining focus in case alt-tab was used when
         // losing focus and modstate is now incorrectly set
         modstate = 0;
-        return true;
+        return false;
     }
 
     if(ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
@@ -2384,8 +2440,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
             hotkey_states[ke->ksym.sym] = false;
         }
     }
-    return true;
-    // do stuff with the events...
+    return false;
 }
 
 bool Core::SelectHotkey(int sym, int modifiers)
@@ -2657,13 +2712,14 @@ std::map<std::string, std::vector<std::string>> Core::ListAliases()
     return aliases;
 }
 
-std::string Core::GetAliasCommand(const std::string &name, const std::string &default_)
+std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
 {
     std::lock_guard<std::recursive_mutex> lock(alias_mutex);
-    if (IsAlias(name))
-        return join_strings(" ", aliases[name]);
-    else
-        return default_;
+    if (!IsAlias(name) || aliases[name].empty())
+        return name;
+    if (ignore_params)
+        return aliases[name][0];
+    return join_strings(" ", aliases[name]);
 }
 
 /////////////////

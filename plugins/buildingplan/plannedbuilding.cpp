@@ -26,9 +26,10 @@ static vector<vector<df::job_item_vector_id>> get_vector_ids(color_ostream &out,
     if (!bld || bld->jobs.size() != 1)
         return ret;
 
-    auto &job = bld->jobs[0];
-    for (auto &jitem : job->job_items) {
-        ret.emplace_back(getVectorIds(out, jitem));
+    auto &jitems = bld->jobs[0]->job_items;
+    int num_job_items = (int)jitems.size();
+    for (int jitem_idx = num_job_items - 1; jitem_idx >= 0; --jitem_idx) {
+        ret.emplace_back(getVectorIds(out, jitems[jitem_idx], false));
     }
     return ret;
 }
@@ -68,19 +69,35 @@ static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataIte
     return deserialize_item_filters(out, rawstrs[1]);
 }
 
-static string serialize(const vector<vector<df::job_item_vector_id>> &vector_ids, const vector<ItemFilter> &item_filters) {
+static set<string> get_specials(color_ostream &out, PersistentDataItem &bld_config) {
+    vector<string> rawstrs;
+    split_string(&rawstrs, bld_config.val(), "|");
+    set<string> ret;
+    if (rawstrs.size() < 3)
+        return ret;
+    vector<string> specials;
+    split_string(&specials, rawstrs[2], ",");
+    for (auto & special : specials)
+        ret.emplace(special);
+    return ret;
+}
+
+static string serialize(const vector<vector<df::job_item_vector_id>> &vector_ids, const DefaultItemFilters &item_filters) {
     vector<string> joined;
     for (auto &vec_list : vector_ids) {
         joined.emplace_back(join_strings(",", vec_list));
     }
     std::ostringstream out;
-    out << join_strings(";", joined) << "|" << serialize_item_filters(item_filters);
+    out << join_strings(";", joined);
+    out << "|" << serialize_item_filters(item_filters.getItemFilters());
+    out << "|" << join_strings(",", item_filters.getSpecials());
     return out.str();
 }
 
-PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafety heat, const vector<ItemFilter> &item_filters)
+PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafety heat, const DefaultItemFilters &item_filters)
         : id(bld->id), vector_ids(get_vector_ids(out, id)), heat_safety(heat),
-          item_filters(item_filters) {
+          item_filters(item_filters.getItemFilters()),
+          specials(item_filters.getSpecials()) {
     DEBUG(status,out).print("creating persistent data for building %d\n", id);
     bld_config = World::AddPersistentData(BLD_CONFIG_KEY);
     set_config_val(bld_config, BLD_CONFIG_ID, id);
@@ -92,18 +109,21 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)
     : id(get_config_val(bld_config, BLD_CONFIG_ID)),
         vector_ids(deserialize_vector_ids(out, bld_config)),
-        heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
+        //heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)), // until this works
+        heat_safety(HEAT_SAFETY_ANY),
         item_filters(get_item_filters(out, bld_config)),
+        specials(get_specials(out, bld_config)),
         bld_config(bld_config) { }
 
 // Ensure the building still exists and is in a valid state. It can disappear
 // for lots of reasons, such as running the game with the buildingplan plugin
 // disabled, manually removing the building, modifying it via the API, etc.
-df::building * PlannedBuilding::getBuildingIfValidOrRemoveIfNot(color_ostream &out) {
+df::building * PlannedBuilding::getBuildingIfValidOrRemoveIfNot(color_ostream &out, bool skip_remove) {
     auto bld = df::building::find(id);
     bool valid = bld && bld->getBuildStage() == 0;
     if (!valid) {
-        remove(out);
+        if (!skip_remove)
+            remove(out);
         return NULL;
     }
     return bld;

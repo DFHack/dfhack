@@ -183,7 +183,7 @@ Scripts
 #. If the script is not in your `script-paths`, install your script (see the
    `modding-guide` for help setting up a dev environment so that you don't need
    to reinstall your scripts after every edit).
-#. Call ``:lua require('plugins.overlay').reload()`` to reload your overlay
+#. Call ``:lua require('plugins.overlay').rescan()`` to reload your overlay
    widget
 
 Plugins
@@ -194,7 +194,7 @@ Plugins
    :file:`hack/lua/plugins/`
 #. If you have changed the compiled plugin, `reload` it
 #. If you have changed the lua code, run ``:lua reload('plugins.mypluginname')``
-#. Call ``:lua require('plugins.overlay').reload()`` to reload your overlay
+#. Call ``:lua require('plugins.overlay').rescan()`` to reload your overlay
    widget
 
 Troubleshooting

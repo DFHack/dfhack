@@ -836,7 +836,9 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
 end
 
 local function scrollbar_do_drag(scrollbar)
-    local _,y = scrollbar.frame_body:localXY(dfhack.screen.getMousePos())
+    local x,y = dfhack.screen.getMousePos()
+    if not y then return end
+    x,y = scrollbar.frame_body:localXY(x, y)
     local cur_pos = y - scrollbar.is_dragging
     local max_top = scrollbar.num_elems - scrollbar.elems_per_page + 1
     local max_pos = scrollbar_get_max_pos_and_height(scrollbar)
@@ -851,7 +853,7 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local SBSO = 922 --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
+local SBSO = df.global.init.scrollbar_texpos[0] --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
 local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=SBSO+0, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=SBSO+1, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+24, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
@@ -1121,10 +1123,10 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
                 end
             end
 
-            if token.tile then
+            if token.tile or (hovered and token.htile) then
                 x = x + 1
                 if dc then
-                    local tile = getval(token.tile)
+                    local tile = hovered and getval(token.htile or token.tile) or getval(token.tile)
                     local tile_pen = tonumber(tile) and to_pen{tile=tile} or tile
                     dc:char(nil, tile_pen)
                     if token.width then
@@ -1361,11 +1363,11 @@ function Label:onInput(keys)
         return true
     end
     if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
-        self:on_click()
+        self.on_click()
         return true
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
-        self:on_rclick()
+        self.on_rclick()
         return true
     end
     for k,v in pairs(self.scroll_keys) do
@@ -1488,6 +1490,8 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
     key_back=DEFAULT_NIL,
+    key_sep=': ',
+    option_gap=1,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     label_below=false,
@@ -1499,17 +1503,16 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
-    local val_gap = 1
     if self.label_below then
-        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+        self.option_gap = self.option_gap + (self.key_back and 1 or 0) + (self.key and 2 or 0)
     end
 
     self:setText{
         self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
-        {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
+        {key=self.key, key_sep=self.key_sep, text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         self.label_below and NEWLINE or '',
-        {gap=val_gap, text=self:callback('getOptionLabel'),
+        {gap=self.option_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end
@@ -1560,17 +1563,17 @@ function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
     end
 end
 
-local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key, require_key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
         return option[key]
     end
-    return option
+    return not require_key and option or nil
 end
 
 function CycleHotkeyLabel:getOptionLabel(option_idx)
-    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+    return getval(cyclehotkeylabel_getOptionElem(self, option_idx, 'label'))
 end
 
 function CycleHotkeyLabel:getOptionValue(option_idx)
@@ -1578,7 +1581,7 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
 end
 
 function CycleHotkeyLabel:getOptionPen(option_idx)
-    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    local pen = getval(cyclehotkeylabel_getOptionElem(self, option_idx, 'pen', true))
     if type(pen) == 'string' then return nil end
     return pen
 end
@@ -1657,6 +1660,13 @@ function List:setChoices(choices, selected)
     end
 
     self:setSelected(selected)
+
+    -- Check if page_top needs to be adjusted
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    elseif self.page_top > #self.choices - self.page_size + 1 then
+        self.page_top = #self.choices - self.page_size + 1
+    end
 end
 
 function List:setSelected(selected)
@@ -1697,10 +1707,20 @@ local function update_list_scrollbar(list)
 end
 
 function List:postComputeFrame(body)
-    self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    if #self.choices - self.page_size < 0 then
+    local row_count = body.height // self.row_height
+    self.page_size = math.max(1, row_count)
+
+    local num_choices = #self.choices
+    if num_choices == 0 then
         self.page_top = 1
+        update_list_scrollbar(self)
+        return
     end
+
+    if self.page_top > num_choices - self.page_size + 1 then
+        self.page_top = math.max(1, num_choices - self.page_size + 1)
+    end
+
     update_list_scrollbar(self)
 end
 
@@ -1929,6 +1949,8 @@ end
 -- Filtered List --
 -------------------
 
+FILTER_FULL_TEXT = false
+
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
@@ -2099,19 +2121,22 @@ function FilteredList:setFilter(filter, pos)
             end
             for _,key in ipairs(tokens) do
                 key = key:escape_pattern()
-                -- start matches at non-space or non-punctuation. this allows
-                -- punctuation itself to be matched if that is useful (e.g.
-                -- filenames or parameter names)
                 if key ~= '' then
                     if not self.case_sensitive then
                         search_key = string.lower(search_key)
                         key = string.lower(key)
                     end
 
-                    if not search_key:match('%f[^%p\x00]'..key) and
-                        not search_key:match('%f[^%s\x00]'..key) then
-                            ok = false
-                            break
+                    -- the separate checks for non-space or non-punctuation allows
+                    -- punctuation itself to be matched if that is useful (e.g.
+                    -- filenames or parameter names)
+                    if not FILTER_FULL_TEXT and not search_key:match('%f[^%p\x00]'..key)
+                            and not search_key:match('%f[^%s\x00]'..key) then
+                        ok = false
+                        break
+                    elseif FILTER_FULL_TEXT and not search_key:find(key) then
+                        ok = false
+                        break
                     end
                 end
             end
@@ -2141,34 +2166,35 @@ function FilteredList:onFilterChar(char, text)
     return true
 end
 
+local TSO = df.global.init.tabs_texpos[0] -- tab spritesheet offset
 local DEFAULT_ACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
     text_mode_label_pen=to_pen{fg=COLOR_WHITE},
-    lt=to_pen{tile=1005, write_to_lower=true},
-    lt2=to_pen{tile=1006, write_to_lower=true},
-    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1008, write_to_lower=true},
-    rt=to_pen{tile=1009, write_to_lower=true},
-    lb=to_pen{tile=1015, write_to_lower=true},
-    lb2=to_pen{tile=1016, write_to_lower=true},
-    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1018, write_to_lower=true},
-    rb=to_pen{tile=1019, write_to_lower=true},
+    lt=to_pen{tile=TSO+5, write_to_lower=true},
+    lt2=to_pen{tile=TSO+6, write_to_lower=true},
+    t=to_pen{tile=TSO+7, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+8, write_to_lower=true},
+    rt=to_pen{tile=TSO+9, write_to_lower=true},
+    lb=to_pen{tile=TSO+15, write_to_lower=true},
+    lb2=to_pen{tile=TSO+16, write_to_lower=true},
+    b=to_pen{tile=TSO+17, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+18, write_to_lower=true},
+    rb=to_pen{tile=TSO+19, write_to_lower=true},
 }
 
 local DEFAULT_INACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
     text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
-    lt=to_pen{tile=1000, write_to_lower=true},
-    lt2=to_pen{tile=1001, write_to_lower=true},
-    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1003, write_to_lower=true},
-    rt=to_pen{tile=1004, write_to_lower=true},
-    lb=to_pen{tile=1010, write_to_lower=true},
-    lb2=to_pen{tile=1011, write_to_lower=true},
-    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1013, write_to_lower=true},
-    rb=to_pen{tile=1014, write_to_lower=true},
+    lt=to_pen{tile=TSO+0, write_to_lower=true},
+    lt2=to_pen{tile=TSO+1, write_to_lower=true},
+    t=to_pen{tile=TSO+2, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+3, write_to_lower=true},
+    rt=to_pen{tile=TSO+4, write_to_lower=true},
+    lb=to_pen{tile=TSO+10, write_to_lower=true},
+    lb2=to_pen{tile=TSO+11, write_to_lower=true},
+    b=to_pen{tile=TSO+12, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+13, write_to_lower=true},
+    rb=to_pen{tile=TSO+14, write_to_lower=true},
 }
 
 ---------
@@ -2238,8 +2264,8 @@ TabBar.ATTRS{
     active_tab_pens=DEFAULT_ACTIVE_TAB_PENS,
     inactive_tab_pens=DEFAULT_INACTIVE_TAB_PENS,
     get_pens=DEFAULT_NIL,
-    key=DEFAULT_NIL,
-    key_back=DEFAULT_NIL,
+    key='CUSTOM_CTRL_T',
+    key_back='CUSTOM_CTRL_Y',
 }
 
 function TabBar:init()
@@ -2290,6 +2316,143 @@ function TabBar:onInput(keys)
         local prev_zero_idx = (zero_idx - 1) % #self.labels
         self.on_select(prev_zero_idx + 1)
         return true
+    end
+end
+
+--------------------------------
+-- RangeSlider
+--
+
+RangeSlider = defclass(RangeSlider, Widget)
+RangeSlider.ATTRS{
+    num_stops=DEFAULT_NIL,
+    get_left_idx_fn=DEFAULT_NIL,
+    get_right_idx_fn=DEFAULT_NIL,
+    on_left_change=DEFAULT_NIL,
+    on_right_change=DEFAULT_NIL,
+}
+
+function RangeSlider:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+end
+
+function RangeSlider:init()
+    if self.num_stops < 2 then error('too few RangeSlider stops') end
+    self.is_dragging_target = nil -- 'left', 'right', or 'both'
+    self.is_dragging_idx = nil -- offset from leftmost dragged tile
+end
+
+local function rangeslider_get_width_per_idx(self)
+    return math.max(5, (self.frame_body.width-7) // (self.num_stops-1))
+end
+
+function RangeSlider:onInput(keys)
+    if not keys._MOUSE_L_DOWN then return false end
+    local x = self:getMousePos()
+    if not x then return false end
+    local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
+    local width_per_idx = rangeslider_get_width_per_idx(self)
+    local left_pos = width_per_idx*(left_idx-1)
+    local right_pos = width_per_idx*(right_idx-1) + 4
+    if x < left_pos then
+        self.on_left_change(self.get_left_idx_fn() - 1)
+    elseif x < left_pos+3 then
+        self.is_dragging_target = 'left'
+        self.is_dragging_idx = x - left_pos
+    elseif x < right_pos then
+        self.is_dragging_target = 'both'
+        self.is_dragging_idx = x - left_pos
+    elseif x < right_pos+3 then
+        self.is_dragging_target = 'right'
+        self.is_dragging_idx = x - right_pos
+    else
+        self.on_right_change(self.get_right_idx_fn() + 1)
+    end
+    return true
+end
+
+local function rangeslider_do_drag(self, width_per_idx)
+    local x = self.frame_body:localXY(dfhack.screen.getMousePos())
+    local cur_pos = x - self.is_dragging_idx
+    cur_pos = math.max(0, cur_pos)
+    cur_pos = math.min(width_per_idx*(self.num_stops-1)+7, cur_pos)
+    local offset = self.is_dragging_target == 'right' and -2 or 1
+    local new_idx = math.max(0, cur_pos+offset)//width_per_idx + 1
+    local new_left_idx, new_right_idx
+    if self.is_dragging_target == 'right' then
+        new_right_idx = new_idx
+    else
+        new_left_idx = new_idx
+        if self.is_dragging_target == 'both' then
+            new_right_idx = new_left_idx + self.get_right_idx_fn() - self.get_left_idx_fn()
+            if new_right_idx > self.num_stops then
+                return
+            end
+        end
+    end
+    if new_left_idx and new_left_idx ~= self.get_left_idx_fn() then
+        self.on_left_change(new_left_idx)
+    end
+    if new_right_idx and new_right_idx ~= self.get_right_idx_fn() then
+        self.on_right_change(new_right_idx)
+    end
+end
+
+local SLIDER_LEFT_END = to_pen{ch=198, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK = to_pen{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_SELECTED = to_pen{ch=205, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP = to_pen{ch=216, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP_SELECTED = to_pen{ch=216, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_RIGHT_END = to_pen{ch=181, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TAB_LEFT = to_pen{ch=60, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_CENTER = to_pen{ch=9, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_RIGHT = to_pen{ch=62, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+
+function RangeSlider:onRenderBody(dc, rect)
+    local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
+    local width_per_idx = rangeslider_get_width_per_idx(self)
+    -- draw track
+    dc:seek(1,0)
+    dc:char(nil, SLIDER_LEFT_END)
+    dc:char(nil, SLIDER_TRACK)
+    for stop_idx=1,self.num_stops-1 do
+        local track_stop_pen = SLIDER_TRACK_STOP_SELECTED
+        local track_pen = SLIDER_TRACK_SELECTED
+        if left_idx > stop_idx or right_idx < stop_idx then
+            track_stop_pen = SLIDER_TRACK_STOP
+            track_pen = SLIDER_TRACK
+        elseif right_idx == stop_idx then
+            track_pen = SLIDER_TRACK
+        end
+        dc:char(nil, track_stop_pen)
+        for i=2,width_per_idx do
+            dc:char(nil, track_pen)
+        end
+    end
+    if right_idx >= self.num_stops then
+        dc:char(nil, SLIDER_TRACK_STOP_SELECTED)
+    else
+        dc:char(nil, SLIDER_TRACK_STOP)
+    end
+    dc:char(nil, SLIDER_TRACK)
+    dc:char(nil, SLIDER_RIGHT_END)
+    -- draw tabs
+    dc:seek(width_per_idx*(left_idx-1))
+    dc:char(nil, SLIDER_TAB_LEFT)
+    dc:char(nil, SLIDER_TAB_CENTER)
+    dc:char(nil, SLIDER_TAB_RIGHT)
+    dc:seek(width_per_idx*(right_idx-1)+4)
+    dc:char(nil, SLIDER_TAB_LEFT)
+    dc:char(nil, SLIDER_TAB_CENTER)
+    dc:char(nil, SLIDER_TAB_RIGHT)
+    -- manage dragging
+    if self.is_dragging_target then
+        rangeslider_do_drag(self, width_per_idx)
+    end
+    if df.global.enabler.mouse_lbut == 0 then
+        self.is_dragging_target = nil
+        self.is_dragging_idx = nil
     end
 end
 

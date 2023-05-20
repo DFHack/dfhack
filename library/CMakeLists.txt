@@ -1,5 +1,5 @@
 project(dfapi)
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.21)
 
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
 cmake_policy(SET CMP0022 NEW)
@@ -95,7 +95,6 @@ endif()
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
-    Hooks-windows.cpp
     Hooks.cpp
     PlugLoad-windows.cpp
     Process-windows.cpp
@@ -108,14 +107,12 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    Hooks-linux.cpp
     PlugLoad-posix.cpp
     Process-linux.cpp
 )
 
 set(MAIN_SOURCES_DARWIN
     ${CONSOLE_SOURCES}
-    Hooks-darwin.cpp
     PlugLoad-posix.cpp
     Process-darwin.cpp
 )
@@ -125,6 +122,7 @@ set(MODULE_HEADERS
     include/modules/Burrows.h
     include/modules/Constructions.h
     include/modules/DFSDL.h
+    include/modules/DFSteam.h
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
@@ -154,6 +152,7 @@ set(MODULE_SOURCES
     modules/Burrows.cpp
     modules/Constructions.cpp
     modules/DFSDL.cpp
+    modules/DFSteam.cpp
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
@@ -374,8 +373,7 @@ add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
 if(WIN32)
-    # name the resulting library SDL.dll on Windows
-    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "SDL" )
+    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
@@ -435,8 +433,8 @@ if(UNIX)
         LIBRARY DESTINATION .
         RUNTIME DESTINATION .)
 else()
-    # On windows, copy the renamed SDL so DF can still run.
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
+    # On windows, copy SDL.dll so DF can still run.
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDL.dll
         DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 endif()
 

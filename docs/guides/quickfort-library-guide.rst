@@ -5,7 +5,7 @@ Quickfort blueprint library
 ===========================
 
 This guide contains a high-level overview of the blueprints available in the
-:source:`quickfort blueprint library <data/blueprints/library>`.
+:source:`quickfort blueprint library <data/blueprints>`.
 
 Each file is hyperlinked to its online version so you can see exactly what the
 blueprints do before you run them. Also, if you use `gui/quickfort`, you will
@@ -18,8 +18,8 @@ Whole fort blueprint sets
 These files contain the plans for entire fortresses. Each file has one or more
 help sections that walk you through how to build the fort, step by step.
 
-- :source:`library/dreamfort.csv <data/blueprints/library/dreamfort.csv>`
-- :source:`library/quickfortress.csv <data/blueprints/library/quickfortress.csv>`
+- :source:`library/dreamfort.csv <data/blueprints/dreamfort.csv>`
+- :source:`library/quickfortress.csv <data/blueprints/quickfortress.csv>`
 
 .. _dreamfort:
 
@@ -149,10 +149,10 @@ these ``#dig`` blueprints can only mark undug wall tiles for mining, they are
 best used underground. They won't do much on the surface, where there aren't
 many walls.
 
-- :source:`library/layout-helpers/mark_up_left.csv <data/blueprints/library/layout-helpers/mark_up_left.csv>`
-- :source:`library/layout-helpers/mark_up_right.csv <data/blueprints/library/layout-helpers/mark_up_right.csv>`
-- :source:`library/layout-helpers/mark_down_right.csv <data/blueprints/library/layout-helpers/mark_down_right.csv>`
-- :source:`library/layout-helpers/mark_down_left.csv <data/blueprints/library/layout-helpers/mark_down_left.csv>`
+- :source:`library/layout-helpers/mark_up_left.csv <data/blueprints/layout-helpers/mark_up_left.csv>`
+- :source:`library/layout-helpers/mark_up_right.csv <data/blueprints/layout-helpers/mark_up_right.csv>`
+- :source:`library/layout-helpers/mark_down_right.csv <data/blueprints/layout-helpers/mark_down_right.csv>`
+- :source:`library/layout-helpers/mark_down_left.csv <data/blueprints/layout-helpers/mark_down_left.csv>`
 
 Bedrooms
 --------
@@ -161,9 +161,9 @@ These are popular bedroom layouts from the :wiki:`Bedroom design` page on the
 wiki. Each file has ``#dig``, ``#build``, and ``#query`` blueprints to dig the
 rooms, build the furniture, and configure the beds as bedrooms, respectively.
 
-- :source:`library/bedrooms/48-4-Raynard_Whirlpool_Housing.csv <data/blueprints/library/bedrooms/48-4-Raynard_Whirlpool_Housing.csv>`
-- :source:`library/bedrooms/95-9-Hactar1_3_Branch_Tree.csv <data/blueprints/library/bedrooms/95-9-Hactar1_3_Branch_Tree.csv>`
-- :source:`library/bedrooms/28-3-Modified_Windmill_Villas.csv <data/blueprints/library/bedrooms/28-3-Modified_Windmill_Villas.csv>`
+- :source:`library/bedrooms/48-4-Raynard_Whirlpool_Housing.csv <data/blueprints/bedrooms/48-4-Raynard_Whirlpool_Housing.csv>`
+- :source:`library/bedrooms/95-9-Hactar1_3_Branch_Tree.csv <data/blueprints/bedrooms/95-9-Hactar1_3_Branch_Tree.csv>`
+- :source:`library/bedrooms/28-3-Modified_Windmill_Villas.csv <data/blueprints/bedrooms/28-3-Modified_Windmill_Villas.csv>`
 
 Tombs
 -----
@@ -171,8 +171,8 @@ Tombs
 These blueprints have burial plot layouts for fortress that expect a lot of
 casualties.
 
-- :source:`library/tombs/Mini_Saracen.csv <data/blueprints/library/tombs/Mini_Saracen.csv>`
-- :source:`library/tombs/The_Saracen_Crypts.csv <data/blueprints/library/tombs/The_Saracen_Crypts.csv>`
+- :source:`library/tombs/Mini_Saracen.csv <data/blueprints/tombs/Mini_Saracen.csv>`
+- :source:`library/tombs/The_Saracen_Crypts.csv <data/blueprints/tombs/The_Saracen_Crypts.csv>`
 
 Exploratory mining
 ------------------
@@ -181,18 +181,18 @@ Several mining patterns to choose from when searching for gems or ores. The
 patterns can be repeated up or down z-levels (via quickfort's ``--repeat``
 commandline option) for exploring through the depths.
 
-- :source:`library/exploratory-mining/tunnels.csv <data/blueprints/library/exploratory-mining/tunnels.csv>`
-- :source:`library/exploratory-mining/vertical-mineshafts.csv <data/blueprints/library/exploratory-mining/vertical-mineshafts.csv>`
-- :source:`library/exploratory-mining/connected-mineshafts.csv <data/blueprints/library/exploratory-mining/connected-mineshafts.csv>`
+- :source:`library/exploratory-mining/tunnels.csv <data/blueprints/exploratory-mining/tunnels.csv>`
+- :source:`library/exploratory-mining/vertical-mineshafts.csv <data/blueprints/exploratory-mining/vertical-mineshafts.csv>`
+- :source:`library/exploratory-mining/connected-mineshafts.csv <data/blueprints/exploratory-mining/connected-mineshafts.csv>`
 
 Miscellaneous
 -------------
 
 Extra blueprints that are useful in specific situations.
 
-- :source:`library/aquifer_tap.csv <data/blueprints/library/aquifer_tap.csv>`
-- :source:`library/embark.csv <data/blueprints/library/embark.csv>`
-- :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
+- :source:`library/aquifer_tap.csv <data/blueprints/aquifer_tap.csv>`
+- :source:`library/embark.csv <data/blueprints/embark.csv>`
+- :source:`library/pump_stack.csv <data/blueprints/pump_stack.csv>`
 
 Light aquifer tap
 ~~~~~~~~~~~~~~~~~

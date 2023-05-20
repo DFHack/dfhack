@@ -76,7 +76,9 @@
 #include "df/ocean_wave.h"
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
+#include "df/plant_tree_tile.h"
 #include "df/plant_raw_flags.h"
+#include "df/plant_root_tile.h"
 #include "df/projectile.h"
 #include "df/proj_itemst.h"
 #include "df/proj_unitst.h"
@@ -806,8 +808,6 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         return CR_OK;
     }
 
-
-
     df::world_raws *raws = &world->raws;
     // df::world_history *history = &world->history;
     MaterialInfo mat;
@@ -818,7 +818,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->mutable_mat_pair()->set_mat_type(0);
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
-        mat_def->set_name(mat.toString()); //find the name at cave temperature;
+        mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
         if (size_t(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]) < raws->descriptors.colors.size())
         {
             ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
@@ -836,7 +836,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(i);
             mat_def->mutable_mat_pair()->set_mat_index(j);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])], mat_def->mutable_state_color());
@@ -853,7 +853,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(j + 19);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(creature->material[j]->state_color[GetState(creature->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(creature->material[j]->state_color[GetState(creature->material[j])], mat_def->mutable_state_color());
@@ -870,7 +870,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(j + 419);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(plant->material[j]->state_color[GetState(plant->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(plant->material[j]->state_color[GetState(plant->material[j])], mat_def->mutable_state_color());
@@ -901,7 +901,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
             continue;
         MaterialDefinition * basePlant = out->add_material_list();
         basePlant->set_id(pp->id + ":BASE");
-        basePlant->set_name(pp->name);
+        basePlant->set_name(DF2UTF(pp->name));
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
 #if DF_VERSION_INT > 40001
@@ -914,7 +914,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
             {
                 MaterialDefinition * out_growth = out->add_material_list();
                 out_growth->set_id(pp->id + ":" + growth->id + +":" + growth_locations[l]);
-                out_growth->set_name(growth->name);
+                out_growth->set_name(DF2UTF(growth->name));
                 out_growth->mutable_mat_pair()->set_mat_type(g * 10 + l);
                 out_growth->mutable_mat_pair()->set_mat_index(i);
             }
@@ -971,17 +971,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                     || yyy >= 16
                     )
                     continue;
-                df::plant_tree_tile tile;
                 if (-localPos.z < 0)
                 {
-                    tile = tree_info->roots[-1 + localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_root_tile tile = tree_info->roots[-1 + localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
                 else
                 {
-                    tile = tree_info->body[-localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_tree_tile tile = tree_info->body[-localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
-                if (!tile.whole || tile.bits.blocked)
-                    continue;
                 if (tree_info->body_height <= 1)
                     trunk_percent[xxx][yyy] = 0;
                 else
@@ -1948,8 +1949,8 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);
     out->set_center_z(pos.z);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
     out->set_cur_year(World::ReadCurrentYear());
     out->set_cur_year_tick(World::ReadCurrentTick());
     return CR_OK;
@@ -1974,8 +1975,8 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
     auto poles = data->flip_latitude;
 #if DF_VERSION_INT > 34011
     switch (poles)
@@ -2123,8 +2124,8 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
 #if DF_VERSION_INT > 34011
     auto poles = data->flip_latitude;
     switch (poles)
@@ -2794,8 +2795,8 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
             auto send_tissue = send_creature->add_tissues();
 
             send_tissue->set_id(orig_tissue->id);
-            send_tissue->set_name(orig_tissue->tissue_name_singular);
-            send_tissue->set_subordinate_to_tissue(orig_tissue->subordinate_to_tissue);
+            send_tissue->set_name(DF2UTF(orig_tissue->tissue_name_singular));
+            send_tissue->set_subordinate_to_tissue(DF2UTF(orig_tissue->subordinate_to_tissue));
 
             CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
@@ -2828,7 +2829,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
 
         plant_remote->set_index(i);
         plant_remote->set_id(plant_local->id);
-        plant_remote->set_name(plant_local->name);
+        plant_remote->set_name(DF2UTF(plant_local->name));
         if (!plant_local->flags.is_set(df::plant_raw_flags::TREE))
             plant_remote->set_tile(plant_local->tiles.shrub_tile);
         else
@@ -2840,7 +2841,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
             TreeGrowth * growth_remote = plant_remote->add_growths();
             growth_remote->set_index(j);
             growth_remote->set_id(growth_local->id);
-            growth_remote->set_name(growth_local->name);
+            growth_remote->set_name(DF2UTF(growth_local->name));
             for (size_t k = 0; k < growth_local->prints.size(); k++)
             {
                 df::plant_growth_print* print_local = growth_local->prints[k];

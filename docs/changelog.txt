@@ -64,7 +64,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 
-## Internal
+## Internals
 - ``dfhack.internal``: added memory analysis functions: ``msizeAddress``, ``getHeapState``, ``heapTakeSnapshot``, ``isAddressInHeap``, ``isAddressActiveInHeap``, ``isAddressUsedAfterFreeInHeap``, ``getAddressSizeInHeap``, and ``getRootAddressOfHeapObject``
 
 ## Lua

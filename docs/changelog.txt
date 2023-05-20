@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - DFHack screen backgrounds now use appropriate tiles in DF Classic
 - RemoteServer: fix crash on malformed json in ``dfhack-config/remote-server.json``
 - `autolabor`: work detail override warning now only appears on the work details screen
+- `RemoteFortressReader`: ensured names are transmitted in UTF-8 instead of CP437
 
 ## Misc Improvements
 - `autodump`: no longer checks for a keyboard cursor before executing, so ``autodump destroy`` (which doesn't require a cursor) can still function

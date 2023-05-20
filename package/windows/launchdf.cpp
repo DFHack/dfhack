@@ -139,6 +139,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         exit(0);
     }
 
+    if (waitForDF())
+        exit(0);
+
     if (!SteamAPI_Init())
     {
         // could not initialize steam context, attempt fallback launch
@@ -150,9 +153,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
         exit(0);
     }
-
-    if (waitForDF())
-        exit(0);
 
     bool wine = is_running_on_wine();
 

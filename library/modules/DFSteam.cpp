@@ -88,7 +88,9 @@ void DFSteam::cleanup(color_ostream& out) {
 }
 
 #ifdef WIN32
+#include <process.h>
 #include <windows.h>
+#include <TlHelp32.h>
 static bool is_running_on_wine() {
     typedef const char* (CDECL wine_get_version)(void);
     static wine_get_version* pwine_get_version;
@@ -100,10 +102,39 @@ static bool is_running_on_wine() {
     return !!pwine_get_version;
 }
 
+static DWORD findProcess(LPWSTR name) {
+    PROCESSENTRY32W entry;
+    entry.dwSize = sizeof(PROCESSENTRY32W);
+
+    const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (!Process32FirstW(snapshot, &entry)) {
+        CloseHandle(snapshot);
+        return -1;
+    }
+
+    do {
+        std::wstring executableName(entry.szExeFile);
+        if (executableName == name) {
+            CloseHandle(snapshot);
+            return entry.th32ProcessID;
+        }
+    }
+    while (Process32NextW(snapshot, &entry));
+
+    CloseHandle(snapshot);
+    return -1;
+}
+
 static bool launchDFHack(color_ostream& out) {
     if (is_running_on_wine()) {
         DEBUG(dfsteam, out).print("not attempting to re-launch DFHack on wine\n");
         return false;
+    }
+
+    if (findProcess(L"launchdf.exe") != -1) {
+        DEBUG(dfsteam, out).print("launchdf.exe already running\n");
+        return true;
     }
 
     STARTUPINFOW si;

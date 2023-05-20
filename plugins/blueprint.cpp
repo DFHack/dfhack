@@ -99,9 +99,9 @@ struct blueprint_options {
     bool construct = false;
     bool build = false;
     bool place = false;
-    bool zone = false;
-    bool query = false;
-    bool rooms = false;
+    // bool zone = false;
+    // bool query = false;
+    // bool rooms = false;
 
     static struct_identity _identity;
 };
@@ -125,9 +125,9 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "construct",              offsetof(blueprint_options, construct),             &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "rooms",                  offsetof(blueprint_options, rooms),                 &df::identity_traits<bool>::identity,    0, 0 },
+    // { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
+    // { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
+    // { struct_field_info::PRIMITIVE, "rooms",                  offsetof(blueprint_options, rooms),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -855,7 +855,6 @@ static const char * get_tile_build(const df::coord &pos,
     return add_expansion_syntax(ctx, keys);
 }
 
-/* TODO: understand how this changes for v50
 static const char * get_place_keys(const tile_context &ctx) {
     df::building_stockpilest* sp =
             virtual_cast<df::building_stockpilest>(ctx.b);
@@ -908,6 +907,7 @@ static const char * get_tile_place(const df::coord &pos,
     return add_expansion_syntax(ctx, get_place_keys(ctx));
 }
 
+/* TODO: understand how this changes for v50
 static bool hospital_maximums_eq(const df::hospital_supplies &a,
                                  const df::hospital_supplies &b) {
     return a.max_thread == b.max_thread &&
@@ -1333,23 +1333,15 @@ static bool do_transform(color_ostream &out,
                   get_tile_construct, ensure_building);
     add_processor(processors, opts, "build", "build", opts.build,
                   get_tile_build, ensure_building);
-/* TODO: understand how this changes for v50
     add_processor(processors, opts, "place", "place", opts.place,
                   get_tile_place, ensure_building);
+/* TODO: understand how this changes for v50
     add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
     add_processor(processors, opts, "query", "query", opts.query,
                   get_tile_query, ensure_building);
     add_processor(processors, opts, "query", "rooms", opts.rooms,
                   get_tile_rooms, ensure_building);
-*/  if (opts.place)
-        out.printerr("'place' blueprints are not yet supported for the current version of DF\n");
-    if (opts.zone)
-        out.printerr("'zone' blueprints are not yet supported for the current version of DF\n");
-    if (opts.query)
-        out.printerr("'query' blueprints are not yet supported for the current version of DF\n");
-    if (opts.rooms)
-        out.printerr("'rooms' blueprints are not yet supported for the current version of DF\n");
-
+*/
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");
         return false;

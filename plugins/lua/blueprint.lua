@@ -9,17 +9,17 @@ local valid_phase_list = {
     'construct',
     'build',
     'place',
-    'zone',
-    'query',
-    'rooms',
+    -- 'zone',
+    -- 'query',
+    -- 'rooms',
 }
 valid_phases = utils.invert(valid_phase_list)
 
 local meta_phase_list = {
     'build',
     'place',
-    'zone',
-    'query',
+    -- 'zone',
+    -- 'query',
 }
 meta_phases = utils.invert(meta_phase_list)
 
@@ -167,7 +167,7 @@ end
 
 function parse_commandline(opts, ...)
     local positionals = process_args(opts, {...})
-    if opts.help then return end
+    if not positionals or opts.help then return end
 
     local width, height = tonumber(positionals[1]), tonumber(positionals[2])
     if is_bad_dim(width) or is_bad_dim(height) then

@@ -81,7 +81,7 @@ local included_elements = {
     types=8,
 }
 
-local function export_stockpile(name, opts)
+function export_stockpile(name, opts)
     assert_safe_name(name)
     name = STOCKPILES_DIR .. '/' .. name
 
@@ -101,7 +101,7 @@ local function export_stockpile(name, opts)
     stockpiles_export(name, get_sp_id(opts), includedElements)
 end
 
-local function import_stockpile(name, opts)
+function import_stockpile(name, opts)
     local is_library = false
     if name:startswith('library/') then
         name = name:sub(9)

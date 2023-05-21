@@ -55,7 +55,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Terminal console no longer appears in front of the game window on startup
 - `gui/control-panel`: new preference for whether filters in lists search for substrings in the middle of words (e.g. if set to true, then "ee" will match "steel")
 - `gui/design`: Improved performance for drawing shapes
-- Dreamfort: improve traffic patterns throughout the fortress (stockpiles and zones are still not working, pending updates in `quickfort`)
+- Dreamfort: improve traffic patterns throughout the fortress
+- `gui/blueprint`: recording of stockpile layouts and categories is now supported. note that detailed stockpile configurations will *not* be saved (yet)
 - Core: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline or specify ``DFHACK_DISABLE=1`` in the environment to disable DFHack for the current session.
 - `overlay`: added links to the quickstart guide and the control panel on the DF title screen
 - `gui/autodump`: fort-mode keybinding: Ctrl-H

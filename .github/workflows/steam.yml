@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       commit_hash:
-        description: Commit hash
+        description: Branch or commit hash
         type: string
         required: true
+        default: develop
       version:
-        description: Version
+        description: Version or build description
         type: string
         required: true
       release_channel:

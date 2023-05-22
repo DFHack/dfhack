@@ -48,7 +48,7 @@ DFhackCExport void dfhooks_prerender() {
 
 // called from the main thread for each SDL event. if true is returned, then
 // the event has been consumed and further processing shouldn't happen
-DFhackCExport bool dfhooks_sdl_event(SDL::Event* event) {
+DFhackCExport bool dfhooks_sdl_event(SDL_Event* event) {
     if (disabled)
         return false;
     return DFHack::Core::getInstance().DFH_SDL_Event(event);

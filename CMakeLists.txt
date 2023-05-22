@@ -299,24 +299,21 @@ if(WIN32)
         DESTINATION ${CMAKE_BINARY_DIR}/depends/)
     file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
         DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
-
-    # Do the same for SDL.dll
-    # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
-    # continue to include it so we don't break Steam players on update by removing
-    # the SDL.dll that DF needs.
-    set(SDL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
-    if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "1ae242c4b94cb03756a1288122a66faf")
-    else()
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "5a09604daca6b2b5ce049d79af935d6a")
-    endif()
-
 endif()
+
+# Download SDL release and extract into depends (in the build dir so as not to clutter up the source dir)
+# all we need are the header files, so the same release package will work for all platforms
+# (the above statement is untested for OSX)
+set(SDL_VERSION 2.26.2)
+set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
+set(SDL_ZIP_PATH ${CMAKE_BINARY_DIR}/depends/SDL2/)
+file(DOWNLOAD "https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+    ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+    EXPECTED_MD5 574daf26d48de753d0b1e19823c9d8bb
+    SHOW_PROGRESS)
+file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+    DESTINATION ${SDL_ZIP_PATH})
+include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
 
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)

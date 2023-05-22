@@ -8,6 +8,8 @@
 
 #include "df/enabler.h"
 
+#include <SDL_surface.h>
+
 using df::global::enabler;
 using namespace DFHack;
 using namespace DFHack::DFSDL;
@@ -37,26 +39,34 @@ static long g_window_borders_texpos_start = -1;
 //
 // It uses the same pixel format (RGBA, R at lowest address) regardless of
 // hardware.
-DFSDL_Surface * canonicalize_format(DFSDL_Surface *src) {
-  DFSDL_PixelFormat fmt;
+SDL_Surface * canonicalize_format(SDL_Surface *src) {
+  SDL_PixelFormat fmt;
   fmt.palette = NULL;
   fmt.BitsPerPixel = 32;
   fmt.BytesPerPixel = 4;
   fmt.Rloss = fmt.Gloss = fmt.Bloss = fmt.Aloss = 0;
-//#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-//  fmt.Rshift = 24; fmt.Gshift = 16; fmt.Bshift = 8; fmt.Ashift = 0;
-//#else
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  fmt.Rshift = 24; fmt.Gshift = 16; fmt.Bshift = 8; fmt.Ashift = 0;
+#else
   fmt.Rshift = 0; fmt.Gshift = 8; fmt.Bshift = 16; fmt.Ashift = 24;
-//#endif
+#endif
   fmt.Rmask = 255 << fmt.Rshift;
   fmt.Gmask = 255 << fmt.Gshift;
   fmt.Bmask = 255 << fmt.Bshift;
   fmt.Amask = 255 << fmt.Ashift;
-  fmt.colorkey = 0;
-  fmt.alpha = 255;
 
-  DFSDL_Surface *tgt = DFSDL_ConvertSurface(src, &fmt, 0); // SDL_SWSURFACE
+  SDL_Surface *tgt = DFSDL_ConvertSurface(src, &fmt, SDL_SWSURFACE);
   DFSDL_FreeSurface(src);
+  for (int x = 0; x < tgt->w; ++x) {
+      for (int y = 0; y < tgt->h; ++y) {
+          Uint8* p = (Uint8*)tgt->pixels + y * tgt->pitch + x * 4;
+          if (p[3] == 0) {
+              for (int c = 0; c < 3; c++) {
+                  p[c] = 0;
+              }
+          }
+      }
+  }
   return tgt;
 }
 
@@ -65,7 +75,7 @@ const uint32_t TILE_HEIGHT_PX = 12;
 
 static size_t load_textures(color_ostream & out, const char * fname,
                             long *texpos_start) {
-    DFSDL_Surface *s = DFIMG_Load(fname);
+    SDL_Surface *s = DFIMG_Load(fname);
     if (!s) {
         out.printerr("unable to load textures from '%s'\n", fname);
         return 0;
@@ -78,12 +88,12 @@ static size_t load_textures(color_ostream & out, const char * fname,
     long count = 0;
     for (int y = 0; y < dimy; y++) {
         for (int x = 0; x < dimx; x++) {
-            DFSDL_Surface *tile = DFSDL_CreateRGBSurface(0, // SDL_SWSURFACE
+            SDL_Surface *tile = DFSDL_CreateRGBSurface(0, // SDL_SWSURFACE
                     TILE_WIDTH_PX, TILE_HEIGHT_PX, 32,
                     s->format->Rmask, s->format->Gmask, s->format->Bmask,
                     s->format->Amask);
             DFSDL_SetAlpha(tile, 0,255);
-            DFSDL_Rect vp;
+            SDL_Rect vp;
             vp.x = TILE_WIDTH_PX * x;
             vp.y = TILE_HEIGHT_PX * y;
             vp.w = TILE_WIDTH_PX;
@@ -161,7 +171,7 @@ void Textures::cleanup() {
     auto &raws = textures.raws;
     size_t texpos_end = g_dfhack_logo_texpos_start + g_num_dfhack_textures;
     for (size_t idx = g_dfhack_logo_texpos_start; idx <= texpos_end; ++idx) {
-        DFSDL_FreeSurface((DFSDL_Surface *)raws[idx]);
+        DFSDL_FreeSurface((SDL_Surface *)raws[idx]);
         raws[idx] = NULL;
     }
 

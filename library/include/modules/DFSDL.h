@@ -39,8 +39,6 @@ bool init(DFHack::color_ostream &out);
 void cleanup();
 
 DFHACK_EXPORT SDL_Surface * DFIMG_Load(const char *file);
-DFHACK_EXPORT int DFSDL_SetAlpha(SDL_Surface *surface, uint32_t flag, uint8_t alpha);
-DFHACK_EXPORT SDL_Surface * DFSDL_GetVideoSurface(void);
 DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
 DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
 DFHACK_EXPORT int DFSDL_UpperBlit(SDL_Surface *src, const SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect);

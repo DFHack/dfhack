@@ -82,7 +82,6 @@ static size_t load_textures(color_ostream & out, const char * fname,
     }
 
     s = canonicalize_format(s);
-    DFSDL_SetAlpha(s, 0, 255);
     int dimx = s->w / TILE_WIDTH_PX;
     int dimy = s->h / TILE_HEIGHT_PX;
     long count = 0;
@@ -92,7 +91,6 @@ static size_t load_textures(color_ostream & out, const char * fname,
                     TILE_WIDTH_PX, TILE_HEIGHT_PX, 32,
                     s->format->Rmask, s->format->Gmask, s->format->Bmask,
                     s->format->Amask);
-            DFSDL_SetAlpha(tile, 0,255);
             SDL_Rect vp;
             vp.x = TILE_WIDTH_PX * x;
             vp.y = TILE_HEIGHT_PX * y;

@@ -27,8 +27,6 @@ static const std::vector<std::string> SDL_IMAGE_LIBS {
 };
 
 SDL_Surface * (*g_IMG_Load)(const char *) = nullptr;
-int (*g_SDL_SetAlpha)(SDL_Surface *, uint32_t, uint8_t) = nullptr;
-SDL_Surface * (*g_SDL_GetVideoSurface)(void) = nullptr;
 SDL_Surface * (*g_SDL_CreateRGBSurface)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t) = nullptr;
 SDL_Surface * (*g_SDL_CreateRGBSurfaceFrom)(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = nullptr;
 int (*g_SDL_UpperBlit)(SDL_Surface *, const SDL_Rect *, SDL_Surface *, SDL_Rect *) = nullptr;
@@ -65,8 +63,6 @@ bool DFSDL::init(color_ostream &out) {
         }
 
     bind(g_sdl_image_handle, IMG_Load);
-    bind(g_sdl_handle, SDL_SetAlpha);
-    bind(g_sdl_handle, SDL_GetVideoSurface);
     bind(g_sdl_handle, SDL_CreateRGBSurface);
     bind(g_sdl_handle, SDL_CreateRGBSurfaceFrom);
     bind(g_sdl_handle, SDL_UpperBlit);
@@ -95,14 +91,6 @@ void DFSDL::cleanup() {
 
 SDL_Surface * DFSDL::DFIMG_Load(const char *file) {
     return g_IMG_Load(file);
-}
-
-int DFSDL::DFSDL_SetAlpha(SDL_Surface *surface, uint32_t flag, uint8_t alpha) {
-    return g_SDL_SetAlpha(surface, flag, alpha);
-}
-
-SDL_Surface * DFSDL::DFSDL_GetVideoSurface(void) {
-    return g_SDL_GetVideoSurface();
 }
 
 SDL_Surface * DFSDL::DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) {

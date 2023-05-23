@@ -60,6 +60,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Core: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline or specify ``DFHACK_DISABLE=1`` in the environment to disable DFHack for the current session.
 - `overlay`: added links to the quickstart guide and the control panel on the DF title screen
 - `gui/autodump`: fort-mode keybinding: Ctrl-H
+- Window behavior: if you have multiple DFHack tool windows open, scrolling the mouse wheel while over an unfocused window will focus it and raise it to the top
 
 ## Documentation
 

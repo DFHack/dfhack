@@ -2373,21 +2373,11 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
         else if (ke.state == SDL_PRESSED && !hotkey_states[ke.keysym.sym])
         {
             hotkey_states[ke.keysym.sym] = true;
+            SelectHotkey(ke.keysym.sym, modstate);
         }
         else if(ke.state == SDL_RELEASED)
         {
             hotkey_states[ke.keysym.sym] = false;
-        }
-    }
-    else if (ev->type == SDL_TEXTINPUT) {
-        auto &te = ev->text;
-
-        uint8_t sym = (uint8_t)te.text[0];
-        if (sym <= 0x7f && hotkey_states[sym]) {
-            // register that we have responded to this hotkey, and don't respond
-            // again even if the key is held down
-            hotkey_states[sym] = false;
-            SelectHotkey(sym, modstate);
         }
     }
     return false;
@@ -2408,7 +2398,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
     std::string cmd;
 
-    DEBUG(keybinding).print("checking hotkeys for sym=%d, modifiers=%x\n", sym, modifiers);
+    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
 
     {
         std::lock_guard<std::mutex> lock(HotkeyMutex);

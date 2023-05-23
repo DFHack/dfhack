@@ -8,8 +8,8 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.08")
-set(DFHACK_RELEASE "r4")
-set(DFHACK_PRERELEASE FALSE)
+set(DFHACK_RELEASE "r2rc1")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 1)
@@ -285,24 +285,23 @@ else()
         unset(CMAKE_HAVE_PTHREAD_H CACHE)
     endif()
 
-    # Move zlib to the build folder so possible 32 and 64-bit builds
-    # in the same source tree don't conflict
-    file(COPY ${dfhack_SOURCE_DIR}/depends/zlib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/)
-    file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
+    if(NOT APPLE AND DFHACK_BUILD_32)
+        set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
+    endif()
 endif()
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
 
-# Download SDL release and extract into depends (in the build dir so as not to clutter up the source dir)
+# Download SDL release and extract into depends in the build dir
 # all we need are the header files, so the same release package will work for all platforms
 # (the above statement is untested for OSX)
 set(SDL_VERSION 2.26.2)
+set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
 set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
 set(SDL_ZIP_PATH ${CMAKE_BINARY_DIR}/depends/SDL2/)
-file(DOWNLOAD "https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
     ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
-    EXPECTED_MD5 574daf26d48de753d0b1e19823c9d8bb
-    SHOW_PROGRESS)
+    ${SDL_ZIP_MD5})
 file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
     DESTINATION ${SDL_ZIP_PATH})
 include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)

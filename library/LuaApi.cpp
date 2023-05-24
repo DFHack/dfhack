@@ -2635,6 +2635,7 @@ static int screen_charToKey(lua_State *L)
     return 1;
 }
 
+/*
 static int screen_zoom(lua_State *L)
 {
     using df::global::enabler;
@@ -2651,6 +2652,7 @@ static int screen_zoom(lua_State *L)
     enabler->zoom_display(cmd);
     return 0;
 }
+*/
 
 }
 
@@ -2671,7 +2673,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "_doSimulateInput", screen_doSimulateInput },
     { "keyToChar", screen_keyToChar },
     { "charToKey", screen_charToKey },
-    { "zoom", screen_zoom },
+    //{ "zoom", screen_zoom },
     { NULL, NULL }
 };
 

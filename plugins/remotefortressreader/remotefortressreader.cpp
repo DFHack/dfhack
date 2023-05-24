@@ -14,8 +14,6 @@
 #include "PluginManager.h"
 #include "RemoteFortressReader.pb.h"
 #include "RemoteServer.h"
-#include "SDL_events.h"
-#include "SDL_keyboard.h"
 #include "TileTypes.h"
 #include "VersionInfo.h"
 #if DF_VERSION_INT > 34011
@@ -125,6 +123,9 @@
 #include "building_reader.h"
 #include "dwarf_control.h"
 #include "item_reader.h"
+
+#include <SDL_events.h>
+#include <SDL_keyboard.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -2892,13 +2893,12 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
 {
 #if DF_VERSION_INT > 34011
-    SDL::Event e;
+    SDL_Event e;
     e.key.type = in->type();
     e.key.state = in->state();
-    e.key.ksym.mod = (SDL::Mod)in->mod();
-    e.key.ksym.scancode = in->scancode();
-    e.key.ksym.sym = (SDL::Key)in->sym();
-    e.key.ksym.unicode = in->unicode();
+    e.key.keysym.mod = in->mod();
+    e.key.keysym.scancode = (SDL_Scancode)in->scancode();
+    e.key.keysym.sym = in->sym();
     DFHack::DFSDL::DFSDL_PushEvent(&e);
 #endif
     return CR_OK;

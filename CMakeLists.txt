@@ -1,21 +1,19 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0074 NEW)
 project(dfhack)
 
-if("${CMAKE_GENERATOR}" STREQUAL Ninja)
-    if("${CMAKE_VERSION}" VERSION_LESS 3.9)
-        message(WARNING "You are using an old version of CMake (${CMAKE_VERSION}) with Ninja. This may result in ninja errors - see docs/Compile.rst for more details. Upgrading your CMake version is recommended.")
-    endif()
-endif()
+# set up versioning.
+set(DF_VERSION "50.08")
+set(DFHACK_RELEASE "r2rc1")
+set(DFHACK_PRERELEASE TRUE)
 
-if(NOT("${CMAKE_VERSION}" VERSION_LESS 3.12))
-    # make ZLIB_ROOT work in CMake >= 3.12
-    # https://cmake.org/cmake/help/git-stage/policy/CMP0074.html
-    cmake_policy(SET CMP0074 NEW)
-endif()
+set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
+set(DFHACK_ABI_VERSION 1)
+set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
@@ -123,7 +121,7 @@ elseif("${DFHACK_BUILD_ARCH}" STREQUAL "64")
     set(DFHACK_SETARCH "x86_64")
     add_definitions(-DDFHACK64)
 else()
-    message(SEND_ERROR "Invalid build architecture (should be 32/64): ${DFHACK_BUILD_ARCH}")
+    message(SEND_ERROR "Invalid build architecture (should be 32 or 64): ${DFHACK_BUILD_ARCH}")
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -182,30 +180,24 @@ endif()
 if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/scripts/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt
+    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/jsoncpp-sub/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libzip/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/xlsxio/CMakeLists.txt
+    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/googletest/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/luacov/src
 )
-    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in docs/Compile.rst)")
+    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in docs/dev/compile/Compile.rst)")
 endif()
 
-# set up versioning.
-set(DF_VERSION "50.08")
-set(DFHACK_RELEASE "r3")
-set(DFHACK_PRERELEASE FALSE)
-
-set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
-
-set(DFHACK_ABI_VERSION 1)
-
-set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
+# dfhack data goes here:
+set(DFHACK_DATA_DESTINATION hack)
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
 if(UNIX)
     # put the lib into DF/hack
-    set(DFHACK_LIBRARY_DESTINATION hack)
+    set(DFHACK_LIBRARY_DESTINATION ${DFHACK_DATA_DESTINATION})
 else()
     # windows is crap, therefore we can't do nice things with it. leave the libs on a nasty pile...
     set(DFHACK_LIBRARY_DESTINATION .)
@@ -213,31 +205,26 @@ endif()
 
 # external tools will be installed here:
 set(DFHACK_BINARY_DESTINATION .)
-# dfhack data goes here:
-set(DFHACK_DATA_DESTINATION hack)
 # plugin libs go here:
-set(DFHACK_PLUGIN_DESTINATION hack/plugins)
-# dfhack header files go here:
-set(DFHACK_INCLUDES_DESTINATION hack/include)
+set(DFHACK_PLUGIN_DESTINATION ${DFHACK_DATA_DESTINATION}/plugins)
 # dfhack lua files go here:
-set(DFHACK_LUA_DESTINATION hack/lua)
+set(DFHACK_LUA_DESTINATION ${DFHACK_DATA_DESTINATION}/lua)
 # the windows .lib file goes here:
-set(DFHACK_DEVLIB_DESTINATION hack)
+set(DFHACK_DEVLIB_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # user documentation goes here:
-set(DFHACK_USERDOC_DESTINATION hack)
+set(DFHACK_USERDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 # developer documentation goes here:
-set(DFHACK_DEVDOC_DESTINATION hack)
+set(DFHACK_DEVDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # some options for the user/developer to play with
-option(BUILD_LIBRARY "Build the library that goes into DF." ON)
-option(BUILD_PLUGINS "Build the plugins." ON)
+option(BUILD_LIBRARY "Build the DFHack library." ON)
+option(BUILD_PLUGINS "Build the DFHack plugins." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 if(UNIX)
     ## flags for GCC
     # default to hidden symbols
-    # build 32bit
     # ensure compatibility with older CPUs
     # enable C++11 features
     add_definitions(-DLINUX_BUILD)
@@ -254,7 +241,7 @@ if(UNIX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i686")
     endif()
     string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-    set(CMAKE_INSTALL_RPATH "hack")
+    set(CMAKE_INSTALL_RPATH ${DFHACK_LIBRARY_DESTINATION})
 elseif(MSVC)
     # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
@@ -276,30 +263,37 @@ elseif(WIN32)
     add_definitions(-DWIN32)
 endif()
 
-#### download depends ####
+#### dependencies ####
+
+# fix for pyenv: default to `python3` before `python3.x`
+set(Python_FIND_UNVERSIONED_NAMES FIRST)
 
 include(CMake/DownloadFile.cmake)
 
 if(WIN32)
-    # Download zlib on Windows
-    set(ZLIB_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
-    if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-zlib.lib"
-            ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-            "a3b2fc6b68efafa89b0882e354fc8418")
-    else()
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-zlib.lib"
-            ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-            "f4ebaa21d9de28566e88b1edfcdff901")
+    set(ZLIB_FILE win64-zlib.lib)
+    set(ZLIB_PATH ${CMAKE_BINARY_DIR}/depends/zlib/)
+    set(ZLIB_MD5 a3b2fc6b68efafa89b0882e354fc8418)
+    file(COPY ${dfhack_SOURCE_DIR}/depends/zlib/ DESTINATION ${ZLIB_PATH})
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/${ZLIB_FILE}"
+        ${ZLIB_PATH}${ZLIB_FILE}
+        ${ZLIB_MD5})
+    set(ZLIB_ROOT ${ZLIB_PATH})
+else()
+    # Rescan for pthread and zlib if the build arch changed
+    if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")
+        unset(ZLIB_LIBRARY CACHE)
+        unset(CMAKE_HAVE_PTHREAD_H CACHE)
     endif()
 
-    # Move zlib to the build folder so possible 32 and 64-bit builds
-    # in the same source tree don't conflict
-    file(COPY ${dfhack_SOURCE_DIR}/depends/zlib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/)
-    file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
+    if(NOT APPLE AND DFHACK_BUILD_32)
+        set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
+    endif()
+endif()
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
 
+if(WIN32)
     # Do the same for SDL.dll
     # (DFHack doesn't require this at build time, so no need to move it to the build folder)
     # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
@@ -315,7 +309,6 @@ if(WIN32)
             ${SDL_DOWNLOAD_DIR}/SDL.dll
             "5a09604daca6b2b5ce049d79af935d6a")
     endif()
-
 endif()
 
 if(APPLE)
@@ -376,29 +369,6 @@ endif()
 
 #### expose depends ####
 
-# fix for pyenv: default to `python3` before `python3.x`
-set(Python_FIND_UNVERSIONED_NAMES FIRST)
-
-if(UNIX)
-    # Rescan for pthread and zlib if the build arch changed
-    if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")
-        unset(ZLIB_LIBRARY CACHE)
-        unset(CMAKE_HAVE_PTHREAD_H CACHE)
-    endif()
-endif()
-
-# find and make available libz
-if(NOT UNIX) # Windows
-    # zlib is in here so 32-bit and 64-bit builds in the same source tree are possible
-    set(ZLIB_ROOT ${CMAKE_BINARY_DIR}/depends/zlib/)
-else()
-    if(NOT APPLE AND DFHACK_BUILD_32)
-        # 32-bit Linux
-        set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
-    endif()
-endif()
-
-find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
@@ -420,7 +390,6 @@ endif()
 
 include_directories(depends/lodepng)
 include_directories(depends/tthread)
-include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
 add_subdirectory(depends)

@@ -272,11 +272,10 @@ include(CMake/DownloadFile.cmake)
 
 if(WIN32)
     set(ZLIB_FILE zlib.lib)
-    set(ZLIB_PATH ${CMAKE_BINARY_DIR}/depends/zlib/)
+    set(ZLIB_PATH ${dfhack_SOURCE_DIR}/depends/zlib/)
     set(ZLIB_MD5 a3b2fc6b68efafa89b0882e354fc8418)
-    file(COPY ${dfhack_SOURCE_DIR}/depends/zlib/ DESTINATION ${ZLIB_PATH})
     download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-${ZLIB_FILE}"
-        ${ZLIB_PATH}lib/${ZLIB_FILE}
+        ${ZLIB_PATH}lib/win64/${ZLIB_FILE}
         ${ZLIB_MD5})
     set(ZLIB_ROOT ${ZLIB_PATH})
 else()

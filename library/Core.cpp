@@ -2359,8 +2359,10 @@ bool Core::DFH_ncurses_key(int key)
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev)
 {
+    static std::map<int, bool> hotkey_states;
+
     // do NOT process events before we are ready.
-    if(!started || !ev)
+    if (!started || !ev)
         return false;
 
     if (ev->type == SDL_WINDOWEVENT && ev->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
@@ -2372,23 +2374,40 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
 
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         auto &ke = ev->key;
+        auto &sym = ke.keysym.sym;
 
-        if (ke.keysym.sym == SDLK_LSHIFT || ke.keysym.sym == SDLK_RSHIFT)
+        if (sym == SDLK_LSHIFT || sym == SDLK_RSHIFT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
-        else if (ke.keysym.sym == SDLK_LCTRL || ke.keysym.sym == SDLK_RCTRL)
+        else if (sym == SDLK_LCTRL || sym == SDLK_RCTRL)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
-        else if (ke.keysym.sym == SDLK_LALT || ke.keysym.sym == SDLK_RALT)
+        else if (sym == SDLK_LALT || sym == SDLK_RALT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
-        else if (ke.state == SDL_PRESSED && !hotkey_states[ke.keysym.sym])
+        else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
-            hotkey_states[ke.keysym.sym] = true;
-            SelectHotkey(ke.keysym.sym, modstate);
+            // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
+            DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
+            bool handled = SelectHotkey(sym, modstate);
+            if (handled) {
+                DEBUG(keybinding).print("inhibiting SDL key down event\n");
+                hotkey_states[sym] = true;
+                return true;
+            }
         }
-        else if(ke.state == SDL_RELEASED)
+        else if (ke.state == SDL_RELEASED)
         {
-            hotkey_states[ke.keysym.sym] = false;
+            DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
+            hotkey_states[sym] = false;
         }
     }
+    else if (ev->type == SDL_TEXTINPUT) {
+        auto &te = ev->text;
+        DEBUG(keybinding).print("text input: '%s'\n", te.text);
+        if (strlen(te.text) == 1 && hotkey_states[te.text[0]]) {
+            DEBUG(keybinding).print("inhibiting SDL text event\n");
+            return true;
+        }
+    }
+
     return false;
 }
 

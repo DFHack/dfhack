@@ -5,7 +5,6 @@ cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0022 NEW)
 
 # build options
-option(BUILD_DEVEL "Install/package files required for development(For SDK)." OFF)
 if(UNIX)
     option(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 endif()
@@ -458,18 +457,5 @@ install(DIRECTORY lua/
 install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
     DESTINATION ${DFHACK_DATA_DESTINATION}
     FILES_MATCHING PATTERN "*.dif")
-
-# Unused for so long that it's not even relevant now...
-if(BUILD_DEVEL)
-    if(WIN32)
-        install(TARGETS dfhack
-            ARCHIVE DESTINATION ${DFHACK_DEVLIB_DESTINATION})
-    endif()
-    # note the ending '/'. This means *contents* of the directory are installed
-    # without the '/', the directory itself is installed
-    install(DIRECTORY include/
-        DESTINATION ${DFHACK_INCLUDES_DESTINATION}
-        FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" )
-endif()
 
 add_subdirectory(xml)

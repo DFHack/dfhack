@@ -59,7 +59,13 @@ function _file:read(strict)
         end
     else
         self.exists = true
-        self.data = decode_file(self.path)
+        local ok, err = pcall(function() self.data = decode_file(self.path) end)
+        if not ok then
+            if strict then
+                error(('cannot decode file: %s: %s'):format(self.path, err))
+            end
+            self.data = {}
+        end
     end
     return self.data
 end

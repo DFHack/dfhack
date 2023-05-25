@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `autodump`: no longer checks for a keyboard cursor before executing, so ``autodump destroy`` (which doesn't require a cursor) can still function
+- Settings: recover gracefully when settings files become corrupted (e.g. by CTD)
 - `orders`: update orders in orders library for prepared meals, bins, archer uniforms, and weapons
 - Terminal console no longer appears in front of the game window on startup
 - `gui/control-panel`: new preference for whether filters in lists search for substrings in the middle of words (e.g. if set to true, then "ee" will match "steel")

@@ -3615,9 +3615,8 @@ static int internal_isAlias(lua_State *L)
 
 static int internal_addAlias(lua_State *L)
 {
-    const char *new_alias = luaL_checkstring(L, 1);
     std::vector<std::string> alias;
-    split_string(&alias, new_alias, " ");
+    Lua::GetVector(L, alias, 1);
 
     if (!alias.empty())
     {

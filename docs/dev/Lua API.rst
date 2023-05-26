@@ -4240,11 +4240,11 @@ input skips all unfocused ZScreens under that ZScreen and is passed directly to
 the first non-ZScreen viewscreen. There are class attributes that can be set to
 control what kind of unhandled input is passed to the lower layers.
 
-If multiple ZScreens are visible and the player left or right clicks on a
-visible element of a non-focused ZScreen, that ZScreen will be given focus. This
-allows multiple DFHack GUI tools to be usable at the same time. If the mouse is
-clicked away from the ZScreen widgets, that ZScreen loses focus. If no ZScreen
-has focus, all input is passed directly through to the first underlying
+If multiple ZScreens are visible and the player scrolls or left/right clicks on
+a visible element of a non-focused ZScreen, that ZScreen will be given focus.
+This allows multiple DFHack GUI tools to be usable at the same time. If the
+mouse is clicked away from the ZScreen widgets, that ZScreen loses focus. If no
+ZScreen has focus, all input is passed directly through to the first underlying
 non-ZScreen viewscreen.
 
 For a ZScreen with keyboard focus, if :kbd:`Esc` or the right mouse button is

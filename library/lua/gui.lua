@@ -787,7 +787,10 @@ end
 function ZScreen:onInput(keys)
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
-        if (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN) and has_mouse then
+        if has_mouse and
+                (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or
+                 keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
+                 keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
         else
             self:sendInputToParent(keys)
@@ -818,10 +821,15 @@ function ZScreen:onInput(keys)
         end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
-            for key in pairs(MOUSE_KEYS) do
-                if keys[key] then
-                    passit = true
-                    break
+            if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
+                    keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN then
+                passit = true
+            else
+                for key in pairs(MOUSE_KEYS) do
+                    if keys[key] then
+                        passit = true
+                        break
+                    end
                 end
             end
         end

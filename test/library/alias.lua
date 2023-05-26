@@ -1,7 +1,7 @@
 -- Simple tests to ensure the alias functions work as expected
 function test.aliases()
     expect.eq(false, dfhack.internal.isAlias("foo"))
-    expect.eq(true, dfhack.internal.addAlias("foo help"))
+    expect.eq(true, dfhack.internal.addAlias({"foo", "help"}))
     expect.eq(true, dfhack.internal.isAlias("foo"))
     expect.eq("help", dfhack.internal.getAliasCommand("foo"))
     expect.eq("this is not an alias", dfhack.internal.getAliasCommand("this is not an alias"))

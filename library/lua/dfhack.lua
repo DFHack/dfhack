@@ -404,6 +404,14 @@ function ensure_key(t, key, default_value)
     return t[key]
 end
 
+function ensure_keys(t, key, ...)
+    t = ensure_key(t, key)
+    if select('#', ...) > 0 then
+        return ensure_keys(t, ...)
+    end
+    return t
+end
+
 -- String class extentions
 
 -- prefix is a literal string, not a pattern

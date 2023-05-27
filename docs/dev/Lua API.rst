@@ -4240,11 +4240,11 @@ input skips all unfocused ZScreens under that ZScreen and is passed directly to
 the first non-ZScreen viewscreen. There are class attributes that can be set to
 control what kind of unhandled input is passed to the lower layers.
 
-If multiple ZScreens are visible and the player left or right clicks on a
-visible element of a non-focused ZScreen, that ZScreen will be given focus. This
-allows multiple DFHack GUI tools to be usable at the same time. If the mouse is
-clicked away from the ZScreen widgets, that ZScreen loses focus. If no ZScreen
-has focus, all input is passed directly through to the first underlying
+If multiple ZScreens are visible and the player scrolls or left/right clicks on
+a visible element of a non-focused ZScreen, that ZScreen will be given focus.
+This allows multiple DFHack GUI tools to be usable at the same time. If the
+mouse is clicked away from the ZScreen widgets, that ZScreen loses focus. If no
+ZScreen has focus, all input is passed directly through to the first underlying
 non-ZScreen viewscreen.
 
 For a ZScreen with keyboard focus, if :kbd:`Esc` or the right mouse button is
@@ -4503,7 +4503,7 @@ Has attributes:
   Called from ``postComputeFrame``.
 
 * ``draggable = bool`` (default: ``false``)
-* ``drag_anchors = {}`` (default: ``{title=true, frame=false, body=false}``)
+* ``drag_anchors = {}`` (default: ``{title=true, frame=false/true, body=true}``)
 * ``drag_bound = 'frame' or 'body'`` (default: ``'frame'``)
 * ``on_drag_begin = function()`` (default: ``nil``)
 * ``on_drag_end = function(bool)`` (default: ``nil``)
@@ -4511,7 +4511,7 @@ Has attributes:
   If ``draggable`` is set to ``true``, then the above attributes come into play
   when the panel is dragged around the screen, either with the mouse or the
   keyboard. ``drag_anchors`` sets which parts of the panel can be clicked on
-  with the left mouse button to start dragging. ``drag_bound`` configures
+  with the left mouse button to start dragging. The frame is a drag anchor by default only if ``resizable`` (below) is ``false``. ``drag_bound`` configures
   whether the frame of the panel (if any) can be dragged outside the containing
   parent's boundary. The body will never be draggable outside of the parent,
   but you can allow the frame to cross the boundary by setting ``drag_bound`` to

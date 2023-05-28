@@ -11,6 +11,7 @@
 //  df
 #include "df/building_stockpilest.h"
 #include "df/creature_raw.h"
+#include "df/caste_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/item_quality.h"
 #include <df/itemdef_ammost.h>
@@ -611,6 +612,12 @@ static bool serialize_list_creature(FuncWriteExport add_value, const vector<char
     return all;
 }
 
+static string get_filter_string(df::creature_raw *r) {
+    if (!r->caste.size() || !r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET))
+        return r->name[0];
+    return r->name[0] + "/tameable";
+}
+
 static void unserialize_list_creature(const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, int32_t list_size, vector<char>& pile_list) {
     size_t num_elems = world->raws.creatures.all.size();
@@ -618,7 +625,7 @@ static void unserialize_list_creature(const char* subcat, bool all, char val, co
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
             auto r = find_creature(idx);
-            set_filter_elem(subcat, filters, val, r->name[0], r->creature_id, pile_list.at(idx));
+            set_filter_elem(subcat, filters, val, get_filter_string(r), r->creature_id, pile_list.at(idx));
         }
         return;
     }
@@ -631,7 +638,7 @@ static void unserialize_list_creature(const char* subcat, bool all, char val, co
             continue;
         }
         auto r = find_creature(idx);
-        set_filter_elem(subcat, filters, val, r->name[0], r->creature_id, pile_list.at(idx));
+        set_filter_elem(subcat, filters, val, get_filter_string(r), r->creature_id, pile_list.at(idx));
     }
 }
 

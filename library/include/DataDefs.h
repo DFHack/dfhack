@@ -529,6 +529,13 @@ namespace df
     }
 
     template<class T>
+    void *allocator_noassign_fn(void *out, const void *in) {
+        if (out) { return NULL; }
+        else if (in) { delete (T*)in; return (T*)in; }
+        else return new T();
+    }
+
+    template<class T>
     struct identity_traits {
         static compound_identity *get() { return &T::_identity; }
     };

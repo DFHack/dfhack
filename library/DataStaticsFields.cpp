@@ -17,6 +17,9 @@ namespace df {
     category##_identity<type> identity_traits<type>::identity(name);
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
+#define OPAQUE_IDENTITY_TRAITS_NAME(type, name) \
+    opaque_identity identity_traits<type>::identity(sizeof(type), allocator_noassign_fn<type>, name)
+#define STL_OPAQUE_IDENTITY_TRAITS(type) OPAQUE_IDENTITY_TRAITS_NAME(std::type, #type)
 
 #ifndef STATIC_FIELDS_GROUP
     INTEGER_IDENTITY_TRAITS(char,               "char");
@@ -42,13 +45,8 @@ namespace df {
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     bit_array_identity identity_traits<BitArray<int> >::identity;
 
-    static void *fstream_allocator_fn(void *out, const void *in) {
-        if (out) { /* *(T*)out = *(const T*)in;*/ return NULL; }
-        else if (in) { delete (std::fstream*)in; return (std::fstream*)in; }
-        else return new std::fstream();
-    }
-    opaque_identity identity_traits<std::fstream>::identity(
-        sizeof(std::fstream), fstream_allocator_fn, "fstream");
+    STL_OPAQUE_IDENTITY_TRAITS(fstream);
+    STL_OPAQUE_IDENTITY_TRAITS(mutex);
 
     buffer_container_identity buffer_container_identity::base_instance;
 #endif

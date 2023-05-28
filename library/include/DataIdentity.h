@@ -25,10 +25,11 @@ distribution.
 #pragma once
 
 #include <deque>
-#include <string>
-#include <sstream>
-#include <vector>
 #include <map>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "DataDefs.h"
 
@@ -566,6 +567,11 @@ namespace df
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::fstream> {
+        static opaque_identity identity;
+        static opaque_identity *get() { return &identity; }
+    };
+
+    template<> struct DFHACK_EXPORT identity_traits<std::mutex> {
         static opaque_identity identity;
         static opaque_identity *get() { return &identity; }
     };

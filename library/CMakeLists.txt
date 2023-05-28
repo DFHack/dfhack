@@ -62,6 +62,7 @@ set(MAIN_SOURCES
     ColorText.cpp
     CompilerWorkAround.cpp
     DataDefs.cpp
+    DataIdentity.cpp
     Debug.cpp
     Error.cpp
     VTableInterpose.cpp
@@ -71,7 +72,6 @@ set(MAIN_SOURCES
     LuaApi.cpp
     DataStatics.cpp
     DataStaticsCtor.cpp
-    DataStaticsFields.cpp
     MiscUtils.cpp
     Types.cpp
     PluginManager.cpp
@@ -186,8 +186,7 @@ foreach(GROUP other a b c d e f g h i j k l m n o p q r s t u v w x y z)
         set(STATIC_FIELDS_INC_FILENAME "df/static.fields-${GROUP}.inc")
     endif()
     file(WRITE ${STATIC_FIELDS_FILENAME}.tmp
-        "#define STATIC_FIELDS_GROUP\n"
-        "#include \"../DataStaticsFields.cpp\"\n"
+        "#include \"DataStaticsFields.inc\"\n"
         "#include \"${STATIC_FIELDS_INC_FILENAME}\"\n"
     )
     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -294,15 +293,15 @@ add_custom_target(generate_headers
 if(REMOVE_SYMBOLS_FROM_DF_STUBS)
     if(UNIX)
         # Don't produce debug info for generated stubs
-        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp ${STATIC_FIELDS_FILES}
             PROPERTIES COMPILE_FLAGS "-g0 -O1")
     else(WIN32)
-        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp ${STATIC_FIELDS_FILES}
             PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
     endif()
 else()
     if(WIN32)
-        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+        set_source_files_properties(DataStatics.cpp DataStaticsCtor.cpp ${STATIC_FIELDS_FILES}
             PROPERTIES COMPILE_FLAGS "/Od /bigobj")
     endif()
 endif()

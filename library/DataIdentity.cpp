@@ -1,16 +1,11 @@
 #include <stddef.h>
 
 #include <fstream>
-
-#ifndef STATIC_FIELDS_GROUP
-#include "DataDefs.h"
-#endif
+#include <mutex>
+#include <string>
+#include <vector>
 
 #include "DataFuncs.h"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(category, type, name) \
@@ -50,15 +45,4 @@ namespace df {
 
     buffer_container_identity buffer_container_identity::base_instance;
 #endif
-#undef NUMBER_IDENTITY_TRAITS
-#undef INTEGER_IDENTITY_TRAITS
-#undef FLOAT_IDENTITY_TRAITS
 }
-
-#define TID(type) (&identity_traits< type >::identity)
-
-#define FLD(mode, name) struct_field_info::mode, #name, offsetof(CUR_STRUCT, name)
-#define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
-#define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
-#define METHOD_N(mode, func, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::func)
-#define FLD_END struct_field_info::END

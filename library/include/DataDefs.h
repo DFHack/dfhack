@@ -497,11 +497,25 @@ namespace df
     using DFHack::DfLinkedList;
     using DFHack::DfOtherVectors;
 
+    template<class T>
+    typename std::enable_if<
+        std::is_copy_assignable<T>::value
+    >::type allocator_try_assign(void *out, const void *in) {
+        *(T*)out = *(const T*)in;
+    }
+
+    template<class T>
+    typename std::enable_if<
+        !std::is_copy_assignable<T>::value
+    >::type allocator_try_assign(void *out, const void *in) {
+        // assignment is not possible; do nothing
+    }
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
     template<class T>
     void *allocator_fn(void *out, const void *in) {
-        if (out) { *(T*)out = *(const T*)in; return out; }
+        if (out) { allocator_try_assign<T>(out, in); return out; }
         else if (in) { delete (T*)in; return (T*)in; }
         else return new T();
     }

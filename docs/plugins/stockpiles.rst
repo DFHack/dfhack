@@ -134,6 +134,9 @@ entire category, or with a filter, any matchable subset thereof::
     cat_weapons
     cat_wood
 
+There is also an ``everything`` file that includes all the above categories,
+including refuse and corpses.
+
 For many of the categories, there are also flags and subcategory prefixes that
 you can match with filters and convenient pre-made settings files that
 manipulate interesting category subsets.

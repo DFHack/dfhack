@@ -8,6 +8,8 @@
 
 #include "df/building.h"
 #include "df/building_stockpilest.h"
+#include "df/hauling_route.h"
+#include "df/hauling_stop.h"
 
 #include <string>
 #include <vector>
@@ -147,8 +149,54 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
     return true;
 }
 
+static bool stockpiles_route_import(color_ostream& out, string fname, int route_id, int stop_id, string mode_str, string filter) {
+    auto route = df::hauling_route::find(route_id);
+    if (!route) {
+        out.printerr("Specified hauling route not found: %d.\n", route_id);
+        return false;
+    }
+
+    df::hauling_stop *stop = binsearch_in_vector(route->stops, &df::hauling_stop::id, stop_id);
+    if (!stop) {
+        out.printerr("Specified hauling stop not found in route %d: %d.\n", route_id, stop_id);
+        return false;
+    }
+
+    if (!is_dfstockfile(fname))
+        fname += ".dfstock";
+
+    if (!Filesystem::exists(fname)) {
+        out.printerr("ERROR: file doesn't exist: '%s'\n", fname.c_str());
+        return false;
+    }
+
+    DeserializeMode mode = DESERIALIZE_MODE_SET;
+    if (mode_str == "enable")
+        mode = DESERIALIZE_MODE_ENABLE;
+    else if (mode_str == "disable")
+        mode = DESERIALIZE_MODE_DISABLE;
+
+    vector<string> filters;
+    split_string(&filters, filter, ",", true);
+
+    try {
+        StockpileSettingsSerializer cereal(&stop->settings);
+        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+            out.printerr("deserialization failed: '%s'\n", fname.c_str());
+            return false;
+        }
+    }
+    catch (std::exception& e) {
+        out.printerr("deserialization failed: protobuf exception: %s\n", e.what());
+        return false;
+    }
+
+    return true;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(stockpiles_export),
     DFHACK_LUA_FUNCTION(stockpiles_import),
+    DFHACK_LUA_FUNCTION(stockpiles_route_import),
     DFHACK_LUA_END
 };

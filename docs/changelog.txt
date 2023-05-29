@@ -63,6 +63,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Window behavior: non-resizable windows now allow dragging by their frame edges by default
 - `gui/autodump`: fort-mode keybinding: Ctrl-H
 - Window behavior: if you have multiple DFHack tool windows open, scrolling the mouse wheel while over an unfocused window will focus it and raise it to the top
+- `stockpiles`: allow filtering creatures by tameability
 
 ## Documentation
 

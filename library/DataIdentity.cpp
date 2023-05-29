@@ -40,6 +40,7 @@ namespace df {
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     bit_array_identity identity_traits<BitArray<int> >::identity;
 
+    STL_OPAQUE_IDENTITY_TRAITS(condition_variable);
     STL_OPAQUE_IDENTITY_TRAITS(fstream);
     STL_OPAQUE_IDENTITY_TRAITS(mutex);
 

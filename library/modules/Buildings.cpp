@@ -465,7 +465,7 @@ bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
                                df::coord pos) {
     pvec->clear();
 
-    for (df::building_civzonest* zone : world->buildings.other.ACTIVITY_ZONE)
+    for (df::building_civzonest* zone : world->buildings.other.ANY_ZONE)
     {
         if (pos.z != zone->z)
             continue;

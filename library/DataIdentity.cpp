@@ -1,11 +1,13 @@
 #include <stddef.h>
 
+#include <condition_variable>
 #include <fstream>
 #include <mutex>
 #include <string>
 #include <vector>
 
 #include "DataFuncs.h"
+#include "DataIdentity.h"
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(category, type, name) \

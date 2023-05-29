@@ -24,15 +24,18 @@ distribution.
 
 #pragma once
 
-#include <condition_variable>
 #include <deque>
 #include <map>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "DataDefs.h"
+
+namespace std {
+    class condition_variable;
+    class mutex;
+};
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.

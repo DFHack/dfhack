@@ -134,12 +134,14 @@ entire category, or with a filter, any matchable subset thereof::
     cat_weapons
     cat_wood
 
-There is also an ``everything`` file that includes all the above categories,
-including refuse and corpses.
+In addition, there are files for ``all``, which includes all categories except
+refuse and corpses (mirroring the "all" configuration in-game), and
+``everything``, which really includes all categories.
 
-For many of the categories, there are also flags and subcategory prefixes that
-you can match with filters and convenient pre-made settings files that
-manipulate interesting category subsets.
+For many of the categories, there are also flags, subcategory prefixes, and
+item properties that you can match with filters. In addition, there are
+normally at least a few convenient pre-made settings files that manipulate
+interesting category subsets.
 
 Ammo stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,6 +173,10 @@ Flags::
 
     cages
     traps
+
+Properties::
+
+    tameable
 
 Settings files::
 
@@ -274,6 +280,13 @@ Notes:
 * ``thread`` and ``cloth`` settings files set all materials that are not
     adamantine.
 
+Corpse stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Properties::
+
+    tameable
+
 Finished goods stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -295,7 +308,7 @@ Settings files::
 
 Example commands for a toy stockpile::
 
-    stockpiles import cat_furniture -f mats/,other/,core/,total/
+    stockpiles import cat_finished_goods -f mats/,other/,core/,total/
     stockpiles import -m enable toys
 
 Food stockpile adjustments
@@ -403,6 +416,10 @@ Flags and subcategory prefixes::
     shells/
     teeth/
     horns/
+
+Properties::
+
+    tameable
 
 Settings files::
 

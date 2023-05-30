@@ -985,7 +985,7 @@ function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     local signed = false
 
-    if x1 == y2 then
+    if x1 == x2 and y1 == y2 then
         dscreen.paintTile(style.x_frame_pen or pen, x1, y2)
     elseif x1 == x2 then
         dscreen.paintTile(style.tte_frame_pen or style.tti_frame_pen or pen, x1, y1)

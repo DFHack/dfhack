@@ -899,13 +899,13 @@ GREY_FRAME = {
 -- The boundary used by the pre-steam DF screens.
 -- deprecated
 BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK }, -- ch=0xDB is "full block" (█)
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 local BASE_FRAME = {
-    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK }, -- ch=206 is "box drawings double vertical and horizontal" (╬)
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
@@ -920,14 +920,42 @@ local function make_frame(name, double_line)
     end
 
     local frame = copyall(BASE_FRAME)
+    -- external horizontal/vertical bars
     frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external corners
     frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external T-junctions
+    frame.tte_frame_pen = to_pen{ tile=tp(10), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bte_frame_pen = to_pen{ tile=tp(11), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lte_frame_pen = to_pen{ tile=tp(12), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rte_frame_pen = to_pen{ tile=tp(13), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal horizontal/vertical bars (and cross junction)
+    frame.v_frame_pen = to_pen{ tile=tp(4), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.h_frame_pen = to_pen{ tile=tp(5), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.x_frame_pen = to_pen{ tile=tp(3), ch=double_line and 206 or 197, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal T-junctions
+    frame.tti_frame_pen = to_pen{ tile=tp(20), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bti_frame_pen = to_pen{ tile=tp(19), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lti_frame_pen = to_pen{ tile=tp(18), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rti_frame_pen = to_pen{ tile=tp(17), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    --[[ naming scheme for t-junctions:
+        the first letter means:
+            "t" for "top":    the T is not rotated, it looks like the character "T"
+            "b" for "bottom": the T is upside-down
+            "l" for "left":   the T is rotated 90 degrees counter-clockwise
+            "r" for "right":  the T is rotated 90 degrees clockwise
+        the second letter means:
+            "t" for "t-junction": this is a t-junction piece...
+        the third letter means:
+            "i" for "internal": this sprite is meant to be drawn inside the frame.
+            "e" for "external": this sprite is meant to be drawn on the frame itself.
+    --]]
     return frame
 end
 
@@ -955,19 +983,35 @@ INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
 function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
-    dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
-    dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
-    dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    local rb_frame_pen = style.rb_frame_pen
-    if rb_frame_pen == FRAME_WINDOW.rb_frame_pen and not resizable then
-        rb_frame_pen = FRAME_PANEL.rb_frame_pen
+    local signed = false
+
+    if x1 == y2 then
+        dscreen.paintTile(style.x_frame_pen or pen, x1, y2)
+    elseif x1 == x2 then
+        dscreen.paintTile(style.tte_frame_pen or style.tti_frame_pen or pen, x1, y1)
+        dscreen.paintTile(style.bte_frame_pen or style.bti_frame_pen or pen, x2, y2)
+        dscreen.fillRect(style.v_frame_pen or pen, x1,y1+1,x2,y2-1)
+    elseif y1 == y2 then
+        dscreen.paintTile(style.lte_frame_pen or style.lti_frame_pen or pen, x1, y1)
+        dscreen.paintTile(style.rte_frame_pen or style.rti_frame_pen or pen, x2, y2)
+        dscreen.fillRect(style.h_frame_pen or pen, x1+1,y1,x2-1,y2)
+    else
+        dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
+        dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
+        dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
+        local rb_frame_pen = style.rb_frame_pen
+        if rb_frame_pen == FRAME_WINDOW.rb_frame_pen and not resizable then
+            rb_frame_pen = FRAME_PANEL.rb_frame_pen
+        end
+        dscreen.paintTile(rb_frame_pen or pen, x2, y2)
+        dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
+        dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
+        dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
+        dscreen.fillRect(style.r_frame_pen or style.v_frame_pen or pen,x2,y1+1,x2,y2-1)
+        signed = style.signature_pen
     end
-    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
-    dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
-    dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
-    dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
-    dscreen.fillRect(style.r_frame_pen or style.v_frame_pen or pen,x2,y1+1,x2,y2-1)
-    if style.signature_pen ~= false then
+
+    if signed ~= false then
         dscreen.paintString(style.signature_pen or style.title_pen or pen,x2-7,y2,"DFHack")
     end
 

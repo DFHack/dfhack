@@ -112,7 +112,7 @@ function QualityAndMaterialsPage:init()
         widgets.Panel{
             view_id='materials_lists',
             frame={l=0, t=HEADER_HEIGHT, r=0, b=FOOTER_HEIGHT+QUALITY_HEIGHT},
-            frame_style=gui.INTERIOR_FRAME,
+            frame_style=gui.FRAME_INTERIOR,
             subviews={
                 widgets.List{
                     view_id='materials_categories',
@@ -133,12 +133,12 @@ function QualityAndMaterialsPage:init()
         widgets.Panel{
             view_id='divider',
             frame={l=TYPE_COL_WIDTH-1, t=HEADER_HEIGHT, b=FOOTER_HEIGHT+QUALITY_HEIGHT, w=1},
-            on_render=self:callback('draw_divider'),
+            frame_style=gui.FRAME_INTERIOR,
         },
         widgets.Panel{
             view_id='quality_panel',
             frame={l=0, r=0, h=QUALITY_HEIGHT, b=FOOTER_HEIGHT},
-            frame_style=gui.INTERIOR_FRAME,
+            frame_style=gui.FRAME_INTERIOR,
             frame_title='Item quality',
             subviews={
                 widgets.CycleHotkeyLabel{
@@ -437,20 +437,6 @@ function QualityAndMaterialsPage:set_max_quality(idx)
     self.dirty = true
 end
 
-function QualityAndMaterialsPage:draw_divider(dc)
-    local y2 = dc.height - 1
-    for y=0,y2 do
-        dc:seek(0, y)
-        if y == 0 then
-            dc:char(nil, pens.VERT_TOP_PEN)
-        elseif y == y2 then
-            dc:char(nil, pens.VERT_BOT_PEN)
-        else
-            dc:char(nil, pens.VERT_MID_PEN)
-        end
-    end
-end
-
 function QualityAndMaterialsPage:onRenderFrame(dc, rect)
     QualityAndMaterialsPage.super.onRenderFrame(self, dc, rect)
     if self.dirty then
@@ -466,7 +452,7 @@ GlobalSettingsPage = defclass(GlobalSettingsPage, widgets.ResizingPanel)
 GlobalSettingsPage.ATTRS{
     autoarrange_subviews=true,
     frame={t=0, l=0},
-    frame_style=gui.INTERIOR_FRAME,
+    frame_style=gui.FRAME_INTERIOR,
 }
 
 function GlobalSettingsPage:init()

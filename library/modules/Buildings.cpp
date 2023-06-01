@@ -357,7 +357,7 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
     if (bld->assigned_unit == unit)
         return true;
 
-    df::building * pbld = dynamic_cast<df::building*>(bld);
+    df::building * pbld = virtual_cast<df::building>(bld);
 
     if (bld->assigned_unit)
     {

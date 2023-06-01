@@ -1944,9 +1944,9 @@ General
 
   Searches for a specific_ref with the given type.
 
-* ``dfhack.buildings.setOwner(item,unit)``
+* ``dfhack.buildings.setOwner(civzone,unit)``
 
-  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``

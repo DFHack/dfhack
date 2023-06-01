@@ -108,9 +108,9 @@ DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general
 DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
 
 /**
- * Sets the owner unit for the building.
+ * Sets the owner unit for the zone.
  */
-DFHACK_EXPORT bool setOwner(df::building *building, df::unit *owner);
+DFHACK_EXPORT bool setOwner(df::building_civzonest *building, df::unit *owner);
 
 /**
  * Find the building located at the specified tile.

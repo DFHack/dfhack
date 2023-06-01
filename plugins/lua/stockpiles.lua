@@ -101,7 +101,7 @@ function export_stockpile(name, opts)
     stockpiles_export(name, get_sp_id(opts), includedElements)
 end
 
-function import_stockpile(name, opts)
+local function normalize_name(name)
     local is_library = false
     if name:startswith('library/') then
         name = name:sub(9)
@@ -109,11 +109,19 @@ function import_stockpile(name, opts)
     end
     assert_safe_name(name)
     if not is_library and dfhack.filesystem.exists(STOCKPILES_DIR .. '/' .. name .. '.dfstock') then
-        name = STOCKPILES_DIR .. '/' .. name
-    else
-        name = STOCKPILES_LIBRARY_DIR .. '/' .. name
+        return STOCKPILES_DIR .. '/' .. name
     end
-    stockpiles_import(name, get_sp_id(opts), opts.mode, table.concat(opts.filters, ','))
+    return STOCKPILES_LIBRARY_DIR .. '/' .. name
+end
+
+function import_stockpile(name, opts)
+    name = normalize_name(name)
+    stockpiles_import(name, get_sp_id(opts), opts.mode, table.concat(opts.filters or {}, ','))
+end
+
+function import_route(name, route_id, stop_id, mode, filters)
+    name = normalize_name(name)
+    stockpiles_route_import(name, route_id, stop_id, mode, table.concat(filters or {}, ','))
 end
 
 local valid_includes = {general=true, categories=true, types=true}

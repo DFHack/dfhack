@@ -4,6 +4,7 @@
 
 #include "df/itemdef.h"
 #include "df/organic_mat_category.h"
+#include "df/stockpile_settings.h"
 
 #include "proto/stockpiles.pb.h"
 
@@ -57,14 +58,14 @@ struct food_pair {
 /**
  * Class for serializing the stockpile_settings structure into a Google protobuf
  */
-class StockpileSerializer {
+class StockpileSettingsSerializer {
 public:
     /**
-     * @param stockpile stockpile to read or write settings to
+     * @param settings settings to read or write to
      */
-    StockpileSerializer(df::building_stockpilest* stockpile);
+    StockpileSettingsSerializer(df::stockpile_settings *settings);
 
-    ~StockpileSerializer();
+    ~StockpileSettingsSerializer();
 
     /**
      * Since we depend on protobuf-lite, not the full lib, we copy this function from
@@ -88,20 +89,20 @@ public:
      */
     bool unserialize_from_file(const std::string& file, DeserializeMode mode, const std::vector<std::string>& filters);
 
-private:
-    df::building_stockpilest* mPile;
+protected:
     dfstockpiles::StockpileSettings mBuffer;
 
     // read memory structures and serialize to protobuf
-    void write(uint32_t includedElements);
+    virtual void write(uint32_t includedElements);
 
     // parse serialized data into ui indices
-    void read(DeserializeMode mode, const std::vector<std::string>& filters);
+    virtual void read(DeserializeMode mode, const std::vector<std::string>& filters);
 
-    void write_containers();
-    void read_containers(DeserializeMode mode);
-    void write_general();
-    void read_general(DeserializeMode mode);
+    virtual void write_general();
+    virtual void read_general(DeserializeMode mode);
+
+private:
+    df::stockpile_settings *mSettings;
 
     bool write_ammo(dfstockpiles::StockpileSettings::AmmoSet* ammo);
     void read_ammo(DeserializeMode mode, const std::vector<std::string>& filters);
@@ -138,4 +139,33 @@ private:
     void read_weapons(DeserializeMode mode, const std::vector<std::string>& filters);
     bool write_wood(dfstockpiles::StockpileSettings::WoodSet* wood);
     void read_wood(DeserializeMode mode, const std::vector<std::string>& filters);
+};
+
+/**
+ * Class for serializing a stockpile into a Google protobuf
+ */
+class StockpileSerializer : public StockpileSettingsSerializer {
+public:
+    /**
+     * @param stockpile stockpile to read or write settings to
+     */
+    StockpileSerializer(df::building_stockpilest* stockpile);
+
+    ~StockpileSerializer();
+
+protected:
+    // read memory structures and serialize to protobuf
+    virtual void write(uint32_t includedElements);
+
+    // parse serialized data into ui indices
+    virtual void read(DeserializeMode mode, const std::vector<std::string>& filters);
+
+    virtual void write_general();
+    virtual void read_general(DeserializeMode mode);
+
+private:
+    df::building_stockpilest* mPile;
+
+    void write_containers();
+    void read_containers(DeserializeMode mode);
 };

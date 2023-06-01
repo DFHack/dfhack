@@ -100,6 +100,46 @@ static size_t load_textures(color_ostream & out, const char * fname,
     return count;
 }
 
+const uint32_t MAPTILE_WIDTH_PX = 32;
+const uint32_t MAPTILE_HEIGHT_PX = 32;
+
+static size_t load_bigtextures(color_ostream & out, const char * fname,
+                            long *texpos_start) {
+    DFSDL_Surface *s = DFIMG_Load(fname);
+    if (!s) {
+        out.printerr("unable to load textures from '%s'\n", fname);
+        return 0;
+    }
+
+    s = canonicalize_format(s);
+    DFSDL_SetAlpha(s, 0, 255);
+    int dimx = s->w / MAP_TILE_WIDTH_PX;
+    int dimy = s->h / MAP_TILE_HEIGHT_PX;
+    long count = 0;
+    for (int y = 0; y < dimy; y++) {
+        for (int x = 0; x < dimx; x++) {
+            DFSDL_Surface *tile = DFSDL_CreateRGBSurface(0, // SDL_SWSURFACE
+                    MAP_TILE_WIDTH_PX, MAP_TILE_HEIGHT_PX, 32,
+                    s->format->Rmask, s->format->Gmask, s->format->Bmask,
+                    s->format->Amask);
+            DFSDL_SetAlpha(tile, 0,255);
+            DFSDL_Rect vp;
+            vp.x = MAP_TILE_WIDTH_PX * x;
+            vp.y = MAP_TILE_HEIGHT_PX * y;
+            vp.w = MAP_TILE_WIDTH_PX;
+            vp.h = MAP_TILE_HEIGHT_PX;
+            DFSDL_UpperBlit(s, &vp, tile, NULL);
+            if (!count++)
+                *texpos_start = enabler->textures.raws.size();
+            enabler->textures.raws.push_back(tile);
+        }
+    }
+    DFSDL_FreeSurface(s);
+
+    DEBUG(textures,out).print("loaded %ld textures from '%s'\n", count, fname);
+    return count;
+}
+
 // DFHack could conceivably be loaded at any time, so we need to be able to
 // handle loading textures before or after a world is loaded.
 // If a world is already loaded, then append our textures to the raws. they'll
@@ -127,7 +167,7 @@ void Textures::init(color_ostream &out) {
                                           &g_red_pin_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/icons.png",
                                           &g_icons_texpos_start);
-    g_num_dfhack_textures += load_textures(out, "hack/data/art/on-off.png",
+    g_num_dfhack_textures += load_bigtextures(out, "hack/data/art/on-off32x32.png",
                                           &g_on_off_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/control-panel.png",
                                           &g_control_panel_texpos_start);

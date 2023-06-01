@@ -100,8 +100,8 @@ static size_t load_textures(color_ostream & out, const char * fname,
     return count;
 }
 
-const uint32_t MAPTILE_WIDTH_PX = 32;
-const uint32_t MAPTILE_HEIGHT_PX = 32;
+const uint32_t MAP_TILE_WIDTH_PX = 32;
+const uint32_t MAP_TILE_HEIGHT_PX = 32;
 
 static size_t load_bigtextures(color_ostream & out, const char * fname,
                             long *texpos_start) {

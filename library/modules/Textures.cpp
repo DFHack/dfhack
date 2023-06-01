@@ -23,6 +23,7 @@ static long g_green_pin_texpos_start = -1;
 static long g_red_pin_texpos_start = -1;
 static long g_icons_texpos_start = -1;
 static long g_on_off_texpos_start = -1;
+static long g_pathable_texpos_start = -1;
 static long g_control_panel_texpos_start = -1;
 static long g_thin_borders_texpos_start = -1;
 static long g_medium_borders_texpos_start = -1;
@@ -64,7 +65,7 @@ const uint32_t TILE_WIDTH_PX = 8;
 const uint32_t TILE_HEIGHT_PX = 12;
 
 static size_t load_textures(color_ostream & out, const char * fname,
-                            long *texpos_start) {
+                            long *texpos_start, int tile_w, int tile_h) {
     DFSDL_Surface *s = DFIMG_Load(fname);
     if (!s) {
         out.printerr("unable to load textures from '%s'\n", fname);
@@ -73,61 +74,21 @@ static size_t load_textures(color_ostream & out, const char * fname,
 
     s = canonicalize_format(s);
     DFSDL_SetAlpha(s, 0, 255);
-    int dimx = s->w / TILE_WIDTH_PX;
-    int dimy = s->h / TILE_HEIGHT_PX;
+    int dimx = s->w / tile_w;
+    int dimy = s->h / tile_h;
     long count = 0;
     for (int y = 0; y < dimy; y++) {
         for (int x = 0; x < dimx; x++) {
             DFSDL_Surface *tile = DFSDL_CreateRGBSurface(0, // SDL_SWSURFACE
-                    TILE_WIDTH_PX, TILE_HEIGHT_PX, 32,
+                    tile_w, tile_h, 32,
                     s->format->Rmask, s->format->Gmask, s->format->Bmask,
                     s->format->Amask);
             DFSDL_SetAlpha(tile, 0,255);
             DFSDL_Rect vp;
-            vp.x = TILE_WIDTH_PX * x;
-            vp.y = TILE_HEIGHT_PX * y;
-            vp.w = TILE_WIDTH_PX;
-            vp.h = TILE_HEIGHT_PX;
-            DFSDL_UpperBlit(s, &vp, tile, NULL);
-            if (!count++)
-                *texpos_start = enabler->textures.raws.size();
-            enabler->textures.raws.push_back(tile);
-        }
-    }
-    DFSDL_FreeSurface(s);
-
-    DEBUG(textures,out).print("loaded %ld textures from '%s'\n", count, fname);
-    return count;
-}
-
-const uint32_t MAP_TILE_WIDTH_PX = 32;
-const uint32_t MAP_TILE_HEIGHT_PX = 32;
-
-static size_t load_bigtextures(color_ostream & out, const char * fname,
-                            long *texpos_start) {
-    DFSDL_Surface *s = DFIMG_Load(fname);
-    if (!s) {
-        out.printerr("unable to load textures from '%s'\n", fname);
-        return 0;
-    }
-
-    s = canonicalize_format(s);
-    DFSDL_SetAlpha(s, 0, 255);
-    int dimx = s->w / MAP_TILE_WIDTH_PX;
-    int dimy = s->h / MAP_TILE_HEIGHT_PX;
-    long count = 0;
-    for (int y = 0; y < dimy; y++) {
-        for (int x = 0; x < dimx; x++) {
-            DFSDL_Surface *tile = DFSDL_CreateRGBSurface(0, // SDL_SWSURFACE
-                    MAP_TILE_WIDTH_PX, MAP_TILE_HEIGHT_PX, 32,
-                    s->format->Rmask, s->format->Gmask, s->format->Bmask,
-                    s->format->Amask);
-            DFSDL_SetAlpha(tile, 0,255);
-            DFSDL_Rect vp;
-            vp.x = MAP_TILE_WIDTH_PX * x;
-            vp.y = MAP_TILE_HEIGHT_PX * y;
-            vp.w = MAP_TILE_WIDTH_PX;
-            vp.h = MAP_TILE_HEIGHT_PX;
+            vp.x = tile_w * x;
+            vp.y = tile_h * y;
+            vp.w = tile_w;
+            vp.h = tile_h;
             DFSDL_UpperBlit(s, &vp, tile, NULL);
             if (!count++)
                 *texpos_start = enabler->textures.raws.size();
@@ -159,28 +120,31 @@ void Textures::init(color_ostream &out) {
 
     bool is_pre_world = num_textures == textures.init_texture_size;
 
+    // the passed ints are width and height of the spritesheet's tiles.
     g_num_dfhack_textures = load_textures(out, "hack/data/art/dfhack.png",
-                                          &g_dfhack_logo_texpos_start);
+                                          &g_dfhack_logo_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/green-pin.png",
-                                          &g_green_pin_texpos_start);
+                                          &g_green_pin_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/red-pin.png",
-                                          &g_red_pin_texpos_start);
+                                          &g_red_pin_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/icons.png",
-                                          &g_icons_texpos_start);
-    g_num_dfhack_textures += load_bigtextures(out, "hack/data/art/on-off32x32.png",
-                                          &g_on_off_texpos_start);
+                                          &g_icons_texpos_start, 8, 12);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/on-off.png",
+                                          &g_on_off_texpos_start, 8, 12);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/pathable.png",
+                                          &g_pathable_texpos_start, 32, 32);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/control-panel.png",
-                                          &g_control_panel_texpos_start);
+                                          &g_control_panel_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-thin.png",
-                                          &g_thin_borders_texpos_start);
+                                          &g_thin_borders_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-medium.png",
-                                          &g_medium_borders_texpos_start);
+                                          &g_medium_borders_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-bold.png",
-                                          &g_bold_borders_texpos_start);
+                                          &g_bold_borders_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-panel.png",
-                                          &g_panel_borders_texpos_start);
+                                          &g_panel_borders_texpos_start, 8, 12);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-window.png",
-                                          &g_window_borders_texpos_start);
+                                          &g_window_borders_texpos_start, 8, 12);
 
     DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
@@ -231,6 +195,10 @@ long Textures::getIconsTexposStart() {
 
 long Textures::getOnOffTexposStart() {
     return g_on_off_texpos_start;
+}
+
+long Textures::getPathableTexposStart() {
+    return g_pathable_texpos_start;
 }
 
 long Textures::getControlPanelTexposStart() {

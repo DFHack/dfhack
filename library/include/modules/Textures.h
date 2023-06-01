@@ -47,6 +47,11 @@ DFHACK_EXPORT long getIconsTexposStart();
 DFHACK_EXPORT long getOnOffTexposStart();
 
 /**
+ * Get the first texpos for the pathable tiles. It's a 2x1 grid of 32x32 sprites.
+ */
+DFHACK_EXPORT long getPathableTexposStart();
+
+/**
  * Get the first texpos for the control panel icons. 10x2 grid.
  */
 DFHACK_EXPORT long getControlPanelTexposStart();

@@ -2433,4 +2433,131 @@ function RangeSlider:onRenderBody(dc, rect)
     end
 end
 
+GraphicButton = defclass(GraphicButton, ResizingPanel)
+GraphicButton.ATTRS {
+    tiles = DEFAULT_NIL,
+    height = 0,
+    width = 0,
+    graphics = '',
+    graphic_file_dims = { x = 0, y = 0 },
+    pos = 0,
+    selected = false,
+    group_index = -1,
+    on_click_callback = DEFAULT_NIL
+}
+
+function GraphicButton:init()
+    self.tiles = {}
+    for y = 1, self.height do
+        for x = 1, self.width do
+            self.tiles[x] = {}
+            self.tiles[x][y] = nil
+        end
+    end
+end
+
+function GraphicButton:updateLayout(parent_rect)
+    self.subviews = {}
+    self:import(dfhack.textures['get' .. self.graphics .. 'TexposStart'](), self.pos,
+        self.graphic_file_dims.x, self.graphic_file_dims.y)
+
+    GraphicButton.super.updateLayout(self, parent_rect)
+end
+
+function GraphicButton:import(start, pos, dimx, dimy)
+    local offset = self.width * pos
+    local button_icon_start = start + offset
+    for y = 1, self.height do
+        local tiles = {}
+        for x = 1, self.width do
+            local tile = (button_icon_start + (x - 1)) + (y - 1) * dimx * self.width +
+                (self.selected and self.height * self.width * dimx or 0)
+            table.insert(tiles, { tile = tile })
+        end
+        self:addviews {
+            Label {
+                -- view_id = "button_but",
+                frame = { t = y, l = 0 },
+                text = tiles,
+                on_click = function()
+                    if self.on_click_callback then self.on_click_callback({ group_index = self.group_index }) end
+                    self.selected = not self.selected
+                    self.tiles = nil
+                    self:updateLayout()
+                end
+            }
+        }
+    end
+end
+
+ButtonGroup = defclass(ButtonGroup, ResizingPanel)
+ButtonGroup.ATTRS {
+    orientation = 'horizontal', -- horizontal/vertical
+    type = 'radio', -- radio/check
+    buttons = DEFAULT_NIL,
+    on_click_callback = DEFAULT_NIL,
+    hotkey_controller = DEFAULT_NIL
+}
+
+function ButtonGroup:updateLayout(parent_rect)
+    -- If controlled by a cyclehotkey, sync the button selection with the hotkey selected index
+    if self.hotkey_controller then
+        local selected_option = self.hotkey_controller.option_idx
+        for i, _ in pairs(self.buttons) do
+            if selected_option ~= i and self.buttons[i].selected then
+                for j, _ in pairs(self.buttons) do
+                    self.buttons[i].selected = false
+                end
+
+                self.buttons[selected_option].selected = true
+            end
+        end
+    end
+
+    ButtonGroup.super.updateLayout(self, parent_rect)
+end
+
+function ButtonGroup:on_click(args)
+    if self.type == 'radio' then
+        for i, _ in ipairs(self.buttons) do
+            self.buttons[i].selected = false
+            self.buttons[i]:updateLayout()
+        end
+    end
+    if self.on_click_callback then self.on_click_callback(args) end
+end
+
+function ButtonGroup:init(args)
+    self.buttons = {}
+    if self.hotkey_controller then
+        self.hotkey_controller.frame.t = 0
+        self.on_click_callback = function(arg)
+            self.hotkey_controller:setOption(arg.group_index, true)
+        end
+
+        self:addviews {
+            self.hotkey_controller
+        }
+    end
+
+    for i = 1, args.file_dims.x do
+        self.buttons[i] = GraphicButton {
+            group_index = i,
+            selected = i == self.hotkey_controller.initial_option,
+            width = args.button_dims.width,
+            height = args.button_dims.height,
+            frame = {
+                l = (self.orientation == 'horizontal') and args.button_dims.width * (i - 1) or 0,
+                t = ((self.orientation == 'vertical') and args.button_dims.height * (i - 1) or 0)
+            },
+            pos = i - 1,
+            graphics = args.graphics,
+            graphic_file_dims = { x = args.file_dims.x, y = args.file_dims.y },
+            on_click_callback = self:callback('on_click')
+        }
+
+        self:addviews { self.buttons[i] }
+    end
+end
+
 return _ENV

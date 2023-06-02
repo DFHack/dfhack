@@ -29,6 +29,8 @@ static long g_medium_borders_texpos_start = -1;
 static long g_bold_borders_texpos_start = -1;
 static long g_panel_borders_texpos_start = -1;
 static long g_window_borders_texpos_start = -1;
+static long g_gui_design_modes_texpos_start = -1;
+static long g_gui_design_shapes_texpos_start = -1;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -141,6 +143,10 @@ void Textures::init(color_ostream &out) {
                                           &g_panel_borders_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-window.png",
                                           &g_window_borders_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/gui-design-modes.png",
+                                          &g_gui_design_modes_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/gui-design-shapes.png",
+                                          &g_gui_design_shapes_texpos_start);
 
     DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
@@ -215,4 +221,11 @@ long Textures::getPanelBordersTexposStart() {
 
 long Textures::getWindowBordersTexposStart() {
     return g_window_borders_texpos_start;
+}
+
+long Textures::getGuiDesignModesTexposStart() {
+    return g_gui_design_modes_texpos_start;
+}
+long Textures::getGuiDesignShapesTexposStart() {
+    return g_gui_design_shapes_texpos_start;
 }

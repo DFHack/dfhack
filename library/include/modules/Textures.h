@@ -60,5 +60,8 @@ DFHACK_EXPORT long getBoldBordersTexposStart();
 DFHACK_EXPORT long getPanelBordersTexposStart();
 DFHACK_EXPORT long getWindowBordersTexposStart();
 
+DFHACK_EXPORT long getGuiDesignModesTexposStart();
+DFHACK_EXPORT long getGuiDesignShapesTexposStart();
 }
+
 }

@@ -369,6 +369,7 @@ Subcategory prefixes::
 Settings files::
 
     pots
+    barrels
     bags
     buckets
     sand

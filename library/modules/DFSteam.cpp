@@ -127,12 +127,16 @@ static DWORD findProcess(LPWSTR name) {
 }
 
 static bool launchDFHack(color_ostream& out) {
+    std::cerr << "Testing for wine.\n";
     if (is_running_on_wine()) {
+        std::cerr << "found wine; not launching DFHack.\n";
         DEBUG(dfsteam, out).print("not attempting to re-launch DFHack on wine\n");
         return false;
     }
 
+    std::cerr << "Searching for running launchdf.exe.\n";
     if (findProcess(L"launchdf.exe") != -1) {
+        std::cerr << "launchdf already running.\n";
         DEBUG(dfsteam, out).print("launchdf.exe already running\n");
         return true;
     }
@@ -144,6 +148,7 @@ static bool launchDFHack(color_ostream& out) {
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
+    std::cerr << "Running launchdf.exe.\n";
     // note that the enviornment must be explicitly zeroed out and not NULL,
     // otherwise the launched process will inherit this process's environment,
     // and the Steam API in the launchdf process will think it is in DF's context.
@@ -167,24 +172,29 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
         DEBUG(dfsteam, out).print("required Steam API calls are unavailable\n");
         return;
     }
+    std::cerr << "Steam API is initialized.\n";
 
     if (strncmp(getenv("SteamClientLaunch"), "1", 2)) {
         DEBUG(dfsteam, out).print("not launched from Steam client\n");
         return;
     }
+    std::cerr << "SteamClientLaunch=1 is detected in the environment.\n";
 
     void* iSteamApps = g_SteamInternal_FindOrCreateUserInterface(g_SteamAPI_GetHSteamUser(), "STEAMAPPS_INTERFACE_VERSION008");
     if (!iSteamApps) {
         DEBUG(dfsteam, out).print("cannot obtain iSteamApps interface\n");
         return;
     }
+    std::cerr << "iSteamApps interface acquired.\n";
 
     bool isDFHackInstalled = g_SteamAPI_ISteamApps_BIsAppInstalled(iSteamApps, DFHACK_STEAM_APPID);
     if (!isDFHackInstalled) {
         DEBUG(dfsteam, out).print("player has not installed DFHack through Steam\n");
         return;
     }
+    std::cerr << "Steam DFHack intallation verified.\n";
 
     bool ret = launchDFHack(out);
+    std::cerr << "launching DFHack via Steam: " << (ret ? "successful" : "unsuccessful") << "\n";
     DEBUG(dfsteam, out).print("launching DFHack via Steam: %s\n", ret ? "successful" : "unsuccessful");
 }

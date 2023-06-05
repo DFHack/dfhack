@@ -52,6 +52,12 @@ static void bind_all(color_ostream& out, DFLibrary* handle) {
 }
 
 bool DFSteam::init(color_ostream& out) {
+    char *steam_client_launch = getenv("SteamClientLaunch");
+    if (!steam_client_launch || strncmp(steam_client_launch, "1", 2) != 0) {
+        DEBUG(dfsteam, out).print("not launched from Steam client; not initializing steam\n");
+        return false;
+    }
+
     for (auto& lib_str : STEAM_LIBS) {
         if ((g_steam_handle = OpenPlugin(lib_str.c_str())))
             break;
@@ -165,11 +171,6 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
             !g_SteamInternal_FindOrCreateUserInterface ||
             !g_SteamAPI_ISteamApps_BIsAppInstalled) {
         DEBUG(dfsteam, out).print("required Steam API calls are unavailable\n");
-        return;
-    }
-
-    if (strncmp(getenv("SteamClientLaunch"), "1", 2)) {
-        DEBUG(dfsteam, out).print("not launched from Steam client\n");
         return;
     }
 

@@ -82,6 +82,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/autodump`: fort-mode keybinding: Ctrl-H (when ``armok`` tools are enabled in `gui/control-panel`)
 - Window behavior: if you have multiple DFHack tool windows open, scrolling the mouse wheel while over an unfocused window will focus it and raise it to the top
 - `stockpiles`: allow filtering creatures by tameability
+- Autonick: additional nicknames based on borrowwing animals, colours, gems and minerals added
 
 ## Internals
 - ``dfhack.internal``: added memory analysis functions: ``msizeAddress``, ``getHeapState``, ``heapTakeSnapshot``, ``isAddressInHeap``, ``isAddressActiveInHeap``, ``isAddressUsedAfterFreeInHeap``, ``getAddressSizeInHeap``, and ``getRootAddressOfHeapObject``

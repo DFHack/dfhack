@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- Fix crash for some players when they launch DF outside of the Steam client
 
 ## Misc Improvements
 

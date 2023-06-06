@@ -49,6 +49,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 
+# 50.08-r3
+
+## Fixes
+- Fix crash for some players when they launch DF outside of the Steam client
+
 # 50.08-r2
 
 ## New Plugins

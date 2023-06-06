@@ -63,7 +63,6 @@ Blue
 Shadow
 Indigo
 Jade
-Umber
 Silver
 Bistre
 Black
@@ -103,13 +102,11 @@ Chrysler
 Cobalt
 Columbia
 Cornflower
-Sky
 Delft
 Denim
 Dodger
 Duke
 Federal
-Glaucous
 Electrindigo
 Eclipse
 Illini
@@ -153,7 +150,6 @@ Beige
 Bole
 Bone
 Bronze
-Burgundy
 Sienna
 Umber
 Camel
@@ -195,9 +191,7 @@ Seal
 Sepia
 Sinopia
 Tan
-Taupe
 Tawny
-Titian
 Van Dyke
 Walnut
 Wenge
@@ -214,17 +208,14 @@ Ice
 Sea
 Myrtle
 Pacific
-Pine
 Robin
 Skobeloff
 Teal
-Turquoise
 Verdigris
 Vivid
 Zomp
 Platinum
 Timberwolf
-Ash
 Rose quartz
 Cinereous
 Cadet
@@ -234,7 +225,6 @@ Paynes
 Glaucous
 Gunmetal
 Feldgrau
-Apple
 Asparagus
 Avocado
 Brunswick
@@ -246,7 +236,6 @@ Moss
 Pastel
 Dartmouth
 Emerald
-Erin
 Fern
 Forest
 Harlequin
@@ -254,10 +243,8 @@ Honeydew
 Hunter
 Kelly green
 Lawn
-Lime
 Malachite
 Mantis
-Mindaro
 Neon
 Olivine
 Paris
@@ -280,7 +267,6 @@ Fandango
 Finn
 Fuchsia
 Haze
-Orchid
 Plum
 Pizzazz
 Quinacridone
@@ -291,14 +277,12 @@ Telemagenta
 Aerospace
 Alloy
 Amber
-Apricot
 Atomic
 Tangerine
 Burnt
 Butterscotch
 Carrot
 Champagne
-Chrome
 Coral
 Flame
 Gold
@@ -310,7 +294,6 @@ Peach
 Persimmon
 Princeton
 Pumpkin
-Rust
 Safety orange
 Saffron
 Tangelo
@@ -322,10 +305,8 @@ Brilliant
 Brink
 Carnation
 Cherry
-Cordovan
 Cyclamen
 Dogwood
-Heliotrope
 Hollywood
 Hot
 Lavender
@@ -359,7 +340,6 @@ Mauve
 Mauveine
 Mulberry
 Murrey
-Palatinate
 Pale
 Pomp
 Power
@@ -390,7 +370,6 @@ Engine
 Folly
 Imperial
 Jaspar
-Penn
 Poppy
 Rojo
 Rusty
@@ -428,7 +407,6 @@ Arylide
 Aureolin
 Buff
 Canary
-Citron
 Ecru
 Gamboge
 Icterine
@@ -622,9 +600,7 @@ Bast
 Bayldonite
 Benitoite
 Beryl
-Aquamarine
 Maxixe
-Emerald
 Goshenite
 Golden beryl
 Heliodor
@@ -634,7 +610,6 @@ Beryllonite
 Beudantite
 Bismutot
 Biotit
-Bole
 Boracite
 Bornite
 Brazilianite
@@ -780,7 +755,6 @@ Humite
 Hurlbut
 Ilmenite
 Inderite
-Jade
 Jadeite
 Jasper
 Jeremejevite

@@ -33,6 +33,11 @@ The ``<key>`` parameter above has the following **case-sensitive** syntax::
 where the ``KEY`` part can be any recognized key and :kbd:`[`:kbd:`]` denote
 optional parts.
 
+DFHack commands can advertise the contexts in which they can be usefully run.
+For example, a command that acts on a selected unit can tell `keybinding` that
+it is not "applicable" in the current context if a unit is not actively
+selected.
+
 When multiple commands are bound to the same key combination, DFHack selects
 the first applicable one. Later ``add`` commands, and earlier entries within one
 ``add`` command have priority. Commands that are not specifically intended for
@@ -49,6 +54,11 @@ of ``@foo/bar/baz``, ``@foo/bar``, ``@foo``, or none will be active.
 Multiple contexts can be specified by separating them with a pipe (``|``) - for
 example, ``@foo|bar|baz/foo`` would match anything under ``@foo``, ``@bar``, or
 ``@baz/foo``.
+
+If a hotkey is pressed and an applicable command is found and executed, then
+the keypress is not passed on to the DF interface. For example, if you bind the
+unmodified key ``d`` to a command and do not specify a ``@context``, then you
+will be unable to type a ``d`` into any text field in DF.
 
 Commands like `liquids` or `tiletypes` cannot be used as hotkeys since they
 require the console for interactive input.

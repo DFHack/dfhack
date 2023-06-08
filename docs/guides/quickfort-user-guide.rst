@@ -1,15 +1,16 @@
 .. _quickfort-blueprint-guide:
 .. _quickfort-user-guide:
+.. _quickfort-alias-guide:
 
 Quickfort blueprint creation guide
 ==================================
 
-`Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
+`Quickfort <quickfort>` is a DFHack tool that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
 such as MS Excel and `Google Sheets <https://sheets.new>`__. Most layout and
 building-oriented DF commands are supported through the use of multiple files or
-spreadsheets, each describing a different phase of DF construction: designation,
-building, placing stockpiles/zones, and setting configuration.
+spreadsheets, each describing a different phase of DF construction: designating
+digging, defining zones, placing stockpiles, and building.
 
 The original idea came from :wiki:`Valdemar's <User:Valdemar>` auto-designation
 macro. Joel Thornton reimplemented the core logic in Python and extended its
@@ -21,51 +22,44 @@ interacts with Dwarf Fortress memory structures directly, allowing for
 instantaneous blueprint application, error checking and recovery, and many other
 advanced features.
 
-This guide focuses on DFHack Quickfort's capabilities and teaches players how
-to understand and create blueprint files. Some of the text was originally
-written by Joel Thornton, reused here with his permission.
+This guide focuses on DFHack Quickfort's capabilities and blueprint syntax, and
+teaches players how to understand and create blueprint files. Some of the text
+was originally written by Joel Thornton, reused here with his permission.
 
-For those just looking to apply existing blueprints, check out the `quickfort
-command's documentation <quickfort>` for syntax. There are also many
-ready-to-use blueprints available in the ``hack/data/blueprints`` subfolder in
-your DFHack installation. Browse them on your computer or
-:source:`online <data/blueprints>`, or run `gui/quickfort` to browse
-and apply them to your fort!
+If you are just looking to apply existing blueprints to your fort, check out
+`gui/quickfort` (or `quickfort` for the commandline version). There are many
+ready-to-use  blueprints available in the `quickfort-library-guide` distributed
+with DFHack.
 
 Before you become an expert at writing blueprints, though, you should know that
 the easiest way to make a quickfort blueprint is to build your plan "for real"
-in Dwarf Fortress and then export your map using the DFHack `blueprint` plugin.
-You can apply those blueprints as-is in your next fort, or you can fine-tune
-them with additional features from this guide.
+in Dwarf Fortress and then export your map using `gui/blueprint`. You can apply
+those blueprints as-is in your next fort, or you can fine-tune them with
+additional features from this guide.
 
 See the `Links`_ section for more information and online resources.
-
 
 .. contents:: Table of Contents
    :local:
    :depth: 2
-
 
 Features
 --------
 
 -  General
 
-   -  Manages blueprints to handle all phases of DF construction
-   -  Supports .csv and multi-worksheet .xlsx blueprint files
+   -  Blueprint modes for all phases of fort design
+   -  Read blueprints from .csv or multi-worksheet .xlsx files
    -  Near-instant application, even for very large and complex blueprints
    -  Blueprints can span multiple z-levels
-   -  You can package all blueprints and keystroke aliases needed for an entire
-      fortress in a single file for easy sharing
-   -  "meta" blueprints that simplify the application of sequences of blueprints
-   -  Undo functionality for dig, build, place, and zone blueprints
-   -  Rotate blueprints or flip them around to your preference when you apply
-      them to the map
-   -  Automatic cropping of blueprints so you don't get errors if the blueprint
-      extends off the map
-   -  Can generate manager orders for everything required by a build blueprint
+   -  Easy sharing of blueprints with multi-blueprint files
+   -  Scripted application of sequences of blueprints
+   -  Easy undo
+   -  Rotate blueprints or flip them around
+   -  Automatic cropping of blueprints that extend off the map
+   -  Generate manager orders for items required by a blueprint
    -  Includes a library of ready-to-use blueprints
-   -  Blueprint debugging features
+   -  Blueprint debugging
 
 -  Dig mode
 
@@ -76,58 +70,44 @@ Features
    -  Handles carving arbitrarily complex minecart tracks, including tracks that
       cross other tracks
 
+-  Zone and place modes
+
+   -  Define zones and stockpiles of any shape, not just rectangles
+   -  Configurable numbers of bins, barrels and wheelbarrows assigned to created
+      stockpiles
+   -  Automatic splitting of stockpiles that exceed maximum dimension limits
+   -  Create and attach locations to zones
+   -  Full control over stockpile configuration based on the `stockpiles`
+      settings library
+   -  Configurable zone/location settings, such as the pit/pond toggle or
+      hospital supply quantities
+
 -  Build mode
 
-   -  Fully integrated with DFHack buildingplan: you can place buildings before
-      manufacturing building materials and you can use the buildingplan UI for
-      setting materials preferences
+   -  Integrated with DFHack `buildingplan`: you can place buildings before
+      manufacturing building materials and you can use the `buildingplan` UI
+      for setting materials and quality preferences
    -  Designate entire constructions in mid-air without having to wait for each
       tile to become supported
    -  Automatic expansion of building footprints to their minimum dimensions, so
       only the center tile of a multi-tile building needs to be recorded in the
       blueprint
    -  Tile occupancy and validity checking so, for example, buildings that
-      cannot be placed on a target tile will be skipped instead of messing up
-      the blueprint. Blueprints that are only partially applied for any reason
-      (e.g. you need to dig out some more tiles) can be safely reapplied to
-      build the remaining buildings.
+      cannot be placed on a target tile will be skipped instead of causing
+      errors and interrupting the blueprint. Blueprints that are only partially
+      applied for any reason (e.g. you need to dig out some more tiles) can be
+      safely reapplied to build the remaining buildings.
    -  Relaxed rules for farm plot and road placement: you can still place the
       building even if an invalid tile (e.g. stone tiles for farm plots) splits
       the designated area into two disconnected parts
    -  Intelligent boundary detection for adjacent buildings of the same type
       (e.g. a 6x6 block of ``wj`` cells will be correctly split into 4 jeweler's
       workshops)
+   -  Set building properties (such as a name)
+   -  Attach track stops to hauling routes
 
--  Place and zone modes
-
-   -  Define stockpiles and zones of any shape, not just rectangles
-   -  Configurable numbers of bins, barrels and wheelbarrows assigned to created
-      stockpiles
-   -  Automatic splitting of stockpiles and zones that exceed maximum dimension
-      limits
-   -  Fully configurable zone settings, such as pit/pond and hospital supply
-      counts
-
--  Query mode
-
-   -  Send arbitrary keystroke sequences to the UI -- *anything* you can do
-      through the UI is supported
-   -  Supports aliases to simplify frequent keystroke combos
-   -  Includes a library of pre-made and tested aliases to simplify most common
-      tasks, such as configuring stockpiles for important item types or creating
-      hauling routes for quantum stockpiles.
-   -  Supports expanding aliases in other aliases for easy management of common
-      subsequences
-   -  Supports repeating key sequences a specified number of times
-   -  Skips sending keys when the cursor is over a tile that does not have a
-      stockpile or building, so missing buildings won't desynchronize your
-      blueprint
-   -  Instant halting of query blueprint application when keystroke errors are
-      detected, such as when a mistake in a key sequence leaves us stuck in a
-      submenu, to make query blueprints easier to debug
-
-Creating blueprints
--------------------
+Introduction to blueprints
+--------------------------
 
 We recommend using a spreadsheet editor such as Excel, `Google
 Sheets <https://sheets.new>`__, or `LibreOffice <https://www.libreoffice.org>`__
@@ -138,29 +118,27 @@ line (or upper-left cell) of the spreadsheet should look like this::
 
    #dig
 
-The keyword ``dig`` tells Quickfort we are going to be using the Designations
-menu in DF. The following "mode" keywords are understood:
+The keyword ``dig`` tells Quickfort we are going to be specifying designations.
+The following "mode" keywords are understood:
 
 ==============  ===========
 Blueprint mode  Description
 ==============  ===========
-dig             Designations menu (:kbd:`d`)
-build           Build menu (:kbd:`b`)
-place           Place stockpiles menu (:kbd:`p`)
-zone            Activity zones menu (:kbd:`i`)
-query           Set building tasks/prefs menu (:kbd:`q`)
+dig             Designations (digging, traffic, dumping, etc.)
+build           Constructions, buildings, and furniture
+place           Stockpiles
+zone            Activity zones
 ==============  ===========
 
 If no modeline appears in the first cell, Quickfort assumes that it's looking at
 a ``#dig`` blueprint.
 
 There are also other modes that don't directly correspond to Dwarf Fortress
-menus, but we'll talk about those `later <quickfort-other-modes>`.
+design operations, but we'll talk about those `later <quickfort-other-modes>`.
 
 If you like, you may enter a comment after the mode keyword. This comment will
-appear in the output of ``quickfort list`` when run from the ``DFHack#`` prompt
-or in the dialog window when running `gui/quickfort`. You can use this space for
-explanations, attribution, etc.::
+appear in the output of ``quickfort list`` or in the dialog window when running
+`gui/quickfort`. You can use this space for explanations, attribution, etc.::
 
    #dig grand dining room
 
@@ -176,12 +154,31 @@ readability, but a real .csv file would have commas)::
    d d d d #
    # # # # #
 
+The letter ``d`` here stands for "dig". The character sequences in these
+blueprints are based on the old (pre-v50) keyboard shortcuts for the various DF
+menus. Please see the `quickfort_guide_appendix` below for a full listing.
+
 Note the :kbd:`#` symbols at the right end of each row and below the last row.
 These are completely optional, but can be helpful to make the row and column
 positions clear.
 
-Once the dwarves have that dug out, let's build a walled-in bedroom within our
-dug-out area::
+Once the dwarves have that dug out, let's zone it as a bedroom::
+
+   #zone
+   b b b b #
+   b b b b #
+   b b b b #
+   b b b b #
+   # # # # #
+
+This looks very similar to the ``#dig`` blueprint above, but with ``b``s
+instead of ``d``s. The ``b``s mark the area for a ``b``edroom zone just like
+the ``#dig`` blueprint marked the area for digging. It's important to wait
+until after the area is completely dug out before applying further blueprints
+since zones can't be applied to hidden tiles and furniture can't be built in
+undug walls.
+
+Now, let's add some walls and furniture::
 
    #build
    Cw Cw Cw Cw #
@@ -190,17 +187,17 @@ dug-out area::
    Cw Cw    Cw #
    #  #  #  #  #
 
-Note my generosity -- in addition to the bed (:kbd:`b`) I've built a container
-(:kbd:`h`) here for the dwarf as well. You must use the full series of keys
-needed to build something in each cell, e.g. :kbd:`C`:kbd:`w` indicates we
-should enter DF's constructions submenu (:kbd:`C`) and select walls (:kbd:`w`).
+The :kbd:`C`:kbd:`w` cells represent the constructed walls, leaving space for a
+door that we might want to add later. And note my generosity -- in addition to
+the bed (:kbd:`b`) I've built a container (:kbd:`h`) here for the dwarf as
+well.
 
-I'd also like to place a booze stockpile in the 2 unoccupied tiles in the room::
+Finally, let's place a booze stockpile in the 2 unoccupied tiles in the room::
 
-   #place Place a food stockpile
+   #place personal booze stockpile
    ` ` ` ` #
    ` ~ ~ ` #
-   ` f f ` #
+   ` f f{name="bedroom booze"}:=booze
    ` `   ` #
    # # # # #
 
@@ -213,45 +210,19 @@ multilayer or fortress-wide blueprint layouts as "chalk lines".
 QF is smart enough to recognize this as a 2x1 food stockpile, and creates it as
 such rather than as two 1x1 food stockpiles. Quickfort treats any connected
 region of identical designations as a single entity. The tiles can be connected
-orthogonally or diagonally, just as long as they are touching.
+orthogonally or diagonally, just as long as they are touching. You can also
+treat disconnected segments as belonging to the same stockpile, but we'll get
+into that later.
 
-Lastly, let's turn the bed into a bedroom and set the food stockpile to hold
-only booze.
+Now what's all that business attached to the second ``f``? The part between the
+curly brackets specifies properties, in this case the name that we want to give
+the stockpile. The remaining part, from the colon (``:``) onward, applies the
+``booze`` preset from the `stockpiles` library. That will configure the
+stockpile to accept only booze. You can use presets (along with other options
+that we'll go over later) to configure stockpiles however you want, directly
+from the ``#place`` blueprint.
 
-::
-
-   #query
-   ` ` ` ` #
-   ` r&  ` #
-   ` booze #
-   ` ` ` ` #
-   # # # # #
-
-In row 2, column 2 we have ``r&``. This sends the :kbd:`r` key to DF when the
-cursor is over the bed, causing us to "make room" and :kbd:`Enter`, represented
-by special ``&`` alias, to indicate that we're done setting the size (the
-default room size is fine here).
-
-In column 2, row 3 we have ``booze``. This is one of many alias keywords defined
-in the included :source:`aliases library <data/quickfort/aliases-common.txt>`.
-This particular alias sets a food stockpile to accept only booze. It sends the
-keys needed to navigate DF's stockpile settings menu, and then it sends an
-Escape character to exit back to the map. It is important to exit out of any
-menus that you enter while in query mode so that the cursor can move to the next
-tile when it is done with the current tile.
-
-If there weren't an alias named ``booze`` then the literal characters
-:kbd:`b`:kbd:`o`:kbd:`o`:kbd:`z`:kbd:`e` would have been sent, so be sure to
-spell those aliases correctly!
-
-You can save a lot of time and effort by using aliases instead of adding all
-key sequences directly to your blueprints. For more details, check out the
-`quickfort-alias-guide`. You can also see examples of aliases being used in the
-query blueprints in the
-:source:`DFHack blueprint library <data/blueprints>`. You can create
-your own aliases by adding them to :source:`dfhack-config/quickfort/aliases.txt`
-in your DFHack folder or you can package them
-`together with your blueprint files <quickfort-aliases-blueprints>`.
+And that's it! You now have a series of blueprints that you can "stamp" across your fort to quickly build new bedrooms.
 
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -273,7 +244,7 @@ In Quickfort, the following blueprints are equivalent::
 The second example uses Quickfort's "area expansion syntax", which takes the
 form::
 
-   keys(WxH)
+   text(WxH)
 
 Note that area expansion syntax can only specify rectangular areas. If you want
 to create extent-based structures (e.g. farm plots or stockpiles) in different
@@ -332,6 +303,36 @@ blueprint could also be written as::
    `  `  `  `  #
    ga(4x-2) `  #
    #  #  #  #  #
+
+Property syntax
+~~~~~~~~~~~~~~~
+
+Many things you can designate with `quickfort` are configurable. All buildings,
+stockpiles, and zones, for example, can be named. These configuration elements
+are expressed as properties.
+
+Properties are written between curly brackets (``{}``). There can be multiple
+properties defined between those brackets, separated by spaces. Each property
+has a name and a value, with an equal sign to connect them. If a property value
+has a space within it, it should be surrounded by double quotes (``"``).
+
+If you have defined the area of something over multiple spreadsheet cells, you
+can specify properties in just one of those cells and they will apply to the
+whole object. You can even split properties up among multiple cells if that is
+more convenient. If you are using expansion syntax, the expansion part always
+goes last.
+
+Here's an example of a seed stockpile that is configured to take from a seed feeder stockpile::
+
+   #place
+   f{name=Seeds links_only=true}:=seeds(3x2)
+
+   f
+   f{name="Seeds feeder" give_to=Seeds}:=seeds
+   f{containers=0}
+
+Different modes and different types may have different properties that you can
+configure. See the `quickfort_guide_appendix` for a full list.
 
 Automatic area expansion
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -406,15 +407,21 @@ You can go up or down multiple levels by adding a number after the ``<`` or
     #>2
     r(10x10)
 
+#dig mode
+---------
+
+``#dig`` blueprints are normally the first step in any design. They define the
+boundaries and layouts for the blueprints for later stages of construction. Despite their name, ``#dig``` blueprints are for more than just digging. They also handle smoothing, carving, traffic designations, and marking items on the ground for dumping, forbidding, or other similar tags. See the full list of supported designations in the `#dig mode reference`_.
+
 .. _quickfort-dig-priorities:
 
 Dig priorities
 ~~~~~~~~~~~~~~
 
-DF designation priorities are supported for ``#dig`` blueprints. The full syntax
-is ``[letter][number][expansion]``, where if the ``letter`` is not specified,
+DF designation priorities are supported in ``#dig`` blueprints. The full syntax
+is ``[symbol][number][expansion]``, where if the ``symbol`` is not specified,
 ``d`` is assumed, and if ``number`` is not specified, ``4`` is assumed (the
-default priority). So each of these blueprints is equivalent::
+default priority). So all of these blueprints are equivalent::
 
    #dig dig the interior of the room at high priority
    d  d  d  d  d  #
@@ -457,222 +464,24 @@ center of the room marked for digging later::
    d  d  d  d d #
    #  #  #  # # #
 
-Then you can use "Toggle Standard/Marking" (:kbd:`d`:kbd:`M`) to convert the
-center tiles to regular designations at your leisure.
+Then you can use DF's "Toggle Standard/Marking" icons (DF calls them
+"blueprints", but hopefully that won't get too confusing in this context) to
+convert the center tiles to regular designations at your leisure.
 
 To apply an entire dig blueprint in marker mode, regardless of what the
 blueprint itself says, you can set the global quickfort setting
-``force_marker_mode`` to ``true`` before you apply the blueprint.
+``force_marker_mode`` to ``true`` before you apply the blueprint by running
+``quickfort set force_marker_mode true``.
 
-Note that the in-game UI setting "Standard/Marker Only" (:kbd:`d`:kbd:`m`) does
-not have any effect on quickfort.
+Note that the state of the in-game vanilla button that you use to draw
+designations in either Standard or "Blueprint" mode does not have any effect on
+`quickfort`.
 
-Stockpiles and zones
-~~~~~~~~~~~~~~~~~~~~
-
-It is very common to have stockpiles that accept multiple categories of items or
-zones that permit more than one activity. Although it is perfectly valid to
-declare a single-purpose stockpile or zone and then modify it with a ``#query``
-blueprint, quickfort also supports directly declaring all the types in the
-``#place`` and ``#zone`` blueprints. For example, to declare a 20x10 stockpile
-that accepts both corpses and refuse, you could write::
-
-   #place refuse heap
-   yr(20x10)
-
-And similarly, to declare a zone that is a pasture, a fruit picking area, and a
-meeting area all at once::
-
-   #zone main pasture and picnic area
-   nmg(10x10)
-
-The order of the individual letters doesn't matter. If you want to configure the
-stockpile from scratch in a ``#query`` blueprint, you can place unconfigured
-"custom" stockpiles with (:kbd:`c`). It is more efficient, though, to place
-stockpiles using the keys that represent the categories of items that you want
-to store, and then only use a ``#query`` blueprint if you need fine-grained
-customization.
-
-.. _quickfort-place-containers:
-
-Stockpile bins, barrels, and wheelbarrows
-`````````````````````````````````````````
-
-Quickfort has global settings for default values for the number of bins,
-barrels, and wheelbarrows assigned to stockpiles, but these numbers can be set
-for individual stockpiles as well.
-
-To set the number of bins, barrels, or wheelbarrows, just add a number after the
-letter that indicates what type of stockpile it is. For example::
-
-    #place a stone stockpile with 5 wheelbarrows
-    s5(3x3)
-
-    #place a bar, ammo, weapon, and armor stockpile with 20 bins
-    bzpd20(5x5)
-
-If the specified number exceeds the number of available stockpile tiles, the
-number of available tiles is used. For wheelbarrows, that limit is reduced by 1
-to ensure there is at least one non-wheelbarrow tile available in the stockpile.
-Otherwise no stone would ever be brought to the stockpile since all tiles would
-be occupied by wheelbarrows!
-
-Quickfort figures out which container type is being set by looking at the letter
-that comes just before the number. For example ``zf10`` means 10 barrels in a
-stockpile that accepts both ammo and food, whereas ``z10f`` means 10 bins. If
-the stockpile category doesn't usually use any container type, like refuse or
-corpses, wheelbarrows are assumed::
-
-    #place a corpse stockpile with 3 wheelbarrows
-    y3(3x3)
-
-Note that if you are not using expansion syntax, each tile of the stockpile must
-have the same text. Otherwise the stockpile boundaries will not be detected
-properly::
-
-    #place a non-rectangular animal stockpile with 5 wheelbarrows
-    a5,a5,a5,a5
-    a5,  ,  ,a5
-    a5,  ,  ,a5
-    a5,a5,a5,a5
-
-Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
-container/wheelbarrow counts will enqueue manager orders for the specified
-number of containers or wheelbarrows, even if that number exceeds the in-game
-size of the stockpile. For example, ``quickfort orders`` on the following
-blueprint will enqueue 10 rock pots, even though the stockpile only has 9
-tiles::
-
-    #place
-    f10(3x3)
-
-Zone detailed configuration
-```````````````````````````
-
-Detailed configuration for zones, such as the pit/pond toggle, can also be set
-by mimicking the hotkeys used to set them. Note that gather flags default to
-true, so specifying them in a blueprint will turn the toggles off. If you need
-to set configuration from multiple zone subscreens, separate the key sections
-with :kbd:`^`. Note the special syntax for setting hospital supply levels, which
-have no in-game hotkeys::
-
-   #zone a combination hospital and shrub (but not fruit) gathering zone
-   gGtf^hH{hospital buckets=5 splints=20}(10x10)
-
-The valid hospital settings (and their maximum values) are::
-
-    thread   (1500000)
-    cloth    (1000000)
-    splints  (100)
-    crutches (100)
-    plaster  (15000)
-    buckets  (100)
-    soap     (15000)
-
-To toggle the ``active`` flag for zones, add an :kbd:`a` character to the
-string. For example, to create a *disabled* pond zone (that you later intend to
-carefully fill with 3-depth water for a dwarven bathtub)::
-
-   #zone disabled pond zone
-   apPf(1x3)
-
-Minecart tracks
-~~~~~~~~~~~~~~~
-
-There are two ways to produce minecart tracks, and they are handled very
-differently by the game. You can carve them into hard natural floors or you can
-construct them out of building materials. Constructed tracks are conceptually
-simpler, so we'll start with them.
-
-Constructed tracks
-``````````````````
-
-Quickfort supports the designation of track stops and rollers in ``#build``
-blueprints. You can build a track stop with :kbd:`C`:kbd:`S` and some number of
-:kbd:`d` and :kbd:`a` characters for selecting dump direction and friction. You
-can build a roller with :kbd:`M`:kbd:`r` and some number of :kbd:`s` and
-:kbd:`q` characters for direction and speed. However, this can get confusing
-very quickly and is very difficult to read in a blueprint. Moreover, constructed
-track segments don't even have keys associated with them at all!
-
-To solve this problem, Quickfort provides the following keywords for use in
-build blueprints::
-
-   -- Track segments --
-   trackN
-   trackS
-   trackE
-   trackW
-   trackNS
-   trackNE
-   trackNW
-   trackSE
-   trackSW
-   trackEW
-   trackNSE
-   trackNSW
-   trackNEW
-   trackSEW
-   trackNSEW
-
-   -- Track/ramp segments --
-   trackrampN
-   trackrampS
-   trackrampE
-   trackrampW
-   trackrampNS
-   trackrampNE
-   trackrampNW
-   trackrampSE
-   trackrampSW
-   trackrampEW
-   trackrampNSE
-   trackrampNSW
-   trackrampNEW
-   trackrampSEW
-   trackrampNSEW
-
-   -- Horizontal and vertical roller segments --
-   rollerH
-   rollerV
-   rollerNS
-   rollerSN
-   rollerEW
-   rollerWE
-
-   Note: append up to four 'q' characters to roller keywords to set roller
-   speed. E.g. a roller that propels from East to West at the slowest speed can
-   be specified with 'rollerEWqqqq'.
-
-   -- Track stops that (optionally) dump to the N/S/E/W --
-   trackstop
-   trackstopN
-   trackstopS
-   trackstopE
-   trackstopW
-
-   Note: append up to four 'a' characters to trackstop keywords to set friction
-   amount. E.g. a stop that applies the smallest amount of friction can be
-   specified with 'trackstopaaaa'.
-
-As an example, you can create an E-W track with stops at each end that dump to
-their outside directions with the following blueprint::
-
-   #build Example track
-   trackstopW trackEW trackEW trackEW trackstopE
-
-Note that the **only** way to build track and track/ramp segments is with the
-keywords. The UI method of using :kbd:`+` and :kbd:`-` keys to select the track
-type from a list does not work since DFHack Quickfort doesn't actually send keys
-to the UI to build buildings. The text in your spreadsheet cells is mapped
-directly onto DFHack API calls. Only ``#query`` blueprints send actual keycodes
-to the UI.
-
-Carved tracks
-`````````````
+Carved minecart tracks
+~~~~~~~~~~~~~~~~~~~~~~
 
 In the game, you carve a minecart track by specifying a beginning and ending
-tile and the game "adds" the designation to the tiles in between. You cannot
+tile, and the game "adds" the designation to the tiles in between. You cannot
 designate single tiles because DF needs a multi-tile track to figure out which
 direction the track should go on each tile. For example to carve two track
 segments that cross each other, you might use the cursor to designate a line of
@@ -701,8 +510,8 @@ track of the form::
 
 Quickfort supports both styles of specification for carving tracks with ``#dig``
 blueprints. You can use the "additive" style to carve tracks in segments or you
-can use the aliases to specify the track tile by tile. To designate track
-segments, use area expansion syntax with a height or width of 1::
+can use the ``track`` aliases to specify the track tile by tile. To designate
+track segments, use area expansion syntax with a height or width of 1::
 
    #dig
    `      T(1x3) ` #
@@ -757,10 +566,239 @@ masterwork engravings for destruction (unless forced to by a commandline
 parameter). You would run (and let your dwarves complete the jobs for) the
 sequence of blueprints until no tiles are designated by the "erase" blueprint.
 
+#zone mode
+----------
+
+Zones define how regions of your fort should be treated. They are also the anchor point for "locations" like taverns and hospitals. Unlike stockpiles or buildings, zones can overlap, which can lead to some interesting layouts.
+
+Zone designation syntax
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A zone is declared with a symbol followed by optional properties::
+
+   #zone a single tile garbage dump zone
+   d
+
+   #zone a single tile garbage dump zone named "The Dump"
+   d{name="The Dump"}
+
+   #zone interrogation room
+   o{name=Interrogation assigned_unit=sheriff}
+
+   #zone a small inactive pond zone
+   p{name="Fill me" pond=true active=false}(3x3)
+
+If you want multiple zones that have the same footprint, they can be declared
+from the same cell::
+
+   #zone pasture and training area
+   n{name="Main pasture"}t{name="Pet training area"}(14x10)
+
+or from different corners of the same rectangle::
+
+   #zone pasture and training area
+   n{name="Main pasture"}(10x2)
+   t{name="Pet training area"}(10x-2)
+
+and you can use this technique to achieve partial overlap, of course. The only configuration that can't be specified in a single blueprint is multiple non-rectangular zones that are partially overlapping. You will have to use multiple ``#zone`` blueprints to achieve that.
+
+Locations, locations, locations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Hospitals, guildhalls, taverns, libraries, and temples are locations. You can
+declare a location in the properties for a zone::
+
+   #zone metalcrafter hall
+   m{location=guildhall profession=metalcrafter}(7x7)
+
+You can attach multiple zones to a single location by giving the location a
+label (not a name -- you can name zones, but you can't directly name locations)
+and then using that label for each of the zones you want to attach::
+
+   #zone tavern and rented room
+   b{location=tavern/bigpub name="Rent me"}(3x1)
+   h{location=tavern/bigpub name="Central pub" allow=residents}(25x40)
+
+Note that the label ("bigpub" in this case) will never appear in-game. It is only used in the context of the blueprint to identify a common location.
+
+#place mode
+-----------
+
+``#place`` mode is dedicated to stockpiles, which are a major design element in any fortress.
+
+Stockpile designation syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Just like zones, stockpiles can have properties like names or lists of other stockpiles to take from. Unlike zones, stockpiles can have configuration specifiers for exactly what types of items to accept. The full syntax looks like this::
+
+   types{properties}:configuration(expansion)
+
+You're already familiar with `Property syntax`_ and `Area expansion syntax`_, so let's focus in on the remaining elements.
+
+Stockpile types
+~~~~~~~~~~~~~~~
+
+The type of stockpile corresponds to the category of items it accepts. Some types will cause the stockpile to accept bins or barrels. See the full list in the `#place mode reference`_.
+
+It is very common to have stockpiles that accept multiple categories of items.
+Although it is perfectly valid to declare a single-purpose stockpile,
+`quickfort` also supports directly declaring all the categories at once. For
+example, to declare a 20x10 stockpile that accepts both corpses and refuse, you
+could write::
+
+   #place refuse heap
+   yr(20x10)
+
+The order of the individual letters doesn't matter. If you want to configure the
+stockpile from scratch, you can place unconfigured "custom" stockpiles with (:kbd:`c`). It is more efficient, though, to place
+stockpiles using the keys that represent the categories of items that you want
+to store, and then only use a ``#query`` blueprint if you need fine-grained
+customization.
+
+.. _quickfort-place-containers:
+
+Bins, barrels, and wheelbarrows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Quickfort has global settings for default values for the number of bins,
+barrels, and wheelbarrows assigned to stockpiles, but these numbers can be set
+for individual stockpiles as well.
+
+To set the number of bins, barrels, or wheelbarrows, just add a number after the
+letter that indicates what type of stockpile it is. For example::
+
+    #place a stone stockpile with 5 wheelbarrows
+    s5(3x3)
+
+    #place a bar, ammo, weapon, and armor stockpile with 20 bins
+    bzpd20(5x5)
+
+If the specified number exceeds the number of available stockpile tiles, the
+number of available tiles is used. For wheelbarrows, that limit is reduced by 1
+to ensure there is at least one non-wheelbarrow tile available in the stockpile.
+Otherwise no stone would ever be brought to the stockpile since all tiles would
+be occupied by wheelbarrows!
+
+Quickfort figures out which container type is being set by looking at the letter
+that comes just before the number. For example ``zf10`` means 10 barrels in a
+stockpile that accepts both ammo and food, whereas ``z10f`` means 10 bins. If
+the stockpile category doesn't usually use any container type, like refuse or
+corpses, wheelbarrows are assumed::
+
+    #place a corpse stockpile with 3 wheelbarrows
+    y3(3x3)
+
+Note that if you are not using expansion syntax, each tile of the stockpile must
+have the same text. Otherwise the stockpile boundaries will not be detected
+properly::
+
+    #place a non-rectangular animal stockpile with 5 wheelbarrows
+    a5,a5,a5,a5
+    a5,  ,  ,a5
+    a5,  ,  ,a5
+    a5,a5,a5,a5
+
+Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
+container/wheelbarrow counts will enqueue manager orders for the specified
+number of containers or wheelbarrows, even if that number exceeds the in-game
+size of the stockpile. For example, ``quickfort orders`` on the following
+blueprint will enqueue 10 rock pots, even though the stockpile only has 9
+tiles::
+
+    #place
+    f10(3x3)
+
+#build mode
+-----------
+
+``#build`` mode handles buildings, furniture (which are also "buildings"
+according to DF), constructions (including constructed tracks), and hauling
+routes.
+
+Building designation syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Other than names, most buildings do not have any extra properties. See the
+`#build mode reference`_ for those that do.
+
+The syntax otherwise looks just like stockpiles, except that it only makes
+sense to have a single symbol to indicate what to build on that tile::
+
+   symbol{properties}:configuration(expansion)
+
+Here's an example of a simple 5x5 square of flooring::
+
+   #build
+   Cf(5x5)
+
+or a named Jeweler's workshop that takes from specific stockpiles::
+
+   #build
+   wj{name="Encrusting center" take_from="Furniture,Gem storage"}
+
+The ``:configuration`` part is only relevant for hauling routes, which we'll go
+over in the next section.
+
+Hauling route definitions
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Hauling routes are defined by properties and configuration attached to track
+stops. You can define a single-stop hauling route for a quantum stockpile as
+easily as a multi-stop stone quarry transportation line. The stockpile-like
+``:configuration`` part of the syntax controls which item types are considered
+"desired" for the hauling route stop. If it's not specified, then all item
+types are accepted. This is the most common case since most hauling route
+contents are filtered by the stockpiles that the stops take from, but the
+flexibility is there for when multiple stops take different items from the same
+stockpile, or when a stop only wants a subset of items from a stockpile.
+
+Here is a common setup for a quantum stone stockpile::
+
+   #place
+   s{name="Stone quantum" quantum=true} ~ s5{name="Stone feeder"}(3x3)
+   #build
+   ~ trackstopW{take_from="Stone feeder" route="Stone dumper"}
+
+This sets up the quantum stockpile and the feeder stockpile in the ``#place``
+blueprint, followed by the trackstop and the hauling route configuration in the
+``#build`` blueprint. The ``route`` property is the name of the hauling route
+to create (or attach to if it already exists). If you are applying a quantum
+stockpile blueprint more than once in a fort, be sure to *avoid* defining the
+``route`` property so that each application of the blueprint creates a unique
+hauling route. Two quantum stockpiles on the same route will not function
+propertly.
+
+Let's look at a slightly more complicated setup where we sort the stone into
+different output quantum stockpiles::
+
+   #place
+   s{name="Other stone quantum" quantum=true}    ~ s5e{name="Rock feeder"}(3x3)
+   s{name="Ore/clay stone quantum" quantum=true} ~
+   s{name="Gem quantum" quantum=true}            ~
+   #build
+   ~ trackstopW{take_from="Rock feeder" route="Other stone"}:=otherstone
+   ~ trackstopW{take_from="Rock feeder" route="Ore/clay"}:=cat_stone-otherstone
+   ~ trackstopW{take_from="Rock feeder" route="Gems"}:=cat_gems
+
+You can see how we make use of the stockpile-style configuration syntax to
+fine-tune the items desired by the hauling route stop.
+
+Finally, let's make a series of stops on a common hauling route. There is
+nothing particularly special about this example. If the ``route`` property
+names an existing route, the stop will be added to that route::
+
+   #dig
+   trackE trackEW trackEW trackW
+   #build
+   trackstop{route="Tick tock"} ~ ~ trackstop{route="Tick tock"}
+
+These two track stops (which do not dump their contents) simply exist on a
+common route at the ends of a connected carved track.
+
 .. _quickfort-modeline:
 
 Modeline markers
-~~~~~~~~~~~~~~~~
+----------------
 
 The modeline has some additional optional components that we haven't talked
 about yet. You can:
@@ -774,7 +812,7 @@ about yet. You can:
 
 The full modeline syntax, when all optional elements are specified, is::
 
-   #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() message(mymessage) comment
+   #mode label(mylabel) start(X;Y;startcomment) hidden() message(mymessage) comment
 
 Note that all elements are optional except for the initial ``#mode`` (though, as
 mentioned in the first section, if a modeline doesn't appear at all in the first
@@ -783,16 +821,15 @@ no optional markers). Here are a few examples of modelines with optional
 elements before we discuss them in more detail::
 
    #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
-   #build label(noblebedroom) start(10;15)
-   #query label(configstockpiles) No explicit 'start()' means cursor is at upper left corner
+   #build label(noblebedroom) No explicit 'start()' so cursor is in upper left
    #meta label(digwholefort) start(center of stairs on surface)
-   #dig label(digdining) hidden() called by the digwholefort meta blueprint
+   #dig label(dig_dining) hidden() called by the digwholefort meta blueprint
    #zone label(pastures) message(remember to assign animals to the new pastures)
 
 .. _quickfort-label:
 
 Blueprint labels
-````````````````
+~~~~~~~~~~~~~~~~
 
 Labels are displayed in the ``quickfort list`` output and are used for
 addressing specific blueprints when there are multiple blueprints in a single
@@ -807,7 +844,7 @@ user-defined labels.
 .. _quickfort-start:
 
 Start positions
-```````````````
+~~~~~~~~~~~~~~~
 
 Start positions specify a cursor offset for a particular blueprint, simplifying
 the task of blueprint alignment. This is very helpful for blueprints that are
@@ -842,7 +879,7 @@ You can use semicolons, commas, or spaces to separate the elements of the
 .. _quickfort-hidden:
 
 Hiding blueprints
-`````````````````
+~~~~~~~~~~~~~~~~~
 
 A blueprint with a ``hidden()`` marker won't appear in ``quickfort list`` output
 unless the ``--hidden`` flag is specified. The primary reason for hiding a
@@ -853,7 +890,7 @@ managed by a `meta blueprint <quickfort-meta>`.
 .. _quickfort-message:
 
 Messages
-````````
+~~~~~~~~
 
 A blueprint with a ``message()`` marker will display a message after the
 blueprint is applied with ``quickfort run``. This is useful for reminding
@@ -870,27 +907,26 @@ quotes automatically when they save/export the file.
 
 .. _quickfort-meta:
 
-Meta blueprints
-~~~~~~~~~~~~~~~
+#meta mode
+----------
 
-Meta blueprints are blueprints that control how other blueprints are applied.
-For example, meta blueprints can bundle a group of other blueprints so that they
-can be run with a single command. They can also encode logic, like rotating the
-blueprint or duplicating it across a specified number of z-levels.
+``#meta`` blueprints are blueprints that control how other blueprints are
+applied. For example, meta blueprints can bundle a group of other blueprints so
+that they can be run with a single command. They can also encode logic, like
+rotating the blueprint or duplicating it across a specified number of z-levels.
 
 A common scenario where meta blueprints are useful is when you have several
 phases to link together. For example you might:
 
 1.  Apply a dig blueprint to designate dig areas
 #.  Wait for miners to dig
+#.  **Apply another dig blueprint** to designate traffic costs
+#.  **Apply a zone blueprint** to designate zones
+#.  **Apply a place buildprint** to designate and configure stockpiles
 #.  **Apply a build buildprint** to designate buildings
-#.  **Apply a place buildprint** to designate stockpiles
-#.  **Apply a query blueprint** to configure stockpiles
-#.  Wait for buildings to get built
-#.  Apply a different query blueprint to configure rooms
 
-Those three "apply"s in the middle might as well get done in one command instead
-of three. A ``#meta`` blueprint can help with that. A meta blueprint refers to
+Those last four "apply"s might as well get done in one command instead of four.
+A ``#meta`` blueprint can help with that. A meta blueprint refers to
 other blueprints in the same file by their label (see the `Modeline markers`_
 section above) in the same format used by the `quickfort` command:
 ``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv files or
@@ -902,26 +938,24 @@ that prepare bedrooms for your dwarves::
 
    #dig label(bed1) dig out the rooms
    ...
-   #build label(bed2) build the furniture
+   #zone label(bed2) declare bedroom zones
    ...
    #place label(bed3) add food stockpiles
    ...
-   #query label(bed4) configure stockpiles
-   ...
-   #query label(bed5) set the built beds as rooms
+   #build label(bed4) build the furniture
    ...
 
 Note how I've given them all labels so we can address them safely. If I hadn't
 given them labels, they would receive default labels of "1", "2", "3", etc, but
 those labels would change if I ever add more blueprints at the top. This is not
-a problem if we're just running the blueprints individually from the
-``quickfort list`` command, but meta blueprints need a label name that isn't
-going to change over time.
+a problem if we're just running the blueprints individually from
+`gui/quickfort` or the ``quickfort list`` command, but meta blueprints need a
+label name that isn't going to change over time.
 
-So let's add a meta blueprint to this file that will combine the middle three
+So let's add a meta blueprint to this file that will combine the last three
 blueprints into one::
 
-   "#meta label(bed234) combines build, place, and stockpile config blueprints"
+   "#meta label(bed234) combines zone, place, and build blueprints"
    /bed2
    /bed3
    /bed4
@@ -930,10 +964,7 @@ Now your sequence is shortened to:
 
 1.  Run /bed1 to designate dig areas
 #.  Wait for miners to dig
-#.  **Run /bed234 meta buildprint** to build buildings and designate/configure
-    stockpiles
-#.  Wait for buildings to get built
-#.  Run /bed5 to configure the rooms as bedrooms
+#.  **Run /bed234 meta buildprint** to declare zones, place stockpiles, and build furniture
 
 You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for
@@ -957,7 +988,7 @@ dig_bedrooms   one #dig blueprint, no label
 We can add a sheet named "dig_all" with the following contents (we're expecting
 a big fort, so we're digging 5 levels of bedrooms)::
 
-   #meta dig the whole fortress
+   #meta label(dig_it) dig the whole fortress
    dig_farming/1
    #>
    dig_industry/1
@@ -981,7 +1012,7 @@ them by their auto-generated numeric label.
 
 The command to run the meta blueprint above would be::
 
-    quickfort run myfort.xlsx -n dig_all
+    quickfort run myfort.xlsx -n dig_all/dig_it
 
 It's worth repeating that ``#meta`` blueprints can only refer to blueprints that
 are defined in the same file. This means that all blueprints that a meta
@@ -996,7 +1027,7 @@ blueprints individually, you can still see them with
 ``quickfort list --hidden``.
 
 Meta markers
-````````````
+~~~~~~~~~~~~
 
 In meta blueprints, you can tag referenced blueprints with markers to modify how
 they are applied. These markers are similar to `Modeline markers`_, but are only
@@ -1011,7 +1042,8 @@ shift(0 10)          Adds 10 to the y coordinate of each blueprint tile
 transform(cw flipv)  Rotates a blueprint clockwise and then flips it vertically
 ===================  ===========
 
-**Repeating blueprints**
+Repeating blueprints
+````````````````````
 
 Syntax: repeat(<direction>[, ]<number>)
 
@@ -1032,7 +1064,8 @@ lines are all equivalent::
     /2beds repeat(down, 3)
     /2beds repeat(>3)
 
-**Shifting blueprints**
+Shifting blueprints
+```````````````````
 
 Syntax: shift(<x shift>[[,] <y shift>])
 
@@ -1042,7 +1075,8 @@ semantics for the y axis are opposite compared to regular graphs on paper. This
 is because the y coordinates in the DF game map start a 0 at the top and
 increase as they go down.
 
-**Transforming blueprints**
+Transforming blueprints
+```````````````````````
 
 Syntax: transform(<transformation>[[,] <transformation>...])
 
@@ -1082,7 +1116,7 @@ by blueprint rotation.
 .. _quickfort-other-modes:
 
 Other blueprint modes
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 In addition to the powerful ``#meta`` mode described above, there are a few
 additional blueprint modes that become useful when you are sharing your
@@ -1093,57 +1127,16 @@ have specialized, higher-level uses:
 ==============  ===========
 Blueprint mode  Description
 ==============  ===========
-config          Play back key sequences that are not related to map tiles
 notes           Display long messages, such as help text or blueprint
                 walkthroughs
-aliases         Define aliases that can be used by other ``#query`` blueprints
-                in the same file
 ignore          Hide a section of your spreadsheet from quickfort, useful for
                 scratch space or personal notes
 ==============  ===========
 
-.. _quickfort-config-blueprints:
-
-Config blueprints
-`````````````````
-
-A ``#config`` blueprint is used to send unfiltered keystrokes directly to the
-DF UI without interacting with specific map tiles. They have access to the same
-keystroke aliases as ``#query`` blueprints, but ``#config`` blueprints differ
-from ``#query`` blueprints in a few critical ways:
-
-- Whereas the "home" mode for ``#query`` blueprints is the "query" mode
-  (:kbd:`q`), ``#config`` blueprints start on the default map screen -- the view
-  you have when you're looking at the map with no sidebar visible. The keystroke
-  or alias sequence in each spreadsheet cell in a ``#config`` blueprint must
-  begin and end on the default map screen.
-- The cursor position is not set for ``#config`` blueprints. This means that it
-  doesn't matter what spreadsheet cell you put your text in. The blueprint cell
-  location does not correspond to a map tile.
-
-A ``#config`` blueprint is best used for accessing game menus that are not
-associated with map tiles, such as the hotkey menu (:kbd:`H`), the military
-menu (:kbd:`m`), or the standing orders menu (:kbd:`o`). In other words, use a
-``#config`` blueprint when you want to configure the game itself, not the tiles
-on the map. A ``#config`` blueprint is better for these menus than a ``#query``
-blueprint because the cursor can jump around in unpredictable ways when
-accessing these non-cursor modes and then re-entering query mode. This will
-cause quickfort to detect a ``#query`` blueprint error and stop executing.
-Also, ``#query`` blueprints will skip playing back a key sequence entirely if
-it doesn't detect a building or zone on the target tile. A ``#config``
-blueprint doesn't need a building or zone to exist in order to run.
-
-Note that you *can* enter any mode you want during a ``#config`` blueprint
-keystroke sequence (as long as you get back to the default map screen by the end
-of the sequence), even modes that provide a cursor on the screen. It's just that
-the position of that cursor is not guaranteed to be on any specific tile. If you
-need access to a cursor, you probably should be using a ``#query`` blueprint
-instead.
-
 .. _quickfort-notes:
 
 Notes blueprints
-````````````````
+~~~~~~~~~~~~~~~~
 
 Sometimes you just want to record some information about your blueprints, such
 as when to apply them, what preparations you need to make, or what the
@@ -1171,50 +1164,8 @@ The ``#meta`` blueprint is all squashed into a single spreadsheet cell, using
 embedded newlines. Each line of the ``#notes`` "blueprint", however, is in a
 separate cell, allowing for much easier viewing and editing.
 
-.. _quickfort-aliases-blueprints:
-
-Aliases blueprints
-``````````````````
-
-There are keystroke aliases that `come with DFHack <quickfort-alias-guide>` that
-are usable by all blueprints, and you have the ability to define custom aliases
-in :source:`dfhack-config/quickfort/aliases.txt` that are visible to all your
-blueprints as well. An ``#aliases`` blueprint can define custom aliases that are
-only visible to the current ``.csv`` or ``.xlsx`` file. Packaging aliases in the
-same file that uses them is convenient for specialized aliases that are only
-useful to a particular blueprint. Also, if you want to share your blueprint with
-others, defining your aliases in an ``#aliases`` blueprint will help your
-blueprint to work "out of the box", and you won't need others to add your custom
-aliases to their ``dfhack-config/quickfort/aliases.txt`` files.
-
-Although we're calling them "blueprints", ``#aliases`` blueprints are not actual
-blueprints, and they don't show up when you run ``quickfort list``. The aliases
-are just automatically read in when you run any ``#query`` blueprint that is
-defined in the same file.
-
-Aliases can be in either of two formats, and you can mix formats freely within
-the same ``#aliases`` section. The first format is the same as what is used in
-the ``aliases.txt`` files::
-
-    #aliases
-    aliasname: aliasdefinition
-
-Aliases in this format must appear in the first column of a row.
-
-The second format has the alias name in the first column and the alias
-definition in the second column, with no ``:`` separator::
-
-    #aliases
-    aliasname,aliasdefinition
-
-There can be multiple #aliases sections defined in a .csv file or .xlsx
-spreadsheet. The aliases are simply combined into one list. If an alias is
-defined multiple times, the last definition wins.
-
-See the `quickfort-alias-guide` for help with the alias definition syntax.
-
 Ignore blueprints
-`````````````````
+~~~~~~~~~~~~~~~~~
 
 If you don't want some data to be visible to quickfort at all, use an
 ``#ignore`` blueprint. All lines until the next modeline in the file or sheet
@@ -1226,9 +1177,9 @@ space, or temporarily "commented out" blueprints.
 Packaging a set of blueprints
 -----------------------------
 
-A complete specification for a section of your fortress may contain 5 or more
-separate blueprints, one for each "phase" of construction (dig, build, place
-stockpiles, designate zones, and query adjustments).
+A complete specification for a section of your fortress may contain 4 or more
+separate blueprints, one for each "phase" of construction (dig, zone, place,
+build).
 
 To manage all the separate blueprints, it is often convenient to keep related
 blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint
@@ -1252,11 +1203,11 @@ For example, you can write multiple blueprints in one file like this::
    d d d d #
    d d d d #
    # # # # #
-   #build label(bed2)
-   b   f h #
+   #zone label(bed2)
+   b(4x4)  #
            #
            #
-   n       #
+           #
    # # # # #
    #place label(bed3)
            #
@@ -1264,58 +1215,40 @@ For example, you can write multiple blueprints in one file like this::
            #
            #
    # # # # #
-   #query label(bed4)
-           #
-   booze   #
-           #
-           #
-   # # # # #
-   #query label(bed5)
-   r{+ 3}& #
+   #build label(bed4)
+   b   f h #
            #
            #
-           #
+   t c     #
    # # # # #
 
 Of course, you could still choose to keep your blueprints in separate files and
 just give related blueprints similar names::
 
    bedroom.1.dig.csv
-   bedroom.2.build.csv
+   bedroom.2.zone.csv
    bedroom.3.place.csv
-   bedroom.4.query.csv
-   bedroom.5.query2.csv
+   bedroom.4.build.csv
 
 The naming and organization is completely up to you.
 
 Buildingplan integration
 ------------------------
 
-Buildingplan is a DFHack plugin that keeps building construction jobs in a
+`buildingplan` is a DFHack plugin that keeps building construction jobs in a
 suspended state until the materials required for the job are available. This
 prevents a building designation from being canceled when a dwarf picks up the
-job but can't find the materials.
+job but can't find the materials. `quickfort` uses `buildingplan` to manage
+construction.
 
-As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
-construction. The buildingplan plugin has an `"enabled" setting
-<buildingplan-settings>` for each building type, but those settings only apply
-to buildings created through the buildingplan user interface. Quickfort will
-still use buildingplan to plan buildings even if the buildingplan UI says that
-building type is not "enabled".
-
-In addition, buildingplan has a "quickfort_mode" setting for compatibility with
-legacy Python Quickfort. This setting has no effect on DFHack Quickfort, which
-will use buildingplan to manage everything designated in a ``#build`` blueprint
-regardless of the buildingplan UI settings.
-
-However, quickfort *does* use `buildingplan's filters <buildingplan>`
-for each building type. For example, you can use the buildingplan UI to set the
-type of stone you want your walls made out of. Or you can specify that all
+This means that `buildingplan's filters <buildingplan>` will be used for each
+building type. For example, you can use the buildingplan UI to set the type of
+stone you want your walls made out of. Or you can specify that all
 buildingplan-managed chairs and tables must be of Masterful quality. The current
 filter settings are saved with planned buildings when the ``#build`` blueprint
 is run. This means you can set the filters the way you want for one blueprint,
-run the blueprint, and then freely change them again for the next blueprint,
-even if the first set of buildings haven't been built yet.
+run the blueprint, and then freely change the filters again for the next
+blueprint, even if the first set of buildings haven't been built yet.
 
 Note that buildings are still constructed immediately if you already have the
 materials. However, with buildingplan you now have the freedom to apply
@@ -1323,19 +1256,12 @@ materials. However, with buildingplan you now have the freedom to apply
 jobs will be fulfilled whenever the materials become available.
 
 Since it can be difficult to figure out exactly what source materials you need
-for a ``#build`` blueprint, quickfort supplies the ``orders`` command. It
+for a ``#build`` blueprint, quickfort supplies the ``orders`` subcommand. It
 enqueues manager orders for everything that the buildings in a ``#build``
 blueprint require. See the `next section <generating-manager-orders>`_ for more
-details on this.
-
-Alternately, if you know you only need a few types of items, the `workflow`
-plugin can be configured to build those items continuously for as long as they
-are needed.
-
-If you do not want to enable the buildingplan plugin, run ``quickfort orders``
-and make sure all manager orders are fulfilled before applying a ``#build``
-blueprint. Otherwise you will get job cancellation spam when the buildings can't
-be built with available materials.
+details on this. You can apply a blueprint, then have `quickfort` generate
+orders for you. The planned buildings will be built as your dwarves fulfill the
+orders.
 
 Generating manager orders
 -------------------------
@@ -1357,8 +1283,8 @@ number of blocks you need divided by four (rounded up). You might end up with a
 few extra blocks, but not too many.
 
 If you want your constructions to be in a consistent color, be sure to choose a
-rock type for all of your 'Make rock blocks' orders by selecting the order and
-hitting :kbd:`d`. You might want to set the rock type for other non-block orders
+rock type for all of your 'Make rock blocks' orders in the manager orders
+screen. You might also want to set the rock type for other non-block orders
 to something different if you fear running out of the type of rock that you want
 to use for blocks. You should also set the `buildingplan` material filter for
 construction building types to that type of rock as well so other blocks you
@@ -1384,10 +1310,6 @@ number of bins, pots, or wheelbarrows.
 Tips and tricks
 ---------------
 
--  During blueprint application, especially query blueprints, don't click the
-   mouse on the DF window or type any keys. They can change the state of the
-   game while the blueprint is being applied, resulting in strange errors.
-
 -  After digging out an area, you may wish to smooth and/or engrave the area
    before starting the build phase, as dwarves may be unable to access walls or
    floors that are behind/under built objects.
@@ -1404,23 +1326,18 @@ Tips and tricks
    level. This will ensure your miners complete digging out a level before
    continuing on to the next.
 
--  As of DF 0.34.x, it is no longer possible to build doors (:kbd:`d`) at the
-   same time that you build adjacent walls (:kbd:`C`:kbd:`w`). Doors must now be
-   built *after* adjacent walls are constructed. This does not affect the more
-   common case where walls exist as a side-effect of having dug-out a room in a
-   ``#dig`` blueprint, but if you are building your own walls, be aware that
-   walls must be built before you run the blueprint to designate attached doors.
+-  As of DF 0.34.x, it is no longer possible to build doors at the same time
+   that you build adjacent walls. Doors must now be built *after* adjacent
+   walls are constructed. This does not affect the more common case where walls
+   exist as a side-effect of having dug-out a room in a ``#dig`` blueprint, but
+   if you are building your own walls, be aware that walls must be built before
+   you run the blueprint to designate attached doors.
 
 - Quickfort is a very powerful tool. See the `case study <dreamfort-case-study>`
   below for more ideas on how to build awesome blueprints!
 
 Caveats and limitations
 -----------------------
-
--  If you use the the ``bags`` alias, be aware that the game does not
-   differentiate between empty and full bags. Therefore, you can get bags of
-   gypsum power in your "bags" stockpile unless you are careful to assign all
-   your gypsum to your hospital.
 
 -  Weapon traps and upright spear/spike traps can currently only be built with a
    single weapon.
@@ -1429,8 +1346,9 @@ Caveats and limitations
 
 -  Building instruments is not yet supported.
 
--  DFHack Quickfort is a large project, and there are bound to be bugs! Please
-   report them at the :issue:`DFHack issue tracker <>` so they can be addressed.
+-  DFHack Quickfort is a large project, and there are bound to be bugs! If you
+   run into any, please report them at the :issue:`DFHack issue tracker <>` so
+   they can be addressed.
 
 .. _dreamfort-case-study:
 
@@ -1493,16 +1411,6 @@ library/dreamfort.csv`` will display Dreamfort's `introduction text
 Do not neglect writing the help text! Not only will it give others a chance to
 use your blueprints appropriately, but the help you write will remind *you* what
 you were thinking when you wrote the blueprint in the first place.
-
-.. topic:: Tip
-
-    Include custom alias definitions in the same file as the blueprint.
-
-If any blueprint in the set uses custom aliases that other users won't have in
-their :source:`data/quickfort/aliases-common.txt` files, be sure to define them
-in the blueprint itself in an `quickfort-aliases-blueprints` section. Then other
-people can use your blueprint right away without having to manually copy aliases
-into their personal :source:`dfhack-config/quickfort/aliases.txt` files.
 
 The surface_ level: how to manage complexity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1821,7 +1729,6 @@ Links
 **Quickfort links:**
 
 -  `Quickfort command reference <quickfort>`
--  `quickfort-alias-guide`
 -  `blueprint-library-guide`
 -  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`
@@ -1836,3 +1743,374 @@ Links
    constraints for quickfort-placed buildings.
 -  `Python Quickfort <http://joelpt.net/quickfort>`__ is the previous,
    Python-based implementation that DFHack's quickfort script was inspired by.
+
+.. _quickfort_guide_appendix:
+
+Appendix: Symbols and properties
+--------------------------------
+
+#dig mode reference
+~~~~~~~~~~~~~~~~~~~
+
+=============  =======
+Symbol         Meaning
+=============  =======
+``d``          dig (mine out walls but leave the floors)
+``h``          channel (empty tile with a ramp in the z-level below)
+``u``          up stair
+``j``          down stair
+``i``          up/down stair
+``r``          ramp (produces empty tile in the z-level above)
+``z``          remove up stairs/ramps
+``t``          chop trees
+``p``          gather plants
+``s``          smooth walls or floors
+``e``          engrave smoothed walls or floors
+``F``          carve fortification
+``T``          carve track
+``v``          toggle whether engraving details are visible
+``M``          toggle marker (called "blueprints" by the DF interface)
+``n``          remove construction
+``x``          remove designation
+``bc``         claim items on this tile
+``bf``         forbid items on this tile
+``bm``         melt items on this tile
+``bM``         remove melt flag from items on this tile
+``bd``         dump items on this tile
+``bD``         remove dump flag from items on this tile
+``bh``         hide items on this tile
+``bH``         unhide items on this tile
+``oh``         set high traffic
+``on``         set normal traffic
+``ol``         set low traffic
+``or``         set restricted traffic
+``trackN``     carve track that extends to the north
+``trackS``     carve track that extends to the south
+``trackE``     carve track that extends to the east
+``trackW``     carve track that extends to the west
+``trackNS``    carve track that extends to the north and south
+``trackEW``    carve track that extends to the east and west
+``trackNE``    carve track that extends to the north and east (corner)
+``trackNW``    carve track that extends to the north and west (corner)
+``trackSE``    carve track that extends to the south and east (corner)
+``trackSW``    carve track that extends to the south and west (corner)
+``trackNSE``   carve track that extends to the north, south, and east (tee)
+``trackNSW``   carve track that extends to the north, south, and west (tee)
+``trackNEW``   carve track that extends to the north, east, and west (tee)
+``trackSEW``   carve track that extends to the south, east, and west (tee)
+``trackNSEW``  carve track that extends in all directions (cross)
+=============  =======
+
+You can carve a track over an existing natural ramp to allow a minecart to
+safely traverse z-levels. You can write  ``trackramp<dir>`` instead of
+``track<dir>`` (e.g. ``trackrampSW``) for clarity in blueprints where this is
+the intention. The actual designation produced by ``track<dir>`` and
+``trackramp<dir>`` is identical.
+
+#zone mode reference
+~~~~~~~~~~~~~~~~~~~~
+
+======  =================  ==========
+Symbol  Type               Properties
+======  =================  ==========
+``m``   meeting area
+``b``   bedroom
+``h``   dining hall
+``n``   pen/pasture
+``p``   pit/pond           ``pond``: if set to ``true``, then the zone is a pond
+``w``   water source
+``j``   dungeon
+``f``   fishing
+``s``   sand
+``o``   office
+``D``   dormitory
+``B``   barracks
+``a``   archery range      ``shoot_from``: can be any of: ``west``, ``left``,
+                           ``east``, ``right``, ``north``, ``top``, ``south``,
+                           or ``bottom``. defaults to ``west``.
+``d``   garbage dump
+``t``   animal training
+``T``   tomb               ``pets``: if set to ``true`` then pets are allowed.
+                           ``citizens``: if set to ``false`` then citizens are
+                           not allowed.
+``g``   gather/pick fruit  ``pick_trees``, ``pick_shrubs``, ``gather_fallen``:
+                           all are set to ``true`` by default. set to ``false``
+                           to disable.
+``c``   clay
+======  =================  ==========
+
+In addition to the type-specific properties listed above, all zones support the
+following properties:
+
+=================  ===========
+Property           Description
+=================  ===========
+``name``           the name of the zone
+``active``         if set to ``false`` then the zone is deactivated
+``assigned_unit``  if set to the name of a noble position (like ``manager`` or
+                   ``bookkeeper`` or ``sheriff``) then the zone will be
+                   assigned to the unit appointed to the indicated noble
+                   position (if any). if the fort has progressed to the point
+                   that the sheriff role has been replaced by the captain of
+                   the guard, then ``assigned_unit=sheriff`` will be
+                   interpreted as ``assigned_unit=captain_of_the_guard``.
+``location``       the type of location to create and attach the zone to: one
+                   of: ``hospital``, ``guildhall``, ``tavern``, ``library``, or
+                   ``temple``. To attach multiple zones to the same location,
+                   specify a label after the location type and use the same
+                   label for all attached zones. For example:
+                   ``location=tavern/mainpub``.
+``allow``          (only if ``location`` is also set) sets the access
+                   restriction for the attached location: one of: ``visitors``,
+                   ``residents``, ``citizens``, or ``members``. defaults to
+                   ``visitors``.
+``profession``     (only if ``location=guildhall``) sets the profession of the
+                   guildhall. See possilbe values with ``:lua @df.profession``.
+                   For example: ``profession=metalsmith``.
+``desired_*``      (only if the location is set to the relevant type) sets the
+                   desired number of stocked items for the attached location.
+                   See the table below for details.
+=================  ===========
+
+Here are the desired items that can be specified for each location type:
+
+=============  ===========
+Location type  Properties
+=============  ===========
+tavern         ``desired_goblets`` (defaults to ``10``),
+               ``desired_instruments`` (defaults to ``5``)
+hospital       ``desired_splints`` (defaults to ``5``), ``desired_thread``
+               (defaults to ``5``), ``desired_cloth`` (defaults to ``5``),
+               ``desired_crutches`` (defaults to ``5``), ``desired_powder``
+               (defaults to ``5``), ``desired_buckets`` (defaults to ``2``),
+               ``desired_soap`` (defaults to ``5``)
+library        ``desired_paper`` (defaults to ``10``)
+temple         ``desired_instruments`` (defaults to ``5``)
+=============  ===========
+
+#place mode reference
+~~~~~~~~~~~~~~~~~~~~~
+
+The symbol or symbols used to declare a stockpile determine which item
+categories are enabled by default as well as which stockpile containers (e.g.
+bins/barrels/wheelbarrows) are assigned to the stockpile by default.
+
+======  ===============  ==========
+Symbol  Type             Containers
+======  ===============  ==========
+``a``   animal
+``f``   food             barrels
+``u``   furniture
+``n``   coins            bins
+``y``   corpses
+``r``   refuse
+``s``   stone            wheelbarrows
+``w``   wood
+``e``   gem              bins
+``b``   bars and blocks  bins
+``h``   cloth            bins
+``l``   leather          bins
+``z``   ammo             bins
+``S``   sheets           bins
+``g``   finished goods   bins
+``p``   weapons          bins
+``d``   armor            bins
+``c``   custom
+======  ===============  ==========
+
+All stockpiles support the following properties:
+
+================  ===========
+Property          Description
+================  ===========
+``name``          the name of the stockpile
+``take_from``     comma-separated list of names of stockpiles or workshops that
+                  the stockpile takes from
+``give_to``       comma-separated list of names of stockpiles or workshops that
+                  the stockpile gives to
+``links_only``    if set to ``true`` then the stockpile will only take from
+                  links
+``barrels``       the number of desired barrels
+``bins``          the number of desired bins
+``wheelbarrows``  the number of desired wheelbarrows
+``containers``    sets the desired numbers for barrels, bins, and wheelbarrows.
+                  this is most useful to set all desired container counts to 0.
+``quantum``       if set to ``true``, then sets ``containers=0 links_only=true``
+================  ===========
+
+#build mode reference
+~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the type-specific properties listed below, all building types
+accept the ``name`` property.
+
+Moreover, all workshops and furnaces accept ``take_from`` and ``give_to``
+properties, which are comma-separated lists of names (the same as the
+correponding stockpile properties above).
+
+================= ============================= ==========
+Symbol            Type                          Properties
+================= ============================= ==========
+``a``             armor stand
+``b``             bed
+``c``             seat
+``n``             burial receptacle
+``d``             door
+``x``             floodgate
+``H``             floor hatch
+``W``             wall grate
+``G``             floor grate
+``B``             vertical bars
+``~b``            floor bars
+``f``             cabinet
+``h``             container
+``r``             weapon rack
+``s``             statue
+``~s``            slab
+``t``             table
+``g``             bridge (retracting)
+``gw``            bridge (raises to north)
+``gd``            bridge (raises to east)
+``gx``            bridge (raises to south)
+``ga``            bridge (raises to west)
+``l``             well
+``y``             glass window
+``Y``             gem window
+``D``             trade depot
+``Msu``           screw pump (pumps from north)
+``Msk``           screw pump (pumps from east)
+``Msm``           screw pump (pumps from south)
+``Msh``           screw pump (pumps from west)
+``Mw``            water wheel (vertical)
+``Mws``           water wheel (horizontal)
+``Mg``            gear assembly
+``Mh``            horizontal axle (east-west)
+``Mhs``           horizontal axle (north-south)
+``Mv``            vertical axle
+``rollerNS``      roller (pushes to south)      ``speed``: one of ``50000``,
+                                                ``40000``, ``30000``,
+                                                ``20000``, or ``10000``.
+                                                defaults to ``50000``.
+``rollerEW``      roller (pushes to west)       ``speed``
+``rollerSN``      roller (pushes to north)      ``speed``
+``rollerWE``      roller (pushes to east)       ``speed``
+``S``             support
+``m``             animal trap
+``v``             restraint
+``j``             cage
+``A``             archery target
+``R``             traction bench
+``N``             nest box
+``~h``            hive                          if ``do_install`` is set to
+                                                ``true`` then a bee colony will
+                                                be installed. if ``do_gather``
+                                                is set to ``true`` then hive
+                                                products will be gathered.
+``~a``            offering place
+``~c``            bookcase
+``F``             display furniture
+``p``             farm plot                     if ``seasonal_fertilize`` is
+                                                set to ``true`` then the plots
+                                                will be configured for seasonal
+                                                fertilization
+``o``             paved road
+``O``             dirt road
+``k``             vermin catcher
+``we``            leather works
+``wq``            quern
+``wM``            millstone
+``wo``            loom
+``wk``            clothier
+``wb``            bowyer
+``wc``            carpenter
+``wf``            metalsmith
+``wv``            magma forge
+``wj``            jeweler
+``wm``            stoneworker
+``wu``            butcher
+``wn``            tanner
+``wr``            craftsdwarf
+``ws``            siege workshop
+``wt``            mechanic
+``wl``            still
+``ww``            farmer
+``wz``            kitchen
+``wh``            fishery
+``wy``            ashery
+``wd``            dyer
+``wS``            soap maker
+``wp``            screw press
+``ew``            wood furnace
+``es``            smelter
+``el``            magma smelter
+``eg``            glass furnace
+``ea``            magma glass furnace
+``ek``            kiln
+``en``            magma kiln
+``ib``            ballista
+``ic``            catapult
+``Cw``            wall
+``Cf``            floor
+``Cr``            ramp
+``Cu``            up stair
+``Cd``            down stair
+``Cx``            up/down stair
+``CF``            fortification
+``trackstop``     track stop (no dumping)       ``friction``: one of ``50000``,
+                                                ``10000``, ``500``, ``50``, or
+                                                ``10``. defaults to ``50000``.
+                                                ``take_from``: create a hauling
+                                                route stop on this track stop
+                                                and make it take from the given
+                                                comma-separated list of
+                                                stockpile names. ``route``: add
+                                                this route stop to the named
+                                                route. if no route of this name
+                                                exists, it will be created. If
+                                                no route name is given, a new
+                                                route is always created.
+``trackstopN``    track stop (dump to north)    ``friction``, ``take_from``,
+                                                ``route``
+``trackstopS``    track stop (dump to south)    ``friction``, ``take_from``,
+                                                ``route``
+``trackstopE``    track stop (dump to east)     ``friction``, ``take_from``,
+                                                ``route``
+``trackstopW``    track stop (dump to west)     ``friction``, ``take_from``,
+                                                ``route``
+``Ts``            stone-fall trap
+``Tw``            weapon trap
+``Tl``            lever
+``Tp``            pressure plate
+``Tc``            cage trap
+``TS``            upright spear/spike
+``trackN``        track to the N
+``trackS``        track to the S
+``trackE``        track to the E
+``trackW``        track to the W
+``trackNS``       track to the N, S
+``trackEW``       track to the E, W
+``trackNE``       track corner to the N, E
+``trackNW``       track corner to the N, W
+``trackSE``       track corner to the S, E
+``trackSW``       track corner to the S, W
+``trackNSE``      track tee to the N, S, E
+``trackNSW``      track tee to the N, S, W
+``trackNEW``      track tee to the N, E, W
+``trackSEW``      track tee to the S, E, W
+``trackNSEW``     track cross
+``trackrampN``    track ramp to the N
+``trackrampS``    track ramp to the S
+``trackrampE``    track ramp to the E
+``trackrampW``    track ramp to the W
+``trackrampNS``   track ramp to the N, S
+``trackrampEW``   track ramp to the E, W
+``trackrampNE``   track ramp corner to the N, E
+``trackrampNW``   track ramp corner to the N, W
+``trackrampSE``   track ramp corner to the S, E
+``trackrampSW``   track ramp corner to the S, W
+``trackrampNSE``  track ramp tee to the N, S, E
+``trackrampNSW``  track ramp tee to the N, S, W
+``trackrampNEW``  track ramp tee to the N, E, W
+``trackrampSEW``  track ramp tee to the S, E, W
+``trackrampNSEW`` track ramp cross
+================= ============================= ==========

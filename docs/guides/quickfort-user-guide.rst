@@ -1,5 +1,6 @@
 .. _quickfort-blueprint-guide:
 .. _quickfort-user-guide:
+.. _quickfort-alias-guide:
 
 Quickfort blueprint creation guide
 ==================================
@@ -1728,7 +1729,6 @@ Links
 **Quickfort links:**
 
 -  `Quickfort command reference <quickfort>`
--  `quickfort-alias-guide`
 -  `blueprint-library-guide`
 -  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`

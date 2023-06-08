@@ -1708,11 +1708,11 @@ build2/industry_build2
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,"bnpdz{name=""Bar/military feeder"" containers=0}:-potash+adamantinethread(5x3)",,,,~,`,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,c
-,,,,"pd{name=""Meltable steel/bronze"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/mats/,other/,core/masterful,core/artifact-cat_armor/mats/,other/,core/masterful,core/artifact+bronzeweapons+bronzearmor+steelweapons+steelarmor(7x3)",,,~,~,~,~,`,`,`,`,"s5{name=""Ore/clay feeder""}:-otherstone(5x2)",,,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,"pd{name=""Meltable steel/bronze"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/mats/,other/-cat_armor/mats/,other/+bronzeweapons+bronzearmor+steelweapons+steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,"s5{name=""Ore/clay feeder""}:-otherstone(5x2)",,,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,"c{name=""Coal"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+coal",`,"c{name=""Metalworker quantum"" quantum=true}:+all",`,"c{name=""Iron"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+ironbars",`,`,`,`,`,`,`,`,`,`,`
-,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/other/,core/masterful,core/artifact-cat_armor/other/,core/masterful,core/artifact-bronzeweapons-bronzearmor-steelweapons-steelarmor(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder""}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
+,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/other/-cat_armor/other/-bronzeweapons-bronzearmor-steelweapons-steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder""}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`

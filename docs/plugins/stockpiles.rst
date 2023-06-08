@@ -143,6 +143,21 @@ item properties that you can match with filters. In addition, there are
 normally at least a few convenient pre-made settings files that manipulate
 interesting category subsets.
 
+Cross-category stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Settings files::
+
+    artifacts
+    masterworks
+
+Example command for a meltable weapons stockpile::
+
+    stockpiles import cat_weapons
+    stockpiles import -m disable cat_weapons -f other/
+    stockpiles import -m disable artifacts
+    stockpiles import -m disable masterworks
+
 Ammo stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -369,6 +384,7 @@ Subcategory prefixes::
 Settings files::
 
     pots
+    barrels
     bags
     buckets
     sand

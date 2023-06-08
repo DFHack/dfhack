@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `autonick`: additional nicknames based on burrowing animals, colours, gems and minerals added
+- `stockpiles`: added ``barrels``, ``organic``, ``artifacts``, and ``masterworks`` stockpile presets
 
 ## Documentation
 

@@ -1530,7 +1530,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         ConvertDFCoord(engraving->pos, netEngraving->mutable_pos());
         netEngraving->set_quality(engraving->quality);
         netEngraving->set_tile(engraving->tile);
-        CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        if (chunk->images[engraving->art_subid]) {
+            CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        }
         netEngraving->set_floor(engraving->flags.bits.floor);
         netEngraving->set_west(engraving->flags.bits.west);
         netEngraving->set_east(engraving->flags.bits.east);

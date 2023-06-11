@@ -42,59 +42,65 @@ interactively."
 "# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-"Here is the recommended order for Dreamfort commands. You can either copy/paste the command lines directly into the DFHack terminal or run the blueprints in the UI with gui/quickfort. See the walkthroughs (the ""help"" blueprints) for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps!"
+"Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details."
+"If the checklist indicates that you should generate orders, that means to hit the ""o"" hotkey when the blueprint is loaded in gui/quickfort. You'll get a popup saying which orders were generated. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps!"
 ""
 -- Preparation (before you embark!) --
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the prefs/embark_profiles.txt file.
 Run gui/control-panel and enable settings on the Autostart tab. See the /setup_help notes for details.
 ""
 -- Set settings and preload initial orders --
-quickfort run library/dreamfort.csv -n /setup_help,# For advice on how to do initial setup for success.
-"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
+DFHack command,Blueprint,Generate orders,Notes
+gui/quickfort,/setup_help,,For advice on how to do initial setup for success.
+"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /industry2, /surface4""",,,"Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
-gui/quickfort library/dreamfort.csv -n /perimeter,# Run at embark. Don't actually apply the blueprint. Just use the preview shadow to find a good spot on the surface.
+DFHack command,Blueprint,Generate orders,Notes
+gui/quickfort,/perimeter,,Run at embark. Don't actually apply the blueprint -- it's way too early to dedicate resources to building walls. Just use the preview shadow to find a good spot on the surface.
 ""
 -- Dig  --
-quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center tile. Deconstruct your wagon if it is in the way.
-quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
+DFHack command,Blueprint,Generate orders,Notes
+gui/quickfort,/surface1,,Clear some trees and dig central staircase. Run when you find your center tile. Deconstruct your wagon if it is in the way.
+gui/quickfort,/dig_all,,"Run when you find a suitable (non-aquifer) rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) --
-quickfort run library/dreamfort.csv -n /surface2,"# Run after initial trees are cleared. If you are deconstructing the wagon now, wait until after the wagon is deconstructed so the jobs that depend on wagon contents (e.g. blocks) don't get canceled later."
-quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and the additional designated trees on the surface are cleared.
-quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out.
-quickfort run library/dreamfort.csv -n /surface3,# Run right after /farming2.
-quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out.
-prioritize ConstructBuilding,"# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. **Be sure that there are no items attached to jobs left in the workshops before deconstructing them, otherwise you'll get canceled jobs!**"
-quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 to run this blueprint so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
-"quickfort orders,run library/dreamfort.csv -n /services2","# Run when the services levels have been dug out. Feel free to remove the orders for the ropes if you already brought them with you. If you are filling your wells from an aquifer or stream, now is also a good time to start digging the plumbing."
-orders import library/basic,"# Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
-"quickfort orders,run library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
-prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the busy masons come and build them.
-"quickfort orders,run library/dreamfort.csv -n /surface6",# Run once you have linked all levers to their respective bridges.
-"quickfort orders,run library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
+DFHack command,Blueprint,Generate orders,Notes
+gui/quickfort,/surface2,,"Build starter workshops/stockpiles and dig miasma vents. Run after initial trees are cleared. If you are deconstructing the wagon, do it before running this blueprint so the jobs that depend on wagon contents (e.g. blocks) don't get canceled later."
+gui/quickfort,/farming1,,Dig out the farming level. Run when channels are dug and the additional designated trees on the surface are cleared.
+gui/quickfort,/farming2,,Build farming level. Run as soon as the farming level has been completely dug out.
+gui/quickfort,/surface3,,Cover the miasma vents and protect the central staircase from early invasions. Run right after /farming2.
+gui/quickfort,/industry2,,Build industry level. Run as soon as the industry level has been completely dug out.
+prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. **Be sure that there are no items attached to jobs left in the workshops before deconstructing them, otherwise you'll get canceled jobs!**"
+gui/quickfort,/surface4,,Protect the staircase with doors and lay flooring for future buildings. Run after the walls and floors around the staircase are built.
+gui/quickfort,/services2,Yes,"Build simple hospital and dining room, including a well. Run when the services levels have been dug out. Feel free to remove the orders for the ropes if you already brought them with you. If you are filling your wells from an aquifer or stream, now is also a good time to start digging the plumbing."
+orders import library/basic,,,"Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
+gui/quickfort,/surface5,Yes,"Build surface buildings, drawbridges, and furniture. Run when all marked trees on the surface are chopped down and previously-designated walls and floors have been constructed. Be sure to check that the little ""wing"" of roof section over the future barracks is constructed so we can place the barracks beds."
+prioritize ConstructBuilding,,,Run when you see the bridges ready to be built so the busy masons come and build them.
+gui/quickfort,/surface6,Yes,Build security perimeter. Run once you have linked all levers to their respective bridges.
+gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down.
 ""
 -- Plumbing --
 "If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through this checklist! If you choose to use magma, try to get it in place before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
--- Mature fort (third migration wave onward) --
-The order of steps in this section is less important. Feel free to reorder as per the needs of your fort.
-orders import library/furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
-"quickfort orders,run library/dreamfort.csv -n /guildhall2_default",# Run when the guildhall level has been dug out.
-"quickfort orders,run library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
-"quickfort orders,run library/dreamfort.csv -n /services3",# Run when your population grows to about 20.
-"quickfort orders,run library/dreamfort.csv -n /apartments2",# Run when the first apartment level has been dug out.
-"quickfort orders,run library/dreamfort.csv -n /crypt2",# Run when the crypt level has been dug out.
-"quickfort orders,run library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
-"quickfort orders,run library/dreamfort.csv -n /farming3",# Add in all the doors we couldn't afford to build earlier.
-orders import library/military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
-orders import library/smelting,# Automated production of all types of metal bars.
-"quickfort orders,run library/dreamfort.csv -n /services4",# Run when you need a full dining room and/or jail.
-orders import library/rockstock,# Maintains a small stock of all types of rock furniture. Useful for filling out future guildhalls.
-orders import library/glassstock,# Maintains a small stock of all types of glass furniture and parts (only import if you have sand).
-"quickfort orders,run library/dreamfort.csv -n /apartments2",# Repeat as needed as your fort grows.
-"quickfort orders,run library/dreamfort.csv -n /crypt3",# Run when the crypt is starting to run out of space.
+-- Mature fort (fourth migration wave onward) --
+The order of steps in this section is not important. Feel free to reorder as per the needs of your fort.
+DFHack command,Blueprint,Generate orders,Notes
+orders import library/furnace,,,Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
+gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future needed temples and guildhalls. Run when the guildhall level has been dug out."
+gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out.
+gui/quickfort,/services3,Yes,"Extend the dining room and hospital, and start the jail. Run when your population grows to about 20."
+gui/quickfort,/apartments2,Yes,Build and zone bedrooms. Run when the first apartment level has been dug out and you have outgrown your starter dormintory.
+gui/quickfort,/crypt2,Yes,Build a small group of tombs. Run when the crypt level has been dug out and you have outgrown your starter tomb on the farming level.
+gui/quickfort,/surface8,Yes,"Build extended trap corridors. If you have a strong military, you might not need this."
+gui/quickfort,/farming3,Yes,Add in all the doors we couldn't afford to build earlier.
+orders import library/military,,,Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
+orders import library/smelting,,,Automated production of all types of metal bars.
+gui/quickfort,/services4,Yes,Build full dining room and jail.
+orders import library/rockstock,,,Maintains a small stock of all types of rock furniture. Useful for filling out future guildhalls.
+orders import library/glassstock,,,Maintains a small stock of all types of glass furniture and parts (only import if you have sand).
+gui/quickfort,/apartments2,Yes,Repeat as needed as your fort grows.
+gui/quickfort,/crypt3,Yes,Run when the crypt is starting to run out of free tombs.
 ""
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
 #notes label(setup_help)
@@ -104,6 +110,7 @@ These are Dreamfort's suggestions for adjustments to settings and initial setup.
 ""
 - On the Work details screen (Labor -> Work details)
   - Specialize your miners (click the hammer-lock button so it turns red) and make your miners also engravers (they'll need something to do once the mining is done)
+  - Deselect fishing from all dwarves -- you have enough food to get started and you'll need their time for hauling
 ""
 - In standing orders (Labor -> Standing orders):
 "  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
@@ -172,7 +179,7 @@ Also bring logs for beds if embarking in an area without many trees.
 ""
 See ldog's Dreamfort embark profile for a more advanced (and more thoroughly explained!) approach:
 https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=sharing
-"#ignore Add these lines to the bottom of your ""data/init/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's dreamfort embark profile for a more advanced, dwarfy approach."
+"#ignore Add these lines to the bottom of your ""prefs/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's dreamfort embark profile for a more advanced, dwarfy approach."
 [PROFILE]
 [TITLE:Dreamfort]
 [SKILL:1:STONECRAFT:1]
@@ -222,34 +229,6 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [PET:1:CAT:MALE:STANDARD]
 [PET:2:BIRD_GOOSE:FEMALE:STANDARD]
 [PET:2:BIRD_GOOSE:MALE:STANDARD]
-#meta label(all_orders) hidden() references all blueprints that generate orders; for testing only
-/surface1
-/surface2
-/surface3
-/surface4
-/surface5
-/surface6
-/surface7
-/surface8
-/farming1
-/farming2
-/farming3
-/farming4
-/industry1
-/industry2
-/services1
-/services2
-/services3
-/services4
-/guildhall1
-/guildhall2
-/guildhall3
-/guildhall4
-/suites1
-/suites2
-/apartments1 repeat(>5)
-/apartments2 repeat(>5)
-/apartments3 repeat(>5)
 #notes label(surface_help)
 Sets up a protected entrance to your fort in a flat area on the surface.
 Screenshot: https://drive.google.com/file/d/1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
@@ -316,6 +295,26 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 "- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
 ""
 "Only common hostile creatures are accepted by the prisoner hauling route by default. You can add additional creature types by configuring the hauling route stop. Note that generated creature types, like necromancer experiments, can't be explicitly added. You have to (at least temporarily) accept all animals to include them."
+#dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
+`,j6,`
+u,`,u
+`,j6,`
+#meta label(central_stairs_even) hidden() carved spiral stairs even levels
+/central_stairs_odd transform(cw)
+#meta label(central_stairs) two levels of carved spiral stairs (repeat down as needed)
+/central_stairs_odd
+#>
+/central_stairs_even
+#build label(central_stairs_odd_constructed) start(2;2) hidden() constructed spiral stairs odd levels
+`,Cd,`
+Cu,`,Cu
+`,Cd,`
+#meta label(central_stairs_even_constructed) hidden() constructed spiral stairs even levels
+/central_stairs_odd_constructed transform(cw)
+#meta label(central_stairs_constructed) two levels of constructed spiral stairs (repeat down as needed)
+/central_stairs_odd_constructed
+#>
+/central_stairs_even_constructed
 "#meta label(perimeter) start(central stairs) message(If you accidentally applied this blueprint to the map, run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting"
 walls/surface_walls
 corridor/surface_corridor
@@ -337,12 +336,12 @@ channel/surface_channel
 clear/surface_clear
 ""
 "#meta label(surface3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
-Once the walls and floors have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
+Once the walls and floors around the staircase have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
 cover_vents/surface_cover_vents
 cover_stairs/surface_cover_stairs
 ""
 "#meta label(surface4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
-Once the walls and floors have been constructed, continue with /surface5. Be sure to check one z-level above the surface to ensure the roof segment above the future barracks has been finished.) build walls and flooring to support upcoming buildings and furniture"
+Once the bits of flooring have been constructed, continue with /surface5. Be sure to check one z-level above the surface to ensure the roof segment above the future barracks has been finished.) build walls and flooring to support upcoming buildings and furniture"
 stairs_doors/surface_stairs_doors
 pre_building/surface_pre_building
 ""
@@ -373,26 +372,6 @@ roof4/surface_roof4
 corridor_gates/surface_corridor_gates
 corridor/surface_corridor
 corridor_traps/surface_corridor_traps
-#dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
-`,j6,`
-u,`,u
-`,j6,`
-#meta label(central_stairs_even) hidden() carved spiral stairs even levels
-/central_stairs_odd transform(cw)
-#meta label(central_stairs) two levels of carved spiral stairs (repeat down as needed)
-/central_stairs_odd
-#>
-/central_stairs_even
-#build label(central_stairs_odd_constructed) start(2;2) hidden() constructed spiral stairs odd levels
-`,Cd,`
-Cu,`,Cu
-`,Cd,`
-#meta label(central_stairs_even_constructed) hidden() constructed spiral stairs even levels
-/central_stairs_odd_constructed transform(cw)
-#meta label(central_stairs_constructed) two levels of constructed spiral stairs (repeat down as needed)
-/central_stairs_odd_constructed
-#>
-/central_stairs_even_constructed
 #dig label(surface_clear_small) start(19; 19) hidden() clear trees for starting workshops and stockpiles
 
 
@@ -496,7 +475,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-#build label(surface_build_start) start(19; 19) hidden() message(There is room to the left of the carpenter's workshop to build one more workshop of any type if you need it.) starting workshops
+#build label(surface_build_start) start(19; 19) hidden() starting workshops
 
 
 
@@ -796,7 +775,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,Cf,,,,,,,,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,,`,,`
 ,,,`,,`,Cf,,,,,,,,~,~,,~,~,~,,~,~,,,,,,,,,`,,`
 ,,,`,,`,Cf,,,,,,Cf,,Cf,Cf,,~,~,~,,Cf,Cf,,,,,,,,,`,,`
-,,,`,,`,Cf,Cf,,,,,Cf,,`,,,~,~,~,,,`,,,,,,,,,`,,`
+,,,`,,`,Cf,Cf,,,,,Cf,,`,,,~,~,~,,,`,Cf,,Cf,,,Cf,,Cf,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,Cf,Cf,,,,,,,,Cf,Cf,,,,~,,,,Cf,Cf,,,,,,,,Cf,Cf,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1004,7 +983,7 @@ t1(37x33)
 ,,,`,,`,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,~,~,~,~,~,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,,`
 ,,,`,,`,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,,`
 ,,,`,,`,~,Cf,Cf,Cf,Cf,Cf,~,Cf,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,,`
-,,,`,,`,~,~,Cf,Cf,Cf,Cf,~,Cf,`,Cf,Cf,~,~,~,Cf,Cf,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,,`
+,,,`,,`,~,~,Cf,Cf,Cf,Cf,~,Cf,`,Cf,Cf,~,~,~,Cf,Cf,`,~,Cf,~,Cf,Cf,~,Cf,~,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,~,,,,,,,,,,,Cf,Cf,Cf,~,Cf,Cf,Cf,,,,,,,,,,,~,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1702,7 +1681,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=Pots,Barrels,Jugs,Bags}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
-,,"c{name=""Lye"" barrels=2}:+miscliquid",`,`,`,`,`,`,~,~,"u2{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
+,,"c{name=""Lye"" barrels=2}:+miscliquid",`,`,`,`,`,`,~,~,"u{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,"bnpdz{name=""Bar/military feeder"" containers=0}:-potash+adamantinethread(5x3)",,,,~,`,`,`,`,`,`,`,`,`,`,`,`,c

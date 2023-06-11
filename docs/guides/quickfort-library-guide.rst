@@ -186,8 +186,8 @@ Exploratory mining
 ------------------
 
 Several mining patterns to choose from when searching for gems or ores. The
-patterns can be repeated up or down z-levels (via `gui/quickfort`'s
-:kbd:`r`epeat functionality) for exploring through the depths.
+patterns can be repeated up or down z-levels (via `gui/quickfort`\'s
+:kbd:`r`\epeat functionality) for exploring through the depths.
 
 - :source:`library/exploratory-mining/tunnels.csv <data/blueprints/exploratory-mining/tunnels.csv>`
 - :source:`library/exploratory-mining/vertical-mineshafts.csv <data/blueprints/exploratory-mining/vertical-mineshafts.csv>`
@@ -215,6 +215,11 @@ the `Dreamfort screenshot above <Services levels (4 deep)>`_.
 
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__.
+
+.. image:: https://drive.google.com/uc?export=download&id=11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
+  :alt: Annotated screenshot of the aquifer tap
+  :target: https://drive.google.com/file/d/11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
+  :align: center
 
 Post-embark
 ~~~~~~~~~~~

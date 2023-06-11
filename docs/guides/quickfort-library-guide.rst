@@ -44,7 +44,7 @@ a complete `example embark profile
 <https://docs.google.com/spreadsheets/d/15TDBebP8rBNvsFbezb9xuKPmGWNzv7j4XZWq1AsfCio/edit#gid=1727884387>`__,
 and a convenient `checklist
 <https://docs.google.com/spreadsheets/d/15TDBebP8rBNvsFbezb9xuKPmGWNzv7j4XZWq1AsfCio/edit#gid=1459509569>`__
-from which you can copy the ``quickfort`` commands.
+that you can use to track your progress.
 
 If you like, you can download a fully built Dreamfort-based fort from
 :dffd:`dffd <15434>`, load it, and explore it interactively.

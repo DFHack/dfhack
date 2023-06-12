@@ -1264,7 +1264,6 @@ bool StockpileSettingsSerializer::write_bars_blocks(color_ostream& out, Stockpil
 void StockpileSettingsSerializer::read_bars_blocks(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
     auto & pbarsblocks = mSettings->bars_blocks;
     read_category<StockpileSettings_BarsBlocksSet>(out, "bars_blocks", mode,
->>>>>>> 7a1aacdca (import and export logistics features)
         std::bind(&StockpileSettings::has_barsblocks, mBuffer),
         std::bind(&StockpileSettings::barsblocks, mBuffer),
         mSettings->flags.whole,

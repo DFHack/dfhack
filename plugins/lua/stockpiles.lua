@@ -80,7 +80,7 @@ local function get_sp_id(opts)
     return nil
 end
 
-local included_elements = {containers=1, general=2, categories=4, types=8, features=16}
+local included_elements = {containers=1, general=2, categories=4, types=8}
 
 function export_stockpile(name, opts)
     assert_safe_name(name)
@@ -207,15 +207,6 @@ function parse_commandline(args)
     return true
 end
 
-function get_stockpile_features(stockpile_number)
-    local config = logistics.logistics_getStockpileConfigs(stockpile_number)[1]
-    return config.melt, config.trade, config.dump, config.train
-end
-
-function set_stockpile_features(stockpile_number, melt, trade, dump, train)
-    logistics.logistics_setStockpileConfig(stockpile_number, melt, trade, dump, train)
-end
-
 --------------------
 -- dialogs
 --------------------
@@ -240,7 +231,6 @@ function StockpilesExport:init()
             initial_option=false,
         }, widgets.ToggleHotkeyLabel{frame={t=6, l=0}, label='Categories', initial_option=true},
         widgets.ToggleHotkeyLabel{frame={t=7, l=0}, label='Subtypes', initial_option=true},
-        widgets.ToggleHotkeyLabel{frame={t=8, l=0}, label='DFHack features', initial_option=true},
         widgets.HotkeyLabel{
             frame={t=10, l=0},
             label='export',

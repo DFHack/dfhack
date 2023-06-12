@@ -2,7 +2,7 @@ stockpiles
 ==========
 
 .. dfhack-tool::
-    :summary: Import, export, or modify stockpile settings and features.
+    :summary: Import, export, or modify stockpile settings.
     :tags: fort design productivity stockpiles
 
 Commands act upon the stockpile selected in the UI unless another stockpile
@@ -94,7 +94,6 @@ file are:
 :types: The elements below the categories, which include the sub-categories, the
     specific item types, and any toggles the category might have (like Prepared
     meals for the Food category).
-:features: DFHack `logistics` features.
 
 .. _stockpiles-library:
 

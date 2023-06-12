@@ -770,8 +770,6 @@ void StockpileSettingsSerializer::write(color_ostream& out, uint32_t includedEle
 }
 
 void StockpileSerializer::write(color_ostream& out, uint32_t includedElements) {
-    if (includedElements & INCLUDED_ELEMENTS_FEATURES)
-        write_features(out);
     if (includedElements & INCLUDED_ELEMENTS_CONTAINERS)
         write_containers(out);
 
@@ -808,7 +806,6 @@ void StockpileSettingsSerializer::read(color_ostream &out, DeserializeMode mode,
 }
 
 void StockpileSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
-    read_features(out, mode);
     read_containers(out, mode);
     StockpileSettingsSerializer::read(out, mode, filters);
 }
@@ -909,56 +906,6 @@ void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode)
             std::bind(&StockpileSettings::has_use_links_only, mBuffer),
             std::bind(&StockpileSettings::use_links_only, mBuffer),
             mPile->use_links_only);
-}
-
-void StockpileSerializer::write_features(color_ostream& out) {
-    DEBUG(log, out).print("writing feature settings\n");
-    if (!call_stockpiles_lua(&out, "get_stockpile_features", 1, 4,
-        [&](lua_State* L) {
-            Lua::Push(L, mPile->stockpile_number);
-        },
-        [&](lua_State* L) {
-            mBuffer.set_melt(0 != lua_toboolean(L, -1));
-            mBuffer.set_trade(0 != lua_toboolean(L, -2));
-            mBuffer.set_dump(0 != lua_toboolean(L, -3));
-            mBuffer.set_train(0 != lua_toboolean(L, -4));
-        })) {
-
-        WARN(log, out).print("failed to get logistics features of stockpile number %d\n", mPile->stockpile_number);
-    }
-}
-
-void StockpileSerializer::read_features(color_ostream &out, DeserializeMode mode) {
-    int32_t melt = -1, trade = -1, dump = -1, train = -1;
-    read_elem<int32_t, bool>(out, "melt", mode,
-            std::bind(&StockpileSettings::has_melt, mBuffer),
-            std::bind(&StockpileSettings::melt, mBuffer),
-            melt);
-    read_elem<int32_t, bool>(out, "trade", mode,
-            std::bind(&StockpileSettings::has_trade, mBuffer),
-            std::bind(&StockpileSettings::trade, mBuffer),
-            trade);
-    read_elem<int32_t, bool>(out, "dump", mode,
-            std::bind(&StockpileSettings::has_dump, mBuffer),
-            std::bind(&StockpileSettings::dump, mBuffer),
-            dump);
-    read_elem<int32_t, bool>(out, "train", mode,
-        std::bind(&StockpileSettings::has_train, mBuffer),
-        std::bind(&StockpileSettings::train, mBuffer),
-        train);
-
-    if (melt != -1 || trade != -1 || dump != -1 || train != -1) {
-        if (!call_stockpiles_lua(&out, "set_stockpile_features", 4, 0,
-            [&](lua_State* L) {
-                Lua::Push(L, mPile->stockpile_number);
-                Lua::Push(L, melt == 1);
-                Lua::Push(L, trade == 1);
-                Lua::Push(L, dump == 1);
-                Lua::Push(L, train == 1);
-            })) {
-            WARN(log, out).print("failed to set logistics features of stockpile number %d\n", mPile->stockpile_number);
-        }
-    }
 }
 
 static bool ammo_mat_is_allowed(const MaterialInfo& mi) {

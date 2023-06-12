@@ -32,7 +32,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
     commands.push_back(PluginCommand(
         plugin_name,
-        "Import, export, or modify stockpile settings and features.",
+        "Import, export, or modify stockpile settings.",
         do_command));
 
     return CR_OK;

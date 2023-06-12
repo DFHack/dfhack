@@ -21,7 +21,6 @@ enum IncludedElements {
     INCLUDED_ELEMENTS_GENERAL = 0x02,
     INCLUDED_ELEMENTS_CATEGORIES = 0x04,
     INCLUDED_ELEMENTS_TYPES = 0x08,
-    INCLUDED_ELEMENTS_FEATURES = 0x10,
 };
 
 enum DeserializeMode {
@@ -169,6 +168,4 @@ private:
 
     void write_containers(DFHack::color_ostream& out);
     void read_containers(DFHack::color_ostream& out, DeserializeMode mode);
-    void write_features(DFHack::color_ostream& out);
-    void read_features(DFHack::color_ostream &out, DeserializeMode mode);
 };

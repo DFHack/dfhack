@@ -43,7 +43,7 @@ interactively."
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
 "Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details."
-"If the checklist indicates that you should generate orders, that means to hit the ""o"" hotkey when the blueprint is loaded in gui/quickfort. You'll get a popup saying which orders were generated. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps!"
+"If the checklist indicates that you should generate orders, that means to hit the ""o"" hotkey when the blueprint is loaded in gui/quickfort. You'll get a popup saying which orders were generated. Also remember to read the messages the blueprints display after you run them so you don't miss any important manual steps!"
 ""
 -- Preparation (before you embark!) --
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the prefs/embark_profiles.txt file.
@@ -106,19 +106,10 @@ See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x
 #notes label(setup_help)
 These are Dreamfort's suggestions for adjustments to settings and initial setup.
 ""
-"- Assign dwarves to manager, chief medical dwarf, sheriff, broker, and bookkeeper noble roles (they can all be the same dwarf)"
-""
-- On the Work details screen (Labor -> Work details)
-  - Specialize your miners (click the hammer-lock button so it turns red) and make your miners also engravers (they'll need something to do once the mining is done)
-  - Deselect fishing from all dwarves -- you have enough food to get started and you'll need their time for hauling
-""
-- In standing orders (Labor -> Standing orders):
-"  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
-""
-"- Create a burrow named ""Inside"" and register it as a civilian alert burrow in gui/civ-alert so you can use it to get your civilians to safety during sieges. You will have to periodically expand the burrow area as the fort expands."
-""
+You can save some time by setting up your settings in gui/control-panel before you embark.
 "Beyond the bugfix tools that are enabled by default, we recommend enabling the following DFHack tools in gui/control-panel (but they are not required if you prefer to do these things manually):"
-"On the ""Autostart"" tab, additionally enable:"
+""
+"On the gui/control-panel ""Autostart"" tab, additionally enable:"
 - autobutcher
 - autobutcher target 50 50 14 2 BIRD_GOOSE
 - autochop
@@ -136,11 +127,24 @@ These are Dreamfort's suggestions for adjustments to settings and initial setup.
 - tailor
 "Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Fort"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""
-"On the ""Maintenance"" tab, enable:"
+"On the gui/control-panel ""Maintenance"" tab, enable:"
 - everything
 ""
-"On the ""System"" tab, additionally enable:"
+"On the gui/control-panel ""System"" tab, additionally enable:"
 - work-now
+""
+"Now, after you've arrived at your embark site, open the nobles screen and:"
+"- Assign dwarves to at least manager, chief medical dwarf, broker, and bookkeeper noble roles (they can all be the same dwarf)"
+""
+On the work details screen (Labor -> Work details)
+  - Specialize your miners (click the hammer-lock button so it turns red) and make your miners also engravers (they'll need something to do once the mining is done)
+  - Deselect fishing from all dwarves -- you have enough food to get started and you'll need their time for hauling
+""
+In standing orders (Labor -> Standing orders):
+"  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
+""
+"Finally, in the burrows screen:"
+"- Create a burrow named ""Inside"" and register it as a civilian alert burrow in gui/civ-alert so you can use it to get your civilians to safety during sieges. You will have to periodically expand the burrow area as the fort expands."
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -1687,11 +1691,11 @@ build2/industry_build2
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,"bnpdz{name=""Bar/military feeder"" containers=0}:-potash+adamantinethread(5x3)",,,,~,`,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,c
-,,,,"pd{name=""Meltable steel/bronze"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/mats/,other/-cat_armor/mats/,other/+bronzeweapons+bronzearmor+steelweapons+steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,"s5{name=""Ore/clay feeder""}:-otherstone(5x2)",,,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,"pd{name=""Meltable steel/bronze"" take_from=""Metalworker quantum,Bar/military feeder"" containers=0}:-cat_weapons/mats/,other/-cat_armor/mats/,other/+bronzeweapons+bronzearmor+steelweapons+steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,"s5{name=""Ore/clay feeder""}:-otherstone(5x2)",,,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,"c{name=""Coal"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+coal",`,"c{name=""Metalworker quantum"" quantum=true}:+all",`,"c{name=""Iron"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+ironbars",`,`,`,`,`,`,`,`,`,`,`
-,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder""}:-cat_weapons/other/-cat_armor/other/-bronzeweapons-bronzearmor-steelweapons-steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder""}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
+,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder"" containers=0}:-cat_weapons/other/-cat_armor/other/-bronzeweapons-bronzearmor-steelweapons-steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder""}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2476,7 +2480,7 @@ doors/guildhall_doors
 
 #notes label(beds_help)
 Suites for nobles and apartments for the teeming masses
-Suites screenshot: https://drive.google.com/file/d/1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
+Suites screenshot: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
 Apt. screenshot: https://drive.google.com/file/d/1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
 ""
 Features:
@@ -2717,7 +2721,7 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 
 #notes label(crypt_help)
 Places to rest your dead
-Screenshot: https://drive.google.com/file/d/1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
+Screenshot: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
 ""
 Features:
 "- Staged crypt expansion that grows with your, um, need"

@@ -28,6 +28,7 @@ function getStockpileData()
             melt=make_stat('melt', stockpile_number, stats, configs),
             trade=make_stat('trade', stockpile_number, stats, configs),
             dump=make_stat('dump', stockpile_number, stats, configs),
+            train=make_stat('train', stockpile_number, stats, configs),
         })
     end
     table.sort(data, function(a, b) return a.sort_key < b.sort_key end)
@@ -42,14 +43,14 @@ local function print_stockpile_data(data)
 
     print('Designated/designatable items in stockpiles:')
     print()
-    local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s';
-    print(fmt:format('number', 'name', 'melt', 'melt items', 'trade', 'trade items', 'dump', 'dump items'))
+    local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s  %5s %11s';
+    print(fmt:format('number', 'name', 'melt', 'melt items', 'trade', 'trade items', 'dump', 'dump items', 'train', 'train items'))
     local function uline(len) return ('-'):rep(len) end
     print(fmt:format(uline(6), uline(name_len), uline(4), uline(10), uline(5), uline(11), uline(4), uline(10)))
     local function get_enab(stats) return ('[%s]'):format(stats.enabled and 'x' or ' ') end
     local function get_dstat(stats) return ('%d/%d'):format(stats.designated, stats.designated + stats.can_designate) end
     for _,sp in ipairs(data) do
-        print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt), get_dstat(sp.melt), get_enab(sp.trade), get_dstat(sp.trade), get_enab(sp.dump), get_dstat(sp.dump)))
+        print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt), get_dstat(sp.melt), get_enab(sp.trade), get_dstat(sp.trade), get_enab(sp.dump), get_dstat(sp.dump), get_enab(sp.train), get_dstat(sp.train)))
     end
 end
 
@@ -74,6 +75,7 @@ local function print_status()
     print(('Total items marked for melting: %5d'):format(global_stats.total_melt))
     print(('Total items marked for trading: %5d'):format(global_stats.total_trade))
     print(('Total items marked for dumping: %5d'):format(global_stats.total_dump))
+    print(('Total animals marked for training: %5d'):format(global_stats.total_train))
 end
 
 local function for_stockpiles(opts, fn)
@@ -98,7 +100,8 @@ local function do_add_stockpile_config(features, opts)
                 logistics_setStockpileConfig(config.stockpile_number,
                     features.melt or config.melt == 1,
                     features.trade or config.trade == 1,
-                    features.dump or config.dump == 1)
+                    features.dump or config.dump == 1,
+                    features.train or config.train == 1)
             end
         end
     end)

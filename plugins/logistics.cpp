@@ -41,6 +41,7 @@ enum StockpileConfigValues {
     STOCKPILE_CONFIG_MELT = 1,
     STOCKPILE_CONFIG_TRADE = 2,
     STOCKPILE_CONFIG_DUMP = 3,
+    STOCKPILE_CONFIG_TRAIN = 4,
 };
 
 static int get_config_val(PersistentDataItem& c, int index) {
@@ -77,6 +78,7 @@ static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stock
     set_config_bool(c, STOCKPILE_CONFIG_MELT, false);
     set_config_bool(c, STOCKPILE_CONFIG_TRADE, false);
     set_config_bool(c, STOCKPILE_CONFIG_DUMP, false);
+    set_config_bool(c, STOCKPILE_CONFIG_TRAIN, false);
     return c;
 }
 
@@ -92,7 +94,7 @@ static const int32_t CYCLE_TICKS = 600;
 static int32_t cycle_timestamp = 0; // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
-static void do_cycle(color_ostream &out, int32_t &melt_count, int32_t &trade_count, int32_t &dump_count);
+static void do_cycle(color_ostream& out, int32_t& melt_count, int32_t& trade_count, int32_t& dump_count, int32_t& train_count);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     DEBUG(status, out).print("initializing %s\n", plugin_name);
@@ -125,7 +127,8 @@ static void validate_stockpile_configs(color_ostream& out,
         if (!bld || (
                 !get_config_bool(c, STOCKPILE_CONFIG_MELT) &&
                 !get_config_bool(c, STOCKPILE_CONFIG_TRADE) &&
-                !get_config_bool(c, STOCKPILE_CONFIG_DUMP))) {
+            !get_config_bool(c, STOCKPILE_CONFIG_DUMP) &&
+            !get_config_bool(c, STOCKPILE_CONFIG_TRAIN))) {
             remove_stockpile_config(out, stockpile_number);
             continue;
         }
@@ -172,14 +175,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!is_enabled || !Core::getInstance().isWorldLoaded())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
-        int32_t melt_count = 0, trade_count = 0, dump_count = 0;
-        do_cycle(out, melt_count, trade_count, dump_count);
+        int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0;
+        do_cycle(out, melt_count, trade_count, dump_count, train_count);
         if (0 < melt_count)
             out.print("logistics: marked %d item(s) for melting\n", melt_count);
         if (0 < trade_count)
             out.print("logistics: marked %d item(s) for trading\n", trade_count);
         if (0 < dump_count)
             out.print("logistics: marked %d item(s) for dumping\n", dump_count);
+        if (0 < train_count)
+            out.print("logistics: marked %d animal(s) for training\n", dump_count);
     }
     return CR_OK;
 }
@@ -397,6 +402,24 @@ public:
      }
 };
 
+class TrainStockProcessor : public StockProcessor {
+public:
+    TrainStockProcessor(int32_t stockpile_number, bool enabled, ProcessorStats& stats)
+        : StockProcessor("train", stockpile_number, enabled, stats) {}
+
+    bool is_designated(color_ostream& out, df::item* item) override {
+        return false;
+    }
+
+    bool can_designate(color_ostream& out, df::item* item) override {
+        return false;
+    }
+
+    bool designate(color_ostream& out, df::item* item) override {
+        return false;
+    }
+};
+
 static const struct BadFlags {
     const uint32_t whole;
 
@@ -474,11 +497,11 @@ static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
     }
 }
 
-static void do_cycle(color_ostream &out, int32_t &melt_count, int32_t &trade_count, int32_t &dump_count) {
+static void do_cycle(color_ostream& out, int32_t& melt_count, int32_t& trade_count, int32_t& dump_count, int32_t& train_count) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
     cycle_timestamp = world->frame_counter;
 
-    ProcessorStats melt_stats, trade_stats, dump_stats;
+    ProcessorStats melt_stats, trade_stats, dump_stats, train_stats;
     unordered_map<df::building_stockpilest *, PersistentDataItem> cache;
     validate_stockpile_configs(out, cache);
 
@@ -490,10 +513,12 @@ static void do_cycle(color_ostream &out, int32_t &melt_count, int32_t &trade_cou
         bool melt = get_config_bool(c, STOCKPILE_CONFIG_MELT);
         bool trade = get_config_bool(c, STOCKPILE_CONFIG_TRADE);
         bool dump = get_config_bool(c, STOCKPILE_CONFIG_DUMP);
+        bool train = get_config_bool(c, STOCKPILE_CONFIG_TRAIN);
 
         MeltStockProcessor melt_stock_processor(stockpile_number, melt, melt_stats);
         TradeStockProcessor trade_stock_processor(stockpile_number, trade, trade_stats);
         DumpStockProcessor dump_stock_processor(stockpile_number, dump, dump_stats);
+        TrainStockProcessor train_stock_processor(stockpile_number, train, train_stats);
 
         scan_stockpile(out, bld, melt_stock_processor,
                 trade_stock_processor, dump_stock_processor);
@@ -518,13 +543,14 @@ static int logistics_getStockpileData(lua_State *L) {
     unordered_map<df::building_stockpilest *, PersistentDataItem> cache;
     validate_stockpile_configs(*out, cache);
 
-    ProcessorStats melt_stats, trade_stats, dump_stats;
+    ProcessorStats melt_stats, trade_stats, dump_stats, train_stats;
 
     for (auto bld : df::global::world->buildings.other.STOCKPILE) {
         int32_t stockpile_number = bld->stockpile_number;
         MeltStockProcessor melt_stock_processor(stockpile_number, false, melt_stats);
         TradeStockProcessor trade_stock_processor(stockpile_number, false, trade_stats);
         DumpStockProcessor dump_stock_processor(stockpile_number, false, dump_stats);
+        TrainStockProcessor train_stock_processor(stockpile_number, false, train_stats);
 
         scan_stockpile(*out, bld, melt_stock_processor,
                 trade_stock_processor, dump_stock_processor);
@@ -537,6 +563,8 @@ static int logistics_getStockpileData(lua_State *L) {
     stats.emplace("trade_can_designate", trade_stats.can_designate_counts);
     stats.emplace("dump_designated", dump_stats.designated_counts);
     stats.emplace("dump_can_designate", dump_stats.can_designate_counts);
+    stats.emplace("train_designated", train_stats.designated_counts);
+    stats.emplace("train_can_designate", train_stats.can_designate_counts);
     Lua::Push(L, stats);
 
     unordered_map<int32_t, unordered_map<string, string>> configs;
@@ -547,11 +575,13 @@ static int logistics_getStockpileData(lua_State *L) {
         bool melt = get_config_bool(c, STOCKPILE_CONFIG_MELT);
         bool trade = get_config_bool(c, STOCKPILE_CONFIG_TRADE);
         bool dump = get_config_bool(c, STOCKPILE_CONFIG_DUMP);
+        bool train = get_config_bool(c, STOCKPILE_CONFIG_TRAIN);
 
         unordered_map<string, string> config;
         config.emplace("melt", melt ? "true" : "false");
         config.emplace("trade", trade ? "true" : "false");
         config.emplace("dump", dump ? "true" : "false");
+        config.emplace("train", train ? "true" : "false");
 
         configs.emplace(bld->stockpile_number, config);
     }
@@ -564,11 +594,12 @@ static int logistics_getStockpileData(lua_State *L) {
 
 static void logistics_cycle(color_ostream &out) {
     DEBUG(status, out).print("entering logistics_cycle\n");
-    int32_t melt_count = 0, trade_count = 0, dump_count = 0;
-    do_cycle(out, melt_count, trade_count, dump_count);
+    int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0;
+    do_cycle(out, melt_count, trade_count, dump_count, train_count);
     out.print("logistics: marked %d item(s) for melting\n", melt_count);
     out.print("logistics: marked %d item(s) for trading\n", trade_count);
     out.print("logistics: marked %d item(s) for dumping\n", dump_count);
+    out.print("logistics: marked %d animal(s) for train\n", train_count);
 }
 
 static void find_stockpiles(lua_State *L, int idx,
@@ -596,10 +627,12 @@ static unordered_map<string, int> get_stockpile_config(int32_t stockpile_number)
         stockpile_config.emplace("melt", get_config_bool(c, STOCKPILE_CONFIG_MELT));
         stockpile_config.emplace("trade", get_config_bool(c, STOCKPILE_CONFIG_TRADE));
         stockpile_config.emplace("dump", get_config_bool(c, STOCKPILE_CONFIG_DUMP));
+        stockpile_config.emplace("train", get_config_bool(c, STOCKPILE_CONFIG_TRAIN));
     } else {
         stockpile_config.emplace("melt", false);
         stockpile_config.emplace("trade", false);
         stockpile_config.emplace("dump", false);
+        stockpile_config.emplace("train", false);
     }
     return stockpile_config;
 }
@@ -625,9 +658,9 @@ static int logistics_getStockpileConfigs(lua_State *L) {
     return 1;
 }
 
-static void logistics_setStockpileConfig(color_ostream &out, int stockpile_number, bool melt, bool trade, bool dump) {
-    DEBUG(status, out).print("entering logistics_setStockpileConfig stockpile_number=%d, melt=%d, trade=%d, dump=%d\n",
-            stockpile_number, melt, trade, dump);
+static void logistics_setStockpileConfig(color_ostream& out, int stockpile_number, bool melt, bool trade, bool dump, bool train) {
+    DEBUG(status, out).print("entering logistics_setStockpileConfig stockpile_number=%d, melt=%d, trade=%d, dump=%d, train=%d\n",
+        stockpile_number, melt, trade, dump, train);
 
     if (!find_stockpile(stockpile_number)) {
         out.printerr("invalid stockpile number: %d\n", stockpile_number);
@@ -638,6 +671,7 @@ static void logistics_setStockpileConfig(color_ostream &out, int stockpile_numbe
     set_config_bool(c, STOCKPILE_CONFIG_MELT, melt);
     set_config_bool(c, STOCKPILE_CONFIG_TRADE, trade);
     set_config_bool(c, STOCKPILE_CONFIG_DUMP, dump);
+    set_config_bool(c, STOCKPILE_CONFIG_TRAIN, train);
 }
 
 static int logistics_clearStockpileConfig(lua_State *L) {
@@ -684,10 +718,14 @@ static int logistics_getGlobalCounts(lua_State *L) {
             ++num_dump;
     }
 
+    size_t num_train = 0;
+    // TODO
+
     unordered_map<string, size_t> results;
     results.emplace("total_melt", num_melt);
     results.emplace("total_trade", num_trade);
     results.emplace("total_dump", num_dump);
+    results.emplace("total_train", num_train);
     Lua::Push(L, results);
 
     TRACE(cycle, *out).print("exit logistics_getGlobalCounts\n");

@@ -209,11 +209,11 @@ end
 
 function get_stockpile_features(stockpile_number)
     local config = logistics.logistics_getStockpileConfigs(stockpile_number)[1]
-    return config.melt, config.trade, config.dump
+    return config.melt, config.trade, config.dump, config.train
 end
 
-function set_stockpile_features(stockpile_number, melt, trade, dump)
-    logistics.logistics_setStockpileConfig(stockpile_number, melt, trade, dump)
+function set_stockpile_features(stockpile_number, melt, trade, dump, train)
+    logistics.logistics_setStockpileConfig(stockpile_number, melt, trade, dump, train)
 end
 
 --------------------
@@ -429,6 +429,15 @@ function StockpilesOverlay:init()
                         options={{label='Dumping', value=true, pen=COLOR_LIGHTMAGENTA},
                                 {label='Dumping', value=false}},
                         on_change=self:callback('toggleLogisticsFeature', 'dump'),
+                    }, widgets.ToggleHotkeyLabel{
+                        view_id='train',
+                        frame={t=1, l=48},
+                        auto_width=true,
+                        key='CUSTOM_CTRL_A',
+                        option_gap=-1,
+                        options={{label='Training', value=true, pen=COLOR_LIGHTBLUE},
+                                {label='Training', value=false}},
+                        on_change=self:callback('toggleLogisticsFeature', 'train'),
                     },
                 },
             },
@@ -458,6 +467,7 @@ function StockpilesOverlay:onRenderFrame()
         self.subviews.melt:setOption(config.melt == 1)
         self.subviews.trade:setOption(config.trade == 1)
         self.subviews.dump:setOption(config.dump == 1)
+        self.subviews.train:setOption(config.train == 1)
         self.cur_stockpile = sp
     end
 end
@@ -470,7 +480,7 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
-            (feature == 'dump') ~= (config.dump == 1))
+            (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1))
 end
 
 function StockpilesOverlay:toggleMinimized()

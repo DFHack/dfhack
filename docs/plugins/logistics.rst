@@ -14,8 +14,6 @@ will mark valid items/animals in those stockpiles for melting, trading,
 dumping, and/or training, respectively. Note that items will only be marked for
 trading if a caravan is approaching or is already at the trade depot.
 
-Please see `gui/logistics` for the interactive status and configuration dialog.
-
 Usage
 -----
 

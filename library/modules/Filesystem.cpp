@@ -99,7 +99,7 @@ bool Filesystem::mkdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
-    fail = ::_mkdir(path.c_str());
+    fail = ::_wmkdir(path.c_str());
 #else
     fail = ::mkdir(path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP |
                    S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -142,7 +142,7 @@ bool Filesystem::rmdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
-    fail = ::_rmdir(path.c_str());
+    fail = ::_wrmdir(path.c_str());
 #else
     fail = ::rmdir(path.c_str());
 #endif

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LuaTools.h"
 #include "MiscUtils.h"
 
 #include "df/world.h"
@@ -8,6 +9,11 @@
 
 // Utility Functions {{{
 // A set of convenience functions for doing common lookups
+
+bool call_stockpiles_lua(DFHack::color_ostream* out, const char* fn_name,
+    int nargs = 0, int nres = 0,
+    DFHack::Lua::LuaLambda&& args_lambda = DFHack::Lua::DEFAULT_LUA_LAMBDA,
+    DFHack::Lua::LuaLambda&& res_lambda = DFHack::Lua::DEFAULT_LUA_LAMBDA);
 
 /**
  * Retrieve creature raw from index

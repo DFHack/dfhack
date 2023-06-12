@@ -11,9 +11,6 @@
 #include "df/hauling_route.h"
 #include "df/hauling_stop.h"
 
-#include <string>
-#include <vector>
-
 using std::string;
 using std::vector;
 
@@ -23,27 +20,27 @@ DFHACK_PLUGIN("stockpiles");
 
 REQUIRE_GLOBAL(world);
 
-namespace DFHack {
-    DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
+namespace DFHack
+{
+DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
 }
 
-static command_result do_command(color_ostream &out, vector<string> &parameters);
+static command_result do_command(color_ostream& out, vector<string>& parameters);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
+    DEBUG(log, out).print("initializing %s\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
-        "Import, export, or modify stockpile settings and features.",
+        "Import, export, or modify stockpile settings.",
         do_command));
 
     return CR_OK;
 }
 
-static bool call_stockpiles_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+bool call_stockpiles_lua(color_ostream* out, const char* fn_name,
+    int nargs, int nres, Lua::LuaLambda&& args_lambda, Lua::LuaLambda&& res_lambda) {
+
     DEBUG(log).print("calling stockpiles lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
@@ -97,7 +94,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.serialize_to_file(fname, includedElements)) {
+        if (!cereal.serialize_to_file(out, fname, includedElements)) {
             out.printerr("could not save to '%s'\n", fname.c_str());
             return false;
         }
@@ -136,7 +133,7 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+        if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }
@@ -181,7 +178,7 @@ static bool stockpiles_route_import(color_ostream& out, string fname, int route_
 
     try {
         StockpileSettingsSerializer cereal(&stop->settings);
-        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+        if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }

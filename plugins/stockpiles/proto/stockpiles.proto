@@ -187,6 +187,7 @@ message StockpileSettings {
   optional bool melt = 27;
   optional bool trade = 28;
   optional bool dump = 29;
+  optional bool train = 30;
 
   // deprecated
   optional bool corpses = 24; // not marked as deprecated since we still read it

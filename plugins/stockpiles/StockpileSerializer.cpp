@@ -677,96 +677,96 @@ void StockpileSettingsSerializer::write(color_ostream& out, uint32_t includedEle
     if (!(includedElements & INCLUDED_ELEMENTS_CATEGORIES))
         return;
 
-    DEBUG(log).print("GROUP SET %s\n",
+    DEBUG(log, out).print("GROUP SET %s\n",
             bitfield_to_string(mSettings->flags).c_str());
 
     bool include_types = 0 != (includedElements & INCLUDED_ELEMENTS_TYPES);
 
-    write_cat<StockpileSettings_AmmoSet>("ammo", include_types,
+    write_cat<StockpileSettings_AmmoSet>(out, "ammo", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_ammo,
         std::bind(&StockpileSettings::mutable_ammo, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_ammo, this, _1));
-    write_cat<StockpileSettings_AnimalsSet>("animals", include_types,
+        std::bind(&StockpileSettingsSerializer::write_ammo, this, _1, _2));
+    write_cat<StockpileSettings_AnimalsSet>(out, "animals", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_animals,
         std::bind(&StockpileSettings::mutable_animals, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_animals, this, _1));
-    write_cat<StockpileSettings_ArmorSet>("armor", include_types,
+        std::bind(&StockpileSettingsSerializer::write_animals, this, _1, _2));
+    write_cat<StockpileSettings_ArmorSet>(out, "armor", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_armor,
         std::bind(&StockpileSettings::mutable_armor, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_armor, this, _1));
-    write_cat<StockpileSettings_BarsBlocksSet>("bars_blocks", include_types,
+        std::bind(&StockpileSettingsSerializer::write_armor, this, _1, _2));
+    write_cat<StockpileSettings_BarsBlocksSet>(out, "bars_blocks", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_bars_blocks,
         std::bind(&StockpileSettings::mutable_barsblocks, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_bars_blocks, this, _1));
-    write_cat<StockpileSettings_ClothSet>("cloth", include_types,
+        std::bind(&StockpileSettingsSerializer::write_bars_blocks, this, _1, _2));
+    write_cat<StockpileSettings_ClothSet>(out, "cloth", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_cloth,
         std::bind(&StockpileSettings::mutable_cloth, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_cloth, this, _1));
-    write_cat<StockpileSettings_CoinSet>("coin", include_types,
+        std::bind(&StockpileSettingsSerializer::write_cloth, this, _1, _2));
+    write_cat<StockpileSettings_CoinSet>(out, "coin", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_coins,
         std::bind(&StockpileSettings::mutable_coin, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_coins, this, _1));
-    write_cat<StockpileSettings_FinishedGoodsSet>("finished_goods", include_types,
+        std::bind(&StockpileSettingsSerializer::write_coins, this, _1, _2));
+    write_cat<StockpileSettings_FinishedGoodsSet>(out, "finished_goods", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_finished_goods,
         std::bind(&StockpileSettings::mutable_finished_goods, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_finished_goods, this, _1));
-    write_cat<StockpileSettings_FoodSet>("food", include_types,
+        std::bind(&StockpileSettingsSerializer::write_finished_goods, this, _1, _2));
+    write_cat<StockpileSettings_FoodSet>(out, "food", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_food,
         std::bind(&StockpileSettings::mutable_food, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_food, this, _1));
-    write_cat<StockpileSettings_FurnitureSet>("furniture", include_types,
+        std::bind(&StockpileSettingsSerializer::write_food, this, _1, _2));
+    write_cat<StockpileSettings_FurnitureSet>(out, "furniture", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_furniture,
         std::bind(&StockpileSettings::mutable_furniture, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_furniture, this, _1));
-    write_cat<StockpileSettings_GemsSet>("gems", include_types,
+        std::bind(&StockpileSettingsSerializer::write_furniture, this, _1, _2));
+    write_cat<StockpileSettings_GemsSet>(out, "gems", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_gems,
         std::bind(&StockpileSettings::mutable_gems, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_gems, this, _1));
-    write_cat<StockpileSettings_LeatherSet>("leather", include_types,
+        std::bind(&StockpileSettingsSerializer::write_gems, this, _1, _2));
+    write_cat<StockpileSettings_LeatherSet>(out, "leather", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_leather,
         std::bind(&StockpileSettings::mutable_leather, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_leather, this, _1));
-    write_cat<StockpileSettings_CorpsesSet>("corpses", include_types,
+        std::bind(&StockpileSettingsSerializer::write_leather, this, _1, _2));
+    write_cat<StockpileSettings_CorpsesSet>(out, "corpses", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_corpses,
         std::bind(&StockpileSettings::mutable_corpses_v50, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_corpses, this, _1));
-    write_cat<StockpileSettings_RefuseSet>("refuse", include_types,
+        std::bind(&StockpileSettingsSerializer::write_corpses, this, _1, _2));
+    write_cat<StockpileSettings_RefuseSet>(out, "refuse", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_refuse,
         std::bind(&StockpileSettings::mutable_refuse, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_refuse, this, _1));
-    write_cat<StockpileSettings_SheetSet>("sheet", include_types,
+        std::bind(&StockpileSettingsSerializer::write_refuse, this, _1, _2));
+    write_cat<StockpileSettings_SheetSet>(out, "sheet", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_sheet,
         std::bind(&StockpileSettings::mutable_sheet, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_sheet, this, _1));
-    write_cat<StockpileSettings_StoneSet>("stone", include_types,
+        std::bind(&StockpileSettingsSerializer::write_sheet, this, _1, _2));
+    write_cat<StockpileSettings_StoneSet>(out, "stone", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_stone,
         std::bind(&StockpileSettings::mutable_stone, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_stone, this, _1));
-    write_cat<StockpileSettings_WeaponsSet>("weapons", include_types,
+        std::bind(&StockpileSettingsSerializer::write_stone, this, _1, _2));
+    write_cat<StockpileSettings_WeaponsSet>(out, "weapons", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_weapons,
         std::bind(&StockpileSettings::mutable_weapons, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_weapons, this, _1));
-    write_cat<StockpileSettings_WoodSet>("wood", include_types,
+        std::bind(&StockpileSettingsSerializer::write_weapons, this, _1, _2));
+    write_cat<StockpileSettings_WoodSet>(out, "wood", include_types,
         mSettings->flags.whole,
         mSettings->flags.mask_wood,
         std::bind(&StockpileSettings::mutable_wood, &mBuffer),
-        std::bind(&StockpileSettingsSerializer::write_wood, this, _1));
+        std::bind(&StockpileSettingsSerializer::write_wood, this, _1, _2));
 }
 
 void StockpileSerializer::write(color_ostream& out, uint32_t includedElements) {
@@ -775,23 +775,23 @@ void StockpileSerializer::write(color_ostream& out, uint32_t includedElements) {
     if (includedElements & INCLUDED_ELEMENTS_CONTAINERS)
         write_containers(out);
 
-    StockpileSettingsSerializer::write(includedElements);
+    StockpileSettingsSerializer::write(out, includedElements);
 }
 
 void StockpileSettingsSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
     DEBUG(log).print("==READ==\n");
-    read_general(mode);
-    read_ammo(mode, filters);
-    read_animals(mode, filters);
-    read_armor(mode, filters);
-    read_bars_blocks(mode, filters);
-    read_cloth(mode, filters);
-    read_coins(mode, filters);
-    read_finished_goods(mode, filters);
-    read_food(mode, filters);
-    read_furniture(mode, filters);
-    read_gems(mode, filters);
-    read_leather(mode, filters);
+    read_general(out, mode);
+    read_ammo(out, mode, filters);
+    read_animals(out, mode, filters);
+    read_armor(out, mode, filters);
+    read_bars_blocks(out, mode, filters);
+    read_cloth(out, mode, filters);
+    read_coins(out, mode, filters);
+    read_finished_goods(out, mode, filters);
+    read_food(out, mode, filters);
+    read_furniture(out, mode, filters);
+    read_gems(out, mode, filters);
+    read_leather(out, mode, filters);
 
     // support for old versions before corpses had a set
     if (mBuffer.has_corpses()) {
@@ -913,7 +913,7 @@ void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode)
 
 void StockpileSerializer::write_features(color_ostream& out) {
     DEBUG(log, out).print("writing feature settings\n");
-    if (!call_stockpiles_lua(&out, "get_stockpile_features", 1, 3,
+    if (!call_stockpiles_lua(&out, "get_stockpile_features", 1, 4,
         [&](lua_State* L) {
             Lua::Push(L, mPile->stockpile_number);
         },
@@ -921,6 +921,7 @@ void StockpileSerializer::write_features(color_ostream& out) {
             mBuffer.set_melt(0 != lua_toboolean(L, -1));
             mBuffer.set_trade(0 != lua_toboolean(L, -2));
             mBuffer.set_dump(0 != lua_toboolean(L, -3));
+            mBuffer.set_train(0 != lua_toboolean(L, -4));
         })) {
 
         WARN(log, out).print("failed to get logistics features of stockpile number %d\n", mPile->stockpile_number);
@@ -928,7 +929,7 @@ void StockpileSerializer::write_features(color_ostream& out) {
 }
 
 void StockpileSerializer::read_features(color_ostream &out, DeserializeMode mode) {
-    int32_t melt = -1, trade = -1, dump = -1;
+    int32_t melt = -1, trade = -1, dump = -1, train = -1;
     read_elem<int32_t, bool>(out, "melt", mode,
             std::bind(&StockpileSettings::has_melt, mBuffer),
             std::bind(&StockpileSettings::melt, mBuffer),
@@ -941,14 +942,19 @@ void StockpileSerializer::read_features(color_ostream &out, DeserializeMode mode
             std::bind(&StockpileSettings::has_dump, mBuffer),
             std::bind(&StockpileSettings::dump, mBuffer),
             dump);
+    read_elem<int32_t, bool>(out, "train", mode,
+        std::bind(&StockpileSettings::has_train, mBuffer),
+        std::bind(&StockpileSettings::train, mBuffer),
+        train);
 
-    if (melt != -1 || trade != -1 || dump != -1) {
+    if (melt != -1 || trade != -1 || dump != -1 || train != -1) {
         if (!call_stockpiles_lua(&out, "set_stockpile_features", 4, 0,
             [&](lua_State* L) {
                 Lua::Push(L, mPile->stockpile_number);
                 Lua::Push(L, melt == 1);
                 Lua::Push(L, trade == 1);
                 Lua::Push(L, dump == 1);
+                Lua::Push(L, train == 1);
             })) {
             WARN(log, out).print("failed to set logistics features of stockpile number %d\n", mPile->stockpile_number);
         }
@@ -973,7 +979,7 @@ bool StockpileSettingsSerializer::write_ammo(color_ostream& out, StockpileSettin
 
     if (mSettings->ammo.other_mats.size() > 2) {
         WARN(log, out).print("ammo other materials > 2: %zd\n",
-                mPile->settings.ammo.other_mats.size());
+            mSettings->ammo.other_mats.size());
     }
 
     size_t num_other_mats = std::min(size_t(2),
@@ -1339,7 +1345,6 @@ bool StockpileSettingsSerializer::write_cloth(color_ostream& out, StockpileSetti
 void StockpileSettingsSerializer::read_cloth(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
     auto & pcloth = mSettings->cloth;
     read_category<StockpileSettings_ClothSet>(out, "cloth", mode,
->>>>>>> 7a1aacdca (import and export logistics features)
         std::bind(&StockpileSettings::has_cloth, mBuffer),
         std::bind(&StockpileSettings::cloth, mBuffer),
         mSettings->flags.whole,
@@ -1473,10 +1478,12 @@ bool StockpileSettingsSerializer::write_finished_goods(color_ostream& out, Stock
         mOtherMatsFinishedGoods.mats, [&](const string& token) { finished_goods->add_other_mats(token); },
         mSettings->finished_goods.other_mats) && all;
 
-    all = serialize_list_quality([&](out, const string& token) { finished_goods->add_quality_core(token); },
+    all = serialize_list_quality(out,
+        [&](const string& token) { finished_goods->add_quality_core(token); },
         mSettings->finished_goods.quality_core) && all;
 
-    all = serialize_list_quality([&](out, const string& token) { finished_goods->add_quality_total(token); },
+    all = serialize_list_quality(out,
+        [&](const string& token) { finished_goods->add_quality_total(token); },
         mSettings->finished_goods.quality_total) && all;
 
     return all;

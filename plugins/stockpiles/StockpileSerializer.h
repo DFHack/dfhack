@@ -97,10 +97,10 @@ protected:
     virtual void write(DFHack::color_ostream& out, uint32_t includedElements);
 
     // parse serialized data into ui indices
-    virtual void read(DeserializeMode mode, const std::vector<std::string>& filters);
+    virtual void read(DFHack::color_ostream& out, DeserializeMode mode, const std::vector<std::string>& filters);
 
-    virtual void write_general();
-    virtual void read_general(DeserializeMode mode);
+    virtual void write_general(DFHack::color_ostream& out);
+    virtual void read_general(DFHack::color_ostream& out, DeserializeMode mode);
 
 private:
     df::stockpile_settings *mSettings;
@@ -156,19 +156,19 @@ public:
 
 protected:
     // read memory structures and serialize to protobuf
-    virtual void write(uint32_t includedElements);
+    virtual void write(DFHack::color_ostream& out, uint32_t includedElements);
 
     // parse serialized data into ui indices
-    virtual void read(DeserializeMode mode, const std::vector<std::string>& filters);
+    virtual void read(DFHack::color_ostream& out, DeserializeMode mode, const std::vector<std::string>& filters);
 
-    virtual void write_general();
-    virtual void read_general(DeserializeMode mode);
+    virtual void write_general(DFHack::color_ostream& out);
+    virtual void read_general(DFHack::color_ostream& out, DeserializeMode mode);
 
 private:
     df::building_stockpilest* mPile;
 
-    void write_containers();
-    void read_containers(DeserializeMode mode);
+    void write_containers(DFHack::color_ostream& out);
+    void read_containers(DFHack::color_ostream& out, DeserializeMode mode);
     void write_features(DFHack::color_ostream& out);
     void read_features(DFHack::color_ostream &out, DeserializeMode mode);
 };

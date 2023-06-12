@@ -46,7 +46,7 @@ local function print_stockpile_data(data)
     local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s  %5s %11s';
     print(fmt:format('number', 'name', 'melt', 'melt items', 'trade', 'trade items', 'dump', 'dump items', 'train', 'train items'))
     local function uline(len) return ('-'):rep(len) end
-    print(fmt:format(uline(6), uline(name_len), uline(4), uline(10), uline(5), uline(11), uline(4), uline(10)))
+    print(fmt:format(uline(6), uline(name_len), uline(4), uline(10), uline(5), uline(11), uline(4), uline(10), uline(5), uline(11)))
     local function get_enab(stats) return ('[%s]'):format(stats.enabled and 'x' or ' ') end
     local function get_dstat(stats) return ('%d/%d'):format(stats.designated, stats.designated + stats.can_designate) end
     for _,sp in ipairs(data) do

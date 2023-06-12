@@ -3,16 +3,16 @@ logistics
 
 .. dfhack-tool::
     :summary: Automatically mark and route items in monitored stockpiles.
-    :tags: fort auto items stockpiles
+    :tags: fort auto animals items stockpiles
 
 Commands act upon the stockpile selected in the UI unless another stockpile
 identifier is specified on the commandline.
 
 When the plugin is enabled, it checks stockpiles marked with automelt,
-autotrade, and/or autodump features twice every in-game day, and will mark valid
-items in those stockpiles for melting, trading, and/or dumping, respectively.
-Note that items will only be marked for trading if a caravan is approaching or
-is already at the trade depot.
+autotrade, autodump, and/or autotrain features twice every in-game day, and
+will mark valid items/animals in those stockpiles for melting, trading,
+dumping, and/or training, respectively. Note that items will only be marked for
+trading if a caravan is approaching or is already at the trade depot.
 
 Please see `gui/logistics` for the interactive status and configuration dialog.
 
@@ -24,7 +24,7 @@ Usage
     enable logistics
     logistics [status]
     logistics now
-    logistics add [melt] [trade] [dump] [<options>]
+    logistics add [melt] [trade] [dump] [train] [<options>]
     logistics clear [all] [<options>]
 
 Examples

@@ -5,6 +5,7 @@
 #include "modules/Buildings.h"
 #include "modules/Job.h"
 #include "modules/Persistence.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/building.h"
@@ -13,6 +14,7 @@
 #include "df/caravan_state.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/plotinfost.h"
+#include "df/training_assignment.h"
 #include "df/world.h"
 
 using std::string;
@@ -408,15 +410,42 @@ public:
         : StockProcessor("train", stockpile_number, enabled, stats) {}
 
     bool is_designated(color_ostream& out, df::item* item) override {
-        return false;
+        auto unit = get_caged_unit(item);
+        return unit && has_training_assignment(unit);
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
-        return false;
+        auto unit = get_caged_unit(item);
+        return unit && Units::isTamable(unit) && !Units::isTame(unit)
+            && !has_training_assignment(unit);
     }
 
     bool designate(color_ostream& out, df::item* item) override {
-        return false;
+        auto unit = get_caged_unit(item);
+        if (!unit)
+            return false;
+        df::training_assignment *assignment = new df::training_assignment();
+        assignment->animal_id = unit->id;
+        assignment->trainer_id = -1;
+        assignment->flags.bits.any_trainer = true;
+        insert_into_vector(df::global::plotinfo->equipment.training_assignments,
+            &df::training_assignment::animal_id, assignment);
+        return true;
+    }
+
+private:
+    static df::unit* get_caged_unit(df::item* item) {
+        if (item->getType() != df::item_type::CAGE)
+            return NULL;
+        auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT);
+        if (!gref)
+            return NULL;
+        return gref->getUnit();
+    }
+
+    static bool has_training_assignment(df::unit* unit) {
+        return binsearch_index(df::global::plotinfo->equipment.training_assignments,
+            &df::training_assignment::animal_id, unit->id) > -1;
     }
 };
 
@@ -475,7 +504,8 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
 static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
         MeltStockProcessor &melt_stock_processor,
         TradeStockProcessor &trade_stock_processor,
-        DumpStockProcessor &dump_stock_processor) {
+        DumpStockProcessor &dump_stock_processor,
+        TrainStockProcessor &train_stock_processor) {
     auto id = bld->id;
     Buildings::StockpileIterator items;
     for (items.begin(bld); !items.done(); ++items) {
@@ -494,6 +524,7 @@ static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
         }
         scan_item(out, item, melt_stock_processor);
         scan_item(out, item, dump_stock_processor);
+        scan_item(out, item, train_stock_processor);
     }
 }
 
@@ -521,7 +552,7 @@ static void do_cycle(color_ostream& out, int32_t& melt_count, int32_t& trade_cou
         TrainStockProcessor train_stock_processor(stockpile_number, train, train_stats);
 
         scan_stockpile(out, bld, melt_stock_processor,
-                trade_stock_processor, dump_stock_processor);
+                trade_stock_processor, dump_stock_processor, train_stock_processor);
     }
 
     melt_count = melt_stats.newly_designated;
@@ -553,7 +584,7 @@ static int logistics_getStockpileData(lua_State *L) {
         TrainStockProcessor train_stock_processor(stockpile_number, false, train_stats);
 
         scan_stockpile(*out, bld, melt_stock_processor,
-                trade_stock_processor, dump_stock_processor);
+                trade_stock_processor, dump_stock_processor, train_stock_processor);
     }
 
     unordered_map<string, StatMap> stats;

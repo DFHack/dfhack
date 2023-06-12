@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `logistics`: automatically mark and route items or animals that come to monitored stockpiles. options are toggleable on an overlay that comes up when you have a stockpile selected.
 
 ## Fixes
 - `dig-now`: clear item occupancy flags for channeled tiles that had items on them

@@ -42,8 +42,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `autonick`: additional nicknames based on burrowing animals, colours, gems and minerals added
 - `stockpiles`: added ``barrels``, ``organic``, ``artifacts``, and ``masterworks`` stockpile presets
+- `quickfort`: update library bedroom blueprints with new zone syntax
+- Dreamfort: update with new `quickfort` syntax; layout tweaks; help rewrite
 
 ## Documentation
+- `blueprint-library-guide`: update Dreamfort screenshots, add ``aquifer_tap`` screenshot
 
 ## API
 

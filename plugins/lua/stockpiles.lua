@@ -358,7 +358,7 @@ StockpilesOverlay.ATTRS{
     default_pos={x=24, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Some/Stockpile',
-    frame={w=73, h=4},
+    frame={w=65, h=4},
 }
 
 function StockpilesOverlay:init()
@@ -372,25 +372,26 @@ function StockpilesOverlay:init()
             return not self.minimized
         end,
         subviews={
-            widgets.HotkeyLabel{
+            -- widgets.HotkeyLabel{
+            --     frame={t=0, l=0},
+            --     label='import settings',
+            --     auto_width=true,
+            --     key='CUSTOM_CTRL_I',
+            --     on_activate=do_import,
+            -- }, widgets.HotkeyLabel{
+            --     frame={t=1, l=0},
+            --     label='export settings',
+            --     auto_width=true,
+            --     key='CUSTOM_CTRL_E',
+            --     on_activate=do_export,
+            -- },
+            widgets.Panel{
                 frame={t=0, l=0},
-                label='import settings',
-                auto_width=true,
-                key='CUSTOM_CTRL_I',
-                on_activate=do_import,
-            }, widgets.HotkeyLabel{
-                frame={t=1, l=0},
-                label='export settings',
-                auto_width=true,
-                key='CUSTOM_CTRL_E',
-                on_activate=do_export,
-            }, widgets.Panel{
-                frame={t=0, l=25},
                 subviews={
                     widgets.Label{
                         frame={t=0, l=0, h=1},
                         auto_height=false,
-                        text={'Designate items brought to this stockpile for:'},
+                        text={'Designate items/animals brought to this stockpile for:'},
                         text_pen=COLOR_DARKGREY,
                     }, widgets.ToggleHotkeyLabel{
                         view_id='melt',
@@ -400,6 +401,7 @@ function StockpilesOverlay:init()
                         option_gap=-1,
                         options={{label='Melting', value=true, pen=COLOR_RED},
                                 {label='Melting', value=false}},
+                        initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'melt'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='trade',
@@ -409,6 +411,7 @@ function StockpilesOverlay:init()
                         option_gap=-1,
                         options={{label='Trading', value=true, pen=COLOR_YELLOW},
                                 {label='Trading', value=false}},
+                        initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'trade'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='dump',
@@ -418,6 +421,7 @@ function StockpilesOverlay:init()
                         option_gap=-1,
                         options={{label='Dumping', value=true, pen=COLOR_LIGHTMAGENTA},
                                 {label='Dumping', value=false}},
+                        initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'dump'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='train',
@@ -427,6 +431,7 @@ function StockpilesOverlay:init()
                         option_gap=-1,
                         options={{label='Training', value=true, pen=COLOR_LIGHTBLUE},
                                 {label='Training', value=false}},
+                        initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'train'),
                     },
                 },

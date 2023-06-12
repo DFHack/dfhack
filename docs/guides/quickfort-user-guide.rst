@@ -1936,6 +1936,14 @@ Property          Description
 ``containers``    sets the desired numbers for barrels, bins, and wheelbarrows.
                   this is most useful to set all desired container counts to 0.
 ``quantum``       if set to ``true``, then sets ``containers=0 links_only=true``
+``automelt``      if set to ``true``, enables the corresponding `logistics`
+                  feature
+``autotrade``     if set to ``true``, enables the corresponding `logistics`
+                  feature
+``autodump``      if set to ``true``, enables the corresponding `logistics`
+                  feature
+``autotrain``     if set to ``true``, enables the corresponding `logistics`
+                  feature
 ================  ===========
 
 #build mode reference

@@ -52,7 +52,7 @@ Run gui/control-panel and enable settings on the Autostart tab. See the /setup_h
 -- Set settings and preload initial orders --
 DFHack command,Blueprint,Generate orders,Notes
 gui/quickfort,/setup_help,,For advice on how to do initial setup for success.
-"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /industry2, /industry3, /surface4""",,,"Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
+"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /industry2, /surface4, /industry3""",,,"Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
 DFHack command,Blueprint,Generate orders,Notes
@@ -72,13 +72,13 @@ gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central
 gui/quickfort,/industry2,,Build industry level. Run as soon as the industry level has been completely dug out.
 prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. **Be sure that there are no items attached to jobs left in the workshops before deconstructing them, otherwise you'll get canceled jobs!**"
 gui/quickfort,/surface4,,Finish protecting the staircase and lay flooring for future buildings. Run after the walls and floors around the staircase are built and you have moved production from the surface to the industry level.
-gui/quickfort,/industry3,,Build the rest of the industry level. Run any time after /surface4.
+gui/quickfort,/industry3,,Build the rest of the industry level. Run once /surface4 is mostly complete.
 orders import library/basic,,,"Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 gui/quickfort,/services2,Yes,"Build simple hospital and dining room, including a well. Run once the 4 services levels have been dug out and you have built up some stone in your industry stone stockpiles. Feel free to remove the orders for the ropes if you already brought them with you. If you are filling your wells from an aquifer or stream, now is also a good time to start digging the plumbing."
 gui/quickfort,/surface5,Yes,"Build surface buildings, drawbridges, and furniture. Run when all marked trees on the surface are chopped down and previously-designated walls and floors have been constructed. Be sure to check that the little ""wing"" of roof section over the future barracks is constructed so we can place the barracks beds."
 prioritize ConstructBuilding,,,Run when you see the bridges ready to be built so the busy masons come and build them.
 gui/quickfort,/surface6,Yes,Build security perimeter. Run once you have linked all levers to their respective bridges.
-gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down.
+gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down. Be sure to give your haulers some time to fill the stonecutter's stockpile with some stone first so your stonecutters won't be hauling it up from the depths by hand.
 ""
 -- Plumbing --
 "If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
@@ -89,8 +89,8 @@ Also consider bringing magma up to your services level so you can replace the fo
 DFHack command,Blueprint,Generate orders,Notes
 orders import library/furnace,,,Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future needed temples and guildhalls. Run when the guildhall level has been dug out."
-gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out.
 gui/quickfort,/services3,Yes,"Extend the dining room and hospital, and start the jail. Run when your population grows to about 20."
+gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out.
 gui/quickfort,/apartments2,Yes,Build and zone bedrooms. Run when the first apartment level has been dug out and you have outgrown your starter dormintory.
 gui/quickfort,/crypt2,Yes,Build a small group of tombs. Run when the crypt level has been dug out and you have outgrown your starter tomb on the farming level.
 gui/quickfort,/surface8,Yes,"Build extended trap corridors. If you have a strong military, you might not need this."
@@ -492,7 +492,7 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,,,,,,,,,,`,,`
-,,,`,,`,`,"wt{name=""Starter mechanic's""}",`,,`,"wc{name=""Starter carpenter""}",`,,`,"wr{name=""Starter craftsdwarf's""}",`,,`,"wm{name=""Starter stoneworker's""}",`,,,,,,,,,,,`,,`
+,,,`,,`,`,"wt{name=""Starter mechanic's""}",`,,`,"wc{name=""Starter carpenter""}",`,,`,"wr{name=""Starter craftsdwarf's""}",`,,`,"wm{name=""Starter stoneworker's"" max_general_orders=2}",`,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
@@ -1696,7 +1696,7 @@ build2/industry_build2
 ,,,,~,~,~,~,~,~,~,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,"c{name=""Coal"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+coal",`,"c{name=""Metalworker quantum"" quantum=true}:+all",`,"c{name=""Iron"" containers=0 take_from=""Metalworker quantum,Bar/military feeder""}:+ironbars",`,`,`,`,`,`,`,`,`,`,`
-,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder"" containers=0}:-cat_weapons/other/-cat_armor/other/-bronzeweapons-bronzearmor-steelweapons-steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder""}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
+,,,,"pd{name=""Other meltables"" take_from=""Metalworker quantum,Bar/military feeder"" containers=0}:-cat_weapons/other/-cat_armor/other/-bronzeweapons-bronzearmor-steelweapons-steelarmor-masterworks-artifacts(7x3)",,,~,~,~,~,`,`,`,`,c,"c{name=Flux take_from=""Metalworker quantum,Ore/clay feeder"" links_only=true}:+flux(3x1)",,,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,c,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2026,7 +2026,8 @@ build3/services_build3
 ,,,,,,,,,,,,,,,`,`,`,`,`
 ,,,,,,,,,,,,,,,`,`,`,`,`
 
-"#zone label(services_zones) start(18; 18) hidden() message(If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
+"#zone label(services_zones) start(18; 18) hidden() message(Don't forget to assign a doctor to the hospital!
+If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
 ,,,,,,,,,,,,"j{name=""Jail 1""}(5x5)",,,,"j{name=""Jail 2""}(5x5)",,,,"j{name=""Jail 3""}(5x5)",,,,"j{name=""Jail 4""}(5x5)",,,,"j{name=""Jail 5""}(5x5)"
 ,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2689,10 +2690,10 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,,,f,h,,f,h,,f,h,,f,h,,f,h,,h,f,,h,f,,h,f,,h,f,,h,f
 ,,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,,,b,`,,b,`,,b,`,,b,`,,b,`,,`,b,,`,b,,`,b,,`,b,,`,b
-,,,,`,,,`,,,`,,,`,,,`,,`,,,`,,,`,,,`,,,`
+,,,,d,,,d,,,d,,,d,,,d,,d,,,d,,,d,,,d,,,d
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,,,`,,,`,,,`,,,`,,`,`,`,,`,,,`,,,`,,,`,,,`
+,,d,,,d,,,d,,,d,,,d,,`,`,`,,d,,,d,,,d,,,d,,,d
 ,b,`,,b,`,,b,`,,b,`,,b,`,,`,`,`,,`,b,,`,b,,`,b,,`,b,,`,b
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,f,h,,f,h,,f,h,,f,h,,f,h,,`,`,`,,h,f,,h,f,,h,f,,h,f,,h,f
@@ -2700,11 +2701,11 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,`,b,,`,b,,`,b,,`,b,,`,b,,`,,`,,b,`,,b,`,,b,`,,b,`,,b,`
-,`,,,`,,,`,,,`,,,`,,,`,`,`,,,`,,,`,,,`,,,`,,,`
+,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,,,`,,,`,,,`,,,`,,,`,`,`,,,`,,,`,,,`,,,`,,,`
+,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
 ,`,b,,`,b,,`,b,,`,b,,`,b,,`,,`,,b,`,,b,`,,b,`,,b,`,,b,`
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
@@ -2712,10 +2713,10 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,f,h,,f,h,,f,h,,f,h,,f,h,,`,`,`,,h,f,,h,f,,h,f,,h,f,,h,f
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,b,`,,b,`,,b,`,,b,`,,b,`,,`,`,`,,`,b,,`,b,,`,b,,`,b,,`,b
-,,`,,,`,,,`,,,`,,,`,,`,`,`,,`,,,`,,,`,,,`,,,`
+,,d,,,d,,,d,,,d,,,d,,`,`,`,,d,,,d,,,d,,,d,,,d
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,,,`,,,`,,,`,,,`,,`,,,`,,,`,,,`,,,`
+,,,,d,,,d,,,d,,,d,,,d,,d,,,d,,,d,,,d,,,d
 ,,,b,`,,b,`,,b,`,,b,`,,b,`,,`,b,,`,b,,`,b,,`,b,,`,b
 ,,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,,,f,h,,f,h,,f,h,,f,h,,f,h,,h,f,,h,f,,h,f,,h,f,,h,f

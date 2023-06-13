@@ -84,6 +84,9 @@ Services levels (4 deep)
   :alt: Annotated screenshot of the dreamfort services level
   :target: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :align: center
+
+Services waterway:
+
 .. image:: https://drive.google.com/uc?export=download&id=1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
   :alt: Annotated screenshot of the dreamfort waterway
   :target: https://drive.google.com/file/d/1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
@@ -98,6 +101,9 @@ z-level below the preceding screenshot)
   :alt: Annotated screenshot of an example aqueduct addition to the dreamfort cisterns
   :target: https://drive.google.com/file/d/1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
   :align: center
+
+Cistern drain (keep open while you're digging out the aquifer tap):
+
 .. image:: https://drive.google.com/uc?export=download&id=1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
   :alt: Annotated screenshot of an example drainage addition to the dreamfort cisterns
   :target: https://drive.google.com/file/d/1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe

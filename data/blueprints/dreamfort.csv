@@ -322,7 +322,9 @@ Cu,`,Cu
 /central_stairs_even_constructed
 "#meta label(perimeter) start(central stairs) message(If you accidentally applied this blueprint to the map, run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting"
 walls/surface_walls
+corridor_gates/surface_corridor_gates
 corridor/surface_corridor
+corridor_traps/surface_corridor_traps
 ""
 "#meta label(surface1) start(central stairs)
 message(Once the central stairs are mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.

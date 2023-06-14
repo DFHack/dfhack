@@ -1,7 +1,7 @@
 #notes label(help) run me for the dreamfort walkthrough
 "Welcome to Dreamfort! These blueprints will help you build a functional, secure, fully self-sustaining fortress that you can use as-is or extend to build the fortress of your dreams!"
 ""
-"It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""quickfort run library/dreamfort.csv -n /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of the blueprints you'll be applying. Each level also has its own mini-walkthrough with more details."
+"It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""gui/quickfort dreamfort /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of the blueprints you'll be applying. Each level also has its own mini-walkthrough with more details."
 ""
 "The final fort will have a walled-in area on the surface for livestock, trading, aboveground farming, and military training. One z-level down is the farming level, with related workshops and vents up to the surface for miasma prevention. The farming level also has a miniature dining hall and dormitory for use until you get the services and housing levels set up."
 ""
@@ -13,11 +13,11 @@
 - The apartments levels have small but well-furnished bedrooms for your other dwarves.
 - The crypt level houses your dead.
 ""
-"Run each level's ""help"" blueprint (e.g. ""quickfort run library/dreamfort.csv -n /surface_help"") for more details."
+"Run each level's ""help"" blueprint (e.g. ""gui/quickfort dreamfort /surface_help"") for more details."
 ""
-"Dreamfort has a central stairs-based design. For all Dreamfort levels, place the cursor on the center (undug) tile of the 3x3 stairs area when you apply the blueprints for that level. The first surface blueprint will designate a column of stairs that you can use as a guide. If you need to extend the stairs down further to lower levels, run ""quickfort run library/dreamfort.csv -n /central_stairs --repeat down,10"" with the cursor on the z-level below the lowest current stairs."
+"Dreamfort has a central stairs-based design. For all Dreamfort levels, place the cursor on the center (undug) tile of the 3x3 stairs area when you apply the blueprints for that level. The first surface blueprint will designate a column of stairs that you can use as a guide. If you need to extend the stairs down further to lower levels, run ""gui/quickfort dreamfort /central_stairs"" and set the repeat option to go down however many levels you need (each repetition is 2 levels). Apply it with the cursor on the z-level below the lowest current stairs."
 ""
-"Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Note that blueprints will designate buildings to build even if you don't have the materials needed to build them. You can use ""quickfort orders"" to automatically create the manager orders for all the needed items. Make sure your manager is available to validate all the incoming work orders!"
+"Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Note that blueprints will designate buildings to build even if you don't have the materials needed to build them. You can use the ""o"" hotkey to automatically create the manager orders for all the needed items when you have a blueprint loaded in gui/quickfort. Make sure your manager is available to validate all the incoming work orders!"
 ""
 "There are some tasks common to all forts that Dreamfort doesn't specifically handle for you. For example, Dreamfort sets up a barracks, but managing squads is up to you. Here are some other common tasks that may need to be done manually (or with some other tool):"
 - Exploratory mining for specific resources like iron
@@ -28,11 +28,11 @@
 ""
 "Dreamfort works best at an embark site that is relatively flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
-"Other DFHack tools also work very well with Dreamfort, such as autofarm and all of the other DFHack auto tools. Turn them on in the DFHack gui/control-panel."
+"Other DFHack tools also work very well with Dreamfort, such as autofarm. See the /setup_help blueprint for a suggested list to turn on in the DFHack gui/control-panel."
 ""
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can set this to be your default in the Autostart tab of gui/control-panel."
 ""
-"Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup_help"" to get some advice on initial settings, and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
+"Directly after embark, run ""gui/quickfort dreamfort /setup_help"" to get some advice on initial settings, and get started building your fort with ""gui/quickfort dreamfort /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
 ""
 "The dreamfort.csv file distributed with DFHack is generated from online spreadsheet files. If you want to look at how these blueprints are put together, it is easier to look at the online spreadsheets than the giant .csv. You can view them at: https://drive.google.com/drive/folders/1dsmvnzbOKsyFS3DCj0F8ibSnMhVHEjdV"
 You are welcome to copy the Dreamfort spreadsheets and make your own modifications!
@@ -236,52 +236,52 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [PET:2:BIRD_GOOSE:MALE:STANDARD]
 #notes label(surface_help)
 Sets up a protected entrance to your fort in a flat area on the surface.
-Screenshot: https://drive.google.com/file/d/1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
+Screenshot: https://drive.google.com/file/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
 ""
 Features:
 - A starting set of workshops and stockpiles (which you can later remove once you establish your permanent workshops and storage)
-- Livestock grazing area with nestbox zones and beehives
+"- Livestock grazing area, nestbox zones, and beehives"
 "- Walls, roof, and lever-controlled gates for security"
 - Barracks (with prisoner processing quantum dump)
 - Trap-filled hallways for invaders
-- Optional extended trap hallways (to handle larger sieges)
+- Optional extended trap hallways (to handle larger sieges with a smaller/no military)
 "- Protected trade depot, with separate trade goods stockpiles for organics and inorganics (for easy elven trading)"
-- A grid of 1x1 farm plots (intended to be managed by DFHack autofarm)
+- A grid of small farm plots for lucrative surface farming
 ""
 Manual steps you have to take:
 - Assign grazing livestock to the large pasture and dogs to the pasture over the central stairs (DFHack's autonestbox can manage the nestbox zones)
-- Connect levers to the gates that match the names of the levers
-- Assign minecarts to the trade goods and prisoner processing quantum stockpile hauling routes
+- Connect levers to the drawbridges that match the names of the levers
+- Assign minecarts to the trade goods and prisoner processing quantum stockpile hauling routes with assign-minecarts all
 ""
 Be sure to choose an embark site that has a flat area on the surface large enough to use these blueprints!
 ""
 Surface Walkthrough:
-"1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, run ""gui/quickfort library/dreamfort.csv -n /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Cancel out of the preview. You don't actually need to apply this blueprint."
+"1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or ponds. To be sure that the tile you've chosen is in a good spot, run ""gui/quickfort dreamfort /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Cancel out of the preview. You don't actually need to apply this blueprint."
 ""
 "2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. Your egg-layers will automatically get assigned to nestbox zones once the nestboxes are built, so you don't need to worry about them. You can let your cats roam free to chase vermin."
 ""
-"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Run ""quickfort orders"" for /surface2."
+"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Generate manager orders for /surface2."
 ""
-"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level. Run ""quickfort orders"" for /surface3."
+"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level. Generate manager orders for /surface3."
 ""
-"5) Once all walls and floors have been constructed around the stairwell, run /surface4 to build floors and walls to support upcoming buildings and furniture. Run ""quickfort orders"" for /surface4."
+"5) Once all walls and floors have been constructed around the stairwell, run /surface4 to build floors and walls to support upcoming buildings and furniture. Generate manager orders for /surface4."
 ""
-"6) Once walls and floors have been constructed (including the small roof segment one z-level up over the barracks), run /surface5 to build furniture, gates, and the permanent trade depot. Remember to deconstruct the temporary trade depot once nobody is using it. Run ""quickfort orders"" for /surface5."
+"6) Once walls and floors have been constructed (including the small roof segment one z-level up over the barracks), run /surface5 to build furniture, gates, and the permanent trade depot. Remember to deconstruct the temporary trade depot once nobody is using it. Generate manager orders for /surface5."
 ""
-"7) Once all marked trees are cleared, run /surface6 to build the remaining walls and floors. Run ""quickfort orders"" for /surface6."
+"7) Once all marked trees are cleared, run /surface6 to build the security perimeter and remaining flooring. Generate manager orders for /surface6."
 ""
-"8) Once you have enough dwarves to do a lot of building without starving other important tasks, run /surface7 to build the roof. Run ""quickfort orders"" for /surface7."
+"8) Once you have enough dwarves to do a lot of building without starving other important tasks, run /surface7 to build the roof. Generate manager orders for /surface7."
 ""
-"9) For extra security, you can run /surface8 any time after /surface7 to extend the trap corridors. Run ""quickfort orders"" for /surface8."
+"9) For extra security, you can run /surface8 any time after /surface7 to extend the trap corridors. Generate manager orders for /surface8."
 ""
-"10) Once your industry and farming levels are set up and running, you can disassemble the surface workshops and remove the surface stockpiles. Disassembling a workshop scatters the items stored within it and cancels any pending jobs that happen to use those items. In order to avoid job cancellations, first set the surface workshops to not accept general work orders. Then check to see if any items in a workshop are marked as being part of an active job. Once no items in the workshop have that marker, you are free to disassemble that workshop."
+"10) Once your industry and farming levels are set up and running, you can disassemble the surface workshops and remove the surface stockpiles. Disassembling a workshop scatters the items stored within it and cancels any pending jobs that happen to use those items. In order to avoid job cancellations, first set the surface workshops to not accept general work orders (click on the building, select the ""Work orders"" tab, and set the ""General work orders allowed"" to 0). Then check to see if any items in a workshop are marked as being part of an active job. Once no items in the workshop have that marker, you are free to disassemble that workshop."
 ""
 Sieges and Prisoner Processing:
 Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
 ""
-"- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" zone is) or the trapped hallways."
+"- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
 ""
-"- When a siege begins, set your civilian alert (attach the alert to your ""Inside"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks."
+"- When a siege begins, set your civilian alert (attach the alert to your ""Inside"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
 ""
 "- During a siege, use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway."
 ""
@@ -298,8 +298,6 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 - Assign a group prisoners to the pasture that overlaps the prisoner quantum stockpile
 ""
 "- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
-""
-"Only common hostile creatures are accepted by the prisoner hauling route by default. You can add additional creature types by configuring the hauling route stop. Note that generated creature types, like necromancer experiments, can't be explicitly added. You have to (at least temporarily) accept all animals to include them."
 #dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
 `,j6,`
 u,`,u
@@ -1304,15 +1302,15 @@ t1(37x33)
 
 #notes label(farming_help)
 "Sets up farming, food storage, and related industries. Also provides post-embark necessities that can later be disassembled."
-Screenshot: https://drive.google.com/file/d/1fBC3G5Y888l4tVe5REAyAd_zeojADVme
+Screenshot: https://drive.google.com/file/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
 ""
 Features:
 - Pairs with the surface blueprints for vents that prevent miasma
 - Farm plots (can be managed by DFHack autofarm)
 - Plentiful food storage
 - Refuse/corpse quantum stockpile
-- Small dormitory and dining room for post-embark needs
-- Small offices for your manager and bookkeeper
+"- Starter dormitory, dining room, and tomb for use until more permanent versions are ready"
+- Offices for your manager and bookkeeper
 ""
 Workshops:
 - Kitchen
@@ -1325,16 +1323,16 @@ Workshops:
 - Screw Press
 ""
 Manual steps you have to take:
-"- Assign a minecart to your refuse quantum stockpile hauling route (you can run ""assign-minecarts all"" at the DFHack prompt to do this)"
+"- Assign a minecart to your refuse quantum stockpile hauling route (you can run ""assign-minecarts all"" to do this)"
 ""
 Farming Walkthrough:
 "1) Wait until you have channeled the miasma vents and cleared trees on the surface before digging out the farming level on the z-level below the surface, otherwise you will end up with extra ramps on the farming level and unprotected holes through the surface when you later chop down trees growing above empty space."
 ""
-"2) Start digging with /farming1 and get started on manufacturing furniture by running ""quickfort orders"" on /farming2"
+2) Start digging with /farming1 and get started on manufacturing furniture by generating manager orders for /farming2
 ""
-"3) Once the level is dug out, run /farming2 to designate zones, build workshops and stockpiles, and place furniture. Remember to assign a minecart to the newly-designated quantum refuse dump."
+"3) Once the level is dug out, run /farming2 to designate zones, build workshops and stockpiles, and place furniture. Remember to assign a minecart to the newly-designated quantum refuse dump with assign-minecarts all."
 ""
-"4) Once your fort has enough free time to build the remaining doors, run /farming3. Run ""quickfort orders"" for /farming3."
+"4) Once your fort has enough free time to build the remaining doors, run /farming3. Generate manager orders for /farming3."
 ""
 "5) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
 "#dig label(farming1) start(16; 18; central stairs) message(Once the area is dug out, continue with /farming2.)"
@@ -1534,7 +1532,7 @@ doors/farming_doors
 
 #notes label(industry_help)
 Sets up workshops for all non-farming industries
-Screenshot: https://drive.google.com/file/d/1emMaHHCaUPcdRbkLQqvr-0ZCs2tdM5X7
+Screenshot: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
 ""
 Features:
 - Compact layout that covers all workshops
@@ -1570,24 +1568,24 @@ Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes. The assign-minecarts all command will do it for you.
 ""
 Optional manual steps you can take:
-"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a heavily forested area, set up autochop, and keep your coal stocks high."
+"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a forested area, set up autochop, and keep your coal stocks high."
 ""
 Industry Walkthrough:
 "1) Start digging out /industry1 as soon as you find a non-aquifer stone layer at least two layers beneath the surface so the boulders can be used by your starting workshops. The services level is intended to be dug beneath this one, and there is space on that level to route magma underneath your furnaces so you can replace the furnaces on this level with magma-powered equivalents."
 ""
-"2) Queue up manufacturing by running ""quickfort orders"" on /industry2. You brought an anvil with you (right??), so you can remove the unneeded anvil work order from the manager orders screen. Note that stockpiles that accept containers may claim the barrels you need to build the Dyer's Workshop and Ashery. If you see those two buildings not being constructed, build a few extra barrels or run combine all to free up some existing ones."
+"2) Generate manager orders for /industry2. You brought an anvil with you (right??), so you can remove the unneeded anvil work order from the manager orders screen. Note that stockpiles that accept containers may claim the barrels you need to build the Dyer's Workshop and Ashery. If you see those two buildings not being constructed, build a few extra barrels or run combine all to free up some existing ones."
 ""
-"3) Once the area is dug out, run /industry2. Remember to assign minecarts to to your quantum stockpile hauling routes with assign-minecarts all."
+"3) Once the area is dug out, run /industry2 to build replacements for your starter workshops up on the surface. Remember to assign minecarts to to your quantum stockpile hauling routes with assign-minecarts all."
 ""
-"4) After the important workshops are constructed, run /industry3 to build the remaining workshops."
+"4) After the initial workshops are constructed, run /industry3 to build the remaining workshops."
 ""
 "5) Once you have enough dwarves to do maintenance tasks (that is, after the first or second migration wave), run ""orders import library/basic"" to use the provided manager orders to take care of your fort's basic needs, such as food, booze, and raw material processing."
 ""
-"6) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt. If you don't have a high density of trees to make into charcoal, though, be sure to route magma to the level beneath this one and replace the forge and furnaces with magma equivalents."
+"6) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-west stockpiles for auto-melt. If you don't have a high density of trees to make into charcoal, though, be sure to route magma to the level beneath this one and replace the forge and furnaces with magma equivalents."
 ""
 "7) Once you have magma furnaces (or abundant fuel) and more dwarves, run ""orders import library/furnace"", ""orders import library/military"", and ""orders import library/smelting"" (in that order) to import the remaining fort automation orders. The military orders are optional if you are not planning to have a military, of course."
 ""
-"8) At any time, feel free to build extra workshops or designate custom stockpiles in the remaining open space. The space is there for you to use! Note the area in the bottom right can be used for additional magma-powered furnaces and workshops since there is space reserved for magma in those spots in the level beneath."
+"8) At any time, feel free to build extra workshops or designate custom stockpiles in the remaining open space. The space is there for you to use! Note the area in the bottom right can be used for additional magma-powered furnaces and workshops since there is space reserved for magma in those spots in the services level beneath."
 "#dig label(industry1) start(18; 18; central stairs) message(Once the area is dug out, continue with /industry2.)"
 
 
@@ -1779,20 +1777,18 @@ build2/industry_build2
 
 #notes label(services_help)
 "Sets up public services (dining, hospital, etc.)"
-Screenshot: https://drive.google.com/file/d/13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
+Screenshot: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
 ""
 Features:
-- Spacious dining room/tavern (tavern is restricted to residents-only by default)
+- Spacious dining room/tavern (tavern is restricted to citizens and residents only by default)
 - Large prepared food and drink stockpiles
-- Well cistern system (bring your own water)
+- Well cistern system (route or carry your own water)
 - Hospital (also restricted to residents by default) with a well for washing
-- Well-appointed jail cells
+- Well-appointed jail cells for happy prisoners
 - Bolt-recycling archery range for your marksdwarves
-- Interrogation room for your Captain of the Guard
+- Interrogation room (office) for your Captain of the Guard
 - Garbage dump
 - Empty space for magma to power forges and smelters in the industry level above
-""
-Note the hospital is attached to an animal training zone so it can be used with the dwarfvet plugin if it's enabled.
 ""
 Manual steps you have to take:
 "- If you want to tavern to attract visitors, change the restriction in the location configuration screen."
@@ -1804,13 +1800,13 @@ Services Walkthrough:
 ""
 2) Start digging with /services1. Note that this digs out the main level and three levels below for the well cisterns.
 ""
-"3) Once the area is dug out, set up zones/locations and start populating the rooms with /services2. Run ""quickfort orders"" for /services2."
+"3) Once the area is dug out, start populating the rooms with /services2. Generate manager orders for /services2."
 ""
 4) Fill the wells with either bucket brigades or by carefully routing flowing water.
 ""
-"5) When your fort has grown some more, or you start needing a jail cell, run /services3 to extend the rooms a bit more. Run ""quickfort orders"" for /services3."
+"5) When your fort has grown some more, or you start needing a jail, run /services3 to extend the rooms a bit more. Generate manager orders for /services3."
 ""
-"6) When your fort is more mature and you need to expand the rooms, run /services4 to finish everything up. If you didn't have a Sheriff/Captain of the Guard to automatically assign to the interrogation room when you ran /services2, you can manually assign the office now. Run ""quickfort orders"" for /services4."
+"6) When your fort is more mature and you need to expand the rooms, run /services4 to finish everything up. If you didn't have a Sheriff/Captain of the Guard to automatically assign to the interrogation room when you ran /services2, you can manually assign the office now. Generate manager orders for /services4."
 "#dig label(services1) start(18; 18; central stairs) message(Once the area is dug out, continue with /services2.)"
 
 ,d,d,d,,d,d,d,,d,d,d,,d,h,d,,d,h,d,,d,h,d,,d,h,d,,d,h,d
@@ -2306,7 +2302,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 #notes label(guildhall_help)
 "Eight 7x7 rooms for guildhalls, temples, libraries, etc."
-Screenshot: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
+Screenshot: https://drive.google.com/file/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
 ""
 Features:
 "- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add maximum value. Declare locations from the pre-created meeting zones as needed."
@@ -2314,9 +2310,9 @@ Features:
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
-"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for a full blank slate. Run ""quickfort orders"" for your chosen variant."
+"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for a full blank slate. Generate manager orders for your chosen variant."
 ""
-"Note that the default temple and library are created ""Residents only"", but you can change this in the location configuration screen if you want them to attract visitors. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
+"Note that the default temple and library are created ""Citizens and Long-Term Residents only"", but you can change this in the location configuration screen if you want them to attract visitors. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
 
 
@@ -2485,21 +2481,22 @@ doors/guildhall_doors
 #notes label(beds_help)
 Suites for nobles and apartments for the teeming masses
 Suites screenshot: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
-Apt. screenshot: https://drive.google.com/file/d/1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
+Apt. screenshot: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
 ""
 Features:
-- Well-appointed suites to satisfy nobles
+- Well-appointed suites to satisfy nobles or citizens with a need for opulence
+"- Suite rooms are multi-functional. Any suite can be zoned as a bedroom, office, dining hall, or tomb. If a noble requires a fancier version than what one room can provide, include multiple rooms in the zone. A suites level can fully satisfy a monarch if each zone covers four (engraved) rooms."
 - Apartments with beds and storage to keep dwarves happy and the fortress clean
 ""
 Suites Walkthrough:
 1) Dig out the suites layer with /suites1.
 ""
-"2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unzoned so you can configure them for specific nobles. Each room can serve as a bedroom, a dining hall, an office, and/or a tomb. Run ""quickfort orders"" for /suites2."
+"2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unzoned so you can configure them for the needs of specific nobles. Generate manager orders for /suites2."
 ""
 Apartments Walkthrough:
-"1) Dig out one layer of apartments with /apartments1, or 5 layers at once (enough for 200 dwarves) with by adding ""--repeat down,5"" to the quickfort command or adjusting the settings in the gui/quickfort UI."
+"1) Dig out one layer of apartments with /apartments1, or 3 layers at once (180 bedrooms total) by configuring gui/quickfort to repeat down 3 levels."
 ""
-"2) Once a layer is dug out, build furniture with /apartments2. Run ""quickfort orders"" for /apartments2."
+"2) Once a layer is dug out, build furniture with /apartments2. Generate manager orders for /apartments2."
 "#dig label(suites1) start(18; 18; central stairs) message(Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d

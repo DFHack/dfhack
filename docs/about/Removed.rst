@@ -166,6 +166,12 @@ This script is no longer useful in current DF versions. The script required a
 binpatch <binpatches/needs-patch>`, which has not been available since DF
 0.34.11.
 
+.. _gui/automelt:
+
+gui/automelt
+============
+Replaced by the `stockpiles` overlay and the gui for `logistics`.
+
 .. _gui/dig:
 
 gui/dig

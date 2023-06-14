@@ -8,7 +8,7 @@ Quickfort blueprint creation guide
 `Quickfort <quickfort>` is a DFHack tool that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
 such as MS Excel and `Google Sheets <https://sheets.new>`__. Most layout and
-building-oriented DF commands are supported through the use of multiple files or
+building-oriented DF actions are supported through the use of multiple files or
 spreadsheets, each describing a different phase of DF construction: designating
 digging, defining zones, placing stockpiles, and building.
 
@@ -16,9 +16,11 @@ The original idea came from :wiki:`Valdemar's <User:Valdemar>` auto-designation
 macro. Joel Thornton reimplemented the core logic in Python and extended its
 functionality with `Quickfort 2.0 <https://github.com/joelpt/quickfort>`__. This
 DFHack-native implementation, called "DFHack Quickfort" or just "quickfort",
-builds upon Quickfort 2.0's formats and features. Any blueprint that worked in
-Python Quickfort 2.0 should work with DFHack Quickfort. DFHack Quickfort
-interacts with Dwarf Fortress memory structures directly, allowing for
+builds upon Quickfort 2.0's formats and features, preserving compatibility with
+existing blueprints (where possible -- DF itself has changed since then). In
+contrast with the earlier quickfort implementations, which interacted with DF
+by simulating keyboard input, DFHack Quickfort calls lower-level API functions
+to designate tiles and configure buildings. This allows for nearly
 instantaneous blueprint application, error checking and recovery, and many other
 advanced features.
 
@@ -28,14 +30,14 @@ was originally written by Joel Thornton, reused here with his permission.
 
 If you are just looking to apply existing blueprints to your fort, check out
 `gui/quickfort` (or `quickfort` for the commandline version). There are many
-ready-to-use  blueprints available in the `quickfort-library-guide` distributed
+ready-to-use blueprints available in the `quickfort-library-guide` distributed
 with DFHack.
 
 Before you become an expert at writing blueprints, though, you should know that
 the easiest way to make a quickfort blueprint is to build your plan "for real"
-in Dwarf Fortress and then export your map using `gui/blueprint`. You can apply
-those blueprints as-is in your next fort, or you can fine-tune them with
-additional features from this guide.
+in Dwarf Fortress and then export that section of your map using
+`gui/blueprint`. You can apply those blueprints as-is in your next fort, or you
+can fine-tune them with additional features from this guide.
 
 See the `Links`_ section for more information and online resources.
 
@@ -43,8 +45,8 @@ See the `Links`_ section for more information and online resources.
    :local:
    :depth: 2
 
-Features
---------
+Feature summary
+---------------
 
 - General
 
@@ -54,7 +56,7 @@ Features
     - Blueprints can span multiple z-levels
     - Easy sharing of blueprints with multi-blueprint files
     - Scripted application of sequences of blueprints
-    - Easy undo
+    - Undo applied blueprints
     - Rotate blueprints or flip them around
     - Automatic cropping of blueprints that extend off the map
     - Generate manager orders for items required by a blueprint
@@ -104,7 +106,7 @@ Features
       (e.g. a 6x6 block of ``wj`` cells will be correctly split into 4 jeweler's
       workshops)
     - Set building properties (such as a name)
-    - Attach track stops to hauling routes
+    - Can attach and configure track stops as part of hauling routes
 
 Introduction to blueprints
 --------------------------
@@ -156,7 +158,7 @@ readability, but a real .csv file would have commas)::
 
 The letter ``d`` here stands for "dig". The character sequences in these
 blueprints are based on the old (pre-v50) keyboard shortcuts for the various DF
-menus. Please see the `quickfort_guide_appendix` below for a full listing.
+menus. Please see the `quickfort_guide_appendix` below for a full reference.
 
 Note the :kbd:`#` symbols at the right end of each row and below the last row.
 These are completely optional, but can be helpful to make the row and column
@@ -171,8 +173,8 @@ Once the dwarves have that dug out, let's zone it as a bedroom::
     b b b b #
     # # # # #
 
-This looks very similar to the ``#dig`` blueprint above, but with ``b``s
-instead of ``d``s. The ``b``s mark the area for a ``b``edroom zone just like
+This looks very similar to the ``#dig`` blueprint above, but with ``b``\s
+instead of ``d``\s. The ``b``\s mark the area for a ``b``\edroom zone just like
 the ``#dig`` blueprint marked the area for digging. It's important to wait
 until after the area is completely dug out before applying further blueprints
 since zones can't be applied to hidden tiles and furniture can't be built in
@@ -188,9 +190,11 @@ Now, let's add some walls and furniture::
     #  #  #  #  #
 
 The :kbd:`C`:kbd:`w` cells represent the constructed walls, leaving space for a
-door that we might want to add later. And note my generosity -- in addition to
-the bed (:kbd:`b`) I've built a container (:kbd:`h`) here for the dwarf as
-well.
+door that we might want to add later. Quickfort uses `buildingplan` for
+managing buildings, so the walls will be built out of whatever matches the
+current buildingplan filter set for walls. Also note my generosity -- in
+addition to the bed (:kbd:`b`) I've built a container (:kbd:`h`) for this lucky
+dwarf.
 
 Finally, let's place a booze stockpile in the 2 unoccupied tiles in the room::
 
@@ -212,7 +216,7 @@ such rather than as two 1x1 food stockpiles. Quickfort treats any connected
 region of identical designations as a single entity. The tiles can be connected
 orthogonally or diagonally, just as long as they are touching. You can also
 treat disconnected segments as belonging to the same stockpile, but we'll get
-into that later.
+into `Label syntax`_ later.
 
 Now what's all that business attached to the second ``f``? The part between the
 curly brackets specifies properties, in this case the name that we want to give
@@ -334,6 +338,27 @@ Here's an example of a seed stockpile that is configured to take from a seed fee
 Different modes and different types may have different properties that you can
 configure. See the `quickfort_guide_appendix` for a full list.
 
+Label syntax
+~~~~~~~~~~~~
+
+Labels are different from the ``name`` property. They are only used internally
+by Quickfort to associate tiles with a particular zones or stockpiles. This is
+useful for when you want to define two touching zones or stockpiles of the same
+type(s), but you can't use expansion syntax because they are non-rectangular.
+It is also useful for marking two *disconnected* regions as belonging to the
+same zone or stockpile. Note that every tile in the zone or stockpile must be
+marked with the same label::
+
+    #place two touching stockpiles of the same type
+    f/feed f/feed f/feed{name="Seeds feeder" containers=0}:=seeds
+    f/feed f      f/feed
+    f      f      f{name=Seeds links_only=true take_from="Seeds feeder"}:=seeds
+
+    #zone one pasture in two disconnected regions
+    n/slots n/slots n/slots
+
+    n/slots{name="Pasture slots"}(3x1)
+
 Automatic area expansion
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -341,7 +366,7 @@ Buildings larger than 1x1, like workshops, can be represented in any of three
 ways. You can designate just their center tile with empty cells around it to
 leave room for the footprint, like this::
 
-    #build a mason workshop in row 2, col 2 that will occupy the 3x3 area
+    #build a stonecutter workshop in row 2, col 2 that will occupy the 3x3 area
     ` `  ` #
     ` wm ` #
     ` `  ` #
@@ -349,7 +374,7 @@ leave room for the footprint, like this::
 
 Or you can fill out the entire footprint like this::
 
-    #build a mason workshop
+    #build a stonecutter workshop
     wm wm wm #
     wm wm wm #
     wm wm wm #
@@ -361,7 +386,7 @@ point" can be non-obvious.
 
 Or you can use area expansion syntax::
 
-    #build a mason workshop
+    #build a stonecutter workshop
     wm(3x3)  #
     `  `  `  #
     `  `  `  #
@@ -369,9 +394,9 @@ Or you can use area expansion syntax::
 
 This style can be convenient for laying out multiple buildings of the same type.
 If you are building a large-scale block factory, for example, this will create
-20 mason workshops all in a row::
+20 stonecutter workshops all in a row::
 
-    #build line of 20 mason workshops
+    #build line of 20 stonecutter workshops
     wm(60x3)
 
 Quickfort will intelligently break large areas of the same designation into
@@ -411,7 +436,7 @@ You can go up or down multiple levels by adding a number after the ``<`` or
 ---------
 
 ``#dig`` blueprints are normally the first step in any design. They define the
-boundaries and layouts for the blueprints for later stages of construction. Despite their name, ``#dig``` blueprints are for more than just digging. They also handle smoothing, carving, traffic designations, and marking items on the ground for dumping, forbidding, or other similar tags. See the full list of supported designations in the `#dig mode reference`_.
+boundaries and layouts for the blueprints for later stages of construction. Despite their name, ``#dig`` blueprints are for more than just digging. They also handle smoothing, carving, traffic designations, and marking items on the ground for dumping, forbidding, or other similar tags. See the full list of supported designations in the `#dig mode reference`_.
 
 .. _quickfort-dig-priorities:
 
@@ -569,7 +594,10 @@ sequence of blueprints until no tiles are designated by the "erase" blueprint.
 #zone mode
 ----------
 
-Zones define how regions of your fort should be treated. They are also the anchor point for "locations" like taverns and hospitals. Unlike stockpiles or buildings, zones can overlap, which can lead to some interesting layouts.
+Zones define how regions of your fort should be treated. They are also the
+anchor point for "locations" like taverns and hospitals. Unlike stockpiles or
+buildings, zones can overlap, which can lead to some interesting layouts. See
+the full list of zone symbols in the `#zone mode reference`_.
 
 Zone designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -602,6 +630,10 @@ or from different corners of the same rectangle::
 
 and you can use this technique to achieve partial overlap, of course. The only configuration that can't be specified in a single blueprint is multiple non-rectangular zones that are partially overlapping. You will have to use multiple ``#zone`` blueprints to achieve that.
 
+You can also use labels (see `Label syntax`_ above) to separate adjacent
+non-rectangular zones that happen to be of the same type or to combine
+disconnected regions into a single zone.
+
 Locations, locations, locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -631,9 +663,11 @@ Stockpile designation syntax
 
 Just like zones, stockpiles can have properties like names or lists of other stockpiles to take from. Unlike zones, stockpiles can have configuration specifiers for exactly what types of items to accept. The full syntax looks like this::
 
-    types{properties}:configuration(expansion)
+    types/label{properties}:configuration(expansion)
 
-You're already familiar with `Property syntax`_ and `Area expansion syntax`_, so let's focus in on the remaining elements.
+with every component other than the type being optional. You're already
+familiar with `Property syntax`_, `Label syntax`_, and
+`Area expansion syntax`_, so let's focus in on the remaining elements.
 
 Stockpile types
 ~~~~~~~~~~~~~~~
@@ -650,10 +684,7 @@ could write::
     yr(20x10)
 
 The order of the individual letters doesn't matter. If you want to configure the
-stockpile from scratch, you can place unconfigured "custom" stockpiles with (:kbd:`c`). It is more efficient, though, to place
-stockpiles using the keys that represent the categories of items that you want
-to store, and then only use a ``#query`` blueprint if you need fine-grained
-customization.
+stockpile from scratch, you can place unconfigured "custom" stockpiles with (:kbd:`c`).
 
 .. _quickfort-place-containers:
 
@@ -662,16 +693,25 @@ Bins, barrels, and wheelbarrows
 
 Quickfort has global settings for default values for the number of bins,
 barrels, and wheelbarrows assigned to stockpiles, but these numbers can be set
-for individual stockpiles as well.
+for individual stockpiles as well in the properties.
 
-To set the number of bins, barrels, or wheelbarrows, just add a number after the
-letter that indicates what type of stockpile it is. For example::
+Individual properties for ``bins``, ``barrels``, and ``wheelbarrows`` are
+supported. You can also set them all at once with the ``containers`` alias (it
+usually just makes sense to set this to 0 when you don't want any containers of
+any type). For example::
 
     #place a stone stockpile with 5 wheelbarrows
-    s5(3x3)
+    s{wheelbarrows=5}(3x3)
 
     #place a bar, ammo, weapon, and armor stockpile with 20 bins
-    bzpd20(5x5)
+    bzpd{bins=20}(5x5)
+
+    #place a weapon stockpile with no bins
+    p{containers=0}(9x2)
+
+That last one could have equivalently used ``bins=0``, but sometimes you just
+don't want to have to think about which stockpile types take which type of
+container.
 
 If the specified number exceeds the number of available stockpile tiles, the
 number of available tiles is used. For wheelbarrows, that limit is reduced by 1
@@ -679,34 +719,14 @@ to ensure there is at least one non-wheelbarrow tile available in the stockpile.
 Otherwise no stone would ever be brought to the stockpile since all tiles would
 be occupied by wheelbarrows!
 
-Quickfort figures out which container type is being set by looking at the letter
-that comes just before the number. For example ``zf10`` means 10 barrels in a
-stockpile that accepts both ammo and food, whereas ``z10f`` means 10 bins. If
-the stockpile category doesn't usually use any container type, like refuse or
-corpses, wheelbarrows are assumed::
-
-    #place a corpse stockpile with 3 wheelbarrows
-    y3(3x3)
-
-Note that if you are not using expansion syntax, each tile of the stockpile must
-have the same text. Otherwise the stockpile boundaries will not be detected
-properly::
-
-    #place a non-rectangular animal stockpile with 5 wheelbarrows
-    a5,a5,a5,a5
-    a5,  ,  ,a5
-    a5,  ,  ,a5
-    a5,a5,a5,a5
-
-Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
+Generating manager orders for a ``#place`` blueprint with explicitly set
 container/wheelbarrow counts will enqueue manager orders for the specified
 number of containers or wheelbarrows, even if that number exceeds the in-game
-size of the stockpile. For example, ``quickfort orders`` on the following
-blueprint will enqueue 10 rock pots, even though the stockpile only has 9
-tiles::
+size of the stockpile. For example, the following blueprint will enqueue orders
+for 10 rock pots, even though the stockpile only has 9 tiles::
 
     #place
-    f10(3x3)
+    f{barrels=10}(3x3)
 
 Stockpile configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -817,7 +837,7 @@ to create (or attach to if it already exists). If you are applying a quantum
 stockpile blueprint more than once in a fort, be sure to *avoid* defining the
 ``route`` property so that each application of the blueprint creates a unique
 hauling route. Two quantum stockpiles on the same route will not function
-propertly.
+properly (since one of the stops will be missing a minecart).
 
 Let's look at a slightly more complicated setup where we sort the stone into
 different output quantum stockpiles::
@@ -882,15 +902,15 @@ elements before we discuss them in more detail::
 Blueprint labels
 ~~~~~~~~~~~~~~~~
 
-Labels are displayed in the ``quickfort list`` output and are used for
-addressing specific blueprints when there are multiple blueprints in a single
-file or spreadsheet sheet (see `Packaging a set of blueprints`_ below). If a
-blueprint has no label, the label becomes the ordinal of the blueprint's
-position in the file or sheet. For example, the label of the first blueprint
-will be "1" if it is not otherwise set, the label of the second blueprint will
-be "2" if it is not otherwise set, etc. Labels that are explicitly defined must
-start with a letter to ensure the auto-generated labels don't conflict with
-user-defined labels.
+Labels are displayed in the blueprint selection dialog and the output of
+``quickfort list`` and are used for addressing specific blueprints when there
+are multiple blueprints in a single file or spreadsheet sheet (see
+`Packaging a set of blueprints`_ below). If a blueprint has no label, the label
+becomes the ordinal of the blueprint's position in the file or sheet. For
+example, the label of the first blueprint will be "1" if it is not otherwise
+set, the label of the second blueprint will be "2" if it is not otherwise set,
+etc. Labels that are explicitly defined must start with a letter to ensure the
+auto-generated labels don't conflict with user-defined labels.
 
 .. _quickfort-start:
 
@@ -902,7 +922,7 @@ the task of blueprint alignment. This is very helpful for blueprints that are
 based on a central staircase, but it comes in handy whenever a blueprint has an
 obvious "center". For example::
 
-    #build start(2;2;center of workshop) label(masonw) a mason workshop
+    #build start(2;2;center of workshop) label(stonew) a stonecutter workshop
     wm wm wm #
     wm wm wm #
     wm wm wm #
@@ -913,30 +933,29 @@ the cursor.
 
 The two numbers specify the column and row (or 1-based X and Y offset) where the
 cursor is expected to be when you apply the blueprint. Position ``1;1`` is the
-top left cell. The optional comment will show up in the ``quickfort list``
-output and should contain information about where to position the cursor. If the
-start position is ``1;1``, you can omit the numbers and just add a comment
-describing where to put the cursor. This is also useful for meta blueprints that
-don't actually care where the cursor is, but that refer to other blueprints that
-have fully-specified ``start()`` markers. For example, a meta blueprint that
-refers to the ``masonw`` blueprint above could look like this::
+top left cell. The optional comment will show up in the blueprint listings and
+should contain information about where to position the cursor. If the start
+position is ``1;1``, you can omit the numbers and just add a comment describing
+where to put the cursor. This is also useful for meta blueprints that don't
+actually care where the cursor is, but that refer to other blueprints that have
+fully-specified ``start()`` markers. For example, a meta blueprint that refers to the ``stonew`` blueprint above could look like this::
 
-    #meta start(center of workshop) a mason workshop
-    /masonw
+    #meta start(center of workshop) a stonecutter workshop
+    /stonew
 
 You can use semicolons, commas, or spaces to separate the elements of the
-``start()`` marker, whatever is most convenient.
+``start()`` marker, whichever you prefer.
 
 .. _quickfort-hidden:
 
 Hiding blueprints
 ~~~~~~~~~~~~~~~~~
 
-A blueprint with a ``hidden()`` marker won't appear in ``quickfort list`` output
-unless the ``--hidden`` flag is specified. The primary reason for hiding a
-blueprint (rather than, say, deleting it or moving it out of the ``blueprints/``
-folder) is if a blueprint is intended to be run as part of a larger sequence
-managed by a `meta blueprint <quickfort-meta>`.
+A blueprint with a ``hidden()`` marker won't appear in the blueprint listings
+unless hidden blueprints are specifically requested. The primary reason for
+hiding a blueprint (rather than, say, deleting it or moving it out of the
+``blueprints/`` folder) is if a blueprint is intended to be run as part of a
+larger sequence managed by a `meta blueprint <quickfort-meta>`.
 
 .. _quickfort-message:
 
@@ -944,10 +963,10 @@ Messages
 ~~~~~~~~
 
 A blueprint with a ``message()`` marker will display a message after the
-blueprint is applied with ``quickfort run``. This is useful for reminding
-players to take manual steps that cannot be automated, like assigning minecarts
-to a route, or listing the next step in a series of blueprints. For long or
-multi-part messages, you can embed newlines::
+blueprint is applied. This is useful for reminding players to take manual steps
+that cannot be automated, like assigning minecarts to a route, or listing the
+next step in a series of blueprints. For long or multi-part messages, you can
+embed newlines::
 
     "#meta label(surface1) message(This would be a good time to start digging the industry level.
     Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
@@ -956,15 +975,78 @@ The quotes surrounding the cell text are only necessary if you are writing a
 .csv file by hand. Spreadsheet applications will surround multi-line text with
 quotes automatically when they save/export the file.
 
+.. _quickfort-other-modes:
+
+Other blueprint modes
+---------------------
+
+There are a few additional blueprint modes that become useful when you are
+sharing your blueprints with others or managing complex blueprint sets. Instead
+of mapping tile positions to map modifications like the basic modes do, these
+"blueprints" have specialized, higher-level uses:
+
+==============  ===========
+Blueprint mode  Description
+==============  ===========
+notes           Display long messages, such as help text or blueprint
+                walkthroughs
+ignore          Hide a section of your spreadsheet from quickfort, useful for
+                scratch space or personal notes
+meta            Script sequences of blueprints together, transform them, and/or
+                repeat them across multiple z-levels
+==============  ===========
+
+.. _quickfort-notes:
+
+#notes mode
+~~~~~~~~~~~
+
+Sometimes you just want to record some information about your blueprints, such
+as when to apply them, what preparations you need to make, or what the
+blueprints contain. The `message() <quickfort-message>` modeline marker is
+useful for small, single-line messages, but a ``#notes`` blueprint is more
+convenient for long messages or messages that span many lines. The lines in a
+``#notes`` blueprint are output as if they were contained within one large
+multi-line ``message()`` marker. For example, the following (empty) ``#meta``
+blueprint::
+
+    "#meta label(help) message(This is the help text for the blueprint set
+    contained in this file.
+
+    First, make sure that you embark in...) blueprint set walkthrough"
+
+could more naturally be written as a ``#notes`` blueprint::
+
+    #notes label(help) blueprint set walkthrough
+    This is the help text for the blueprint set
+    contained in this file
+
+    First, make sure that you embark in...
+
+The ``#meta`` blueprint is all squashed into a single spreadsheet cell, using
+embedded newlines. Each line of the ``#notes`` "blueprint", however, is in a
+separate cell, allowing for much easier viewing and editing.
+
+#ignore mode
+~~~~~~~~~~~~
+
+If you don't want some data to be visible to quickfort at all, use an
+``#ignore`` blueprint. All lines until the next modeline in the file or sheet
+will be completely ignored. This can be useful for personal notes, scratch
+space, or temporarily "commented out" blueprints.
+
 .. _quickfort-meta:
 
 #meta mode
-----------
+~~~~~~~~~~
 
 ``#meta`` blueprints are blueprints that control how other blueprints are
 applied. For example, meta blueprints can bundle a group of other blueprints so
 that they can be run with a single command. They can also encode logic, like
 rotating the blueprint or duplicating it across a specified number of z-levels.
+
+Scripting blueprints together
+`````````````````````````````
 
 A common scenario where meta blueprints are useful is when you have several
 phases to link together. For example you might:
@@ -979,7 +1061,7 @@ phases to link together. For example you might:
 Those last four "apply"s might as well get done in one command instead of four.
 A ``#meta`` blueprint can help with that. A meta blueprint refers to
 other blueprints in the same file by their label (see the `Modeline markers`_
-section above) in the same format used by the `quickfort` command:
+section) in the same format used by the `quickfort` command:
 ``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv files or
 blueprints in the same spreadsheet sheet as the ``#meta`` blueprint that
 references them.
@@ -1061,24 +1143,19 @@ a big fort, so we're digging 5 levels of bedrooms)::
 Note that for blueprints without an explicit label, we still need to address
 them by their auto-generated numeric label.
 
-The command to run the meta blueprint above would be::
-
-    quickfort run myfort.xlsx -n dig_all/dig_it
-
 It's worth repeating that ``#meta`` blueprints can only refer to blueprints that
 are defined in the same file. This means that all blueprints that a meta
 blueprint needs to run must be in sheets within the same .xlsx spreadsheet or
 concatenated into the same .csv file.
 
 You can then hide the blueprints that you now manage with the meta blueprint
-from ``quickfort list`` by adding a ``hidden()`` marker to their modelines. That
-way the output of ``quickfort list`` won't be cluttered by blueprints that you
-don't need to run directly. If you ever *do* need to access the meta-managed
-blueprints individually, you can still see them with
-``quickfort list --hidden``.
+from the blueprint selection lists by adding a ``hidden()`` marker to their
+modelines. That way, the blueprint lists won't be cluttered by blueprints that
+you don't need to run directly. If you ever *do* need to access the meta-managed
+blueprints individually, you can still see them by toggling the "Hidden" setting in the `gui/quickfort` load dialog or with ``quickfort list --hidden``.
 
 Meta markers
-~~~~~~~~~~~~
+````````````
 
 In meta blueprints, you can tag referenced blueprints with markers to modify how
 they are applied. These markers are similar to `Modeline markers`_, but are only
@@ -1093,8 +1170,7 @@ shift(0 10)          Adds 10 to the y coordinate of each blueprint tile
 transform(cw flipv)  Rotates a blueprint clockwise and then flips it vertically
 ===================  ===========
 
-Repeating blueprints
-````````````````````
+**Repeating blueprints**
 
 Syntax: repeat(<direction>[, ]<number>)
 
@@ -1115,8 +1191,7 @@ lines are all equivalent::
     /2beds repeat(down, 3)
     /2beds repeat(>3)
 
-Shifting blueprints
-```````````````````
+**Shifting blueprints**
 
 Syntax: shift(<x shift>[[,] <y shift>])
 
@@ -1126,8 +1201,7 @@ semantics for the y axis are opposite compared to regular graphs on paper. This
 is because the y coordinates in the DF game map start a 0 at the top and
 increase as they go down.
 
-Transforming blueprints
-```````````````````````
+**Transforming blueprints**
 
 Syntax: transform(<transformation>[[,] <transformation>...])
 
@@ -1156,72 +1230,6 @@ use nested meta blueprints. For example, the following blueprint will shift the
 Transforming build blueprints will also change the properties of buildings that
 care about direction. For example, a bridge that opens to the North, rotated
 clockwise, will open to the East when applied to the map.
-
-Direction keys that move the cursor on the map will also be transformed. For
-example, the keys ``g{Up 4}&`` that would cause a stockpile to give to a
-workshop 4 tiles to the North become ``g{Right 4}&`` when played back on a
-clockwise-rotated ``#query`` blueprint. Direction keys that don't move the map
-cursor, for example when on the stockpile configuration screen, are not changed
-by blueprint rotation.
-
-.. _quickfort-other-modes:
-
-Other blueprint modes
----------------------
-
-In addition to the powerful ``#meta`` mode described above, there are a few
-additional blueprint modes that become useful when you are sharing your
-blueprints with others or managing complex blueprint sets. Instead of mapping
-tile positions to map modifications like the basic modes do, these "blueprints"
-have specialized, higher-level uses:
-
-==============  ===========
-Blueprint mode  Description
-==============  ===========
-notes           Display long messages, such as help text or blueprint
-                walkthroughs
-ignore          Hide a section of your spreadsheet from quickfort, useful for
-                scratch space or personal notes
-==============  ===========
-
-.. _quickfort-notes:
-
-Notes blueprints
-~~~~~~~~~~~~~~~~
-
-Sometimes you just want to record some information about your blueprints, such
-as when to apply them, what preparations you need to make, or what the
-blueprints contain. The `message() <quickfort-message>` modeline marker is
-useful for small, single-line messages, but a ``#notes`` blueprint is more
-convenient for long messages or messages that span many lines. The lines in a
-``#notes`` blueprint are output as if they were contained within one large
-multi-line ``message()`` marker. For example, the following (empty) ``#meta``
-blueprint::
-
-    "#meta label(help) message(This is the help text for the blueprint set
-    contained in this file.
-
-    First, make sure that you embark in...) blueprint set walkthrough"
-
-could more naturally be written as a ``#notes`` blueprint::
-
-    #notes label(help) blueprint set walkthrough
-    This is the help text for the blueprint set
-    contained in this file
-
-    First, make sure that you embark in...
-
-The ``#meta`` blueprint is all squashed into a single spreadsheet cell, using
-embedded newlines. Each line of the ``#notes`` "blueprint", however, is in a
-separate cell, allowing for much easier viewing and editing.
-
-Ignore blueprints
-~~~~~~~~~~~~~~~~~
-
-If you don't want some data to be visible to quickfort at all, use an
-``#ignore`` blueprint. All lines until the next modeline in the file or sheet
-will be completely ignored. This can be useful for personal notes, scratch
-space, or temporarily "commented out" blueprints.
 
 .. _quickfort-packaging:
 
@@ -1297,9 +1305,9 @@ building type. For example, you can use the buildingplan UI to set the type of
 stone you want your walls made out of. Or you can specify that all
 buildingplan-managed chairs and tables must be of Masterful quality. The current
 filter settings are saved with planned buildings when the ``#build`` blueprint
-is run. This means you can set the filters the way you want for one blueprint,
-run the blueprint, and then freely change the filters again for the next
-blueprint, even if the first set of buildings haven't been built yet.
+is run. You can set the filters the way you want for one blueprint, run the
+blueprint, and then freely change the filters again for the next blueprint,
+even if the first set of buildings haven't been built yet.
 
 Note that buildings are still constructed immediately if you already have the
 materials. However, with buildingplan you now have the freedom to apply
@@ -1307,12 +1315,10 @@ materials. However, with buildingplan you now have the freedom to apply
 jobs will be fulfilled whenever the materials become available.
 
 Since it can be difficult to figure out exactly what source materials you need
-for a ``#build`` blueprint, quickfort supplies the ``orders`` subcommand. It
-enqueues manager orders for everything that the buildings in a ``#build``
-blueprint require. See the `next section <generating-manager-orders>`_ for more
-details on this. You can apply a blueprint, then have `quickfort` generate
-orders for you. The planned buildings will be built as your dwarves fulfill the
-orders.
+for a ``#build`` blueprint, quickfort can autogenerate manager orders for
+everything that a blueprint requires. See `Generating manager orders`_ for more
+details on this. You can apply a blueprint, then the planned buildings will be
+built as your dwarves fulfill the orders.
 
 Generating manager orders
 -------------------------
@@ -1624,8 +1630,11 @@ hauling route configuration.
 In order to be a target for a stockpile or workshop link, the stockpile or
 building must have a name. That's not the only reason you should give things
 names, though. The game is just much easier to play when stockpiles and key
-buildings have descriptive names. Which lever controls the bridge named "Right outer gate"? You can click on that bridge, click on "show linked buildings", zoom to the lever, and click on the lever. Or you can scan your mouse over the levers and click onYou can always edit names in-game, but
-blueprints are a great way to automate this task.
+buildings have descriptive names. Which lever controls the bridge named "Right
+outer gate"? You can click on that bridge, click on "show linked buildings",
+zoom to the lever, and click on the lever. Or you can scan your mouse over the
+levers and click on the lever with the same name as the target bridge. You can
+always edit names in-game, but blueprints are a great way to automate this task.
 
 .. topic:: Tip
 
@@ -1662,11 +1671,12 @@ priorities <quickfort-dig-priorities>`.
 We can `ensure <https://docs.google.com/spreadsheets/d/1xu8vNKGlGDN9L3MVB4qp2Ytef9oAWvuET6RkuZXmCaE/edit#gid=1706912296>`__
 the bottom level is carved out before the layer above is channeled by assigning
 the channel designations lower priorities (the ``h5``\s in the lower layers --
-scroll down). This works here because there is only a single column of
-higher-priority stairs for a dwarf to dig down to get below the lower-priority
-channels. If the dig area has multiple tiles exposed, it is harder to control
-dig order since a second dwarf may not have access to any higher-priority tiles
-and may start digging the lower-priority designations prematurely.
+scroll down on the blueprint spreadsheet). This works here because there is
+only a single column of higher-priority stairs for a dwarf to dig down to get
+below the lower-priority channels. If the dig area has multiple tiles exposed,
+it is harder to control dig order since a second dwarf may not have access to
+any higher-priority tiles and may start digging the lower-priority designations
+prematurely.
 
 An alternative is to have a follow-up blueprint that removes any undesired
 ramps. We did this on the

@@ -355,7 +355,7 @@ end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
-    default_pos={x=24, y=-6},
+    default_pos={x=16, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Some/Stockpile',
     frame={w=65, h=4},

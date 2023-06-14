@@ -355,7 +355,7 @@ end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
-    default_pos={x=16, y=-6},
+    default_pos={x=24, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Some/Stockpile',
     frame={w=65, h=4},
@@ -441,7 +441,7 @@ function StockpilesOverlay:init()
 
     self:addviews{
         main_panel, MinimizeButton{
-            frame={t=0, r=1},
+            frame={t=0, r=9},
             get_minimized_fn=function()
                 return self.minimized
             end,

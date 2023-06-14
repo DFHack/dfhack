@@ -90,8 +90,8 @@ DFHack command,Blueprint,Generate orders,Notes
 orders import library/furnace,,,Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future needed temples and guildhalls. Run when the guildhall level has been dug out."
 gui/quickfort,/services3,Yes,"Extend the dining room and hospital, and start the jail. Run when your population grows to about 20."
-gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out.
 gui/quickfort,/apartments2,Yes,Build and zone bedrooms. Run when the first apartment level has been dug out and you have outgrown your starter dormintory.
+gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out and you are approaching a population of 50.
 gui/quickfort,/crypt2,Yes,Build a small group of tombs. Run when the crypt level has been dug out and you have outgrown your starter tomb on the farming level.
 gui/quickfort,/surface8,Yes,"Build extended trap corridors. If you have a strong military, you might not need this."
 gui/quickfort,/farming3,Yes,Add in all the doors we couldn't afford to build earlier.
@@ -2790,21 +2790,21 @@ build_extended/crypt_extended_build
 
 
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
-,,,,,,,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`
+,,,,,,,,,,,`,`,,,,,,,,,,`,`
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,`,`,`,,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
-,,,,,,,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,`,`,`,,,,`,`,`,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,`,`,`,,T{pets=true}(1x1),,`
+,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
+,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
 ,,,,,,,,,,,,`,`,`,`,,~,,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,`,`,`,,,,`,`,`,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
-,,,,,,,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,`,`,`,,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
+,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,`,`,`,,T{pets=true}(1x1),,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
-,,,,,,,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`
-,,,,,,,,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`
+,,,,,,,,,,,`,`,,,,,,,,,,`,`
+,,,,,,,,,,,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -2826,21 +2826,21 @@ build_extended/crypt_extended_build
 
 
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n
-,,,,,,,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n
+,,,,,,,,,,,,`,,n,,n,,n,,n,,`
+,,,,,,,,,,,`,`,,,,,,,,,,`,`
+,,,,,,,,,,,,`,,n,,n,,n,,n,,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,`,s,`,,n,,`,,n,,n
-,,,,,,,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,`,`,`,,,,`,`,`,`,,n,,n
+,,,,,,,,,,,,`,,n,,`,s,`,,n,,`
+,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
+,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
 ,,,,,,,,,,,,`,`,s,`,,~,,`,s,`,`
-,,,,,,,,n,,n,,`,`,`,`,,,,`,`,`,`,,n,,n
-,,,,,,,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,`,s,`,,n,,`,,n,,n
+,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
+,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
+,,,,,,,,,,,,`,,n,,`,s,`,,n,,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n
-,,,,,,,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`
-,,,,,,,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n
+,,,,,,,,,,,,`,,n,,n,,n,,n,,`
+,,,,,,,,,,,`,`,,,,,,,,,,`,`
+,,,,,,,,,,,,`,,n,,n,,n,,n,,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -2862,21 +2862,21 @@ build_extended/crypt_extended_build
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,~,,~,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,~,,~,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,`,`,`,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,`,`,`,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,`,`,`,,,,`,`,`,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,`,`,`,,,,`,`,`,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,,,,,,,,,,,,`,`,`,`,,~,,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,`,`,`,,,,`,`,`,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,`,`,`,,,,`,`,`,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,`,`,`,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,`,`,`,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,~,,~,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
+,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,~,,~,,~,,~,,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 ,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,`,,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1),,T{pets=true}(1x1)
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2898,21 +2898,21 @@ build_extended/crypt_extended_build
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,n,,n,,n,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n,,n,,n,,n
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,~,,~,,~,,`,,n,,n,,n,,n,,n
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,~,,~,,~,,`,,n,,n,,n,,n,,n
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,`,~,`,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,`,~,`,,~,,`,,n,,n,,n,,n,,n
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,`,`,`,,,,`,`,`,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,`,`,`,,,,`,`,`,`,,n,,n,,n,,n,,n
 ,,,,,,,,,,,,`,`,~,`,,~,,`,~,`,`
-,,n,,n,,n,,~,,~,,`,`,`,`,,,,`,`,`,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,`,`,`,,,,`,`,`,`,,n,,n,,n,,n,,n
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,`,~,`,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,`,~,`,,~,,`,,n,,n,,n,,n,,n
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,~,,~,,~,,`,,n,,n,,n,,n,,n
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,n,,n,,n,,~,,~,,`,,~,,~,,~,,~,,`,,~,,~,,n,,n,,n
+,,n,,n,,n,,n,,n,,`,,~,,~,,~,,~,,`,,n,,n,,n,,n,,n
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 ,,n,,n,,n,,n,,n,,`,,n,,n,,n,,n,,`,,n,,n,,n,,n,,n
 ,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`

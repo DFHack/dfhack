@@ -137,7 +137,7 @@ Crypt
 `````
 
 .. image:: https://drive.google.com/uc?export=download&id=16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
-  :alt: Annotated screenshot of the dreamfort noble suites
+  :alt: Annotated screenshot of the dreamfort crypt
   :target: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :align: center
 

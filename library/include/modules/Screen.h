@@ -229,6 +229,9 @@ namespace DFHack
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
         DFHACK_EXPORT void raise(df::viewscreen *screen);
 
+        // returns a new set with text interface keys from the text buffer added in (if any)
+        DFHACK_EXPORT std::set<df::interface_key> add_text_keys(const std::set<df::interface_key>& keys);
+
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
 

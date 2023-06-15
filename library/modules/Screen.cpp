@@ -598,10 +598,12 @@ std::set<df::interface_key> Screen::add_text_keys(const std::set<df::interface_k
 
 string Screen::getKeyDisplay(df::interface_key key)
 {
-    if (enabler)
-        return enabler->GetKeyDisplay(key);
-
-    return "?";
+    int c = keyToChar(key);
+    if (c != -1)
+        return string(1, c);
+    if (key >= df::interface_key::CUSTOM_SHIFT_A && key <= df::interface_key::CUSTOM_SHIFT_Z)
+        return string(1, 'A' + (key - df::interface_key::CUSTOM_SHIFT_A));
+    return enabler->GetKeyDisplay(key);
 }
 
 int Screen::keyToChar(df::interface_key key)

@@ -11,8 +11,11 @@ identifier is specified on the commandline.
 When the plugin is enabled, it checks stockpiles marked with automelt,
 autotrade, autodump, and/or autotrain features twice every in-game day, and
 will mark valid items/animals in those stockpiles for melting, trading,
-dumping, and/or training, respectively. Note that items will only be marked for
-trading if a caravan is approaching or is already at the trade depot.
+dumping, and/or training, respectively.
+
+For autotrade, items will be marked for trading only when a caravan is
+approaching or is already at the trade depot. Items (or bins that contain
+items) of which a noble has forbidden export will not be marked for trade.
 
 Usage
 -----

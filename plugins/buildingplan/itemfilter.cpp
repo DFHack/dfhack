@@ -152,9 +152,10 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const {
 }
 
 bool ItemFilter::matches(df::item *item) const {
-    if (item->getQuality() < min_quality || item->getQuality() > max_quality) {
+    int16_t quality = (item->flags.bits.artifact ? df::item_quality::Artifact : item->getQuality());
+    if (quality < min_quality || quality > max_quality) {
         TRACE(cycle).print("item outside of quality range (%d not between %d and %d)\n",
-                item->getQuality(), min_quality, max_quality);
+                quality, min_quality, max_quality);
         return false;
     }
 

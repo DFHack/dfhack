@@ -108,7 +108,7 @@ static bool is_running_on_wine() {
     return !!pwine_get_version;
 }
 
-static DWORD findProcess(LPWSTR name) {
+static DWORD findProcess(const LPWSTR name) {
     PROCESSENTRY32W entry;
     entry.dwSize = sizeof(PROCESSENTRY32W);
 

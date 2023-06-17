@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Blueprint library: dreamfort: full rewrite and update for DF v50
 - Blueprint library: pump_stack: updated walkthrough and separated dig and channel steps so boulders can be cleared
 - Blueprint library: aquifer_tap: updated walkthrough
+- `orders`: better order conditions for the ``smelting`` library orders to reduce cancellation spam
 
 ## Documentation
 - `blueprint-library-guide`: update Dreamfort screenshots, add ``aquifer_tap`` screenshot

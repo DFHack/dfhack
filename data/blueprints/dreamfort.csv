@@ -85,7 +85,7 @@ gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are complete
 Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through this checklist!
 ""
 -- Mature fort (fourth migration wave onward) --
-"The order of steps in this section is not important. Feel free to reorder as per the needs of your fort. Once you have about 100 dwarves, you can queue up as much as you want and your haulers will be able to keep your stonecutters supplied. You might need to dig a quarry on an unused level to get enough stone, though."
+"The order of steps in this section is not important. Feel free to reorder as per the needs of your fort. Once you have about 50 dwarves, you can queue up as much as you want and your haulers will be able to keep your stonecutters supplied. You can even build another two Stonecutter's workshops to speed things along. You might need to dig a quarry on an unused level to get enough stone, though."
 DFHack command,Blueprint,Generate orders,Notes
 orders import library/furnace,,,Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future needed temples and guildhalls. Run when the guildhall level has been dug out."
@@ -143,10 +143,11 @@ On the work details screen (Labor -> Work details)
 ""
 In standing orders (Labor -> Standing orders):
 "  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
+"- On the ""Other"" tab, change ""Everybody harvests"" to ""Only farmers harvest"""
 ""
 "Finally, in the burrows screen:"
 "- Create a burrow named ""Inside"" and register it as a civilian alert burrow in gui/civ-alert so you can use it to get your civilians to safety during sieges. You will have to periodically expand the burrow area as the fort expands."
-"#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
+"#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
 /industry1
@@ -548,7 +549,7 @@ corridor_traps/surface_corridor_traps
 
 
 #dig label(surface_clear) start(19; 19) hidden() clear trees so the farming level can be dug without fear of generating surface holes
-p7(37x33)
+
 
 ,,,,t1(29x29)
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`

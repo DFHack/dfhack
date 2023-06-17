@@ -43,7 +43,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `autonick`: additional nicknames based on burrowing animals, colours, gems, and minerals
 - `stockpiles`: added ``barrels``, ``organic``, ``artifacts``, and ``masterworks`` stockpile presets
-- Dreamfort: full rewrite and update for DF v50
+- Blueprint library: dreamfort: full rewrite and update for DF v50
+- Blueprint library: pump_stack: updated walkthrough and separated dig and channel steps so boulders can be cleared
+- Blueprint library: aquifer_tap: updated walkthrough
 
 ## Documentation
 - `blueprint-library-guide`: update Dreamfort screenshots, add ``aquifer_tap`` screenshot

@@ -52,6 +52,11 @@ DFHACK_EXPORT long getOnOffTexposStart();
 DFHACK_EXPORT long getMapPathableTexposStart();
 
 /**
+ * Get the first texpos for the unsuspend 32x32 sprites. It's a 3x1 grid.
+ */
+DFHACK_EXPORT long getMapUnsuspendTexposStart();
+
+/**
  * Get the first texpos for the control panel icons. 10x2 grid.
  */
 DFHACK_EXPORT long getControlPanelTexposStart();

@@ -1944,9 +1944,9 @@ General
 
   Searches for a specific_ref with the given type.
 
-* ``dfhack.buildings.setOwner(item,unit)``
+* ``dfhack.buildings.setOwner(civzone,unit)``
 
-  Replaces the owner of the building. If unit is *nil*, removes ownership.
+  Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
 
 * ``dfhack.buildings.getSize(building)``
@@ -3018,6 +3018,11 @@ environment by the mandatory init file dfhack.lua:
   If the Lua table ``t`` doesn't include the specified ``key``, ``t[key]`` is
   set to the value of ``default_value``, which defaults to ``{}`` if not set.
   The new or existing value of ``t[key]`` is then returned.
+
+* ``ensure_keys(t, key...)``
+
+  Walks a series of keys, creating any missing keys as empty tables. The new or
+  existing table from the last specified key is returned from the function.
 
 .. _lua-string:
 

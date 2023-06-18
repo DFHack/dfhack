@@ -34,14 +34,37 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `add-spatter`: reinstated: allow mods to add poisons and magical effects to weapons
-- `changeitem`: reinstated: change item material, quality, and subtype
-- `createitem`: reinstated: create arbitrary items, from the command line
-- `deramp`: reinstated: removes all ramps designated for removal from the map
-- `flows`: reinstated: counts map blocks with flowing liquids
-- `lair`: reinstated: mark the map as a monster lair (this avoids item scatter when the fortress is abandoned)
-- `luasocket`: reinstated: provides a Lua API for accessing network sockets
-- `work-now`: reinstated, renamed from ``workNow``: reduce the time that dwarves are left without a task after completing a job
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Internals
+
+## Lua
+
+## Removed
+
+# 50.08-r3
+
+## Fixes
+- Fix crash for some players when they launch DF outside of the Steam client
+
+# 50.08-r2
+
+## New Plugins
+- `add-spatter`: (reinstated) allow mods to add poisons and magical effects to weapons
+- `changeitem`: (reinstated) change item material, quality, and subtype
+- `createitem`: (reinstated) create arbitrary items from the command line
+- `deramp`: (reinstated) removes all ramps designated for removal from the map
+- `flows`: (reinstated) counts map blocks with flowing liquids
+- `lair`: (reinstated) mark the map as a monster lair (this avoids item scatter when the fortress is abandoned)
+- `luasocket`: (reinstated) provides a Lua API for accessing network sockets
+- `work-now`: (reinstated, renamed from ``workNow``) prevent dwarves from wandering aimlessly with "No job" after completing a task
 
 ## Fixes
 - DFHack screen backgrounds now use appropriate tiles in DF Classic
@@ -51,24 +74,18 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `autodump`: no longer checks for a keyboard cursor before executing, so ``autodump destroy`` (which doesn't require a cursor) can still function
-- Settings: recover gracefully when settings files become corrupted (e.g. by CTD)
-- `orders`: update orders in orders library for prepared meals, bins, archer uniforms, and weapons
-- Terminal console no longer appears in front of the game window on startup
+- Settings: recover gracefully when settings files become corrupted (e.g. by DF CTD)
+- `orders`: update orders in library for prepared meals, bins, archer uniforms, and weapons
 - `gui/control-panel`: new preference for whether filters in lists search for substrings in the middle of words (e.g. if set to true, then "ee" will match "steel")
 - `gui/design`: Improved performance for drawing shapes
 - Dreamfort: improve traffic patterns throughout the fortress
 - `gui/blueprint`: recording of stockpile layouts and categories is now supported. note that detailed stockpile configurations will *not* be saved (yet)
-- Core: For debugging purposes, you can now pass ``--disable-dfhack`` on the Dwarf Fortress commandline or specify ``DFHACK_DISABLE=1`` in the environment to disable DFHack for the current session.
-- `overlay`: added links to the quickstart guide and the control panel on the DF title screen
+- Core: new commandline flag/environment var: pass ``--disable-dfhack`` on the Dwarf Fortress commandline or specify ``DFHACK_DISABLE=1`` in the environment to disable DFHack for the current session.
+- `overlay`: add links to the quickstart guide and the control panel on the DF title screen
 - Window behavior: non-resizable windows now allow dragging by their frame edges by default
-- `gui/autodump`: fort-mode keybinding: Ctrl-H
+- `gui/autodump`: fort-mode keybinding: Ctrl-H (when ``armok`` tools are enabled in `gui/control-panel`)
 - Window behavior: if you have multiple DFHack tool windows open, scrolling the mouse wheel while over an unfocused window will focus it and raise it to the top
-- ``Textures.load_textures()``: can now load spritesheets with tilesizes other than 8x12.
-- ``gui/pathable``: now uses 32x32 sprites.
-
-## Documentation
-
-## API
+- `stockpiles`: allow filtering creatures by tameability
 
 ## Internals
 - ``dfhack.internal``: added memory analysis functions: ``msizeAddress``, ``getHeapState``, ``heapTakeSnapshot``, ``isAddressInHeap``, ``isAddressActiveInHeap``, ``isAddressUsedAfterFreeInHeap``, ``getAddressSizeInHeap``, and ``getRootAddressOfHeapObject``
@@ -76,6 +93,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - ``overlay.reload()``: has been renamed to ``overlay.rescan()`` so as not to conflict with the global ``reload()`` function. If you are developing an overlay, please take note of the new function name for reloading your overlay during development.
 - ``gui``: changed frame naming scheme to ``FRAME_X`` rather than ``X_FRAME``, and added aliases for backwards compatibility. (for example ``BOLD_FRAME`` is now called ``FRAME_BOLD``)
+- ``ensure_keys``: walks a series of keys, creating new tables for any missing values
 
 ## Removed
 - `orders`: ``library/military_include_artifact_materials`` library file removed since recent research indicates that platinum blunt weapons and silver crossbows are not more effective than standard steel. the alternate military orders file was also causing unneeded confusion.

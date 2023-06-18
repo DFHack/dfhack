@@ -206,7 +206,7 @@ long Textures::getOnOffTexposStart() {
     return g_on_off_texpos_start;
 }
 
-long Textures::getPathableTexposStart() {
+long Textures::getMapPathableTexposStart() {
     return g_pathable_texpos_start;
 }
 

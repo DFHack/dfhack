@@ -48,10 +48,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (enable != is_enabled)
     {
-#if 0
         if (!INTERPOSE_HOOK(prep_hook, logic).apply(enable))
             return CR_FAILURE;
-#endif
 
         is_enabled = enable;
     }

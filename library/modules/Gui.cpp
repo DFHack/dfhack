@@ -200,6 +200,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::enums::info_interface_mode_type::JUSTICE:
             newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
+        case df::enums::info_interface_mode_type::WORK_ORDERS:
+            if (game->main_interface.info.work_orders.conditions.open)
+                newFocusString += "/Conditions";
+            else
+                newFocusString += "/Default";
+            break;
         default:
             break;
         }

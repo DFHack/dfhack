@@ -1,9 +1,9 @@
 # list depends here.
 add_subdirectory(lodepng)
-add_subdirectory(md5)
-
 add_subdirectory(lua)
+add_subdirectory(md5)
 add_subdirectory(protobuf)
+
 if(UNIX)
     set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
     target_compile_options(protoc

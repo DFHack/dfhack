@@ -66,7 +66,7 @@ OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},
     default_enabled=true,
-    viewscreens='dwarfmode/Info/WORK_ORDERS',
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     frame={w=30, h=4},
 }
 
@@ -142,6 +142,7 @@ function OrdersOverlay:init()
 end
 
 function OrdersOverlay:onInput(keys)
+    if df.global.game.main_interface.job_details.open then return end
     if keys.CUSTOM_ALT_M then
         self.minimized = not self.minimized
         return true
@@ -149,6 +150,11 @@ function OrdersOverlay:onInput(keys)
     if OrdersOverlay.super.onInput(self, keys) then
         return true
     end
+end
+
+function OrdersOverlay:render(dc)
+    if df.global.game.main_interface.job_details.open then return end
+    OrdersOverlay.super.render(self, dc)
 end
 
 OVERLAY_WIDGETS = {

@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Blueprint library: pump_stack: updated walkthrough and separated dig and channel steps so boulders can be cleared
 - Blueprint library: aquifer_tap: updated walkthrough
 - `orders`: better order conditions for the ``smelting`` library orders to reduce cancellation spam
+- `dig-now`: can now handle digging obsidian that has been formed from magma and water
 
 ## Documentation
 - `blueprint-library-guide`: update Dreamfort screenshots, add ``aquifer_tap`` screenshot

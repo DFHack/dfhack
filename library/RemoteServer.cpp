@@ -476,11 +476,14 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
     CActiveSocket *client = nullptr;
 
     try {
-        while ((client = server.socket.Accept()) != NULL)
+        while (server.socket.IsSocketValid())
         {
-            BlockGuard lock;
-            ServerConnection::Accepted(client);
-            client = nullptr;
+            if ((client = server.socket.Accept()) != NULL)
+            {
+                BlockGuard lock;
+                ServerConnection::Accepted(client);
+                client = nullptr;
+            }
         }
     } catch(BlockedException &) {
         if (client)

@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- RemoteServer: fix accept continue to accept connections as long as the listening socket is valid and logs errors
 
 ## Misc Improvements
 

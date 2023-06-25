@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "Debug.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -85,6 +86,7 @@ namespace {
 }
 
 namespace DFHack {
+    DBG_DECLARE(core, socket, DebugCategory::LINFO);
 
     struct BlockGuard {
         std::lock_guard<std::mutex> lock;
@@ -483,6 +485,10 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
                 BlockGuard lock;
                 ServerConnection::Accepted(client);
                 client = nullptr;
+            }
+            else
+            {
+                WARN(socket).print("Accepting connection error: %s\n", server.socket.DescribeError());
             }
         }
     } catch(BlockedException &) {

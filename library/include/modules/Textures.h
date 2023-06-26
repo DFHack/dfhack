@@ -52,7 +52,7 @@ DFHACK_EXPORT long getOnOffTexposStart();
 DFHACK_EXPORT long getMapPathableTexposStart();
 
 /**
- * Get the first texpos for the unsuspend 32x32 sprites. It's a 3x1 grid.
+ * Get the first texpos for the unsuspend 32x32 sprites. It's a 4x1 grid.
  */
 DFHACK_EXPORT long getMapUnsuspendTexposStart();
 

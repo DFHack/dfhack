@@ -49,6 +49,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 
+# 50.09-r1
+
 # 50.08-r4
 
 ## New Plugins

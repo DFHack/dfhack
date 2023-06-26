@@ -217,7 +217,7 @@ create a drainage system so your dwarves don't drown when digging the tap, by
 running the ``library/aquifer_tap.csv`` ``/help`` blueprint.
 
 You can see how to nullify the water pressure (so you don't flood your fort) in
-the `Dreamfort screenshot above <Services levels (4 deep)>`_.
+the Dreamfort cistern screenshot above: `Services levels (4 deep)`_.
 
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__.

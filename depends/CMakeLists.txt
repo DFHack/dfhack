@@ -6,14 +6,10 @@ add_subdirectory(protobuf)
 
 if(UNIX)
     set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
-    target_compile_options(protoc
-        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
-    target_compile_options(protoc-bin
-        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
-    target_compile_options(protobuf-lite
-        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
-    target_compile_options(protobuf
-        PUBLIC -Wno-deprecated-declarations -Wno-restrict)
+    set_target_properties(protoc PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protoc-bin PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
 endif()
 
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated

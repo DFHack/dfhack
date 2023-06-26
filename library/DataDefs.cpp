@@ -213,12 +213,12 @@ std::string pointer_identity::getFullName()
 
 std::string container_identity::getFullName(type_identity *item)
 {
-    return "<" + (item ? item->getFullName() : std::string("void")) + ">";
+    return '<' + (item ? item->getFullName() : std::string("void")) + '>';
 }
 
 std::string ptr_container_identity::getFullName(type_identity *item)
 {
-    return "<" + (item ? item->getFullName() : std::string("void")) + "*>";
+    return '<' + (item ? item->getFullName() : std::string("void")) + std::string("*>");
 }
 
 std::string bit_container_identity::getFullName(type_identity *)

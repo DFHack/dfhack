@@ -46,6 +46,10 @@
 #ifndef GOOGLE_PROTOBUF_REPEATED_FIELD_H__
 #define GOOGLE_PROTOBUF_REPEATED_FIELD_H__
 
+#ifdef __GNUC__
+#pragma GCC system_header
+#endif
+
 #include <string>
 #include <iterator>
 #include <google/protobuf/stubs/common.h>

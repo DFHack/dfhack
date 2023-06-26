@@ -76,7 +76,7 @@ struct viewscreen_overlay : T {
                     [&](lua_State *L) {
                         Lua::Push(L, T::_identity.getName());
                         Lua::Push(L, this);
-                        Lua::PushInterfaceKeys(L, *input);
+                        Lua::PushInterfaceKeys(L, Screen::add_text_keys(*input));
                     }, [&](lua_State *L) {
                         input_is_handled = lua_toboolean(L, -1);
                     });

@@ -26,6 +26,7 @@ static long g_red_pin_texpos_start = -1;
 static long g_icons_texpos_start = -1;
 static long g_on_off_texpos_start = -1;
 static long g_pathable_texpos_start = -1;
+static long g_unsuspend_texpos_start = -1;
 static long g_control_panel_texpos_start = -1;
 static long g_thin_borders_texpos_start = -1;
 static long g_medium_borders_texpos_start = -1;
@@ -142,6 +143,8 @@ void Textures::init(color_ostream &out) {
                                           &g_on_off_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/pathable.png",
                                           &g_pathable_texpos_start, 32, 32);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/unsuspend.png",
+                                          &g_unsuspend_texpos_start, 32, 32);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/control-panel.png",
                                           &g_control_panel_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-thin.png",
@@ -208,6 +211,10 @@ long Textures::getOnOffTexposStart() {
 
 long Textures::getMapPathableTexposStart() {
     return g_pathable_texpos_start;
+}
+
+long Textures::getMapUnsuspendTexposStart() {
+    return g_unsuspend_texpos_start;
 }
 
 long Textures::getControlPanelTexposStart() {

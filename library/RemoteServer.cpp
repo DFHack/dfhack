@@ -478,7 +478,7 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
     CActiveSocket *client = nullptr;
 
     try {
-        while (server.socket.IsSocketValid())
+        for (int acceptFail = 0 ; server.socket.IsSocketValid() && acceptFail < 5 ; acceptFail++)
         {
             if ((client = server.socket.Accept()) != NULL)
             {
@@ -488,13 +488,22 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
             }
             else
             {
-                WARN(socket).print("Accepting connection error: %s\n", server.socket.DescribeError());
+                WARN(socket).print("Accepting connection error: %s %d of %d\n", server.socket.DescribeError(), acceptFail + 1, 5);
             }
         }
     } catch(BlockedException &) {
         if (client)
             client->Close();
         delete client;
+    }
+
+    if (server.socket.IsSocketValid())
+    {
+        WARN(socket).print("To many failed accept, shutting down RemoteServer \n");
+    }
+    else
+    {
+        WARN(socket).print("Listening socket invalid, shutting down RemoteServer\n");
     }
 }
 

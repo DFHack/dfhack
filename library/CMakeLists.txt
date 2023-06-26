@@ -377,9 +377,6 @@ if(WIN32)
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
-    # required because of transitively-included protobuf headers
-    target_compile_options(dfhack
-        INTERFACE -Wno-deprecated-declarations -Wno-restrict)
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
     add_library(dfhooks SHARED Hooks.cpp)
     target_link_libraries(dfhooks dfhack)

@@ -40,8 +40,6 @@ distribution.
 #include <mutex>
 #include <thread>
 
-#include "RemoteClient.h"
-
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
 #define DFH_MOD_ALT 4

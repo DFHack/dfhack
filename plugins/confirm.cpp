@@ -411,7 +411,7 @@ public:
             Screen::paintTile(corner_ur, x2, y1);
             Screen::paintTile(corner_dl, x1, y2);
             Screen::paintTile(corner_dr, x2, y2);
-            string title = " " + get_title() + " ";
+            string title = ' ' + get_title() + ' ';
             Screen::paintString(Screen::Pen(' ', COLOR_DARKGREY, COLOR_BLACK),
                 x2 - 6, y1, "DFHack");
             Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY),

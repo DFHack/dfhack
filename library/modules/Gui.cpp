@@ -343,6 +343,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.diplomacy.open) {
         newFocusString = baseFocus;
         newFocusString += "/Diplomacy";
+        if (game->main_interface.diplomacy.taking_requests)
+            newFocusString += "/Requests";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.petitions.open) {

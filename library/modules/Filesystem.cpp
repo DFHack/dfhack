@@ -99,7 +99,13 @@ bool Filesystem::mkdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
-    fail = ::_mkdir(path.c_str());
+    ::std::wstring wide_path;
+    int convertResult = MultiByteToWideChar(437, 0, path.c_str(), (int)strlen(path.c_str()), NULL, 0);
+    if (convertResult > 0) {
+        wide_path.resize(convertResult+10);
+        convertResult = MultiByteToWideChar(437, 0, path.c_str(), (int)strlen(path.c_str()), &wide_path[0], (int)wide_path.size());
+    }
+    fail = ::_wmkdir(wide_path.c_str());
 #else
     fail = ::mkdir(path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP |
                    S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -142,7 +148,13 @@ bool Filesystem::rmdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
-    fail = ::_rmdir(path.c_str());
+    ::std::wstring wide_path;
+    int convertResult = MultiByteToWideChar(437, 0, path.c_str(), (int)strlen(path.c_str()), NULL, 0);
+    if (convertResult > 0) {
+        wide_path.resize(convertResult+10);
+        convertResult = MultiByteToWideChar(437, 0, path.c_str(), (int)strlen(path.c_str()), &wide_path[0], (int)wide_path.size());
+    }
+    fail = ::_wrmdir(wide_path.c_str());
 #else
     fail = ::rmdir(path.c_str());
 #endif

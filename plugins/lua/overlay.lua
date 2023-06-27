@@ -597,6 +597,10 @@ function TitleVersionOverlay:init()
         table.insert(text, {text='Pre-release build', pen=COLOR_LIGHTRED})
     end
 
+    for _,t in ipairs(text) do
+        self.frame.w = math.max(self.frame.w, #t)
+    end
+
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},

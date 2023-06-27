@@ -11,8 +11,9 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 
-namespace DFHack {
-    DBG_EXTERN(stockpiles, log);
+namespace DFHack
+{
+DBG_EXTERN(stockpiles, log);
 }
 
 /**
@@ -20,8 +21,8 @@ namespace DFHack {
  * and their index in the stockpile_settings structures.
  */
 
-void OrganicMatLookup::food_mat_by_idx(organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat) {
-    DEBUG(log).print("food_lookup: food_idx(%zd)\n", food_idx);
+void OrganicMatLookup::food_mat_by_idx(color_ostream& out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat) {
+    DEBUG(log, out).print("food_lookup: food_idx(%zd)\n", food_idx);
     df::world_raws& raws = world->raws;
     df::special_mat_table table = raws.mat_table;
     int32_t main_idx = table.organic_indexes[mat_category][food_idx];
@@ -31,16 +32,16 @@ void OrganicMatLookup::food_mat_by_idx(organic_mat_category::organic_mat_categor
         mat_category == organic_mat_category::Eggs) {
         food_mat.creature = raws.creatures.all[type];
         food_mat.caste = food_mat.creature->caste[main_idx];
-        DEBUG(log).print("special creature type(%d) caste(%d)\n", type, main_idx);
+        DEBUG(log, out).print("special creature type(%d) caste(%d)\n", type, main_idx);
     }
     else {
         food_mat.material.decode(type, main_idx);
-        DEBUG(log).print("type(%d) index(%d) token(%s)\n", type, main_idx, food_mat.material.getToken().c_str());
+        DEBUG(log, out).print("type(%d) index(%d) token(%s)\n", type, main_idx, food_mat.material.getToken().c_str());
     }
 }
-std::string OrganicMatLookup::food_token_by_idx(organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx) {
+std::string OrganicMatLookup::food_token_by_idx(color_ostream& out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx) {
     FoodMat food_mat;
-    food_mat_by_idx(mat_category, idx, food_mat);
+    food_mat_by_idx(out, mat_category, idx, food_mat);
     if (food_mat.material.isValid()) {
         return food_mat.material.getToken();
     }
@@ -71,32 +72,32 @@ void OrganicMatLookup::food_build_map() {
     index_built = true;
 }
 
-int16_t OrganicMatLookup::food_idx_by_token(organic_mat_category::organic_mat_category mat_category, const std::string& token) {
+int16_t OrganicMatLookup::food_idx_by_token(color_ostream& out, organic_mat_category::organic_mat_category mat_category, const std::string& token) {
     df::world_raws& raws = world->raws;
     df::special_mat_table table = raws.mat_table;
-    DEBUG(log).print("food_idx_by_token:\n");
+    DEBUG(log, out).print("food_idx_by_token:\n");
     if (mat_category == organic_mat_category::Fish ||
         mat_category == organic_mat_category::UnpreparedFish ||
         mat_category == organic_mat_category::Eggs) {
         std::vector<std::string> tokens;
         split_string(&tokens, token, ":");
         if (tokens.size() != 2) {
-            WARN(log).print("creature invalid CREATURE:CASTE token: %s\n", token.c_str());
+            WARN(log, out).print("creature invalid CREATURE:CASTE token: %s\n", token.c_str());
             return -1;
         }
         int16_t creature_idx = find_creature(tokens[0]);
         if (creature_idx < 0) {
-            WARN(log).print("creature invalid token %s\n", tokens[0].c_str());
+            WARN(log, out).print("creature invalid token %s\n", tokens[0].c_str());
             return -1;
         }
         int16_t food_idx = linear_index(table.organic_types[mat_category], creature_idx);
         if (tokens[1] == "MALE")
             food_idx += 1;
         if (table.organic_types[mat_category][food_idx] == creature_idx) {
-            DEBUG(log).print("creature %s caste %s creature_idx(%d) food_idx(%d)\n", token.c_str(), tokens[1].c_str(), creature_idx, food_idx);
+            DEBUG(log, out).print("creature %s caste %s creature_idx(%d) food_idx(%d)\n", token.c_str(), tokens[1].c_str(), creature_idx, food_idx);
             return food_idx;
         }
-        WARN(log).print("creature caste not found: %s caste %s creature_idx(%d) food_idx(%d)\n", token.c_str(), tokens[1].c_str(), creature_idx, food_idx);
+        WARN(log, out).print("creature caste not found: %s caste %s creature_idx(%d) food_idx(%d)\n", token.c_str(), tokens[1].c_str(), creature_idx, food_idx);
         return -1;
     }
 
@@ -107,12 +108,12 @@ int16_t OrganicMatLookup::food_idx_by_token(organic_mat_category::organic_mat_ca
     int32_t index = mat_info.index;
     auto it = food_index[mat_category].find(std::make_pair(type, index));
     if (it != food_index[mat_category].end()) {
-        DEBUG(log).print("matinfo: %s type(%d) idx(%d) food_idx(%zd)\n", token.c_str(), mat_info.type, mat_info.index, it->second);
+        DEBUG(log, out).print("matinfo: %s type(%d) idx(%d) food_idx(%zd)\n", token.c_str(), mat_info.type, mat_info.index, it->second);
         return it->second;
 
     }
 
-    WARN(log).print("matinfo: %s type(%d) idx(%d) food_idx not found :(\n", token.c_str(), mat_info.type, mat_info.index);
+    WARN(log, out).print("matinfo: %s type(%d) idx(%d) food_idx not found :(\n", token.c_str(), mat_info.type, mat_info.index);
     return -1;
 }
 

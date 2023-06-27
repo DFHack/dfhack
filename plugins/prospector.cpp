@@ -662,6 +662,9 @@ static command_result map_prospector(color_ostream &con,
 
     for(uint32_t z = 0; z < z_max; z++)
     {
+        // the '- 100' is because DF v50 and later have a 100 offset in reported elevation
+        int global_z = world->map.region_z + z - 100;
+
         for(uint32_t b_y = 0; b_y < y_max; b_y++)
         {
             for(uint32_t b_x = 0; b_x < x_max; b_x++)
@@ -677,9 +680,6 @@ static command_result map_prospector(color_ostream &con,
                 // Find features
                 b->GetGlobalFeature(&blockFeatureGlobal);
                 b->GetLocalFeature(&blockFeatureLocal);
-
-                // the '- 100' is because DF v50 and later have a 100 offset in reported elevation
-                int global_z = world->map.region_z + z - 100;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)

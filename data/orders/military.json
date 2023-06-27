@@ -418,7 +418,7 @@
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
 				"material" : "INORGANIC:CASSITERITE",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",
@@ -697,7 +697,7 @@
 				"bearing" : "TIN",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",
@@ -758,7 +758,7 @@
 				"bearing" : "TIN",
 				"condition" : "AtMost",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",

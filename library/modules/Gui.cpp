@@ -200,6 +200,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::enums::info_interface_mode_type::JUSTICE:
             newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
+        case df::enums::info_interface_mode_type::WORK_ORDERS:
+            if (game->main_interface.info.work_orders.conditions.open)
+                newFocusString += "/Conditions";
+            else
+                newFocusString += "/Default";
+            break;
         default:
             break;
         }
@@ -337,6 +343,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.diplomacy.open) {
         newFocusString = baseFocus;
         newFocusString += "/Diplomacy";
+        if (game->main_interface.diplomacy.taking_requests)
+            newFocusString += "/Requests";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.petitions.open) {

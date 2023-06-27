@@ -3580,6 +3580,67 @@ static int internal_md5file(lua_State *L)
     }
 }
 
+/**************************
+ * Wrappers for Alias API *
+ **************************/
+
+static int internal_getAliasCommand(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    std::string ret = Core::getInstance().GetAliasCommand(name);
+    if (!ret.empty())
+        lua_pushstring(L, ret.c_str());
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int internal_listAliases(lua_State *L)
+{
+    auto aliases = Core::getInstance().ListAliases();
+
+    lua_newtable(L);
+    for (const auto& p : aliases)
+    {
+        Lua::Push(L, p.first.c_str()); // alias
+        Lua::PushVector(L, p.second);
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int internal_isAlias(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    lua_pushboolean(L, Core::getInstance().IsAlias(name));
+    return 1;
+}
+
+static int internal_addAlias(lua_State *L)
+{
+    std::vector<std::string> alias;
+    Lua::GetVector(L, alias, 1);
+
+    if (!alias.empty())
+    {
+        std::string name = alias[0];
+        alias.erase(alias.begin());
+        lua_pushboolean(L, Core::getInstance().AddAlias(name, alias));
+    } else {
+        lua_pushboolean(L, false);
+    }
+
+    return 1;
+}
+
+static int internal_removeAlias(lua_State *L)
+{
+    const char *rem_alias = luaL_checkstring(L, 1);
+
+    lua_pushboolean(L, Core::getInstance().RemoveAlias(rem_alias));
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -3608,6 +3669,13 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
+
+    { "getAliasCommand", internal_getAliasCommand },
+    { "isAlias", internal_isAlias },
+    { "listAliases", internal_listAliases },
+    { "addAlias", internal_addAlias },
+    { "removeAlias", internal_removeAlias },
+
     { NULL, NULL }
 };
 

@@ -1775,6 +1775,10 @@ Items module
 
   Checks whether the item and all items it contains, if any, can be traded.
 
+* ``dfhack.items.markForTrade(item, depot)``
+
+  Marks the given item for trade at the given depot.
+
 * ``dfhack.items.isRouteVehicle(item)``
 
   Checks whether the item is an assigned hauling vehicle.

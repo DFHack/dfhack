@@ -1552,8 +1552,7 @@ function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
         end
     end
     if not option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(value_or_index))
+        option_idx = 1
     end
     local old_option_idx = self.option_idx
     self.option_idx = option_idx
@@ -2392,9 +2391,15 @@ local function rangeslider_do_drag(self, width_per_idx)
         end
     end
     if new_left_idx and new_left_idx ~= self.get_left_idx_fn() then
+        if not new_right_idx and new_left_idx > self.get_right_idx_fn() then
+            self.on_right_change(new_left_idx)
+        end
         self.on_left_change(new_left_idx)
     end
     if new_right_idx and new_right_idx ~= self.get_right_idx_fn() then
+        if new_right_idx < self.get_left_idx_fn() then
+            self.on_left_change(new_right_idx)
+        end
         self.on_right_change(new_right_idx)
     end
 end

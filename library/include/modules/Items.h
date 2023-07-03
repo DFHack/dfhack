@@ -33,6 +33,7 @@ distribution.
 #include "MemAccess.h"
 
 #include "DataDefs.h"
+#include "df/building_tradedepotst.h"
 #include "df/item.h"
 #include "df/item_type.h"
 #include "df/general_ref.h"
@@ -199,6 +200,8 @@ DFHACK_EXPORT bool checkMandates(df::item *item);
 DFHACK_EXPORT bool canTrade(df::item *item);
 /// Checks whether the item and all items it contains, if any, can be traded
 DFHACK_EXPORT bool canTradeWithContents(df::item *item);
+/// marks the given item for trade at the given depot
+DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
 
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);

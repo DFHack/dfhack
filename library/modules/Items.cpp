@@ -39,6 +39,7 @@ distribution.
 using namespace std;
 
 #include "ModuleFactory.h"
+#include "modules/Job.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
@@ -48,6 +49,7 @@ using namespace std;
 #include "df/body_part_template_flags.h"
 #include "df/building.h"
 #include "df/building_actual.h"
+#include "df/building_tradedepotst.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/general_ref.h"
@@ -1633,6 +1635,42 @@ bool Items::canTradeWithContents(df::item *item)
         if (!canTrade(cit))
             return false;
     }
+
+    return true;
+}
+
+bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
+    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(depot);
+
+    // validate that the depot is in a good state
+    if (depot->getBuildStage() < depot->getMaxBuildStage())
+        return false;
+    if (depot->jobs.size() && depot->jobs[0]->job_type == df::job_type::DestroyBuilding)
+        return false;
+
+    auto href = df::allocate<df::general_ref_building_holderst>();
+    if (!href)
+        return false;
+
+    auto job = new df::job();
+    job->job_type = df::job_type::BringItemToDepot;
+    job->pos = df::coord(depot->centerx, depot->centery, depot->z);
+
+    // job <-> item link
+    if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled)) {
+        delete job;
+        delete href;
+        return false;
+    }
+
+    // job <-> building link
+    href->building_id = depot->id;
+    depot->jobs.push_back(job);
+    job->general_refs.push_back(href);
+
+    // add to job list
+    Job::linkIntoWorld(job);
 
     return true;
 }

@@ -216,6 +216,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString = baseFocus;
         newFocusString += "/ViewSheets";
         newFocusString += "/" + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        if (game->main_interface.view_sheets.active_sheet == df::view_sheet_type::BUILDING) {
+            auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid);
+            if (bld)
+                newFocusString += '/' + enum_item_key(bld->getType());
+        }
         focusStrings.push_back(newFocusString);
     }
 
@@ -328,6 +333,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.trade.open) {
         newFocusString = baseFocus;
         newFocusString += "/Trade";
+        if (game->main_interface.trade.choosing_merchant)
+            newFocusString += "/ChoosingMerchant";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.job_details.open) {
@@ -377,6 +386,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.unit_selector.open) {
         newFocusString = baseFocus;
         newFocusString += "/UnitSelector";
+        newFocusString += '/' + enum_item_key(game->main_interface.unit_selector.context);
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.announcement_alert.open) {

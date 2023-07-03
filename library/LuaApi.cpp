@@ -47,6 +47,7 @@ distribution.
 #include "modules/Burrows.h"
 #include "modules/Constructions.h"
 #include "modules/Designations.h"
+#include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -2999,6 +3000,9 @@ static int msize_address(uintptr_t ptr)
     return -1;
 }
 
+static std::string getClipboardText() { return DFSDL::DFSDL_GetClipboardTextCp437(); }
+static void setClipboardText(std::string s) { DFSDL::DFSDL_SetClipboardTextCp437(s); }
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3013,6 +3017,8 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
     WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
     WRAPN(msizeAddress, msize_address),
+    WRAP(getClipboardText),
+    WRAP(setClipboardText),
     { NULL, NULL }
 };
 

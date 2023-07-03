@@ -772,6 +772,16 @@ function EditField:onInput(keys)
     elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
         return true
+    elseif keys.CUSTOM_CTRL_C then
+        dfhack.internal.setClipboardText(self.text)
+        return true
+    elseif keys.CUSTOM_CTRL_X then
+        dfhack.internal.setClipboardText(self.text)
+        self:setText('')
+        return true
+    elseif keys.CUSTOM_CTRL_V then
+        self:insert(dfhack.internal.getClipboardText())
+        return true
     end
 
     -- if we're modal, then unconditionally eat all the input

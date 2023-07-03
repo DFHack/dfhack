@@ -3,7 +3,10 @@
 #include "modules/DFSDL.h"
 
 #include "Debug.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
+
+#include <SDL.h>
 
 namespace DFHack {
     DBG_DECLARE(core, dfsdl, DebugCategory::LINFO);
@@ -35,6 +38,10 @@ void (*g_SDL_FreeSurface)(SDL_Surface *) = nullptr;
 // int (*g_SDL_SemWait)(DFSDL_sem *) = nullptr;
 // int (*g_SDL_SemPost)(DFSDL_sem *) = nullptr;
 int (*g_SDL_PushEvent)(SDL_Event *) = nullptr;
+SDL_bool (*g_SDL_HasClipboardText)();
+int (*g_SDL_SetClipboardText)(const char *text);
+char * (*g_SDL_GetClipboardText)();
+void (*g_SDL_free)(void *);
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -71,6 +78,10 @@ bool DFSDL::init(color_ostream &out) {
     // bind(g_sdl_handle, SDL_SemWait);
     // bind(g_sdl_handle, SDL_SemPost);
     bind(g_sdl_handle, SDL_PushEvent);
+    bind(g_sdl_handle, SDL_HasClipboardText);
+    bind(g_sdl_handle, SDL_SetClipboardText);
+    bind(g_sdl_handle, SDL_GetClipboardText);
+    bind(g_sdl_handle, SDL_free);
     #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -123,4 +134,34 @@ void DFSDL::DFSDL_FreeSurface(SDL_Surface *surface) {
 
 int DFSDL::DFSDL_PushEvent(SDL_Event *event) {
     return g_SDL_PushEvent(event);
+}
+
+std::string DFSDL::DFSDL_GetClipboardTextUtf8() {
+    if (g_SDL_HasClipboardText() != SDL_TRUE)
+        return "";
+    char *text = g_SDL_GetClipboardText();
+    std::string ret = text;
+    g_SDL_free(text);
+    return ret;
+}
+
+std::string DFSDL::DFSDL_GetClipboardTextCp437() {
+    std::string utf8text = DFSDL_GetClipboardTextUtf8();
+    return UTF2DF(utf8text);
+}
+
+bool DFSDL::DFSDL_SetClipboardTextUtf8(const char *text) {
+    return g_SDL_SetClipboardText(text) == 0;
+}
+
+bool DFSDL::DFSDL_SetClipboardTextUtf8(const std::string &text) {
+    return DFSDL_SetClipboardTextUtf8(text.c_str());
+}
+
+bool DFSDL::DFSDL_SetClipboardTextCp437(const char *text) {
+    return DFSDL_SetClipboardTextUtf8(DF2UTF(text));
+}
+
+bool DFSDL::DFSDL_SetClipboardTextCp437(const std::string &text) {
+    return DFSDL_SetClipboardTextUtf8(DF2UTF(text));
 }

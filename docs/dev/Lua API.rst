@@ -2815,6 +2815,14 @@ and are only documented here for completeness:
   Returns 0 if the address is not found.
   Requires a heap snapshot.
 
+* ``dfhack.internal.getClipboardText()``
+
+  Gets the system clipboard text (converted to CP437 encoding).
+
+* ``dfhack.internal.setClipboardText(text)``
+
+  Converts the given text from CP437 to UTF-8 and sets the system clipboard
+  text.
 
 .. _lua-core-context:
 
@@ -4687,6 +4695,12 @@ following keyboard hotkeys:
 - Left/Right arrow: move the cursor one character to the left or right.
 - Ctrl-B/Ctrl-F: move the cursor one word back or forward.
 - Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+
+The widget also supports integration with the system clipboard:
+
+- Ctrl-C: copy current text to the system clipboard
+- Ctrl-X: copy current text to the system clipboard and clear text in widget
+- Ctrl-V: paste text from the system clipboard (text is converted to cp437)
 
 The ``EditField`` class also provides the following functions:
 

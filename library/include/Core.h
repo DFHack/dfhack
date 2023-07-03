@@ -72,6 +72,17 @@ namespace DFHack
         struct Hide;
     }
 
+    enum command_result
+    {
+        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
+        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
+        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
+        CR_OK = 0,               // Success
+        CR_FAILURE = 1,          // Failure
+        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
+        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
+    };
+
     enum state_change_event
     {
         SC_UNKNOWN = -1,

@@ -640,8 +640,12 @@ function EditField:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
+    local old = self.text
     self.text = text
     self:setCursor(cursor)
+    if self.on_change and text ~= old then
+        self.on_change(self.text, old)
+    end
 end
 
 function EditField:postUpdateLayout()
@@ -699,11 +703,7 @@ function EditField:onInput(keys)
     end
 
     if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
-        local old = self.text
         self:setText(self.saved_text)
-        if self.on_change and old ~= self.saved_text then
-            self.on_change(self.text, old)
-        end
         self:setFocus(false)
         return true
     end
@@ -746,9 +746,6 @@ function EditField:onInput(keys)
             elseif self.on_char then
                 return self.modal
             end
-        end
-        if self.on_change and self.text ~= old then
-            self.on_change(self.text, old)
         end
         return true
     elseif keys.KEYBOARD_CURSOR_LEFT then

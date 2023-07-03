@@ -1833,6 +1833,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, multiplyGroupActionTimers),
     WRAPM(Units, setActionTimers),
     WRAPM(Units, setGroupActionTimers),
+    WRAPM(Units, getUnitByNobleRole),
     { NULL, NULL }
 };
 
@@ -1921,6 +1922,14 @@ static int units_getCitizens(lua_State *L) {
     return 0;
 }
 
+static int units_getUnitsByNobleRole(lua_State *L) {
+    std::string role_name = lua_tostring(L, -1);
+    std::vector<df::unit *> units;
+    Units::getUnitsByNobleRole(units, role_name);
+    Lua::PushVector(L, units);
+    return 1;
+}
+
 static int units_getStressCutoffs(lua_State *L)
 {
     lua_newtable(L);
@@ -1935,6 +1944,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
+    { "getUnitsByNobleRole", units_getUnitsByNobleRole},
     { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };

@@ -42,11 +42,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role
 
 ## Internals
 
 ## Lua
 - ``dfhack.items.markForTrade``: new API for marking items for trade
+- ``dfhack.units.getUnitByNobleRole``, ``dfhack.units.getUnitsByNobleRole``: unit lookup API by role
 
 ## Removed
 

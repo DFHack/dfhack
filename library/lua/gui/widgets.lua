@@ -770,14 +770,14 @@ function EditField:onInput(keys)
         self:setCursor()
         return true
     elseif keys.CUSTOM_CTRL_C then
-        dfhack.internal.setClipboardText(self.text)
+        dfhack.internal.setClipboardTextCp437(self.text)
         return true
     elseif keys.CUSTOM_CTRL_X then
-        dfhack.internal.setClipboardText(self.text)
+        dfhack.internal.setClipboardTextCp437(self.text)
         self:setText('')
         return true
     elseif keys.CUSTOM_CTRL_V then
-        self:insert(dfhack.internal.getClipboardText())
+        self:insert(dfhack.internal.getClipboardTextCp437())
         return true
     end
 

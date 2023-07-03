@@ -2815,14 +2815,13 @@ and are only documented here for completeness:
   Returns 0 if the address is not found.
   Requires a heap snapshot.
 
-* ``dfhack.internal.getClipboardText()``
+* ``dfhack.internal.getClipboardTextCp437()``
 
-  Gets the system clipboard text (converted to CP437 encoding).
+  Gets the system clipboard text (and converts text to CP437 encoding).
 
-* ``dfhack.internal.setClipboardText(text)``
+* ``dfhack.internal.setClipboardTextCp437(text)``
 
-  Converts the given text from CP437 to UTF-8 and sets the system clipboard
-  text.
+  Sets the system clipboard text from a CP437 string.
 
 .. _lua-core-context:
 

@@ -3,7 +3,6 @@
 #include "modules/DFSDL.h"
 
 #include "Debug.h"
-#include "MiscUtils.h"
 #include "PluginManager.h"
 
 #include <SDL.h>
@@ -136,7 +135,7 @@ int DFSDL::DFSDL_PushEvent(SDL_Event *event) {
     return g_SDL_PushEvent(event);
 }
 
-std::string DFSDL::DFSDL_GetClipboardTextUtf8() {
+std::string DFSDL::DFSDL_GetClipboardText() {
     if (g_SDL_HasClipboardText() != SDL_TRUE)
         return "";
     char *text = g_SDL_GetClipboardText();
@@ -145,23 +144,6 @@ std::string DFSDL::DFSDL_GetClipboardTextUtf8() {
     return ret;
 }
 
-std::string DFSDL::DFSDL_GetClipboardTextCp437() {
-    std::string utf8text = DFSDL_GetClipboardTextUtf8();
-    return UTF2DF(utf8text);
-}
-
-bool DFSDL::DFSDL_SetClipboardTextUtf8(const char *text) {
+bool DFSDL::DFSDL_SetClipboardText(const char *text) {
     return g_SDL_SetClipboardText(text) == 0;
-}
-
-bool DFSDL::DFSDL_SetClipboardTextUtf8(const std::string &text) {
-    return DFSDL_SetClipboardTextUtf8(text.c_str());
-}
-
-bool DFSDL::DFSDL_SetClipboardTextCp437(const char *text) {
-    return DFSDL_SetClipboardTextUtf8(DF2UTF(text));
-}
-
-bool DFSDL::DFSDL_SetClipboardTextCp437(const std::string &text) {
-    return DFSDL_SetClipboardTextUtf8(DF2UTF(text));
 }

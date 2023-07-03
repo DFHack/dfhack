@@ -333,6 +333,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.trade.open) {
         newFocusString = baseFocus;
         newFocusString += "/Trade";
+        if (game->main_interface.trade.choosing_merchant)
+            newFocusString += "/ChoosingMerchant";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.job_details.open) {

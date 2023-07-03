@@ -2603,14 +2603,29 @@ static int screen_doSimulateInput(lua_State *L)
     int sz = lua_rawlen(L, 2);
     std::set<df::interface_key> keys;
 
+    char str = '\0';
     for (int j = 1; j <= sz; j++)
     {
         lua_rawgeti(L, 2, j);
-        keys.insert((df::interface_key)lua_tointeger(L, -1));
+        df::interface_key k = (df::interface_key)lua_tointeger(L, -1);
+        if (!str && k > df::interface_key::STRING_A000 && k <= df::interface_key::STRING_A255)
+            str = Screen::keyToChar(k);
+        keys.insert(k);
         lua_pop(L, 1);
     }
 
+    // if we're injecting a text keybinding, ensure it is reflected in the enabler text buffer
+    std::string prev_input;
+    if (str) {
+        prev_input = (const char *)&df::global::enabler->last_text_input[0];
+        df::global::enabler->last_text_input[0] = str;
+        df::global::enabler->last_text_input[1] = '\0';
+    }
+
     screen->feed(&keys);
+
+    if (str)
+        strcpy((char *)&df::global::enabler->last_text_input[0], prev_input.c_str());
     return 0;
 }
 

@@ -34,6 +34,27 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Internals
+
+## Lua
+- ``dfhack.items.markForTrade``: new API for marking items for trade
+
+## Removed
+
+# 50.09-r1
+
+# 50.08-r4
+
+## New Plugins
 - `logistics`: automatically mark and route items or animals that come to monitored stockpiles. options are toggleable on an overlay that comes up when you have a stockpile selected.
 
 ## Fixes
@@ -44,21 +65,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `autonick`: additional nicknames based on burrowing animals, colours, gems, and minerals
 - `stockpiles`: added ``barrels``, ``organic``, ``artifacts``, and ``masterworks`` stockpile presets
+- `orders`: only display import/export/sort/clear panel on main orders screen
+- `orders`: refine order conditions for library orders to reduce cancellation spam
 - Blueprint library: dreamfort: full rewrite and update for DF v50
 - Blueprint library: pump_stack: updated walkthrough and separated dig and channel steps so boulders can be cleared
 - Blueprint library: aquifer_tap: updated walkthrough
-- `orders`: better order conditions for the ``smelting`` library orders to reduce cancellation spam
+- `dig-now`: can now handle digging obsidian that has been formed from magma and water
 
 ## Documentation
-- `blueprint-library-guide`: update Dreamfort screenshots, add ``aquifer_tap`` screenshot
-
-## API
-
-## Internals
-
-## Lua
-
-## Removed
+- `blueprint-library-guide`: update Dreamfort screenshots and links, add ``aquifer_tap`` screenshot
 
 # 50.08-r3
 

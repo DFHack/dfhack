@@ -250,7 +250,7 @@ Features:
 - A grid of small farm plots for lucrative surface farming
 ""
 Manual steps you have to take:
-- Assign grazing livestock to the large pasture and dogs to the pasture over the central stairs (DFHack's autonestbox can manage the nestbox zones)
+"- Assign grazing livestock to the large pasture, dogs to the pasture over the central stairs, and male birds to the zone between the rows of nestboxes (DFHack's autonestbox will auto-assign the female egg-laying birds to the nestbox zones)"
 - Connect levers to the drawbridges that match the names of the levers
 - Assign minecarts to the trade goods and prisoner processing quantum stockpile hauling routes with assign-minecarts all
 ""
@@ -412,7 +412,7 @@ corridor_traps/surface_corridor_traps
 
 
 
-#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs and your grazing animals to the large pasture.) pastures and training areas
+"#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs, your grazing animals to the large pasture, and your male birds to the zone between the rows of nestboxes.) pastures and training areas"
 
 
 
@@ -430,7 +430,7 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,`,,`,"n{name=""Nestbox 1""}(1x1)","n{name=""Nestbox 2""}(1x1)","n{name=""Nestbox 3""}(1x1)","n{name=""Nestbox 4""}(1x1)","n{name=""Nestbox 5""}(1x1)","n{name=""Nestbox 6""}(1x1)","n{name=""Nestbox 7""}(1x1)",`,,,,,,`,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,"n/guarddogs{name=""Guard dogs""}(5x1)",~,~,~,~,,,,,,,,,,,`,,`
+,,,`,,`,,`,"n{name=""Male birds""}(7x3)",,,,,,,,"n/guarddogs{name=""Guard dogs""}(5x1)",~,~,~,~,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,`,,`,~,`,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,n/guarddogs(5x1),~,~,~,~,,,,,,,,,,,`,,`
 ,,,`,,`,,`,"n{name=""Nestbox 8""}(1x1)","n{name=""Nestbox 9""}(1x1)","n{name=""Nestbox 10""}(1x1)","n{name=""Nestbox 11""}(1x1)","n{name=""Nestbox 12""}(1x1)","n{name=""Nestbox 13""}(1x1)","n{name=""Nestbox 14""}(1x1)",`,,,,,,`,,,,,,,,,,`,,`
@@ -1686,7 +1686,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
-,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=Pots,Barrels,Jugs,Bags}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
+,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
 ,,"c{name=""Lye"" barrels=2}:+miscliquid",`,`,`,`,`,`,~,~,"u{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c

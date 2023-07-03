@@ -7,9 +7,9 @@ cmake_policy(SET CMP0074 NEW)
 project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.08")
-set(DFHACK_RELEASE "r4rc1")
-set(DFHACK_PRERELEASE TRUE)
+set(DF_VERSION "50.09")
+set(DFHACK_RELEASE "r1")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 1)
@@ -61,9 +61,9 @@ endif()
 
 if(WIN32)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1935 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1935))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1935 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1936 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1936))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1936 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
@@ -291,23 +291,20 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-if(WIN32)
-    # Do the same for SDL.dll
-    # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
-    # continue to include it so we don't break Steam players on update by removing
-    # the SDL.dll that DF needs.
-    set(SDL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
-    if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "1ae242c4b94cb03756a1288122a66faf")
-    else()
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "5a09604daca6b2b5ce049d79af935d6a")
-    endif()
-endif()
+# Download SDL release and extract into depends in the build dir
+# all we need are the header files (including generated headers), so the same release package
+# will work for all platforms
+# (the above statement is untested for OSX)
+set(SDL_VERSION 2.26.2)
+set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
+set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
+set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
+download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+    ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+    ${SDL_ZIP_MD5})
+file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+    DESTINATION ${SDL_ZIP_PATH})
+include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
 
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)

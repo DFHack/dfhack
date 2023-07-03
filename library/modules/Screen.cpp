@@ -78,7 +78,6 @@ namespace DFHack {
     DBG_DECLARE(core, screen, DebugCategory::LINFO);
 }
 
-
 /*
  * Screen painting API.
  */
@@ -106,9 +105,11 @@ df::coord2d Screen::getWindowSize()
     return df::coord2d(gps->dimx, gps->dimy);
 }
 
+/*
 void Screen::zoom(df::zoom_commands cmd) {
     enabler->zoom_display(cmd);
 }
+*/
 
 bool Screen::inGraphicsMode()
 {
@@ -584,12 +585,25 @@ void Hide::merge() {
 }
 } }
 
+std::set<df::interface_key> Screen::add_text_keys(const std::set<df::interface_key>& keys) {
+    std::set<df::interface_key> combined_keys(keys);
+    if (df::global::enabler->last_text_input[0]) {
+        char c = df::global::enabler->last_text_input[0];
+        df::interface_key key = charToKey(c);
+        DEBUG(screen).print("adding character %c as interface key %ld\n", c, key);
+        combined_keys.emplace(key);
+    }
+    return combined_keys;
+}
+
 string Screen::getKeyDisplay(df::interface_key key)
 {
-    if (enabler)
-        return enabler->GetKeyDisplay(key);
-
-    return "?";
+    int c = keyToChar(key);
+    if (c != -1)
+        return string(1, c);
+    if (key >= df::interface_key::CUSTOM_SHIFT_A && key <= df::interface_key::CUSTOM_SHIFT_Z)
+        return string(1, 'A' + (key - df::interface_key::CUSTOM_SHIFT_A));
+    return enabler->GetKeyDisplay(key);
 }
 
 int Screen::keyToChar(df::interface_key key)
@@ -938,7 +952,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     }
 
     lua_pushvalue(L, -2);
-    Lua::PushInterfaceKeys(L, *keys);
+    Lua::PushInterfaceKeys(L, Screen::add_text_keys(*keys));
 
     lua_call(L, 2, 0);
     self->update_focus(L, -1);
@@ -1021,6 +1035,7 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+    df::global::enabler->last_text_input[0] = '\0';
 }
 
 void dfhack_lua_viewscreen::onShow()

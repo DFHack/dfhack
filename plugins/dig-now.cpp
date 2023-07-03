@@ -388,21 +388,37 @@ struct dug_tile_info {
         df::tiletype tt = map.tiletypeAt(pos);
         tmat = tileMaterial(tt);
 
+        itype = df::item_type::BOULDER;
+        imat = -1;
+
+        df::tiletype_shape shape = tileShape(tt);
+        if (shape == df::tiletype_shape::WALL || shape == df::tiletype_shape::FORTIFICATION) {
+            switch (tmat) {
+                case df::tiletype_material::STONE:
+                case df::tiletype_material::MINERAL:
+                case df::tiletype_material::FEATURE:
+                    imat = map.baseMaterialAt(pos).mat_index;
+                    break;
+                case df::tiletype_material::LAVA_STONE:
+                {
+                    MaterialInfo mi;
+                    if (mi.findInorganic("OBSIDIAN"))
+                        imat = mi.index;
+                    return; // itype should always be BOULDER, regardless of vein
+                }
+                default:
+                    break;
+            }
+        }
+
         switch (map.BlockAtTile(pos)->veinTypeAt(pos)) {
             case df::inclusion_type::CLUSTER_ONE:
             case df::inclusion_type::CLUSTER_SMALL:
                 itype = df::item_type::ROUGH;
                 break;
             default:
-                itype = df::item_type::BOULDER;
+                break;
         }
-
-        imat = -1;
-        if (tileShape(tt) == df::tiletype_shape::WALL
-                && (tmat == df::tiletype_material::STONE
-                    || tmat == df::tiletype_material::MINERAL
-                    || tmat == df::tiletype_material::FEATURE))
-            imat = map.baseMaterialAt(pos).mat_index;
     }
 };
 
@@ -415,7 +431,6 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
-    case df::tiletype_material::LAVA_STONE:
     case df::tiletype_material::MAGMA:
     case df::tiletype_material::HFS:
     case df::tiletype_material::UNDERWORLD_GATE:
@@ -443,15 +458,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         DEBUG(general).print("dig_tile: not diggable\n");
         return false;
     }
-
-    /** The algorithm process seems to be:
-     * for each tile
-     *  check for a designation
-     *    if a designation exists send it to dig_tile
-     *
-     * dig_tile (below) then digs the layer below the channel designated tile
-     * thereby changing it and causing its designation to be lost
-     * */
 
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {

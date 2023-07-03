@@ -323,31 +323,7 @@ public:
     bool designate(color_ostream& out, df::item* item) override {
         if (!depot)
             return false;
-
-        auto href = df::allocate<df::general_ref_building_holderst>();
-        if (!href)
-            return false;
-
-        auto job = new df::job();
-        job->job_type = df::job_type::BringItemToDepot;
-        job->pos = df::coord(depot->centerx, depot->centery, depot->z);
-
-        // job <-> item link
-        if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled)) {
-            delete job;
-            delete href;
-            return false;
-        }
-
-        // job <-> building link
-        href->building_id = depot->id;
-        depot->jobs.push_back(job);
-        job->general_refs.push_back(href);
-
-        // add to job list
-        Job::linkIntoWorld(job);
-
-        return true;
+        return Items::markForTrade(item, depot);
     }
 
 private:

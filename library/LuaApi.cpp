@@ -1715,6 +1715,7 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getRedPinTexposStart),
     WRAPM(Textures, getIconsTexposStart),
     WRAPM(Textures, getOnOffTexposStart),
+    WRAPM(Textures, getMapUnsuspendTexposStart),
     WRAPM(Textures, getControlPanelTexposStart),
     WRAPM(Textures, getThinBordersTexposStart),
     WRAPM(Textures, getMediumBordersTexposStart),
@@ -2013,6 +2014,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
     WRAPM(Items, canTradeWithContents),
+    WRAPM(Items, markForTrade),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
     WRAPN(moveToGround, items_moveToGround),
@@ -2635,6 +2637,7 @@ static int screen_charToKey(lua_State *L)
     return 1;
 }
 
+/*
 static int screen_zoom(lua_State *L)
 {
     using df::global::enabler;
@@ -2651,6 +2654,7 @@ static int screen_zoom(lua_State *L)
     enabler->zoom_display(cmd);
     return 0;
 }
+*/
 
 }
 
@@ -2671,7 +2675,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "_doSimulateInput", screen_doSimulateInput },
     { "keyToChar", screen_keyToChar },
     { "charToKey", screen_charToKey },
-    { "zoom", screen_zoom },
+    //{ "zoom", screen_zoom },
     { NULL, NULL }
 };
 

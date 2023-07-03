@@ -84,7 +84,7 @@ using namespace DFHack;
 #include <condition_variable>
 #include "md5wrapper.h"
 
-#include "SDL_events.h"
+#include <SDL_events.h>
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
@@ -2347,99 +2347,37 @@ bool Core::DFH_ncurses_key(int key)
     return ncurses_wgetch(key, dummy);
 }
 
-int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
-{
-    // Assume keyboard layouts don't change the order of numbers:
-    if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
-    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
-
-    // These keys are mapped to the same control codes as Ctrl-?
-    switch (ke.ksym.sym)
-    {
-        case SDL::K_RETURN:
-        case SDL::K_KP_ENTER:
-        case SDL::K_TAB:
-        case SDL::K_ESCAPE:
-        case SDL::K_DELETE:
-            return ke.ksym.sym;
-        default:
-            break;
-    }
-
-    int unicode = ke.ksym.unicode;
-
-    // convert Ctrl characters to their 0x40-0x5F counterparts:
-    if (unicode < ' ')
-    {
-        unicode += 'A' - 1;
-    }
-
-    // convert A-Z to their a-z counterparts:
-    if('A' <= unicode && unicode <= 'Z')
-    {
-        unicode += 'a' - 'A';
-    }
-
-    // convert various other punctuation marks:
-    if('\"' == unicode) unicode = '\'';
-    if('+' == unicode) unicode = '=';
-    if(':' == unicode) unicode = ';';
-    if('<' == unicode) unicode = ',';
-    if('>' == unicode) unicode = '.';
-    if('?' == unicode) unicode = '/';
-    if('{' == unicode) unicode = '[';
-    if('|' == unicode) unicode = '\\';
-    if('}' == unicode) unicode = ']';
-    if('~' == unicode) unicode = '`';
-
-    return unicode;
-}
-
 // returns true if the event is handled
-bool Core::DFH_SDL_Event(SDL::Event* ev)
+bool Core::DFH_SDL_Event(SDL_Event* ev)
 {
     // do NOT process events before we are ready.
     if(!started || !ev)
         return false;
 
-    if(ev->type == SDL::ET_ACTIVEEVENT && ev->active.gain)
-    {
+    if (ev->type == SDL_WINDOWEVENT && ev->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         // clear modstate when gaining focus in case alt-tab was used when
         // losing focus and modstate is now incorrectly set
         modstate = 0;
         return false;
     }
 
-    if(ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
-    {
-        auto ke = (SDL::KeyboardEvent *)ev;
+    if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
+        auto &ke = ev->key;
 
-        if (ke->ksym.sym == SDL::K_LSHIFT || ke->ksym.sym == SDL::K_RSHIFT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
-        else if (ke->ksym.sym == SDL::K_LCTRL || ke->ksym.sym == SDL::K_RCTRL)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
-        else if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
-        else if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
+        if (ke.keysym.sym == SDLK_LSHIFT || ke.keysym.sym == SDLK_RSHIFT)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
+        else if (ke.keysym.sym == SDLK_LCTRL || ke.keysym.sym == SDLK_RCTRL)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
+        else if (ke.keysym.sym == SDLK_LALT || ke.keysym.sym == SDLK_RALT)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
+        else if (ke.state == SDL_PRESSED && !hotkey_states[ke.keysym.sym])
         {
-            hotkey_states[ke->ksym.sym] = true;
-
-            // Use unicode so Windows gives the correct value for the
-            // user's Input Language
-            if(ke->ksym.unicode && ((ke->ksym.unicode & 0xff80) == 0))
-            {
-                int key = UnicodeAwareSym(*ke);
-                SelectHotkey(key, modstate);
-            }
-            else
-            {
-                // Pretend non-ascii characters don't happen:
-                SelectHotkey(ke->ksym.sym, modstate);
-            }
+            hotkey_states[ke.keysym.sym] = true;
+            SelectHotkey(ke.keysym.sym, modstate);
         }
-        else if(ke->state == SDL::BTN_RELEASED)
+        else if(ke.state == SDL_RELEASED)
         {
-            hotkey_states[ke->ksym.sym] = false;
+            hotkey_states[ke.keysym.sym] = false;
         }
     }
     return false;
@@ -2455,12 +2393,12 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
-    if (sym == SDL::K_KP_ENTER)
-        sym = SDL::K_RETURN;
+    if (sym == SDLK_KP_ENTER)
+        sym = SDLK_RETURN;
 
     std::string cmd;
 
-    DEBUG(keybinding).print("checking hotkeys for sym=%d, modifiers=%x\n", sym, modifiers);
+    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
 
     {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
@@ -2497,7 +2435,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
         if (cmd.empty()) {
             // Check the hotkey keybindings
-            int idx = sym - SDL::K_F1;
+            int idx = sym - SDLK_F1;
             if(idx >= 0 && idx < 8)
             {
 /* TODO: understand how this changes for v50
@@ -2555,22 +2493,22 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     }
 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDL::K_a + (keyspec[0]-'A');
+        *psym = SDLK_a + (keyspec[0]-'A');
         return true;
     } else if (keyspec.size() == 1 && keyspec[0] == '`') {
-        *psym = SDL::K_BACKQUOTE;
+        *psym = SDLK_BACKQUOTE;
         return true;
     } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
-        *psym = SDL::K_0 + (keyspec[0]-'0');
+        *psym = SDLK_0 + (keyspec[0]-'0');
         return true;
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDL::K_F1 + (keyspec[1]-'1');
+        *psym = SDLK_F1 + (keyspec[1]-'1');
         return true;
     } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
-        *psym = SDL::K_F10 + (keyspec[2]-'0');
+        *psym = SDLK_F10 + (keyspec[2]-'0');
         return true;
     } else if (keyspec == "Enter") {
-        *psym = SDL::K_RETURN;
+        *psym = SDLK_RETURN;
         return true;
     } else
         return false;

@@ -436,8 +436,8 @@ struct GeoLayer
     void print_mineral_stats(color_ostream &out)
     {
         for (auto it = mineral_count.begin(); it != mineral_count.end(); ++it)
-            INFO(process, out).print("3dveins:    %s %s: %d  (%f)\n",
-                MaterialInfo(0, it->first.first).getToken(),
+            INFO(process, out).print("3dveins:    %s %s: %ld  (%f)\n",
+                MaterialInfo(0, it->first.first).getToken().c_str(),
                 ENUM_KEY_STR(inclusion_type, it->first.second),
                 it->second,
                 (float(it->second) / unmined_tiles));
@@ -1589,7 +1589,9 @@ bool VeinGenerator::place_veins(bool verbose)
         if (verbose)
         {
             if (j > 0)
+            {
                 TRACE(process, out).print("done.");
+            }
 
             TRACE(process, out).print(
                 "\nVein layer %zu of %zu: %s %s (%.2f%%)... ",

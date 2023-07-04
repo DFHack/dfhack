@@ -50,8 +50,10 @@ using namespace std;
 #include "df/building.h"
 #include "df/building_actual.h"
 #include "df/building_tradedepotst.h"
+#include "df/caravan_state.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
+#include "df/entity_raw.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/general_ref_contained_in_itemst.h"
@@ -828,15 +830,15 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
     item->getItemDescription(&tmp, type);
 
     if (decorate) {
-        if (item->flags.bits.foreign)
-            tmp = "(" + tmp + ")";
-
         addQuality(tmp, item->getQuality());
 
         if (item->isImproved()) {
             tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
             addQuality(tmp, item->getImprovementQuality());
         }
+
+        if (item->flags.bits.foreign)
+            tmp = "(" + tmp + ")";
     }
 
     return tmp;
@@ -1197,16 +1199,22 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     switch (item_type)
     {
     case item_type::BAR:
-    case item_type::SMALLGEM:
     case item_type::BLOCKS:
     case item_type::SKIN_TANNED:
         value = 5;
         break;
 
-    case item_type::ROUGH:
+    case item_type::SMALLGEM:
+        value = 20;
+        break;
+
     case item_type::BOULDER:
     case item_type::WOOD:
         value = 3;
+        break;
+
+    case item_type::ROUGH:
+        value = 6;
         break;
 
     case item_type::DOOR:
@@ -1224,6 +1232,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::TABLE:
     case item_type::COFFIN:
     case item_type::BOX:
+    case item_type::BAG:
     case item_type::BIN:
     case item_type::ARMORSTAND:
     case item_type::WEAPONRACK:
@@ -1367,6 +1376,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::COIN:
     case item_type::GLOB:
     case item_type::ORTHOPEDIC_CAST:
+    case item_type::BRANCH:
         value = 1;
         break;
 
@@ -1435,7 +1445,61 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     return value;
 }
 
-int Items::getValue(df::item *item)
+static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
+    static const int32_t DEFAULT_MULTIPLIER = 256;
+
+    if (!caravan)
+        return DEFAULT_MULTIPLIER;
+    auto caravan_he = df::historical_entity::find(caravan->entity);
+    if (!caravan_he)
+        return DEFAULT_MULTIPLIER;
+    int32_t war_alignment = caravan_he->entity_raw->sphere_alignment[df::sphere_type::WAR];
+    if (war_alignment == DEFAULT_MULTIPLIER)
+        return DEFAULT_MULTIPLIER;
+    switch (item->getType()) {
+    case df::item_type::WEAPON:
+    {
+        auto weap_def = df::itemdef_weaponst::find(item->getSubtype());
+        auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
+        if (!weap_def || !caravan_cre_raw || caravan_cre_raw->adultsize < weap_def->minimum_size)
+            return DEFAULT_MULTIPLIER;
+        break;
+    }
+    case df::item_type::ARMOR:
+    case df::item_type::SHOES:
+    case df::item_type::HELM:
+    case df::item_type::GLOVES:
+    case df::item_type::PANTS:
+    {
+        if (item->getEffectiveArmorLevel() <= 0)
+            return DEFAULT_MULTIPLIER;
+        auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
+        auto maker_cre_raw = df::creature_raw::find(item->getMakerRace());
+        if (!caravan_cre_raw || !maker_cre_raw)
+            return DEFAULT_MULTIPLIER;
+        if (caravan_cre_raw->adultsize < ((maker_cre_raw->adultsize * 6) / 7))
+            return DEFAULT_MULTIPLIER;
+        if (caravan_cre_raw->adultsize > ((maker_cre_raw->adultsize * 8) / 7))
+            return DEFAULT_MULTIPLIER;
+        break;
+    }
+    case df::item_type::SHIELD:
+    case df::item_type::AMMO:
+    case df::item_type::BACKPACK:
+    case df::item_type::QUIVER:
+        break;
+    default:
+        return DEFAULT_MULTIPLIER;
+    }
+    return war_alignment;
+}
+
+// returns 0 if the multiplier would be equal to 1.0
+static float get_trade_agreement_multiplier(df::item *item, df::caravan_state *caravan, bool caravan_buying) {
+    return 0;
+}
+
+int Items::getValue(df::item *item, df::caravan_state *caravan, bool caravan_buying)
 {
     CHECK_NULL_POINTER(item);
 
@@ -1447,16 +1511,38 @@ int Items::getValue(df::item *item)
     // Get base value for item type, subtype, and material
     int value = getItemBaseValue(item_type, item_subtype, mat_type, mat_subtype);
 
-    // Ignore entity value modifications
+    // entity value modifications
+    value *= get_war_multiplier(item, caravan);
+    value >>= 8;
 
     // Improve value based on quality
-    int quality = item->getQuality();
-    value *= (quality + 1);
-    if (quality == 5)
+    switch (item->getQuality()) {
+    case 1:
+        value *= 1.1;
+        value += 3;
+        break;
+    case 2:
+        value *= 1.2;
+        value += 6;
+        break;
+    case 3:
+        value *= 1.333;
+        value += 10;
+        break;
+    case 4:
+        value *= 1.5;
+        value += 15;
+        break;
+    case 5:
         value *= 2;
+        value += 30;
+        break;
+    default:
+        break;
+    }
 
     // Add improvement values
-    int impValue = item->getThreadDyeValue(NULL) + item->getImprovementsValue(NULL);
+    int impValue = item->getThreadDyeValue(caravan) + item->getImprovementsValue(caravan);
     if (item_type == item_type::AMMO) // Ammo improvements are worth less
         impValue /= 30;
     value += impValue;
@@ -1481,12 +1567,17 @@ int Items::getValue(df::item *item)
     if (item->flags.bits.artifact_mood)
         value *= 10;
 
+    // modify buy/sell prices if a caravan is given
+    float trade_agreement_multiplier = get_trade_agreement_multiplier(item, caravan, caravan_buying);
+    if (trade_agreement_multiplier > 0)
+        value *= trade_agreement_multiplier;
+
     // Boost value from stack size
     value *= item->getStackSize();
     // ...but not for coins
     if (item_type == item_type::COIN)
     {
-        value /= 500;
+        value /= 50;
         if (!value)
             value = 1;
     }

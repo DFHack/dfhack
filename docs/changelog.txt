@@ -47,10 +47,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role
 
 ## Internals
+- Price calculations fixed for many item types
 
 ## Lua
 - ``dfhack.items.markForTrade``: new API for marking items for trade
 - ``dfhack.units.getUnitByNobleRole``, ``dfhack.units.getUnitsByNobleRole``: unit lookup API by role
+- ``dfhack.items.getValue``: gained optional ``caravan`` and ``caravan_buying`` parameters for prices that take trader races and agreements into account
 
 ## Removed
 

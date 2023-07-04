@@ -1778,6 +1778,10 @@ Items module
   for the item and ``false`` to get the price that the caravan will sell the
   item for.
 
+* ``dfhack.items.isRequestedTradeGood(item)``
+
+  Returns whether any active caravan will pay extra for the given item.
+
 * ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
 
   Creates an item, similar to the `createitem` plugin.

@@ -436,9 +436,9 @@ struct GeoLayer
     void print_mineral_stats(color_ostream &out)
     {
         for (auto it = mineral_count.begin(); it != mineral_count.end(); ++it)
-            INFO(process, out).print("3dveins:    %s %s: %ld  (%f)\n",
+            INFO(process, out).print("3dveins:    %s %s: %d  (%f)\n",
                 MaterialInfo(0, it->first.first).getToken().c_str(),
-                ENUM_KEY_STR(inclusion_type, it->first.second),
+                ENUM_KEY_STR(inclusion_type, it->first.second).c_str(),
                 it->second,
                 (float(it->second) / unmined_tiles));
 
@@ -479,7 +479,7 @@ struct GeoBiome
         for (size_t i = 0; i < layers.size(); i++)
             if (layers[i])
             {
-                INFO(process, out).print("3dveins:  Layer %d\n", i);
+                INFO(process, out).print("3dveins:  Layer %ld\n", i);
                 layers[i]->print_mineral_stats(out);
             }
     }

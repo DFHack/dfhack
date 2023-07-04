@@ -53,6 +53,9 @@ using namespace std;
 #include "df/caravan_state.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
+#include "df/entity_buy_prices.h"
+#include "df/entity_buy_requests.h"
+#include "df/entity_sell_prices.h"
 #include "df/entity_raw.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
@@ -1446,23 +1449,23 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
 }
 
 static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
-    static const int32_t DEFAULT_MULTIPLIER = 256;
+    static const int32_t DEFAULT_WAR_MULTIPLIER = 256;
 
     if (!caravan)
-        return DEFAULT_MULTIPLIER;
+        return DEFAULT_WAR_MULTIPLIER;
     auto caravan_he = df::historical_entity::find(caravan->entity);
     if (!caravan_he)
-        return DEFAULT_MULTIPLIER;
+        return DEFAULT_WAR_MULTIPLIER;
     int32_t war_alignment = caravan_he->entity_raw->sphere_alignment[df::sphere_type::WAR];
-    if (war_alignment == DEFAULT_MULTIPLIER)
-        return DEFAULT_MULTIPLIER;
+    if (war_alignment == DEFAULT_WAR_MULTIPLIER)
+        return DEFAULT_WAR_MULTIPLIER;
     switch (item->getType()) {
     case df::item_type::WEAPON:
     {
         auto weap_def = df::itemdef_weaponst::find(item->getSubtype());
         auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
         if (!weap_def || !caravan_cre_raw || caravan_cre_raw->adultsize < weap_def->minimum_size)
-            return DEFAULT_MULTIPLIER;
+            return DEFAULT_WAR_MULTIPLIER;
         break;
     }
     case df::item_type::ARMOR:
@@ -1472,15 +1475,15 @@ static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
     case df::item_type::PANTS:
     {
         if (item->getEffectiveArmorLevel() <= 0)
-            return DEFAULT_MULTIPLIER;
+            return DEFAULT_WAR_MULTIPLIER;
         auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
         auto maker_cre_raw = df::creature_raw::find(item->getMakerRace());
         if (!caravan_cre_raw || !maker_cre_raw)
-            return DEFAULT_MULTIPLIER;
+            return DEFAULT_WAR_MULTIPLIER;
         if (caravan_cre_raw->adultsize < ((maker_cre_raw->adultsize * 6) / 7))
-            return DEFAULT_MULTIPLIER;
+            return DEFAULT_WAR_MULTIPLIER;
         if (caravan_cre_raw->adultsize > ((maker_cre_raw->adultsize * 8) / 7))
-            return DEFAULT_MULTIPLIER;
+            return DEFAULT_WAR_MULTIPLIER;
         break;
     }
     case df::item_type::SHIELD:
@@ -1489,14 +1492,42 @@ static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
     case df::item_type::QUIVER:
         break;
     default:
-        return DEFAULT_MULTIPLIER;
+        return DEFAULT_WAR_MULTIPLIER;
     }
     return war_alignment;
 }
 
-// returns 0 if the multiplier would be equal to 1.0
-static float get_trade_agreement_multiplier(df::item *item, df::caravan_state *caravan, bool caravan_buying) {
-    return 0;
+static const int32_t DEFAULT_AGREEMENT_MULTIPLIER = 128;
+
+static int32_t get_buy_request_multiplier(df::item *item, const df::entity_buy_prices *buy_prices) {
+    int16_t item_type = item->getType();
+    int16_t item_subtype = item->getSubtype();
+    int16_t mat_type = item->getMaterial();
+    int32_t mat_subtype = item->getMaterialIndex();
+
+    for (size_t idx = 0; idx < buy_prices->price.size(); ++idx) {
+        if (buy_prices->items->item_type[idx] != item_type)
+            continue;
+        if (buy_prices->items->item_subtype[idx] != -1 && buy_prices->items->item_subtype[idx] != item_subtype)
+            continue;
+        if (buy_prices->items->mat_types[idx] != -1 && buy_prices->items->mat_types[idx] != mat_type)
+            continue;
+        if (buy_prices->items->mat_indices[idx] != -1 && buy_prices->items->mat_indices[idx] != mat_subtype)
+            continue;
+        return buy_prices->price[idx];
+    }
+    return DEFAULT_AGREEMENT_MULTIPLIER;
+}
+
+static int32_t get_sell_request_multiplier(df::item *item, const df::entity_sell_prices *sell_prices) {
+    return DEFAULT_AGREEMENT_MULTIPLIER;
+}
+
+static int32_t get_trade_agreement_multiplier(df::item *item, df::caravan_state *caravan, bool caravan_buying) {
+    if (!caravan)
+        return DEFAULT_AGREEMENT_MULTIPLIER;
+    return caravan_buying ? get_buy_request_multiplier(item, caravan->buy_prices)
+        : get_sell_request_multiplier(item, caravan->sell_prices);
 }
 
 int Items::getValue(df::item *item, df::caravan_state *caravan, bool caravan_buying)
@@ -1567,10 +1598,9 @@ int Items::getValue(df::item *item, df::caravan_state *caravan, bool caravan_buy
     if (item->flags.bits.artifact_mood)
         value *= 10;
 
-    // modify buy/sell prices if a caravan is given
-    float trade_agreement_multiplier = get_trade_agreement_multiplier(item, caravan, caravan_buying);
-    if (trade_agreement_multiplier > 0)
-        value *= trade_agreement_multiplier;
+    // modify buy/sell prices
+    value *= get_trade_agreement_multiplier(item, caravan, caravan_buying);
+    value >>= 7;
 
     // Boost value from stack size
     value *= item->getStackSize();

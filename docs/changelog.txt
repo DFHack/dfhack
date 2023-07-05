@@ -45,6 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role
+- ``Items::markForTrade()``, ``Items::isRequestedTradeGood()``, ``Items::getValue``: see Lua notes below
 
 ## Internals
 - Price calculations fixed for many item types

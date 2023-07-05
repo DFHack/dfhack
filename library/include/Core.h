@@ -125,11 +125,7 @@ namespace DFHack
         friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
-        static Core& getInstance()
-        {
-            static Core instance;
-            return instance;
-        }
+        static Core& getInstance();
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -177,7 +173,7 @@ namespace DFHack
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
 
-        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+        static df::viewscreen *getTopViewscreen();
 
         DFHack::Console &getConsole() { return con; }
 

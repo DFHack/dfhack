@@ -1709,7 +1709,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (a_flags.bits.D_DISPLAY)
         {
             world->status.display_timer = r.display_timer;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
         }
         DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
         return true;

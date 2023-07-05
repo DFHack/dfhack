@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing
 
 ## Misc Improvements
 

@@ -408,8 +408,8 @@ endif()
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static dfhack)
-target_link_libraries(dfhack-run dfhack-client dfhack)
+target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
+target_link_libraries(dfhack-run dfhack-client)
 
 if(APPLE)
     add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")

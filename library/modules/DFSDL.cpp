@@ -135,15 +135,29 @@ int DFSDL::DFSDL_PushEvent(SDL_Event *event) {
     return g_SDL_PushEvent(event);
 }
 
-std::string DFSDL::DFSDL_GetClipboardText() {
-    if (g_SDL_HasClipboardText() != SDL_TRUE)
-        return "";
-    char *text = g_SDL_GetClipboardText();
-    std::string ret = text;
-    g_SDL_free(text);
-    return ret;
+void DFSDL::DFSDL_free(void *ptr) {
+    g_SDL_free(ptr);
 }
 
-bool DFSDL::DFSDL_SetClipboardText(const char *text) {
-    return g_SDL_SetClipboardText(text) == 0;
+char * DFSDL::DFSDL_GetClipboardText() {
+    return g_SDL_GetClipboardText();
+}
+
+int DFSDL::DFSDL_SetClipboardText(const char *text) {
+    return g_SDL_SetClipboardText(text);
+}
+
+DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
+    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
+        return "";
+    char *text = g_SDL_GetClipboardText();
+    std::string textcp437 = UTF2DF(text);
+    DFHack::DFSDL::DFSDL_free(text);
+    return textcp437;
+}
+
+DFHACK_EXPORT bool DFHack::setClipboardTextCp437(std::string text) {
+    if (!g_sdl_handle)
+        return false;
+    return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(DF2UTF(text).c_str());
 }

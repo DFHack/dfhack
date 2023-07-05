@@ -496,7 +496,3 @@ DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);
-
-// System clipboard -- submitted and returned text must be in CP437
-DFHACK_EXPORT std::string getClipboardTextCp437();
-DFHACK_EXPORT bool setClipboardTextCp437(std::string text);

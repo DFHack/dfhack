@@ -47,12 +47,17 @@ DFHACK_EXPORT void DFSDL_FreeSurface(SDL_Surface *surface);
 // DFHACK_EXPORT int DFSDL_SemWait(SDL_sem *sem);
 // DFHACK_EXPORT int DFSDL_SemPost(SDL_sem *sem);
 DFHACK_EXPORT int DFSDL_PushEvent(SDL_Event *event);
+DFHACK_EXPORT void DFSDL_free(void *ptr);
 
 // submitted and returned text is UTF-8
-// see wrapper functions in MiscUtils.h for cp-437 variants
-DFHACK_EXPORT std::string DFSDL_GetClipboardText();
-DFHACK_EXPORT bool DFSDL_SetClipboardText(const char *text);
+// see wrapper functions below for cp-437 variants
+DFHACK_EXPORT char * DFSDL_GetClipboardText();
+DFHACK_EXPORT int DFSDL_SetClipboardText(const char *text);
 
 }
+
+// System clipboard -- submitted and returned text must be in CP437
+DFHACK_EXPORT std::string getClipboardTextCp437();
+DFHACK_EXPORT bool setClipboardTextCp437(std::string text);
 
 }

@@ -472,11 +472,3 @@ DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::stri
 {
     return out.is_console() ? DF2CONSOLE(in) : in;
 }
-
-DFHACK_EXPORT std::string getClipboardTextCp437() {
-    return UTF2DF(DFHack::DFSDL::DFSDL_GetClipboardText());
-}
-
-DFHACK_EXPORT bool setClipboardTextCp437(std::string text) {
-    return DFHack::DFSDL::DFSDL_SetClipboardText(DF2UTF(text).c_str());
-}

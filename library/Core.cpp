@@ -1471,6 +1471,10 @@ std::string Core::getHackPath()
 #endif
 }
 
+df::viewscreen * Core::getTopViewscreen() {
+    return getInstance().top_viewscreen;
+}
+
 bool Core::InitMainThread() {
     Filesystem::init();
 
@@ -1853,6 +1857,11 @@ void *Core::GetData( std::string key )
     {
         return 0;// or throw an error.
     }
+}
+
+Core& Core::getInstance() {
+    static Core instance;
+    return instance;
 }
 
 bool Core::isSuspended(void)

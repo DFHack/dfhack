@@ -35,9 +35,10 @@ option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduce
 macro(CHECK_GCC compiler_path)
     execute_process(COMMAND ${compiler_path} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-    if(${GCC_VERSION_OUT} VERSION_LESS "4.8")
-        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.8 or later")
-    elseif(${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
+    if(${GCC_VERSION_OUT} VERSION_LESS "10")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
+        # TODO: this may need to be removed when DF linux actually comes out
+        # TODO: and we can test
         # GCC 5 changes ABI name mangling to enable C++11 changes.
         # This must be disabled to enable linking against DF.
         # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
@@ -66,8 +67,8 @@ if(WIN32)
     endif()
 endif()
 
-# Ask for C++11 standard from compilers
-set(CMAKE_CXX_STANDARD 11)
+# Ask for C++-20 standard from compilers
+set(CMAKE_CXX_STANDARD 20)
 # Require the standard support from compilers.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Use only standard c++ to keep code portable
@@ -226,9 +227,7 @@ if(UNIX)
     ## flags for GCC
     # default to hidden symbols
     # ensure compatibility with older CPUs
-    # enable C++11 features
     add_definitions(-DLINUX_BUILD)
-    add_definitions(-D_GLIBCXX_USE_C99)
     set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")

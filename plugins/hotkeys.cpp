@@ -103,7 +103,7 @@ static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, 
     }
 
     for (int i = 1; i <= 12; i++) {
-        valid_keys.push_back("F" + int_to_string(i));
+        valid_keys.push_back('F' + int_to_string(i));
     }
 
     valid_keys.push_back("`");

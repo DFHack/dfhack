@@ -182,23 +182,23 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.info.open) {
         newFocusString = baseFocus;
         newFocusString += "/Info";
-        newFocusString += "/" + enum_item_key(game->main_interface.info.current_mode);
+        newFocusString += '/' + enum_item_key(game->main_interface.info.current_mode);
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.creatures.current_mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.buildings.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
             break;
         case df::enums::info_interface_mode_type::LABOR:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.labor.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.labor.mode);
             break;
         case df::enums::info_interface_mode_type::ARTIFACTS:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.artifacts.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
         case df::enums::info_interface_mode_type::JUSTICE:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
         case df::enums::info_interface_mode_type::WORK_ORDERS:
             if (game->main_interface.info.work_orders.conditions.open)
@@ -215,7 +215,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.view_sheets.open) {
         newFocusString = baseFocus;
         newFocusString += "/ViewSheets";
-        newFocusString += "/" + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        newFocusString += '/' + enum_item_key(game->main_interface.view_sheets.active_sheet);
         if (game->main_interface.view_sheets.active_sheet == df::view_sheet_type::BUILDING) {
             auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid);
             if (bld)
@@ -244,7 +244,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Zone";
             if (game->main_interface.civzone.cur_bld) {
                 newFocusString += "/Some";
-                newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
+                newFocusString += '/' + enum_item_key(game->main_interface.civzone.cur_bld->type);
             }
             break;
         case df::enums::main_bottom_mode_type::ZONE_PAINT:
@@ -519,7 +519,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
     if (!adventure)
         return;
 
-    focus += "/" + enum_item_key(adventure->menu);
+    focus += '/' + enum_item_key(adventure->menu);
 }
 */
 
@@ -1447,7 +1447,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         if (flags.bits.D_DISPLAY)
         {
             world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
         }
         return -1;
     }
@@ -1709,7 +1709,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (a_flags.bits.D_DISPLAY)
         {
             world->status.display_timer = r.display_timer;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
         }
         DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
         return true;

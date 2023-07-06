@@ -40,8 +40,6 @@ distribution.
 #include <mutex>
 #include <thread>
 
-#include "RemoteClient.h"
-
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
 #define DFH_MOD_ALT 4
@@ -73,6 +71,17 @@ namespace DFHack
     {
         struct Hide;
     }
+
+    enum command_result
+    {
+        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
+        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
+        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
+        CR_OK = 0,               // Success
+        CR_FAILURE = 1,          // Failure
+        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
+        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
+    };
 
     enum state_change_event
     {
@@ -116,11 +125,7 @@ namespace DFHack
         friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
-        static Core& getInstance()
-        {
-            static Core instance;
-            return instance;
-        }
+        static Core& getInstance();
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -168,7 +173,7 @@ namespace DFHack
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
 
-        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+        static df::viewscreen *getTopViewscreen();
 
         DFHack::Console &getConsole() { return con; }
 

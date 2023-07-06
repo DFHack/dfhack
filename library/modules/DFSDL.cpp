@@ -5,7 +5,7 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
-#include <SDL.h>
+#include <SDL_stdinc.h>
 
 namespace DFHack {
     DBG_DECLARE(core, dfsdl, DebugCategory::LINFO);

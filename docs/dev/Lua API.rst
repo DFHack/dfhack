@@ -1438,10 +1438,23 @@ Units module
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
 
+* ``dfhack.units.getUnitByNobleRole(role_name)``
+
+  Returns the unit assigned to the given noble role, if any. ``role_name`` must
+  be one of the position codes associated with the active fort or civilization
+  government. For example: ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
+  Note that if more than one unit has the role, only the first will be
+  returned. See ``getUnitsByNobleRole`` below for retrieving all units with a
+  particular role.
+
+* ``dfhack.units.getUnitsByNobleRole(role_name)``
+
+  Returns a list of units (possibly empty) assigned to the given noble role.
+
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a table (list) of all citizens, which you would otherwise have to loop over all
-  units in world and test against ``isCitizen()`` to discover.
+  Returns a table (list) of all citizens, which you would otherwise have to
+  loop over all units in world and test against ``isCitizen()`` to discover.
 
 * ``dfhack.units.teleport(unit, pos)``
 

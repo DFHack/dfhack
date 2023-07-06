@@ -2020,6 +2020,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getSubtypeDef),
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
+    WRAPM(Items, isRequestedTradeGood),
     WRAPM(Items, createItem),
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),

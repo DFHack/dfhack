@@ -204,7 +204,7 @@ DFHACK_EXPORT bool canTradeWithContents(df::item *item);
 /// marks the given item for trade at the given depot
 DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
 /// Returns true if an active caravan will pay extra for the given item
-DFHACK_EXPORT bool isRequestedTradeGood(df::item *item);
+DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
 
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);

@@ -1778,9 +1778,10 @@ Items module
   for the item and ``false`` to get the price that the caravan will sell the
   item for.
 
-* ``dfhack.items.isRequestedTradeGood(item)``
+* ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
 
-  Returns whether any active caravan will pay extra for the given item.
+  Returns whether a caravan will pay extra for the given item. If caravan_state
+  is not given, checks all active caravans.
 
 * ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
 

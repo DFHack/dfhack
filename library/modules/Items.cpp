@@ -1917,7 +1917,19 @@ static int32_t get_trade_agreement_multiplier(df::item *item, const df::caravan_
         : get_sell_request_multiplier(item, caravan);
 }
 
-bool Items::isRequestedTradeGood(df::item *item) {
+static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
+    auto trade_state = caravan->trade_state;
+    if (caravan->time_remaining <= 0 ||
+            (trade_state != df::caravan_state::T_trade_state::Approaching &&
+                trade_state != df::caravan_state::T_trade_state::AtDepot))
+        return false;
+    return get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER;
+}
+
+bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
+    if (caravan)
+        return is_requested_trade_good(item, caravan);
+
     for (auto caravan : df::global::plotinfo->caravans) {
         auto trade_state = caravan->trade_state;
         if (caravan->time_remaining <= 0 ||

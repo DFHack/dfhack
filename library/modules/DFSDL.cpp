@@ -5,6 +5,8 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include <SDL_stdinc.h>
+
 namespace DFHack {
     DBG_DECLARE(core, dfsdl, DebugCategory::LINFO);
 }
@@ -35,6 +37,10 @@ void (*g_SDL_FreeSurface)(SDL_Surface *) = nullptr;
 // int (*g_SDL_SemWait)(DFSDL_sem *) = nullptr;
 // int (*g_SDL_SemPost)(DFSDL_sem *) = nullptr;
 int (*g_SDL_PushEvent)(SDL_Event *) = nullptr;
+SDL_bool (*g_SDL_HasClipboardText)();
+int (*g_SDL_SetClipboardText)(const char *text);
+char * (*g_SDL_GetClipboardText)();
+void (*g_SDL_free)(void *);
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -71,6 +77,10 @@ bool DFSDL::init(color_ostream &out) {
     // bind(g_sdl_handle, SDL_SemWait);
     // bind(g_sdl_handle, SDL_SemPost);
     bind(g_sdl_handle, SDL_PushEvent);
+    bind(g_sdl_handle, SDL_HasClipboardText);
+    bind(g_sdl_handle, SDL_SetClipboardText);
+    bind(g_sdl_handle, SDL_GetClipboardText);
+    bind(g_sdl_handle, SDL_free);
     #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -123,4 +133,31 @@ void DFSDL::DFSDL_FreeSurface(SDL_Surface *surface) {
 
 int DFSDL::DFSDL_PushEvent(SDL_Event *event) {
     return g_SDL_PushEvent(event);
+}
+
+void DFSDL::DFSDL_free(void *ptr) {
+    g_SDL_free(ptr);
+}
+
+char * DFSDL::DFSDL_GetClipboardText() {
+    return g_SDL_GetClipboardText();
+}
+
+int DFSDL::DFSDL_SetClipboardText(const char *text) {
+    return g_SDL_SetClipboardText(text);
+}
+
+DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
+    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
+        return "";
+    char *text = g_SDL_GetClipboardText();
+    std::string textcp437 = UTF2DF(text);
+    DFHack::DFSDL::DFSDL_free(text);
+    return textcp437;
+}
+
+DFHACK_EXPORT bool DFHack::setClipboardTextCp437(std::string text) {
+    if (!g_sdl_handle)
+        return false;
+    return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(DF2UTF(text).c_str());
 }

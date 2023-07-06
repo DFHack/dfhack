@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing
 
 ## Misc Improvements
+- ``widgets.EditField``: DFHack edit fields now support cut/copy/paste with the system clipboard with Ctrl-X/Ctrl-C/Ctrl-V
 
 ## Documentation
 

@@ -3039,6 +3039,8 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
     WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
     WRAPN(msizeAddress, msize_address),
+    WRAP(getClipboardTextCp437),
+    WRAP(setClipboardTextCp437),
     { NULL, NULL }
 };
 

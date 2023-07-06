@@ -1441,13 +1441,11 @@ Units module
 * ``dfhack.units.getUnitByNobleRole(role_name)``
 
   Returns the unit assigned to the given noble role, if any. ``role_name`` must
-  be one of the position codes associated with the active fort government.
-  Normally, this includes: ``MILITIA_COMMANDER``, ``MILITIA_CAPTAIN``,
-  ``SHERIFF``, ``CAPTAIN_OF_THE_GUARD``, ``EXPEDITION_LEADER``, ``MAYOR``,
-  ``MANAGER``, ``CHIEF_MEDICAL_DWARF``, ``BROKER``, ``BOOKKEEPER``,
-  ``CHAMPION``, ``HAMMERER``, ``DUNGEON_MASTER``, and ``MESSENGER``. Note that
-  if more than one unit has the role, only the first will be returned. See
-  ``getUnitsByNobleRole`` below for retrieving all units with a particular role.
+  be one of the position codes associated with the active fort or civilization
+  government. For example: ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
+  Note that if more than one unit has the role, only the first will be
+  returned. See ``getUnitsByNobleRole`` below for retrieving all units with a
+  particular role.
 
 * ``dfhack.units.getUnitsByNobleRole(role_name)``
 

@@ -782,8 +782,7 @@ static int32_t get_noble_position_id(const df::historical_entity::T_positions &p
     return -1;
 }
 
-static void get_assigned_noble_units(vector<df::unit *> &units, const df::historical_entity::T_positions &positions, int32_t noble_position_id, size_t limit) {
-    units.clear();
+static void add_assigned_noble_units(vector<df::unit *> &units, const df::historical_entity::T_positions &positions, int32_t noble_position_id, size_t limit) {
     for (auto &assignment : positions.assignments) {
         if (assignment->position_id != noble_position_id)
             continue;
@@ -802,17 +801,20 @@ static void get_assigned_noble_units(vector<df::unit *> &units, const df::histor
 static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
     auto &site = df::global::world->world_data->active_site[0];
     for (auto &link : site->entity_links) {
-        auto gov = df::historical_entity::find(link->entity_id);
-        if (!gov || gov->type != df::historical_entity_type::SiteGovernment)
+        auto he = df::historical_entity::find(link->entity_id);
+        if (!he ||
+                (he->type != df::historical_entity_type::SiteGovernment &&
+                 he->type != df::historical_entity_type::Civilization))
             continue;
-        int32_t noble_position_id = get_noble_position_id(gov->positions, noble);
+        int32_t noble_position_id = get_noble_position_id(he->positions, noble);
         if (noble_position_id < 0)
-            return;
-        get_assigned_noble_units(units, gov->positions, noble_position_id, limit);
+            continue;
+        add_assigned_noble_units(units, he->positions, noble_position_id, limit);
     }
 }
 
 bool Units::getUnitsByNobleRole(vector<df::unit *> &units, std::string noble) {
+    units.clear();
     get_units_by_noble_role(units, noble);
     return !units.empty();
 }

@@ -593,7 +593,7 @@ bool VeinGenerator::init_biomes()
 
         if (info.geo_index < 0 || !info.geobiome)
         {
-            ERR(process, out).print("Biome %zd is not defined.\n", i);
+            WARN(process, out).print("Biome %zd is not defined.\n", i);
             return false;
         }
 
@@ -804,7 +804,7 @@ bool VeinGenerator::scan_layer_depth(Block *b, df::coord2d column, int z)
             {
                 if (z != min_level[idx]-1 && min_level[idx] <= top_solid)
                 {
-                    ERR(process, out).print("Discontinuous layer %d at (%d,%d,%d).\n",
+                    WARN(process, out).print("Discontinuous layer %d at (%d,%d,%d).\n",
                         layer->index, x+column.x*16, y+column.y*16, z
                     );
                     return false;
@@ -854,7 +854,7 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
 
                     if (max_level[i+1] != min_level[i]-1)
                     {
-                        ERR(process, out).print(
+                        WARN(process, out).print(
                             "Gap or overlap with next layer %d at (%d,%d,%d-%d).\n",
                             i+1, x+column.x*16, y+column.y*16, max_level[i+1], min_level[i]
                         );
@@ -897,7 +897,7 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
                         }
                     }
 
-                    ERR(process, out).print(
+                    WARN(process, out).print(
                         "Layer height change in layer %d at (%d,%d,%d): %d instead of %d.\n",
                         i, x+column.x*16, y+column.y*16, max_level[i],
                         size, biome->layers[i]->thickness
@@ -939,7 +939,7 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
                     if (unsigned(key.first) >= materials.size() ||
                         unsigned(key.second) >= NUM_INCLUSIONS)
                     {
-                        ERR(process, out).print("Invalid vein code: %d %d - aborting.\n",key.first,key.second);
+                        WARN(process, out).print("Invalid vein code: %d %d - aborting.\n",key.first,key.second);
                         return false;
                     }
 
@@ -1097,7 +1097,7 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
 
                 if (!ok)
                 {
-                    ERR(process, out).print(
+                    WARN(process, out).print(
                         "Couldn't write %d vein at (%d,%d,%d)\n",
                         mat, x+column.x*16, y+column.y*16, z
                     );
@@ -1288,7 +1288,7 @@ bool GeoLayer::form_veins(color_ostream &out)
 
         if (parent_id >= (int)refs.size())
         {
-            ERR(process, out).print("Forward vein reference in biome %d.\n", biome->info.geo_index);
+            WARN(process, out).print("Forward vein reference in biome %d.\n", biome->info.geo_index);
             return false;
         }
 
@@ -1364,7 +1364,7 @@ bool VeinGenerator::place_orphan(t_veinkey key, int size, GeoLayer *from)
 
     if (best.empty())
     {
-        ERR(process,out).print(
+        WARN(process,out).print(
             "Could not place orphaned vein %s %s anywhere.\n",
             MaterialInfo(0,key.first).getToken().c_str(),
             ENUM_KEY_STR(inclusion_type, key.second).c_str()
@@ -1548,7 +1548,7 @@ bool VeinGenerator::place_veins(bool verbose)
 
             if (!isStoneInorganic(key.first))
             {
-                ERR(process, out).print(
+                WARN(process, out).print(
                     "Invalid vein material: %s\n",
                     MaterialInfo(0, key.first).getToken().c_str()
                 );
@@ -1558,7 +1558,7 @@ bool VeinGenerator::place_veins(bool verbose)
 
             if (!is_valid_enum_item(key.second))
             {
-                ERR(process, out).print("Invalid vein type: %d\n", key.second);
+                WARN(process, out).print("Invalid vein type: %d\n", key.second);
                 return false;
             }
 
@@ -1577,7 +1577,7 @@ bool VeinGenerator::place_veins(bool verbose)
     {
         if (queue[j]->parent && !queue[j]->parent->placed)
         {
-            ERR(process, out).print(
+            WARN(process, out).print(
                 "\nParent vein not placed for %s %s.\n",
                 MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
                 ENUM_KEY_STR(inclusion_type, queue[j]->vein.second).c_str()

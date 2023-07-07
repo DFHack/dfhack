@@ -106,9 +106,13 @@ namespace DFHack
         StateChangeScript(state_change_event event, std::string path, bool save_specific = false)
             :event(event), path(path), save_specific(save_specific)
         { }
-        bool operator==(const StateChangeScript& other)
+        bool const operator==(const StateChangeScript& other)
         {
             return event == other.event && path == other.path && save_specific == other.save_specific;
+        }
+        bool const operator!=(const StateChangeScript& other)
+        {
+            return !(operator==(other));
         }
     };
 

@@ -756,9 +756,10 @@ function EditField:onInput(keys)
                                                find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.CUSTOM_CTRL_A then -- home
-        self:setCursor(1)
-        return true
+    -- commented out until we get HOME key support from DF
+    -- elseif keys.CUSTOM_CTRL_A then -- home
+    --     self:setCursor(1)
+    --     return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true

@@ -588,7 +588,7 @@ static int do_cycle(color_ostream &out);
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(config,out).print("initializing %s\n", plugin_name);
 
-    tailor_instance = dts::make_unique<Tailor>();
+    tailor_instance = std::make_unique<Tailor>();
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(

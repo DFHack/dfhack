@@ -1404,7 +1404,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d(dts::make_unique<Private>()),
+    d(std::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},
@@ -1501,7 +1501,7 @@ bool Core::InitMainThread() {
     #else
         const char * path = "hack\\symbols.xml";
     #endif
-    auto local_vif = dts::make_unique<DFHack::VersionInfoFactory>();
+    auto local_vif = std::make_unique<DFHack::VersionInfoFactory>();
     std::cerr << "Identifying DF version.\n";
     try
     {
@@ -1517,7 +1517,7 @@ bool Core::InitMainThread() {
         return false;
     }
     vif = std::move(local_vif);
-    auto local_p = dts::make_unique<DFHack::Process>(*vif);
+    auto local_p = std::make_unique<DFHack::Process>(*vif);
     local_p->ValidateDescriptionOS();
     vinfo = local_p->getDescriptor();
 

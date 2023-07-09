@@ -2360,12 +2360,8 @@ static bool getSuppressDuplicateKeyboardEvents() {
     auto L = Lua::Core::State;
     color_ostream_proxy out(Core::getInstance().getConsole());
     Lua::StackUnwinder top(L);
-    bool suppress = false;
-    Lua::CallLuaModuleFunction(out, L, "dfhack", "getSuppressDuplicateKeyboardEvents", 0, 1,
-        Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
-            suppress = lua_toboolean(L, -1);
-        }, false);
-    return suppress;
+    return DFHack::Lua::PushModulePublic(out, L, "dfhack", "SUPPRESS_DUPLICATE_KEYBOARD_EVENTS") &&
+        lua_toboolean(L, -1);
 }
 
 // returns true if the event is handled

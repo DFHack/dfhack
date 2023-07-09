@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - ``widgets.EditField``: DFHack edit fields now support cut/copy/paste with the system clipboard with Ctrl-X/Ctrl-C/Ctrl-V
+- Suppress DF keyboard events when a DFHack keybinding is matched. This prevents, for example, a backtick from appearing in a textbox as text when you launch `gui/launcher` from the backtick keybinding.
 
 ## Documentation
 

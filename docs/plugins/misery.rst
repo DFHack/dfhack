@@ -2,7 +2,7 @@ misery
 ======
 
 .. dfhack-tool::
-    :summary: Lower the baseline for your citizens' happiness.
+    :summary: Make citizens more miserable.
     :tags: fort gameplay units
 
 When enabled, all of your citizens receive a negative thought about a

@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.EditField``: DFHack edit fields now support cut/copy/paste with the system clipboard with Ctrl-X/Ctrl-C/Ctrl-V
 
 ## Documentation
+- `misery`: rewrite the documentation to clarify the actual effects of the plugin
 
 ## API
 - ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role

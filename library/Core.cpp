@@ -2356,6 +2356,18 @@ bool Core::DFH_ncurses_key(int key)
     return ncurses_wgetch(key, dummy);
 }
 
+static bool getSuppressDuplicateKeyboardEvents() {
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+    bool suppress = false;
+    Lua::CallLuaModuleFunction(out, L, "dfhack", "getSuppressDuplicateKeyboardEvents", 0, 1,
+        Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
+            suppress = lua_toboolean(L, -1);
+        }, false);
+    return suppress;
+}
+
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev)
 {
@@ -2390,7 +2402,7 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
             if (handled) {
                 DEBUG(keybinding).print("inhibiting SDL key down event\n");
                 hotkey_states[sym] = true;
-                return true;
+                return getSuppressDuplicateKeyboardEvents();
             }
         }
         else if (ke.state == SDL_RELEASED)

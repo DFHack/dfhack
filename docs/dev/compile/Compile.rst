@@ -89,7 +89,7 @@ assistance.
 All Platforms
 =============
 Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this,
-but from command line is the usual way to do this; thought the Windows section below points out some
+but from command line is the usual way to do this; though the Windows section below points out some
 Windows batch files that can be used to avoid opening a terminal/command-prompt.
 
 You should seek cmake's documentation online or via ``cmake --help`` to see how the command works. See

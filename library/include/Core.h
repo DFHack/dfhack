@@ -250,7 +250,6 @@ namespace DFHack
         int8_t modstate;
 
         std::map<int, std::vector<KeyBinding> > key_bindings;
-        std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
         enum hotkey_set_t {
             NO,

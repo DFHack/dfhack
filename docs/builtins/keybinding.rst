@@ -33,6 +33,11 @@ The ``<key>`` parameter above has the following **case-sensitive** syntax::
 where the ``KEY`` part can be any recognized key and :kbd:`[`:kbd:`]` denote
 optional parts.
 
+DFHack commands can advertise the contexts in which they can be usefully run.
+For example, a command that acts on a selected unit can tell `keybinding` that
+it is not "applicable" in the current context if a unit is not actively
+selected.
+
 When multiple commands are bound to the same key combination, DFHack selects
 the first applicable one. Later ``add`` commands, and earlier entries within one
 ``add`` command have priority. Commands that are not specifically intended for

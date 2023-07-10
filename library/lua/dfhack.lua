@@ -63,6 +63,11 @@ function dfhack.getHideArmokTools()
     return dfhack.HIDE_ARMOK_TOOLS
 end
 
+dfhack.SUPPRESS_DUPLICATE_KEYBOARD_EVENTS = true
+function dfhack.getSuppressDuplicateKeyboardEvents()
+    return dfhack.SUPPRESS_DUPLICATE_KEYBOARD_EVENTS
+end
+
 -- Error handling
 
 safecall = dfhack.safecall

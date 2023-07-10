@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Suppress DF keyboard events when a DFHack keybinding is matched. This prevents, for example, a backtick from appearing in a textbox as text when you launch `gui/launcher` from the backtick keybinding.
 
 ## Documentation
+- `misery`: rewrite the documentation to clarify the actual effects of the plugin
 
 ## API
 - ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role

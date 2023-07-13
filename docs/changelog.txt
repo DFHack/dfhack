@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `autonick`: add more variety to nicknames based on famous literary dwarves
 
 ## Documentation
 

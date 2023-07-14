@@ -88,9 +88,9 @@ assistance.
 
 All Platforms
 =============
-Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this,
-but from command line is the usual way to do this; thought the Windows section below points out some
-Windows batch files that can be used to avoid opening a terminal/command-prompt.
+Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this
+for you, but it's more common to do it from the command line. Windows developers can refer to the
+Windows section below for batch files that can be used to avoid opening a terminal/command-prompt.
 
 You should seek cmake's documentation online or via ``cmake --help`` to see how the command works. See
 the `build-options` page for help finding the DFHack build options relevant to you.

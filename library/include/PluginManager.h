@@ -35,8 +35,6 @@ distribution.
 #include "Core.h"
 #include "DataFuncs.h"
 
-#include "RemoteClient.h"
-
 typedef struct lua_State lua_State;
 
 namespace tthread

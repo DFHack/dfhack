@@ -103,7 +103,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                     WARN(manager).print(" has %d access\n", access);
                     cavein_possible = config.riskaverse;
                     cavein_candidates.emplace(pos, access);
-                    least_access = min(access, least_access);
+                    least_access = std::min(access, least_access);
                 }
             } else if (config.insta_dig && isEntombed(miner_pos, pos)) {
                 manage_one(pos, true, false);
@@ -141,7 +141,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
             for (df::block_square_event* event: block->block_events) {
                 if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                     // we want to let the user keep some designations free of being managed
-                    auto b = max(0, cavein_candidates[pos] - least_access);
+                    auto b = std::max(0, cavein_candidates[pos] - least_access);
                     auto v = 1000 + (b * 1700);
                     DEBUG(manager).print("(" COORD ") 1000+1000(%d) -> %d {least-access: %d}\n",COORDARGS(pos), b, v, least_access);
                     evT->priority[Coord(local)] = v;

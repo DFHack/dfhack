@@ -1404,7 +1404,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d(dts::make_unique<Private>()),
+    d(std::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},
@@ -1471,6 +1471,10 @@ std::string Core::getHackPath()
 #endif
 }
 
+df::viewscreen * Core::getTopViewscreen() {
+    return getInstance().top_viewscreen;
+}
+
 bool Core::InitMainThread() {
     Filesystem::init();
 
@@ -1497,7 +1501,7 @@ bool Core::InitMainThread() {
     #else
         const char * path = "hack\\symbols.xml";
     #endif
-    auto local_vif = dts::make_unique<DFHack::VersionInfoFactory>();
+    auto local_vif = std::make_unique<DFHack::VersionInfoFactory>();
     std::cerr << "Identifying DF version.\n";
     try
     {
@@ -1513,7 +1517,7 @@ bool Core::InitMainThread() {
         return false;
     }
     vif = std::move(local_vif);
-    auto local_p = dts::make_unique<DFHack::Process>(*vif);
+    auto local_p = std::make_unique<DFHack::Process>(*vif);
     local_p->ValidateDescriptionOS();
     vinfo = local_p->getDescriptor();
 
@@ -1853,6 +1857,11 @@ void *Core::GetData( std::string key )
     {
         return 0;// or throw an error.
     }
+}
+
+Core& Core::getInstance() {
+    static Core instance;
+    return instance;
 }
 
 bool Core::isSuspended(void)
@@ -2347,11 +2356,21 @@ bool Core::DFH_ncurses_key(int key)
     return ncurses_wgetch(key, dummy);
 }
 
+static bool getSuppressDuplicateKeyboardEvents() {
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+    return DFHack::Lua::PushModulePublic(out, L, "dfhack", "SUPPRESS_DUPLICATE_KEYBOARD_EVENTS") &&
+        lua_toboolean(L, -1);
+}
+
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev)
 {
+    static std::map<int, bool> hotkey_states;
+
     // do NOT process events before we are ready.
-    if(!started || !ev)
+    if (!started || !ev)
         return false;
 
     if (ev->type == SDL_WINDOWEVENT && ev->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
@@ -2363,23 +2382,40 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
 
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         auto &ke = ev->key;
+        auto &sym = ke.keysym.sym;
 
-        if (ke.keysym.sym == SDLK_LSHIFT || ke.keysym.sym == SDLK_RSHIFT)
+        if (sym == SDLK_LSHIFT || sym == SDLK_RSHIFT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
-        else if (ke.keysym.sym == SDLK_LCTRL || ke.keysym.sym == SDLK_RCTRL)
+        else if (sym == SDLK_LCTRL || sym == SDLK_RCTRL)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
-        else if (ke.keysym.sym == SDLK_LALT || ke.keysym.sym == SDLK_RALT)
+        else if (sym == SDLK_LALT || sym == SDLK_RALT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
-        else if (ke.state == SDL_PRESSED && !hotkey_states[ke.keysym.sym])
+        else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
-            hotkey_states[ke.keysym.sym] = true;
-            SelectHotkey(ke.keysym.sym, modstate);
+            // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
+            DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
+            bool handled = SelectHotkey(sym, modstate);
+            if (handled) {
+                DEBUG(keybinding).print("inhibiting SDL key down event\n");
+                hotkey_states[sym] = true;
+                return getSuppressDuplicateKeyboardEvents();
+            }
         }
-        else if(ke.state == SDL_RELEASED)
+        else if (ke.state == SDL_RELEASED)
         {
-            hotkey_states[ke.keysym.sym] = false;
+            DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
+            hotkey_states[sym] = false;
         }
     }
+    else if (ev->type == SDL_TEXTINPUT) {
+        auto &te = ev->text;
+        DEBUG(keybinding).print("text input: '%s'\n", te.text);
+        if (strlen(te.text) == 1 && hotkey_states[te.text[0]]) {
+            DEBUG(keybinding).print("inhibiting SDL text event\n");
+            return true;
+        }
+    }
+
     return false;
 }
 

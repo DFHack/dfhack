@@ -1833,6 +1833,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, multiplyGroupActionTimers),
     WRAPM(Units, setActionTimers),
     WRAPM(Units, setGroupActionTimers),
+    WRAPM(Units, getUnitByNobleRole),
     { NULL, NULL }
 };
 
@@ -1921,6 +1922,14 @@ static int units_getCitizens(lua_State *L) {
     return 0;
 }
 
+static int units_getUnitsByNobleRole(lua_State *L) {
+    std::string role_name = lua_tostring(L, -1);
+    std::vector<df::unit *> units;
+    Units::getUnitsByNobleRole(units, role_name);
+    Lua::PushVector(L, units);
+    return 1;
+}
+
 static int units_getStressCutoffs(lua_State *L)
 {
     lua_newtable(L);
@@ -1935,6 +1944,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
+    { "getUnitsByNobleRole", units_getUnitsByNobleRole},
     { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };
@@ -2010,6 +2020,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getSubtypeDef),
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
+    WRAPM(Items, isRequestedTradeGood),
     WRAPM(Items, createItem),
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
@@ -2604,14 +2615,29 @@ static int screen_doSimulateInput(lua_State *L)
     int sz = lua_rawlen(L, 2);
     std::set<df::interface_key> keys;
 
+    char str = '\0';
     for (int j = 1; j <= sz; j++)
     {
         lua_rawgeti(L, 2, j);
-        keys.insert((df::interface_key)lua_tointeger(L, -1));
+        df::interface_key k = (df::interface_key)lua_tointeger(L, -1);
+        if (!str && k > df::interface_key::STRING_A000 && k <= df::interface_key::STRING_A255)
+            str = Screen::keyToChar(k);
+        keys.insert(k);
         lua_pop(L, 1);
     }
 
+    // if we're injecting a text keybinding, ensure it is reflected in the enabler text buffer
+    std::string prev_input;
+    if (str) {
+        prev_input = (const char *)&df::global::enabler->last_text_input[0];
+        df::global::enabler->last_text_input[0] = str;
+        df::global::enabler->last_text_input[1] = '\0';
+    }
+
     screen->feed(&keys);
+
+    if (str)
+        strcpy((char *)&df::global::enabler->last_text_input[0], prev_input.c_str());
     return 0;
 }
 
@@ -3014,6 +3040,8 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
     WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
     WRAPN(msizeAddress, msize_address),
+    WRAP(getClipboardTextCp437),
+    WRAP(setClipboardTextCp437),
     { NULL, NULL }
 };
 

@@ -640,8 +640,12 @@ function EditField:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
+    local old = self.text
     self.text = text
     self:setCursor(cursor)
+    if self.on_change and text ~= old then
+        self.on_change(self.text, old)
+    end
 end
 
 function EditField:postUpdateLayout()
@@ -699,11 +703,7 @@ function EditField:onInput(keys)
     end
 
     if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
-        local old = self.text
         self:setText(self.saved_text)
-        if self.on_change and old ~= self.saved_text then
-            self.on_change(self.text, old)
-        end
         self:setFocus(false)
         return true
     end
@@ -747,9 +747,6 @@ function EditField:onInput(keys)
                 return self.modal
             end
         end
-        if self.on_change and self.text ~= old then
-            self.on_change(self.text, old)
-        end
         return true
     elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
@@ -759,9 +756,10 @@ function EditField:onInput(keys)
                                                find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.CUSTOM_CTRL_A then -- home
-        self:setCursor(1)
-        return true
+    -- commented out until we get HOME key support from DF
+    -- elseif keys.CUSTOM_CTRL_A then -- home
+    --     self:setCursor(1)
+    --     return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
@@ -771,6 +769,16 @@ function EditField:onInput(keys)
         return true
     elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
+        return true
+    elseif keys.CUSTOM_CTRL_C then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        return true
+    elseif keys.CUSTOM_CTRL_X then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        self:setText('')
+        return true
+    elseif keys.CUSTOM_CTRL_V then
+        self:insert(dfhack.internal.getClipboardTextCp437())
         return true
     end
 

@@ -585,8 +585,10 @@ void Hide::merge() {
 }
 } }
 
-std::set<df::interface_key> Screen::add_text_keys(const std::set<df::interface_key>& keys) {
-    std::set<df::interface_key> combined_keys(keys);
+std::set<df::interface_key> Screen::normalize_text_keys(const std::set<df::interface_key>& keys) {
+    std::set<df::interface_key> combined_keys;
+    std::copy_if(keys.begin(), keys.end(), std::inserter(combined_keys, combined_keys.begin()),
+        [](df::interface_key k){ return k <= df::interface_key::STRING_A000 || k > df::interface_key::STRING_A255; } );
     if (df::global::enabler->last_text_input[0]) {
         char c = df::global::enabler->last_text_input[0];
         df::interface_key key = charToKey(c);
@@ -952,7 +954,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     }
 
     lua_pushvalue(L, -2);
-    Lua::PushInterfaceKeys(L, Screen::add_text_keys(*keys));
+    Lua::PushInterfaceKeys(L, Screen::normalize_text_keys(*keys));
 
     lua_call(L, 2, 0);
     self->update_focus(L, -1);

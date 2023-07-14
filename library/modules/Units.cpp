@@ -59,6 +59,7 @@ using namespace std;
 #include "df/entity_position_assignment.h"
 #include "df/entity_raw.h"
 #include "df/entity_raw_flags.h"
+#include "df/entity_site_link.h"
 #include "df/identity_type.h"
 #include "df/game_mode.h"
 #include "df/histfig_entity_link_positionst.h"
@@ -80,6 +81,8 @@ using namespace std;
 #include "df/unit_soul.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_site.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
 
@@ -768,6 +771,60 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
         }
     }
     return true;
+}
+
+static int32_t get_noble_position_id(const df::historical_entity::T_positions &positions, const string &noble) {
+    string target_id = toUpper(noble);
+    for (auto &position : positions.own) {
+        if (position->code == target_id)
+            return position->id;
+    }
+    return -1;
+}
+
+static void add_assigned_noble_units(vector<df::unit *> &units, const df::historical_entity::T_positions &positions, int32_t noble_position_id, size_t limit) {
+    for (auto &assignment : positions.assignments) {
+        if (assignment->position_id != noble_position_id)
+            continue;
+        auto histfig = df::historical_figure::find(assignment->histfig);
+        if (!histfig)
+            continue;
+        auto unit = df::unit::find(histfig->unit_id);
+        if (!unit)
+            continue;
+        units.emplace_back(unit);
+        if (limit > 0 && units.size() >= limit)
+            break;
+    }
+}
+
+static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
+    auto &site = df::global::world->world_data->active_site[0];
+    for (auto &link : site->entity_links) {
+        auto he = df::historical_entity::find(link->entity_id);
+        if (!he ||
+                (he->type != df::historical_entity_type::SiteGovernment &&
+                 he->type != df::historical_entity_type::Civilization))
+            continue;
+        int32_t noble_position_id = get_noble_position_id(he->positions, noble);
+        if (noble_position_id < 0)
+            continue;
+        add_assigned_noble_units(units, he->positions, noble_position_id, limit);
+    }
+}
+
+bool Units::getUnitsByNobleRole(vector<df::unit *> &units, std::string noble) {
+    units.clear();
+    get_units_by_noble_role(units, noble);
+    return !units.empty();
+}
+
+df::unit *Units::getUnitByNobleRole(string noble) {
+    vector<df::unit *> units;
+    get_units_by_noble_role(units, noble, 1);
+    if (units.empty())
+        return NULL;
+    return units[0];
 }
 
 bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {

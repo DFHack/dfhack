@@ -4,11 +4,19 @@ add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
 
+if(UNIX)
+    set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
+    set_target_properties(protoc PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protoc-bin PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+endif()
+
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)
-    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")
+    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare -Wno-restrict")
 endif()
 endif()
 

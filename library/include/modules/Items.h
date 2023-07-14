@@ -34,6 +34,7 @@ distribution.
 
 #include "DataDefs.h"
 #include "df/building_tradedepotst.h"
+#include "df/caravan_state.h"
 #include "df/item.h"
 #include "df/item_type.h"
 #include "df/general_ref.h"
@@ -189,8 +190,8 @@ DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item 
 /// Gets value of base-quality item with specified type and material
 DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype);
 
-/// Gets the value of a specific item, ignoring civ values and trade agreements
-DFHACK_EXPORT int getValue(df::item *item);
+/// Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given
+DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL, bool caravan_buying = false);
 
 DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* creator);
 
@@ -202,6 +203,8 @@ DFHACK_EXPORT bool canTrade(df::item *item);
 DFHACK_EXPORT bool canTradeWithContents(df::item *item);
 /// marks the given item for trade at the given depot
 DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
+/// Returns true if an active caravan will pay extra for the given item
+DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
 
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);

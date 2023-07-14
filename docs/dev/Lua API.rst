@@ -1438,10 +1438,23 @@ Units module
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
 
+* ``dfhack.units.getUnitByNobleRole(role_name)``
+
+  Returns the unit assigned to the given noble role, if any. ``role_name`` must
+  be one of the position codes associated with the active fort or civilization
+  government. For example: ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
+  Note that if more than one unit has the role, only the first will be
+  returned. See ``getUnitsByNobleRole`` below for retrieving all units with a
+  particular role.
+
+* ``dfhack.units.getUnitsByNobleRole(role_name)``
+
+  Returns a list of units (possibly empty) assigned to the given noble role.
+
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a table (list) of all citizens, which you would otherwise have to loop over all
-  units in world and test against ``isCitizen()`` to discover.
+  Returns a table (list) of all citizens, which you would otherwise have to
+  loop over all units in world and test against ``isCitizen()`` to discover.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1755,9 +1768,20 @@ Items module
 
   Calculates the base value for an item of the specified type and material.
 
-* ``dfhack.items.getValue(item)``
+* ``dfhack.items.getValue(item[, caravan_state, caravan_buying])``
 
-  Calculates the Basic Value of an item, as seen in the View Item screen.
+  Calculates the value of an item. If a ``df.caravan_state`` object is given
+  (from ``df.global.plotinfo.caravans`` or
+  ``df.global.main_interface.trade.mer``), then the value is modified by civ
+  properties and any trade agreements that might be in effect. In this case,
+  specify ``caravan_buying`` as ``true`` to get the price the caravan will pay
+  for the item and ``false`` to get the price that the caravan will sell the
+  item for.
+
+* ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
+
+  Returns whether a caravan will pay extra for the given item. If caravan_state
+  is not given, checks all active caravans.
 
 * ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
 
@@ -2819,6 +2843,13 @@ and are only documented here for completeness:
   Returns 0 if the address is not found.
   Requires a heap snapshot.
 
+* ``dfhack.internal.getClipboardTextCp437()``
+
+  Gets the system clipboard text (and converts text to CP437 encoding).
+
+* ``dfhack.internal.setClipboardTextCp437(text)``
+
+  Sets the system clipboard text from a CP437 string.
 
 .. _lua-core-context:
 
@@ -4691,6 +4722,12 @@ following keyboard hotkeys:
 - Left/Right arrow: move the cursor one character to the left or right.
 - Ctrl-B/Ctrl-F: move the cursor one word back or forward.
 - Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+
+The widget also supports integration with the system clipboard:
+
+- Ctrl-C: copy current text to the system clipboard
+- Ctrl-X: copy current text to the system clipboard and clear text in widget
+- Ctrl-V: paste text from the system clipboard (text is converted to cp437)
 
 The ``EditField`` class also provides the following functions:
 

@@ -27,6 +27,8 @@ distribution.
 #include "MiscUtils.h"
 #include "ColorText.h"
 
+#include "modules/DFSDL.h"
+
 #ifndef LINUX_BUILD
 // We don't want min and max macros
 #define NOMINMAX

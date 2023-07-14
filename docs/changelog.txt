@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing
 
 ## Misc Improvements
+- `autonick`: add more variety to nicknames based on famous literary dwarves
 - ``widgets.EditField``: DFHack edit fields now support cut/copy/paste with the system clipboard with Ctrl-X/Ctrl-C/Ctrl-V
 - Suppress DF keyboard events when a DFHack keybinding is matched. This prevents, for example, a backtick from appearing in a textbox as text when you launch `gui/launcher` from the backtick keybinding.
 

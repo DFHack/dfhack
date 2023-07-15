@@ -574,7 +574,7 @@ local function get_disposition(unit)
         disposition = DISPOSITION.TRAINED
     elseif dfhack.units.isTamable(unit) then
         disposition = DISPOSITION.WILD_TRAINABLE
-    elseif dfhack.units.isInvader(unit) then
+    elseif dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit) then
         disposition = DISPOSITION.HOSTILE
     else
         disposition = DISPOSITION.WILD_UNTRAINABLE

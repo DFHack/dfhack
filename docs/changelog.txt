@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Plugins
 - `3dveins`: reinstated for v50, this plugin replaces vanilla DF's blobby vein generation with veins that flow smoothly and naturally between z-levels
+- `zone`: new searchable, sortable, filterable screen for assigning units to pastures
 
 ## Fixes
 - Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing

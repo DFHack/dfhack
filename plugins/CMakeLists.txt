@@ -168,7 +168,7 @@ dfhack_plugin(tiletypes tiletypes.cpp Brushes.h LINK_LIBRARIES lua)
 #dfhack_plugin(workflow workflow.cpp LINK_LIBRARIES lua)
 dfhack_plugin(work-now work-now.cpp)
 dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
-#dfhack_plugin(zone zone.cpp)
+dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
 
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,
 # see instructions for adding "external" plugins at the end of this file.

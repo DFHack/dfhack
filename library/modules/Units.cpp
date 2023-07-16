@@ -555,6 +555,18 @@ bool Units::isEggLayer(df::unit* unit)
            || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
 }
 
+bool Units::isEggLayerRace(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    for (auto &caste : raw->caste) {
+        if (caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
+                || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS))
+            return true;
+    }
+    return false;
+}
+
 bool Units::isGrazer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);

@@ -1360,6 +1360,7 @@ Units module
 * ``dfhack.units.isGeldable(unit)``
 * ``dfhack.units.isGelded(unit)``
 * ``dfhack.units.isEggLayer(unit)``
+* ``dfhack.units.isEggLayerRace(unit)``
 * ``dfhack.units.isGrazer(unit)``
 * ``dfhack.units.isMilkable(unit)``
 

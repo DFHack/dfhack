@@ -294,15 +294,14 @@ function Pasture:init()
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_egg',
-                    frame={l=0, t=0, w=SMALL_SLIDER_LABEL_WIDTH},
-                    label='Min egg:',
-                    label_below=true,
+                    frame={l=0, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
                     key_back='CUSTOM_SHIFT_B',
                     key='CUSTOM_SHIFT_N',
                     options={
                         {label=EGG.NOT_EGG_LAYING.label, value=EGG.NOT_EGG_LAYING.value},
                         {label=EGG.EGG_LAYING.label, value=EGG.EGG_LAYING.value},
                     },
+                    option_gap=0,
                     initial_option=EGG.NOT_EGG_LAYING.value,
                     on_change=function(val)
                         if self.subviews.max_egg:getOptionValue() < val then
@@ -313,15 +312,14 @@ function Pasture:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='max_egg',
-                    frame={r=1, t=0, w=SMALL_SLIDER_LABEL_WIDTH},
-                    label='Max egg:',
-                    label_below=true,
+                    frame={r=1, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
                     key_back='CUSTOM_SHIFT_T',
                     key='CUSTOM_SHIFT_Y',
                     options={
                         {label=EGG.NOT_EGG_LAYING.label, value=EGG.NOT_EGG_LAYING.value},
                         {label=EGG.EGG_LAYING.label, value=EGG.EGG_LAYING.value},
                     },
+                    option_gap=0,
                     initial_option=EGG.EGG_LAYING.value,
                     on_change=function(val)
                         if self.subviews.min_egg:getOptionValue() > val then
@@ -349,15 +347,14 @@ function Pasture:init()
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_graze',
-                    frame={l=0, t=0, w=SMALL_SLIDER_LABEL_WIDTH},
-                    label='Min graze:',
-                    label_below=true,
+                    frame={l=0, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
                     key_back='CUSTOM_SHIFT_M',
                     key='CUSTOM_SHIFT_L',
                     options={
                         {label=GRAZE.NOT_GRAZING.label, value=GRAZE.NOT_GRAZING.value},
                         {label=GRAZE.GRAZING.label, value=GRAZE.GRAZING.value},
                     },
+                    option_gap=0,
                     initial_option=GRAZE.NOT_GRAZING.value,
                     on_change=function(val)
                         if self.subviews.max_graze:getOptionValue() < val then
@@ -368,15 +365,14 @@ function Pasture:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='max_graze',
-                    frame={r=1, t=0, w=SMALL_SLIDER_LABEL_WIDTH},
-                    label='Max graze:',
-                    label_below=true,
+                    frame={r=1, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
                     key_back='CUSTOM_SHIFT_U',
                     key='CUSTOM_SHIFT_I',
                     options={
                         {label=GRAZE.NOT_GRAZING.label, value=GRAZE.NOT_GRAZING.value},
                         {label=GRAZE.GRAZING.label, value=GRAZE.GRAZING.value},
                     },
+                    option_gap=0,
                     initial_option=GRAZE.GRAZING.value,
                     on_change=function(val)
                         if self.subviews.min_graze:getOptionValue() > val then
@@ -605,7 +601,7 @@ function Pasture:cache_choices()
             race=raw.creature_id,
             status=get_status(unit),
             disposition=get_disposition(unit),
-            egg=dfhack.units.isEggLayer(unit) and EGG.EGG_LAYING.value or EGG.NOT_EGG_LAYING.value,
+            egg=dfhack.units.isEggLayerRace(unit) and EGG.EGG_LAYING.value or EGG.NOT_EGG_LAYING.value,
             graze=dfhack.units.isGrazer(unit) and GRAZE.GRAZING.value or GRAZE.NOT_GRAZING.value,
         }
         local choice = {

@@ -1765,6 +1765,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isGeldable),
     WRAPM(Units, isGelded),
     WRAPM(Units, isEggLayer),
+    WRAPM(Units, isEggLayerRace),
     WRAPM(Units, isGrazer),
     WRAPM(Units, isMilkable),
     WRAPM(Units, isForest),

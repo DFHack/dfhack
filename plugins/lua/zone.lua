@@ -37,18 +37,6 @@ for k, v in pairs(DISPOSITION) do
     DISPOSITION_REVMAP[v.value] = k
 end
 
-local EGG = {
-    NONE={label='Unknown', value=0},
-    NOT_EGG_LAYING={label='Not egg laying', value=1},
-    EGG_LAYING={label='Egg laying', value=2},
-}
-
-local GRAZE = {
-    NONE={label='Unknown', value=0},
-    NOT_GRAZING={label='Not grazing', value=1},
-    GRAZING={label='Grazing', value=2},
-}
-
 -- -------------------
 -- Pasture
 --
@@ -56,15 +44,13 @@ local GRAZE = {
 local STATUS_COL_WIDTH = 18
 local DISPOSITION_COL_WIDTH = 18
 local GENDER_COL_WIDTH = 6
-local LARGE_SLIDER_LABEL_WIDTH = STATUS_COL_WIDTH + 4
-local LARGE_SLIDER_WIDTH = 48
-local SMALL_SLIDER_LABEL_WIDTH = 18
-local SMALL_SLIDER_WIDTH = 40
+local SLIDER_LABEL_WIDTH = math.max(STATUS_COL_WIDTH, DISPOSITION_COL_WIDTH) + 4
+local SLIDER_WIDTH = 48
 
 Pasture = defclass(Pasture, widgets.Window)
 Pasture.ATTRS {
     frame_title='Assign units to pasture',
-    frame={w=LARGE_SLIDER_WIDTH+SMALL_SLIDER_WIDTH+6, h=47},
+    frame={w=6+SLIDER_WIDTH*2, h=47},
     resizable=true,
     resize_min={h=27},
 }
@@ -164,11 +150,11 @@ function Pasture:init()
             on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Panel{
-            frame={t=2, l=0, w=LARGE_SLIDER_WIDTH, h=4},
+            frame={t=2, l=0, w=SLIDER_WIDTH, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_status',
-                    frame={l=0, t=0, w=LARGE_SLIDER_LABEL_WIDTH},
+                    frame={l=0, t=0, w=SLIDER_LABEL_WIDTH},
                     label='Min status:',
                     label_below=true,
                     key_back='CUSTOM_SHIFT_Z',
@@ -191,7 +177,7 @@ function Pasture:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='max_status',
-                    frame={r=1, t=0, w=LARGE_SLIDER_LABEL_WIDTH},
+                    frame={r=1, t=0, w=SLIDER_LABEL_WIDTH},
                     label='Max status:',
                     label_below=true,
                     key_back='CUSTOM_SHIFT_Q',
@@ -227,11 +213,11 @@ function Pasture:init()
             },
         },
         widgets.Panel{
-            frame={t=7, l=0, w=LARGE_SLIDER_WIDTH, h=4},
+            frame={t=2, l=SLIDER_WIDTH+2, w=SLIDER_WIDTH, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_disposition',
-                    frame={l=0, t=0, w=LARGE_SLIDER_LABEL_WIDTH},
+                    frame={l=0, t=0, w=SLIDER_LABEL_WIDTH},
                     label='Min disposition:',
                     label_below=true,
                     key_back='CUSTOM_SHIFT_C',
@@ -254,7 +240,7 @@ function Pasture:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='max_disposition',
-                    frame={r=1, t=0, w=LARGE_SLIDER_LABEL_WIDTH},
+                    frame={r=1, t=0, w=SLIDER_LABEL_WIDTH},
                     label='Max disposition:',
                     label_below=true,
                     key_back='CUSTOM_SHIFT_E',
@@ -290,114 +276,41 @@ function Pasture:init()
             },
         },
         widgets.Panel{
-            frame={t=2, l=LARGE_SLIDER_WIDTH+1, w=SMALL_SLIDER_WIDTH, h=4},
+            frame={t=7, l=4, r=0, h=1},
             subviews={
                 widgets.CycleHotkeyLabel{
-                    view_id='min_egg',
-                    frame={l=0, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
+                    view_id='egg',
+                    frame={l=0, t=0, w=23},
                     key_back='CUSTOM_SHIFT_B',
                     key='CUSTOM_SHIFT_N',
+                    label='Egg layers:',
                     options={
-                        {label=EGG.NOT_EGG_LAYING.label, value=EGG.NOT_EGG_LAYING.value},
-                        {label=EGG.EGG_LAYING.label, value=EGG.EGG_LAYING.value},
+                        {label='Include', value='include'},
+                        {label='Only', value='only'},
+                        {label='Exclude', value='exclude'},
                     },
-                    option_gap=0,
-                    initial_option=EGG.NOT_EGG_LAYING.value,
-                    on_change=function(val)
-                        if self.subviews.max_egg:getOptionValue() < val then
-                            self.subviews.max_egg:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
+                    initial_option='include',
+                    on_change=self:callback('refresh_list'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='max_egg',
-                    frame={r=1, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
+                    view_id='graze',
+                    frame={l=29, t=0, w=20},
                     key_back='CUSTOM_SHIFT_T',
                     key='CUSTOM_SHIFT_Y',
+                    label='Grazers:',
                     options={
-                        {label=EGG.NOT_EGG_LAYING.label, value=EGG.NOT_EGG_LAYING.value},
-                        {label=EGG.EGG_LAYING.label, value=EGG.EGG_LAYING.value},
+                        {label='Include', value='include'},
+                        {label='Only', value='only'},
+                        {label='Exclude', value='exclude'},
                     },
-                    option_gap=0,
-                    initial_option=EGG.EGG_LAYING.value,
-                    on_change=function(val)
-                        if self.subviews.min_egg:getOptionValue() > val then
-                            self.subviews.min_egg:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
-                },
-                widgets.RangeSlider{
-                    frame={l=0, t=3},
-                    num_stops=2,
-                    get_left_idx_fn=function()
-                        return self.subviews.min_egg:getOptionValue()
-                    end,
-                    get_right_idx_fn=function()
-                        return self.subviews.max_egg:getOptionValue()
-                    end,
-                    on_left_change=function(idx) self.subviews.min_egg:setOption(idx, true) end,
-                    on_right_change=function(idx) self.subviews.max_egg:setOption(idx, true) end,
-                },
-            },
-        },
-        widgets.Panel{
-            frame={t=7, l=LARGE_SLIDER_WIDTH+1, w=SMALL_SLIDER_WIDTH, h=4},
-            subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='min_graze',
-                    frame={l=0, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
-                    key_back='CUSTOM_SHIFT_M',
-                    key='CUSTOM_SHIFT_L',
-                    options={
-                        {label=GRAZE.NOT_GRAZING.label, value=GRAZE.NOT_GRAZING.value},
-                        {label=GRAZE.GRAZING.label, value=GRAZE.GRAZING.value},
-                    },
-                    option_gap=0,
-                    initial_option=GRAZE.NOT_GRAZING.value,
-                    on_change=function(val)
-                        if self.subviews.max_graze:getOptionValue() < val then
-                            self.subviews.max_graze:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='max_graze',
-                    frame={r=1, t=1, w=SMALL_SLIDER_LABEL_WIDTH},
-                    key_back='CUSTOM_SHIFT_U',
-                    key='CUSTOM_SHIFT_I',
-                    options={
-                        {label=GRAZE.NOT_GRAZING.label, value=GRAZE.NOT_GRAZING.value},
-                        {label=GRAZE.GRAZING.label, value=GRAZE.GRAZING.value},
-                    },
-                    option_gap=0,
-                    initial_option=GRAZE.GRAZING.value,
-                    on_change=function(val)
-                        if self.subviews.min_graze:getOptionValue() > val then
-                            self.subviews.min_graze:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
-                },
-                widgets.RangeSlider{
-                    frame={l=0, t=3},
-                    num_stops=2,
-                    get_left_idx_fn=function()
-                        return self.subviews.min_graze:getOptionValue()
-                    end,
-                    get_right_idx_fn=function()
-                        return self.subviews.max_graze:getOptionValue()
-                    end,
-                    on_left_change=function(idx) self.subviews.min_graze:setOption(idx, true) end,
-                    on_right_change=function(idx) self.subviews.max_graze:setOption(idx, true) end,
+                    initial_option='include',
+                    on_change=self:callback('refresh_list'),
                 },
             },
         },
         widgets.Panel{
             view_id='list_panel',
-            frame={t=12, l=0, r=0, b=4},
+            frame={t=9, l=0, r=0, b=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -584,7 +497,6 @@ local function is_pasturable_unit(unit)
         not dfhack.units.isDead(unit) and
         not dfhack.units.isMerchant(unit) and
         not dfhack.units.isForest(unit)
-
 end
 
 function Pasture:cache_choices()
@@ -601,8 +513,8 @@ function Pasture:cache_choices()
             race=raw.creature_id,
             status=get_status(unit),
             disposition=get_disposition(unit),
-            egg=dfhack.units.isEggLayerRace(unit) and EGG.EGG_LAYING.value or EGG.NOT_EGG_LAYING.value,
-            graze=dfhack.units.isGrazer(unit) and GRAZE.GRAZING.value or GRAZE.NOT_GRAZING.value,
+            egg=dfhack.units.isEggLayerRace(unit),
+            graze=dfhack.units.isGrazer(unit),
         }
         local choice = {
             search_key=make_search_key(data),
@@ -623,10 +535,8 @@ function Pasture:get_choices()
     local max_status = self.subviews.max_status:getOptionValue()
     local min_disposition = self.subviews.min_disposition:getOptionValue()
     local max_disposition = self.subviews.max_disposition:getOptionValue()
-    local min_egg = self.subviews.min_egg:getOptionValue()
-    local max_egg = self.subviews.max_egg:getOptionValue()
-    local min_graze = self.subviews.min_graze:getOptionValue()
-    local max_graze = self.subviews.max_graze:getOptionValue()
+    local egg = self.subviews.egg:getOptionValue()
+    local graze = self.subviews.graze:getOptionValue()
     local choices = {}
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
@@ -634,10 +544,10 @@ function Pasture:get_choices()
         if max_status < data.status then goto continue end
         if min_disposition > data.disposition then goto continue end
         if max_disposition < data.disposition then goto continue end
-        if min_egg > data.egg then goto continue end
-        if max_egg < data.egg then goto continue end
-        if min_graze > data.graze then goto continue end
-        if max_graze < data.graze then goto continue end
+        if egg == 'only' and not data.egg then goto continue end
+        if egg == 'exclude' and data.egg then goto continue end
+        if graze == 'only' and not data.graze then goto continue end
+        if graze == 'exclude' and data.graze then goto continue end
         table.insert(choices, choice)
         ::continue::
     end
@@ -740,7 +650,6 @@ function Pasture:toggle_visible()
         target_value = toggle_item_base(choice, target_value)
     end
 end
-
 
 -- -------------------
 -- PastureScreen

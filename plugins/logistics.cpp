@@ -317,7 +317,7 @@ public:
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
-        return Items::canTradeWithContents(item);
+        return Items::canTradeAnyWithContents(item);
     }
 
     bool designate(color_ostream& out, df::item* item) override {

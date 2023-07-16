@@ -1797,7 +1797,12 @@ Items module
 
 * ``dfhack.items.canTradeWithContents(item)``
 
-  Checks whether the item and all items it contains, if any, can be traded.
+  Returns false if the item or any contained items cannot be traded.
+
+* ``canTradeAnyWithContents(item)``
+
+  Returns true if the item is empty and can be traded or if the item contains
+  any item that can be traded.
 
 * ``dfhack.items.markForTrade(item, depot)``
 

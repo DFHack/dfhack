@@ -38,6 +38,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing
+- `logistics`: don't autotrain domestic animals brought by invaders (they'll get attacked by friendly creatures as soon as you let them out of their cage)
+- `logistics`: don't bring trade goods to depot if the only caravans present are tribute caravans
 
 ## Misc Improvements
 - `stockpiles`: include exotic pets in the "tameable" filter

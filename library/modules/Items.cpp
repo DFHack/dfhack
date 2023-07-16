@@ -2172,6 +2172,27 @@ bool Items::canTradeWithContents(df::item *item)
     return true;
 }
 
+bool Items::canTradeAnyWithContents(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (item->flags.bits.in_inventory)
+        return false;
+
+    vector<df::item*> contained_items;
+    getContainedItems(item, &contained_items);
+
+    if (contained_items.empty())
+        return canTrade(item);
+
+    for (df::item *cit : contained_items) {
+        if (canTrade(cit))
+            return true;
+    }
+
+    return false;
+}
+
 bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(depot);

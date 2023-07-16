@@ -199,8 +199,10 @@ DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16
 DFHACK_EXPORT bool checkMandates(df::item *item);
 /// Checks whether the item can be traded
 DFHACK_EXPORT bool canTrade(df::item *item);
-/// Checks whether the item and all items it contains, if any, can be traded
+/// Returns false if the item or any contained items cannot be traded
 DFHACK_EXPORT bool canTradeWithContents(df::item *item);
+/// Returns true if the item is empty and can be traded or if the item contains any item that can be traded
+DFHACK_EXPORT bool canTradeAnyWithContents(df::item *item);
 /// marks the given item for trade at the given depot
 DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
 /// Returns true if an active caravan will pay extra for the given item

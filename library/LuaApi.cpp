@@ -2025,6 +2025,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
     WRAPM(Items, canTradeWithContents),
+    WRAPM(Items, canTradeAnyWithContents),
     WRAPM(Items, markForTrade),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),

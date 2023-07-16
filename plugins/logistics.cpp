@@ -317,7 +317,7 @@ public:
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
-        return Items::canTradeWithContents(item);
+        return Items::canTradeAnyWithContents(item);
     }
 
     bool designate(color_ostream& out, df::item* item) override {
@@ -330,11 +330,13 @@ private:
     df::building_tradedepotst * const depot;
 
     static df::building_tradedepotst * get_active_trade_depot() {
-        // at least one caravan must be approaching or ready to trade
+        // at least one non-tribute caravan must be approaching or ready to trade
         if (!plotinfo->caravans.size())
             return NULL;
         bool found = false;
         for (auto caravan : plotinfo->caravans) {
+            if (caravan->flags.bits.tribute)
+                continue;
             auto trade_state = caravan->trade_state;
             auto time_remaining = caravan->time_remaining;
             if ((trade_state == df::caravan_state::T_trade_state::Approaching ||
@@ -392,8 +394,9 @@ public:
 
     bool can_designate(color_ostream& out, df::item* item) override {
         auto unit = get_caged_unit(item);
-        return unit && Units::isTamable(unit) && !Units::isTame(unit)
-            && !has_training_assignment(unit);
+        return unit && !Units::isInvader(unit) &&
+            Units::isTamable(unit) && !Units::isTame(unit) &&
+            !has_training_assignment(unit);
     }
 
     bool designate(color_ostream& out, df::item* item) override {

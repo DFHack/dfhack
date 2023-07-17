@@ -65,6 +65,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.items.markForTrade``: mark items for trade
 - ``dfhack.items.isRequestedTradeGood``: discover whether an item is named in a trade agreement with an active caravan
 - ``dfhack.items.getValue``: gained optional ``caravan`` and ``caravan_buying`` parameters for prices that take trader races and agreements into account
+- ``widgets.TextButton``: wraps a ``HotkeyLabel`` and decorates it to look more like a button
 
 ## Removed
 

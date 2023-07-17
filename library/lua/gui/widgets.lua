@@ -1489,6 +1489,52 @@ function HotkeyLabel:onInput(keys)
     end
 end
 
+----------------
+-- TextButton --
+----------------
+
+TextButton = defclass(TextButton, Panel)
+
+local BUTTON_PEN = dfhack.pen.parse{fg=COLOR_YELLOW, bg=COLOR_RED}
+
+function TextButton:init(info)
+    self.label = HotkeyLabel{
+        frame={t=0, l=1, r=1},
+        key=info.key,
+        key_sep=info.key_sep,
+        label=info.label,
+        on_activate=info.on_activate,
+        text_pen=info.text_pen,
+        text_dpen=info.text_dpen,
+        text_hpen=info.text_hpen,
+        disabled=info.disabled,
+        enabled=info.enabled,
+        auto_height=info.auto_height,
+        auto_width=info.auto_width,
+        on_click=info.on_click,
+        on_rclick=info.on_rclick,
+        scroll_keys=info.scroll_keys,
+    }
+
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=1},
+            text=string.char(221),  -- half-width stripe on left
+            text_pen=BUTTON_PEN,
+        },
+        self.label,
+        Label{
+            frame={t=0, r=0, w=1},
+            text=string.char(222),  -- half-width stripe on right
+            text_pen=BUTTON_PEN,
+        }
+    }
+end
+
+function TextButton:setLabel(label)
+    self.label:setLabel(label)
+end
+
 ----------------------
 -- CycleHotkeyLabel --
 ----------------------

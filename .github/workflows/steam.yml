@@ -64,7 +64,7 @@ jobs:
           ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --show-stats
       - name: Steam deploy
-        uses: game-ci/steam-deploy@v2
+        uses: game-ci/steam-deploy@v3
         with:
           username: ${{ secrets.STEAM_USERNAME }}
           password: ${{ secrets.STEAM_PASSWORD }}

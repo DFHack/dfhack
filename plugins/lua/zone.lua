@@ -700,16 +700,16 @@ end
 
 PastureOverlay = defclass(PastureOverlay, overlay.OverlayWidget)
 PastureOverlay.ATTRS{
-    default_pos={x=9,y=13},
+    default_pos={x=7,y=13},
     default_enabled=true,
     viewscreens='dwarfmode/Zone/Some/Pen',
-    frame={w=30, h=1},
+    frame={w=32, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
 function PastureOverlay:init()
     self:addviews{
-        widgets.HotkeyLabel{
+        widgets.TextButton{
             frame={t=0, l=0},
             label='DFHack search and sort',
             key='CUSTOM_CTRL_T',

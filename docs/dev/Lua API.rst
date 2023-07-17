@@ -5063,12 +5063,20 @@ The CycleHotkeyLabel widget implements the following methods:
     selected option if no index is given. If an option was defined as just a
     string, then this function will return ``nil`` for that option.
 
-ToggleHotkeyLabel
------------------
+ToggleHotkeyLabel class
+-----------------------
 
 This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
+
+TextButton class
+----------------
+
+This is a Panel subclass that wraps a HotkeyLabel with some decorators on the
+sides to make it look more like a button, suitable for both graphics and ASCII
+mdoes. All HotkeyLabel parameters passed to the constructor are passed through
+to the wrapped HotkeyLabel.
 
 List class
 ----------

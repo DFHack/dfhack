@@ -131,7 +131,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
                 return CR_FAILURE;
             }
             df::tiletype ttype = MC.tiletypeAt(pos_cursor);
-            if(!DFHack::isWalkable(ttype) || DFHack::isOpenTerrain(ttype))
+            if(!DFHack::isWalkable(ttype))
             {
                 out.printerr("Cursor should be placed over a floor.\n");
                 return CR_FAILURE;

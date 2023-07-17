@@ -213,7 +213,7 @@ function Pasture:init()
             },
         },
         widgets.Panel{
-            frame={t=2, l=SLIDER_WIDTH+2, w=SLIDER_WIDTH, h=4},
+            frame={t=7, l=0, w=SLIDER_WIDTH, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_disposition',
@@ -276,7 +276,7 @@ function Pasture:init()
             },
         },
         widgets.Panel{
-            frame={t=7, l=4, r=0, h=1},
+            frame={t=3, l=SLIDER_WIDTH+2, r=0, h=3},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='egg',
@@ -294,7 +294,7 @@ function Pasture:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='graze',
-                    frame={l=29, t=0, w=20},
+                    frame={l=0, t=2, w=20},
                     key_back='CUSTOM_SHIFT_T',
                     key='CUSTOM_SHIFT_Y',
                     label='Grazers:',
@@ -310,7 +310,7 @@ function Pasture:init()
         },
         widgets.Panel{
             view_id='list_panel',
-            frame={t=9, l=0, r=0, b=4},
+            frame={t=12, l=0, r=0, b=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',

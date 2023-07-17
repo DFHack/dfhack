@@ -832,8 +832,7 @@ static DFCoord simulate_fall(const DFCoord &pos) {
 
     while (Maps::ensureTileBlock(resting_pos)) {
         df::tiletype tt = *Maps::getTileType(resting_pos);
-        df::tiletype_shape_basic basic_shape = tileShapeBasic(tileShape(tt));
-        if (isWalkable(tt) && basic_shape != df::tiletype_shape_basic::Open)
+        if (isWalkable(tt))
             break;
         --resting_pos.z;
     }

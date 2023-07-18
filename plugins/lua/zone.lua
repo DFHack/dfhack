@@ -449,6 +449,17 @@ local function get_cage_ref(unit)
     return dfhack.units.getGeneralRef(unit, df.general_ref_type.CONTAINED_IN_ITEM)
 end
 
+local function get_built_cage(item_cage)
+    if not item_cage then return end
+    local built_cage_ref = dfhack.items.getGeneralRef(item_cage, df.general_ref_type.BUILDING_HOLDER)
+    if not built_cage_ref then return end
+    local built_cage = df.building.find(built_cage_ref.building_id)
+    if not built_cage then return end
+    if built_cage:getType() == df.building_type.Cage then
+        return built_cage
+    end
+end
+
 local function get_status(unit)
     local assigned_pasture_ref = dfhack.units.getGeneralRef(unit, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
     if assigned_pasture_ref then
@@ -463,8 +474,7 @@ local function get_status(unit)
     end
     local cage_ref = get_cage_ref(unit)
     if cage_ref then
-        local cage = df.item.find(cage_ref.item_id)
-        if dfhack.items.getGeneralRef(cage, df.general_ref_type.BUILDING_HOLDER) then
+        if get_built_cage(df.item.find(cage_ref.item_id)) then
             return STATUS.BUILT_CAGE.value
         else
             return STATUS.ITEM_CAGE.value
@@ -573,13 +583,10 @@ local function detach_unit(unit)
             unit.general_refs:erase(idx)
             ref:delete()
         elseif df.general_ref_contained_in_itemst:is_instance(ref) then
-            local cage = df.item.find(ref.item_id)
-            if cage then
-                local built_cage_ref = dfhack.items.getGeneralRef(cage, df.general_ref_type.BUILDING_HOLDER)
-                if built_cage_ref then
-                    unassign_unit(df.building.find(built_cage_ref.building_id), unit)
-                    -- unit's general ref will be removed when the unit is released from the cage
-                end
+            local built_cage = get_built_cage(df.item.find(ref.item_id))
+            if built_cage and built_cage:getType() == df.building_type.Cage then
+                unassign_unit(built_cage, unit)
+                -- unit's general ref will be removed when the unit is released from the cage
             end
         elseif df.general_ref_building_chainst:is_instance(ref) then
             local chain = df.building.find(ref.building_id)

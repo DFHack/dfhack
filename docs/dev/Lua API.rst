@@ -2857,6 +2857,12 @@ and are only documented here for completeness:
 
   Sets the system clipboard text from a CP437 string.
 
+* ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
+* ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
+
+  Gets and sets the flag for whether to suppress DF key events when a DFHack
+  keybinding is matched and a command is launched.
+
 .. _lua-core-context:
 
 Core interpreter context

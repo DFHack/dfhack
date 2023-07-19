@@ -394,9 +394,6 @@ restarting DF.
 
 - ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
 
-- ``dfhack.SUPPRESS_DUPLICATE_KEYBOARD_EVENTS``: Whether to prevent DFHack
-  keybindings from producing DF key events.
-
 Miscellaneous notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.

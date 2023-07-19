@@ -159,6 +159,9 @@ namespace DFHack
         std::string findScript(std::string name);
         void getScriptPaths(std::vector<std::string> *dest);
 
+        bool getSuppressDuplicateKeyboardEvents();
+        void setSuppressDuplicateKeyboardEvents(bool suppress);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
@@ -249,6 +252,7 @@ namespace DFHack
         };
         int8_t modstate;
 
+        bool suppress_duplicate_keyboard_events;
         std::map<int, std::vector<KeyBinding> > key_bindings;
         std::string hotkey_cmd;
         enum hotkey_set_t {

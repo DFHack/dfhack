@@ -841,7 +841,7 @@ df::unit *Units::getUnitByNobleRole(string noble) {
 
 bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
     for (auto &unit : world->units.active) {
-        if (isCitizen(unit, ignore_sanity))
+        if (isCitizen(unit, ignore_sanity) && isAlive(unit))
             citizens.emplace_back(unit);
     }
     return true;

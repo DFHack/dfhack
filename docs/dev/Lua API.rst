@@ -1454,8 +1454,7 @@ Units module
 
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a table (list) of all citizens, which you would otherwise have to
-  loop over all units in world and test against ``isCitizen()`` to discover.
+  Returns a list of all living citizens.
 
 * ``dfhack.units.teleport(unit, pos)``
 

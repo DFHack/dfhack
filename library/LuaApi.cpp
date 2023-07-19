@@ -3611,13 +3611,23 @@ static int internal_md5file(lua_State *L)
     }
 }
 
+static int internal_getSuppressDuplicateKeyboardEvents(lua_State *L) {
+    Lua::Push(L, Core::getInstance().getSuppressDuplicateKeyboardEvents());
+    return 1;
+}
+
+static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
+    bool suppress = lua_toboolean(L, 1);
+    Core::getInstance().setSuppressDuplicateKeyboardEvents(suppress);
+    return 0;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
-
     { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
@@ -3639,6 +3649,8 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
+    { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
+    { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
     { NULL, NULL }
 };
 

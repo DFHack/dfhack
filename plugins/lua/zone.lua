@@ -422,29 +422,6 @@ local function make_choice_text(data)
     }
 end
 
-local function get_unit_description(unit, raw)
-    local race = dfhack.units.isChild(unit) and raw.general_child_name[0] or raw.caste[unit.caste].caste_name[0]
-    local name = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
-    if name and #name > 0 then
-        name = ('%s, %s'):format(name, race)
-    else
-        name = race
-    end
-    if #unit.syndromes.active > 0 then
-        for _, unit_syndrome in ipairs(unit.syndromes.active) do
-            local syndrome = df.syndrome.find(unit_syndrome.type)
-            if not syndrome then goto continue end
-            for _, effect in ipairs(syndrome.ce) do
-                if df.creature_interaction_effect_display_namest:is_instance(effect) then
-                    return name .. ' ' .. effect.name
-                end
-            end
-            ::continue::
-        end
-    end
-    return name
-end
-
 local function get_cage_ref(unit)
     return dfhack.units.getGeneralRef(unit, df.general_ref_type.CONTAINED_IN_ITEM)
 end
@@ -518,9 +495,9 @@ function Pasture:cache_choices()
         local raw = df.creature_raw.find(unit.race)
         local data = {
             unit=unit,
-            desc=get_unit_description(unit, raw),
+            desc=dfhack.units.getReadableName(unit),
             gender=unit.sex,
-            race=raw.creature_id,
+            race=raw and raw.creature_id or -1,
             status=get_status(unit),
             disposition=get_disposition(unit),
             egg=dfhack.units.isEggLayerRace(unit),

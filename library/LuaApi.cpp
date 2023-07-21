@@ -1824,6 +1824,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
     WRAPM(Units, getRaceChildNameById),
+    WRAPM(Units, getReadableName),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),

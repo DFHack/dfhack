@@ -1589,6 +1589,11 @@ Units module
   Currently only one dream per unit is supported by Dwarf Fortress.
   Support for multiple dreams may be added in future versions of Dwarf Fortress.
 
+* ``dfhack.units.getReadableName(unit)``
+
+  Returns a string that includes the language name of the unit (if any), the
+  race of the unit, and any syndrome-given descriptions (such as "necromancer").
+
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.

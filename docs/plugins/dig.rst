@@ -179,3 +179,11 @@ Filters:
     Take current designation and apply the selected pattern to it.
 
 After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Overlay
+-------
+
+This tool also provides an overlay that is managed by the `overlay` framework.
+When the ``dig.asciiwarmdamp`` overlay is enabled and you are in non-graphics
+(ASCII) mode, warm tiles will be highlighted in red and damp tiles will be
+highlighted in blue.

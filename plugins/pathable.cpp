@@ -1,23 +1,27 @@
+#include "Debug.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
 
-#include "Debug.h"
-#include "LuaTools.h"
-#include "PluginManager.h"
-
 #include "df/init.h"
+#include "df/map_block.h"
+#include "df/tile_designation.h"
+
+#include <functional>
 
 using namespace DFHack;
 
 DFHACK_PLUGIN("pathable");
 
-REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(init);
+REQUIRE_GLOBAL(selection_rect);
 REQUIRE_GLOBAL(window_x);
 REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);
-REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     DBG_DECLARE(pathable, log, DebugCategory::LINFO);
@@ -31,7 +35,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-static void paintScreen(df::coord target, bool skip_unrevealed = false) {
+static void paintScreenPathable(df::coord target, bool show_hidden = false) {
     DEBUG(log).print("entering paintScreen\n");
 
     bool use_graphics = Screen::inGraphicsMode();
@@ -39,8 +43,8 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
     int selected_tile_texpos = 0;
     Screen::findGraphicsTile("CURSORS", 4, 3, &selected_tile_texpos);
 
-    long pathable_tile_texpos = df::global::init->load_bar_texpos[1];
-    long unpathable_tile_texpos = df::global::init->load_bar_texpos[4];
+    long pathable_tile_texpos = init->load_bar_texpos[1];
+    long unpathable_tile_texpos = init->load_bar_texpos[4];
     long on_off_texpos = Textures::getMapPathableTexposStart();
     if (on_off_texpos > 0) {
         pathable_tile_texpos = on_off_texpos + 0;
@@ -61,7 +65,7 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
                 continue;
             }
 
-            if (skip_unrevealed && !Maps::isTileVisible(map_pos)) {
+            if (!show_hidden && !Maps::isTileVisible(map_pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }
@@ -110,7 +114,129 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
     }
 }
 
+static bool init_mouse_selection_rect(rect2d &rect) {
+    df::coord mouse_pos = Gui::getMousePos();
+    if (!mouse_pos.isValid())
+        return false;
+    rect.first.x = std::min(selection_rect->start_x, (int32_t)mouse_pos.x);
+    rect.second.x = std::max(selection_rect->start_x, (int32_t)mouse_pos.x);
+    rect.first.y = std::min(selection_rect->start_y, (int32_t)mouse_pos.y);
+    rect.second.y = std::max(selection_rect->start_y, (int32_t)mouse_pos.y);
+    return true;
+}
+
+static bool in_mouse_selection_rect(const rect2d &rect, const df::coord &pos) {
+    return ((pos.y == rect.first.y || pos.y == rect.second.y) && (pos.x >= rect.first.x || pos.x <= rect.second.x)) ||
+        ((pos.x == rect.first.x || pos.x == rect.second.x) && (pos.y >= rect.first.y || pos.y <= rect.second.y));
+}
+
+static bool is_warm(const df::coord &pos) {
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+    return block->temperature_1[pos.x&15][pos.y&15] >= 10075;
+}
+
+static bool is_rough_wall(int16_t x, int16_t y, int16_t z) {
+    df::tiletype *tt = Maps::getTileType(x, y, z);
+    if (!tt)
+        return false;
+
+    return tileShape(*tt) == df::tiletype_shape::WALL &&
+        tileSpecial(*tt) != df::tiletype_special::SMOOTH;
+}
+
+static bool will_leak(int16_t x, int16_t y, int16_t z) {
+    auto des = Maps::getTileDesignation(x, y, z);
+    if (!des)
+        return false;
+    if (des->bits.liquid_type == df::tile_liquid::Water && des->bits.flow_size >= 1)
+        return true;
+    if (des->bits.water_table && is_rough_wall(x, y, z))
+        return true;
+    return false;
+}
+
+static bool is_damp(const df::coord &pos) {
+    return will_leak(pos.x-1, pos.y-1, pos.z) ||
+        will_leak(pos.x, pos.y-1, pos.z) ||
+        will_leak(pos.x+1, pos.y-1, pos.z) ||
+        will_leak(pos.x-1, pos.y, pos.z) ||
+        will_leak(pos.x+1, pos.y, pos.z) ||
+        will_leak(pos.x-1, pos.y+1, pos.z) ||
+        will_leak(pos.x, pos.y+1, pos.z) ||
+        will_leak(pos.x+1, pos.y+1, pos.z);
+        will_leak(pos.x, pos.y+1, pos.z+1);
+}
+
+static void paintScreenWarmDamp(bool show_hidden = false) {
+    DEBUG(log).print("entering paintScreenDampWarm\n");
+
+    if (Screen::inGraphicsMode())
+        return;
+
+    bool has_mouse_selection_rect = selection_rect->start_x >= 0;
+    rect2d mouse_sel_rect;
+    if (has_mouse_selection_rect) {
+        has_mouse_selection_rect = init_mouse_selection_rect(mouse_sel_rect);
+    }
+
+    bool has_kbd_selection_rect = false; // TODO where is this info stored?
+
+    auto dims = Gui::getDwarfmodeViewDims().map();
+    for (int y = dims.first.y; y <= dims.second.y; ++y) {
+        for (int x = dims.first.x; x <= dims.second.x; ++x) {
+            df::coord map_pos(*window_x + x, *window_y + y, *window_z);
+
+            if (!Maps::isValidTilePos(map_pos))
+                continue;
+
+            // don't overwrite selection box tiles
+            if (has_mouse_selection_rect && in_mouse_selection_rect(mouse_sel_rect, map_pos)) {
+                TRACE(log).print("skipping mouse selection box tile\n");
+                continue;
+            }
+
+            if (!show_hidden && !Maps::isTileVisible(map_pos)) {
+                TRACE(log).print("skipping hidden tile\n");
+                continue;
+            }
+
+            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                map_pos.x, map_pos.y, map_pos.z, x, y);
+
+            Screen::Pen cur_tile = Screen::readTile(x, y, true);
+            if (!cur_tile.valid()) {
+                DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
+                continue;
+            }
+
+            int color = is_warm(map_pos) ? COLOR_RED : is_damp(map_pos) ? COLOR_BLUE : COLOR_BLACK;
+            if (color == COLOR_BLACK) {
+                TRACE(log).print("skipping non-warm, non-damp tile\n");
+                continue;
+            }
+
+            if (cur_tile.fg && cur_tile.ch != ' ') {
+                cur_tile.fg = color;
+                cur_tile.bg = 0;
+            } else {
+                cur_tile.fg = 0;
+                cur_tile.bg = color;
+            }
+
+            cur_tile.bold = false;
+
+            if (cur_tile.tile)
+                cur_tile.tile_mode = Screen::Pen::CharColor;
+
+            Screen::paintTile(cur_tile, x, y, true);
+        }
+    }
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(paintScreen),
+    DFHACK_LUA_FUNCTION(paintScreenPathable),
+    DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
     DFHACK_LUA_END
 };

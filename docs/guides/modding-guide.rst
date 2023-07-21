@@ -45,6 +45,7 @@ this::
     info.txt
     graphics/...
     objects/...
+    blueprints/...
     scripts_modactive/example-mod.lua
     scripts_modactive/internal/example-mod/...
     scripts_modinstalled/...
@@ -58,6 +59,9 @@ Let's go through that line by line.
 - Modifications to the game raws (potentially with custom raw tokens) go in
     the :file:`graphics/` and :file:`objects/` folders. You can read more about
     the files that go in these directories on the :wiki:`Modding` wiki page.
+- Any `quickfort` blueprints included with your mod go in the
+    :file:`blueprints` folder. Note that your mod can *just* be blueprints and
+    nothing else if you like.
 - A control script in :file:`scripts_modactive/` directory that handles
     system-level event hooks (e.g. reloading state when a world is loaded),
     registering `overlays <overlay-dev-guide>`, and

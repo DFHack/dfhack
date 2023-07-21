@@ -114,27 +114,6 @@ static void paintScreenPathable(df::coord target, bool show_hidden = false) {
     }
 }
 
-static bool init_mouse_selection_rect(rect2d &rect) {
-    df::coord mouse_pos = Gui::getMousePos();
-    if (!mouse_pos.isValid())
-        return false;
-    rect.first.x = std::min(selection_rect->start_x, (int32_t)mouse_pos.x);
-    rect.second.x = std::max(selection_rect->start_x, (int32_t)mouse_pos.x);
-    rect.first.y = std::min(selection_rect->start_y, (int32_t)mouse_pos.y);
-    rect.second.y = std::max(selection_rect->start_y, (int32_t)mouse_pos.y);
-    return true;
-}
-
-static bool in_mouse_selection_rect(const rect2d &rect, const df::coord &pos) {
-    return ((pos.y == rect.first.y || pos.y == rect.second.y) && (pos.x >= rect.first.x && pos.x <= rect.second.x)) ||
-        ((pos.x == rect.first.x || pos.x == rect.second.x) && (pos.y >= rect.first.y && pos.y <= rect.second.y));
-}
-
-static bool in_kbd_selection_rect(const rect2d &rect, const df::coord &pos) {
-    return pos.y >= rect.first.y && pos.y <= rect.second.y &&
-        pos.x >= rect.first.x && pos.x <= rect.second.x;
-}
-
 static bool is_warm(const df::coord &pos) {
     auto block = Maps::getTileBlock(pos);
     if (!block)
@@ -180,15 +159,6 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
     if (Screen::inGraphicsMode())
         return;
 
-    bool has_mouse_selection_rect = selection_rect->start_x >= 0;
-    rect2d mouse_sel_rect;
-    if (has_mouse_selection_rect) {
-        has_mouse_selection_rect = init_mouse_selection_rect(mouse_sel_rect);
-    }
-
-    bool has_kbd_selection_rect = false; // TODO where is this info stored?
-    rect2d kbd_sel_rect;
-
     auto dims = Gui::getDwarfmodeViewDims().map();
     for (int y = dims.first.y; y <= dims.second.y; ++y) {
         for (int x = dims.first.x; x <= dims.second.x; ++x) {
@@ -196,16 +166,6 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
             if (!Maps::isValidTilePos(map_pos))
                 continue;
-
-            // don't overwrite selection box tiles
-            if (has_mouse_selection_rect && in_mouse_selection_rect(mouse_sel_rect, map_pos)) {
-                TRACE(log).print("skipping mouse selection box tile\n");
-                continue;
-            }
-            if (has_kbd_selection_rect && in_kbd_selection_rect(kbd_sel_rect, map_pos)){
-                TRACE(log).print("skipping keyboard selection box tile\n");
-                continue;
-            }
 
             if (!show_hidden && !Maps::isTileVisible(map_pos)) {
                 TRACE(log).print("skipping hidden tile\n");
@@ -227,6 +187,8 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                 continue;
             }
 
+            // this will also change the color of the cursor or any selection box that overlaps
+            // the tile. this is intentional since it makes the UI more readable
             if (cur_tile.fg && cur_tile.ch != ' ') {
                 cur_tile.fg = color;
                 cur_tile.bg = 0;

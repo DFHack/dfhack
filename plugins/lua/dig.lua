@@ -24,6 +24,6 @@ function WarmDampOverlay:onRenderFrame(dc)
     pathable.paintScreenWarmDamp()
 end
 
-OVERLAY_WIDGETS = {overlay=WarmDampOverlay}
+OVERLAY_WIDGETS = {asciiwarmdamp=WarmDampOverlay}
 
 return _ENV

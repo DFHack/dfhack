@@ -75,7 +75,7 @@ local function print_status()
     print(('Total items marked for melting: %5d'):format(global_stats.total_melt))
     print(('Total items marked for trading: %5d'):format(global_stats.total_trade))
     print(('Total items marked for dumping: %5d'):format(global_stats.total_dump))
-    print(('Total animals marked for training: %5d'):format(global_stats.total_train))
+    print(('Total animals marked for training: %2d'):format(global_stats.total_train))
 end
 
 local function for_stockpiles(opts, fn)

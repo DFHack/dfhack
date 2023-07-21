@@ -151,6 +151,11 @@ DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return "";
     char *text = g_SDL_GetClipboardText();
+    // convert tabs to spaces so they don't get converted to '?'
+    for (char *c = text; *c; ++c) {
+        if (*c == '\t')
+            *c = ' ';
+    }
     std::string textcp437 = UTF2DF(text);
     DFHack::DFSDL::DFSDL_free(text);
     return textcp437;

@@ -126,8 +126,13 @@ static bool init_mouse_selection_rect(rect2d &rect) {
 }
 
 static bool in_mouse_selection_rect(const rect2d &rect, const df::coord &pos) {
-    return ((pos.y == rect.first.y || pos.y == rect.second.y) && (pos.x >= rect.first.x || pos.x <= rect.second.x)) ||
-        ((pos.x == rect.first.x || pos.x == rect.second.x) && (pos.y >= rect.first.y || pos.y <= rect.second.y));
+    return ((pos.y == rect.first.y || pos.y == rect.second.y) && (pos.x >= rect.first.x && pos.x <= rect.second.x)) ||
+        ((pos.x == rect.first.x || pos.x == rect.second.x) && (pos.y >= rect.first.y && pos.y <= rect.second.y));
+}
+
+static bool in_kbd_selection_rect(const rect2d &rect, const df::coord &pos) {
+    return pos.y >= rect.first.y && pos.y <= rect.second.y &&
+        pos.x >= rect.first.x && pos.x <= rect.second.x;
 }
 
 static bool is_warm(const df::coord &pos) {
@@ -182,6 +187,7 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
     }
 
     bool has_kbd_selection_rect = false; // TODO where is this info stored?
+    rect2d kbd_sel_rect;
 
     auto dims = Gui::getDwarfmodeViewDims().map();
     for (int y = dims.first.y; y <= dims.second.y; ++y) {
@@ -194,6 +200,10 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
             // don't overwrite selection box tiles
             if (has_mouse_selection_rect && in_mouse_selection_rect(mouse_sel_rect, map_pos)) {
                 TRACE(log).print("skipping mouse selection box tile\n");
+                continue;
+            }
+            if (has_kbd_selection_rect && in_kbd_selection_rect(kbd_sel_rect, map_pos)){
+                TRACE(log).print("skipping keyboard selection box tile\n");
                 continue;
             }
 

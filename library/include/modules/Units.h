@@ -192,7 +192,7 @@ DFHACK_EXPORT std::string getRaceBabyNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
-
+DFHACK_EXPORT std::string getReadableName(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 DFHACK_EXPORT int getKillCount(df::unit *unit);

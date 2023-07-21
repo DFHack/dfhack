@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `3dveins`: reinstated for v50, this plugin replaces vanilla DF's blobby vein generation with veins that flow smoothly and naturally between z-levels
 - `zone`: new searchable, sortable, filterable screen for assigning units to pastures
+- `dwarfvet`: reinstated and updated for v50's new hospital mechanics; allow your animals to have their wounds treated at hospitals
 - `dig`: new ``dig.asciiwarmdamp`` overlay that highlights warm and damp tiles when in ASCII mode. there is no effect in graphics mode since the tiles are already highlighted there
 
 ## Fixes

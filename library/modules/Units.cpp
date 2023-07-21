@@ -53,6 +53,7 @@ using namespace std;
 #include "df/activity_entry.h"
 #include "df/burrow.h"
 #include "df/caste_raw.h"
+#include "df/creature_interaction_effect_display_namest.h"
 #include "df/creature_raw.h"
 #include "df/curse_attr_change.h"
 #include "df/entity_position.h"
@@ -74,11 +75,13 @@ using namespace std;
 #include "df/nemesis_record.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
+#include "df/syndrome.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_relationship_type.h"
 #include "df/unit_skill.h"
 #include "df/unit_soul.h"
+#include "df/unit_syndrome.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -1218,6 +1221,41 @@ string Units::getRaceChildName(df::unit* unit)
     return getRaceChildNameById(unit->race);
 }
 
+static string get_caste_name(df::unit* unit) {
+    int32_t id = unit->race;
+    if (id < 0 || (size_t)id >= world->raws.creatures.all.size())
+        return "";
+    df::creature_raw* raw = world->raws.creatures.all[id];
+    int16_t caste = unit->caste;
+    if (!raw || caste < 0 || (size_t)caste >= raw->caste.size())
+        return "";
+    return raw->caste[caste]->caste_name[0];
+}
+
+string Units::getReadableName(df::unit* unit) {
+    string race_name = isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit);
+    string name = Translation::TranslateName(getVisibleName(unit));
+    if (name.empty()) {
+        name = race_name;
+    } else {
+        name += ", ";
+        name += race_name;
+    }
+    for (auto unit_syndrome : unit->syndromes.active) {
+        auto syndrome = df::syndrome::find(unit_syndrome->type);
+        if (!syndrome)
+            continue;
+        for (auto effect : syndrome->ce) {
+            auto cie = strict_virtual_cast<df::creature_interaction_effect_display_namest>(effect);
+            if (!cie)
+                continue;
+            name += " ";
+            name += cie->name;
+            break;
+        }
+    }
+    return name;
+}
 
 double Units::getAge(df::unit *unit, bool true_age)
 {

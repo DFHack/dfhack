@@ -186,4 +186,5 @@ Overlay
 This tool also provides an overlay that is managed by the `overlay` framework.
 When the ``dig.asciiwarmdamp`` overlay is enabled and you are in non-graphics
 (ASCII) mode, warm tiles will be highlighted in red and damp tiles will be
-highlighted in blue.
+highlighted in blue. Box selection characters and the keyboard cursor will also
+change color as appropriate when over the warm or damp tile.

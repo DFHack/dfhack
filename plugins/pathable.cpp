@@ -18,7 +18,6 @@ using namespace DFHack;
 DFHACK_PLUGIN("pathable");
 
 REQUIRE_GLOBAL(init);
-REQUIRE_GLOBAL(selection_rect);
 REQUIRE_GLOBAL(window_x);
 REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);

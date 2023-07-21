@@ -687,7 +687,7 @@ PastureOverlay.ATTRS{
     default_pos={x=7,y=13},
     default_enabled=true,
     viewscreens='dwarfmode/Zone/Some/Pen',
-    frame={w=32, h=1},
+    frame={w=31, h=3},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -695,9 +695,15 @@ function PastureOverlay:init()
     self:addviews{
         widgets.TextButton{
             frame={t=0, l=0},
-            label='DFHack search and sort',
+            label='DFHack manage pasture',
             key='CUSTOM_CTRL_T',
             on_activate=function() view = view and view:raise() or PastureScreen{}:show() end,
+        },
+        widgets.TextButton{
+            frame={t=2, l=0},
+            label='DFHack autobutcher',
+            key='CUSTOM_CTRL_B',
+            on_activate=function() dfhack.run_script('gui/autobutcher') end,
         },
     }
 end

@@ -112,7 +112,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 ""
 "On the gui/control-panel ""Autostart"" tab, additionally enable:"
 - autobutcher
-- autobutcher target 50 50 14 2 BIRD_GOOSE
+- autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
 - autofarm
 - autofish
@@ -121,6 +121,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 - ban-cooking all
 - buildingplan set boulders false
 - buildingplan set logs false
+- dwarfvet
 - nestboxes
 - prioritize
 - seedwatch

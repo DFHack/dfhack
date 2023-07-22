@@ -34,6 +34,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Internals
+
+## Lua
+
+## Removed
+
+# 50.09-r2
+
+## New Plugins
 - `3dveins`: reinstated for v50, this plugin replaces vanilla DF's blobby vein generation with veins that flow smoothly and naturally between z-levels
 - `zone`: new searchable, sortable, filterable screen for assigning units to pastures
 - `dwarfvet`: reinstated and updated for v50's new hospital mechanics; allow your animals to have their wounds treated at hospitals
@@ -70,8 +88,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.items.isRequestedTradeGood``: discover whether an item is named in a trade agreement with an active caravan
 - ``dfhack.items.getValue``: gained optional ``caravan`` and ``caravan_buying`` parameters for prices that take trader races and agreements into account
 - ``widgets.TextButton``: wraps a ``HotkeyLabel`` and decorates it to look more like a button
-
-## Removed
 
 # 50.09-r1
 

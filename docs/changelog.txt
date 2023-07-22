@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `logistics`: don't autotrain domestic animals brought by invaders (they'll get attacked by friendly creatures as soon as you let them out of their cage)
 - `logistics`: don't bring trade goods to depot if the only caravans present are tribute caravans
 - `gui/create-item`: when choosing a citizen to create the chosen items, avoid choosing a dead citizen
+- `logistics`: fix potential crash when removing stockpiles or turning off stockpile features
 
 ## Misc Improvements
 - `stockpiles`: include exotic pets in the "tameable" filter

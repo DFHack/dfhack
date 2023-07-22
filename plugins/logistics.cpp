@@ -122,6 +122,7 @@ static df::building_stockpilest* find_stockpile(int32_t stockpile_number) {
 
 static void validate_stockpile_configs(color_ostream& out,
         unordered_map<df::building_stockpilest *, PersistentDataItem> &cache) {
+    vector<int> to_remove;
     for (auto& entry : watched_stockpiles) {
         int stockpile_number = entry.first;
         PersistentDataItem &c = entry.second;
@@ -129,13 +130,15 @@ static void validate_stockpile_configs(color_ostream& out,
         if (!bld || (
                 !get_config_bool(c, STOCKPILE_CONFIG_MELT) &&
                 !get_config_bool(c, STOCKPILE_CONFIG_TRADE) &&
-            !get_config_bool(c, STOCKPILE_CONFIG_DUMP) &&
-            !get_config_bool(c, STOCKPILE_CONFIG_TRAIN))) {
-            remove_stockpile_config(out, stockpile_number);
+                !get_config_bool(c, STOCKPILE_CONFIG_DUMP) &&
+                !get_config_bool(c, STOCKPILE_CONFIG_TRAIN))) {
+            to_remove.push_back(stockpile_number);
             continue;
         }
         cache.emplace(bld, c);
     }
+    for (int stockpile_number : to_remove)
+        remove_stockpile_config(out, stockpile_number);
 }
 
 // remove this function once saves from 50.08 are no longer compatible

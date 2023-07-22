@@ -42,7 +42,7 @@ interactively."
 "# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-"Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details."
+"Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details. You can also copy text from this spreadsheet online and paste it in gui/launcher with Ctrl-V."
 "If the checklist indicates that you should generate orders, that means to hit the ""o"" hotkey when the blueprint is loaded in gui/quickfort. You'll get a popup saying which orders were generated. Also remember to read the messages the blueprints display after you run them so you don't miss any important manual steps!"
 ""
 -- Preparation (before you embark!) --

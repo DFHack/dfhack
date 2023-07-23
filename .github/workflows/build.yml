@@ -30,6 +30,7 @@ jobs:
         sudo apt-get install \
             ccache \
             libxml-libxslt-perl \
+            libgl-dev \
             ninja-build
         pip install 'sphinx<4.4.0'
     - name: Install GCC
@@ -132,6 +133,7 @@ jobs:
           sudo apt-get install \
               ccache \
               libxml-libxslt-perl \
+              libgl-dev \
               ninja-build
           pip install 'sphinx<4.4.0'
       - name: Clone DFHack

@@ -73,6 +73,7 @@ jobs:
             -B build \
             -G Ninja \
             -DDFHACK_BUILD_ARCH=64 \
+            -DBUILD_STONESENSE:BOOL=1 \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DBUILD_DFLAUNCH:BOOL=1 \
@@ -86,7 +87,7 @@ jobs:
           ccache --show-stats
       - name: Cross-compile win64 artifacts
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_DFLAUNCH:BOOL=1'
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1'
           steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
           steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
         run: |

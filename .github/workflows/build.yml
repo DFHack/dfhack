@@ -78,6 +78,7 @@ jobs:
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -199,6 +200,8 @@ jobs:
             ccache-win64-cross-msvc-${{ github.ref_name }}
             ccache-win64-cross-msvc
       - name: Cross-compile win64
+        env:
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
         run: |
           cd build
           bash -x build-win64-from-linux.sh

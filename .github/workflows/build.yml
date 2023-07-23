@@ -3,9 +3,9 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build:
+  build-test:
     runs-on: ${{ matrix.os }}
-    name: build (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
+    name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
     strategy:
       fail-fast: false
       matrix:
@@ -29,11 +29,8 @@ jobs:
         sudo apt-get update
         sudo apt-get install \
             ccache \
-            libsdl2-dev \
-            libxml-libxml-perl \
             libxml-libxslt-perl \
-            ninja-build \
-            zlib1g-dev
+            ninja-build
         pip install 'sphinx<4.4.0'
     - name: Install GCC
       run: |
@@ -41,8 +38,8 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # unlimited - we need past tags
         submodules: true
+        fetch-depth: 0
     - name: Set up environment
       id: env_setup
       run: |
@@ -51,11 +48,6 @@ jobs:
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
         echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
-        #    - name: Fetch DF cache
-        #      uses: actions/cache@v3
-        #      with:
-        #        path: ~/DF
-        #        key: dfcache-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
     - name: Fetch ccache
       uses: actions/cache@v3
       with:
@@ -64,9 +56,14 @@ jobs:
         restore-keys: |
           ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}
           ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
-          #    - name: Download DF
-          #      run: |
-          #        sh ci/download-df.sh
+    # - name: Fetch DF cache
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ~/DF
+    #     key: df-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
+    # - name: Download DF
+    #   run: |
+    #     sh ci/download-df.sh
     - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
@@ -96,32 +93,92 @@ jobs:
       run: |
         ninja -C build-ci test
         exit $?
-        #    - name: Run lua tests
-        #      id: run_tests_lua
-        #      run: |
-        #        export TERM=dumb
-        #        status=0
-        #        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-        #        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-        #        mkdir -p artifacts
-        #        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-        #        exit $status
-        #    - name: Upload test artifacts
-        #      uses: actions/upload-artifact@v1
-        #      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
-        #      continue-on-error: true
-        #      with:
-        #        name: test-artifacts-${{ matrix.gcc }}
-        #        path: artifacts
-    - name: Clean up DF folder
-      # prevent DFHack-generated files from ending up in the cache
-      # (download-df.sh also removes them, this is just to save cache space)
-      if: success() || failure()
-      run: |
-        rm -rf "$DF_FOLDER"
+    # - name: Run lua tests
+    #   id: run_tests_lua
+    #   run: |
+    #     export TERM=dumb
+    #     status=0
+    #     script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+    #     python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
+    #     mkdir -p artifacts
+    #     cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+    #     exit $status
+    # - name: Upload test artifacts
+    #   uses: actions/upload-artifact@v3
+    #   if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
+    #   continue-on-error: true
+    #   with:
+    #     name: test-artifacts-${{ matrix.gcc }}
+    #     path: artifacts
+    # - name: Clean up DF folder
+    #   # prevent DFHack-generated files from ending up in the cache
+    #   # (download-df.sh also removes them, this is just to save cache space)
+    #   if: success() || failure()
+    #   run: |
+    #     rm -rf "$DF_FOLDER"
+
+  build-linux64:
+    name: Linux package
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+              ccache \
+              libxml-libxslt-perl \
+              ninja-build
+          pip install 'sphinx<4.4.0'
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Fetch ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ccache-ubuntu-22.04-gcc-11-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-ubuntu-22.04-gcc-11-${{ github.ref_name }}
+            ccache-ubuntu-22.04-gcc-11
+      - name: Set up environment
+        id: env_setup
+        run: |
+          echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
+      - name: Configure DFHack
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -G Ninja \
+            -DDFHACK_BUILD_ARCH=64 \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DBUILD_DOCS:BOOL=1 \
+            -DCMAKE_INSTALL_PREFIX=build/output
+      - name: Build DFHack
+        run: |
+          ninja -C build install
+          ccache --max-size 50M
+          ccache --cleanup
+          ccache --show-stats
+      - name: Format artifact name
+        id: artifactname
+        run: |
+          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dfhack-linux64-build-${{ steps.artifactname.outputs.name }}
+          path: build/output/*
 
   build-cross-win64:
-    name: Build MSVC win64
+    name: Win64 package
     runs-on: ubuntu-22.04
     steps:
       - name: Install dependencies
@@ -141,7 +198,7 @@ jobs:
           restore-keys: |
             ccache-win64-cross-msvc-${{ github.ref_name }}
             ccache-win64-cross-msvc
-      - name: Cross-compile win64 artifacts
+      - name: Cross-compile win64
         run: |
           cd build
           bash -x build-win64-from-linux.sh
@@ -152,7 +209,7 @@ jobs:
         id: artifactname
         run: |
           echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
-      - name: Upload win64 artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: dfhack-win64-build-${{ steps.artifactname.outputs.name }}

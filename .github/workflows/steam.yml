@@ -32,13 +32,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
               ccache \
-              libsdl2-dev \
-              libxml-libxml-perl \
               libxml-libxslt-perl \
-              ninja-build \
-              zlib1g-dev \
-              gcc \
-              g++
+              ninja-build
           pip install 'sphinx<4.4.0'
       - name: Clone DFHack
         uses: actions/checkout@v3
@@ -57,9 +52,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ccache-ubuntu-22.04-gcc-10-${{ github.sha }}
+          key: ccache-ubuntu-22.04-gcc-11-${{ github.sha }}
           restore-keys: |
-            ccache-ubuntu-22.04-gcc-10
+            ccache-ubuntu-22.04-gcc-11
       - name: Fetch win64 ccache
         uses: actions/cache@v3
         with:
@@ -82,7 +77,7 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DBUILD_DFLAUNCH:BOOL=1 \
             -DBUILD_DOCS:BOOL=1 \
-            -DCMAKE_INSTALL_PREFIX=linux64/output
+            -DCMAKE_INSTALL_PREFIX=build/output
       - name: Build DFHack
         run: |
           ninja -C build install
@@ -114,5 +109,5 @@ jobs:
           buildDescription: ${{ github.event.inputs.version }}
           rootPath: build
           depot1Path: win64-cross/output
-          depot2Path: linux64/output
+          depot2Path: output
           releaseBranch: ${{ github.event.inputs.release_channel }}

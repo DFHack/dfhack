@@ -53,9 +53,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.ccache
-        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}-${{ github.sha }}
+        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.sha }}
         restore-keys: |
-          ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}
           ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     # - name: Fetch DF cache
     #   uses: actions/cache@v3
@@ -147,9 +146,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ccache-ubuntu-22.04-gcc-10-${{ github.ref_name }}-${{ github.sha }}
+          key: ccache-ubuntu-22.04-gcc-10-${{ github.sha }}
           restore-keys: |
-            ccache-ubuntu-22.04-gcc-10-${{ github.ref_name }}
             ccache-ubuntu-22.04-gcc-10
       - name: Set up environment
         id: env_setup
@@ -202,9 +200,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: build/win64-cross/ccache
-          key: ccache-win64-cross-msvc-${{ github.ref_name }}-${{ github.sha }}
+          key: ccache-win64-cross-msvc-${{ github.sha }}
           restore-keys: |
-            ccache-win64-cross-msvc-${{ github.ref_name }}
             ccache-win64-cross-msvc
       - name: Cross-compile win64
         env:

@@ -32,8 +32,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
               ccache \
-              libxml-libxslt-perl \
               libgl-dev \
+              libxml-libxslt-perl \
               ninja-build
           pip install 'sphinx<4.4.0'
       - name: Clone DFHack

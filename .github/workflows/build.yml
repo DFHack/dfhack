@@ -132,6 +132,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
               ccache \
+              gcc-10 \
+              g++-10 \
               libgl-dev \
               libxml-libxslt-perl \
               ninja-build
@@ -145,15 +147,18 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ccache-ubuntu-22.04-gcc-11-${{ github.ref_name }}-${{ github.sha }}
+          key: ccache-ubuntu-22.04-gcc-10-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ccache-ubuntu-22.04-gcc-11-${{ github.ref_name }}
-            ccache-ubuntu-22.04-gcc-11
+            ccache-ubuntu-22.04-gcc-10-${{ github.ref_name }}
+            ccache-ubuntu-22.04-gcc-10
       - name: Set up environment
         id: env_setup
         run: |
           echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
       - name: Configure DFHack
+        env:
+          CC: gcc-10
+          CXX: g++-10
         run: |
           cmake \
             -S . \

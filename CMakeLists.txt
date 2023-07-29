@@ -210,17 +210,16 @@ set(DFHACK_BINARY_DESTINATION .)
 set(DFHACK_PLUGIN_DESTINATION ${DFHACK_DATA_DESTINATION}/plugins)
 # dfhack lua files go here:
 set(DFHACK_LUA_DESTINATION ${DFHACK_DATA_DESTINATION}/lua)
-# the windows .lib file goes here:
-set(DFHACK_DEVLIB_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # user documentation goes here:
 set(DFHACK_USERDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
-# developer documentation goes here:
-set(DFHACK_DEVDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # some options for the user/developer to play with
 option(BUILD_LIBRARY "Build the DFHack library." ON)
 option(BUILD_PLUGINS "Build the DFHack plugins." ON)
+option(BUILD_BINARIES "Build the DFHack binary tools." ON)
+option(INSTALL_SCRIPTS "Install DFHack scripts." ON)
+option(INSTALL_DATA_FILES "Install DFHack common data files." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 if(UNIX)
@@ -387,11 +386,14 @@ include_directories(depends/lodepng)
 include_directories(depends/tthread)
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
-add_subdirectory(depends)
+
+if(BUILD_LIBRARY)
+    add_subdirectory(depends)
+endif()
 
 # Testing with CTest
 macro(dfhack_test name files)
-if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
+if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
     target_link_libraries(${name} dfhack gtest)
@@ -416,12 +418,17 @@ file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
-if(BUILD_PLUGINS)
+if(BUILD_LIBRARY AND BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
-add_subdirectory(data)
-add_subdirectory(scripts)
+if(INSTALL_DATA_FILES)
+    add_subdirectory(data)
+endif()
+
+if(INSTALL_SCRIPTS)
+    add_subdirectory(scripts)
+endif()
 
 if(BUILD_DOCS)
     find_package(Python3)
@@ -582,7 +589,7 @@ endif()
 set(DFHACK_BUILD_ARCH_PREV "${DFHACK_BUILD_ARCH}" CACHE STRING "Previous build architecture" FORCE)
 
 option(BUILD_SIZECHECK "Build the sizecheck library, for research" OFF)
-if(BUILD_SIZECHECK)
+if(BUILD_LIBRARY AND BUILD_SIZECHECK)
     add_subdirectory(depends/sizecheck)
     add_dependencies(dfhack sizecheck)
 endif()

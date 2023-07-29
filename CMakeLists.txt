@@ -217,7 +217,6 @@ set(DFHACK_USERDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 # some options for the user/developer to play with
 option(BUILD_LIBRARY "Build the DFHack library." ON)
 option(BUILD_PLUGINS "Build the DFHack plugins." ON)
-option(BUILD_BINARIES "Build the DFHack binary tools." ON)
 option(INSTALL_SCRIPTS "Install DFHack scripts." ON)
 option(INSTALL_DATA_FILES "Install DFHack common data files." ON)
 
@@ -418,9 +417,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
-if(BUILD_LIBRARY AND BUILD_PLUGINS)
-    add_subdirectory(plugins)
-endif()
+add_subdirectory(plugins)
 
 if(INSTALL_DATA_FILES)
     add_subdirectory(data)

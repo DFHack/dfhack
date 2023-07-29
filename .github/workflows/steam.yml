@@ -70,16 +70,24 @@ jobs:
         run: |
           echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
       - name: Configure DFHack (common files)
+        env:
+          CC: gcc-10
+          CXX: g++-10
         run: |
           cmake \
             -S . \
             -B build \
             -G Ninja \
+            -DCMAKE_INSTALL_PREFIX=build/common-output \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DDFHACK_BUILD_ARCH=64 \
-            -DBUILD_LIBRARY:BOOL=0 \
-            -DBUILD_BINARIES:BOOL=0 \
             -DBUILD_DOCS:BOOL=1 \
-            -DCMAKE_INSTALL_PREFIX=build/common-output
+            -DBUILD_LIBRARY:BOOL=0 \
+            -DBUILD_PLUGINS:BOOL=0 \
+            -DBUILD_STONESENSE:BOOL=1 \
+            -DINSTALL_DATA_FILES:BOOL=1 \
+            -DINSTALL_SCRIPTS:BOOL=1
       - name: Build DFHack (common files)
         run: |
           ninja -C build install
@@ -92,16 +100,16 @@ jobs:
             -S . \
             -B build \
             -G Ninja \
-            -DDFHACK_BUILD_ARCH=64 \
-            -DBUILD_STONESENSE:BOOL=1 \
+            -DCMAKE_INSTALL_PREFIX=build/linux-output \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DBUILD_LIBRARY:BOOL=1 \
-            -DBUILD_BINARIES:BOOL=1 \
+            -DDFHACK_BUILD_ARCH=64 \
             -DBUILD_DOCS:BOOL=0 \
-            -DINSTALL_SCRIPTS:BOOL=0 \
+            -DBUILD_LIBRARY:BOOL=1 \
+            -DBUILD_PLUGINS:BOOL=1 \
+            -DBUILD_STONESENSE:BOOL=1 \
             -DINSTALL_DATA_FILES:BOOL=0 \
-            -DCMAKE_INSTALL_PREFIX=build/linux-output
+            -DINSTALL_SCRIPTS:BOOL=0
       - name: Build DFHack (linux build)
         run: |
           ninja -C build install
@@ -110,7 +118,7 @@ jobs:
           ccache --show-stats
       - name: Cross-compile win64 artifacts
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1 -DBUILD_DOCS:BOOL=0 -DINSTALL_SCRIPTS:BOOL=0 -DINSTALL_DATA_FILES:BOOL=0'
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1 -DBUILD_DOCS:BOOL=0 -DINSTALL_DATA_FILES:BOOL=0 -DINSTALL_SCRIPTS:BOOL=0'
           steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
           steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
         run: |

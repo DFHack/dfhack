@@ -53,8 +53,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.ccache
-        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.sha }}
+        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-test-${{ github.sha }}
         restore-keys: |
+          ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-test
           ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     # - name: Fetch DF cache
     #   uses: actions/cache@v3

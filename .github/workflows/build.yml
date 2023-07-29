@@ -186,6 +186,31 @@ jobs:
           name: dfhack-linux64-build-${{ steps.artifactname.outputs.name }}
           path: build/output/*
 
+  package-win64:
+    name: Win64 package (native)
+    runs-on: windows-latest
+    steps:
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Configure DFHack
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image
+      - name: Build DFHack
+        run: |
+          cmake --build build --config Release --target install
+      - name: Format artifact name
+        id: artifactname
+        run: |
+          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dfhack-win64-build-${{ steps.artifactname.outputs.name }}
+          path: build/image/*
+
   build-cross-win64:
     name: Win64 package
     runs-on: ubuntu-22.04

@@ -24,15 +24,17 @@ if(BUILD_DEV_PLUGINS)
     #add_subdirectory(devel)
 endif()
 
-install(DIRECTORY lua/
-    DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
-    FILES_MATCHING PATTERN "*.lua")
-install(DIRECTORY raw/
-    DESTINATION ${DFHACK_DATA_DESTINATION}/raw
-    FILES_MATCHING PATTERN "*.txt")
-install(DIRECTORY raw/
-    DESTINATION ${DFHACK_DATA_DESTINATION}/raw
-    FILES_MATCHING PATTERN "*.diff")
+if(INSTALL_DATA_FILES)
+    install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
+        FILES_MATCHING PATTERN "*.lua")
+    install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.txt")
+    install(DIRECTORY raw/
+        DESTINATION ${DFHACK_DATA_DESTINATION}/raw
+        FILES_MATCHING PATTERN "*.diff")
+endif()
 
 # Protobuf
 file(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)

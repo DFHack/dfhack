@@ -39,8 +39,6 @@ option(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependenc
 add_subdirectory(clsocket)
 ide_folder(clsocket "Depends")
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/luacov/src/luacov/ DESTINATION ${DFHACK_DATA_DESTINATION}/lua/luacov)
-
 # set the default values of libexpat options - the descriptions are left empty
 # because later option() calls *do* override those
 set(EXPAT_BUILD_EXAMPLES OFF CACHE BOOL "")

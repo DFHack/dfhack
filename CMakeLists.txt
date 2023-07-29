@@ -218,7 +218,7 @@ set(DFHACK_USERDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 option(BUILD_LIBRARY "Build the DFHack library." ON)
 option(BUILD_PLUGINS "Build the DFHack plugins." ON)
 option(INSTALL_SCRIPTS "Install DFHack scripts." ON)
-option(INSTALL_DATA_FILES "Install DFHack common data files." ON)
+option(INSTALL_DATA_FILES "Install DFHack platform independent files." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 if(UNIX)
@@ -407,20 +407,20 @@ if(NOT GIT_FOUND)
 endif()
 
 # build the lib itself
+add_subdirectory(library)
 if(BUILD_LIBRARY)
-    add_subdirectory(library)
-    install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
+    file(WRITE ${CMAKE_BINARY_DIR}/dfhack_setarch.txt ${DFHACK_SETARCH})
+    install(FILES ${CMAKE_BINARY_DIR}/dfhack_setarch.txt DESTINATION ${DFHACK_DATA_DESTINATION})
 endif()
-
-file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
-install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
 add_subdirectory(plugins)
 
 if(INSTALL_DATA_FILES)
     add_subdirectory(data)
+    install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/depends/luacov/src/luacov/ DESTINATION ${DFHACK_DATA_DESTINATION}/lua/luacov)
 endif()
 
 if(INSTALL_SCRIPTS)

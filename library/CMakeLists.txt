@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.21)
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
 cmake_policy(SET CMP0022 NEW)
 
+if(BUILD_LIBRARY)
+
 # build options
 if(UNIX)
     option(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
@@ -438,20 +440,24 @@ install(TARGETS dfhack
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
-# install the offset file
-install(FILES xml/symbols.xml
-    DESTINATION ${DFHACK_DATA_DESTINATION})
-
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
-install(DIRECTORY lua/
-    DESTINATION ${DFHACK_LUA_DESTINATION}
-    FILES_MATCHING PATTERN "*.lua")
-
-install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
-    DESTINATION ${DFHACK_DATA_DESTINATION}
-    FILES_MATCHING PATTERN "*.dif")
-
 add_subdirectory(xml)
+
+endif(BUILD_LIBRARY)
+
+# install the offset file
+if(INSTALL_DATA_FILES)
+    install(FILES xml/symbols.xml
+        DESTINATION ${DFHACK_DATA_DESTINATION})
+
+    install(DIRECTORY lua/
+        DESTINATION ${DFHACK_LUA_DESTINATION}
+        FILES_MATCHING PATTERN "*.lua")
+
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
+        DESTINATION ${DFHACK_DATA_DESTINATION}
+        FILES_MATCHING PATTERN "*.dif")
+endif()

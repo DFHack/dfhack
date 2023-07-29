@@ -73,16 +73,16 @@ jobs:
           -S . \
           -B build-ci \
           -G Ninja \
+          -DCMAKE_INSTALL_PREFIX="$DF_FOLDER" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DDFHACK_BUILD_ARCH=64 \
-          -DBUILD_TESTS:BOOL=ON \
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
-          -DBUILD_SUPPORTED:BOOL=1 \
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+          -DBUILD_TESTS:BOOL=ON
     - name: Build DFHack
       run: |
         ninja -C build-ci install
@@ -162,12 +162,13 @@ jobs:
             -S . \
             -B build \
             -G Ninja \
-            -DDFHACK_BUILD_ARCH=64 \
+            -DCMAKE_INSTALL_PREFIX=build/output \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DDFHACK_BUILD_ARCH=64 \
             -DBUILD_DOCS:BOOL=1 \
-            -DBUILD_STONESENSE:BOOL=1 \
-            -DCMAKE_INSTALL_PREFIX=build/output
+            -DBUILD_STONESENSE:BOOL=1
       - name: Build DFHack
         run: |
           ninja -C build install

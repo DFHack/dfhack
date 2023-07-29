@@ -79,6 +79,7 @@ jobs:
             -B build \
             -G Ninja \
             -DCMAKE_INSTALL_PREFIX=build/common-output \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DDFHACK_BUILD_ARCH=64 \
@@ -101,6 +102,7 @@ jobs:
             -B build \
             -G Ninja \
             -DCMAKE_INSTALL_PREFIX=build/linux-output \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DDFHACK_BUILD_ARCH=64 \

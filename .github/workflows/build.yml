@@ -202,23 +202,18 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - name: Install dependencies
-        run: pip install clcache
+      - run: pip install clcache
       - run: pip install 'sphinx<4.4.0'
       - name: Configure DFHack
-        run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image -DCMAKE_C_COMPILER_LAUNCHER=clcache -DCMAKE_CXX_COMPILER_LAUNCHER=clcache -DBUILD_DOCS:BOOL=1 -DBUILD_STONESENSE:BOOL=1
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image -DCMAKE_C_COMPILER_LAUNCHER=clcache -DCMAKE_CXX_COMPILER_LAUNCHER=clcache -DBUILD_DOCS:BOOL=1 -DBUILD_STONESENSE:BOOL=1
       - name: Build DFHack
-        run: |
-          cmake --build build -j 2 --config Release --target install
-      - name: Format artifact name
-        id: artifactname
-        run: |
-          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+        run: cmake --build build -j 2 --config Release --target install
+      - uses: benjlevesque/short-sha@v2.2
+        id: short-sha
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: dfhack-win64-build-${{ steps.artifactname.outputs.name }}
+          name: dfhack-win64-build-${{ steps.short-sha.outputs.sha }}
           path: build/image/*
 
   build-cross-win64:

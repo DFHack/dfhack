@@ -208,7 +208,8 @@ jobs:
         run: cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image -DCMAKE_C_COMPILER_LAUNCHER=clcache -DCMAKE_CXX_COMPILER_LAUNCHER=clcache -DBUILD_DOCS:BOOL=1 -DBUILD_STONESENSE:BOOL=1
       - name: Build DFHack
         run: cmake --build build -j 2 --config Release --target install
-      - uses: benjlevesque/short-sha@v2.2
+      - name: Format artifact name
+        uses: benjlevesque/short-sha@v2.2
         id: short-sha
       - name: Upload artifact
         uses: actions/upload-artifact@v3

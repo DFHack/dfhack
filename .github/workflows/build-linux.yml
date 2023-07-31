@@ -71,6 +71,7 @@ jobs:
         env:
           CC: gcc-${{ inputs.gcc-ver }}
           CXX: g++-${{ inputs.gcc-ver }}
+          CCACHE_DIR: ${{ env.HOME }}/.ccache
         run: |
           cmake \
             -S . \
@@ -82,7 +83,7 @@ jobs:
             ${{ inputs.platform-files && '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache' || '' }} \
             -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} \
             -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} \
-            -DBUILD_STONESENSE:BOOL=${{ inputs.platform-files }} \
+            -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} \
             -DBUILD_DEV_PLUGINS:BOOL=${{ inputs.extras }} \
             -DBUILD_SIZECHECK:BOOL=${{ inputs.extras }} \
             -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \

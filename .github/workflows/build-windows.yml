@@ -1,0 +1,65 @@
+name: build-windows
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        type: string
+      append-date-and-hash:
+        type: boolean
+        default: false
+      cache-id:
+        type: string
+        default: ''
+      platform-files:
+        type: boolean
+        default: true
+      common-files:
+        type: boolean
+        default: true
+
+jobs:
+  build-win64:
+    name: Build win64
+    runs-on: windows-latest
+    steps:
+      - run: pip install clcache
+        if: inputs.platform-files
+      - run: pip install 'sphinx<4.4.0'
+        if: inputs.common-files
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: ${{ !inputs.platform-files && 1 || 0 }}
+      - name: Fetch clcache
+        if: inputs.platform-files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.HOME }}/clcache
+          key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
+          restore-keys: |
+            win-msvc-${{ inputs.cache-id }}
+            win-msvc
+      - name: Configure DFHack
+        env:
+          CLCACHE_DIR: ${{ env.HOME }}/clcache
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image ${{ inputs.platform-files && '-DCMAKE_C_COMPILER_LAUNCHER=clcache' || '' }} ${{ inputs.platform-files && '-DCMAKE_CXX_COMPILER_LAUNCHER=clcache' || '' }} -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} -DBUILD_STONESENSE:BOOL=${{ inputs.platform-files }} -DBUILD_DOCS:BOOL=${{ inputs.common-files }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
+      - name: Build DFHack
+        run: cmake --build build -j 2 --config Release --target install
+      - name: Trim cache
+        if: inputs.platform-files
+        run: |
+          clcache -M 52428800
+          clcache -c
+          clcache -s
+      - name: Format artifact name
+        if: inputs.append-date-and-hash
+        id: artifactname
+        run: echo "name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Upload artifact
+        if: inputs.artifact-name
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.append-date-and-hash && steps.artifactname.outputs.name || inputs.artifact-name }}
+          path: build/image/*

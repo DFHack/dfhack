@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build-linux:
-    name: Build (Linux ${{ matrix.type }}, GCC ${{ matrix.gcc }})
+    name: Linux ${{ matrix.type }}, GCC ${{ matrix.gcc }}
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: ${{ matrix.artifact-name || format('{0}-gcc-{1}', matrix.type, matrix.gcc) }}

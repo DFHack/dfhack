@@ -75,7 +75,7 @@ jobs:
     name: Linux package
     uses: ./.github/workflows/build-linux.yml
     with:
-      artifact-name: dfhack-linux64
+      artifact-name: dfhack-linux64-build
       append-date-and-hash: true
       cache-id: release
       stonesense: true
@@ -84,52 +84,13 @@ jobs:
     secrets: inherit
 
   package-win64:
-    name: Win64 package (native)
+    name: Win64 package
     uses: ./.github/workflows/build-windows.yml
     with:
-      artifact-name: dfhack-win64
+      artifact-name: dfhack-win64-build
       append-date-and-hash: true
       cache-id: msvc
     secrets: inherit
-
-  build-cross-win64:
-    name: Win64 package
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install ccache
-      - name: Clone DFHack
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-          fetch-depth: 0
-      - name: Fetch ccache
-        uses: actions/cache@v3
-        with:
-          path: build/win64-cross/ccache
-          key: ccache-win64-cross-msvc-${{ github.sha }}
-          restore-keys: |
-            ccache-win64-cross-msvc
-      - name: Cross-compile win64
-        env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
-        run: |
-          cd build
-          bash -x build-win64-from-linux.sh
-          ccache -d win64-cross/ccache --max-size 200M
-          ccache -d win64-cross/ccache --cleanup
-          ccache -d win64-cross/ccache --show-stats
-      - name: Format artifact name
-        id: artifactname
-        run: |
-          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: dfhack-win64-build-${{ steps.artifactname.outputs.name }}
-          path: build/win64-cross/output/*
 
   docs:
     uses: ./.github/workflows/build-linux.yml

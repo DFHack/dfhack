@@ -13,127 +13,65 @@ on:
         type: string
         required: true
       release_channel:
-        description: Release channel
+        description: Steam release channel
         type: string
         required: true
         default: staging
 
 jobs:
+  depot-common:
+    name: Common depot files
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: common-depot
+      ref: ${{ github.event.inputs.ref }}
+      platform-files: false
+      docs: true
+      stonesense: true
+    secrets: inherit
+
+  depot-linux:
+    name: Linux depot files
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: linux64-depot
+      ref: ${{ github.event.inputs.ref }}
+      cache-id: depot
+      common-files: false
+      stonesense: true
+      gcc-ver: "10"
+    secrets: inherit
+
+  depot-win64:
+    name: Windows depot files
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      artifact-name: win64-depot
+      ref: ${{ github.event.inputs.ref }}
+      cache-id: msvc
+      common-files: false
+      launchdf: true
+    secrets: inherit
+
   deploy-to-steam:
     name: Deploy to Steam
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Set up Python 3
-        uses: actions/setup-python@v4
+      - name: Stage common depot files
+        uses: actions/download-artifact@v3
         with:
-          python-version: 3
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install \
-              ccache \
-              gcc-10 \
-              g++-10 \
-              libgl-dev \
-              libxml-libxslt-perl \
-              ninja-build
-          pip install 'sphinx<4.4.0'
-      - name: Clone DFHack
-        uses: actions/checkout@v3
+          name: common-depot
+          path: common
+      - name: Stage linux64 depot files
+        uses: actions/download-artifact@v3
         with:
-          submodules: true
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.ref }}
-      - name: Get 3rd party SDKs
-        uses: actions/checkout@v3
+          name: linux64-depot
+          path: linux64
+      - name: Stage win64 depot files
+        uses: actions/download-artifact@v3
         with:
-          repository: DFHack/3rdparty
-          ref: main
-          ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
-          path: depends/steam
-      - name: Fetch linux64 ccache
-        uses: actions/cache@v3
-        with:
-          path: ~/.ccache
-          key: ccache-ubuntu-22.04-gcc-10-${{ github.sha }}
-          restore-keys: |
-            ccache-ubuntu-22.04-gcc-10
-      - name: Fetch win64 ccache
-        uses: actions/cache@v3
-        with:
-          path: build/win64-cross/ccache
-          key: ccache-win64-cross-msvc-${{ github.sha }}
-          restore-keys: |
-            ccache-win64-cross-msvc
-      - name: Set up environment
-        id: env_setup
-        run: |
-          echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
-      - name: Configure DFHack (common files)
-        env:
-          CC: gcc-10
-          CXX: g++-10
-        run: |
-          cmake \
-            -S . \
-            -B build \
-            -G Ninja \
-            -DCMAKE_INSTALL_PREFIX=build/common-output \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DDFHACK_BUILD_ARCH=64 \
-            -DBUILD_DOCS:BOOL=1 \
-            -DBUILD_LIBRARY:BOOL=0 \
-            -DBUILD_PLUGINS:BOOL=0 \
-            -DBUILD_STONESENSE:BOOL=1 \
-            -DINSTALL_DATA_FILES:BOOL=1 \
-            -DINSTALL_SCRIPTS:BOOL=1
-      - name: Build DFHack (common files)
-        run: |
-          ninja -C build install
-      - name: Configure DFHack (linux build)
-        env:
-          CC: gcc-10
-          CXX: g++-10
-        run: |
-          cmake \
-            -S . \
-            -B build \
-            -G Ninja \
-            -DCMAKE_INSTALL_PREFIX=build/linux-output \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DDFHACK_BUILD_ARCH=64 \
-            -DBUILD_DOCS:BOOL=0 \
-            -DBUILD_LIBRARY:BOOL=1 \
-            -DBUILD_PLUGINS:BOOL=1 \
-            -DBUILD_STONESENSE:BOOL=1 \
-            -DINSTALL_DATA_FILES:BOOL=0 \
-            -DINSTALL_SCRIPTS:BOOL=0
-      - name: Build DFHack (linux build)
-        run: |
-          ninja -C build install
-          ccache --max-size 50M
-          ccache --cleanup
-          ccache --show-stats
-      - name: Cross-compile win64 artifacts
-        env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DFLAUNCH:BOOL=1 -DBUILD_DOCS:BOOL=0 -DINSTALL_DATA_FILES:BOOL=0 -DINSTALL_SCRIPTS:BOOL=0'
-          steam_username: ${{ secrets.STEAM_SDK_USERNAME }}
-          steam_password: ${{ secrets.STEAM_SDK_PASSWORD }}
-        run: |
-          echo "ref: ${{ github.event.inputs.ref }}"
-          echo "sha: ${{ github.sha }}"
-          echo "version: ${{ github.event.inputs.version }}"
-          echo "release_channel: ${{ github.event.inputs.release_channel }}"
-          echo
-          cd build
-          bash -x build-win64-from-linux.sh
-          ccache -d win64-cross/ccache --max-size 200M
-          ccache -d win64-cross/ccache --cleanup
-          ccache -d win64-cross/ccache --show-stats
+          name: win64-depot
+          path: win64
       - name: Steam deploy
         uses: game-ci/steam-deploy@v3
         with:
@@ -142,7 +80,7 @@ jobs:
           appId: 2346660
           buildDescription: ${{ github.event.inputs.version }}
           rootPath: build
-          depot1Path: common-output
-          depot2Path: win64-cross/output
-          depot3Path: linux-output
+          depot1Path: common
+          depot2Path: win64
+          depot3Path: linux64
           releaseBranch: ${{ github.event.inputs.release_channel }}

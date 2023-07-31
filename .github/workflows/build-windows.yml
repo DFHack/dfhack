@@ -3,6 +3,9 @@ name: build-windows
 on:
   workflow_call:
     inputs:
+      ref:
+        type: string
+        default: ''
       artifact-name:
         type: string
       append-date-and-hash:
@@ -14,40 +17,52 @@ on:
       common-files:
         type: boolean
         default: true
+      launchdf:
+        type: boolean
+        default: false
 
 jobs:
   build-win64:
     name: Build win64
-    runs-on: windows-latest
+    runs-on: ubuntu-22.04
     steps:
-      - run: pip install clcache
-      - run: pip install 'sphinx<4.4.0'
-        if: inputs.common-files
-      - name: Fetch clcache
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ccache
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: true
+          fetch-depth: 0
+      - name: Get 3rd party SDKs
+        if: inputs.launchdf
+        uses: actions/checkout@v3
+        with:
+          repository: DFHack/3rdparty
+          ref: main
+          ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
+          path: depends/steam
+      - name: Fetch ccache
         uses: actions/cache@v3
         with:
-          path: clcache
+          path: build/win64-cross/ccache
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
           restore-keys: |
             win-msvc-${{ inputs.cache-id }}
             win-msvc
-      - name: Clone DFHack
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-          fetch-depth: 0
-      - name: Configure DFHack
+      - name: Cross-compile
         env:
-          CC: clcache
-          CXX: clcache
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image -DBUILD_STONESENSE:BOOL=1 -DBUILD_DOCS:BOOL=${{ inputs.common-files }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
-      - name: Build DFHack
-        run: cmake --build build -j 2 --config Release --target install
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1 -DBUILD_DOCS:BOOL=${{ inputs.common-files }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }}'
+        run: |
+          cd build
+          bash -x build-win64-from-linux.sh
       - name: Trim cache
         run: |
-          clcache -M 52428800
-          clcache -c
-          clcache -s
+          ccache -d win64-cross/ccache --max-size 50M
+          ccache -d win64-cross/ccache --cleanup
+          ccache -d win64-cross/ccache --show-stats --verbose
       - name: Format artifact name
         if: inputs.append-date-and-hash
         id: artifactname
@@ -57,4 +72,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ inputs.append-date-and-hash && steps.artifactname.outputs.name || inputs.artifact-name }}
-          path: build/image/*
+          path: build/win64-cross/output/*

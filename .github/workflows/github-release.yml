@@ -21,6 +21,7 @@ jobs:
       cache-readonly: true
       stonesense: true
       docs: true
+      launchdf: true
     secrets: inherit
 
   package-linux64:
@@ -49,13 +50,16 @@ jobs:
       with:
         ref: ${{ github.event.inputs.tag }}
         submodules: true
+    - name: Get tag
+      id: gettag
+      run: echo name=$(git describe --tags --abbrev=0 --exact-match) >> $GITHUB_OUTPUT
     - name: Generate release text
       run: |
         python docs/gen_changelog.py -a
         TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
         head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
-        CHANGELOG_LINES=$(wc -l <docs/changelogs/${{ github.event.inputs.tag }}-github.txt)
-        tail -n $((CHANGELOG_LINES - 3)) docs/changelogs/${{ github.event.inputs.tag }}-github.txt >> release_body.md
+        CHANGELOG_LINES=$(wc -l <docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt)
+        tail -n $((CHANGELOG_LINES - 3)) docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt >> release_body.md
         tail -n 2 .github/release_template.md >> release_body.md
         cat release_body.md
     - name: Stage win64 release
@@ -66,7 +70,7 @@ jobs:
     - name: Create win64 release archive
       run: |
         cd win64
-        zip -r ../dfhack-${{ github.event.inputs.tag }}-Windows-64bit.zip .
+        zip -r ../dfhack-${{ steps.gettag.outputs.name }}-Windows-64bit.zip .
     - name: Stage linux64 release
       uses: actions/download-artifact@v3
       with:
@@ -75,7 +79,7 @@ jobs:
     - name: Create linux64 release archive
       run: |
         cd linux64
-        tar cjf ../dfhack-${{ github.event.inputs.tag }}-Linux-64bit.tar.bz2 .
+        tar cjf ../dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2 .
     - name: Create or update GitHub release
       uses: ncipollo/release-action@v1
       with:
@@ -84,10 +88,10 @@ jobs:
         allowUpdates: true
         artifactErrorsFailBuild: true
         draft: true
-        name: "DFHack ${{ github.event.inputs.tag }}"
+        name: "DFHack ${{ steps.gettag.outputs.name }}"
         omitBodyDuringUpdate: true
         omitDraftDuringUpdate: true
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
         replacesArtifacts: true
-        tag: ${{ github.event.inputs.tag }}
+        tag: ${{ steps.gettag.outputs.name }}

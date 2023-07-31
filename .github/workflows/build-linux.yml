@@ -71,7 +71,7 @@ jobs:
         env:
           CC: gcc-${{ inputs.gcc-ver }}
           CXX: g++-${{ inputs.gcc-ver }}
-          CCACHE_DIR: ${{ env.HOME }}/.ccache
+          CCACHE_DIR: ${{ github.env.HOME }}/.ccache
         run: |
           cmake \
             -S . \

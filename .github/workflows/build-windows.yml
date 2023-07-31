@@ -1,4 +1,4 @@
-name: build-windows
+name: Build win64
 
 on:
   workflow_call:

@@ -1,4 +1,4 @@
-name: Releases
+name: Deploy to GitHub
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   package-win64:
-    name: Windows release
+    name: Build win64 release
     uses: ./.github/workflows/build-windows.yml
     with:
       artifact-name: win64-release
@@ -25,7 +25,7 @@ jobs:
     secrets: inherit
 
   package-linux64:
-    name: Linux release
+    name: Build linux64 release
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-release
@@ -37,7 +37,7 @@ jobs:
     secrets: inherit
 
   create-update-release:
-    name: GitHub release
+    name: Draft GitHub release
     needs:
     - package-win64
     - package-linux64

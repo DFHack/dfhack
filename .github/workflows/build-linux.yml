@@ -1,0 +1,110 @@
+name: build-linux
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        type: string
+      append-date-and-hash:
+        type: boolean
+        default: false
+      cache-id:
+        type: string
+        default: ''
+      platform-files:
+        type: boolean
+        default: true
+      common-files:
+        type: boolean
+        default: true
+      docs:
+        type: boolean
+        default: false
+      stonesense:
+        type: boolean
+        default: true
+      extras:
+        type: boolean
+        default: false
+      gcc-ver:
+        type: string
+        default: "11"
+
+jobs:
+  build-linux64:
+    name: Linux package
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install basic build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install ninja-build
+      - name: Install binary build dependencies
+        if: inputs.platform-files
+        run: |
+          sudo apt-get install \
+              ccache \
+              gcc-${{ inputs.gcc-ver }} \
+              g++-${{ inputs.gcc-ver }} \
+              libxml-libxslt-perl
+      - name: Install stonesense dependencies
+        if: inputs.stonesense
+        run: sudo apt-get install libgl-dev
+      - name: Install doc dependencies
+        if: inputs.docs
+        run: pip install 'sphinx<4.4.0'
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: ${{ !inputs.platform-files && 1 || 0 }}
+      - name: Fetch ccache
+        if: inputs.platform-files
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
+          restore-keys: |
+            linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}
+            linux-gcc-${{ inputs.gcc-ver }}
+      - name: Configure DFHack
+        env:
+          CC: gcc-${{ inputs.gcc-ver }}
+          CXX: g++-${{ inputs.gcc-ver }}
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -G Ninja \
+            -DCMAKE_INSTALL_PREFIX=build/image \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} \
+            -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} \
+            -DBUILD_STONESENSE:BOOL=${{ inputs.platform-files }} \
+            -DBUILD_DEV_PLUGINS:BOOL=${{ inputs.extras }} \
+            -DBUILD_SIZECHECK:BOOL=${{ inputs.extras }} \
+            -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \
+            -DBUILD_DOCS:BOOL=${{ inputs.docs }} \
+            -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} \
+            -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
+      - name: Build DFHack
+        run: ninja -C build install
+      - name: Run cpp tests
+        run: ninja -C build test
+      - name: Trim cache
+        if: inputs.platform-files
+        run: |
+          ccache --max-size 50M
+          ccache --cleanup
+          ccache --show-stats
+      - name: Format artifact name
+        if: ${{ inputs.append-date-and-hash }}
+        id: artifactname
+        run: |
+          echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+      - name: Upload artifact
+        if: inputs.artifact-name
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.append-date-and-hash && inputs.artifact-name || steps.artifactname.outputs.name}}
+          path: build/image/*

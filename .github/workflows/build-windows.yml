@@ -27,23 +27,21 @@ jobs:
         if: inputs.platform-files
       - run: pip install 'sphinx<4.4.0'
         if: inputs.common-files
+      - name: Fetch clcache
+        if: inputs.platform-files
+        uses: actions/cache@v3
+        with:
+          path: clcache
+          key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
+          restore-keys: |
+            win-msvc-${{ inputs.cache-id }}
+            win-msvc
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: ${{ !inputs.platform-files && 1 || 0 }}
-      - name: Fetch clcache
-        if: inputs.platform-files
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.env.HOME }}/clcache
-          key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
-          restore-keys: |
-            win-msvc-${{ inputs.cache-id }}
-            win-msvc
       - name: Configure DFHack
-        env:
-          CLCACHE_DIR: ${{ github.env.HOME }}/clcache
         run: cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX=build/image ${{ inputs.platform-files && '-DCMAKE_C_COMPILER_LAUNCHER=clcache' || '' }} ${{ inputs.platform-files && '-DCMAKE_CXX_COMPILER_LAUNCHER=clcache' || '' }} -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} -DBUILD_STONESENSE:BOOL=${{ inputs.platform-files }} -DBUILD_DOCS:BOOL=${{ inputs.common-files }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
       - name: Build DFHack
         run: cmake --build build -j 2 --config Release --target install

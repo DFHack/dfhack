@@ -50,7 +50,7 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v3
       with:
-        name: test-${{ matrix.gcc }}
+        name: test-gcc-${{ matrix.gcc }}
     # - name: Fetch DF cache
     #   uses: actions/cache@v3
     #   with:

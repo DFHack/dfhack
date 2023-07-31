@@ -22,7 +22,7 @@ on:
         default: false
       stonesense:
         type: boolean
-        default: true
+        default: false
       extras:
         type: boolean
         default: false
@@ -32,7 +32,7 @@ on:
 
 jobs:
   build-linux64:
-    name: Linux package
+    name: Build linux64
     runs-on: ubuntu-22.04
     steps:
       - name: Install basic build dependencies
@@ -78,6 +78,8 @@ jobs:
             -G Ninja \
             -DCMAKE_INSTALL_PREFIX=build/image \
             -DCMAKE_BUILD_TYPE=Release \
+            ${{ inputs.platform-files && '-DCMAKE_C_COMPILER_LAUNCHER=ccache' || '' }} \
+            ${{ inputs.platform-files && '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache' || '' }} \
             -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} \
             -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} \
             -DBUILD_STONESENSE:BOOL=${{ inputs.platform-files }} \
@@ -90,6 +92,7 @@ jobs:
       - name: Build DFHack
         run: ninja -C build install
       - name: Run cpp tests
+        if: inputs.platform-files
         run: ninja -C build test
       - name: Trim cache
         if: inputs.platform-files
@@ -98,7 +101,7 @@ jobs:
           ccache --cleanup
           ccache --show-stats
       - name: Format artifact name
-        if: ${{ inputs.append-date-and-hash }}
+        if: inputs.append-date-and-hash
         id: artifactname
         run: |
           echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
@@ -106,5 +109,5 @@ jobs:
         if: inputs.artifact-name
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.append-date-and-hash && inputs.artifact-name || steps.artifactname.outputs.name}}
+          name: ${{ inputs.append-date-and-hash && steps.artifactname.outputs.name || inputs.artifact-name }}
           path: build/image/*

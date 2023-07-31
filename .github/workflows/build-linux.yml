@@ -62,7 +62,7 @@ jobs:
         if: inputs.platform-files
         uses: actions/cache@v3
         with:
-          path: ~/.ccache
+          path: ~/.cache/ccache
           key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
           restore-keys: |
             linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}
@@ -71,7 +71,6 @@ jobs:
         env:
           CC: gcc-${{ inputs.gcc-ver }}
           CXX: g++-${{ inputs.gcc-ver }}
-          CCACHE_DIR: ${{ github.env.HOME }}/.ccache
         run: |
           cmake \
             -S . \
@@ -100,7 +99,7 @@ jobs:
         run: |
           ccache --max-size 50M
           ccache --cleanup
-          ccache --show-stats
+          ccache --show-stats --verbose
       - name: Format artifact name
         if: inputs.append-date-and-hash
         id: artifactname

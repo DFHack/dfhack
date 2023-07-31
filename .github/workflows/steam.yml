@@ -52,7 +52,6 @@ jobs:
       cache-id: release
       cache-readonly: true
       common-files: false
-      launchdf: true
     secrets: inherit
 
   deploy-to-steam:

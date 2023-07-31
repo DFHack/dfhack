@@ -20,7 +20,7 @@ Announcements
 
 ### Annc 1
 
-
+Text
 
 ### PSAs
 
@@ -58,8 +58,8 @@ Generated release notes
 ====================
 
 <details>
-  <summary>New tools, fixes, and improvements</summary>
+<summary>New tools, fixes, and improvements</summary>
 
-RELEASE NOTES HERE
+%RELEASE_NOTES%
 
 </details>

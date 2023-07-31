@@ -48,6 +48,16 @@ jobs:
       uses: actions/checkout@v3
       with:
         ref: ${{ github.event.inputs.tag }}
+        submodules: true
+    - name: Generate release text
+      run: |
+        python docs/gen_changelog.py -a
+        TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
+        head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
+        CHANGELOG_LINES=$(wc -l <docs/changelogs/${{ github.event.inputs.tag }}-github.txt)
+        tail -n $((CHANGELOG_LINES - 3)) docs/changelogs/${{ github.event.inputs.tag }}-github.txt >> release_body.md
+        tail -n 2 .github/release_template.md >> release_body.md
+        cat release_body.md
     - name: Stage win64 release
       uses: actions/download-artifact@v3
       with:
@@ -70,7 +80,7 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: "dfhack-*"
-        bodyFile: ".github/release_template.md"
+        bodyFile: "release_body.md"
         allowUpdates: true
         artifactErrorsFailBuild: true
         draft: true

@@ -1,0 +1,83 @@
+name: Releases
+
+on:
+  push:
+    tags:
+    - '*-r[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: tag
+        required: true
+
+jobs:
+  package-win64:
+    name: Windows release
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      artifact-name: win64-release
+      ref: ${{ github.event.inputs.tag }}
+      cache-id: release
+      cache-readonly: true
+      stonesense: true
+      docs: true
+    secrets: inherit
+
+  package-linux64:
+    name: Linux release
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: linux64-release
+      ref: ${{ github.event.inputs.tag }}
+      cache-id: release
+      cache-readonly: true
+      stonesense: true
+      docs: true
+    secrets: inherit
+
+  create-update-release:
+    name: GitHub release
+    needs:
+    - package-win64
+    - package-linux64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Clone DFHack
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.tag }}
+    - name: Stage win64 release
+      uses: actions/download-artifact@v3
+      with:
+        name: win64-release
+        path: win64
+    - name: Create win64 release archive
+      run: |
+        cd win64
+        zip -r ../dfhack-${{ github.event.inputs.tag }}-Windows-64bit.zip .
+    - name: Stage linux64 release
+      uses: actions/download-artifact@v3
+      with:
+        name: linux64-release
+        path: linux64
+    - name: Create linux64 release archive
+      run: |
+        cd linux64
+        tar cjf ../dfhack-${{ github.event.inputs.tag }}-Linux-64bit.tar.bz2 .
+    - name: Create or update GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "dfhack-*"
+        bodyFile: ".github/release_template.md"
+        allowUpdates: true
+        artifactErrorsFailBuild: true
+        draft: true
+        name: "DFHack ${{ github.event.inputs.tag }}"
+        omitBodyDuringUpdate: true
+        omitDraftDuringUpdate: true
+        omitNameDuringUpdate: true
+        omitPrereleaseDuringUpdate: true
+        replacesArtifacts: true
+        tag: ${{ github.event.inputs.tag }}

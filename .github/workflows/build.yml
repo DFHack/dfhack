@@ -4,35 +4,23 @@ on: [push, pull_request]
 
 jobs:
   build-linux:
-    name: Linux ${{ matrix.type }}, GCC ${{ matrix.gcc }}
+    name: Linux gcc-${{ matrix.gcc }}
     uses: ./.github/workflows/build-linux.yml
     with:
-      artifact-name: ${{ matrix.artifact-name || format('{0}-gcc-{1}', matrix.type, matrix.gcc) }}
-      append-date-and-hash: ${{ matrix.append-date-and-hash && true || false }}
-      cache-id: ${{ matrix.type }}
-      stonesense: ${{ matrix.stonesense }}
-      docs: ${{ matrix.type == 'release' }}
-      extras: ${{ matrix.extras }}
+      artifact-name: test-gcc-${{ matrix.gcc }}
+      cache-id: test
+      stonesense: ${{ matrix.plugins == 'all' }}
+      extras: ${{ matrix.plugins == 'all' }}
       gcc-ver: ${{ matrix.gcc }}
     secrets: inherit
     strategy:
       fail-fast: false
       matrix:
         include:
-        - type: release
-          gcc: "10"
-          artifact-name: dfhack-linux64
-          append-date-and-hash: true
-          stonesense: true
-          extras: false
-        - type: test
-          gcc: "10"
-          stonesense: false
-          extras: false
-        - type: test
-          gcc: "12"
-          stonesense: true
-          extras: true
+        - gcc: 10
+          plugins: "default"
+        - gcc: 12
+          plugins: "all"
 
   test-linux:
     name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
@@ -41,11 +29,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc: [10]
-        plugins: [default]
         include:
-        - gcc: 12
-          plugins: all
+          - gcc: 10
+            plugins: "default"
+          - gcc: 12
+            plugins: "all"
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v3
@@ -82,6 +70,18 @@ jobs:
     #   if: success() || failure()
     #   run: |
     #     rm -rf "$DF_FOLDER"
+
+  package-linux:
+    name: Linux package
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: dfhack-linux64
+      append-date-and-hash: true
+      cache-id: release
+      stonesense: true
+      docs: true
+      gcc-ver: "10"
+    secrets: inherit
 
   package-win64:
     name: Win64 package (native)
@@ -140,7 +140,7 @@ jobs:
     secrets: inherit
 
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Install Lua
       run: |

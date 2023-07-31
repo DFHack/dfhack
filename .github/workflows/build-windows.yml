@@ -68,6 +68,7 @@ jobs:
           ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --show-stats --verbose
       - name: Save ccache
+        if: !inputs.cache-readonly
         uses: actions/cache/save@v3
         with:
           path: build/win64-cross/ccache

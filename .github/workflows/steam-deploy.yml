@@ -84,7 +84,7 @@ jobs:
         configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
         appId: 2346660
         buildDescription: ${{ github.event.inputs.version }}
-        rootPath: build
+        rootPath: .
         depot1Path: common
         depot2Path: win64
         depot3Path: linux64

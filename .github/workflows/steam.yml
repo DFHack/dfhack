@@ -36,7 +36,8 @@ jobs:
     with:
       artifact-name: linux64-depot
       ref: ${{ github.event.inputs.ref }}
-      cache-id: depot
+      cache-id: release
+      cache-readonly: true
       common-files: false
       stonesense: true
       gcc-ver: "10"
@@ -48,7 +49,8 @@ jobs:
     with:
       artifact-name: win64-depot
       ref: ${{ github.event.inputs.ref }}
-      cache-id: msvc
+      cache-id: release
+      cache-readonly: true
       common-files: false
       launchdf: true
     secrets: inherit

@@ -14,6 +14,9 @@ on:
       cache-id:
         type: string
         default: ''
+      cache-readonly:
+        type: boolean
+        default: false
       platform-files:
         type: boolean
         default: true
@@ -64,7 +67,7 @@ jobs:
           fetch-depth: ${{ !inputs.platform-files && 1 || 0 }}
       - name: Fetch ccache
         if: inputs.platform-files
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: ~/.cache/ccache
           key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
@@ -101,9 +104,15 @@ jobs:
       - name: Trim cache
         if: inputs.platform-files
         run: |
-          ccache --max-size 50M
+          ccache --max-size 40M
           ccache --cleanup
           ccache --show-stats --verbose
+      - name: Save ccache
+        if: inputs.platform-files && !inputs.cache-readonly
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.cache/ccache
+          key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
         if: inputs.append-date-and-hash
         id: artifactname

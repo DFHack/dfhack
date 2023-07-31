@@ -14,6 +14,9 @@ on:
       cache-id:
         type: string
         default: ''
+      cache-readonly:
+        type: boolean
+        default: false
       common-files:
         type: boolean
         default: true
@@ -45,7 +48,7 @@ jobs:
           ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
           path: depends/steam
       - name: Fetch ccache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: build/win64-cross/ccache
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
@@ -60,9 +63,15 @@ jobs:
           bash -x build-win64-from-linux.sh
       - name: Trim cache
         run: |
-          ccache -d win64-cross/ccache --max-size 50M
+          cd build
+          ccache -d win64-cross/ccache --max-size 200M
           ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --show-stats --verbose
+      - name: Save ccache
+        uses: actions/cache/save@v3
+        with:
+          path: build/win64-cross/ccache
+          key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
         if: inputs.append-date-and-hash
         id: artifactname

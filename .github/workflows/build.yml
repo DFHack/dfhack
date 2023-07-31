@@ -89,7 +89,7 @@ jobs:
     with:
       artifact-name: dfhack-win64-build
       append-date-and-hash: true
-      cache-id: msvc
+      cache-id: release
     secrets: inherit
 
   docs:

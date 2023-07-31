@@ -25,7 +25,7 @@ jobs:
   test-linux:
     name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
     needs: build-linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +80,6 @@ jobs:
       cache-id: release
       stonesense: true
       docs: true
-      gcc-ver: "10"
     secrets: inherit
 
   package-win64:

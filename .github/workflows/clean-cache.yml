@@ -1,4 +1,5 @@
 name: Clean up PR caches
+
 on:
   pull_request_target:
     types:

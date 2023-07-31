@@ -30,19 +30,6 @@ jobs:
       stonesense: true
     secrets: inherit
 
-  depot-linux:
-    name: Linux depot files
-    uses: ./.github/workflows/build-linux.yml
-    with:
-      artifact-name: linux64-depot
-      ref: ${{ github.event.inputs.ref }}
-      cache-id: release
-      cache-readonly: true
-      common-files: false
-      stonesense: true
-      gcc-ver: "10"
-    secrets: inherit
-
   depot-win64:
     name: Windows depot files
     uses: ./.github/workflows/build-windows.yml
@@ -54,34 +41,50 @@ jobs:
       common-files: false
     secrets: inherit
 
+  depot-linux64:
+    name: Linux depot files
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: linux64-depot
+      ref: ${{ github.event.inputs.ref }}
+      cache-id: release
+      cache-readonly: true
+      common-files: false
+      stonesense: true
+    secrets: inherit
+
   deploy-to-steam:
     name: Deploy to Steam
+    needs:
+    - depot-common
+    - depot-win64
+    - depot-linux64
     runs-on: ubuntu-latest
     steps:
-      - name: Stage common depot files
-        uses: actions/download-artifact@v3
-        with:
-          name: common-depot
-          path: common
-      - name: Stage linux64 depot files
-        uses: actions/download-artifact@v3
-        with:
-          name: linux64-depot
-          path: linux64
-      - name: Stage win64 depot files
-        uses: actions/download-artifact@v3
-        with:
-          name: win64-depot
-          path: win64
-      - name: Steam deploy
-        uses: game-ci/steam-deploy@v3
-        with:
-          username: ${{ secrets.STEAM_USERNAME }}
-          configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
-          appId: 2346660
-          buildDescription: ${{ github.event.inputs.version }}
-          rootPath: build
-          depot1Path: common
-          depot2Path: win64
-          depot3Path: linux64
-          releaseBranch: ${{ github.event.inputs.release_channel }}
+    - name: Stage common depot files
+      uses: actions/download-artifact@v3
+      with:
+        name: common-depot
+        path: common
+    - name: Stage win64 depot files
+      uses: actions/download-artifact@v3
+      with:
+        name: win64-depot
+        path: win64
+    - name: Stage linux64 depot files
+      uses: actions/download-artifact@v3
+      with:
+        name: linux64-depot
+        path: linux64
+    - name: Steam deploy
+      uses: game-ci/steam-deploy@v3
+      with:
+        username: ${{ secrets.STEAM_USERNAME }}
+        configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
+        appId: 2346660
+        buildDescription: ${{ github.event.inputs.version }}
+        rootPath: build
+        depot1Path: common
+        depot2Path: win64
+        depot3Path: linux64
+        releaseBranch: ${{ github.event.inputs.release_channel }}

@@ -34,7 +34,7 @@ on:
         default: false
       gcc-ver:
         type: string
-        default: "11"
+        default: "10"
 
 jobs:
   build-linux64:

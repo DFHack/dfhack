@@ -1,6 +1,10 @@
 name: Deploy to Steam
 
 on:
+  push:
+    tags:
+    - '*'
+
   workflow_dispatch:
     inputs:
       ref:
@@ -24,7 +28,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: common-depot
-      ref: ${{ github.event.inputs.ref }}
+      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       platform-files: false
       docs: true
       stonesense: true
@@ -35,7 +39,7 @@ jobs:
     uses: ./.github/workflows/build-windows.yml
     with:
       artifact-name: win64-depot
-      ref: ${{ github.event.inputs.ref }}
+      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       common-files: false
@@ -47,7 +51,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-depot
-      ref: ${{ github.event.inputs.ref }}
+      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       common-files: false
@@ -61,7 +65,10 @@ jobs:
     - depot-win64
     - depot-linux64
     runs-on: ubuntu-latest
+    concurrency: steam
     steps:
+    - name: Set env
+      run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Stage common depot files
       uses: actions/download-artifact@v3
       with:
@@ -83,9 +90,9 @@ jobs:
         username: ${{ secrets.STEAM_USERNAME }}
         configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
         appId: 2346660
-        buildDescription: ${{ github.event.inputs.version }}
+        buildDescription: ${{ github.event.inputs && github.event.inputs.version || env.TAG }}
         rootPath: .
         depot1Path: common
         depot2Path: win64
         depot3Path: linux64
-        releaseBranch: ${{ github.event.inputs.release_channel }}
+        releaseBranch: ${{ github.event.inputs && github.event.inputs.release_channel || 'staging' }}

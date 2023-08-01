@@ -4,10 +4,11 @@ on:
   push:
     tags:
     - '*-r[0-9]+'
+
   workflow_dispatch:
     inputs:
-      tag:
-        description: tag
+      ref:
+        description: Tag
         required: true
 
 jobs:
@@ -16,7 +17,7 @@ jobs:
     uses: ./.github/workflows/build-windows.yml
     with:
       artifact-name: win64-release
-      ref: ${{ github.event.inputs.tag }}
+      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       stonesense: true
@@ -29,7 +30,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-release
-      ref: ${{ github.event.inputs.tag }}
+      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       stonesense: true
@@ -48,7 +49,7 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.inputs.tag }}
+        ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
         submodules: true
     - name: Get tag
       id: gettag

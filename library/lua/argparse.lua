@@ -3,7 +3,6 @@
 local _ENV = mkmodule('argparse')
 
 local getopt = require('3rdparty.alt_getopt')
-local guidm = require('gui.dwarfmode')
 
 function processArgs(args, validArgs)
     local result = {}
@@ -174,6 +173,7 @@ end
 
 function coords(arg, arg_name, skip_validation)
     if arg == 'here' then
+        local guidm = require('gui.dwarfmode')  -- globals may not be available yet
         local cursor = guidm.getCursorPos()
         if not cursor then
             arg_error(arg_name,

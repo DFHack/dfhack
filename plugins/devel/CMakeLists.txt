@@ -26,4 +26,4 @@ if(UNIX)
     dfhack_plugin(ref-index ref-index.cpp)
 endif()
 
-# add_subdirectory(check-structures-sanity)
+add_subdirectory(check-structures-sanity)

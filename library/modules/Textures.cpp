@@ -121,6 +121,9 @@ static size_t load_textures(color_ostream & out, const char * fname,
 // unloaded.
 //
 void Textures::init(color_ostream &out) {
+    if (!enabler)
+        return;
+
     auto & textures = enabler->textures;
     long num_textures = textures.raws.size();
     if (num_textures <= g_dfhack_logo_texpos_start)

@@ -1896,8 +1896,8 @@ void Core::doUpdate(color_ostream &out)
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
-    if ((df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
-        (df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
+    if ((df::global::game && df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
+        (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
         doSaveData(out);
@@ -1959,8 +1959,10 @@ void Core::doUpdate(color_ostream &out)
     // Execute per-frame handlers
     onUpdate(out);
 
-    d->last_autosave_request = df::global::plotinfo->main.autosave_request;
-    d->last_manual_save_request = df::global::game->main_interface.options.do_manual_save;
+    if (df::global::game && df::global::plotinfo) {
+        d->last_autosave_request = df::global::plotinfo->main.autosave_request;
+        d->last_manual_save_request = df::global::game->main_interface.options.do_manual_save;
+    }
     d->was_load_save = is_load_save;
 
     out << std::flush;

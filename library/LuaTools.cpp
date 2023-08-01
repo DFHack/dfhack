@@ -2172,10 +2172,12 @@ void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
         inhibit_m_down = true;
     }
 
-    if (!df::global::enabler->mouse_lbut)
-        inhibit_l_down = false;
-    if (!df::global::enabler->mouse_rbut)
-        inhibit_r_down = false;
-    if (!df::global::enabler->mouse_mbut)
-        inhibit_m_down = false;
+    if (df::global::enabler) {
+        if (!df::global::enabler->mouse_lbut)
+            inhibit_l_down = false;
+        if (!df::global::enabler->mouse_rbut)
+            inhibit_r_down = false;
+        if (!df::global::enabler->mouse_mbut)
+            inhibit_m_down = false;
+    }
 }

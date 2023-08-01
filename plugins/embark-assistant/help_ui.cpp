@@ -411,5 +411,5 @@ namespace embark_assist{
 //===============================================================================
 
 void embark_assist::help_ui::init(DFHack::Plugin *plugin_self) {
-    Screen::show(dts::make_unique<embark_assist::help_ui::ViewscreenHelpUi>(), plugin_self);
+    Screen::show(std::make_unique<embark_assist::help_ui::ViewscreenHelpUi>(), plugin_self);
 }

@@ -377,6 +377,10 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     {
         // TODO: check DfArray
     }
+    else if (base_container.substr(0, 4) == "map<")
+    {
+        // TODO: check map
+    }
     else
     {
         UNEXPECTED;

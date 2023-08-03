@@ -49,7 +49,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Set env
-      run: echo "DF_FOLDER=DF" >> $GITHUB_ENV
+      run: echo "DF_FOLDER=DF" >> $env:GITHUB_ENV
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:

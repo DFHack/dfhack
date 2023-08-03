@@ -7,6 +7,8 @@ on:
         type: string
       scripts_ref:
         type: string
+      structures_ref:
+        type: string
       artifact-name:
         type: string
       append-date-and-hash:
@@ -74,6 +76,13 @@ jobs:
           repository: 'DFHack/scripts'
           ref: ${{ inputs.scripts_ref }}
           path: scripts
+      - name: Clone structures
+        if: inputs.structures_ref
+        uses: actions/checkout@v3
+        with:
+          repository: 'DFHack/df-structures'
+          ref: ${{ inputs.structures_ref }}
+          path: library/xml
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v3

@@ -3,9 +3,10 @@ name: Build win64
 on:
   workflow_call:
     inputs:
-      ref:
+      dfhack_ref:
         type: string
-        default: ''
+      structures_ref:
+        type: string
       artifact-name:
         type: string
       append-date-and-hash:
@@ -36,9 +37,16 @@ jobs:
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.dfhack_ref }}
           submodules: true
           fetch-depth: 0
+      - name: Clone structures
+        if: inputs.structures_ref
+        uses: actions/checkout@v3
+        with:
+          repository: 'DFHack/df-structures'
+          ref: ${{ inputs.structures_ref }}
+          path: library/xml
       - name: Get 3rd party SDKs
         if: inputs.launchdf
         uses: actions/checkout@v3

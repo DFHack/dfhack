@@ -1,0 +1,83 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      dfhack_ref:
+        type: string
+      scripts_ref:
+        type: string
+      structures_ref:
+        type: string
+
+jobs:
+  build-linux:
+    name: Linux gcc-${{ matrix.gcc }}
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_ref: ${{ inputs.scripts_ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: test-gcc-${{ matrix.gcc }}
+      cache-id: test
+      stonesense: ${{ matrix.plugins == 'all' }}
+      extras: ${{ matrix.plugins == 'all' }}
+      gcc-ver: ${{ matrix.gcc }}
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - gcc: 10
+          plugins: "default"
+        - gcc: 12
+          plugins: "all"
+
+  test-linux:
+    name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
+    needs: build-linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gcc: 10
+            plugins: "default"
+          - gcc: 12
+            plugins: "all"
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: test-gcc-${{ matrix.gcc }}
+    # - name: Fetch DF cache
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ~/DF
+    #     key: df-${{ hashFiles('ci/download-df.sh') }}
+    # - name: Download DF
+    #   run: |
+    #     sh ci/download-df.sh
+    # - name: Run lua tests
+    #   id: run_tests_lua
+    #   run: |
+    #     export TERM=dumb
+    #     status=0
+    #     script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+    #     python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
+    #     mkdir -p artifacts
+    #     cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+    #     exit $status
+    # - name: Upload test artifacts
+    #   uses: actions/upload-artifact@v3
+    #   if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
+    #   continue-on-error: true
+    #   with:
+    #     name: test-artifacts-${{ matrix.gcc }}
+    #     path: artifacts
+    # - name: Clean up DF folder
+    #   # prevent DFHack-generated files from ending up in the cache
+    #   # (download-df.sh also removes them, this is just to save cache space)
+    #   if: success() || failure()
+    #   run: |
+    #     rm -rf "$DF_FOLDER"

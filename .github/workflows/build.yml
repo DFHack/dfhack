@@ -3,73 +3,9 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build-linux:
-    name: Linux gcc-${{ matrix.gcc }}
-    uses: ./.github/workflows/build-linux.yml
-    with:
-      artifact-name: test-gcc-${{ matrix.gcc }}
-      cache-id: test
-      stonesense: ${{ matrix.plugins == 'all' }}
-      extras: ${{ matrix.plugins == 'all' }}
-      gcc-ver: ${{ matrix.gcc }}
+  test:
+    uses: ./.github/workflows/test.yml
     secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - gcc: 10
-          plugins: "default"
-        - gcc: 12
-          plugins: "all"
-
-  test-linux:
-    name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
-    needs: build-linux
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - gcc: 10
-            plugins: "default"
-          - gcc: 12
-            plugins: "all"
-    steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: test-gcc-${{ matrix.gcc }}
-    # - name: Fetch DF cache
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: ~/DF
-    #     key: df-${{ hashFiles('ci/download-df.sh') }}
-    # - name: Download DF
-    #   run: |
-    #     sh ci/download-df.sh
-    # - name: Run lua tests
-    #   id: run_tests_lua
-    #   run: |
-    #     export TERM=dumb
-    #     status=0
-    #     script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-    #     python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-    #     mkdir -p artifacts
-    #     cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-    #     exit $status
-    # - name: Upload test artifacts
-    #   uses: actions/upload-artifact@v3
-    #   if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
-    #   continue-on-error: true
-    #   with:
-    #     name: test-artifacts-${{ matrix.gcc }}
-    #     path: artifacts
-    # - name: Clean up DF folder
-    #   # prevent DFHack-generated files from ending up in the cache
-    #   # (download-df.sh also removes them, this is just to save cache space)
-    #   if: success() || failure()
-    #   run: |
-    #     rm -rf "$DF_FOLDER"
 
   package-linux:
     name: Linux package
@@ -100,27 +36,8 @@ jobs:
     secrets: inherit
 
   lint:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install Lua
-      run: |
-        sudo apt-get update
-        sudo apt-get install lua5.3
-    - name: Clone DFHack
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Check whitespace
-      run: python ci/lint.py --git-only --github-actions
-    - name: Check Authors.rst
-      if: always()
-      run: python ci/authors-rst.py
-    - name: Check for missing documentation
-      if: always()
-      run: python ci/script-docs.py
-    - name: Check Lua syntax
-      if: always()
-      run: python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
+    uses: ./.github/workflows/lint.yml
+    secrets: inherit
 
   check-pr:
     runs-on: ubuntu-latest

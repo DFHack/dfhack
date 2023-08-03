@@ -17,7 +17,7 @@ jobs:
     uses: ./.github/workflows/build-windows.yml
     with:
       artifact-name: win64-release
-      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       launchdf: true
@@ -28,7 +28,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-release
-      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       stonesense: true

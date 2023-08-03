@@ -142,6 +142,7 @@ private:
     void check_unknown_pointer(const QueueItem &);
     void check_stl_vector(const QueueItem &, type_identity *, type_identity *);
     void check_stl_string(const QueueItem &);
+    void check_stl_map(const QueueItem &, container_identity *);
     void check_possible_pointer(const QueueItem &, const CheckedStructure &);
 
     friend struct CheckedStructure;

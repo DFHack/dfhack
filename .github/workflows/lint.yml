@@ -5,7 +5,6 @@ on:
     inputs:
       dfhack_ref:
         type: string
-        required: true
       scripts_ref:
         type: string
 

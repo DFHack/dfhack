@@ -3,9 +3,10 @@ name: Build linux64
 on:
   workflow_call:
     inputs:
-      ref:
+      dfhack_ref:
         type: string
-        default: ''
+      scripts_ref:
+        type: string
       artifact-name:
         type: string
       append-date-and-hash:
@@ -62,9 +63,20 @@ jobs:
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.ref }}
+          repository: 'DFHack/dfhack'
+          ref: ${{ inputs.dfhack_ref }}
           submodules: true
           fetch-depth: ${{ !inputs.platform-files && 1 || 0 }}
+      - name: Get scripts submodule ref
+        if: '!inputs.scripts_ref'
+        id: scriptssubmoduleref
+        run: echo ref=$(git submodule | fgrep scripts | cut -c2-41) >> $GITHUB_OUTPUT
+      - name: Clone scripts
+        uses: actions/checkout@v3
+        with:
+          repository: 'DFHack/scripts'
+          ref: ${{ inputs.scripts_ref || steps.scriptssubmoduleref.outputs.ref }}
+          path: scripts
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v3
@@ -116,8 +128,7 @@ jobs:
       - name: Format artifact name
         if: inputs.append-date-and-hash
         id: artifactname
-        run: |
-          echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+        run: echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
       - name: Upload artifact
         if: inputs.artifact-name
         uses: actions/upload-artifact@v3

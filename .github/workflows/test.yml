@@ -16,6 +16,7 @@ jobs:
     uses: ./.github/workflows/build-windows.yml
     with:
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_ref: ${{ inputs.scripts_ref }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-msvc
       cache-id: test
@@ -54,7 +55,9 @@ jobs:
       with:
         repository: 'DFHack/dfhack'
         ref: ${{ inputs.dfhack_ref }}
-        sparse-checkout: CMakeLists.txt
+        sparse-checkout: |
+          CMakeLists.txt
+          ci/
     - name: Detect DF version
       id: get-df-version
       run: echo ver="$(sh ci/get-df-version.sh)" >> $GITHUB_OUTPUT

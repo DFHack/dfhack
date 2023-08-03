@@ -87,7 +87,7 @@ jobs:
       - name: Trim cache
         run: |
           cd build
-          ccache -d win64-cross/ccache --max-size 200M
+          ccache -d win64-cross/ccache --max-size 150M
           ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --show-stats --verbose
       - name: Save ccache

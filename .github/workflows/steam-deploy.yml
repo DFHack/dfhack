@@ -28,7 +28,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: common-depot
-      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       platform-files: false
       docs: true
       stonesense: true
@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-depot
-      ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
       common-files: false

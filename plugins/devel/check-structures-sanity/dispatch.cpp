@@ -1,6 +1,7 @@
 #include "check-structures-sanity.h"
 
 #include <cinttypes>
+#include <queue>
 
 #include "df/large_integer.h"
 
@@ -379,7 +380,7 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     }
     else if (base_container.starts_with("map<"))
     {
-        // TODO: check map
+        check_stl_map(item, identity);
     }
     else if (base_container.starts_with("unordered_map<"))
     {
@@ -901,6 +902,98 @@ void Checker::check_stl_string(const QueueItem & item)
         FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
     }
 }
+
+void Checker::check_stl_map(const QueueItem & item, container_identity *identity)
+{
+#ifndef WIN32
+    const static CheckedStructure cs(identity, 0, nullptr, true);
+
+    struct rb_tree_node_base {
+        enum { COLOR_RED = false, COLOR_BLACK = true } color;
+        rb_tree_node_base *parent;
+        rb_tree_node_base *left;
+        rb_tree_node_base *right;
+    };
+
+    struct rb_tree_node : public rb_tree_node_base {
+        union {
+            int8_t data_i8;
+            int16_t data_i16;
+            int32_t data_i32;
+            int64_t data_i64;
+            int64_t data_i64s[4];
+        };
+    };
+
+    struct map_data
+    {
+        struct {} compare;
+        rb_tree_node_base header;
+        size_t node_count;
+    };
+
+    auto map = reinterpret_cast<const map_data*>(item.ptr);
+    auto smap = reinterpret_cast<const std::map<void*,void*>*>(item.ptr);
+    Core::print("s %zi\n", smap->size());
+
+    if (!is_valid_dereference(QueueItem(item, "", map), 1)) {
+        FAIL("invalid map pointer: " << map);
+        return;
+    }
+    if (!is_valid_dereference(QueueItem(item, "parent", map->header.parent), 1)) {
+        FAIL("invalid map initial parent pointer: " << map->header.parent);
+        return;
+    }
+
+    struct search_queue_entry {
+        const rb_tree_node_base *node;
+        const rb_tree_node_base *parent;
+        QueueItem item;
+    };
+
+    std::queue<search_queue_entry> search_queue;
+    // search_queue.push(search_queue_entry{&map->header, nullptr, QueueItem(item, "header", item.ptr)});
+    search_queue.push(search_queue_entry{map->header.parent, nullptr, QueueItem(item, "header.parent", item.ptr)});
+    size_t visited_nodes = 0;
+    while (!search_queue.empty()) {
+        const search_queue_entry entry = search_queue.front();
+        const QueueItem &item          = entry.item;
+        search_queue.pop();
+        visited_nodes++;
+
+        if (!is_valid_dereference(item, 1)) {
+            FAIL("invalid node pointer: " << item.ptr);
+            continue;
+        }
+
+        if (entry.node->color != rb_tree_node_base::COLOR_RED && entry.node->color != rb_tree_node_base::COLOR_BLACK) {
+            FAIL("invalid map node color: " << int(entry.node->color));
+        }
+
+        if (entry.parent && entry.node->parent != entry.parent) {
+            FAIL("mismatched parent pointer: " << entry.node->parent);
+        }
+
+        if (entry.node->left) {
+            search_queue.push(search_queue_entry{entry.node->left, entry.node, QueueItem(item, "left", entry.node->left)});
+        }
+        if (entry.node->right) {
+            search_queue.push(search_queue_entry{entry.node->right, entry.node, QueueItem(item, "right", entry.node->right)});
+        }
+    }
+
+    // if (map->header.color != rb_tree_node_base::COLOR_RED && map->header.color != rb_tree_node_base::COLOR_BLACK) {
+    //     FAIL("invalid RB color: " << int(map->header.color));
+    // }
+
+    if (map->node_count != visited_nodes) {
+        FAIL("invalid map size (" << map->node_count << "): counted " << visited_nodes << " nodes");
+        // UNEXPECTED;
+    }
+
+#endif
+}
+
 void Checker::check_possible_pointer(const QueueItem & item, const CheckedStructure & cs)
 {
     if (sizes && maybepointer && uintptr_t(item.ptr) % sizeof(void *) == 0)

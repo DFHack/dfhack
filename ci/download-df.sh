@@ -10,10 +10,12 @@ minor=$(echo "$DF_VERSION" | cut -d. -f1)
 patch=$(echo "$DF_VERSION" | cut -d. -f2)
 df_url="https://www.bay12games.com/dwarves/df_${minor}_${patch}"
 if test "$OS_TARGET" = "windows"; then
+    WGET="C:/msys64/usr/bin/wget.exe"
     df_url="${df_url}_win_s.zip"
     df_archive_name="df.zip"
     df_extract_cmd="unzip -d ${DF_FOLDER}"
 elif test "$OS_TARGET" = "linux"; then
+    WGET=wget
     df_url="${df_url}_linux.tar.bz2"
     df_archive_name="df.tar.bz2"
     df_extract_cmd="tar -x -j --strip-components=1 -f"
@@ -22,7 +24,7 @@ else
     exit 1
 fi
 
-if ! wget -v "$df_url" -O "$df_archive_name"; then
+if ! $WGET -v "$df_url" -O "$df_archive_name"; then
     echo "Failed to download DF from $df_url"
     exit 1
 fi
@@ -31,7 +33,7 @@ save_url="https://dffd.bay12games.com/download.php?id=15434&f=dreamfort.7z"
 save_archive_name="test_save.7z"
 save_extract_cmd="7z x -oDF/save"
 
-if ! wget -v "$save_url" -O "$save_archive_name"; then
+if ! $WGET -v "$save_url" -O "$save_archive_name"; then
     echo "Failed to download test save from $save_url"
     exit 1
 fi

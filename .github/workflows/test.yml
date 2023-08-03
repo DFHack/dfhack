@@ -60,7 +60,7 @@ jobs:
           ci/
     - name: Detect DF version
       id: get-df-version
-      run: echo ver="$(sh ci/get-df-version.sh)" >> $GITHUB_OUTPUT
+      run: echo ver="$(sh ci/get-df-version.sh)" >> $env:GITHUB_OUTPUT
     - name: Fetch DF cache
       id: restore-df
       uses: actions/cache/restore@v3

@@ -100,27 +100,10 @@ jobs:
     secrets: inherit
 
   lint:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install Lua
-      run: |
-        sudo apt-get update
-        sudo apt-get install lua5.3
-    - name: Clone DFHack
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-    - name: Check whitespace
-      run: python ci/lint.py --git-only --github-actions
-    - name: Check Authors.rst
-      if: always()
-      run: python ci/authors-rst.py
-    - name: Check for missing documentation
-      if: always()
-      run: python ci/script-docs.py
-    - name: Check Lua syntax
-      if: always()
-      run: python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
+    uses: ./.github/workflows/lint.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
+    secrets: inherit
 
   check-pr:
     runs-on: ubuntu-latest

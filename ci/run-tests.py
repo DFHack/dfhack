@@ -33,7 +33,7 @@ if args.test_dir is not None:
 
 MAX_TRIES = 5
 
-dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dfhack'
+dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dwarfort'
 test_status_file = 'test_status.json'
 
 class TestStatus(enum.Enum):
@@ -59,14 +59,9 @@ default_init_txt_path = 'data/init/init_default.txt'
 prefs_path = 'prefs'
 init_txt_path = 'prefs/init.txt'
 if not os.path.exists(init_txt_path):
-    try:
-        os.mkdir(prefs_path)
-    except OSError as error:
-        # ignore already exists errors
-        pass
+    os.makedirs(prefs_path, exist_ok=True)
     shutil.copyfile(default_init_txt_path, init_txt_path)
 
-print('Backing up init.txt to init.txt.orig')
 shutil.copyfile(init_txt_path, init_txt_path + '.orig')
 with open(init_txt_path) as f:
     init_contents = f.read()
@@ -83,11 +78,7 @@ init_path = 'dfhack-config/init'
 if not os.path.isdir('hack/init'):
     # we're on an old branch that still reads init files from the root dir
     init_path = '.'
-try:
-    os.mkdir(init_path)
-except OSError as error:
-    # ignore already exists errors
-    pass
+os.makedirs(init_path, exist_ok=True)
 test_init_file = os.path.join(init_path, 'dfhackzzz_test.init')  # Core sorts these alphabetically
 with open(test_init_file, 'w') as f:
     f.write('''

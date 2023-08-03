@@ -20,8 +20,6 @@ jobs:
       ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       cache-id: release
       cache-readonly: true
-      stonesense: true
-      docs: true
       launchdf: true
     secrets: inherit
 

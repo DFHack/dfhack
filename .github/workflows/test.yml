@@ -85,6 +85,7 @@ jobs:
         path: ${{ env.DF_FOLDER }}
     - name: Run lua tests
       id: run-tests
+      timeout-minutes: 10
       run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
     - name: Upload test artifacts
       uses: actions/upload-artifact@v3

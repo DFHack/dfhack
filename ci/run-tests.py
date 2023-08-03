@@ -55,7 +55,18 @@ if os.path.exists(test_status_file):
     os.remove(test_status_file)
 
 print('Backing up init.txt to init.txt.orig')
-init_txt_path = 'data/init/init.txt'
+default_init_txt_path = 'data/init/init_default.txt'
+prefs_path = 'prefs'
+init_txt_path = 'prefs/init.txt'
+if not os.path.exists(init_txt_path):
+    try:
+        os.mkdir(prefs_path)
+    except OSError as error:
+        # ignore already exists errors
+        pass
+    shutil.copyfile(default_init_txt_path, init_txt_path)
+
+print('Backing up init.txt to init.txt.orig')
 shutil.copyfile(init_txt_path, init_txt_path + '.orig')
 with open(init_txt_path) as f:
     init_contents = f.read()

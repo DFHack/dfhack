@@ -35,6 +35,9 @@ on:
       extras:
         type: boolean
         default: false
+      tests:
+        type: boolean
+        default: false
       gcc-ver:
         type: string
         default: "10"
@@ -112,6 +115,7 @@ jobs:
             -DBUILD_SIZECHECK:BOOL=${{ inputs.extras }} \
             -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \
             -DBUILD_DOCS:BOOL=${{ inputs.docs }} \
+            -DBUILD_TESTS:BOOL=${{ inputs.tests }} \
             -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} \
             -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
       - name: Build DFHack

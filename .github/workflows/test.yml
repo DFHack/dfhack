@@ -20,6 +20,7 @@ jobs:
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-msvc
       cache-id: test
+      tests: true
 
   build-linux:
     name: Linux gcc-${{ matrix.gcc }}
@@ -32,6 +33,7 @@ jobs:
       cache-id: test
       stonesense: ${{ matrix.plugins == 'all' }}
       extras: ${{ matrix.plugins == 'all' }}
+      tests: true
       gcc-ver: ${{ matrix.gcc }}
     secrets: inherit
     strategy:

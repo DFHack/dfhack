@@ -1092,8 +1092,7 @@ df::plant *dfhack_lua_viewscreen::getSelectedPlant()
     return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }
 
-#define STATIC_FIELDS_GROUP
-#include "../DataStaticsFields.cpp"
+#include "DataStaticsFields.inc"
 
 using df::identity_traits;
 

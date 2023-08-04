@@ -1,6 +1,7 @@
 name: Clean up PR caches
 
 on:
+  workflow_call:
   pull_request_target:
     types:
       - closed

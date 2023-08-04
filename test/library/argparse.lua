@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 local argparse = require('argparse')
 local guidm = require('gui.dwarfmode')
 

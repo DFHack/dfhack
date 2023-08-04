@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 local gui = require('gui')
 
 function test.getKeyDisplay()
@@ -10,6 +12,7 @@ end
 
 function test.clear_pen()
     expect.table_eq(gui.CLEAR_PEN, {
+        tile = df.global.init.texpos_border_interior,
         ch = string.byte(' '),
         fg = COLOR_BLACK,
         bg = COLOR_BLACK,

@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 local widgets = require('gui.widgets')
 
 function test.hotkeylabel_click()

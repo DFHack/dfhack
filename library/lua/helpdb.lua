@@ -789,7 +789,7 @@ function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
     end
     if not show_dev_commands then
         local dev_tags = {'dev', 'unavailable'}
-        if dfhack.getHideArmokTools() then
+        if filter_str ~= 'armok' and dfhack.getHideArmokTools() then
             table.insert(dev_tags, 'armok')
         end
         table.insert(excludes, {tag=dev_tags})

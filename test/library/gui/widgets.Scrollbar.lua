@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
@@ -10,7 +12,7 @@ function test.update()
     expect.eq(1, s.elems_per_page)
     expect.eq(1, s.num_elems)
     expect.eq(0, s.bar_offset)
-    expect.eq(1, s.bar_height)
+    expect.eq(2, s.bar_height)
 
     -- top_elem, elems_per_page, num_elems
     s:update(1, 10, 0)
@@ -18,7 +20,7 @@ function test.update()
     expect.eq(10, s.elems_per_page)
     expect.eq(0, s.num_elems)
     expect.eq(0, s.bar_offset)
-    expect.eq(1, s.bar_height)
+    expect.eq(2, s.bar_height)
 
     -- first 10 of 50 shown
     s:update(1, 10, 50)

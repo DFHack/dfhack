@@ -33,7 +33,7 @@ if args.test_dir is not None:
 
 MAX_TRIES = 5
 
-dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dwarfort'
+dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dfhack'
 test_status_file = 'test_status.json'
 
 class TestStatus(enum.Enum):

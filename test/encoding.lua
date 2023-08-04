@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 function test.toSearchNormalized()
     expect.eq(dfhack.toSearchNormalized(''), '')
     expect.eq(dfhack.toSearchNormalized('abcd'), 'abcd')

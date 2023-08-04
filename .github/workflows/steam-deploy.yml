@@ -43,6 +43,7 @@ jobs:
       cache-id: release
       cache-readonly: true
       common-files: false
+      stonesense: true
       launchdf: true
     secrets: inherit
 

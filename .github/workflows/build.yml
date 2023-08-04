@@ -25,6 +25,8 @@ jobs:
       artifact-name: dfhack-win64-build
       append-date-and-hash: true
       cache-id: release
+      stonesense: true
+      docs: true
     secrets: inherit
 
   docs:

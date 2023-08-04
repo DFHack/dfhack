@@ -11,6 +11,17 @@ on:
         type: string
 
 jobs:
+  build-windows:
+    name: Windows MSVC
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_ref: ${{ inputs.scripts_ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: test-msvc
+      cache-id: test
+      tests: true
+
   build-linux:
     name: Linux gcc-${{ matrix.gcc }}
     uses: ./.github/workflows/build-linux.yml
@@ -22,6 +33,7 @@ jobs:
       cache-id: test
       stonesense: ${{ matrix.plugins == 'all' }}
       extras: ${{ matrix.plugins == 'all' }}
+      tests: true
       gcc-ver: ${{ matrix.gcc }}
     secrets: inherit
     strategy:
@@ -33,51 +45,78 @@ jobs:
         - gcc: 12
           plugins: "all"
 
-  test-linux:
-    name: Test (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
-    needs: build-linux
-    runs-on: ubuntu-latest
+  test-windows:
+    name: Test (${{ matrix.os }}, ${{ matrix.compiler }}, ${{ matrix.plugins }} plugins)
+    needs:
+    - build-windows
+    - build-linux
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - gcc: 10
+          - os: windows
+            compiler: msvc
             plugins: "default"
-          - gcc: 12
-            plugins: "all"
+          # TODO: uncomment once we have a linux build we can download from bay12
+          # - os: ubuntu
+          #   compiler: gcc-10
+          #   gcc: 10
+          #   plugins: "default"
+          # - os: ubuntu
+          #   compiler: gcc-10
+          #   gcc: 12
+          #   plugins: "all"
     steps:
-    - name: Download artifact
+    - name: Set env (windows)
+      if: matrix.os == 'windows'
+      run: echo "DF_FOLDER=DF" >> $env:GITHUB_ENV
+    - name: Set env (posix)
+      if: matrix.os != 'windows'
+      run: echo "DF_FOLDER=DF" >> $GITHUB_ENV
+    - name: Clone DFHack
+      uses: actions/checkout@v3
+      with:
+        repository: 'DFHack/dfhack'
+        ref: ${{ inputs.dfhack_ref }}
+    - name: Detect DF version (windows)
+      if: matrix.os == 'windows'
+      run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >> $env:GITHUB_ENV
+    - name: Detect DF version (posix)
+      if: matrix.os != 'windows'
+      run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >> $GITHUB_ENV
+    - name: Fetch DF cache
+      id: restore-df
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ env.DF_FOLDER }}
+        key: df-${{ matrix.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
+    - name: Download DF
+      if: steps.restore-df.outputs.cache-hit != 'true'
+      run: sh ci/download-df.sh ${{ env.DF_FOLDER }} ${{ matrix.os }} ${{ env.DF_VERSION }}
+    - name: Save DF cache
+      if: steps.restore-df.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ env.DF_FOLDER }}
+        key: df-${{ matrix.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
+    - name: Download DFHack
       uses: actions/download-artifact@v3
       with:
-        name: test-gcc-${{ matrix.gcc }}
-    # - name: Fetch DF cache
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: ~/DF
-    #     key: df-${{ hashFiles('ci/download-df.sh') }}
-    # - name: Download DF
-    #   run: |
-    #     sh ci/download-df.sh
-    # - name: Run lua tests
-    #   id: run_tests_lua
-    #   run: |
-    #     export TERM=dumb
-    #     status=0
-    #     script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-    #     python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-    #     mkdir -p artifacts
-    #     cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-    #     exit $status
-    # - name: Upload test artifacts
-    #   uses: actions/upload-artifact@v3
-    #   if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
-    #   continue-on-error: true
-    #   with:
-    #     name: test-artifacts-${{ matrix.gcc }}
-    #     path: artifacts
-    # - name: Clean up DF folder
-    #   # prevent DFHack-generated files from ending up in the cache
-    #   # (download-df.sh also removes them, this is just to save cache space)
-    #   if: success() || failure()
-    #   run: |
-    #     rm -rf "$DF_FOLDER"
+        name: test-${{ matrix.compiler }}
+        path: ${{ env.DF_FOLDER }}
+    - name: Run lua tests
+      timeout-minutes: 10
+      run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
+    - name: Check RPC interface
+      run: python ci/check-rpc.py "${{ env.DF_FOLDER }}/dfhack-rpc.txt"
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      continue-on-error: true
+      with:
+        name: test-artifacts-msvc
+        path: |
+          ${{ env.DF_FOLDER }}/dfhack-rpc.txt
+          ${{ env.DF_FOLDER }}/test*.json
+          ${{ env.DF_FOLDER }}/*.log

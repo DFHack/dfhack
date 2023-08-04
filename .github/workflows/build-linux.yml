@@ -38,6 +38,9 @@ on:
       tests:
         type: boolean
         default: false
+      xml-dump-type-sizes:
+        type: boolean
+        default: false
       gcc-ver:
         type: string
         default: "10"
@@ -52,7 +55,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ninja-build
       - name: Install binary build dependencies
-        if: inputs.platform-files
+        if: inputs.platform-files || inputs.xml-dump-type-sizes
         run: |
           sudo apt-get install \
               ccache \
@@ -116,6 +119,7 @@ jobs:
             -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \
             -DBUILD_DOCS:BOOL=${{ inputs.docs }} \
             -DBUILD_TESTS:BOOL=${{ inputs.tests }} \
+            -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} \
             -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} \
             -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
       - name: Build DFHack

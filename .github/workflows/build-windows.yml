@@ -20,6 +20,9 @@ on:
       cache-readonly:
         type: boolean
         default: false
+      platform-files:
+        type: boolean
+        default: true
       common-files:
         type: boolean
         default: true
@@ -30,6 +33,9 @@ on:
         type: boolean
         default: false
       tests:
+        type: boolean
+        default: false
+      xml-dump-type-sizes:
         type: boolean
         default: false
       launchdf:
@@ -75,6 +81,7 @@ jobs:
           ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
           path: depends/steam
       - name: Fetch ccache
+        if: inputs.platform-files
         uses: actions/cache/restore@v3
         with:
           path: build/win64-cross/ccache
@@ -84,7 +91,7 @@ jobs:
             win-msvc
       - name: Cross-compile
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }}'
+          CMAKE_EXTRA_ARGS: '-DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }}'
         run: |
           cd build
           bash -x build-win64-from-linux.sh
@@ -95,7 +102,7 @@ jobs:
           ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --show-stats --verbose
       - name: Save ccache
-        if: '!inputs.cache-readonly'
+        if: inputs.platform-files && !inputs.cache-readonly
         uses: actions/cache/save@v3
         with:
           path: build/win64-cross/ccache

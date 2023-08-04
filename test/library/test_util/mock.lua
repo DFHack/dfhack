@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 local mock = require('test_util.mock')
 

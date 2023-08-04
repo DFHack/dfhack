@@ -1,6 +1,6 @@
 -- tests misc functions added by dfhack.lua
 
-config.targets = 'core'
+config.target = 'core'
 
 function test.safe_pairs()
     for k,v in safe_pairs(nil) do

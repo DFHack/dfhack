@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 function test.get()
     dfhack.with_temp_object(df.unit:new(), function(unit)

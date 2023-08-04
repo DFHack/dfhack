@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 function test.struct()
     expect.eq(df.coord._kind, 'struct-type')

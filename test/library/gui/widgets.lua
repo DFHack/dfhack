@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 local widgets = require('gui.widgets')
 

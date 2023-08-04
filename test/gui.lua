@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 function test.getCurViewscreen()
     local scr = dfhack.gui.getCurViewscreen()

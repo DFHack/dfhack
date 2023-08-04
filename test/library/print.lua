@@ -1,6 +1,6 @@
 -- tests print-related functions added by dfhack.lua
 
-config.targets = 'core'
+config.target = 'core'
 
 local dfhack = dfhack
 

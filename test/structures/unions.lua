@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 local utils = require('utils')
 

@@ -1,5 +1,4 @@
--- TODO: fix crash in test.viewscreenDtors with viewscreen_legendsst
---config.targets = 'core'
+config.target = 'core'
 
 function test.overlappingGlobals()
     local globals = {}

@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 function test.index_name()
     for _, k in ipairs(df.units_other_id) do

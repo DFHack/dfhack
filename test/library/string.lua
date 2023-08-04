@@ -1,6 +1,6 @@
 -- tests string functions added by dfhack.lua
 
-config.targets = 'core'
+config.target = 'core'
 
 function test.startswith()
     expect.true_(('abcd'):startswith(''))

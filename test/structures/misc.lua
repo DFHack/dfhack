@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 function test.overlappingGlobals()
     local globals = {}
     for name, _ in pairs(df.global) do

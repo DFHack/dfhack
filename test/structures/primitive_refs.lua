@@ -1,3 +1,5 @@
+config.targets = 'core'
+
 utils = require('utils')
 
 function with_temp_ref(...)

@@ -1,11 +1,12 @@
 -- DFHack developer test harness
 --@ module = true
 
-local expect = require 'test_util.expect'
-local json = require 'json'
-local mock = require 'test_util.mock'
-local script = require 'gui.script'
-local utils = require 'utils'
+local expect = require('test_util.expect')
+local helpdb = require('helpdb')
+local json = require('json')
+local mock = require('test_util.mock')
+local script = require('gui.script')
+local utils = require('utils')
 
 local help_text =
 [====[
@@ -13,49 +14,59 @@ local help_text =
 test
 ====
 
-Run DFHack tests.
+Tags: dev
 
-Usage:
+Command: "test"
+
+    Run DFHack regression tests.
+
+Discover DFHack functionality that has broken due to recent changes in DF or DFHack.
+
+Usage
+-----
 
     test [<options>] [<done_command>]
 
 If a done_command is specified, it will be run after the tests complete.
 
-Options:
+Options
+-------
 
-    -h, --help      display this help message and exit.
-    -d, --test_dir  specifies which directory to look in for tests. defaults to
-                    the "hack/scripts/test" folder in your DF installation.
-    -m, --modes     only run tests in the given comma separated list of modes.
-                    see the next section for a list of valid modes. if not
-                    specified, the tests are not filtered by modes.
-    -r, --resume    skip tests that have already been run. remove the
-                    test_status.json file to reset the record.
-    -s, --save_dir  the save folder to load for "fortress" mode tests. this
-                    save is only loaded if a fort is not already loaded when
-                    a "fortress" mode test is run. if not specified, defaults to
-                    'region1'.
-    -t, --tests     only run tests that match one of the comma separated list of
-                    patterns. if not specified, no tests are filtered.
+-d, --test_dir  specifies which directory to look in for tests. defaults to
+                the "hack/scripts/test" folder in your DF installation.
+-m, --modes     only run tests in the given comma separated list of modes.
+                see the next section for a list of valid modes. if not
+                specified, the tests are not filtered by modes.
+-r, --resume    skip tests that have already been run. remove the
+                test_status.json file to reset the record.
+-s, --save_dir  the save folder to load for "fortress" mode tests. this
+                save is only loaded if a fort is not already loaded when
+                a "fortress" mode test is run. if not specified, defaults to
+                'region1'.
+-t, --tests     only run tests that match one of the comma separated list of
+                patterns. if not specified, no tests are filtered and all tessts
+                are run.
 
-Modes:
+Modes
+-----
 
-    none      the test can be run on any screen
-    title     the test must be run on the DF title screen. note that if the game
-              has a map loaded, "title" mode tests cannot be run
-    fortress  the test must be run while a map is loaded. if the game is
-              currently on the title screen, the save specified by the save_dir
-              parameter will be loaded.
+none      the test can be run on any screen
+title     the test must be run on the DF title screen. note that if the game
+          has a map loaded, "title" mode tests cannot be run
+fortress  the test must be run while a map is loaded. if the game is
+          currently on the title screen, the save specified by the save_dir
+          parameter will be loaded.
 
-Examples:
+Examples
+--------
 
-    test                 runs all tests
-    test -r              runs all tests that haven't been run before
-    test -m none         runs tests that don't need the game to be in a
-                         specific mode
-    test -t quickfort    runs quickfort tests
-    test -d /path/to/dfhack-scripts/repo/test
-                         runs tests in your dev scripts repo
+test                 runs all tests
+test -r              runs all tests that haven't been run before
+test -m none         runs tests that don't need the game to be in a
+                     specific mode
+test -t quickfort    runs quickfort tests
+test -d /path/to/dfhack-scripts/repo/test
+                     runs tests in your dev scripts repo
 
 Default values for the options may be set in a file named test_config.json in
 your DF folder. Options with comma-separated values should be written as json
@@ -352,33 +363,46 @@ local function load_tests(file, tests)
     if not code then
         dfhack.printerr('Failed to load file: ' .. tostring(err))
         return false
-    else
-        dfhack.internal.IN_TEST = true
-        local ok, err = dfhack.pcall(code)
-        dfhack.internal.IN_TEST = false
-        if not ok then
-            dfhack.printerr('Error when running file: ' .. tostring(err))
+    end
+    dfhack.internal.IN_TEST = true
+    local ok, err = dfhack.pcall(code)
+    dfhack.internal.IN_TEST = false
+    if not ok then
+        dfhack.printerr('Error when running file: ' .. tostring(err))
+        return false
+    end
+    if not MODES[env.config.mode] then
+        dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
+        return false
+    end
+    if not env.config.targets then
+        dfhack.printerr('Test target(s) not specified in ' .. file)
+        return false
+    end
+    local targets = type(env.config.targets) == table and env.config.targets or {env.config.targets}
+    for _,target in ipairs(targets) do
+        if target == 'core' then goto continue end
+        if type(target) ~= 'string' or not helpdb.is_entry(target) or
+            helpdb.get_entry_tags(target).unavailable
+        then
+            dfhack.printerr('Skipping tests for unavailable target: ' .. target)
             return false
-        else
-            if not MODES[env.config.mode] then
-                dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
-                return false
-            end
-            for name, test_func in pairs(env.test) do
-                if env.config.wrapper then
-                    local fn = test_func
-                    test_func = function() env.config.wrapper(fn) end
-                end
-                local test_data = {
-                    full_name = short_filename .. ':' .. name,
-                    func = test_func,
-                    private = env_private,
-                    config = env.config,
-                }
-                test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
-                table.insert(tests, test_data)
-            end
         end
+        ::continue::
+    end
+    for name, test_func in pairs(env.test) do
+        if env.config.wrapper then
+            local fn = test_func
+            test_func = function() env.config.wrapper(fn) end
+        end
+        local test_data = {
+            full_name = short_filename .. ':' .. name,
+            func = test_func,
+            private = env_private,
+            config = env.config,
+        }
+        test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
+        table.insert(tests, test_data)
     end
     return true
 end
@@ -575,7 +599,7 @@ local function dump_df_state()
         enabler = {
             fps = df.global.enabler.fps,
             gfps = df.global.enabler.gfps,
-            fullscreen = df.global.enabler.fullscreen,
+            fullscreen_state = df.global.enabler.fullscreen_state.whole,
         },
         gps = {
             dimx = df.global.gps.dimx,

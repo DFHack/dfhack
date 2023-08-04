@@ -375,7 +375,7 @@ local function load_tests(file, tests)
         dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
         return false
     end
-    if not env.config.targets then
+    if not env.config.target then
         dfhack.printerr('Skipping tests for unspecified target in ' .. file)
         return true  -- TODO: change to false once existing tests have targets specified
     end

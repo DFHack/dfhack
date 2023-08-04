@@ -376,8 +376,8 @@ local function load_tests(file, tests)
         return false
     end
     if not env.config.targets then
-        dfhack.printerr('Test target(s) not specified in ' .. file)
-        return false
+        dfhack.printerr('Skipping tests for unspecified target in ' .. file)
+        return true  -- TODO: change to false once existing tests have targets specified
     end
     local targets = type(env.config.targets) == table and env.config.targets or {env.config.targets}
     for _,target in ipairs(targets) do
@@ -386,7 +386,7 @@ local function load_tests(file, tests)
             helpdb.get_entry_tags(target).unavailable
         then
             dfhack.printerr('Skipping tests for unavailable target: ' .. target)
-            return false
+            return true
         end
         ::continue::
     end

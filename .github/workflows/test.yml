@@ -45,7 +45,7 @@ jobs:
         - gcc: 12
           plugins: "all"
 
-  test-windows:
+  run-tests:
     name: Test (${{ matrix.os }}, ${{ matrix.compiler }}, ${{ matrix.plugins }} plugins)
     needs:
     - build-windows

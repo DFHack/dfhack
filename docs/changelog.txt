@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 
 ## Lua
+- ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
 
 ## Removed
 

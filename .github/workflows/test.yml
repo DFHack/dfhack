@@ -68,22 +68,16 @@ jobs:
           #   gcc: 12
           #   plugins: "all"
     steps:
-    - name: Set env (windows)
-      if: matrix.os == 'windows'
-      run: echo "DF_FOLDER=DF" >> $env:GITHUB_ENV
-    - name: Set env (posix)
-      if: matrix.os != 'windows'
+    - name: Set env
+      shell: bash
       run: echo "DF_FOLDER=DF" >> $GITHUB_ENV
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
         repository: 'DFHack/dfhack'
         ref: ${{ inputs.dfhack_ref }}
-    - name: Detect DF version (windows)
-      if: matrix.os == 'windows'
-      run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >> $env:GITHUB_ENV
-    - name: Detect DF version (posix)
-      if: matrix.os != 'windows'
+    - name: Detect DF version
+      shell: bash
       run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >> $GITHUB_ENV
     - name: Fetch DF cache
       id: restore-df

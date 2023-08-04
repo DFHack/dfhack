@@ -1,3 +1,5 @@
+config.target = 'core'
+
 local expect_raw = require('test_util.expect')
 
 function test.str_find()

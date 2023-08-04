@@ -1,4 +1,5 @@
 config.mode = 'title'
+config.target = 'core'
 
 local function clean_vec(vec)
     while #vec > 0 do

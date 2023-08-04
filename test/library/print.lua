@@ -1,5 +1,7 @@
 -- tests print-related functions added by dfhack.lua
 
+config.target = 'core'
+
 local dfhack = dfhack
 
 local mock_print = mock.func()

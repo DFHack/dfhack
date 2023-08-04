@@ -379,7 +379,7 @@ local function load_tests(file, tests)
         dfhack.printerr('Skipping tests for unspecified target in ' .. file)
         return true  -- TODO: change to false once existing tests have targets specified
     end
-    local targets = type(env.config.targets) == table and env.config.targets or {env.config.targets}
+    local targets = type(env.config.target) == 'table' and env.config.target or {env.config.target}
     for _,target in ipairs(targets) do
         if target == 'core' then goto continue end
         if type(target) ~= 'string' or not helpdb.is_entry(target) or

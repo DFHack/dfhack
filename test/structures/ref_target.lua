@@ -1,3 +1,5 @@
+config.target = 'core'
+
 function test.get()
     dfhack.with_temp_object(df.unit:new(), function(unit)
         expect.eq(unit:_field('hist_figure_id').ref_target, df.historical_figure)

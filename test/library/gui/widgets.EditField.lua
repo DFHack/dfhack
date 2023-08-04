@@ -1,3 +1,5 @@
+config.target = 'core'
+
 local widgets = require('gui.widgets')
 
 function test.editfield_cursor()
@@ -20,18 +22,18 @@ function test.editfield_cursor()
     expect.eq('ones two threes', e.text)
     expect.eq(5, e.cursor)
 
-    e:onInput{CURSOR_LEFT=true}
+    e:onInput{KEYBOARD_CURSOR_LEFT=true}
     expect.eq(4, e.cursor)
-    e:onInput{CURSOR_RIGHT=true}
+    e:onInput{KEYBOARD_CURSOR_RIGHT=true}
     expect.eq(5, e.cursor)
-    e:onInput{A_CARE_MOVE_W=true}
-    expect.eq(1, e.cursor, 'interpret alt-left as home')
-    e:onInput{A_MOVE_E_DOWN=true}
-    expect.eq(6, e.cursor, 'interpret ctrl-right as goto beginning of next word')
-    e:onInput{A_CARE_MOVE_E=true}
-    expect.eq(16, e.cursor, 'interpret alt-right as end')
-    e:onInput{A_MOVE_W_DOWN=true}
-    expect.eq(9, e.cursor, 'interpret ctrl-left as goto end of previous word')
+    -- e:onInput{A_CARE_MOVE_W=true}
+    -- expect.eq(1, e.cursor, 'interpret alt-left as home') -- uncomment when we have a home key
+    e:onInput{CUSTOM_CTRL_F=true}
+    expect.eq(6, e.cursor, 'interpret Ctrl-f as goto beginning of next word')
+    e:onInput{CUSTOM_CTRL_E=true}
+    expect.eq(16, e.cursor, 'interpret Ctrl-e as end')
+    e:onInput{CUSTOM_CTRL_B=true}
+    expect.eq(9, e.cursor, 'interpret Ctrl-b as goto end of previous word')
 end
 
 function test.editfield_click()

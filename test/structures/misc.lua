@@ -1,6 +1,8 @@
+config.target = 'core'
+
 function test.overlappingGlobals()
     local globals = {}
-    for name, _ in pairs(df.global) do
+    for name in pairs(df.global) do
         local gvar = df.global:_field(name)
         local size, addr = gvar:sizeof()
         table.insert(globals, {

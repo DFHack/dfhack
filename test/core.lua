@@ -1,4 +1,4 @@
-config.targets = 'core'
+config.target = 'core'
 
 local function clean_path(p)
     -- todo: replace with dfhack.filesystem call?

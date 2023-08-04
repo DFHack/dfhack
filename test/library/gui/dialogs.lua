@@ -1,3 +1,5 @@
+--config.target = 'core'
+
 local gui = require('gui')
 local function send_keys(...)
     local keys = {...}

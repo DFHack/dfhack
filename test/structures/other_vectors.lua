@@ -1,3 +1,5 @@
+config.target = 'core'
+
 function test.index_name()
     for _, k in ipairs(df.units_other_id) do
         expect.eq(df.global.world.units.other[k]._kind, 'container')

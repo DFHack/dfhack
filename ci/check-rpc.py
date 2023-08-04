@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import glob
+import itertools
 import sys
 
 actual = {'': {}}
@@ -27,7 +28,7 @@ for p in glob.iglob('library/proto/*.proto'):
                 parts = line.split(' ')
                 expected[''][parts[2]] = (parts[4], parts[6])
 
-for p in glob.iglob('plugins/proto/*.proto'):
+for p in itertools.chain(glob.iglob('plugins/proto/*.proto'), glob.iglob('plugins/*/proto/*.proto')):
     plugin_name = ''
     with open(p) as f:
         for line in f:

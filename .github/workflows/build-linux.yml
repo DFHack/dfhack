@@ -29,6 +29,9 @@ on:
       docs:
         type: boolean
         default: false
+      html:
+        type: boolean
+        default: true
       stonesense:
         type: boolean
         default: false
@@ -118,6 +121,7 @@ jobs:
             -DBUILD_SIZECHECK:BOOL=${{ inputs.extras }} \
             -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \
             -DBUILD_DOCS:BOOL=${{ inputs.docs }} \
+            -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} \
             -DBUILD_TESTS:BOOL=${{ inputs.tests }} \
             -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} \
             -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} \

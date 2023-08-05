@@ -3,7 +3,7 @@ config.target = 'core'
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-local fs = defclass(fs, gui.FramedScreen)
+local fs = defclass(nil, gui.FramedScreen)
 fs.ATTRS = {
     frame_style = gui.GREY_LINE_FRAME,
     frame_title = 'TestFramedScreen',

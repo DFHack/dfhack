@@ -12,36 +12,18 @@ on:
         required: true
 
 jobs:
-  package-win64:
-    name: Build win64 release
-    uses: ./.github/workflows/build-windows.yml
+  package:
+    uses: ./.github/workflows/package.yml
     with:
-      artifact-name: win64-release
       dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
-      cache-id: release
+      append-date-and-hash: false
       cache-readonly: true
-      stonesense: true
-      docs: true
       launchdf: true
-    secrets: inherit
-
-  package-linux64:
-    name: Build linux64 release
-    uses: ./.github/workflows/build-linux.yml
-    with:
-      artifact-name: linux64-release
-      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
-      cache-id: release
-      cache-readonly: true
-      stonesense: true
-      docs: true
     secrets: inherit
 
   create-update-release:
     name: Draft GitHub release
-    needs:
-    - package-win64
-    - package-linux64
+    needs: package
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -63,23 +45,15 @@ jobs:
         tail -n $((CHANGELOG_LINES - 3)) docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt >> release_body.md
         tail -n 2 .github/release_template.md >> release_body.md
         cat release_body.md
-    - name: Stage win64 release
+    - name: Stage release
       uses: actions/download-artifact@v3
-      with:
-        name: win64-release
-        path: win64
     - name: Create win64 release archive
       run: |
-        cd win64
+        cd dfhack-windows64-build
         zip -r ../dfhack-${{ steps.gettag.outputs.name }}-Windows-64bit.zip .
-    - name: Stage linux64 release
-      uses: actions/download-artifact@v3
-      with:
-        name: linux64-release
-        path: linux64
     - name: Create linux64 release archive
       run: |
-        cd linux64
+        cd dfhack-linux64-build
         tar cjf ../dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2 .
     - name: Create or update GitHub release
       uses: ncipollo/release-action@v1

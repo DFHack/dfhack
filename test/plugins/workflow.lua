@@ -1,3 +1,5 @@
+config.target = 'workflow'
+
 local workflow = require('plugins.workflow')
 
 function test.job_outputs()

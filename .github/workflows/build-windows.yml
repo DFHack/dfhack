@@ -29,6 +29,9 @@ on:
       docs:
         type: boolean
         default: false
+      html:
+        type: boolean
+        default: true
       stonesense:
         type: boolean
         default: false
@@ -91,7 +94,7 @@ jobs:
             win-msvc
       - name: Cross-compile
         env:
-          CMAKE_EXTRA_ARGS: '-DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }}'
+          CMAKE_EXTRA_ARGS: '-DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }}'
         run: |
           cd build
           bash -x build-win64-from-linux.sh

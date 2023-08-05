@@ -26,6 +26,7 @@
 -- crashing the game.
 
 config.mode = 'fortress'
+config.target = {'quickfort', 'blueprint', 'dig-now', 'tiletypes', 'gui/quantum'}
 
 local argparse = require('argparse')
 local gui = require('gui')

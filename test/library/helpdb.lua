@@ -1,4 +1,4 @@
-config.target = 'core'
+--config.target = 'core'
 
 local h = require('helpdb')
 

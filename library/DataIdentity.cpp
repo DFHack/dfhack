@@ -9,13 +9,16 @@
 #include "DataFuncs.h"
 #include "DataIdentity.h"
 
+// the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
+// without it the macro generates a syntax error when type is a template specification
+
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(category, type, name) \
     category##_identity<type> identity_traits<type>::identity(name);
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
 #define OPAQUE_IDENTITY_TRAITS_NAME(type, name) \
-    opaque_identity identity_traits<type>::identity(sizeof(type), allocator_noassign_fn<type>, name)
+    opaque_identity identity_traits<type >::identity(sizeof(type), allocator_noassign_fn<type >, name)
 #define STL_OPAQUE_IDENTITY_TRAITS(type) OPAQUE_IDENTITY_TRAITS_NAME(std::type, #type)
 
 #ifndef STATIC_FIELDS_GROUP
@@ -45,6 +48,7 @@ namespace df {
     STL_OPAQUE_IDENTITY_TRAITS(condition_variable);
     STL_OPAQUE_IDENTITY_TRAITS(fstream);
     STL_OPAQUE_IDENTITY_TRAITS(mutex);
+    STL_OPAQUE_IDENTITY_TRAITS(future<void>);
 
     buffer_container_identity buffer_container_identity::base_instance;
 #endif

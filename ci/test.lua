@@ -553,6 +553,7 @@ local function run_tests(tests, status, counts, config)
             goto skip
         end
         if not MODES[test.config.mode].detect() then
+            print(('Switching to %s mode for test: %s'):format(test.config.mode, test.name))
             local ok, err = pcall(MODES[test.config.mode].navigate, config)
             if not ok then
                 MODES[test.config.mode].failed = true

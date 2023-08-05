@@ -20,6 +20,8 @@ jobs:
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-msvc
       cache-id: test
+      docs: true
+      html: false
       tests: true
 
   build-linux:
@@ -33,6 +35,8 @@ jobs:
       cache-id: test
       stonesense: ${{ matrix.plugins == 'all' }}
       extras: ${{ matrix.plugins == 'all' }}
+      docs: true
+      html: false
       tests: true
       gcc-ver: ${{ matrix.gcc }}
     secrets: inherit

@@ -30,6 +30,7 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 option(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
+option(BUILD_DOCS_NO_HTML "Don't build the HTML docs, only the in-game docs." OFF)
 option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduces libdfhack size to about half but removes a few useful symbols)" ON)
 
 macro(CHECK_GCC compiler_path)
@@ -468,7 +469,14 @@ if(BUILD_DOCS)
         "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
     )
 
-    set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+    if(BUILD_DOCS_NO_HTML)
+        set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/text/index.txt")
+        set(SPHINX_BUILD_TARGETS text)
+    else()
+        set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+        set(SPHINX_BUILD_TARGETS html text)
+    endif()
+
     set_property(
         DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES TRUE
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelogs"
@@ -485,9 +493,10 @@ if(BUILD_DOCS)
         "${CMAKE_BINARY_DIR}/docs/text"
         "${CMAKE_BINARY_DIR}/docs/xml"
     )
+
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
-            html text --sphinx="${SPHINX_EXECUTABLE}" -- -q -W
+        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" -- -q -W
         DEPENDS ${SPHINX_DEPS}
         COMMENT "Building documentation with Sphinx"
     )
@@ -500,10 +509,12 @@ if(BUILD_DOCS)
     add_custom_command(TARGET dfhack_docs POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
-    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
-        DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
-        FILES_MATCHING PATTERN "*"
-                       PATTERN html/_sources EXCLUDE)
+    if(NOT BUILD_DOCS_NO_HTML)
+        install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
+            DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
+            FILES_MATCHING PATTERN "*"
+                           PATTERN html/_sources EXCLUDE)
+    endif()
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/text/
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
     install(FILES docs/changelogs/news.rst docs/changelogs/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})

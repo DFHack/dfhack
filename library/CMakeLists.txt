@@ -4,21 +4,48 @@ cmake_minimum_required(VERSION 3.21)
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
 cmake_policy(SET CMP0022 NEW)
 
-if(BUILD_LIBRARY)
-
 # build options
 if(UNIX)
     option(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 endif()
 
-include_directories(proto)
-include_directories(include)
+# Generation
+set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+
+file(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
+file(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
 execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml ${dfapi_SOURCE_DIR}/include/df ";"
     WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
     OUTPUT_VARIABLE GENERATED_HDRS)
 
 set_source_files_properties(${GENERATED_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE GENERATED TRUE)
+
+add_custom_command(
+    OUTPUT ${CODEGEN_OUT}
+    BYPRODUCTS ${GENERATED_HDRS}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
+        ${CMAKE_CURRENT_SOURCE_DIR}/xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/df
+    MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    COMMENT "Generating codegen.out.xml and df/headers"
+    DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
+)
+
+if(NOT("${CMAKE_GENERATOR}" STREQUAL Ninja))
+    # use BYPRODUCTS instead under Ninja to avoid rebuilds
+    list(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+endif()
+
+add_custom_target(generate_headers DEPENDS ${CODEGEN_OUT})
+
+include_directories(include)
+
+add_subdirectory(xml)
+
+if(BUILD_LIBRARY)
+
+include_directories(proto)
 
 set(MAIN_HEADERS
     include/Internal.h
@@ -263,32 +290,7 @@ add_custom_target(generate_proto_core DEPENDS ${PROJECT_PROTO_TMP_FILES})
 # Merge headers into sources
 set_source_files_properties( ${PROJECT_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
 list(APPEND PROJECT_SOURCES ${PROJECT_HEADERS})
-
-# Generation
 list(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
-
-file(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
-file(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
-
-set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
-if(NOT("${CMAKE_GENERATOR}" STREQUAL Ninja))
-    # use BYPRODUCTS instead under Ninja to avoid rebuilds
-    list(APPEND CODEGEN_OUT ${GENERATED_HDRS})
-endif()
-
-add_custom_command(
-    OUTPUT ${CODEGEN_OUT}
-    BYPRODUCTS ${GENERATED_HDRS}
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
-        ${CMAKE_CURRENT_SOURCE_DIR}/xml
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/df
-    MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
-    COMMENT "Generating codegen.out.xml and df/headers"
-    DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
-)
-
-add_custom_target(generate_headers
-    DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
 
 if(REMOVE_SYMBOLS_FROM_DF_STUBS)
     if(UNIX)
@@ -442,8 +444,6 @@ install(TARGETS dfhack
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
-
-add_subdirectory(xml)
 
 endif(BUILD_LIBRARY)
 

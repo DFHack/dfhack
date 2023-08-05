@@ -68,23 +68,10 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: steam
     steps:
-    - name: Set env
+    - name: Get tag
       run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-    - name: Stage common depot files
+    - name: Stage depot files
       uses: actions/download-artifact@v3
-      with:
-        name: common-depot
-        path: common
-    - name: Stage win64 depot files
-      uses: actions/download-artifact@v3
-      with:
-        name: win64-depot
-        path: win64
-    - name: Stage linux64 depot files
-      uses: actions/download-artifact@v3
-      with:
-        name: linux64-depot
-        path: linux64
     - name: Steam deploy
       uses: game-ci/steam-deploy@v3
       with:
@@ -93,7 +80,7 @@ jobs:
         appId: 2346660
         buildDescription: ${{ github.event.inputs && github.event.inputs.version || env.TAG }}
         rootPath: .
-        depot1Path: common
-        depot2Path: win64
-        depot3Path: linux64
+        depot1Path: common-depot
+        depot2Path: win64-depot
+        depot3Path: linux64-depot
         releaseBranch: ${{ github.event.inputs && github.event.inputs.release_channel || 'staging' }}

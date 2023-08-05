@@ -7,26 +7,10 @@ jobs:
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
-  package-linux:
-    name: Linux package
-    uses: ./.github/workflows/build-linux.yml
+  package:
+    uses: ./.github/workflows/package.yml
     with:
-      artifact-name: dfhack-linux64-build
-      append-date-and-hash: true
-      cache-id: release
-      stonesense: true
-      docs: true
-    secrets: inherit
-
-  package-win64:
-    name: Win64 package
-    uses: ./.github/workflows/build-windows.yml
-    with:
-      artifact-name: dfhack-win64-build
-      append-date-and-hash: true
-      cache-id: release
-      stonesense: true
-      docs: true
+      dfhack_ref: ${{ github.ref }}
     secrets: inherit
 
   docs:

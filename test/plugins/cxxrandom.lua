@@ -1,3 +1,5 @@
+config.target = 'cxxrandom'
+
 local rng = require('plugins.cxxrandom')
 
 function test.cxxrandom_distributions()

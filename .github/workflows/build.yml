@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     uses: ./.github/workflows/test.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
     secrets: inherit
 
   package:
@@ -16,6 +18,7 @@ jobs:
   docs:
     uses: ./.github/workflows/build-linux.yml
     with:
+      dfhack_ref: ${{ github.ref }}
       platform-files: false
       common-files: false
       docs: true
@@ -23,6 +26,8 @@ jobs:
 
   lint:
     uses: ./.github/workflows/lint.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
     secrets: inherit
 
   check-pr:

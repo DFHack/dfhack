@@ -68,8 +68,6 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: steam
     steps:
-    - name: Get tag
-      run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Stage depot files
       uses: actions/download-artifact@v3
     - name: Steam deploy
@@ -78,7 +76,7 @@ jobs:
         username: ${{ secrets.STEAM_USERNAME }}
         configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
         appId: 2346660
-        buildDescription: ${{ github.event.inputs && github.event.inputs.version || env.TAG }}
+        buildDescription: ${{ github.event.inputs && github.event.inputs.version || github.ref_name }}
         rootPath: .
         depot1Path: common-depot
         depot2Path: win64-depot

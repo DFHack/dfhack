@@ -19,7 +19,7 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
-        repository: 'DFHack/dfhack'
+        repository: ${{ inputs.dfhack_ref && github.repository || 'DFHack/dfhack' }}
         ref: ${{ inputs.dfhack_ref }}
     - name: Get scripts submodule ref
       if: '!inputs.scripts_ref'
@@ -28,7 +28,7 @@ jobs:
     - name: Clone scripts
       uses: actions/checkout@v3
       with:
-        repository: 'DFHack/scripts'
+        repository: ${{ inputs.scripts_ref && github.repository || 'DFHack/scripts' }}
         ref: ${{ inputs.scripts_ref || steps.scriptssubmoduleref.outputs.ref }}
         path: scripts
     - name: Check whitespace

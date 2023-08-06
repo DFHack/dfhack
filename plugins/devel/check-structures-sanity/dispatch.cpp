@@ -821,7 +821,7 @@ void Checker::check_stl_vector(const QueueItem & item, type_identity *item_ident
     auto vec_items = validate_vector_size(item, CheckedStructure(item_identity));
 
     // skip bad pointer vectors
-    if (item.path.length() > 4 && item.path.substr(item.path.length() - 4) == ".bad" && item_identity->type() == IDTYPE_POINTER)
+    if ((item.path.ends_with(".bad") || item.path.ends_with(".temp_save")) && item_identity->type() == IDTYPE_POINTER)
     {
         return;
     }

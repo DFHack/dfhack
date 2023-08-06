@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- `RemoteFortressReader`: add a `force_reload` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
 
 ## Internals
 

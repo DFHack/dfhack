@@ -526,6 +526,7 @@ message BlockRequest
     optional int32 max_y = 5;
     optional int32 min_z = 6;
     optional int32 max_z = 7;
+    optional bool force_reload = 8;
 }
 
 message BlockList

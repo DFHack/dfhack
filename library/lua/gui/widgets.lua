@@ -1489,13 +1489,27 @@ function HotkeyLabel:onInput(keys)
     end
 end
 
+-----------------
+-- BannerPanel --
+-----------------
+
+BannerPanel = defclass(BannerPanel, Panel)
+
+local BANNER_PEN = dfhack.pen.parse{fg=COLOR_YELLOW, bg=COLOR_RED}
+
+function BannerPanel:onRenderBody(dc)
+    dc:pen(BANNER_PEN)
+    for y=0,self.frame_rect.height-1 do
+        dc:seek(0, y):char(string.char(221)) -- half-width stripe on left
+        dc:seek(self.frame_rect.width-1):char(string.char(222)) -- half-width stripe on right
+    end
+end
+
 ----------------
 -- TextButton --
 ----------------
 
-TextButton = defclass(TextButton, Panel)
-
-local BUTTON_PEN = dfhack.pen.parse{fg=COLOR_YELLOW, bg=COLOR_RED}
+TextButton = defclass(TextButton, BannerPanel)
 
 function TextButton:init(info)
     self.label = HotkeyLabel{
@@ -1516,19 +1530,7 @@ function TextButton:init(info)
         scroll_keys=info.scroll_keys,
     }
 
-    self:addviews{
-        Label{
-            frame={t=0, l=0, w=1},
-            text=string.char(221),  -- half-width stripe on left
-            text_pen=BUTTON_PEN,
-        },
-        self.label,
-        Label{
-            frame={t=0, r=0, w=1},
-            text=string.char(222),  -- half-width stripe on right
-            text_pen=BUTTON_PEN,
-        }
-    }
+    self:addviews{self.label}
 end
 
 function TextButton:setLabel(label)

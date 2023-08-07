@@ -5077,13 +5077,21 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+BannerPanel class
+-----------------
+
+This is a Panel subclass that prints a distinctive banner along the far left
+and right columns of the widget frame. Note that this is not a "proper" frame
+since it doesn't have top or bottom borders. Subviews of this panel should
+inset their frames one tile from the left and right edges.
+
 TextButton class
 ----------------
 
-This is a Panel subclass that wraps a HotkeyLabel with some decorators on the
-sides to make it look more like a button, suitable for both graphics and ASCII
-mdoes. All HotkeyLabel parameters passed to the constructor are passed through
-to the wrapped HotkeyLabel.
+This is a BannerPanel subclass that wraps a HotkeyLabel with some decorators on
+the sides to make it look more like a button, suitable for both graphics and
+ASCII modes. All HotkeyLabel parameters passed to the constructor are passed
+through to the wrapped HotkeyLabel.
 
 List class
 ----------

@@ -694,13 +694,13 @@ PastureOverlay.ATTRS{
 function PastureOverlay:init()
     self:addviews{
         widgets.TextButton{
-            frame={t=0, l=0},
+            frame={t=0, l=0, r=0, h=1},
             label='DFHack manage pasture',
             key='CUSTOM_CTRL_T',
             on_activate=function() view = view and view:raise() or PastureScreen{}:show() end,
         },
         widgets.TextButton{
-            frame={t=2, l=0},
+            frame={t=2, l=0, r=0, h=1},
             label='DFHack autobutcher',
             key='CUSTOM_CTRL_B',
             on_activate=function() dfhack.run_script('gui/autobutcher') end,

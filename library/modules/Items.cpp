@@ -1910,13 +1910,6 @@ static int32_t get_sell_request_multiplier(df::item *item, const df::caravan_sta
     return get_sell_request_multiplier(item, caravan_he->resources, &sell_prices->price[0]);
 }
 
-static int32_t get_trade_agreement_multiplier(df::item *item, const df::caravan_state *caravan, bool caravan_buying) {
-    if (!caravan)
-        return DEFAULT_AGREEMENT_MULTIPLIER;
-    return caravan_buying ? get_buy_request_multiplier(item, caravan->buy_prices)
-        : get_sell_request_multiplier(item, caravan);
-}
-
 static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
     auto trade_state = caravan->trade_state;
     if (caravan->time_remaining <= 0 ||
@@ -1942,7 +1935,7 @@ bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
     return false;
 }
 
-int Items::getValue(df::item *item, df::caravan_state *caravan, bool caravan_buying)
+int Items::getValue(df::item *item, df::caravan_state *caravan)
 {
     CHECK_NULL_POINTER(item);
 
@@ -2011,8 +2004,12 @@ int Items::getValue(df::item *item, df::caravan_state *caravan, bool caravan_buy
         value *= 10;
 
     // modify buy/sell prices
-    value *= get_trade_agreement_multiplier(item, caravan, caravan_buying);
-    value >>= 7;
+    if (caravan) {
+        value *= get_buy_request_multiplier(item, caravan->buy_prices);
+        value >>= 7;
+        value *= get_sell_request_multiplier(item, caravan);
+        value >>= 7;
+    }
 
     // Boost value from stack size
     value *= item->getStackSize();

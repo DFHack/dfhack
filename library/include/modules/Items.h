@@ -191,7 +191,7 @@ DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item 
 DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype);
 
 /// Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given
-DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL, bool caravan_buying = false);
+DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
 DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* creator);
 

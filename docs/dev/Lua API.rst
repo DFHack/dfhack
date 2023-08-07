@@ -1773,15 +1773,12 @@ Items module
 
   Calculates the base value for an item of the specified type and material.
 
-* ``dfhack.items.getValue(item[, caravan_state, caravan_buying])``
+* ``dfhack.items.getValue(item[, caravan_state])``
 
   Calculates the value of an item. If a ``df.caravan_state`` object is given
   (from ``df.global.plotinfo.caravans`` or
   ``df.global.main_interface.trade.mer``), then the value is modified by civ
-  properties and any trade agreements that might be in effect. In this case,
-  specify ``caravan_buying`` as ``true`` to get the price the caravan will pay
-  for the item and ``false`` to get the price that the caravan will sell the
-  item for.
+  properties and any trade agreements that might be in effect.
 
 * ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
 

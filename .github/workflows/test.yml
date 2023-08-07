@@ -107,9 +107,9 @@ jobs:
       if: matrix.config == 'empty'
       shell: bash
       run: |
-        mkdir -p dfhack-config/init
+        mkdir -p ${{ env.DF_FOLDER }}/dfhack-config/init
         cd data/dfhack-config/init
-        for fname in *.init; do touch ../../../dfhack-config/init/$fname; done
+        for fname in *.init; do touch ../../../${{ env.DF_FOLDER }}/dfhack-config/init/$fname; done
     - name: Download DFHack
       uses: actions/download-artifact@v3
       with:
@@ -125,7 +125,7 @@ jobs:
       if: always()
       continue-on-error: true
       with:
-        name: test-artifacts-msvc
+        name: test-output-${{ matrix.compiler }}-${{ matrix.plugins }}_plugins-${{ matrix.config }}_config
         path: |
           ${{ env.DF_FOLDER }}/dfhack-rpc.txt
           ${{ env.DF_FOLDER }}/test*.json

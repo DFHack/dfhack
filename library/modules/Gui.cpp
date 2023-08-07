@@ -69,6 +69,7 @@ using namespace DFHack;
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
+#include "df/legend_pagest.h"
 #include "df/occupation.h"
 #include "df/plant.h"
 #include "df/popup_message.h"
@@ -84,6 +85,7 @@ using namespace DFHack;
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_titlest.h"
 #include "df/world.h"
@@ -168,6 +170,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(legends)
+{
+    if (screen->init_stage != -1)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->page.size() <= 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else
+        focusStrings.push_back(baseFocus + '/' + screen->page[screen->active_page_index]->header);
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)

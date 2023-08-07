@@ -22,6 +22,26 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
   spans multiple lines. Three ``]`` characters indicate the end of such a block.
 - ``!`` immediately before a phrase set up to be replaced (see gen_changelog.py) stops that occurrence from being replaced.
 
+Template for new versions:
+
+# Future
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Internals
+
+## Lua
+
+## Removed
+
 ===end
 ]]]
 
@@ -33,7 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
-## New Plugins
+## New Features
 
 ## Fixes
 

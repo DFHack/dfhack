@@ -28,13 +28,14 @@ HotspotMenuWidget.ATTRS{
     default_enabled=true,
     hotspot=true,
     viewscreens={
-        -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'adopt_region',
         'choose_game_type',
+        -- 'choose_start_site', -- conflicts with vanilla panel layouts
         'dwarfmode',
         'export_region',
         'game_cleaner',
         'initial_prep',
-        'legends',
+        --'legends', -- conflicts with vanilla export button and info text
         'loadgame',
         -- 'new_region', -- conflicts with vanilla panel layouts
         'savegame',

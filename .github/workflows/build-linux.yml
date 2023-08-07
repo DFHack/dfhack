@@ -131,7 +131,7 @@ jobs:
       - name: Run cpp tests
         if: inputs.platform-files
         run: ninja -C build test
-      - name: Trim cache
+      - name: Finalize cache
         if: inputs.platform-files
         run: |
           ccache --max-size 40M

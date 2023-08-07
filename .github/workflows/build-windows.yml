@@ -98,7 +98,7 @@ jobs:
         run: |
           cd build
           bash -x build-win64-from-linux.sh
-      - name: Trim cache
+      - name: Finalize cache
         run: |
           cd build
           ccache -d win64-cross/ccache --max-size 150M

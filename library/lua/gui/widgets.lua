@@ -236,8 +236,9 @@ local function Panel_end_drag(self, frame, success)
     else
         self:setFocus(false)
     end
+    local resize_edge = self.resize_edge
     Panel_update_frame(self, frame, true)
-    if self.resize_edge then
+    if resize_edge then
         if self.on_resize_end then self.on_resize_end(success) end
     else
         if self.on_drag_end then self.on_drag_end(success) end

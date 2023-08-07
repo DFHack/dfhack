@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `hotkeys`: don't display DFHack logo in legends mode since it covers up important interface elements. the Ctrl-Shift-C hotkey to bring up the menu and the mouseover hotspot still function, though.
 
 ## Documentation
 

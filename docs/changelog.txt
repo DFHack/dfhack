@@ -69,6 +69,7 @@ Template for new versions:
 ## Lua
 - ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
 - ``dfhack.items.getValue()``: remove ``caravan_buying`` param as per C++ API change
+- ``widgets.BannerPanel``: panel with distinctive border for marking DFHack UI elements on otherwise vanilla screens
 
 ## Removed
 

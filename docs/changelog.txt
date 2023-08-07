@@ -42,11 +42,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
 
 ## Internals
 
 ## Lua
 - ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
+- ``dfhack.items.getValue()``: remove ``caravan_buying`` param as per C++ API change
 
 ## Removed
 

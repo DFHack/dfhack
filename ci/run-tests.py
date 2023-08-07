@@ -83,7 +83,6 @@ test_init_file = os.path.join(init_path, 'dfhackzzz_test.init')  # Core sorts th
 with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt
-    :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
     test --resume -- lua scr.breakdown_level=df.interface_breakdown_types.%s
     ''' % ('NONE' if args.no_quit else 'QUIT'))
 

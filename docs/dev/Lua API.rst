@@ -4559,7 +4559,7 @@ Has attributes:
 * ``drag_anchors = {}`` (default: ``{title=true, frame=false/true, body=true}``)
 * ``drag_bound = 'frame' or 'body'`` (default: ``'frame'``)
 * ``on_drag_begin = function()`` (default: ``nil``)
-* ``on_drag_end = function(bool)`` (default: ``nil``)
+* ``on_drag_end = function(success, new_frame)`` (default: ``nil``)
 
   If ``draggable`` is set to ``true``, then the above attributes come into play
   when the panel is dragged around the screen, either with the mouse or the
@@ -4573,13 +4573,15 @@ Has attributes:
   otherwise. Dragging can be canceled by right clicking while dragging with the
   mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
   calling ``Panel:setKeyboaredDragEnabled(false)`` (while dragging with the
-  keyboard).
+  keyboard). If it is more convenient to do so, you can choose to override the
+  ``panel:onDragBegin`` and/or the ``panel:onDragEnd`` methods instead of
+  setting the ``on_drag_begin`` and/or ``on_drag_end`` attributes.
 
 * ``resizable = bool`` (default: ``false``)
 * ``resize_anchors = {}`` (default: ``{t=false, l=true, r=true, b=true}``
 * ``resize_min = {}`` (default: w and h from the ``frame``, or ``{w=5, h=5}``)
 * ``on_resize_begin = function()`` (default: ``nil``)
-* ``on_resize_end = function(bool)`` (default: ``nil``)
+* ``on_resize_end = function(success, new_frame)`` (default: ``nil``)
 
   If ``resizable`` is set to ``true``, then the player can click the mouse on
   any edge specified in ``resize_anchors`` and drag the border to resize the
@@ -4593,6 +4595,9 @@ Has attributes:
   Dragging can be canceled by right clicking while resizing with the mouse,
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
+  If it is more convenient to do so, you can choose to override the
+  ``panel:onResizeBegin`` and/or the ``panel:onResizeEnd`` methods instead of
+  setting the ``on_resize_begin`` and/or ``on_resize_end`` attributes.
 
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
@@ -4636,6 +4641,15 @@ Has functions:
   be chosen. Shift-cursor keys move by larger amounts. Hit :kbd:`Enter` to
   commit the new window size or :kbd:`Esc` to cancel. If resizing is canceled,
   then the window size from before the resize operation is restored.
+
+* ``panel:onDragBegin()``
+* ``panel:onDragEnd(success, new_frame)``
+* ``panel:onResizeBegin()``
+* ``panel:onResizeEnd(success, new_frame)``
+
+The default implementations of these methods call the associated attribute (if
+set). You can override them in a subclass if that is more convenient than
+setting the attributes.
 
 Double clicking:
 

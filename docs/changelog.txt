@@ -35,6 +35,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
 
 ## Internals
 

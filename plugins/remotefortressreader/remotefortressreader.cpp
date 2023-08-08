@@ -1393,6 +1393,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y();
     int min_z = in->min_z();
     int max_z = in->max_z();
+    bool forceReload = in->force_reload();
     bool firstBlock = true; //Always send all the buildings needed on the first block, and none on the rest.
                                 //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = max_z - 1; zz >= min_z; zz--)
@@ -1440,19 +1441,19 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool itemsChanged = block->items.size() > 0;
                         bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block = nullptr;
-                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows || forceReload)
                         {
                             net_block = out->add_map_blocks();
                             net_block->set_map_x(block->map_pos.x);
                             net_block->set_map_y(block->map_pos.y);
                             net_block->set_map_z(block->map_pos.z);
                         }
-                        if (tileChanged)
+                        if (tileChanged || forceReload)
                         {
                             CopyBlock(block, net_block, &MC, pos);
                             blocks_sent++;
                         }
-                        if (desChanged)
+                        if (desChanged || forceReload)
                             CopyDesignation(block, net_block, &MC, pos);
                         if (firstBlock)
                         {
@@ -1460,7 +1461,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyProjectiles(net_block);
                             firstBlock = false;
                         }
-                        if (spatterChanged)
+                        if (spatterChanged || forceReload)
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)
                             CopyItems(block, net_block, &MC, pos);

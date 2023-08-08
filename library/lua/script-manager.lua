@@ -51,9 +51,10 @@ function reload(refresh_active_mod_scripts)
     enabled_map = utils.OrderedTable()
     local force_refresh_fn = refresh_active_mod_scripts and function(script_path, script_name)
         if script_path:find('scripts_modactive') then
-            internal_script = dfhack.internal.scripts[script_path..'/'..script_name]
+            local full_path = script_path..'/'..script_name
+            internal_script = dfhack.internal.scripts[full_path]
             if internal_script then
-                internal_script.env = nil
+                dfhack.internal.scripts[full_path] = nil
             end
         end
     end or nil

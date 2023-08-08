@@ -6,7 +6,6 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
-local dscreen = dfhack.screen
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
 
@@ -223,9 +222,9 @@ local function Panel_begin_drag(self, drag_offset, resize_edge)
     self.prev_focus_owner = self.focus_group.cur
     self:setFocus(true)
     if self.resize_edge then
-        if self.on_resize_begin then self.on_resize_begin(success) end
+        self:onResizeBegin()
     else
-        if self.on_drag_begin then self.on_drag_begin(success) end
+        self:onDragBegin()
     end
 end
 
@@ -239,9 +238,9 @@ local function Panel_end_drag(self, frame, success)
     local resize_edge = self.resize_edge
     Panel_update_frame(self, frame, true)
     if resize_edge then
-        if self.on_resize_end then self.on_resize_end(success) end
+        self:onResizeEnd(success, self.frame)
     else
-        if self.on_drag_end then self.on_drag_end(success) end
+        self:onDragEnd(success, self.frame)
     end
 end
 
@@ -493,6 +492,22 @@ function Panel:onRenderFrame(dc, rect)
             and df.global.enabler.mouse_lbut == 0 then
         Panel_end_drag(self, nil, true)
     end
+end
+
+function Panel:onDragBegin()
+    if self.on_drag_begin then self.on_drag_begin() end
+end
+
+function Panel:onDragEnd(success, new_frame)
+    if self.on_drag_end then self.on_drag_end(success, new_frame) end
+end
+
+function Panel:onResizeBegin()
+    if self.on_resize_begin then self.on_resize_begin() end
+end
+
+function Panel:onResizeEnd(success, new_frame)
+    if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
 
 ------------

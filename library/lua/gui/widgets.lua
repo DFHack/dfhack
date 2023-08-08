@@ -1496,13 +1496,11 @@ end
 
 BannerPanel = defclass(BannerPanel, Panel)
 
-local BANNER_PEN = dfhack.pen.parse{fg=COLOR_YELLOW, bg=COLOR_RED}
-
 function BannerPanel:onRenderBody(dc)
-    dc:pen(BANNER_PEN)
+    dc:pen(COLOR_RED)
     for y=0,self.frame_rect.height-1 do
-        dc:seek(0, y):char(string.char(221)) -- half-width stripe on left
-        dc:seek(self.frame_rect.width-1):char(string.char(222)) -- half-width stripe on right
+        dc:seek(0, y):char('[')
+        dc:seek(self.frame_rect.width-1):char(']')
     end
 end
 

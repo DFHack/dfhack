@@ -217,6 +217,7 @@ function get_code_segment()
     for i,mem in ipairs(dfhack.internal.getMemRanges()) do
         if mem.read and mem.execute
            and (string.match(mem.name,'/dwarfort%.exe$')
+             or string.match(mem.name,'/dwarfort$')
              or string.match(mem.name,'/Dwarf_Fortress$')
              or string.match(mem.name,'Dwarf Fortress%.exe'))
         then

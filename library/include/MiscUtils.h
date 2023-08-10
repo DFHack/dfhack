@@ -474,3 +474,5 @@ DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out);

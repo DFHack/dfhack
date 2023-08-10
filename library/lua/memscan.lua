@@ -533,4 +533,32 @@ function get_screen_size()
     return w,h
 end
 
+-- Global table
+
+function read_c_string(char_ptr)
+    local s = ''
+    local i = 0
+    while char_ptr[i] ~= 0 do
+        s = s .. string.char(char_ptr[i])
+        i = i + 1
+    end
+    return s
+end
+
+function read_global_table(global_table)
+    global_table = global_table or df.global.global_table
+    local out = {}
+    local i = 0
+    while true do
+        -- use _displace() so we can read past the bounds of the array set in structures, if necessary
+        local entry = global_table[0]:_displace(i)
+        if not entry.name or not entry.address then
+            break
+        end
+        out[read_c_string(entry.name)] = entry
+        i = i + 1
+    end
+    return out
+end
+
 return _ENV

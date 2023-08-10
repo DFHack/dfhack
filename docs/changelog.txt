@@ -60,6 +60,7 @@ Template for new versions:
 - Core: properly reload scripts in mods when a world is unloaded and immediately loaded again
 
 ## Misc Improvements
+- Surround DFHack-specific UI elements with square brackets instead of red-yellow blocks for better readability
 - `hotkeys`: don't display DFHack logo in legends mode since it covers up important interface elements. the Ctrl-Shift-C hotkey to bring up the menu and the mouseover hotspot still function, though.
 
 ## Documentation

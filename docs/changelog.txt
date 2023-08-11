@@ -24,7 +24,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 Template for new versions:
 
-# Future
+## New Tools
 
 ## New Features
 
@@ -35,7 +35,6 @@ Template for new versions:
 ## Documentation
 
 ## API
-- `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
 
 ## Internals
 
@@ -54,6 +53,8 @@ Template for new versions:
 
 # Future
 
+## New Tools
+
 ## New Features
 
 ## Fixes
@@ -67,6 +68,7 @@ Template for new versions:
 
 ## API
 - ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
+- `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
 
 ## Internals
 

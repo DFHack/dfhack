@@ -1,4 +1,4 @@
-config.mode = 'title'
+config.mode = 'title' -- not safe to run when a world is loaded
 config.target = 'core'
 
 local function clean_vec(vec)

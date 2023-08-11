@@ -2732,6 +2732,11 @@ and are only documented here for completeness:
   The oldval, newval or delta arguments may be used to specify additional constraints.
   Returns: *found_index*, or *nil* if end reached.
 
+* ``dfhack.internal.cxxDemangle(mangled_name)``
+
+  Decodes a mangled C++ symbol name. Returns the demangled name on success, or
+  ``nil, error_message`` on failure.
+
 * ``dfhack.internal.getDir(path)``
 
   Lists files/directories in a directory.

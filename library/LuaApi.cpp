@@ -3333,6 +3333,24 @@ static int internal_diffscan(lua_State *L)
     return 1;
 }
 
+static int internal_cxxDemangle(lua_State *L)
+{
+    std::string mangled = luaL_checkstring(L, 1);
+    std::string status;
+    std::string demangled = cxx_demangle(mangled, &status);
+    if (demangled.length())
+    {
+        lua_pushstring(L, demangled.c_str());
+        return 1;
+    }
+    else
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, status.c_str());
+        return 2;
+    }
+}
+
 static int internal_runCommand(lua_State *L)
 {
     color_ostream *out = NULL;
@@ -3637,6 +3655,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
+    { "cxxDemangle", internal_cxxDemangle },
     { "getDir", filesystem_listdir },
     { "runCommand", internal_runCommand },
     { "getModifiers", internal_getModifiers },

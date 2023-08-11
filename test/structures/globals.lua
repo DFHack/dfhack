@@ -1,4 +1,3 @@
-config.mode = 'title'
 config.target = 'core'
 
 local function with_temp_global_address(name, addr, callback, ...)

@@ -664,6 +664,9 @@ static int meta_global_field_reference(lua_State *state)
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
         field_error(state, 2, "builtin property or method", "reference");
+    void *ptr = *(void**)field->offset;
+    if (!ptr)
+        field_error(state, 2, "global address not known", "reference");
     field_reference(state, field, *(void**)field->offset);
     return 1;
 }

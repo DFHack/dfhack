@@ -1692,6 +1692,7 @@ bool Core::InitSimulationThread()
     }
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
+    Textures::initDynamic(con);
     // create mutex for syncing with interactive tasks
     std::cerr << "Initializing plugins.\n";
     // create plugin manager

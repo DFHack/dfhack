@@ -1,13 +1,14 @@
 #pragma once
 
-#include <optional>
+#include <vector>
+#include <string>
 
 #include "Export.h"
 #include "ColorText.h"
 
 #include <SDL_surface.h>
 
-using TexposHandle = uintptr_t;
+typedef typename void* TexposHandle;
 
 namespace DFHack {
 
@@ -25,17 +26,28 @@ namespace Textures {
 DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface);
 
 /**
+ * Load tileset from image file.
+ * Return vector of handles to obtain valid texposes.
+ */
+DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file, int tile_px_w, int tile_px_h);
+
+/**
  * Get texpos by handle.
  * Always use this function, if you need to get valid texpos for your texure.
  * Texpos can change on game textures reset, but handle will be the same.
  */
-DFHACK_EXPORT std::optional<long> getTexposByHandle(TexposHandle handle);
+DFHACK_EXPORT long getTexposByHandle(TexposHandle handle);
 
 /**
  * Call this on DFHack init and on every viewscreen change so we can reload
  * and reindex textures as needed.
  */
-void init(DFHack::color_ostream &out);
+void init(DFHack::color_ostream& out);
+
+/**
+ * Call this on DFHack init just once to setup interposed handlers.
+ */
+void initDynamic(DFHack::color_ostream& out);
 
 /**
  * Call this when DFHack is being unloaded.

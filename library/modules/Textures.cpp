@@ -25,7 +25,6 @@ namespace DFHack {
 }
 
 static bool g_loaded = false;
-static bool g_dynamic_loaded = false;
 static long g_num_dfhack_textures = 0;
 static long g_dfhack_logo_texpos_start = -1;
 static long g_green_pin_texpos_start = -1;
@@ -45,6 +44,9 @@ static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
 static std::mutex g_adding_mutex;
 
+const uint32_t TILE_WIDTH_PX = 8;
+const uint32_t TILE_HEIGHT_PX = 12;
+
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
 // and the source surface didn't already have an alpha channel.
@@ -52,7 +54,7 @@ static std::mutex g_adding_mutex;
 //
 // It uses the same pixel format (RGBA, R at lowest address) regardless of
 // hardware.
-SDL_Surface* canonicalize_format(SDL_Surface *src) {
+SDL_Surface* canonicalize_format(SDL_Surface* src) {
   SDL_PixelFormat fmt;
   fmt.palette = NULL;
   fmt.BitsPerPixel = 32;
@@ -95,7 +97,7 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
     if (!surface)
         return 0; // should be some error, i guess
 
-    auto handle = reinterpret_cast<uintptr_t>(surface); // not the best way?
+    auto handle = reinterpret_cast<TexposHandle>(surface);
     g_handle_to_surface.emplace(handle, surface);
     surface->refcount++; // prevent destruct on next FreeSurface by game
     auto texpos = add_texture(surface);
@@ -103,21 +105,53 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
     return handle;
 }
 
-std::optional<long> Textures::getTexposByHandle(TexposHandle handle) {
-    if (!handle)
-        return std::nullopt;
+std::vector<TexposHandle> Textures::loadTileset(const std::string& file,
+                                                int tile_px_w = TILE_WIDTH_PX,
+                                                int tile_px_h = TILE_HEIGHT_PX) {
+    std::vector<TexposHandle> handles{};
 
-    if (auto it = g_handle_to_texpos.find(handle); it != g_handle_to_texpos.end())
-        return it->second;
-
-    if (auto it = g_handle_to_surface.find(handle); it != g_handle_to_surface.end()) {
-      it->second->refcount++; // prevent destruct on next FreeSurface by game
-      auto texpos = add_texture(it->second);
-      g_handle_to_texpos.emplace(handle, texpos);
-      return texpos;
+    SDL_Surface* surface = DFIMG_Load(file.c_str());
+    if (!surface) {
+        ERR(textures).printerr("unable to load textures from '%s'\n", file.c_str());
+        return handles;
     }
 
-    return std::nullopt;
+    surface = canonicalize_format(surface);
+    int dimx = surface->w / tile_px_w;
+    int dimy = surface->h / tile_px_h;
+    for (int y = 0; y < dimy; y++) {
+        for (int x = 0; x < dimx; x++) {
+            SDL_Surface* tile = DFSDL_CreateRGBSurface(0, tile_px_w, tile_px_h, 32,
+                                                        surface->format->Rmask, surface->format->Gmask,
+                                                        surface->format->Bmask, surface->format->Amask);
+            SDL_Rect vp{ tile_px_w * x, tile_px_h * y, tile_px_w, tile_px_h };
+            DFSDL_UpperBlit(surface, &vp, tile, NULL);
+            auto handle = Textures::loadTexture(tile);
+            handles.push_back(handle);
+        }
+    }
+
+    DFSDL_FreeSurface(surface);
+    DEBUG(textures).print("loaded %ld textures from '%s'\n", handles.size(), file.c_str());
+
+    return handles;
+}
+
+long Textures::getTexposByHandle(TexposHandle handle) {
+    if (!handle)
+        return -1;
+
+    if (g_handle_to_texpos.contains(handle))
+        return g_handle_to_texpos[handle];
+
+    if (g_handle_to_surface.contains(handle)) {
+        g_handle_to_surface[handle]->refcount++; // prevent destruct on next FreeSurface by game
+        auto texpos = add_texture(g_handle_to_surface[handle]);
+        g_handle_to_texpos.emplace(handle, texpos);
+        return texpos;
+    }
+
+    return -1;
 }
 
 static void reset_texpos() {
@@ -203,8 +237,7 @@ struct tracking_stage_new_arena : df::viewscreen_new_arenast {
 };
 IMPLEMENT_VMETHOD_INTERPOSE(tracking_stage_new_arena, logic);
 
-static void
-  install_reset_point() {
+static void install_reset_point() {
     INTERPOSE_HOOK(tracking_stage_new_region, logic).apply();
     INTERPOSE_HOOK(tracking_stage_adopt_region, logic).apply();
     INTERPOSE_HOOK(tracking_stage_load_region, logic).apply();
@@ -218,14 +251,11 @@ static void uninstall_reset_point() {
     INTERPOSE_HOOK(tracking_stage_new_arena, logic).remove();
 }
 
-const uint32_t TILE_WIDTH_PX = 8;
-const uint32_t TILE_HEIGHT_PX = 12;
-
 static size_t load_tiles_from_image(color_ostream& out, const char* fname,
                                     long* texpos_start,
                                     int tile_w = TILE_WIDTH_PX,
                                     int tile_h = TILE_HEIGHT_PX) {
-    SDL_Surface *s = DFIMG_Load(fname);
+    SDL_Surface* s = DFIMG_Load(fname);
     if (!s) {
         out.printerr("unable to load textures from '%s'\n", fname);
         return 0;
@@ -258,6 +288,11 @@ static size_t load_tiles_from_image(color_ostream& out, const char* fname,
     return count;
 }
 
+void Textures::initDynamic(color_ostream& out) {
+    install_reset_point();
+    DEBUG(textures, out).print("dynamic texture reset points installed");
+}
+
 // DFHack could conceivably be loaded at any time, so we need to be able to
 // handle loading textures before or after a world is loaded.
 // If a world is already loaded, then append our textures to the raws. they'll
@@ -267,15 +302,10 @@ static size_t load_tiles_from_image(color_ostream& out, const char* fname,
 // unloaded.
 //
 void Textures::init(color_ostream& out) {
-    if (!g_dynamic_loaded) {
-        g_dynamic_loaded = true;
-        install_reset_point();
-    }
-
     if (!enabler)
         return;
 
-    auto & textures = enabler->textures;
+    auto& textures = enabler->textures;
     long num_textures = textures.raws.size();
     if (num_textures <= g_dfhack_logo_texpos_start)
         g_loaded = false;
@@ -324,6 +354,10 @@ void Textures::init(color_ostream& out) {
 
 // It's ok to leave NULLs in the raws list (according to usage in g_src)
 void Textures::cleanup() {
+    reset_texpos();
+    reset_surface();
+    uninstall_reset_point();
+
     if (!g_loaded)
         return;
 
@@ -341,13 +375,6 @@ void Textures::cleanup() {
     g_loaded = false;
     g_num_dfhack_textures = 0;
     g_dfhack_logo_texpos_start = -1;
-
-    if (g_dynamic_loaded) {
-        g_dynamic_loaded = false;
-        reset_texpos();
-        reset_surface();
-        uninstall_reset_point();
-    }
 }
 
 long Textures::getDfhackLogoTexposStart() {

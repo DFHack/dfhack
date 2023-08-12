@@ -2,26 +2,14 @@ local _ENV = mkmodule('plugins.zone')
 
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
 local CH_MALE = string.char(11)
 local CH_FEMALE = string.char(12)
-
-local STATUS = {
-    NONE={label='Unknown', value=0},
-    PASTURED_HERE={label='Pastured here', value=1},
-    PASTURED_ELSEWHERE={label='Pastured elsewhere', value=2},
-    RESTRAINT={label='On restraint', value=3},
-    BUILT_CAGE={label='On display in cage', value=4},
-    ITEM_CAGE={label='In movable cage', value=5},
-    ROAMING={label='Roaming', value=6},
-}
-local STATUS_REVMAP = {}
-for k, v in pairs(STATUS) do
-    STATUS_REVMAP[v.value] = k
-end
+local CH_NEUTER = '?'
 
 local DISPOSITION = {
     NONE={label='Unknown', value=0},
@@ -38,7 +26,7 @@ for k, v in pairs(DISPOSITION) do
 end
 
 -- -------------------
--- Pasture
+-- AssignAnimal
 --
 
 local STATUS_COL_WIDTH = 18
@@ -47,12 +35,20 @@ local GENDER_COL_WIDTH = 6
 local SLIDER_LABEL_WIDTH = math.max(STATUS_COL_WIDTH, DISPOSITION_COL_WIDTH) + 4
 local SLIDER_WIDTH = 48
 
-Pasture = defclass(Pasture, widgets.Window)
-Pasture.ATTRS {
-    frame_title='Assign units to pasture',
+AssignAnimal = defclass(AssignAnimal, widgets.Window)
+AssignAnimal.ATTRS {
+    frame_title='Animal and prisoner assignment',
     frame={w=6+SLIDER_WIDTH*2, h=47},
     resizable=true,
     resize_min={h=27},
+    target_name=DEFAULT_NIL,
+    status=DEFAULT_NIL,
+    status_revmap=DEFAULT_NIL,
+    get_status=DEFAULT_NIL,
+    get_allow_vermin=DEFAULT_NIL,
+    get_multi_select=DEFAULT_NIL,
+    attach=DEFAULT_NIL,
+    initial_min_disposition=DISPOSITION.PET.value,
 }
 
 local function sort_noop(a, b)
@@ -123,7 +119,19 @@ local function sort_by_status_asc(a, b)
     return a.data.status > b.data.status
 end
 
-function Pasture:init()
+function AssignAnimal:init()
+    local status_options = {}
+    for k, v in ipairs(self.status_revmap) do
+        status_options[k] = self.status[v]
+    end
+
+    local disposition_options = {}
+    for k, v in ipairs(DISPOSITION_REVMAP) do
+        disposition_options[k] = DISPOSITION[v]
+    end
+
+    local can_assign_pets = self.initial_min_disposition == DISPOSITION.PET.value
+
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='sort',
@@ -159,15 +167,8 @@ function Pasture:init()
                     label_below=true,
                     key_back='CUSTOM_SHIFT_Z',
                     key='CUSTOM_SHIFT_X',
-                    options={
-                        {label=STATUS.PASTURED_HERE.label, value=STATUS.PASTURED_HERE.value},
-                        {label=STATUS.PASTURED_ELSEWHERE.label, value=STATUS.PASTURED_ELSEWHERE.value},
-                        {label=STATUS.RESTRAINT.label, value=STATUS.RESTRAINT.value},
-                        {label=STATUS.BUILT_CAGE.label, value=STATUS.BUILT_CAGE.value},
-                        {label=STATUS.ITEM_CAGE.label, value=STATUS.ITEM_CAGE.value},
-                        {label=STATUS.ROAMING.label, value=STATUS.ROAMING.value},
-                    },
-                    initial_option=STATUS.PASTURED_HERE.value,
+                    options=status_options,
+                    initial_option=1,
                     on_change=function(val)
                         if self.subviews.max_status:getOptionValue() < val then
                             self.subviews.max_status:setOption(val)
@@ -182,15 +183,8 @@ function Pasture:init()
                     label_below=true,
                     key_back='CUSTOM_SHIFT_Q',
                     key='CUSTOM_SHIFT_W',
-                    options={
-                        {label=STATUS.PASTURED_HERE.label, value=STATUS.PASTURED_HERE.value},
-                        {label=STATUS.PASTURED_ELSEWHERE.label, value=STATUS.PASTURED_ELSEWHERE.value},
-                        {label=STATUS.RESTRAINT.label, value=STATUS.RESTRAINT.value},
-                        {label=STATUS.BUILT_CAGE.label, value=STATUS.BUILT_CAGE.value},
-                        {label=STATUS.ITEM_CAGE.label, value=STATUS.ITEM_CAGE.value},
-                        {label=STATUS.ROAMING.label, value=STATUS.ROAMING.value},
-                    },
-                    initial_option=STATUS.ROAMING.value,
+                    options=status_options,
+                    initial_option=#self.status_revmap,
                     on_change=function(val)
                         if self.subviews.min_status:getOptionValue() > val then
                             self.subviews.min_status:setOption(val)
@@ -200,7 +194,7 @@ function Pasture:init()
                 },
                 widgets.RangeSlider{
                     frame={l=0, t=3},
-                    num_stops=6,
+                    num_stops=#self.status_revmap,
                     get_left_idx_fn=function()
                         return self.subviews.min_status:getOptionValue()
                     end,
@@ -222,15 +216,8 @@ function Pasture:init()
                     label_below=true,
                     key_back='CUSTOM_SHIFT_C',
                     key='CUSTOM_SHIFT_V',
-                    options={
-                        {label=DISPOSITION.PET.label, value=DISPOSITION.PET.value},
-                        {label=DISPOSITION.TAME.label, value=DISPOSITION.TAME.value},
-                        {label=DISPOSITION.TRAINED.label, value=DISPOSITION.TRAINED.value},
-                        {label=DISPOSITION.WILD_TRAINABLE.label, value=DISPOSITION.WILD_TRAINABLE.value},
-                        {label=DISPOSITION.WILD_UNTRAINABLE.label, value=DISPOSITION.WILD_UNTRAINABLE.value},
-                        {label=DISPOSITION.HOSTILE.label, value=DISPOSITION.HOSTILE.value},
-                    },
-                    initial_option=DISPOSITION.PET.value,
+                    options=disposition_options,
+                    initial_option=self.initial_min_disposition,
                     on_change=function(val)
                         if self.subviews.max_disposition:getOptionValue() < val then
                             self.subviews.max_disposition:setOption(val)
@@ -245,14 +232,7 @@ function Pasture:init()
                     label_below=true,
                     key_back='CUSTOM_SHIFT_E',
                     key='CUSTOM_SHIFT_R',
-                    options={
-                        {label=DISPOSITION.PET.label, value=DISPOSITION.PET.value},
-                        {label=DISPOSITION.TAME.label, value=DISPOSITION.TAME.value},
-                        {label=DISPOSITION.TRAINED.label, value=DISPOSITION.TRAINED.value},
-                        {label=DISPOSITION.WILD_TRAINABLE.label, value=DISPOSITION.WILD_TRAINABLE.value},
-                        {label=DISPOSITION.WILD_UNTRAINABLE.label, value=DISPOSITION.WILD_UNTRAINABLE.value},
-                        {label=DISPOSITION.HOSTILE.label, value=DISPOSITION.HOSTILE.value},
-                    },
+                    options=disposition_options,
                     initial_option=DISPOSITION.HOSTILE.value,
                     on_change=function(val)
                         if self.subviews.min_disposition:getOptionValue() > val then
@@ -310,7 +290,7 @@ function Pasture:init()
         },
         widgets.Panel{
             view_id='list_panel',
-            frame={t=12, l=0, r=0, b=4},
+            frame={t=12, l=0, r=0, b=4+(can_assign_pets and 0 or 1)},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -367,15 +347,20 @@ function Pasture:init()
             }
         },
         widgets.HotkeyLabel{
-            frame={l=0, b=2},
+            frame={l=0, b=2+(can_assign_pets and 0 or 1)},
             label='Assign all/none',
             key='CUSTOM_CTRL_A',
             on_activate=self:callback('toggle_visible'),
+            visible=self.get_multi_select,
             auto_width=true,
         },
         widgets.WrappedLabel{
             frame={b=0, l=0, r=0},
-            text_to_wrap='Click to assign/unassign to current pasture. Shift click to assign/unassign a range.',
+            text_to_wrap=function()
+                return 'Click to assign/unassign to ' .. self.target_name .. '.' ..
+                    (self.get_multi_select() and ' Shift click to assign/unassign a range.' or '') ..
+                    (not can_assign_pets and '\nNote that pets cannot be assigned to cages or restraints.' or '')
+            end,
         },
     }
 
@@ -388,7 +373,7 @@ function Pasture:init()
     self.subviews.list:setChoices(self:get_choices())
 end
 
-function Pasture:refresh_list(sort_widget, sort_fn)
+function AssignAnimal:refresh_list(sort_widget, sort_fn)
     sort_widget = sort_widget or 'sort'
     sort_fn = sort_fn or self.subviews.sort:getOptionValue()
     if sort_fn == sort_noop then
@@ -405,25 +390,36 @@ function Pasture:refresh_list(sort_widget, sort_fn)
     list:setFilter(saved_filter)
 end
 
-local function make_search_key(data)
+local function make_search_key(desc)
     local out = ''
-    for c in data.desc:gmatch("[%w%s]") do
+    for c in desc:gmatch("[%w%s]") do
         out = out .. c:lower()
     end
     return out
 end
 
-local function make_choice_text(data)
+function AssignAnimal:make_choice_text(data)
+    local gender_ch = CH_NEUTER
+    if data.gender == df.pronoun_type.she then
+        gender_ch = CH_FEMALE
+    elseif data.gender == df.pronoun_type.he then
+        gender_ch = CH_MALE
+    end
     return {
-        {width=STATUS_COL_WIDTH, text=function() return STATUS[STATUS_REVMAP[data.status]].label end},
+        {width=STATUS_COL_WIDTH, text=function() return self.status[self.status_revmap[data.status]].label end},
         {gap=2, width=DISPOSITION_COL_WIDTH, text=function() return DISPOSITION[DISPOSITION_REVMAP[data.disposition]].label end},
-        {gap=2, width=GENDER_COL_WIDTH, text=data.gender == 0 and CH_FEMALE or CH_MALE},
+        {gap=2, width=GENDER_COL_WIDTH, text=gender_ch},
         {gap=2, text=data.desc},
     }
 end
 
-local function get_cage_ref(unit)
-    return dfhack.units.getGeneralRef(unit, df.general_ref_type.CONTAINED_IN_ITEM)
+local function get_general_ref(unit_or_vermin, ref_type)
+    local is_unit = df.unit:is_instance(unit_or_vermin)
+    return dfhack[is_unit and 'units' or 'items'].getGeneralRef(unit_or_vermin, ref_type)
+end
+
+local function get_cage_ref(unit_or_vermin)
+    return get_general_ref(unit_or_vermin, df.general_ref_type.CONTAINED_IN_ITEM)
 end
 
 local function get_built_cage(item_cage)
@@ -437,30 +433,22 @@ local function get_built_cage(item_cage)
     end
 end
 
-local function get_status(unit)
-    local assigned_pasture_ref = dfhack.units.getGeneralRef(unit, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
-    if assigned_pasture_ref then
-        if df.global.game.main_interface.civzone.cur_bld.id == assigned_pasture_ref.building_id then
-            return STATUS.PASTURED_HERE.value
-        else
-            return STATUS.PASTURED_ELSEWHERE.value
+local function get_bld_assignments()
+    local assignments = {}
+    for _,cage in ipairs(df.global.world.buildings.other.CAGE) do
+        for _,unit_id in ipairs(cage.assigned_units) do
+            assignments[unit_id] = cage
         end
     end
-    if dfhack.units.getGeneralRef(unit, df.general_ref_type.BUILDING_CHAIN) then
-        return STATUS.RESTRAINT.value
-    end
-    local cage_ref = get_cage_ref(unit)
-    if cage_ref then
-        if get_built_cage(df.item.find(cage_ref.item_id)) then
-            return STATUS.BUILT_CAGE.value
-        else
-            return STATUS.ITEM_CAGE.value
+    for _,chain in ipairs(df.global.world.buildings.other.CHAIN) do
+        if chain.assigned then
+            assignments[chain.assigned.id] = chain
         end
     end
-    return STATUS.ROAMING.value
+    return assignments
 end
 
-local function get_disposition(unit)
+local function get_unit_disposition(unit)
     local disposition = DISPOSITION.NONE
     if dfhack.units.isPet(unit) then
         disposition = DISPOSITION.PET
@@ -478,7 +466,12 @@ local function get_disposition(unit)
     return disposition.value
 end
 
-local function is_pasturable_unit(unit)
+local function get_vermin_disposition(vermin)
+    -- TODO
+    return DISPOSITION.TAME.value
+end
+
+local function is_assignable_unit(unit)
     return dfhack.units.isActive(unit) and
         ((dfhack.units.isAnimal(unit) and dfhack.units.isOwnCiv(unit)) or get_cage_ref(unit)) and
         not dfhack.units.isDead(unit) and
@@ -486,27 +479,57 @@ local function is_pasturable_unit(unit)
         not dfhack.units.isForest(unit)
 end
 
-function Pasture:cache_choices()
+local function is_assignable_vermin(vermin)
+    -- TODO are there unassignable vermin?
+    return true
+end
+
+local function get_vermin_desc(vermin, raw)
+    if not raw then return 'Unknown vermin' end
+    return ('%s [%d]'):format(raw.name[1], vermin.stack_size)
+end
+
+function AssignAnimal:cache_choices()
     if self.choices then return self.choices end
 
+    local bld_assignments = get_bld_assignments()
     local choices = {}
     for _, unit in ipairs(df.global.world.units.active) do
-        if not is_pasturable_unit(unit) then goto continue end
+        if not is_assignable_unit(unit) then goto continue end
         local raw = df.creature_raw.find(unit.race)
         local data = {
             unit=unit,
             desc=dfhack.units.getReadableName(unit),
             gender=unit.sex,
             race=raw and raw.creature_id or -1,
-            status=get_status(unit),
-            disposition=get_disposition(unit),
+            status=self.get_status(unit, bld_assignments),
+            disposition=get_unit_disposition(unit),
             egg=dfhack.units.isEggLayerRace(unit),
             graze=dfhack.units.isGrazer(unit),
         }
         local choice = {
-            search_key=make_search_key(data),
+            search_key=make_search_key(data.desc),
             data=data,
-            text=make_choice_text(data),
+            text=self:make_choice_text(data),
+        }
+        table.insert(choices, choice)
+        ::continue::
+    end
+    for _, vermin in ipairs(df.global.world.items.other.VERMIN) do
+        if not is_assignable_vermin(vermin) then goto continue end
+        local raw = df.creature_raw.find(vermin.race)
+        local data = {
+            vermin=vermin,
+            desc=get_vermin_desc(vermin, raw),
+            gender=df.pronoun_type.it,
+            race=raw and raw.creature_id or -1,
+            status=self.get_status(vermin, bld_assignments),
+            disposition=get_vermin_disposition(vermin),
+        }
+        local choice = {
+            search_key=make_search_key(data.desc),
+            data=data,
+            text=self:make_choice_text(data),
         }
         table.insert(choices, choice)
         ::continue::
@@ -516,8 +539,9 @@ function Pasture:cache_choices()
     return choices
 end
 
-function Pasture:get_choices()
+function AssignAnimal:get_choices()
     local raw_choices = self:cache_choices()
+    local show_vermin = self.get_allow_vermin()
     local min_status = self.subviews.min_status:getOptionValue()
     local max_status = self.subviews.max_status:getOptionValue()
     local min_disposition = self.subviews.min_disposition:getOptionValue()
@@ -527,6 +551,7 @@ function Pasture:get_choices()
     local choices = {}
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
+        if not show_vermin and data.vermin then goto continue end
         if min_status > data.status then goto continue end
         if max_status < data.status then goto continue end
         if min_disposition > data.disposition then goto continue end
@@ -542,122 +567,180 @@ function Pasture:get_choices()
     return choices
 end
 
-local function unassign_unit(bld, unit)
+local function get_bld_assigned_vec(bld, unit_or_vermin)
     if not bld then return end
-    for au_idx, au_id in ipairs(bld.assigned_units) do
-        if au_id == unit.id then
-            bld.assigned_units:erase(au_idx)
-            return
+    return df.unit:is_instance(unit_or_vermin) and bld.assigned_units or bld.assigned_items
+end
+
+local function get_assigned_unit_or_vermin_idx(bld, unit_or_vermin, vec)
+    vec = vec or get_bld_assigned_vec(bld, unit_or_vermin)
+    if not vec then return end
+    for assigned_idx, assigned_id in ipairs(vec) do
+        if assigned_id == unit_or_vermin.id then
+            return assigned_idx
         end
     end
 end
 
-local function detach_unit(unit)
-    for idx = #unit.general_refs-1, 0, -1 do
-        local ref = unit.general_refs[idx]
+local function unassign_unit_or_vermin(bld, unit_or_vermin)
+    if not bld then return end
+    if df.building_chainst:is_instance(bld) then
+        if bld.assigned == unit_or_vermin then
+            bld.assigned = nil
+        end
+        return
+    end
+    local vec = get_bld_assigned_vec(bld, unit_or_vermin)
+    local idx = get_assigned_unit_or_vermin_idx(bld, unit_or_vermin, vec)
+    if vec and idx then
+        vec:erase(idx)
+    end
+end
+
+local function detach_unit_or_vermin(unit_or_vermin, bld_assignments)
+    for idx = #unit_or_vermin.general_refs-1, 0, -1 do
+        local ref = unit_or_vermin.general_refs[idx]
         if df.general_ref_building_civzone_assignedst:is_instance(ref) then
-            unassign_unit(df.building.find(ref.building_id), unit)
-            unit.general_refs:erase(idx)
+            unassign_unit_or_vermin(df.building.find(ref.building_id), unit_or_vermin)
+            unit_or_vermin.general_refs:erase(idx)
             ref:delete()
         elseif df.general_ref_contained_in_itemst:is_instance(ref) then
             local built_cage = get_built_cage(df.item.find(ref.item_id))
             if built_cage and built_cage:getType() == df.building_type.Cage then
-                unassign_unit(built_cage, unit)
+                unassign_unit_or_vermin(built_cage, unit_or_vermin)
                 -- unit's general ref will be removed when the unit is released from the cage
-            end
-        elseif df.general_ref_building_chainst:is_instance(ref) then
-            local chain = df.building.find(ref.building_id)
-            if chain then
-                chain.assigned = nil
             end
         end
     end
+    bld_assignments = bld_assignments or get_bld_assignments()
+    if bld_assignments[unit_or_vermin.id] then
+        unassign_unit_or_vermin(bld_assignments[unit_or_vermin.id], unit_or_vermin)
+    end
 end
 
-local function attach_unit(unit)
-    local pasture = df.global.game.main_interface.civzone.cur_bld
-    local ref = df.new(df.general_ref_building_civzone_assignedst)
-    ref.building_id = pasture.id;
-    unit.general_refs:insert('#', ref)
-    pasture.assigned_units:insert('#', unit.id)
-end
+function AssignAnimal:toggle_item_base(choice, target_value, bld_assignments)
+    local true_value = self.status[self.status_revmap[1]].value
 
-local function toggle_item_base(choice, target_value)
     if target_value == nil then
-        target_value = choice.data.status ~= STATUS.PASTURED_HERE.value
+        target_value = choice.data.status ~= true_value
     end
 
-    if target_value and choice.data.status == STATUS.PASTURED_HERE.value then
-        return
+    if target_value and choice.data.status == true_value then
+        return target_value
     end
-    if not target_value and choice.data.status ~= STATUS.PASTURED_HERE.value then
-        return
+    if not target_value and choice.data.status ~= true_value then
+        return target_value
     end
 
-    local unit = choice.data.unit
-    detach_unit(unit)
+    if self.initial_min_disposition ~= DISPOSITION.PET.value and choice.data.disposition == DISPOSITION.PET.value then
+        return target_value
+    end
+
+    local unit_or_vermin = choice.data.unit or choice.data.vermin
+    detach_unit_or_vermin(unit_or_vermin, bld_assignments)
 
     if target_value then
-        attach_unit(unit)
+        local displaced_unit = self.attach(unit_or_vermin)
+        if displaced_unit then
+            -- assigning a unit to a restraint can unassign a different unit
+            for _, c in ipairs(self.subviews.list:getChoices()) do
+                if c.data.unit == displaced_unit then
+                    c.data.status = self.get_status(displaced_unit)
+                end
+            end
+        end
     end
 
-    choice.data.status = get_status(unit)
+    -- don't pass bld_assignments since it may no longer be valid
+    choice.data.status = self.get_status(unit_or_vermin)
+
+    return target_value
 end
 
-function Pasture:select_item(idx, choice)
+function AssignAnimal:select_item(idx, choice)
     if not dfhack.internal.getModifiers().shift then
         self.prev_list_idx = self.subviews.list.list:getSelected()
     end
 end
 
-function Pasture:toggle_item(idx, choice)
-    toggle_item_base(choice)
+function AssignAnimal:toggle_item(idx, choice)
+    self:toggle_item_base(choice)
 end
 
-function Pasture:toggle_range(idx, choice)
+function AssignAnimal:toggle_range(idx, choice)
+    if not self.get_multi_select() then
+        self:toggle_item(idx, choice)
+        return
+    end
     if not self.prev_list_idx then
         self:toggle_item(idx, choice)
         return
     end
     local choices = self.subviews.list:getVisibleChoices()
     local list_idx = self.subviews.list.list:getSelected()
+    local bld_assignments = get_bld_assignments()
     local target_value
     for i = list_idx, self.prev_list_idx, list_idx < self.prev_list_idx and 1 or -1 do
-        target_value = toggle_item_base(choices[i], target_value)
+        target_value = self:toggle_item_base(choices[i], target_value, bld_assignments)
     end
     self.prev_list_idx = list_idx
 end
 
-function Pasture:toggle_visible()
+function AssignAnimal:toggle_visible()
+    local bld_assignments = get_bld_assignments()
     local target_value
     for _, choice in ipairs(self.subviews.list:getVisibleChoices()) do
-        target_value = toggle_item_base(choice, target_value)
+        target_value = self:toggle_item_base(choice, target_value, bld_assignments)
     end
 end
 
 -- -------------------
--- PastureScreen
+-- AssignAnimalScreen
 --
 
 view = view or nil
 
-PastureScreen = defclass(PastureScreen, gui.ZScreen)
-PastureScreen.ATTRS {
-    focus_path='zone/pasture',
+AssignAnimalScreen = defclass(AssignAnimalScreen, gui.ZScreen)
+AssignAnimalScreen.ATTRS {
+    focus_path='zone/assign',
+    is_valid_ui_state=DEFAULT_NIL,
+    status=DEFAULT_NIL,
+    status_revmap=DEFAULT_NIL,
+    get_status=DEFAULT_NIL,
+    get_allow_vermin=DEFAULT_NIL,
+    get_multi_select=DEFAULT_NIL,
+    attach=DEFAULT_NIL,
+    initial_min_disposition=DEFAULT_NIL,
+    target_name=DEFAULT_NIL,
 }
 
-function PastureScreen:init()
-    self:addviews{Pasture{}}
+function AssignAnimalScreen:init()
+    self:addviews{
+        AssignAnimal{
+            status=self.status,
+            status_revmap=self.status_revmap,
+            get_status=self.get_status,
+            get_allow_vermin=self.get_allow_vermin,
+            get_multi_select=self.get_multi_select,
+            attach=self.attach,
+            initial_min_disposition=self.initial_min_disposition,
+            target_name=self.target_name,
+        }
+    }
 end
 
-function PastureScreen:onInput(keys)
-    local handled = PastureScreen.super.onInput(self, keys)
+function AssignAnimalScreen:onInput(keys)
+    local handled = AssignAnimalScreen.super.onInput(self, keys)
+    if not self.is_valid_ui_state() then
+        view:dismiss()
+        return
+    end
     if keys._MOUSE_L_DOWN then
-        -- if any click is made outside of our window, we need to recheck unit properites
+        -- if any click is made outside of our window, we need to recheck unit properties
         local window = self.subviews[1]
         if not window:getMouseFramePos() then
             for _, choice in ipairs(self.subviews.list:getChoices()) do
-                choice.data.status = get_status(choice.data.unit)
+                choice.data.status = self.get_status(choice.data.unit or choice.data.vermin)
             end
             window:refresh_list()
         end
@@ -665,42 +748,126 @@ function PastureScreen:onInput(keys)
     return handled
 end
 
-function PastureScreen:onRenderFrame()
-    if df.global.game.main_interface.bottom_mode_selected ~= df.main_bottom_mode_type.ZONE or
-        not df.global.game.main_interface.civzone.cur_bld or
-        df.global.game.main_interface.civzone.cur_bld.type ~= df.civzone_type.Pen
-    then
+function AssignAnimalScreen:onRenderFrame()
+    if not self.is_valid_ui_state() then
         view:dismiss()
     end
 end
 
-function PastureScreen:onDismiss()
+function AssignAnimalScreen:onDismiss()
     view = nil
 end
 
 -- -------------------
--- PastureOverlay
+-- PasturePondOverlay
 --
 
-PastureOverlay = defclass(PastureOverlay, overlay.OverlayWidget)
-PastureOverlay.ATTRS{
+PasturePondOverlay = defclass(PasturePondOverlay, overlay.OverlayWidget)
+PasturePondOverlay.ATTRS{
     default_pos={x=7,y=13},
     default_enabled=true,
-    viewscreens='dwarfmode/Zone/Some/Pen',
-    frame={w=31, h=3},
-    frame_background=gui.CLEAR_PEN,
+    viewscreens={'dwarfmode/Zone/Some/Pen', 'dwarfmode/Zone/Some/Pond'},
+    frame={w=31, h=4},
 }
 
-function PastureOverlay:init()
+local function is_valid_zone()
+    return df.global.game.main_interface.bottom_mode_selected == df.main_bottom_mode_type.ZONE and
+        df.global.game.main_interface.civzone.cur_bld and
+        (df.global.game.main_interface.civzone.cur_bld.type == df.civzone_type.Pen or
+         df.global.game.main_interface.civzone.cur_bld.type == df.civzone_type.Pond)
+end
+
+local function is_pit_selected()
+    return df.global.game.main_interface.bottom_mode_selected == df.main_bottom_mode_type.ZONE and
+        df.global.game.main_interface.civzone.cur_bld and
+        df.global.game.main_interface.civzone.cur_bld.type == df.civzone_type.Pond
+end
+
+local function attach_to_zone(unit_or_vermin)
+    local zone = df.global.game.main_interface.civzone.cur_bld
+    local ref = df.new(df.general_ref_building_civzone_assignedst)
+    ref.building_id = zone.id;
+    unit_or_vermin.general_refs:insert('#', ref)
+    local is_unit = df.unit:is_instance(unit_or_vermin)
+    local vec = is_unit and zone.assigned_units or zone.assigned_items
+    utils.insert_sorted(vec, unit_or_vermin.id)
+end
+
+local PASTURE_STATUS = {
+    NONE={label='Unknown', value=0},
+    ASSIGNED_HERE={label='Assigned here', value=1},
+    PASTURED={label='In other pasture', value=2},
+    PITTED={label='In other pit/pond', value=3},
+    RESTRAINED={label='On restraint', value=4},
+    BUILT_CAGE={label='In built cage', value=5},
+    ITEM_CAGE={label='In stockpiled cage', value=6},
+    ROAMING={label='Roaming', value=7},
+}
+local PASTURE_STATUS_REVMAP = {}
+for k, v in pairs(PASTURE_STATUS) do
+    PASTURE_STATUS_REVMAP[v.value] = k
+end
+
+local function get_zone_status(unit_or_vermin, bld_assignments)
+    local assigned_zone_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
+    if assigned_zone_ref then
+        if df.global.game.main_interface.civzone.cur_bld.id == assigned_zone_ref.building_id then
+            return PASTURE_STATUS.ASSIGNED_HERE.value
+        else
+            local civzone = df.building.find(assigned_zone_ref.building_id)
+            if civzone.type == df.civzone_type.Pen then
+                return PASTURE_STATUS.PASTURED.value
+            elseif civzone.type == df.civzone_type.Pond then
+                return PASTURE_STATUS.PITTED.value
+            else
+                return PASTURE_STATUS.NONE.value
+            end
+        end
+    end
+    if get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CHAIN) then
+        return PASTURE_STATUS.RESTRAINED.value
+    end
+    local cage_ref = get_cage_ref(unit_or_vermin)
+    if cage_ref then
+        if get_built_cage(df.item.find(cage_ref.item_id)) then
+            return PASTURE_STATUS.BUILT_CAGE.value
+        else
+            return PASTURE_STATUS.ITEM_CAGE.value
+        end
+    end
+    bld_assignments = bld_assignments or get_bld_assignments()
+    if bld_assignments and bld_assignments[unit_or_vermin.id] then
+        if df.building_chainst:is_instance(bld_assignments[unit_or_vermin.id]) then
+            return PASTURE_STATUS.RESTRAINED.value
+        end
+        return PASTURE_STATUS.BUILT_CAGE.value
+    end
+    return PASTURE_STATUS.ROAMING.value
+end
+
+local function show_pasture_pond_screen()
+    return AssignAnimalScreen{
+        is_valid_ui_state=is_valid_zone,
+        status=PASTURE_STATUS,
+        status_revmap=PASTURE_STATUS_REVMAP,
+        get_status=get_zone_status,
+        get_allow_vermin=is_pit_selected,
+        get_multi_select=function() return true end,
+        attach=attach_to_zone,
+        target_name='pasture/pond/pit',
+    }:show()
+end
+
+function PasturePondOverlay:init()
     self:addviews{
         widgets.TextButton{
-            frame={t=0, l=0, r=0, h=1},
-            label='DFHack manage pasture',
+            frame={t=0, l=0, w=23, h=1},
+            label='DFHack assign',
             key='CUSTOM_CTRL_T',
-            on_activate=function() view = view and view:raise() or PastureScreen{}:show() end,
+            on_activate=function() view = view and view:raise() or show_pasture_pond_screen() end,
         },
         widgets.TextButton{
-            frame={t=2, l=0, r=0, h=1},
+            frame={b=0, l=0, w=28, h=1},
             label='DFHack autobutcher',
             key='CUSTOM_CTRL_B',
             on_activate=function() dfhack.run_script('gui/autobutcher') end,
@@ -708,8 +875,142 @@ function PastureOverlay:init()
     }
 end
 
+-- -------------------
+-- CageChainOverlay
+--
+
+CageChainOverlay = defclass(CageChainOverlay, overlay.OverlayWidget)
+CageChainOverlay.ATTRS{
+    default_pos={x=-40,y=34},
+    default_enabled=true,
+    viewscreens={'dwarfmode/ViewSheets/BUILDING/Cage', 'dwarfmode/ViewSheets/BUILDING/Chain'},
+    frame={w=23, h=1},
+    frame_background=gui.CLEAR_PEN,
+}
+
+local function is_valid_building()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    return bld and bld:getBuildStage() == bld:getMaxBuildStage() and
+        (bld:getType() == df.building_type.Cage or
+         bld:getType() == df.building_type.Chain)
+end
+
+local function is_cage_selected()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    return bld and bld:getType() == df.building_type.Cage
+end
+
+local function attach_to_building(unit_or_vermin)
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld then return end
+    local is_unit = df.unit:is_instance(unit_or_vermin)
+    if is_unit and unit_or_vermin.relationship_ids[df.unit_relationship_type.Pet] ~= -1 then
+        -- pet owners would just release them
+        return
+    end
+    if bld:getType() == df.building_type.Cage then
+        local vec = is_unit and bld.assigned_units or bld.assigned_items
+        vec:insert('#', unit_or_vermin.id)
+    elseif is_unit and bld:getType() == df.building_type.Chain then
+        local prev_unit = bld.assigned
+        bld.assigned = unit_or_vermin
+        return prev_unit
+    end
+end
+
+local function get_built_chain(unit_or_vermin)
+    local built_chain_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CHAIN)
+    if not built_chain_ref then return end
+    return df.building.find(built_chain_ref.building_id)
+end
+
+local CAGE_STATUS = {
+    NONE={label='Unknown', value=0},
+    ASSIGNED_HERE={label='Assigned here', value=1},
+    PASTURED={label='In pasture', value=2},
+    PITTED={label='In pit/pond', value=3},
+    RESTRAINED={label='On other chain', value=4},
+    BUILT_CAGE={label='In built cage', value=5},
+    ITEM_CAGE={label='In stockpiled cage', value=6},
+    ROAMING={label='Roaming', value=7},
+}
+local CAGE_STATUS_REVMAP = {}
+for k, v in pairs(CAGE_STATUS) do
+    CAGE_STATUS_REVMAP[v.value] = k
+end
+
+local function get_cage_status(unit_or_vermin, bld_assignments)
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    local is_chain = bld and df.building_chainst:is_instance(bld)
+
+    if is_chain and bld.assigned == unit_or_vermin then
+        return CAGE_STATUS.ASSIGNED_HERE.value
+    elseif not is_chain and get_assigned_unit_or_vermin_idx(bld, unit_or_vermin) then
+        return CAGE_STATUS.ASSIGNED_HERE.value
+    end
+    local cage_ref = get_cage_ref(unit_or_vermin)
+    if cage_ref then
+        if get_built_cage(df.item.find(cage_ref.item_id)) then
+            return CAGE_STATUS.BUILT_CAGE.value
+        end
+        return CAGE_STATUS.ITEM_CAGE.value
+    end
+    local built_chain = get_built_chain(unit_or_vermin)
+    if built_chain then
+        if bld and bld == built_chain then
+            return CAGE_STATUS.ASSIGNED_HERE.value
+        end
+        return CAGE_STATUS.RESTRAINED.value
+    end
+    local assigned_zone_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
+    if assigned_zone_ref then
+        local civzone = df.building.find(assigned_zone_ref.building_id)
+        if civzone.type == df.civzone_type.Pen then
+            return CAGE_STATUS.PASTURED.value
+        elseif civzone.type == df.civzone_type.Pond then
+            return CAGE_STATUS.PITTED.value
+        else
+            return CAGE_STATUS.NONE.value
+        end
+    end
+    bld_assignments = bld_assignments or get_bld_assignments()
+    if bld_assignments and bld_assignments[unit_or_vermin.id] then
+        if df.building_chainst:is_instance(bld_assignments[unit_or_vermin.id]) then
+            return CAGE_STATUS.RESTRAINED.value
+        end
+        return CAGE_STATUS.BUILT_CAGE.value
+    end
+    return CAGE_STATUS.ROAMING.value
+end
+
+local function show_cage_chain_screen()
+    return AssignAnimalScreen{
+        is_valid_ui_state=is_valid_building,
+        status=CAGE_STATUS,
+        status_revmap=CAGE_STATUS_REVMAP,
+        get_status=get_cage_status,
+        get_allow_vermin=is_cage_selected,
+        get_multi_select=is_cage_selected,
+        attach=attach_to_building,
+        initial_min_disposition=DISPOSITION.TAME.value,
+        target_name='cage/restraint',
+    }:show()
+end
+
+function CageChainOverlay:init()
+    self:addviews{
+        widgets.TextButton{
+            frame={t=0, l=0, r=0, h=1},
+            label='DFHack assign',
+            key='CUSTOM_CTRL_T',
+            on_activate=function() view = view and view:raise() or show_cage_chain_screen() end,
+        },
+    }
+end
+
 OVERLAY_WIDGETS = {
-    pasture=PastureOverlay,
+    pasturepond=PasturePondOverlay,
+    cagechain=CageChainOverlay,
 }
 
 return _ENV

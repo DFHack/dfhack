@@ -56,6 +56,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `caravan`: advanced unit assignment screens for cages, restraints, and pits/ponds
 
 ## Fixes
 - Core: properly reload scripts in mods when a world is unloaded and immediately loaded again

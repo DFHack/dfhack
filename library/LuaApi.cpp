@@ -844,6 +844,23 @@ static void make_pen_table(lua_State *L, Pen &pen)
                 lua_pushboolean(L, false); lua_setfield(L, -2, "tile_color");
                 break;
         }
+
+        if (pen.keep_lower) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "keep_lower");
+        }
+        if (pen.write_to_lower) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "write_to_lower");
+        }
+        if (pen.top_of_text) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "top_of_text");
+        }
+        if (pen.bottom_of_text) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "bottom_of_text");
+        }
     }
 }
 

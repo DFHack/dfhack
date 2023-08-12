@@ -79,6 +79,7 @@ Template for new versions:
 - ``dfhack.items.getValue()``: remove ``caravan_buying`` param as per C++ API change
 - ``widgets.BannerPanel``: panel with distinctive border for marking DFHack UI elements on otherwise vanilla screens
 - ``widgets.Panel``: new functions to override instead of setting corresponding properties (useful when subclassing instead of just setting attributes): ``onDragBegin``, ``onDragEnd``, ``onResizeBegin``, ``onResizeEnd``
+- ``dfhack.screen.readTile()``: now populates extended tile property fields (like top_of_text) in the returned Pen object
 
 ## Removed
 

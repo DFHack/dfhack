@@ -21,7 +21,6 @@ namespace df {
     opaque_identity identity_traits<type >::identity(sizeof(type), allocator_noassign_fn<type >, name)
 #define STL_OPAQUE_IDENTITY_TRAITS(type) OPAQUE_IDENTITY_TRAITS_NAME(std::type, #type)
 
-#ifndef STATIC_FIELDS_GROUP
     INTEGER_IDENTITY_TRAITS(char,               "char");
     INTEGER_IDENTITY_TRAITS(signed char,        "int8_t");
     INTEGER_IDENTITY_TRAITS(unsigned char,      "uint8_t");
@@ -51,5 +50,4 @@ namespace df {
     STL_OPAQUE_IDENTITY_TRAITS(future<void>);
 
     buffer_container_identity buffer_container_identity::base_instance;
-#endif
 }

@@ -1692,7 +1692,6 @@ bool Core::InitSimulationThread()
     }
     std::cerr << "Initializing textures.\n";
     Textures::init(con);
-    Textures::initDynamic(con);
     // create mutex for syncing with interactive tasks
     std::cerr << "Initializing plugins.\n";
     // create plugin manager
@@ -2219,7 +2218,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         }
         break;
     case SC_VIEWSCREEN_CHANGED:
-        Textures::init(out);
         break;
     default:
         break;

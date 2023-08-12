@@ -1710,18 +1710,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Textures module *****/
 
 static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
-    WRAPM(Textures, getDfhackLogoTexposStart),
-    WRAPM(Textures, getGreenPinTexposStart),
-    WRAPM(Textures, getRedPinTexposStart),
-    WRAPM(Textures, getIconsTexposStart),
-    WRAPM(Textures, getOnOffTexposStart),
-    WRAPM(Textures, getMapUnsuspendTexposStart),
-    WRAPM(Textures, getControlPanelTexposStart),
-    WRAPM(Textures, getThinBordersTexposStart),
-    WRAPM(Textures, getMediumBordersTexposStart),
-    WRAPM(Textures, getBoldBordersTexposStart),
-    WRAPM(Textures, getPanelBordersTexposStart),
-    WRAPM(Textures, getWindowBordersTexposStart),
+    WRAPM(Textures, getAsset),
     { NULL, NULL }
 };
 

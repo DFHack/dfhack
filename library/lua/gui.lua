@@ -913,10 +913,10 @@ local BASE_FRAME = {
 }
 
 local function make_frame(name, double_line)
-    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
     local tp = function(offset)
+        local texpos = dfhack.textures.getAsset('hack/data/art/border-'..name:lower()..'.png', offset)
         if texpos == -1 then return nil end
-        return texpos + offset
+        return texpos
     end
 
     local frame = copyall(BASE_FRAME)
@@ -951,8 +951,40 @@ BOLD_FRAME = FRAME_BOLD
 INTERIOR_FRAME = FRAME_INTERIOR
 INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
 
+-- for compatibility with dynamic textures
+local function choose_frame_style(style)
+    if style == FRAME_WINDOW then return make_frame('Window', true) end
+    if style == FRAME_PANEL then return make_frame('Panel', true) end
+    if style == FRAME_MEDIUM then return make_frame('Medium', true) end
+    if style == FRAME_BOLD then return make_frame('Bold', true) end
+    if style == FRAME_INTERIOR then
+        local frame = make_frame('Thin', true)
+        frame.signature_pen = false
+        return frame
+    end
+    if style == FRAME_INTERIOR_MEDIUM then
+        local frame = make_frame('Medium', true)
+        frame.signature_pen = false
+        return frame
+    end
+    if style == GREY_LINE_FRAME then return make_frame('Panel', true) end
+    if style == WINDOW_FRAME then return make_frame('Window', true) end
+    if style == PANEL_FRAME then return make_frame('Panel', true) end
+    if style == MEDIUM_FRAME then return make_frame('Medium', true) end
+    if style == INTERIOR_FRAME then
+        local frame = make_frame('Thin', true)
+        frame.signature_pen = false
+        return frame
+    end
+    if style == INTERIOR_MEDIUM_FRAME then
+        local frame = make_frame('Medium', true)
+        frame.signature_pen = false
+        return frame
+    end
+end
 
-function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
+function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
+    style = choose_frame_style(style)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)

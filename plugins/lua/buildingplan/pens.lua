@@ -9,29 +9,30 @@ MINI_TEXT_PEN, MINI_TEXT_HPEN, MINI_BUTT_PEN, MINI_BUTT_HPEN = nil, nil, nil, ni
 
 local to_pen = dfhack.pen.parse
 
-local tp = function(base, offset)
-    if base == -1 then return nil end
-    return base + offset
+local tp = function(asset, offset)
+    local texpos = dfhack.textures.getAsset(asset, offset)
+    if texpos == -1 then return nil end
+    return texpos
 end
 
 function reload_pens()
     GOOD_TILE_PEN = to_pen{ch='o', fg=COLOR_GREEN, tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
     BAD_TILE_PEN = to_pen{ch='X', fg=COLOR_RED, tile=dfhack.screen.findGraphicsTile('CURSORS', 3, 0)}
 
-    local tb_texpos = dfhack.textures.getThinBordersTexposStart()
-    VERT_TOP_PEN = to_pen{tile=tp(tb_texpos, 10), ch=194, fg=COLOR_GREY, bg=COLOR_BLACK}
-    VERT_MID_PEN = to_pen{tile=tp(tb_texpos, 4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
-    VERT_BOT_PEN = to_pen{tile=tp(tb_texpos, 11), ch=193, fg=COLOR_GREY, bg=COLOR_BLACK}
+    local tb = "hack/data/art/border-thin.png"
+    VERT_TOP_PEN = to_pen { tile = tp(tb, 10), ch = 194, fg = COLOR_GREY, bg = COLOR_BLACK }
+    VERT_MID_PEN = to_pen { tile = tp(tb, 4), ch = 179, fg = COLOR_GREY, bg = COLOR_BLACK }
+    VERT_BOT_PEN = to_pen { tile = tp(tb, 11), ch = 193, fg = COLOR_GREY, bg = COLOR_BLACK }
 
-    local mb_texpos = dfhack.textures.getMediumBordersTexposStart()
-    HORI_LEFT_PEN = to_pen{tile=tp(mb_texpos, 12), ch=195, fg=COLOR_GREY, bg=COLOR_BLACK}
-    HORI_MID_PEN = to_pen{tile=tp(mb_texpos, 5), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
-    HORI_RIGHT_PEN = to_pen{tile=tp(mb_texpos, 13), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
+    local mb = "hack/data/art/border-medium.png"
+    HORI_LEFT_PEN = to_pen { tile = tp(mb, 12), ch = 195, fg = COLOR_GREY, bg = COLOR_BLACK }
+    HORI_MID_PEN = to_pen { tile = tp(mb, 5), ch = 196, fg = COLOR_GREY, bg = COLOR_BLACK }
+    HORI_RIGHT_PEN = to_pen { tile = tp(mb, 13), ch = 180, fg = COLOR_GREY, bg = COLOR_BLACK }
 
-    local cp_texpos = dfhack.textures.getControlPanelTexposStart()
-    BUTTON_START_PEN = to_pen{tile=tp(cp_texpos, 13), ch='[', fg=COLOR_YELLOW}
-    BUTTON_END_PEN = to_pen{tile=tp(cp_texpos, 15), ch=']', fg=COLOR_YELLOW}
-    SELECTED_ITEM_PEN = to_pen{tile=tp(cp_texpos, 9), ch=string.char(251), fg=COLOR_YELLOW}
+    local cp = "hack/data/art/control-panel.png"
+    BUTTON_START_PEN = to_pen { tile = tp(cp, 13), ch = '[', fg = COLOR_YELLOW }
+    BUTTON_END_PEN = to_pen { tile = tp(cp, 15), ch = ']', fg = COLOR_YELLOW }
+    SELECTED_ITEM_PEN = to_pen { tile = tp(cp, 9), ch = string.char(251), fg = COLOR_YELLOW }
 
     MINI_TEXT_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREY}
     MINI_TEXT_HPEN = to_pen{fg=COLOR_BLACK, bg=COLOR_WHITE}

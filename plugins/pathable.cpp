@@ -44,10 +44,10 @@ static void paintScreenPathable(df::coord target, bool show_hidden = false) {
 
     long pathable_tile_texpos = init->load_bar_texpos[1];
     long unpathable_tile_texpos = init->load_bar_texpos[4];
-    long on_off_texpos = Textures::getMapPathableTexposStart();
+    long on_off_texpos = Textures::getAsset("hack/data/art/pathable.png", 0);
     if (on_off_texpos > 0) {
-        pathable_tile_texpos = on_off_texpos + 0;
-        unpathable_tile_texpos = on_off_texpos + 1;
+        pathable_tile_texpos = on_off_texpos;
+        unpathable_tile_texpos = Textures::getAsset("hack/data/art/pathable.png", 1);
     }
 
     auto dims = Gui::getDwarfmodeViewDims().map();

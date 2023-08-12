@@ -1426,19 +1426,16 @@ static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity 
             lua_settable(state, -3);
         }
 
+        // freeze_table(state);  // TODO: make pairs() work
         lua_settable(state, ix_fields);
 
         lua_pop(state, 1); // field name
     }
 
+    // lua_pushvalue(state, ix_fields);
+    // freeze_table(state); // TODO: figure out why this creates an __index cycle for nonexistent fields
     lua_pushvalue(state, ix_wrapper);
     lua_setfield(state, ftable_idx, "_fields");
-    lua_pushvalue(state, ix_fieldinfo);
-    lua_setfield(state, ftable_idx, "_fieldsinfo");
-    lua_pushvalue(state, ix_meta);
-    lua_setfield(state, ftable_idx, "_fieldsmeta");
-    lua_pushvalue(state, ix_fielditer);
-    lua_setfield(state, ftable_idx, "_fieldsiter");
 }
 
 void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct)

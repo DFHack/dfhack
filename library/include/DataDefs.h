@@ -265,6 +265,7 @@ namespace DFHack
         type_identity *ref_target;
         const char *union_tag_field;
         const char *union_tag_attr;
+        const char *original_name;
     };
 
     struct struct_field_info {

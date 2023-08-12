@@ -953,30 +953,18 @@ INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
 
 -- for compatibility with dynamic textures
 local function choose_frame_style(style)
-    if style == FRAME_WINDOW then return make_frame('Window', true) end
-    if style == FRAME_PANEL then return make_frame('Panel', true) end
-    if style == FRAME_MEDIUM then return make_frame('Medium', true) end
+    if style == FRAME_WINDOW or style == WINDOW_FRAME then return make_frame('Window', true) end
+    if style == FRAME_PANEL or style == GREY_LINE_FRAME or style == PANEL_FRAME then
+        return make_frame('Panel', true)
+    end
+    if style == FRAME_MEDIUM or style == MEDIUM_FRAME then return make_frame('Medium', true) end
     if style == FRAME_BOLD then return make_frame('Bold', true) end
-    if style == FRAME_INTERIOR then
+    if style == FRAME_INTERIOR or style == INTERIOR_FRAME then
         local frame = make_frame('Thin', true)
         frame.signature_pen = false
         return frame
     end
-    if style == FRAME_INTERIOR_MEDIUM then
-        local frame = make_frame('Medium', true)
-        frame.signature_pen = false
-        return frame
-    end
-    if style == GREY_LINE_FRAME then return make_frame('Panel', true) end
-    if style == WINDOW_FRAME then return make_frame('Window', true) end
-    if style == PANEL_FRAME then return make_frame('Panel', true) end
-    if style == MEDIUM_FRAME then return make_frame('Medium', true) end
-    if style == INTERIOR_FRAME then
-        local frame = make_frame('Thin', true)
-        frame.signature_pen = false
-        return frame
-    end
-    if style == INTERIOR_MEDIUM_FRAME then
+    if style == FRAME_INTERIOR_MEDIUM or style == INTERIOR_MEDIUM_FRAME then
         local frame = make_frame('Medium', true)
         frame.signature_pen = false
         return frame

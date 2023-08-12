@@ -162,12 +162,12 @@ Overlay
 -------
 
 Advanced unit selection is available via an `overlay` widget that appears when
-you select a pasture zone.
+you select a cage, restraint, pasture zone, or pit/pond zone.
 
 In the window that pops up when you click the hotkey hint or hit the hotkey on your keyboard, you can:
 
 - search for units by name
-- sort or filter by status (Pastured here, Pastured elsewhere, On restraint, On
+- sort or filter by status (Assigned here, Pastured elsewhere, On restraint, On
     display in cage, In movable cage, or Roaming)
 - sort or filter by disposition (Pet, Domesticated, Partially trained, Wild
     (trainable), Wild (untrainable), or Hostile)
@@ -177,11 +177,12 @@ In the window that pops up when you click the hotkey hint or hit the hotkey on y
 - filter by whether the unit needs a grazing area
 
 The window is fully navigatable via keyboard or mouse. Hit Enter or click on a
-unit to assign/unassign it to the currently selected pasture. Shift click to
-assign/unassign a range of units.
+unit to assign/unassign it to the currently selected zone or building. Shift
+click to assign/unassign a range of units.
 
-You can also keep the window open and click around on different pastures, so
-you can manage multiple pastures without having to close and reopen the window.
+You can also keep the window open and click around on different cages,
+restraints, pastures, or pit/ponds, so you can manage multiple buildings/zones
+without having to close and reopen the window.
 
-As for all other overlays, you can disable this one in `gui/control-panel` on
+Just like all other overlays, you can disable this one in `gui/control-panel` on
 the Overlays tab if you don't want the option of using it.

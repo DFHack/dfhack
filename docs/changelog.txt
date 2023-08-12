@@ -59,6 +59,7 @@ Template for new versions:
 
 ## Fixes
 - Core: properly reload scripts in mods when a world is unloaded and immediately loaded again
+- Core: fix text getting added to DFHack text entry widgets when Alt- or Ctrl- keys are hit
 
 ## Misc Improvements
 - Surround DFHack-specific UI elements with square brackets instead of red-yellow blocks for better readability

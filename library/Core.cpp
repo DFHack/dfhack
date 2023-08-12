@@ -2400,9 +2400,13 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
             bool handled = SelectHotkey(sym, modstate);
             if (handled) {
+                hotkey_states[sym] = true;
+                if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
+                    DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
+                    return false;
+                }
                 DEBUG(keybinding).print("%sinhibiting SDL key down event\n",
                     suppress_duplicate_keyboard_events ? "" : "not ");
-                hotkey_states[sym] = true;
                 return suppress_duplicate_keyboard_events;
             }
         }
@@ -2414,7 +2418,11 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
     }
     else if (ev->type == SDL_TEXTINPUT) {
         auto &te = ev->text;
-        DEBUG(keybinding).print("text input: '%s'\n", te.text);
+        DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
+            te.text,
+            modstate & DFH_MOD_SHIFT ? "Shift" : "",
+            modstate & DFH_MOD_CTRL ? "Ctrl" : "",
+            modstate & DFH_MOD_ALT ? "Alt" : "");
         if (strlen(te.text) == 1 && hotkey_states[te.text[0]]) {
             DEBUG(keybinding).print("%sinhibiting SDL text event\n",
                 suppress_duplicate_keyboard_events ? "" : "not ");

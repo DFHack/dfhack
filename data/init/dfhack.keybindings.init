@@ -38,7 +38,7 @@ keybinding add Ctrl-V@dwarfmode digv
 keybinding add Ctrl-Shift-V@dwarfmode "digv x"
 
 # clean the selected tile of blood etc
-keybinding add Ctrl-C spotclean
+keybinding add Ctrl-C@dwarfmode spotclean
 
 # destroy the selected item
 keybinding add Ctrl-K@dwarfmode autodump-destroy-item

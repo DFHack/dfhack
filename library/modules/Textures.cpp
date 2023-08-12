@@ -264,7 +264,13 @@ void Textures::init(color_ostream& out) {
     DEBUG(textures, out).print("dynamic texture loading ready");
 
     for (auto& [key, value] : g_static_assets) {
-        g_static_assets[key] = Textures::loadTileset(key);
+        auto tile_w = TILE_WIDTH_PX;
+        auto tile_h = TILE_HEIGHT_PX;
+        if (key == "hack/data/art/pathable.png" || key == "hack/data/art/unsuspend.png") {
+            tile_w = 32;
+            tile_h = 32;
+        }
+        g_static_assets[key] = Textures::loadTileset(key, tile_w, tile_h);
     }
 
     DEBUG(textures, out).print("assets loaded");

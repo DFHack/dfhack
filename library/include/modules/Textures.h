@@ -8,7 +8,7 @@
 
 #include <SDL_surface.h>
 
-typedef typename void* TexposHandle;
+typedef void* TexposHandle;
 
 namespace DFHack {
 

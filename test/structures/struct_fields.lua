@@ -21,6 +21,14 @@ function test.access()
         expect.eq(fields[name].name, name, name)
         expect.eq(fields[name].type_name, expected.type_name, name)
         expect.eq(type(fields[name].offset), 'number', name)
+        expect.eq(type(fields[name].mode), 'number', name)
+        expect.eq(type(fields[name].count), 'number', name)
+    end
+end
+
+function test.globals_original_name()
+    for name, info in pairs(df.global._fields) do
+        expect.eq(type(info.original_name), 'string', name)
     end
 end
 

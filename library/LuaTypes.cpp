@@ -1365,6 +1365,42 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, in
     }
 }
 
+static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *field)
+{
+    lua_newtable(state);    // new field info
+    Lua::TableInsert(state, "mode", field->mode);
+    Lua::TableInsert(state, "name", field->name);
+    Lua::TableInsert(state, "offset", field->offset);
+    Lua::TableInsert(state, "count", field->count);
+
+    if (field->type) {
+        Lua::TableInsert(state, "type_name", field->type->getFullName());
+
+        lua_pushlightuserdata(state, field->type);
+        lua_setfield(state, -2, "type_identity");
+
+        lua_pushstring(state, "type");
+        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPEID_TABLE_TOKEN);
+        lua_rawgetp(state, -1, field->type);
+        lua_remove(state, -2);  // TYPEID_TABLE
+        lua_settable(state, -3);
+    }
+
+    if (field->extra) {
+        // TODO: index_enum, ref_target
+        if (field->extra->union_tag_field) {
+            Lua::TableInsert(state, "union_tag_field", field->extra->union_tag_field);
+        }
+        if (field->extra->union_tag_attr) {
+            Lua::TableInsert(state, "union_tag_attr", field->extra->union_tag_attr);
+        }
+        if (field->extra->original_name) {
+            Lua::TableInsert(state, "original_name", field->extra->original_name);
+        }
+    }
+    // freeze_table(state);  // TODO: make pairs() work
+}
+
 static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity *pstruct)
 {
     Lua::StackUnwinder base{state};
@@ -1412,24 +1448,9 @@ static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity 
     while (lua_next(state, ix_fieldinfo)) {
         auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
         lua_pushvalue(state, -2);  // field name
-        lua_newtable(state);    // new field info
-        Lua::TableInsert(state, "name", field->name);
-        Lua::TableInsert(state, "offset", field->offset);
-
-        if (field->type) {
-            Lua::TableInsert(state, "type_name", field->type->getFullName());
-
-            lua_pushstring(state, "type");
-            lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPEID_TABLE_TOKEN);
-            lua_rawgetp(state, -1, field->type);
-            lua_remove(state, -2);  // TYPEID_TABLE
-            lua_settable(state, -3);
-        }
-
-        // freeze_table(state);  // TODO: make pairs() work
+        PushFieldInfoSubTable(state, field);
         lua_settable(state, ix_fields);
-
-        lua_pop(state, 1); // field name
+        lua_pop(state, 1); // struct_field_info
     }
 
     // lua_pushvalue(state, ix_fields);

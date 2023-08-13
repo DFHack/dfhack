@@ -1670,6 +1670,7 @@ static void RenderType(lua_State *state, compound_identity *node)
 
         {
             RenderTypeChildren(state, node->getScopeChildren());
+            IndexStatics(state, ix_meta, ftable, (struct_identity*)node);
 
             lua_pushlightuserdata(state, node);
             lua_setfield(state, ftable, "_identity");

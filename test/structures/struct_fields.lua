@@ -43,6 +43,13 @@ end
 
 function test.nonexistent()
     expect.nil_(df.coord._fields.nonexistent)
+
+    expect.error_match('string expected', function()
+        expect.nil_(df.coord._fields[2])
+    end)
+    expect.error_match('string expected', function()
+        expect.nil_(df.coord._fields[nil])
+    end)
 end
 
 function test.readonly()
@@ -52,13 +59,11 @@ function test.readonly()
     expect.error_match(READONLY_MSG, function()
         df.coord._fields.nonexistent = 'foo'
     end)
-    -- see TODOs in LuaTypes.cpp
-    -- expect.error_match(READONLY_MSG, function()
-    --     df.coord._fields.x.name = 'foo'
-    -- end)
-
-    expect.eq(df.coord._fields.x.name, 'x')
     expect.nil_(df.coord._fields.nonexistent)
+
+    -- should have no effect
+    df.coord._fields.x.name = 'foo'
+    expect.eq(df.coord._fields.x.name, 'x')
 end
 
 function test.circular_refs_init()

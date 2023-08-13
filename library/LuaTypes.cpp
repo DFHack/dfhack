@@ -1403,7 +1403,6 @@ static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *fie
             Lua::TableInsert(state, "original_name", field->extra->original_name);
         }
     }
-    // freeze_table(state);  // TODO: make pairs() work
 }
 
 /**

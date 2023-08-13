@@ -467,21 +467,23 @@ local function get_unit_disposition(unit)
 end
 
 local function get_item_disposition(item)
-    local disposition = DISPOSITION.NONE
     if dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.OPPOSED_TO_LIFE) then
-        disposition = DISPOSITION.HOSTILE
-    -- elseif dfhack.units.isPet(unit) then
-    --     disposition = DISPOSITION.PET
-    -- elseif dfhack.units.isDomesticated(unit) then
-    --     disposition = DISPOSITION.TAME
-    elseif dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.PET) or
+        return DISPOSITION.HOSTILE.value
+    end
+
+    if df.item_petst:is_instance(item) then
+        if item.owner_id > -1 then
+            return DISPOSITION.PET.value
+        end
+        return DISPOSITION.TAME.value
+    end
+
+    if dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.PET) or
         dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.PET_EXOTIC)
     then
-        disposition = DISPOSITION.WILD_TRAINABLE
-    else
-        disposition = DISPOSITION.WILD_UNTRAINABLE
+        return DISPOSITION.WILD_TRAINABLE.value
     end
-    return disposition.value
+    return DISPOSITION.WILD_UNTRAINABLE.value
 end
 
 local function is_assignable_unit(unit)
@@ -493,13 +495,16 @@ local function is_assignable_unit(unit)
 end
 
 local function is_assignable_item(item)
-    -- TODO are there unassignable vermin/small pets?
+    -- all vermin/small pets are assignable
     return true
 end
 
 local function get_vermin_desc(vermin, raw)
     if not raw then return 'Unknown vermin' end
-    return ('%s [%d]'):format(raw.name[1], vermin.stack_size)
+    if vermin.stack_size > 1 then
+        return ('%s [%d]'):format(raw.name[1], vermin.stack_size)
+    end
+    return ('%s'):format(raw.name[0])
 end
 
 local function get_small_pet_desc(raw)
@@ -519,7 +524,7 @@ function AssignAnimal:cache_choices()
             unit=unit,
             desc=dfhack.units.getReadableName(unit),
             gender=unit.sex,
-            race=raw and raw.creature_id or -1,
+            race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
             disposition=get_unit_disposition(unit),
             egg=dfhack.units.isEggLayerRace(unit),
@@ -540,7 +545,7 @@ function AssignAnimal:cache_choices()
             vermin=vermin,
             desc=get_vermin_desc(vermin, raw),
             gender=df.pronoun_type.it,
-            race=raw and raw.creature_id or -1,
+            race=raw and raw.creature_id or '',
             status=self.get_status(vermin, bld_assignments),
             disposition=get_item_disposition(vermin),
         }
@@ -559,7 +564,7 @@ function AssignAnimal:cache_choices()
             vermin=small_pet,
             desc=get_small_pet_desc(raw),
             gender=df.pronoun_type.it,
-            race=raw and raw.creature_id or -1,
+            race=raw and raw.creature_id or '',
             status=self.get_status(small_pet, bld_assignments),
             disposition=get_item_disposition(small_pet),
         }

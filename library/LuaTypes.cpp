@@ -1367,6 +1367,11 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, in
 
 static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *field)
 {
+    if (!field) {
+        lua_pushnil(state);
+        return;
+    }
+
     lua_newtable(state);    // new field info
     Lua::TableInsert(state, "mode", field->mode);
     Lua::TableInsert(state, "name", field->name);
@@ -1401,6 +1406,51 @@ static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *fie
     // freeze_table(state);  // TODO: make pairs() work
 }
 
+/**
+ * Metamethod: __index for struct._fields
+ *
+ * upvalue 1: name -> struct_field_info* table
+ */
+static int meta_fieldinfo_index(lua_State *state)
+{
+    luaL_checktype(state, -1, LUA_TSTRING);
+
+    lua_gettable(state, lua_upvalueindex(1));
+    auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
+    lua_pop(state, 1);
+    PushFieldInfoSubTable(state, field);
+
+    return 1;
+}
+
+/**
+ * Metamethod: iterator for struct._fields
+ *
+ * upvalue 1: name -> struct_field_info* table
+ * upvalue 3: field table (int <-> name)
+ */
+static int meta_fieldinfo_next(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    int len = lua_rawlen(state, UPVAL_FIELDTABLE);
+    int idx = cur_iter_index(state, len+1, 2, 0);
+    if (idx == len)
+        return 0;
+
+    lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
+
+    // modified from meta_struct_next:
+    // retrieve the struct_field_info* from the table and convert it
+    lua_dup(state);
+    lua_gettable(state, lua_upvalueindex(1));
+    auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
+    lua_pop(state, 1);
+    PushFieldInfoSubTable(state, field);
+
+    return 2;
+}
+
 static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity *pstruct)
 {
     Lua::StackUnwinder base{state};
@@ -1418,7 +1468,10 @@ static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity 
     int ix_fielditer = lua_gettop(state);
     IndexFields(state, base, pstruct, IndexFieldsFlags::RAW);
 
-    PushStructMethod(state, ix_meta, ix_fielditer, meta_struct_next);
+    PushStructMethod(state, ix_meta, ix_fielditer, meta_fieldinfo_next);
+    // change upvalue 1 to the field info table since we don't need the original
+    lua_pushvalue(state, ix_fieldinfo);
+    lua_setupvalue(state, -2, 1);
     SetPairsMethod(state, ix_meta, "__pairs");
 
     // field table (name -> table representation of struct_field_info)
@@ -1432,7 +1485,8 @@ static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity 
     // set up metatable for the wrapper
     // use field table for __index
     lua_pushstring(state, "__index");
-    lua_pushvalue(state, ix_fields);
+    lua_pushvalue(state, ix_fieldinfo);
+    lua_pushcclosure(state, meta_fieldinfo_index, 1);
     lua_settable(state, ix_meta);
 
     // use change_error() for __newindex

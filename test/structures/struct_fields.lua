@@ -60,3 +60,15 @@ function test.readonly()
     expect.eq(df.coord._fields.x.name, 'x')
     expect.nil_(df.coord._fields.nonexistent)
 end
+
+function test.circular_refs_init()
+    expect.eq(df.job._fields.list_link.type, df.job_list_link)
+    expect.eq(df.job_list_link._fields.item.type, df.job)
+end
+
+function test.subclass_match()
+    for f, parent in pairs(df.viewscreen._fields) do
+        local child = df.viewscreen_titlest._fields[f]
+        expect.table_eq(parent, child, f)
+    end
+end

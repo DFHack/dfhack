@@ -466,7 +466,7 @@ local function get_unit_disposition(unit)
     return disposition.value
 end
 
-local function get_vermin_disposition(vermin)
+local function get_item_disposition(item)
     -- TODO
     return DISPOSITION.TAME.value
 end
@@ -479,14 +479,19 @@ local function is_assignable_unit(unit)
         not dfhack.units.isForest(unit)
 end
 
-local function is_assignable_vermin(vermin)
-    -- TODO are there unassignable vermin?
+local function is_assignable_item(item)
+    -- TODO are there unassignable vermin/small pets?
     return true
 end
 
 local function get_vermin_desc(vermin, raw)
     if not raw then return 'Unknown vermin' end
     return ('%s [%d]'):format(raw.name[1], vermin.stack_size)
+end
+
+local function get_small_pet_desc(raw)
+    if not raw then return 'Unknown small pet' end
+    return ('tame %s'):format(raw.name[0])
 end
 
 function AssignAnimal:cache_choices()
@@ -516,7 +521,7 @@ function AssignAnimal:cache_choices()
         ::continue::
     end
     for _, vermin in ipairs(df.global.world.items.other.VERMIN) do
-        if not is_assignable_vermin(vermin) then goto continue end
+        if not is_assignable_item(vermin) then goto continue end
         local raw = df.creature_raw.find(vermin.race)
         local data = {
             vermin=vermin,
@@ -524,7 +529,26 @@ function AssignAnimal:cache_choices()
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or -1,
             status=self.get_status(vermin, bld_assignments),
-            disposition=get_vermin_disposition(vermin),
+            disposition=get_item_disposition(vermin),
+        }
+        local choice = {
+            search_key=make_search_key(data.desc),
+            data=data,
+            text=self:make_choice_text(data),
+        }
+        table.insert(choices, choice)
+        ::continue::
+    end
+    for _, small_pet in ipairs(df.global.world.items.other.PET) do
+        if not is_assignable_item(small_pet) then goto continue end
+        local raw = df.creature_raw.find(small_pet.race)
+        local data = {
+            vermin=small_pet,
+            desc=get_small_pet_desc(raw),
+            gender=df.pronoun_type.it,
+            race=raw and raw.creature_id or -1,
+            status=self.get_status(small_pet, bld_assignments),
+            disposition=get_item_disposition(small_pet),
         }
         local choice = {
             search_key=make_search_key(data.desc),

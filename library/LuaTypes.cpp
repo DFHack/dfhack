@@ -1365,6 +1365,13 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, in
     }
 }
 
+static void PushTypeIdentity(lua_State *state, const type_identity *id)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPEID_TABLE_TOKEN);
+    lua_rawgetp(state, -1, id);
+    lua_remove(state, -2);  // TYPEID_TABLE
+}
+
 static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *field)
 {
     if (!field) {
@@ -1384,15 +1391,19 @@ static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *fie
         lua_pushlightuserdata(state, field->type);
         lua_setfield(state, -2, "type_identity");
 
-        lua_pushstring(state, "type");
-        lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPEID_TABLE_TOKEN);
-        lua_rawgetp(state, -1, field->type);
-        lua_remove(state, -2);  // TYPEID_TABLE
-        lua_settable(state, -3);
+        PushTypeIdentity(state, field->type);
+        lua_setfield(state, -2, "type");
     }
 
     if (field->extra) {
-        // TODO: index_enum, ref_target
+        if (field->extra->index_enum) {
+            PushTypeIdentity(state, field->extra->index_enum);
+            lua_setfield(state, -2, "index_enum");
+        }
+        if (field->extra->ref_target) {
+            PushTypeIdentity(state, field->extra->ref_target);
+            lua_setfield(state, -2, "ref_target");
+        }
         if (field->extra->union_tag_field) {
             Lua::TableInsert(state, "union_tag_field", field->extra->union_tag_field);
         }

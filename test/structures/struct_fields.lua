@@ -52,6 +52,18 @@ function test.nonexistent()
     end)
 end
 
+function test.count()
+    expect.eq(df.unit._fields.relationship_ids.count, 10)
+end
+
+function test.index_enum()
+    expect.eq(df.unit._fields.relationship_ids.index_enum, df.unit_relationship_type)
+end
+
+function test.ref_target()
+    expect.eq(df.unit._fields.hist_figure_id.ref_target, df.historical_figure)
+end
+
 function test.readonly()
     expect.error_match(READONLY_MSG, function()
         df.coord._fields.x = 'foo'

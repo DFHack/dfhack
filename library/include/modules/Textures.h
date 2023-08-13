@@ -6,9 +6,9 @@
 #include "ColorText.h"
 #include "Export.h"
 
-#include <SDL_surface.h>
+struct SDL_Surface;
 
-typedef void* TexposHandle;
+typedef SDL_Surface* TexposHandle;
 
 namespace DFHack {
 
@@ -18,6 +18,9 @@ namespace DFHack {
  * \ingroup grp_textures
  */
 namespace Textures {
+
+const uint32_t TILE_WIDTH_PX = 8;
+const uint32_t TILE_HEIGHT_PX = 12;
 
 /**
  * Load texture and get handle.
@@ -29,8 +32,9 @@ DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface);
  * Load tileset from image file.
  * Return vector of handles to obtain valid texposes.
  */
-DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file, int tile_px_w,
-                                                    int tile_px_h);
+DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file,
+                                                    int tile_px_w = TILE_WIDTH_PX,
+                                                    int tile_px_h = TILE_HEIGHT_PX);
 
 /**
  * Get texpos by handle.

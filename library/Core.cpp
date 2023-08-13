@@ -2217,8 +2217,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             }
         }
         break;
-    case SC_VIEWSCREEN_CHANGED:
-        break;
     default:
         break;
     }

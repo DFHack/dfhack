@@ -16,30 +16,38 @@
 #include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 
+#include <SDL_surface.h>
+
 using df::global::enabler;
 using namespace DFHack;
 using namespace DFHack::DFSDL;
 
 namespace DFHack {
-    DBG_DECLARE(core, textures, DebugCategory::LINFO);
+DBG_DECLARE(core, textures, DebugCategory::LINFO);
 }
 
 static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
 static std::mutex g_adding_mutex;
 
-const uint32_t TILE_WIDTH_PX = 8;
-const uint32_t TILE_HEIGHT_PX = 12;
-
 static std::vector<TexposHandle> empty{};
-static std::unordered_map<std::string, std::vector<TexposHandle>> g_static_assets{
-    {"hack/data/art/dfhack.png", empty},       {"hack/data/art/green-pin.png", empty},
-    {"hack/data/art/red-pin.png", empty},      {"hack/data/art/icons.png", empty},
-    {"hack/data/art/on-off.png", empty},       {"hack/data/art/pathable.png", empty},
-    {"hack/data/art/unsuspend.png", empty},    {"hack/data/art/control-panel.png", empty},
-    {"hack/data/art/border-thin.png", empty},  {"hack/data/art/border-medium.png", empty},
-    {"hack/data/art/border-bold.png", empty},  {"hack/data/art/border-panel.png", empty},
-    {"hack/data/art/border-window.png", empty}};
+// handle, tile width px, tile height px
+static std::tuple<std::vector<TexposHandle>, int, int> basic{empty, Textures::TILE_WIDTH_PX,
+                                                             Textures::TILE_HEIGHT_PX};
+static std::unordered_map<std::string, std::tuple<std::vector<TexposHandle>, int, int>>
+    g_static_assets{{"hack/data/art/dfhack.png", basic},
+                    {"hack/data/art/green-pin.png", basic},
+                    {"hack/data/art/red-pin.png", basic},
+                    {"hack/data/art/icons.png", basic},
+                    {"hack/data/art/on-off.png", basic},
+                    {"hack/data/art/pathable.png", std::make_tuple(empty, 32, 32)},
+                    {"hack/data/art/unsuspend.png", std::make_tuple(empty, 32, 32)},
+                    {"hack/data/art/control-panel.png", basic},
+                    {"hack/data/art/border-thin.png", basic},
+                    {"hack/data/art/border-medium.png", basic},
+                    {"hack/data/art/border-bold.png", basic},
+                    {"hack/data/art/border-panel.png", basic},
+                    {"hack/data/art/border-window.png", basic}};
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -97,7 +105,7 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
     if (!surface)
         return 0; // should be some error, i guess
 
-    auto handle = reinterpret_cast<TexposHandle>(surface); // not the best way? but cheap
+    auto handle = surface;
     g_handle_to_surface.emplace(handle, surface);
     surface->refcount++; // prevent destruct on next FreeSurface by game
     auto texpos = add_texture(surface);
@@ -105,9 +113,8 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
     return handle;
 }
 
-std::vector<TexposHandle> Textures::loadTileset(const std::string& file,
-                                                int tile_px_w = TILE_WIDTH_PX,
-                                                int tile_px_h = TILE_HEIGHT_PX) {
+std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
+                                                int tile_px_h) {
     std::vector<TexposHandle> handles{};
 
     SDL_Surface* surface = DFIMG_Load(file.c_str());
@@ -157,9 +164,10 @@ long Textures::getTexposByHandle(TexposHandle handle) {
 long Textures::getAsset(const std::string asset, size_t index) {
     if (!g_static_assets.contains(asset))
         return -1;
-    if (g_static_assets[asset].size() <= index)
+    auto handles = std::get<0>(g_static_assets[asset]);
+    if (handles.size() <= index)
         return -1;
-    return Textures::getTexposByHandle(g_static_assets[asset][index]);
+    return Textures::getTexposByHandle(handles[index]);
 }
 
 static void reset_texpos() {
@@ -264,13 +272,10 @@ void Textures::init(color_ostream& out) {
     DEBUG(textures, out).print("dynamic texture loading ready");
 
     for (auto& [key, value] : g_static_assets) {
-        auto tile_w = TILE_WIDTH_PX;
-        auto tile_h = TILE_HEIGHT_PX;
-        if (key == "hack/data/art/pathable.png" || key == "hack/data/art/unsuspend.png") {
-            tile_w = 32;
-            tile_h = 32;
-        }
-        g_static_assets[key] = Textures::loadTileset(key, tile_w, tile_h);
+        auto tile_w = std::get<1>(value);
+        auto tile_h = std::get<2>(value);
+        g_static_assets[key] =
+            std::make_tuple(Textures::loadTileset(key, tile_w, tile_h), tile_w, tile_h);
     }
 
     DEBUG(textures, out).print("assets loaded");

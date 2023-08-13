@@ -70,7 +70,7 @@ local dscreen = dfhack.screen
 function HotspotMenuWidget:onRenderBody(dc)
     local x, y = dc.x, dc.y
     local tp = function(offset)
-        return dfhack.textures.getAsset("hack/data/art/dfhack.png", offset)
+        return dfhack.textures.getAsset('hack/data/art/dfhack.png', offset)
     end
 
     if tp(0) == -1 then

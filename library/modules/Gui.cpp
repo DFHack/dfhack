@@ -215,6 +215,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::enums::info_interface_mode_type::WORK_ORDERS:
             if (game->main_interface.info.work_orders.conditions.open)
                 newFocusString += "/Conditions";
+            else if (game->main_interface.create_work_order.open)
+                newFocusString += "/Create";
             else
                 newFocusString += "/Default";
             break;
@@ -479,11 +481,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.assign_uniform.open) {
         newFocusString = baseFocus;
         newFocusString += "/AssignUniform";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.create_work_order.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/CreateWorkOrder";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.hotkey.open) {

@@ -1525,6 +1525,11 @@ Units module
 
   Computes the effective attribute value, including curse effect.
 
+* ``dfhack.units.casteFlagSet(race, caste, flag)``
+
+  Returns whether the given ``df.caste_raw_flags`` flag is set for the given
+  race and caste.
+
 * ``dfhack.units.getMiscTrait(unit, type[, create])``
 
   Finds (or creates if requested) a misc trait object with the given id.

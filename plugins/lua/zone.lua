@@ -450,7 +450,9 @@ end
 
 local function get_unit_disposition(unit)
     local disposition = DISPOSITION.NONE
-    if dfhack.units.isPet(unit) then
+    if dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit) then
+        disposition = DISPOSITION.HOSTILE
+    elseif dfhack.units.isPet(unit) then
         disposition = DISPOSITION.PET
     elseif dfhack.units.isDomesticated(unit) then
         disposition = DISPOSITION.TAME
@@ -458,8 +460,6 @@ local function get_unit_disposition(unit)
         disposition = DISPOSITION.TRAINED
     elseif dfhack.units.isTamable(unit) then
         disposition = DISPOSITION.WILD_TRAINABLE
-    elseif dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit) then
-        disposition = DISPOSITION.HOSTILE
     else
         disposition = DISPOSITION.WILD_UNTRAINABLE
     end
@@ -467,8 +467,21 @@ local function get_unit_disposition(unit)
 end
 
 local function get_item_disposition(item)
-    -- TODO
-    return DISPOSITION.TAME.value
+    local disposition = DISPOSITION.NONE
+    if dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.OPPOSED_TO_LIFE) then
+        disposition = DISPOSITION.HOSTILE
+    -- elseif dfhack.units.isPet(unit) then
+    --     disposition = DISPOSITION.PET
+    -- elseif dfhack.units.isDomesticated(unit) then
+    --     disposition = DISPOSITION.TAME
+    elseif dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.PET) or
+        dfhack.units.casteFlagSet(item.race, item.caste, df.caste_raw_flags.PET_EXOTIC)
+    then
+        disposition = DISPOSITION.WILD_TRAINABLE
+    else
+        disposition = DISPOSITION.WILD_UNTRAINABLE
+    end
+    return disposition.value
 end
 
 local function is_assignable_unit(unit)

@@ -11,8 +11,7 @@ local to_pen = dfhack.pen.parse
 
 local tp = function(asset, offset)
     local texpos = dfhack.textures.getAsset(asset, offset)
-    if texpos == -1 then return nil end
-    return texpos
+    return texpos >= 0 and texpos or nil
 end
 
 function reload_pens()

@@ -18,6 +18,7 @@ function test.clear_pen()
         bg = COLOR_BLACK,
         bold = false,
         tile_color = false,
+        write_to_lower = true,
     })
 end
 

@@ -294,6 +294,7 @@ static Pen doGetTile_default(int x, int y, bool map) {
         return Pen(0, 0, 0, -1);
 
     long *texpos = &gps->screentexpos[index];
+    long *texpos_lower = &gps->screentexpos_lower[index];
     uint32_t *flag = &gps->screentexpos_flag[index];
 
     if (gps->top_in_use &&
@@ -301,6 +302,7 @@ static Pen doGetTile_default(int x, int y, bool map) {
              (use_graphics && gps->screentexpos_top[index]))) {
         screen = &gps->screen_top[index * 8];
         texpos = &gps->screentexpos_top[index];
+        texpos_lower = &gps->screentexpos_top_lower[index];
         flag = &gps->screentexpos_top_flag[index];
     }
 
@@ -308,19 +310,37 @@ static Pen doGetTile_default(int x, int y, bool map) {
     uint8_t fg = to_16_bit_color(&screen[1]);
     uint8_t bg = to_16_bit_color(&screen[4]);
     int tile = 0;
-    if (use_graphics)
+    bool write_to_lower = false;
+    bool top_of_text = false;
+    bool bottom_of_text = false;
+    if (use_graphics) {
         tile = *texpos;
-
-    if (*flag & 1) {
-        // TileColor
-        return Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
-    } else if (*flag & 2) {
-        // CharColor
-        return Pen(ch, fg, bg, tile, true);
+        if (!tile && *texpos_lower) {
+            tile = *texpos_lower;
+            write_to_lower = true;
+        }
+        if (*flag & 0x8)
+            top_of_text = true;
+        else if (*flag &0x10)
+            bottom_of_text = true;
     }
 
-    // AsIs
-    return Pen(ch, fg, bg, tile, false);
+    Pen ret;
+    if (*flag & 1) {
+        // TileColor
+        ret = Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
+    } else if (*flag & 2) {
+        // CharColor
+        ret = Pen(ch, fg, bg, tile, true);
+    } else {
+        // AsIs
+        ret = Pen(ch, fg, bg, tile, false);
+    }
+
+    ret.write_to_lower = write_to_lower;
+    ret.top_of_text = top_of_text;
+    ret.bottom_of_text = bottom_of_text;
+    return ret;
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);

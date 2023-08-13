@@ -306,7 +306,32 @@ All types and the global object have the following features:
 * ``type._identity``
 
   Contains a lightuserdata pointing to the underlying
-  ``DFHack::type_instance`` object.
+  ``DFHack::type_identity`` object.
+
+All compound types (structs, classes, unions, and the global object) support:
+
+* ``type._fields``
+
+  Contains a table mapping field names to descriptions of the type's fields,
+  including data members and functions. Iterating with ``pairs()`` returns data
+  fields in the order they are defined in the type. Functions and globals may
+  appear in an arbitrary order.
+
+  Each entry contains the following fields:
+
+  * ``name``: the name of the field (matches the ``_fields`` table key)
+  * ``offset``: for data members, the position of the field relative to the start of the type, in bytes
+  * ``count``: for arrays, the number of elements
+  * ``mode``: implementation detail. See ``struct_field_info::Mode`` in ``DataDefs.h``.
+
+  Each entry may also contain the following fields, depending on its type:
+
+  * ``type_name``: present for most fields; a string representation of the field's type
+  * ``type``: the type object matching the field's type; present if such an object exists
+    (e.g. present for DF types, absent for primitive types)
+  * ``type_identity``: present for most fields; a lightuserdata pointing to the field's underlying ``DFHack::type_identity`` object
+  * ``index_enum``, ``ref_target``: the type object corresponding to the field's similarly-named XML attribute, if present
+  * ``union_tag_field``, ``union_tag_attr``, ``original_name``: the string value of the field's similarly-named XML attribute, if present
 
 Types excluding the global object also support:
 

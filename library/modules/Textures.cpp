@@ -35,8 +35,7 @@ static std::vector<TexposHandle> empty{};
 static std::tuple<std::vector<TexposHandle>, int, int> basic{empty, Textures::TILE_WIDTH_PX,
                                                              Textures::TILE_HEIGHT_PX};
 static std::unordered_map<std::string, std::tuple<std::vector<TexposHandle>, int, int>>
-    g_static_assets{{"hack/data/art/dfhack.png", basic},
-                    {"hack/data/art/green-pin.png", basic},
+    g_static_assets{{"hack/data/art/green-pin.png", basic},
                     {"hack/data/art/red-pin.png", basic},
                     {"hack/data/art/icons.png", basic},
                     {"hack/data/art/on-off.png", basic},
@@ -105,7 +104,7 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
     if (!surface)
         return 0; // should be some error, i guess
 
-    auto handle = surface;
+    auto handle = reinterpret_cast<uintptr_t>(surface);
     g_handle_to_surface.emplace(handle, surface);
     surface->refcount++; // prevent destruct on next FreeSurface by game
     auto texpos = add_texture(surface);
@@ -139,7 +138,7 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
     }
 
     DFSDL_FreeSurface(surface);
-    DEBUG(textures).print("loaded %ld textures from '%s'\n", handles.size(), file.c_str());
+    DEBUG(textures).print("loaded %i textures from '%s'\n", handles.size(), file.c_str());
 
     return handles;
 }

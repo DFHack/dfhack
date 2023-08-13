@@ -50,6 +50,7 @@ HotspotMenuWidget.ATTRS{
 
 function HotspotMenuWidget:init()
     self.mouseover = false
+    self.textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
 end
 
 function HotspotMenuWidget:overlay_onupdate()
@@ -70,28 +71,28 @@ local dscreen = dfhack.screen
 function HotspotMenuWidget:onRenderBody(dc)
     local x, y = dc.x, dc.y
     local tp = function(offset)
-        return dfhack.textures.getAsset('hack/data/art/dfhack.png', offset)
+        return dfhack.textures.getTexposByHandle(self.textures[offset])
     end
 
-    if tp(0) == -1 then
+    if tp(1) == -1 then
         dscreen.paintString(COLOR_WHITE, x, y + 0, '!DF!')
         dscreen.paintString(COLOR_WHITE, x, y + 1, '!Ha!')
         dscreen.paintString(COLOR_WHITE, x, y + 2, '!ck!')
     else
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 0, '!', tp(0))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 0, 'D', tp(1))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 0, 'F', tp(2))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 0, '!', tp(3))
+        dscreen.paintTile(COLOR_WHITE, x + 0, y + 0, '!', tp(1))
+        dscreen.paintTile(COLOR_WHITE, x + 1, y + 0, 'D', tp(2))
+        dscreen.paintTile(COLOR_WHITE, x + 2, y + 0, 'F', tp(3))
+        dscreen.paintTile(COLOR_WHITE, x + 3, y + 0, '!', tp(4))
 
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 1, '!', tp(4))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 1, 'H', tp(5))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 1, 'a', tp(6))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 1, '!', tp(7))
+        dscreen.paintTile(COLOR_WHITE, x + 0, y + 1, '!', tp(5))
+        dscreen.paintTile(COLOR_WHITE, x + 1, y + 1, 'H', tp(6))
+        dscreen.paintTile(COLOR_WHITE, x + 2, y + 1, 'a', tp(7))
+        dscreen.paintTile(COLOR_WHITE, x + 3, y + 1, '!', tp(8))
 
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 2, '!', tp(8))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 2, 'c', tp(9))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 2, 'k', tp(10))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 2, '!', tp(11))
+        dscreen.paintTile(COLOR_WHITE, x + 0, y + 2, '!', tp(9))
+        dscreen.paintTile(COLOR_WHITE, x + 1, y + 2, 'c', tp(10))
+        dscreen.paintTile(COLOR_WHITE, x + 2, y + 2, 'k', tp(11))
+        dscreen.paintTile(COLOR_WHITE, x + 3, y + 2, '!', tp(12))
     end
 end
 

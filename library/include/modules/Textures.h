@@ -8,7 +8,7 @@
 
 struct SDL_Surface;
 
-typedef SDL_Surface* TexposHandle;
+typedef uintptr_t TexposHandle;
 
 namespace DFHack {
 

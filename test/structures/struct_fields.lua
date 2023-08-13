@@ -11,6 +11,14 @@ local COORD_FIELD_EXPECTED_DATA = {
 
 local READONLY_MSG = 'Attempt to change a read%-only table.'
 
+local function listFieldNames(t)
+    local names = {}
+    for name in pairs(t._fields) do
+        table.insert(names, name)
+    end
+    return names
+end
+
 function test.access()
     local fields = df.coord._fields
     expect.true_(fields)
@@ -33,12 +41,7 @@ function test.globals_original_name()
 end
 
 function test.order()
-    local i = 0
-    for name in pairs(df.coord._fields) do
-        i = i + 1
-        expect.eq(name, COORD_FIELD_NAMES[i], i)
-    end
-    expect.eq(i, #COORD_FIELD_NAMES)
+    expect.table_eq(listFieldNames(df.coord), COORD_FIELD_NAMES)
 end
 
 function test.nonexistent()
@@ -87,5 +90,23 @@ function test.subclass_match()
     for f, parent in pairs(df.viewscreen._fields) do
         local child = df.viewscreen_titlest._fields[f]
         expect.table_eq(parent, child, f)
+    end
+end
+
+function test.subclass_order()
+    -- ensure that parent class fields come before subclass fields
+    local hierarchy = {df.item, df.item_actual, df.item_crafted, df.item_constructed, df.item_bedst}
+    local field_names = {}
+    for _, t in pairs(hierarchy) do
+        field_names[t] = listFieldNames(t)
+    end
+    for ic = 1, #hierarchy do
+        for ip = 1, ic - 1 do
+            local parent_fields = listFieldNames(hierarchy[ip])
+            local child_fields = listFieldNames(hierarchy[ic])
+            child_fields = table.pack(table.unpack(child_fields, 1, #parent_fields))
+            child_fields.n = nil
+            expect.table_eq(child_fields, parent_fields, ('compare %s to %s'):format(hierarchy[ip], hierarchy[ic]))
+        end
     end
 end

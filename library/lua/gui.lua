@@ -885,37 +885,10 @@ ZScreenModal.ATTRS{
     pass_mouse_clicks = false,
 }
 
--- Framed screen object
---------------------------
-
--- Plain grey-colored frame.
--- deprecated
-GREY_FRAME = {
-    frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
-    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
-    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-}
-
--- The boundary used by the pre-steam DF screens.
--- deprecated
-BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
-    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-}
-
-local BASE_FRAME = {
-    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
-    title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
-    inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
-    signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
-    paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
-}
-
 -- DFHack textures
 --------------------------
 
--- Preloaded DFHack Asset
+-- Preloaded DFHack Assets
 -- Use this handles if you need to get dfhack standard textures
 local texpos_handles = {
     green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12),
@@ -930,7 +903,7 @@ local texpos_handles = {
     border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12),
 }
 
--- Mathods to obtain valid texposes by handles
+-- Methods to obtain valid texposes by handles
 function tp_green_pin(offset)
     return dfhack.textures.getTexposByHandle(texpos_handles.green_pin[offset])
 end
@@ -961,6 +934,33 @@ end
 function tp_border_window(offset)
     return dfhack.textures.getTexposByHandle(texpos_handles.border_window[offset])
 end
+
+-- Framed screen object
+--------------------------
+
+-- Plain grey-colored frame.
+-- deprecated
+GREY_FRAME = {
+    frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+}
+
+-- The boundary used by the pre-steam DF screens.
+-- deprecated
+BOUNDARY_FRAME = {
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
+    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
+}
+
+local BASE_FRAME = {
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
+    inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
+    signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
+    paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
+}
 
 
 local function make_frame(tp, double_line)

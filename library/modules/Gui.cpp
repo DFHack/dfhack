@@ -230,10 +230,89 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString = baseFocus;
         newFocusString += "/ViewSheets";
         newFocusString += '/' + enum_item_key(game->main_interface.view_sheets.active_sheet);
-        if (game->main_interface.view_sheets.active_sheet == df::view_sheet_type::BUILDING) {
-            auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid);
-            if (bld)
+        switch (game->main_interface.view_sheets.active_sheet) {
+        case df::view_sheet_type::UNIT:
+            switch (game->main_interface.view_sheets.active_sub_tab) {
+            case 0: newFocusString += "/Overview"; break;
+            case 1: newFocusString += "/Items"; break;
+            case 2:
+                newFocusString += "/Health";
+                switch (game->main_interface.view_sheets.unit_health_active_tab) {
+                    case 0: newFocusString += "/Status"; break;
+                    case 1: newFocusString += "/Wounds"; break;
+                    case 2: newFocusString += "/Treatment"; break;
+                    case 3: newFocusString += "/History"; break;
+                    case 4: newFocusString += "/Description"; break;
+                    default: break;
+                }
+                break;
+            case 3:
+                newFocusString += "/Skills";
+                switch (game->main_interface.view_sheets.unit_skill_active_tab) {
+                    case 0: newFocusString += "/Labor"; break;
+                    case 1: newFocusString += "/Combat"; break;
+                    case 2: newFocusString += "/Social"; break;
+                    case 3: newFocusString += "/Other"; break;
+                    case 4:
+                        newFocusString += "/Knowledge";
+                        if (game->main_interface.view_sheets.skill_description_raw_str.size())
+                            newFocusString += "/Details";
+                        else
+                            newFocusString += "/Default";
+                        break;
+                    default: break;
+                }
+                break;
+            case 4: newFocusString += "/Rooms"; break;
+            case 5:
+                newFocusString += "/Labor";
+                switch (game->main_interface.view_sheets.unit_labor_active_tab) {
+                    case 0: newFocusString += "/WorkDetails"; break;
+                    case 1: newFocusString += "/Workshops"; break;
+                    case 2: newFocusString += "/Locations"; break;
+                    case 3: newFocusString += "/WorkAnimals"; break;
+                    default: break;
+                }
+                break;
+            case 6: newFocusString += "/Relations"; break;
+            case 7: newFocusString += "/Groups"; break;
+            case 8:
+                newFocusString += "/Military";
+                switch (game->main_interface.view_sheets.unit_military_active_tab) {
+                    case 0: newFocusString += "/Squad"; break;
+                    case 1: newFocusString += "/Uniform"; break;
+                    case 2: newFocusString += "/Kills"; break;
+                    default: break;
+                }
+                break;
+            case 9:
+                newFocusString += "/Thoughts";
+                switch (game->main_interface.view_sheets.thoughts_active_tab) {
+                    case 0: newFocusString += "/Recent"; break;
+                    case 1: newFocusString += "/Memories"; break;
+                    default: break;
+                }
+                break;
+            case 10:
+                newFocusString += "/Personality";
+                switch (game->main_interface.view_sheets.personality_active_tab) {
+                    case 0: newFocusString += "/Traits"; break;
+                    case 1: newFocusString += "/Values"; break;
+                    case 2: newFocusString += "/Preferences"; break;
+                    case 3: newFocusString += "/Needs"; break;
+                    default: break;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case df::view_sheet_type::BUILDING:
+            if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid))
                 newFocusString += '/' + enum_item_key(bld->getType());
+            break;
+        default:
+            break;
         }
         focusStrings.push_back(newFocusString);
     }

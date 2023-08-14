@@ -1,3 +1,4 @@
+#include "df/enabler.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -29,6 +30,7 @@ DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(enabler);
 
 namespace DFHack {
     DBG_DECLARE(overlay, control, DebugCategory::LINFO);
@@ -82,6 +84,8 @@ struct viewscreen_overlay : T {
                     });
         if (!input_is_handled)
             INTERPOSE_NEXT(feed)(input);
+        else
+            enabler->last_text_input[0] = '\0';
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();

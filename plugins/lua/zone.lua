@@ -392,7 +392,7 @@ end
 
 local function make_search_key(desc)
     local out = ''
-    for c in desc:gmatch("[%w%s]") do
+    for c in dfhack.toSearchNormalized(desc):gmatch("[%w%s]") do
         out = out .. c:lower()
     end
     return out

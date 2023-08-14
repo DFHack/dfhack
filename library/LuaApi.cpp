@@ -1719,13 +1719,25 @@ static int textures_loadTileset(lua_State *state)
     return 1;
 }
 
+static int textures_getTexposByHandle(lua_State *state)
+{
+    auto handle = luaL_checkunsigned(state, 1);
+    auto texpos = Textures::getTexposByHandle(handle);
+    if (texpos == -1) {
+        lua_pushnil(state);
+    } else {
+        Lua::Push(state, texpos);
+    }
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
-    WRAPM(Textures, getTexposByHandle),
     { NULL, NULL }
 };
 
 static const luaL_Reg dfhack_textures_funcs[] = {
     { "loadTileset", textures_loadTileset },
+    { "getTexposByHandle", textures_getTexposByHandle },
     { NULL, NULL }
 };
 

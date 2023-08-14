@@ -30,24 +30,6 @@ static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
 static std::mutex g_adding_mutex;
 
-static std::vector<TexposHandle> empty{};
-// handle, tile width px, tile height px
-static std::tuple<std::vector<TexposHandle>, int, int> basic{empty, Textures::TILE_WIDTH_PX,
-                                                             Textures::TILE_HEIGHT_PX};
-static std::unordered_map<std::string, std::tuple<std::vector<TexposHandle>, int, int>>
-    g_static_assets{{"hack/data/art/green-pin.png", basic},
-                    {"hack/data/art/red-pin.png", basic},
-                    {"hack/data/art/icons.png", basic},
-                    {"hack/data/art/on-off.png", basic},
-                    {"hack/data/art/pathable.png", std::make_tuple(empty, 32, 32)},
-                    {"hack/data/art/unsuspend.png", std::make_tuple(empty, 32, 32)},
-                    {"hack/data/art/control-panel.png", basic},
-                    {"hack/data/art/border-thin.png", basic},
-                    {"hack/data/art/border-medium.png", basic},
-                    {"hack/data/art/border-bold.png", basic},
-                    {"hack/data/art/border-panel.png", basic},
-                    {"hack/data/art/border-window.png", basic}};
-
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
 // and the source surface didn't already have an alpha channel.
@@ -160,15 +142,6 @@ long Textures::getTexposByHandle(TexposHandle handle) {
     return -1;
 }
 
-long Textures::getAsset(const std::string asset, size_t index) {
-    if (!g_static_assets.contains(asset))
-        return -1;
-    auto handles = std::get<0>(g_static_assets[asset]);
-    if (handles.size() <= index)
-        return -1;
-    return Textures::getTexposByHandle(handles[index]);
-}
-
 static void reset_texpos() {
     g_handle_to_texpos.clear();
 }
@@ -269,15 +242,6 @@ static void uninstall_reset_point() {
 void Textures::init(color_ostream& out) {
     install_reset_point();
     DEBUG(textures, out).print("dynamic texture loading ready");
-
-    for (auto& [key, value] : g_static_assets) {
-        auto tile_w = std::get<1>(value);
-        auto tile_h = std::get<2>(value);
-        g_static_assets[key] =
-            std::make_tuple(Textures::loadTileset(key, tile_w, tile_h), tile_w, tile_h);
-    }
-
-    DEBUG(textures, out).print("assets loaded");
 }
 
 void Textures::cleanup() {

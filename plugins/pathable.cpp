@@ -26,7 +26,10 @@ namespace DFHack {
     DBG_DECLARE(pathable, log, DebugCategory::LINFO);
 }
 
+static std::vector<TexposHandle> textures;
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+    textures = Textures::loadTileset("hack/data/art/pathable.png", 32, 32);
     return CR_OK;
 }
 
@@ -44,10 +47,10 @@ static void paintScreenPathable(df::coord target, bool show_hidden = false) {
 
     long pathable_tile_texpos = init->load_bar_texpos[1];
     long unpathable_tile_texpos = init->load_bar_texpos[4];
-    long on_off_texpos = Textures::getAsset("hack/data/art/pathable.png", 0);
+    long on_off_texpos = Textures::getTexposByHandle(textures[0]);
     if (on_off_texpos > 0) {
         pathable_tile_texpos = on_off_texpos;
-        unpathable_tile_texpos = Textures::getAsset("hack/data/art/pathable.png", 1);
+        unpathable_tile_texpos = Textures::getTexposByHandle(textures[1]);
     }
 
     auto dims = Gui::getDwarfmodeViewDims().map();

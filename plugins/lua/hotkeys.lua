@@ -5,6 +5,8 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
+local textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
+
 local function get_command(cmdline)
     local first_word = cmdline:trim():split(' +')[1]
     if first_word:startswith(':') then first_word = first_word:sub(2) end
@@ -50,7 +52,6 @@ HotspotMenuWidget.ATTRS{
 
 function HotspotMenuWidget:init()
     self.mouseover = false
-    self.textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
 end
 
 function HotspotMenuWidget:overlay_onupdate()
@@ -71,7 +72,7 @@ local dscreen = dfhack.screen
 function HotspotMenuWidget:onRenderBody(dc)
     local x, y = dc.x, dc.y
     local tp = function(offset)
-        return dfhack.textures.getTexposByHandle(self.textures[offset])
+        return dfhack.textures.getTexposByHandle(textures[offset])
     end
 
     if tp(1) == -1 then

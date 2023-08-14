@@ -44,11 +44,6 @@ DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file,
 DFHACK_EXPORT long getTexposByHandle(TexposHandle handle);
 
 /**
- * Get texpos for static asset with index in tileset.
- */
-DFHACK_EXPORT long getAsset(const std::string asset, size_t index = 0);
-
-/**
  * Call this on DFHack init just once to setup interposed handlers and
  * init static assets.
  */

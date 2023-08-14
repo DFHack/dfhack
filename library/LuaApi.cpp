@@ -1720,7 +1720,6 @@ static int textures_loadTileset(lua_State *state)
 }
 
 static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
-    WRAPM(Textures, getAsset),
     WRAPM(Textures, getTexposByHandle),
     { NULL, NULL }
 };

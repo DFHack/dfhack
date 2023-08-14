@@ -912,32 +912,77 @@ local BASE_FRAME = {
     paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
-local function make_frame(name, double_line)
-    local tp = function(offset)
-        local texpos = dfhack.textures.getAsset('hack/data/art/border-'..name:lower()..'.png', offset)
-        return texpos >= 0 and texpos or nil
-    end
+local texpos_handles = {
+    green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12),
+    red_pin = dfhack.textures.loadTileset('hack/data/art/red-pin.png', 8, 12),
+    icons = dfhack.textures.loadTileset('hack/data/art/icons.png', 8, 12),
+    on_off = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12),
+    control_panel = dfhack.textures.loadTileset('hack/data/art/control-panel.png', 8, 12),
+    border_thin = dfhack.textures.loadTileset('hack/data/art/border-thin.png', 8, 12),
+    border_medium = dfhack.textures.loadTileset('hack/data/art/border-medium.png', 8, 12),
+    border_bold = dfhack.textures.loadTileset('hack/data/art/border-bold.png', 8, 12),
+    border_panel = dfhack.textures.loadTileset('hack/data/art/border-panel.png', 8, 12),
+    border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12),
+}
 
+function tp_border_thin(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.border_thin[offset])
+end
+function tp_border_medium(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.border_medium[offset])
+end
+function tp_border_bold(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.border_bold[offset])
+end
+function tp_border_panel(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.border_panel[offset])
+end
+function tp_border_window(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.border_window[offset])
+end
+function tp_control_panel(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.control_panel[offset])
+end
+
+local function make_frame(tp, double_line)
     local frame = copyall(BASE_FRAME)
-    frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.t_frame_pen = to_pen{ tile=tp(2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=tp(8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=tp(16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=tp(10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lt_frame_pen = to_pen{ tile=tp(1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=tp(15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=tp(3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=tp(17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
     return frame
 end
 
-FRAME_WINDOW = make_frame('Window', true)
-FRAME_PANEL = make_frame('Panel', false)
-FRAME_MEDIUM = make_frame('Medium', false)
-FRAME_BOLD = make_frame('Bold', true)
-FRAME_INTERIOR = make_frame('Thin', false)
-FRAME_INTERIOR.signature_pen = false
-FRAME_INTERIOR_MEDIUM = copyall(FRAME_MEDIUM)
-FRAME_INTERIOR_MEDIUM.signature_pen = false
+function FRAME_WINDOW(resizable)
+    local frame = make_frame(tp_border_window, true)
+    if not resizable then
+        frame.rb_frame_pen = to_pen{ tile=tp_border_panel(17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    end
+    return frame
+end
+function FRAME_PANEL(resizable)
+    return make_frame(tp_border_panel, false)
+end
+function FRAME_MEDIUM(resizable)
+    return make_frame(tp_border_medium, false)
+end
+function FRAME_BOLD(resizable)
+    return make_frame(tp_border_bold, true)
+end
+function FRAME_INTERIOR(resizable)
+    local frame = make_frame(tp_border_thin, false)
+    frame.signature_pen = false
+    return frame
+end
+function FRAME_INTERIOR_MEDIUM(resizable)
+    local frame = make_frame(tp_border_medium, false)
+    frame.signature_pen = false
+    return frame
+end
 
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = FRAME_PANEL
@@ -950,38 +995,16 @@ BOLD_FRAME = FRAME_BOLD
 INTERIOR_FRAME = FRAME_INTERIOR
 INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
 
--- for compatibility with dynamic textures
-local function choose_frame_style(style)
-    if style == FRAME_WINDOW or style == WINDOW_FRAME then return make_frame('Window', true) end
-    if style == FRAME_PANEL or style == GREY_LINE_FRAME or style == PANEL_FRAME then
-        return make_frame('Panel', true)
-    end
-    if style == FRAME_MEDIUM or style == MEDIUM_FRAME then return make_frame('Medium', true) end
-    if style == FRAME_BOLD then return make_frame('Bold', true) end
-    if style == FRAME_INTERIOR or style == INTERIOR_FRAME then
-        local frame = make_frame('Thin', true)
-        frame.signature_pen = false
-        return frame
-    end
-    if style == FRAME_INTERIOR_MEDIUM or style == INTERIOR_MEDIUM_FRAME then
-        local frame = make_frame('Medium', true)
-        frame.signature_pen = false
-        return frame
-    end
-end
-
 function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
-    style = choose_frame_style(style)
+    if type(style) == 'function' then
+        style = style(resizable)
+    end
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    local rb_frame_pen = style.rb_frame_pen
-    if rb_frame_pen == FRAME_WINDOW.rb_frame_pen and not resizable then
-        rb_frame_pen = FRAME_PANEL.rb_frame_pen
-    end
-    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
+    dscreen.paintTile(style.rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)

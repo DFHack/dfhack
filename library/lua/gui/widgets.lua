@@ -2191,6 +2191,8 @@ function FilteredList:setFilter(filter, pos)
             for _,key in ipairs(tokens) do
                 key = key:escape_pattern()
                 if key ~= '' then
+                    search_key = dfhack.toSearchNormalized(search_key)
+                    key = dfhack.toSearchNormalized(key)
                     if not self.case_sensitive then
                         search_key = string.lower(search_key)
                         key = string.lower(key)

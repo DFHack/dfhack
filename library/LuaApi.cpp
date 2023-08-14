@@ -161,6 +161,26 @@ static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int de
     return !nil;
 }
 
+template<class T>
+static bool get_int_or_closure_field(lua_State *L, T *pf, int idx, const char *name, int defval)
+{
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil) {
+        *pf = T(defval);
+    } else if (lua_isnumber(L, -1)) {
+        *pf = T(lua_tointeger(L, -1));
+    } else if (lua_isfunction(L, -1)) {
+        lua_call(L, 0, 1);
+        *pf = T(lua_tointeger(L, -1));
+        lua_pop(L, 1);
+    } else {
+        luaL_error(L, "Field %s is not a number or closure function.", name);
+    }
+    lua_pop(L, 1);
+    return !nil;
+}
+
 static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, char defval)
 {
     lua_getfield(L, idx, name);
@@ -207,7 +227,7 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
     else pen.bold = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
-    get_int_field(L, &pen.tile, idx, "tile", 0);
+    get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
     bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
     tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;

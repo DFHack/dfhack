@@ -912,6 +912,11 @@ local BASE_FRAME = {
     paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
+-- DFHack textures
+--------------------------
+
+-- Preloaded DFHack Asset
+-- Use this handles if you need to get dfhack standard textures
 local texpos_handles = {
     green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12),
     red_pin = dfhack.textures.loadTileset('hack/data/art/red-pin.png', 8, 12),
@@ -925,6 +930,22 @@ local texpos_handles = {
     border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12),
 }
 
+-- Mathods to obtain valid texposes by handles
+function tp_green_pin(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.green_pin[offset])
+end
+function tp_red_pin(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.red_pin[offset])
+end
+function tp_icons(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.icons[offset])
+end
+function tp_on_off(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.on_off[offset])
+end
+function tp_control_panel(offset)
+    return dfhack.textures.getTexposByHandle(texpos_handles.control_panel[offset])
+end
 function tp_border_thin(offset)
     return dfhack.textures.getTexposByHandle(texpos_handles.border_thin[offset])
 end
@@ -940,27 +961,25 @@ end
 function tp_border_window(offset)
     return dfhack.textures.getTexposByHandle(texpos_handles.border_window[offset])
 end
-function tp_control_panel(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.control_panel[offset])
-end
+
 
 local function make_frame(tp, double_line)
     local frame = copyall(BASE_FRAME)
-    frame.t_frame_pen = to_pen{ tile=tp(2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.l_frame_pen = to_pen{ tile=tp(8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.b_frame_pen = to_pen{ tile=tp(16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.r_frame_pen = to_pen{ tile=tp(10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lt_frame_pen = to_pen{ tile=tp(1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lb_frame_pen = to_pen{ tile=tp(15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rt_frame_pen = to_pen{ tile=tp(3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rb_frame_pen = to_pen{ tile=tp(17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.t_frame_pen = to_pen{ tile=curry(tp, 2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=curry(tp, 8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=curry(tp, 16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=curry(tp, 10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lt_frame_pen = to_pen{ tile=curry(tp, 1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=curry(tp, 15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=curry(tp, 3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=curry(tp, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
     return frame
 end
 
 function FRAME_WINDOW(resizable)
     local frame = make_frame(tp_border_window, true)
     if not resizable then
-        frame.rb_frame_pen = to_pen{ tile=tp_border_panel(17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+        frame.rb_frame_pen = to_pen{ tile=curry(tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
     end
     return frame
 end

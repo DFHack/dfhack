@@ -75,7 +75,7 @@ function HotspotMenuWidget:onRenderBody(dc)
         return dfhack.textures.getTexposByHandle(textures[offset])
     end
 
-    if tp(1) == -1 then
+    if tp(1) == nil then
         dscreen.paintString(COLOR_WHITE, x, y + 0, '!DF!')
         dscreen.paintString(COLOR_WHITE, x, y + 1, '!Ha!')
         dscreen.paintString(COLOR_WHITE, x, y + 2, '!ck!')

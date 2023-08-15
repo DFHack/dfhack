@@ -1380,6 +1380,13 @@ static void OpenModule(lua_State *state, const char *mname,
     lua_pop(state, 1);
 }
 
+static void OpenModule(lua_State *state, const char *mname, const luaL_Reg *reg2)
+{
+    luaL_getsubtable(state, lua_gettop(state), mname);
+    luaL_setfuncs(state, reg2, 0);
+    lua_pop(state, 1);
+}
+
 #define WRAPM(module, function) { #function, df::wrap_function(module::function,true) }
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
@@ -1750,10 +1757,6 @@ static int textures_getTexposByHandle(lua_State *state)
     }
     return 1;
 }
-
-static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
-    { NULL, NULL }
-};
 
 static const luaL_Reg dfhack_textures_funcs[] = {
     { "loadTileset", textures_loadTileset },
@@ -3727,7 +3730,7 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
-    OpenModule(state, "textures", dfhack_textures_module, dfhack_textures_funcs);
+    OpenModule(state, "textures", dfhack_textures_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);

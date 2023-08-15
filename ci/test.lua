@@ -247,6 +247,25 @@ local function load_test_config(config_file)
     return config
 end
 
+local function TestTable()
+    local inner = utils.OrderedTable()
+    local meta = copyall(getmetatable(inner))
+
+    function meta:__newindex(k, v)
+        if inner[k] then
+            error('Attempt to overwrite existing test: ' .. k)
+        elseif type(v) ~= 'function' then
+            error('Attempt to define test as non-function: ' .. k .. ' = ' .. tostring(v))
+        else
+            inner[k] = v
+        end
+    end
+
+    local self = {}
+    setmetatable(self, meta)
+    return self
+end
+
 -- we have to save and use the original dfhack.printerr here so our test harness
 -- output doesn't trigger its own dfhack.printerr usage detection (see
 -- detect_printerr below)
@@ -291,7 +310,7 @@ end
 
 local function build_test_env(path)
     local env = {
-        test = utils.OrderedTable(),
+        test = TestTable(),
         -- config values can be overridden in the test file to define
         -- requirements for the tests in that file
         config = {

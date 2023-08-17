@@ -91,7 +91,6 @@ jobs:
         with:
           repository: ${{ inputs.structures_ref && github.repository || 'DFHack/df-structures' }}
           ref: ${{ inputs.structures_ref }}
-          fetch_depth: 0
           path: library/xml
       - name: Fetch ccache
         if: inputs.platform-files

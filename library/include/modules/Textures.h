@@ -38,7 +38,7 @@ DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file,
 
 /**
  * Get texpos by handle.
- * Always use this function, if you need to get valid texpos for your texure.
+ * Always use this function, if you need to get valid texpos for your texture.
  * Texpos can change on game textures reset, but handle will be the same.
  */
 DFHACK_EXPORT long getTexposByHandle(TexposHandle handle);

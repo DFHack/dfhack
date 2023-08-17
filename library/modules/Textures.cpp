@@ -120,7 +120,7 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
     }
 
     DFSDL_FreeSurface(surface);
-    DEBUG(textures).print("loaded %i textures from '%s'\n", handles.size(), file.c_str());
+    DEBUG(textures).print("loaded %zd textures from '%s'\n", handles.size(), file.c_str());
 
     return handles;
 }

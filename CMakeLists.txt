@@ -227,7 +227,7 @@ if(UNIX)
     # default to hidden symbols
     # ensure compatibility with older CPUs
     add_definitions(-DLINUX_BUILD)
-    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")

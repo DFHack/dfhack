@@ -36,7 +36,7 @@ fi
 old_tty_settings=$(stty -g)
 
 # Now run
-export LD_LIBRARY_PATH="./hack/libs:./hack:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="./hack:$LD_LIBRARY_PATH"
 
 LIB="./hack/libdfhack.so"
 LIBSAN=""

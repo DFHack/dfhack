@@ -111,12 +111,22 @@ jobs:
           path: build/win64-cross/ccache
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
-        if: inputs.append-date-and-hash
+        if: inputs.artifact-name
         id: artifactname
-        run: echo "name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+        run: |
+          if test "false" = "${{ inputs.append-date-and-hash }}"; then
+            echo name=${{ inputs.artifact-name }} >> $GITHUB_OUTPUT
+          else
+            echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+          fi
+      - name: Prep artifact
+        if: inputs.artifact-name
+        run: |
+          cd build/win64-cross/output
+          tar cjf ../../../${{ steps.artifactname.outputs.name }}.tar.bz2 .
       - name: Upload artifact
         if: inputs.artifact-name
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.append-date-and-hash && steps.artifactname.outputs.name || inputs.artifact-name }}
-          path: build/win64-cross/output/*
+          name: ${{ steps.artifactname.outputs.name }}
+          path: ${{ steps.artifactname.outputs.name }}.tar.bz2

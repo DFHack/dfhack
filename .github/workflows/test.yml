@@ -110,11 +110,13 @@ jobs:
         mkdir -p ${{ env.DF_FOLDER }}/dfhack-config/init
         cd data/dfhack-config/init
         for fname in *.init; do touch ../../../${{ env.DF_FOLDER }}/dfhack-config/init/$fname; done
-    - name: Install DFHack
+    - name: Download DFHack
       uses: actions/download-artifact@v3
       with:
         name: test-${{ matrix.compiler }}
-        path: ${{ env.DF_FOLDER }}
+    - name: Install DFHack
+      shell: bash
+      run: tar xjf test-${{ matrix.compiler }}.tar.bz2 -C ${{ env.DF_FOLDER }}
     - name: Run lua tests
       timeout-minutes: 10
       run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"

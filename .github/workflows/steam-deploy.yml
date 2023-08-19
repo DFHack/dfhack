@@ -68,8 +68,16 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: steam
     steps:
-    - name: Stage depot files
+    - name: Download depot files
       uses: actions/download-artifact@v3
+    - name: Stage depot files
+      run: |
+        for name in common win64 linux64; do
+          cd ${name}-depot
+          tar xjf ${name}-depot.tar.bz2
+          rm ${name}-depot.tar.bz2
+          cd ..
+        done
     - name: Steam deploy
       uses: game-ci/steam-deploy@v3
       with:

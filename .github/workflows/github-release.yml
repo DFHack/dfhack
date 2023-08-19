@@ -28,6 +28,8 @@ jobs:
     permissions:
       contents: write
     steps:
+    - name: Install doc dependencies
+      run: pip install 'sphinx<4.4.0'
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:

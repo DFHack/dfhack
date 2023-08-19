@@ -33,6 +33,7 @@ jobs:
       cache-readonly: ${{ inputs.cache-readonly }}
       stonesense: true
       docs: true
+      launchdf: ${{ inputs.launchdf }}
     secrets: inherit
 
   package-linux:

@@ -36,6 +36,8 @@ fi
 old_tty_settings=$(stty -g)
 
 # Now run
+export LD_LIBRARY_PATH="./hack:$LD_LIBRARY_PATH"
+
 LIB="./hack/libdfhack.so"
 LIBSAN=""
 if which objdump > /dev/null; then
@@ -58,7 +60,7 @@ fi
 case "$1" in
   -g | --gdb)
     shift
-    echo "set exec-wrapper env LD_PRELOAD='$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
+    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
     gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./dwarfort "$@"
     rm gdbcmd.tmp
     ret=$?
@@ -71,7 +73,8 @@ case "$1" in
       echo "If your world gen name has spaces you need to remove spaces from the name in data/init/world_gen.txt"
       echo "****"
     fi
-    echo "set environment LD_PRELOAD $PRELOAD_LIB" > gdbcmd.tmp
+    echo "set environment LD_LIBRARY_PATH $LD_LIBRARY_PATH" > gdbcmd.tmp
+    echo "set environment LD_PRELOAD $PRELOAD_LIB" >> gdbcmd.tmp
     echo "set environment MALLOC_PERTURB_ 45" >> gdbcmd.tmp
     echo "set startup-with-shell off" >> gdbcmd.tmp
     echo "target extended-remote localhost:12345" >> gdbcmd.tmp

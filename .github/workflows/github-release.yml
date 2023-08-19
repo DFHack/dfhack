@@ -37,7 +37,10 @@ jobs:
         submodules: true
     - name: Get tag
       id: gettag
-      run: echo name=$(git describe --tags --abbrev=0 --exact-match) >> $GITHUB_OUTPUT
+      run: |
+        TAG=$(git describe --tags --abbrev=0 --exact-match)
+        echo name="$TAG" >> $GITHUB_OUTPUT
+        echo type=$(echo "$TAG" | egrep '-r[0-9]+$' && echo "release" || echo "prerelease") >> $GITHUB_OUTPUT
     - name: Generate release text
       run: |
         python docs/gen_changelog.py -a
@@ -73,5 +76,6 @@ jobs:
         omitDraftDuringUpdate: true
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
+        prerelease: ${{ steps.gettag.outputs.type == 'prerelease' }}
         replacesArtifacts: true
         tag: ${{ steps.gettag.outputs.name }}

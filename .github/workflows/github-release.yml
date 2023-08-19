@@ -51,16 +51,15 @@ jobs:
         cat release_body.md
     - name: Stage release
       uses: actions/download-artifact@v3
-    - name: Prep artifact directory
-      run: mkdir artifacts
-    - name: Create win64 release archive
+    - name: Prep artifacts
       run: |
+        mkdir artifacts
         cd dfhack-windows64-build
+        tar xjf dfhack-windows64-build.tar.bz2
+        rm dfhack-windows64-build.tar.bz2
         zip -qr ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Windows-64bit.zip .
-    - name: Create linux64 release archive
-      run: |
-        cd dfhack-linux64-build
-        tar cjf ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2 .
+        cd ../dfhack-linux64-build
+        mv dfhack-linux64-build.tar.bz2 ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2
     - name: Create or update GitHub release
       uses: ncipollo/release-action@v1
       with:

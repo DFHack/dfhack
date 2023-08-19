@@ -56,65 +56,72 @@ local function sort_noop(a, b)
     error('sort_noop should not be called')
 end
 
-local function sort_base(a, b)
+local function sort_by_race_desc(a, b)
     if a.data.race == b.data.race then
         return a.data.gender < b.data.gender
     end
     return a.data.race < b.data.race
 end
 
+local function sort_by_race_asc(a, b)
+    if a.data.race == b.data.race then
+        return a.data.gender < b.data.gender
+    end
+    return a.data.race > b.data.race
+end
+
 local function sort_by_name_desc(a, b)
     if a.search_key == b.search_key then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.search_key < b.search_key
 end
 
 local function sort_by_name_asc(a, b)
     if a.search_key == b.search_key then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.search_key > b.search_key
 end
 
 local function sort_by_gender_desc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.gender < b.data.gender
 end
 
 local function sort_by_gender_asc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.gender > b.data.gender
 end
 
 local function sort_by_disposition_desc(a, b)
     if a.data.disposition == b.data.disposition then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.disposition < b.data.disposition
 end
 
 local function sort_by_disposition_asc(a, b)
     if a.data.disposition == b.data.disposition then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.disposition > b.data.disposition
 end
 
 local function sort_by_status_desc(a, b)
     if a.data.status == b.data.status then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.status < b.data.status
 end
 
 local function sort_by_status_asc(a, b)
     if a.data.status == b.data.status then
-        return sort_base(a, b)
+        return sort_by_race_desc(a, b)
     end
     return a.data.status > b.data.status
 end
@@ -145,6 +152,8 @@ function AssignAnimal:init()
                 {label='disposition'..CH_UP, value=sort_by_disposition_asc},
                 {label='gender'..CH_DN, value=sort_by_gender_desc},
                 {label='gender'..CH_UP, value=sort_by_gender_asc},
+                {label='race'..CH_DN, value=sort_by_race_desc},
+                {label='race'..CH_UP, value=sort_by_race_asc},
                 {label='name'..CH_DN, value=sort_by_name_desc},
                 {label='name'..CH_UP, value=sort_by_name_asc},
             },
@@ -327,8 +336,19 @@ function AssignAnimal:init()
                     on_change=self:callback('refresh_list', 'sort_gender'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_name',
+                    view_id='sort_race',
                     frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2, w=5},
+                    options={
+                        {label='race', value=sort_noop},
+                        {label='race'..CH_DN, value=sort_by_race_desc},
+                        {label='race'..CH_UP, value=sort_by_race_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_race'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_name',
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2+7, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..CH_DN, value=sort_by_name_desc},
@@ -380,7 +400,7 @@ function AssignAnimal:refresh_list(sort_widget, sort_fn)
         self.subviews[sort_widget]:cycle()
         return
     end
-    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_disposition', 'sort_gender', 'sort_name'} do
+    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_disposition', 'sort_gender', 'sort_race', 'sort_name'} do
         self.subviews[widget_name]:setOption(sort_fn)
     end
     local list = self.subviews.list

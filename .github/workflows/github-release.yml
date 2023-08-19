@@ -3,7 +3,7 @@ name: Deploy to GitHub
 on:
   push:
     tags:
-    - '*-r[0-9]+'
+    - '*-r*'
 
   workflow_dispatch:
     inputs:
@@ -39,10 +39,12 @@ jobs:
     - name: Generate release text
       run: |
         python docs/gen_changelog.py -a
+        CHANGELOG_FILE=docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt
+        if ! test -f $CHANGELOG_FILE; then CHANGELOG_FILE=docs/changelogs/future-github.txt; fi
         TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
         head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
-        CHANGELOG_LINES=$(wc -l <docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt)
-        tail -n $((CHANGELOG_LINES - 3)) docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt >> release_body.md
+        CHANGELOG_LINES=$(wc -l <$CHANGELOG_FILE)
+        tail -n $((CHANGELOG_LINES - 3)) $CHANGELOG_FILE >> release_body.md
         tail -n 2 .github/release_template.md >> release_body.md
         cat release_body.md
     - name: Stage release

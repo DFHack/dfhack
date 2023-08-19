@@ -37,6 +37,7 @@ HotspotMenuWidget.ATTRS{
         'initial_prep',
         --'legends', -- conflicts with vanilla export button and info text
         'loadgame',
+        -- 'new_arena', -- conflicts with vanilla panel layouts
         -- 'new_region', -- conflicts with vanilla panel layouts
         'savegame',
         'setupdwarfgame',

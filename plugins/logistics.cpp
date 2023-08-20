@@ -392,14 +392,14 @@ public:
 
     bool is_designated(color_ostream& out, df::item* item) override {
         auto unit = get_caged_unit(item);
-        return unit && has_training_assignment(unit);
+        return unit && Units::isMarkedForTraining(unit);
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
         auto unit = get_caged_unit(item);
         return unit && !Units::isInvader(unit) &&
             Units::isTamable(unit) && !Units::isTame(unit) &&
-            !has_training_assignment(unit);
+            !Units::isMarkedForTraining(unit);
     }
 
     bool designate(color_ostream& out, df::item* item) override {
@@ -423,11 +423,6 @@ private:
         if (!gref)
             return NULL;
         return gref->getUnit();
-    }
-
-    static bool has_training_assignment(df::unit* unit) {
-        return binsearch_index(df::global::plotinfo->equipment.training_assignments,
-            &df::training_assignment::animal_id, unit->id) > -1;
     }
 };
 

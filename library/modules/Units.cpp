@@ -76,6 +76,7 @@ using namespace std;
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
 #include "df/syndrome.h"
+#include "df/training_assignment.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_relationship_type.h"
@@ -508,6 +509,38 @@ bool Units::isDomesticated(df::unit* unit)
         }
     }
     return tame;
+}
+
+static df::training_assignment * get_training_assignment(df::unit* unit) {
+    return binsearch_in_vector(df::global::plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, unit->id);
+}
+
+bool Units::isMarkedForTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return !!get_training_assignment(unit);
+}
+
+bool Units::isMarkedForTaming(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && !assignment->flags.bits.train_war && !assignment->flags.bits.train_hunt;
+}
+
+bool Units::isMarkedForWarTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && assignment->flags.bits.train_war;
+}
+
+bool Units::isMarkedForHuntTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && assignment->flags.bits.train_hunt;
 }
 
 bool Units::isMarkedForSlaughter(df::unit* unit)

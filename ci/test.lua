@@ -162,16 +162,19 @@ end
 local function ensure_title_screen()
     for i = 1, 100 do
         local scr = dfhack.gui.getCurViewscreen()
-        if is_title_screen(scr) then
+        if df.viewscreen_initial_prepst:is_instance(scr) then
+            delay(10000)
+        elseif is_title_screen(scr) then
             print('Found title screen')
             return
+        else
+            scr:feed_key(df.interface_key.LEAVESCREEN)
+            delay(10)
         end
-        scr:feed_key(df.interface_key.LEAVESCREEN)
-        delay(10)
         if i % 10 == 0 then print('Looking for title screen...') end
     end
     qerror(string.format('Could not find title screen (timed out at %s)',
-                         dfhack.gui.getCurFocus(true)))
+                         dfhack.gui.getCurFocus(true)[1]))
 end
 
 local function is_fortress(focus_string)

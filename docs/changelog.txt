@@ -29,6 +29,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
 
 ## Misc Improvements
 

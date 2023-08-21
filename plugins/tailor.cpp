@@ -186,6 +186,9 @@ public:
             }
             if (i->getWear() >= 1)
                 continue;
+            if (i->getMakerRace() < 0) // sometimes we get borked items with no valid maker race
+                continue;
+
             df::item_type t = i->getType();
             int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 

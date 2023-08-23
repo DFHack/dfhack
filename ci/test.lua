@@ -160,17 +160,29 @@ end
 -- has already loaded a fortress or is in any screen that can't get to the title
 -- screen by sending ESC keys.
 local function ensure_title_screen()
+    local start_ms = dfhack.getTickCount()
+    local prev_ms = start_ms
+    while df.viewscreen_initial_prepst:is_instance(dfhack.gui.getCurViewscreen()) do
+        delay(10)
+        -- wait up to 1 minute for the game to load and show the title screen
+        local now_ms = dfhack.getTickCount()
+        if now_ms - start_ms > 60000 then
+            qerror(('Could not find title screen (timed out at %s)'):format(
+                dfhack.gui.getCurFocus(true)[1]))
+        end
+        if now_ms - prev_ms > 1000 then
+            print('Waiting for game to load and show title screen...')
+            prev_ms = now_ms
+        end
+    end
     for i = 1, 100 do
         local scr = dfhack.gui.getCurViewscreen()
-        if df.viewscreen_initial_prepst:is_instance(scr) then
-            delay(10000)
-        elseif is_title_screen(scr) then
+        if is_title_screen(scr) then
             print('Found title screen')
             return
-        else
-            scr:feed_key(df.interface_key.LEAVESCREEN)
-            delay(10)
         end
+        scr:feed_key(df.interface_key.LEAVESCREEN)
+        delay(10)
         if i % 10 == 0 then print('Looking for title screen...') end
     end
     qerror(string.format('Could not find title screen (timed out at %s)',

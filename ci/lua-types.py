@@ -1965,7 +1965,7 @@ def parse_tag(el: ET.Element) -> Iterable[str]:
             yield f"-- SKIPPED TAG {el.tag}"
 
 
-def line(intend: int, text: str) -> str:
+def line(text: str, intend: int = 0) -> str:
     prefix = "".join(" " * intend)
     return f"{prefix}{text}\n"
 
@@ -1973,58 +1973,35 @@ def line(intend: int, text: str) -> str:
 def field(name: str, type: str, comment: str = "", intend: int = 0) -> str:
     if comment != "":
         comment = " " + comment
-    return line(0, "---@field " + name + " " + type + comment)
+    return line("---@field " + name + " " + type + comment)
 
 
 def base_type(type: str) -> str:
-    if type in ["int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"]:
-        return "integer"
-    if type in ["stl-string", "static-string", "ptr-string"]:
-        return "string"
-    if type in ["s-float", "d-float", "long", "ulong"]:
-        return "number"
-    if type in ["bool"]:
-        return "boolean"
-    if type in ["pointer", "padding"]:
-        return "integer"  # or what?
-    if type in ["stl-bit-vector"]:
-        return "boolean[]"
-    return type
+    match type:
+        case "int8_t" | "uint8_t" | "int16_t" | "uint16_t" | "int32_t" | "uint32_t" | "int64_t" | "uint64_t" | "size_t":
+            return "integer"
+        case "stl-string" | "static-string" | "ptr-string":
+            return "string"
+        case "s-float" | "d-float" | "long" | "ulong":
+            return "number"
+        case "bool":
+            return "boolean"
+        case "pointer" | "padding":
+            return "integer"  # or what?
+        case "stl-bit-vector":
+            return "boolean[]"
+        case _:
+            return type
+
+
+def fetch_name(el: ET.Element, options: list[str], default: str = "WTF_UNKNOWN_NAME") -> str:
+    for item in options:
+        if item in el.attrib:
+            return el.attrib[item]
+    return default
 
 
 def fetch_type(el: ET.Element, prefix: str) -> str:
-    if el.tag == "df-flagarray":
-        return (el.attrib["index-enum"] if "index-enum" in el.attrib else "any") + "[]"
-    if el.tag == "pointer" and "is-array" in el.attrib:
-        return "any[]"
-    if el.tag == "stl-vector" or el.tag == "static-array":
-        if "type-name" in el.attrib:
-            return base_type(el.attrib["type-name"]) + "[]"
-        elif "pointer-type" in el.attrib:
-            return base_type(el.attrib["pointer-type"]) + "[]"
-        else:
-            return "any[]"
-    if el.tag == "compound":
-        if "type-name" in el.attrib:
-            return el.attrib["type-name"]
-        if "pointer-type" in el.attrib:
-            return el.attrib["pointer-type"]
-        if "is-union" in el.attrib and el.attrib["is-union"] == "true":
-            t: list[str] = []
-            for child in el:
-                t.append(base_type(child.attrib["type-name"] if "type-name" in child.attrib else child.tag))
-            if t.__len__() > 0:
-                return " | ".join(t)
-        else:
-            return (
-                prefix + "_" + el.attrib["name"]
-                if "name" in el.attrib
-                else el.attrib["type-name"]
-                if "type-name" in el.attrib
-                else "unknown"
-            )
-    if el.tag == "bitfield":
-        return "bitfield"
     type = (
         el.attrib["type-name"]
         if "type-name" in el.attrib
@@ -2033,7 +2010,34 @@ def fetch_type(el: ET.Element, prefix: str) -> str:
         else el.tag
     )
 
-    return base_type(type)
+    match el.tag:
+        case "df-flagarray":
+            return (el.attrib["index-enum"] if "index-enum" in el.attrib else "any") + "[]"
+        case "pointer":
+            return "any[]" if "is-array" in el.attrib else base_type(type)
+        case "stl-vector" | "static-array":
+            if "type-name" in el.attrib:
+                return base_type(el.attrib["type-name"]) + "[]"
+            elif "pointer-type" in el.attrib:
+                return base_type(el.attrib["pointer-type"]) + "[]"
+            else:
+                return "any[]"
+        case "bitfield":
+            return "bitfield"
+        case "compound":
+            if "type-name" in el.attrib:
+                return el.attrib["type-name"]
+            if "pointer-type" in el.attrib:
+                return el.attrib["pointer-type"]
+            if "is-union" in el.attrib and el.attrib["is-union"] == "true":
+                t: list[str] = []
+                for child in el:
+                    t.append(base_type(child.attrib["type-name"] if "type-name" in child.attrib else child.tag))
+                return " | ".join(t) if t.__len__() > 0 else base_type(type)
+            else:
+                return prefix + "_" + fetch_name(el, ["name", "type-name"], "unknown")
+        case _:
+            return base_type(type)
 
 
 def fetch_comment(el: ET.Element) -> str:
@@ -2056,7 +2060,7 @@ def fetch_union_name(el: ET.Element) -> str:
 
 
 def enum(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
-    name: str = el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"]
+    name = fetch_name(el, ["name", "type-name"])
     if parent != "":
         name = f"{parent}_{name}"
     if name in DF_GLOBAL:
@@ -2072,17 +2076,15 @@ def enum(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
             shift = int(child.attrib["value"])
         comment = " -- " + child.attrib["comment"] if "comment" in child.attrib else ""
         if "name" in child.attrib:
-            s += line(4, child.attrib["name"] + f" = {i + shift},{comment}")
+            s += line(child.attrib["name"] + f" = {i + shift},{comment}", 4)
         else:
-            s += line(4, f"unk_{i} = {i + shift},")
+            s += line(f"unk_{i} = {i + shift},", 4)
     s += "}\n"
     return s
 
 
 def struct(el: ET.Element, name_prefix: str = "", prefix: str = "df.") -> list[str]:
-    parent_name: str = (
-        el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"] if "type-name" in el.attrib else "WTF"
-    )
+    parent_name = fetch_name(el, ["name", "type-name"])
     if name_prefix != "":
         parent_name = f"{name_prefix}_{parent_name}"
     if parent_name in DF_GLOBAL:
@@ -2103,7 +2105,7 @@ def struct(el: ET.Element, name_prefix: str = "", prefix: str = "df.") -> list[s
             or type == "comment"
         ):
             continue
-        name = child.attrib["name"] if "name" in child.attrib else f"unnamed_{parent_name}_{index}"
+        name = fetch_name(child, ["name"], f"unnamed_{parent_name}_{index}")
         if child.tag == "virtual-methods":
             for g in child:
                 out.append(vmethod(g, f"{prefix}{parent_name}"))
@@ -2146,45 +2148,37 @@ def struct(el: ET.Element, name_prefix: str = "", prefix: str = "df.") -> list[s
 
 
 def global_object(el: ET.Element) -> str:
-    name: str = (
-        el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"] if "type-name" in el.attrib else "WTF"
-    )
-    type: str
-    if el.__len__() == 0:
-        type = fetch_type(el, "")
-    else:
-        type = fetch_type(el[0], "")
+    name = fetch_name(el, ["name", "type-name"])
+    if el.__len__() > 0:
+        el = el[0]
+    type = fetch_type(el, "")
     return f"---@type {type}\ndf.global.{name} = nil\n"
 
 
 def bitfield(el: ET.Element) -> str:
-    name: str = (
-        el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"] if "type-name" in el.attrib else "WTF"
-    )
+    name = fetch_name(el, ["name", "type-name"])
     return f"---@alias {name} bitfield\n"
 
 
 def df_linked_list_type(el: ET.Element) -> str:
-    name: str = (
-        el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"] if "type-name" in el.attrib else "WTF"
-    )
+    name = fetch_name(el, ["name", "type-name"])
     return f"---@alias {name} {el.attrib['item-type']}[]\n"
 
 
-def df_other_vectors_type(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
-    el_name: str = el.attrib["name"] if "name" in el.attrib else el.attrib["type-name"]
-    s: str = f"---@class {el_name}\n"
+def df_other_vectors_type(el: ET.Element, parent_name: str = "", prefix: str = "df.") -> str:
+    el_name = fetch_name(el, ["name", "type-name"])
+    s = f"---@class {el_name}\n"
     for index, child in enumerate(el, start=0):
-        name = child.attrib["name"] if "name" in child.attrib else f"unnamed_{index}"
+        name = fetch_name(child, ["name"], f"unnamed_{index}")
         if child.tag != "stl-vector":
             s += "UNKNOWN VECTOR FIELD"
         else:
-            s += field(name, fetch_type(child, parent), fetch_comment(child))
+            s += field(name, fetch_type(child, parent_name), fetch_comment(child))
     return s
 
 
 def vmethod(el: ET.Element, glob: str) -> str:
-    name = el.attrib["name"] if "name" in el.attrib else "unnamed_method"
+    name = fetch_name(el, ["name"], "unnamed_method")
     ret = el.attrib["ret-type"] if "ret-type" in el.attrib else ""
     args: list[tuple[str, str]] = []
     for i, child in enumerate(el):

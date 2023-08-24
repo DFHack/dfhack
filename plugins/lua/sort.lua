@@ -224,8 +224,8 @@ local function melee_potential(unit)
     local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
     -- strength/bodysize is a dirty approximation of momentum formula
-    local rating = 10000*strength/bodySize + strength*4 + agility*3 + toughness 
-    + endurance + recuperation/3 + diseaseResistance/3 
+    local rating = 10000*strength/bodySize + strength*4 + agility*3 + toughness
+    + endurance + recuperation/3 + diseaseResistance/3
     + kinestheticSense*3 + willpower/2 + spatialSense/2 + focus/4
     return rating
 end
@@ -277,7 +277,7 @@ local function ranged_potential(unit)
     local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
     local rating = strength + agility*4 + toughness + endurance + recuperation/2
-    + diseaseResistance/2 - bodySize/2 
+    + diseaseResistance/2 - bodySize/2
     + kinestheticSense + willpower + spatialSense*3 + focus
     return rating
 end
@@ -338,16 +338,16 @@ local function mental_stability(unit)
     local SKILL = setbelief.getUnitBelief(unit, df.value_type['SKILL'])
 
     -- Calculate the rating using the defined variables
-    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05) 
-                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24) 
-                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13) 
-                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06) 
-                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14) 
-                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13) 
-                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07) 
-                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20) 
+    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05)
+                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24)
+                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13)
+                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06)
+                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14)
+                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13)
+                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07)
+                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20)
                  + (TOLERANT * -0.11)
-    
+
     return rating
 end
 

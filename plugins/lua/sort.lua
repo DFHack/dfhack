@@ -5,6 +5,8 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
+local setbelief = reqscript("modtools/set-belief")
+
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
 
@@ -71,6 +73,28 @@ local function sort_by_migrant_wave_asc(unit_id_1, unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
     return utils.compare(unit1.id, unit2.id)
+end
+
+local function sort_by_stress_desc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local happiness1 = unit1.status.current_soul.personality.stress
+    local happiness2 = unit2.status.current_soul.personality.stress
+    return utils.compare(happiness2, happiness1)
+end
+
+local function sort_by_stress_asc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local happiness1 = unit1.status.current_soul.personality.stress
+    local happiness2 = unit2.status.current_soul.personality.stress
+    return utils.compare(happiness1, happiness2)
 end
 
 local function get_skill(unit_id, skill, unit)
@@ -181,6 +205,181 @@ local function make_sort_by_skill_asc(sort_skill)
     end
 end
 
+-- Heuristic rating that is bigger for more potent dwarves in long run melee military training
+-- Wounds are not considered!
+local function melee_potential(unit)
+    -- Physical attributes
+    local strength = unit.body.physical_attrs.STRENGTH.max_value
+    local agility = unit.body.physical_attrs.AGILITY.max_value
+    local toughness = unit.body.physical_attrs.TOUGHNESS.max_value
+    local endurance = unit.body.physical_attrs.ENDURANCE.max_value
+    local recuperation = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.RECUPERATION)
+    local diseaseResistance = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.DISEASE_RESISTANCE)
+    local bodySize = unit.body.size_info.size_base
+
+    -- Mental attributes
+    local focus = unit.status.current_soul.mental_attrs.FOCUS.max_value
+    local willpower = unit.status.current_soul.mental_attrs.WILLPOWER.max_value
+    local spatialSense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
+    local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
+
+    -- strength/bodysize is a dirty approximation of momentum formula
+    local rating = 10000*strength/bodySize + strength*4 + agility*3 + toughness 
+    + endurance + recuperation/3 + diseaseResistance/3 
+    + kinestheticSense*3 + willpower/2 + spatialSense/2 + focus/4
+    return rating
+end
+
+local function sort_by_melee_potential_desc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = melee_potential(unit1)
+    local rating2 = melee_potential(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_desc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating2, rating1)
+end
+
+local function sort_by_melee_potential_asc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = melee_potential(unit1)
+    local rating2 = melee_potential(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_asc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating1, rating2)
+end
+
+-- Heuristic rating that is bigger for more potent dwarves in long run ranged military training
+-- Wounds are not considered!
+local function ranged_potential(unit)
+    -- Physical attributes
+    local strength = unit.body.physical_attrs.STRENGTH.max_value
+    local agility = unit.body.physical_attrs.AGILITY.max_value
+    local toughness = unit.body.physical_attrs.TOUGHNESS.max_value
+    local endurance = unit.body.physical_attrs.ENDURANCE.max_value
+    local recuperation = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.RECUPERATION)
+    local diseaseResistance = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.DISEASE_RESISTANCE)
+    local bodySize = unit.body.size_info.size_base
+
+    -- Mental attributes
+    local focus = unit.status.current_soul.mental_attrs.FOCUS.max_value
+    local willpower = unit.status.current_soul.mental_attrs.WILLPOWER.max_value
+    local spatialSense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
+    local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
+
+    local rating = strength + agility*4 + toughness + endurance + recuperation/2
+    + diseaseResistance/2 - bodySize/2 
+    + kinestheticSense + willpower + spatialSense*3 + focus
+    return rating
+end
+
+local function sort_by_ranged_potential_desc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = ranged_potential(unit1)
+    local rating2 = ranged_potential(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_desc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating2, rating1)
+end
+
+local function sort_by_ranged_potential_asc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = ranged_potential(unit1)
+    local rating2 = ranged_potential(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_asc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating1, rating2)
+end
+
+-- Statistical rating that is bigger for dwarves that are mentally stable
+local function mental_stability(unit)
+    local ALTRUISM = unit.status.current_soul.personality.traits.ALTRUISM
+    local ANXIETY_PROPENSITY = unit.status.current_soul.personality.traits.ANXIETY_PROPENSITY
+    local BRAVERY = unit.status.current_soul.personality.traits.BRAVERY
+    local CHEER_PROPENSITY = unit.status.current_soul.personality.traits.CHEER_PROPENSITY
+    local CURIOUS = unit.status.current_soul.personality.traits.CURIOUS
+    local DISCORD = unit.status.current_soul.personality.traits.DISCORD
+    local DUTIFULNESS = unit.status.current_soul.personality.traits.DUTIFULNESS
+    local EMOTIONALLY_OBSESSIVE = unit.status.current_soul.personality.traits.EMOTIONALLY_OBSESSIVE
+    local HUMOR = unit.status.current_soul.personality.traits.HUMOR
+    local LOVE_PROPENSITY = unit.status.current_soul.personality.traits.LOVE_PROPENSITY
+    local PERSEVERENCE = unit.status.current_soul.personality.traits.PERSEVERENCE
+    local POLITENESS = unit.status.current_soul.personality.traits.POLITENESS
+    local PRIVACY = unit.status.current_soul.personality.traits.PRIVACY
+    local STRESS_VULNERABILITY = unit.status.current_soul.personality.traits.STRESS_VULNERABILITY
+    local TOLERANT = unit.status.current_soul.personality.traits.TOLERANT
+
+    local CRAFTSMANSHIP = setbelief.getUnitBelief(unit, df.value_type['CRAFTSMANSHIP'])
+    local FAMILY = setbelief.getUnitBelief(unit, df.value_type['FAMILY'])
+    local HARMONY = setbelief.getUnitBelief(unit, df.value_type['HARMONY'])
+    local INDEPENDENCE = setbelief.getUnitBelief(unit, df.value_type['INDEPENDENCE'])
+    local KNOWLEDGE = setbelief.getUnitBelief(unit, df.value_type['KNOWLEDGE'])
+    local LEISURE_TIME = setbelief.getUnitBelief(unit, df.value_type['LEISURE_TIME'])
+    local NATURE = setbelief.getUnitBelief(unit, df.value_type['NATURE'])
+    local SKILL = setbelief.getUnitBelief(unit, df.value_type['SKILL'])
+
+    -- Calculate the rating using the defined variables
+    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05) 
+                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24) 
+                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13) 
+                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06) 
+                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14) 
+                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13) 
+                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07) 
+                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20) 
+                 + (TOLERANT * -0.11)
+    
+    return rating
+end
+
+
+local function sort_by_mental_stability_desc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = mental_stability(unit1)
+    local rating2 = mental_stability(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_desc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating2, rating1)
+end
+
+local function sort_by_mental_stability_asc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = mental_stability(unit1)
+    local rating2 = mental_stability(unit2)
+    if rating1 == rating2 then
+        return sort_by_name_asc(unit_id_1, unit_id_2)
+    end
+    return utils.compare(rating1, rating2)
+end
+
 local SORT_FNS = {
     sort_by_any_melee_desc=make_sort_by_skill_list_desc(MELEE_WEAPON_SKILLS),
     sort_by_any_melee_asc=make_sort_by_skill_list_asc(MELEE_WEAPON_SKILLS),
@@ -211,7 +410,7 @@ SquadAssignmentOverlay.ATTRS{
     default_pos={x=-33, y=40},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=63, h=7},
+    frame={w=74, h=9},
     frame_style=gui.FRAME_PANEL,
     frame_background=gui.CLEAR_PEN,
 }
@@ -236,6 +435,8 @@ function SquadAssignmentOverlay:init()
                 {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
                 {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
                 {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
+                {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
+                {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
                 {label='axe skill'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
                 {label='axe skill'..CH_UP, value=SORT_FNS.sort_by_axe_asc, pen=COLOR_YELLOW},
                 {label='sword skill'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
@@ -248,6 +449,12 @@ function SquadAssignmentOverlay:init()
                 {label='spear skill'..CH_UP, value=SORT_FNS.sort_by_spear_asc, pen=COLOR_YELLOW},
                 {label='crossbow skill'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
                 {label='crossbow skill'..CH_UP, value=SORT_FNS.sort_by_crossbow_asc, pen=COLOR_YELLOW},
+                {label='melee potential'..CH_DN, value=sort_by_melee_potential_desc, pen=COLOR_GREEN},
+                {label='melee potential'..CH_UP, value=sort_by_melee_potential_asc, pen=COLOR_YELLOW},
+                {label='ranged potential'..CH_DN, value=sort_by_ranged_potential_desc, pen=COLOR_GREEN},
+                {label='ranged potential'..CH_UP, value=sort_by_ranged_potential_asc, pen=COLOR_YELLOW},
+                {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
+                {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
             },
             initial_option=SORT_FNS.sort_by_any_melee_desc,
             on_change=self:callback('refresh_list', 'sort'),
@@ -309,7 +516,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_migrant_wave',
-                    frame={t=0, l=48, w=13},
+                    frame={t=0, l=49, w=13},
                     options={
                         {label='migrant wave', value=sort_noop},
                         {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
@@ -317,6 +524,17 @@ function SquadAssignmentOverlay:init()
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_migrant_wave'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_stress',
+                    frame={t=0, l=65, w=7},
+                    options={
+                        {label='stress', value=sort_noop},
+                        {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
+                        {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_stress'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_axe',
@@ -383,6 +601,39 @@ function SquadAssignmentOverlay:init()
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_crossbow'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_melee_potential',
+                    frame={t=4, l=2, w=16},
+                    options={
+                        {label='melee potential', value=sort_noop},
+                        {label='melee potential'..CH_DN, value=sort_by_melee_potential_desc, pen=COLOR_GREEN},
+                        {label='melee potential'..CH_UP, value=sort_by_melee_potential_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_melee_potential'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_ranged_potential',
+                    frame={t=4, l=21, w=17},
+                    options={
+                        {label='ranged potential', value=sort_noop},
+                        {label='ranged potential'..CH_DN, value=sort_by_ranged_potential_desc, pen=COLOR_GREEN},
+                        {label='ranged potential'..CH_UP, value=sort_by_ranged_potential_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_ranged_potential'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_mental_stability',
+                    frame={t=4, l=41, w=17},
+                    options={
+                        {label='mental stability', value=sort_noop},
+                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
+                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_mental_stability'),
                 },
             }
         },
@@ -454,12 +705,16 @@ local SORT_WIDGET_NAMES = {
     'sort_leadership',
     'sort_name',
     'sort_migrant_wave',
+    'sort_stress',
     'sort_axe',
     'sort_sword',
     'sort_mace',
     'sort_hammer',
     'sort_spear',
     'sort_crossbow',
+    'sort_melee_potential',
+    'sort_ranged_potential',
+    'sort_mental_stability',
 }
 
 function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
@@ -555,3 +810,4 @@ make_sort_order = utils.make_sort_order
 ]]
 
 return _ENV
+

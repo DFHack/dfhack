@@ -1971,8 +1971,6 @@ def line(text: str, intend: int = 0) -> str:
 
 
 def field(name: str, type: str, comment: str = "", intend: int = 0) -> str:
-    if comment != "":
-        comment = " " + comment
     return line("---@field " + name + " " + type + comment)
 
 
@@ -2046,7 +2044,8 @@ def fetch_comment(el: ET.Element) -> str:
         s.append(el.attrib["comment"])
     if "since" in el.attrib:
         s.append("since " + el.attrib["since"])
-    return ", ".join(s)
+    out = ", ".join(s)
+    return " " + out if out != "" else ""
 
 
 def fetch_union_name(el: ET.Element) -> str:
@@ -2065,7 +2064,8 @@ def enum(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
         name = f"{parent}_{name}"
     if name in DF_GLOBAL:
         prefix = "df.global."
-    s: str = f"---@enum {name}\n"
+    comment = fetch_comment(el)
+    s: str = f"---@enum {name}{comment}\n"
     s += f"{prefix}{name} = {{\n"
     shift = 1
     for i, child in enumerate(el, start=0):
@@ -2090,8 +2090,8 @@ def struct(el: ET.Element, name_prefix: str = "", prefix: str = "df.") -> list[s
     if parent_name in DF_GLOBAL:
         prefix = "df.global."
 
-    s: str = ""
-    s += f"---@class {parent_name}\n"
+    comment = fetch_comment(el)
+    s = f"---@class {parent_name}{comment}\n"
     if "inherits-from" in el.attrib:
         s += f"-- inherit {el.attrib['inherits-from']}\n"
     out: list[str] = []
@@ -2148,26 +2148,30 @@ def struct(el: ET.Element, name_prefix: str = "", prefix: str = "df.") -> list[s
 
 
 def global_object(el: ET.Element) -> str:
+    comment = fetch_comment(el)
     name = fetch_name(el, ["name", "type-name"])
     if el.__len__() > 0:
         el = el[0]
     type = fetch_type(el, "")
-    return f"---@type {type}\ndf.global.{name} = nil\n"
+    return f"---@type {type}{comment}\ndf.global.{name} = nil\n"
 
 
 def bitfield(el: ET.Element) -> str:
+    comment = fetch_comment(el)
     name = fetch_name(el, ["name", "type-name"])
-    return f"---@alias {name} bitfield\n"
+    return f"---@alias {name} bitfield{comment}\n"
 
 
 def df_linked_list_type(el: ET.Element) -> str:
+    comment = fetch_comment(el)
     name = fetch_name(el, ["name", "type-name"])
-    return f"---@alias {name} {el.attrib['item-type']}[]\n"
+    return f"---@alias {name} {el.attrib['item-type']}[]{comment}\n"
 
 
 def df_other_vectors_type(el: ET.Element, parent_name: str = "", prefix: str = "df.") -> str:
+    comment = fetch_comment(el)
     el_name = fetch_name(el, ["name", "type-name"])
-    s = f"---@class {el_name}\n"
+    s = f"---@class {el_name}{comment}\n"
     for index, child in enumerate(el, start=0):
         name = fetch_name(child, ["name"], f"unnamed_{index}")
         if child.tag != "stl-vector":
@@ -2178,6 +2182,7 @@ def df_other_vectors_type(el: ET.Element, parent_name: str = "", prefix: str = "
 
 
 def vmethod(el: ET.Element, glob: str) -> str:
+    comment = fetch_comment(el)
     name = fetch_name(el, ["name"], "unnamed_method")
     ret = el.attrib["ret-type"] if "ret-type" in el.attrib else ""
     args: list[tuple[str, str]] = []
@@ -2202,7 +2207,7 @@ def vmethod(el: ET.Element, glob: str) -> str:
     if ret != "":
         s += f"---@return {base_type(ret)}\n"
 
-    s += f"function {glob}.{name}({', '.join(params)}) end\n"
+    s += f"function {glob}.{name}({', '.join(params)}) end{' --' + comment if comment != '' else ''}\n"
 
     return s
 

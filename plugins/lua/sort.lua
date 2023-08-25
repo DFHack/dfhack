@@ -269,7 +269,7 @@ local function ranged_potential(unit)
     local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
     -- Ranged potential formula
-    local rating = agility*3.9 + kinestheticSense*3 + spatialSense*2.9 + toughness*0.9 
+    local rating = agility*3.9 + kinestheticSense*3 + spatialSense*2.9 + toughness*0.9
     + focus*0.7 + endurance*0.7 + willpower*0.6
     return rating
 end

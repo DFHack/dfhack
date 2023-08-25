@@ -205,7 +205,7 @@ local function make_sort_by_skill_asc(sort_skill)
     end
 end
 
--- Heuristic rating that is bigger for more potent dwarves in long run melee military training
+-- Statistical rating that is bigger for more potent dwarves in long run melee military training
 -- Wounds are not considered!
 local function melee_potential(unit)
     -- Physical attributes
@@ -213,20 +213,16 @@ local function melee_potential(unit)
     local agility = unit.body.physical_attrs.AGILITY.max_value
     local toughness = unit.body.physical_attrs.TOUGHNESS.max_value
     local endurance = unit.body.physical_attrs.ENDURANCE.max_value
-    local recuperation = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.RECUPERATION)
-    local diseaseResistance = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.DISEASE_RESISTANCE)
     local bodySize = unit.body.size_info.size_base
 
     -- Mental attributes
-    local focus = unit.status.current_soul.mental_attrs.FOCUS.max_value
     local willpower = unit.status.current_soul.mental_attrs.WILLPOWER.max_value
     local spatialSense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
     local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
-    -- strength/bodysize is a dirty approximation of momentum formula
-    local rating = 10000*strength/bodySize + strength*4 + agility*3 + toughness 
-    + endurance + recuperation/3 + diseaseResistance/3 
-    + kinestheticSense*3 + willpower/2 + spatialSense/2 + focus/4
+    -- Melee potential rating
+    local rating = strength*5.8 + kinestheticSense*3.7 + bodySize*2 + agility*2 + endurance*1.8
+    + willpower*1.5 * spatialSense*1.5 + toughness*1.5
     return rating
 end
 
@@ -258,17 +254,13 @@ local function sort_by_melee_potential_asc(unit_id_1, unit_id_2)
     return utils.compare(rating1, rating2)
 end
 
--- Heuristic rating that is bigger for more potent dwarves in long run ranged military training
+-- Statistical rating that is bigger for more potent dwarves in long run ranged military training
 -- Wounds are not considered!
 local function ranged_potential(unit)
     -- Physical attributes
-    local strength = unit.body.physical_attrs.STRENGTH.max_value
     local agility = unit.body.physical_attrs.AGILITY.max_value
     local toughness = unit.body.physical_attrs.TOUGHNESS.max_value
     local endurance = unit.body.physical_attrs.ENDURANCE.max_value
-    local recuperation = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.RECUPERATION)
-    local diseaseResistance = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.DISEASE_RESISTANCE)
-    local bodySize = unit.body.size_info.size_base
 
     -- Mental attributes
     local focus = unit.status.current_soul.mental_attrs.FOCUS.max_value
@@ -276,9 +268,9 @@ local function ranged_potential(unit)
     local spatialSense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
     local kinestheticSense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
-    local rating = strength + agility*4 + toughness + endurance + recuperation/2
-    + diseaseResistance/2 - bodySize/2 
-    + kinestheticSense + willpower + spatialSense*3 + focus
+    -- Ranged potential formula
+    local rating = agility*3.9 + kinestheticSense*3 + spatialSense*2.9 + toughness*0.9 
+    + focus*0.7 + endurance*0.7 + willpower*0.6
     return rating
 end
 

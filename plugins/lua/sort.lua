@@ -330,16 +330,16 @@ local function mental_stability(unit)
     local SKILL = setbelief.getUnitBelief(unit, df.value_type['SKILL'])
 
     -- Calculate the rating using the defined variables
-    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05) 
-                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24) 
-                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13) 
-                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06) 
-                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14) 
-                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13) 
-                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07) 
-                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20) 
+    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05)
+                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24)
+                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13)
+                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06)
+                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14)
+                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13)
+                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07)
+                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20)
                  + (TOLERANT * -0.11)
-    
+
     return rating
 end
 

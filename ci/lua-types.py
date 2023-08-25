@@ -2073,7 +2073,7 @@ def enum(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
             shift -= 1
             continue
         if "value" in child.attrib:
-            shift = int(child.attrib["value"])
+            shift = int(child.attrib["value"]) - i
         comment = " -- " + child.attrib["comment"] if "comment" in child.attrib else ""
         if "name" in child.attrib:
             s += line(child.attrib["name"] + f" = {i + shift},{comment}", 4)

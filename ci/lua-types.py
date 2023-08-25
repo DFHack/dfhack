@@ -2067,7 +2067,7 @@ def enum(el: ET.Element, parent: str = "", prefix: str = "df.") -> str:
     comment = fetch_comment(el)
     s: str = f"---@enum {name}{comment}\n"
     s += f"{prefix}{name} = {{\n"
-    shift = 1
+    shift = 0
     for i, child in enumerate(el, start=0):
         if child.tag != "enum-item":
             shift -= 1

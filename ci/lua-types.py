@@ -2281,11 +2281,12 @@ PATH_DFHACK_OUTPUT = "./types/library/dfhack.lua"
 PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)"
 PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)"
 PATTERN_WRAPN = r"WRAPN\((.+), (.+)\)"
-PATTERN_MODULE_ARRAY = r"dfhack_\w+_module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
-PATTERN_LFUNC_ARRAY = r"dfhack_\w+_funcs\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
+PATTERN_WRAP = r"WRAP\((.+)\),"
+PATTERN_MODULE_ARRAY = r"dfhack_[\w+_]*module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
+PATTERN_LFUNC_ARRAY = r"dfhack_[\w+_]*funcs\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
 PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}"
 PATTERN_SIGNATURE = r"^([\w::<>]+).+?\((.*)?\)"
-PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}.*?\)[\s\n\w]+\{"
+PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 
 
 @dataclass
@@ -2324,7 +2325,6 @@ def parse_luaapi() -> Iterable[Entry]:
         data = file.read()
         arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
         wrappers = [WRAPM, WRAPN, CWRAP, LFUN]
-
         for array_pattern in arrays:
             for array in re.finditer(array_pattern, data):
                 for wrapper in wrappers:
@@ -2335,14 +2335,35 @@ def parse_luaapi() -> Iterable[Entry]:
                             item.decoded_sig = decode_signature(item.sig)
                             if item.decoded_sig:
                                 decoded += 1
-                            # print(item)
                             yield item
-
+                        else:
+                            print("Unable to find signature -> module:", item.module, "function:", item.fn)
     print(f"Signatures -> total: {total}, found: {found}, decoded {decoded}")
 
 
+def module_name(array: str) -> str:
+    return (
+        array.split(" ")[0]
+        .replace("dfhack", "")
+        .replace("module[]", "")
+        .replace("funcs[]", "")
+        .replace("_", "")
+        .capitalize()
+    )
+
+
+def WRAP(array: str) -> Iterable[Entry]:
+    module = module_name(array)
+    if not module:
+        module = ""
+    for match in re.finditer(PATTERN_WRAP, array):
+        item = Entry(module, match.group(1).split(",")[0], "WRAP", None, None)
+        item.sig = find_signature(item)
+        yield item
+
+
 def LFUN(array: str) -> Iterable[Entry]:
-    module = array.split("_")[1].capitalize()
+    module = module_name(array)
     for match in re.finditer(PATTERN_LFUNC_ITEM, array):
         item = Entry(module, match.group(1), "LFUNC", None, None)
         item.sig = find_signature(item)
@@ -2350,7 +2371,7 @@ def LFUN(array: str) -> Iterable[Entry]:
 
 
 def CWRAP(array: str) -> Iterable[Entry]:
-    module = array.split("_")[1].capitalize()
+    module = module_name(array)
     for match in re.finditer(PATTERN_CWRAP, array):
         item = Entry(module, match.group(1), "CWRAP", None, None)
         item.sig = find_signature(item)
@@ -2368,7 +2389,7 @@ def WRAPM(array: str) -> Iterable[Entry]:
 
 
 def WRAPN(array: str) -> Iterable[Entry]:
-    module = array.split("_")[1].capitalize()
+    module = module_name(array)
     for match in re.finditer(PATTERN_WRAPN, array):
         if any(c in match.group(1) or c in match.group(2) for c in ["{", "}"]):
             print("SKIP", match.group(0))
@@ -2382,13 +2403,17 @@ def find_signature(item: Entry) -> str | None:
     for entry in Path(PATH_LIBRARY).rglob("*.cpp"):
         with entry.open("r", encoding="utf-8") as file:
             data = file.read()
-            r = PATTERN_SIGNATURE_SEARCH.replace("module", item.module).replace("function", item.fn)
-            match = re.search(r, data, re.MULTILINE)
-            if match:
-                sig = match.group(0).replace("\n", "").replace("{", "").replace("DFHACK_EXPORT ", "").strip()
-                if sig.startswith("if (") or sig.startswith("<<"):
-                    return None
-                return sig
+            regex: set[str] = set()
+            if item.module != "":
+                regex.add(PATTERN_SIGNATURE_SEARCH.replace("module", item.module).replace("function", item.fn))
+            regex.add(PATTERN_SIGNATURE_SEARCH.replace("module::", "").replace("function", item.fn))
+            for r in regex:
+                for match in re.finditer(r, data, re.MULTILINE):
+                    sig = match.group(0).replace("\n", "").replace("{", "").replace("DFHACK_EXPORT ", "").strip()
+                    if sig.startswith("if (") or sig.startswith("<<") or sig.find("&&") > 0 or sig.find("->") > 0:
+                        continue
+                    return sig
+    return None
 
 
 def decode_type(cxx: str) -> str:
@@ -2414,14 +2439,12 @@ def decode_type(cxx: str) -> str:
 
 
 def decode_signature(sig: str) -> Signature | None:
-    # print(sig)
-    for k in ["const ", "*", "&"]:
+    for k in ["const ", "*", "&", "static ", "inline "]:
         sig = sig.replace(k, "")
     match = re.search(PATTERN_SIGNATURE, sig, re.MULTILINE)
     if match:
         type_ret = match.group(1)
         decoded_type_ret = decode_type(type_ret)
-        # print("RET TYPE", decode_type(match.group(1)))
         args_pairs = match.group(2).split(", ")
         args: list[Arg] = []
         if args_pairs.__len__() > 0 and match.group(2).__len__() > 0:
@@ -2429,6 +2452,8 @@ def decode_signature(sig: str) -> Signature | None:
                 arg_name = arg_pair.split(" ")[-1]
                 arg_type = arg_pair.replace(" " + arg_name, "").strip()
                 decoded_type_arg = decode_type(arg_type)
+                if decoded_type_arg == "lua_State":
+                    continue
                 arg = Arg(
                     arg_name,
                     decoded_type_arg.replace("::", "__"),
@@ -2436,7 +2461,6 @@ def decode_signature(sig: str) -> Signature | None:
                     or any(c.isupper() for c in decoded_type_arg),
                 )
                 args.append(arg)
-                # print(arg)
         if decoded_type_ret:
             return Signature(
                 Ret(
@@ -2457,7 +2481,7 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
             known_args += f"---@param {arg.name} {arg.type}{' -- unknown' if arg.unknown else ''}\n"
         ret = f"---@return {entry.decoded_sig.ret.type}{' -- unknown' if entry.decoded_sig.ret.unknown else ''}\n"
         s += known_args + ret
-        s += f"function {prefix}{entry.module.lower()}.{entry.fn}({', '.join([x.name for x in entry.decoded_sig.args])}) end\n"
+        s += f"function {prefix}{entry.module.lower()}{'.' if entry.module != '' else ''}{entry.fn}({', '.join([x.name for x in entry.decoded_sig.args])}) end\n"
     return s
 
 

@@ -2452,7 +2452,7 @@ def decode_signature(sig: str) -> Signature | None:
                 arg_name = arg_pair.split(" ")[-1]
                 arg_type = arg_pair.replace(" " + arg_name, "").strip()
                 decoded_type_arg = decode_type(arg_type)
-                if decoded_type_arg == "lua_State":
+                if decoded_type_arg in ["lua_State", "color_ostream", "MapExtras__MapCache"]:
                     continue
                 arg = Arg(
                     arg_name,

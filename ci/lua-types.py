@@ -42,6 +42,8 @@ class Tag:
     naming_rule: list[str]
     default_name: str
     name_prefix: str
+    type_prefix: str
+    declare_prefix: str
     have_children: boolean = False
 
     def __init__(
@@ -51,6 +53,7 @@ class Tag:
         default_name: str = "unknown",
         name_prefix: str = "",
         type_prefix: str = "",
+        declare_prefix: str = "",
     ) -> None:
         self.el = el
         self.tag = el.tag
@@ -58,6 +61,7 @@ class Tag:
         self.default_name = default_name
         self.name_prefix = name_prefix
         self.type_prefix = type_prefix
+        self.declare_prefix = declare_prefix
         self.have_children = self.el.__len__() > 0
         self.parse()
 
@@ -88,7 +92,7 @@ class EnumItem(Tag):
 class Enum(Tag):
     def render(self) -> str:
         s = f"---@enum {self.name}{self.comment}\n"
-        s += f"{declare_prefix(self.name, 'df.')}{self.name} = {{\n"
+        s += f"{declare_prefix(self.name, 'df.')}{self.name.replace('.', '_')} = {{\n"
         shift = 0
         for i, child in enumerate(self.el, start=0):
             if child.tag != "enum-item":
@@ -115,7 +119,24 @@ class Enum(Tag):
                 if "name" in self.el.attrib
                 else self.default_name
             )
-        return field(self.name, t, self.comment)
+        return field(self.name.split(".")[-1], t, self.comment)
+
+    def item_names(self) -> list[str]:
+        names: list[str] = []
+        shift = 0
+        for i, child in enumerate(self.el, start=0):
+            if child.tag != "enum-item":
+                shift -= 1
+                continue
+            else:
+                if "value" in child.attrib:
+                    shift = int(child.attrib["value"]) - i
+                item = EnumItem(child, naming_rule=["name"], default_name=f"unk_{i}").set_index(i + shift)
+                names.append(f'"{item.name}"')
+        return names
+
+
+enum_map: dict[str, Enum] = {}
 
 
 class Struct(Tag):
@@ -137,8 +158,14 @@ class Struct(Tag):
             if c.tag == "custom-methods" or c.type == "code-helper" or c.type == "comment":
                 continue
             if c.tag == "enum":
-                name_prefix = f"{self.name}_" if c.have_children else ""
-                enum = Enum(child, name_prefix=name_prefix, default_name=f"{self.name}_unknown_enum_{index}")
+                name_prefix = f"T_" if c.have_children else ""
+                enum = Enum(
+                    el=child,
+                    name_prefix=f"{self.name_prefix}{self.name}.{name_prefix}",
+                    default_name=f"{self.name}_unknown_enum_{index}",
+                    declare_prefix=f"{declare}{self.name_prefix}{self.name}_",
+                )
+                enum_map[enum.name] = enum
                 if enum.have_children:
                     childs.append(enum)
                 s += enum.as_field()
@@ -148,6 +175,11 @@ class Struct(Tag):
                     childs.append(Struct(c.el, name_prefix=f"{self.name}_"))
             if c.tag == "virtual-methods":
                 childs.append(VirtualMethods(c.el, name_prefix=f"{declare}{self.name}."))
+                continue
+            if c.tag == "df-flagarray":
+                fa = DfFlagArray(child, naming_rule=["name"], default_name=f"unnamed_{self.name}_{index}")
+                childs.append(fa)
+                s += fa.as_field()
                 continue
             s += field(c.name, c.type, c.comment)
 
@@ -234,6 +266,25 @@ class DfLinkedList(Tag):
         return f"---@alias {self.name} {self.el.attrib['item-type']}[]{self.comment}\n"
 
 
+class DfFlagArray(Tag):
+    def render(self) -> str:
+        if "index-enum" in self.el.attrib:
+            return ""
+        else:
+            return f"---@alias {self.name} unknown{self.comment}\n\n"
+
+    def as_field(self) -> str:
+        if "index-enum" in self.el.attrib:
+            if self.el.attrib["index-enum"] in enum_map:
+                enum = enum_map[self.el.attrib["index-enum"]]
+                enum_names = enum.item_names()
+                if enum_names.__len__() > 0:
+                    return field(self.name, f"table<{'|'.join(enum_names)}, boolean>", self.comment)
+            return field(self.name, f"table<string, boolean>", self.comment)
+        else:
+            return field(self.name, self.name, self.comment)
+
+
 def parse_xml(file: Path) -> str:
     tree = ET.parse(file)
     root = tree.getroot()
@@ -247,7 +298,9 @@ def parse_xml(file: Path) -> str:
 def parse_tag(el: ET.Element) -> Iterable[Tag]:
     match el.tag:
         case "enum-type":
-            yield Enum(el)
+            e = Enum(el)
+            enum_map[e.name] = e
+            yield e
         case "struct-type":
             yield Struct(el)
         case "class-type":

@@ -1,4 +1,0 @@
----@meta
-
----@alias bitfield integer
-

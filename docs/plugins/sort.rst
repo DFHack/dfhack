@@ -26,23 +26,28 @@ skill they have in crossbows or general ranged combat.
 If sorted by "leadership", then the citizen is sorted according to the highest
 skill they have in leader, teacher, or military tactics.
 
-If sorting is done by "melee potential" citizens are arranged based on their
-melee potential rating. This rating is a heuristic measure that takes into
+If sorting is done by "mental stability" citizens are arranged based on their
+mental stability rating. This rating is a measure that takes into account
+facets and values of an individual and correlates to better stress values.
+It is designed to be higher for more stress-resistant citizens.
+
+If sorting is done by "solo combat potential" citizens are arranged based on their
+solo combat potential rating. This rating is a measure that takes into
 account genetic predispositions in physical and mental attributes, as
 well as body size. Dwarves (and other humanoid creatures) with bigger rating
-are expected to be more effective in melee combat against opponents of
-similar skill levels.
+are expected to be more effective in melee combat against strong opponents.
+
+If sorting is done by "group combat potential" citizens are arranged based on their
+group combat potential rating. Similar with solo combat rating except this rating
+taking into account efficiency in a fight against multiple opponents. This rating
+is valid only for dwarves because it considers martial trance which only dwarves
+are capable of.
 
 If sorting is done by "ranged potential" citizens are arranged based on their
 ranged potential rating. This rating is a statistical measure that takes into
 account genetic predispositions in physical and mental attributes.
 Dwarves (and other humanoid creatures) with bigger rating are expected to be
 more effective in ranged combat.
-
-If sorting is done by "mental stability" citizens are arranged based on their
-mental stability rating. This rating is a measure that takes into account
-facets and values of an individual and correlates to better stress values.
-It is designed to be higher for more stress-resistant citizens.
 
 You can search for a dwarf by name by typing in the Search field. You can also
 type in the name of any job skill (military-related or not) and dwarves with

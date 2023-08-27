@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from xmlrpc.client import boolean
 
 PATH_XML = "./library/xml"
@@ -434,13 +435,13 @@ PATH_LUAAPI = "./library/LuaApi.cpp"
 PATH_LIBRARY = "./library/"
 PATH_DFHACK_OUTPUT = "./types/library/dfhack.lua"
 
-PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)"
-PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)"
-PATTERN_WRAPN = r"WRAPN\((.+), (.+)\)"
-PATTERN_WRAP = r"WRAP\((.+)\),"
+PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
+PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
+PATTERN_WRAPN = r"WRAPN\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
+PATTERN_WRAP = r"WRAP\((.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_MODULE_ARRAY = r"dfhack_[\w_]*module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
 PATTERN_LFUNC_ARRAY = r"dfhack_[\w_]*funcs\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
-PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}"
+PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_SIGNATURE = r"^([\w::<>]+).+?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 
@@ -449,6 +450,7 @@ PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\
 class Arg:
     name: str
     type: str
+    default_value: Any | None
     unknown: bool = False
 
 
@@ -480,7 +482,7 @@ def parse_luaapi() -> Iterable[Entry]:
     with Path(PATH_LUAAPI).open("r", encoding="utf-8") as file:
         data = file.read()
         arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
-        wrappers = [WRAPM, WRAPN, CWRAP, LFUN]
+        wrappers = [WRAPM, WRAPN, CWRAP, LFUNC, WRAP]
         for array_pattern in arrays:
             for array in re.finditer(array_pattern, data):
                 for wrapper in wrappers:
@@ -514,15 +516,22 @@ def WRAP(array: str) -> Iterable[Entry]:
         module = ""
     for match in re.finditer(PATTERN_WRAP, array):
         item = Entry(module, match.group(1).split(",")[0], "WRAP", None, None)
-        item.sig = find_signature(item)
+        if match.group(2):
+            print("EXPOSE")
+            item.sig = match.group(2).split("<expose>")[1].strip()
+        else:
+            item.sig = find_signature(item)
         yield item
 
 
-def LFUN(array: str) -> Iterable[Entry]:
+def LFUNC(array: str) -> Iterable[Entry]:
     module = module_name(array)
     for match in re.finditer(PATTERN_LFUNC_ITEM, array):
         item = Entry(module, match.group(1), "LFUNC", None, None)
-        item.sig = find_signature(item)
+        if match.group(3):
+            item.sig = match.group(3).split("<expose>")[1].strip()
+        else:
+            item.sig = find_signature(item)
         yield item
 
 
@@ -530,17 +539,22 @@ def CWRAP(array: str) -> Iterable[Entry]:
     module = module_name(array)
     for match in re.finditer(PATTERN_CWRAP, array):
         item = Entry(module, match.group(1), "CWRAP", None, None)
-        item.sig = find_signature(item)
+        if match.group(3):
+            item.sig = match.group(3).split("<expose>")[1].strip()
+        else:
+            item.sig = find_signature(item)
         yield item
 
 
 def WRAPM(array: str) -> Iterable[Entry]:
     for match in re.finditer(PATTERN_WRAPM, array):
         if any(c in match.group(1) or c in match.group(2) for c in ["{", "}"]):
-            print("SKIP", match.group(0))
             continue
         item = Entry(match.group(1), match.group(2), "WRAPM", None, None)
-        item.sig = find_signature(item)
+        if match.group(3):
+            item.sig = match.group(3).split("<expose>")[1].strip()
+        else:
+            item.sig = find_signature(item)
         yield item
 
 
@@ -548,10 +562,12 @@ def WRAPN(array: str) -> Iterable[Entry]:
     module = module_name(array)
     for match in re.finditer(PATTERN_WRAPN, array):
         if any(c in match.group(1) or c in match.group(2) for c in ["{", "}"]):
-            print("SKIP", match.group(0))
             continue
         item = Entry(module, match.group(1), "WRAPN", None, None)
-        item.sig = find_signature(item)
+        if match.group(3):
+            item.sig = match.group(3).split("<expose>")[1].strip()
+        else:
+            item.sig = find_signature(item)
         yield item
 
 
@@ -574,7 +590,7 @@ def find_signature(item: Entry) -> str | None:
 
 def decode_type(cxx: str) -> str:
     match cxx:
-        case "int" | "int8_t" | "uint8_t" | "int16_t" | "uint16_t" | "int32_t" | "uint32_t" | "int64_t" | "uint64_t" | "size_t" | "uintptr_t":
+        case "int" | "int8_t" | "uint8_t" | "int16_t" | "uint16_t" | "int32_t" | "uint32_t" | "int64_t" | "uint64_t" | "size_t" | "uintptr_t" | "intptr_t":
             return "integer"
         case "float" | "long" | "ulong" | "double":
             return "number"
@@ -605,23 +621,29 @@ def decode_signature(sig: str) -> Signature | None:
         args: list[Arg] = []
         if args_pairs.__len__() > 0 and match.group(2).__len__() > 0:
             for arg_pair in args_pairs:
+                default_value = None
+                is_default = arg_pair.split("=")
+                if is_default.__len__() > 1:
+                    default_value = is_default[1].strip()
+                    arg_pair = is_default[0].strip()
                 arg_name = arg_pair.split(" ")[-1]
                 arg_type = arg_pair.replace(" " + arg_name, "").strip()
                 decoded_type_arg = decode_type(arg_type)
                 if decoded_type_arg in ["lua_State", "color_ostream", "MapExtras::MapCache"]:
                     continue
                 arg = Arg(
-                    arg_name,
-                    decoded_type_arg.replace("::", "__"),
-                    (decoded_type_arg == arg_type and arg_type != "string")
+                    name=arg_name,
+                    type=decoded_type_arg.replace("::", "__"),
+                    default_value=default_value,
+                    unknown=(decoded_type_arg == arg_type and arg_type != "string")
                     or any(c.isupper() for c in decoded_type_arg),
                 )
                 args.append(arg)
         if decoded_type_ret:
             return Signature(
                 Ret(
-                    decoded_type_ret.replace("::", "__").replace("enums__biome_type__", ""),
-                    decoded_type_ret == type_ret and type_ret != "string",
+                    type=decoded_type_ret.replace("::", "__").replace("enums__biome_type__", ""),
+                    unknown=decoded_type_ret == type_ret and type_ret != "string",
                 ),
                 args,
             )
@@ -634,7 +656,7 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     ret = ""
     if entry.decoded_sig:
         for arg in entry.decoded_sig.args:
-            known_args += f"---@param {arg.name} {arg.type}{' -- unknown' if arg.unknown else ''}\n"
+            known_args += f"---@param {arg.name}{'?' if arg.default_value else ''} {arg.type}{' -- unknown' if arg.unknown else ''}{' -- default value is ' + arg.default_value if arg.default_value else ''}\n"
         ret = f"---@return {entry.decoded_sig.ret.type}{' -- unknown' if entry.decoded_sig.ret.unknown else ''}\n"
         s += known_args + ret
         s += f"function {prefix}{entry.module.lower()}{'.' if entry.module != '' else ''}{entry.fn}({', '.join([x.name for x in entry.decoded_sig.args])}) end\n"

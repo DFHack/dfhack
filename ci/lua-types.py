@@ -11,7 +11,6 @@ PATH_OUTPUT = "./types/library/"
 PATH_LIB_CONFIG = "./types/config.json"
 PATH_CONFIG = ".luarc.json"
 
-ALIAS = "---@meta\n\n---@alias bitfield integer\n"
 LIB_CONFIG = """{
   "name": "DFHack Lua",
   "words": [
@@ -92,7 +91,7 @@ class EnumItem(Tag):
 class Enum(Tag):
     def render(self) -> str:
         s = f"---@enum {self.name}{self.comment}\n"
-        s += f"{declare_prefix(self.name, 'df.')}{self.name.replace('.', '_')} = {{\n"
+        s += f"{declare_prefix(self.name, 'df.')}{self.name} = {{\n"
         shift = 0
         for i, child in enumerate(self.el, start=0):
             if child.tag != "enum-item":
@@ -136,6 +135,41 @@ class Enum(Tag):
         return names
 
 
+class Bitfield(Tag):
+    def render(self) -> str:
+        if self.have_children:
+            s = f"---@alias {self.name} {self.get_type()}{self.comment}\n"
+            s += f"---@type {self.name}\n"
+            s += f"{declare_prefix(self.name, 'df.')}{self.name} = nil\n"
+            return s
+        else:
+            return f"---@alias {self.name} unknown{self.comment}\n\n"
+
+    def get_type(self) -> str:
+        items: list[Tag] = []
+        for i, child in enumerate(self.el):
+            if child.tag != "flag-bit":
+                continue
+            items.append(Tag(child, default_name=f"unk_{i}"))
+        if items.__len__() > 0:
+            s = f"table<"
+            for item in items:
+                s += f'"{item.name}"|'
+            s = f"{s[:-1]}, boolean>"
+            return s
+        else:
+            return "table<string, boolean>"
+
+    def as_field(self) -> str:
+        n = self.name
+        if self.name.split(".").__len__() > 1:
+            n = self.name.split(".")[1]
+        if self.have_children:
+            return field(n, self.get_type(), self.comment)
+        else:
+            return field(n, self.name, self.comment)
+
+
 enum_map: dict[str, Enum] = {}
 
 
@@ -177,9 +211,24 @@ class Struct(Tag):
                 childs.append(VirtualMethods(c.el, name_prefix=f"{declare}{self.name}."))
                 continue
             if c.tag == "df-flagarray":
-                fa = DfFlagArray(child, naming_rule=["name"], default_name=f"unnamed_{self.name}_{index}")
-                childs.append(fa)
-                s += fa.as_field()
+                flagarray = DfFlagArray(
+                    el=child,
+                    naming_rule=["name"],
+                    default_name=f"unnamed_{self.name}_{index}",
+                    name_prefix=f"{self.name_prefix}{self.name}.",
+                )
+                childs.append(flagarray)
+                s += flagarray.as_field()
+                continue
+            if c.tag == "bitfield":
+                bitfield = Bitfield(
+                    el=child,
+                    default_name=f"unnamed_{self.name}_{index}",
+                    name_prefix=f"{self.name_prefix}{self.name}.",
+                )
+                if not bitfield.have_children:
+                    childs.append(bitfield)
+                s += bitfield.as_field()
                 continue
             s += field(c.name, c.type, c.comment)
 
@@ -256,11 +305,6 @@ class GlobalObject(Tag):
         return f"---@type {self.type}{self.comment}\ndf.global.{self.name} = nil\n"
 
 
-class Bitfield(Tag):
-    def render(self) -> str:
-        return f"---@alias {self.name} bitfield{self.comment}\n"
-
-
 class DfLinkedList(Tag):
     def render(self) -> str:
         return f"---@alias {self.name} {self.el.attrib['item-type']}[]{self.comment}\n"
@@ -279,10 +323,10 @@ class DfFlagArray(Tag):
                 enum = enum_map[self.el.attrib["index-enum"]]
                 enum_names = enum.item_names()
                 if enum_names.__len__() > 0:
-                    return field(self.name, f"table<{'|'.join(enum_names)}, boolean>", self.comment)
+                    return field(self.name.split(".")[1], f"table<{'|'.join(enum_names)}, boolean>", self.comment)
             return field(self.name, f"table<string, boolean>", self.comment)
         else:
-            return field(self.name, self.name, self.comment)
+            return field(self.name.split(".")[1], self.name, self.comment)
 
 
 def parse_xml(file: Path) -> str:
@@ -466,9 +510,6 @@ def symbols_processing() -> None:
             print(LIB_CONFIG, file=dest)
         with Path(PATH_CONFIG).open("w", encoding="utf-8") as dest:
             print(CONFIG, file=dest)
-
-    with Path(f"{PATH_OUTPUT}aliases.lua").open("w", encoding="utf-8") as dest:
-        print(ALIAS, file=dest)
 
     for file in sorted(Path(PATH_XML).glob("*.xml")):
         print(f"Symbols -> {file.name}")

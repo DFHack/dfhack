@@ -178,7 +178,7 @@ struct tracking_stage_adopt_region : df::viewscreen_adopt_regionst {
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
             this->m_cur_step = this->cur_step;
-            if (this->m_cur_step == 2)
+            if (this->m_cur_step == 1)
                 reset_texpos();
         }
         INTERPOSE_NEXT(logic)();

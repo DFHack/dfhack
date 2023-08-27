@@ -1,0 +1,26 @@
+#dig start(6;6) room for 24 corpses
+d, ,d, ,d, ,d, ,d, ,d,#
+d,d,d,d,d,d,d,d,d,d,d,#
+d, ,d, ,d,d,d, ,d, ,d,#
+ , , , ,d,d,d, , , , ,#
+d, ,d,d,i,i,i,d,d, ,d,#
+d,d,d,d,i,i,i,d,d,d,d,#
+d, ,d,d,i,i,i,d,d, ,d,#
+ , , , ,d,d,d, , , , ,#
+d, ,d, ,d,d,d, ,d, ,d,#
+d,d,d,d,d,d,d,d,d,d,d,#
+d, ,d, ,d, ,d, ,d, ,d,#
+#,#,#,#,#,#,#,#,#,#,#,#
+#build label(urns) start(6;6) message(use burial script to mark urns as usable) 24 urns
+n, ,n, ,n, ,n, ,n, ,n,#
+`,`,`,`,`,`,`,`,`,`,`,#
+n, ,n, ,`,`,`, ,n, ,n,#
+ , , , ,`,`,`, , , , ,#
+n, ,`,`,~,~,~,`,`, ,n,#
+`,`,`,`,~,~,~,`,`,`,`,#
+n, ,`,`,~,~,~,`,`, ,n,#
+ , , , ,`,`,`, , , , ,#
+n, ,n, ,`,`,`, ,n, ,n,#
+`,`,`,`,`,`,`,`,`,`,`,#
+n, ,n, ,n, ,n, ,n, ,n,#
+#,#,#,#,#,#,#,#,#,#,#,#

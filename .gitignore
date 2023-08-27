@@ -87,4 +87,4 @@ depends/SDL2
 
 # lua typing
 .luarc.json
-/types
+# /types

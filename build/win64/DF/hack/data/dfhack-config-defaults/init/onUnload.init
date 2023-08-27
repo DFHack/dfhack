@@ -1,0 +1,4 @@
+# This file runs when a world is unloaded.
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to this file.

@@ -1,0 +1,5 @@
+# This file runs when DFHack is initialized, when Dwarf Fortress is first
+# started, before any world or save data is loaded.
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to this file.

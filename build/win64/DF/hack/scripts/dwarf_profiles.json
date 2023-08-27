@@ -1,0 +1,301 @@
+{
+    "LEADER": {
+        "comment": "Roughly based on: https://www.16personalities.com/enfj-personality",
+        "ATTRIBUTES": {
+            "ANALYTICAL_ABILITY": 1,
+            "MEMORY": 1,
+            "INTUITION": 1,
+            "EMPATHY": 1,
+            "SOCIAL_AWARENESS": 1,
+            "LINGUISTIC_ABILITY": 1
+        },
+        "SKILLS": {
+            "APPRAISAL": 2,
+            "JUDGING_INTENT": 2,
+            "PACIFY": 2,
+            "CONVERSATION": 1,
+            "PERSUASION": 1,
+            "NEGOTIATION": 2
+        },
+        "PREFERENCES": {
+            "LIKEMATERIAL": [
+                "INORGANIC:COBALTITE",
+                "INORGANIC:SILVER",
+                "INORGANIC:AMETHYST"
+            ],
+            "LIKEFOOD": [
+                "PLANT:GRASS_TAIL_PIG:DRINK",
+                "CREATURE:GOAT:CHEESE"
+            ],
+            "LIKECREATURE": [
+                "BIRD_GOOSE"
+            ],
+            "HATECREATURE": [
+                "BAT"
+            ],
+            "LIKECOLOR": [
+                "TURQUOISE"
+            ],
+            "LIKETREE": [
+                "ASH"
+            ]
+        },
+        "BELIEFS": {
+            "ELOQUENCE": 1,
+            "STOICISM": -1,
+            "HARMONY": 1,
+            "COMPETITION": -2
+        },
+        "GOALS": {
+            "BRING_PEACE_TO_THE_WORLD": false
+        },
+        "FACETS": {
+            "HATE_PROPENSITY": -1,
+            "ANGER_PROPENSITY": -1,
+            "STRESS_VULNERABILITY": 1,
+            "DISCORD": -2,
+            "FRIENDLINESS": 2,
+            "DISDAIN_ADVICE": -1,
+            "HOPEFUL": 1,
+            "BASHFUL": 1,
+            "TOLERANT": 2,
+            "EMOTIONALLY_OBSESSIVE": 2,
+            "ALTRUISM": 1,
+            "GRATITUDE": 1
+        }
+    },
+    "DOCTOR": {
+        "comment": "Roughly based on: https://www.16personalities.com/isfj-personality",
+        "ATTRIBUTES": {
+            "AGILITY": 1,
+            "MEMORY": 1,
+            "EMPATHY": 1,
+            "ANALYTICAL_ABILITY": 1,
+            "INTUITION": 1,
+            "PATIENCE": 1
+        },
+        "SKILLS": {
+            "DIAGNOSE": 2,
+            "DRESS_WOUNDS": 1,
+            "SUTURE": 3,
+            "SET_BONE": 1,
+            "SURGERY": 3
+        },
+        "PREFERENCES": {
+            "LIKEMATERIAL": [
+                "INORGANIC:SELENITE",
+                "INORGANIC:TIN",
+                "INORGANIC:SMOKY QUARTZ",
+                "INORGANIC:PLASTER"
+            ],
+            "LIKEFOOD": [
+                "PLANT:MUSHROOM_HELMET_PLUMP:DRINK",
+                "PLANT:BLUEBERRY:FRUIT"
+            ],
+            "HATECREATURE": [
+                "SPIDER_BROWN_RECLUSE"
+            ],
+            "LIKEITEM": [
+                "CLOTH"
+            ]
+        },
+        "GOALS": {
+            "START_A_FAMILY": false
+        },
+        "BELIEFS": {
+            "POWER": -1,
+            "SACRIFICE": 1,
+            "TRADITION": 2,
+            "ROMANCE": 2
+        },
+        "FACETS": {
+            "DISCORD": -1,
+            "FRIENDLINESS": 1,
+            "AMBITION": -1,
+            "GRATITUDE": 2,
+            "IMMODESTY": -2,
+            "BASHFUL": 1,
+            "PRIVACY": 1,
+            "PERFECTIONIST": 2,
+            "ALTRUISM": 2,
+            "DUTIFULNESS": 2,
+            "ABSTRACT_INCLINED": -1
+        }
+    },
+    "MECHANIC": {
+        "comment": "Roughly based on: https://www.16personalities.com/intp-personality",
+        "ATTRIBUTES": {
+            "AGILITY": 1,
+            "ANALYTICAL_ABILITY": 1,
+            "ENDURANCE": 1,
+            "SPATIAL_SENSE": 1,
+            "STRENGTH": 1,
+            "CREATIVITY": 2,
+            "EMPATHY": -1,
+            "SOCIAL_AWARENESS": -1
+        },
+        "SKILLS": {
+            "MECHANICS": 5,
+            "DESIGNBUILDING": 5
+        },
+        "PREFERENCES": {
+            "LIKEMATERIAL": [
+                "INORGANIC:GRAPHITE",
+                "INORGANIC:STEEL",
+                "GLASS_CRYSTAL"
+            ],
+            "LIKECREATURE": [
+                "BIRD_RAVEN"
+            ],
+            "HATECREATURE": [
+                "FLY"
+            ],
+            "LIKEITEM": [
+                "ITEM_TRAPCOMP:ITEM_TRAPCOMP_ENORMOUSCORKSCREW"
+            ],
+            "LIKEFOOD": [
+                "CREATURE:HONEY_BEE:MEAD"
+            ],
+            "LIKESHAPE": [
+                "CIRCLE"
+            ]
+        },
+        "BELIEFS": {
+            "TRADITION": -2,
+            "INDEPENDENCE": 2,
+            "STOICISM": 1,
+            "INTROSPECTION": 3,
+            "KNOWLEDGE": 2
+        },
+        "GOALS": {
+            "MASTER_A_SKILL": false
+        },
+        "FACETS": {
+            "IMAGINATION": 1,
+            "LOVE_PROPENSITY": -1,
+            "CURIOUS": 1,
+            "PRIVACY": 1,
+            "PERFECTIONIST": 3,
+            "SWAYED_BY_EMOTIONS": -2,
+            "ABSTRACT_INCLINED": 3
+        }
+    },
+    "HAMMERDWARF": {
+        "comment": "Roughly based on: https://www.16personalities.com/entj-personality",
+        "ATTRIBUTES": {
+            "AGILITY": 1,
+            "SPATIAL_SENSE": 1,
+            "STRENGTH": 1,
+            "TOUGHNESS": 1,
+            "KINESTHETIC_SENSE": 1,
+            "WILLPOWER": 1
+        },
+        "SKILLS": {
+            "HAMMER": 5,
+            "SHIELD": 2,
+            "DODGING": 2,
+            "DISCIPLINE": 1
+        },
+        "PREFERENCES": {
+            "LIKEMATERIAL": [
+                "INORGANIC:DOLOMITE",
+                "INORGANIC:STEEL",
+                "INORGANIC:ONYX OPAL"
+            ],
+            "LIKECREATURE": [
+                "BEAR_GRIZZLY"
+            ],
+            "HATECREATURE": [
+                "SLUG"
+            ],
+            "LIKEITEM": [
+                "ITEM_WEAPON:ITEM_WEAPON_HAMMER_WAR"
+            ],
+            "LIKEFOOD": [
+                "CREATURE:HORSE:MUSCLE",
+                "PLANT:GRASS_TAIL_PIG:DRINK"
+            ],
+            "LIKETREE": [
+                "CEDAR"
+            ]
+        },
+        "BELIEFS": {
+            "POWER": 1,
+            "TRUTH": -1
+        },
+        "GOALS": {
+            "BECOME_A_LEGENDARY_WARRIOR": false
+        },
+        "FACETS": {
+            "STRESS_VULNERABILITY": -2,
+            "POLITENESS": -1,
+            "BRAVERY": 1,
+            "CONFIDENCE": 2,
+            "CURIOUS": 1,
+            "SWAYED_BY_EMOTIONS": -2
+        }
+    },
+    "TEST": {
+        "comment": "test preferences",
+        "PREFERENCES": {
+            "LIKEMATERIAL": [
+                "INORGANIC:OBSIDIAN",
+                "INORGANIC:COPPER",
+                "INORGANIC:AMETHYST",
+                "PLANT:WILLOW:WOOD",
+                "GLASS_CLEAR",
+                "CREATURE:COW:LEATHER",
+                "CREATURE:GOAT_MOUNTAIN:HORN",
+                "CREATURE:WILD_BOAR:IVORY",
+                "AMBER",
+                "CREATURE:DEER:BONE",
+                "CREATURE:POND_TURTLE:SHELL",
+                "CREATURE:SPIDER_CAVE:SILK",
+                "CREATURE:SHEEP:HAIR",
+                "PLANT:COTTON:THREAD"
+            ],
+            "LIKEITEM": [
+                "ITEM_WEAPON:ITEM_WEAPON_AXE_BATTLE",
+                "WEAPON:ITEM_WEAPON_HAMMER_WAR",
+                "ITEM_PANTS:ITEM_PANTS_PANTS",
+                "DOOR",
+                "CROWN",
+                "ITEM_SIEGEAMMO:ITEM_SIEGEAMMO_BALLISTA",
+                "ITEM_TOOL:ITEM_TOOL_KNIFE_CARVING"
+            ],
+            "LIKEFOOD": [
+                "CREATURE:HORSE:MUSCLE",
+                "CREATURE:MUSSEL:MUSCLE",
+                "CREATURE:SHEEP:CHEESE",
+                "PLANT:BERRIES_STRAW:FRUIT",
+                "PLANT:GRAPE:DRINK",
+                "creature:COW:MILK",
+                "PLANT:POD_SWEET:EXTRACT",
+                "PLANT:BUSH_QUARRY:SEED",
+                "PLANT:BUSH_QUARRY:LEAF",
+                "PLANT:OLIVE:FRUIT",
+                "CREATURE:BUMBLEBEE:HONEY",
+                "CREATURE:HONEY_BEE:MEAD"
+            ],
+            "LIKECREATURE": [
+                "DOG",
+                "CREATURE:bird_cardinal"
+            ],
+            "LIKEPLANT": [
+                "PLANT:BLUEBERRY:STRUCTURAL"
+            ],
+            "LIKETREE": [
+                "PLANT:OAK:STRUCTURAL"
+            ],
+            "LIKECOLOR": [
+                "AQUA"
+            ],
+            "LIKESHAPE": [
+                "STAR"
+            ],
+            "LIKEPOETICFORM": [],
+            "LIKEMUSICALFORM": [],
+            "LIKEDANCEFORM": []
+        }
+    }
+}

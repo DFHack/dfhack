@@ -1,0 +1,11 @@
+DFHack's changelog is no longer stored at this location.
+
+- For a local copy, see hack/docs/docs/NEWS.html
+  (this requires offline docs to be installed)
+- For an online copy, see https://dfhack.readthedocs.org/en/stable/docs/NEWS.html
+
+
+---
+
+Note to maintainers: this file is installed to hack/changelog.txt - for details,
+see https://github.com/DFHack/dfhack/issues/1775

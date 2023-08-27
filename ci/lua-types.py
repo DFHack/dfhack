@@ -2335,10 +2335,10 @@ PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)"
 PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)"
 PATTERN_WRAPN = r"WRAPN\((.+), (.+)\)"
 PATTERN_WRAP = r"WRAP\((.+)\),"
-PATTERN_MODULE_ARRAY = r"dfhack_[\w+_]*module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
-PATTERN_LFUNC_ARRAY = r"dfhack_[\w+_]*funcs\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
+PATTERN_MODULE_ARRAY = r"dfhack_[\w_]*module\[\](.|\n)*?NULL,\s?NULL\s?\}\n\}"
+PATTERN_LFUNC_ARRAY = r"dfhack_[\w_]*funcs\[\](.|\n)*?NULL,\s?NULL\s?\}\n\}"
 PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}"
-PATTERN_SIGNATURE = r"^([\w::<>]+).+?\((.*)?\)"
+PATTERN_SIGNATURE = r"^([\w:<>]+).+?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 
 

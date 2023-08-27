@@ -174,16 +174,10 @@ enum_map: dict[str, Enum] = {}
 
 
 class Struct(Tag):
-    def shim_inheritance(self) -> str:
-        if "inherits-from" in self.el.attrib:
-            return f"-- inherit {self.el.attrib['inherits-from']}\n"
-        else:
-            return ""
-
     def render(self) -> str:
         declare = declare_prefix(self.name)
-        s = f"---@class {self.name}{self.comment}\n"
-        s += self.shim_inheritance()
+        inheritance = ": " + self.el.attrib["inherits-from"] if "inherits-from" in self.el.attrib else ""
+        s = f"---@class {self.name}{inheritance}{self.comment}\n"
 
         childs: list[Tag] = []
 
@@ -473,24 +467,6 @@ def shim_ineritance(data: str) -> str:
     return data
 
 
-def resolve_inheritance(file: Path) -> None:
-    to_replace: dict[str, str] = {}
-    data: str = ""
-    with file.open("r", encoding="utf-8") as src:
-        data = src.read()
-        for m in data.split("\n\n"):
-            if m.startswith("---@class"):
-                to_replace[m] = shim_ineritance(m)
-
-    if to_replace.__len__() > 0:
-        with file.open("r", encoding="utf-8") as src:
-            data = src.read()
-        with file.open("w", encoding="utf-8") as dest:
-            for k in to_replace:
-                data = to_replace[k].join(data.split(k))
-            dest.write(data)
-
-
 def parse_items_place() -> None:
     for file in sorted(Path(PATH_XML).glob("*.xml")):
         with file.open("r", encoding="utf-8") as src:
@@ -515,9 +491,6 @@ def symbols_processing() -> None:
         print(f"Symbols -> {file.name}")
         with Path(f"{PATH_OUTPUT}{file.name.replace('.xml', '.lua')}").open("w", encoding="utf-8") as dest:
             print(parse_xml(Path(file)), file=dest)
-
-    for file in sorted(Path(PATH_OUTPUT).glob("*.lua")):
-        resolve_inheritance(file)
 
 
 ########################################

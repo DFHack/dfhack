@@ -872,6 +872,12 @@ end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')
 end
+function ZScreen:onGetSelectedStockpile()
+    return zscreen_get_any(self, 'Stockpile')
+end
+function ZScreen:onGetSelectedCivZone()
+    return zscreen_get_any(self, 'CivZone')
+end
 function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
 end

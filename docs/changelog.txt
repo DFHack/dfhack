@@ -75,6 +75,7 @@ Template for new versions:
 - ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
 - `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
 - ``Units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``Gui``: ``getAnyStockpile`` and ``getAnyCivzone`` (along with their ``getSelected`` variants) now work through layers of ZScreens. This means that they will still return valid results even if a DFHack tool window is in the foereground.
 
 ## Lua
 - ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
@@ -83,6 +84,7 @@ Template for new versions:
 - ``widgets.Panel``: new functions to override instead of setting corresponding properties (useful when subclassing instead of just setting attributes): ``onDragBegin``, ``onDragEnd``, ``onResizeBegin``, ``onResizeEnd``
 - ``dfhack.screen.readTile()``: now populates extended tile property fields (like ``top_of_text``) in the returned ``Pen`` object
 - ``dfhack.units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``dfhack.gui``: new ``getAnyCivZone`` and ``getAnyStockpile`` functions; also behavior of ``getSelectedCivZone`` and ``getSelectedStockpile`` functions has changes as per the related API notes
 
 ## Removed
 

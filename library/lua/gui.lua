@@ -2,6 +2,7 @@
 
 local _ENV = mkmodule('gui')
 
+local textures = require('gui.textures')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -885,56 +886,6 @@ ZScreenModal.ATTRS{
     pass_mouse_clicks = false,
 }
 
--- DFHack textures
---------------------------
-
--- Preloaded DFHack Assets
--- Use this handles if you need to get dfhack standard textures
-local texpos_handles = {
-    green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12),
-    red_pin = dfhack.textures.loadTileset('hack/data/art/red-pin.png', 8, 12),
-    icons = dfhack.textures.loadTileset('hack/data/art/icons.png', 8, 12),
-    on_off = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12),
-    control_panel = dfhack.textures.loadTileset('hack/data/art/control-panel.png', 8, 12),
-    border_thin = dfhack.textures.loadTileset('hack/data/art/border-thin.png', 8, 12),
-    border_medium = dfhack.textures.loadTileset('hack/data/art/border-medium.png', 8, 12),
-    border_bold = dfhack.textures.loadTileset('hack/data/art/border-bold.png', 8, 12),
-    border_panel = dfhack.textures.loadTileset('hack/data/art/border-panel.png', 8, 12),
-    border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12),
-}
-
--- Methods to obtain valid texposes by handles
-function tp_green_pin(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.green_pin[offset])
-end
-function tp_red_pin(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.red_pin[offset])
-end
-function tp_icons(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.icons[offset])
-end
-function tp_on_off(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.on_off[offset])
-end
-function tp_control_panel(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.control_panel[offset])
-end
-function tp_border_thin(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.border_thin[offset])
-end
-function tp_border_medium(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.border_medium[offset])
-end
-function tp_border_bold(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.border_bold[offset])
-end
-function tp_border_panel(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.border_panel[offset])
-end
-function tp_border_window(offset)
-    return dfhack.textures.getTexposByHandle(texpos_handles.border_window[offset])
-end
-
 -- Framed screen object
 --------------------------
 
@@ -977,28 +928,28 @@ local function make_frame(tp, double_line)
 end
 
 function FRAME_WINDOW(resizable)
-    local frame = make_frame(tp_border_window, true)
+    local frame = make_frame(textures.tp_border_window, true)
     if not resizable then
-        frame.rb_frame_pen = to_pen{ tile=curry(tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
     end
     return frame
 end
 function FRAME_PANEL(resizable)
-    return make_frame(tp_border_panel, false)
+    return make_frame(textures.tp_border_panel, false)
 end
 function FRAME_MEDIUM(resizable)
-    return make_frame(tp_border_medium, false)
+    return make_frame(textures.tp_border_medium, false)
 end
 function FRAME_BOLD(resizable)
-    return make_frame(tp_border_bold, true)
+    return make_frame(textures.tp_border_bold, true)
 end
 function FRAME_INTERIOR(resizable)
-    local frame = make_frame(tp_border_thin, false)
+    local frame = make_frame(textures.tp_border_thin, false)
     frame.signature_pen = false
     return frame
 end
 function FRAME_INTERIOR_MEDIUM(resizable)
-    local frame = make_frame(tp_border_medium, false)
+    local frame = make_frame(textures.tp_border_medium, false)
     frame.signature_pen = false
     return frame
 end

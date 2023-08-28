@@ -20,7 +20,9 @@ LIB_CONFIG = """{
 
 CONFIG = f"""{{
   "workspace.library": ["{PATH_OUTPUT}"],
-  "workspace.ignoreDir": ["build"]
+  "workspace.ignoreDir": ["build"],
+  "workspace.useGitIgnore": false,
+  "diagnostics.disable": ["lowercase-global"]
 }}\n"""
 
 BASE_METHODS = """
@@ -100,8 +102,9 @@ class EnumItem(Tag):
 
 class Enum(Tag):
     def render(self) -> str:
+        declare = f"{declare_prefix(self.name, 'df.')}{self.name}"
         s = f"---@enum {self.name}{self.comment}\n"
-        s += f"{declare_prefix(self.name, 'df.')}{self.name} = {{\n"
+        s += f"{declare} = {{\n"
         shift = 0
         for i, child in enumerate(self.el, start=0):
             if child.tag != "enum-item":
@@ -210,6 +213,12 @@ class Struct(Tag):
             if c.tag == "compound" and c.have_children:
                 if "is-union" not in c.el.attrib:
                     childs.append(Struct(c.el, name_prefix=f"{self.name}_"))
+                # else:
+                #     # name_prefix = "T_" if not self.name.startswith("T_") else ""
+                #     union = CompoundUnion(c.el, name_prefix="T_", declare_prefix=f"{self.name}.")
+                #     childs.append(union)
+                #     s += union.as_field()
+                #     continue
             if c.tag == "virtual-methods":
                 childs.append(VirtualMethods(c.el, name_prefix=f"{declare}{self.name}."))
                 continue
@@ -363,6 +372,11 @@ class DfFlagArray(Tag):
             return field(self.name, f"table<string, boolean>", self.comment)
         else:
             return field(self.name.split(".")[1], self.name, self.comment)
+
+
+class CompoundUnion(Struct):
+    def as_field(self) -> str:
+        return f"---@field {self.name} {self.type}\n"
 
 
 def parse_xml(file: Path) -> str:
@@ -534,6 +548,7 @@ def symbols_processing() -> None:
 
 
 PATH_LUAAPI = "./library/LuaApi.cpp"
+PATH_LUATOOLS = "./library/LuaTools.cpp"
 PATH_LIBRARY = "./library/"
 PATH_DFHACK_OUTPUT = "./types/library/dfhack.lua"
 PATH_DEFAULT = "./types/library/default.lua"
@@ -554,6 +569,7 @@ class Arg:
     name: str
     type: str
     default_value: Any | None
+    vararg: bool
     unknown: bool = False
 
 
@@ -582,23 +598,24 @@ def parse_luaapi() -> Iterable[Entry]:
     total = 0
     found = 0
     decoded = 0
-    with Path(PATH_LUAAPI).open("r", encoding="utf-8") as file:
-        data = file.read()
-        arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
-        wrappers = [WRAPM, WRAPN, CWRAP, LFUNC, WRAP]
-        for array_pattern in arrays:
-            for array in re.finditer(array_pattern, data):
-                for wrapper in wrappers:
-                    for item in wrapper(array.group(0)):
-                        total += 1
-                        if item.sig:
-                            found += 1
-                            item.decoded_sig = decode_signature(item.sig)
-                            if item.decoded_sig:
-                                decoded += 1
-                            yield item
-                        else:
-                            print("Unable to find signature -> module:", item.module, "function:", item.fn)
+    for path in [PATH_LUAAPI, PATH_LUATOOLS]:
+        with Path(path).open("r", encoding="utf-8") as file:
+            data = file.read()
+            arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
+            wrappers = [WRAPM, WRAPN, CWRAP, LFUNC, WRAP]
+            for array_pattern in arrays:
+                for array in re.finditer(array_pattern, data):
+                    for wrapper in wrappers:
+                        for item in wrapper(array.group(0)):
+                            total += 1
+                            if item.sig:
+                                found += 1
+                                item.decoded_sig = decode_signature(item.sig)
+                                if item.decoded_sig:
+                                    decoded += 1
+                                yield item
+                            else:
+                                print("Unable to find signature -> module:", item.module, "function:", item.fn)
     print(f"Signatures -> total: {total}, found: {found}, decoded {decoded}")
 
 
@@ -704,6 +721,8 @@ def decode_type(cxx: str) -> str:
         case "void":
             return "nil"
         case _:
+            if cxx.startswith("std::function"):
+                return "function"
             if cxx.startswith("std::vector<") or cxx.startswith("vector<"):
                 return decode_type(cxx.replace("std::vector<", "").replace("vector<", "")[:-1]).strip() + "[]"
             if cxx.startswith("df::"):
@@ -724,22 +743,30 @@ def decode_signature(sig: str) -> Signature | None:
         args: list[Arg] = []
         if args_pairs.__len__() > 0 and match.group(2).__len__() > 0:
             for arg_pair in args_pairs:
+                vararg = False
                 default_value = None
                 is_default = arg_pair.split("=")
                 if is_default.__len__() > 1:
                     default_value = is_default[1].strip()
                     arg_pair = is_default[0].strip()
-                arg_name = arg_pair.split(" ")[-1]
-                arg_type = arg_pair.replace(" " + arg_name, "").strip()
-                decoded_type_arg = decode_type(arg_type)
-                if decoded_type_arg in ["lua_State", "color_ostream", "MapExtras::MapCache"]:
-                    continue
+                if arg_pair.startswith("..."):
+                    vararg = True
+                    arg_name = "vararg"
+                    arg_type = "vararg_type"
+                    decoded_type_arg = "..."
+                else:
+                    arg_name = arg_pair.split(" ")[-1]
+                    arg_type = arg_pair.replace(" " + arg_name, "").strip()
+                    decoded_type_arg = decode_type(arg_type)
+                    if decoded_type_arg in ["lua_State", "color_ostream", "MapExtras::MapCache"]:
+                        continue
                 arg = Arg(
                     name=arg_name,
                     type=decoded_type_arg.replace("::", "__"),
                     default_value=default_value,
                     unknown=(decoded_type_arg == arg_type and arg_type != "string")
                     or any(c.isupper() for c in decoded_type_arg),
+                    vararg=vararg,
                 )
                 args.append(arg)
         if decoded_type_ret:
@@ -759,10 +786,15 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     ret = ""
     if entry.decoded_sig:
         for arg in entry.decoded_sig.args:
-            known_args += f"---@param {arg.name}{'?' if arg.default_value else ''} {arg.type}{' -- unknown' if arg.unknown else ''}{' -- default value is ' + arg.default_value if arg.default_value else ''}\n"
+            if arg.vararg:
+                known_args += f"---@vararg unknown\n"
+                break
+            else:
+                known_args += f"---@param {arg.name}{'?' if arg.default_value else ''} {arg.type}{' -- unknown' if arg.unknown else ''}{' -- default value is ' + arg.default_value if arg.default_value else ''}\n"
         ret = f"---@return {entry.decoded_sig.ret.type}{' -- unknown' if entry.decoded_sig.ret.unknown else ''}\n"
         s += known_args + ret
-        s += f"function {prefix}{entry.module.lower()}{'.' if entry.module != '' else ''}{entry.fn}({', '.join([x.name for x in entry.decoded_sig.args])}) end\n"
+        args = f"{', '.join(['...' if x.vararg else x.name for x in entry.decoded_sig.args])}"
+        s += f"function {prefix}{entry.module.lower()}{'.' if entry.module != '' else ''}{entry.fn}({args}) end\n"
     return s
 
 
@@ -771,7 +803,7 @@ dfhack_modules: list[str] = []
 
 def generate_base_methods() -> None:
     with Path(PATH_DEFAULT).open("w", encoding="utf-8") as dest:
-        out = f"-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n---@class df\ndf = nil\n---@class global\ndf.global = nil\n\n---@class dfhack\ndfhack = nil\n"
+        out = f"-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n---@class df\ndf = nil\n\n---@class global\ndf.global = nil\n\n---@class dfhack\ndfhack = nil\n"
         for module in dfhack_modules:
             out += f"\n---@class {module.lower()}\ndfhack.{module.lower()} = nil\n"
         out += f"\n---@alias env {{ df: df, dfhack: dfhack }}\n\n---@param module string\n---@return env\nfunction mkmodule(module) end\n\n"

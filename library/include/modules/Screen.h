@@ -36,6 +36,8 @@ distribution.
 #include "DataDefs.h"
 #include "df/graphic.h"
 #include "df/viewscreen.h"
+#include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
 #include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
@@ -362,6 +364,8 @@ namespace DFHack
         virtual df::item *getSelectedItem() { return nullptr; }
         virtual df::job *getSelectedJob() { return nullptr; }
         virtual df::building *getSelectedBuilding() { return nullptr; }
+        virtual df::building_stockpilest *getSelectedStockpile() { return nullptr; }
+        virtual df::building_civzonest *getSelectedCivZone() { return nullptr; }
         virtual df::plant *getSelectedPlant() { return nullptr; }
 
         static virtual_identity _identity;
@@ -406,6 +410,8 @@ namespace DFHack
         virtual df::item *getSelectedItem();
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
+        virtual df::building_civzonest *getSelectedCivZone();
+        virtual df::building_stockpilest *getSelectedStockpile();
         virtual df::plant *getSelectedPlant();
 
         static virtual_identity _identity;

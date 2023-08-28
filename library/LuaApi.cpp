@@ -1527,6 +1527,8 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getAnyUnit),
     WRAPM(Gui, getAnyItem),
     WRAPM(Gui, getAnyBuilding),
+    WRAPM(Gui, getAnyCivZone),
+    WRAPM(Gui, getAnyStockpile),
     WRAPM(Gui, getAnyPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),

@@ -1010,41 +1010,26 @@ General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
-
-  When a job is selected in :kbd:`q` mode, returns the job, else
-  prints error unless silent and returns *nil*.
-
 * ``dfhack.gui.getSelectedJob([silent])``
-
-  Returns the job selected in a workshop or unit/jobs screen.
-
 * ``dfhack.gui.getSelectedUnit([silent])``
-
-  Returns the unit selected via :kbd:`v`, :kbd:`k`, unit/jobs, or
-  a full-screen item view of a cage or suchlike.
-
 * ``dfhack.gui.getSelectedItem([silent])``
-
-  Returns the item selected via :kbd:`v` ->inventory, :kbd:`k`, :kbd:`t`, or
-  a full-screen item view of a container. Note that in the
-  last case, the highlighted *contained item* is returned, not
-  the container itself.
-
 * ``dfhack.gui.getSelectedBuilding([silent])``
-
-  Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
-
 * ``dfhack.gui.getSelectedCivZone([silent])``
-
-  Returns the zone currently selected via :kbd:`z`
-
+* ``dfhack.gui.getSelectedStockpile([silent])``
 * ``dfhack.gui.getSelectedPlant([silent])``
 
-  Returns the plant selected via :kbd:`k`.
+  Returns the currently selected in-game object or the indicated thing
+  associated with the selected in-game object. For example, Calling
+  ``getSelectedJob`` when a building is selected will return the job associated
+  with the building (e.g. the ``ConstructBuilding`` job). If ``silent`` is
+  ommitted or set to ``false`` and a selected object cannot be found, then an
+  error is printed to the console.
 
 * ``dfhack.gui.getAnyUnit(screen)``
 * ``dfhack.gui.getAnyItem(screen)``
 * ``dfhack.gui.getAnyBuilding(screen)``
+* ``dfhack.gui.getAnyCivZone(screen)``
+* ``dfhack.gui.getAnyStockpile(screen)``
 * ``dfhack.gui.getAnyPlant(screen)``
 
   Similar to the corresponding ``getSelected`` functions, but operate on the

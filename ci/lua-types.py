@@ -23,6 +23,16 @@ CONFIG = f"""{{
   "workspace.ignoreDir": ["build"]
 }}\n"""
 
+BASE_METHODS = """
+---@param id integer|number
+---@return <BASE_TYPE>|nil
+function <DECLARE_PREFIX>.find(id) end
+
+---@param item any
+---@return boolean
+function <DECLARE_PREFIX>:is_instance(item) end
+"""
+
 ########################################
 #          Symbols processing          #
 ########################################
@@ -178,7 +188,6 @@ class Struct(Tag):
         declare = declare_prefix(self.name)
         inheritance = ": " + self.el.attrib["inherits-from"] if "inherits-from" in self.el.attrib else ""
         s = f"---@class {self.name}{inheritance}{self.comment}\n"
-
         childs: list[Tag] = []
 
         for index, child in enumerate(self.el, start=1):
@@ -227,14 +236,14 @@ class Struct(Tag):
             s += field(c.name, c.type, c.comment)
 
         class_map[self.name] = s
-
         if declare != "":
             s += f"{declare}{self.name_prefix}{self.name} = nil\n"
         else:
             s += "\n"
-
         for child in childs:
             s = child.render() + s
+        if not inheritance and declare:
+            s = base_methods(self.name, f"{declare}{self.name_prefix}{self.name}") + "\n" + s
 
         return s
 
@@ -251,36 +260,10 @@ class DfOtherVector(Tag):
         return s
 
 
-class VirtualMethods(Tag):
-    def render(self) -> str:
-        s = ""
-        for child in self.el:
-            if "is-destructor" in child.attrib:
-                continue
-            s += VirtualMethod(
-                child, name_prefix=f"{self.name_prefix}", naming_rule=["name"], default_name="unnamed_method"
-            ).render()
-        return s
-
-
 class VirtualMethod(Tag):
     def render(self) -> str:
-        ret = self.el.attrib["ret-type"] if "ret-type" in self.el.attrib else ""
-        args: list[tuple[str, str]] = []
-        for i, child in enumerate(self.el):
-            if child.tag == "comment":
-                continue
-            if child.tag == "ret-type":
-                ret = fetch_type(child[0], "")
-            else:
-                args.append(
-                    (
-                        child.attrib["name"]
-                        if "name" in child.attrib and child.attrib["name"] != "local"
-                        else f"arg_{i}",
-                        fetch_type(child, ""),
-                    )
-                )
+        ret = self.get_ret()
+        args = self.get_args()
         s = ""
         params: list[str] = []
         for a in args:
@@ -290,6 +273,65 @@ class VirtualMethod(Tag):
             s += f"---@return {base_type(ret)}\n"
         s += f"function {self.name}({', '.join(params)}) end{' --' + self.comment if self.comment != '' else ''}\n\n"
         return s
+
+    def as_field(self) -> str:
+        ret = self.get_ret() or "nil"
+        args = self.get_args()
+        signature = "fun("
+        for a in args:
+            signature += f"{a[0]}: {a[1]},"
+        if signature[-1] == ",":
+            signature = signature[:-1]
+        signature = f"{signature}): {ret}"
+        name = self.name
+        if self.name.split(".").__len__() > 1:
+            name = self.name.split(".")[-1]
+        return field(name, signature, self.comment)
+
+    def get_ret(self) -> str:
+        ret = self.el.attrib["ret-type"] if "ret-type" in self.el.attrib else ""
+        for child in self.el:
+            if child.tag == "ret-type":
+                ret = fetch_type(child[0], "")
+                break
+        return base_type(ret)
+
+    def get_args(self) -> list[tuple[str, str]]:
+        args: list[tuple[str, str]] = []
+        for i, child in enumerate(self.el):
+            if child.tag == "comment" or child.tag == "ret-type":
+                continue
+            args.append(
+                (
+                    child.attrib["name"] if "name" in child.attrib and child.attrib["name"] != "local" else f"arg_{i}",
+                    fetch_type(child, ""),
+                )
+            )
+        return args
+
+
+class VirtualMethods(Tag):
+    def render(self) -> str:
+        s = ""
+        for i, child in enumerate(self.el):
+            if "is-destructor" in child.attrib:
+                continue
+            s += VirtualMethod(
+                child, name_prefix=f"{self.name_prefix}", naming_rule=["name"], default_name=f"unnamed_method_{i}"
+            ).render()
+        return s
+
+    def get_methods(self) -> list[VirtualMethod]:
+        methods: list[VirtualMethod] = []
+        for i, child in enumerate(self.el):
+            if "is-destructor" in child.attrib:
+                continue
+            methods.append(
+                VirtualMethod(
+                    child, name_prefix=f"{self.name_prefix}", naming_rule=["name"], default_name=f"unnamed_method_{i}"
+                )
+            )
+        return methods
 
 
 class GlobalObject(Tag):
@@ -353,6 +395,10 @@ def parse_tag(el: ET.Element) -> Iterable[Tag]:
             yield DfLinkedList(el)
         case _:
             print(f"-- SKIPPED TAG {el.tag}")
+
+
+def base_methods(base_type: str, declare_prefix: str) -> str:
+    return BASE_METHODS.replace("<BASE_TYPE>", base_type).replace("<DECLARE_PREFIX>", declare_prefix)
 
 
 def line(text: str, intend: int = 0) -> str:
@@ -456,17 +502,6 @@ def declare_prefix(name: str, default: str = "") -> str:
     return default
 
 
-def shim_ineritance(data: str) -> str:
-    for line in data.split("\n"):
-        if line.startswith("-- inherit "):
-            name = line.replace("-- inherit ", "").replace("\n", "")
-            data = data.replace(
-                line,
-                f"-- inherited from {name}\n" + shim_ineritance(class_map[name].split("\n", 1)[-1]) + "-- end " + name,
-            )
-    return data
-
-
 def parse_items_place() -> None:
     for file in sorted(Path(PATH_XML).glob("*.xml")):
         with file.open("r", encoding="utf-8") as src:
@@ -501,6 +536,7 @@ def symbols_processing() -> None:
 PATH_LUAAPI = "./library/LuaApi.cpp"
 PATH_LIBRARY = "./library/"
 PATH_DFHACK_OUTPUT = "./types/library/dfhack.lua"
+PATH_DEFAULT = "./types/library/default.lua"
 
 PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
@@ -730,6 +766,18 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     return s
 
 
+dfhack_modules: list[str] = []
+
+
+def generate_base_methods() -> None:
+    with Path(PATH_DEFAULT).open("w", encoding="utf-8") as dest:
+        out = f"-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n---@class df\ndf = nil\n---@class global\ndf.global = nil\n\n---@class dfhack\ndfhack = nil\n"
+        for module in dfhack_modules:
+            out += f"\n---@class {module.lower()}\ndfhack.{module.lower()} = nil\n"
+        out += f"\n---@alias env {{ df: df, dfhack: dfhack }}\n\n---@param module string\n---@return env\nfunction mkmodule(module) end\n\n"
+        print(out, file=dest)
+
+
 def signatures_processing() -> None:
     print("Processing signatures...")
     with Path(PATH_DFHACK_OUTPUT).open("w", encoding="utf-8") as dest:
@@ -737,6 +785,8 @@ def signatures_processing() -> None:
         unknown_types: set[str] = set()
         for entry in parse_luaapi():
             if entry.decoded_sig:
+                if entry.module and entry.module not in dfhack_modules:
+                    dfhack_modules.append(entry.module)
                 if entry.decoded_sig.ret.unknown:
                     unknown_types.add(f"---@alias {entry.decoded_sig.ret.type.replace('[]', '')} unknown\n")
                 for arg in entry.decoded_sig.args:
@@ -744,6 +794,8 @@ def signatures_processing() -> None:
                         unknown_types.add(f"---@alias {arg.type.replace('[]', '')} unknown\n")
             print(print_entry(entry), file=dest)
         print(f"\n-- Unknown types\n{''.join(unknown_types)}", file=dest)
+
+    generate_base_methods()
 
 
 if __name__ == "__main__":

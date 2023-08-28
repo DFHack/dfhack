@@ -795,10 +795,19 @@ def decode_signature(sig: str) -> Signature | None:
                     type=decoded_type_ret.replace("::", "__").replace("enums__biome_type__", ""),
                     unknown=decoded_type_ret == type_ret and type_ret != "string",
                 ),
-                args=args,
+                args=check_optional_bool(args),
                 name=match.group(2).strip().lower().replace("::", ".") if match.group(2) else None,
             )
     return None
+
+
+def check_optional_bool(args: list[Arg]) -> list[Arg]:
+    for arg in reversed(args):
+        if arg.type == "boolean":
+            arg.default_value = "false"
+        else:
+            break
+    return args
 
 
 def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:

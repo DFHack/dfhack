@@ -203,6 +203,7 @@ Sebastian Wolfertz      Enkrod
 SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
+shevernitskiy           shevernitskiy
 Shim Panze              Shim-Panze
 Silver                  silverflyone
 simon

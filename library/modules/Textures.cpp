@@ -77,7 +77,8 @@ static long add_texture(SDL_Surface* surface) {
 // delete surface from texture raws
 static void delete_texture(long texpos) {
     std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
-    if (texpos >= enabler->textures.raws.size())
+    auto pos = static_cast<size_t>(texpos);
+    if (pos >= enabler->textures.raws.size())
         return;
     enabler->textures.raws[texpos] = NULL;
 }
@@ -85,7 +86,7 @@ static void delete_texture(long texpos) {
 // create new surface with RGBA32 format and pixels as data
 SDL_Surface* create_texture(std::vector<uint32_t>& pixels, int texture_px_w, int texture_px_h) {
     auto surface = DFSDL_CreateRGBSurfaceWithFormat(0, texture_px_w, texture_px_h, 32, RGBA32);
-    for (auto i = 0; i < pixels.size() && i < texture_px_w * texture_px_h; i++) {
+    for (size_t i = 0; i < pixels.size() && i < texture_px_w * texture_px_h; i++) {
         uint32_t* p = (uint32_t*)surface->pixels + i;
         *p = pixels[i];
     }

@@ -560,8 +560,9 @@ PATTERN_WRAP = r"WRAP\((.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_MODULE_ARRAY = r"dfhack_[\w_]*module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
 PATTERN_LFUNC_ARRAY = r"dfhack_[\w_]*funcs\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
 PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}[,](\s?\/\/\s?<expose>\s?.*)*"
-PATTERN_SIGNATURE = r"^([\w::<>]+).+?\(([^)]*)\)"
+PATTERN_SIGNATURE = r"^([\w:<>]+)(.+)?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
+PATTERN_FORCE_EXPOSE = r"\/\/\s?<force-expose>\s?(.+)"
 
 
 @dataclass
@@ -583,6 +584,7 @@ class Ret:
 class Signature:
     ret: Ret
     args: list[Arg]
+    name: str | None
 
 
 @dataclass
@@ -592,9 +594,10 @@ class Entry:
     type: str
     sig: str | None
     decoded_sig: Signature | None
+    ignore_expose_prefix: boolean = False
 
 
-def parse_luaapi() -> Iterable[Entry]:
+def parse_files() -> Iterable[Entry]:
     total = 0
     found = 0
     decoded = 0
@@ -616,6 +619,23 @@ def parse_luaapi() -> Iterable[Entry]:
                                 yield item
                             else:
                                 print("Unable to find signature -> module:", item.module, "function:", item.fn)
+            for match in re.finditer(PATTERN_FORCE_EXPOSE, data, re.MULTILINE):
+                if match.group(1):
+                    total += 1
+                    found += 1
+                    decoded_signature = decode_signature(match.group(1).strip())
+                    if decoded_signature:
+                        decoded += 1
+                        item = Entry(
+                            module="",
+                            fn=decoded_signature.name or "INVELID_NAME",
+                            type="FORCE_EXPOSE",
+                            sig=match.group(1).strip(),
+                            decoded_sig=decoded_signature,
+                            ignore_expose_prefix=True,
+                        )
+                        yield item
+
     print(f"Signatures -> total: {total}, found: {found}, decoded {decoded}")
 
 
@@ -739,9 +759,9 @@ def decode_signature(sig: str) -> Signature | None:
     if match:
         type_ret = match.group(1)
         decoded_type_ret = decode_type(type_ret)
-        args_pairs = match.group(2).split(", ")
+        args_pairs = match.group(3).split(", ")
         args: list[Arg] = []
-        if args_pairs.__len__() > 0 and match.group(2).__len__() > 0:
+        if args_pairs.__len__() > 0 and match.group(3).__len__() > 0:
             for arg_pair in args_pairs:
                 vararg = False
                 default_value = None
@@ -771,16 +791,19 @@ def decode_signature(sig: str) -> Signature | None:
                 args.append(arg)
         if decoded_type_ret:
             return Signature(
-                Ret(
+                ret=Ret(
                     type=decoded_type_ret.replace("::", "__").replace("enums__biome_type__", ""),
                     unknown=decoded_type_ret == type_ret and type_ret != "string",
                 ),
-                args,
+                args=args,
+                name=match.group(2).strip().lower().replace("::", ".") if match.group(2) else None,
             )
     return None
 
 
 def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
+    if entry.ignore_expose_prefix:
+        prefix = ""
     s = f"-- CXX SIGNATURE -> {entry.sig}\n"
     known_args = ""
     ret = ""
@@ -798,7 +821,7 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     return s
 
 
-dfhack_modules: list[str] = []
+dfhack_modules: set[str] = set()
 
 
 def generate_base_methods() -> None:
@@ -815,17 +838,20 @@ def signatures_processing() -> None:
     with Path(PATH_DFHACK_OUTPUT).open("w", encoding="utf-8") as dest:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=dest)
         unknown_types: set[str] = set()
-        for entry in parse_luaapi():
+        for entry in parse_files():
             if entry.decoded_sig:
-                if entry.module and entry.module not in dfhack_modules:
-                    dfhack_modules.append(entry.module)
+                if not entry.ignore_expose_prefix and entry.module:
+                    dfhack_modules.add(entry.module)
+                if entry.ignore_expose_prefix and entry.fn.startswith("dfhack.") and entry.fn.split(".").__len__() > 2:
+                    dfhack_modules.add(entry.fn.split(".")[1])
                 if entry.decoded_sig.ret.unknown:
                     unknown_types.add(f"---@alias {entry.decoded_sig.ret.type.replace('[]', '')} unknown\n")
                 for arg in entry.decoded_sig.args:
                     if arg.unknown:
                         unknown_types.add(f"---@alias {arg.type.replace('[]', '')} unknown\n")
             print(print_entry(entry), file=dest)
-        print(f"\n-- Unknown types\n{''.join(unknown_types)}", file=dest)
+        if unknown_types.__len__() > 0:
+            print(f"\n-- Unknown types\n{''.join(unknown_types)}", file=dest)
 
     generate_base_methods()
 

@@ -161,6 +161,26 @@ static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int de
     return !nil;
 }
 
+template<class T>
+static bool get_int_or_closure_field(lua_State *L, T *pf, int idx, const char *name, int defval)
+{
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil) {
+        *pf = T(defval);
+    } else if (lua_isnumber(L, -1)) {
+        *pf = T(lua_tointeger(L, -1));
+    } else if (lua_isfunction(L, -1)) {
+        lua_call(L, 0, 1);
+        *pf = T(lua_tointeger(L, -1));
+        lua_pop(L, 1);
+    } else {
+        luaL_error(L, "Field %s is not a number or closure function.", name);
+    }
+    lua_pop(L, 1);
+    return !nil;
+}
+
 static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, char defval)
 {
     lua_getfield(L, idx, name);
@@ -207,7 +227,7 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
     else pen.bold = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
-    get_int_field(L, &pen.tile, idx, "tile", 0);
+    get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
     bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
     tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
@@ -1377,6 +1397,13 @@ static void OpenModule(lua_State *state, const char *mname,
     lua_pop(state, 1);
 }
 
+static void OpenModule(lua_State *state, const char *mname, const luaL_Reg *reg2)
+{
+    luaL_getsubtable(state, lua_gettop(state), mname);
+    luaL_setfuncs(state, reg2, 0);
+    lua_pop(state, 1);
+}
+
 #define WRAPM(module, function) { #function, df::wrap_function(module::function,true) }
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
@@ -1726,19 +1753,31 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 /***** Textures module *****/
 
-static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
-    WRAPM(Textures, getDfhackLogoTexposStart),
-    WRAPM(Textures, getGreenPinTexposStart),
-    WRAPM(Textures, getRedPinTexposStart),
-    WRAPM(Textures, getIconsTexposStart),
-    WRAPM(Textures, getOnOffTexposStart),
-    WRAPM(Textures, getMapUnsuspendTexposStart),
-    WRAPM(Textures, getControlPanelTexposStart),
-    WRAPM(Textures, getThinBordersTexposStart),
-    WRAPM(Textures, getMediumBordersTexposStart),
-    WRAPM(Textures, getBoldBordersTexposStart),
-    WRAPM(Textures, getPanelBordersTexposStart),
-    WRAPM(Textures, getWindowBordersTexposStart),
+static int textures_loadTileset(lua_State *state)
+{
+    std::string file = luaL_checkstring(state, 1);
+    auto tile_w = luaL_checkint(state, 2);
+    auto tile_h = luaL_checkint(state, 3);
+    auto handles = Textures::loadTileset(file, tile_w, tile_h);
+    Lua::PushVector(state, handles);
+    return 1;
+}
+
+static int textures_getTexposByHandle(lua_State *state)
+{
+    auto handle = luaL_checkunsigned(state, 1);
+    auto texpos = Textures::getTexposByHandle(handle);
+    if (texpos == -1) {
+        lua_pushnil(state);
+    } else {
+        Lua::Push(state, texpos);
+    }
+    return 1;
+}
+
+static const luaL_Reg dfhack_textures_funcs[] = {
+    { "loadTileset", textures_loadTileset },
+    { "getTexposByHandle", textures_getTexposByHandle },
     { NULL, NULL }
 };
 
@@ -3713,7 +3752,7 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
-    OpenModule(state, "textures", dfhack_textures_module);
+    OpenModule(state, "textures", dfhack_textures_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);

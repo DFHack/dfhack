@@ -62,6 +62,7 @@ Template for new versions:
 - Core: reload scripts in mods when a world is unloaded and immediately loaded again
 - Core: fix text getting added to DFHack text entry widgets when Alt- or Ctrl- keys are hit
 - `orders`: prevent import/export overlay from appearing on the create workorder screen
+- `caravan`: corrected prices for cages that have units inside of them
 
 ## Misc Improvements
 - Surround DFHack-specific UI elements with square brackets instead of red-yellow blocks for better readability

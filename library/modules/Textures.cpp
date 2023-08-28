@@ -86,7 +86,8 @@ static void delete_texture(long texpos) {
 // create new surface with RGBA32 format and pixels as data
 SDL_Surface* create_texture(std::vector<uint32_t>& pixels, int texture_px_w, int texture_px_h) {
     auto surface = DFSDL_CreateRGBSurfaceWithFormat(0, texture_px_w, texture_px_h, 32, RGBA32);
-    for (size_t i = 0; i < pixels.size() && i < texture_px_w * texture_px_h; i++) {
+    auto canvas_length = static_cast<size_t>(texture_px_w * texture_px_h);
+    for (size_t i = 0; i < pixels.size() && i < canvas_length; i++) {
         uint32_t* p = (uint32_t*)surface->pixels + i;
         *p = pixels[i];
     }

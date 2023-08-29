@@ -14,7 +14,8 @@ Searching and sorting functionality is provided by `overlay` widgets, and widget
 Squad assignment overlay
 ------------------------
 
-The squad assignment screen can be sorted by name, by migrant wave, by stress, by various military-related skills or by specific potential ratings.
+The squad assignment screen can be sorted by name, by migrant wave, by stress,
+by various military-related skills or by long-term military potential.
 
 If sorted by "any melee", then the citizen is sorted according to the highest
 skill they have in axes, short swords, maces, warhammers, spears, or general

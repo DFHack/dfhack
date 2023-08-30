@@ -2606,8 +2606,9 @@ graphical tile id passed as the ``tile`` field in a `Pen <lua-screen-pen>`).
 Adding new textures to the vector is not difficult, but the game periodically
 deletes textures that are in the vector, and that's a problem since it
 invalidates the ``texpos`` value that used to point to that texture.
-The ``texture`` module solves this problem. Instead of ``texpos`` directly, it operates on the ``TexposHandle`` entity, which is essentially a reference to ``texpos``.
-Thanks to this handle, it is possible to get a valid ``texpos`` at any time.
+The ``textures`` module solves this problem by providing a stable handle instead of a
+raw ``texpos``. When we need to draw a particular tile, we can look up the current
+``texpos`` value via the handle.
 
 * ``loadTileset(file, tile_px_w, tile_px_h)``
 

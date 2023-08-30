@@ -3915,9 +3915,6 @@ These modules make extensive use of the ``class`` module, and define
 things ranging from the basic ``Painter``, ``View`` and ``Screen``
 classes, to fully functional predefined dialogs.
 
-In addition to the ``gui`` module, there is a ``textures`` module that allows
-you to perform actions on textures to use them as tiles during rendering.
-
 gui
 ===
 

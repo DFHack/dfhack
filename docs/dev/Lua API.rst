@@ -2622,9 +2622,9 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
 
 * ``getTexposByHandle(handle)``
 
-  Get ``texpos`` by ``TexposHandle``.
-  Always use this method if you need to get valid texpos for your texture.
-  ``texpos`` can change on game textures reset, but the handle will be the same.
+  Get the current ``texpos`` for the given ``TexposHandle``. Always use this method to
+  get the ``texpos`` for your texture. ``texpos`` can change when game textures are
+  reset, but the handle will be the same.
 
 * ``createTile(pixels, tile_px_w, tile_px_h)``
 

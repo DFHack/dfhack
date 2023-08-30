@@ -2600,7 +2600,9 @@ a ``dfhack.penarray`` instance to cache their output.
 Textures module
 ---------------
 
-In order for the game to render a particular tile (graphic), it needs to know ``texpos`` - the position in the vector of the registered game textures (also the graphical tile id passed as the tile field in a `Pen <lua-screen-pen>`).
+In order for the game to render a particular tile (graphic), it needs to know the
+``texpos`` - the position in the vector of the registered game textures (also the
+graphical tile id passed as the ``tile`` field in a `Pen <lua-screen-pen>`).
 Add your own texture to it and get ``texpos`` is not difficult. But the game periodically deletes textures that are in the vector, and that's the problem.
 Because the ``texpos`` we got earlier no longer points to our added texture.
 The ``texture`` module solves this problem. Instead of ``texpos`` directly, it operates on the ``TexposHandle`` entity, which is essentially a reference to ``texpos``.

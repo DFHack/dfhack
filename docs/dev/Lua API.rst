@@ -2614,8 +2614,8 @@ Thanks to this handle, it is possible to get a valid ``texpos`` at any time.
 
   Example usage::
 
-  local logo_textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
-  local first_texposhandle = logo_textures[1]
+    local logo_textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
+    local first_texposhandle = logo_textures[1]
 
 * ``getTexposByHandle(handle)``
 

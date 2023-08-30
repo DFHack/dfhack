@@ -16,12 +16,10 @@ local MELEE_WEAPON_SKILLS = {
     df.job_skill.MACE,
     df.job_skill.HAMMER,
     df.job_skill.SPEAR,
-    -- df.job_skill.MELEE_COMBAT, --Fighter
 }
 
 local RANGED_WEAPON_SKILLS = {
     df.job_skill.CROSSBOW,
-    -- df.job_skill.RANGED_COMBAT,
 }
 
 local LEADERSHIP_SKILLS = {
@@ -125,9 +123,7 @@ local function get_max_skill(unit_id, list)
     return max
 end
 
-local function melee_skill_effectiveness(unit_id, skill_list)
-    local unit = df.unit.find(unit_id)
-
+local function melee_skill_effectiveness(unit, skill_list)
     -- Physical attributes
     local strength = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.STRENGTH)
     local agility = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.AGILITY)
@@ -141,15 +137,15 @@ local function melee_skill_effectiveness(unit_id, skill_list)
     local kinesthetic_sense = dfhack.units.getMentalAttrValue(unit, df.mental_attribute_type.KINESTHETIC_SENSE)
 
     -- Skills
-    local melee_skill = get_max_skill(unit_id, skill_list)
-    if melee_skill then
-        melee_skill = melee_skill.rating
-    else
-        melee_skill = 0
+    -- Finding the highest skill
+    skill_rating = 0
+    for _, skill in ipairs(skill_list) do
+        melee_skill = dfhack.units.getNominalSkill(unit, skill, true)
+        skill_rating = math.max(skill_rating, melee_skill)
     end
-    local melee_combat = dfhack.units.getNominalSkill(unit, df.job_skill.MELEE_COMBAT, true)
+    local melee_combat_rating = dfhack.units.getNominalSkill(unit, df.job_skill.MELEE_COMBAT, true)
 
-    local rating = melee_skill * 27000 + melee_combat * 9000
+    local rating = skill_rating * 27000 + melee_combat_rating * 9000
     + strength * 180 + body_size_base * 100 + kinesthetic_sense * 50 + endurance * 50
     + agility * 30 + toughness * 20 + willpower * 20 + spatial_sense * 20
     return rating
@@ -158,30 +154,33 @@ end
 local function make_sort_by_melee_skill_effectiveness_desc(list)
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local rating1 = melee_skill_effectiveness(unit_id_1, list)
-        local rating2 = melee_skill_effectiveness(unit_id_2, list)
+        local unit1 = df.unit.find(unit_id_1)
+        local unit2 = df.unit.find(unit_id_2)
+        if not unit1 then return -1 end
+        if not unit2 then return 1 end
+        local rating1 = melee_skill_effectiveness(unit1, list)
+        local rating2 = melee_skill_effectiveness(unit2, list)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if rating1 ~= rating2 then return utils.compare(rating2, rating1) end
+        return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_melee_skill_effectiveness_asc(list)
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local rating1 = melee_skill_effectiveness(unit_id_1, list)
-        local rating2 = melee_skill_effectiveness(unit_id_2, list)
+        local unit1 = df.unit.find(unit_id_1)
+        local unit2 = df.unit.find(unit_id_2)
+        if not unit1 then return -1 end
+        if not unit2 then return 1 end
+        local rating1 = melee_skill_effectiveness(unit1, list)
+        local rating2 = melee_skill_effectiveness(unit2, list)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if rating1 ~= rating2 then return utils.compare(rating1, rating2) end
+        return utils.compare(rating1, rating2)
     end
 end
 
-local function ranged_skill_effectiveness(unit_id, skill_list)
-    local unit = df.unit.find(unit_id)
-
+-- FUnction could easily be adapted to different weapon types.
+local function ranged_skill_effectiveness(unit, skill_list)
     -- Physical attributes
     local agility = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.AGILITY)
 
@@ -191,15 +190,15 @@ local function ranged_skill_effectiveness(unit_id, skill_list)
     local focus = dfhack.units.getMentalAttrValue(unit, df.mental_attribute_type.FOCUS)
 
     -- Skills
-    local ranged_skill = get_max_skill(unit_id, skill_list)
-    if ranged_skill then
-        ranged_skill = ranged_skill.rating
-    else
-        ranged_skill = 0
+    -- Finding the highest skill
+    skill_rating = 0
+    for _, skill in ipairs(skill_list) do
+        ranged_skill = dfhack.units.getNominalSkill(unit, skill, true)
+        skill_rating = math.max(skill_rating, ranged_skill)
     end
     local ranged_combat = dfhack.units.getNominalSkill(unit, df.job_skill.RANGED_COMBAT, true)
 
-    local rating = ranged_skill * 24000 + ranged_combat * 8000
+    local rating = skill_rating * 24000 + ranged_combat * 8000
     + agility * 15 + spatial_sense * 15 + kinesthetic_sense * 6 + focus * 6
     return rating
 end
@@ -207,24 +206,28 @@ end
 local function make_sort_by_ranged_skill_effectiveness_desc(list)
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit_id_1, list)
-        local rating2 = ranged_skill_effectiveness(unit_id_2, list)
+        local unit1 = df.unit.find(unit_id_1)
+        local unit2 = df.unit.find(unit_id_2)
+        if not unit1 then return -1 end
+        if not unit2 then return 1 end
+        local rating1 = ranged_skill_effectiveness(unit1, list)
+        local rating2 = ranged_skill_effectiveness(unit2, list)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if rating1 ~= rating2 then return utils.compare(rating2, rating1) end
+        return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_ranged_skill_effectiveness_asc(list)
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit_id_1, list)
-        local rating2 = ranged_skill_effectiveness(unit_id_2, list)
+        local unit1 = df.unit.find(unit_id_1)
+        local unit2 = df.unit.find(unit_id_2)
+        if not unit1 then return -1 end
+        if not unit2 then return 1 end
+        local rating1 = ranged_skill_effectiveness(unit1, list)
+        local rating2 = ranged_skill_effectiveness(unit2, list)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if rating1 ~= rating2 then return utils.compare(rating1, rating2) end
+        return utils.compare(rating1, rating2)
     end
 end
 
@@ -308,7 +311,7 @@ local function make_sort_by_skill_asc(sort_skill)
     end
 end
 
--- Statistical rating that is bigger for dwarves that are mentally stable
+-- Statistical rating that is higher for dwarves that are mentally stable
 local function mental_stability(unit)
     local ALTRUISM = unit.status.current_soul.personality.traits.ALTRUISM
     local ANXIETY_PROPENSITY = unit.status.current_soul.personality.traits.ANXIETY_PROPENSITY
@@ -379,7 +382,7 @@ local function sort_by_mental_stability_asc(unit_id_1, unit_id_2)
     return utils.compare(rating1, rating2)
 end
 
--- Statistical rating that is bigger for more potent dwarves in long run melee military training
+-- Statistical rating that is higher for more potent dwarves in long run melee military training
 -- Rating considers fighting melee opponents
 -- Wounds are not considered!
 local function melee_combat_potential(unit)
@@ -429,7 +432,7 @@ local function sort_by_melee_combat_potential_asc(unit_id_1, unit_id_2)
     return utils.compare(rating1, rating2)
 end
 
--- Statistical rating that is bigger for more potent dwarves in long run ranged military training
+-- Statistical rating that is higher for more potent dwarves in long run ranged military training
 -- Wounds are not considered!
 local function ranged_combat_potential(unit)
     -- Physical attributes
@@ -506,7 +509,7 @@ SquadAssignmentOverlay.ATTRS{
     default_pos={x=-33, y=40},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=65, h=9},
+    frame={w=75, h=9},
     frame_style=gui.FRAME_PANEL,
     frame_background=gui.CLEAR_PEN,
 }

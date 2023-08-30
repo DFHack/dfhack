@@ -2628,10 +2628,9 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
 
 * ``createTile(pixels, tile_px_w, tile_px_h)``
 
-  Create and register new a texture with the given tile dimension and array of ``pixels`` as data in row major order.
-  Each pixel is an integer representing color in packed RBGA format (for example, #0022FF11).
-
-  Returns ``TexposHandle``.
+  Create and register a new texture with the given tile dimensions and an array of
+  ``pixels`` in row major order. Each pixel is an integer representing color in packed
+  RBGA format (for example, #0022FF11). Returns a ``TexposHandle``.
 
 * ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h)``
 

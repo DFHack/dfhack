@@ -1777,9 +1777,51 @@ static int textures_getTexposByHandle(lua_State *state)
     return 1;
 }
 
+static int textures_deleteHandle(lua_State *state)
+{
+    if (lua_isinteger(state,1)) {
+        auto handle = luaL_checkunsigned(state, 1);
+        Textures::deleteHandle(handle);
+    } else if (lua_istable(state,1)) {
+        std::vector<TexposHandle> handles;
+        Lua::GetVector(state, handles);
+        for (auto& handle: handles) {
+            Textures::deleteHandle(handle);
+        }
+    }
+    return 0;
+}
+
+static int textures_createTile(lua_State *state)
+{
+    std::vector<uint32_t> pixels;
+    Lua::GetVector(state, pixels);
+    auto tile_w = luaL_checkint(state, 2);
+    auto tile_h = luaL_checkint(state, 3);
+    auto handle = Textures::createTile(pixels, tile_w, tile_h);
+    Lua::Push(state, handle);
+    return 1;
+}
+
+static int textures_createTileset(lua_State *state)
+{
+    std::vector<uint32_t> pixels;
+    Lua::GetVector(state, pixels);
+    auto texture_w = luaL_checkint(state, 2);
+    auto texture_h = luaL_checkint(state, 3);
+    auto tile_w = luaL_checkint(state, 4);
+    auto tile_h = luaL_checkint(state, 5);
+    auto handles = Textures::createTileset(pixels, texture_w, texture_h, tile_w, tile_h);
+    Lua::PushVector(state, handles);
+    return 1;
+}
+
 static const luaL_Reg dfhack_textures_funcs[] = {
     { "loadTileset", textures_loadTileset },
     { "getTexposByHandle", textures_getTexposByHandle },
+    { "deleteHandle", textures_deleteHandle },
+    { "createTile", textures_createTile },
+    { "createTileset", textures_createTileset },
     { NULL, NULL }
 };
 

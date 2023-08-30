@@ -1,4 +1,5 @@
 #include <mutex>
+#include <numeric>
 #include <unordered_map>
 
 #include "Internal.h"
@@ -16,6 +17,7 @@
 #include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 
+#include <SDL_pixels.h>
 #include <SDL_surface.h>
 
 using df::global::enabler;
@@ -38,28 +40,14 @@ static std::mutex g_adding_mutex;
 // It uses the same pixel format (RGBA, R at lowest address) regardless of
 // hardware.
 SDL_Surface* canonicalize_format(SDL_Surface* src) {
-    SDL_PixelFormat fmt;
-    fmt.palette = NULL;
-    fmt.BitsPerPixel = 32;
-    fmt.BytesPerPixel = 4;
-    fmt.Rloss = fmt.Gloss = fmt.Bloss = fmt.Aloss = 0;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    fmt.Rshift = 24;
-    fmt.Gshift = 16;
-    fmt.Bshift = 8;
-    fmt.Ashift = 0;
-#else
-    fmt.Rshift = 0;
-    fmt.Gshift = 8;
-    fmt.Bshift = 16;
-    fmt.Ashift = 24;
-#endif
-    fmt.Rmask = 255 << fmt.Rshift;
-    fmt.Gmask = 255 << fmt.Gshift;
-    fmt.Bmask = 255 << fmt.Bshift;
-    fmt.Amask = 255 << fmt.Ashift;
+    // even though we have null check after DFIMG_Load
+    // in loadTileset() (the only consumer of this method)
+    // it's better put nullcheck here as well
+    if (!src)
+        return src;
 
-    SDL_Surface* tgt = DFSDL_ConvertSurface(src, &fmt, SDL_SWSURFACE);
+    auto fmt = DFSDL_AllocFormat(SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    SDL_Surface* tgt = DFSDL_ConvertSurface(src, fmt, SDL_SWSURFACE);
     DFSDL_FreeSurface(src);
     for (int x = 0; x < tgt->w; ++x) {
         for (int y = 0; y < tgt->h; ++y) {
@@ -71,6 +59,7 @@ SDL_Surface* canonicalize_format(SDL_Surface* src) {
             }
         }
     }
+
     return tgt;
 }
 
@@ -80,6 +69,53 @@ static long add_texture(SDL_Surface* surface) {
     auto texpos = enabler->textures.raws.size();
     enabler->textures.raws.push_back(surface);
     return texpos;
+}
+
+// delete surface from texture raws
+static void delete_texture(long texpos) {
+    std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
+    auto pos = static_cast<size_t>(texpos);
+    if (pos >= enabler->textures.raws.size())
+        return;
+    enabler->textures.raws[texpos] = NULL;
+}
+
+// create new surface with RGBA32 format and pixels as data
+SDL_Surface* create_texture(std::vector<uint32_t>& pixels, int texture_px_w, int texture_px_h) {
+    auto surface = DFSDL_CreateRGBSurfaceWithFormat(0, texture_px_w, texture_px_h, 32,
+                                                    SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    auto canvas_length = static_cast<size_t>(texture_px_w * texture_px_h);
+    for (size_t i = 0; i < pixels.size() && i < canvas_length; i++) {
+        uint32_t* p = (uint32_t*)surface->pixels + i;
+        *p = pixels[i];
+    }
+    return surface;
+}
+
+// convert single surface into tiles according w/h
+// register tiles in texture raws and return handles
+std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int tile_px_h) {
+    std::vector<TexposHandle> handles{};
+    if (!surface)
+        return handles;
+
+    int dimx = surface->w / tile_px_w;
+    int dimy = surface->h / tile_px_h;
+
+    for (int y = 0; y < dimy; y++) {
+        for (int x = 0; x < dimx; x++) {
+            SDL_Surface* tile = DFSDL_CreateRGBSurface(
+                0, tile_px_w, tile_px_h, 32, surface->format->Rmask, surface->format->Gmask,
+                surface->format->Bmask, surface->format->Amask);
+            SDL_Rect vp{tile_px_w * x, tile_px_h * y, tile_px_w, tile_px_h};
+            DFSDL_UpperBlit(surface, &vp, tile, NULL);
+            auto handle = Textures::loadTexture(tile);
+            handles.push_back(handle);
+        }
+    }
+
+    DFSDL_FreeSurface(surface);
+    return handles;
 }
 
 TexposHandle Textures::loadTexture(SDL_Surface* surface) {
@@ -96,30 +132,15 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
 
 std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
                                                 int tile_px_h) {
-    std::vector<TexposHandle> handles{};
-
     SDL_Surface* surface = DFIMG_Load(file.c_str());
     if (!surface) {
         ERR(textures).printerr("unable to load textures from '%s'\n", file.c_str());
-        return handles;
+        return std::vector<TexposHandle>{};
     }
 
     surface = canonicalize_format(surface);
-    int dimx = surface->w / tile_px_w;
-    int dimy = surface->h / tile_px_h;
-    for (int y = 0; y < dimy; y++) {
-        for (int x = 0; x < dimx; x++) {
-            SDL_Surface* tile = DFSDL_CreateRGBSurface(
-                0, tile_px_w, tile_px_h, 32, surface->format->Rmask, surface->format->Gmask,
-                surface->format->Bmask, surface->format->Amask);
-            SDL_Rect vp{tile_px_w * x, tile_px_h * y, tile_px_w, tile_px_h};
-            DFSDL_UpperBlit(surface, &vp, tile, NULL);
-            auto handle = Textures::loadTexture(tile);
-            handles.push_back(handle);
-        }
-    }
+    auto handles = slice_tileset(surface, tile_px_w, tile_px_h);
 
-    DFSDL_FreeSurface(surface);
     DEBUG(textures).print("loaded %zd textures from '%s'\n", handles.size(), file.c_str());
 
     return handles;
@@ -140,6 +161,33 @@ long Textures::getTexposByHandle(TexposHandle handle) {
     }
 
     return -1;
+}
+
+TexposHandle Textures::createTile(std::vector<uint32_t>& pixels, int tile_px_w, int tile_px_h) {
+    auto texture = create_texture(pixels, tile_px_w, tile_px_h);
+    auto handle = Textures::loadTexture(texture);
+    return handle;
+}
+
+std::vector<TexposHandle> Textures::createTileset(std::vector<uint32_t>& pixels, int texture_px_w,
+                                                  int texture_px_h, int tile_px_w, int tile_px_h) {
+    auto texture = create_texture(pixels, texture_px_w, texture_px_h);
+    auto handles = slice_tileset(texture, tile_px_w, tile_px_h);
+    return handles;
+}
+
+void Textures::deleteHandle(TexposHandle handle) {
+    auto texpos = Textures::getTexposByHandle(handle);
+    if (texpos > 0)
+        delete_texture(texpos);
+    if (g_handle_to_texpos.contains(handle))
+        g_handle_to_texpos.erase(handle);
+    if (g_handle_to_surface.contains(handle)) {
+        auto surface = g_handle_to_surface[handle];
+        while (surface->refcount)
+            DFSDL_FreeSurface(surface);
+        g_handle_to_surface.erase(handle);
+    }
 }
 
 static void reset_texpos() {

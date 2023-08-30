@@ -2581,6 +2581,56 @@ a ``dfhack.penarray`` instance to cache their output.
 
   ``bufferx`` and ``buffery`` default to 0.
 
+
+Textures module
+---------------
+
+In order for the game to render a particular tile (graphic), it needs to know the
+``texpos`` - the position in the vector of the registered game textures (also the
+graphical tile id passed as the ``tile`` field in a `Pen <lua-screen-pen>`).
+Adding new textures to the vector is not difficult, but the game periodically
+deletes textures that are in the vector, and that's a problem since it
+invalidates the ``texpos`` value that used to point to that texture.
+The ``textures`` module solves this problem by providing a stable handle instead of a
+raw ``texpos``. When we need to draw a particular tile, we can look up the current
+``texpos`` value via the handle.
+
+* ``loadTileset(file, tile_px_w, tile_px_h)``
+
+  Loads a tileset from the image ``file`` with give tile dimensions in pixels. The
+  image will be sliced in row major order. Returns an array of ``TexposHandle``.
+
+  Example usage::
+
+    local logo_textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
+    local first_texposhandle = logo_textures[1]
+
+* ``getTexposByHandle(handle)``
+
+  Get the current ``texpos`` for the given ``TexposHandle``. Always use this method to
+  get the ``texpos`` for your texture. ``texpos`` can change when game textures are
+  reset, but the handle will be the same.
+
+* ``createTile(pixels, tile_px_w, tile_px_h)``
+
+  Create and register a new texture with the given tile dimensions and an array of
+  ``pixels`` in row major order. Each pixel is an integer representing color in packed
+  RBGA format (for example, #0022FF11). Returns a ``TexposHandle``.
+
+* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h)``
+
+  Create and register a new texture with the given texture dimensions and an array of
+  ``pixels`` in row major order. Then slice it into tiles with the given tile
+  dimensions. Each pixel is an integer representing color in packed RBGA format (for
+  example #0022FF11). Returns an array of ``TexposHandle``.
+
+* ``deleteHandle(handle)``
+
+  ``handle`` here can be single ``TexposHandle`` or an array of ``TexposHandle``.
+  Deletes all metadata and texture(s) related to the given handle(s). The handles
+  become invalid after this call.
+
+
 Filesystem module
 -----------------
 
@@ -5326,6 +5376,31 @@ The parent widget owns the range values, and can control them independently (e.g
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+
+gui.textures
+============
+
+This module contains convenience methods for accessing default DFHack graphic assets.
+Pass the ``offset`` in tiles (in row major position) to get a particular tile from the
+asset. ``offset`` 0 is the first tile.
+
+* ``tp_green_pin(offset)`` tileset: ``hack/data/art/green-pin.png``
+* ``tp_red_pin(offset)`` tileset: ``hack/data/art/red-pin.png``
+* ``tp_icons(offset)`` tileset: ``hack/data/art/icons.png``
+* ``tp_on_off(offset)`` tileset: ``hack/data/art/on-off.png``
+* ``tp_control_panel(offset)`` tileset: ``hack/data/art/control-panel.png``
+* ``tp_border_thin(offset)`` tileset: ``hack/data/art/border-thin.png``
+* ``tp_border_medium(offset)`` tileset: ``hack/data/art/border-medium.png``
+* ``tp_border_bold(offset)`` tileset: ``hack/data/art/border-bold.png``
+* ``tp_border_panel(offset)`` tileset: ``hack/data/art/border-panel.png``
+* ``tp_border_window(offset)`` tileset: ``hack/data/art/order-window.png``
+
+Example usage::
+
+  local textures = require('gui.textures')
+  local first_border_texpos = textures.tp_border_thin(1)
+
 
 .. _lua-plugins:
 

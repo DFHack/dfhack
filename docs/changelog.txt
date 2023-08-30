@@ -30,6 +30,7 @@ Template for new versions:
 
 ## Fixes
 - `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
+- `seedwatch`: seedwatch will now ignore (unplantable) tree seeds entirely
 
 ## Misc Improvements
 

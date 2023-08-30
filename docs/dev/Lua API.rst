@@ -5415,7 +5415,7 @@ asset. ``offset`` 0 is the first tile.
 * ``tp_border_panel(offset)`` tileset: ``hack/data/art/border-panel.png``
 * ``tp_border_window(offset)`` tileset: ``hack/data/art/order-window.png``
 
-Example usega::
+Example usage::
 
   local textures = require('gui.textures')
   local first_border_texpos = textures.tp_border_thin(1)

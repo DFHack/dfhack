@@ -3864,6 +3864,9 @@ These modules make extensive use of the ``class`` module, and define
 things ranging from the basic ``Painter``, ``View`` and ``Screen``
 classes, to fully functional predefined dialogs.
 
+In addition to the ``gui`` module, there is a ``textures`` module that allows
+you to perform actions on textures to use them as tiles during rendering.
+
 gui
 ===
 
@@ -5341,6 +5344,48 @@ The parent widget owns the range values, and can control them independently (e.g
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+textures
+========
+
+In order for the game to render a particular tile (graphic), it needs to know ``texpos`` - the position in the vector of the registered game textures.
+Add your own texture to it and get ``texpos`` is not difficult. But the game periodically deletes textures that are in the vector, and that's the problem.
+Because the ``texpos`` we got earlier no longer points to our added texture.
+The ``texture`` module solves this problem. Instead of ``texpos`` directly, it operates on the ``TexposHandle`` entity, which is essentially a reference to ``texpos``.
+Thanks to this handle, it is possible to get a valid ``texpos`` at any time.
+
+* ``loadTileset(file, tile_px_w, tile_px_h)``
+
+  Loads tileset from the image ``file`` with give tile dimension in pixels (image will be sliced in row major order).
+
+  Returns an array of ``TexposHandle``
+
+* ``getTexposByHandle(handle)``
+
+  Get ``texpos`` by ``TexposHandle``.
+  Always use this method if you need to get valid texpos for your texture.
+  ``texpos`` can change on game textures reset, but the handle will be the same.
+
+* ``createTile(pixels, tile_px_w, tile_px_h)``
+
+  Create and register new a texture with the given tile dimension and array of ``pixels`` as data in row major order.
+  Each pixel is an integer representing color in packed RBGA format (for example, #0022FF11).
+
+  Returns ``TexposHandle``.
+
+* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h)``
+
+  Create and register a new texture with the given texture dimension and array of ``pixels`` as data in row major order.
+  Then slice it on tiles with the given dimension in row major order.
+  Each pixel is an integer representing color in packed RBGA format (for example #0022FF11).
+
+  Returns an array of ``TexposHandle``.
+
+* ``deleteHandle(handle)``
+
+  ``handle`` here can be signle ``TexposHandle``, or array of ``TexposHandle``.
+  Deletes all metadata and texture(s) itself by given handle(s).
+  You must be sure that the game does not use this texture in rendering process.
 
 .. _lua-plugins:
 

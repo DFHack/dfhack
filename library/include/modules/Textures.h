@@ -49,14 +49,14 @@ DFHACK_EXPORT long getTexposByHandle(TexposHandle handle);
 DFHACK_EXPORT void deleteHandle(TexposHandle handle);
 
 /**
- * Create new texture with RGBA32 format and pixels as data.
+ * Create new texture with RGBA32 format and pixels as data in row major order.
  * Register this texture and return TexposHandle.
  */
 DFHACK_EXPORT TexposHandle createTile(std::vector<uint32_t>& pixels, int tile_px_w = TILE_WIDTH_PX,
                                       int tile_px_h = TILE_HEIGHT_PX);
 
 /**
- * Create new textures as tileset with RGBA32 format and pixels as data.
+ * Create new textures as tileset with RGBA32 format and pixels as data in row major order.
  * Register this textures and return vector of TexposHandle.
  */
 DFHACK_EXPORT std::vector<TexposHandle> createTileset(std::vector<uint32_t>& pixels,

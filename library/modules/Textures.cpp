@@ -17,6 +17,7 @@
 #include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 
+#include <SDL_pixels.h>
 #include <SDL_surface.h>
 
 using df::global::enabler;
@@ -31,10 +32,6 @@ static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
 static std::mutex g_adding_mutex;
 
-// it is SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32
-// initialized inplace to avoid including SDL_pixels.h
-static const uint32_t RGBA32 = 376840196;
-
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
 // and the source surface didn't already have an alpha channel.
@@ -43,13 +40,13 @@ static const uint32_t RGBA32 = 376840196;
 // It uses the same pixel format (RGBA, R at lowest address) regardless of
 // hardware.
 SDL_Surface* canonicalize_format(SDL_Surface* src) {
-    // however we have null check after DFIMG_Load
+    // even though we have null check after DFIMG_Load
     // in loadTileset() (the only consumer of this method)
     // it's better put nullcheck here as well
     if (!src)
         return src;
 
-    auto fmt = DFSDL_AllocFormat(RGBA32);
+    auto fmt = DFSDL_AllocFormat(SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
     SDL_Surface* tgt = DFSDL_ConvertSurface(src, fmt, SDL_SWSURFACE);
     DFSDL_FreeSurface(src);
     for (int x = 0; x < tgt->w; ++x) {
@@ -85,7 +82,8 @@ static void delete_texture(long texpos) {
 
 // create new surface with RGBA32 format and pixels as data
 SDL_Surface* create_texture(std::vector<uint32_t>& pixels, int texture_px_w, int texture_px_h) {
-    auto surface = DFSDL_CreateRGBSurfaceWithFormat(0, texture_px_w, texture_px_h, 32, RGBA32);
+    auto surface = DFSDL_CreateRGBSurfaceWithFormat(0, texture_px_w, texture_px_h, 32,
+                                                    SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
     auto canvas_length = static_cast<size_t>(texture_px_w * texture_px_h);
     for (size_t i = 0; i < pixels.size() && i < canvas_length; i++) {
         uint32_t* p = (uint32_t*)surface->pixels + i;
@@ -186,9 +184,8 @@ void Textures::deleteHandle(TexposHandle handle) {
         g_handle_to_texpos.erase(handle);
     if (g_handle_to_surface.contains(handle)) {
         auto surface = g_handle_to_surface[handle];
-        for (auto i = 0; i < surface->refcount; i++) {
+        while (surface->refcount)
             DFSDL_FreeSurface(surface);
-        }
         g_handle_to_surface.erase(handle);
     }
 }

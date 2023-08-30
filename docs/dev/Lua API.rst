@@ -2642,9 +2642,9 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
 
 * ``deleteHandle(handle)``
 
-  ``handle`` here can be signle ``TexposHandle``, or array of ``TexposHandle``.
-  Deletes all metadata and texture(s) itself by given handle(s).
-  You must be sure that the game does not use this texture in rendering process.
+  ``handle`` here can be single ``TexposHandle`` or an array of ``TexposHandle``.
+  Deletes all metadata and texture(s) related to the given handle(s). The handles
+  become invalid after this call.
 
 
 Filesystem module

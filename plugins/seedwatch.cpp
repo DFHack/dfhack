@@ -171,7 +171,8 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     world_plant_ids.clear();
     for (size_t i = 0; i < world->raws.plants.all.size(); ++i) {
         auto & plant = world->raws.plants.all[i];
-        if (plant->material_defs.type[plant_material_def::seed] != -1)
+        if (plant->material_defs.type[plant_material_def::seed] != -1 &&
+            !plant->flags.is_set(df::enums::plant_raw_flags::TREE))
             world_plant_ids[plant->id] = i;
     }
 
@@ -180,8 +181,13 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     World::GetPersistentData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
     const size_t num_seed_configs = seed_configs.size();
     for (size_t idx = 0; idx < num_seed_configs; ++idx) {
-        auto &c = seed_configs[idx];
-        watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
+        auto& c = seed_configs[idx];
+        int seed_id = get_config_val(c, SEED_CONFIG_ID);
+        auto plant = binsearch_in_vector(world->raws.plants.all, &df::plant_raw::index, seed_id);
+        if (!plant->flags.is_set(df::enums::plant_raw_flags::TREE))
+            watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
+        else
+            DEBUG(config, out).print("reference to tree seed in saved config discarded\n");
     }
 
     config = World::GetPersistentData(CONFIG_KEY);

@@ -5400,7 +5400,9 @@ The parent widget owns the range values, and can control them independently (e.g
 gui.textures
 ============
 
-This module contains preloaded ``DFHack`` graphic assets and provide several helper methods to get ``texpos`` by offset in tilest (in row major position).
+This module contains convenience methods for accessing default DFHack graphic assets.
+Pass the ``offset`` in tiles (in row major position) to get a particular tile from the
+asset. ``offset`` 0 is the first tile.
 
 * ``tp_green_pin(offset)`` tileset: ``hack/data/art/green-pin.png``
 * ``tp_red_pin(offset)`` tileset: ``hack/data/art/red-pin.png``

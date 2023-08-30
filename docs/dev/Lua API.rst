@@ -2597,7 +2597,7 @@ a ``dfhack.penarray`` instance to cache their output.
   ``bufferx`` and ``buffery`` default to 0.
 
 
-Textures Module
+Textures module
 ---------------
 
 In order for the game to render a particular tile (graphic), it needs to know ``texpos`` - the position in the vector of the registered game textures (also the graphical tile id passed as the tile field in a `Pen <lua-screen-pen>`).

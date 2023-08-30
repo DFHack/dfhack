@@ -2612,9 +2612,8 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
 
 * ``loadTileset(file, tile_px_w, tile_px_h)``
 
-  Loads tileset from the image ``file`` with give tile dimension in pixels (image will be sliced in row major order).
-
-  Returns an array of ``TexposHandle``
+  Loads a tileset from the image ``file`` with give tile dimensions in pixels. The
+  image will be sliced in row major order. Returns an array of ``TexposHandle``.
 
   Example usage::
 

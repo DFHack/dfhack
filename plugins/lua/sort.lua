@@ -81,6 +81,9 @@ local function sort_by_stress_desc(unit_id_1, unit_id_2)
     if not unit2 then return 1 end
     local happiness1 = unit1.status.current_soul.personality.stress
     local happiness2 = unit2.status.current_soul.personality.stress
+    if happiness1 == happiness2 then
+        return sort_by_name_desc(unit_id_1, unit_id_2)
+    end
     return utils.compare(happiness2, happiness1)
 end
 
@@ -92,6 +95,9 @@ local function sort_by_stress_asc(unit_id_1, unit_id_2)
     if not unit2 then return 1 end
     local happiness1 = unit1.status.current_soul.personality.stress
     local happiness2 = unit2.status.current_soul.personality.stress
+    if happiness1 == happiness2 then
+        return sort_by_name_desc(unit_id_1, unit_id_2)
+    end
     return utils.compare(happiness1, happiness2)
 end
 
@@ -138,16 +144,16 @@ local function melee_skill_effectiveness(unit, skill_list)
 
     -- Skills
     -- Finding the highest skill
-    skill_rating = 0
+    local skill_rating = 0
     for _, skill in ipairs(skill_list) do
-        melee_skill = dfhack.units.getNominalSkill(unit, skill, true)
+        local melee_skill = dfhack.units.getNominalSkill(unit, skill, true)
         skill_rating = math.max(skill_rating, melee_skill)
     end
     local melee_combat_rating = dfhack.units.getNominalSkill(unit, df.job_skill.MELEE_COMBAT, true)
 
     local rating = skill_rating * 27000 + melee_combat_rating * 9000
-    + strength * 180 + body_size_base * 100 + kinesthetic_sense * 50 + endurance * 50
-    + agility * 30 + toughness * 20 + willpower * 20 + spatial_sense * 20
+            + strength * 180 + body_size_base * 100 + kinesthetic_sense * 50 + endurance * 50
+            + agility * 30 + toughness * 20 + willpower * 20 + spatial_sense * 20
     return rating
 end
 
@@ -191,9 +197,9 @@ local function ranged_skill_effectiveness(unit, skill_list)
 
     -- Skills
     -- Finding the highest skill
-    skill_rating = 0
+    local skill_rating = 0
     for _, skill in ipairs(skill_list) do
-        ranged_skill = dfhack.units.getNominalSkill(unit, skill, true)
+        local ranged_skill = dfhack.units.getNominalSkill(unit, skill, true)
         skill_rating = math.max(skill_rating, ranged_skill)
     end
     local ranged_combat = dfhack.units.getNominalSkill(unit, df.job_skill.RANGED_COMBAT, true)
@@ -400,7 +406,7 @@ local function melee_combat_potential(unit)
 
     -- melee combat potential rating
     local rating = strength * 264 + endurance * 84 + body_size_base * 77 + kinesthetic_sense * 74
-     + agility * 33 + willpower * 31 + spatial_sense * 27 + toughness * 25
+            + agility * 33 + willpower * 31 + spatial_sense * 27 + toughness * 25
     return rating
 end
 

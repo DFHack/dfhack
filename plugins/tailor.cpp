@@ -222,7 +222,7 @@ public:
                 // only count dyed
                 std::string d;
                 i->getItemDescription(&d, 0);
-                TRACE(cycle).print("tailor: skipping undyed %s\n", d.c_str());
+                TRACE(cycle).print("tailor: skipping undyed %s\n", DF2CONSOLE(d).c_str());
                 continue;
             }
             MaterialInfo mat(i);
@@ -242,7 +242,7 @@ public:
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", DF2CONSOLE(d).c_str(), i->id);
                 }
             }
         }
@@ -301,14 +301,14 @@ public:
                         available[std::make_pair(ty, usize)] -= 1;
                         DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
                             ENUM_KEY_STR(item_type, ty).c_str(), usize,
-                            Translation::TranslateName(&u->name, false).c_str());
+                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str());
                         wearing.insert(ty);
                     }
                     else if (ordered.count(ty) == 0)
                     {
                         DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
-                                            description.c_str(), isize,
-                                            Translation::TranslateName(&u->name, false).c_str(), usize);
+                                            DF2CONSOLE(description).c_str(), isize,
+                                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str(), usize);
                         needed[std::make_pair(ty, usize)] += 1;
                         ordered.insert(ty);
                     }
@@ -323,8 +323,8 @@ public:
                         INFO(cycle).print(
                             "tailor: %s %s from %s.\n",
                             (confiscated ? "confiscated" : "could not confiscate"),
-                            description.c_str(),
-                            Translation::TranslateName(&u->name, false).c_str()
+                            DF2CONSOLE(description).c_str(),
+                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str()
                         );
                     }
 
@@ -341,7 +341,7 @@ public:
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
                         usize,
-                        Translation::TranslateName(&u->name, false).c_str());
+                        DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str());
                     needed[std::make_pair(ty, usize)] += 1;
                 }
             }
@@ -416,7 +416,7 @@ public:
                 {
                     supply[m] -= o->amount_left;
                     TRACE(cycle).print("tailor: supply of %s reduced by %d due to being required for an existing order\n",
-                        m.name.c_str(), o->amount_left);
+                        DF2CONSOLE(m.name).c_str(), o->amount_left);
                 }
             }
 
@@ -508,11 +508,11 @@ public:
 
                 if (!can_make)
                 {
-                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", name_p.c_str());
+                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", DF2CONSOLE(name_p).c_str());
                     continue;
                 }
 
-                DEBUG(cycle).print("tailor: ordering %d %s\n", count, name_p.c_str());
+                DEBUG(cycle).print("tailor: ordering %d %s\n", count, DF2CONSOLE(name_p).c_str());
 
                 for (auto& m : material_order)
                 {
@@ -528,7 +528,7 @@ public:
                         {
                             c = supply[m] - res;
                             TRACE(cycle).print("tailor: order reduced from %d to %d to protect reserves of %s\n",
-                                count, c, m.name.c_str());
+                                count, c, DF2CONSOLE(m.name).c_str());
                         }
                         supply[m] -= c;
 
@@ -552,8 +552,8 @@ public:
                             order->id,
                             c,
                             bitfield_to_string(order->material_category).c_str(),
-                            (c > 1) ? name_p.c_str() : name_s.c_str(),
-                            world->raws.creatures.all[order->hist_figure_id]->name[1].c_str()
+                            DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
+                            DF2CONSOLE(world->raws.creatures.all[order->hist_figure_id]->name[1]).c_str()
                         );
 
                         count -= c;
@@ -561,7 +561,7 @@ public:
                     }
                     else
                     {
-                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", m.name.c_str(), supply[m]);
+                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
                     }
 
                 }

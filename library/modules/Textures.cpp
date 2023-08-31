@@ -191,6 +191,7 @@ void Textures::deleteHandle(TexposHandle handle) {
 }
 
 static void reset_texpos() {
+    DEBUG(textures).print("resetting texture mappings\n");
     g_handle_to_texpos.clear();
 }
 
@@ -207,6 +208,7 @@ struct tracking_stage_new_region : df::viewscreen_new_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_raw_load_stage != this->raw_load_stage) {
+            TRACE(textures).print("raw_load_stage %d -> %d\n", this->m_raw_load_stage, this->raw_load_stage);
             this->m_raw_load_stage = this->raw_load_stage;
             if (this->m_raw_load_stage == 1)
                 reset_texpos();
@@ -225,6 +227,7 @@ struct tracking_stage_adopt_region : df::viewscreen_adopt_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 1)
                 reset_texpos();
@@ -243,6 +246,7 @@ struct tracking_stage_load_region : df::viewscreen_loadgamest {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 1)
                 reset_texpos();
@@ -261,6 +265,7 @@ struct tracking_stage_new_arena : df::viewscreen_new_arenast {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 0)
                 reset_texpos();

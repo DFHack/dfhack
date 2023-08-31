@@ -2,6 +2,7 @@ import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
+from enum import Enum as EnumType
 from pathlib import Path
 from typing import Any
 
@@ -354,41 +355,47 @@ CONFIG = f"""{{
   "diagnostics.disable": ["lowercase-global"]
 }}\n"""
 
-BASE_METHODS = """---@param id integer|number
----@return <BASE_TYPE>|nil
-function <DECLARE_PREFIX>.find(id) end
 
----@param item any
----@return boolean
-function <DECLARE_PREFIX>:is_instance(item) end
+BASE_METHODS = """---@field sizeof fun(self: self): integer
+---@field new fun(self: self): self
+"""
 
----@return <BASE_TYPE>
-function <DECLARE_PREFIX>:new() end
+BASE_TYPED_OBJECTS_METHODS = """---@field assign fun(self: self, obj: self): nil
+---@field delete fun(self: self): boolean
+---@field _displace fun(self: self, index: integer): self
+---@field _kind "primitive"|"struct"|"container"|"bitfield"
+---@field _type table | string
+"""
 
----@param src <BASE_TYPE>
-function <DECLARE_PREFIX>:assign(src) end
+BASE_NAMED_TYPES_METHODS = """---@field is_instance fun(self: self, obj: any): boolean
+---@field _identity lightuserdata
+---@field _kind "struct-type"|"class-type"|"enum-type"|"bitfield-type"|"global"
+---@field _fields table<string, { name: string, offset: integer, count: integer, mode: any, type_name?: string, type?: any, type_identity?: lightuserdata, index_enum?: any, union_tag_field?: string, union_tag_attr?: string, original_name?: string }>
+"""
 
----@param item <BASE_TYPE>
----@return <BASE_TYPE>
-function <DECLARE_PREFIX>:_displace(item) end
+BASE_STRUCT_METHODS = """---@field vmethod fun(self: self, ...): any
+"""
 
----@return boolean
-function <DECLARE_PREFIX>:delete() end
-
----@return string
-function <DECLARE_PREFIX>:__tostring() end
-
----@return integer
-function <DECLARE_PREFIX>:sizeof() end
+BASE_CONTAINER_METHODS = """---@field resize fun(self: self, size: integer): nil
+---@field insert fun(self: self, index: "#"|integer, item: self): nil
+---@field erase fun(self: self, index: integer): nil
 """
 
 df_global: list[str] = []
 df: list[str] = []
 
 
+class RenderMode(EnumType):
+    Type = "type"
+    Regular = "regular"
+    All = "all"
+
+
 class Tag:
     renderable = False
+    fieldable = False
     el: ET.Element
+    tag: str
     meta: str
     level: str
     name: str
@@ -398,45 +405,79 @@ class Tag:
     subtype: str
     ref_target: str
     pointer_type: str
+    instance_vector: str
+    union: str
     inherit: str
     comment: str
     since: str
     path: list[str]
+    full_type: str
     name_prefix: str = ""
+    render_mode: RenderMode
     have_childs: bool = False
-    invisible_field: bool = False
+    is_container: bool = False
 
-    def __init__(self, el: ET.Element, path: list[str] = []) -> None:
+    def __init__(self, el: ET.Element, render_mode: RenderMode, path: list[str] = []) -> None:
         self.el = el
         self.path = path
+        self.render_mode = render_mode
         self.parse()
         self.traverse()
 
     def parse(self) -> None:
-        if len(self.el) == 1 and self.el[0].tag == "item":
-            self.el.attrib = self.el[0].attrib | self.el.attrib
-            self.renderable = False
-        self.meta = self.el.attrib["meta"] if "meta" in self.el.attrib else ""
-        self.level = self.el.attrib["level"] if "level" in self.el.attrib else ""
-        self.name = self.el.attrib["name"] if "name" in self.el.attrib else ""
-        self.type_name = self.el.attrib["type-name"] if "type-name" in self.el.attrib else ""
-        self.typedef_name = self.el.attrib["typedef-name"] if "typedef-name" in self.el.attrib else ""
-        self.anon_name = self.el.attrib["anon-name"] if "anon-name" in self.el.attrib else ""
-        self.subtype = self.el.attrib["subtype"] if "subtype" in self.el.attrib else ""
-        self.ref_target = self.el.attrib["ref-target"] if "ref-target" in self.el.attrib else ""
-        self.pointer_type = self.el.attrib["pointer-type"] if "pointer-type" in self.el.attrib else ""
-        self.inherit = self.el.attrib["inherits-from"] if "inherits-from" in self.el.attrib else ""
-        self.since = self.el.attrib["since"] if "since" in self.el.attrib else ""
-        self.comment = (
-            " " + self.el.attrib["comment"] if "comment" in self.el.attrib and self.el.attrib["comment"] != "" else ""
-        )
-        if self.since:
-            self.comment += " since " + self.since
         self.have_childs = len(self.el) > 0
         if not self.have_childs:
             self.renderable = False
-        if len(self.path) > 0:
-            self.name_prefix = ".".join(self.path) + "."
+        if len(self.el) == 1 and self.el[0].tag == "item":
+            self.el.attrib = self.el[0].attrib | self.el.attrib
+            self.renderable = False
+
+        self.tag = self.el.tag
+        self.meta = self.el.attrib.get("meta") or ""
+        self.level = self.el.attrib.get("level") or ""
+        self.name = self.el.attrib.get("name") or ""
+        self.type_name = self.el.attrib.get("type-name") or ""
+        self.typedef_name = self.el.attrib.get("typedef-name") or ""
+        self.anon_name = self.el.attrib.get("anon-name") or ""
+        self.subtype = self.el.attrib.get("subtype") or ""
+        self.ref_target = self.el.attrib.get("ref-target") or ""
+        self.pointer_type = self.el.attrib.get("pointer-type") or ""
+        self.instance_vector = self.el.attrib.get("instance-vector") or ""
+        self.union = self.el.attrib.get("is-union") or ""
+        self.inherit = self.el.attrib.get("inherits-from") or ""
+        self.since = self.el.attrib.get("since") or ""
+        self.comment = self.el.attrib.get("comment") or ""
+        if self.comment:
+            self.comment = " " + self.comment
+        if self.since:
+            self.comment += " since " + self.since
+
+        if (RenderMode.Regular or RenderMode.All) and (self.name or self.anon_name):
+            self.fieldable = True
+        if RenderMode.Type and self.typedef_name:
+            self.fieldable = True
+
+        # case for root global-type
+        if self.level == "0":
+            self.path.append(self.type_name)
+        else:
+            if self.render_mode == RenderMode.Type:
+                self.path.append(self.typedef_name)
+            else:
+                self.path.append(self.name)
+        if self.meta == "global":
+            self.path = [self.path[-1]]
+            self.full_type = self.type_name
+        else:
+            self.full_type = ".".join(self.path)
+
+        if self.tag == "global-object":
+            self.path = [self.name]
+            self.full_type = ".".join(self.path)
+
+        if self.full_type in df_global and "global" not in self.path:
+            self.path.insert(0, "global")
+            self.full_type = ".".join(self.path)
 
     def traverse(self) -> None:
         pass
@@ -464,52 +505,49 @@ class EnumItem(Tag):
 class Enum(Tag):
     renderable = True
     items: list[EnumItem]
+    attrs: list[tuple[str, str | None]]
 
     def traverse(self) -> None:
+        self.attrs = []
         self.items = []
         shift = 0
         for i, child in enumerate(self.el, start=0):
-            if child.tag != "enum-item":
-                shift -= 1
-                continue
-            else:
+            if child.tag == "enum-item":
                 if "value" in child.attrib:
                     shift = int(child.attrib["value"]) - i
-                self.items.append(EnumItem(child).set_index(i + shift))
+                self.items.append(EnumItem(child, self.render_mode).set_index(i + shift))
+            else:
+                if child.tag == "enum-attr":
+                    name = child.attrib.get("name")
+                    if name:
+                        self.attrs.append((name, child.attrib.get("type-name")))
+                shift -= 1
+
+        enum_map[self.full_type] = self
 
     def render(self) -> str:
-        name = f"{self.name_prefix}{self.typedef_name or self.type_name}"
-        s = f"---@enum {name}{self.comment}\n"
-        decl = "df."
-        if len(self.path) > 0:
-            s += f"---@diagnostic disable-next-line: undefined-global, inject-field\n"
-            decl = "df.global." if self.path[0] in df_global else "df."
-        s += f"{decl or 'df.'}{name} = {{\n"
+        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s += f"---@enum {self.full_type}{self.comment}\n"
+        s += f"---@diagnostic disable-next-line: undefined-global, inject-field\n"
+        s += f"df.{self.full_type} = {{\n"
         for item in self.items:
             s += f"{item.as_field()}\n"
-        s += "}\n"
+        s += "}\n\n"
+        if len(self.attrs) > 0:
+            s += f"---@type {{ [{self.full_type}]: {{ "
+            for attr in self.attrs:
+                s += f"{attr[0]}: {base_type(attr[1] or 'unknown')}, "
+            s = s[:-2] + f" }}}}\ndf.{self.full_type}.attrs = nil\n"
         return s
 
     def as_field(self) -> str:
-        type_name = f"{self.name_prefix}{self.typedef_name or self.type_name}"
-        field = f"---@field {self.name or self.anon_name} {type_name}{self.comment}"
-        if self.typedef_name:
-            field += f"\n---@field {self.typedef_name} {type_name} -- type for {self.name or self.anon_name}"
-        return field
+        return f"---@field {self.path[-1]} {self.full_type}{self.comment}"
 
-    def item_names(self) -> list[str]:
-        names: list[str] = []
-        shift = 0
-        for i, child in enumerate(self.el, start=0):
-            if child.tag != "enum-item":
-                shift -= 1
-                continue
-            else:
-                if "value" in child.attrib:
-                    shift = int(child.attrib["value"]) - i
-                item = EnumItem(child).set_index(i + shift)
-                names.append(f'{item.name or ("unk_" + str(i)) }')
-        return names
+    def keys(self) -> list[str]:
+        keys: list[str] = []
+        for item in self.items:
+            keys.append(item.name or f"unk_{item.index}")
+        return keys
 
 
 enum_map: dict[str, Enum] = {}
@@ -528,32 +566,60 @@ class Pointer(Tag):
 
     def traverse(self) -> None:
         self.items = []
-        inside_el = get_container_item(self.el)
+        (inside_el, self.array_dim) = get_container_item(self.el)
+        if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in inside_el.attrib:
+            self.typedef_name = inside_el.attrib["typedef-name"]
+            self.path = self.path[:-1]
+            self.path.append(self.typedef_name)
+            self.full_type = ".".join(self.path)
+
         if self.have_childs and len(inside_el) > 0:
             inside_el.attrib = self.el.attrib | inside_el.attrib
-            if "subtype" in inside_el.attrib and inside_el.attrib["subtype"] == "enum":
-                item = Enum(inside_el, self.path)
+            if inside_el.attrib.get("subtype") == "enum":
+                item = Enum(inside_el, self.render_mode, self.path[:-1])
             else:
-                item = Compound(inside_el, self.path)
+                item = Compound(inside_el, self.render_mode, self.path[:-1])
             self.renderable = True
             item.renderable = True
             self.items.append(item)
 
-    def as_field(self) -> str:
         if len(self.items) > 0:
-            type_name = f"{self.name_prefix}{self.items[0].typedef_name}"
+            type_name = f"{self.full_type}"
         elif self.pointer_type and self.subtype == "stl-vector":
             type_name = self.pointer_type + "[]"
         else:
             type_name = ""
         subtype = "any[] -- NOT TYPED" if base_type(self.subtype) == "stl-vector" else base_type(self.subtype)
-        field = f"---@field {self.name or self.anon_name} {base_type(self.type_name) or type_name or subtype or 'unknown -- NOT TYPED'}{self.comment}"
-        if self.typedef_name:
-            field += f"\n---@field {self.typedef_name} {base_type(self.type_name) or type_name or subtype or 'unknown'} -- type for {self.name or self.anon_name}"
-        return field
+
+        self.typed = base_type(self.type_name) or type_name or subtype or self.full_type
+
+        if inside_el.attrib.get("meta") == "global":
+            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
+        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
+            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+        if (
+            len(self.array_dim) > 0
+            and inside_el.attrib.get("meta") == "container"
+            and inside_el.attrib["subtype"] == "stl-vector"
+        ):
+            self.typed = "unknown" + ("[]" * len(self.array_dim))
+
+        if self.typed == self.full_type:
+            if self.render_mode == RenderMode.Type:
+                self.renderable = True
+            if not self.have_childs and not self.type_name:
+                self.typed = "unknown -- NOT TYPED"
+
+    def as_field(self) -> str:
+        count = f"count<{','.join(self.array_dim)}>"
+        return f"---@field {self.path[-1]} {self.typed}{' ' + count if len(self.array_dim) > 0 else ''}{self.comment}"
 
     def render(self) -> str:
         s = ""
+        if self.typed == self.full_type and self.render_mode == RenderMode.Type:
+            s += f"-- {self.render_mode}, path: {self.path}\n"
+            s += f"---@class {self.full_type}{self.comment}\n"
+            s += f"df.{self.full_type} = nil\n"
         for item in self.items:
             if item.renderable:
                 s += item.render()
@@ -562,45 +628,68 @@ class Pointer(Tag):
 
 class Container(Tag):
     renderable = False
+    is_container = True
     items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
+        (inside_el, self.array_dim) = get_container_item(self.el)
+        if self.render_mode == RenderMode.Type and not self.typedef_name and inside_el.attrib.get("typedef-name"):
+            self.typedef_name = inside_el.attrib["typedef-name"]
+            self.path = self.path[:-1]
+            self.path.append(self.typedef_name)
+            self.full_type = ".".join(self.path)
 
-        self.count = self.el.attrib["count"] if "count" in self.el.attrib else "0"
-        inside_el = get_container_item(self.el)
         if self.have_childs and len(inside_el) > 0:
             inside_el.attrib = self.el.attrib | inside_el.attrib
-            if "subtype" in inside_el.attrib and inside_el.attrib["subtype"] == "enum":
-                item = Enum(inside_el, self.path)
+            if inside_el.attrib.get("subtype") == "enum":
+                item = Enum(inside_el, self.render_mode, self.path[:-1])
             else:
-                item = Compound(inside_el, self.path)
+                item = Compound(inside_el, self.render_mode, self.path[:-1])
             self.renderable = True
             item.renderable = True
             self.items.append(item)
 
-        self.inside_containter = (
-            self.items[0].name_prefix + self.items[0].typedef_name
-            if len(inside_el) > 0 and inside_el[0].tag != "code-helper"
-            else ""
-        )
-        self.flagarray = (
-            flagarray_type(self.el.attrib["index-enum"])
-            if ("index-enum" in self.el.attrib and self.subtype == "df-flagarray")
-            else ""
-        )
-        self.typed = f"{self.ref_target or base_type(self.type_name) or self.inside_containter or ('boolean' if self.subtype == 'stl-bit-vector' else '') or 'any'}[]"
-        if self.flagarray and self.typed == "any[]":
-            self.typed = self.flagarray
+        inside_containter = self.full_type if len(inside_el) > 0 and inside_el[0].tag != "code-helper" else ""
+        self.typed = f"{self.ref_target or base_type(self.type_name) or inside_containter or ('boolean' if self.subtype == 'stl-bit-vector' else '') or 'any'}{'[]' * len(self.array_dim)}"
+
+        if self.subtype == "df-flagarray":
+            if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
+                self.typed = "table<"
+                for key in enum_map[self.el.attrib["index-enum"]].keys():
+                    self.typed += f'"{key}"|'
+                self.typed = self.typed[:-1] + ", boolean>"
+            else:
+                self.typed = "table<string, boolean>"
+
+        if inside_el.attrib.get("meta") == "global":
+            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
+        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
+            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+        if (
+            len(self.array_dim) > 0
+            and inside_el.attrib.get("meta") == "container"
+            and inside_el.attrib["subtype"] == "stl-vector"
+        ):
+            self.typed = "unknown" + ("[]" * len(self.array_dim))
+
+        if self.typed.startswith(self.full_type + "[]"):
+            if self.render_mode == RenderMode.Type:
+                self.renderable = True
+            if not self.have_childs and not self.type_name:
+                self.typed = "unknown -- NOT TYPED"
 
     def as_field(self) -> str:
-        field = f"---@field {self.name or self.anon_name} {self.typed}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
-        if len(self.items) > 0 and self.items[0].typedef_name:
-            field += f"\n---@field {self.items[0].typedef_name} {self.typed} -- type for {self.name or self.anon_name}"
-        return field
+        count = f" count<{','.join(self.array_dim)}>"
+        if self.subtype == "df-flagarray":
+            count = ""
+        return f"---@field {self.path[-1]} {self.typed}{count}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
 
     def as_type(self) -> str:
-        return f"---@type {self.typed}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
+        count = f" count<{','.join(self.array_dim)}>"
+        if self.subtype == "df-flagarray":
+            count = ""
+        return f"---@type {self.typed}{count}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
 
     def render(self) -> str:
         s = ""
@@ -612,34 +701,51 @@ class Container(Tag):
 
 class StaticArray(Tag):
     renderable = False
-    count: str
+    is_container = True
     items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
-        self.count = self.el.attrib["count"] if "count" in self.el.attrib else "0"
-        inside_el = get_container_item(self.el)
+        (inside_el, self.array_dim) = get_container_item(self.el)
+        if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in inside_el.attrib:
+            self.typedef_name = inside_el.attrib["typedef-name"]
+            self.path = self.path[:-1]
+            self.path.append(self.typedef_name)
+            self.full_type = ".".join(self.path)
+
         if self.have_childs and len(inside_el) > 0:
+            if inside_el.attrib.get("name") and self.el.attrib.get("name"):
+                inside_el.attrib["name"] = self.el.attrib["name"]
             inside_el.attrib = self.el.attrib | inside_el.attrib
-            if "subtype" in inside_el.attrib and inside_el.attrib["subtype"] == "enum":
-                item = Enum(inside_el, self.path)
+            if inside_el.attrib.get("subtype") == "enum":
+                item = Enum(inside_el, self.render_mode, self.path[:-1])
             else:
-                item = Compound(inside_el, self.path)
+                item = Compound(inside_el, self.render_mode, self.path[:-1])
             self.renderable = True
             item.renderable = True
             self.items.append(item)
 
+        inside_containter = self.full_type if len(inside_el) > 0 and inside_el[0].tag != "code-helper" else ""
+        self.typed = (
+            f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{'[]' * len(self.array_dim)}"
+        )
+
+        if inside_el.attrib.get("meta") == "global":
+            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
+        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
+            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+        if (
+            len(self.array_dim) > 0
+            and inside_el.attrib.get("meta") == "container"
+            and inside_el.attrib["subtype"] == "stl-vector"
+        ):
+            self.typed = "unknown" + ("[]" * len(self.array_dim))
+
     def as_field(self) -> str:
-        inside_containter = self.items[0].name_prefix + self.items[0].typedef_name if len(self.items) > 0 else ""
-        type_name = f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}[]"
-        return f"---@field {self.name or self.anon_name} {type_name} count<{self.count}>{self.comment}{' -- NOT TYPED' if type_name == 'any[]' else ''}"
+        return f"---@field {self.path[-1]} {self.typed} count<{','.join(self.array_dim)}>{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
 
     def as_type(self) -> str:
-        inside_containter = self.items[0].name_prefix + self.items[0].typedef_name if len(self.items) > 0 else ""
-        type_name = f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}[]"
-        return (
-            f"---@type {type_name} count<{self.count}>{self.comment}{' -- NOT TYPED' if type_name == 'any[]' else ''}"
-        )
+        return f"---@type {self.typed} count<{','.join(self.array_dim)}>{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
 
     def render(self) -> str:
         s = ""
@@ -652,83 +758,117 @@ class StaticArray(Tag):
 class Compound(Tag):
     renderable = True
     items: list[Tag]
+    has_container = False
 
     def traverse(self) -> None:
         self.items = []
         for i, child in enumerate(self.el):
-            for tag in switch_tag(child, self.path_to_child()):
+            for tag in switch_tag(child, self.render_mode, self.path[:]):
                 if not tag.name and not tag.anon_name:
                     tag.name = f"unnamed_{i}"
-                    if not tag.type_name:
-                        tag.type_name = tag.name
-                self.items.append(tag)
+                if (self.render_mode == RenderMode.Type and tag.typedef_name) or (
+                    self.render_mode == RenderMode.Regular and tag.name
+                ):
+                    if tag.is_container:
+                        self.has_container = True
+                    self.items.append(tag)
 
     def as_field(self) -> str:
-        type_name = f"{self.name_prefix}{self.typedef_name or self.type_name or 'anon-compound'}"
-        field = f"---@field {self.name or self.anon_name} {type_name}{self.comment}"
-        if self.typedef_name:
-            field += f"\n---@field {self.typedef_name} {type_name} -- type for {self.name or self.anon_name}"
-        return field
+        return f"---@field {self.path[-1]} {self.full_type}{self.comment}"
 
     def as_type(self) -> str:
-        type_name = f"{self.name_prefix}{self.typedef_name or self.type_name}"
-        return f"---@type {type_name}{self.comment}"
+        return f"---@type {self.full_type}{self.comment}"
 
     def render(self) -> str:
-        type_name = f"{self.name_prefix}{self.typedef_name or self.type_name or 'anon-compound'}"
-        s = f"---@class {type_name}{self.comment}\n"
+        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
         append = ""
         for item in self.items:
-            s += f"{item.as_field()}\n"
+            if item.fieldable:
+                s += f"{item.as_field()}\n"
             if item.renderable:
                 append += item.render()
-        decl = declare(type_name)
-        if decl != type_name:
-            s += f"{decl} = nil\n"
+        if not self.inherit:
+            s += BASE_METHODS
+            if RenderMode.Type:
+                s += BASE_NAMED_TYPES_METHODS
+            else:
+                s += BASE_TYPED_OBJECTS_METHODS
+        if self.has_container:
+            s += BASE_CONTAINER_METHODS
+        s += f"df.{self.full_type} = nil\n"
         return s + "\n" + append
-
-    def path_to_child(self) -> list[str]:
-        path = self.path
-        if self.typedef_name or self.type_name:
-            path = path + [self.typedef_name or self.type_name]
-        return path
 
 
 class Struct(Tag):
     renderable = True
     items: list[Tag]
+    has_container = False
+
+    def traverse(self) -> None:
+        self.items = []
+        for mode in [RenderMode.Regular, RenderMode.Type]:
+            for i, child in enumerate(self.el):
+                for tag in switch_tag(child, mode, self.path[:]):
+                    if not tag.name and not tag.anon_name:
+                        tag.name = f"unnamed_{i}"
+                    if (mode == RenderMode.Type and tag.typedef_name) or (mode == RenderMode.Regular and tag.name):
+                        if tag.is_container:
+                            self.has_container = True
+                        self.items.append(tag)
+
+    def render(self) -> str:
+        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
+        append = ""
+        for item in self.items:
+            if item.fieldable:
+                s += f"{item.as_field()}\n"
+            if item.renderable:
+                append += item.render()
+        if self.instance_vector:
+            s += "---@field find fun(id: integer): self|nil\n"
+        if not self.inherit:
+            s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_NAMED_TYPES_METHODS
+        if self.has_container:
+            s += BASE_CONTAINER_METHODS
+        s += f"df.{self.full_type} = nil\n"
+        return s + "\n" + append
+
+
+# TODO: unused, delete later
+class Union(Tag):
+    renderable = True
+    fieldable = True
+    items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
         for i, child in enumerate(self.el):
-            for tag in switch_tag(child, self.path_to_child()):
+            for tag in switch_tag(child, self.render_mode, self.path[:-1]):
                 if not tag.name and not tag.anon_name:
                     tag.name = f"unnamed_{i}"
-                self.items.append(tag)
+                if (self.render_mode == RenderMode.Type and tag.typedef_name) or (
+                    self.render_mode == RenderMode.Regular and tag.name
+                ):
+                    self.items.append(tag)
+
+    def as_field(self) -> str:
+        s = "-- union start\n"
+        for item in self.items:
+            if item.fieldable:
+                s += f"{item.as_field()}\n"
+        return s + "-- union end"
 
     def render(self) -> str:
-        type_name = f"{self.name_prefix}{self.type_name}"
-        s = f"---@class {type_name}{': ' + self.inherit if self.inherit else ''}{self.comment}\n"
-        append = "\n"
+        s = ""
         for item in self.items:
-            if not item.invisible_field:
-                s += f"{item.as_field()}\n"
             if item.renderable:
-                append += item.render()
-        decl = declare(type_name)
-        if decl != type_name:
-            s += f"{decl} = nil\n"
-            if not self.inherit:
-                s += "\n" + base_methods(type_name, decl)
-        return s + append
-
-    def path_to_child(self) -> list[str]:
-        path = self.path
-        if self.type_name:
-            path = path + [self.type_name]
-        return path
+                s += item.render()
+        return s + "\n"
 
 
+# TODO: unused, delete later
 class VirtualMethod(Tag):
     renderable = True
     ret: str = ""
@@ -739,7 +879,7 @@ class VirtualMethod(Tag):
         if "ret-type" in self.el.attrib:
             self.ret = base_type(self.el.attrib["ret-type"])
         for i, child in enumerate(self.el):
-            c = Tag(child)
+            c = Tag(child, self.render_mode)
             type_name = ""
             if c.subtype == "stl-vector":
                 type_name = f"{c.ref_target or base_type(c.pointer_type) or base_type(c.type_name) or 'any'}[]"
@@ -801,15 +941,17 @@ class VirtualMethod(Tag):
         return f"---@field {name} {signature}{self.comment}"
 
 
+# TODO: unused, delete later
 class VirtualMethods(Tag):
-    invisible_field = True
     renderable = True
+    fieldable = False
     items: list[VirtualMethod]
 
     def traverse(self) -> None:
+        self.fieldable = False
         self.items = []
         for child in self.el:
-            self.items.append(VirtualMethod(child, self.path_to_child()))
+            self.items.append(VirtualMethod(child, self.render_mode, self.path[:-1]))
 
     def render(self) -> str:
         s = ""
@@ -817,12 +959,6 @@ class VirtualMethods(Tag):
             if item.renderable:
                 s += item.render()
         return s
-
-    def path_to_child(self) -> list[str]:
-        path = self.path
-        if self.type_name:
-            path = path + [self.type_name]
-        return path
 
     def as_field(self) -> str:
         return "-- VIRTUAL METHODS"
@@ -837,23 +973,26 @@ class DefaultGlobalField(Tag):
 
 class GlobalObject(Tag):
     renderable = True
-    items: list[Tag]
 
     def render(self) -> str:
         match self.meta:
             case "global" | "pointer":
-                return f"---@type {self.type_name}{self.comment}\n{declare(self.name)} = nil\n"
+                prefix = "global." if self.type_name in df_global else ""
+                return f" -- {self.render_mode}, path {self.path}\n---@type {prefix}{self.type_name}{self.comment}\ndf.{self.full_type} = nil\n"
             case "number":
-                return f"---@type {base_type(self.subtype)}{self.comment}\n{declare(self.name)} = nil\n"
+                return f" -- {self.render_mode}, path {self.path}\n---@type {base_type(self.subtype)}{self.comment}\ndf.{self.full_type} = nil\n"
             case "static-array":
-                tag = StaticArray(self.el[0])
-                return f"{tag.as_type()}\n{declare(self.name)} = nil\n"
+                tag = StaticArray(self.el[0], self.render_mode, self.path[:])
+                return f" -- {self.render_mode}, path {self.path}\n{tag.as_type()}\ndf.{self.full_type} = nil\n"
             case "compound":
-                tag = Compound(self.el[0])
-                return f"{tag.as_type()}\n{declare(self.name)} = nil\n\n{tag.render()}"
+                self.el[0].attrib = self.el.attrib | self.el[0].attrib
+                tag = Compound(self.el[0], self.render_mode, self.path[:])
+                tag.path = tag.path[:-1]
+                tag.full_type = ".".join(tag.path)
+                return tag.render()
             case "container":
-                tag = Container(self.el[0])
-                return f"{tag.as_type()}\n{declare(self.name)} = nil\n"
+                tag = Container(self.el[0], self.render_mode, self.path[:])
+                return f" -- {self.render_mode}, path {self.path}\n{tag.as_type()}\ndf.{self.full_type} = nil\n"
             case _:
                 return "-- NOT HANDLED GLOBAL OBJECT " + self.name
 
@@ -861,15 +1000,14 @@ class GlobalObject(Tag):
 def parse_codegen(file: Path):
     tree = ET.parse(file)
     root = tree.getroot()
+    total = 0
     with Path(PATH_DEFINITIONS).open("w", encoding="utf-8") as output:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=output)
         for el in root:
             for tag in switch_global_tag(el):
+                total += 1
                 print(tag.render(), file=output)
-
-
-def base_methods(base_type: str, declare_prefix: str) -> str:
-    return BASE_METHODS.replace("<BASE_TYPE>", base_type).replace("<DECLARE_PREFIX>", declare_prefix)
+    print(f"Tags: {total}")
 
 
 def base_type(type: str) -> str:
@@ -890,88 +1028,78 @@ def base_type(type: str) -> str:
             return type
 
 
-def get_container_item(el: ET.Element, force: bool = True) -> ET.Element:
-    while len(el) > 0 and ("is-container" in el.attrib) and el.attrib["is-container"] == "true":
+def get_container_item(el: ET.Element) -> tuple[ET.Element, list[str]]:
+    array_dim: list[str] = []
+    while len(el) > 0:
+        if (
+            "is-array" in el.attrib
+            or el.attrib.get("meta") == "static-array"
+            or (el.attrib.get("subtype") == "stl-vector" and el.attrib.get("meta") == "container")
+        ):
+            array_dim.append(el.attrib.get("count") or "_")
+        if el[0].tag != "item":
+            return (el, array_dim)
         el = el[0]
-    return el
+    return (el, array_dim)
 
 
-def flagarray_type(index_enum: str) -> str:
-    if index_enum in enum_map:
-        items = enum_map[index_enum].item_names()
-        if len(items) > 0:
-            s = f"table<"
-            for item in items:
-                s += f'"{item}"|'
-            s = f"{s[:-1]}, boolean>"
-            return s
-    return "table<string, boolean>"
-
-
+# TODO: unused, delete later
 def declare(name: str) -> str:
     if name in df_global:
         return "df.global." + name
-    if name in df:
-        return "df." + name
-    return name
+    return "df." + name
 
 
-def switch_tag(el: ET.Element, path: list[str] = []) -> Iterable[Tag]:
+def switch_tag(el: ET.Element, render_mode: RenderMode, path: list[str] = []) -> Iterable[Tag]:
     if el.tag != "item" and el.tag != "code-helper":
-        tag = Tag(el)
+        tag = Tag(el, render_mode)
         match tag.meta:
-            case "primitive":
-                yield Primitive(el, path)
-            case "bytes":
-                yield Primitive(el, path)
-            case "number":
-                yield Primitive(el, path)
+            case "primitive" | "bytes" | "number":
+                yield Primitive(el, render_mode, path)
             case "pointer":
-                yield Pointer(el, path)
+                yield Pointer(el, render_mode, path)
             case "container":
-                yield Container(el, path)
+                yield Container(el, render_mode, path)
             case "static-array":
-                yield StaticArray(el, path)
+                yield StaticArray(el, render_mode, path)
             case "compound":
                 match tag.subtype:
                     case "enum":
-                        tag = Enum(el, path)
-                        enum_map[tag.type_name] = tag
-                        yield tag
+                        yield Enum(el, render_mode, path)
                     case _:
-                        yield Compound(el, path)
+                        # if tag.union == "true":
+                        #     yield Union(el, render_mode, path)
+                        # else:
+                        if "anon-compound" in el.attrib:
+                            el.attrib["name"] = "anon_compound"
+                        yield Compound(el, render_mode, path)
             case "global":
                 match tag.subtype:
                     case "enum":
-                        yield Enum(el)
+                        yield Enum(el, render_mode, path)
                     case _:
-                        yield DefaultGlobalField(el)
+                        yield DefaultGlobalField(el, render_mode, path)
                 pass
             case _:
-                if el.tag == "virtual-methods":
-                    yield VirtualMethods(el, path)
-                else:
-                    print("Skip tag ->", el.tag)
+                # if el.tag == "virtual-methods":
+                #     yield VirtualMethods(el, path, render_mode)
+                # else:
+                print("Skip tag ->", el.tag)
 
 
 def switch_global_tag(el: ET.Element) -> Iterable[Tag]:
-    tag = Tag(el)
+    tag = Tag(el, RenderMode.Regular)
     match tag.meta:
         case "enum-type":
-            tag = Enum(el)
-            enum_map[tag.type_name] = tag
-            yield tag
-        case "struct-type":
-            yield Struct(el)
-        case "class-type":
-            yield Struct(el)
-        case "bitfield-type":
-            yield Struct(el)
+            yield Enum(el, RenderMode.Regular, [])
+        case "struct-type" | "class-type" | "bitfield-type":
+            yield Struct(el, RenderMode.All, [])
         case _:
             match el.tag:
                 case "global-object":
-                    yield GlobalObject(el)
+                    yield GlobalObject(el, RenderMode.Regular, [])
                 case _:
+                    pass
                     print(f"-- SKIPPED TAG {el.tag} {tag.meta} {tag.type_name}")
 
 

@@ -2,10 +2,9 @@ local _ENV = mkmodule('plugins.sort')
 
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local setbelief = reqscript('modtools/set-belief')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-
-local setbelief = reqscript("modtools/set-belief")
 
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
@@ -20,12 +19,6 @@ local MELEE_WEAPON_SKILLS = {
 
 local RANGED_WEAPON_SKILLS = {
     df.job_skill.CROSSBOW,
-}
-
-local LEADERSHIP_SKILLS = {
-    df.job_skill.MILITARY_TACTICS,
-    df.job_skill.LEADERSHIP,
-    df.job_skill.TEACHING,
 }
 
 local function sort_noop(a, b)
@@ -234,46 +227,6 @@ local function make_sort_by_ranged_skill_effectiveness_asc(list)
         local rating2 = ranged_skill_effectiveness(unit2, list)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating1, rating2)
-    end
-end
-
-local function make_sort_by_skill_list_desc(list)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_max_skill(unit_id_1, list)
-        local s2 = get_max_skill(unit_id_2, list)
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if not s2 then return -1 end
-        if not s1 then return 1 end
-        if s1.rating ~= s2.rating then
-            return utils.compare(s2.rating, s1.rating)
-        end
-        if s1.experience ~= s2.experience then
-            return utils.compare(s2.experience, s1.experience)
-        end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
-    end
-end
-
-local function make_sort_by_skill_list_asc(list)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_max_skill(unit_id_1, list)
-        local s2 = get_max_skill(unit_id_2, list)
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
-        if not s2 then return 1 end
-        if not s1 then return -1 end
-        if s1.rating ~= s2.rating then
-            return utils.compare(s1.rating, s2.rating)
-        end
-        if s1.experience ~= s2.experience then
-            return utils.compare(s1.experience, s2.experience)
-        end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
     end
 end
 
@@ -490,8 +443,10 @@ local SORT_FNS = {
     sort_by_any_melee_asc=make_sort_by_melee_skill_effectiveness_asc(MELEE_WEAPON_SKILLS),
     sort_by_any_ranged_desc=make_sort_by_ranged_skill_effectiveness_desc(RANGED_WEAPON_SKILLS),
     sort_by_any_ranged_asc=make_sort_by_ranged_skill_effectiveness_asc(RANGED_WEAPON_SKILLS),
-    sort_by_leadership_desc=make_sort_by_skill_list_desc(LEADERSHIP_SKILLS),
-    sort_by_leadership_asc=make_sort_by_skill_list_asc(LEADERSHIP_SKILLS),
+    sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING),
+    sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING),
+    sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS),
+    sort_by_tactics_asc=make_sort_by_skill_asc(df.job_skill.MILITARY_TACTICS),
     sort_by_axe_desc=make_sort_by_skill_desc(df.job_skill.AXE),
     sort_by_axe_asc=make_sort_by_skill_asc(df.job_skill.AXE),
     sort_by_sword_desc=make_sort_by_skill_desc(df.job_skill.SWORD),
@@ -512,71 +467,76 @@ local SORT_FNS = {
 
 SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
 SquadAssignmentOverlay.ATTRS{
-    default_pos={x=-33, y=40},
+    default_pos={x=23, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=75, h=9},
+    frame={w=38, h=25},
     frame_style=gui.FRAME_PANEL,
     frame_background=gui.CLEAR_PEN,
+    autoarrange_subviews=true,
+    autoarrange_gap=1,
 }
 
 function SquadAssignmentOverlay:init()
     self.dirty = true
 
     self:addviews{
-        widgets.CycleHotkeyLabel{
-            view_id='sort',
-            frame={l=0, t=0, w=29},
-            label='Sort by:',
-            key='CUSTOM_SHIFT_S',
-            options={
-                {label='any melee skill'..CH_DN, value=SORT_FNS.sort_by_any_melee_desc, pen=COLOR_GREEN},
-                {label='any melee skill'..CH_UP, value=SORT_FNS.sort_by_any_melee_asc, pen=COLOR_YELLOW},
-                {label='any ranged skill'..CH_DN, value=SORT_FNS.sort_by_any_ranged_desc, pen=COLOR_GREEN},
-                {label='any ranged skill'..CH_UP, value=SORT_FNS.sort_by_any_ranged_asc, pen=COLOR_YELLOW},
-                {label='any leader skill'..CH_DN, value=SORT_FNS.sort_by_leadership_desc, pen=COLOR_GREEN},
-                {label='any leader skill'..CH_UP, value=SORT_FNS.sort_by_leadership_asc, pen=COLOR_YELLOW},
-                {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
-                {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
-                {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
-                {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
-                {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
-                {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
-                {label='axe skill'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
-                {label='axe skill'..CH_UP, value=SORT_FNS.sort_by_axe_asc, pen=COLOR_YELLOW},
-                {label='sword skill'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
-                {label='sword skill'..CH_UP, value=SORT_FNS.sort_by_sword_asc, pen=COLOR_YELLOW},
-                {label='mace skill'..CH_DN, value=SORT_FNS.sort_by_mace_desc, pen=COLOR_GREEN},
-                {label='mace skill'..CH_UP, value=SORT_FNS.sort_by_mace_asc, pen=COLOR_YELLOW},
-                {label='hammer skill'..CH_DN, value=SORT_FNS.sort_by_hammer_desc, pen=COLOR_GREEN},
-                {label='hammer skill'..CH_UP, value=SORT_FNS.sort_by_hammer_asc, pen=COLOR_YELLOW},
-                {label='spear skill'..CH_DN, value=SORT_FNS.sort_by_spear_desc, pen=COLOR_GREEN},
-                {label='spear skill'..CH_UP, value=SORT_FNS.sort_by_spear_asc, pen=COLOR_YELLOW},
-                {label='crossbow skill'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
-                {label='crossbow skill'..CH_UP, value=SORT_FNS.sort_by_crossbow_asc, pen=COLOR_YELLOW},
-                {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
-                {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
-                {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
-                {label='melee potential'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
-                {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
-                {label='ranged potential'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
-            },
-            initial_option=SORT_FNS.sort_by_any_melee_desc,
-            on_change=self:callback('refresh_list', 'sort'),
-        },
         widgets.EditField{
             view_id='search',
-            frame={l=32, t=0},
+            frame={l=0},
             label_text='Search: ',
             on_char=function(ch) return ch:match('[%l _-]') end,
             on_change=function() self:refresh_list() end,
         },
         widgets.Panel{
-            frame={t=2, l=0, r=0, b=0},
+            frame={l=0, r=0, h=15},
+            frame_style=gui.FRAME_INTERIOR,
             subviews={
                 widgets.CycleHotkeyLabel{
+                    view_id='sort',
+                    frame={t=0, l=0},
+                    label='Sort by:',
+                    key='CUSTOM_SHIFT_S',
+                    options={
+                        {label='melee effectiveness'..CH_DN, value=SORT_FNS.sort_by_any_melee_desc, pen=COLOR_GREEN},
+                        {label='melee effectiveness'..CH_UP, value=SORT_FNS.sort_by_any_melee_asc, pen=COLOR_YELLOW},
+                        {label='ranged effectiveness'..CH_DN, value=SORT_FNS.sort_by_any_ranged_desc, pen=COLOR_GREEN},
+                        {label='ranged effectiveness'..CH_UP, value=SORT_FNS.sort_by_any_ranged_asc, pen=COLOR_YELLOW},
+                        {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
+                        {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
+                        {label='teacher skill'..CH_DN, value=SORT_FNS.sort_by_teacher_desc, pen=COLOR_GREEN},
+                        {label='teacher skill'..CH_UP, value=SORT_FNS.sort_by_teacher_asc, pen=COLOR_YELLOW},
+                        {label='tactics skill'..CH_DN, value=SORT_FNS.sort_by_tactics_desc, pen=COLOR_GREEN},
+                        {label='tactics skill'..CH_UP, value=SORT_FNS.sort_by_tactics_asc, pen=COLOR_YELLOW},
+                        {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
+                        {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
+                        {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
+                        {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
+                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
+                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
+                        {label='axe skill'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
+                        {label='axe skill'..CH_UP, value=SORT_FNS.sort_by_axe_asc, pen=COLOR_YELLOW},
+                        {label='sword skill'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
+                        {label='sword skill'..CH_UP, value=SORT_FNS.sort_by_sword_asc, pen=COLOR_YELLOW},
+                        {label='mace skill'..CH_DN, value=SORT_FNS.sort_by_mace_desc, pen=COLOR_GREEN},
+                        {label='mace skill'..CH_UP, value=SORT_FNS.sort_by_mace_asc, pen=COLOR_YELLOW},
+                        {label='hammer skill'..CH_DN, value=SORT_FNS.sort_by_hammer_desc, pen=COLOR_GREEN},
+                        {label='hammer skill'..CH_UP, value=SORT_FNS.sort_by_hammer_asc, pen=COLOR_YELLOW},
+                        {label='spear skill'..CH_DN, value=SORT_FNS.sort_by_spear_desc, pen=COLOR_GREEN},
+                        {label='spear skill'..CH_UP, value=SORT_FNS.sort_by_spear_asc, pen=COLOR_YELLOW},
+                        {label='crossbow skill'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
+                        {label='crossbow skill'..CH_UP, value=SORT_FNS.sort_by_crossbow_asc, pen=COLOR_YELLOW},
+                        {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
+                        {label='melee potential'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
+                        {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
+                        {label='ranged potential'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
+                    },
+                    initial_option=SORT_FNS.sort_by_any_melee_desc,
+                    on_change=self:callback('refresh_list', 'sort'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_any_melee',
-                    frame={t=0, l=0, w=10},
+                    frame={t=2, l=0, w=10},
                     options={
                         {label='any melee', value=sort_noop},
                         {label='any melee'..CH_DN, value=SORT_FNS.sort_by_any_melee_desc, pen=COLOR_GREEN},
@@ -588,7 +548,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_any_ranged',
-                    frame={t=0, l=13, w=11},
+                    frame={t=2, r=9, w=11},
                     options={
                         {label='any ranged', value=sort_noop},
                         {label='any ranged'..CH_DN, value=SORT_FNS.sort_by_any_ranged_desc, pen=COLOR_GREEN},
@@ -598,19 +558,8 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_any_ranged'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_leadership',
-                    frame={t=0, l=27, w=11},
-                    options={
-                        {label='leadership', value=sort_noop},
-                        {label='leadership'..CH_DN, value=SORT_FNS.sort_by_leadership_desc, pen=COLOR_GREEN},
-                        {label='leadership'..CH_UP, value=SORT_FNS.sort_by_leadership_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_leadership'),
-                },
-                widgets.CycleHotkeyLabel{
                     view_id='sort_name',
-                    frame={t=0, l=41, w=5},
+                    frame={t=2, r=0, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
@@ -620,8 +569,30 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_name'),
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='sort_teacher',
+                    frame={t=4, l=0, w=8},
+                    options={
+                        {label='teacher', value=sort_noop},
+                        {label='teacher'..CH_DN, value=SORT_FNS.sort_by_teacher_desc, pen=COLOR_GREEN},
+                        {label='teacher'..CH_UP, value=SORT_FNS.sort_by_teacher_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_teacher'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_tactics',
+                    frame={t=4, l=10, w=8},
+                    options={
+                        {label='tactics', value=sort_noop},
+                        {label='tactics'..CH_DN, value=SORT_FNS.sort_by_tactics_desc, pen=COLOR_GREEN},
+                        {label='tactics'..CH_UP, value=SORT_FNS.sort_by_tactics_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_tactics'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_migrant_wave',
-                    frame={t=0, l=49, w=13},
+                    frame={t=4, r=0, w=13},
                     options={
                         {label='migrant wave', value=sort_noop},
                         {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
@@ -632,7 +603,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_stress',
-                    frame={t=0, l=65, w=7},
+                    frame={t=6, l=0, w=7},
                     options={
                         {label='stress', value=sort_noop},
                         {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
@@ -642,8 +613,19 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_stress'),
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='sort_mental_stability',
+                    frame={t=6, r=0, w=17},
+                    options={
+                        {label='mental stability', value=sort_noop},
+                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
+                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_mental_stability'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_axe',
-                    frame={t=2, l=0, w=4},
+                    frame={t=8, l=0, w=4},
                     options={
                         {label='axe', value=sort_noop},
                         {label='axe'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
@@ -654,7 +636,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_sword',
-                    frame={t=2, l=7, w=6},
+                    frame={t=8, w=6},
                     options={
                         {label='sword', value=sort_noop},
                         {label='sword'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
@@ -665,7 +647,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_mace',
-                    frame={t=2, l=16, w=5},
+                    frame={t=8, r=0, w=5},
                     options={
                         {label='mace', value=sort_noop},
                         {label='mace'..CH_DN, value=SORT_FNS.sort_by_mace_desc, pen=COLOR_GREEN},
@@ -676,7 +658,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_hammer',
-                    frame={t=2, l=23, w=7},
+                    frame={t=10, l=0, w=7},
                     options={
                         {label='hammer', value=sort_noop},
                         {label='hammer'..CH_DN, value=SORT_FNS.sort_by_hammer_desc, pen=COLOR_GREEN},
@@ -687,7 +669,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_spear',
-                    frame={t=2, l=34, w=6},
+                    frame={t=10, w=6},
                     options={
                         {label='spear', value=sort_noop},
                         {label='spear'..CH_DN, value=SORT_FNS.sort_by_spear_desc, pen=COLOR_GREEN},
@@ -698,7 +680,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_crossbow',
-                    frame={t=2, l=43, w=9},
+                    frame={t=10, r=0, w=9},
                     options={
                         {label='crossbow', value=sort_noop},
                         {label='crossbow'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
@@ -708,19 +690,8 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_crossbow'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_mental_stability',
-                    frame={t=4, l=0, w=17},
-                    options={
-                        {label='mental stability', value=sort_noop},
-                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
-                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_mental_stability'),
-                },
-                widgets.CycleHotkeyLabel{
                     view_id='sort_melee_combat_potential',
-                    frame={t=4, l=20, w=16},
+                    frame={t=12, l=0, w=16},
                     options={
                         {label='melee potential', value=sort_noop},
                         {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
@@ -731,7 +702,7 @@ function SquadAssignmentOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_ranged_combat_potential',
-                    frame={t=4, l=39, w=17},
+                    frame={t=12, r=0, w=17},
                     options={
                         {label='ranged potential', value=sort_noop},
                         {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
@@ -740,7 +711,46 @@ function SquadAssignmentOverlay:init()
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_ranged_combat_potential'),
                 },
-            }
+            },
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='military',
+            frame={l=0},
+            key='CUSTOM_SHIFT_Q',
+            label='Units in other squads:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='officials',
+            frame={l=0},
+            key='CUSTOM_SHIFT_O',
+            label='Appointed officials:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='nobles',
+            frame={l=0, w=20},
+            key='CUSTOM_SHIFT_N',
+            label='Nobility:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
         },
     }
 end
@@ -753,26 +763,69 @@ local function normalize_search_key(search_key)
     return out
 end
 
-local function filter_matches(unit_id, search)
-    if unit_id == -1 then return true end
-    local unit = df.unit.find(unit_id)
-    if not unit then return true end
-    local search_key = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
-    if unit.status.current_soul then
-        for _,skill in ipairs(unit.status.current_soul.skills) do
-            search_key = (search_key or '') .. ' ' .. (df.job_skill[skill.id] or '')
+local function is_in_military(unit)
+    return unit.military.squad_id > -1
+end
+
+local function is_elected_or_appointed_official(unit)
+    if #unit.occupations > 0 then return true end
+    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
+        if noble_pos.position.flags.ELECTED or
+            (noble_pos.position.mandate_max == 0 and noble_pos.position.demand_max == 0)
+        then
+            return true
         end
     end
-    return normalize_search_key(search_key):find(dfhack.toSearchNormalized(search))
+    return false
+end
+
+local function is_nobility(unit)
+    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
+        if not noble_pos.position.flags.ELECTED and
+            (noble_pos.position.mandate_max > 0 or noble_pos.position.demand_max > 0)
+        then
+            return true
+        end
+    end
+    return false
+end
+
+local function filter_matches(unit_id, filter)
+    if unit_id == -1 then return true end
+    local unit = df.unit.find(unit_id)
+    if not unit then return false end
+    if filter.military == 'only' and not is_in_military(unit) then return false end
+    if filter.military == 'exclude' and is_in_military(unit) then return false end
+    if filter.officials == 'only' and not is_elected_or_appointed_official(unit) then return false end
+    if filter.officials == 'exclude' and is_elected_or_appointed_official(unit) then return false end
+    if filter.nobles == 'only' and not is_nobility(unit) then return false end
+    if filter.nobles == 'exclude' and is_nobility(unit) then return false end
+    if #filter.search == 0 then return true end
+    local search_key = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
+    return normalize_search_key(search_key):find(dfhack.toSearchNormalized(filter.search))
+end
+
+local function is_noop_filter(filter)
+    return #filter.search == 0 and
+        filter.military == 'include' and
+        filter.officials == 'include' and
+        filter.nobles == 'include'
+end
+
+local function is_filter_equal(a, b)
+    return a.search == b.search and
+        a.military == b.military and
+        a.officials == b.officials and
+        a.nobles == b.nobles
 end
 
 local unit_selector = df.global.game.main_interface.unit_selector
 
 -- this function uses the unused itemid and selected vectors to keep state,
 -- taking advantage of the fact that they are reset by DF when the list of units changes
-local function filter_vector(search, prev_search)
+local function filter_vector(filter, prev_filter)
     local unid_is_filtered = #unit_selector.selected >= 0 and unit_selector.selected[0] ~= 0
-    if #search == 0 or #unit_selector.selected == 0 then
+    if is_noop_filter(filter) or #unit_selector.selected == 0 then
         if not unid_is_filtered then
             -- we haven't modified the unid vector; nothing to do here
             return
@@ -783,8 +836,8 @@ local function filter_vector(search, prev_search)
         unit_selector.selected[0] = 0
         return
     end
-    if unid_is_filtered and search == prev_search then
-        -- prev filter still stands
+    if unid_is_filtered and is_filter_equal(filter, prev_filter) then
+        -- filter hasn't changed; we don't need to refilter
         return
     end
     if unid_is_filtered then
@@ -797,7 +850,7 @@ local function filter_vector(search, prev_search)
     end
     -- do the actual filtering
     for idx=#unit_selector.unid-1,0,-1 do
-        if not filter_matches(unit_selector.unid[idx], search) then
+        if not filter_matches(unit_selector.unid[idx], filter) then
             unit_selector.unid:erase(idx)
         end
     end
@@ -807,17 +860,18 @@ local SORT_WIDGET_NAMES = {
     'sort',
     'sort_any_melee',
     'sort_any_ranged',
-    'sort_leadership',
     'sort_name',
+    'sort_teacher',
+    'sort_tactics',
     'sort_migrant_wave',
     'sort_stress',
+    'sort_mental_stability',
     'sort_axe',
     'sort_sword',
     'sort_mace',
     'sort_hammer',
     'sort_spear',
     'sort_crossbow',
-    'sort_mental_stability',
     'sort_melee_combat_potential',
     'sort_ranged_combat_potential',
 }
@@ -832,9 +886,14 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
     for _,widget_name in ipairs(SORT_WIDGET_NAMES) do
         self.subviews[widget_name]:setOption(sort_fn)
     end
-    local search = self.subviews.search.text
-    filter_vector(search, self.prev_search)
-    self.prev_search = search
+    local filter = {
+        search=self.subviews.search.text,
+        military=self.subviews.military:getOptionValue(),
+        officials=self.subviews.officials:getOptionValue(),
+        nobles=self.subviews.nobles:getOptionValue(),
+    }
+    filter_vector(filter, self.prev_filter or {})
+    self.prev_filter = filter
     utils.sort_vector(unit_selector.unid, nil, sort_fn)
 end
 

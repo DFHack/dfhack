@@ -101,27 +101,6 @@ local function get_skill(unit_id, skill, unit)
         utils.binsearch(unit.status.current_soul.skills, skill, 'id')
 end
 
-local function get_max_skill(unit_id, list)
-    local unit = df.unit.find(unit_id)
-    if not unit or not unit.status.current_soul then return end
-    local max
-    for _,skill in ipairs(list) do
-        local s = get_skill(unit_id, skill, unit)
-        if s then
-            if not max then
-                max = s
-            else
-                if max.rating == s.rating and max.experience < s.experience then
-                    max = s
-                elseif max.rating < s.rating then
-                    max = s
-                end
-            end
-        end
-    end
-    return max
-end
-
 local function melee_skill_effectiveness(unit, skill_list)
     -- Physical attributes
     local strength = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.STRENGTH)
@@ -396,12 +375,9 @@ end
 local function ranged_combat_potential(unit)
     -- Physical attributes
     local agility = unit.body.physical_attrs.AGILITY.max_value
-    local toughness = unit.body.physical_attrs.TOUGHNESS.max_value
-    local endurance = unit.body.physical_attrs.ENDURANCE.max_value
 
     -- Mental attributes
     local focus = unit.status.current_soul.mental_attrs.FOCUS.max_value
-    local willpower = unit.status.current_soul.mental_attrs.WILLPOWER.max_value
     local spatial_sense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
     local kinesthetic_sense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 

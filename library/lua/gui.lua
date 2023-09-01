@@ -940,21 +940,21 @@ function FRAME_WINDOW(resizable)
     end
     return frame
 end
-function FRAME_PANEL(resizable)
+function FRAME_PANEL()
     return make_frame(textures.tp_border_panel, false)
 end
-function FRAME_MEDIUM(resizable)
+function FRAME_MEDIUM()
     return make_frame(textures.tp_border_medium, false)
 end
-function FRAME_BOLD(resizable)
+function FRAME_BOLD()
     return make_frame(textures.tp_border_bold, true)
 end
-function FRAME_INTERIOR(resizable)
+function FRAME_INTERIOR()
     local frame = make_frame(textures.tp_border_thin, false)
     frame.signature_pen = false
     return frame
 end
-function FRAME_INTERIOR_MEDIUM(resizable)
+function FRAME_INTERIOR_MEDIUM()
     local frame = make_frame(textures.tp_border_medium, false)
     frame.signature_pen = false
     return frame

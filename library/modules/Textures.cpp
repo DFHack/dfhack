@@ -1,3 +1,4 @@
+#include <atomic>
 #include <mutex>
 #include <numeric>
 #include <unordered_map>
@@ -29,8 +30,30 @@ DBG_DECLARE(core, textures, DebugCategory::LINFO);
 }
 
 static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
+static std::unordered_map<TexposHandle, long> g_handle_to_reserved_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
+static std::unordered_map<std::string, std::vector<TexposHandle>> g_tileset_to_handles;
 static std::mutex g_adding_mutex;
+static std::atomic<bool> loading_state = false;
+
+struct Reserved {
+    static void init(int32_t start) {
+        reserved_range.start = start;
+        reserved_range.end = start + Reserved::size;
+        reserved_range.current = start;
+    }
+    static long get_new_texpos() {
+        if (reserved_range.current == reserved_range.end)
+            return -1;
+        current = reserved_range.current;
+        reserved_range.current++;
+        return current;
+    }
+    static const int32_t size = 10000; // size of reserved texpos buffer
+    inline static int32_t start = -1;
+    inline static int32_t end = -1;
+    inline static long current = -1;
+} reserved_range;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -71,6 +94,12 @@ static long add_texture(SDL_Surface* surface) {
     return texpos;
 }
 
+// register surface in texture raws to specific texpos, returns a texpos
+static void insert_texture(SDL_Surface* surface, long texpos) {
+    std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
+    enabler->textures.raws[texpos] = surface;
+}
+
 // delete surface from texture raws
 static void delete_texture(long texpos) {
     std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
@@ -94,7 +123,8 @@ SDL_Surface* create_texture(std::vector<uint32_t>& pixels, int texture_px_w, int
 
 // convert single surface into tiles according w/h
 // register tiles in texture raws and return handles
-std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int tile_px_h) {
+std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int tile_px_h,
+                                        bool reserved) {
     std::vector<TexposHandle> handles{};
     if (!surface)
         return handles;
@@ -109,7 +139,7 @@ std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int
                 surface->format->Bmask, surface->format->Amask);
             SDL_Rect vp{tile_px_w * x, tile_px_h * y, tile_px_w, tile_px_h};
             DFSDL_UpperBlit(surface, &vp, tile, NULL);
-            auto handle = Textures::loadTexture(tile);
+            auto handle = Textures::loadTexture(tile, reserved);
             handles.push_back(handle);
         }
     }
@@ -118,22 +148,38 @@ std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int
     return handles;
 }
 
-TexposHandle Textures::loadTexture(SDL_Surface* surface) {
+TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
     if (!surface || !enabler)
         return 0; // should be some error, i guess
+    if (loading_state) {
+        ERR(textures).printerr("unable to load texture during game loading\n");
+        return 0;
+    }
 
     auto handle = reinterpret_cast<uintptr_t>(surface);
     g_handle_to_surface.emplace(handle, surface);
     surface->refcount++; // prevent destruct on next FreeSurface by game
-    auto texpos = add_texture(surface);
-    g_handle_to_texpos.emplace(handle, texpos);
+    if (reserved) {
+        auto texpos = reserved_range.get_new_texpos();
+        if (texpos == -1) {
+            ERR(textures).printerr("reserved range limit has been reached, use dynamic range\n");
+            return 0;
+        }
+        insert_texture(surface, texpos);
+        g_handle_to_reserved_texpos.emplace(handle, texpos);
+    } else {
+        auto texpos = add_texture(surface);
+        g_handle_to_texpos.emplace(handle, texpos);
+    }
     return handle;
 }
 
 std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
-                                                int tile_px_h) {
+                                                int tile_px_h, bool reserved) {
     if (!enabler)
         return std::vector<TexposHandle>{};
+    if (g_tileset_to_handles.contains(file))
+        return g_tileset_to_handles[file];
 
     SDL_Surface* surface = DFIMG_Load(file.c_str());
     if (!surface) {
@@ -142,10 +188,12 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
     }
 
     surface = canonicalize_format(surface);
-    auto handles = slice_tileset(surface, tile_px_w, tile_px_h);
+    auto handles = slice_tileset(surface, tile_px_w, tile_px_h, reserved);
 
-    DEBUG(textures).print("loaded %zd textures from '%s'\n", handles.size(), file.c_str());
+    DEBUG(textures).print("loaded %zd textures from '%s' to %s range\n", handles.size(),
+                          file.c_str(), reserved ? "reserved" : "dynamic");
 
+    g_tileset_to_handles[file] = handles;
     return handles;
 }
 
@@ -153,10 +201,15 @@ long Textures::getTexposByHandle(TexposHandle handle) {
     if (!handle || !enabler)
         return -1;
 
+    if (g_handle_to_reserved_texpos.contains(handle))
+        return g_handle_to_reserved_texpos[handle];
     if (g_handle_to_texpos.contains(handle))
         return g_handle_to_texpos[handle];
-
     if (g_handle_to_surface.contains(handle)) {
+        if (loading_state) {
+            ERR(textures).printerr("unable reinit texture from dynamic range during loading\n");
+            return -1;
+        }
         g_handle_to_surface[handle]->refcount++; // prevent destruct on next FreeSurface by game
         auto texpos = add_texture(g_handle_to_surface[handle]);
         g_handle_to_texpos.emplace(handle, texpos);
@@ -166,22 +219,24 @@ long Textures::getTexposByHandle(TexposHandle handle) {
     return -1;
 }
 
-TexposHandle Textures::createTile(std::vector<uint32_t>& pixels, int tile_px_w, int tile_px_h) {
+TexposHandle Textures::createTile(std::vector<uint32_t>& pixels, int tile_px_w, int tile_px_h,
+                                  bool reserved) {
     if (!enabler)
         return 0;
 
     auto texture = create_texture(pixels, tile_px_w, tile_px_h);
-    auto handle = Textures::loadTexture(texture);
+    auto handle = Textures::loadTexture(texture, reserved);
     return handle;
 }
 
 std::vector<TexposHandle> Textures::createTileset(std::vector<uint32_t>& pixels, int texture_px_w,
-                                                  int texture_px_h, int tile_px_w, int tile_px_h) {
+                                                  int texture_px_h, int tile_px_w, int tile_px_h,
+                                                  bool reserved) {
     if (!enabler)
         return std::vector<TexposHandle>{};
 
     auto texture = create_texture(pixels, texture_px_w, texture_px_h);
-    auto handles = slice_tileset(texture, tile_px_w, tile_px_h);
+    auto handles = slice_tileset(texture, tile_px_w, tile_px_h, reserved);
     return handles;
 }
 
@@ -192,6 +247,8 @@ void Textures::deleteHandle(TexposHandle handle) {
     auto texpos = Textures::getTexposByHandle(handle);
     if (texpos > 0)
         delete_texture(texpos);
+    if (g_handle_to_reserved_texpos.contains(handle))
+        g_handle_to_reserved_texpos.erase(handle);
     if (g_handle_to_texpos.contains(handle))
         g_handle_to_texpos.erase(handle);
     if (g_handle_to_surface.contains(handle)) {
@@ -207,7 +264,18 @@ static void reset_texpos() {
     g_handle_to_texpos.clear();
 }
 
+static void reset_reserved_texpos() {
+    DEBUG(textures).print("resetting reserved texture mappings\n");
+    g_handle_to_reserved_texpos.clear();
+}
+
+static void reset_tilesets() {
+    DEBUG(textures).print("resetting tileset to handle mappings\n");
+    g_tileset_to_handles.clear();
+}
+
 static void reset_surface() {
+    DEBUG(textures).print("deleting cached surfaces\n");
     for (auto& entry : g_handle_to_surface) {
         DFSDL_FreeSurface(entry.second);
     }
@@ -220,7 +288,9 @@ struct tracking_stage_new_region : df::viewscreen_new_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_raw_load_stage != this->raw_load_stage) {
-            TRACE(textures).print("raw_load_stage %d -> %d\n", this->m_raw_load_stage, this->raw_load_stage);
+            TRACE(textures).print("raw_load_stage %d -> %d\n", this->m_raw_load_stage,
+                                  this->raw_load_stage);
+            loading_state = this->raw_load_stage >= 0 && this->raw_load_stage < 3 ? true : false;
             this->m_raw_load_stage = this->raw_load_stage;
             if (this->m_raw_load_stage == 1)
                 reset_texpos();
@@ -240,6 +310,7 @@ struct tracking_stage_adopt_region : df::viewscreen_adopt_regionst {
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 1)
                 reset_texpos();
@@ -259,6 +330,7 @@ struct tracking_stage_load_region : df::viewscreen_loadgamest {
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 1)
                 reset_texpos();
@@ -278,6 +350,7 @@ struct tracking_stage_new_arena : df::viewscreen_new_arenast {
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             this->m_cur_step = this->cur_step;
             if (this->m_cur_step == 0)
                 reset_texpos();
@@ -304,12 +377,25 @@ static void uninstall_reset_point() {
     INTERPOSE_HOOK(tracking_stage_new_arena, logic).remove();
 }
 
+static void reserve_static_range() {
+    reserved_range.init(enabler->textures.init_texture_size);
+    auto dummy_surface =
+        DFSDL_CreateRGBSurfaceWithFormat(0, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    for (int32_t i = 0; i < Reserved::size; i++) {
+        add_texture(dummy_surface);
+    }
+    enabler->textures.init_texture_size += Reserved::size;
+}
+
 void Textures::init(color_ostream& out) {
     if (!enabler)
         return;
 
+    reserve_static_range();
     install_reset_point();
-    DEBUG(textures, out).print("dynamic texture loading ready");
+    DEBUG(textures, out)
+        .print("dynamic texture loading ready, reserved range %d-%d\n", reserved_range.start,
+               reserved_range.end);
 }
 
 void Textures::cleanup() {
@@ -317,6 +403,8 @@ void Textures::cleanup() {
         return;
 
     reset_texpos();
+    reset_reserved_texpos();
+    reset_tilesets();
     reset_surface();
     uninstall_reset_point();
 }

@@ -6,18 +6,18 @@ local _ENV = mkmodule('gui.textures')
 
 -- Preloaded DFHack Assets.
 -- Use this handles if you need to get dfhack standard textures.
----@type table<string, TexposHandle>
+---@type table<string, TexposHandle[]>
 local texpos_handles = {
-  green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12),
-  red_pin = dfhack.textures.loadTileset('hack/data/art/red-pin.png', 8, 12),
-  icons = dfhack.textures.loadTileset('hack/data/art/icons.png', 8, 12),
-  on_off = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12),
-  control_panel = dfhack.textures.loadTileset('hack/data/art/control-panel.png', 8, 12),
-  border_thin = dfhack.textures.loadTileset('hack/data/art/border-thin.png', 8, 12),
-  border_medium = dfhack.textures.loadTileset('hack/data/art/border-medium.png', 8, 12),
-  border_bold = dfhack.textures.loadTileset('hack/data/art/border-bold.png', 8, 12),
-  border_panel = dfhack.textures.loadTileset('hack/data/art/border-panel.png', 8, 12),
-  border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12),
+  green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12, true),
+  red_pin = dfhack.textures.loadTileset('hack/data/art/red-pin.png', 8, 12, true),
+  icons = dfhack.textures.loadTileset('hack/data/art/icons.png', 8, 12, true),
+  on_off = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12, true),
+  control_panel = dfhack.textures.loadTileset('hack/data/art/control-panel.png', 8, 12, true),
+  border_thin = dfhack.textures.loadTileset('hack/data/art/border-thin.png', 8, 12, true),
+  border_medium = dfhack.textures.loadTileset('hack/data/art/border-medium.png', 8, 12, true),
+  border_bold = dfhack.textures.loadTileset('hack/data/art/border-bold.png', 8, 12, true),
+  border_panel = dfhack.textures.loadTileset('hack/data/art/border-panel.png', 8, 12, true),
+  border_window = dfhack.textures.loadTileset('hack/data/art/border-window.png', 8, 12, true),
 }
 
 -- Get valid texpos for preloaded texture in tileset

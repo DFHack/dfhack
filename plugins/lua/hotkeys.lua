@@ -37,8 +37,8 @@ HotspotMenuWidget.ATTRS{
         'export_region',
         'game_cleaner',
         'initial_prep',
-        --'legends', -- conflicts with vanilla export button and info text
-        'loadgame',
+        -- 'legends', -- conflicts with vanilla export button and info text
+        -- 'loadgame', -- disable temporarily while we get texture reloading sorted
         -- 'new_arena', -- conflicts with vanilla panel layouts
         -- 'new_region', -- conflicts with vanilla panel layouts
         'savegame',

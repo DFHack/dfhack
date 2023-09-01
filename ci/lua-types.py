@@ -672,6 +672,8 @@ class Container(Tag):
             and inside_el.attrib["subtype"] == "stl-vector"
         ):
             self.typed = "unknown" + ("[]" * len(self.array_dim))
+        if inside_el.attrib.get("subtype") == "stl-string" and self.pointer_type == "stl-string":
+            self.typed = f"{{ value: string }}{'[]' * len(self.array_dim)}"
 
         if self.typed.startswith(self.full_type + "[]"):
             if self.render_mode == RenderMode.Type:
@@ -730,10 +732,19 @@ class StaticArray(Tag):
             f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{'[]' * len(self.array_dim)}"
         )
 
-        if inside_el.attrib.get("meta") == "global":
-            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
-        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
-            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+        if (
+            inside_el.attrib.get("meta") == "global"
+            or inside_el.attrib.get("meta") == "number"
+            or inside_el.attrib.get("meta") == "primitive"
+        ):
+            item_type = inside_el.attrib.get("type-name") or inside_el.attrib.get("subtype") or "any"
+            if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
+                self.typed = "table<"
+                for key in enum_map[self.el.attrib["index-enum"]].keys():
+                    self.typed += f'"{key}"|'
+                self.typed = self.typed[:-1] + f", {base_type(item_type)}>"
+            else:
+                self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
         if (
             len(self.array_dim) > 0
             and inside_el.attrib.get("meta") == "container"
@@ -1135,4 +1146,4 @@ def symbols_processing() -> None:
 
 if __name__ == "__main__":
     symbols_processing()
-    signatures_processing()
+    # signatures_processing()

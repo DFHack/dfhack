@@ -48,22 +48,33 @@ local function sort_by_name_asc(unit_id_1, unit_id_2)
     return utils.compare_name(name2, name1)
 end
 
+local active_units = df.global.world.units.active
+local active_idx_cache = {}
+local function get_active_idx_cache()
+    local num_active_units = #active_units
+    if num_active_units == 0 or active_idx_cache[active_units[num_active_units-1].id] ~= num_active_units-1 then
+        active_idx_cache = {}
+        for i,active_unit in ipairs(active_units) do
+            active_idx_cache[active_unit.id] = i
+        end
+    end
+    return active_idx_cache
+end
+
 local function sort_by_migrant_wave_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
-    return utils.compare(unit2.id, unit1.id)
+    local cache = get_active_idx_cache()
+    if not cache[unit_id_1] then return -1 end
+    if not cache[unit_id_2] then return 1 end
+    return utils.compare(cache[unit_id_2], cache[unit_id_1])
 end
 
 local function sort_by_migrant_wave_asc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
-    return utils.compare(unit1.id, unit2.id)
+    local cache = get_active_idx_cache()
+    if not cache[unit_id_1] then return -1 end
+    if not cache[unit_id_2] then return 1 end
+    return utils.compare(cache[unit_id_1], cache[unit_id_2])
 end
 
 local function sort_by_stress_desc(unit_id_1, unit_id_2)
@@ -453,6 +464,13 @@ SquadAssignmentOverlay.ATTRS{
     autoarrange_gap=1,
 }
 
+-- allow initial spacebar or two successive spacebars to fall through and
+-- pause/unpause the game
+local function search_on_char(ch, text)
+    if ch == ' ' then return text:match('%S$') end
+    return ch:match('[%l _-]')
+end
+
 function SquadAssignmentOverlay:init()
     self.dirty = true
 
@@ -461,7 +479,7 @@ function SquadAssignmentOverlay:init()
             view_id='search',
             frame={l=0},
             label_text='Search: ',
-            on_char=function(ch) return ch:match('[%l _-]') end,
+            on_char=search_on_char,
             on_change=function() self:refresh_list() end,
         },
         widgets.Panel{

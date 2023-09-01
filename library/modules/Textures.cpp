@@ -29,31 +29,33 @@ namespace DFHack {
 DBG_DECLARE(core, textures, DebugCategory::LINFO);
 }
 
+struct ReservedRange {
+    void init(int32_t start) {
+        this->start = start;
+        this->end = start + ReservedRange::size;
+        this->current = start;
+    }
+    long get_new_texpos() {
+        if (this->current == this->end)
+            return -1;
+        current = this->current;
+        this->current++;
+        return current;
+    }
+
+    static const int32_t size = 10000; // size of reserved texpos buffer
+    int32_t start = -1;
+    int32_t end = -1;
+    long current = -1;
+};
+
+static ReservedRange reserved_range{};
 static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, long> g_handle_to_reserved_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
 static std::unordered_map<std::string, std::vector<TexposHandle>> g_tileset_to_handles;
 static std::mutex g_adding_mutex;
 static std::atomic<bool> loading_state = false;
-
-struct Reserved {
-    static void init(int32_t start) {
-        reserved_range.start = start;
-        reserved_range.end = start + Reserved::size;
-        reserved_range.current = start;
-    }
-    static long get_new_texpos() {
-        if (reserved_range.current == reserved_range.end)
-            return -1;
-        current = reserved_range.current;
-        reserved_range.current++;
-        return current;
-    }
-    static const int32_t size = 10000; // size of reserved texpos buffer
-    inline static int32_t start = -1;
-    inline static int32_t end = -1;
-    inline static long current = -1;
-} reserved_range;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -381,10 +383,10 @@ static void reserve_static_range() {
     reserved_range.init(enabler->textures.init_texture_size);
     auto dummy_surface =
         DFSDL_CreateRGBSurfaceWithFormat(0, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
-    for (int32_t i = 0; i < Reserved::size; i++) {
+    for (int32_t i = 0; i < ReservedRange::size; i++) {
         add_texture(dummy_surface);
     }
-    enabler->textures.init_texture_size += Reserved::size;
+    enabler->textures.init_texture_size += ReservedRange::size;
 }
 
 void Textures::init(color_ostream& out) {

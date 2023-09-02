@@ -17,6 +17,9 @@ For autotrade, items will be marked for trading only when a caravan is
 approaching or is already at the trade depot. Items (or bins that contain
 items) of which a noble has forbidden export will not be marked for trade.
 
+Stockpiles can be registered for ``logistics`` features by toggling the options
+in the `stockpiles` overlay that comes up when you select a stockpile in the UI.
+
 Usage
 -----
 

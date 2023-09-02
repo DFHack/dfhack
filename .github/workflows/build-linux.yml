@@ -142,9 +142,11 @@ jobs:
       - name: Finalize cache
         if: inputs.platform-files
         run: |
+          ccache --show-stats --verbose
           ccache --max-size 40M
           ccache --cleanup
-          ccache --show-stats --verbose
+          ccache --max-size 500M
+          ccache --zero-stats
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly
         uses: actions/cache/save@v3

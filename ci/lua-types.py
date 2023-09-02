@@ -374,10 +374,11 @@ BASE_NAMED_TYPES_METHODS = """---@field is_instance fun(self: self, obj: any): b
 """
 
 BASE_STRUCT_METHODS = """---@field vmethod fun(self: self, ...): any
+---@field is_instance fun(self: self, obj: any): boolean
 """
 
 BASE_CONTAINER_METHODS = """---@field resize fun(self: self, size: integer): nil
----@field insert fun(self: self, index: "#"|integer, item: self): nil
+---@field insert fun(self: self, index: "#"|integer, item: <UNDERLAYING>): nil
 ---@field erase fun(self: self, index: integer): nil
 """
 
@@ -526,7 +527,7 @@ class Enum(Tag):
         enum_map[self.full_type] = self
 
     def render(self) -> str:
-        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s = f"-- {self.render_mode}, path: {self.path}, enum\n"
         s += f"---@enum {self.full_type}{self.comment}\n"
         s += f"---@diagnostic disable-next-line: undefined-global, inject-field\n"
         s += f"df.{self.full_type} = {{\n"
@@ -617,7 +618,7 @@ class Pointer(Tag):
     def render(self) -> str:
         s = ""
         if self.typed == self.full_type and self.render_mode == RenderMode.Type:
-            s += f"-- {self.render_mode}, path: {self.path}\n"
+            s += f"-- {self.render_mode}, path: {self.path}, pointer\n"
             s += f"---@class {self.full_type}{self.comment}\n"
             s += f"df.{self.full_type} = nil\n"
         for item in self.items:
@@ -627,12 +628,13 @@ class Pointer(Tag):
 
 
 class Container(Tag):
-    renderable = False
+    renderable = True
     is_container = True
     items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
+        self.renderable = True
         (inside_el, self.array_dim) = get_container_item(self.el)
         if self.render_mode == RenderMode.Type and not self.typedef_name and inside_el.attrib.get("typedef-name"):
             self.typedef_name = inside_el.attrib["typedef-name"]
@@ -646,7 +648,6 @@ class Container(Tag):
                 item = Enum(inside_el, self.render_mode, self.path[:-1])
             else:
                 item = Compound(inside_el, self.render_mode, self.path[:-1])
-            self.renderable = True
             item.renderable = True
             self.items.append(item)
 
@@ -683,9 +684,11 @@ class Container(Tag):
 
     def as_field(self) -> str:
         count = f" count<{','.join(self.array_dim)}>"
+        type_name = self.full_type
         if self.subtype == "df-flagarray":
             count = ""
-        return f"---@field {self.path[-1]} {self.typed}{count}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
+            type_name = self.typed
+        return f"---@field {self.path[-1]} {type_name}{count}{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
 
     def as_type(self) -> str:
         count = f" count<{','.join(self.array_dim)}>"
@@ -695,6 +698,18 @@ class Container(Tag):
 
     def render(self) -> str:
         s = ""
+        if self.subtype != "df-flagarray":
+            s += f"-- {self.render_mode}, path: {self.path}, container\n"
+            s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
+            s += f"---@field [integer] {self.typed[:-2] if self.typed.endswith('[]') else self.typed}\n"
+            s += BASE_CONTAINER_METHODS.replace(
+                "<UNDERLAYING>", self.typed[:-2] if self.typed.endswith("[]") else self.typed
+            )
+            if self.render_mode == RenderMode.Type:
+                s += BASE_NAMED_TYPES_METHODS
+            else:
+                s += BASE_TYPED_OBJECTS_METHODS
+            s += f"df.{self.full_type} = nil\n\n"
         for item in self.items:
             if item.renderable:
                 s += item.render()
@@ -791,7 +806,7 @@ class Compound(Tag):
         return f"---@type {self.full_type}{self.comment}"
 
     def render(self) -> str:
-        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s = f"-- {self.render_mode}, path: {self.path}, compound\n"
         s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
         append = ""
         for item in self.items:
@@ -801,12 +816,10 @@ class Compound(Tag):
                 append += item.render()
         if not self.inherit:
             s += BASE_METHODS
-            if RenderMode.Type:
+            if self.render_mode == RenderMode.Type:
                 s += BASE_NAMED_TYPES_METHODS
             else:
                 s += BASE_TYPED_OBJECTS_METHODS
-        if self.has_container:
-            s += BASE_CONTAINER_METHODS
         s += f"df.{self.full_type} = nil\n"
         return s + "\n" + append
 
@@ -829,7 +842,7 @@ class Struct(Tag):
                         self.items.append(tag)
 
     def render(self) -> str:
-        s = f"-- {self.render_mode}, path: {self.path}\n"
+        s = f"-- {self.render_mode}, path: {self.path}, struct\n"
         s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
         append = ""
         for item in self.items:
@@ -840,9 +853,7 @@ class Struct(Tag):
         if self.instance_vector:
             s += "---@field find fun(id: integer): self|nil\n"
         if not self.inherit:
-            s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_NAMED_TYPES_METHODS
-        if self.has_container:
-            s += BASE_CONTAINER_METHODS
+            s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_TYPED_OBJECTS_METHODS
         s += f"df.{self.full_type} = nil\n"
         return s + "\n" + append
 
@@ -1146,4 +1157,4 @@ def symbols_processing() -> None:
 
 if __name__ == "__main__":
     symbols_processing()
-    # signatures_processing()
+    signatures_processing()

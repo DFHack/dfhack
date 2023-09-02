@@ -2594,6 +2594,11 @@ invalidates the ``texpos`` value that used to point to that texture.
 The ``textures`` module solves this problem by providing a stable handle instead of a
 raw ``texpos``. When we need to draw a particular tile, we can look up the current
 ``texpos`` value via the handle.
+Texture module can register textures in two ways: to reserved and dynamic ranges.
+Reserved range is a limit buffer in a game texture vector, that will never be wiped.
+It is good for static assets, which need to be loaded at the very beginning and will be used during the process running.
+In other cases, it is better to use dynamic range.
+If reserved range buffer limit has been reached, dynamic range will be used by default.
 
 * ``loadTileset(file, tile_px_w, tile_px_h, reserved?)``
 

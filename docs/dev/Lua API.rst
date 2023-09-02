@@ -2600,7 +2600,7 @@ It is good for static assets, which need to be loaded at the very beginning and 
 In other cases, it is better to use dynamic range.
 If reserved range buffer limit has been reached, dynamic range will be used by default.
 
-* ``loadTileset(file, tile_px_w, tile_px_h, reserved?)``
+* ``loadTileset(file, tile_px_w, tile_px_h[, reserved])``
 
   Loads a tileset from the image ``file`` with give tile dimensions in pixels. The
   image will be sliced in row major order. Returns an array of ``TexposHandle``.
@@ -2618,7 +2618,7 @@ If reserved range buffer limit has been reached, dynamic range will be used by d
   get the ``texpos`` for your texture. ``texpos`` can change when game textures are
   reset, but the handle will be the same.
 
-* ``createTile(pixels, tile_px_w, tile_px_h, reserved?)``
+* ``createTile(pixels, tile_px_w, tile_px_h[, reserved])``
 
   Create and register a new texture with the given tile dimensions and an array of
   ``pixels`` in row major order. Each pixel is an integer representing color in packed
@@ -2626,7 +2626,7 @@ If reserved range buffer limit has been reached, dynamic range will be used by d
   ``reserved`` is optional boolean argument, which indicates texpos range.
   ``true`` - reserved, ``false`` - dynamic (default).
 
-* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h, reserved?)``
+* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h[, reserved])``
 
   Create and register a new texture with the given texture dimensions and an array of
   ``pixels`` in row major order. Then slice it into tiles with the given tile

@@ -100,7 +100,7 @@ static long add_texture(SDL_Surface* surface) {
     return texpos;
 }
 
-// register surface in texture raws to specific texpos, returns a texpos
+// register surface in texture raws to specific texpos
 static void insert_texture(SDL_Surface* surface, long texpos) {
     std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
     enabler->textures.raws[texpos] = surface;

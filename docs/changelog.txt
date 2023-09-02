@@ -63,6 +63,7 @@ Template for new versions:
 - `orders`: prevent import/export overlay from appearing on the create workorder screen
 - `caravan`: corrected prices for cages that have units inside of them
 - `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
+- ``dialogs.MessageBox``: fix spacing around scrollable text
 - `seedwatch`: seedwatch will now ignore (unplantable) tree seeds entirely
 - `autobutcher`: fix ``ticks`` commandline option incorrectly rejecting positive integers as valid values
 

@@ -29,8 +29,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
-- `seedwatch`: seedwatch will now ignore (unplantable) tree seeds entirely
 
 ## Misc Improvements
 
@@ -64,6 +62,9 @@ Template for new versions:
 - Core: fix text getting added to DFHack text entry widgets when Alt- or Ctrl- keys are hit
 - `orders`: prevent import/export overlay from appearing on the create workorder screen
 - `caravan`: corrected prices for cages that have units inside of them
+- `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
+- `seedwatch`: seedwatch will now ignore (unplantable) tree seeds entirely
+- `autobutcher`: fix ``ticks`` commandline option incorrectly rejecting positive integers as valid values
 
 ## Misc Improvements
 - Surround DFHack-specific UI elements with square brackets instead of red-yellow blocks for better readability

@@ -273,6 +273,9 @@ void Textures::deleteHandle(TexposHandle handle) {
         g_handle_to_reserved_texpos.erase(handle);
     if (g_handle_to_texpos.contains(handle))
         g_handle_to_texpos.erase(handle);
+    if (auto it = std::find(g_delayed_regs.begin(), g_delayed_regs.end(), handle);
+        it != g_delayed_regs.end())
+        g_delayed_regs.erase(it);
     if (g_handle_to_surface.contains(handle)) {
         auto surface = g_handle_to_surface[handle];
         while (surface->refcount)

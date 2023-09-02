@@ -561,28 +561,63 @@ class Primitive(Tag):
         return f"---@field {self.name or self.anon_name} {base_type(self.subtype)}{self.comment}"
 
 
-class Pointer(Tag):
+class IterableTag(Tag):
+    items: list[Tag]
+
+    def underlaing_entity(self) -> None:
+        (self.inside_el, self.array_dim) = get_container_item(self.el)
+        if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in self.inside_el.attrib:
+            self.typedef_name = self.inside_el.attrib["typedef-name"]
+            self.path = self.path[:-1]
+            self.path.append(self.typedef_name)
+            self.full_type = ".".join(self.path)
+
+    def fetch_items(self) -> None:
+        if self.have_childs and len(self.inside_el) > 0:
+            if self.inside_el.attrib.get("name") and self.el.attrib.get("name"):
+                self.inside_el.attrib["name"] = self.el.attrib["name"]
+            self.inside_el.attrib = self.el.attrib | self.inside_el.attrib
+            if self.inside_el.attrib.get("subtype") == "enum":
+                item = Enum(self.inside_el, self.render_mode, self.path[:-1])
+            else:
+                item = Compound(self.inside_el, self.render_mode, self.path[:-1])
+            item.renderable = True
+            self.items.append(item)
+
+    def unknown_vector_item(self) -> None:
+        if (
+            len(self.array_dim) > 0
+            and self.inside_el.attrib.get("meta") == "container"
+            and self.inside_el.attrib["subtype"] == "stl-vector"
+        ):
+            self.typed = "unknown" + ("[]" * len(self.array_dim))
+
+    def primitive_item(self) -> None:
+        if self.inside_el.attrib.get("meta") == "global":
+            self.typed = self.inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
+        if self.inside_el.attrib.get("meta") == "primitive" or self.inside_el.attrib.get("meta") == "number":
+            self.typed = base_type(self.inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+
+    def index_enum(self, value_type: str) -> None:
+        if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
+            self.typed = "table<"
+            for key in enum_map[self.el.attrib["index-enum"]].keys():
+                self.typed += f'"{key}"|'
+            self.typed = f"{self.typed[:-1]}, {value_type}>"
+        else:
+            self.typed = f"table<string, {value_type}>"
+
+
+class Pointer(IterableTag):
     renderable = False
     items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
-        (inside_el, self.array_dim) = get_container_item(self.el)
-        if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in inside_el.attrib:
-            self.typedef_name = inside_el.attrib["typedef-name"]
-            self.path = self.path[:-1]
-            self.path.append(self.typedef_name)
-            self.full_type = ".".join(self.path)
-
-        if self.have_childs and len(inside_el) > 0:
-            inside_el.attrib = self.el.attrib | inside_el.attrib
-            if inside_el.attrib.get("subtype") == "enum":
-                item = Enum(inside_el, self.render_mode, self.path[:-1])
-            else:
-                item = Compound(inside_el, self.render_mode, self.path[:-1])
+        self.underlaing_entity()
+        self.fetch_items()
+        if self.have_childs and len(self.inside_el) > 0:
             self.renderable = True
-            item.renderable = True
-            self.items.append(item)
 
         if len(self.items) > 0:
             type_name = f"{self.full_type}"
@@ -591,19 +626,10 @@ class Pointer(Tag):
         else:
             type_name = ""
         subtype = "any[] -- NOT TYPED" if base_type(self.subtype) == "stl-vector" else base_type(self.subtype)
-
         self.typed = base_type(self.type_name) or type_name or subtype or self.full_type
 
-        if inside_el.attrib.get("meta") == "global":
-            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
-        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
-            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
-        if (
-            len(self.array_dim) > 0
-            and inside_el.attrib.get("meta") == "container"
-            and inside_el.attrib["subtype"] == "stl-vector"
-        ):
-            self.typed = "unknown" + ("[]" * len(self.array_dim))
+        self.primitive_item()
+        self.unknown_vector_item()
 
         if self.typed == self.full_type:
             if self.render_mode == RenderMode.Type:
@@ -627,53 +653,27 @@ class Pointer(Tag):
         return s
 
 
-class Container(Tag):
+class Container(IterableTag):
     renderable = True
     is_container = True
     items: list[Tag]
 
     def traverse(self) -> None:
-        self.items = []
         self.renderable = True
-        (inside_el, self.array_dim) = get_container_item(self.el)
-        if self.render_mode == RenderMode.Type and not self.typedef_name and inside_el.attrib.get("typedef-name"):
-            self.typedef_name = inside_el.attrib["typedef-name"]
-            self.path = self.path[:-1]
-            self.path.append(self.typedef_name)
-            self.full_type = ".".join(self.path)
+        self.items = []
+        self.underlaing_entity()
+        self.fetch_items()
 
-        if self.have_childs and len(inside_el) > 0:
-            inside_el.attrib = self.el.attrib | inside_el.attrib
-            if inside_el.attrib.get("subtype") == "enum":
-                item = Enum(inside_el, self.render_mode, self.path[:-1])
-            else:
-                item = Compound(inside_el, self.render_mode, self.path[:-1])
-            item.renderable = True
-            self.items.append(item)
-
-        inside_containter = self.full_type if len(inside_el) > 0 and inside_el[0].tag != "code-helper" else ""
+        inside_containter = self.full_type if len(self.inside_el) > 0 and self.inside_el[0].tag != "code-helper" else ""
         self.typed = f"{self.ref_target or base_type(self.type_name) or inside_containter or ('boolean' if self.subtype == 'stl-bit-vector' else '') or 'any'}{'[]' * len(self.array_dim)}"
 
         if self.subtype == "df-flagarray":
-            if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
-                self.typed = "table<"
-                for key in enum_map[self.el.attrib["index-enum"]].keys():
-                    self.typed += f'"{key}"|'
-                self.typed = self.typed[:-1] + ", boolean>"
-            else:
-                self.typed = "table<string, boolean>"
+            self.index_enum("boolean")
 
-        if inside_el.attrib.get("meta") == "global":
-            self.typed = inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
-        if inside_el.attrib.get("meta") == "primitive" or inside_el.attrib.get("meta") == "number":
-            self.typed = base_type(inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
-        if (
-            len(self.array_dim) > 0
-            and inside_el.attrib.get("meta") == "container"
-            and inside_el.attrib["subtype"] == "stl-vector"
-        ):
-            self.typed = "unknown" + ("[]" * len(self.array_dim))
-        if inside_el.attrib.get("subtype") == "stl-string" and self.pointer_type == "stl-string":
+        self.primitive_item()
+        self.unknown_vector_item()
+
+        if self.inside_el.attrib.get("subtype") == "stl-string" and self.pointer_type == "stl-string":
             self.typed = f"{{ value: string }}{'[]' * len(self.array_dim)}"
 
         if self.typed.startswith(self.full_type + "[]"):
@@ -684,7 +684,7 @@ class Container(Tag):
 
     def as_field(self) -> str:
         count = f" count<{','.join(self.array_dim)}>"
-        type_name = self.full_type
+        type_name = self.full_type + "_C"
         if self.subtype == "df-flagarray":
             count = ""
             type_name = self.typed
@@ -700,7 +700,7 @@ class Container(Tag):
         s = ""
         if self.subtype != "df-flagarray":
             s += f"-- {self.render_mode}, path: {self.path}, container\n"
-            s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
+            s += f"---@class {self.full_type}_C{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
             s += f"---@field [integer] {self.typed[:-2] if self.typed.endswith('[]') else self.typed}\n"
             s += BASE_CONTAINER_METHODS.replace(
                 "<UNDERLAYING>", self.typed[:-2] if self.typed.endswith("[]") else self.typed
@@ -716,56 +716,43 @@ class Container(Tag):
         return s
 
 
-class StaticArray(Tag):
+class StaticArray(IterableTag):
     renderable = False
     is_container = True
     items: list[Tag]
 
     def traverse(self) -> None:
         self.items = []
-        (inside_el, self.array_dim) = get_container_item(self.el)
-        if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in inside_el.attrib:
-            self.typedef_name = inside_el.attrib["typedef-name"]
-            self.path = self.path[:-1]
-            self.path.append(self.typedef_name)
-            self.full_type = ".".join(self.path)
-
-        if self.have_childs and len(inside_el) > 0:
-            if inside_el.attrib.get("name") and self.el.attrib.get("name"):
-                inside_el.attrib["name"] = self.el.attrib["name"]
-            inside_el.attrib = self.el.attrib | inside_el.attrib
-            if inside_el.attrib.get("subtype") == "enum":
-                item = Enum(inside_el, self.render_mode, self.path[:-1])
-            else:
-                item = Compound(inside_el, self.render_mode, self.path[:-1])
+        self.items = []
+        self.underlaing_entity()
+        self.fetch_items()
+        if self.have_childs and len(self.inside_el) > 0:
             self.renderable = True
-            item.renderable = True
-            self.items.append(item)
 
-        inside_containter = self.full_type if len(inside_el) > 0 and inside_el[0].tag != "code-helper" else ""
+        inside_containter = self.full_type if len(self.inside_el) > 0 and self.inside_el[0].tag != "code-helper" else ""
         self.typed = (
             f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{'[]' * len(self.array_dim)}"
         )
 
-        if (
-            inside_el.attrib.get("meta") == "global"
-            or inside_el.attrib.get("meta") == "number"
-            or inside_el.attrib.get("meta") == "primitive"
-        ):
-            item_type = inside_el.attrib.get("type-name") or inside_el.attrib.get("subtype") or "any"
-            if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
-                self.typed = "table<"
-                for key in enum_map[self.el.attrib["index-enum"]].keys():
-                    self.typed += f'"{key}"|'
-                self.typed = self.typed[:-1] + f", {base_type(item_type)}>"
-            else:
-                self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
-        if (
-            len(self.array_dim) > 0
-            and inside_el.attrib.get("meta") == "container"
-            and inside_el.attrib["subtype"] == "stl-vector"
-        ):
-            self.typed = "unknown" + ("[]" * len(self.array_dim))
+        self.index_enum(self.typed[:-2] if self.typed.endswith("[]") else self.typed)
+        if "index-enum" not in self.el.attrib:
+            item_type = (
+                self.inside_el.attrib.get("type-name")
+                or self.inside_el.attrib.get("base-name")
+                or self.inside_el.attrib.get("subtype")
+                or "any"
+            )
+            match self.inside_el.attrib.get("meta"):
+                case "global" | "number" | "primitive":
+                    self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
+                case _:
+                    match self.inside_el.attrib.get("subtype"):
+                        case "bitfield" | "enum":
+                            self.typed = self.full_type + ("[]" * len(self.array_dim))
+                        case _:
+                            self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
+
+        self.unknown_vector_item()
 
     def as_field(self) -> str:
         return f"---@field {self.path[-1]} {self.typed} count<{','.join(self.array_dim)}>{self.comment}{' -- NOT TYPED' if self.typed == 'any[]' else ''}"
@@ -1025,10 +1012,11 @@ def parse_codegen(file: Path):
     total = 0
     with Path(PATH_DEFINITIONS).open("w", encoding="utf-8") as output:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=output)
-        for el in root:
-            for tag in switch_global_tag(el):
-                total += 1
-                print(tag.render(), file=output)
+        for enums in [True, False]:
+            for el in root:
+                for tag in switch_global_tag(el, enums):
+                    total += 1
+                    print(tag.render(), file=output)
     print(f"Tags: {total}")
 
 
@@ -1109,20 +1097,21 @@ def switch_tag(el: ET.Element, render_mode: RenderMode, path: list[str] = []) ->
                 print("Skip tag ->", el.tag)
 
 
-def switch_global_tag(el: ET.Element) -> Iterable[Tag]:
-    tag = Tag(el, RenderMode.Regular)
-    match tag.meta:
-        case "enum-type":
+def switch_global_tag(el: ET.Element, only_enums: bool) -> Iterable[Tag]:
+    if only_enums:
+        if el.attrib.get("meta") == "enum-type":
             yield Enum(el, RenderMode.Regular, [])
-        case "struct-type" | "class-type" | "bitfield-type":
-            yield Struct(el, RenderMode.All, [])
-        case _:
-            match el.tag:
-                case "global-object":
-                    yield GlobalObject(el, RenderMode.Regular, [])
-                case _:
-                    pass
-                    print(f"-- SKIPPED TAG {el.tag} {tag.meta} {tag.type_name}")
+    else:
+        match el.attrib.get("meta"):
+            case "struct-type" | "class-type" | "bitfield-type":
+                yield Struct(el, RenderMode.All, [])
+            case _:
+                match el.tag:
+                    case "global-object":
+                        yield GlobalObject(el, RenderMode.Regular, [])
+                    case _:
+                        pass
+                        # print(f"-- SKIPPED TAG {el.tag} {el.attrib.get('meta')} {el.attrib.get('type-name')}")
 
 
 def parse_items_place() -> None:

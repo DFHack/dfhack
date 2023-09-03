@@ -60,6 +60,7 @@ Template for new versions:
 ## Fixes
 - Core: reload scripts in mods when a world is unloaded and immediately loaded again
 - Core: fix text getting added to DFHack text entry widgets when Alt- or Ctrl- keys are hit
+- `buildingplan`: ensure selected barrels and buckets are empty (or at least free of lye and milk) as per the requirements of the building
 - `orders`: prevent import/export overlay from appearing on the create workorder screen
 - `caravan`: corrected prices for cages that have units inside of them
 - `tailor`: remove crash caused by clothing items with an invalid ``maker_race``

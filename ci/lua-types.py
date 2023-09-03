@@ -10,7 +10,6 @@ from typing import Any
 #        Signatures processing         #
 ########################################
 
-
 PATH_LUAAPI = "./library/LuaApi.cpp"
 PATH_LUATOOLS = "./library/LuaTools.cpp"
 PATH_LIBRARY = "./library/"
@@ -27,7 +26,6 @@ PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_SIGNATURE = r"^([\w:<>]+)(.+)?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 PATTERN_FORCE_EXPOSE = r"\/\/\s?<force-expose>\s?(.+)"
-
 
 MODULES_GLUE = """---@generic T
 ---@param module `T`
@@ -84,23 +82,22 @@ def parse_files() -> Iterable[Entry]:
     found = 0
     decoded = 0
     for path in [PATH_LUAAPI, PATH_LUATOOLS]:
-        with Path(path).open("r", encoding="utf-8") as file:
-            data = file.read()
-            arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
-            wrappers = [WRAPM, WRAPN, CWRAP, LFUNC, WRAP]
-            for array_pattern in arrays:
-                for array in re.finditer(array_pattern, data):
-                    for wrapper in wrappers:
-                        for item in wrapper(array.group(0)):
-                            total += 1
-                            if item.sig:
-                                found += 1
-                                item.decoded_sig = decode_signature(item.sig)
-                                if item.decoded_sig:
-                                    decoded += 1
-                                yield item
-                            else:
-                                print("Unable to find signature -> module:", item.module, "function:", item.fn)
+        data = Path(path).read_text(encoding="utf-8")
+        arrays = [PATTERN_MODULE_ARRAY, PATTERN_LFUNC_ARRAY]
+        wrappers = [WRAPM, WRAPN, CWRAP, LFUNC, WRAP]
+        for array_pattern in arrays:
+            for array in re.finditer(array_pattern, data):
+                for wrapper in wrappers:
+                    for item in wrapper(array.group(0)):
+                        total += 1
+                        if item.sig:
+                            found += 1
+                            item.decoded_sig = decode_signature(item.sig)
+                            if item.decoded_sig:
+                                decoded += 1
+                            yield item
+                        else:
+                            print("Unable to find signature -> module:", item.module, "function:", item.fn)
             for match in re.finditer(PATTERN_FORCE_EXPOSE, data, re.MULTILINE):
                 if match.group(1):
                     total += 1
@@ -133,13 +130,10 @@ def module_name(array: str) -> str:
 
 
 def WRAP(array: str) -> Iterable[Entry]:
-    module = module_name(array)
-    if not module:
-        module = ""
+    module = module_name(array) or ""
     for match in re.finditer(PATTERN_WRAP, array):
         item = Entry(module, match.group(1).split(",")[0], "WRAP", None, None)
         if match.group(2):
-            print("EXPOSE")
             item.sig = match.group(2).split("<expose>")[1].strip()
         else:
             item.sig = find_signature(item)
@@ -195,18 +189,17 @@ def WRAPN(array: str) -> Iterable[Entry]:
 
 def find_signature(item: Entry) -> str | None:
     for entry in Path(PATH_LIBRARY).rglob("*.cpp"):
-        with entry.open("r", encoding="utf-8") as file:
-            data = file.read()
-            regex: set[str] = set()
-            if item.module != "":
-                regex.add(PATTERN_SIGNATURE_SEARCH.replace("module", item.module).replace("function", item.fn))
-            regex.add(PATTERN_SIGNATURE_SEARCH.replace("module::", "").replace("function", item.fn))
-            for r in regex:
-                for match in re.finditer(r, data, re.MULTILINE):
-                    sig = match.group(0).replace("\n", "").replace("{", "").replace("DFHACK_EXPORT ", "").strip()
-                    if sig.startswith("if (") or sig.startswith("<<") or sig.find("&&") > 0 or sig.find("->") > 0:
-                        continue
-                    return sig
+        data = entry.read_text(encoding="utf-8")
+        regex: set[str] = set()
+        if item.module != "":
+            regex.add(PATTERN_SIGNATURE_SEARCH.replace("module", item.module).replace("function", item.fn))
+        regex.add(PATTERN_SIGNATURE_SEARCH.replace("module::", "").replace("function", item.fn))
+        for r in regex:
+            for match in re.finditer(r, data, re.MULTILINE):
+                sig = match.group(0).replace("\n", "").replace("{", "").replace("DFHACK_EXPORT ", "").strip()
+                if sig.startswith("if (") or sig.startswith("<<") or sig.find("&&") > 0 or sig.find("->") > 0:
+                    continue
+                return sig
     return None
 
 
@@ -295,7 +288,8 @@ def check_optional_bool(args: list[Arg]) -> list[Arg]:
 def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     if entry.ignore_expose_prefix:
         prefix = ""
-    s = f"-- CXX SIGNATURE -> {entry.sig}\n"
+    sig = " ".join(entry.sig.split()) if entry.sig else entry.sig
+    s = f"-- CXX SIGNATURE -> {sig}\n"
     known_args = ""
     ret = ""
     if entry.decoded_sig:
@@ -441,7 +435,7 @@ class Tag:
         self.path = path
         self.render_mode = render_mode
         self.parse()
-        self.traverse()
+        self.fetch()
 
     def parse(self) -> None:
         self.have_childs = len(self.el) > 0
@@ -498,7 +492,7 @@ class Tag:
             self.path.insert(0, "global")
             self.full_type = ".".join(self.path)
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         pass
 
     def as_field(self) -> str:
@@ -526,7 +520,7 @@ class Enum(Tag):
     items: list[EnumItem]
     attrs: list[tuple[str, str | None]]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.attrs = []
         self.items = []
         shift = 0
@@ -629,7 +623,7 @@ class Pointer(IterableTag):
     renderable = False
     items: list[Tag]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.items = []
         self.underlaing_entity()
         self.fetch_items()
@@ -675,7 +669,7 @@ class Container(IterableTag):
     is_container = True
     items: list[Tag]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.renderable = True
         self.items = []
         self.underlaing_entity()
@@ -738,7 +732,7 @@ class StaticArray(IterableTag):
     is_container = True
     items: list[Tag]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.items = []
         self.items = []
         self.underlaing_entity()
@@ -790,7 +784,7 @@ class Compound(Tag):
     items: list[Tag]
     has_container = False
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.items = []
         for i, child in enumerate(self.el):
             for tag in switch_tag(child, self.render_mode, self.path[:]):
@@ -833,7 +827,7 @@ class Struct(Tag):
     items: list[Tag]
     has_container = False
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.items = []
         for mode in [RenderMode.Regular, RenderMode.Type]:
             for i, child in enumerate(self.el):
@@ -867,7 +861,7 @@ class Union(Tag):
     fieldable = True
     items: list[Tag]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.items = []
         for i, child in enumerate(self.el):
             for tag in switch_tag(child, self.render_mode, self.path[:-1]):
@@ -899,7 +893,7 @@ class VirtualMethod(Tag):
     ret: str = ""
     args: list[tuple[str, str]]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.args = []
         if "ret-type" in self.el.attrib:
             self.ret = base_type(self.el.attrib["ret-type"])
@@ -972,7 +966,7 @@ class VirtualMethods(Tag):
     fieldable = False
     items: list[VirtualMethod]
 
-    def traverse(self) -> None:
+    def fetch(self) -> None:
         self.fieldable = False
         self.items = []
         for child in self.el:
@@ -1033,7 +1027,7 @@ def parse_codegen(file: Path):
                 for tag in switch_global_tag(el, enums):
                     total += 1
                     print(tag.render(), file=output)
-    print(f"Tags: {total}")
+    print(f"Symbol tags -> total: {total}")
 
 
 def base_type(type: str) -> str:
@@ -1077,40 +1071,40 @@ def declare(name: str) -> str:
 
 
 def switch_tag(el: ET.Element, render_mode: RenderMode, path: list[str] = []) -> Iterable[Tag]:
-    if el.tag != "item" and el.tag != "code-helper":
-        tag = Tag(el, render_mode)
-        match tag.meta:
-            case "primitive" | "bytes" | "number":
-                yield Primitive(el, render_mode, path)
-            case "pointer":
-                yield Pointer(el, render_mode, path)
-            case "container":
-                yield Container(el, render_mode, path)
-            case "static-array":
-                yield StaticArray(el, render_mode, path)
-            case "compound":
-                match tag.subtype:
-                    case "enum":
-                        yield Enum(el, render_mode, path)
-                    case _:
-                        # if tag.union == "true":
-                        #     yield Union(el, render_mode, path)
-                        # else:
-                        if "anon-compound" in el.attrib:
-                            el.attrib["name"] = "anon_compound"
-                        yield Compound(el, render_mode, path)
-            case "global":
-                match tag.subtype:
-                    case "enum":
-                        yield Enum(el, render_mode, path)
-                    case _:
-                        yield DefaultGlobalField(el, render_mode, path)
-                pass
-            case _:
-                # if el.tag == "virtual-methods":
-                #     yield VirtualMethods(el, path, render_mode)
-                # else:
-                print("Skip tag ->", el.tag)
+    if el.tag == "item" or el.tag == "code-helper":
+        return
+    match el.attrib.get("meta"):
+        case "primitive" | "bytes" | "number":
+            yield Primitive(el, render_mode, path)
+        case "pointer":
+            yield Pointer(el, render_mode, path)
+        case "container":
+            yield Container(el, render_mode, path)
+        case "static-array":
+            yield StaticArray(el, render_mode, path)
+        case "compound":
+            match el.attrib.get("subtype"):
+                case "enum":
+                    yield Enum(el, render_mode, path)
+                case _:
+                    # if tag.union == "true":
+                    #     yield Union(el, render_mode, path)
+                    # else:
+                    if "anon-compound" in el.attrib:
+                        el.attrib["name"] = "anon_compound"
+                    yield Compound(el, render_mode, path)
+        case "global":
+            match el.attrib.get("subtype"):
+                case "enum":
+                    yield Enum(el, render_mode, path)
+                case _:
+                    yield DefaultGlobalField(el, render_mode, path)
+            pass
+        case _:
+            # if el.tag == "virtual-methods":
+            #     yield VirtualMethods(el, path, render_mode)
+            # else:
+            print("Skip tag ->", el.tag)
 
 
 def switch_global_tag(el: ET.Element, only_enums: bool) -> Iterable[Tag]:
@@ -1132,29 +1126,22 @@ def switch_global_tag(el: ET.Element, only_enums: bool) -> Iterable[Tag]:
 
 def parse_items_place() -> None:
     for file in sorted(Path(PATH_XML).glob("*.xml")):
-        with file.open("r", encoding="utf-8") as src:
-            data = src.read()
-            for match in re.finditer(r"(struct|class|enum)-type.*type-name='([^']+).*'", data, re.MULTILINE):
-                df.append(match.group(2))
-            for match in re.finditer(r"(global-object).*\sname='([^']+).*'", data, re.MULTILINE):
-                df_global.append(match.group(2))
+        data = file.read_text(encoding="utf-8")
+        for match in re.finditer(r"(struct|class|enum)-type.*type-name='([^']+).*'", data, re.MULTILINE):
+            df.append(match.group(2))
+        for match in re.finditer(r"(global-object).*\sname='([^']+).*'", data, re.MULTILINE):
+            df_global.append(match.group(2))
 
 
 def symbols_processing() -> None:
     if not Path(PATH_OUTPUT).is_dir():
         Path(PATH_OUTPUT).mkdir(parents=True, exist_ok=True)
-        with Path(PATH_LIB_CONFIG).open("w", encoding="utf-8") as dest:
-            print(LIB_CONFIG, file=dest)
-        with Path(PATH_CONFIG).open("w", encoding="utf-8") as dest:
-            print(CONFIG, file=dest)
-
-    data = ""
+        Path(PATH_LIB_CONFIG).write_text(LIB_CONFIG, encoding="utf-8")
+        Path(PATH_CONFIG).write_text(CONFIG, encoding="utf-8")
     tmp = Path(PATH_CODEGEN + ".tmp")
-    with Path(PATH_CODEGEN).open("r", encoding="utf-8") as src:
-        data = src.read()
-        data = data.replace("ld:", "")
-    with tmp.open("w", encoding="utf-8") as dest:
-        dest.write(data)
+    data = Path(PATH_CODEGEN).read_text(encoding="utf-8")
+    data = data.replace("ld:", "")
+    tmp.write_text(data, encoding="utf-8")
     parse_items_place()
     parse_codegen(tmp)
     tmp.unlink()
@@ -1169,39 +1156,65 @@ PATH_LUA_MODULES = ["./library/lua", "./plugins/lua"]
 PATH_LUA_MODULES_OUTPUT = "./types/library/"
 
 PATTERN_MKMODULE = r"^local\s_ENV\s=\smkmodule\(['\"](.+)['\"]\)\n"
-PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}^function\s(\w+)\((.*)\)"
+PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}((^---@.+\n)*){0,1}^function\s(\w+)\((.*)\)"
 PATTERN_LUA_VARAIBLE = r"((^--\s.+\n)*){0,1}^(\w+)\s=.*\n"
 
 
 def lua_modules_processing() -> None:
     print("Lua modules processeing...")
+    total = 0
     with Path(PATH_LUA_MODULES_OUTPUT + "modules.lua").open("w", encoding="utf-8") as dest:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=dest)
         for folder in PATH_LUA_MODULES:
             for entry in Path(folder).rglob("*.lua"):
                 for item in parse_lua_file(entry):
+                    total += 1
                     print(item, file=dest)
+    print(f"Modules -> total: {total}")
 
 
 def parse_lua_file(src: Path) -> Iterable[str]:
-    with src.open("r", encoding="utf-8") as file:
-        data = file.read()
-        m = re.search(PATTERN_MKMODULE, data, re.MULTILINE)
-        if not m:
-            print("Skip not module ->", src)
-        else:
-            yield from parse_lua_module(data, m.group(1))
+    data = src.read_text(encoding="utf-8")
+    m = re.search(PATTERN_MKMODULE, data, re.MULTILINE)
+    if not m:
+        print("Skip not module ->", src)
+    else:
+        yield from parse_lua_module(data, m.group(1))
 
 
 def parse_lua_module(data: str, module: str) -> Iterable[str]:
     s = f"---@class {module}\n"
     for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
         comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
-        s += f"---@field {match.group(3)} fun({match.group(4)}): any{' ' + comment if comment else ''}\n"
+        args: list[str] = [match.group(6)]
+        ret = "any"
+        if match.group(3):
+            args = []
+            parsed = parse_annotation(match.group(3))
+            for k in parsed:
+                if k == "return":
+                    ret = parsed[k]
+                else:
+                    args.append(f"{k}: {parsed[k]}")
+        s += f"---@field {match.group(5)} fun({', '.join(args)}): {ret}{' ' + comment if comment else ''}\n"
     for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
         comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
         s += f"---@field {match.group(3)} any{' ' + comment if comment else ''}\n"
     yield s
+
+
+def parse_annotation(data: str) -> dict[str, str]:
+    out: dict[str, str] = dict()
+    for line in data.split("\n"):
+        tokens = line.split(" ")
+        match tokens[0]:
+            case "---@param":
+                out[tokens[1]] = line.replace(f"---@param {tokens[1]} ", "").replace("\n", "")
+            case "---@return":
+                out["return"] = line.replace(f"---@return ", "").replace("\n", "")
+            case _:
+                pass
+    return out
 
 
 if __name__ == "__main__":

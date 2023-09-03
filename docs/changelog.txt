@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 - `sort`: search and sort for squad assignment screen
 - `zone`: advanced unit assignment screens for cages, restraints, and pits/ponds
+- `buildingplan`: one-click magma/fire safety filter for planned buildings
 
 ## Fixes
 - Core: reload scripts in mods when a world is unloaded and immediately loaded again

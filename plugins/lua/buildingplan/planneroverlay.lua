@@ -548,7 +548,6 @@ function PlannerOverlay:init()
                     on_change=function(heat)
                         buildingplan.setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
                     end,
-                    visible=false, -- until we can make this work the way it's intended
                 },
             },
         },

@@ -3,7 +3,6 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum as EnumType
-from io import TextIOWrapper
 from pathlib import Path
 from typing import Any
 
@@ -1180,20 +1179,21 @@ def lua_modules_processing() -> None:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=dest)
         for folder in PATH_LUA_MODULES:
             for entry in Path(folder).rglob("*.lua"):
-                parse_lua_file(entry, dest)
+                for item in parse_lua_file(entry):
+                    print(item, file=dest)
 
 
-def parse_lua_file(src: Path, dest: TextIOWrapper) -> None:
+def parse_lua_file(src: Path) -> Iterable[str]:
     with src.open("r", encoding="utf-8") as file:
         data = file.read()
         m = re.search(PATTERN_MKMODULE, data, re.MULTILINE)
         if not m:
             print("Skip not module ->", src)
         else:
-            print(parse_lua_module(data, m.group(1)), file=dest)
+            yield from parse_lua_module(data, m.group(1))
 
 
-def parse_lua_module(data: str, module: str) -> str:
+def parse_lua_module(data: str, module: str) -> Iterable[str]:
     s = f"---@class {module}\n"
     for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
         comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
@@ -1201,7 +1201,7 @@ def parse_lua_module(data: str, module: str) -> str:
     for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
         comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
         s += f"---@field {match.group(3)} any{' ' + comment if comment else ''}\n"
-    return s
+    yield s
 
 
 if __name__ == "__main__":

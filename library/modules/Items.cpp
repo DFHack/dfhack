@@ -420,6 +420,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
         xmask1.bits.cookable = true;
         break;
 
+    // TODO: split this into BOX and BAG
     case BOX:
         OK(1,bag); OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);

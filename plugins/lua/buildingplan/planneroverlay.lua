@@ -775,7 +775,9 @@ function PlannerOverlay:onInput(keys)
                 local filters = get_cur_filters()
                 local num_filters = #filters
                 local choose = self.subviews.choose:getOptionValue()
-                if choose > 0 then
+                if choose == 0 then
+                    self:place_building(get_placement_data())
+                else
                     local bounds = get_selected_bounds()
                     self:save_placement()
                     local autoselect = choose == 2
@@ -806,7 +808,7 @@ function PlannerOverlay:onInput(keys)
                                 end
                             end,
                             on_cancel=function()
-                                for i,scr in pairs(active_screens) do
+                                for _,scr in pairs(active_screens) do
                                     scr:dismiss()
                                 end
                                 df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
@@ -820,8 +822,6 @@ function PlannerOverlay:onInput(keys)
                             active_screens[idx] = selection_screen:show()
                         end
                     end
-                else
-                    self:place_building(get_placement_data())
                 end
                 return true
             elseif not is_choosing_area() then

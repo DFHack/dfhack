@@ -88,6 +88,20 @@ bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety h
     if (job_item->flags2.bits.building_material && !item->isBuildMat())
         return false;
 
+    if ((job_item->flags1.bits.empty || job_item->flags2.bits.lye_milk_free)) {
+        auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
+        if (gref) {
+            if (job_item->flags1.bits.empty)
+                return false;
+            if (auto contained_item = gref->getItem(); contained_item) {
+                MaterialInfo mi;
+                mi.decode(contained_item);
+                if (mi.getToken() != "WATER")
+                    return false;
+            }
+        }
+    }
+
     if (job_item->metal_ore > -1 && !item->isMetalOre(job_item->metal_ore))
         return false;
 

@@ -567,7 +567,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
     return true;
 }
 
-bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
+bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype)
 {
     CHECK_NULL_POINTER(item);
 
@@ -581,7 +581,7 @@ bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
 }
 
 bool Job::isSuitableMaterial(
-    df::job_item *item, int mat_type, int mat_index, df::item_type itype)
+    const df::job_item *item, int mat_type, int mat_index, df::item_type itype)
 {
     CHECK_NULL_POINTER(item);
 

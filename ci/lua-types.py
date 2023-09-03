@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum as EnumType
+from io import TextIOWrapper
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,7 @@ from typing import Any
 PATH_LUAAPI = "./library/LuaApi.cpp"
 PATH_LUATOOLS = "./library/LuaTools.cpp"
 PATH_LIBRARY = "./library/"
-PATH_DFHACK_OUTPUT = "./types/library/dfhack.lua"
+PATH_DFHACK_OUTPUT = "./types/library/signatures.lua"
 PATH_DEFAULT = "./types/library/default.lua"
 
 PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
@@ -27,6 +28,24 @@ PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_SIGNATURE = r"^([\w:<>]+)(.+)?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 PATTERN_FORCE_EXPOSE = r"\/\/\s?<force-expose>\s?(.+)"
+
+
+MODULES_GLUE = """---@generic T
+---@param module `T`
+---@return T | _G
+function mkmodule(module) end
+
+---@generic T
+---@param module `T`
+---@return T
+function require(module) end
+
+-- Create or updates a class; a class has metamethods and thus own metatable.
+---@param class any
+---@param parent any
+---@return any
+function defclass(class, parent) end
+"""
 
 
 @dataclass
@@ -302,7 +321,7 @@ def generate_base_methods() -> None:
         out = f"-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n---@class df\ndf = nil\n\n---@class global\ndf.global = nil\n\n---@class dfhack\ndfhack = nil\n"
         for module in dfhack_modules:
             out += f"\n---@class {module.lower()}\ndfhack.{module.lower()} = nil\n"
-        out += f"\n---@alias env {{ df: df, dfhack: dfhack }}\n\n---@param module string\n---@return env\nfunction mkmodule(module) end\n\n"
+        out += "\n" + MODULES_GLUE
         print(out, file=dest)
 
 
@@ -334,7 +353,7 @@ def signatures_processing() -> None:
 ########################################
 
 PATH_CODEGEN = "./library/include/df/codegen.out.xml"
-PATH_DEFINITIONS = "./types/library/definitions.lua"
+PATH_DEFINITIONS = "./types/library/symbols.lua"
 
 PATH_XML = "./library/xml"
 PATH_OUTPUT = "./types/library/"
@@ -529,7 +548,6 @@ class Enum(Tag):
     def render(self) -> str:
         s = f"-- {self.render_mode}, path: {self.path}, enum\n"
         s += f"---@enum {self.full_type}{self.comment}\n"
-        s += f"---@diagnostic disable-next-line: undefined-global, inject-field\n"
         s += f"df.{self.full_type} = {{\n"
         for item in self.items:
             s += f"{item.as_field()}\n"
@@ -709,7 +727,7 @@ class Container(IterableTag):
                 s += BASE_NAMED_TYPES_METHODS
             else:
                 s += BASE_TYPED_OBJECTS_METHODS
-            s += f"df.{self.full_type} = nil\n\n"
+            s += f"df.{self.full_type}_C = nil\n\n"
         for item in self.items:
             if item.renderable:
                 s += item.render()
@@ -839,8 +857,7 @@ class Struct(Tag):
                 append += item.render()
         if self.instance_vector:
             s += "---@field find fun(id: integer): self|nil\n"
-        if not self.inherit:
-            s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_TYPED_OBJECTS_METHODS
+        s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_TYPED_OBJECTS_METHODS
         s += f"df.{self.full_type} = nil\n"
         return s + "\n" + append
 
@@ -1144,6 +1161,50 @@ def symbols_processing() -> None:
     tmp.unlink()
 
 
+########################################
+#        Lua modules processing        #
+########################################
+
+
+PATH_LUA_MODULES = ["./library/lua", "./plugins/lua"]
+PATH_LUA_MODULES_OUTPUT = "./types/library/"
+
+PATTERN_MKMODULE = r"^local\s_ENV\s=\smkmodule\(['\"](.+)['\"]\)\n"
+PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}^function\s(\w+)\((.*)\)"
+PATTERN_LUA_VARAIBLE = r"((^--\s.+\n)*){0,1}^(\w+)\s=.*\n"
+
+
+def lua_modules_processing() -> None:
+    print("Lua modules processeing...")
+    with Path(PATH_LUA_MODULES_OUTPUT + "modules.lua").open("w", encoding="utf-8") as dest:
+        print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=dest)
+        for folder in PATH_LUA_MODULES:
+            for entry in Path(folder).rglob("*.lua"):
+                parse_lua_file(entry, dest)
+
+
+def parse_lua_file(src: Path, dest: TextIOWrapper) -> None:
+    with src.open("r", encoding="utf-8") as file:
+        data = file.read()
+        m = re.search(PATTERN_MKMODULE, data, re.MULTILINE)
+        if not m:
+            print("Skip not module ->", src)
+        else:
+            print(parse_lua_module(data, m.group(1)), file=dest)
+
+
+def parse_lua_module(data: str, module: str) -> str:
+    s = f"---@class {module}\n"
+    for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
+        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
+        s += f"---@field {match.group(3)} fun({match.group(4)}): any{' ' + comment if comment else ''}\n"
+    for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
+        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
+        s += f"---@field {match.group(3)} any{' ' + comment if comment else ''}\n"
+    return s
+
+
 if __name__ == "__main__":
     symbols_processing()
     signatures_processing()
+    lua_modules_processing()

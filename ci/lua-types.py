@@ -426,6 +426,7 @@ class Tag:
     path: list[str]
     full_type: str
     name_prefix: str = ""
+    multiline_comment: str = ""
     render_mode: RenderMode
     have_childs: bool = False
     is_container: bool = False
@@ -565,6 +566,15 @@ class Enum(Tag):
 enum_map: dict[str, Enum] = {}
 
 
+class MultilineComment(Tag):
+    renderable = False
+    fieldable = False
+
+    def fetch(self) -> None:
+        self.multiline_comment = self.el.text or ""
+        self.multiline_comment = self.multiline_comment.replace("    ", "")
+
+
 class Primitive(Tag):
     renderable = False
 
@@ -577,6 +587,7 @@ class IterableTag(Tag):
 
     def underlaing_entity(self) -> None:
         (self.inside_el, self.array_dim) = get_container_item(self.el)
+        self.postfix_brackets = "[]" * len(self.array_dim)
         if self.render_mode == RenderMode.Type and not self.typedef_name and "typedef-name" in self.inside_el.attrib:
             self.typedef_name = self.inside_el.attrib["typedef-name"]
             self.path = self.path[:-1]
@@ -601,13 +612,13 @@ class IterableTag(Tag):
             and self.inside_el.attrib.get("meta") == "container"
             and self.inside_el.attrib["subtype"] == "stl-vector"
         ):
-            self.typed = "unknown" + ("[]" * len(self.array_dim))
+            self.typed = "unknown" + self.postfix_brackets
 
     def primitive_item(self) -> None:
         if self.inside_el.attrib.get("meta") == "global":
-            self.typed = self.inside_el.attrib["type-name"] + ("[]" * len(self.array_dim))
+            self.typed = self.inside_el.attrib["type-name"] + self.postfix_brackets
         if self.inside_el.attrib.get("meta") == "primitive" or self.inside_el.attrib.get("meta") == "number":
-            self.typed = base_type(self.inside_el.attrib["subtype"]) + ("[]" * len(self.array_dim))
+            self.typed = base_type(self.inside_el.attrib["subtype"]) + self.postfix_brackets
 
     def index_enum(self, value_type: str) -> None:
         if "index-enum" in self.el.attrib and self.el.attrib["index-enum"] in enum_map:
@@ -685,7 +696,7 @@ class Container(IterableTag):
         self.unknown_vector_item()
 
         if self.inside_el.attrib.get("subtype") == "stl-string" and self.pointer_type == "stl-string":
-            self.typed = f"{{ value: string }}{'[]' * len(self.array_dim)}"
+            self.typed = f"{{ value: string }}{self.postfix_brackets}"
 
         if self.typed.startswith(self.full_type + "[]"):
             if self.render_mode == RenderMode.Type:
@@ -742,7 +753,7 @@ class StaticArray(IterableTag):
 
         inside_containter = self.full_type if len(self.inside_el) > 0 and self.inside_el[0].tag != "code-helper" else ""
         self.typed = (
-            f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{'[]' * len(self.array_dim)}"
+            f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{self.postfix_brackets}"
         )
 
         self.index_enum(self.typed[:-2] if self.typed.endswith("[]") else self.typed)
@@ -755,13 +766,13 @@ class StaticArray(IterableTag):
             )
             match self.inside_el.attrib.get("meta"):
                 case "global" | "number" | "primitive":
-                    self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
+                    self.typed = base_type(item_type) + self.postfix_brackets
                 case _:
                     match self.inside_el.attrib.get("subtype"):
                         case "bitfield" | "enum":
-                            self.typed = self.full_type + ("[]" * len(self.array_dim))
+                            self.typed = self.full_type + self.postfix_brackets
                         case _:
-                            self.typed = base_type(item_type) + ("[]" * len(self.array_dim))
+                            self.typed = base_type(item_type) + self.postfix_brackets
 
         self.unknown_vector_item()
 
@@ -795,6 +806,9 @@ class Compound(Tag):
                 ):
                     if tag.is_container:
                         self.has_container = True
+                    if tag.multiline_comment:
+                        self.multiline_comment = tag.multiline_comment
+                        continue
                     self.items.append(tag)
 
     def as_field(self) -> str:
@@ -804,7 +818,10 @@ class Compound(Tag):
         return f"---@type {self.full_type}{self.comment}"
 
     def render(self) -> str:
-        s = f"-- {self.render_mode}, path: {self.path}, compound\n"
+        s = ""
+        if self.multiline_comment:
+            s += f"--[[{self.multiline_comment}\n]]\n"
+        s += f"-- {self.render_mode}, path: {self.path}, compound\n"
         s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
         append = ""
         for item in self.items:
@@ -837,10 +854,16 @@ class Struct(Tag):
                     if (mode == RenderMode.Type and tag.typedef_name) or (mode == RenderMode.Regular and tag.name):
                         if tag.is_container:
                             self.has_container = True
+                        if tag.multiline_comment:
+                            self.multiline_comment = tag.multiline_comment
+                            continue
                         self.items.append(tag)
 
     def render(self) -> str:
-        s = f"-- {self.render_mode}, path: {self.path}, struct\n"
+        s = ""
+        if self.multiline_comment:
+            s += f"--[[{self.multiline_comment}\n]]\n"
+        s += f"-- {self.render_mode}, path: {self.path}, struct\n"
         s += f"---@class {self.full_type}{(': ' + self.inherit) if self.inherit else ''}{self.comment}\n"
         append = ""
         for item in self.items:
@@ -853,134 +876,6 @@ class Struct(Tag):
         s += BASE_METHODS + BASE_STRUCT_METHODS + BASE_TYPED_OBJECTS_METHODS
         s += f"df.{self.full_type} = nil\n"
         return s + "\n" + append
-
-
-# TODO: unused, delete later
-class Union(Tag):
-    renderable = True
-    fieldable = True
-    items: list[Tag]
-
-    def fetch(self) -> None:
-        self.items = []
-        for i, child in enumerate(self.el):
-            for tag in switch_tag(child, self.render_mode, self.path[:-1]):
-                if not tag.name and not tag.anon_name:
-                    tag.name = f"unnamed_{i}"
-                if (self.render_mode == RenderMode.Type and tag.typedef_name) or (
-                    self.render_mode == RenderMode.Regular and tag.name
-                ):
-                    self.items.append(tag)
-
-    def as_field(self) -> str:
-        s = "-- union start\n"
-        for item in self.items:
-            if item.fieldable:
-                s += f"{item.as_field()}\n"
-        return s + "-- union end"
-
-    def render(self) -> str:
-        s = ""
-        for item in self.items:
-            if item.renderable:
-                s += item.render()
-        return s + "\n"
-
-
-# TODO: unused, delete later
-class VirtualMethod(Tag):
-    renderable = True
-    ret: str = ""
-    args: list[tuple[str, str]]
-
-    def fetch(self) -> None:
-        self.args = []
-        if "ret-type" in self.el.attrib:
-            self.ret = base_type(self.el.attrib["ret-type"])
-        for i, child in enumerate(self.el):
-            c = Tag(child, self.render_mode)
-            type_name = ""
-            if c.subtype == "stl-vector":
-                type_name = f"{c.ref_target or base_type(c.pointer_type) or base_type(c.type_name) or 'any'}[]"
-            match child.tag:
-                case "ret-type":
-                    self.ret = (
-                        type_name
-                        or base_type(c.ref_target)
-                        or base_type(c.type_name)
-                        or base_type(c.pointer_type)
-                        or base_type(c.subtype)
-                        or c.el.tag
-                    )
-                    continue
-                case "comment":
-                    continue
-                case _:
-                    arg_name = c.name or c.anon_name or f"arg_{i}"
-                    if arg_name == "local":
-                        arg_name = f"arg_{i}"
-                    arg_type = (
-                        type_name
-                        or base_type(c.type_name)
-                        or base_type(c.pointer_type)
-                        or base_type(c.subtype)
-                        or "unknown"
-                    )
-                    self.args.append((arg_name, arg_type))
-
-    def render(self) -> str:
-        params: list[str] = []
-        s = ""
-        for a in self.args:
-            s += f"---@param {a[0]} {a[1]}\n"
-            params.append(a[0])
-        if self.ret != "":
-            s += f"---@return {base_type(self.ret)}\n"
-        decl = ""
-        if len(self.path) > 0:
-            if self.path[0] in df_global:
-                decl += "df.global."
-            elif self.path[0] in df:
-                decl += "df."
-            decl += ".".join(self.path)
-            decl += "."
-        s += f"function {decl}{self.name or self.anon_name}({', '.join(params)}) end{' --' + self.comment if self.comment != '' else ''}\n\n"
-        return s
-
-    def as_field(self) -> str:
-        signature = "fun("
-        for a in self.args:
-            signature += f"{a[0]}: {a[1]},"
-        if signature[-1] == ",":
-            signature = signature[:-1]
-        signature = f"{signature}): {self.ret or 'nil'}"
-        name = self.name
-        if self.name.split(".").__len__() > 1:
-            name = self.name.split(".")[-1]
-        return f"---@field {name} {signature}{self.comment}"
-
-
-# TODO: unused, delete later
-class VirtualMethods(Tag):
-    renderable = True
-    fieldable = False
-    items: list[VirtualMethod]
-
-    def fetch(self) -> None:
-        self.fieldable = False
-        self.items = []
-        for child in self.el:
-            self.items.append(VirtualMethod(child, self.render_mode, self.path[:-1]))
-
-    def render(self) -> str:
-        s = ""
-        for item in self.items:
-            if item.renderable:
-                s += item.render()
-        return s
-
-    def as_field(self) -> str:
-        return "-- VIRTUAL METHODS"
 
 
 class DefaultGlobalField(Tag):
@@ -1016,20 +911,6 @@ class GlobalObject(Tag):
                 return "-- NOT HANDLED GLOBAL OBJECT " + self.name
 
 
-def parse_codegen(file: Path):
-    tree = ET.parse(file)
-    root = tree.getroot()
-    total = 0
-    with Path(PATH_DEFINITIONS).open("w", encoding="utf-8") as output:
-        print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=output)
-        for enums in [True, False]:
-            for el in root:
-                for tag in switch_global_tag(el, enums):
-                    total += 1
-                    print(tag.render(), file=output)
-    print(f"Symbol tags -> total: {total}")
-
-
 def base_type(type: str) -> str:
     match type:
         case "int8_t" | "uint8_t" | "int16_t" | "uint16_t" | "int32_t" | "uint32_t" | "int64_t" | "uint64_t" | "size_t":
@@ -1063,13 +944,6 @@ def get_container_item(el: ET.Element) -> tuple[ET.Element, list[str]]:
     return (el, array_dim)
 
 
-# TODO: unused, delete later
-def declare(name: str) -> str:
-    if name in df_global:
-        return "df.global." + name
-    return "df." + name
-
-
 def switch_tag(el: ET.Element, render_mode: RenderMode, path: list[str] = []) -> Iterable[Tag]:
     if el.tag == "item" or el.tag == "code-helper":
         return
@@ -1101,10 +975,13 @@ def switch_tag(el: ET.Element, render_mode: RenderMode, path: list[str] = []) ->
                     yield DefaultGlobalField(el, render_mode, path)
             pass
         case _:
-            # if el.tag == "virtual-methods":
-            #     yield VirtualMethods(el, path, render_mode)
-            # else:
-            print("Skip tag ->", el.tag)
+            if el.tag == "comment":
+                yield MultilineComment(el, render_mode, path)
+            else:
+                # if el.tag == "virtual-methods":
+                #     yield VirtualMethods(el, path, render_mode)
+                # else:
+                print("Skip tag ->", el.tag, path)
 
 
 def switch_global_tag(el: ET.Element, only_enums: bool) -> Iterable[Tag]:
@@ -1122,6 +999,20 @@ def switch_global_tag(el: ET.Element, only_enums: bool) -> Iterable[Tag]:
                     case _:
                         pass
                         # print(f"-- SKIPPED TAG {el.tag} {el.attrib.get('meta')} {el.attrib.get('type-name')}")
+
+
+def parse_codegen(file: Path):
+    tree = ET.parse(file)
+    root = tree.getroot()
+    total = 0
+    with Path(PATH_DEFINITIONS).open("w", encoding="utf-8") as output:
+        print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=output)
+        for enums in [True, False]:
+            for el in root:
+                for tag in switch_global_tag(el, enums):
+                    total += 1
+                    print(tag.render(), file=output)
+    print(f"Symbol tags -> total: {total}")
 
 
 def parse_items_place() -> None:

@@ -434,7 +434,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.job_details.open) {
         newFocusString = baseFocus;
-        newFocusString += "/JobDetails";
+        newFocusString += "/JobDetails/" + enum_item_key(game->main_interface.job_details.context);
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.assign_trade.open) {

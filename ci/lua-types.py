@@ -1047,8 +1047,17 @@ PATH_LUA_MODULES = ["./library/lua", "./plugins/lua"]
 PATH_LUA_MODULES_OUTPUT = "./types/library/"
 
 PATTERN_MKMODULE = r"^local\s_ENV\s=\smkmodule\(['\"](.+)['\"]\)\n"
-PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}((^---@.+\n)*){0,1}^function\s(\w+)\((.*)\)"
+PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}((^---@.+\n)*){0,1}^function\s([\w:]+)\((.*)\)"
 PATTERN_LUA_VARAIBLE = r"((^--\s.+\n)*){0,1}^(\w+)\s=.*\n"
+
+
+@dataclass
+class LuaFunc:
+    fn_name: str
+    class_name: str
+    ret: str
+    args: list[str]
+    comment: str
 
 
 def lua_modules_processing() -> None:
@@ -1074,24 +1083,29 @@ def parse_lua_file(src: Path) -> Iterable[str]:
 
 
 def parse_lua_module(data: str, module: str) -> Iterable[str]:
-    s = f"---@class {module}\n"
-    for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
-        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
-        args: list[str] = [match.group(6)]
-        ret = "any"
-        if match.group(3):
-            args = []
-            parsed = parse_annotation(match.group(3))
-            for k in parsed:
-                if k == "return":
-                    ret = parsed[k]
-                else:
-                    args.append(f"{k}: {parsed[k]}")
-        s += f"---@field {match.group(5)} fun({', '.join(args)}): {ret}{' ' + comment if comment else ''}\n"
+    classes: dict[str, list[str]] = {}
+    for item in parse_lua_functions(data):
+        target = item.class_name or module
+        if not target in classes:
+            classes[target] = []
+        classes[target].append(
+            f"---@field {item.fn_name} fun({', '.join(item.args)}): {item.ret}{' ' + item.comment if item.comment else ''}\n"
+        )
     for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
+        type_name = match.group(3) if match.group(3) in classes else "any"
         comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
-        s += f"---@field {match.group(3)} any{' ' + comment if comment else ''}\n"
-    yield s
+        if not module in classes:
+            classes[module] = []
+        classes[module].append(f"---@field {match.group(3)} {type_name}{' ' + comment if comment else ''}\n")
+    for cl in classes:
+        yield render_class((cl, classes[cl]))
+
+
+def render_class(cl: tuple[str, list[str]]) -> str:
+    s = f"---@class {cl[0]}\n"
+    for field in cl[1]:
+        s += field
+    return s
 
 
 def parse_annotation(data: str) -> dict[str, str]:
@@ -1108,7 +1122,30 @@ def parse_annotation(data: str) -> dict[str, str]:
     return out
 
 
+def parse_lua_functions(data: str) -> Iterable[LuaFunc]:
+    for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
+        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
+        fn_name = match.group(5)
+        args: list[str] = str(match.group(6)).split(",")
+        args = [x.strip() for x in args]
+        ret = "any"
+        if match.group(3):
+            args = []
+            parsed = parse_annotation(match.group(3))
+            for k in parsed:
+                if k == "return":
+                    ret = parsed[k]
+                else:
+                    args.append(f"{k}: {parsed[k]}")
+        splitted = fn_name.split(":")
+        class_name = ""
+        if len(splitted) > 1:
+            class_name = splitted[0]
+            fn_name = splitted[1]
+        yield LuaFunc(fn_name, class_name, ret, args, comment)
+
+
 if __name__ == "__main__":
-    symbols_processing()
-    signatures_processing()
+    # symbols_processing()
+    # signatures_processing()
     lua_modules_processing()

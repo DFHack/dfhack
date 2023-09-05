@@ -420,6 +420,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
         xmask1.bits.cookable = true;
         break;
 
+    // TODO: split this into BOX and BAG
     case BOX:
         OK(1,bag); OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);
@@ -1910,6 +1911,21 @@ static int32_t get_sell_request_multiplier(df::item *item, const df::caravan_sta
     return get_sell_request_multiplier(item, caravan_he->resources, &sell_prices->price[0]);
 }
 
+static int32_t get_sell_request_multiplier(df::unit *unit, const df::caravan_state *caravan) {
+    const df::entity_sell_prices *sell_prices = caravan->sell_prices;
+    if (!sell_prices)
+        return DEFAULT_AGREEMENT_MULTIPLIER;
+
+    auto caravan_he = df::historical_entity::find(caravan->entity);
+    if (!caravan_he)
+        return DEFAULT_AGREEMENT_MULTIPLIER;
+
+    auto & resources = caravan_he->resources;
+    int32_t price = get_price(resources.animals.pet_races, unit->race, resources.animals.pet_castes, unit->caste,
+                              sell_prices->price[df::entity_sell_category::Pets]);
+    return (price != -1) ? price : DEFAULT_AGREEMENT_MULTIPLIER;
+}
+
 static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
     auto trade_state = caravan->trade_state;
     if (caravan->time_remaining <= 0 ||
@@ -2031,6 +2047,28 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
         if (divisor > 1)
             value /= divisor;
     }
+
+    // Add in value from units contained in cages
+    if (item_type == item_type::CAGE) {
+        for (auto gref : item->general_refs) {
+            if (gref->getType() != df::general_ref_type::CONTAINS_UNIT)
+                continue;
+            auto unit = gref->getUnit();
+            if (!unit)
+                continue;
+            df::creature_raw *raw = world->raws.creatures.all[unit->race];
+            df::caste_raw *caste = raw->caste.at(unit->caste);
+            int unit_value = caste->misc.petvalue;
+            if (Units::isWar(unit) || Units::isHunter(unit))
+                unit_value *= 2;
+            if (caravan) {
+                unit_value *= get_sell_request_multiplier(unit, caravan);
+                unit_value >>= 7;
+            }
+            value += unit_value;
+        }
+    }
+
     return value;
 }
 

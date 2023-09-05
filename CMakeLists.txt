@@ -8,7 +8,7 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.09")
-set(DFHACK_RELEASE "r3rc2")
+set(DFHACK_RELEASE "r3rc3")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -228,7 +228,6 @@ if(UNIX)
     # ensure compatibility with older CPUs
     add_definitions(-DLINUX_BUILD)
     set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")
     if(DFHACK_BUILD_64)

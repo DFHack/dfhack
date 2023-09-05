@@ -48,6 +48,8 @@ DFHACK_EXPORT void DFSDL_FreeSurface(SDL_Surface *surface);
 // DFHACK_EXPORT int DFSDL_SemPost(SDL_sem *sem);
 DFHACK_EXPORT int DFSDL_PushEvent(SDL_Event *event);
 DFHACK_EXPORT void DFSDL_free(void *ptr);
+DFHACK_EXPORT SDL_PixelFormat* DFSDL_AllocFormat(uint32_t pixel_format);
+DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format);
 
 // submitted and returned text is UTF-8
 // see wrapper functions below for cp-437 variants

@@ -109,8 +109,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)
     : id(get_config_val(bld_config, BLD_CONFIG_ID)),
         vector_ids(deserialize_vector_ids(out, bld_config)),
-        //heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)), // until this works
-        heat_safety(HEAT_SAFETY_ANY),
+        heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
         item_filters(get_item_filters(out, bld_config)),
         specials(get_specials(out, bld_config)),
         bld_config(bld_config) { }

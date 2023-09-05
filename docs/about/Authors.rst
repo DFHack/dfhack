@@ -129,6 +129,7 @@ Michael Crouch          creidieki
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
+Mikhail Panov           Halifay
 Mikko Juola             Noeda                   Adeon
 Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
@@ -203,6 +204,7 @@ Sebastian Wolfertz      Enkrod
 SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
+shevernitskiy           shevernitskiy
 Shim Panze              Shim-Panze
 Silver                  silverflyone
 simon

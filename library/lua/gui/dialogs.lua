@@ -11,7 +11,7 @@ MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
     frame_style = gui.WINDOW_FRAME,
-    frame_inset = 1,
+    frame_inset = {l=1, t=1, b=1, r=0},
     -- new attrs
     on_accept = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
@@ -33,13 +33,14 @@ end
 function MessageBox:getWantedFrameSize()
     local label = self.subviews.label
     local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
-    local text_area_width = label:getTextWidth()
-    if label.frame_inset then
-        -- account for scroll icons
-        text_area_width = text_area_width + (label.frame_inset.l or 0)
-        text_area_width = text_area_width + (label.frame_inset.r or 0)
+    local text_area_width = label:getTextWidth() + 1
+    local text_height = label:getTextHeight()
+    local sw, sh = dfhack.screen.getWindowSize()
+    if text_height > sh - 4 then
+        -- account for scrollbar
+        text_area_width = text_area_width + 2
     end
-    return math.max(width, text_area_width), label:getTextHeight()
+    return math.max(width, text_area_width), text_height
 end
 
 function MessageBox:onRenderFrame(dc,rect)

@@ -12,7 +12,8 @@ from typing import Any
 
 PATH_LUA_DOCS = "./docs/dev/Lua API.rst"
 
-PATTERN_LUA_DOCS = r"^\*\s``((.+)\(.*\))``\n^((\n|(\s+.*\n))+)"
+# PATTERN_LUA_DOCS = r"^\*\s``((.+)\(.*\))``\n^((\n|(\s+.*\n))+)"
+PATTERN_LUA_DOCS = r"\*\s+``(?P<name1>[^`]+?)``(?:(?:, |\n\*\s+|\n  |, or )``(?P<namek>[^`]+?)``)*\n\n(?P<descr>(\n|(?!\*)[ \.]+[^\n]+)+)"
 
 docs: dict[tuple[str, str], str] = {}
 
@@ -22,8 +23,11 @@ def parse_docs() -> dict[tuple[str, str], str]:
     out: dict[tuple[str, str], str] = {}
     data = Path(PATH_LUA_DOCS).read_text()
     for match in re.finditer(PATTERN_LUA_DOCS, data, re.MULTILINE):
-        (class_name, fn_name, _with_self) = split_name(match.group(2).replace("dfhack.", "").replace("dfhack:", ""))
-        out[(class_name.lower().strip(), fn_name.lower().strip())] = match.group(3)[:-1]
+        for group in ["name1", "namek"]:
+            if match.group(group):
+                (class_name, fn_name, _with_self) = split_name(match.group(group))
+                if fn_name:
+                    out[(class_name.lower().strip(), fn_name.lower().strip())] = match.group(3)[:-1]
     print("Items -> total:", len(out))
     return out
 
@@ -33,6 +37,9 @@ def multiline_comment(comment: str, ending: str = "") -> str:
 
 
 def split_name(value: str) -> tuple[str, str, bool]:
+    for c in ["dfhack.", "dfhack:", "function", "=", "{", "}", "'", "?"]:
+        value = value.replace(c, "")
+    value = value.strip().split("(")[0]
     class_name = ""
     fn_name = value
     splitted = value.split(":")
@@ -59,8 +66,8 @@ PATH_LIBRARY = "./library/"
 PATH_DFHACK_OUTPUT = "./types/library/signatures.lua"
 PATH_DEFAULT = "./types/library/default.lua"
 
-PATTERN_WRAPM = r"WRAPM\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
-PATTERN_CWRAP = r"CWRAP\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
+PATTERN_WRAPM = r"WRAPM\((.+),[ ]*(.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
+PATTERN_CWRAP = r"CWRAP\((.+),[ ]*(.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_WRAPN = r"WRAPN\((.+), (.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_WRAP = r"WRAP\((.+)\)[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_MODULE_ARRAY = r"dfhack_[\w_]*module\[\](.|\n)*?NULL,\s{0,1}NULL\s{0,1}\}\n\}"
@@ -69,6 +76,8 @@ PATTERN_LFUNC_ITEM = r"\{\s\"(\w+)\",\s(\w+)\s\}[,](\s?\/\/\s?<expose>\s?.*)*"
 PATTERN_SIGNATURE = r"^([\w:<>]+)(.+)?\(([^)]*)\)"
 PATTERN_SIGNATURE_SEARCH = r"^.+[\s\*]+(DFHack::){0,1}module::function[\s]{0,1}\([\n]{0,1}(.|,\n)*?\n{0,1}\)[\s\n\w]+\{"
 PATTERN_FORCE_EXPOSE = r"\/\/\s?<force-expose>\s?(.+)"
+
+BANNED_TYPES = ["lua_State", "color_ostream", "MapExtras::MapCache"]
 
 MODULES_GLUE = """---@generic T
 ---@param module `T`
@@ -141,22 +150,22 @@ def parse_files() -> Iterable[Entry]:
                             yield item
                         else:
                             print("Unable to find signature -> module:", item.module, "function:", item.fn)
-            for match in re.finditer(PATTERN_FORCE_EXPOSE, data, re.MULTILINE):
-                if match.group(1):
-                    total += 1
-                    found += 1
-                    decoded_signature = decode_signature(match.group(1).strip())
-                    if decoded_signature:
-                        decoded += 1
-                        item = Entry(
-                            module="",
-                            fn=decoded_signature.name or "INVELID_NAME",
-                            type="FORCE_EXPOSE",
-                            sig=match.group(1).strip(),
-                            decoded_sig=decoded_signature,
-                            ignore_expose_prefix=True,
-                        )
-                        yield item
+        for match in re.finditer(PATTERN_FORCE_EXPOSE, data, re.MULTILINE):
+            if match.group(1):
+                total += 1
+                found += 1
+                decoded_signature = decode_signature(match.group(1).strip(), False)
+                if decoded_signature:
+                    decoded += 1
+                    item = Entry(
+                        module="",
+                        fn=decoded_signature.name or "INVELID_NAME",
+                        type="FORCE_EXPOSE",
+                        sig=match.group(1).strip(),
+                        decoded_sig=decoded_signature,
+                        ignore_expose_prefix=True,
+                    )
+                    yield item
 
     print(f"Signatures -> total: {total}, found: {found}, decoded {decoded}")
 
@@ -247,6 +256,14 @@ def find_signature(item: Entry) -> str | None:
 
 
 def decode_type(cxx: str) -> str:
+    splitted = cxx.strip().split("|")
+    out: list[str] = []
+    for s in splitted:
+        out.append(decode_single_type(s.strip()))
+    return "|".join(out)
+
+
+def decode_single_type(cxx: str) -> str:
     match cxx:
         case "int" | "int8_t" | "uint8_t" | "int16_t" | "uint16_t" | "int32_t" | "uint32_t" | "int64_t" | "uint64_t" | "size_t" | "uintptr_t" | "intptr_t":
             return "integer"
@@ -270,7 +287,7 @@ def decode_type(cxx: str) -> str:
             return cxx
 
 
-def decode_signature(sig: str) -> Signature | None:
+def decode_signature(sig: str, lower: bool = True) -> Signature | None:
     for k in ["const ", "*", "&", "static ", "inline "]:
         sig = sig.replace(k, "")
     match = re.search(PATTERN_SIGNATURE, sig, re.MULTILINE)
@@ -295,12 +312,12 @@ def decode_signature(sig: str) -> Signature | None:
                 else:
                     arg_name = arg_pair.split(" ")[-1]
                     arg_type = arg_pair.replace(" " + arg_name, "").strip()
-                    decoded_type_arg = decode_type(arg_type)
-                    if decoded_type_arg in ["lua_State", "color_ostream", "MapExtras::MapCache"]:
+                    if arg_type in BANNED_TYPES:
                         continue
+                    decoded_type_arg = decode_type(arg_type)
                 arg = Arg(
                     name=arg_name,
-                    type=decoded_type_arg.replace("::", "__"),
+                    type=decoded_type_arg.replace("::", "."),
                     default_value=default_value,
                     unknown=(decoded_type_arg == arg_type and arg_type != "string")
                     or any(c.isupper() for c in decoded_type_arg),
@@ -308,13 +325,16 @@ def decode_signature(sig: str) -> Signature | None:
                 )
                 args.append(arg)
         if decoded_type_ret:
+            name = match.group(2).strip().replace("::", ".") if match.group(2) else None
+            if lower and name:
+                name = name.lower()
             return Signature(
                 ret=Ret(
-                    type=decoded_type_ret.replace("::", "__").replace("enums__biome_type__", ""),
+                    type=decoded_type_ret.replace("::", ".").replace("enums__biome_type__", ""),
                     unknown=decoded_type_ret == type_ret and type_ret != "string",
                 ),
                 args=check_optional_bool(args),
-                name=match.group(2).strip().lower().replace("::", ".") if match.group(2) else None,
+                name=name,
             )
     return None
 
@@ -376,10 +396,10 @@ def signatures_processing() -> None:
                 if entry.ignore_expose_prefix and entry.fn.startswith("dfhack.") and entry.fn.split(".").__len__() > 2:
                     dfhack_modules.add(entry.fn.split(".")[1])
                 if entry.decoded_sig.ret.unknown:
-                    unknown_types.add(f"---@alias {entry.decoded_sig.ret.type.replace('[]', '')} unknown\n")
+                    unknown_types.add(f"--@alias {entry.decoded_sig.ret.type.replace('[]', '')} unknown\n")
                 for arg in entry.decoded_sig.args:
                     if arg.unknown:
-                        unknown_types.add(f"---@alias {arg.type.replace('[]', '')} unknown\n")
+                        unknown_types.add(f"--@alias {arg.type.replace('[]', '')} unknown\n")
             print(print_entry(entry), file=dest)
         if unknown_types.__len__() > 0:
             print(f"\n-- Unknown types\n{''.join(unknown_types)}", file=dest)

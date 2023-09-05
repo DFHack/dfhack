@@ -1495,20 +1495,20 @@ bool Lua::IsCoreContext(lua_State *state)
 }
 
 static const luaL_Reg dfhack_funcs[] = {
-    { "print", lua_dfhack_print },
-    { "println", lua_dfhack_println },
-    { "printerr", lua_dfhack_printerr },
-    { "color", lua_dfhack_color },
-    { "is_interactive", lua_dfhack_is_interactive },
+    { "print", lua_dfhack_print }, // <expose> void print(std::string str)
+    { "println", lua_dfhack_println }, // <expose> void println(std::string str)
+    { "printerr", lua_dfhack_printerr }, // <expose> void printerr(std::string str)
+    { "color", lua_dfhack_color }, // <expose> int color(int color = -1)
+    { "is_interactive", lua_dfhack_is_interactive }, // <expose> bool is_interactive()
     { "lineedit", dfhack_lineedit },
-    { "safecall", dfhack_safecall },
-    { "saferesume", dfhack_saferesume },
-    { "onerror", dfhack_onerror },
-    { "error", dfhack_error },
-    { "call_with_finalizer", dfhack_call_with_finalizer },
-    { "with_suspend", lua_dfhack_with_suspend },
-    { "open_plugin", dfhack_open_plugin },
-    { "curry", dfhack_curry },
+    { "safecall", dfhack_safecall }, // <expose> any safecall(any call)
+    { "saferesume", dfhack_saferesume }, // <expose> bool saferesume(thread coroutine)
+    { "onerror", dfhack_onerror }, // <expose> void onerror(any error)
+    { "error", dfhack_error }, // <expose> void error(std::string message, int level = 1, bool verbose = false)
+    { "call_with_finalizer", dfhack_call_with_finalizer }, // <expose> any call_with_finalizer(int nargs, ...)
+    { "with_suspend", lua_dfhack_with_suspend }, // <expose> any with_suspend(...)
+    { "open_plugin", dfhack_open_plugin }, // <expose> any open_plugin(table pkg, std::string plugin)
+    { "curry", dfhack_curry }, // <expose> any curry(std::function closure, ...)
     { NULL, NULL }
 };
 

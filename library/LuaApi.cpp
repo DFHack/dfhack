@@ -697,11 +697,11 @@ static int dfhack_matinfo_matches(lua_State *state)
 }
 
 static const luaL_Reg dfhack_matinfo_funcs[] = {
-    { "find", dfhack_matinfo_find },
+    { "find", dfhack_matinfo_find }, // <expose> DFHack::MaterialInfo find(std::string | std::vector<std::string> token)
     { "decode", dfhack_matinfo_decode },
-    { "getToken", dfhack_matinfo_getToken },
-    { "toString", dfhack_matinfo_toString },
-    { "getCraftClass", dfhack_matinfo_getCraftClass },
+    { "getToken", dfhack_matinfo_getToken }, // <expose> std::string getToken(DFHack::MaterialInfo matinfo)
+    { "toString", dfhack_matinfo_toString }, // <expose> std::string toString(DFHack::MaterialInfo matinfo)
+    { "getCraftClass", dfhack_matinfo_getCraftClass }, // <expose> int getCraftClass(DFHack::MaterialInfo matinfo)
     { "matches", dfhack_matinfo_matches },
     { NULL, NULL }
 };
@@ -1465,7 +1465,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
-    WRAPM(Translation, TranslateName),
+    WRAPM(Translation, TranslateName), // <force-expose> string dfhack::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
@@ -1686,7 +1686,7 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
     { "getFocusStrings", gui_getFocusStrings },
-    { "getCurFocus", gui_getCurFocus },
+    { "getCurFocus", gui_getCurFocus }, // <expose> std::vector<std::string> getCurFocus(bool skip_dismissed = false)
     { NULL, NULL }
 };
 
@@ -1726,8 +1726,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,disconnectJobItem),
     WRAPM(Job,disconnectJobGeneralRef),
     WRAPM(Job,removeJob),
-    WRAPN(is_equal, jobEqual),
-    WRAPN(is_item_equal, jobItemEqual),
+    WRAPN(is_equal, jobEqual), // <expose> bool jobEqual(const df::job *job1, const df::job *job2)
+    WRAPN(is_item_equal, jobItemEqual), // <expose> bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
     { NULL, NULL }
 };
 
@@ -2052,7 +2052,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
     { "getUnitsByNobleRole", units_getUnitsByNobleRole},
-    { "getStressCutoffs", units_getStressCutoffs },
+    { "getStressCutoffs", units_getStressCutoffs }, // <expose> std::vector<int32_t> getStressCutoffs()
     { NULL, NULL }
 };
 
@@ -2141,8 +2141,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),
     WRAPN(remove, items_remove),
-    WRAPN(findType, items_findType),
-    WRAPN(findSubtype, items_findSubtype),
+    WRAPN(findType, items_findType), // <expose> int16_t findType(std::string token)
+    WRAPN(findSubtype, items_findSubtype), // <expose> int32_t findSubtype(std::string token)
     { NULL, NULL }
 };
 
@@ -2382,8 +2382,8 @@ static const LuaWrapper::FunctionReg dfhack_burrows_module[] = {
     WRAPM(Burrows, clearTiles),
     WRAPN(isAssignedBlockTile, burrows_isAssignedBlockTile),
     WRAPN(setAssignedBlockTile, burrows_setAssignedBlockTile),
-    WRAPM(Burrows, isAssignedTile),
-    WRAPM(Burrows, setAssignedTile),
+    WRAPM(Burrows, isAssignedTile), // <expose> bool isAssignedTile(df::burrow *burrow, df::coord tile)
+    WRAPM(Burrows, setAssignedTile), // <expose> bool setAssignedTile(df::burrow *burrow, df::coord tile, bool enable)
     { NULL, NULL }
 };
 
@@ -2826,9 +2826,9 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
     WRAPM(Filesystem, isdir),
-    WRAPM(Filesystem, atime),
-    WRAPM(Filesystem, ctime),
-    WRAPM(Filesystem, mtime),
+    WRAPM(Filesystem, atime), // <expose> int64_t atime(std::string path)
+    WRAPM(Filesystem, ctime), // <expose> int64_t ctime(std::string path)
+    WRAPM(Filesystem, mtime), // <expose> int64_t mtime(std::string path)
     {NULL, NULL}
 };
 
@@ -3138,16 +3138,16 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
     WRAP(getModstate),
-    WRAPN(strerror, internal_strerror),
-    WRAPN(md5, internal_md5),
-    WRAPN(heapTakeSnapshot, heap_take_snapshot),
-    WRAPN(getHeapState, get_heap_state),
-    WRAPN(isAddressInHeap, is_address_in_heap),
-    WRAPN(isAddressActiveInHeap, is_address_active_in_heap),
-    WRAPN(isAddressUsedAfterFreeInHeap, is_address_used_after_free_in_heap),
-    WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
-    WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
-    WRAPN(msizeAddress, msize_address),
+    WRAPN(strerror, internal_strerror), // <expose> std::string strerror(int n)
+    WRAPN(md5, internal_md5), // <expose> std::string md5(std::string s)
+    WRAPN(heapTakeSnapshot, heap_take_snapshot), // <expose> int heapTakeSnapshot()
+    WRAPN(getHeapState, get_heap_state), // <expose> int getHeapState()
+    WRAPN(isAddressInHeap, is_address_in_heap), // <expose> bool isAddressInHeap(uintptr_t ptr)
+    WRAPN(isAddressActiveInHeap, is_address_active_in_heap), // <expose> bool isAddressActiveInHeap(uintptr_t ptr)
+    WRAPN(isAddressUsedAfterFreeInHeap, is_address_used_after_free_in_heap), // <expose> bool isAddressUsedAfterFreeInHeap(uintptr_t ptr)
+    WRAPN(getAddressSizeInHeap, get_address_size_in_heap), // <expose> int getAddressSizeInHeap(uintptr_t ptr)
+    WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object), // <expose> uintptr_t getRootAddressOfHeapObject(uintptr_t ptr)
+    WRAPN(msizeAddress, msize_address), // <expose> int msizeAddress(uintptr_t ptr)
     WRAP(getClipboardTextCp437),
     WRAP(setClipboardTextCp437),
     { NULL, NULL }

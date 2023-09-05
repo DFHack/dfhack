@@ -244,3 +244,15 @@ Replaced with an `overlay`.
 warn-stuck-trees
 ================
 The corresponding DF :bug:`9252` was fixed in DF 0.44.01.
+
+.. _gui/workshop-job:
+
+gui/workshop-job
+================
+Merged with `gui/workorder-details` and renamed into `gui/job-details`
+
+.. _gui/workorder-details:
+
+gui/workorder-details
+=====================
+Merged with `gui/workshop-job` and renamed into `gui/job-details`

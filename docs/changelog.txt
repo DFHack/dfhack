@@ -74,6 +74,7 @@ Template for new versions:
 - `autobutcher`: don't mark animals for butchering if they are already marked for some kind of training (war, hunt)
 - `hotkeys`: don't display DFHack logo in legends mode since it covers up important interface elements. the Ctrl-Shift-C hotkey to bring up the menu and the mouseover hotspot still function, though.
 - `sort`: animals are now sortable by race on the assignment screens
+- `createitem`: support creating items inside of bags
 
 ## Documentation
 

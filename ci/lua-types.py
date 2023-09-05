@@ -22,7 +22,7 @@ def parse_docs() -> dict[tuple[str, str], str]:
     out: dict[tuple[str, str], str] = {}
     data = Path(PATH_LUA_DOCS).read_text()
     for match in re.finditer(PATTERN_LUA_DOCS, data, re.MULTILINE):
-        (class_name, fn_name) = split_name(match.group(2).replace("dfhack.", "").replace("dfhack:", ""))
+        (class_name, fn_name, _with_self) = split_name(match.group(2).replace("dfhack.", "").replace("dfhack:", ""))
         out[(class_name.lower().strip(), fn_name.lower().strip())] = match.group(3)[:-1]
     print("Items -> total:", len(out))
     return out
@@ -32,19 +32,21 @@ def multiline_comment(comment: str, ending: str = "") -> str:
     return "--[=[" + comment.strip("--").strip("\n").replace("--", "") + ending + "]=]\n" if comment else ""
 
 
-def split_name(value: str) -> tuple[str, str]:
+def split_name(value: str) -> tuple[str, str, bool]:
     class_name = ""
     fn_name = value
     splitted = value.split(":")
+    with_self = False
     if len(splitted) > 1:
         class_name = splitted[0]
         fn_name = splitted[1]
+        with_self = True
     else:
         splitted = value.split(".")
         if len(splitted) > 1:
             class_name = splitted[0]
             fn_name = splitted[1]
-    return (class_name, fn_name)
+    return (class_name, fn_name, with_self)
 
 
 ########################################
@@ -1181,7 +1183,12 @@ def parse_lua_functions(data: str, module: str = "") -> Iterable[LuaFunc]:
                     ret = parsed[k]
                 else:
                     args.append(f"{k}: {parsed[k]}")
-        (class_name, fn_name) = split_name(fn_name)
+        (class_name, fn_name, with_self) = split_name(fn_name)
+        if with_self:
+            if len(args) == 1 and args[0] == "":
+                args[0] = f"self: self"
+            else:
+                args.insert(0, f"self: self")
         if (class_name.lower(), fn_name.lower()) in docs:
             comment = multiline_comment(docs[(class_name.lower(), fn_name.lower())])
         if (module.lower(), fn_name.lower()) in docs:

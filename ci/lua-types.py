@@ -81,7 +81,7 @@ BANNED_TYPES = ["lua_State", "color_ostream", "MapExtras::MapCache"]
 
 MODULES_GLUE = """---@generic T
 ---@param module `T`
----@return T | _G
+---@return T | _G | _global
 function mkmodule(module) end
 
 ---@generic T
@@ -1146,29 +1146,31 @@ def parse_lua_file(src: Path) -> Iterable[str]:
     data = src.read_text(encoding="utf-8")
     m = re.search(PATTERN_MKMODULE, data, re.MULTILINE)
     if not m:
-        print("Skip not module ->", src)
+        yield from parse_lua_module(data, "_global")
     else:
         yield from parse_lua_module(data, m.group(1))
 
 
-def parse_lua_module(data: str, module: str) -> Iterable[str]:
+def parse_lua_module(data: str, module: str, header: bool = True) -> Iterable[str]:
     classes: dict[str, list[str]] = {}
     for item in parse_lua_functions(data, module):
         target = item.class_name or module
-        if not target in classes:
+        if target not in classes:
             classes[target] = []
         classes[target].append(item.comment + f"---@field {item.fn_name} fun({', '.join(item.args)}): {item.ret}\n")
     for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
         type_name = match.group(3) if match.group(3) in classes else "any"
-        if not module in classes:
+        if module not in classes:
             classes[module] = []
         classes[module].append(multiline_comment(match.group(1)) + f"---@field {match.group(3)} {type_name}\n")
     for cl in classes:
-        yield render_class((cl, classes[cl]))
+        yield render_class((cl, classes[cl]), header)
 
 
-def render_class(cl: tuple[str, list[str]]) -> str:
-    s = f"---@class {cl[0]}\n"
+def render_class(cl: tuple[str, list[str]], header: bool = True) -> str:
+    s = ""
+    if header:
+        s += f"---@class {cl[0]}\n"
     for field in cl[1]:
         s += field
     return s
@@ -1182,7 +1184,7 @@ def parse_annotation(data: str) -> dict[str, str]:
             case "---@param":
                 out[tokens[1]] = line.replace(f"---@param {tokens[1]} ", "").replace("\n", "")
             case "---@return":
-                out["return"] = line.replace(f"---@return ", "").replace("\n", "")
+                out["return"] = line.replace("---@return ", "").replace("\n", "")
             case _:
                 pass
     return out
@@ -1206,9 +1208,9 @@ def parse_lua_functions(data: str, module: str = "") -> Iterable[LuaFunc]:
         (class_name, fn_name, with_self) = split_name(fn_name)
         if with_self:
             if len(args) == 1 and args[0] == "":
-                args[0] = f"self: self"
+                args[0] = "self: self"
             else:
-                args.insert(0, f"self: self")
+                args.insert(0, "self: self")
         if (class_name.lower(), fn_name.lower()) in docs:
             comment = multiline_comment(docs[(class_name.lower(), fn_name.lower())])
         if (module.lower(), fn_name.lower()) in docs:

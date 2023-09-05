@@ -7,6 +7,47 @@ from pathlib import Path
 from typing import Any
 
 ########################################
+#         Methods description          #
+########################################
+
+PATH_LUA_DOCS = "./docs/dev/Lua API.rst"
+
+PATTERN_LUA_DOCS = r"^\*\s``((.+)\(.*\))``\n^((\n|(\s+.*\n))+)"
+
+docs: dict[tuple[str, str], str] = {}
+
+
+def parse_docs() -> dict[tuple[str, str], str]:
+    print("Parsing Lua docs...")
+    out: dict[tuple[str, str], str] = {}
+    data = Path(PATH_LUA_DOCS).read_text()
+    for match in re.finditer(PATTERN_LUA_DOCS, data, re.MULTILINE):
+        (class_name, fn_name) = split_name(match.group(2).replace("dfhack.", "").replace("dfhack:", ""))
+        out[(class_name.lower().strip(), fn_name.lower().strip())] = match.group(3)[:-1]
+    print("Items -> total:", len(out))
+    return out
+
+
+def multiline_comment(comment: str, ending: str = "") -> str:
+    return "--[=[" + comment.strip("--").strip("\n").replace("--", "") + ending + "]=]\n" if comment else ""
+
+
+def split_name(value: str) -> tuple[str, str]:
+    class_name = ""
+    fn_name = value
+    splitted = value.split(":")
+    if len(splitted) > 1:
+        class_name = splitted[0]
+        fn_name = splitted[1]
+    else:
+        splitted = value.split(".")
+        if len(splitted) > 1:
+            class_name = splitted[0]
+            fn_name = splitted[1]
+    return (class_name, fn_name)
+
+
+########################################
 #        Signatures processing         #
 ########################################
 
@@ -289,7 +330,10 @@ def print_entry(entry: Entry, prefix: str = "dfhack.") -> str:
     if entry.ignore_expose_prefix:
         prefix = ""
     sig = " ".join(entry.sig.split()) if entry.sig else entry.sig
-    s = f"-- CXX SIGNATURE -> {sig}\n"
+    s = ""
+    if (entry.module.lower(), entry.fn.lower()) in docs:
+        s += multiline_comment(docs[(entry.module.lower(), entry.fn.lower())], ending="\n")
+    s += f"-- CXX SIGNATURE -> `{sig}`\n"
     known_args = ""
     ret = ""
     if entry.decoded_sig:
@@ -756,8 +800,9 @@ class StaticArray(IterableTag):
             f"{self.ref_target or base_type(self.type_name) or inside_containter or 'any'}{self.postfix_brackets}"
         )
 
-        self.index_enum(self.typed[:-2] if self.typed.endswith("[]") else self.typed)
-        if "index-enum" not in self.el.attrib:
+        if "index-enum" in self.el.attrib:
+            self.index_enum(self.typed[:-2] if self.typed.endswith("[]") else self.typed)
+        else:
             item_type = (
                 self.inside_el.attrib.get("type-name")
                 or self.inside_el.attrib.get("base-name")
@@ -767,6 +812,8 @@ class StaticArray(IterableTag):
             match self.inside_el.attrib.get("meta"):
                 case "global" | "number" | "primitive":
                     self.typed = base_type(item_type) + self.postfix_brackets
+                case "compound":
+                    pass
                 case _:
                     match self.inside_el.attrib.get("subtype"):
                         case "bitfield" | "enum":
@@ -1061,7 +1108,7 @@ class LuaFunc:
 
 
 def lua_modules_processing() -> None:
-    print("Lua modules processeing...")
+    print("Lua modules processing...")
     total = 0
     with Path(PATH_LUA_MODULES_OUTPUT + "modules.lua").open("w", encoding="utf-8") as dest:
         print("-- THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT.\n\n---@meta\n\n", file=dest)
@@ -1084,19 +1131,16 @@ def parse_lua_file(src: Path) -> Iterable[str]:
 
 def parse_lua_module(data: str, module: str) -> Iterable[str]:
     classes: dict[str, list[str]] = {}
-    for item in parse_lua_functions(data):
+    for item in parse_lua_functions(data, module):
         target = item.class_name or module
         if not target in classes:
             classes[target] = []
-        classes[target].append(
-            f"---@field {item.fn_name} fun({', '.join(item.args)}): {item.ret}{' ' + item.comment if item.comment else ''}\n"
-        )
+        classes[target].append(item.comment + f"---@field {item.fn_name} fun({', '.join(item.args)}): {item.ret}\n")
     for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
         type_name = match.group(3) if match.group(3) in classes else "any"
-        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
         if not module in classes:
             classes[module] = []
-        classes[module].append(f"---@field {match.group(3)} {type_name}{' ' + comment if comment else ''}\n")
+        classes[module].append(multiline_comment(match.group(1)) + f"---@field {match.group(3)} {type_name}\n")
     for cl in classes:
         yield render_class((cl, classes[cl]))
 
@@ -1122,9 +1166,9 @@ def parse_annotation(data: str) -> dict[str, str]:
     return out
 
 
-def parse_lua_functions(data: str) -> Iterable[LuaFunc]:
+def parse_lua_functions(data: str, module: str = "") -> Iterable[LuaFunc]:
     for match in re.finditer(PATTERN_LUA_FUNCTION, data, re.MULTILINE):
-        comment = match.group(1).replace("--", "").replace("\n", "") if match.group(1) else ""
+        comment = multiline_comment(match.group(1))
         fn_name = match.group(5)
         args: list[str] = str(match.group(6)).split(",")
         args = [x.strip() for x in args]
@@ -1137,15 +1181,16 @@ def parse_lua_functions(data: str) -> Iterable[LuaFunc]:
                     ret = parsed[k]
                 else:
                     args.append(f"{k}: {parsed[k]}")
-        splitted = fn_name.split(":")
-        class_name = ""
-        if len(splitted) > 1:
-            class_name = splitted[0]
-            fn_name = splitted[1]
+        (class_name, fn_name) = split_name(fn_name)
+        if (class_name.lower(), fn_name.lower()) in docs:
+            comment = multiline_comment(docs[(class_name.lower(), fn_name.lower())])
+        if (module.lower(), fn_name.lower()) in docs:
+            comment = multiline_comment(docs[(module.lower(), fn_name.lower())])
         yield LuaFunc(fn_name, class_name, ret, args, comment)
 
 
 if __name__ == "__main__":
-    # symbols_processing()
-    # signatures_processing()
+    docs = parse_docs()
+    symbols_processing()
+    signatures_processing()
     lua_modules_processing()

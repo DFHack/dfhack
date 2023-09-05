@@ -157,7 +157,7 @@ keybinding add Alt-K@dwarfmode toggle-kbd-cursor
 #keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
 # gui/design
-keybinding add Ctrl-D@dwarfmode/Default gui/design
+keybinding add Ctrl-D@dwarfmode gui/design
 
 
 

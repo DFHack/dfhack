@@ -216,8 +216,9 @@ static void load_material_cache() {
 }
 
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
-    if (cur_heat_safety.count(key))
-        return cur_heat_safety.at(key);
+    // comment out until we can get heat safety working as intended
+    // if (cur_heat_safety.count(key))
+    //     return cur_heat_safety.at(key);
     return HEAT_SAFETY_ANY;
 }
 
@@ -947,19 +948,22 @@ static int getMaterialFilter(lua_State *L) {
     map<MaterialInfo, int32_t> counts;
     scanAvailableItems(*out, type, subtype, custom, index, false, NULL, &counts);
     HeatSafety heat = get_heat_safety_filter(key);
-    const df::job_item *jitem = get_job_items(*out, key)[index];
+    df::job_item jitem_cur_heat = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], heat);
+    df::job_item jitem_fire = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_FIRE);
+    df::job_item jitem_magma = getJobItemWithHeatSafety(
+            get_job_items(*out, key)[index], HEAT_SAFETY_MAGMA);
     // name -> {count=int, enabled=bool, category=string, heat=string}
     map<string, map<string, string>> ret;
     for (auto & entry : mat_cache) {
         auto &mat = entry.second.first;
-        if (!mat.matches(jitem))
-            continue;
-        if (!matchesHeatSafety(mat.type, mat.index, heat))
+        if (!mat.matches(jitem_cur_heat))
             continue;
         string heat_safety = "";
-        if (matchesHeatSafety(mat.type, mat.index, HEAT_SAFETY_MAGMA))
+        if (mat.matches(jitem_magma))
             heat_safety = "magma-safe";
-        else if (matchesHeatSafety(mat.type, mat.index, HEAT_SAFETY_FIRE))
+        else if (mat.matches(jitem_fire))
             heat_safety = "fire-safe";
         auto &name = entry.first;
         auto &cat = entry.second.second;

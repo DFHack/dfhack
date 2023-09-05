@@ -131,7 +131,7 @@ jobs:
             -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} \
             -DBUILD_TESTS:BOOL=${{ inputs.tests }} \
             -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} \
-            ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || ''}} \
+            -DINSTALL_XMLDUMP:BOOL=1 \
             -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} \
             -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }}
       - name: Build DFHack
@@ -142,11 +142,9 @@ jobs:
       - name: Finalize cache
         if: inputs.platform-files
         run: |
-          ccache --show-stats --verbose
           ccache --max-size 40M
           ccache --cleanup
-          ccache --max-size 500M
-          ccache --zero-stats
+          ccache --show-stats --verbose
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly
         uses: actions/cache/save@v3

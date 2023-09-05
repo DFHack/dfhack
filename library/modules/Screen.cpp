@@ -1104,22 +1104,6 @@ df::building *dfhack_lua_viewscreen::getSelectedBuilding()
     return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
 }
 
-df::building_stockpilest *dfhack_lua_viewscreen::getSelectedStockpile()
-{
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedStockpile");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_stockpilest>(Lua::Core::State, -1);
-}
-
-df::building_civzonest *dfhack_lua_viewscreen::getSelectedCivZone()
-{
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedCivZone");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_civzonest>(Lua::Core::State, -1);
-}
-
 df::plant *dfhack_lua_viewscreen::getSelectedPlant()
 {
     Lua::StackUnwinder frame(Lua::Core::State);

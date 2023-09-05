@@ -61,7 +61,7 @@ gui/quickfort,/perimeter,,Run at embark. Don't actually apply the blueprint -- i
 -- Dig  --
 DFHack command,Blueprint,Generate orders,Notes
 gui/quickfort,/surface1,,Clear some trees and dig central staircase. Run when you find your center tile. Deconstruct your wagon if it is in the way.
-gui/quickfort,/dig_all,,"Run when you find a suitable (non-aquifer) rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll designate in the uppermost soil layer once the surface miasma channels are dug. Note that it is more efficient for your miners if you designate the digging for a level before they dig the central stairs past that level. The stairs down on each level are designated at priority 5 instead of the regular priority 4. This lets the miners focus on one z-level at a time and not run up and down the stairs attempting to dig out two blueprints simultaneously. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
+gui/quickfort,/dig_all,,"Run when you find a suitable (non-aquifer) rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) --
 DFHack command,Blueprint,Generate orders,Notes
@@ -81,7 +81,7 @@ gui/quickfort,/surface6,Yes,Build security perimeter. Run once you have linked a
 gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down. Be sure to give your haulers some time to fill the stonecutter's stockpile with some stone first so your stonecutters won't be hauling it up from the depths by hand.
 ""
 -- Plumbing --
-"If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the aquifer_tap library blueprint for help with this)."
+"If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
 Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through this checklist!
 ""
 -- Mature fort (fourth migration wave onward) --
@@ -293,11 +293,11 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 ""
 "After a siege, you can use the caged prisoners to safely train your military. Here's how:"
 ""
-"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in DFHack's gui/launcher."
+"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in the DFHack gui/launcher."
 ""
 "- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
 ""
-- Assign a group of prisoners to the pasture that overlaps the prisoner quantum stockpile
+- Assign a group prisoners to the pasture that overlaps the prisoner quantum stockpile
 ""
 "- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
 #dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
@@ -858,6 +858,7 @@ You might also want to set the ""trade goods quantum"" stockpile to autotrade.) 
 
 
 
+#aliases
 "#build label(surface_build) start(19; 19) hidden() message(Use autofarm to manage farm crop selection.
 Remember to connect the levers to the gates once they are built.) gates, barracks, farm area, and trade area"
 
@@ -1709,7 +1710,7 @@ build2/industry_build2
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf""}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
@@ -1745,7 +1746,7 @@ build2/industry_build2
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`

@@ -41,8 +41,6 @@ SDL_bool (*g_SDL_HasClipboardText)();
 int (*g_SDL_SetClipboardText)(const char *text);
 char * (*g_SDL_GetClipboardText)();
 void (*g_SDL_free)(void *);
-SDL_PixelFormat* (*g_SDL_AllocFormat)(uint32_t pixel_format) = nullptr;
-SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int height, int depth, uint32_t format) = nullptr;
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -83,9 +81,7 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_SetClipboardText);
     bind(g_sdl_handle, SDL_GetClipboardText);
     bind(g_sdl_handle, SDL_free);
-    bind(g_sdl_handle, SDL_AllocFormat);
-    bind(g_sdl_handle, SDL_CreateRGBSurfaceWithFormat);
-#undef bind
+    #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
     return true;
@@ -150,15 +146,6 @@ char * DFSDL::DFSDL_GetClipboardText() {
 int DFSDL::DFSDL_SetClipboardText(const char *text) {
     return g_SDL_SetClipboardText(text);
 }
-
-SDL_PixelFormat* DFSDL::DFSDL_AllocFormat(uint32_t pixel_format) {
-    return g_SDL_AllocFormat(pixel_format);
-}
-
-SDL_Surface* DFSDL::DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format) {
-    return g_SDL_CreateRGBSurfaceWithFormat(flags, width, height, depth, format);
-}
-
 
 DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)

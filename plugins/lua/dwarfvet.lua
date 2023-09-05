@@ -17,6 +17,7 @@ local function get_cur_patients()
     for _,job in utils.listpairs(df.global.world.jobs.list) do
         if job.job_type ~= df.job_type.Rest then goto continue end
         local unit = dfhack.job.getWorker(job)
+        print(unit.id)
         if is_valid_animal(unit) then
             cur_patients[unit] = true
         end

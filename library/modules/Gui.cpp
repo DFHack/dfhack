@@ -434,7 +434,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.job_details.open) {
         newFocusString = baseFocus;
-        newFocusString += "/JobDetails/" + enum_item_key(game->main_interface.job_details.context);
+        newFocusString += "/JobDetails";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.assign_trade.open) {
@@ -1235,11 +1235,9 @@ bool Gui::any_stockpile_hotkey(df::viewscreen* top)
 }
 
 df::building_stockpilest* Gui::getAnyStockpile(df::viewscreen* top) {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedStockpile();
-
-    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::STOCKPILE)
+    if (matchFocusString("dwarfmode/Some/Stockpile")) {
         return game->main_interface.stockpile.cur_bld;
+    }
 
     return NULL;
 }
@@ -1258,12 +1256,9 @@ bool Gui::any_civzone_hotkey(df::viewscreen* top) {
 }
 
 df::building_civzonest *Gui::getAnyCivZone(df::viewscreen* top) {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedCivZone();
-
-    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::ZONE)
+    if (matchFocusString("dwarfmode/Zone")) {
         return game->main_interface.civzone.cur_bld;
-
+    }
     return NULL;
 }
 
@@ -1278,6 +1273,8 @@ df::building_civzonest *Gui::getSelectedCivZone(color_ostream &out, bool quiet) 
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
+    using df::global::game;
+
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();
 

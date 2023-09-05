@@ -1249,14 +1249,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         else if (res == CR_NEEDS_CONSOLE)
             con.printerr("%s needs an interactive console to work.\n"
-                          "Please run this command from the DFHack terminal.\n\n"
-#ifdef WIN32
-                          "You can show the terminal with the 'show' command."
-#else
-                          "The terminal is accessible when you run DF from the commandline\n"
-                          "via the './dfhack' script."
-#endif
-                          "\n", first.c_str());
+                          "Please run this command from the DFHack terminal.\n", first.c_str());
         return res;
     }
 
@@ -2223,6 +2216,9 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        break;
+    case SC_VIEWSCREEN_CHANGED:
+        Textures::init(out);
         break;
     default:
         break;

@@ -66,66 +66,45 @@ bool itemPassesScreen(color_ostream& out, df::item* item) {
         && isAccessible(out, item);
 }
 
-bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {
-     if (heat == HEAT_SAFETY_ANY)
-        return true;
-
-    MaterialInfo minfo(mat_type, mat_index);
-    df::job_item_flags2 ok;
-    df::job_item_flags2 mask;
-    minfo.getMatchBits(ok, mask);
-
-    if (heat >= HEAT_SAFETY_MAGMA)
-        return ok.bits.magma_safe;
-    if (heat == HEAT_SAFETY_FIRE)
-        return ok.bits.fire_safe || ok.bits.magma_safe;
-    return false;
+df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat) {
+    df::job_item jitem = *job_item;
+    if (heat >= HEAT_SAFETY_MAGMA) {
+        jitem.flags2.bits.magma_safe = true;
+        jitem.flags2.bits.fire_safe = false;
+    } else if (heat == HEAT_SAFETY_FIRE && !jitem.flags2.bits.magma_safe)
+        jitem.flags2.bits.fire_safe = true;
+    return jitem;
 }
 
-bool matchesFilters(df::item * item, const df::job_item * jitem, HeatSafety heat, const ItemFilter &item_filter, const std::set<string> &specials) {
+bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<string> &specials) {
     // check the properties that are not checked by Job::isSuitableItem()
-    if (jitem->item_type > -1 && jitem->item_type != item->getType())
+    if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;
 
-    if (jitem->item_subtype > -1 &&
-        jitem->item_subtype != item->getSubtype())
+    if (job_item->item_subtype > -1 &&
+        job_item->item_subtype != item->getSubtype())
         return false;
 
-    if (jitem->flags2.bits.building_material && !item->isBuildMat())
+    if (job_item->flags2.bits.building_material && !item->isBuildMat())
         return false;
 
-    if ((jitem->flags1.bits.empty || jitem->flags2.bits.lye_milk_free)) {
-        auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
-        if (gref) {
-            if (jitem->flags1.bits.empty)
-                return false;
-            if (auto contained_item = gref->getItem(); contained_item) {
-                MaterialInfo mi;
-                mi.decode(contained_item);
-                if (mi.getToken() != "WATER")
-                    return false;
-            }
-        }
-    }
-
-    if (jitem->metal_ore > -1 && !item->isMetalOre(jitem->metal_ore))
+    if (job_item->metal_ore > -1 && !item->isMetalOre(job_item->metal_ore))
         return false;
 
-    if (jitem->has_tool_use > df::tool_uses::NONE
-        && !item->hasToolUse(jitem->has_tool_use))
+    if (job_item->has_tool_use > df::tool_uses::NONE
+        && !item->hasToolUse(job_item->has_tool_use))
         return false;
 
     if (item->getType() == df::item_type::SLAB && specials.count("engraved")
         && static_cast<df::item_slabst *>(item)->engraving_type != df::slab_engraving_type::Memorial)
         return false;
 
-    if (!matchesHeatSafety(item->getMaterial(), item->getMaterialIndex(), heat))
-        return false;
+    df::job_item jitem = getJobItemWithHeatSafety(job_item, heat);
 
     return Job::isSuitableItem(
-            jitem, item->getType(), item->getSubtype())
+            &jitem, item->getType(), item->getSubtype())
         && Job::isSuitableMaterial(
-            jitem, item->getMaterial(), item->getMaterialIndex(),
+            &jitem, item->getMaterial(), item->getMaterialIndex(),
             item->getType())
         && item_filter.matches(item);
 }

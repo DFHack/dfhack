@@ -387,14 +387,7 @@ bool DFHack::Job::removeJob(df::job* job) {
     // call the job cancel vmethod graciously provided by The Toady One.
     // job_handler::cancel_job calls job::~job, and then deletes job (this has
     // been confirmed by disassembly).
-
-    // HACK: GCC (starting around GCC 10 targeting C++20 as of v50.09) optimizes
-    // out the vmethod call here regardless of optimization level, so we need to
-    // invoke the vmethod manually through a pointer, as the Lua wrapper does.
-    // `volatile` does not seem to be necessary but is included for good
-    // measure.
-    volatile auto cancel_job_method = &df::job_handler::cancel_job;
-    (world->jobs.*cancel_job_method)(job);
+    world->jobs.cancel_job(job);
 
     return true;
 }
@@ -567,7 +560,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
     return true;
 }
 
-bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype)
+bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
 {
     CHECK_NULL_POINTER(item);
 
@@ -581,7 +574,7 @@ bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isub
 }
 
 bool Job::isSuitableMaterial(
-    const df::job_item *item, int mat_type, int mat_index, df::item_type itype)
+    df::job_item *item, int mat_type, int mat_index, df::item_type itype)
 {
     CHECK_NULL_POINTER(item);
 

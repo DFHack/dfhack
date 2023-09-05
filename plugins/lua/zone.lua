@@ -279,7 +279,7 @@ function AssignAnimal:init()
                         {label='Exclude', value='exclude', pen=COLOR_RED},
                     },
                     initial_option='include',
-                    on_change=function() self:refresh_list() end,
+                    on_change=self:callback('refresh_list'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='graze',
@@ -293,7 +293,7 @@ function AssignAnimal:init()
                         {label='Exclude', value='exclude', pen=COLOR_RED},
                     },
                     initial_option='include',
-                    on_change=function() self:refresh_list() end,
+                    on_change=self:callback('refresh_list'),
                 },
             },
         },

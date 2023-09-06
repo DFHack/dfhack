@@ -1368,8 +1368,8 @@ static CommandHistory * ensureCommandHistory(std::string id,
 
 static int getCommandHistory(lua_State *state)
 {
-    std::string id = lua_tostring(state, 1);
-    std::string src_file = lua_tostring(state, 2);
+    std::string id = luaL_checkstring(state, 1);
+    std::string src_file = luaL_checkstring(state, 2);
     std::vector<std::string> entries;
     ensureCommandHistory(id, src_file)->getEntries(entries);
     Lua::PushVector(state, entries);
@@ -2030,7 +2030,7 @@ static int units_getCitizens(lua_State *L) {
 }
 
 static int units_getUnitsByNobleRole(lua_State *L) {
-    std::string role_name = lua_tostring(L, -1);
+    std::string role_name = luaL_checkstring(L, -1);
     std::vector<df::unit *> units;
     Units::getUnitsByNobleRole(units, role_name);
     Lua::PushVector(L, units);

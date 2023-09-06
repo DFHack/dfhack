@@ -54,7 +54,23 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `sort`: search and sort for squad assignment screen
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.09-r3
+
+## New Features
+- `sort`: search, sort, and filter for squad assignment screen
 - `zone`: advanced unit assignment screens for cages, restraints, and pits/ponds
 - `buildingplan`: one-click magma/fire safety filter for planned buildings
 
@@ -66,7 +82,7 @@ Template for new versions:
 - `caravan`: corrected prices for cages that have units inside of them
 - `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
 - ``dialogs.MessageBox``: fix spacing around scrollable text
-- `seedwatch`: seedwatch will now ignore (unplantable) tree seeds entirely
+- `seedwatch`: ignore unplantable tree seeds
 - `autobutcher`: fix ``ticks`` commandline option incorrectly rejecting positive integers as valid values
 
 ## Misc Improvements
@@ -75,8 +91,6 @@ Template for new versions:
 - `hotkeys`: don't display DFHack logo in legends mode since it covers up important interface elements. the Ctrl-Shift-C hotkey to bring up the menu and the mouseover hotspot still function, though.
 - `sort`: animals are now sortable by race on the assignment screens
 - `createitem`: support creating items inside of bags
-
-## Documentation
 
 ## API
 - ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
@@ -92,8 +106,6 @@ Template for new versions:
 - ``dfhack.screen.readTile()``: now populates extended tile property fields (like ``top_of_text``) in the returned ``Pen`` object
 - ``dfhack.units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
 - ``dfhack.gui``: new ``getAnyCivZone`` and ``getAnyStockpile`` functions; also behavior of ``getSelectedCivZone`` and ``getSelectedStockpile`` functions has changes as per the related API notes
-
-## Removed
 
 # 50.09-r2
 

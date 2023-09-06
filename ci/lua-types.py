@@ -333,16 +333,18 @@ def decode_signature(sig: str, lower: bool = True) -> Signature | None:
                     type=decoded_type_ret.replace("::", ".").replace("enums__biome_type__", ""),
                     unknown=decoded_type_ret == type_ret and type_ret != "string",
                 ),
-                args=check_optional_bool(args),
+                args=check_optional_args(args),
                 name=name,
             )
     return None
 
 
-def check_optional_bool(args: list[Arg]) -> list[Arg]:
+def check_optional_args(args: list[Arg]) -> list[Arg]:
     for arg in reversed(args):
         if arg.type == "boolean":
             arg.default_value = "false"
+        elif arg.type == "integer":
+            arg.default_value = "0"
         else:
             break
     return args

@@ -9,21 +9,23 @@ local widgets = require('gui.widgets')
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
 
-local MELEE_WEAPON_SKILLS = {
-    df.job_skill.AXE,
-    df.job_skill.SWORD,
-    df.job_skill.MACE,
-    df.job_skill.HAMMER,
-    df.job_skill.SPEAR,
-}
-
-local RANGED_WEAPON_SKILLS = {
-    df.job_skill.CROSSBOW,
-}
+local function get_rating(val, max, med, low)
+    val = math.min(max, val)
+    local percent = (val * 100) // max
+    local color = COLOR_GREEN
+    if percent < (low or 50) then color = COLOR_RED
+    elseif percent < (med or 75) then color = COLOR_YELLOW
+    end
+    return percent, color
+end
 
 local function sort_noop(a, b)
     -- this function is used as a marker and never actually gets called
     error('sort_noop should not be called')
+end
+
+local function get_name(unit)
+    return unit and dfhack.toSearchNormalized(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 end
 
 local function sort_by_name_desc(unit_id_1, unit_id_2)
@@ -32,8 +34,8 @@ local function sort_by_name_desc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local name1 = dfhack.TranslateName(dfhack.units.getVisibleName(unit1))
-    local name2 = dfhack.TranslateName(dfhack.units.getVisibleName(unit2))
+    local name1 = get_name(unit1)
+    local name2 = get_name(unit2)
     return utils.compare_name(name1, name2)
 end
 
@@ -43,8 +45,8 @@ local function sort_by_name_asc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local name1 = dfhack.TranslateName(dfhack.units.getVisibleName(unit1))
-    local name2 = dfhack.TranslateName(dfhack.units.getVisibleName(unit2))
+    local name1 = get_name(unit1)
+    local name2 = get_name(unit2)
     return utils.compare_name(name2, name1)
 end
 
@@ -59,6 +61,11 @@ local function get_active_idx_cache()
         end
     end
     return active_idx_cache
+end
+
+local function get_migrant_wave_rating(unit)
+    -- TODO: return green for most recent wave, red for the first wave, yellow for all others
+    return 1, nil
 end
 
 local function sort_by_migrant_wave_desc(unit_id_1, unit_id_2)
@@ -77,17 +84,29 @@ local function sort_by_migrant_wave_asc(unit_id_1, unit_id_2)
     return utils.compare(cache[unit_id_1], cache[unit_id_2])
 end
 
+local function get_stress(unit)
+    return unit and
+        unit.status.current_soul and
+        unit.status.current_soul.personality.stress
+end
+
+local function get_stress_rating(unit)
+    return get_rating(-get_stress(unit) + 100000, 200000, 50, 25)
+end
+
 local function sort_by_stress_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local unit1 = df.unit.find(unit_id_1)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local happiness1 = unit1.status.current_soul.personality.stress
-    local happiness2 = unit2.status.current_soul.personality.stress
+    local happiness1 = get_stress(unit1)
+    local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
         return sort_by_name_desc(unit_id_1, unit_id_2)
     end
+    if not happiness2 then return -1 end
+    if not happiness1 then return 1 end
     return utils.compare(happiness2, happiness1)
 end
 
@@ -97,22 +116,37 @@ local function sort_by_stress_asc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local happiness1 = unit1.status.current_soul.personality.stress
-    local happiness2 = unit2.status.current_soul.personality.stress
+    local happiness1 = get_stress(unit1)
+    local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
         return sort_by_name_desc(unit_id_1, unit_id_2)
     end
+    if not happiness2 then return 1 end
+    if not happiness1 then return -1 end
     return utils.compare(happiness1, happiness2)
 end
 
-local function get_skill(unit_id, skill, unit)
-    unit = unit or df.unit.find(unit_id)
+local function get_skill(skill, unit)
     return unit and
         unit.status.current_soul and
-        utils.binsearch(unit.status.current_soul.skills, skill, 'id')
+        (utils.binsearch(unit.status.current_soul.skills, skill, 'id'))
 end
 
-local function melee_skill_effectiveness(unit, skill_list)
+local function get_skill_rating(skill, unit)
+    local uskill = get_skill(skill, unit)
+    if not uskill then return nil end
+    return get_rating(uskill.rating, 100, 5, 0)
+end
+
+local MELEE_WEAPON_SKILLS = {
+    df.job_skill.AXE,
+    df.job_skill.SWORD,
+    df.job_skill.MACE,
+    df.job_skill.HAMMER,
+    df.job_skill.SPEAR,
+}
+
+local function melee_skill_effectiveness(unit)
     -- Physical attributes
     local strength = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.STRENGTH)
     local agility = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.AGILITY)
@@ -128,7 +162,7 @@ local function melee_skill_effectiveness(unit, skill_list)
     -- Skills
     -- Finding the highest skill
     local skill_rating = 0
-    for _, skill in ipairs(skill_list) do
+    for _, skill in ipairs(MELEE_WEAPON_SKILLS) do
         local melee_skill = dfhack.units.getNominalSkill(unit, skill, true)
         skill_rating = math.max(skill_rating, melee_skill)
     end
@@ -140,36 +174,44 @@ local function melee_skill_effectiveness(unit, skill_list)
     return rating
 end
 
-local function make_sort_by_melee_skill_effectiveness_desc(list)
+local function get_melee_skill_effectiveness_rating(unit)
+    return get_rating(melee_skill_effectiveness(unit), 2000000)
+end
+
+local function make_sort_by_melee_skill_effectiveness_desc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = melee_skill_effectiveness(unit1, list)
-        local rating2 = melee_skill_effectiveness(unit2, list)
+        local rating1 = melee_skill_effectiveness(unit1)
+        local rating2 = melee_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating2, rating1)
     end
 end
 
-local function make_sort_by_melee_skill_effectiveness_asc(list)
+local function make_sort_by_melee_skill_effectiveness_asc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = melee_skill_effectiveness(unit1, list)
-        local rating2 = melee_skill_effectiveness(unit2, list)
+        local rating1 = melee_skill_effectiveness(unit1)
+        local rating2 = melee_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating1, rating2)
     end
 end
 
--- FUnction could easily be adapted to different weapon types.
-local function ranged_skill_effectiveness(unit, skill_list)
+local RANGED_WEAPON_SKILLS = {
+    df.job_skill.CROSSBOW,
+}
+
+-- Function could easily be adapted to different weapon types.
+local function ranged_skill_effectiveness(unit)
     -- Physical attributes
     local agility = dfhack.units.getPhysicalAttrValue(unit, df.physical_attribute_type.AGILITY)
 
@@ -181,7 +223,7 @@ local function ranged_skill_effectiveness(unit, skill_list)
     -- Skills
     -- Finding the highest skill
     local skill_rating = 0
-    for _, skill in ipairs(skill_list) do
+    for _, skill in ipairs(RANGED_WEAPON_SKILLS) do
         local ranged_skill = dfhack.units.getNominalSkill(unit, skill, true)
         skill_rating = math.max(skill_rating, ranged_skill)
     end
@@ -190,6 +232,10 @@ local function ranged_skill_effectiveness(unit, skill_list)
     local rating = skill_rating * 24000 + ranged_combat * 8000
     + agility * 15 + spatial_sense * 15 + kinesthetic_sense * 6 + focus * 6
     return rating
+end
+
+local function get_ranged_skill_effectiveness_rating(unit)
+    return get_rating(ranged_skill_effectiveness(unit), 500000)
 end
 
 local function make_sort_by_ranged_skill_effectiveness_desc(list)
@@ -225,8 +271,8 @@ local function make_sort_by_skill_desc(sort_skill)
         if unit_id_1 == unit_id_2 then return 0 end
         if unit_id_1 == -1 then return -1 end
         if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(unit_id_1, sort_skill)
-        local s2 = get_skill(unit_id_2, sort_skill)
+        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
+        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
         if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         if not s2 then return -1 end
         if not s1 then return 1 end
@@ -245,8 +291,8 @@ local function make_sort_by_skill_asc(sort_skill)
         if unit_id_1 == unit_id_2 then return 0 end
         if unit_id_1 == -1 then return -1 end
         if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(unit_id_1, sort_skill)
-        local s2 = get_skill(unit_id_2, sort_skill)
+        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
+        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
         if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         if not s2 then return 1 end
         if not s1 then return -1 end
@@ -261,7 +307,7 @@ local function make_sort_by_skill_asc(sort_skill)
 end
 
 -- Statistical rating that is higher for dwarves that are mentally stable
-local function mental_stability(unit)
+local function get_mental_stability(unit)
     local ALTRUISM = unit.status.current_soul.personality.traits.ALTRUISM
     local ANXIETY_PROPENSITY = unit.status.current_soul.personality.traits.ANXIETY_PROPENSITY
     local BRAVERY = unit.status.current_soul.personality.traits.BRAVERY
@@ -301,14 +347,18 @@ local function mental_stability(unit)
     return rating
 end
 
+local function get_mental_stability_rating(unit)
+    return get_rating(get_mental_stability(unit), 100, 10, 0)
+end
+
 local function sort_by_mental_stability_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local unit1 = df.unit.find(unit_id_1)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = mental_stability(unit1)
-    local rating2 = mental_stability(unit2)
+    local rating1 = get_mental_stability(unit1)
+    local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
         -- sorting by stress is opposite
         -- more mental stable dwarves should have less stress
@@ -323,8 +373,8 @@ local function sort_by_mental_stability_asc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = mental_stability(unit1)
-    local rating2 = mental_stability(unit2)
+    local rating1 = get_mental_stability(unit1)
+    local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
         return sort_by_stress_desc(unit_id_1, unit_id_2)
     end
@@ -334,7 +384,7 @@ end
 -- Statistical rating that is higher for more potent dwarves in long run melee military training
 -- Rating considers fighting melee opponents
 -- Wounds are not considered!
-local function melee_combat_potential(unit)
+local function get_melee_combat_potential(unit)
     -- Physical attributes
     local strength = unit.body.physical_attrs.STRENGTH.max_value
     local agility = unit.body.physical_attrs.AGILITY.max_value
@@ -353,14 +403,18 @@ local function melee_combat_potential(unit)
     return rating
 end
 
+local function get_melee_combat_potential_rating(unit)
+    return get_rating(get_melee_combat_potential(unit), 2000000)
+end
+
 local function sort_by_melee_combat_potential_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local unit1 = df.unit.find(unit_id_1)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = melee_combat_potential(unit1)
-    local rating2 = melee_combat_potential(unit2)
+    local rating1 = get_melee_combat_potential(unit1)
+    local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
         return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
     end
@@ -373,8 +427,8 @@ local function sort_by_melee_combat_potential_asc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = melee_combat_potential(unit1)
-    local rating2 = melee_combat_potential(unit2)
+    local rating1 = get_melee_combat_potential(unit1)
+    local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
         return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
     end
@@ -383,7 +437,7 @@ end
 
 -- Statistical rating that is higher for more potent dwarves in long run ranged military training
 -- Wounds are not considered!
-local function ranged_combat_potential(unit)
+local function get_ranged_combat_potential(unit)
     -- Physical attributes
     local agility = unit.body.physical_attrs.AGILITY.max_value
 
@@ -397,14 +451,18 @@ local function ranged_combat_potential(unit)
     return rating
 end
 
+local function get_ranged_combat_potential_rating(unit)
+    return get_rating(get_ranged_combat_potential(unit), 40000)
+end
+
 local function sort_by_ranged_combat_potential_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local unit1 = df.unit.find(unit_id_1)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = ranged_combat_potential(unit1)
-    local rating2 = ranged_combat_potential(unit2)
+    local rating1 = get_ranged_combat_potential(unit1)
+    local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
         return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
     end
@@ -417,18 +475,18 @@ local function sort_by_ranged_combat_potential_asc(unit_id_1, unit_id_2)
     local unit2 = df.unit.find(unit_id_2)
     if not unit1 then return -1 end
     if not unit2 then return 1 end
-    local rating1 = ranged_combat_potential(unit1)
-    local rating2 = ranged_combat_potential(unit2)
+    local rating1 = get_ranged_combat_potential(unit1)
+    local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
         return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
     end
     return utils.compare(rating1, rating2)
 end
 
-local sort_by_any_melee_desc=make_sort_by_melee_skill_effectiveness_desc(MELEE_WEAPON_SKILLS)
-local sort_by_any_melee_asc=make_sort_by_melee_skill_effectiveness_asc(MELEE_WEAPON_SKILLS)
-local sort_by_any_ranged_desc=make_sort_by_ranged_skill_effectiveness_desc(RANGED_WEAPON_SKILLS)
-local sort_by_any_ranged_asc=make_sort_by_ranged_skill_effectiveness_asc(RANGED_WEAPON_SKILLS)
+local sort_by_any_melee_desc=make_sort_by_melee_skill_effectiveness_desc()
+local sort_by_any_melee_asc=make_sort_by_melee_skill_effectiveness_asc()
+local sort_by_any_ranged_desc=make_sort_by_ranged_skill_effectiveness_desc()
+local sort_by_any_ranged_asc=make_sort_by_ranged_skill_effectiveness_asc()
 local sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING)
 local sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING)
 local sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS)
@@ -446,13 +504,38 @@ local sort_by_spear_asc=make_sort_by_skill_asc(df.job_skill.SPEAR)
 local sort_by_crossbow_desc=make_sort_by_skill_desc(df.job_skill.CROSSBOW)
 local sort_by_crossbow_asc=make_sort_by_skill_asc(df.job_skill.CROSSBOW)
 
+local SORT_LIBRARY = {
+    {label='melee effectiveness', desc_fn=sort_by_any_melee_desc, asc_fn=sort_by_any_melee_asc, rating_fn=get_melee_skill_effectiveness_rating},
+    {label='ranged effectiveness', desc_fn=sort_by_any_ranged_desc, asc_fn=sort_by_any_ranged_asc, rating_fn=get_ranged_skill_effectiveness_rating},
+    {label='name', desc_fn=sort_by_name_desc, asc_fn=sort_by_name_asc},
+    {label='teacher skill', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
+    {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
+    {label='migrant wave', desc_fn=sort_by_migrant_wave_desc, asc_fn=sort_by_migrant_wave_asc, rating_fn=get_migrant_wave_rating},
+    {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating},
+    {label='mental stability', desc_fn=sort_by_mental_stability_desc, asc_fn=sort_by_mental_stability_asc, rating_fn=get_mental_stability_rating},
+    {label='axe skill', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
+    {label='sword skill', desc_fn=sort_by_sword_desc, asc_fn=sort_by_sword_asc, rating_fn=curry(get_skill_rating, df.job_skill.SWORD)},
+    {label='mace skill', desc_fn=sort_by_mace_desc, asc_fn=sort_by_mace_asc, rating_fn=curry(get_skill_rating, df.job_skill.MACE)},
+    {label='hammer skill', desc_fn=sort_by_hammer_desc, asc_fn=sort_by_hammer_asc, rating_fn=curry(get_skill_rating, df.job_skill.HAMMER)},
+    {label='spear skill', desc_fn=sort_by_spear_desc, asc_fn=sort_by_spear_asc, rating_fn=curry(get_skill_rating, df.job_skill.SPEAR)},
+    {label='crossbow skill', desc_fn=sort_by_crossbow_desc, asc_fn=sort_by_crossbow_asc, rating_fn=curry(get_skill_rating, df.job_skill.CROSSBOW)},
+    {label='melee potential', desc_fn=sort_by_melee_combat_potential_desc, asc_fn=sort_by_melee_combat_potential_asc, rating_fn=get_melee_combat_potential_rating},
+    {label='ranged potential', desc_fn=sort_by_ranged_combat_potential_desc, asc_fn=sort_by_ranged_combat_potential_asc, rating_fn=get_ranged_combat_potential_rating},
+}
+
+local RATING_FNS = {}
+for _, opt in ipairs(SORT_LIBRARY) do
+    RATING_FNS[opt.desc_fn] = opt.rating_fn
+    RATING_FNS[opt.asc_fn] = opt.rating_fn
+end
+
 -- ----------------------
 -- SquadAssignmentOverlay
 --
 
 SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
 SquadAssignmentOverlay.ATTRS{
-    default_pos={x=23, y=5},
+    default_pos={x=18, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
     frame={w=38, h=25},
@@ -472,6 +555,20 @@ end
 function SquadAssignmentOverlay:init()
     self.dirty = true
 
+    local sort_options = {}
+    for _, opt in ipairs(SORT_LIBRARY) do
+        table.insert(sort_options, {
+            label=opt.label..CH_DN,
+            value=opt.desc_fn,
+            pen=COLOR_GREEN,
+        })
+        table.insert(sort_options, {
+            label=opt.label..CH_UP,
+            value=opt.asc_fn,
+            pen=COLOR_YELLOW,
+        })
+    end
+
     self:addviews{
         widgets.EditField{
             view_id='search',
@@ -489,40 +586,7 @@ function SquadAssignmentOverlay:init()
                     frame={t=0, l=0},
                     label='Sort by:',
                     key='CUSTOM_SHIFT_S',
-                    options={
-                        {label='melee effectiveness'..CH_DN, value=sort_by_any_melee_desc, pen=COLOR_GREEN},
-                        {label='melee effectiveness'..CH_UP, value=sort_by_any_melee_asc, pen=COLOR_YELLOW},
-                        {label='ranged effectiveness'..CH_DN, value=sort_by_any_ranged_desc, pen=COLOR_GREEN},
-                        {label='ranged effectiveness'..CH_UP, value=sort_by_any_ranged_asc, pen=COLOR_YELLOW},
-                        {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
-                        {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
-                        {label='teacher skill'..CH_DN, value=sort_by_teacher_desc, pen=COLOR_GREEN},
-                        {label='teacher skill'..CH_UP, value=sort_by_teacher_asc, pen=COLOR_YELLOW},
-                        {label='tactics skill'..CH_DN, value=sort_by_tactics_desc, pen=COLOR_GREEN},
-                        {label='tactics skill'..CH_UP, value=sort_by_tactics_asc, pen=COLOR_YELLOW},
-                        {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
-                        {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
-                        {label='stress level'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
-                        {label='stress level'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
-                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
-                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
-                        {label='axe skill'..CH_DN, value=sort_by_axe_desc, pen=COLOR_GREEN},
-                        {label='axe skill'..CH_UP, value=sort_by_axe_asc, pen=COLOR_YELLOW},
-                        {label='sword skill'..CH_DN, value=sort_by_sword_desc, pen=COLOR_GREEN},
-                        {label='sword skill'..CH_UP, value=sort_by_sword_asc, pen=COLOR_YELLOW},
-                        {label='mace skill'..CH_DN, value=sort_by_mace_desc, pen=COLOR_GREEN},
-                        {label='mace skill'..CH_UP, value=sort_by_mace_asc, pen=COLOR_YELLOW},
-                        {label='hammer skill'..CH_DN, value=sort_by_hammer_desc, pen=COLOR_GREEN},
-                        {label='hammer skill'..CH_UP, value=sort_by_hammer_asc, pen=COLOR_YELLOW},
-                        {label='spear skill'..CH_DN, value=sort_by_spear_desc, pen=COLOR_GREEN},
-                        {label='spear skill'..CH_UP, value=sort_by_spear_asc, pen=COLOR_YELLOW},
-                        {label='crossbow skill'..CH_DN, value=sort_by_crossbow_desc, pen=COLOR_GREEN},
-                        {label='crossbow skill'..CH_UP, value=sort_by_crossbow_asc, pen=COLOR_YELLOW},
-                        {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
-                        {label='melee potential'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
-                        {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
-                        {label='ranged potential'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
-                    },
+                    options=sort_options,
                     initial_option=sort_by_any_melee_desc,
                     on_change=self:callback('refresh_list', 'sort'),
                 },
@@ -846,6 +910,29 @@ local function filter_vector(filter, prev_filter)
             unit_selector.unid:erase(idx)
         end
     end
+    -- fix up scroll position if it would be off the end of the list
+    if unit_selector.scroll_position + 10 > #unit_selector.unid then
+        unit_selector.scroll_position = math.max(0, #unit_selector.unid - 10)
+    end
+end
+
+local rating_annotations = {}
+
+local function annotate_visible_units(sort_fn)
+    rating_annotations = {}
+    rating_fn = RATING_FNS[sort_fn]
+    local max_idx = math.min(#unit_selector.unid-1, unit_selector.scroll_position+9)
+    for idx = unit_selector.scroll_position, max_idx do
+        local annotation_idx = idx - unit_selector.scroll_position + 1
+        local unit = df.unit.find(unit_selector.unid[idx])
+        rating_annotations[annotation_idx] = nil
+        if unit and rating_fn then
+            local val, color = rating_fn(unit)
+            if val then
+                rating_annotations[annotation_idx] = {val=val, color=color}
+            end
+        end
+    end
 end
 
 local SORT_WIDGET_NAMES = {
@@ -887,6 +974,8 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
     filter_vector(filter, self.prev_filter or {})
     self.prev_filter = filter
     utils.sort_vector(unit_selector.unid, nil, sort_fn)
+    annotate_visible_units(sort_fn)
+    self.saved_scroll_position = unit_selector.scroll_position
 end
 
 function SquadAssignmentOverlay:onInput(keys)
@@ -904,11 +993,59 @@ function SquadAssignmentOverlay:onRenderFrame(dc, frame_rect)
     if self.dirty then
         self:refresh_list()
         self.dirty = false
+    elseif self.saved_scroll_position ~= unit_selector.scroll_position then
+        annotate_visible_units(self.subviews.sort:getOptionValue())
+        self.saved_scroll_position = unit_selector.scroll_position
+    end
+end
+
+-- ----------------------
+-- SquadAnnotationOverlay
+--
+
+SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
+SquadAnnotationOverlay.ATTRS{
+    default_pos={x=56, y=5},
+    default_enabled=true,
+    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
+    frame={w=5, h=35},
+    frame_style=gui.FRAME_INTERIOR_MEDIUM,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function get_annotation_text(idx)
+    local elem = rating_annotations[idx]
+    if not elem or not tonumber(elem.val) then return ' - ' end
+
+    return tostring(math.tointeger(elem.val))
+end
+
+function get_annotation_color(idx)
+    local elem = rating_annotations[idx]
+    return elem and elem.color or nil
+end
+
+function SquadAnnotationOverlay:init()
+    for idx = 1, 10 do
+        self:addviews{
+            widgets.Label{
+                frame={t=idx*3+1, h=1, w=3},
+                text={
+                    {
+                        text=curry(get_annotation_text, idx),
+                        pen=curry(get_annotation_color, idx),
+                        width=3,
+                        rjustify=true,
+                    },
+                },
+            },
+        }
     end
 end
 
 OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
+    squad_annotation=SquadAnnotationOverlay,
 }
 
 --[[

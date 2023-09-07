@@ -425,28 +425,26 @@ local function sort_by_ranged_combat_potential_asc(unit_id_1, unit_id_2)
     return utils.compare(rating1, rating2)
 end
 
-local SORT_FNS = {
-    sort_by_any_melee_desc=make_sort_by_melee_skill_effectiveness_desc(MELEE_WEAPON_SKILLS),
-    sort_by_any_melee_asc=make_sort_by_melee_skill_effectiveness_asc(MELEE_WEAPON_SKILLS),
-    sort_by_any_ranged_desc=make_sort_by_ranged_skill_effectiveness_desc(RANGED_WEAPON_SKILLS),
-    sort_by_any_ranged_asc=make_sort_by_ranged_skill_effectiveness_asc(RANGED_WEAPON_SKILLS),
-    sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING),
-    sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING),
-    sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS),
-    sort_by_tactics_asc=make_sort_by_skill_asc(df.job_skill.MILITARY_TACTICS),
-    sort_by_axe_desc=make_sort_by_skill_desc(df.job_skill.AXE),
-    sort_by_axe_asc=make_sort_by_skill_asc(df.job_skill.AXE),
-    sort_by_sword_desc=make_sort_by_skill_desc(df.job_skill.SWORD),
-    sort_by_sword_asc=make_sort_by_skill_asc(df.job_skill.SWORD),
-    sort_by_mace_desc=make_sort_by_skill_desc(df.job_skill.MACE),
-    sort_by_mace_asc=make_sort_by_skill_asc(df.job_skill.MACE),
-    sort_by_hammer_desc=make_sort_by_skill_desc(df.job_skill.HAMMER),
-    sort_by_hammer_asc=make_sort_by_skill_asc(df.job_skill.HAMMER),
-    sort_by_spear_desc=make_sort_by_skill_desc(df.job_skill.SPEAR),
-    sort_by_spear_asc=make_sort_by_skill_asc(df.job_skill.SPEAR),
-    sort_by_crossbow_desc=make_sort_by_skill_desc(df.job_skill.CROSSBOW),
-    sort_by_crossbow_asc=make_sort_by_skill_asc(df.job_skill.CROSSBOW),
-}
+local sort_by_any_melee_desc=make_sort_by_melee_skill_effectiveness_desc(MELEE_WEAPON_SKILLS)
+local sort_by_any_melee_asc=make_sort_by_melee_skill_effectiveness_asc(MELEE_WEAPON_SKILLS)
+local sort_by_any_ranged_desc=make_sort_by_ranged_skill_effectiveness_desc(RANGED_WEAPON_SKILLS)
+local sort_by_any_ranged_asc=make_sort_by_ranged_skill_effectiveness_asc(RANGED_WEAPON_SKILLS)
+local sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING)
+local sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING)
+local sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS)
+local sort_by_tactics_asc=make_sort_by_skill_asc(df.job_skill.MILITARY_TACTICS)
+local sort_by_axe_desc=make_sort_by_skill_desc(df.job_skill.AXE)
+local sort_by_axe_asc=make_sort_by_skill_asc(df.job_skill.AXE)
+local sort_by_sword_desc=make_sort_by_skill_desc(df.job_skill.SWORD)
+local sort_by_sword_asc=make_sort_by_skill_asc(df.job_skill.SWORD)
+local sort_by_mace_desc=make_sort_by_skill_desc(df.job_skill.MACE)
+local sort_by_mace_asc=make_sort_by_skill_asc(df.job_skill.MACE)
+local sort_by_hammer_desc=make_sort_by_skill_desc(df.job_skill.HAMMER)
+local sort_by_hammer_asc=make_sort_by_skill_asc(df.job_skill.HAMMER)
+local sort_by_spear_desc=make_sort_by_skill_desc(df.job_skill.SPEAR)
+local sort_by_spear_asc=make_sort_by_skill_asc(df.job_skill.SPEAR)
+local sort_by_crossbow_desc=make_sort_by_skill_desc(df.job_skill.CROSSBOW)
+local sort_by_crossbow_asc=make_sort_by_skill_asc(df.job_skill.CROSSBOW)
 
 -- ----------------------
 -- SquadAssignmentOverlay
@@ -492,40 +490,40 @@ function SquadAssignmentOverlay:init()
                     label='Sort by:',
                     key='CUSTOM_SHIFT_S',
                     options={
-                        {label='melee effectiveness'..CH_DN, value=SORT_FNS.sort_by_any_melee_desc, pen=COLOR_GREEN},
-                        {label='melee effectiveness'..CH_UP, value=SORT_FNS.sort_by_any_melee_asc, pen=COLOR_YELLOW},
-                        {label='ranged effectiveness'..CH_DN, value=SORT_FNS.sort_by_any_ranged_desc, pen=COLOR_GREEN},
-                        {label='ranged effectiveness'..CH_UP, value=SORT_FNS.sort_by_any_ranged_asc, pen=COLOR_YELLOW},
+                        {label='melee effectiveness'..CH_DN, value=sort_by_any_melee_desc, pen=COLOR_GREEN},
+                        {label='melee effectiveness'..CH_UP, value=sort_by_any_melee_asc, pen=COLOR_YELLOW},
+                        {label='ranged effectiveness'..CH_DN, value=sort_by_any_ranged_desc, pen=COLOR_GREEN},
+                        {label='ranged effectiveness'..CH_UP, value=sort_by_any_ranged_asc, pen=COLOR_YELLOW},
                         {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
                         {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
-                        {label='teacher skill'..CH_DN, value=SORT_FNS.sort_by_teacher_desc, pen=COLOR_GREEN},
-                        {label='teacher skill'..CH_UP, value=SORT_FNS.sort_by_teacher_asc, pen=COLOR_YELLOW},
-                        {label='tactics skill'..CH_DN, value=SORT_FNS.sort_by_tactics_desc, pen=COLOR_GREEN},
-                        {label='tactics skill'..CH_UP, value=SORT_FNS.sort_by_tactics_asc, pen=COLOR_YELLOW},
+                        {label='teacher skill'..CH_DN, value=sort_by_teacher_desc, pen=COLOR_GREEN},
+                        {label='teacher skill'..CH_UP, value=sort_by_teacher_asc, pen=COLOR_YELLOW},
+                        {label='tactics skill'..CH_DN, value=sort_by_tactics_desc, pen=COLOR_GREEN},
+                        {label='tactics skill'..CH_UP, value=sort_by_tactics_asc, pen=COLOR_YELLOW},
                         {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
                         {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
                         {label='stress level'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
                         {label='stress level'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
                         {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
                         {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
-                        {label='axe skill'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
-                        {label='axe skill'..CH_UP, value=SORT_FNS.sort_by_axe_asc, pen=COLOR_YELLOW},
-                        {label='sword skill'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
-                        {label='sword skill'..CH_UP, value=SORT_FNS.sort_by_sword_asc, pen=COLOR_YELLOW},
-                        {label='mace skill'..CH_DN, value=SORT_FNS.sort_by_mace_desc, pen=COLOR_GREEN},
-                        {label='mace skill'..CH_UP, value=SORT_FNS.sort_by_mace_asc, pen=COLOR_YELLOW},
-                        {label='hammer skill'..CH_DN, value=SORT_FNS.sort_by_hammer_desc, pen=COLOR_GREEN},
-                        {label='hammer skill'..CH_UP, value=SORT_FNS.sort_by_hammer_asc, pen=COLOR_YELLOW},
-                        {label='spear skill'..CH_DN, value=SORT_FNS.sort_by_spear_desc, pen=COLOR_GREEN},
-                        {label='spear skill'..CH_UP, value=SORT_FNS.sort_by_spear_asc, pen=COLOR_YELLOW},
-                        {label='crossbow skill'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
-                        {label='crossbow skill'..CH_UP, value=SORT_FNS.sort_by_crossbow_asc, pen=COLOR_YELLOW},
+                        {label='axe skill'..CH_DN, value=sort_by_axe_desc, pen=COLOR_GREEN},
+                        {label='axe skill'..CH_UP, value=sort_by_axe_asc, pen=COLOR_YELLOW},
+                        {label='sword skill'..CH_DN, value=sort_by_sword_desc, pen=COLOR_GREEN},
+                        {label='sword skill'..CH_UP, value=sort_by_sword_asc, pen=COLOR_YELLOW},
+                        {label='mace skill'..CH_DN, value=sort_by_mace_desc, pen=COLOR_GREEN},
+                        {label='mace skill'..CH_UP, value=sort_by_mace_asc, pen=COLOR_YELLOW},
+                        {label='hammer skill'..CH_DN, value=sort_by_hammer_desc, pen=COLOR_GREEN},
+                        {label='hammer skill'..CH_UP, value=sort_by_hammer_asc, pen=COLOR_YELLOW},
+                        {label='spear skill'..CH_DN, value=sort_by_spear_desc, pen=COLOR_GREEN},
+                        {label='spear skill'..CH_UP, value=sort_by_spear_asc, pen=COLOR_YELLOW},
+                        {label='crossbow skill'..CH_DN, value=sort_by_crossbow_desc, pen=COLOR_GREEN},
+                        {label='crossbow skill'..CH_UP, value=sort_by_crossbow_asc, pen=COLOR_YELLOW},
                         {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
                         {label='melee potential'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
                         {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
                         {label='ranged potential'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
                     },
-                    initial_option=SORT_FNS.sort_by_any_melee_desc,
+                    initial_option=sort_by_any_melee_desc,
                     on_change=self:callback('refresh_list', 'sort'),
                 },
                 widgets.CycleHotkeyLabel{
@@ -533,10 +531,10 @@ function SquadAssignmentOverlay:init()
                     frame={t=2, l=0, w=11},
                     options={
                         {label='melee eff.', value=sort_noop},
-                        {label='melee eff.'..CH_DN, value=SORT_FNS.sort_by_any_melee_desc, pen=COLOR_GREEN},
-                        {label='melee eff.'..CH_UP, value=SORT_FNS.sort_by_any_melee_asc, pen=COLOR_YELLOW},
+                        {label='melee eff.'..CH_DN, value=sort_by_any_melee_desc, pen=COLOR_GREEN},
+                        {label='melee eff.'..CH_UP, value=sort_by_any_melee_asc, pen=COLOR_YELLOW},
                     },
-                    initial_option=SORT_FNS.sort_by_any_melee_desc,
+                    initial_option=sort_by_any_melee_desc,
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_any_melee'),
                 },
@@ -545,8 +543,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=2, r=8, w=12},
                     options={
                         {label='ranged eff.', value=sort_noop},
-                        {label='ranged eff.'..CH_DN, value=SORT_FNS.sort_by_any_ranged_desc, pen=COLOR_GREEN},
-                        {label='ranged eff.'..CH_UP, value=SORT_FNS.sort_by_any_ranged_asc, pen=COLOR_YELLOW},
+                        {label='ranged eff.'..CH_DN, value=sort_by_any_ranged_desc, pen=COLOR_GREEN},
+                        {label='ranged eff.'..CH_UP, value=sort_by_any_ranged_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_any_ranged'),
@@ -567,8 +565,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=4, l=0, w=8},
                     options={
                         {label='teacher', value=sort_noop},
-                        {label='teacher'..CH_DN, value=SORT_FNS.sort_by_teacher_desc, pen=COLOR_GREEN},
-                        {label='teacher'..CH_UP, value=SORT_FNS.sort_by_teacher_asc, pen=COLOR_YELLOW},
+                        {label='teacher'..CH_DN, value=sort_by_teacher_desc, pen=COLOR_GREEN},
+                        {label='teacher'..CH_UP, value=sort_by_teacher_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_teacher'),
@@ -578,8 +576,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=4, l=10, w=8},
                     options={
                         {label='tactics', value=sort_noop},
-                        {label='tactics'..CH_DN, value=SORT_FNS.sort_by_tactics_desc, pen=COLOR_GREEN},
-                        {label='tactics'..CH_UP, value=SORT_FNS.sort_by_tactics_asc, pen=COLOR_YELLOW},
+                        {label='tactics'..CH_DN, value=sort_by_tactics_desc, pen=COLOR_GREEN},
+                        {label='tactics'..CH_UP, value=sort_by_tactics_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_tactics'),
@@ -622,8 +620,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=8, l=0, w=4},
                     options={
                         {label='axe', value=sort_noop},
-                        {label='axe'..CH_DN, value=SORT_FNS.sort_by_axe_desc, pen=COLOR_GREEN},
-                        {label='axe'..CH_UP, value=SORT_FNS.sort_by_axe_asc, pen=COLOR_YELLOW},
+                        {label='axe'..CH_DN, value=sort_by_axe_desc, pen=COLOR_GREEN},
+                        {label='axe'..CH_UP, value=sort_by_axe_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_axe'),
@@ -633,8 +631,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=8, w=6},
                     options={
                         {label='sword', value=sort_noop},
-                        {label='sword'..CH_DN, value=SORT_FNS.sort_by_sword_desc, pen=COLOR_GREEN},
-                        {label='sword'..CH_UP, value=SORT_FNS.sort_by_sword_asc, pen=COLOR_YELLOW},
+                        {label='sword'..CH_DN, value=sort_by_sword_desc, pen=COLOR_GREEN},
+                        {label='sword'..CH_UP, value=sort_by_sword_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_sword'),
@@ -644,8 +642,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=8, r=0, w=5},
                     options={
                         {label='mace', value=sort_noop},
-                        {label='mace'..CH_DN, value=SORT_FNS.sort_by_mace_desc, pen=COLOR_GREEN},
-                        {label='mace'..CH_UP, value=SORT_FNS.sort_by_mace_asc, pen=COLOR_YELLOW},
+                        {label='mace'..CH_DN, value=sort_by_mace_desc, pen=COLOR_GREEN},
+                        {label='mace'..CH_UP, value=sort_by_mace_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_mace'),
@@ -655,8 +653,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=10, l=0, w=7},
                     options={
                         {label='hammer', value=sort_noop},
-                        {label='hammer'..CH_DN, value=SORT_FNS.sort_by_hammer_desc, pen=COLOR_GREEN},
-                        {label='hammer'..CH_UP, value=SORT_FNS.sort_by_hammer_asc, pen=COLOR_YELLOW},
+                        {label='hammer'..CH_DN, value=sort_by_hammer_desc, pen=COLOR_GREEN},
+                        {label='hammer'..CH_UP, value=sort_by_hammer_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_hammer'),
@@ -666,8 +664,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=10, w=6},
                     options={
                         {label='spear', value=sort_noop},
-                        {label='spear'..CH_DN, value=SORT_FNS.sort_by_spear_desc, pen=COLOR_GREEN},
-                        {label='spear'..CH_UP, value=SORT_FNS.sort_by_spear_asc, pen=COLOR_YELLOW},
+                        {label='spear'..CH_DN, value=sort_by_spear_desc, pen=COLOR_GREEN},
+                        {label='spear'..CH_UP, value=sort_by_spear_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_spear'),
@@ -677,8 +675,8 @@ function SquadAssignmentOverlay:init()
                     frame={t=10, r=0, w=9},
                     options={
                         {label='crossbow', value=sort_noop},
-                        {label='crossbow'..CH_DN, value=SORT_FNS.sort_by_crossbow_desc, pen=COLOR_GREEN},
-                        {label='crossbow'..CH_UP, value=SORT_FNS.sort_by_crossbow_asc, pen=COLOR_YELLOW},
+                        {label='crossbow'..CH_DN, value=sort_by_crossbow_desc, pen=COLOR_GREEN},
+                        {label='crossbow'..CH_UP, value=sort_by_crossbow_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_crossbow'),

@@ -478,7 +478,7 @@ function PlannerOverlay:init()
             end,
         },
         widgets.Label{
-            frame={b=2, l=23},
+            frame={b=4, l=23},
             text_pen=COLOR_DARKGREY,
             text={
                 'Selected area: ',

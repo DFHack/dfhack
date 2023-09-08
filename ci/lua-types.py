@@ -1119,16 +1119,70 @@ PATH_LUA_MODULES_OUTPUT = "./types/library/"
 
 PATTERN_MKMODULE = r"^local\s_ENV\s=\smkmodule\(['\"](.+)['\"]\)\n"
 PATTERN_LUA_FUNCTION = r"((^--\s.+\n)*){0,1}((^---@.+\n)*){0,1}^function\s([\w:]+)\((.*)\)"
-PATTERN_LUA_VARAIBLE = r"((^--\s.+\n)*){0,1}^(\w+)\s=.*\n"
+PATTERN_LUA_VARAIBLE = r"((^--\s.+\n)*){0,1}^(\w+)[\s]*=[\s]*(.+)\n"
 
 
-@dataclass
 class LuaFunc:
-    fn_name: str
+    name: str
     class_name: str
     ret: str
     args: list[str]
     comment: str
+
+    def __init__(self, name: str, class_name: str, ret: str, args: list[str], comment: str) -> None:
+        self.name = name
+        self.class_name = class_name
+        self.ret = ret
+        self.args = args
+        self.comment = comment
+
+    def as_field(self) -> str:
+        return self.comment + f"---@field {self.name} fun({', '.join(self.args)}): {self.ret}\n"
+
+
+class LuaVariable:
+    name: str
+    class_name: str
+    value: str
+    type_name: str
+    comment: str
+
+    def __init__(self, name: str, class_name: str, value: str, comment: str) -> None:
+        self.name = name
+        self.class_name = class_name
+        self.value = value
+        self.type_name = self.fetch_type(value)
+        self.comment = comment
+
+    def fetch_type(self, value: str) -> str:
+        try:
+            _val = int(value)
+            return "integer"
+        except ValueError:
+            pass
+        if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+            return "string"
+        if value.startswith("function"):
+            return "function"
+        if value == "true" or value == "false":
+            return "boolean"
+        if value.startswith("{"):
+            return "table"
+        return "any"
+
+    def as_field(self) -> str:
+        type_name = "any"
+        if self.name == self.class_name:
+            type_name = self.class_name
+        else:
+            match self.type_name:
+                case "integer" | "string" | "boolean":
+                    type_name = self.value
+                case "function" | "table":
+                    type_name = self.type_name
+                case _:
+                    type_name = "any"
+        return self.comment + f"---@field {self.name} {type_name}\n"
 
 
 def lua_modules_processing() -> None:
@@ -1159,12 +1213,11 @@ def parse_lua_module(data: str, module: str, header: bool = True) -> Iterable[st
         target = item.class_name or module
         if target not in classes:
             classes[target] = []
-        classes[target].append(item.comment + f"---@field {item.fn_name} fun({', '.join(item.args)}): {item.ret}\n")
-    for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
-        type_name = match.group(3) if match.group(3) in classes else "any"
+        classes[target].append(item.as_field())
+    for item in parse_lua_variables(data, classes, module):
         if module not in classes:
             classes[module] = []
-        classes[module].append(multiline_comment(match.group(1)) + f"---@field {match.group(3)} {type_name}\n")
+        classes[module].append(item.as_field())
     for cl in classes:
         yield render_class((cl, classes[cl]), header)
 
@@ -1190,6 +1243,12 @@ def parse_annotation(data: str) -> dict[str, str]:
             case _:
                 pass
     return out
+
+
+def parse_lua_variables(data: str, classes: dict[str, list[str]], module: str = "") -> Iterable[LuaVariable]:
+    for match in re.finditer(PATTERN_LUA_VARAIBLE, data, re.MULTILINE):
+        class_name = match.group(3) if match.group(3) in classes else ""
+        yield LuaVariable(match.group(3), class_name, match.group(4), multiline_comment(match.group(1)))
 
 
 def parse_lua_functions(data: str, module: str = "") -> Iterable[LuaFunc]:
@@ -1222,6 +1281,6 @@ def parse_lua_functions(data: str, module: str = "") -> Iterable[LuaFunc]:
 
 if __name__ == "__main__":
     docs = parse_docs()
-    symbols_processing()
-    signatures_processing()
+    # symbols_processing()
+    # signatures_processing()
     lua_modules_processing()

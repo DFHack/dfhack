@@ -9,14 +9,15 @@ local widgets = require('gui.widgets')
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
 
-local function get_rating(val, max, med, low)
-    val = math.min(max, val)
-    local percent = (val * 100) // max
-    local color = COLOR_GREEN
-    if percent < (low or 50) then color = COLOR_RED
-    elseif percent < (med or 75) then color = COLOR_YELLOW
-    end
-    return percent, color
+local function get_rating(val, baseline, range, highest, high, med, low)
+    val = val - (baseline or 0)
+    range = range or 100
+    local percentile = (math.min(range, val) * 100) // range
+    if percentile < (low or 25) then return percentile, COLOR_RED end
+    if percentile < (med or 50) then return percentile, COLOR_LIGHTRED end
+    if percentile < (high or 75) then return percentile, COLOR_YELLOW end
+    if percentile < (highest or 90) then return percentile, COLOR_GREEN end
+    return percentile, COLOR_LIGHTGREEN
 end
 
 local function sort_noop(a, b)
@@ -91,7 +92,7 @@ local function get_stress(unit)
 end
 
 local function get_stress_rating(unit)
-    return get_rating(-get_stress(unit) + 100000, 200000, 50, 25)
+    return get_rating(dfhack.units.getStressCategory(unit), 0, 100, 4, 3, 2, 1)
 end
 
 local function sort_by_stress_desc(unit_id_1, unit_id_2)
@@ -135,7 +136,7 @@ end
 local function get_skill_rating(skill, unit)
     local uskill = get_skill(skill, unit)
     if not uskill then return nil end
-    return get_rating(uskill.rating, 100, 5, 0)
+    return get_rating(uskill.rating, 0, 100, 10, 5, 1, 0)
 end
 
 local MELEE_WEAPON_SKILLS = {
@@ -175,7 +176,7 @@ local function melee_skill_effectiveness(unit)
 end
 
 local function get_melee_skill_effectiveness_rating(unit)
-    return get_rating(melee_skill_effectiveness(unit), 2000000)
+    return get_rating(melee_skill_effectiveness(unit), 350000, 2350000, 78, 64, 49, 35)
 end
 
 local function make_sort_by_melee_skill_effectiveness_desc()
@@ -235,7 +236,7 @@ local function ranged_skill_effectiveness(unit)
 end
 
 local function get_ranged_skill_effectiveness_rating(unit)
-    return get_rating(ranged_skill_effectiveness(unit), 500000)
+    return get_rating(ranged_skill_effectiveness(unit), 0, 500000, 90, 62, 44, 27)
 end
 
 local function make_sort_by_ranged_skill_effectiveness_desc(list)
@@ -347,10 +348,6 @@ local function get_mental_stability(unit)
     return rating
 end
 
-local function get_mental_stability_rating(unit)
-    return get_rating(get_mental_stability(unit), 100, 10, 0)
-end
-
 local function sort_by_mental_stability_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local unit1 = df.unit.find(unit_id_1)
@@ -404,7 +401,7 @@ local function get_melee_combat_potential(unit)
 end
 
 local function get_melee_combat_potential_rating(unit)
-    return get_rating(get_melee_combat_potential(unit), 2000000)
+    return get_rating(get_melee_combat_potential(unit), 300000, 2600000, 81, 64, 46, 29)
 end
 
 local function sort_by_melee_combat_potential_desc(unit_id_1, unit_id_2)
@@ -447,12 +444,12 @@ local function get_ranged_combat_potential(unit)
     local kinesthetic_sense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
     -- ranged combat potential formula
-    local rating = agility * 5 + kinesthetic_sense * 5 + spatial_sense * 2 + focus * 2
+    local rating = agility * 5 + kinesthetic_sense * 2 + spatial_sense * 5 + focus * 2
     return rating
 end
 
 local function get_ranged_combat_potential_rating(unit)
-    return get_rating(get_ranged_combat_potential(unit), 40000)
+    return get_rating(get_ranged_combat_potential(unit), 0, 70000, 73, 57, 41, 25)
 end
 
 local function sort_by_ranged_combat_potential_desc(unit_id_1, unit_id_2)
@@ -480,6 +477,54 @@ local function sort_by_ranged_combat_potential_asc(unit_id_1, unit_id_2)
     if rating1 == rating2 then
         return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
     end
+    return utils.compare(rating1, rating2)
+end
+
+local function get_need(unit)
+    if not unit or not unit.status.current_soul then return end
+    for _, need in ipairs(unit.status.current_soul.personality.needs) do
+        if need.id == df.need_type.MartialTraining and need.focus_level < 0 then
+            return -need.focus_level
+        end
+    end
+end
+
+local function get_need_rating(unit)
+    local focus_level = get_need(unit)
+    if not focus_level then return end
+    focus_level = math.min(focus_level, 100000)
+    return get_rating(100000 - focus_level, 0, 100000, 100, 99, 90, 0)
+end
+
+local function sort_by_need_desc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = get_need(unit1)
+    local rating2 = get_need(unit2)
+    if rating1 == rating2 then
+        return sort_by_stress_desc(unit_id_1, unit_id_2)
+    end
+    if not rating2 then return -1 end
+    if not rating1 then return 1 end
+    return utils.compare(rating2, rating1)
+end
+
+local function sort_by_need_asc(unit_id_1, unit_id_2)
+    if unit_id_1 == unit_id_2 then return 0 end
+    local unit1 = df.unit.find(unit_id_1)
+    local unit2 = df.unit.find(unit_id_2)
+    if not unit1 then return -1 end
+    if not unit2 then return 1 end
+    local rating1 = get_need(unit1)
+    local rating2 = get_need(unit2)
+    if rating1 == rating2 then
+        return sort_by_stress_asc(unit_id_1, unit_id_2)
+    end
+    if not rating2 then return 1 end
+    if not rating1 then return -1 end
     return utils.compare(rating1, rating2)
 end
 
@@ -512,7 +557,7 @@ local SORT_LIBRARY = {
     {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
     {label='migrant wave', desc_fn=sort_by_migrant_wave_desc, asc_fn=sort_by_migrant_wave_asc, rating_fn=get_migrant_wave_rating},
     {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating},
-    {label='mental stability', desc_fn=sort_by_mental_stability_desc, asc_fn=sort_by_mental_stability_asc, rating_fn=get_mental_stability_rating},
+    {label='need for training', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating},
     {label='axe skill', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
     {label='sword skill', desc_fn=sort_by_sword_desc, asc_fn=sort_by_sword_asc, rating_fn=curry(get_skill_rating, df.job_skill.SWORD)},
     {label='mace skill', desc_fn=sort_by_mace_desc, asc_fn=sort_by_mace_asc, rating_fn=curry(get_skill_rating, df.job_skill.MACE)},
@@ -538,7 +583,7 @@ SquadAssignmentOverlay.ATTRS{
     default_pos={x=18, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=38, h=25},
+    frame={w=38, h=31},
     frame_style=gui.FRAME_PANEL,
     frame_background=gui.CLEAR_PEN,
     autoarrange_subviews=true,
@@ -669,15 +714,15 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_stress'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_mental_stability',
-                    frame={t=6, r=0, w=17},
+                    view_id='sort_need',
+                    frame={t=6, r=0, w=18},
                     options={
-                        {label='mental stability', value=sort_noop},
-                        {label='mental stability'..CH_DN, value=sort_by_mental_stability_desc, pen=COLOR_GREEN},
-                        {label='mental stability'..CH_UP, value=sort_by_mental_stability_asc, pen=COLOR_YELLOW},
+                        {label='need for training', value=sort_noop},
+                        {label='need for training'..CH_DN, value=sort_by_need_desc, pen=COLOR_GREEN},
+                        {label='need for training'..CH_UP, value=sort_by_need_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_mental_stability'),
+                    on_change=self:callback('refresh_list', 'sort_need'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_axe',
@@ -808,6 +853,45 @@ function SquadAssignmentOverlay:init()
             initial_option='include',
             on_change=function() self:refresh_list() end,
         },
+        widgets.CycleHotkeyLabel{
+            view_id='infant',
+            frame={l=0},
+            key='CUSTOM_SHIFT_M',
+            label='Mothers carrying infants:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='unstable',
+            frame={l=0},
+            key='CUSTOM_SHIFT_U',
+            label='Easily stressed units:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='maimed',
+            frame={l=0},
+            key='CUSTOM_SHIFT_I',
+            label='Critically injured:',
+            options={
+                {label='Include', value='include', pen=COLOR_GREEN},
+                {label='Only', value='only', pen=COLOR_YELLOW},
+                {label='Exclude', value='exclude', pen=COLOR_RED},
+            },
+            initial_option='include',
+            on_change=function() self:refresh_list() end,
+        },
     }
 end
 
@@ -846,6 +930,23 @@ local function is_nobility(unit)
     return false
 end
 
+local function has_infant(unit)
+    -- TODO
+    return false
+end
+
+local function is_unstable(unit)
+    -- stddev percentiles are 61, 48, 35, 23
+    -- let's go with one stddev below the mean (35) as the cutoff
+    local _, color = get_rating(get_mental_stability(unit), -40, 80, 35, 0, 0, 0)
+    return color ~= COLOR_LIGHTGREEN
+end
+
+local function is_maimed(unit)
+    -- TODO
+    return false
+end
+
 local function filter_matches(unit_id, filter)
     if unit_id == -1 then return true end
     local unit = df.unit.find(unit_id)
@@ -856,6 +957,12 @@ local function filter_matches(unit_id, filter)
     if filter.officials == 'exclude' and is_elected_or_appointed_official(unit) then return false end
     if filter.nobles == 'only' and not is_nobility(unit) then return false end
     if filter.nobles == 'exclude' and is_nobility(unit) then return false end
+    if filter.infant == 'only' and not has_infant(unit) then return false end
+    if filter.infant == 'exclude' and has_infant(unit) then return false end
+    if filter.unstable == 'only' and not is_unstable(unit) then return false end
+    if filter.unstable == 'exclude' and is_unstable(unit) then return false end
+    if filter.maimed == 'only' and not is_maimed(unit) then return false end
+    if filter.maimed == 'exclude' and is_maimed(unit) then return false end
     if #filter.search == 0 then return true end
     local search_key = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
     return normalize_search_key(search_key):find(dfhack.toSearchNormalized(filter.search))
@@ -865,14 +972,20 @@ local function is_noop_filter(filter)
     return #filter.search == 0 and
         filter.military == 'include' and
         filter.officials == 'include' and
-        filter.nobles == 'include'
+        filter.nobles == 'include' and
+        filter.infant == 'include' and
+        filter.unstable == 'include' and
+        filter.maimed == 'include'
 end
 
 local function is_filter_equal(a, b)
     return a.search == b.search and
         a.military == b.military and
         a.officials == b.officials and
-        a.nobles == b.nobles
+        a.nobles == b.nobles and
+        a.infant == b.infant and
+        a.unstable == b.unstable and
+        a.maimed == b.maimed
 end
 
 local unit_selector = df.global.game.main_interface.unit_selector
@@ -944,7 +1057,7 @@ local SORT_WIDGET_NAMES = {
     'sort_tactics',
     'sort_migrant_wave',
     'sort_stress',
-    'sort_mental_stability',
+    'sort_need',
     'sort_axe',
     'sort_sword',
     'sort_mace',
@@ -970,6 +1083,9 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
         military=self.subviews.military:getOptionValue(),
         officials=self.subviews.officials:getOptionValue(),
         nobles=self.subviews.nobles:getOptionValue(),
+        infant=self.subviews.infant:getOptionValue(),
+        unstable=self.subviews.unstable:getOptionValue(),
+        maimed=self.subviews.maimed:getOptionValue(),
     }
     filter_vector(filter, self.prev_filter or {})
     self.prev_filter = filter

@@ -991,7 +991,7 @@ local function is_unstable(unit)
 end
 
 local function is_maimed(unit)
-    return unit.flags2.vision_missing or
+    return not unit.flags2.vision_good or
         unit.status2.limbs_grasp_count < 2 or
         unit.status2.limbs_stand_count == 0
 end
@@ -1207,14 +1207,13 @@ for idx=0,6 do
     end
 end
 
-local ASCII_FACE_TILES = {}
 for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
     local face = {}
-    ensure_key(face, 0)[0] = to_pen{ch=1, fg=color}
-    ensure_key(face, 0)[1] = to_pen{ch='\\', fg=color}
-    ensure_key(face, 1)[0] = to_pen{ch='\\', fg=color}
-    ensure_key(face, 1)[1] = to_pen{ch='/', fg=color}
-    ASCII_FACE_TILES[idx-1] = face
+    ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color}
+    ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color}
+    ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color}
+    ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color}
+    FACE_TILES[idx-1] = face
 end
 
 function get_stress_face_tile(idx, x, y)
@@ -1223,7 +1222,7 @@ function get_stress_face_tile(idx, x, y)
         return x == 0 and y == 1 and DASH_PEN or gui.CLEAR_PEN
     end
     local val = math.min(6, elem.val)
-    return (dfhack.screen.inGraphicsMode() and FACE_TILES or ASCII_FACE_TILES)[val][y][x]
+    return FACE_TILES[val][y][x]
 end
 
 function SquadAnnotationOverlay:init()

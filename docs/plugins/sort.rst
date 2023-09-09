@@ -37,11 +37,14 @@ be effective in the military in their current state (though see "melee
 potential" and "ranged potential" sorts below for predictions about future
 effectiveness).
 
-The "arrival order" sort shows the order that your dwarves appeared at your
-fort. The numbers on the left indicate the relative arrival order, and the
-numbers for the most recent migration wave will be colored bright green.
+The "arrival order" sorts your citizens according to the most recent time they
+entered your map. The numbers on the left indicate the relative arrival order,
+and the numbers for the group of dwarves that most recently entered the map
+will be at the top and be colored bright green. If you run this sort after you
+get a new group of migrants, the migrant wave will be colored bright green.
 Dwarves that arrived earlier will have numbers in yellow, and your original
-dwarves (if any still survive) will have numbers in red.
+dwarves (if any still survive and have never left and re-entered the map) will
+have numbers in red.
 
 The "stress" sort order will bring your most stressed dwarves to the top, ready
 for addition to a :wiki:`therapy squad <Stress#Recovering_unhappy_dwarves>` to

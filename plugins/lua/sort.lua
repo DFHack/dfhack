@@ -6,6 +6,8 @@ local setbelief = reqscript('modtools/set-belief')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
+local GLOBAL_KEY = 'sort'
+
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
 
@@ -1196,24 +1198,26 @@ local to_pen = dfhack.pen.parse
 local DASH_PEN = to_pen{ch='-', fg=COLOR_WHITE, keep_lower=true}
 
 local FACE_TILES = {}
-for idx=0,6 do
-    FACE_TILES[idx] = {}
-    local face_off = (6 - idx) * 2
-    for y=0,1 do
-        for x=0,1 do
-            local tile = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 32 + face_off + x, 6 + y)
-            ensure_key(FACE_TILES[idx], y)[x] = tile
+local function init_face_tiles()
+    for idx=0,6 do
+        FACE_TILES[idx] = {}
+        local face_off = (6 - idx) * 2
+        for y=0,1 do
+            for x=0,1 do
+                local tile = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 32 + face_off + x, 6 + y)
+                ensure_key(FACE_TILES[idx], y)[x] = tile
+            end
         end
     end
-end
 
-for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
-    local face = {}
-    ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color}
-    ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color}
-    ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color}
-    ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color}
-    FACE_TILES[idx-1] = face
+    for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
+        local face = {}
+        ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color}
+        ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color}
+        ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color}
+        ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color}
+        FACE_TILES[idx-1] = face
+    end
 end
 
 function get_stress_face_tile(idx, x, y)
@@ -1260,6 +1264,14 @@ OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
 }
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+
+    init_face_tiles()
+end
 
 --[[
 local utils = require('utils')

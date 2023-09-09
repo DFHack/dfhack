@@ -492,8 +492,12 @@ end
 local function get_need_rating(unit)
     local focus_level = get_need(unit)
     if not focus_level then return end
-    focus_level = math.min(focus_level, 100000)
-    return get_rating(100000 - focus_level, 0, 100000, 100, 99, 90, 0)
+    -- convert to stress ratings so we can use stress faces as labels
+    if focus_level > 100000 then return 0 end
+    if focus_level > 10000 then return 1 end
+    if focus_level > 1000 then return 2 end
+    if focus_level > 100 then return 3 end
+    return 6
 end
 
 local function sort_by_need_desc(unit_id_1, unit_id_2)
@@ -556,8 +560,8 @@ local SORT_LIBRARY = {
     {label='teacher skill', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
     {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
     {label='migrant wave', desc_fn=sort_by_migrant_wave_desc, asc_fn=sort_by_migrant_wave_asc, rating_fn=get_migrant_wave_rating},
-    {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating},
-    {label='need for training', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating},
+    {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
+    {label='need for training', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
     {label='axe skill', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
     {label='sword skill', desc_fn=sort_by_sword_desc, asc_fn=sort_by_sword_asc, rating_fn=curry(get_skill_rating, df.job_skill.SWORD)},
     {label='mace skill', desc_fn=sort_by_mace_desc, asc_fn=sort_by_mace_asc, rating_fn=curry(get_skill_rating, df.job_skill.MACE)},
@@ -569,9 +573,14 @@ local SORT_LIBRARY = {
 }
 
 local RATING_FNS = {}
+local STRESS_FACE_FNS = {}
 for _, opt in ipairs(SORT_LIBRARY) do
     RATING_FNS[opt.desc_fn] = opt.rating_fn
     RATING_FNS[opt.asc_fn] = opt.rating_fn
+    if opt.use_stress_faces then
+        STRESS_FACE_FNS[opt.desc_fn] = true
+        STRESS_FACE_FNS[opt.asc_fn] = true
+    end
 end
 
 -- ----------------------
@@ -857,7 +866,7 @@ function SquadAssignmentOverlay:init()
             view_id='infant',
             frame={l=0},
             key='CUSTOM_SHIFT_M',
-            label='Mothers carrying infants:',
+            label='Mothers with infants:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -869,8 +878,8 @@ function SquadAssignmentOverlay:init()
         widgets.CycleHotkeyLabel{
             view_id='unstable',
             frame={l=0},
-            key='CUSTOM_SHIFT_U',
-            label='Easily stressed units:',
+            key='CUSTOM_SHIFT_F',
+            label='Weak mental fortitude:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -931,7 +940,11 @@ local function is_nobility(unit)
 end
 
 local function has_infant(unit)
-    -- TODO
+    for _, baby in ipairs(df.global.world.units.other.ANY_BABY2) do
+        if baby.relationship_ids.Mother == unit.id then
+            return true
+        end
+    end
     return false
 end
 
@@ -943,8 +956,9 @@ local function is_unstable(unit)
 end
 
 local function is_maimed(unit)
-    -- TODO
-    return false
+    return unit.flags2.vision_missing or
+        unit.status2.limbs_grasp_count == 0 or
+        unit.status2.limbs_stand_count == 0
 end
 
 local function filter_matches(unit_id, filter)
@@ -1029,9 +1043,11 @@ local function filter_vector(filter, prev_filter)
     end
 end
 
+local use_stress_faces = false
 local rating_annotations = {}
 
 local function annotate_visible_units(sort_fn)
+    use_stress_faces = STRESS_FACE_FNS[sort_fn]
     rating_annotations = {}
     rating_fn = RATING_FNS[sort_fn]
     local max_idx = math.min(#unit_selector.unid-1, unit_selector.scroll_position+9)
@@ -1141,6 +1157,40 @@ function get_annotation_color(idx)
     return elem and elem.color or nil
 end
 
+local to_pen = dfhack.pen.parse
+local DASH_PEN = to_pen{ch='-', fg=COLOR_WHITE, keep_lower=true}
+
+local FACE_TILES = {}
+for idx=0,6 do
+    FACE_TILES[idx] = {}
+    local face_off = (6 - idx) * 2
+    for y=0,1 do
+        for x=0,1 do
+            local tile = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 32 + face_off + x, 6 + y)
+            ensure_key(FACE_TILES[idx], y)[x] = tile
+        end
+    end
+end
+
+local ASCII_FACE_TILES = {}
+for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
+    local face = {}
+    ensure_key(face, 0)[0] = to_pen{ch=1, fg=color}
+    ensure_key(face, 0)[1] = to_pen{ch='\\', fg=color}
+    ensure_key(face, 1)[0] = to_pen{ch='\\', fg=color}
+    ensure_key(face, 1)[1] = to_pen{ch='/', fg=color}
+    ASCII_FACE_TILES[idx-1] = face
+end
+
+function get_stress_face_tile(idx, x, y)
+    local elem = rating_annotations[idx]
+    if not elem or not elem.val or elem.val < 0 then
+        return x == 0 and y == 1 and DASH_PEN or gui.CLEAR_PEN
+    end
+    local val = math.min(6, elem.val)
+    return (dfhack.screen.inGraphicsMode() and FACE_TILES or ASCII_FACE_TILES)[val][y][x]
+end
+
 function SquadAnnotationOverlay:init()
     for idx = 1, 10 do
         self:addviews{
@@ -1154,6 +1204,19 @@ function SquadAnnotationOverlay:init()
                         rjustify=true,
                     },
                 },
+                visible=function() return not use_stress_faces end,
+            },
+            widgets.Label{
+                frame={t=idx*3, r=0, h=2, w=2},
+                auto_height=false,
+                text={
+                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 0)},
+                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 0)},
+                    NEWLINE,
+                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 1)},
+                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 1)},
+                },
+                visible=function() return use_stress_faces end,
             },
         }
     end

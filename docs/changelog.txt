@@ -64,6 +64,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``argparse.boolean``: convert arguments to lua boolean values.
 
 ## Removed
 

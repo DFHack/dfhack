@@ -626,6 +626,7 @@ SquadAssignmentOverlay.ATTRS{
     default_pos={x=18, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
+    version='2',
     frame={w=38, h=31},
     frame_style=gui.FRAME_PANEL,
     frame_background=gui.CLEAR_PEN,

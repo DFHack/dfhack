@@ -81,8 +81,10 @@ The following filters are provided:
 - Elected and appointed officials (e.g. mayor, priests, tavern keepers, etc.)
 - Nobility (e.g. monarch, barons, counts, etc.)
 - Mothers with infants (you may not want mothers using their babies as shields)
-- Weak mental fortitude (units that have facets and values that indicate that they will react poorly to the stresses of battle)
-- Critically injured (units that have lost their ability to grasp weapons or walk)
+- Weak mental fortitude (units that have facets and values that indicate that
+  they will react poorly to the stresses of battle)
+- Critically injured (units that have lost their ability to see, grasp weapons,
+  or walk)
 
 "Melee skill effectiveness", "ranged skill effectiveness", "melee combat potential"
 and "ranged combat potential" are explained in detail here:

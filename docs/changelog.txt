@@ -62,6 +62,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- `overlay`: overlay widgets can now declare a ``version`` attribute. changing the version of a widget will reset its settings to defaults. this is useful when changing the overlay layout and old saved positions will no longer be valid.
 
 ## Lua
 

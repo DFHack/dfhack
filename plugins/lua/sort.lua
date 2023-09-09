@@ -64,12 +64,46 @@ local function get_active_idx_cache()
     return active_idx_cache
 end
 
-local function get_migrant_wave_rating(unit)
-    -- TODO: return green for most recent wave, red for the first wave, yellow for all others
-    return 1, nil
+local function is_original_dwarf(unit)
+    return df.global.plotinfo.fortress_age == unit.curse.time_on_site // 10
 end
 
-local function sort_by_migrant_wave_desc(unit_id_1, unit_id_2)
+local WAVE_END_GAP = 10000
+
+local function get_most_recent_wave_oldest_active_idx(cache)
+    local oldest_unit
+    for idx=#active_units-1,0,-1 do
+        local unit = active_units[idx]
+        if not dfhack.units.isCitizen(unit) then goto continue end
+        if oldest_unit and unit.curse.time_on_site - oldest_unit.curse.time_on_site > WAVE_END_GAP then
+            return cache[oldest_unit.id]
+        else
+            oldest_unit = unit
+        end
+        ::continue::
+    end
+end
+
+-- return green for most recent wave, red for the first wave, yellow for all others
+-- rating is a three digit number that indicates the (potentially approximate) order
+local function get_arrival_rating(unit)
+    local cache = get_active_idx_cache()
+    local unit_active_idx = cache[unit.id]
+    if not unit_active_idx then return end
+    local most_recent_wave_oldest_active_idx = get_most_recent_wave_oldest_active_idx(cache)
+    if not most_recent_wave_oldest_active_idx then return end
+    local num_active_units = #active_units
+    local rating = num_active_units < 1000 and unit_active_idx or ((unit_active_idx * 1000) // #active_units)
+    if most_recent_wave_oldest_active_idx < unit_active_idx then
+        return rating, COLOR_LIGHTGREEN
+    end
+    if is_original_dwarf(unit) then
+        return rating, COLOR_RED
+    end
+    return rating, COLOR_YELLOW
+end
+
+local function sort_by_arrival_desc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local cache = get_active_idx_cache()
     if not cache[unit_id_1] then return -1 end
@@ -77,7 +111,7 @@ local function sort_by_migrant_wave_desc(unit_id_1, unit_id_2)
     return utils.compare(cache[unit_id_2], cache[unit_id_1])
 end
 
-local function sort_by_migrant_wave_asc(unit_id_1, unit_id_2)
+local function sort_by_arrival_asc(unit_id_1, unit_id_2)
     if unit_id_1 == unit_id_2 then return 0 end
     local cache = get_active_idx_cache()
     if not cache[unit_id_1] then return -1 end
@@ -559,7 +593,7 @@ local SORT_LIBRARY = {
     {label='name', desc_fn=sort_by_name_desc, asc_fn=sort_by_name_asc},
     {label='teacher skill', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
     {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
-    {label='migrant wave', desc_fn=sort_by_migrant_wave_desc, asc_fn=sort_by_migrant_wave_asc, rating_fn=get_migrant_wave_rating},
+    {label='arrival order', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
     {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
     {label='need for training', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
     {label='axe skill', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
@@ -701,15 +735,15 @@ function SquadAssignmentOverlay:init()
                     on_change=self:callback('refresh_list', 'sort_tactics'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_migrant_wave',
-                    frame={t=4, r=0, w=13},
+                    view_id='sort_arrival',
+                    frame={t=4, r=0, w=14},
                     options={
-                        {label='migrant wave', value=sort_noop},
-                        {label='migrant wave'..CH_DN, value=sort_by_migrant_wave_desc, pen=COLOR_GREEN},
-                        {label='migrant wave'..CH_UP, value=sort_by_migrant_wave_asc, pen=COLOR_YELLOW},
+                        {label='arrival order', value=sort_noop},
+                        {label='arrival order'..CH_DN, value=sort_by_arrival_desc, pen=COLOR_GREEN},
+                        {label='arrival order'..CH_UP, value=sort_by_arrival_asc, pen=COLOR_YELLOW},
                     },
                     option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_migrant_wave'),
+                    on_change=self:callback('refresh_list', 'sort_arrival'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_stress',
@@ -957,7 +991,7 @@ end
 
 local function is_maimed(unit)
     return unit.flags2.vision_missing or
-        unit.status2.limbs_grasp_count == 0 or
+        unit.status2.limbs_grasp_count < 2 or
         unit.status2.limbs_stand_count == 0
 end
 
@@ -1071,7 +1105,7 @@ local SORT_WIDGET_NAMES = {
     'sort_name',
     'sort_teacher',
     'sort_tactics',
-    'sort_migrant_wave',
+    'sort_arrival',
     'sort_stress',
     'sort_need',
     'sort_axe',

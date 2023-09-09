@@ -261,7 +261,11 @@ local function load_widget(name, widget_class)
         next_update_ms=widget.overlay_onupdate and 0 or math.huge,
     }
     if not overlay_config[name] then overlay_config[name] = {} end
+    if widget.version ~= overlay_config[name].version then
+        overlay_config[name] = {}
+    end
     local config = overlay_config[name]
+    config.version = widget.version
     if config.enabled == nil then
         config.enabled = widget.default_enabled
     end

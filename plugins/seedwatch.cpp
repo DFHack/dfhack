@@ -102,7 +102,11 @@ static void remove_seed_config(color_ostream &out, int id) {
 static bool validate_seed_config(color_ostream& out, PersistentDataItem c)
 {
     int seed_id = get_config_val(c, SEED_CONFIG_ID);
-    auto plant = binsearch_in_vector(world->raws.plants.all, &df::plant_raw::index, seed_id);
+    auto plant = df::plant_raw::find(seed_id);
+    if (!plant) {
+        WARN(config, out).print("discarded invalid seed id: %d\n", seed_id);
+        return false;
+    }
     bool valid = (!plant->flags.is_set(df::enums::plant_raw_flags::TREE));
     if (!valid) {
         DEBUG(config, out).print("invalid configuration for %s discarded\n", plant->id.c_str());

@@ -59,6 +59,9 @@ Template for new versions:
 - `buildingplan`: make the construction dimensions readout visible again
 
 ## Misc Improvements
+- `sort`: sort by need for training on squad assignment screen
+- `sort`: filter mothers with infants, units with weak mental fortitude, and critically injured units on the squad assignment screen
+- `sort`: display a rating relative to the current sort order next to the visible units on the squad assignment screen
 
 ## Documentation
 

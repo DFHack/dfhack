@@ -3539,6 +3539,7 @@ parameters.
   messages more useful.
 
 * ``argparse.boolean(arg, arg_name)``
+
   Converts ``string.lower(arg)`` from "yes/no/on/off/true/false/etc..." to a lua
   boolean. Throws if the value can't be converted, otherwise returns
   ``true``/``false``. If ``arg_name`` is specified, it is used to make error

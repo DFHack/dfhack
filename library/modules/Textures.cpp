@@ -200,6 +200,9 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
     if (g_tileset_to_handles.contains(file))
         return g_tileset_to_handles[file];
 
+    if (!enabler)
+        return std::vector<TexposHandle>{};
+
     SDL_Surface* surface = DFIMG_Load(file.c_str());
     if (!surface) {
         ERR(textures).printerr("unable to load textures from '%s'\n", file.c_str());
@@ -428,8 +431,8 @@ static void reserve_static_range() {
         return;
     }
     reserved_range.init(enabler->textures.init_texture_size);
-    auto dummy_surface =
-        DFSDL_CreateRGBSurfaceWithFormat(0, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    auto dummy_surface = DFSDL_CreateRGBSurfaceWithFormat(
+        SDL_DONTFREE, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
     for (int32_t i = 0; i < ReservedRange::size; i++) {
         add_texture(dummy_surface);
     }

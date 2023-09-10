@@ -155,6 +155,10 @@ Template for new versions:
 
 # 50.09-r1
 
+## Internals
+
+- Core: update SDL interface from SDL1 to SDL2
+
 # 50.08-r4
 
 ## New Plugins

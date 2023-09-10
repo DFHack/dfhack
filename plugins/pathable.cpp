@@ -231,6 +231,41 @@ static bool is_designated_for_track_carving(const df::coord &pos) {
     return occ->bits.carve_track_east || occ->bits.carve_track_north || occ->bits.carve_track_south || occ->bits.carve_track_west;
 }
 
+static char get_track_char(const df::coord &pos) {
+    auto occ = Maps::getTileOccupancy(pos);
+    if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_south && occ->bits.carve_track_west)
+        return 0xCE; // NSEW
+    if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_south)
+        return 0xCC; // NSE
+    if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_west)
+        return 0xCA; // NEW
+    if (occ->bits.carve_track_east && occ->bits.carve_track_south && occ->bits.carve_track_west)
+        return 0xCB; // SEW
+    if (occ->bits.carve_track_north && occ->bits.carve_track_south && occ->bits.carve_track_west)
+        return 0xB9; // NSW
+    if (occ->bits.carve_track_north && occ->bits.carve_track_south)
+        return 0xBA; // NS
+    if (occ->bits.carve_track_east && occ->bits.carve_track_west)
+        return 0xCD; // EW
+    if (occ->bits.carve_track_east && occ->bits.carve_track_north)
+        return 0xC8; // NE
+    if (occ->bits.carve_track_north && occ->bits.carve_track_west)
+        return 0xBC; // NW
+    if (occ->bits.carve_track_east && occ->bits.carve_track_south)
+        return 0xC9; // SE
+    if (occ->bits.carve_track_south && occ->bits.carve_track_west)
+        return 0xBB; // SW
+    if (occ->bits.carve_track_north)
+        return 0xD0; // N
+    if (occ->bits.carve_track_south)
+        return 0xD2; // S
+    if (occ->bits.carve_track_east)
+        return 0xC6; // E
+    if (occ->bits.carve_track_west)
+        return 0xB5; // W
+    return 0xC5; // single line cross; should never happen
+}
+
 static bool is_smooth_wall(const df::coord &pos) {
     df::tiletype *tt = Maps::getTileType(pos);
     return tt && tileSpecial(*tt) == df::tiletype_special::SMOOTH
@@ -268,15 +303,15 @@ static void paintScreenCarve() {
 
             if (is_designated_for_smoothing(map_pos)) {
                 if (is_smooth_wall(map_pos))
-                    cur_tile.ch = 206; // hash, indicating a fortification designation
+                    cur_tile.ch = (char)206; // hash, indicating a fortification designation
                 else
-                    cur_tile.ch = 219; // solid block, indicating a smoothing designation
+                    cur_tile.ch = (char)219; // solid block, indicating a smoothing designation
             }
             else if (is_designated_for_engraving(map_pos)) {
-                cur_tile.ch = 10; // solid block with a circle on it
+                cur_tile.ch = (char)10; // solid block with a circle on it
             }
             else if (is_designated_for_track_carving(map_pos)) {
-                cur_tile.ch = 186; // parallel tracks
+                cur_tile.ch = get_track_char(map_pos); // directional track
             }
             else {
                 TRACE(log).print("skipping tile with no carving designation\n");

@@ -161,7 +161,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(title)
 
 DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 {
-    if (screen->doing_mods)
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
         focusStrings.push_back(baseFocus + "/Mods");
     else if (screen->doing_simple_params)
         focusStrings.push_back(baseFocus + "/Basic");

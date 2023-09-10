@@ -119,7 +119,7 @@ std::vector<TexposHandle> slice_tileset(SDL_Surface* surface, int tile_px_w, int
 }
 
 TexposHandle Textures::loadTexture(SDL_Surface* surface) {
-    if (!surface)
+    if (!surface || !enabler)
         return 0; // should be some error, i guess
 
     auto handle = reinterpret_cast<uintptr_t>(surface);
@@ -132,6 +132,9 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface) {
 
 std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
                                                 int tile_px_h) {
+    if (!enabler)
+        return std::vector<TexposHandle>{};
+
     SDL_Surface* surface = DFIMG_Load(file.c_str());
     if (!surface) {
         ERR(textures).printerr("unable to load textures from '%s'\n", file.c_str());
@@ -147,7 +150,7 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
 }
 
 long Textures::getTexposByHandle(TexposHandle handle) {
-    if (!handle)
+    if (!handle || !enabler)
         return -1;
 
     if (g_handle_to_texpos.contains(handle))
@@ -164,6 +167,9 @@ long Textures::getTexposByHandle(TexposHandle handle) {
 }
 
 TexposHandle Textures::createTile(std::vector<uint32_t>& pixels, int tile_px_w, int tile_px_h) {
+    if (!enabler)
+        return 0;
+
     auto texture = create_texture(pixels, tile_px_w, tile_px_h);
     auto handle = Textures::loadTexture(texture);
     return handle;
@@ -171,12 +177,18 @@ TexposHandle Textures::createTile(std::vector<uint32_t>& pixels, int tile_px_w, 
 
 std::vector<TexposHandle> Textures::createTileset(std::vector<uint32_t>& pixels, int texture_px_w,
                                                   int texture_px_h, int tile_px_w, int tile_px_h) {
+    if (!enabler)
+        return std::vector<TexposHandle>{};
+
     auto texture = create_texture(pixels, texture_px_w, texture_px_h);
     auto handles = slice_tileset(texture, tile_px_w, tile_px_h);
     return handles;
 }
 
 void Textures::deleteHandle(TexposHandle handle) {
+    if (!enabler)
+        return;
+
     auto texpos = Textures::getTexposByHandle(handle);
     if (texpos > 0)
         delete_texture(texpos);
@@ -293,11 +305,17 @@ static void uninstall_reset_point() {
 }
 
 void Textures::init(color_ostream& out) {
+    if (!enabler)
+        return;
+
     install_reset_point();
     DEBUG(textures, out).print("dynamic texture loading ready");
 }
 
 void Textures::cleanup() {
+    if (!enabler)
+        return;
+
     reset_texpos();
     reset_surface();
     uninstall_reset_point();

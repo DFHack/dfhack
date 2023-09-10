@@ -60,6 +60,7 @@ Template for new versions:
 - `seedwatch`: fix a crash when reading data saved by very very old versions of the plugin
 
 ## Misc Improvements
+- ``autofish``: changed ``--raw`` argument format to allow explicit setting
 - `sort`: sort by need for training on squad assignment screen
 - `sort`: filter mothers with infants, units with weak mental fortitude, and critically injured units on the squad assignment screen
 - `sort`: display a rating relative to the current sort order next to the visible units on the squad assignment screen

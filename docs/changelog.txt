@@ -70,6 +70,7 @@ Template for new versions:
 - `overlay`: overlay widgets can now declare a ``version`` attribute. changing the version of a widget will reset its settings to defaults. this is useful when changing the overlay layout and old saved positions will no longer be valid.
 
 ## Lua
+- ``argparse.boolean``: convert arguments to lua boolean values.
 
 ## Removed
 

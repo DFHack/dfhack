@@ -196,4 +196,16 @@ function coords(arg, arg_name, skip_validation)
     return pos
 end
 
+local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,
+              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false}
+function boolean(arg, arg_name)
+    local arg_lower = string.lower(arg)
+    if toBool[arg_lower] == nil then
+        arg_error(arg_name,
+            'unknown value: "%s"; expected "true", "yes", "false", or "no"', arg)
+    end
+
+    return toBool[arg_lower]
+end
+
 return _ENV

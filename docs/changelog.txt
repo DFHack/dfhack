@@ -59,6 +59,7 @@ Template for new versions:
 ## Fixes
 - `buildingplan`: make the construction dimensions readout visible again
 - `seedwatch`: fix a crash when reading data saved by very very old versions of the plugin
+- `gui/mod-manager`: don't continue to display overlay after the raws loading progress bar appears
 
 ## Misc Improvements
 - `sort`: sort by need for training on squad assignment screen

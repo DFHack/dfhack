@@ -293,13 +293,13 @@ extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);
 
-inline df::tiletype *getTileType(df::coord pos) {
+inline df::tiletype *getTileType(const df::coord &pos) {
     return getTileType(pos.x, pos.y, pos.z);
 }
-inline df::tile_designation *getTileDesignation(df::coord pos) {
+inline df::tile_designation *getTileDesignation(const df::coord &pos) {
     return getTileDesignation(pos.x, pos.y, pos.z);
 }
-inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
+inline df::tile_occupancy *getTileOccupancy(const df::coord &pos) {
     return getTileOccupancy(pos.x, pos.y, pos.z);
 }
 

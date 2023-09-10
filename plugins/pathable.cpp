@@ -1,4 +1,5 @@
 #include "Debug.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
@@ -209,8 +210,87 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
     }
 }
 
+static bool is_designated_for_smoothing(const df::coord &pos) {
+    auto des = Maps::getTileDesignation(pos);
+    if (!des)
+        return false;
+    return des->bits.smooth == 1;
+}
+
+static bool is_designated_for_engraving(const df::coord &pos) {
+    auto des = Maps::getTileDesignation(pos);
+    if (!des)
+        return false;
+    return des->bits.smooth == 2;
+}
+
+static bool is_designated_for_track_carving(const df::coord &pos) {
+    auto occ = Maps::getTileOccupancy(pos);
+    if (!occ)
+        return false;
+    return occ->bits.carve_track_east || occ->bits.carve_track_north || occ->bits.carve_track_south || occ->bits.carve_track_west;
+}
+
+static bool is_smooth_wall(const df::coord &pos) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    return tt && tileSpecial(*tt) == df::tiletype_special::SMOOTH
+                && tileShape(*tt) == df::tiletype_shape::WALL;
+}
+
+static bool blink(int delay) {
+    return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
+}
+
+static void paintScreenCarve() {
+    DEBUG(log).print("entering paintScreenCarve\n");
+
+    if (Screen::inGraphicsMode() || blink(500))
+        return;
+
+    auto dims = Gui::getDwarfmodeViewDims().map();
+    for (int y = dims.first.y; y <= dims.second.y; ++y) {
+        for (int x = dims.first.x; x <= dims.second.x; ++x) {
+            df::coord map_pos(*window_x + x, *window_y + y, *window_z);
+
+            if (!Maps::isValidTilePos(map_pos))
+                continue;
+
+            if (!Maps::isTileVisible(map_pos)) {
+                TRACE(log).print("skipping hidden tile\n");
+                continue;
+            }
+
+            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                map_pos.x, map_pos.y, map_pos.z, x, y);
+
+            Screen::Pen cur_tile;
+            cur_tile.fg = COLOR_DARKGREY;
+
+            if (is_designated_for_smoothing(map_pos)) {
+                if (is_smooth_wall(map_pos))
+                    cur_tile.ch = 206; // hash, indicating a fortification designation
+                else
+                    cur_tile.ch = 219; // solid block, indicating a smoothing designation
+            }
+            else if (is_designated_for_engraving(map_pos)) {
+                cur_tile.ch = 10; // solid block with a circle on it
+            }
+            else if (is_designated_for_track_carving(map_pos)) {
+                cur_tile.ch = 186; // parallel tracks
+            }
+            else {
+                TRACE(log).print("skipping tile with no carving designation\n");
+                continue;
+            }
+
+            Screen::paintTile(cur_tile, x, y, true);
+        }
+    }
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(paintScreenPathable),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
+    DFHACK_LUA_FUNCTION(paintScreenCarve),
     DFHACK_LUA_END
 };

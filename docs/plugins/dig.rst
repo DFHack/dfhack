@@ -183,8 +183,19 @@ After you have a pattern set, you can use ``expdig`` to apply it again.
 Overlay
 -------
 
-This tool also provides an overlay that is managed by the `overlay` framework.
-When the ``dig.asciiwarmdamp`` overlay is enabled and you are in non-graphics
-(ASCII) mode, warm tiles will be highlighted in red and damp tiles will be
-highlighted in blue. Box selection characters and the keyboard cursor will also
+This tool also provides two overlays that are managed by the `overlay`
+framework. Both have no effect when in graphics mode, but when in ASCII mode,
+they display useful highlights that are otherwise missing from the ASCII mode
+interface.
+
+The ``dig.asciiwarmdamp`` overlay highlights warm tiles red and damp tiles in
+blue. Box selection characters and the keyboard cursor will also
 change color as appropriate when over the warm or damp tile.
+
+The ``dig.asciicarve`` overlay highlights tiles that are designated for
+smoothing, engraving, track carving, or fortification carving. The designations
+blink so you can still see what is underneath them.
+
+Note that due to the limitations of the ASCII mode screen buffer, the
+designation highlights may show through other interface elements that overlap
+the designated area.

@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `dig`: new overlay for ASCII mode that visualizes designations for smoothing, engraving, carving tracks, and carving fortifications
 
 ## Fixes
 - `buildingplan`: make the construction dimensions readout visible again

@@ -40,9 +40,7 @@ struct ReservedRange {
     long get_new_texpos() {
         if (this->current == this->end)
             return -1;
-        current = this->current;
-        this->current++;
-        return current;
+        return this->current++;
     }
 
     static const int32_t size = 10000; // size of reserved texpos buffer

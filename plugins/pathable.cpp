@@ -284,7 +284,7 @@ static char get_tile_char(const df::coord &pos, char desig_char, bool draw_prior
     std::vector<df::block_square_event_designation_priorityst *> priorities;
     Maps::SortBlockEvents(Maps::getTileBlock(pos), NULL, NULL, NULL, NULL, NULL, NULL, NULL, &priorities);
     if (priorities.empty())
-        return '4';
+        return desig_char;
     switch (priorities[0]->priority[pos.x % 16][pos.y % 16] / 1000) {
     case 1: return '1';
     case 2: return '2';
@@ -294,7 +294,7 @@ static char get_tile_char(const df::coord &pos, char desig_char, bool draw_prior
     case 6: return '6';
     case 7: return '7';
     default:
-        return '0';
+        return '4';
     }
 }
 

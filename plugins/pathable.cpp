@@ -235,36 +235,36 @@ static bool is_designated_for_track_carving(const df::coord &pos) {
 static char get_track_char(const df::coord &pos) {
     auto occ = Maps::getTileOccupancy(pos);
     if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_south && occ->bits.carve_track_west)
-        return 0xCE; // NSEW
+        return (char)0xCE; // NSEW
     if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_south)
-        return 0xCC; // NSE
+        return (char)0xCC; // NSE
     if (occ->bits.carve_track_east && occ->bits.carve_track_north && occ->bits.carve_track_west)
-        return 0xCA; // NEW
+        return (char)0xCA; // NEW
     if (occ->bits.carve_track_east && occ->bits.carve_track_south && occ->bits.carve_track_west)
-        return 0xCB; // SEW
+        return (char)0xCB; // SEW
     if (occ->bits.carve_track_north && occ->bits.carve_track_south && occ->bits.carve_track_west)
-        return 0xB9; // NSW
+        return (char)0xB9; // NSW
     if (occ->bits.carve_track_north && occ->bits.carve_track_south)
-        return 0xBA; // NS
+        return (char)0xBA; // NS
     if (occ->bits.carve_track_east && occ->bits.carve_track_west)
-        return 0xCD; // EW
+        return (char)0xCD; // EW
     if (occ->bits.carve_track_east && occ->bits.carve_track_north)
-        return 0xC8; // NE
+        return (char)0xC8; // NE
     if (occ->bits.carve_track_north && occ->bits.carve_track_west)
-        return 0xBC; // NW
+        return (char)0xBC; // NW
     if (occ->bits.carve_track_east && occ->bits.carve_track_south)
-        return 0xC9; // SE
+        return (char)0xC9; // SE
     if (occ->bits.carve_track_south && occ->bits.carve_track_west)
-        return 0xBB; // SW
+        return (char)0xBB; // SW
     if (occ->bits.carve_track_north)
-        return 0xD0; // N
+        return (char)0xD0; // N
     if (occ->bits.carve_track_south)
-        return 0xD2; // S
+        return (char)0xD2; // S
     if (occ->bits.carve_track_east)
-        return 0xC6; // E
+        return (char)0xC6; // E
     if (occ->bits.carve_track_west)
-        return 0xB5; // W
-    return 0xC5; // single line cross; should never happen
+        return (char)0xB5; // W
+    return (char)0xC5; // single line cross; should never happen
 }
 
 static bool is_smooth_wall(const df::coord &pos) {
@@ -327,12 +327,12 @@ static void paintScreenCarve() {
 
             if (is_designated_for_smoothing(map_pos)) {
                 if (is_smooth_wall(map_pos))
-                    cur_tile.ch = get_tile_char(map_pos, 206, draw_priority); // hash, indicating a fortification designation
+                    cur_tile.ch = get_tile_char(map_pos, (char)206, draw_priority); // hash, indicating a fortification designation
                 else
-                    cur_tile.ch = get_tile_char(map_pos, 219, draw_priority); // solid block, indicating a smoothing designation
+                    cur_tile.ch = get_tile_char(map_pos, (char)219, draw_priority); // solid block, indicating a smoothing designation
             }
             else if (is_designated_for_engraving(map_pos)) {
-                cur_tile.ch = get_tile_char(map_pos, 10, draw_priority); // solid block with a circle on it
+                cur_tile.ch = get_tile_char(map_pos, (char)10, draw_priority); // solid block with a circle on it
             }
             else if (is_designated_for_track_carving(map_pos)) {
                 cur_tile.ch = get_tile_char(map_pos, get_track_char(map_pos), draw_priority); // directional track

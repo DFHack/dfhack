@@ -67,6 +67,7 @@ Template for new versions:
 - `sort`: display a rating relative to the current sort order next to the visible units on the squad assignment screen
 
 ## Documentation
+- add instructions for downloading development builds to the ``Installing`` page
 
 ## API
 - `overlay`: overlay widgets can now declare a ``version`` attribute. changing the version of a widget will reset its settings to defaults. this is useful when changing the overlay layout and old saved positions will no longer be valid.

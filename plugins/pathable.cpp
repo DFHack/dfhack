@@ -5,6 +5,7 @@
 
 #include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
@@ -255,9 +256,13 @@ public:
 
             df::tile_designation td;
             df::tile_occupancy to;
+            bool keep_if_taken = false;
+
             switch (job->job_type) {
                 case df::job_type::SmoothWall:
                 case df::job_type::SmoothFloor:
+                    keep_if_taken = true;
+                    // fallthrough
                 case df::job_type::CarveFortification:
                     td.bits.smooth = 1;
                     break;
@@ -272,9 +277,10 @@ public:
                     to.bits.carve_track_east = (job->item_category.whole >> 21) & 1;
                     break;
                 default:
-                    break;
+                    continue;
             }
-            designations.emplace(job->pos, designation(job->pos, td, to));
+            if (keep_if_taken || !Job::getWorker(job))
+                designations.emplace(job->pos, designation(job->pos, td, to));
         }
     }
 

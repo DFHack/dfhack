@@ -3,7 +3,7 @@ List of authors
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.
 
-If you should be here and aren't, please get in touch on IRC or the forums,
+If you should be here and aren't, please get in touch on Discord or the forums,
 or make a pull request!
 
 ======================= ======================= ===========================

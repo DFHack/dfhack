@@ -58,6 +58,7 @@ static std::unordered_map<std::string, std::vector<TexposHandle>> g_tileset_to_h
 static std::vector<TexposHandle> g_delayed_regs;
 static std::mutex g_adding_mutex;
 static std::atomic<bool> loading_state = false;
+static SDL_Surface* dummy_surface = NULL;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -173,6 +174,7 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
         if (texpos != -1) {
             insert_texture(surface, texpos);
             g_handle_to_reserved_texpos.emplace(handle, texpos);
+            dummy_surface->refcount--;
             return handle;
         }
 
@@ -431,8 +433,9 @@ static void reserve_static_range() {
         return;
     }
     reserved_range.init(enabler->textures.init_texture_size);
-    auto dummy_surface = DFSDL_CreateRGBSurfaceWithFormat(
-        SDL_DONTFREE, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    dummy_surface =
+        DFSDL_CreateRGBSurfaceWithFormat(0, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
+    dummy_surface->refcount += ReservedRange::size;
     for (int32_t i = 0; i < ReservedRange::size; i++) {
         add_texture(dummy_surface);
     }

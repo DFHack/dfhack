@@ -92,13 +92,6 @@ jobs:
           repository: ${{ inputs.structures_ref && github.repository || 'DFHack/df-structures' }}
           ref: ${{ inputs.structures_ref }}
           path: library/xml
-      - name: Clone structures (temporary override)
-        if: '!inputs.structures_ref'
-        uses: actions/checkout@v3
-        with:
-          repository: DFHack/df-structures
-          ref: refs/heads/linux
-          path: library/xml
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v3

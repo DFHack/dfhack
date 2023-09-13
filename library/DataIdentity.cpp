@@ -47,7 +47,10 @@ namespace df {
     STL_OPAQUE_IDENTITY_TRAITS(condition_variable);
     STL_OPAQUE_IDENTITY_TRAITS(fstream);
     STL_OPAQUE_IDENTITY_TRAITS(mutex);
+    STL_OPAQUE_IDENTITY_TRAITS(shared_ptr<df::widget>);
     STL_OPAQUE_IDENTITY_TRAITS(future<void>);
+    STL_OPAQUE_IDENTITY_TRAITS(function<void()>);
+    STL_OPAQUE_IDENTITY_TRAITS(optional<std::function<void()> >);
 
     buffer_container_identity buffer_container_identity::base_instance;
 }

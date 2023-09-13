@@ -30,6 +30,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <future>
+#include <optional>
 
 #include "DataDefs.h"
 
@@ -37,6 +38,10 @@ namespace std {
     class condition_variable;
     class mutex;
 };
+
+namespace df {
+    class widget;
+}
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.
@@ -573,6 +578,9 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::fstream);
     OPAQUE_IDENTITY_TRAITS(std::mutex);
     OPAQUE_IDENTITY_TRAITS(std::future<void>);
+    OPAQUE_IDENTITY_TRAITS(std::shared_ptr<df::widget>);
+    OPAQUE_IDENTITY_TRAITS(std::function<void()>);
+    OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;

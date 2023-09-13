@@ -25,12 +25,13 @@ distribution.
 #pragma once
 
 #include <deque>
+#include <future>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include <future>
-#include <optional>
 
 #include "DataDefs.h"
 
@@ -661,6 +662,10 @@ namespace df
         static container_identity *get();
     };
 
+    template<class KT, class T> struct identity_traits<std::unordered_map<KT, T>> {
+        static container_identity *get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
         static bit_container_identity *get() { return &identity; }
@@ -735,6 +740,13 @@ namespace df
     inline container_identity *identity_traits<std::map<KT, T>>::get() {
         typedef std::map<KT, T> container;
         static ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class KT, class T>
+    inline container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
+        typedef std::unordered_map<KT, T> container;
+        static ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 

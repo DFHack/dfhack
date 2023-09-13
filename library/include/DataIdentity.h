@@ -40,7 +40,7 @@ namespace std {
 };
 
 namespace df {
-    class widget;
+    struct widget;
 }
 
 /*

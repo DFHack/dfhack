@@ -82,17 +82,9 @@ function HotspotMenuWidget:init()
                 get_tile_token(5, '!'), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, '!'), NEWLINE,
                 get_tile_token(9, '!'), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, '!'),
             },
+            on_click=function() MenuScreen{hotspot=self}:show() end,
         },
     }
-end
-
-function HotspotMenuWidget:onInput(keys)
-    if HotspotMenuWidget.super.onInput(self, keys) then
-        return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
-        MenuScreen{hotspot=self}:show()
-        return true
-    end
 end
 
 -- register the menu hotspot with the overlay

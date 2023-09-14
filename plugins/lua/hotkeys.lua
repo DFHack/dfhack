@@ -82,9 +82,13 @@ function HotspotMenuWidget:init()
                 get_tile_token(5, '!'), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, '!'), NEWLINE,
                 get_tile_token(9, '!'), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, '!'),
             },
-            on_click=function() MenuScreen{hotspot=self}:show() end,
+            on_click=function() dfhack.run_command('hotkeys') end,
         },
     }
+end
+
+function HotspotMenuWidget:overlay_trigger()
+    return MenuScreen{hotspot=self}:show()
 end
 
 -- register the menu hotspot with the overlay
@@ -267,7 +271,7 @@ end
 function Menu:onInput(keys)
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         return false
-    elseif keys.STANDARDSCROLL_RIGHT then
+    elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:onSubmit2(self.subviews.list:getSelected())
         return true
     elseif keys._MOUSE_L_DOWN then

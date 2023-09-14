@@ -26,9 +26,10 @@ end
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    default_pos={x=2,y=2},
+    default_pos={x=5,y=1},
     default_enabled=true,
-    hotspot=true,
+    hotspot=false,
+    version=2,
     viewscreens={
         'adopt_region',
         'choose_game_type',
@@ -170,9 +171,15 @@ end
 
 function Menu:init()
     local hotkeys, bindings = getHotkeys()
+    if #hotkeys == 0 then
+        hotkeys = {''}
+        bindings = {['']='gui/launcher'}
+    end
 
     local is_inverted = not not self.hotspot.frame.b
     local choices,list_width = get_choices(hotkeys, bindings, is_inverted)
+
+    list_width = math.max(35, list_width)
 
     local list_frame = copyall(self.hotspot.frame)
     local list_widget_frame = {h=math.min(#choices, MAX_LIST_HEIGHT)}

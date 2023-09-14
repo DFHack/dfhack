@@ -581,7 +581,8 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
-    default_pos={x=7, y=2},
+    default_pos={x=11, y=1},
+    version=2,
     default_enabled=true,
     viewscreens='title/Default',
     frame={w=35, h=5},

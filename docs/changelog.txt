@@ -54,6 +54,22 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.09-r4
+
+## New Features
 - `dig`: new overlay for ASCII mode that visualizes designations for smoothing, engraving, carving tracks, and carving fortifications
 
 ## Fixes
@@ -62,7 +78,7 @@ Template for new versions:
 - `gui/mod-manager`: don't continue to display overlay after the raws loading progress bar appears
 
 ## Misc Improvements
-- `sort`: sort by need for training on squad assignment screen
+- `sort`: add sort option for training need on squad assignment screen
 - `sort`: filter mothers with infants, units with weak mental fortitude, and critically injured units on the squad assignment screen
 - `sort`: display a rating relative to the current sort order next to the visible units on the squad assignment screen
 
@@ -74,8 +90,6 @@ Template for new versions:
 
 ## Lua
 - ``argparse.boolean``: convert arguments to lua boolean values.
-
-## Removed
 
 # 50.09-r3
 

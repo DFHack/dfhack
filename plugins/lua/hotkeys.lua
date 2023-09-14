@@ -5,7 +5,8 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
+local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12)
+local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12)
 
 local function get_command(cmdline)
     local first_word = cmdline:trim():split(' +')[1]
@@ -28,7 +29,6 @@ HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
     default_pos={x=5,y=1},
     default_enabled=true,
-    hotspot=false,
     version=2,
     viewscreens={
         'adopt_region',
@@ -48,54 +48,50 @@ HotspotMenuWidget.ATTRS{
         'update_region',
         'world'
     },
-    overlay_onupdate_max_freq_seconds=0,
     frame={w=4, h=3}
 }
 
 function HotspotMenuWidget:init()
-    self.mouseover = false
+    local to_pen = dfhack.pen.parse
+    local function tp(idx, ch)
+        return to_pen{
+            tile=function() return dfhack.textures.getTexposByHandle(logo_textures[idx]) end,
+            ch=ch,
+            fg=COLOR_GREY,
+        }
+    end
+    local function tph(idx, ch)
+        return to_pen{
+            tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
+            ch=ch,
+            fg=COLOR_WHITE,
+        }
+    end
+    local function get_tile_token(idx, ch)
+        return {
+            tile=tp(idx, ch),
+            htile=tph(idx, ch),
+            width=1,
+        }
+    end
+
+    self:addviews{
+        widgets.Label{
+            text={
+                get_tile_token(1, '!'), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, '!'), NEWLINE,
+                get_tile_token(5, '!'), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, '!'), NEWLINE,
+                get_tile_token(9, '!'), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, '!'),
+            },
+        },
+    }
 end
 
-function HotspotMenuWidget:overlay_onupdate()
-    local hasMouse = self:getMousePos()
-    if hasMouse and not self.mouseover then
-        self.mouseover = true
+function HotspotMenuWidget:onInput(keys)
+    if HotspotMenuWidget.super.onInput(self, keys) then
         return true
-    end
-    self.mouseover = hasMouse
-end
-
-function HotspotMenuWidget:overlay_trigger()
-    return MenuScreen{hotspot=self}:show()
-end
-
-local dscreen = dfhack.screen
-
-function HotspotMenuWidget:onRenderBody(dc)
-    local x, y = dc.x, dc.y
-    local tp = function(offset)
-        return dfhack.textures.getTexposByHandle(textures[offset])
-    end
-
-    if tp(1) == nil then
-        dscreen.paintString(COLOR_WHITE, x, y + 0, '!DF!')
-        dscreen.paintString(COLOR_WHITE, x, y + 1, '!Ha!')
-        dscreen.paintString(COLOR_WHITE, x, y + 2, '!ck!')
-    else
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 0, '!', tp(1))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 0, 'D', tp(2))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 0, 'F', tp(3))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 0, '!', tp(4))
-
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 1, '!', tp(5))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 1, 'H', tp(6))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 1, 'a', tp(7))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 1, '!', tp(8))
-
-        dscreen.paintTile(COLOR_WHITE, x + 0, y + 2, '!', tp(9))
-        dscreen.paintTile(COLOR_WHITE, x + 1, y + 2, 'c', tp(10))
-        dscreen.paintTile(COLOR_WHITE, x + 2, y + 2, 'k', tp(11))
-        dscreen.paintTile(COLOR_WHITE, x + 3, y + 2, '!', tp(12))
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
+        MenuScreen{hotspot=self}:show()
+        return true
     end
 end
 
@@ -290,7 +286,7 @@ function Menu:onInput(keys)
             df.global.enabler.mouse_lbut = 0
             return true
         end
-        if not self:getMouseFramePos() and not self.hotspot:getMousePos() then
+        if not self:getMouseFramePos() then
             self.parent_view:dismiss()
             return true
         end

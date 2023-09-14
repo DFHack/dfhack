@@ -297,7 +297,7 @@ function Menu:onRenderFrame(dc, rect)
         self.initialize()
         self.initialize = nil
     end
-    Menu.super.onRenderFrame(dc, rect)
+    Menu.super.onRenderFrame(self, dc, rect)
 end
 
 function Menu:getMouseFramePos()
@@ -306,7 +306,7 @@ function Menu:getMouseFramePos()
 end
 
 function Menu:onRenderBody(dc)
-    local panel = self.subviews.list_panel
+    Menu.super.onRenderBody(self, dc)
     local list = self.subviews.list
     local idx = list:getIdxUnderMouse()
     if idx and idx ~= self.last_mouse_idx then
@@ -315,13 +315,6 @@ function Menu:onRenderBody(dc)
         -- another item
         list:setSelected(idx)
         self.last_mouse_idx = idx
-    end
-    if self:getMouseFramePos() then
-        self.mouseover = true
-    elseif self.mouseover then
-        -- once the mouse has entered the list area, leaving the frame should
-        -- close the menu screen
-        self.parent_view:dismiss()
     end
 end
 

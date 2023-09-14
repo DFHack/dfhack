@@ -40,10 +40,6 @@ namespace std {
     class mutex;
 };
 
-namespace df {
-    struct widget;
-}
-
 /*
  * Definitions of DFHack namespace structs used by generated headers.
  */
@@ -579,9 +575,20 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::fstream);
     OPAQUE_IDENTITY_TRAITS(std::mutex);
     OPAQUE_IDENTITY_TRAITS(std::future<void>);
-    OPAQUE_IDENTITY_TRAITS(std::shared_ptr<df::widget>);
     OPAQUE_IDENTITY_TRAITS(std::function<void()>);
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
+
+#ifdef BUILD_DFHACK_LIB
+    template<typename T>
+    struct DFHACK_EXPORT identity_traits<std::shared_ptr<T>> {
+        static opaque_identity *get() {
+            typedef std::shared_ptr<T> type;
+            static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
+            static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
+            return &identity;
+        }
+    };
+#endif
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;

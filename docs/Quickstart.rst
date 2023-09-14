@@ -207,7 +207,7 @@ digging. Your dwarves will come and dig it out as if you had designated the
 tiles yourself.
 
 Once the area is dug out, run `gui/quickfort` again and select your "/build"
-blueprint this time. Hit `o` to generate manager orders for the required
+blueprint this time. Hit ``o`` to generate manager orders for the required
 furniture. Apply the blueprint in the dug-out area, and your furniture will be
 designated. It's just that easy! Note that `quickfort` uses `buildingplan` to
 place buildings, so you don't even need to have the relevant furniture or

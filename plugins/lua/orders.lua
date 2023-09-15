@@ -62,12 +62,24 @@ local function do_export()
     }:show()
 end
 
+local function do_reset()
+    dfhack.run_command('orders', 'reset')
+end
+
+local function do_sort_type()
+    dfhack.run_command('orders', 'sort_type')
+end
+
+local function do_sort_mat()
+    dfhack.run_command('orders', 'sort_material')
+end
+
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    frame={w=30, h=4},
+    frame={w=75, h=4},
 }
 
 function OrdersOverlay:init()
@@ -95,13 +107,34 @@ function OrdersOverlay:init()
             },
             widgets.HotkeyLabel{
                 frame={t=0, l=15},
-                label='sort',
+                label='sort by freq',
                 key='CUSTOM_CTRL_O',
                 auto_width=true,
                 on_activate=do_sort,
             },
             widgets.HotkeyLabel{
                 frame={t=1, l=15},
+                label='sort by type',
+                key='CUSTOM_CTRL_T',
+                auto_width=true,
+                on_activate=do_sort_type,
+            },
+            widgets.HotkeyLabel{
+                frame={t=0, l=35},
+                label='sort by mat',
+                key='CUSTOM_CTRL_T',
+                auto_width=true,
+                on_activate=do_sort_mat,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=35},
+                label='reset',
+                key='CUSTOM_CTRL_R',
+                auto_width=true,
+                on_activate=do_reset,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=55},
                 label='clear',
                 key='CUSTOM_CTRL_C',
                 auto_width=true,

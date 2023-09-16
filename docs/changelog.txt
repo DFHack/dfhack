@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `spectate`: automatically follow productive dwarves (returned to availability)
 
 ## New Features
 

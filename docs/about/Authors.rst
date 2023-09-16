@@ -83,6 +83,7 @@ Herwig Hochleitner      bendlas
 Hevlikn                 Hevlikn
 Ian S                   kremlin-
 IndigoFenix
+Jacek Konieczny         Jajcus
 James                   20k
 James Gilles            kazimuth
 James Logsdon           jlogsdon

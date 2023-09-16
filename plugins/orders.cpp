@@ -1056,7 +1056,29 @@ static bool compare_type(df::manager_order *a, df::manager_order *b)
     }
 
     // Compare job_type
-    return enum_item_key(a->job_type) < enum_item_key(b->job_type);
+    if (enum_item_key(a->job_type) != enum_item_key(b->job_type))
+    {
+        return enum_item_key(a->job_type) < enum_item_key(b->job_type);
+    }
+    
+    // Compare item subtype
+    bool a_has_item_subtype = (a->item_subtype != -1);
+    bool b_has_item_subtype = (b->item_subtype != -1);
+
+    if (a_has_item_subtype != b_has_item_subtype)
+    {
+        return a_has_item_subtype;
+    }
+    else if (a_has_item_subtype && b_has_item_subtype)
+    {
+        if (a->item_subtype != b->item_subtype)
+        {
+            return a->item_subtype < b->item_subtype;
+        }
+    }
+
+    // Fall back to freq sort
+    return compare_freq(a, b);
 }
 
 static command_result orders_sort_type_command(color_ostream & out)
@@ -1118,9 +1140,10 @@ static bool compare_material(df::manager_order *a, df::manager_order *b)
         }
     }
 
-    // By default orders are equal
-    return false;
+    // Fall back to material sort
+    return compare_type(a, b);
 }
+
 static command_result orders_sort_material_command(color_ostream & out)
 {
     CoreSuspender suspend;

@@ -79,7 +79,7 @@ OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    frame={w=75, h=4},
+    frame={w=73, h=4},
 }
 
 function OrdersOverlay:init()
@@ -107,38 +107,38 @@ function OrdersOverlay:init()
             },
             widgets.HotkeyLabel{
                 frame={t=0, l=15},
-                label='sort by freq',
-                key='CUSTOM_CTRL_O',
-                auto_width=true,
-                on_activate=do_sort,
-            },
-            widgets.HotkeyLabel{
-                frame={t=1, l=15},
-                label='sort by type',
-                key='CUSTOM_CTRL_T',
-                auto_width=true,
-                on_activate=do_sort_type,
-            },
-            widgets.HotkeyLabel{
-                frame={t=0, l=35},
-                label='sort by mat',
-                key='CUSTOM_CTRL_T',
-                auto_width=true,
-                on_activate=do_sort_mat,
-            },
-            widgets.HotkeyLabel{
-                frame={t=1, l=35},
                 label='reset',
                 key='CUSTOM_CTRL_R',
                 auto_width=true,
                 on_activate=do_reset,
             },
             widgets.HotkeyLabel{
-                frame={t=1, l=55},
+                frame={t=1, l=15},
                 label='clear',
                 key='CUSTOM_CTRL_C',
                 auto_width=true,
                 on_activate=do_clear,
+            },
+            widgets.HotkeyLabel{
+                frame={t=0, l=30},
+                label='sort by freq',
+                key='CUSTOM_CTRL_O',
+                auto_width=true,
+                on_activate=do_sort,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=30},
+                label='sort by type',
+                key='CUSTOM_CTRL_T',
+                auto_width=true,
+                on_activate=do_sort_type,
+            },
+            widgets.HotkeyLabel{
+                frame={t=0, l=52},
+                label='sort by mat',
+                key='CUSTOM_CTRL_T',
+                auto_width=true,
+                on_activate=do_sort_mat,
             },
         },
     }

@@ -1060,7 +1060,7 @@ static bool compare_type(df::manager_order *a, df::manager_order *b)
     {
         return enum_item_key(a->job_type) < enum_item_key(b->job_type);
     }
-    
+
     // Compare item subtype
     bool a_has_item_subtype = (a->item_subtype != -1);
     bool b_has_item_subtype = (b->item_subtype != -1);

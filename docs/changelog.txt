@@ -57,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - Linux launcher: preserve LD_PRELOAD set by Steam, so Steam Overlay and game streaming works
+- `autobutcher`: allow semi-wild units to be butchered again
 
 ## Misc Improvements
 

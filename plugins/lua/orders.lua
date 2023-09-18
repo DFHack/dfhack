@@ -136,7 +136,7 @@ function OrdersOverlay:init()
             widgets.HotkeyLabel{
                 frame={t=0, l=52},
                 label='sort by mat',
-                key='CUSTOM_CTRL_T',
+                key='CUSTOM_CTRL_M',
                 auto_width=true,
                 on_activate=do_sort_mat,
             },

@@ -28,7 +28,11 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
-using namespace std;
+#include <syncstream>
+
+using std::map;
+using std::string;
+using std::vector;
 
 #include "modules/Gui.h"
 #include "MemAccess.h"
@@ -1397,8 +1401,10 @@ DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
         return;
 
     std::ofstream fseed("gamelog.txt", std::ios::out | std::ios::app);
-    if(fseed.is_open())
-        fseed << message << std::endl;
+    if(fseed.is_open()) {
+        std::osyncstream wrapped_fseed(fseed);
+        wrapped_fseed << message << std::endl;
+    }
     fseed.close();
 }
 
@@ -1540,7 +1546,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         if (flags.bits.D_DISPLAY)
         {
             world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
-            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + std::to_string(repeat_count + 1));
         }
         return -1;
     }
@@ -1802,7 +1808,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (a_flags.bits.D_DISPLAY)
         {
             world->status.display_timer = r.display_timer;
-            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + std::to_string(repeat_count + 1));
         }
         DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
         return true;

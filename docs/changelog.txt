@@ -56,8 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- Linux launcher: preserve LD_PRELOAD set by Steam, so Steam Overlay and game streaming works
-- `autobutcher`: allow semi-wild units to be butchered again
 
 ## Misc Improvements
 
@@ -68,6 +66,12 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 50.10-r1
+
+## Fixes
+- Linux launcher: allow Steam Overlay and game streaming to function
+- `autobutcher`: don't ignore semi-wild units when marking units for slaughter
 
 # 50.09-r4
 

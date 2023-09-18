@@ -1033,7 +1033,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "die")
     {
+#ifdef WIN32
+        TerminateProcess(GetCurrentProcess(),666);
+#else
         std::_Exit(666);
+#endif
     }
     else if (first == "kill-lua")
     {

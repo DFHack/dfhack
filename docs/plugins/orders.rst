@@ -17,7 +17,7 @@ Usage
     manager orders. It will not clear the orders that already exist.
 ``orders clear``
     Deletes all manager orders in the current embark.
-``orders reset``
+``orders recheck``
     Invalidates manager orders forcing material conditions recheck.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't

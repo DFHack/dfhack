@@ -62,8 +62,8 @@ local function do_export()
     }:show()
 end
 
-local function do_reset()
-    dfhack.run_command('orders', 'reset')
+local function do_recheck()
+    dfhack.run_command('orders', 'recheck')
 end
 
 local function do_sort_type()
@@ -107,10 +107,10 @@ function OrdersOverlay:init()
             },
             widgets.HotkeyLabel{
                 frame={t=0, l=15},
-                label='reset',
+                label='recheck',
                 key='CUSTOM_CTRL_R',
                 auto_width=true,
-                on_activate=do_reset,
+                on_activate=do_recheck,
             },
             widgets.HotkeyLabel{
                 frame={t=1, l=15},

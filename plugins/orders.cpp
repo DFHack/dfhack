@@ -66,7 +66,7 @@ static command_result orders_clear_command(color_ostream & out);
 static command_result orders_sort_command(color_ostream & out);
 static command_result orders_sort_type_command(color_ostream & out);
 static command_result orders_sort_material_command(color_ostream & out);
-static command_result orders_reset_command(color_ostream & out);
+static command_result orders_recheck_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -124,9 +124,9 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_sort_material_command(out);
     }
 
-    if (parameters[0] == "reset" && parameters.size() == 1)
+    if (parameters[0] == "recheck" && parameters.size() == 1)
     {
-        return orders_reset_command(out);
+        return orders_recheck_command(out);
     }
 
     return CR_WRONG_USAGE;
@@ -1160,7 +1160,7 @@ static command_result orders_sort_material_command(color_ostream & out)
     return CR_OK;
 }
 
-static command_result orders_reset_command(color_ostream & out)
+static command_result orders_recheck_command(color_ostream & out)
 {
     for (auto it : world->manager_orders)
     {

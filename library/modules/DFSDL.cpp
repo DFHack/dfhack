@@ -162,6 +162,8 @@ SDL_Surface* DFSDL::DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, 
 }
 
 int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window) {
+    if (!g_SDL_ShowSimpleMessageBox)
+        return -1;
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
 }
 

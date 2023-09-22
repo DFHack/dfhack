@@ -67,6 +67,12 @@ Template for new versions:
 
 ## Removed
 
+# 50.10-r1
+
+## Fixes
+- Linux launcher: allow Steam Overlay and game streaming to function
+- `autobutcher`: don't ignore semi-wild units when marking units for slaughter
+
 # 50.09-r4
 
 ## New Features

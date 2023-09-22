@@ -962,6 +962,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     if (!self) return 0;
 
     auto keys = (std::set<df::interface_key>*)lua_touserdata(L, 2);
+    if (!keys) return 0;
 
     lua_getfield(L, -1, "onInput");
 

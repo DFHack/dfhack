@@ -1431,7 +1431,7 @@ doors/farming_doors
 ,,c,c,c,c,c,c,c,c,c,,,,`,,`,,,,c,c,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,c,,,c,`,`,`,`,`,c,,,c,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,c,,"c{name=""Unprepared fish"" take_from=""Starting food""}:+unpreparedfish",c,,,`,,,"c{name=""Rawhides"" take_from=""Starting cloth/trash""}:+rawhides",c,,c,c,c,c,c,c,c,c
-,,c,c,c,c,c,c,c,,,c,c,,"c{name=""Refuse feeder"" give_to=""Rawhides"" take_from=""Starting cloth/trash""}:+cat_refuse/type(1x3)","y{name=""Corpse feeder"" take_from=""Starting cloth/trash""}:+cat_refuse/corpses,bodyparts(2x3)",~,,c,c,,,c,c,c,c,c,c,c
+,,c,c,c,c,c,c,c,,,c,c,,"c{name=""Refuse feeder"" give_to=""Rawhides"" take_from=""Starting cloth/trash""}:+cat_refuse/type(1x3)","y2{name=""Corpse feeder"" take_from=""Starting cloth/trash""}:+cat_refuse/corpses,bodyparts(2x3)",~,,c,c,,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,~,~,~,,`,`,`,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,~,~,~,,`,`,`,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,,`,,,`,`,`,,c,c,c,c,c,c,c
@@ -1687,7 +1687,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
-,,"c{name=""Lye"" barrels=0}:+miscliquid",`,`,`,`,`,`,~,~,"u{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
+,,"c{name=""Lye"" barrels=0}:+miscliquid",`,`,`,`,`,`,~,~,"u2{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,"bnpdz{name=""Bar/military feeder"" containers=0}:-potash+adamantinethread(5x3)",,,,~,`,`,`,`,`,`,`,`,`,`,`,`,c

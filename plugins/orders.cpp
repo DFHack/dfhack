@@ -67,6 +67,7 @@ static command_result orders_sort_command(color_ostream & out);
 static command_result orders_sort_type_command(color_ostream & out);
 static command_result orders_sort_material_command(color_ostream & out);
 static command_result orders_recheck_command(color_ostream & out);
+static command_result orders_recheck_current_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -127,6 +128,14 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "recheck" && parameters.size() == 1)
     {
         return orders_recheck_command(out);
+    }
+
+    if (parameters[0] == "recheck" && parameters.size() == 2)
+    {
+        if (parameters[1] == "this")
+        {
+            return orders_recheck_current_command(out);
+        }
     }
 
     return CR_WRONG_USAGE;
@@ -1039,6 +1048,12 @@ static bool compare_type(df::manager_order *a, df::manager_order *b)
     // Goal: Sort orders to easily find them in the list and to see dupclicated orders.
     // Sorting by job types
 
+    // Divide orders by frequency first
+    if (a->frequency != b->frequency)
+    {
+        return compare_freq(a, b);
+    }
+
     // Determine if only one order has reaction_name
     bool a_has_reaction_name = !a->reaction_name.empty();
     bool b_has_reaction_name = !b->reaction_name.empty();
@@ -1077,8 +1092,8 @@ static bool compare_type(df::manager_order *a, df::manager_order *b)
         }
     }
 
-    // Fall back to freq sort
-    return compare_freq(a, b);
+    // By default orders are the same
+    return false;
 }
 
 static command_result orders_sort_type_command(color_ostream & out)
@@ -1101,6 +1116,12 @@ static bool compare_material(df::manager_order *a, df::manager_order *b)
 {
     // Goal: Sort orders to easily find them in the list and to see dupclicated orders.
     // Sorting by materials
+
+    // Divide orders by frequency first
+    if (a->frequency != b->frequency)
+    {
+        return compare_freq(a, b);
+    }
 
     // Determine if only one of the orders has mat_type
     bool a_has_material = (a->mat_type != -1 || a->mat_index != -1);
@@ -1166,6 +1187,20 @@ static command_result orders_recheck_command(color_ostream & out)
     {
         it->status.bits.active = false;
         it->status.bits.validated = false;
+    }
+    return CR_OK;
+}
+
+static command_result orders_recheck_current_command(color_ostream & out)
+{
+    if (game->main_interface.info.work_orders.conditions.open)
+    {
+        game->main_interface.info.work_orders.conditions.wq.status.active = false;
+    }
+    else
+    {
+        out << COLOR_LIGHTRED << "Order conditions is not open" << std::endl;
+        return CR_FAILURE;
     }
     return CR_OK;
 }

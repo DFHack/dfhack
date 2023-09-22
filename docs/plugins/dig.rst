@@ -143,9 +143,10 @@ Designation options:
 ``clear``
     Clear any designations.
 
-You can also pass a ``-z`` option, which restricts designations to the current
-z-level and down. This is useful when you don't want to designate tiles on the
-same z-levels as your carefully dug fort above.
+You can also pass a ``-z`` and/or a ``+z``` option, which restricts designations to the
+current z-level and down/up. This is useful when you don't want to designate tiles on the
+same z-levels as your carefully dug fort above/below. To dig only at the current z-level,
+pass in both.
 
 digexp
 ------

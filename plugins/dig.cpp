@@ -1424,6 +1424,8 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     uint32_t xMax,yMax,zMax;
     Maps::getSize(xMax,yMax,zMax);
 
+    uint32_t zMin = 0;
+
     int32_t targetDigType = -1;
     for (string parameter : parameters) {
         if ( parameter == "clear" )
@@ -1442,6 +1444,8 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             targetDigType = tile_dig_designation::UpStair;
         else if ( parameter == "-z" )
             zMax = *window_z + 1;
+        else if ( parameter == "+z")
+            zMin = *window_z;
         else
         {
             out.printerr("Invalid parameter: '%s'.\n", parameter.c_str());
@@ -1494,7 +1498,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     if (baseDes.bits.dig == tile_dig_designation::Default) baseOcc.bits.dig_auto = true;
     else baseOcc.bits.dig_auto = false; 
 
-    for( uint32_t z = 0; z < zMax; z++ )
+    for( uint32_t z = zMin; z < zMax; z++ )
     {
         for( uint32_t x = 1; x < tileXMax-1; x++ )
         {

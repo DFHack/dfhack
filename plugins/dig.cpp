@@ -4,6 +4,7 @@
 #include <stack>
 #include <string>
 #include <cmath>
+#include <memory>
 
 #include "Core.h"
 #include "Console.h"
@@ -1072,14 +1073,13 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
     }
-    MapExtras::MapCache * MCache = new MapExtras::MapCache;
+    std::unique_ptr<MapExtras::MapCache> MCache = std::make_unique<MapExtras::MapCache>();
     df::tile_designation des = MCache->designationAt(xy);
     df::tiletype tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);
     if( veinmat == -1 )
     {
         con.printerr("This tile is not a vein.\n");
-        delete MCache;
         return CR_FAILURE;
     }
     con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
@@ -1192,7 +1192,6 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
-    delete MCache;
     return CR_OK;
 }
 
@@ -1259,7 +1258,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
     }
-    MapExtras::MapCache * MCache = new MapExtras::MapCache;
+    std::unique_ptr<MapExtras::MapCache> MCache = std::make_unique<MapExtras::MapCache>();
     df::tile_designation des = MCache->designationAt(xy);
     df::tiletype tt = MCache->tiletypeAt(xy);
     int16_t veinmat = MCache->veinMaterialAt(xy);
@@ -1267,7 +1266,6 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     if( veinmat != -1 )
     {
         con.printerr("This is a vein. Use digv instead!\n");
-        delete MCache;
         return CR_FAILURE;
     }
     con.print("%d/%d/%d tiletype: %d, basemat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, basemat, des.whole);
@@ -1408,7 +1406,6 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         }
     }
     MCache->WriteAll();
-    delete MCache;
     return CR_OK;
 }
 
@@ -1462,14 +1459,21 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
-    MapExtras::MapCache * mCache = new MapExtras::MapCache;
+    std::unique_ptr<MapExtras::MapCache> mCache = std::make_unique<MapExtras::MapCache>();
     df::tile_designation baseDes = mCache->designationAt(xy);
+
+    if (baseDes.bits.hidden) {
+        out.printerr("Cursor is pointing at a hidden tile. Point the cursor at a visible tile");
+        return CR_FAILURE;
+    }
+
+    df::tile_occupancy baseOcc = mCache->occupancyAt(xy);
+
     df::tiletype tt = mCache->tiletypeAt(xy);
     int16_t veinmat = mCache->veinMaterialAt(xy);
     if( veinmat == -1 )
     {
         out.printerr("This tile is not a vein.\n");
-        delete mCache;
         return CR_FAILURE;
     }
     out.print("(%d,%d,%d) tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, baseDes.whole);
@@ -1485,6 +1489,8 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             baseDes.bits.dig = tile_dig_designation::Default;
         }
     }
+
+    baseOcc.bits.dig_auto = true;
 
     for( uint32_t z = 0; z < zMax; z++ )
     {
@@ -1506,18 +1512,22 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                 if ( !mCache->testCoord(current) )
                 {
                     out.printerr("testCoord failed at (%d,%d,%d)\n", x, y, z);
-                    delete mCache;
                     return CR_FAILURE;
                 }
 
                 df::tile_designation designation = mCache->designationAt(current);
+
+                if (designation.bits.hidden) continue;
+
+                df::tile_occupancy occupancy = mCache->occupancyAt(current);
                 designation.bits.dig = baseDes.bits.dig;
-                mCache->setDesignationAt(current, designation,priority);
+                occupancy.bits.dig_auto = baseOcc.bits.dig_auto;
+                mCache->setDesignationAt(current, designation, priority);
+                mCache->setOccupancyAt(current, occupancy);
             }
         }
     }
 
     mCache->WriteAll();
-    delete mCache;
     return CR_OK;
 }

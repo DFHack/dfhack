@@ -1489,8 +1489,10 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             baseDes.bits.dig = tile_dig_designation::Default;
         }
     }
-
-    baseOcc.bits.dig_auto = true;
+    // Auto dig only works on default dig designation. Setting dig_auto for any other designation
+    // prevents dwarves from digging that tile at all.
+    if (baseDes.bits.dig == tile_dig_designation::Default) baseOcc.bits.dig_auto = true;
+    else baseOcc.bits.dig_auto = false; 
 
     for( uint32_t z = 0; z < zMax; z++ )
     {

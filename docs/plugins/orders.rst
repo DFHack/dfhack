@@ -17,8 +17,13 @@ Usage
     manager orders. It will not clear the orders that already exist.
 ``orders clear``
     Deletes all manager orders in the current embark.
-``orders recheck``
-    Invalidates manager orders forcing material conditions recheck.
+``orders recheck [this]``
+    Sets the status to ``Checking`` (from ``Active``) of all work orders or one
+    currently viewed if 'this' option is passed. Work order conditions screen 
+    should be open in this case. This makes the manager reevaluate its conditions.
+    This is especially useful for an order that had its conditions met when it
+    was started, but the requisite items have since disappeared and the workorder
+    is now generating job cancellation spam.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't
     prevent one-time orders from ever being completed. The sorting order is:

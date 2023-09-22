@@ -1198,7 +1198,7 @@ static command_result orders_recheck_current_command(color_ostream & out)
 {
     if (game->main_interface.info.work_orders.conditions.open)
     {
-        game->main_interface.info.work_orders.conditions.wq.status.active = false;
+        game->main_interface.info.work_orders.conditions.wq->status.bits.active = false;
     }
     else
     {

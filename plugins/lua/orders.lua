@@ -129,14 +129,14 @@ function OrdersOverlay:init()
             widgets.HotkeyLabel{
                 frame={t=1, l=30},
                 label='sort by type',
-                key='CUSTOM_CTRL_T',
+                key='CUSTOM_CTRL_J',
                 auto_width=true,
                 on_activate=do_sort_type,
             },
             widgets.HotkeyLabel{
                 frame={t=0, l=52},
                 label='sort by mat',
-                key='CUSTOM_CTRL_M',
+                key='CUSTOM_CTRL_T',
                 auto_width=true,
                 on_activate=do_sort_mat,
             },

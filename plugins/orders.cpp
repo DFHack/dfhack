@@ -10,6 +10,7 @@
 #include "json/json.h"
 
 #include "df/building.h"
+#include "df/gamest.h"
 #include "df/historical_figure.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
@@ -35,6 +36,8 @@
 
 using namespace DFHack;
 using namespace df::enums;
+
+using df::global::game;
 
 DFHACK_PLUGIN("orders");
 

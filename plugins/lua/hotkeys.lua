@@ -177,6 +177,8 @@ function Menu:init()
 
     list_width = math.max(35, list_width)
 
+    list_width = math.max(35, list_width)
+
     local list_frame = copyall(self.hotspot.frame)
     local list_widget_frame = { h = math.min(#choices, MAX_LIST_HEIGHT) }
     local quickstart_frame = {}

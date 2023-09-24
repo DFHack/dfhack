@@ -36,7 +36,7 @@ namespace DFHack {
 static std::vector<TexposHandle> textures;
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
-    textures = Textures::loadTileset("hack/data/art/pathable.png", 32, 32);
+    textures = Textures::loadTileset("hack/data/art/pathable.png", 32, 32, true);
     return CR_OK;
 }
 

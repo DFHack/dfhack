@@ -67,15 +67,14 @@ jobs:
             compiler: msvc
             plugins: "default"
             config: "empty"
-          # TODO: uncomment once we have a linux build we can download from bay12
-          # - os: ubuntu
-          #   compiler: gcc-10
-          #   plugins: "default"
-          #   config: "default"
-          # - os: ubuntu
-          #   compiler: gcc-12
-          #   plugins: "all"
-          #   config: "default"
+          - os: ubuntu
+            compiler: gcc-10
+            plugins: "default"
+            config: "default"
+          - os: ubuntu
+            compiler: gcc-12
+            plugins: "all"
+            config: "default"
     steps:
     - name: Set env
       shell: bash

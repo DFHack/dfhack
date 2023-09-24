@@ -175,6 +175,9 @@ local function ensure_title_screen()
             prev_ms = now_ms
         end
     end
+    if df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getDFViewscreen(true)) then
+        qerror('Cannot reach title screen from loaded fort')
+    end
     for i = 1, 100 do
         local scr = dfhack.gui.getCurViewscreen()
         if is_title_screen(scr) then
@@ -191,6 +194,18 @@ end
 
 local function is_fortress()
     return dfhack.gui.matchFocusString('dwarfmode/Default')
+end
+
+-- error out if we're not running in a CI environment
+-- the tests may corrupt saves, and we don't want to unexpectedly ruin a real player save
+-- this heuristic is not perfect, but it should be able to detect most cases
+local function ensure_ci_save(scr)
+    if #scr.savegame_header ~= 1
+        or #scr.savegame_header_world ~= 1
+        or not string.find(scr.savegame_header[0].fort_name, 'Dream')
+    then
+        qerror('Unexpected test save in slot 0; please manually load a fort for testing. note that tests may corrupt the game!')
+    end
 end
 
 local function click_top_title_button(scr)
@@ -232,14 +247,15 @@ local function ensure_fortress(config)
             return
         end
         local scr = dfhack.gui.getDFViewscreen(true)
-        if dfhack.gui.matchFocusString('title') then
+        if dfhack.gui.matchFocusString('title/Default') then
             -- TODO: reinstate loading of a specified save dir; for now
             -- just load the first possible save, which will at least let us
             -- run fortress tests in CI
             -- qerror()'s on falure
             -- dfhack.run_script('load-save', config.save_dir)
+            ensure_ci_save(scr)
             load_first_save(scr)
-        elseif dfhack.gui.matchFocusString('loadgame') then
+        elseif not dfhack.gui.matchFocusString('loadgame') then
             -- if we're not actively loading a game, hope we're in
             -- a screen where hitting ESC will get us to the game map
             -- or the title screen

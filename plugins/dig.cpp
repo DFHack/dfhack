@@ -1421,11 +1421,10 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    uint32_t zMin = 0;
     uint32_t xMax,yMax,zMax;
     Maps::getSize(xMax,yMax,zMax);
 
-    uint32_t zMin = 0;
-    
     bool hidden = false;
     bool automine = true;
 

@@ -189,39 +189,67 @@ local function ensure_title_screen()
                          dfhack.gui.getCurFocus(true)[1]))
 end
 
-local function is_fortress(focus_string)
-    focus_string = focus_string or dfhack.gui.getCurFocus(true)
-    return focus_string == 'dwarfmode/Default'
+local function is_fortress()
+    return dfhack.gui.matchFocusString('dwarfmode/Default')
+end
+
+local function click_top_title_button(scr)
+    local sw, sh = dfhack.screen.getWindowSize()
+    df.global.gps.mouse_x = sw // 2
+    df.global.gps.precise_mouse_x = df.global.gps.mouse_x * df.global.gps.tile_pixel_x
+    if sh < 60 then
+        df.global.gps.mouse_y = 23
+    else
+        df.global.gps.mouse_y = (sh // 2) + 1
+    end
+    df.global.gps.precise_mouse_y = df.global.gps.mouse_y * df.global.gps.tile_pixel_y
+    df.global.enabler.tracking_on = 1
+    df.global.enabler.mouse_lbut = 1
+    df.global.enabler.mouse_lbut_down = 1
+    dfhack.screen._doSimulateInput(scr, {})
+end
+
+local function load_first_save(scr)
+    if #scr.savegame_header == 0 then
+        qerror('no savegames available to load')
+    end
+    scr.mode = 2
+    click_top_title_button(scr)
+    delay()
+    click_top_title_button(scr)
+    delay()
 end
 
 -- Requires that a fortress game is already loaded or is ready to be loaded via
--- the "Continue Playing" option in the title screen. Otherwise the function
+-- the "Continue active game" option in the title screen. Otherwise the function
 -- will time out and/or exit with error.
 local function ensure_fortress(config)
-    local focus_string = dfhack.gui.getCurFocus(true)
     for screen_timeout = 1,10 do
-        if is_fortress(focus_string) then
+        if is_fortress() then
             print('Loaded fortress map')
             -- pause the game (if it's not already paused)
             dfhack.gui.resetDwarfmodeView(true)
             return
         end
-        local scr = dfhack.gui.getCurViewscreen(true)
-        if focus_string == 'title' or
-                focus_string == 'dfhack/lua/load_screen' then
+        local scr = dfhack.gui.getDFViewscreen(true)
+        if dfhack.gui.matchFocusString('title') then
+            -- TODO: reinstate loading of a specified save dir; for now
+            -- just load the first possible save, which will at least let us
+            -- run fortress tests in CI
             -- qerror()'s on falure
-            dfhack.run_script('load-save', config.save_dir)
-        elseif focus_string ~= 'loadgame' then
+            -- dfhack.run_script('load-save', config.save_dir)
+            load_first_save(scr)
+        elseif dfhack.gui.matchFocusString('loadgame') then
             -- if we're not actively loading a game, hope we're in
             -- a screen where hitting ESC will get us to the game map
             -- or the title screen
             scr:feed_key(df.interface_key.LEAVESCREEN)
         end
         -- wait for current screen to change
-        local prev_focus_string = focus_string
+        local prev_focus_string = dfhack.gui.getCurFocus(true)[1]
         for frame_timeout = 1,100 do
             delay(10)
-            focus_string = dfhack.gui.getCurFocus(true)
+            local focus_string = dfhack.gui.getCurFocus(true)[1]
             if focus_string ~= prev_focus_string then
                 goto next_screen
             end
@@ -236,7 +264,7 @@ local function ensure_fortress(config)
         ::next_screen::
     end
     qerror(string.format('Could not load fortress (timed out at %s)',
-                         focus_string))
+                         table.concat(dfhack.gui.getCurFocus(), ' ')))
 end
 
 local MODES = {

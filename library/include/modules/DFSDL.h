@@ -6,6 +6,7 @@
 struct SDL_Surface;
 struct SDL_Rect;
 struct SDL_PixelFormat;
+struct SDL_Window;
 union SDL_Event;
 
 namespace DFHack
@@ -50,6 +51,7 @@ DFHACK_EXPORT int DFSDL_PushEvent(SDL_Event *event);
 DFHACK_EXPORT void DFSDL_free(void *ptr);
 DFHACK_EXPORT SDL_PixelFormat* DFSDL_AllocFormat(uint32_t pixel_format);
 DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format);
+DFHACK_EXPORT int DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window);
 
 // submitted and returned text is UTF-8
 // see wrapper functions below for cp-437 variants

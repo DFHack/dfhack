@@ -43,6 +43,7 @@ char * (*g_SDL_GetClipboardText)();
 void (*g_SDL_free)(void *);
 SDL_PixelFormat* (*g_SDL_AllocFormat)(uint32_t pixel_format) = nullptr;
 SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int height, int depth, uint32_t format) = nullptr;
+int (*g_SDL_ShowSimpleMessageBox)(uint32_t flags, const char *title, const char *message, SDL_Window *window) = nullptr;
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -85,6 +86,7 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_free);
     bind(g_sdl_handle, SDL_AllocFormat);
     bind(g_sdl_handle, SDL_CreateRGBSurfaceWithFormat);
+    bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
 #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -159,6 +161,11 @@ SDL_Surface* DFSDL::DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, 
     return g_SDL_CreateRGBSurfaceWithFormat(flags, width, height, depth, format);
 }
 
+int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window) {
+    if (!g_SDL_ShowSimpleMessageBox)
+        return -1;
+    return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
+}
 
 DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)

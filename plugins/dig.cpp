@@ -1425,6 +1425,9 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     Maps::getSize(xMax,yMax,zMax);
 
     uint32_t zMin = 0;
+    
+    bool hidden = false;
+    bool automine = true;
 
     int32_t targetDigType = -1;
     for (string parameter : parameters) {
@@ -1442,10 +1445,16 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             targetDigType = tile_dig_designation::DownStair;
         else if ( parameter == "up" )
             targetDigType = tile_dig_designation::UpStair;
-        else if ( parameter == "-z" )
+        else if ( parameter == "-z" || parameter == "--cur-zlevel" )
+            {zMax = *window_z + 1; zMin = *window_z;}
+        else if ( parameter == "--zdown" || parameter == "-d")
             zMax = *window_z + 1;
-        else if ( parameter == "+z")
+        else if ( parameter == "--zup" || parameter == "-u")
             zMin = *window_z;
+        else if ( parameter == "--hidden" || parameter == "-h")
+            hidden = true;
+        else if ( parameter == "--no-auto" || parameter == "-a" )
+            automine = false;
         else
         {
             out.printerr("Invalid parameter: '%s'.\n", parameter.c_str());
@@ -1466,8 +1475,8 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     std::unique_ptr<MapExtras::MapCache> mCache = std::make_unique<MapExtras::MapCache>();
     df::tile_designation baseDes = mCache->designationAt(xy);
 
-    if (baseDes.bits.hidden) {
-        out.printerr("Cursor is pointing at a hidden tile. Point the cursor at a visible tile");
+    if (baseDes.bits.hidden && !hidden) {
+        out.printerr("Cursor is pointing at a hidden tile. Point the cursor at a visible tile when using the --hidden option.\n");
         return CR_FAILURE;
     }
 
@@ -1495,7 +1504,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     }
     // Auto dig only works on default dig designation. Setting dig_auto for any other designation
     // prevents dwarves from digging that tile at all.
-    if (baseDes.bits.dig == tile_dig_designation::Default) baseOcc.bits.dig_auto = true;
+    if (baseDes.bits.dig == tile_dig_designation::Default && automine) baseOcc.bits.dig_auto = true;
     else baseOcc.bits.dig_auto = false;
 
     for( uint32_t z = zMin; z < zMax; z++ )
@@ -1523,7 +1532,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
 
                 df::tile_designation designation = mCache->designationAt(current);
 
-                if (designation.bits.hidden) continue;
+                if (designation.bits.hidden && !hidden) continue;
 
                 df::tile_occupancy occupancy = mCache->occupancyAt(current);
                 designation.bits.dig = baseDes.bits.dig;

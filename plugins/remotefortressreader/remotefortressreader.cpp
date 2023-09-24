@@ -130,7 +130,6 @@
 using namespace DFHack;
 using namespace df::enums;
 using namespace RemoteFortressReader;
-using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
 
@@ -193,7 +192,7 @@ const char* growth_locations[] = {
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
 #include "df/art_image_ref.h"
-command_result loadArtImageChunk(color_ostream &out, vector <string> & parameters)
+command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & parameters)
 {
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
@@ -214,7 +213,7 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     return CR_OK;
 }
 
-command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
+command_result RemoteFortressReader_version(color_ostream &out, std::vector<std::string> &parameters)
 {
     out.print(RFR_VERSION);
     return CR_OK;
@@ -645,7 +644,7 @@ void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 
 }
 
-map<DFCoord, uint16_t> hashes;
+std::map<DFCoord, uint16_t> hashes;
 
 bool IsTiletypeChanged(DFCoord pos)
 {
@@ -663,7 +662,7 @@ bool IsTiletypeChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint16_t> waterHashes;
+std::map<DFCoord, uint16_t> waterHashes;
 
 bool IsDesignationChanged(DFCoord pos)
 {
@@ -681,7 +680,7 @@ bool IsDesignationChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint8_t> buildingHashes;
+std::map<DFCoord, uint8_t> buildingHashes;
 
 bool IsBuildingChanged(DFCoord pos)
 {
@@ -700,7 +699,7 @@ bool IsBuildingChanged(DFCoord pos)
     return changed;
 }
 
-map<DFCoord, uint16_t> spatterHashes;
+std::map<DFCoord, uint16_t> spatterHashes;
 
 bool IsspatterChanged(DFCoord pos)
 {
@@ -737,7 +736,7 @@ bool IsspatterChanged(DFCoord pos)
     return false;
 }
 
-map<int, uint16_t> itemHashes;
+std::map<int, uint16_t> itemHashes;
 
 bool isItemChanged(int i)
 {
@@ -755,7 +754,7 @@ bool isItemChanged(int i)
     return false;
 }
 
-bool areItemsChanged(vector<int> * items)
+bool areItemsChanged(std::vector<int> * items)
 {
     bool result = false;
     for (size_t i = 0; i < items->size(); i++)
@@ -766,7 +765,7 @@ bool areItemsChanged(vector<int> * items)
     return result;
 }
 
-map<int, int> engravingHashes;
+std::map<int, int> engravingHashes;
 
 bool isEngravingNew(int index)
 {

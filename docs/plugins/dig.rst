@@ -146,6 +146,7 @@ Designation options:
     Clear any designations.
 
 Other options:
+
 ``--zdown``, ``-d``
     Only designates tiles on the cursor's z-level and below.
 ``--zup``, ``-u``

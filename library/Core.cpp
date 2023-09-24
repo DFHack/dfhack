@@ -1459,12 +1459,9 @@ void Core::fatal (std::string output)
         con.print("\n");
     }
     fprintf(stderr, "%s\n", out.str().c_str());
-#ifndef LINUX_BUILD
-    out << "Check file stderr.log for details\n";
-    MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
-#else
+    out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-#endif
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1505,6 +1502,12 @@ bool Core::InitMainThread() {
 
     std::cerr << "DFHack build: " << Version::git_description() << "\n"
          << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+
+    std::cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
 
     // find out what we are...
     #ifdef LINUX_BUILD
@@ -1692,11 +1695,6 @@ bool Core::InitSimulationThread()
         return false;
     }
 
-    std::cerr << "Binding to SDL.\n";
-    if (!DFSDL::init(con)) {
-        fatal("cannot bind SDL libraries");
-        return false;
-    }
     if (DFSteam::init(con)) {
         std::cerr << "Found Steam.\n";
         DFSteam::launchSteamDFHackIfNecessary(con);

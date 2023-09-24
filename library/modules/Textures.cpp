@@ -197,11 +197,8 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
 
 std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
                                                 int tile_px_h, bool reserved) {
-    if (!enabler)
-        return std::vector<TexposHandle>{};
     if (g_tileset_to_handles.contains(file))
         return g_tileset_to_handles[file];
-
     if (!enabler)
         return std::vector<TexposHandle>{};
 

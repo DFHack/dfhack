@@ -154,7 +154,7 @@ Other options:
 ``--cur-zlevel``, ``-z``
     Only designates tiles on the same z-level as the cursor.
 ``--hidden``, ``-h``
-    Allows designation of hidden tiles, and using a hidden tile as the "palette".
+    Allows designation of hidden tiles, and picking a hidden tile as the target type.
 ``--no-auto``, ``-a``
     No automatic mining mode designation - useful if you want to avoid dwarves digging where you don't want them.
 

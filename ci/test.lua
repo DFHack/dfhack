@@ -2,6 +2,7 @@
 --@ module = true
 
 local expect = require('test_util.expect')
+local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
 local mock = require('test_util.mock')
@@ -226,7 +227,7 @@ local function click_top_title_button(scr)
     df.global.enabler.tracking_on = 1
     df.global.enabler.mouse_lbut = 1
     df.global.enabler.mouse_lbut_down = 1
-    dfhack.screen._doSimulateInput(scr, {})
+    gui.simulateInput(scr, '_MOUSE_L')
 end
 
 local function load_first_save(scr)

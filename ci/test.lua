@@ -156,19 +156,18 @@ local function is_title_screen()
     return dfhack.gui.matchFocusString('title/Default')
 end
 
-local function wait_for_game_load()
+local function wait_for(ms, desc, predicate)
     local start_ms = dfhack.getTickCount()
     local prev_ms = start_ms
-    while df.viewscreen_initial_prepst:is_instance(dfhack.gui.getDFViewscreen()) do
+    while not predicate() do
         delay(10)
-        -- wait up to 1 minute for the game to load and show the title screen
         local now_ms = dfhack.getTickCount()
-        if now_ms - start_ms > 60000 then
-            qerror(('Could not find title screen (timed out at %s)'):format(
-                dfhack.gui.getCurFocus(true)[1]))
+        if now_ms - start_ms > ms then
+            qerror(('%s took too long (timed out at %s)'):format(
+                desc, dfhack.gui.getCurFocus(true)[1]))
         end
         if now_ms - prev_ms > 1000 then
-            print('Waiting for game to load and show title screen...')
+            print(('Waiting for %s...'):format(desc))
             prev_ms = now_ms
         end
     end
@@ -178,7 +177,6 @@ end
 -- has already loaded a fortress or is in any screen that can't get to the title
 -- screen by sending ESC keys.
 local function ensure_title_screen()
-    wait_for_game_load()
     if df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getDFViewscreen(true)) then
         qerror('Cannot reach title screen from loaded fort')
     end
@@ -208,21 +206,21 @@ local function ensure_ci_save(scr)
         or #scr.savegame_header_world ~= 1
         or not string.find(scr.savegame_header[0].fort_name, 'Dream')
     then
-        qerror('Unexpected test save in slot 0; please manually load a fort for testing. note that tests may corrupt the game!')
+        qerror('Unexpected test save in slot 0; please manually load a fort for ' ..
+            'running fortress mode tests. note that tests may alter or corrupt the ' ..
+            'fort! Do not save after running tests.')
     end
 end
 
 local function click_top_title_button(scr)
     local sw, sh = dfhack.screen.getWindowSize()
-    print(('screen dimensions: %d, %d'):format(sw, sh))
     df.global.gps.mouse_x = sw // 2
     df.global.gps.precise_mouse_x = df.global.gps.mouse_x * df.global.gps.tile_pixel_x
     if sh < 60 then
-        df.global.gps.mouse_y = 23
+        df.global.gps.mouse_y = 25
     else
-        df.global.gps.mouse_y = (sh // 2) + 1
+        df.global.gps.mouse_y = (sh // 2) + 3
     end
-    print(('simulating click at screen coordinates %d, %d'):format(df.global.gps.mouse_x, df.global.gps.mouse_y))
     df.global.gps.precise_mouse_y = df.global.gps.mouse_y * df.global.gps.tile_pixel_y
     df.global.enabler.tracking_on = 1
     df.global.enabler.mouse_lbut = 1
@@ -234,18 +232,25 @@ local function load_first_save(scr)
     if #scr.savegame_header == 0 then
         qerror('no savegames available to load')
     end
-    scr.mode = 2
+
     click_top_title_button(scr)
-    delay()
+    wait_for(1000, 'world list', function()
+        return scr.mode == 2
+    end)
     click_top_title_button(scr)
-    delay()
+    wait_for(1000, 'savegame list', function()
+        return scr.mode == 3
+    end)
+    click_top_title_button(scr)
+    wait_for(1000, 'loadgame progress bar', function()
+        return dfhack.gui.matchFocusString('loadgame')
+    end)
 end
 
 -- Requires that a fortress game is already loaded or is ready to be loaded via
 -- the "Continue active game" option in the title screen. Otherwise the function
 -- will time out and/or exit with error.
 local function ensure_fortress(config)
-    wait_for_game_load()
     for screen_timeout = 1,10 do
         if is_fortress() then
             print('Fortress map is loaded')
@@ -253,8 +258,8 @@ local function ensure_fortress(config)
             dfhack.gui.resetDwarfmodeView(true)
             return
         end
-        local scr = dfhack.gui.getDFViewscreen(true)
-        if dfhack.gui.matchFocusString('title/Default') then
+        local scr = dfhack.gui.getCurViewscreen()
+        if dfhack.gui.matchFocusString('title/Default', scr) then
             print('Attempting to load the test fortress')
             -- TODO: reinstate loading of a specified save dir; for now
             -- just load the first possible save, which will at least let us
@@ -263,29 +268,17 @@ local function ensure_fortress(config)
             -- dfhack.run_script('load-save', config.save_dir)
             ensure_ci_save(scr)
             load_first_save(scr)
-        elseif not dfhack.gui.matchFocusString('loadgame') then
+        elseif not dfhack.gui.matchFocusString('loadgame', scr) then
             -- if we're not actively loading a game, hope we're in
             -- a screen where hitting ESC will get us to the game map
             -- or the title screen
             scr:feed_key(df.interface_key.LEAVESCREEN)
         end
         -- wait for current screen to change
-        local prev_focus_string = dfhack.gui.getCurFocus(true)[1]
-        for frame_timeout = 1,100 do
-            delay(10)
-            local focus_string = dfhack.gui.getCurFocus(true)[1]
-            if focus_string ~= prev_focus_string then
-                goto next_screen
-            end
-            if frame_timeout % 10 == 0 then
-                print(string.format(
-                    'Loading fortress (currently at screen: %s)',
-                    focus_string))
-            end
-        end
-        print('Timed out waiting for screen to change')
-        break
-        ::next_screen::
+        local prev_focus_string = dfhack.gui.getCurFocus()[1]
+        wait_for(60000, 'screen change', function()
+            return dfhack.gui.getCurFocus()[1] ~= prev_focus_string
+        end)
     end
     qerror(string.format('Could not load fortress (timed out at %s)',
                          table.concat(dfhack.gui.getCurFocus(), ' ')))
@@ -630,6 +623,10 @@ local function filter_tests(tests, config)
 end
 
 local function run_tests(tests, status, counts, config)
+    wait_for(60000, 'game load', function()
+        local scr = dfhack.gui.getDFViewscreen()
+        return not df.viewscreen_initial_prepst:is_instance(scr)
+    end)
     print(('Running %d tests'):format(#tests))
     local start_ms = dfhack.getTickCount()
     local num_skipped = 0

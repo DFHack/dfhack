@@ -125,7 +125,7 @@ jobs:
       run: tar xjf test-${{ matrix.compiler }}.tar.bz2 -C ${{ env.DF_FOLDER }}
     - name: Start X server
       if: matrix.os == 'ubuntu'
-      run: Xvfb :0 -screen 0 1600x1200x32 &
+      run: Xvfb :0 -screen 0 1600x1200x24 &
     - name: Run lua tests
       timeout-minutes: 10
       env:

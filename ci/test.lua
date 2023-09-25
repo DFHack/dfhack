@@ -213,7 +213,7 @@ end
 
 local function click_top_title_button(scr)
     local sw, sh = dfhack.screen.getWindowSize()
-    print(('screen dimensions: %d, %d'):format(sw. sh))
+    print(('screen dimensions: %d, %d'):format(sw, sh))
     df.global.gps.mouse_x = sw // 2
     df.global.gps.precise_mouse_x = df.global.gps.mouse_x * df.global.gps.tile_pixel_x
     if sh < 60 then

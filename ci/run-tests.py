@@ -31,7 +31,7 @@ if args.test_dir is not None:
     if not os.path.isdir(args.test_dir):
         print('ERROR: invalid test folder: %r' % args.test_dir)
 
-MAX_TRIES = 5
+MAX_TRIES = 1
 
 dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dfhack'
 test_status_file = 'test_status.json'

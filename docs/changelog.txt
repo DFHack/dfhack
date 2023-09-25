@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autolabor`: now unconditionally clears ``game.external_flag`` when unloading a fort or the plugin
 
 ## Misc Improvements
 - `dig`: `digtype` command now has options to choose between designating only visible tiles or hidden tiles, as well as "auto" dig mode. Z-level options adjusted to allow choosing z-levels above, below, or the same as the cursor.

@@ -220,6 +220,7 @@ local function click_top_title_button(scr)
     else
         df.global.gps.mouse_y = (sh // 2) + 1
     end
+    print(('simulating click at screen coordinates %d, %d'):format(df.global.gps.mouse_x, df.global.gps.mouse_y))
     df.global.gps.precise_mouse_y = df.global.gps.mouse_y * df.global.gps.tile_pixel_y
     df.global.enabler.tracking_on = 1
     df.global.enabler.mouse_lbut = 1

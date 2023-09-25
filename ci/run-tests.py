@@ -65,14 +65,12 @@ if not os.path.exists(init_txt_path):
 shutil.copyfile(init_txt_path, init_txt_path + '.orig')
 with open(init_txt_path) as f:
     init_contents = f.read()
-init_contents = change_setting(init_contents, 'INTRO', 'NO')
 init_contents = change_setting(init_contents, 'SOUND', 'NO')
 init_contents = change_setting(init_contents, 'WINDOWED', 'YES')
-init_contents = change_setting(init_contents, 'WINDOWEDX', '80')
-init_contents = change_setting(init_contents, 'WINDOWEDY', '25')
-init_contents = change_setting(init_contents, 'FPS', 'YES')
-if args.headless:
-    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
+init_contents = change_setting(init_contents, 'WINDOWEDX', '1200')
+init_contents = change_setting(init_contents, 'WINDOWEDY', '800')
+#if args.headless:
+#    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
 init_path = 'dfhack-config/init'
 if not os.path.isdir('hack/init'):

@@ -83,7 +83,9 @@ jobs:
       if: matrix.os == 'ubuntu'
       run: |
         sudo apt-get update
-        sudo apt-get install libsdl2-dev libsdl2-image-dev
+        sudo apt-get install \
+          libsdl2-2.0-0 \
+          libsdl2-image-2.0-0
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
@@ -121,8 +123,13 @@ jobs:
     - name: Install DFHack
       shell: bash
       run: tar xjf test-${{ matrix.compiler }}.tar.bz2 -C ${{ env.DF_FOLDER }}
+    - name: Start X server
+      if: matrix.os == 'ubuntu'
+      run: Xvfb :0 -screen 0 1600x1200x32 &
     - name: Run lua tests
       timeout-minutes: 10
+      env:
+        DISPLAY: :0
       run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
     - name: Check RPC interface
       run: python ci/check-rpc.py "${{ env.DF_FOLDER }}/dfhack-rpc.txt"

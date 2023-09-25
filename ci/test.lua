@@ -151,18 +151,14 @@ end
 test_envvars.require = clean_require
 test_envvars.reqscript = clean_reqscript
 
-local function is_title_screen(scr)
-    scr = scr or dfhack.gui.getCurViewscreen()
-    return df.viewscreen_titlest:is_instance(scr)
+local function is_title_screen()
+    return dfhack.gui.matchFocusString('title/Default')
 end
 
--- This only handles pre-fortress-load screens. It will time out if the player
--- has already loaded a fortress or is in any screen that can't get to the title
--- screen by sending ESC keys.
-local function ensure_title_screen()
+local function wait_for_game_load()
     local start_ms = dfhack.getTickCount()
     local prev_ms = start_ms
-    while df.viewscreen_initial_prepst:is_instance(dfhack.gui.getCurViewscreen()) do
+    while df.viewscreen_initial_prepst:is_instance(dfhack.gui.getDFViewscreen()) do
         delay(10)
         -- wait up to 1 minute for the game to load and show the title screen
         local now_ms = dfhack.getTickCount()
@@ -175,12 +171,19 @@ local function ensure_title_screen()
             prev_ms = now_ms
         end
     end
+end
+
+-- This only handles pre-fortress-load screens. It will time out if the player
+-- has already loaded a fortress or is in any screen that can't get to the title
+-- screen by sending ESC keys.
+local function ensure_title_screen()
+    wait_for_game_load()
     if df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getDFViewscreen(true)) then
         qerror('Cannot reach title screen from loaded fort')
     end
     for i = 1, 100 do
         local scr = dfhack.gui.getCurViewscreen()
-        if is_title_screen(scr) then
+        if is_title_screen() then
             print('Found title screen')
             return
         end
@@ -239,15 +242,17 @@ end
 -- the "Continue active game" option in the title screen. Otherwise the function
 -- will time out and/or exit with error.
 local function ensure_fortress(config)
+    wait_for_game_load()
     for screen_timeout = 1,10 do
         if is_fortress() then
-            print('Loaded fortress map')
+            print('Fortress map is loaded')
             -- pause the game (if it's not already paused)
             dfhack.gui.resetDwarfmodeView(true)
             return
         end
         local scr = dfhack.gui.getDFViewscreen(true)
         if dfhack.gui.matchFocusString('title/Default') then
+            print('Attempting to load the test fortress')
             -- TODO: reinstate loading of a specified save dir; for now
             -- just load the first possible save, which will at least let us
             -- run fortress tests in CI

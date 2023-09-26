@@ -366,10 +366,10 @@ function ItemSelection:submit(choices)
 end
 
 function ItemSelection:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self.on_cancel()
         return true
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local list = self.subviews.flist.list
         local idx = list:getIdxUnderMouse()
         if idx then

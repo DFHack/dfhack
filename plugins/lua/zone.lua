@@ -801,10 +801,12 @@ end
 function AssignAnimalScreen:onInput(keys)
     local handled = AssignAnimalScreen.super.onInput(self, keys)
     if not self.is_valid_ui_state() then
-        view:dismiss()
+        if view then
+            view:dismiss()
+        end
         return
     end
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         -- if any click is made outside of our window, we need to recheck unit properties
         local window = self.subviews[1]
         if not window:getMouseFramePos() then
@@ -818,7 +820,7 @@ function AssignAnimalScreen:onInput(keys)
 end
 
 function AssignAnimalScreen:onRenderFrame()
-    if not self.is_valid_ui_state() then
+    if view and not self.is_valid_ui_state() then
         view:dismiss()
     end
 end
@@ -1072,6 +1074,7 @@ function CageChainOverlay:init()
             frame={t=0, l=0, r=0, h=1},
             label='DFHack assign',
             key='CUSTOM_CTRL_T',
+            visible=is_valid_building,
             on_activate=function() view = view and view:raise() or show_cage_chain_screen() end,
         },
     }

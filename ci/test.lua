@@ -645,12 +645,13 @@ local function run_tests(tests, status, counts, config)
                 goto skip
             end
         end
+        -- pre-emptively mark the test as failed in case we induce a crash
+        status[test.full_name] = TestStatus.FAILED
+        save_test_status(status)
         if run_test(test, status, counts) then
             status[test.full_name] = TestStatus.PASSED
-        else
-            status[test.full_name] = TestStatus.FAILED
+            save_test_status(status)
         end
-        save_test_status(status)
         ::skip::
     end
     local elapsed_ms = dfhack.getTickCount() - start_ms

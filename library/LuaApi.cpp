@@ -1760,7 +1760,8 @@ static int textures_loadTileset(lua_State *state)
     std::string file = luaL_checkstring(state, 1);
     auto tile_w = luaL_checkint(state, 2);
     auto tile_h = luaL_checkint(state, 3);
-    auto handles = Textures::loadTileset(file, tile_w, tile_h);
+    bool reserved = lua_isboolean(state, 4) ? lua_toboolean(state, 4) : false;
+    auto handles = Textures::loadTileset(file, tile_w, tile_h, reserved);
     Lua::PushVector(state, handles);
     return 1;
 }
@@ -1798,7 +1799,8 @@ static int textures_createTile(lua_State *state)
     Lua::GetVector(state, pixels);
     auto tile_w = luaL_checkint(state, 2);
     auto tile_h = luaL_checkint(state, 3);
-    auto handle = Textures::createTile(pixels, tile_w, tile_h);
+    bool reserved = lua_isboolean(state, 4) ? lua_toboolean(state, 4) : false;
+    auto handle = Textures::createTile(pixels, tile_w, tile_h, reserved);
     Lua::Push(state, handle);
     return 1;
 }
@@ -1811,7 +1813,8 @@ static int textures_createTileset(lua_State *state)
     auto texture_h = luaL_checkint(state, 3);
     auto tile_w = luaL_checkint(state, 4);
     auto tile_h = luaL_checkint(state, 5);
-    auto handles = Textures::createTileset(pixels, texture_w, texture_h, tile_w, tile_h);
+    bool reserved = lua_isboolean(state, 6) ? lua_toboolean(state, 6) : false;
+    auto handles = Textures::createTileset(pixels, texture_w, texture_h, tile_w, tile_h, reserved);
     Lua::PushVector(state, handles);
     return 1;
 }

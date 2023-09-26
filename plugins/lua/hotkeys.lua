@@ -5,8 +5,8 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12)
-local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12)
+local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12, true)
+local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12, true)
 
 local function get_command(cmdline)
     local first_word = cmdline:trim():split(' +')[1]

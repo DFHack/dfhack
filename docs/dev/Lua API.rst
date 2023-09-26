@@ -2594,11 +2594,18 @@ invalidates the ``texpos`` value that used to point to that texture.
 The ``textures`` module solves this problem by providing a stable handle instead of a
 raw ``texpos``. When we need to draw a particular tile, we can look up the current
 ``texpos`` value via the handle.
+Texture module can register textures in two ways: to reserved and dynamic ranges.
+Reserved range is a limit buffer in a game texture vector, that will never be wiped.
+It is good for static assets, which need to be loaded at the very beginning and will be used during the process running.
+In other cases, it is better to use dynamic range.
+If reserved range buffer limit has been reached, dynamic range will be used by default.
 
-* ``loadTileset(file, tile_px_w, tile_px_h)``
+* ``loadTileset(file, tile_px_w, tile_px_h[, reserved])``
 
   Loads a tileset from the image ``file`` with give tile dimensions in pixels. The
   image will be sliced in row major order. Returns an array of ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
 
   Example usage::
 
@@ -2611,18 +2618,22 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
   get the ``texpos`` for your texture. ``texpos`` can change when game textures are
   reset, but the handle will be the same.
 
-* ``createTile(pixels, tile_px_w, tile_px_h)``
+* ``createTile(pixels, tile_px_w, tile_px_h[, reserved])``
 
   Create and register a new texture with the given tile dimensions and an array of
   ``pixels`` in row major order. Each pixel is an integer representing color in packed
   RBGA format (for example, #0022FF11). Returns a ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
 
-* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h)``
+* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h[, reserved])``
 
   Create and register a new texture with the given texture dimensions and an array of
   ``pixels`` in row major order. Then slice it into tiles with the given tile
   dimensions. Each pixel is an integer representing color in packed RBGA format (for
   example #0022FF11). Returns an array of ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
 
 * ``deleteHandle(handle)``
 

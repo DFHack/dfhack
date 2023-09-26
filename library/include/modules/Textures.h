@@ -26,7 +26,7 @@ const uint32_t TILE_HEIGHT_PX = 12;
  * Load texture and get handle.
  * Keep it to obtain valid texpos.
  */
-DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface);
+DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface, bool reserved = false);
 
 /**
  * Load tileset from image file.
@@ -34,7 +34,8 @@ DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface);
  */
 DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file,
                                                     int tile_px_w = TILE_WIDTH_PX,
-                                                    int tile_px_h = TILE_HEIGHT_PX);
+                                                    int tile_px_h = TILE_HEIGHT_PX,
+                                                    bool reserved = false);
 
 /**
  * Get texpos by handle.
@@ -53,7 +54,7 @@ DFHACK_EXPORT void deleteHandle(TexposHandle handle);
  * Register this texture and return TexposHandle.
  */
 DFHACK_EXPORT TexposHandle createTile(std::vector<uint32_t>& pixels, int tile_px_w = TILE_WIDTH_PX,
-                                      int tile_px_h = TILE_HEIGHT_PX);
+                                      int tile_px_h = TILE_HEIGHT_PX, bool reserved = false);
 
 /**
  * Create new textures as tileset with RGBA32 format and pixels as data in row major order.
@@ -62,7 +63,8 @@ DFHACK_EXPORT TexposHandle createTile(std::vector<uint32_t>& pixels, int tile_px
 DFHACK_EXPORT std::vector<TexposHandle> createTileset(std::vector<uint32_t>& pixels,
                                                       int texture_px_w, int texture_px_h,
                                                       int tile_px_w = TILE_WIDTH_PX,
-                                                      int tile_px_h = TILE_HEIGHT_PX);
+                                                      int tile_px_h = TILE_HEIGHT_PX,
+                                                      bool reserved = false);
 
 /**
  * Call this on DFHack init just once to setup interposed handlers and

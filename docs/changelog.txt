@@ -75,6 +75,9 @@ Template for new versions:
 - Linux launcher: allow Steam Overlay and game streaming to function
 - `autobutcher`: don't ignore semi-wild units when marking units for slaughter
 
+## Misc Improvements
+- 'sort': Improve combat skill scale thresholds
+
 # 50.09-r4
 
 ## New Features

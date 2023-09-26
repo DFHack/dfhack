@@ -1004,11 +1004,21 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
+    using df::global::enabler;
+
     if (Screen::isDismissed(this))
     {
         if (parent)
             parent->render();
         return;
+    }
+
+    if (enabler &&
+        (enabler->mouse_lbut_down || enabler->mouse_rbut_down || enabler->mouse_mbut_down))
+    {
+        // synthesize feed events for held mouse buttons
+        std::set<df::interface_key> keys;
+        feed(&keys);
     }
 
     dfhack_viewscreen::render();

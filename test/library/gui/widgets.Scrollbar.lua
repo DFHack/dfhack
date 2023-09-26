@@ -59,37 +59,37 @@ function test.onInput()
     s:update(23, 10, 50)
 
     expect.false_(s:onInput{}, 'no mouse down')
-    expect.false_(s:onInput{_MOUSE_L_DOWN=true}, 'no y coord')
+    expect.false_(s:onInput{_MOUSE_L=true}, 'no y coord')
 
     spec, y = nil, 0
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('up_small', spec, 'on up arrow')
 
     spec, y = nil, 1
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('up_large', spec, 'on body above bar')
 
     spec, y = nil, 44
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('up_large', spec, 'on body just above bar')
 
     spec, y = nil, 45
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.nil_(spec, 'on top of bar')
 
     spec, y = nil, 63
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.nil_(spec, 'on bottom of bar')
 
     spec, y = nil, 64
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('down_large', spec, 'on body just below bar')
 
     spec, y = nil, 98
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('down_large', spec, 'on body below bar')
 
     spec, y = nil, 99
-    expect.true_(s:onInput{_MOUSE_L_DOWN=true})
+    expect.true_(s:onInput{_MOUSE_L=true})
     expect.eq('down_small', spec, 'on down arrow')
 end

@@ -269,24 +269,24 @@ function Menu:onSubmit2(_, choice)
 end
 
 function Menu:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         return false
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:onSubmit2(self.subviews.list:getSelected())
         return true
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local list = self.subviews.list
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
-            df.global.enabler.mouse_lbut = 0
+            gui.markMouseClicksHandled(keys)
             return true
         end
         if not self:getMouseFramePos() then
             self.parent_view:dismiss()
             return true
         end
-        df.global.enabler.mouse_lbut = 0
+        gui.markMouseClicksHandled(keys)
     end
     self:inputToSubviews(keys)
     return true -- we're modal

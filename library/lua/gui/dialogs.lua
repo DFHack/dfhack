@@ -57,11 +57,11 @@ function MessageBox:onDestroy()
 end
 
 function MessageBox:onInput(keys)
-    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if keys.SELECT and self.on_accept then
             self.on_accept()
-        elseif (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) and self.on_cancel then
+        elseif (keys.LEAVESCREEN or keys._MOUSE_R) and self.on_cancel then
             self.on_cancel()
         end
         gui.markMouseClicksHandled(keys)
@@ -129,7 +129,7 @@ function InputBox:onInput(keys)
             self.on_input(self.subviews.edit.text)
         end
         return true
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
@@ -231,7 +231,7 @@ function ListBox:getWantedFrameSize()
 end
 
 function ListBox:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()

@@ -273,7 +273,7 @@ end
 
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
             Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
@@ -281,7 +281,6 @@ function Panel:onInput(keys)
         for code in pairs(keys) do
             local dx, dy = guidm.get_movement_delta(code, 1, 10)
             if dx then
-                local frame_rect = self.frame_rect
                 local kbd_pos = self.kbd_get_pos()
                 kbd_pos.x = kbd_pos.x + dx
                 kbd_pos.y = kbd_pos.y + dy
@@ -292,9 +291,9 @@ function Panel:onInput(keys)
         return
     end
     if self.drag_offset then
-        if keys._MOUSE_R_DOWN then
+        if keys._MOUSE_R then
             Panel_end_drag(self, self.saved_frame)
-        elseif keys._MOUSE_L then
+        elseif keys._MOUSE_L_DOWN then
             Panel_update_frame(self, Panel_make_frame(self))
         end
         return true
@@ -302,7 +301,7 @@ function Panel:onInput(keys)
     if Panel.super.onInput(self, keys) then
         return true
     end
-    if not keys._MOUSE_L_DOWN then return end
+    if not keys._MOUSE_L then return end
     local x,y = self:getMouseFramePos()
     if not x then return end
 
@@ -489,7 +488,7 @@ function Panel:onRenderFrame(dc, rect)
         dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
     end
     if self.drag_offset and not self.kbd_get_pos
-            and df.global.enabler.mouse_lbut == 0 then
+            and df.global.enabler.mouse_lbut_down == 0 then
         Panel_end_drag(self, nil, true)
     end
 end
@@ -718,7 +717,7 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then
         self:setText(self.saved_text)
         self:setFocus(false)
         return true
@@ -740,8 +739,8 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
-    elseif keys._MOUSE_L then
-        local mouse_x, mouse_y = self:getMousePos()
+    elseif keys._MOUSE_L_DOWN then
+        local mouse_x = self:getMousePos()
         if mouse_x then
             self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
             return true
@@ -986,7 +985,7 @@ function Scrollbar:onRenderBody(dc)
     if self.is_dragging then
         scrollbar_do_drag(self)
     end
-    if df.global.enabler.mouse_lbut == 0 then
+    if df.global.enabler.mouse_lbut_down == 0 then
         self.last_scroll_ms = 0
         self.is_dragging = false
         self.scroll_spec = nil
@@ -1023,7 +1022,7 @@ function Scrollbar:onInput(keys)
             return true
         end
     end
-    if not keys._MOUSE_L_DOWN then return false end
+    if not keys._MOUSE_L then return false end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil
@@ -1386,11 +1385,11 @@ function Label:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
     end
-    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+    if keys._MOUSE_L and self:getMousePos() and self.on_click then
         self.on_click()
         return true
     end
-    if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
+    if keys._MOUSE_R and self:getMousePos() and self.on_rclick then
         self.on_rclick()
         return true
     end
@@ -1498,7 +1497,7 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+    elseif keys._MOUSE_L and self:getMousePos() and self.on_activate
             and not is_disabled(self) then
         self.on_activate()
         return true
@@ -1658,7 +1657,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
+    elseif keys._MOUSE_L and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end
@@ -1962,7 +1961,7 @@ function List:onInput(keys)
         return self:submit()
     elseif keys.CUSTOM_SHIFT_ENTER then
         return self:submit2()
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local idx = self:getIdxUnderMouse()
         if idx then
             local now_ms = dfhack.getTickCount()
@@ -2317,7 +2316,7 @@ end
 
 function Tab:onInput(keys)
     if Tab.super.onInput(self, keys) then return true end
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
+    if keys._MOUSE_L and self:getMousePos() then
         self.on_select(self.id)
         return true
     end
@@ -2419,7 +2418,7 @@ local function rangeslider_get_width_per_idx(self)
 end
 
 function RangeSlider:onInput(keys)
-    if not keys._MOUSE_L_DOWN then return false end
+    if not keys._MOUSE_L then return false end
     local x = self:getMousePos()
     if not x then return false end
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
@@ -2527,7 +2526,7 @@ function RangeSlider:onRenderBody(dc, rect)
     if self.is_dragging_target then
         rangeslider_do_drag(self, width_per_idx)
     end
-    if df.global.enabler.mouse_lbut == 0 then
+    if df.global.enabler.mouse_lbut_down == 0 then
         self.is_dragging_target = nil
         self.is_dragging_idx = nil
     end

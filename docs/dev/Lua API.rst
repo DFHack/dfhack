@@ -2528,10 +2528,10 @@ Supported callbacks and fields are:
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
   ``_MOUSE_L, _MOUSE_R, _MOUSE_M``
-    If the left, right, and/or middle mouse button is being pressed.
+    If the left, right, and/or middle mouse button was just pressed.
 
   ``_MOUSE_L_DOWN, _MOUSE_R_DOWN, _MOUSE_M_DOWN``
-    If the left, right, and/or middle mouse button was just pressed.
+    If the left, right, and/or middle mouse button is being held down.
 
   If this method is omitted, the screen is dismissed on reception of the ``LEAVESCREEN`` key.
 

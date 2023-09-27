@@ -1148,9 +1148,7 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
 end
 
 function SquadAssignmentOverlay:onInput(keys)
-    if keys._MOUSE_R_DOWN or
-        keys._MOUSE_L_DOWN and not self:getMouseFramePos()
-    then
+    if keys._MOUSE_R or (keys._MOUSE_L and not self:getMouseFramePos()) then
         -- if any click is made outside of our window, we may need to refresh our list
         self.dirty = true
     end

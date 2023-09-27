@@ -66,6 +66,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down.  similar for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
 
 ## Removed
 

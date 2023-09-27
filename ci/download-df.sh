@@ -18,7 +18,7 @@ elif test "$OS_TARGET" = "ubuntu"; then
     WGET=wget
     df_url="${df_url}_linux.tar.bz2"
     df_archive_name="df.tar.bz2"
-    df_extract_cmd="tar -x -j --strip-components=1 -f"
+    df_extract_cmd="tar -x -j -C ${DF_FOLDER} -f"
 else
     echo "Unhandled OS target: ${OS_TARGET}"
     exit 1
@@ -29,22 +29,25 @@ if ! $WGET -v "$df_url" -O "$df_archive_name"; then
     exit 1
 fi
 
+md5sum "$df_archive_name"
+
 save_url="https://dffd.bay12games.com/download.php?id=15434&f=dreamfort.7z"
 save_archive_name="test_save.7z"
-save_extract_cmd="7z x -oDF/save"
+save_extract_cmd="7z x -o${DF_FOLDER}/save"
 
 if ! $WGET -v "$save_url" -O "$save_archive_name"; then
     echo "Failed to download test save from $save_url"
     exit 1
 fi
 
+md5sum "$save_archive_name"
+
 echo Extracting
+mkdir -p ${DF_FOLDER}
 $df_extract_cmd "$df_archive_name"
 $save_extract_cmd "$save_archive_name"
-mv DF/save/* DF/save/region1
+mv ${DF_FOLDER}/save/* ${DF_FOLDER}/save/region1
 
 echo Done
 
 ls -l
-
-md5sum "$df_archive_name" "$save_archive_name"

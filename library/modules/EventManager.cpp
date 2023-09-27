@@ -937,7 +937,7 @@ static void manageEquipmentEvent(color_ostream& out) {
     }
 
     // now handle events
-    std::for_each(equipment_pickups.begin(), equipment_drops.end(), [&](InventoryChangeData& data) {
+    std::for_each(equipment_pickups.begin(), equipment_pickups.end(), [&](InventoryChangeData& data) {
         for (auto &[_, handle] : copy) {
             DEBUG(log,out).print("calling handler for new item equipped inventory change event\n");
             handle.eventHandler(out, (void*) &data);

@@ -10,6 +10,13 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _workorder-recheck:
+
+workorder-recheck
+=================
+Tool to set 'Checking' status of the selected work order forcing manager to reevaluate its
+conditions. Merged into `orders`.
+
 .. _autohauler:
 
 autohauler

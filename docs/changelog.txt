@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `dig`: `digtype` command now has options to choose between designating only visible tiles or hidden tiles, as well as "auto" dig mode. Z-level options adjusted to allow choosing z-levels above, below, or the same as the cursor.
+- `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
 
 ## Documentation
 

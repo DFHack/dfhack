@@ -65,6 +65,7 @@ function HotspotMenuWidget:init()
             tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
             ch=ch,
             fg=COLOR_WHITE,
+            bold=true,
         }
     end
     local function get_tile_token(idx, ch)

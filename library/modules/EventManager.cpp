@@ -466,18 +466,22 @@ static void manageJobStartedEvent(color_ostream& out) {
     vector<df::job*> new_started_jobs;
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
-    for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
-        df::job* job = link->item;
+
+    for (df::job_list_link* link = &df::global::world->jobs.list; link->next != nullptr; link = link->next) {
+        df::job* job = link->next->item;
+        int32_t j_id = job->id;
         if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
             startedJobs.emplace(job->id);
-            new_started_jobs.emplace_back(job);
+            for (auto &[_,handle] : copy) {
+                // the jobs must have a worker to start
+                DEBUG(log,out).print("calling handler for job started event\n");
+                handle.eventHandler(out, job);
+            }
         }
-    }
-    for (df::job* job : new_started_jobs) {
-        for (auto &[_,handle] : copy) {
-            // the jobs must have a worker to start
-            DEBUG(log,out).print("calling handler for job started event\n");
-            handle.eventHandler(out, job);
+        if (link->next == nullptr || link->next->item->id != j_id) {
+            if ( Once::doOnce("EventManager jobstarted job removed") ) {
+                out.print("%s,%d: job %u removed from  jobs linked list\n", __FILE__, __LINE__, j_id);
+            }
         }
     }
 }
@@ -498,11 +502,11 @@ static void manageJobCompletedEvent(color_ostream& out) {
     int32_t tick1 = df::global::world->frame_counter;
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
-    map<int32_t, df::job*> nowJobs;
+    unordered_map<int32_t, df::job*> nowJobs;
     for ( df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next ) {
         if ( link->item == nullptr )
             continue;
-        nowJobs[link->item->id] = link->item;
+        nowJobs.emplace(link->item->id, link->item);
     }
 
 #if 0
@@ -567,8 +571,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
-    vector<df::job*> new_jobs_completed;
-    vector<df::job*> new_jobs_completed_repeats;
     for (auto &prevJob : prevJobs) {
         //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
         if ( tick1 <= tick0 )
@@ -586,7 +588,10 @@ static void manageJobCompletedEvent(color_ostream& out) {
                 continue;
 
             //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-            new_jobs_completed_repeats.emplace_back(&job0);
+            for (auto &[_,handle] : copy) {
+                DEBUG(log,out).print("calling handler for repeated job completed event\n");
+                handle.eventHandler(out, (void*) &job0);
+            }
             continue;
         }
 
@@ -595,37 +600,27 @@ static void manageJobCompletedEvent(color_ostream& out) {
         if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
             continue;
 
-        new_jobs_completed.emplace_back(&job0);
-    }
-
-    for (df::job* job : new_jobs_completed_repeats) {
-        for (auto &[_,handle] : copy) {
-            DEBUG(log,out).print("calling handler for repeated job completed event\n");
-            handle.eventHandler(out, (void*) job);
-        }
-    }
-    for (df::job* job : new_jobs_completed) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for job completed event\n");
-            handle.eventHandler(out, (void*) job);
+            handle.eventHandler(out, (void*) &job0);
         }
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for (auto &prevJob : prevJobs) {
-        Job::deleteJobStruct(prevJob.second, true);
+    for (auto &[_,prev_job] : prevJobs) {
+        Job::deleteJobStruct(prev_job, true);
     }
     prevJobs.clear();
 
     //create new jobs
-    for (auto &nowJob : nowJobs) {
+    for (auto &[_,now_job] : nowJobs) {
         /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
         if ( i != prevJobs.end() ) {
             continue;
         }*/
 
-        df::job* newJob = Job::cloneJobStruct(nowJob.second, true);
-        prevJobs[newJob->id] = newJob;
+        df::job* newJob = Job::cloneJobStruct(now_job, true);
+        prevJobs.emplace(newJob->id, newJob);
     }
 }
 
@@ -662,6 +657,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
             livingUnits.insert(unit->id);
             continue;
         }
+        if (!Units::isDead(unit)) continue; // for units that have left the map but aren't dead
         //dead: if dead since last check, trigger events
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
@@ -747,13 +743,6 @@ static void manageBuildingEvent(color_ostream& out) {
     }
     nextBuilding = *df::global::building_next_id;
 
-    std::for_each(new_buildings.begin(), new_buildings.end(), [&](int32_t building){
-        for (auto &[_,handle] : copy) {
-            DEBUG(log,out).print("calling handler for created building event\n");
-            handle.eventHandler(out, (void*)intptr_t(building));
-        }
-    });
-
     //now alert people about destroyed buildings
     for ( auto it = buildings.begin(); it != buildings.end(); ) {
         int32_t id = *it;
@@ -769,6 +758,14 @@ static void manageBuildingEvent(color_ostream& out) {
         }
         it = buildings.erase(it);
     }
+
+    //alert people about newly created buildings
+    std::for_each(new_buildings.begin(), new_buildings.end(), [&](int32_t building){
+        for (auto &[_,handle] : copy) {
+            DEBUG(log,out).print("calling handler for created building event\n");
+            handle.eventHandler(out, (void*)intptr_t(building));
+        }
+    });
 }
 
 static void manageConstructionEvent(color_ostream& out) {
@@ -877,6 +874,13 @@ static void manageEquipmentEvent(color_ostream& out) {
     vector<InventoryChangeData> equipment_drops;
     vector<InventoryChangeData> equipment_changes;
 
+
+    // This vector stores the pointers to newly created changed items
+    // needed as the stack allocated temporary (in the loop) is lost when we go to
+    // handle the event calls, so we move that data to the heap if its needed,
+    // and then once we are done we delete everything.
+    vector<InventoryItem*> changed_items;
+
     for (auto unit : df::global::world->units.all) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
@@ -904,25 +908,30 @@ static void manageEquipmentEvent(color_ostream& out) {
             auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
             if ( c == itemIdToInventoryItem.end() ) {
                 //new item equipped (probably just picked up)
-                equipment_pickups.emplace_back(unit->id, nullptr, &item_new);
+                changed_items.emplace_back(new InventoryItem(item_new));
+                equipment_pickups.emplace_back(unit->id, nullptr, changed_items.back());
                 continue;
             }
-            InventoryItem item_old = (*c).second;
+            InventoryItem item_old = c->second;
 
             df::unit_inventory_item& item0 = item_old.item;
             df::unit_inventory_item& item1 = item_new.item;
             if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
                 continue;
             //some sort of change in how it's equipped
-
-            equipment_changes.emplace_back(unit->id, nullptr, &item_new);
+            changed_items.emplace_back(new InventoryItem(item_new));
+            InventoryItem* item_new_ptr = changed_items.back();
+            changed_items.emplace_back(new InventoryItem(item_old));
+            InventoryItem* item_old_ptr = changed_items.back();
+            equipment_changes.emplace_back(unit->id, item_old_ptr, item_new_ptr);
         }
         //check for dropped items
         for (auto i : v) {
             if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
                 continue;
             //TODO: delete ptr if invalid
-            equipment_drops.emplace_back(unit->id, &i, nullptr);
+            changed_items.emplace_back(new InventoryItem(i));
+            equipment_drops.emplace_back(unit->id, changed_items.back(), nullptr);
         }
         if ( !hadEquipment )
             delete temp;
@@ -954,6 +963,11 @@ static void manageEquipmentEvent(color_ostream& out) {
             DEBUG(log,out).print("calling handler for inventory change event\n");
             handle.eventHandler(out, (void*) &data);
         }
+    });
+
+    // clean up changed items list
+    std::for_each(changed_items.begin(), changed_items.end(), [](InventoryItem* p){
+        delete p;
     });
 }
 

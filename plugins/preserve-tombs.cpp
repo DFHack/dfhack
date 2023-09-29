@@ -226,7 +226,7 @@ static void update_tomb_assignments(color_ostream &out) {
     for (auto it = tomb_assignments.begin(); it != tomb_assignments.end(); ++it){
         auto &[unit_id, building_id] = *it;
 
-        const size_t tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
+        const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
         if (tomb_idx == -1) {
             out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
             it = tomb_assignments.erase(it);
@@ -253,13 +253,13 @@ static void update_tomb_assignments(color_ostream &out) {
 //
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
 
-    size_t unit_idx = Units::findIndexById(unit_id);
+    const int unit_idx = Units::findIndexById(unit_id);
     if (unit_idx == -1) return false;
 
     df::unit* unit = world->units.all[unit_idx];
     if (!Units::isDead(unit)) return false;
 
-    size_t tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
+    const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
     if (tomb_idx == -1) return false;
 
     df::building_civzonest* tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);

@@ -82,6 +82,7 @@ public:
     bool failfast;
     bool noprogress;
     bool maybepointer;
+    uint8_t perturb_byte;
 
     Checker(color_ostream & out);
     bool queue_item(const QueueItem & item, CheckedStructure cs);

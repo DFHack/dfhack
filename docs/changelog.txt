@@ -57,10 +57,10 @@ Template for new versions:
 
 ## Fixes
 - `autolabor`: now unconditionally re-enables vanilla work details when the fort or the plugin is unloaded
+- ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
 
 ## Misc Improvements
 - `dig`: `digtype` command now has options to choose between designating only visible tiles or hidden tiles, as well as "auto" dig mode. Z-level options adjusted to allow choosing z-levels above, below, or the same as the cursor.
-- ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
 - `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
 
 ## Documentation

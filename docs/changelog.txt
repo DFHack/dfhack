@@ -53,6 +53,8 @@ Template for new versions:
 
 ## New Tools
 
+- `tubefill`: (reinstated) replenishes mined-out adamantine
+
 ## New Features
 
 ## Fixes

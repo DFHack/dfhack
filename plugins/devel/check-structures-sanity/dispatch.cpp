@@ -933,11 +933,13 @@ void Checker::check_stl_map(const QueueItem & item, container_identity *identity
     };
 
     auto map = reinterpret_cast<const map_data*>(item.ptr);
-    auto smap = reinterpret_cast<const std::map<void*,void*>*>(item.ptr);
-    Core::print("s %zi\n", smap->size());
 
     if (!is_valid_dereference(QueueItem(item, "", map), 1)) {
         FAIL("invalid map pointer: " << map);
+        return;
+    }
+    if (!map->header.parent && map->header.left == &map->header && map->header.right == &map->header) {
+        // empty map
         return;
     }
     if (!is_valid_dereference(QueueItem(item, "parent", map->header.parent), 1)) {
@@ -954,12 +956,19 @@ void Checker::check_stl_map(const QueueItem & item, container_identity *identity
     std::queue<search_queue_entry> search_queue;
     // search_queue.push(search_queue_entry{&map->header, nullptr, QueueItem(item, "header", item.ptr)});
     search_queue.push(search_queue_entry{map->header.parent, nullptr, QueueItem(item, "header.parent", item.ptr)});
-    size_t visited_nodes = 0;
+    size_t num_visited_nodes = 0;
+    std::unordered_map<const rb_tree_node_base*, std::string> visited_nodes_paths;
     while (!search_queue.empty()) {
         const search_queue_entry entry = search_queue.front();
         const QueueItem &item          = entry.item;
         search_queue.pop();
-        visited_nodes++;
+        num_visited_nodes++;
+
+        auto insert_result = visited_nodes_paths.insert(decltype(visited_nodes_paths)::value_type(entry.node, entry.item.path));
+        if (!insert_result.second) {
+            FAIL("cycle detected: node already visited at " << insert_result.first->second);
+            break;
+        }
 
         if (!is_valid_dereference(item, 1)) {
             FAIL("invalid node pointer: " << item.ptr);
@@ -986,8 +995,8 @@ void Checker::check_stl_map(const QueueItem & item, container_identity *identity
     //     FAIL("invalid RB color: " << int(map->header.color));
     // }
 
-    if (map->node_count != visited_nodes) {
-        FAIL("invalid map size (" << map->node_count << "): counted " << visited_nodes << " nodes");
+    if (map->node_count != num_visited_nodes) {
+        FAIL("invalid map size (" << map->node_count << "): counted " << num_visited_nodes << " nodes");
         // UNEXPECTED;
     }
 

@@ -65,6 +65,7 @@ function HotspotMenuWidget:init()
             tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
             ch=ch,
             fg=COLOR_WHITE,
+            bold=true,
         }
     end
     local function get_tile_token(idx, ch)
@@ -78,9 +79,9 @@ function HotspotMenuWidget:init()
     self:addviews{
         widgets.Label{
             text={
-                get_tile_token(1, '!'), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, '!'), NEWLINE,
-                get_tile_token(5, '!'), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, '!'), NEWLINE,
-                get_tile_token(9, '!'), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, '!'),
+                get_tile_token(1, 179), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, 179), NEWLINE,
+                get_tile_token(5, 179), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, 179), NEWLINE,
+                get_tile_token(9, 179), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, 179),
             },
             on_click=function() dfhack.run_command('hotkeys') end,
         },

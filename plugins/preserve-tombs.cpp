@@ -70,6 +70,7 @@ static void update_tomb_assignments(color_ostream& out);
 void onUnitDeath(color_ostream& out, void* ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    tomb_assignments.clear();
     return CR_OK;
 }
 
@@ -77,6 +78,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 EventManager::EventHandler assign_tomb_handler(onUnitDeath, 0);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    tomb_assignments.clear();
     if (!Core::getInstance().isWorldLoaded()) {
         out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
         return CR_FAILURE;
@@ -126,6 +128,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
+        tomb_assignments.clear();
         if (is_enabled) {
             DEBUG(config,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
@@ -197,26 +200,27 @@ static void update_tomb_assignments(color_ostream &out) {
     }
 
     // now check our civzones for unassignment / deleted zone / 
-    std::erase_if(tomb_assignments, [&](const std::pair<int32_t, int32_t>& pair){
-        const auto &[unit_id, building_id] = pair;
+    for (auto it = tomb_assignments.begin(); it != tomb_assignments.end(); ++it){
+        auto &[unit_id, building_id] = *it;
         
         const size_t tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
         if (tomb_idx == -1) {
             out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
-            return true;
+            it = tomb_assignments.erase(it);
+            continue;
         }
         const auto tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);
         if (!tomb || !tomb->flags.bits.exists) {
             out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
-            return true;
+            it = tomb_assignments.erase(it);
+            continue;
         }
         if (tomb->assigned_unit_id != unit_id) {
-            out.print("%s unassigned unit %d from tomb %d - removing\n", unit_id, building_id);
-            return true;
+            out.print("%s unassigned unit %d from tomb %d - removing\n", plugin_name, unit_id, building_id);
+            it = tomb_assignments.erase(it);
+            continue;
         }
-        
-        return false;
-    });
+    }
 
 }
 

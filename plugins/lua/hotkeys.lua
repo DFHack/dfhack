@@ -5,8 +5,8 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12)
-local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12)
+local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12, true)
+local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12, true)
 
 local function get_command(cmdline)
     local first_word = cmdline:trim():split(' +')[1]
@@ -65,6 +65,7 @@ function HotspotMenuWidget:init()
             tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
             ch=ch,
             fg=COLOR_WHITE,
+            bold=true,
         }
     end
     local function get_tile_token(idx, ch)
@@ -78,9 +79,9 @@ function HotspotMenuWidget:init()
     self:addviews{
         widgets.Label{
             text={
-                get_tile_token(1, '!'), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, '!'), NEWLINE,
-                get_tile_token(5, '!'), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, '!'), NEWLINE,
-                get_tile_token(9, '!'), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, '!'),
+                get_tile_token(1, 179), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, 179), NEWLINE,
+                get_tile_token(5, 179), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, 179), NEWLINE,
+                get_tile_token(9, 179), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, 179),
             },
             on_click=function() dfhack.run_command('hotkeys') end,
         },
@@ -269,24 +270,24 @@ function Menu:onSubmit2(_, choice)
 end
 
 function Menu:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         return false
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:onSubmit2(self.subviews.list:getSelected())
         return true
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local list = self.subviews.list
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
-            df.global.enabler.mouse_lbut = 0
+            gui.markMouseClicksHandled(keys)
             return true
         end
         if not self:getMouseFramePos() then
             self.parent_view:dismiss()
             return true
         end
-        df.global.enabler.mouse_lbut = 0
+        gui.markMouseClicksHandled(keys)
     end
     self:inputToSubviews(keys)
     return true -- we're modal

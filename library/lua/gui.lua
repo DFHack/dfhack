@@ -696,16 +696,12 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
-local zscreen_inhibit_mouse_l = false
-
 -- ensure underlying DF screens don't also react to handled clicks
 function markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        -- note we can't clear mouse_lbut here. otherwise we break dragging,
-        df.global.enabler.mouse_lbut_down = 0
-        zscreen_inhibit_mouse_l = true
+    if keys._MOUSE_L then
+        df.global.enabler.mouse_lbut = 0
     end
-    if keys._MOUSE_R_DOWN then
+    if keys._MOUSE_R then
         df.global.enabler.mouse_rbut_down = 0
         df.global.enabler.mouse_rbut = 0
     end
@@ -789,7 +785,7 @@ function ZScreen:onInput(keys)
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
         if has_mouse and
-                (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or
+                (keys._MOUSE_L or keys._MOUSE_R or
                  keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
                  keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
@@ -804,22 +800,15 @@ function ZScreen:onInput(keys)
         return
     end
 
-    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
+    if self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
         self:sendInputToParent(keys)
         return
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         markMouseClicksHandled(keys)
         return
     else
-        if zscreen_inhibit_mouse_l then
-            if keys._MOUSE_L then
-                return
-            else
-                zscreen_inhibit_mouse_l = false
-            end
-        end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
             if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or

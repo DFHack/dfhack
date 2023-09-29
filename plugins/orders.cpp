@@ -67,8 +67,6 @@ static command_result orders_export_command(color_ostream & out, const std::stri
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
 static command_result orders_sort_command(color_ostream & out);
-static command_result orders_sort_type_command(color_ostream & out);
-static command_result orders_sort_material_command(color_ostream & out);
 static command_result orders_recheck_command(color_ostream & out);
 static command_result orders_recheck_current_command(color_ostream & out);
 
@@ -116,16 +114,6 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "sort" && parameters.size() == 1)
     {
         return orders_sort_command(out);
-    }
-
-    if (parameters[0] == "sort_type" && parameters.size() == 1)
-    {
-        return orders_sort_type_command(out);
-    }
-
-    if (parameters[0] == "sort_material" && parameters.size() == 1)
-    {
-        return orders_sort_material_command(out);
     }
 
     if (parameters[0] == "recheck" && parameters.size() == 1)
@@ -1041,144 +1029,6 @@ static command_result orders_sort_command(color_ostream & out)
                          world->manager_orders.end(),
                          compare_freq);
         out << "Fixed priority of manager orders." << std::endl;
-    }
-
-    return CR_OK;
-}
-
-static bool compare_type(df::manager_order *a, df::manager_order *b)
-{
-    // Goal: Sort orders to easily find them in the list and to see dupclicated orders.
-    // Sorting by job types
-
-    // Divide orders by frequency first
-    if (a->frequency != b->frequency)
-    {
-        return compare_freq(a, b);
-    }
-
-    // Determine if only one order has reaction_name
-    bool a_has_reaction_name = !a->reaction_name.empty();
-    bool b_has_reaction_name = !b->reaction_name.empty();
-
-    if (a_has_reaction_name != b_has_reaction_name)
-    {
-        return a_has_reaction_name;
-    }
-    else if (a_has_reaction_name && b_has_reaction_name)
-    {
-        if (a->reaction_name != b->reaction_name)
-        {
-            return a->reaction_name < b->reaction_name;
-        }
-    }
-
-    // Compare job_type
-    if (enum_item_key(a->job_type) != enum_item_key(b->job_type))
-    {
-        return enum_item_key(a->job_type) < enum_item_key(b->job_type);
-    }
-
-    // Compare item subtype
-    bool a_has_item_subtype = (a->item_subtype != -1);
-    bool b_has_item_subtype = (b->item_subtype != -1);
-
-    if (a_has_item_subtype != b_has_item_subtype)
-    {
-        return a_has_item_subtype;
-    }
-    else if (a_has_item_subtype && b_has_item_subtype)
-    {
-        if (a->item_subtype != b->item_subtype)
-        {
-            return a->item_subtype < b->item_subtype;
-        }
-    }
-
-    // By default orders are the same
-    return false;
-}
-
-static command_result orders_sort_type_command(color_ostream & out)
-{
-    CoreSuspender suspend;
-    if (!std::is_sorted(world->manager_orders.begin(),
-                        world->manager_orders.end(),
-                        compare_type))
-    {
-        std::stable_sort(world->manager_orders.begin(),
-                         world->manager_orders.end(),
-                         compare_type);
-        out << "Manager orders are sorted by job type." << std::endl;
-    }
-
-    return CR_OK;
-}
-
-static bool compare_material(df::manager_order *a, df::manager_order *b)
-{
-    // Goal: Sort orders to easily find them in the list and to see dupclicated orders.
-    // Sorting by materials
-
-    // Divide orders by frequency first
-    if (a->frequency != b->frequency)
-    {
-        return compare_freq(a, b);
-    }
-
-    // Determine if only one of the orders has mat_type
-    bool a_has_material = (a->mat_type != -1 || a->mat_index != -1);
-    bool b_has_material = (b->mat_type != -1 || b->mat_index != -1);
-
-    if (a_has_material != b_has_material)
-    {
-        return a_has_material;
-    }
-    else if (a_has_material && b_has_material)
-    {
-        // Compare mat_type using MaterialInfo
-        if (MaterialInfo(a).getToken() != MaterialInfo(b).getToken())
-        {
-            return MaterialInfo(a).getToken() < MaterialInfo(b).getToken();
-        }
-    }
-
-    // Determine if only one order has material_category
-    bool a_has_material_category = (a->material_category.whole != 0);
-    bool b_has_material_category = (b->material_category.whole != 0);
-
-    if (a_has_material_category != b_has_material_category)
-    {
-        return a_has_material_category;
-    }
-    else if (a_has_material_category && b_has_material_category)
-    {
-        std::vector<std::string> a_mats, b_mats;
-        bitfield_to_string(&a_mats, a->material_category);
-        bitfield_to_string(&b_mats, b->material_category);
-
-        // Checking that mats are not empty just in case
-        if (!a_mats.empty() && !b_mats.empty() && a_mats[0] != b_mats[0])
-        {
-            return a_mats[0] < b_mats[0];
-        }
-    }
-
-    // Fall back to material sort
-    return compare_type(a, b);
-}
-
-static command_result orders_sort_material_command(color_ostream & out)
-{
-    CoreSuspender suspend;
-    if (!std::is_sorted(world->manager_orders.begin(),
-                        world->manager_orders.end(),
-                        compare_material))
-    {
-        std::stable_sort(world->manager_orders.begin(),
-                         world->manager_orders.end(),
-                         compare_material);
-        out << "Manager orders are sorted by material." << std::endl;
     }
 
     return CR_OK;

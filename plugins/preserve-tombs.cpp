@@ -84,7 +84,14 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
         return CR_WRONG_USAGE;
     }
     else {
-        out.print("%s is currently %s", plugin_name, is_enabled ? "enabled" : "disabled");
+        out.print("%s is currently %s\n", plugin_name, is_enabled ? "enabled" : "disabled");
+        if (is_enabled) {
+            out.print("tracked tomb assignments:\n");
+            std::for_each(tomb_assignments.begin(), tomb_assignments.end(), [&out](const auto& p){
+                auto& [unit_id, building_id] = p;
+                out.print("unit %d -> building %d\n", unit_id, building_id);
+            });
+        }
         return CR_OK;
     }
 }
@@ -138,6 +145,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     DEBUG(config,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
+    if (is_enabled) update_tomb_assignments(out);
     return CR_OK;
 }
 
@@ -255,7 +263,7 @@ static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
     if (tomb_idx == -1) return false;
 
     df::building_civzonest* tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);
-    if (!tomb || tomb->assigned_unit) return false; // in the game we cannot reassign tombs - more research is required to see if reassignment is safe.
+    if (!tomb || tomb->assigned_unit) return false;
 
     Buildings::setOwner(tomb, unit);
     return true;

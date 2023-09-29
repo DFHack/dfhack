@@ -66,14 +66,6 @@ local function do_recheck()
     dfhack.run_command('orders', 'recheck')
 end
 
-local function do_sort_type()
-    dfhack.run_command('orders', 'sort_type')
-end
-
-local function do_sort_mat()
-    dfhack.run_command('orders', 'sort_material')
-end
-
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},

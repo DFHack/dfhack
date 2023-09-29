@@ -14,8 +14,8 @@ work (e.g. links from the `changelog`).
 
 workorder-recheck
 =================
-Tool to set 'Checking' status of the selected work order forcing manager to reevaluate its
-conditions. Merged into `orders`.
+Tool to set 'Checking' status of the selected work order, allowing conditions to be
+reevaluated. Merged into `orders`.
 
 .. _autohauler:
 

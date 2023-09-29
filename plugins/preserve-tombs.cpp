@@ -68,10 +68,25 @@ static void set_config_bool(PersistentDataItem &c, int index, bool value) {
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id);
 static void update_tomb_assignments(color_ostream& out);
 void onUnitDeath(color_ostream& out, void* ptr);
+static command_result do_command(color_ostream& out, std::vector<std::string>& params);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    tomb_assignments.clear();
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Preserves tomb assignments to units when they die.",
+        do_command));
     return CR_OK;
+}
+
+static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
+    if (params.size() != 1 || params[0] != "status") {
+        out.print("%s wrong usage", plugin_name);
+        return CR_WRONG_USAGE;
+    }
+    else {
+        out.print("%s is currently %s", plugin_name, is_enabled ? "enabled" : "disabled");
+        return CR_OK;
+    }
 }
 
 // event listener
@@ -154,7 +169,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 void onUnitDeath(color_ostream& out, void* ptr) {
     // input is void* that contains the unit id
     int32_t unit_id = reinterpret_cast<std::intptr_t>(ptr);
-    
+
     // check if unit was assigned a tomb in life
     auto it = tomb_assignments.find(unit_id);
     if (it == tomb_assignments.end()) return;
@@ -199,10 +214,10 @@ static void update_tomb_assignments(color_ostream &out) {
 
     }
 
-    // now check our civzones for unassignment / deleted zone / 
+    // now check our civzones for unassignment / deleted zone /
     for (auto it = tomb_assignments.begin(); it != tomb_assignments.end(); ++it){
         auto &[unit_id, building_id] = *it;
-        
+
         const size_t tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
         if (tomb_idx == -1) {
             out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
@@ -229,13 +244,13 @@ static void update_tomb_assignments(color_ostream &out) {
 //
 //
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
-    
+
     size_t unit_idx = Units::findIndexById(unit_id);
     if (unit_idx == -1) return false;
-    
+
     df::unit* unit = world->units.all[unit_idx];
     if (!Units::isDead(unit)) return false;
-    
+
     size_t tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
     if (tomb_idx == -1) return false;
 

@@ -384,7 +384,7 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     }
     else if (base_container.starts_with("unordered_map<"))
     {
-        // TODO: check unordered_map
+        check_stl_unordered_map(item, identity);
     }
     else
     {
@@ -1000,6 +1000,75 @@ void Checker::check_stl_map(const QueueItem & item, container_identity *identity
         // UNEXPECTED;
     }
 
+#endif
+}
+
+void Checker::check_stl_unordered_map(const QueueItem & item, container_identity *identity)
+{
+#ifndef WIN32
+    const static CheckedStructure cs(identity, 0, nullptr, true);
+
+    struct hash_node_base
+    {
+        hash_node_base *next;
+    };
+
+    struct prime_rehash_policy
+    {
+        float max_load_factor;
+        size_t next_resize;
+    };
+
+    struct unordered_map_data
+    {
+        hash_node_base *buckets;    // default: &single_bucket
+        size_t bucket_count;        // default: 1
+        hash_node_base before_begin;
+        size_t element_count;       // default: 0
+        prime_rehash_policy rehash_policy;
+        hash_node_base *single_bucket;
+    };
+
+    auto umap = reinterpret_cast<const unordered_map_data*>(item.ptr);
+
+    if (!is_valid_dereference(QueueItem(item, "", umap), 1)) {
+        FAIL("invalid unordered_map pointer: " << umap);
+        return;
+    }
+
+    out << umap->rehash_policy.max_load_factor << std::endl;
+
+    #define check_ptr_field(field, expect_null) \
+        do { \
+            if (((expect_null) && umap->field != nullptr) || (!(expect_null) && !is_valid_dereference(QueueItem(item, #field, umap->field), 1))) { \
+                FAIL("invalid unordered_map::" #field " pointer: " << umap->field); \
+            } \
+        } while (0)
+    check_ptr_field(buckets, false);
+    check_ptr_field(before_begin.next, umap->element_count == 0);
+    // check_ptr_field(single_bucket, umap->element_count == 0);  // never set to non-null?
+    #undef check_ptr_field
+
+    if (umap->bucket_count > (1 << 24)) {
+        FAIL("unreasonable unordered_map element count: " << umap->bucket_count);
+        return;
+    }
+    size_t num_elements = 0;
+    for (size_t i = 0; i < umap->bucket_count; i++) {
+        size_t num_bucket_elements = 0;
+        for (hash_node_base *node = umap->buckets[i].next; node != nullptr; node = node->next) {
+            if (!is_valid_dereference(QueueItem(item, "", node), sizeof(hash_node_base))) {
+                FAIL("invalid node pointer in bucket " << i << ": " << node);
+                break;
+            }
+            if (node != umap->buckets[i].next) num_bucket_elements++;
+        }
+        num_elements += num_bucket_elements;
+    }
+
+    if (num_elements != umap->element_count) {
+        FAIL("invalid unordered_map size (" << umap->element_count << "): counted " << num_elements << " nodes");
+    }
 #endif
 }
 

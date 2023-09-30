@@ -36,11 +36,10 @@ static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
 static PersistentDataItem config;
 
 static int32_t cycle_timestamp;
-static int32_t cycle_freq;
+static constexpr int32_t cycle_freq = 100;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
-    CONFIG_CYCLES = 1
 };
 
 static std::unordered_map<int32_t, int32_t> tomb_assignments;
@@ -82,14 +81,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
-    if (params.size() == 0) {
-        out.print("%s wrong usage\n", plugin_name);
-        return CR_WRONG_USAGE;
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot use %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
     }
-    if (params[0] == "status") {
+    if (params.size() == 0 || params[0] == "status") {
         out.print("%s is currently %s\n", plugin_name, is_enabled ? "enabled" : "disabled");
         if (is_enabled) {
-            out.print("Update frequency: %d ticks", cycle_freq);
             out.print("tracked tomb assignments:\n");
             std::for_each(tomb_assignments.begin(), tomb_assignments.end(), [&out](const auto& p){
                 auto& [unit_id, building_id] = p;
@@ -109,19 +107,6 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
         update_tomb_assignments(out);
         out.print("Updated tomb assignments\n");
         return CR_OK;
-    }
-    if (params.size() < 2) {
-        out.print("%s wrong usage\n", plugin_name);
-        return CR_WRONG_USAGE;
-    }
-    if (params[0] == "ticks" || params[0] == "freq" || params[0] == "rate") {
-        int new_tickrate = std::stoi(params[1]);
-        if (new_tickrate <= 0) {
-            out.print("new tickrate (%d) cannot be <= 0\n", new_tickrate);
-            return CR_WRONG_USAGE;
-        }
-        cycle_freq = new_tickrate;
-        set_config_val(config, CONFIG_CYCLES, cycle_freq);
     }
     return CR_WRONG_USAGE;
 }
@@ -170,11 +155,9 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(config, CONFIG_CYCLES, 100);
     }
 
     is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    cycle_freq = get_config_val(config, CONFIG_CYCLES);
     DEBUG(config,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 

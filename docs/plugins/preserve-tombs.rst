@@ -13,13 +13,11 @@ Usage
 
 ``enable preserve-tombs``
     enable the plugin
-``preserve-tombs status``
+``preserve-tombs [status]``
     check the status of the plugin, and if the plugin is enabled,
-    lists all tracked tomb assignments
+    lists all currently tracked tomb assignments
 ``preserve-tombs update``
-    forces an immediate update of the tomb assignments.
-``preserve-tombs freq [val]``
-    changes the rate at which the plugin rechecks  and updates
-    tomb assignments, in ticks (default is ``100``)
+    forces an immediate update of the tomb assignments. This plugin
+    automatically updates the tomb assignments once every 100 ticks.
 
-This tool runs in the background.
+This tool runs in the background. 

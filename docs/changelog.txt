@@ -59,6 +59,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- Translate: will use DF's ``translate_name`` function, if available, instead of the DFHack emulation
 
 ## Documentation
 

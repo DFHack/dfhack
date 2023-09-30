@@ -20,4 +20,4 @@ Usage
     forces an immediate update of the tomb assignments. This plugin
     automatically updates the tomb assignments once every 100 ticks.
 
-This tool runs in the background. 
+This tool runs in the background.

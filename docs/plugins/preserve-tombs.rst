@@ -11,12 +11,15 @@ they die (e.g. your nobles), this tool can help fix that.
 Usage
 -----
 
-::
+``enable preserve-tombs``
+    enable the plugin
+``preserve-tombs status``
+    check the status of the plugin, and if the plugin is enabled,
+    lists all tracked tomb assignments
+``preserve-tombs update``
+    forces an immediate update of the tomb assignments.
+``preserve-tombs freq [val]``
+    changes the rate at which the plugin rechecks  and updates
+    tomb assignments, in ticks (default is ``100``)
 
-    enable preserve-tombs
-    preserve-tombs status
-
-This tool runs in the background. You can check the status of the plugin
-by running ``preserve-tombs status`` which will show whether the plugin
-is enabled and if so, display a list of all tracked tomb assignments
-to living units.
+This tool runs in the background.

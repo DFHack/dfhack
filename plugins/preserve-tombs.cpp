@@ -14,6 +14,7 @@
 #include "modules/Persistence.h"
 #include "modules/EventManager.h"
 #include "modules/World.h"
+#include "modules/Translation.h"
 
 #include "df/world.h"
 #include "df/unit.h"
@@ -46,6 +47,8 @@ static std::unordered_map<int32_t, int32_t> tomb_assignments;
 
 namespace DFHack {
     DBG_DECLARE(preservetombs, config, DebugCategory::LINFO);
+    DBG_DECLARE(preservetombs, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(preservetombs, event, DebugCategory::LINFO);
 }
 
 
@@ -79,28 +82,50 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
-    if (params.size() != 1 || params[0] != "status") {
-        out.print("%s wrong usage", plugin_name);
+    if (params.size() == 0) {
+        out.print("%s wrong usage\n", plugin_name);
         return CR_WRONG_USAGE;
     }
-    else {
+    if (params[0] == "status") {
         out.print("%s is currently %s\n", plugin_name, is_enabled ? "enabled" : "disabled");
         if (is_enabled) {
+            out.print("Update frequency: %d ticks", cycle_freq);
             out.print("tracked tomb assignments:\n");
             std::for_each(tomb_assignments.begin(), tomb_assignments.end(), [&out](const auto& p){
                 auto& [unit_id, building_id] = p;
-                out.print("unit %d -> building %d\n", unit_id, building_id);
+                auto* unit = df::unit::find(unit_id);
+                std::string name = unit ? Translation::TranslateName(&unit->name) : "UNKNOWN UNIT" ;
+                out.print("%s (id %d) -> building %d\n", name.c_str(), unit_id, building_id);
             });
         }
         return CR_OK;
     }
+    if (params[0] == "update") {
+        CoreSuspender suspend;
+        update_tomb_assignments(out);
+        out.print("Updated tomb assignments\n");
+        return CR_OK;
+    }
+    if (params.size() < 2) {
+        out.print("%s wrong usage\n", plugin_name);
+        return CR_WRONG_USAGE;
+    }
+    if (params[0] == "ticks" || params[0] == "freq" || params[0] == "rate") {
+        int new_tickrate = std::stoi(params[1]);
+        if (new_tickrate <= 0) {
+            out.print("new tickrate (%d) cannot be <= 0\n", new_tickrate);
+            return CR_WRONG_USAGE;
+        }
+        cycle_freq = new_tickrate;
+        set_config_val(config, CONFIG_CYCLES, cycle_freq);
+    }
+    return CR_WRONG_USAGE;
 }
 
 // event listener
 EventManager::EventHandler assign_tomb_handler(onUnitDeath, 0);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    tomb_assignments.clear();
     if (!Core::getInstance().isWorldLoaded()) {
         out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
         return CR_FAILURE;
@@ -111,11 +136,15 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(config,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-        EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler, plugin_self);
-        if (enable)
+        if (enable) {
+            EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler, plugin_self);
             update_tomb_assignments(out);
+        }
+        else {
+            tomb_assignments.clear();
+            EventManager::unregisterAll(plugin_self);
+        }
     } else {
-        EventManager::unregisterAll(plugin_self);
         DEBUG(config,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
@@ -137,7 +166,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(config, CONFIG_CYCLES, 25);
+        set_config_val(config, CONFIG_CYCLES, 100);
     }
 
     is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
@@ -145,7 +174,6 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     DEBUG(config,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
-    if (is_enabled) update_tomb_assignments(out);
     return CR_OK;
 }
 
@@ -157,6 +185,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                                     plugin_name);
             is_enabled = false;
         }
+        EventManager::unregisterAll(plugin_self);
     }
     return CR_OK;
 }
@@ -184,10 +213,12 @@ void onUnitDeath(color_ostream& out, void* ptr) {
 
     // assign that unit to their previously assigned tomb in life
     int32_t building_id = it->second;
-    if (!assign_to_tomb(unit_id, building_id)) return;
-
+    if (!assign_to_tomb(unit_id, building_id)) {
+        DEBUG(event, out).print("Unit %d died - but failed to assign them to tomb %d\n", unit_id, building_id);
+        return;
+    }
     // success, print status update and remove assignment from our memo-list
-    out.print("Unit %d died - assigning them to tomb %d\n", unit_id, building_id);
+    INFO(event, out).print("Unit %d died - assigning them to tomb %d\n", unit_id, building_id);
     tomb_assignments.erase(it);
 
 }
@@ -197,7 +228,7 @@ void onUnitDeath(color_ostream& out, void* ptr) {
 //
 //
 static void update_tomb_assignments(color_ostream &out) {
-
+    cycle_timestamp = world->frame_counter;
     // check tomb civzones for assigned units
     for (auto* bld : world->buildings.other.ZONE_TOMB) {
 
@@ -210,12 +241,14 @@ static void update_tomb_assignments(color_ostream &out) {
 
         if (it == tomb_assignments.end()) {
             tomb_assignments.emplace(tomb->assigned_unit_id, tomb->id);
-            out.print("%s new tomb assignment, unit %d to tomb %d\n", plugin_name, tomb->assigned_unit_id, tomb->id);
+            DEBUG(cycle, out).print("%s new tomb assignment, unit %d to tomb %d\n",
+                                    plugin_name, tomb->assigned_unit_id, tomb->id);
         }
 
         else {
             if (it->second != tomb->id) {
-                out.print("%s tomb assignment to %d changed, (old: %d, new: %d)\n", plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
+                DEBUG(cycle, out).print("%s tomb assignment to %d changed, (old: %d, new: %d)\n",
+                                        plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
             }
             it->second = tomb->id;
         }
@@ -228,16 +261,16 @@ static void update_tomb_assignments(color_ostream &out) {
 
         const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
         if (tomb_idx == -1) {
-            out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
+            DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
             return true;
         }
         const auto tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);
         if (!tomb || !tomb->flags.bits.exists) {
-            out.print("%s tomb missing: %d - removing\n", plugin_name, building_id);
+            DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
             return true;
         }
         if (tomb->assigned_unit_id != unit_id) {
-            out.print("%s unassigned unit %d from tomb %d - removing\n", plugin_name, unit_id, building_id);
+            DEBUG(cycle, out).print("%s unassigned unit %d from tomb %d - removing\n", plugin_name, unit_id, building_id);
             return true;
         }
 
@@ -252,11 +285,9 @@ static void update_tomb_assignments(color_ostream &out) {
 //
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
 
-    const int unit_idx = Units::findIndexById(unit_id);
-    if (unit_idx == -1) return false;
+    df::unit* unit = df::unit::find(unit_id);
 
-    df::unit* unit = world->units.all[unit_idx];
-    if (!Units::isDead(unit)) return false;
+    if (!unit || !Units::isDead(unit)) return false;
 
     const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
     if (tomb_idx == -1) return false;

@@ -54,16 +54,21 @@ Template for new versions:
 ## New Tools
 - `preserve-tombs`: tracks tomb assignments to living units and ensures that the tomb stays assigned to them when they die.
 
+- `tubefill`: (reinstated) replenishes mined-out adamantine
+
 ## New Features
 
 ## Fixes
 - `autolabor`: now unconditionally re-enables vanilla work details when the fort or the plugin is unloaded
 - ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
+- EventManager: Unit death event no longer misfires on units leaving the map
 
 ## Misc Improvements
 - `dig`: `digtype` command now has options to choose between designating only visible tiles or hidden tiles, as well as "auto" dig mode. Z-level options adjusted to allow choosing z-levels above, below, or the same as the cursor.
 - `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
 - `hotkeys`: use vertical bars instead of "!" symbols for the DFHack logo to make it easier to read
+- EventManager: guarded against potential iterator invalidation if one of the event listeners modified the global data structure being iterated over
+- EventManager: changed firing order of building created and building destroyed events to improve performance in the building location cache.
 
 ## Documentation
 

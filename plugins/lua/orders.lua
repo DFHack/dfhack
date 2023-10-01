@@ -100,7 +100,7 @@ function OrdersOverlay:init()
             widgets.HotkeyLabel{
                 frame={t=0, l=15},
                 label='recheck',
-                key='CUSTOM_CTRL_R',
+                key='CUSTOM_CTRL_K',
                 auto_width=true,
                 on_activate=do_recheck,
             },

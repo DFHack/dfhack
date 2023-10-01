@@ -58,23 +58,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `autolabor`: now unconditionally re-enables vanilla work details when the fort or the plugin is unloaded
+- `autolabor`: ensure vanilla work details are reinstated when the fort or the plugin is unloaded
 - ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
 - EventManager: Unit death event no longer misfires on units leaving the map
 
 ## Misc Improvements
-- `dig`: `digtype` command now has options to choose between designating only visible tiles or hidden tiles, as well as "auto" dig mode. Z-level options adjusted to allow choosing z-levels above, below, or the same as the cursor.
+- `digtype`: designate only visible tiles by default, and use "auto" dig mode for following veins
+- `digtype`: added options for designating only current z-level, this z-level and above, and this z-level and below
 - `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
-- `hotkeys`: use vertical bars instead of "!" symbols for the DFHack logo to make it easier to read
-- EventManager: guarded against potential iterator invalidation if one of the event listeners modified the global data structure being iterated over
-- EventManager: changed firing order of building created and building destroyed events to improve performance in the building location cache.
+- `hotkeys`: use vertical bars instead of "!" symbols for the DFHack logo in ascii mode to make it easier to read
+- EventManager: guard against potential iterator invalidation if one of the event listeners were to modify the global data structure being iterated over
+- EventManager: for ``onBuildingCreatedDestroyed`` events, changed firing order of events so destroyed events come before created events
 
 ## Documentation
 
 ## API
 
 ## Lua
-- mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down.  similar for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
+- mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down. similarly for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
 
 ## Removed
 

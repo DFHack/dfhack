@@ -15,8 +15,8 @@ TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
 local MOUSE_KEYS = {
-    _MOUSE_L = true,
-    _MOUSE_R = true,
+    _MOUSE_L = function(is_set) df.global.enabler.mouse_lbut = is_set and 1 or 0 end,
+    _MOUSE_R = function(is_set) df.global.enabler.mouse_rbut = is_set and 1 or 0 end,
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
@@ -27,13 +27,17 @@ local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
 FAKE_INPUT_KEYS._STRING = true
 
 function simulateInput(screen,...)
-    local keys = {}
+    local keys, enabled_mouse_keys = {}, {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
             if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
+            end
+            if MOUSE_KEYS[arg] then
+                df.global.enabler.tracking_on = 1
+                enabled_mouse_keys[arg] = true
             end
         end
         if type(kv) == 'number' then
@@ -55,6 +59,11 @@ function simulateInput(screen,...)
             else
                 push_key(arg)
             end
+        end
+    end
+    for mk, fn in pairs(MOUSE_KEYS) do
+        if type(fn) == 'function' then
+            fn(enabled_mouse_keys[mk])
         end
     end
     dscreen._doSimulateInput(screen, keys)
@@ -696,17 +705,6 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
--- ensure underlying DF screens don't also react to handled clicks
-function markMouseClicksHandled(keys)
-    if keys._MOUSE_L then
-        df.global.enabler.mouse_lbut = 0
-    end
-    if keys._MOUSE_R then
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
-    end
-end
-
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -791,23 +789,17 @@ function ZScreen:onInput(keys)
             self:raise()
         else
             self:sendInputToParent(keys)
-            return
+            return true
         end
     end
 
     if ZScreen.super.onInput(self, keys) then
-        markMouseClicksHandled(keys)
-        return
-    end
-
-    if self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
+        -- noop
+    elseif self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
         self:sendInputToParent(keys)
-        return
     elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
-        markMouseClicksHandled(keys)
-        return
     else
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
@@ -829,8 +821,8 @@ function ZScreen:onInput(keys)
         if passit then
             self:sendInputToParent(keys)
         end
-        return
     end
+    return true
 end
 
 function ZScreen:raise()

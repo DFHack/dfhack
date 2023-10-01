@@ -98,7 +98,7 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
         }
         return CR_OK;
     }
-    if (params[0] == "update") {
+    if (params[0] == "now") {
         if (!is_enabled) {
             out.printerr("Cannot update %s when not enabled", plugin_name);
             return CR_FAILURE;
@@ -232,11 +232,9 @@ static void update_tomb_assignments(color_ostream &out) {
                                     plugin_name, tomb->assigned_unit_id, tomb->id);
         }
 
-        else {
-            if (it->second != tomb->id) {
-                DEBUG(cycle, out).print("%s tomb assignment to %d changed, (old: %d, new: %d)\n",
-                                        plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
-            }
+        else if (it->second != tomb->id) {
+            DEBUG(cycle, out).print("%s tomb assignment to %d changed, (old: %d, new: %d)\n",
+                                    plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
             it->second = tomb->id;
         }
 
@@ -257,7 +255,7 @@ static void update_tomb_assignments(color_ostream &out) {
             return true;
         }
         if (tomb->assigned_unit_id != unit_id) {
-            DEBUG(cycle, out).print("%s unassigned unit %d from tomb %d - removing\n", plugin_name, unit_id, building_id);
+            DEBUG(cycle, out).print("%s unit %d unassigned from tomb %d - removing\n", plugin_name, unit_id, building_id);
             return true;
         }
 

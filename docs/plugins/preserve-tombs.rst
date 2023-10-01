@@ -16,7 +16,7 @@ Usage
 ``preserve-tombs [status]``
     check the status of the plugin, and if the plugin is enabled,
     lists all currently tracked tomb assignments
-``preserve-tombs update``
+``preserve-tombs now``
     forces an immediate update of the tomb assignments. This plugin
     automatically updates the tomb assignments once every 100 ticks.
 

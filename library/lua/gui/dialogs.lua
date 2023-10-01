@@ -67,7 +67,10 @@ function MessageBox:onInput(keys)
         gui.markMouseClicksHandled(keys)
         return true
     end
-    return self:inputToSubviews(keys)
+    if self:inputToSubviews(keys) then
+        gui.markMouseClicksHandled(keys)
+        return true
+    end
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -137,7 +140,10 @@ function InputBox:onInput(keys)
         gui.markMouseClicksHandled(keys)
         return true
     end
-    return self:inputToSubviews(keys)
+    if self:inputToSubviews(keys) then
+        gui.markMouseClicksHandled(keys)
+        return true
+    end
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -239,7 +245,10 @@ function ListBox:onInput(keys)
         gui.markMouseClicksHandled(keys)
         return true
     end
-    return self:inputToSubviews(keys)
+    if self:inputToSubviews(keys) then
+        gui.markMouseClicksHandled(keys)
+        return true
+    end
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

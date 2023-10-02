@@ -54,9 +54,24 @@ Template for new versions:
 ## New Tools
 - `preserve-tombs`: tracks tomb assignments to living units and ensures that the tomb stays assigned to them when they die.
 
-- `tubefill`: (reinstated) replenishes mined-out adamantine
-
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r1
+
+## New Tools
+- `tubefill`: (reinstated) replenishes mined-out adamantine
 
 ## Fixes
 - `autolabor`: ensure vanilla work details are reinstated when the fort or the plugin is unloaded
@@ -71,14 +86,8 @@ Template for new versions:
 - EventManager: guard against potential iterator invalidation if one of the event listeners were to modify the global data structure being iterated over
 - EventManager: for ``onBuildingCreatedDestroyed`` events, changed firing order of events so destroyed events come before created events
 
-## Documentation
-
-## API
-
 ## Lua
 - mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down. similarly for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
-
-## Removed
 
 # 50.10-r1
 

@@ -3958,7 +3958,7 @@ Misc
   the screen, you must set ``df.global.gps.mouse_x`` and
   ``df.global.gps.mouse_y`` if you are clicking on the interface layer or
   ``df.global.gps.precise_mouse_x`` and ``df.global.gps.precise_mouse_y`` if
-  you are clickin on the map.
+  you are clicking on the map.
 
 * ``mkdims_xy(x1,y1,x2,y2)``
 

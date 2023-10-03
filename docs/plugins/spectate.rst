@@ -3,7 +3,7 @@ spectate
 
 .. dfhack-tool::
     :summary: Automatically follow productive dwarves.
-    :tags: unavailable fort interface
+    :tags: fort interface
 
 Usage
 -----

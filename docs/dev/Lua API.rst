@@ -3952,6 +3952,14 @@ Misc
   of keycodes to *true* or *false*. For instance, it is possible to use the
   table passed as argument to ``onInput``.
 
+  You can send mouse clicks as will by setting the ``_MOUSE_L`` key or other
+  mouse-related pseudo-keys documented with the ``screen:onInput(keys)``
+  function above. Note that if you are simulating a click at a specific spot on
+  the screen, you must set ``df.global.gps.mouse_x`` and
+  ``df.global.gps.mouse_y`` if you are clicking on the interface layer or
+  ``df.global.gps.precise_mouse_x`` and ``df.global.gps.precise_mouse_y`` if
+  you are clicking on the map.
+
 * ``mkdims_xy(x1,y1,x2,y2)``
 
   Returns a table containing the arguments as fields, and also ``width`` and

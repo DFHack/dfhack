@@ -506,7 +506,6 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
             not _feed_viewscreen_widgets('all', nil, keys) then
         return false
     end
-    gui.markMouseClicksHandled(keys)
     return true
 end
 

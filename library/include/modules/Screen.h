@@ -391,6 +391,7 @@ namespace DFHack
         virtual ~dfhack_lua_viewscreen();
 
         static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
+        static void markInputAsHandled();
 
         virtual bool is_lua_screen() { return true; }
         virtual bool isFocused() { return !defocused; }

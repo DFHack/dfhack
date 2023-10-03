@@ -280,14 +280,12 @@ function Menu:onInput(keys)
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
-            gui.markMouseClicksHandled(keys)
             return true
         end
         if not self:getMouseFramePos() then
             self.parent_view:dismiss()
             return true
         end
-        gui.markMouseClicksHandled(keys)
     end
     self:inputToSubviews(keys)
     return true -- we're modal

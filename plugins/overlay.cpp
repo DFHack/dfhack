@@ -86,7 +86,7 @@ struct viewscreen_overlay : T {
         if (!input_is_handled)
             INTERPOSE_NEXT(feed)(input);
         else
-            enabler->last_text_input[0] = '\0';
+            dfhack_lua_viewscreen::markInputAsHandled();
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();

@@ -212,7 +212,7 @@ local function melee_skill_effectiveness(unit)
 end
 
 local function get_melee_skill_effectiveness_rating(unit)
-    return get_rating(melee_skill_effectiveness(unit), 350000, 2350000, 78, 64, 49, 35)
+    return get_rating(melee_skill_effectiveness(unit), 350000, 2750000, 64, 52, 40, 28)
 end
 
 local function make_sort_by_melee_skill_effectiveness_desc()
@@ -272,7 +272,7 @@ local function ranged_skill_effectiveness(unit)
 end
 
 local function get_ranged_skill_effectiveness_rating(unit)
-    return get_rating(ranged_skill_effectiveness(unit), 0, 500000, 90, 62, 44, 27)
+    return get_rating(ranged_skill_effectiveness(unit), 0, 800000, 72, 52, 31, 11)
 end
 
 local function make_sort_by_ranged_skill_effectiveness_desc(list)
@@ -345,41 +345,41 @@ end
 
 -- Statistical rating that is higher for dwarves that are mentally stable
 local function get_mental_stability(unit)
-    local ALTRUISM = unit.status.current_soul.personality.traits.ALTRUISM
-    local ANXIETY_PROPENSITY = unit.status.current_soul.personality.traits.ANXIETY_PROPENSITY
-    local BRAVERY = unit.status.current_soul.personality.traits.BRAVERY
-    local CHEER_PROPENSITY = unit.status.current_soul.personality.traits.CHEER_PROPENSITY
-    local CURIOUS = unit.status.current_soul.personality.traits.CURIOUS
-    local DISCORD = unit.status.current_soul.personality.traits.DISCORD
-    local DUTIFULNESS = unit.status.current_soul.personality.traits.DUTIFULNESS
-    local EMOTIONALLY_OBSESSIVE = unit.status.current_soul.personality.traits.EMOTIONALLY_OBSESSIVE
-    local HUMOR = unit.status.current_soul.personality.traits.HUMOR
-    local LOVE_PROPENSITY = unit.status.current_soul.personality.traits.LOVE_PROPENSITY
-    local PERSEVERENCE = unit.status.current_soul.personality.traits.PERSEVERENCE
-    local POLITENESS = unit.status.current_soul.personality.traits.POLITENESS
-    local PRIVACY = unit.status.current_soul.personality.traits.PRIVACY
-    local STRESS_VULNERABILITY = unit.status.current_soul.personality.traits.STRESS_VULNERABILITY
-    local TOLERANT = unit.status.current_soul.personality.traits.TOLERANT
+    local altruism = unit.status.current_soul.personality.traits.ALTRUISM
+    local anxiety_propensity = unit.status.current_soul.personality.traits.ANXIETY_PROPENSITY
+    local bravery = unit.status.current_soul.personality.traits.BRAVERY
+    local cheer_propensity = unit.status.current_soul.personality.traits.CHEER_PROPENSITY
+    local curious = unit.status.current_soul.personality.traits.CURIOUS
+    local discord = unit.status.current_soul.personality.traits.DISCORD
+    local dutifulness = unit.status.current_soul.personality.traits.DUTIFULNESS
+    local emotionally_obsessive = unit.status.current_soul.personality.traits.EMOTIONALLY_OBSESSIVE
+    local humor = unit.status.current_soul.personality.traits.HUMOR
+    local love_propensity = unit.status.current_soul.personality.traits.LOVE_PROPENSITY
+    local perseverence = unit.status.current_soul.personality.traits.PERSEVERENCE
+    local politeness = unit.status.current_soul.personality.traits.POLITENESS
+    local privacy = unit.status.current_soul.personality.traits.PRIVACY
+    local stress_vulnerability = unit.status.current_soul.personality.traits.STRESS_VULNERABILITY
+    local tolerant = unit.status.current_soul.personality.traits.TOLERANT
 
-    local CRAFTSMANSHIP = setbelief.getUnitBelief(unit, df.value_type['CRAFTSMANSHIP'])
-    local FAMILY = setbelief.getUnitBelief(unit, df.value_type['FAMILY'])
-    local HARMONY = setbelief.getUnitBelief(unit, df.value_type['HARMONY'])
-    local INDEPENDENCE = setbelief.getUnitBelief(unit, df.value_type['INDEPENDENCE'])
-    local KNOWLEDGE = setbelief.getUnitBelief(unit, df.value_type['KNOWLEDGE'])
-    local LEISURE_TIME = setbelief.getUnitBelief(unit, df.value_type['LEISURE_TIME'])
-    local NATURE = setbelief.getUnitBelief(unit, df.value_type['NATURE'])
-    local SKILL = setbelief.getUnitBelief(unit, df.value_type['SKILL'])
+    local craftsmanship = setbelief.getUnitBelief(unit, df.value_type['CRAFTSMANSHIP'])
+    local family = setbelief.getUnitBelief(unit, df.value_type['FAMILY'])
+    local harmony = setbelief.getUnitBelief(unit, df.value_type['HARMONY'])
+    local independence = setbelief.getUnitBelief(unit, df.value_type['INDEPENDENCE'])
+    local knowledge = setbelief.getUnitBelief(unit, df.value_type['KNOWLEDGE'])
+    local leisure_time = setbelief.getUnitBelief(unit, df.value_type['LEISURE_TIME'])
+    local nature = setbelief.getUnitBelief(unit, df.value_type['NATURE'])
+    local skill = setbelief.getUnitBelief(unit, df.value_type['SKILL'])
 
-    -- Calculate the rating using the defined variables
-    local rating = (CRAFTSMANSHIP * -0.01) + (FAMILY * -0.09) + (HARMONY * 0.05)
-                 + (INDEPENDENCE * 0.06) + (KNOWLEDGE * -0.30) + (LEISURE_TIME * 0.24)
-                 + (NATURE * 0.27) + (SKILL * -0.21) + (ALTRUISM * 0.13)
-                 + (ANXIETY_PROPENSITY * -0.06) + (BRAVERY * 0.06)
-                 + (CHEER_PROPENSITY * 0.41) + (CURIOUS * -0.06) + (DISCORD * 0.14)
-                 + (DUTIFULNESS * -0.03) + (EMOTIONALLY_OBSESSIVE * -0.13)
-                 + (HUMOR * -0.05) + (LOVE_PROPENSITY * 0.15) + (PERSEVERENCE * -0.07)
-                 + (POLITENESS * -0.14) + (PRIVACY * 0.03) + (STRESS_VULNERABILITY * -0.20)
-                 + (TOLERANT * -0.11)
+    -- calculate the rating using the defined variables
+    local rating = (craftsmanship * -0.01) + (family * -0.09) + (harmony * 0.05)
+                 + (independence * 0.06) + (knowledge * -0.30) + (leisure_time * 0.24)
+                 + (nature * 0.27) + (skill * -0.21) + (altruism * 0.13)
+                 + (anxiety_propensity * -0.06) + (bravery * 0.06)
+                 + (cheer_propensity * 0.41) + (curious * -0.06) + (discord * 0.14)
+                 + (dutifulness * -0.03) + (emotionally_obsessive * -0.13)
+                 + (humor * -0.05) + (love_propensity * 0.15) + (perseverence * -0.07)
+                 + (politeness * -0.14) + (privacy * 0.03) + (stress_vulnerability * -0.20)
+                 + (tolerant * -0.11)
 
     return rating
 end
@@ -1148,9 +1148,7 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
 end
 
 function SquadAssignmentOverlay:onInput(keys)
-    if keys._MOUSE_R_DOWN or
-        keys._MOUSE_L_DOWN and not self:getMouseFramePos()
-    then
+    if keys._MOUSE_R or (keys._MOUSE_L and not self:getMouseFramePos()) then
         -- if any click is made outside of our window, we may need to refresh our list
         self.dirty = true
     end

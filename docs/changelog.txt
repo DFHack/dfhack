@@ -68,11 +68,35 @@ Template for new versions:
 
 ## Removed
 
+# 50.11-r1
+
+## New Tools
+- `tubefill`: (reinstated) replenishes mined-out adamantine
+
+## Fixes
+- `autolabor`: ensure vanilla work details are reinstated when the fort or the plugin is unloaded
+- ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
+- EventManager: Unit death event no longer misfires on units leaving the map
+
+## Misc Improvements
+- `digtype`: designate only visible tiles by default, and use "auto" dig mode for following veins
+- `digtype`: added options for designating only current z-level, this z-level and above, and this z-level and below
+- `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
+- `hotkeys`: use vertical bars instead of "!" symbols for the DFHack logo in ascii mode to make it easier to read
+- EventManager: guard against potential iterator invalidation if one of the event listeners were to modify the global data structure being iterated over
+- EventManager: for ``onBuildingCreatedDestroyed`` events, changed firing order of events so destroyed events come before created events
+
+## Lua
+- mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down. similarly for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
+
 # 50.10-r1
 
 ## Fixes
 - Linux launcher: allow Steam Overlay and game streaming to function
 - `autobutcher`: don't ignore semi-wild units when marking units for slaughter
+
+## Misc Improvements
+- 'sort': Improve combat skill scale thresholds
 
 # 50.09-r4
 

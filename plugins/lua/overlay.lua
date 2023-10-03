@@ -506,10 +506,6 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
             not _feed_viewscreen_widgets('all', nil, keys) then
         return false
     end
-    gui.markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        df.global.enabler.mouse_lbut = 0
-    end
     return true
 end
 

@@ -956,6 +956,18 @@ int dfhack_lua_viewscreen::do_notify(lua_State *L)
     return 1;
 }
 
+void dfhack_lua_viewscreen::markInputAsHandled() {
+    if (!enabler)
+        return;
+
+    // clear text buffer
+    enabler->last_text_input[0] = '\0';
+
+    // mark clicked mouse buttons as handled
+    enabler->mouse_lbut = 0;
+    enabler->mouse_rbut = 0;
+}
+
 int dfhack_lua_viewscreen::do_input(lua_State *L)
 {
     auto self = get_self(L);
@@ -977,7 +989,11 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     lua_pushvalue(L, -2);
     Lua::PushInterfaceKeys(L, Screen::normalize_text_keys(*keys));
 
-    lua_call(L, 2, 0);
+    lua_call(L, 2, 1);
+    if (lua_toboolean(L, -1))
+        markInputAsHandled();
+    lua_pop(L, 1);
+
     self->update_focus(L, -1);
     return 0;
 }
@@ -1004,11 +1020,21 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
+    using df::global::enabler;
+
     if (Screen::isDismissed(this))
     {
         if (parent)
             parent->render();
         return;
+    }
+
+    if (enabler &&
+        (enabler->mouse_lbut_down || enabler->mouse_rbut_down || enabler->mouse_mbut_down))
+    {
+        // synthesize feed events for held mouse buttons
+        std::set<df::interface_key> keys;
+        feed(&keys);
     }
 
     dfhack_viewscreen::render();

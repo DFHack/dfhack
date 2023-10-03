@@ -1,5 +1,5 @@
 config.mode = 'fortress'
---config.target = 'orders'
+config.target = 'orders'
 
 local FILE_PATH_PATTERN = 'dfhack-config/orders/%s.json'
 

@@ -272,7 +272,7 @@ function ItemLine:reset()
 end
 
 function ItemLine:onInput(keys)
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
+    if keys._MOUSE_L and self:getMousePos() then
         self.on_select(self.idx)
     end
     return ItemLine.super.onInput(self, keys)
@@ -739,7 +739,7 @@ end
 
 function PlannerOverlay:onInput(keys)
     if not is_plannable() then return false end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if uibs.selection_pos:isValid() then
             uibs.selection_pos:clear()
             return true
@@ -758,7 +758,7 @@ function PlannerOverlay:onInput(keys)
         return true
     end
     if self:is_minimized() then return false end
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         if is_over_options_panel() then return false end
         local detect_rect = copyall(self.frame_rect)
         detect_rect.height = self.subviews.main.frame_rect.height +
@@ -828,7 +828,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L or keys.SELECT
+   return keys._MOUSE_L_DOWN or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)

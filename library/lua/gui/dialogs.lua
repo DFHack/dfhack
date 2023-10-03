@@ -64,13 +64,9 @@ function MessageBox:onInput(keys)
         elseif (keys.LEAVESCREEN or keys._MOUSE_R) and self.on_cancel then
             self.on_cancel()
         end
-        gui.markMouseClicksHandled(keys)
         return true
     end
-    if self:inputToSubviews(keys) then
-        gui.markMouseClicksHandled(keys)
-        return true
-    end
+    return self:inputToSubviews(keys)
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -137,13 +133,9 @@ function InputBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
-        gui.markMouseClicksHandled(keys)
         return true
     end
-    if self:inputToSubviews(keys) then
-        gui.markMouseClicksHandled(keys)
-        return true
-    end
+    return self:inputToSubviews(keys)
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -242,13 +234,9 @@ function ListBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
-        gui.markMouseClicksHandled(keys)
         return true
     end
-    if self:inputToSubviews(keys) then
-        gui.markMouseClicksHandled(keys)
-        return true
-    end
+    return self:inputToSubviews(keys)
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

@@ -75,7 +75,7 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         plugin_name,
-        "Preserves tomb assignments to units when they die.",
+        "Preserve tomb assignments when assigned units die.",
         do_command));
     return CR_OK;
 }
@@ -144,6 +144,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(config,out).print("shutting down %s\n", plugin_name);
 
+// PluginManager handles unregistering our handler from EventManager,
+// so we don't have to do that here
     return CR_OK;
 }
 
@@ -201,11 +203,11 @@ void onUnitDeath(color_ostream& out, void* ptr) {
     // assign that unit to their previously assigned tomb in life
     int32_t building_id = it->second;
     if (!assign_to_tomb(unit_id, building_id)) {
-        DEBUG(event, out).print("Unit %d died - but failed to assign them to tomb %d\n", unit_id, building_id);
+        WARN(event, out).print("Unit %d died - but failed to assign them back to their tomb %d\n", unit_id, building_id);
         return;
     }
     // success, print status update and remove assignment from our memo-list
-    INFO(event, out).print("Unit %d died - assigning them to tomb %d\n", unit_id, building_id);
+    INFO(event, out).print("Unit %d died - assigning them back to their tomb\n", unit_id);
     tomb_assignments.erase(it);
 
 }

@@ -2,7 +2,7 @@ preserve-tombs
 ==============
 
 .. dfhack-tool::
-    :summary: Fix tombs being unassigned to units on death
+    :summary: Preserve tomb assignments when assigned units die.
     :tags: fort bugfix
 
 If you find that the tombs you assign to units get unassigned from them when

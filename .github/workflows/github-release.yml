@@ -40,7 +40,7 @@ jobs:
       run: |
         TAG=$(git describe --tags --abbrev=0 --exact-match)
         echo name="$TAG" >> $GITHUB_OUTPUT
-        echo type=$(echo "$TAG" | egrep '-r[0-9]+$' && echo "release" || echo "prerelease") >> $GITHUB_OUTPUT
+        echo type=$(echo "$TAG" | egrep 'r[0-9]+$' && echo "release" || echo "prerelease") >> $GITHUB_OUTPUT
     - name: Generate release text
       run: |
         python docs/gen_changelog.py -a

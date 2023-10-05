@@ -147,14 +147,14 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             out.print(
                 "[%d] %s (wear level %d)",
                 item->id,
-                description.c_str(),
+                DF2CONSOLE(description).c_str(),
                 item->getWear()
             );
 
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
+                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name,false)).c_str());
 
             if (!dry_run)
             {

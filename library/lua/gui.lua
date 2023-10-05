@@ -14,9 +14,15 @@ CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.te
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
+local function set_and_get_undo(field, is_set)
+    local prev_value = df.global.enabler[field]
+    df.global.enabler[field] = is_set and 1 or 0
+    return function() df.global.enabler[field] = prev_value end
+end
+
 local MOUSE_KEYS = {
-    _MOUSE_L = true,
-    _MOUSE_R = true,
+    _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
+    _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
@@ -27,13 +33,17 @@ local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
 FAKE_INPUT_KEYS._STRING = true
 
 function simulateInput(screen,...)
-    local keys = {}
+    local keys, enabled_mouse_keys = {}, {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
             if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
+            end
+            if MOUSE_KEYS[arg] then
+                df.global.enabler.tracking_on = 1
+                enabled_mouse_keys[arg] = true
             end
         end
         if type(kv) == 'number' then
@@ -57,7 +67,16 @@ function simulateInput(screen,...)
             end
         end
     end
+    local undo_fns = {}
+    for mk, fn in pairs(MOUSE_KEYS) do
+        if type(fn) == 'function' then
+            table.insert(undo_fns, fn(enabled_mouse_keys[mk]))
+        end
+    end
     dscreen._doSimulateInput(screen, keys)
+    for _, undo_fn in ipairs(undo_fns) do
+        undo_fn()
+    end
 end
 
 function mkdims_xy(x1,y1,x2,y2)
@@ -696,21 +715,6 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
-local zscreen_inhibit_mouse_l = false
-
--- ensure underlying DF screens don't also react to handled clicks
-function markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        -- note we can't clear mouse_lbut here. otherwise we break dragging,
-        df.global.enabler.mouse_lbut_down = 0
-        zscreen_inhibit_mouse_l = true
-    end
-    if keys._MOUSE_R_DOWN then
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
-    end
-end
-
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -789,37 +793,24 @@ function ZScreen:onInput(keys)
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
         if has_mouse and
-                (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or
+                (keys._MOUSE_L or keys._MOUSE_R or
                  keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
                  keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
         else
             self:sendInputToParent(keys)
-            return
+            return true
         end
     end
 
     if ZScreen.super.onInput(self, keys) then
-        markMouseClicksHandled(keys)
-        return
-    end
-
-    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
+        -- noop
+    elseif self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
         self:sendInputToParent(keys)
-        return
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
-        markMouseClicksHandled(keys)
-        return
     else
-        if zscreen_inhibit_mouse_l then
-            if keys._MOUSE_L then
-                return
-            else
-                zscreen_inhibit_mouse_l = false
-            end
-        end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
             if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
@@ -840,8 +831,8 @@ function ZScreen:onInput(keys)
         if passit then
             self:sendInputToParent(keys)
         end
-        return
     end
+    return true
 end
 
 function ZScreen:raise()

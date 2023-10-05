@@ -1033,7 +1033,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "die")
     {
+#ifdef WIN32
+        TerminateProcess(GetCurrentProcess(),666);
+#else
         std::_Exit(666);
+#endif
     }
     else if (first == "kill-lua")
     {
@@ -1249,11 +1253,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         else if (res == CR_NEEDS_CONSOLE)
             con.printerr("%s needs an interactive console to work.\n"
-                          "Please run this command from the DFHack terminal.\n\n"
+                          "Please run this command from the DFHack console.\n\n"
 #ifdef WIN32
-                          "You can show the terminal with the 'show' command."
+                          "You can show the console with the 'show' command."
 #else
-                          "The terminal is accessible when you run DF from the commandline\n"
+                          "The console is accessible when you run DF from the commandline\n"
                           "via the './dfhack' script."
 #endif
                           "\n", first.c_str());
@@ -1455,12 +1459,9 @@ void Core::fatal (std::string output)
         con.print("\n");
     }
     fprintf(stderr, "%s\n", out.str().c_str());
-#ifndef LINUX_BUILD
-    out << "Check file stderr.log for details\n";
-    MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
-#else
+    out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-#endif
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1501,6 +1502,12 @@ bool Core::InitMainThread() {
 
     std::cerr << "DFHack build: " << Version::git_description() << "\n"
          << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+
+    std::cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
 
     // find out what we are...
     #ifdef LINUX_BUILD
@@ -1688,11 +1695,6 @@ bool Core::InitSimulationThread()
         return false;
     }
 
-    std::cerr << "Binding to SDL.\n";
-    if (!DFSDL::init(con)) {
-        fatal("cannot bind SDL libraries");
-        return false;
-    }
     if (DFSteam::init(con)) {
         std::cerr << "Found Steam.\n";
         DFSteam::launchSteamDFHackIfNecessary(con);

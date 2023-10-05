@@ -261,7 +261,11 @@ local function load_widget(name, widget_class)
         next_update_ms=widget.overlay_onupdate and 0 or math.huge,
     }
     if not overlay_config[name] then overlay_config[name] = {} end
+    if widget.version ~= overlay_config[name].version then
+        overlay_config[name] = {}
+    end
     local config = overlay_config[name]
+    config.version = widget.version
     if config.enabled == nil then
         config.enabled = widget.default_enabled
     end
@@ -502,10 +506,6 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
             not _feed_viewscreen_widgets('all', nil, keys) then
         return false
     end
-    gui.markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        df.global.enabler.mouse_lbut = 0
-    end
     return true
 end
 
@@ -577,7 +577,8 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
-    default_pos={x=7, y=2},
+    default_pos={x=11, y=1},
+    version=2,
     default_enabled=true,
     viewscreens='title/Default',
     frame={w=35, h=5},

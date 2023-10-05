@@ -5,7 +5,6 @@ local _ENV = mkmodule('gui.materials')
 local gui = require('gui')
 local widgets = require('gui.widgets')
 local dlg = require('gui.dialogs')
-local utils = require('utils')
 
 ARROW = string.char(26)
 

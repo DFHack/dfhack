@@ -90,6 +90,10 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     This will be filled in with the display name of your widget, in case you
     have multiple widgets with the same implementation but different
     configurations.
+- ``version``
+    You can set this to any string. If the version string of a loaded widget
+    does not match the saved settings for that widget, then the configuration
+    for the widget (position, enabled status) will be reset to defaults.
 - ``default_pos`` (default: ``{x=-2, y=-2}``)
     Override this attribute with your desired default widget position. See
     the `overlay` docs for information on what positive and negative numbers

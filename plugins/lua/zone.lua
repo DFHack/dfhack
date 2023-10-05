@@ -410,12 +410,19 @@ function AssignAnimal:refresh_list(sort_widget, sort_fn)
     list:setFilter(saved_filter)
 end
 
-local function make_search_key(desc)
-    local out = ''
-    for c in dfhack.toSearchNormalized(desc):gmatch("[%w%s]") do
-        out = out .. c:lower()
+function add_words(words, str)
+    for word in dfhack.toSearchNormalized(str):gmatch("[%w-]+") do
+        table.insert(words, word:lower())
     end
-    return out
+end
+
+function make_search_key(desc, race_raw)
+    local words = {}
+    add_words(words, desc)
+    if race_raw then
+        add_words(words, race_raw.name[0])
+    end
+    return table.concat(words, ' ')
 end
 
 function AssignAnimal:make_choice_text(data)
@@ -551,7 +558,7 @@ function AssignAnimal:cache_choices()
             graze=dfhack.units.isGrazer(unit),
         }
         local choice = {
-            search_key=make_search_key(data.desc),
+            search_key=make_search_key(data.desc, raw),
             data=data,
             text=self:make_choice_text(data),
         }
@@ -570,7 +577,7 @@ function AssignAnimal:cache_choices()
             disposition=get_item_disposition(vermin),
         }
         local choice = {
-            search_key=make_search_key(data.desc),
+            search_key=make_search_key(data.desc, raw),
             data=data,
             text=self:make_choice_text(data),
         }
@@ -589,7 +596,7 @@ function AssignAnimal:cache_choices()
             disposition=get_item_disposition(small_pet),
         }
         local choice = {
-            search_key=make_search_key(data.desc),
+            search_key=make_search_key(data.desc, raw),
             data=data,
             text=self:make_choice_text(data),
         }
@@ -794,10 +801,12 @@ end
 function AssignAnimalScreen:onInput(keys)
     local handled = AssignAnimalScreen.super.onInput(self, keys)
     if not self.is_valid_ui_state() then
-        view:dismiss()
+        if view then
+            view:dismiss()
+        end
         return
     end
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         -- if any click is made outside of our window, we need to recheck unit properties
         local window = self.subviews[1]
         if not window:getMouseFramePos() then
@@ -811,7 +820,7 @@ function AssignAnimalScreen:onInput(keys)
 end
 
 function AssignAnimalScreen:onRenderFrame()
-    if not self.is_valid_ui_state() then
+    if view and not self.is_valid_ui_state() then
         view:dismiss()
     end
 end
@@ -1065,6 +1074,7 @@ function CageChainOverlay:init()
             frame={t=0, l=0, r=0, h=1},
             label='DFHack assign',
             key='CUSTOM_CTRL_T',
+            visible=is_valid_building,
             on_activate=function() view = view and view:raise() or show_cage_chain_screen() end,
         },
     }

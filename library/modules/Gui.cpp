@@ -87,6 +87,7 @@ using namespace DFHack;
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
+#include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
 #include "df/world.h"
 
@@ -161,7 +162,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(title)
 
 DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 {
-    if (screen->doing_mods)
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
         focusStrings.push_back(baseFocus + "/Mods");
     else if (screen->doing_simple_params)
         focusStrings.push_back(baseFocus + "/Basic");
@@ -170,6 +173,45 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(setupdwarfgame)
+{
+    if (screen->doing_custom_settings)
+        focusStrings.push_back(baseFocus + "/CustomSettings");
+    else if (game->main_interface.options.open)
+        focusStrings.push_back(baseFocus + "/Abort");
+    else if (screen->initial_selection == 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else if (game->main_interface.name_creator.open) {
+        switch (game->main_interface.name_creator.context) {
+        case df::name_creator_context_type::EMBARK_FORT_NAME:
+            focusStrings.push_back(baseFocus + "/FortName");
+            break;
+        case df::name_creator_context_type::EMBARK_GROUP_NAME:
+            focusStrings.push_back(baseFocus + "/GroupName");
+            break;
+        default:
+            break;
+        }
+    }
+    else if (game->main_interface.image_creator.open) {
+        focusStrings.push_back(baseFocus + "/GroupSymbol");
+    }
+    else if (screen->viewing_objections != 0)
+        focusStrings.push_back(baseFocus + "/Objections");
+    else {
+        switch (screen->mode) {
+        case 0: focusStrings.push_back(baseFocus + "/Dwarves"); break;
+        case 1: focusStrings.push_back(baseFocus + "/Items"); break;
+        case 2: focusStrings.push_back(baseFocus + "/Animals"); break;
+        default:
+            break;
+        }
+    }
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(legends)

@@ -12,6 +12,26 @@ This release is compatible with all distributions of Dwarf Fortress: [Steam](htt
 
 Please report any issues (or feature requests) on the DFHack [GitHub issue tracker](https://github.com/DFHack/dfhack/issues). When reporting issues, please upload a zip file of your savegame and a zip file of your `mods` directory to the cloud and add links to the GitHub issue. Make sure your files are downloadable by "everyone with the link". We need your savegame to reproduce the problem and test the fix, and we need your active mods so we can load your savegame. Issues with savegames and mods attached get fixed first!
 
+Highlights
+----------------------------------
+
+<details>
+<summary>Highlight 1, Highlight 2</summary>
+
+### Highlight 1
+
+Demo screenshot/vidcap
+
+Text
+
+### Highlight 2
+
+Demo screenshot/vidcap
+
+Text
+
+</details>
+
 Announcements
 ----------------------------------
 
@@ -34,26 +54,6 @@ If you see a tool complaining about the lack of a cursor, know that it's referri
 
 </details>
 
-Highlights
-----------------------------------
-
-<details>
-<summary>Highlight 1, Highlight 2</summary>
-
-### Highlight 1
-
-Demo screenshot/vidcap
-
-Text
-
-### Highlight 2
-
-Demo screenshot/vidcap
-
-Text
-
-</details>
-
 Generated release notes
 ====================
 
@@ -61,5 +61,4 @@ Generated release notes
 <summary>New tools, fixes, and improvements</summary>
 
 %RELEASE_NOTES%
-
 </details>

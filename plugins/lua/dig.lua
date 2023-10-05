@@ -20,10 +20,30 @@ WarmDampOverlay.ATTRS{
     overlay_only=true,
 }
 
-function WarmDampOverlay:onRenderFrame(dc)
+function WarmDampOverlay:onRenderFrame()
     pathable.paintScreenWarmDamp()
 end
 
-OVERLAY_WIDGETS = {asciiwarmdamp=WarmDampOverlay}
+CarveOverlay = defclass(CarveOverlay, overlay.OverlayWidget)
+CarveOverlay.ATTRS{
+    viewscreens={
+        'dwarfmode/Designate/SMOOTH',
+        'dwarfmode/Designate/ENGRAVE',
+        'dwarfmode/Designate/TRACK',
+        'dwarfmode/Designate/FORTIFY',
+        'dwarfmode/Designate/ERASE',
+    },
+    default_enabled=true,
+    overlay_only=true,
+}
+
+function CarveOverlay:onRenderFrame()
+    pathable.paintScreenCarve()
+end
+
+OVERLAY_WIDGETS = {
+    asciiwarmdamp=WarmDampOverlay,
+    asciicarve=CarveOverlay,
+}
 
 return _ENV

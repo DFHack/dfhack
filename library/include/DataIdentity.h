@@ -25,11 +25,13 @@ distribution.
 #pragma once
 
 #include <deque>
+#include <future>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include <future>
 
 #include "DataDefs.h"
 
@@ -573,6 +575,20 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::fstream);
     OPAQUE_IDENTITY_TRAITS(std::mutex);
     OPAQUE_IDENTITY_TRAITS(std::future<void>);
+    OPAQUE_IDENTITY_TRAITS(std::function<void()>);
+    OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
+
+#ifdef BUILD_DFHACK_LIB
+    template<typename T>
+    struct DFHACK_EXPORT identity_traits<std::shared_ptr<T>> {
+        static opaque_identity *get() {
+            typedef std::shared_ptr<T> type;
+            static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
+            static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
+            return &identity;
+        }
+    };
+#endif
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
@@ -653,6 +669,10 @@ namespace df
         static container_identity *get();
     };
 
+    template<class KT, class T> struct identity_traits<std::unordered_map<KT, T>> {
+        static container_identity *get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
         static bit_container_identity *get() { return &identity; }
@@ -727,6 +747,13 @@ namespace df
     inline container_identity *identity_traits<std::map<KT, T>>::get() {
         typedef std::map<KT, T> container;
         static ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class KT, class T>
+    inline container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
+        typedef std::unordered_map<KT, T> container;
+        static ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 

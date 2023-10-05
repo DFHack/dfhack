@@ -14,9 +14,15 @@ CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.te
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
+local function set_and_get_undo(field, is_set)
+    local prev_value = df.global.enabler[field]
+    df.global.enabler[field] = is_set and 1 or 0
+    return function() df.global.enabler[field] = prev_value end
+end
+
 local MOUSE_KEYS = {
-    _MOUSE_L = function(is_set) df.global.enabler.mouse_lbut = is_set and 1 or 0 end,
-    _MOUSE_R = function(is_set) df.global.enabler.mouse_rbut = is_set and 1 or 0 end,
+    _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
+    _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
@@ -61,12 +67,16 @@ function simulateInput(screen,...)
             end
         end
     end
+    local undo_fns = {}
     for mk, fn in pairs(MOUSE_KEYS) do
         if type(fn) == 'function' then
-            fn(enabled_mouse_keys[mk])
+            table.insert(undo_fns, fn(enabled_mouse_keys[mk]))
         end
     end
     dscreen._doSimulateInput(screen, keys)
+    for _, undo_fn in ipairs(undo_fns) do
+        undo_fn()
+    end
 end
 
 function mkdims_xy(x1,y1,x2,y2)

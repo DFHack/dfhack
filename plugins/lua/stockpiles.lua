@@ -4,6 +4,7 @@ local argparse = require('argparse')
 local gui = require('gui')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
+local textures = require('gui.textures')
 local widgets = require('gui.widgets')
 
 local STOCKPILES_DIR = 'dfhack-config/stockpiles'
@@ -263,6 +264,45 @@ local function do_export()
 end
 
 --------------------
+-- ConfigModal
+--------------------
+
+ConfigModal = defclass(ConfigModal, gui.ZScreenModal)
+ConfigModal.ATTRS{
+    focus_path='stockpiles_config',
+    on_close=DEFAULT_NIL,
+}
+
+function ConfigModal:init()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    local cur_setting = false
+    if sp then
+        local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+        cur_setting = config.melt_masterworks == 1
+    end
+
+    self:addviews{
+        widgets.Window{
+            frame={w=35, h=10},
+            frame_title='Advanced logistics settings',
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='melt_masterworks',
+                    frame={l=0, t=0},
+                    key='CUSTOM_M',
+                    label='Melt masterworks',
+                    initial_option=cur_setting,
+                },
+            },
+        },
+    }
+end
+
+function ConfigModal:onDismiss()
+    self.on_close{melt_masterworks=self.subviews.melt_masterworks:getOptionValue()}
+end
+
+--------------------
 -- MinimizeButton
 --------------------
 
@@ -368,9 +408,7 @@ function StockpilesOverlay:init()
         view_id='main',
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
-        visible=function()
-            return not self.minimized
-        end,
+        visible=function() return not self.minimized end,
         subviews={
             -- widgets.HotkeyLabel{
             --     frame={t=0, l=0},
@@ -439,13 +477,39 @@ function StockpilesOverlay:init()
         },
     }
 
+    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+    local help_pen_center = dfhack.pen.parse{
+        tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+    local configure_pen_center = dfhack.pen.parse{
+        tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
+
     self:addviews{
-        main_panel, MinimizeButton{
+        main_panel,
+        MinimizeButton{
             frame={t=0, r=9},
-            get_minimized_fn=function()
-                return self.minimized
-            end,
+            get_minimized_fn=function() return self.minimized end,
             on_click=self:callback('toggleMinimized'),
+        },
+        widgets.Label{
+            frame={t=0, r=5, w=3},
+            text={
+                {tile=button_pen_left},
+                {tile=configure_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() ConfigModal{on_close=self:callback('on_custom_config')}:show() end,
+        },
+        widgets.Label{
+            frame={t=0, r=1, w=3},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', 'stockpiles ') end,
         },
     }
 end
@@ -475,7 +539,16 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
-            (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1))
+            (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1),
+            config.melt_masterworks == 1)
+end
+
+function StockpilesOverlay:on_custom_config(custom)
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    if not sp then return end
+    local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+    logistics.logistics_setStockpileConfig(config.stockpile_number,
+            config.melt == 1, config.trade == 1, config.dump == 1, config.train == 1, custom.melt_masterworks)
 end
 
 function StockpilesOverlay:toggleMinimized()

@@ -739,12 +739,6 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
-    elseif keys._MOUSE_L_DOWN then
-        local mouse_x = self:getMousePos()
-        if mouse_x then
-            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
-            return true
-        end
     elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
@@ -795,6 +789,12 @@ function EditField:onInput(keys)
     elseif keys.CUSTOM_CTRL_V then
         self:insert(dfhack.internal.getClipboardTextCp437())
         return true
+    elseif keys._MOUSE_L_DOWN then
+        local mouse_x = self:getMousePos()
+        if mouse_x then
+            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
+            return true
+        end
     end
 
     -- if we're modal, then unconditionally eat all the input

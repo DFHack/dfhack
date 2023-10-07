@@ -684,7 +684,7 @@ Persistent configuration storage
 --------------------------------
 
 This api is intended for storing configuration options in the world itself.
-It probably should be restricted to data that is world-dependent.
+It is intended for data that is world-dependent.
 
 Entries are identified by a string ``key``, but it is also possible to manage
 multiple entries with the same key; their identity is determined by ``entry_id``.
@@ -717,10 +717,8 @@ Every entry has a mutable string ``value``, and an array of 7 mutable ``ints``.
   otherwise the existing one is simply updated.
   Returns *entry, did_create_new*
 
-Since the data is hidden in data structures owned by the DF world,
-and automatically stored in the save game, these save and retrieval
-functions can just copy values in memory without doing any actual I/O.
-However, currently every entry has a 180+-byte dead-weight overhead.
+The data is kept in memory, so no I/O occurs when getting or saving keys. It is
+all written to a json file in the game save directory when the game is saved.
 
 It is also possible to associate one bit per map tile with an entry,
 using these two methods:

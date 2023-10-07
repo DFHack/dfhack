@@ -56,6 +56,7 @@ Template for new versions:
 - `preserve-tombs`: tracks tomb assignments to living units and ensures that the tomb stays assigned to them when they die.
 
 ## New Features
+- `logistics`: ``automelt`` now optionally supports melting masterworks; feature accessible from `stockpiles` overlay
 
 ## Fixes
 

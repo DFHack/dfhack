@@ -3081,6 +3081,9 @@ environment by the mandatory init file dfhack.lua:
     COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
     COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
 
+  ``COLOR_GREY`` and ``COLOR_DARKGREY`` can also be spelled ``COLOR_GRAY`` and
+  ``COLOR_DARKGRAY``.
+
 * State change event codes, used by ``dfhack.onStateChange``
 
   Available only in the `core context <lua-core-context>`, as is the event itself:

@@ -67,6 +67,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- added ``GRAY`` color aliases for ``GREY`` colors
 
 ## Removed
 

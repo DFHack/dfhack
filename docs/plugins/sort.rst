@@ -91,3 +91,11 @@ and "ranged combat potential" are explained in detail here:
 https://www.reddit.com/r/dwarffortress/comments/163kczo/enhancing_military_candidate_selection_part_3/
 "Mental stability" is explained here:
 https://www.reddit.com/r/dwarffortress/comments/1617s11/enhancing_military_candidate_selection_part_2/
+
+Creatures overlay
+-----------------
+
+The search widget that appears on the "Creatures" info panel sub-tabs (e.g.
+"Citizens", "Pets", etc.) can search the lists by name and other shown
+attibutes. For example, searching for ``caged`` will show all caged prisoners
+on the "Other" tab.

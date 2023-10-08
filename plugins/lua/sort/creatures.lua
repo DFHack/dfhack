@@ -145,14 +145,14 @@ end
 local function overall_training_search(data, filter, incremental)
     general_search(creatures.atk_index, function(elem)
             local raw = df.creature_raw.find(elem)
-            if not raw then return '' end
+            if not raw then return end
             return raw.name[1]
         end, nil, data, filter, incremental)
 end
 
 local function assign_trainer_search(data, filter, incremental)
     general_search(creatures.trainer, function(elem)
-            if not elem then return nil end
+            if not elem then return end
             return ('%s %s'):format(dfhack.TranslateName(elem.name), dfhack.units.getProfessionName(elem))
         end, nil, data, filter, incremental)
 end

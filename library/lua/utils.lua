@@ -460,6 +460,32 @@ function erase_sorted(vector,item,field,cmp)
     return erase_sorted_key(vector,key,field,cmp)
 end
 
+FILTER_FULL_TEXT = false
+
+function search_text(text, search_tokens)
+    text = dfhack.toSearchNormalized(text)
+    if type(search_tokens) ~= 'table' then
+        search_tokens = search_tokens:split()
+    end
+
+    for _,search_token in ipairs(search_tokens) do
+        if search_token == '' then goto continue end
+        search_token = dfhack.toSearchNormalized(search_token:escape_pattern())
+
+        -- the separate checks for non-space or non-punctuation allows
+        -- punctuation itself to be matched if that is useful (e.g.
+        -- filenames or parameter names)
+        if not FILTER_FULL_TEXT and not text:match('%f[^%p\x00]'..search_token)
+                and not text:match('%f[^%s\x00]'..search_token) then
+            return false
+        elseif FILTER_FULL_TEXT and not text:find(search_token) then
+            return false
+        end
+        ::continue::
+    end
+    return true
+end
+
 -- Calls a method with a string temporary
 function call_with_string(obj,methodname,...)
     return dfhack.with_temp_object(

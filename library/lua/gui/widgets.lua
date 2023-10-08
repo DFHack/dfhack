@@ -2017,12 +2017,9 @@ end
 -- Filtered List --
 -------------------
 
-FILTER_FULL_TEXT = false
-
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
-    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2172,7 +2169,6 @@ function FilteredList:setFilter(filter, pos)
         pos = nil
 
         for i,v in ipairs(self.choices) do
-            local ok = true
             local search_key = v.search_key
             if not search_key then
                 if type(v.text) ~= 'table' then
@@ -2187,30 +2183,7 @@ function FilteredList:setFilter(filter, pos)
                     search_key = table.concat(texts, ' ')
                 end
             end
-            for _,key in ipairs(tokens) do
-                key = key:escape_pattern()
-                if key ~= '' then
-                    search_key = dfhack.toSearchNormalized(search_key)
-                    key = dfhack.toSearchNormalized(key)
-                    if not self.case_sensitive then
-                        search_key = string.lower(search_key)
-                        key = string.lower(key)
-                    end
-
-                    -- the separate checks for non-space or non-punctuation allows
-                    -- punctuation itself to be matched if that is useful (e.g.
-                    -- filenames or parameter names)
-                    if not FILTER_FULL_TEXT and not search_key:match('%f[^%p\x00]'..key)
-                            and not search_key:match('%f[^%s\x00]'..key) then
-                        ok = false
-                        break
-                    elseif FILTER_FULL_TEXT and not search_key:find(key) then
-                        ok = false
-                        break
-                    end
-                end
-            end
-            if ok then
+            if utils.search_text(search_key, tokens) then
                 table.insert(choices, v)
                 cidx[#choices] = i
                 if ipos == i then

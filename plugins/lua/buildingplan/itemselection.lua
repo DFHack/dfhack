@@ -151,7 +151,6 @@ function ItemSelection:init()
                         widgets.FilteredList{
                             view_id='flist',
                             frame={t=0, b=0},
-                            case_sensitive=false,
                             choices=choices,
                             icon_width=2,
                             on_submit=self:callback('toggle_group'),

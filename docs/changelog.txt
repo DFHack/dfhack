@@ -67,8 +67,10 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``utils.search_text``: text search routine (generalized from ``widgets.FilteredList``)
 
 ## Removed
+- ``FILTER_FULL_TEXT``: moved from ``gui.widgets`` to ``utils``; if your full text search preference is lost, please reset it in `gui/control-panel`
 
 # 50.11-r1
 

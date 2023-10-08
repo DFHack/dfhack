@@ -1,6 +1,6 @@
 local _ENV = mkmodule('plugins.sort')
 
-local creatures = require('plugins.sort.creatures')
+local info = require('plugins.sort.info')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
@@ -1262,7 +1262,7 @@ end
 OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
-    creatures=creatures.InfoOverlay,
+    info=info.InfoOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

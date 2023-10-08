@@ -1,4 +1,4 @@
-local _ENV = mkmodule('plugins.sort.creatures')
+local _ENV = mkmodule('plugins.sort.info')
 
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')

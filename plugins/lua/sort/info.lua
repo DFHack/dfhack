@@ -10,6 +10,8 @@ local creatures = info.creatures
 local objects = info.artifacts
 local justice = info.justice
 
+local state = {}
+
 -- these sort functions attempt to match the vanilla info panelsort behavior, which
 -- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
 -- we'd always sort by name descending as a secondary sort. To match vanilla sorting,
@@ -161,7 +163,15 @@ local function assign_trainer_search(data, filter, incremental)
         end, nil, data, filter, incremental)
 end
 
-local function interrogation_search(data, filter, incremental)
+local function interrogating_search(data, filter, incremental)
+end
+
+local function convicting_search(data, filter, incremental)
+    general_search(justice.conviction_list, function(elem)
+        return ('%s %s'):format(
+            dfhack.units.getReadableName(elem),
+            dfhack.units.getProfessionName(elem))
+    end, nil, data, filter, incremental)
 end
 
 local HANDLERS = {
@@ -171,7 +181,8 @@ local HANDLERS = {
     DECEASED=make_cri_unitst_handlers(creatures.cri_unit.DECEASED),
     PET_OT={search_fn=overall_training_search},
     PET_AT={search_fn=assign_trainer_search},
-    INTERROGATING={search_fn=interrogation_search},
+    INTERROGATING={search_fn=interrogating_search},
+    CONVICTING={search_fn=convicting_search},
 }
 for idx,name in ipairs(df.artifacts_mode_type) do
     if idx < 0 then goto continue end
@@ -182,6 +193,54 @@ for idx,name in ipairs(df.artifacts_mode_type) do
             end, nil)
     }
     ::continue::
+end
+
+local function get_key()
+    if info.current_mode == df.info_interface_mode_type.JUSTICE then
+        if justice.interrogating then
+            return 'INTERROGATING'
+        elseif justice.convicting then
+            return 'CONVICTING'
+        end
+    elseif info.current_mode == df.info_interface_mode_type.CREATURES then
+        if creatures.current_mode == df.unit_list_mode_type.PET then
+            if creatures.showing_overall_training then
+                return 'PET_OT'
+            elseif creatures.adding_trainer then
+                return 'PET_AT'
+            end
+        end
+        return df.unit_list_mode_type[creatures.current_mode]
+    elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
+        return df.artifacts_mode_type[objects.mode]
+    end
+end
+
+local function check_context(self)
+    local key = get_key()
+    if state.prev_key ~= key then
+        state.prev_key = key
+        local prev_text = key and ensure_key(state, key).prev_text or ''
+        self.subviews.search:setText(prev_text)
+    end
+end
+
+local function do_search(self, text)
+    if not next(state) and text == '' then return end
+    -- the EditField state is guaranteed to be consistent with the current
+    -- context since when clicking to switch tabs, onRenderBody is always called
+    -- before this text_input callback, even if a key is pressed before the next
+    -- graphical frame would otherwise be printed. if this ever becomes untrue,
+    -- then we can add an on_char handler to the EditField that also calls
+    -- check_context.
+    local key = get_key()
+    if not key then return end
+    local prev_text = ensure_key(state, key).prev_text
+    -- some screens reset their contents between context switches; regardless
+    -- a switch back to the context should results in an incremental search
+    local incremental = prev_text and text:startswith(prev_text)
+    HANDLERS[key].search_fn(state[key], text, incremental)
+    state[key].prev_text = text
 end
 
 -- ----------------------
@@ -210,8 +269,6 @@ InfoOverlay.ATTRS{
 }
 
 function InfoOverlay:init()
-    self.state = {}
-
     self:addviews{
         widgets.BannerPanel{
             view_id='panel',
@@ -222,14 +279,14 @@ function InfoOverlay:init()
                     frame={l=1, t=0, r=1},
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
-                    on_change=self:callback('text_input'),
+                    on_change=curry(do_search, self),
                 },
             },
         },
     }
 end
 
-local function cleanup(state)
+local function cleanup()
     for k,v in pairs(state) do
         local cleanup_fn = safe_index(HANDLERS, k, 'cleanup_fn')
         if cleanup_fn then cleanup_fn(v) end
@@ -237,11 +294,11 @@ local function cleanup(state)
 end
 
 function InfoOverlay:overlay_onupdate()
-    if next(self.state) and
+    if next(state) and
         not dfhack.gui.matchFocusString('dwarfmode/Info', dfhack.gui.getDFViewscreen(true))
     then
-        cleanup(self.state)
-        self.state = {}
+        cleanup()
+        state = {}
         self.subviews.search:setText('')
         self.subviews.search:setFocus(false)
         self.overlay_onupdate_max_freq_seconds = 60
@@ -281,32 +338,8 @@ function InfoOverlay:updateFrames()
     return true
 end
 
-local function get_key()
-    if info.current_mode == df.info_interface_mode_type.CREATURES then
-        if creatures.current_mode == df.unit_list_mode_type.PET then
-            if creatures.showing_overall_training then
-                return 'PET_OT'
-            elseif creatures.adding_trainer then
-                return 'PET_AT'
-            end
-        end
-        return df.unit_list_mode_type[creatures.current_mode]
-    elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
-        return df.artifacts_mode_type[objects.mode]
-    end
-end
-
-local function check_context(self)
-    local key = get_key()
-    if self.state.prev_key ~= key then
-        self.state.prev_key = key
-        local prev_text = ensure_key(self.state, key).prev_text
-        self.subviews.search:setText(prev_text or '')
-    end
-end
-
 function InfoOverlay:onRenderBody(dc)
-    if next(self.state) then
+    if next(state) then
         check_context(self)
     end
     if self:updateFrames() then
@@ -314,23 +347,6 @@ function InfoOverlay:onRenderBody(dc)
     end
     self.overlay_onupdate_max_freq_seconds = 0
     InfoOverlay.super.onRenderBody(self, dc)
-end
-
-function InfoOverlay:text_input(text)
-    if not next(self.state) and text == '' then return end
-    -- the EditField state is guaranteed to be consistent with the current
-    -- context since when clicking to switch tabs, onRenderBody is always called
-    -- before this text_input callback, even if a key is pressed before the next
-    -- graphical frame would otherwise be printed. if this ever becomes untrue,
-    -- then we can add an on_char handler to the EditField that also calls
-    -- check_context.
-    local key = get_key()
-    local prev_text = ensure_key(self.state, key).prev_text
-    -- some screens reset their contents between context switches; regardless
-    -- a switch back to the context should results in an incremental search
-    local incremental = prev_text and text:startswith(prev_text)
-    HANDLERS[key].search_fn(self.state[key], text, incremental)
-    self.state[key].prev_text = text
 end
 
 function InfoOverlay:onInput(keys)
@@ -349,12 +365,14 @@ InterrogationOverlay = defclass(InterrogationOverlay, overlay.OverlayWidget)
 InterrogationOverlay.ATTRS{
     default_pos={x=47, y=10},
     default_enabled=true,
-    viewscreens={
-        'dwarfmode/Info/JUSTICE/Interrogating',
-        'dwarfmode/Info/JUSTICE/Convicting',
-    },
+    viewscreens='dwarfmode/Info/JUSTICE',
     frame={w=27, h=9},
 }
+
+local function is_interrogate_or_convict()
+    local key = get_key()
+    return key == 'INTERROGATING' or key == 'CONVICTING'
+end
 
 function InterrogationOverlay:init()
     self:addviews{
@@ -363,12 +381,14 @@ function InterrogationOverlay:init()
             frame={l=0, t=4, h=5, r=0},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
+            visible=is_interrogate_or_convict,
             subviews={
                 widgets.EditField{
                     view_id='search',
                     frame={l=0, t=0, r=0},
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
+                    on_change=curry(do_search, self),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='subset',
@@ -424,12 +444,19 @@ function InterrogationOverlay:render(dc)
     InterrogationOverlay.super.render(self, dc)
 end
 
+function InterrogationOverlay:onRenderBody(dc)
+    if next(state) then
+        check_context(self)
+    end
+    InterrogationOverlay.super.onRenderBody(self, dc)
+end
+
 function InterrogationOverlay:onInput(keys)
     if keys._MOUSE_R and self.subviews.search.focus then
         self.subviews.search:setFocus(false)
         return true
     end
-    return InfoOverlay.super.onInput(self, keys)
+    return InterrogationOverlay.super.onInput(self, keys)
 end
 
 return _ENV

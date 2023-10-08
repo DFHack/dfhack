@@ -4,10 +4,12 @@ local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
-local creatures = df.global.game.main_interface.info.creatures
+local info = df.global.game.main_interface.info
+local creatures = info.creatures
+local objects = info.artifacts
 
--- these sort functions attempt to match the vanilla sort behavior, which is not
--- quite the same as the rest of DFHack. For example, in other DFHack sorts,
+-- these sort functions attempt to match the vanilla info panelsort behavior, which
+-- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
 -- we'd always sort by name descending as a secondary sort. To match vanilla sorting,
 -- if the primary sort is ascending, the secondary name sort will also be ascending.
 --
@@ -165,6 +167,16 @@ local HANDLERS = {
     PET_OT={search_fn=overall_training_search},
     PET_AT={search_fn=assign_trainer_search},
 }
+for idx,name in ipairs(df.artifacts_mode_type) do
+    if idx < 0 then goto continue end
+    HANDLERS[name] = {
+        search_fn=curry(general_search, objects.list[idx],
+            function(elem)
+                return ('%s %s'):format(dfhack.TranslateName(elem.name), dfhack.TranslateName(elem.name, true))
+            end, nil)
+    }
+    ::continue::
+end
 
 -- ----------------------
 -- InfoOverlay
@@ -172,7 +184,7 @@ local HANDLERS = {
 
 InfoOverlay = defclass(InfoOverlay, overlay.OverlayWidget)
 InfoOverlay.ATTRS{
-    default_pos={x=64, y=9},
+    default_pos={x=64, y=8},
     default_enabled=true,
     viewscreens={
         'dwarfmode/Info/CREATURES/CITIZEN',
@@ -181,10 +193,14 @@ InfoOverlay.ATTRS{
         'dwarfmode/Info/CREATURES/AddingTrainer',
         'dwarfmode/Info/CREATURES/OTHER',
         'dwarfmode/Info/CREATURES/DECEASED',
+        'dwarfmode/Info/ARTIFACTS/ARTIFACTS',
+        'dwarfmode/Info/ARTIFACTS/SYMBOLS',
+        'dwarfmode/Info/ARTIFACTS/NAMED_OBJECTS',
+        'dwarfmode/Info/ARTIFACTS/WRITTEN_CONTENT',
     },
     hotspot=true,
     overlay_onupdate_max_freq_seconds=0,
-    frame={w=40, h=3},
+    frame={w=40, h=4},
 }
 
 function InfoOverlay:init()
@@ -226,11 +242,6 @@ function InfoOverlay:overlay_onupdate()
     end
 end
 
-local function are_tabs_in_two_rows()
-    local pen = dfhack.screen.readTile(64, 6, false) -- tile is occupied iff tabs are in one row
-    return pen.ch == 0
-end
-
 local function resize_overlay(self)
     local sw = dfhack.screen.getWindowSize()
     local overlay_width = math.min(40, sw-(self.frame_rect.x1 + 30))
@@ -240,24 +251,39 @@ local function resize_overlay(self)
     end
 end
 
+local function get_panel_offsets()
+    local tabs_in_two_rows = dfhack.screen.readTile(64, 6, false).ch == 0
+    local is_objects = info.current_mode == df.info_interface_mode_type.ARTIFACTS
+    local l_offset = (not tabs_in_two_rows and is_objects) and 4 or 0
+    local t_offset = 1
+    if tabs_in_two_rows then
+        t_offset = is_objects and 0 or 3
+    end
+    return l_offset, t_offset
+end
+
 function InfoOverlay:updateFrames()
     local ret = resize_overlay(self)
-    local two_rows = are_tabs_in_two_rows()
-    if (self.two_rows == two_rows) then return ret end
-    self.two_rows = two_rows
-    self.subviews.panel.frame.t = two_rows and 2 or 0
+    local l, t = get_panel_offsets()
+    local frame = self.subviews.panel.frame
+    if (frame.l == l and frame.t == t) then return ret end
+    frame.l, frame.t = l, t
     return true
 end
 
 local function get_key()
-    if creatures.current_mode == df.unit_list_mode_type.PET then
-        if creatures.showing_overall_training then
-            return 'PET_OT'
-        elseif creatures.adding_trainer then
-            return 'PET_AT'
+    if info.current_mode == df.info_interface_mode_type.CREATURES then
+        if creatures.current_mode == df.unit_list_mode_type.PET then
+            if creatures.showing_overall_training then
+                return 'PET_OT'
+            elseif creatures.adding_trainer then
+                return 'PET_AT'
+            end
         end
+        return df.unit_list_mode_type[creatures.current_mode]
+    elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
+        return df.artifacts_mode_type[objects.mode]
     end
-    return df.unit_list_mode_type[creatures.current_mode]
 end
 
 local function check_context(self)

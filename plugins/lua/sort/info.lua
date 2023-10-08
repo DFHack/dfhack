@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.sort.info')
 
+local gui   = require('gui')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 local utils = require('utils')
@@ -7,6 +8,7 @@ local utils = require('utils')
 local info = df.global.game.main_interface.info
 local creatures = info.creatures
 local objects = info.artifacts
+local justice = info.justice
 
 -- these sort functions attempt to match the vanilla info panelsort behavior, which
 -- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
@@ -159,6 +161,9 @@ local function assign_trainer_search(data, filter, incremental)
         end, nil, data, filter, incremental)
 end
 
+local function interrogation_search(data, filter, incremental)
+end
+
 local HANDLERS = {
     CITIZEN=make_cri_unitst_handlers(creatures.cri_unit.CITIZEN),
     PET=make_cri_unitst_handlers(creatures.cri_unit.PET),
@@ -166,6 +171,7 @@ local HANDLERS = {
     DECEASED=make_cri_unitst_handlers(creatures.cri_unit.DECEASED),
     PET_OT={search_fn=overall_training_search},
     PET_AT={search_fn=assign_trainer_search},
+    INTERROGATING={search_fn=interrogation_search},
 }
 for idx,name in ipairs(df.artifacts_mode_type) do
     if idx < 0 then goto continue end
@@ -251,8 +257,12 @@ local function resize_overlay(self)
     end
 end
 
+local function is_tabs_in_two_rows()
+    return dfhack.screen.readTile(64, 6, false).ch == 0
+end
+
 local function get_panel_offsets()
-    local tabs_in_two_rows = dfhack.screen.readTile(64, 6, false).ch == 0
+    local tabs_in_two_rows = is_tabs_in_two_rows()
     local is_objects = info.current_mode == df.info_interface_mode_type.ARTIFACTS
     local l_offset = (not tabs_in_two_rows and is_objects) and 4 or 0
     local t_offset = 1
@@ -324,6 +334,97 @@ function InfoOverlay:text_input(text)
 end
 
 function InfoOverlay:onInput(keys)
+    if keys._MOUSE_R and self.subviews.search.focus then
+        self.subviews.search:setFocus(false)
+        return true
+    end
+    return InfoOverlay.super.onInput(self, keys)
+end
+
+-- ----------------------
+-- InterrogationOverlay
+--
+
+InterrogationOverlay = defclass(InterrogationOverlay, overlay.OverlayWidget)
+InterrogationOverlay.ATTRS{
+    default_pos={x=47, y=10},
+    default_enabled=true,
+    viewscreens={
+        'dwarfmode/Info/JUSTICE/Interrogating',
+        'dwarfmode/Info/JUSTICE/Convicting',
+    },
+    frame={w=27, h=9},
+}
+
+function InterrogationOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            view_id='panel',
+            frame={l=0, t=4, h=5, r=0},
+            frame_background=gui.CLEAR_PEN,
+            frame_style=gui.FRAME_MEDIUM,
+            subviews={
+                widgets.EditField{
+                    view_id='search',
+                    frame={l=0, t=0, r=0},
+                    label_text="Search: ",
+                    key='CUSTOM_ALT_S',
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='subset',
+                    frame={l=0, t=1, w=24},
+                    key='CUSTOM_SHIFT_F',
+                    label='Show:',
+                    options={
+                        {label='All', value='all', pen=COLOR_GREEN},
+                        {label='Undead visitors', value='undead', pen=COLOR_RED},
+                        {label='Other visitors', value='visitors', pen=COLOR_LIGHTRED},
+                        {label='Residents', value='residents', pen=COLOR_YELLOW},
+                        {label='Citizens', value='citizens', pen=COLOR_CYAN},
+                        {label='Animals', value='animals', pen=COLOR_MAGENTA},
+                        {label='Deceased', value='deceased', pen=COLOR_BLUE},
+                    },
+                },
+                widgets.ToggleHotkeyLabel{
+                    view_id='include_interviewed',
+                    frame={l=0, t=2, w=23},
+                    key='CUSTOM_SHIFT_I',
+                    label='Interviewed:',
+                    options={
+                        {label='Include', value=true, pen=COLOR_GREEN},
+                        {label='Exclude', value=false, pen=COLOR_RED},
+                    },
+                    initial_option=true,
+                },
+            },
+        },
+    }
+end
+
+function InterrogationOverlay:render(dc)
+    local sw = dfhack.screen.getWindowSize()
+    local info_panel_border = 31 -- from edges of panel to screen edges
+    local info_panel_width = sw - info_panel_border
+    local info_panel_center = info_panel_width // 2
+    local panel_x_offset = (info_panel_center + 5) - self.frame_rect.x1
+    local frame_w = math.min(panel_x_offset + 37, info_panel_width - 56)
+    local panel_l = panel_x_offset
+    local panel_t = is_tabs_in_two_rows() and 4 or 0
+
+    if self.frame.w ~= frame_w or
+        self.subviews.panel.frame.l ~= panel_l or
+        self.subviews.panel.frame.t ~= panel_t
+    then
+        self.frame.w = frame_w
+        self.subviews.panel.frame.l = panel_l
+        self.subviews.panel.frame.t = panel_t
+        self:updateLayout()
+    end
+
+    InterrogationOverlay.super.render(self, dc)
+end
+
+function InterrogationOverlay:onInput(keys)
     if keys._MOUSE_R and self.subviews.search.focus then
         self.subviews.search:setFocus(false)
         return true

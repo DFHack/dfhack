@@ -1263,6 +1263,7 @@ OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
     info=info.InfoOverlay,
+    interrogation=info.InterrogationOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

@@ -556,7 +556,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.location_selector.open) {
         newFocusString = baseFocus;
-        newFocusString += "/LocationSelector";
+        newFocusString += "/LocationSelector/";
+        if (game->main_interface.location_selector.choosing_temple_religious_practice)
+            newFocusString += "Temple";
+        else if (game->main_interface.location_selector.choosing_craft_guild)
+            newFocusString += "Guildhall";
+        else
+            newFocusString += "Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.location_details.open) {

@@ -18,12 +18,13 @@ Usage
 ``orders clear``
     Deletes all manager orders in the current embark.
 ``orders recheck [this]``
-    Sets the status to ``Checking`` (from ``Active``) for all work orders. if the
-    "this" option is passed, only sets the status for the workorder whose condition
-    details page is open. This makes the manager reevaluate its conditions.
-    This is especially useful for an order that had its conditions met when it
-    was started, but the requisite items have since disappeared and the workorder
-    is now generating job cancellation spam.
+    Sets the status to ``Checking`` (from ``Active``) for all work orders that
+    have conditions that can be re-checked. If the "this" option is passed,
+    only sets the status for the workorder whose condition details page is
+    open. This makes the manager reevaluate its conditions. This is especially
+    useful for an order that had its conditions met when it was started, but
+    the requisite items have since disappeared and the workorder is now
+    generating job cancellation spam.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't
     prevent one-time orders from ever being completed. The sorting order is:

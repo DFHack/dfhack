@@ -71,7 +71,7 @@ OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    frame={w=46, h=4},
+    frame={w=43, h=4},
 }
 
 function OrdersOverlay:init()
@@ -99,7 +99,7 @@ function OrdersOverlay:init()
             },
             widgets.HotkeyLabel{
                 frame={t=0, l=15},
-                label='recheck',
+                label='recheck conditions',
                 key='CUSTOM_CTRL_K',
                 auto_width=true,
                 on_activate=do_recheck,
@@ -112,7 +112,7 @@ function OrdersOverlay:init()
                 on_activate=do_sort,
             },
             widgets.HotkeyLabel{
-                frame={t=0, l=31},
+                frame={t=1, l=28},
                 label='clear',
                 key='CUSTOM_CTRL_C',
                 auto_width=true,
@@ -179,10 +179,10 @@ local function set_current_inactive()
     end
 end
 
-local function is_current_active()
+local function can_recheck()
     local scrConditions = df.global.game.main_interface.info.work_orders.conditions
     local order = scrConditions.wq
-    return order.status.active
+    return order.status.active and #order.item_conditions > 0
 end
 
 -- -------------------
@@ -197,7 +197,7 @@ RecheckOverlay.ATTRS{
     default_enabled=true,
     viewscreens=focusString,
     -- width is the sum of lengths of `[` + `Ctrl+A` + `: ` + button.label + `]`
-    frame={w=1 + 6 + 2 + 16 + 1, h=3},
+    frame={w=1 + 6 + 2 + 19 + 1, h=3},
 }
 
 local function areTabsInTwoRows()
@@ -226,10 +226,10 @@ function RecheckOverlay:init()
         widgets.TextButton{
             view_id = 'button',
             -- frame={t=0, l=0, r=0, h=1}, -- is set in `updateTextButtonFrame()`
-            label='request re-check',
+            label='re-check conditions',
             key='CUSTOM_CTRL_A',
             on_activate=set_current_inactive,
-            enabled=is_current_active,
+            enabled=can_recheck,
         },
     }
 

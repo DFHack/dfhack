@@ -240,7 +240,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
+            if (game->main_interface.info.creatures.showing_overall_training)
+                newFocusString += "/OverallTraining";
+            else if (game->main_interface.info.creatures.showing_activity_details)
+                newFocusString += "/ActivityDetails";
+            else if (game->main_interface.info.creatures.adding_trainer)
+                newFocusString += "/AddingTrainer";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
@@ -556,7 +563,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.location_selector.open) {
         newFocusString = baseFocus;
-        newFocusString += "/LocationSelector";
+        newFocusString += "/LocationSelector/";
+        if (game->main_interface.location_selector.choosing_temple_religious_practice)
+            newFocusString += "Temple";
+        else if (game->main_interface.location_selector.choosing_craft_guild)
+            newFocusString += "Guildhall";
+        else
+            newFocusString += "Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.location_details.open) {

@@ -57,6 +57,7 @@ Template for new versions:
 
 ## New Features
 - `logistics`: ``automelt`` now optionally supports melting masterworks; feature accessible from `stockpiles` overlay
+- `sort`: new search widgets for all the "Creatures" tabs on the info panel, e.g. "Citizens", "Pets", etc. This includes the assign trainers and view species training knowledge screens as well
 
 ## Fixes
 

@@ -240,7 +240,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
+            if (game->main_interface.info.creatures.showing_overall_training)
+                newFocusString += "/OverallTraining";
+            else if (game->main_interface.info.creatures.showing_activity_details)
+                newFocusString += "/ActivityDetails";
+            else if (game->main_interface.info.creatures.adding_trainer)
+                newFocusString += "/AddingTrainer";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);

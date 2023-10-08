@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.sort')
 
+local creatures = require('plugins.sort.creatures')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
@@ -275,29 +276,29 @@ local function get_ranged_skill_effectiveness_rating(unit)
     return get_rating(ranged_skill_effectiveness(unit), 0, 800000, 72, 52, 31, 11)
 end
 
-local function make_sort_by_ranged_skill_effectiveness_desc(list)
+local function make_sort_by_ranged_skill_effectiveness_desc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit1, list)
-        local rating2 = ranged_skill_effectiveness(unit2, list)
+        local rating1 = ranged_skill_effectiveness(unit1)
+        local rating2 = ranged_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating2, rating1)
     end
 end
 
-local function make_sort_by_ranged_skill_effectiveness_asc(list)
+local function make_sort_by_ranged_skill_effectiveness_asc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit1, list)
-        local rating2 = ranged_skill_effectiveness(unit2, list)
+        local rating1 = ranged_skill_effectiveness(unit1)
+        local rating2 = ranged_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating1, rating2)
     end
@@ -1261,6 +1262,7 @@ end
 OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
+    creatures=creatures.InfoOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

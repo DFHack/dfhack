@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates
 
 ## Documentation
 

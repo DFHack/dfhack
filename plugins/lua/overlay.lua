@@ -433,8 +433,12 @@ end
 -- reduces the next call by a small random amount to introduce jitter into the
 -- widget processing timings
 local function do_update(name, db_entry, now_ms, vs)
-    if db_entry.next_update_ms > now_ms then return end
     local w = db_entry.widget
+    if w.overlay_onupdate_max_freq_seconds ~= 0 and
+        db_entry.next_update_ms > now_ms
+    then
+        return
+    end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then

@@ -68,6 +68,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- added ``GRAY`` color aliases for ``GREY`` colors
 - ``utils.search_text``: text search routine (generalized from ``widgets.FilteredList``)
 
 ## Removed

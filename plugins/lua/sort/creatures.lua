@@ -134,7 +134,9 @@ end
 local function make_cri_unitst_handlers(vec)
     return {
         search_fn=curry(general_search, vec,
-            function(elem) return elem.sort_name end,
+            function(elem)
+                return ('%s %s'):format(elem.sort_name, elem.job_sort_name)
+            end,
             get_sort),
         cleanup_fn=curry(cri_unitst_cleanup, vec),
     }

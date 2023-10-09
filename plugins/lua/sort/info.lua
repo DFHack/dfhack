@@ -1,6 +1,6 @@
 local _ENV = mkmodule('plugins.sort.info')
 
-local gui   = require('gui')
+local gui = require('gui')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 local utils = require('utils')

@@ -259,7 +259,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
         case df::enums::info_interface_mode_type::JUSTICE:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
+            if (game->main_interface.info.justice.interrogating)
+                newFocusString += "/Interrogating";
+            else if (game->main_interface.info.justice.convicting)
+                newFocusString += "/Convicting";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
         case df::enums::info_interface_mode_type::WORK_ORDERS:
             if (game->main_interface.info.work_orders.conditions.open)

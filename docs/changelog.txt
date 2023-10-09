@@ -57,7 +57,7 @@ Template for new versions:
 
 ## New Features
 - `logistics`: ``automelt`` now optionally supports melting masterworks; feature accessible from `stockpiles` overlay
-- `sort`: new search widgets for all the "Creatures" and "Objects" tabs on the info panel
+- `sort`: new search widgets for Info panel tabs, including all "Creatures" subtabs, all "Objects" subtabs, "Tasks", the "Work details" subtab under "Labor", and the "Interrogate" and "Convict" screens under "Justice"
 
 ## Fixes
 

@@ -207,12 +207,12 @@ local function interrogating_search(matches_filters_fn, data, filter, incrementa
         flags_vec:assign(data.saved_flags)
     end
 
-    if matches_filters_fn or filter ~= '' then
+    if matches_filters_fn ~= DEFAULT_NIL or filter ~= '' then
         local search_tokens = filter:split()
         for idx = #vec-1,0,-1 do
             local search_key = get_unit_search_key(vec[idx])
             if (search_key and not utils.search_text(search_key, search_tokens)) or
-                (matches_filters_fn and not matches_filters_fn(vec[idx], idx))
+                (matches_filters_fn ~= DEFAULT_NIL and not matches_filters_fn(vec[idx], idx))
             then
                 vec:erase(idx)
                 flags_vec:erase(idx)
@@ -276,10 +276,10 @@ local function get_key()
     end
 end
 
-local function check_context(self)
+local function check_context(self, key_ctx)
     local key = get_key()
-    if state.prev_key ~= key then
-        state.prev_key = key
+    if state[key_ctx] ~= key then
+        state[key_ctx] = key
         local prev_text = key and ensure_key(state, key).prev_text or ''
         self.subviews.search:setText(prev_text)
     end
@@ -407,7 +407,7 @@ end
 
 function InfoOverlay:onRenderBody(dc)
     if next(state) then
-        check_context(self)
+        check_context(self, InfoOverlay)
     end
     if self:updateFrames() then
         self:updateLayout()
@@ -499,8 +499,18 @@ function InterrogationOverlay:init()
     }
 end
 
+local RISKY_PROFESSIONS = utils.invert{
+    df.profession.THIEF,
+    df.profession.MASTER_THIEF,
+    df.profession.CRIMINAL,
+}
+
 local function is_risky(unit)
-    return false
+    if RISKY_PROFESSIONS[unit.profession] or RISKY_PROFESSIONS[unit.profession2] then
+        return true
+    end
+    if dfhack.units.getReadableName(unit):endswith('necromancer') then return true end
+    return not dfhack.units.isAlive(unit)  -- detect intelligent undead
 end
 
 function InterrogationOverlay:matches_filters(unit, idx)
@@ -522,10 +532,10 @@ function InterrogationOverlay:matches_filters(unit, idx)
         return subset == 'animals'
     elseif dfhack.units.isCitizen(unit) then
         return subset == 'citizens'
-    elseif dfhack.units.isOwnGroup(unit) then
-        return subset == 'residents'
+    elseif unit.flags2.roaming_wilderness_population_source then
+        return subset == 'others'
     end
-    return subset == 'others'
+    return subset == 'residents'
 end
 
 function InterrogationOverlay:render(dc)
@@ -553,7 +563,7 @@ end
 
 function InterrogationOverlay:onRenderBody(dc)
     if next(state) then
-        check_context(self)
+        check_context(self, InterrogationOverlay)
     else
         self.subviews.include_interviewed:setOption(true, false)
         self.subviews.subset:setOption('all')

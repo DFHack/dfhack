@@ -9,11 +9,12 @@ local info = df.global.game.main_interface.info
 local creatures = info.creatures
 local justice = info.justice
 local objects = info.artifacts
+local tasks = info.jobs
 local work_details = info.labor.work_details
 
 local state = {}
 
--- these sort functions attempt to match the vanilla info panelsort behavior, which
+-- these sort functions attempt to match the vanilla info panel sort behavior, which
 -- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
 -- we'd always sort by name descending as a secondary sort. To match vanilla sorting,
 -- if the primary sort is ascending, the secondary name sort will also be ascending.
@@ -140,13 +141,22 @@ local function cri_unitst_cleanup(vec, data)
     end
 end
 
-local function make_cri_unitst_handlers(vec)
+local function get_unit_search_key(unit)
+    return ('%s %s %s'):format(
+        dfhack.units.getReadableName(unit),  -- last name is in english
+        dfhack.units.getProfessionName(unit),
+        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
+end
+
+local function make_cri_unitst_handlers(vec, sort_fn)
     return {
         search_fn=curry(general_search, vec,
             function(elem)
-                return ('%s %s'):format(elem.sort_name, elem.job_sort_name)
+                return ('%s %s'):format(
+                    elem.un and get_unit_search_key(elem.un) or '',
+                    elem.job_sort_name)
             end,
-            get_sort),
+            sort_fn),
         cleanup_fn=curry(cri_unitst_cleanup, vec),
     }
 end
@@ -164,13 +174,6 @@ local function assign_trainer_search(matches_filters_fn, data, filter, increment
             if not elem then return end
             return ('%s %s'):format(dfhack.TranslateName(elem.name), dfhack.units.getProfessionName(elem))
         end, nil, matches_filters_fn, data, filter, incremental)
-end
-
-local function get_unit_search_key(unit)
-    return ('%s %s %s'):format(
-        dfhack.units.getReadableName(unit),  -- last name is in english
-        dfhack.units.getProfessionName(unit),
-        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
 end
 
 local function work_details_search(matches_filters_fn, data, filter, incremental)
@@ -224,12 +227,13 @@ local function convicting_search(matches_filters_fn, data, filter, incremental)
 end
 
 local HANDLERS = {
-    CITIZEN=make_cri_unitst_handlers(creatures.cri_unit.CITIZEN),
-    PET=make_cri_unitst_handlers(creatures.cri_unit.PET),
-    OTHER=make_cri_unitst_handlers(creatures.cri_unit.OTHER),
-    DECEASED=make_cri_unitst_handlers(creatures.cri_unit.DECEASED),
+    CITIZEN=make_cri_unitst_handlers(creatures.cri_unit.CITIZEN, get_sort),
+    PET=make_cri_unitst_handlers(creatures.cri_unit.PET, get_sort),
+    OTHER=make_cri_unitst_handlers(creatures.cri_unit.OTHER, get_sort),
+    DECEASED=make_cri_unitst_handlers(creatures.cri_unit.DECEASED, get_sort),
     PET_OT={search_fn=overall_training_search},
     PET_AT={search_fn=assign_trainer_search},
+    JOBS=make_cri_unitst_handlers(tasks.cri_job),
     WORK_DETAILS={search_fn=work_details_search},
     INTERROGATING={search_fn=interrogating_search},
     CONVICTING={search_fn=convicting_search},
@@ -261,6 +265,8 @@ local function get_key()
             end
         end
         return df.unit_list_mode_type[creatures.current_mode]
+    elseif info.current_mode == df.info_interface_mode_type.JOBS then
+        return 'JOBS'
     elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
         return df.artifacts_mode_type[objects.mode]
     elseif info.current_mode == df.info_interface_mode_type.LABOR then
@@ -320,6 +326,11 @@ local function on_input(self, clazz, keys)
     return clazz.super.onInput(self, keys)
 end
 
+local function is_interrogate_or_convict()
+    local key = get_key()
+    return key == 'INTERROGATING' or key == 'CONVICTING'
+end
+
 -- ----------------------
 -- InfoOverlay
 --
@@ -328,19 +339,7 @@ InfoOverlay = defclass(InfoOverlay, overlay.OverlayWidget)
 InfoOverlay.ATTRS{
     default_pos={x=64, y=8},
     default_enabled=true,
-    viewscreens={
-        'dwarfmode/Info/CREATURES/CITIZEN',
-        'dwarfmode/Info/CREATURES/PET',
-        'dwarfmode/Info/CREATURES/OverallTraining',
-        'dwarfmode/Info/CREATURES/AddingTrainer',
-        'dwarfmode/Info/CREATURES/OTHER',
-        'dwarfmode/Info/CREATURES/DECEASED',
-        'dwarfmode/Info/ARTIFACTS/ARTIFACTS',
-        'dwarfmode/Info/ARTIFACTS/SYMBOLS',
-        'dwarfmode/Info/ARTIFACTS/NAMED_OBJECTS',
-        'dwarfmode/Info/ARTIFACTS/WRITTEN_CONTENT',
-        'dwarfmode/Info/LABOR/WORK_DETAILS',
-    },
+    viewscreens='dwarfmode/Info',
     hotspot=true,
     overlay_onupdate_max_freq_seconds=0,
     frame={w=40, h=4},
@@ -351,13 +350,14 @@ function InfoOverlay:init()
         widgets.BannerPanel{
             view_id='panel',
             frame={l=0, t=0, r=0, h=1},
+            visible=function() return get_key() and not is_interrogate_or_convict() end,
             subviews={
                 widgets.EditField{
                     view_id='search',
                     frame={l=1, t=0, r=1},
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
-                    on_change=curry(do_search, DEFAULT_NIL),
+                    on_change=function(text) do_search(DEFAULT_NIL, text) end,
                 },
             },
         },
@@ -389,6 +389,9 @@ local function get_panel_offsets()
     local t_offset = 1
     if tabs_in_two_rows then
         t_offset = shift_right and 0 or 3
+    end
+    if info.current_mode == df.info_interface_mode_type.JOBS then
+        t_offset = t_offset - 1
     end
     return l_offset, t_offset
 end
@@ -442,11 +445,6 @@ function InterrogationOverlay:overlay_onupdate()
     on_update(self)
 end
 
-local function is_interrogate_or_convict()
-    local key = get_key()
-    return key == 'INTERROGATING' or key == 'CONVICTING'
-end
-
 function InterrogationOverlay:init()
     self:addviews{
         widgets.Panel{
@@ -461,7 +459,7 @@ function InterrogationOverlay:init()
                     frame={l=0, t=0, r=0},
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
-                    on_change=curry(do_search, self:callback('matches_filters')),
+                    on_change=function(text) do_search(self:callback('matches_filters'), text) end,
                 },
                 widgets.ToggleHotkeyLabel{
                     view_id='include_interviewed',

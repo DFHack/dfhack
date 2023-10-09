@@ -319,7 +319,7 @@ local function on_update(self)
 end
 
 local function on_input(self, clazz, keys)
-    if keys._MOUSE_R and self.subviews.search.focus then
+    if keys._MOUSE_R and self.subviews.search.focus and self:get_handled_key() then
         self.subviews.search:setFocus(false)
         return true
     end
@@ -350,7 +350,7 @@ function InfoOverlay:init()
         widgets.BannerPanel{
             view_id='panel',
             frame={l=0, t=0, r=0, h=1},
-            visible=function() return get_key() and not is_interrogate_or_convict() end,
+            visible=self:callback('get_handled_key'),
             subviews={
                 widgets.EditField{
                     view_id='search',
@@ -366,6 +366,10 @@ end
 
 function InfoOverlay:overlay_onupdate()
     on_update(self)
+end
+
+function InfoOverlay:get_handled_key()
+    return not is_interrogate_or_convict() and get_key() or nil
 end
 
 local function resize_overlay(self)
@@ -443,6 +447,10 @@ InterrogationOverlay.ATTRS{
 
 function InterrogationOverlay:overlay_onupdate()
     on_update(self)
+end
+
+function InterrogationOverlay:get_handled_key()
+    return is_interrogate_or_convict() and get_key() or nil
 end
 
 function InterrogationOverlay:init()

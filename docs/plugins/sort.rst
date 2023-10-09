@@ -92,10 +92,23 @@ https://www.reddit.com/r/dwarffortress/comments/163kczo/enhancing_military_candi
 "Mental stability" is explained here:
 https://www.reddit.com/r/dwarffortress/comments/1617s11/enhancing_military_candidate_selection_part_2/
 
-Creatures overlay
------------------
+Info overlay
+------------
 
-The search widget that appears on the "Creatures" info panel sub-tabs (e.g.
-"Citizens", "Pets", etc.) can search the lists by name and other shown
-attibutes. For example, searching for ``caged`` will show all caged prisoners
-on the "Other" tab.
+The Info overlay adds search support to many of the fort-wide "Info" panels
+(e.g. "Creatures", "Tasks", etc.). When searching for units, you can search by
+name (with either English or native language last names), profession, or
+special status (like "necromancer"). If there is text in the second column, you
+can search for that text as well. This is often a job name or a status, like
+"caged".
+
+In the interrogation and conviction screens under the "Justice" tab, you can
+also filter by the classification of the unit. The classification groups are
+ordered by how likely a member of that group is to be involved in a plot. The
+groups are: All, Risky visitors, Other visitors, Residents, Citizens, Animals,
+Deceased, and Others. "Risky" visitors are those who are especially likely to
+be involved in plots, such as criminals, necromancers, necromancer experiments,
+and intelligent undead.
+
+On the interrogations screen, you can also filter units by whether they have
+already been interrogated.

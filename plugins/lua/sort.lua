@@ -4,6 +4,7 @@ local info = require('plugins.sort.info')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
+local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -631,10 +632,6 @@ SquadAssignmentOverlay.ATTRS{
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
     version='2',
     frame={w=38, h=31},
-    frame_style=gui.FRAME_PANEL,
-    frame_background=gui.CLEAR_PEN,
-    autoarrange_subviews=true,
-    autoarrange_gap=1,
 }
 
 -- allow initial spacebar or two successive spacebars to fall through and
@@ -661,7 +658,14 @@ function SquadAssignmentOverlay:init()
         })
     end
 
-    self:addviews{
+    local main_panel = widgets.Panel{
+        frame={l=0, r=0, t=0, b=0},
+        frame_style=gui.FRAME_PANEL,
+        frame_background=gui.CLEAR_PEN,
+        autoarrange_subviews=true,
+        autoarrange_gap=1,
+    }
+    main_panel:addviews{
         widgets.EditField{
             view_id='search',
             frame={l=0},
@@ -938,6 +942,26 @@ function SquadAssignmentOverlay:init()
             },
             initial_option='include',
             on_change=function() self:refresh_list() end,
+        },
+    }
+
+    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+    local help_pen_center = dfhack.pen.parse{
+        tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+
+    self:addviews{
+        main_panel,
+        widgets.Label{
+            frame={t=0, r=1, w=3},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', 'sort ') end,
         },
     }
 end

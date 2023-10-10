@@ -120,3 +120,9 @@ Location selection overlay
 
 When choosing the type of guildhall or temple to dedicate, you can search for
 the relevant profession, religion, or deity by name.
+
+World overlay
+-------------
+
+Searching is supported for the Artifacts list when viewing the world map (where
+you can initiate raids).

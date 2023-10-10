@@ -92,8 +92,8 @@ https://www.reddit.com/r/dwarffortress/comments/163kczo/enhancing_military_candi
 "Mental stability" is explained here:
 https://www.reddit.com/r/dwarffortress/comments/1617s11/enhancing_military_candidate_selection_part_2/
 
-Info overlay
-------------
+Info tabs overlay
+-----------------
 
 The Info overlay adds search support to many of the fort-wide "Info" panels
 (e.g. "Creatures", "Tasks", etc.). When searching for units, you can search by
@@ -102,13 +102,21 @@ special status (like "necromancer"). If there is text in the second column, you
 can search for that text as well. This is often a job name or a status, like
 "caged".
 
+Interrogation overlay
+---------------------
+
 In the interrogation and conviction screens under the "Justice" tab, you can
-also filter by the classification of the unit. The classification groups are
-ordered by how likely a member of that group is to be involved in a plot. The
-groups are: All, Risky visitors, Other visitors, Residents, Citizens, Animals,
-Deceased, and Others. "Risky" visitors are those who are especially likely to
-be involved in plots, such as criminals, necromancers, necromancer experiments,
-and intelligent undead.
+search for units by name. You can also filter by the classification of the
+unit. The classification groups are ordered by how likely a member of that
+group is to be involved in a plot. The groups are: All, Risky visitors, Other
+visitors, Residents, Citizens, Animals, Deceased, and Others. "Risky" visitors are those who are especially likely to be involved in plots, such as criminals,
+necromancers, necromancer experiments, and intelligent undead.
 
 On the interrogations screen, you can also filter units by whether they have
 already been interrogated.
+
+Location selection overlay
+--------------------------
+
+When choosing the type of guildhall or temple to dedicate, you can search for
+the relevant profession, religion, or deity by name.

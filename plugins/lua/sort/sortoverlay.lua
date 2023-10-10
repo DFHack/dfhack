@@ -21,6 +21,8 @@ SortOverlay.ATTRS{
     hotspot=true,
     overlay_onupdate_max_freq_seconds=0,
     -- subclasses expected to provide default_pos, viewscreens (single string), and frame
+    -- viewscreens should be the top-level scope within which the search widget state is maintained
+    -- once the player leaves that scope, widget state will be reset
 }
 
 function SortOverlay:init()

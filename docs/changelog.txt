@@ -58,6 +58,7 @@ Template for new versions:
 ## New Features
 - `logistics`: ``automelt`` now optionally supports melting masterworks; feature accessible from `stockpiles` overlay
 - `sort`: new search widgets for Info panel tabs, including all "Creatures" subtabs, all "Objects" subtabs, "Tasks", the "Work details" subtab under "Labor", and the "Interrogate" and "Convict" screens under "Justice"
+- `sort`: new search widgets for location selection screen (when you're choosing what kind of guildhall or temple to dedicate)
 
 ## Fixes
 - `zone`: don't show animal assignment link for dungeon cages/restraints

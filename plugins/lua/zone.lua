@@ -961,9 +961,13 @@ CageChainOverlay.ATTRS{
 
 local function is_valid_building()
     local bld = dfhack.gui.getSelectedBuilding(true)
-    return bld and bld:getBuildStage() == bld:getMaxBuildStage() and
-        (bld:getType() == df.building_type.Cage or
-         bld:getType() == df.building_type.Chain)
+    if not bld or bld:getBuildStage() ~= bld:getMaxBuildStage() then return false end
+    local bt = bld:getType()
+    if bt ~= df.building_type.Cage and bt ~= df.building_type.Chain then return false end
+    for _,zone in ipairs(bld.relations) do
+        if zone.type == df.civzone_type.Dungeon then return false end
+    end
+    return true
 end
 
 local function is_cage_selected()

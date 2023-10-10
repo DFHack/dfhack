@@ -60,10 +60,12 @@ Template for new versions:
 - `sort`: new search widgets for Info panel tabs, including all "Creatures" subtabs, all "Objects" subtabs, "Tasks", the "Work details" subtab under "Labor", and the "Interrogate" and "Convict" screens under "Justice"
 
 ## Fixes
+- `zone`: don't show animal assignment link for dungeon cages/restraints
 
 ## Misc Improvements
 - `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates
 - `orders`: ``recheck`` command now only resets orders that have conditions that can be rechecked
+- `sort`: added help button for squad assignment search/filter/sort
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 
 ## Documentation

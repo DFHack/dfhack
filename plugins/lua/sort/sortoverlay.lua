@@ -56,11 +56,15 @@ function SortOverlay:overlay_onupdate()
                 restore_filtered(self.handlers[key].vec, data)
             end
         end
-        self.state = {}
-        self.subviews.search:setText('')
-        self.subviews.search:setFocus(false)
+        self:reset()
         self.overlay_onupdate_max_freq_seconds = 300
     end
+end
+
+function SortOverlay:reset()
+    self.state = {}
+    self.subviews.search:setText('')
+    self.subviews.search:setFocus(false)
 end
 
 -- returns the current context key for dereferencing the handler
@@ -77,6 +81,7 @@ function SortOverlay:onRenderBody(dc)
             self.state.cur_key = key
             local prev_text = key and ensure_key(self.state, key).prev_text or ''
             self.subviews.search:setText(prev_text)
+            self:do_search(self.subviews.search.text, true)
         end
     end
     self.overlay_onupdate_max_freq_seconds = 0
@@ -141,7 +146,7 @@ end
 
 -- doesn't support cleanup since nothing that uses this needs it yet
 function flags_vector_search(fns, flags_vec, vec, data, text, incremental)
-    local get_elem_id_fn = fns.get_elem_id_fn and fns.get_elem_id_fn(elem) or function(elem) return elem end
+    local get_elem_id_fn = fns.get_elem_id_fn or function(elem) return elem end
     if not data.saved_original then
         data.saved_original = copy_to_lua_table(vec)
         data.saved_flags = copy_to_lua_table(flags_vec)

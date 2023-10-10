@@ -51,7 +51,7 @@ function LocationSelectorOverlay:init()
 
     self:register_handler('TEMPLE', location_selector.valid_religious_practice_id,
         curry(sortoverlay.flags_vector_search, {get_search_key_fn=get_religion_string},
-        location_selector.valid_religious_practice))
+            location_selector.valid_religious_practice))
     self:register_handler('GUILDHALL', location_selector.valid_craft_guild_type,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_profession_string}))
 end

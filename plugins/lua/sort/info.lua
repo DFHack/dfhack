@@ -1,7 +1,7 @@
 local _ENV = mkmodule('plugins.sort.info')
 
 local gui = require('gui')
-local overlay = require('plugins.overlay')
+local sortoverlay = require('plugins.sort.sortoverlay')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
@@ -11,8 +11,6 @@ local justice = info.justice
 local objects = info.artifacts
 local tasks = info.jobs
 local work_details = info.labor.work_details
-
-local state = {}
 
 -- these sort functions attempt to match the vanilla info panel sort behavior, which
 -- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
@@ -98,49 +96,6 @@ local function get_sort()
     end
 end
 
-local function copy_to_lua_table(vec)
-    local tab = {}
-    for k,v in ipairs(vec) do
-        tab[k+1] = v
-    end
-    return tab
-end
-
-local function general_search(vec, get_search_key_fn, get_sort_fn, matches_filters_fn, data, filter, incremental)
-    if not data.saved_original then
-        data.saved_original = copy_to_lua_table(vec)
-    elseif not incremental then
-        vec:assign(data.saved_original)
-    end
-    if matches_filters_fn ~= DEFAULT_NIL or filter ~= '' then
-        local search_tokens = filter:split()
-        for idx = #vec-1,0,-1 do
-            local search_key = get_search_key_fn(vec[idx])
-            if (search_key and not utils.search_text(search_key, search_tokens)) or
-                (matches_filters_fn ~= DEFAULT_NIL and not matches_filters_fn(vec[idx]))
-            then
-                vec:erase(idx)
-            end
-        end
-    end
-    data.saved_visible = copy_to_lua_table(vec)
-    if get_sort_fn then
-        table.sort(data.saved_visible, get_sort_fn())
-        vec:assign(data.saved_visible)
-    end
-end
-
--- add dynamically allocated elements that were not visible at the time of
--- closure back to the vector so they can be cleaned up when it is next initialized
-local function cri_unitst_cleanup(vec, data)
-    if not data.saved_visible or not data.saved_original then return end
-    for _,elem in ipairs(data.saved_original) do
-        if not utils.linear_index(data.saved_visible, elem) then
-            vec:insert('#', elem)
-        end
-    end
-end
-
 local function get_unit_search_key(unit)
     return ('%s %s %s'):format(
         dfhack.units.getReadableName(unit),  -- last name is in english
@@ -148,115 +103,102 @@ local function get_unit_search_key(unit)
         dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
 end
 
-local function make_cri_unitst_handlers(vec, sort_fn)
-    return {
-        search_fn=curry(general_search, vec,
-            function(elem)
-                return ('%s %s'):format(
-                    elem.un and get_unit_search_key(elem.un) or '',
-                    elem.job_sort_name)
-            end,
-            sort_fn),
-        cleanup_fn=curry(cri_unitst_cleanup, vec),
-    }
+local function get_cri_unit_search_key(cri_unit)
+    return ('%s %s'):format(
+        cri_unit.un and get_unit_search_key(cri_unit.un) or '',
+        cri_unit.job_sort_name)
 end
 
-local function overall_training_search(matches_filters_fn, data, filter, incremental)
-    general_search(creatures.atk_index, function(elem)
-            local raw = df.creature_raw.find(elem)
-            if not raw then return end
-            return raw.name[1]
-        end, nil, matches_filters_fn, data, filter, incremental)
+local function get_race_name(raw_id)
+    local raw = df.creature_raw.find(raw_id)
+    if not raw then return end
+    return raw.name[1]
 end
 
-local function assign_trainer_search(matches_filters_fn, data, filter, incremental)
-    general_search(creatures.trainer, function(elem)
-            if not elem then return end
-            return ('%s %s'):format(dfhack.TranslateName(elem.name), dfhack.units.getProfessionName(elem))
-        end, nil, matches_filters_fn, data, filter, incremental)
+local function get_trainer_search_key(unit)
+    if not unit then return end
+    return ('%s %s'):format(dfhack.TranslateName(unit.name), dfhack.units.getProfessionName(unit))
 end
 
-local function work_details_search(matches_filters_fn, data, filter, incremental)
+-- get name in both dwarvish and English
+local function get_artifact_search_key(artifact)
+    return ('%s %s'):format(dfhack.TranslateName(artifact.name), dfhack.TranslateName(artifact.name, true))
+end
+
+local function work_details_search(vec, data, text, incremental)
     if work_details.selected_work_detail_index ~= data.selected then
         data.saved_original = nil
         data.selected = work_details.selected_work_detail_index
     end
-    general_search(work_details.assignable_unit, get_unit_search_key,
-        nil, matches_filters_fn, data, filter, incremental)
+    sortoverlay.single_vector_search(
+        {get_search_key_fn=get_unit_search_key},
+        vec, data, text, incremental)
 end
 
--- independent implementation of search algorithm since we need to
--- keep two vectors in sync
-local function interrogating_search(matches_filters_fn, data, filter, incremental)
-    local vec, flags_vec = justice.interrogation_list, justice.interrogation_list_flag
-    if not data.saved_original then
-        data.saved_original = copy_to_lua_table(vec)
-        data.saved_flags = copy_to_lua_table(flags_vec)
-        data.saved_idx_map = {}
-        for idx, unit in ipairs(data.saved_original) do
-            data.saved_idx_map[unit.id] = idx  -- 1-based idx
-        end
-    else  -- sync flag changes to saved vector
-        for idx, unit in ipairs(vec) do  -- 0-based idx
-            data.saved_flags[data.saved_idx_map[unit.id]] = flags_vec[idx]
-        end
-    end
+-- ----------------------
+-- InfoOverlay
+--
 
-    if not incremental then
-        vec:assign(data.saved_original)
-        flags_vec:assign(data.saved_flags)
-    end
-
-    if matches_filters_fn ~= DEFAULT_NIL or filter ~= '' then
-        local search_tokens = filter:split()
-        for idx = #vec-1,0,-1 do
-            local search_key = get_unit_search_key(vec[idx])
-            if (search_key and not utils.search_text(search_key, search_tokens)) or
-                (matches_filters_fn ~= DEFAULT_NIL and not matches_filters_fn(vec[idx], idx))
-            then
-                vec:erase(idx)
-                flags_vec:erase(idx)
-            end
-        end
-    end
-end
-
-local function convicting_search(matches_filters_fn, data, filter, incremental)
-    general_search(justice.conviction_list, get_unit_search_key,
-        nil, matches_filters_fn, data, filter, incremental)
-end
-
-local HANDLERS = {
-    CITIZEN=make_cri_unitst_handlers(creatures.cri_unit.CITIZEN, get_sort),
-    PET=make_cri_unitst_handlers(creatures.cri_unit.PET, get_sort),
-    OTHER=make_cri_unitst_handlers(creatures.cri_unit.OTHER, get_sort),
-    DECEASED=make_cri_unitst_handlers(creatures.cri_unit.DECEASED, get_sort),
-    PET_OT={search_fn=overall_training_search},
-    PET_AT={search_fn=assign_trainer_search},
-    JOBS=make_cri_unitst_handlers(tasks.cri_job),
-    WORK_DETAILS={search_fn=work_details_search},
-    INTERROGATING={search_fn=interrogating_search},
-    CONVICTING={search_fn=convicting_search},
+InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
+InfoOverlay.ATTRS{
+    default_pos={x=64, y=8},
+    viewscreens='dwarfmode/Info',
+    frame={w=40, h=4},
 }
-for idx,name in ipairs(df.artifacts_mode_type) do
-    if idx < 0 then goto continue end
-    HANDLERS[name] = {
-        search_fn=curry(general_search, objects.list[idx],
-            function(elem)
-                return ('%s %s'):format(dfhack.TranslateName(elem.name), dfhack.TranslateName(elem.name, true))
-            end, nil)
+
+function InfoOverlay:init()
+    self:addviews{
+        widgets.BannerPanel{
+            view_id='panel',
+            frame={l=0, t=0, r=0, h=1},
+            visible=self:callback('get_key'),
+            subviews={
+                widgets.EditField{
+                    view_id='search',
+                    frame={l=1, t=0, r=1},
+                    label_text="Search: ",
+                    key='CUSTOM_ALT_S',
+                    on_change=function(text) self:do_search(text) end,
+                },
+            },
+        },
     }
-    ::continue::
+
+    local CRI_UNIT_VECS = {
+        CITIZEN=creatures.cri_unit.CITIZEN,
+        PET=creatures.cri_unit.PET,
+        OTHER=creatures.cri_unit.OTHER,
+        DECEASED=creatures.cri_unit.DECEASED,
+    }
+    for key,vec in pairs(CRI_UNIT_VECS) do
+        self:register_handler(key, vec,
+            curry(sortoverlay.single_vector_search,
+                {
+                    get_search_key_fn=get_cri_unit_search_key,
+                    get_sort_fn=get_sort
+                }),
+            true)
+    end
+
+    self:register_handler('JOBS', tasks.cri_job,
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_cri_unit_search_key}),
+        true)
+    self:register_handler('PET_OT', creatures.atk_index,
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
+    self:register_handler('PET_AT', creatures.trainer,
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_trainer_search_key}))
+    self:register_handler('WORK_DETAILS', work_details.assignable_unit, work_details_search)
+
+    for idx,name in ipairs(df.artifacts_mode_type) do
+        if idx < 0 then goto continue end
+        self:register_handler(name, objects.list[idx],
+            curry(sortoverlay.single_vector_search, {get_search_key_fn=get_artifact_search_key}))
+        ::continue::
+    end
 end
 
-local function get_key()
-    if info.current_mode == df.info_interface_mode_type.JUSTICE then
-        if justice.interrogating then
-            return 'INTERROGATING'
-        elseif justice.convicting then
-            return 'CONVICTING'
-        end
-    elseif info.current_mode == df.info_interface_mode_type.CREATURES then
+function InfoOverlay:get_key()
+    if info.current_mode == df.info_interface_mode_type.CREATURES then
         if creatures.current_mode == df.unit_list_mode_type.PET then
             if creatures.showing_overall_training then
                 return 'PET_OT'
@@ -274,102 +216,6 @@ local function get_key()
             return 'WORK_DETAILS'
         end
     end
-end
-
-local function check_context(self, key_ctx)
-    local key = get_key()
-    if state[key_ctx] ~= key then
-        state[key_ctx] = key
-        local prev_text = key and ensure_key(state, key).prev_text or ''
-        self.subviews.search:setText(prev_text)
-    end
-end
-
-local function do_search(matches_filters_fn, text, force_full_search)
-    if not force_full_search and not next(state) and text == '' then return end
-    -- the EditField state is guaranteed to be consistent with the current
-    -- context since when clicking to switch tabs, onRenderBody is always called
-    -- before this text_input callback, even if a key is pressed before the next
-    -- graphical frame would otherwise be printed. if this ever becomes untrue,
-    -- then we can add an on_char handler to the EditField that also calls
-    -- check_context.
-    local key = get_key()
-    if not key then return end
-    local prev_text = ensure_key(state, key).prev_text
-    -- some screens reset their contents between context switches; regardless
-    -- a switch back to the context should results in an incremental search
-    local incremental = not force_full_search and prev_text and text:startswith(prev_text)
-    HANDLERS[key].search_fn(matches_filters_fn, state[key], text, incremental)
-    state[key].prev_text = text
-end
-
-local function on_update(self)
-    if self.overlay_onupdate_max_freq_seconds == 0 and
-        not dfhack.gui.matchFocusString('dwarfmode/Info', dfhack.gui.getDFViewscreen(true))
-    then
-        for k,v in pairs(state) do
-            local cleanup_fn = safe_index(HANDLERS, k, 'cleanup_fn')
-            if cleanup_fn then cleanup_fn(v) end
-        end
-        state = {}
-        self.subviews.search:setText('')
-        self.subviews.search:setFocus(false)
-        self.overlay_onupdate_max_freq_seconds = 60
-    end
-end
-
-local function on_input(self, clazz, keys)
-    if keys._MOUSE_R and self.subviews.search.focus and self:get_handled_key() then
-        self.subviews.search:setFocus(false)
-        return true
-    end
-    return clazz.super.onInput(self, keys)
-end
-
-local function is_interrogate_or_convict()
-    local key = get_key()
-    return key == 'INTERROGATING' or key == 'CONVICTING'
-end
-
--- ----------------------
--- InfoOverlay
---
-
-InfoOverlay = defclass(InfoOverlay, overlay.OverlayWidget)
-InfoOverlay.ATTRS{
-    default_pos={x=64, y=8},
-    default_enabled=true,
-    viewscreens='dwarfmode/Info',
-    hotspot=true,
-    overlay_onupdate_max_freq_seconds=0,
-    frame={w=40, h=4},
-}
-
-function InfoOverlay:init()
-    self:addviews{
-        widgets.BannerPanel{
-            view_id='panel',
-            frame={l=0, t=0, r=0, h=1},
-            visible=self:callback('get_handled_key'),
-            subviews={
-                widgets.EditField{
-                    view_id='search',
-                    frame={l=1, t=0, r=1},
-                    label_text="Search: ",
-                    key='CUSTOM_ALT_S',
-                    on_change=function(text) do_search(DEFAULT_NIL, text) end,
-                },
-            },
-        },
-    }
-end
-
-function InfoOverlay:overlay_onupdate()
-    on_update(self)
-end
-
-function InfoOverlay:get_handled_key()
-    return not is_interrogate_or_convict() and get_key() or nil
 end
 
 local function resize_overlay(self)
@@ -410,48 +256,33 @@ function InfoOverlay:updateFrames()
 end
 
 function InfoOverlay:onRenderBody(dc)
-    if next(state) then
-        check_context(self, InfoOverlay)
-    end
+    InfoOverlay.super.onRenderBody(self, dc)
     if self:updateFrames() then
         self:updateLayout()
     end
     if self.refresh_search then
         self.refresh_search = nil
-        do_search(DEFAULT_NIL, self.subviews.search.text)
+        self:do_search(self.subviews.search.text)
     end
-    self.overlay_onupdate_max_freq_seconds = 0
-    InfoOverlay.super.onRenderBody(self, dc)
 end
 
 function InfoOverlay:onInput(keys)
-    if keys._MOUSE_L and get_key() == 'WORK_DETAILS' then
+    if keys._MOUSE_L and self:get_key() == 'WORK_DETAILS' then
         self.refresh_search = true
     end
-    return on_input(self, InfoOverlay, keys)
+    return InfoOverlay.super.onInput(self, keys)
 end
 
 -- ----------------------
 -- InterrogationOverlay
 --
 
-InterrogationOverlay = defclass(InterrogationOverlay, overlay.OverlayWidget)
+InterrogationOverlay = defclass(InterrogationOverlay, sortoverlay.SortOverlay)
 InterrogationOverlay.ATTRS{
     default_pos={x=47, y=10},
-    default_enabled=true,
     viewscreens='dwarfmode/Info/JUSTICE',
     frame={w=27, h=9},
-    hotspot=true,
-    overlay_onupdate_max_freq_seconds=0,
 }
-
-function InterrogationOverlay:overlay_onupdate()
-    on_update(self)
-end
-
-function InterrogationOverlay:get_handled_key()
-    return is_interrogate_or_convict() and get_key() or nil
-end
 
 function InterrogationOverlay:init()
     self:addviews{
@@ -460,14 +291,14 @@ function InterrogationOverlay:init()
             frame={l=0, t=4, h=5, r=0},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
-            visible=is_interrogate_or_convict,
+            visible=self:callback('get_key'),
             subviews={
                 widgets.EditField{
                     view_id='search',
                     frame={l=0, t=0, r=0},
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
-                    on_change=function(text) do_search(self:callback('matches_filters'), text) end,
+                    on_change=function(text) self:do_search(text) end,
                 },
                 widgets.ToggleHotkeyLabel{
                     view_id='include_interviewed',
@@ -479,9 +310,7 @@ function InterrogationOverlay:init()
                         {label='Exclude', value=false, pen=COLOR_RED},
                     },
                     visible=function() return justice.interrogating end,
-                    on_change=function()
-                        do_search(self:callback('matches_filters'), self.subviews.search.text, true)
-                    end,
+                    on_change=function() self:do_search(self.subviews.search.text, true) end,
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='subset',
@@ -498,13 +327,40 @@ function InterrogationOverlay:init()
                         {label='Deceased or missing', value='deceased', pen=COLOR_MAGENTA},
                         {label='Others', value='others', pen=COLOR_GRAY},
                     },
-                    on_change=function()
-                        do_search(self:callback('matches_filters'), self.subviews.search.text, true)
-                    end,
+                    on_change=function() self:do_search(self.subviews.search.text, true) end,
                 },
             },
         },
     }
+
+    self:register_handler('INTERROGATING', justice.interrogation_list,
+        curry(sortoverlay.flags_vector_search,
+            {
+                get_search_key_fn=get_unit_search_key,
+                get_elem_id_fn=function(unit) return unit.id end,
+                matches_filters_fn=self:callback('matches_filters'),
+            },
+        justice.interrogation_list_flag))
+    self:register_handler('CONVICTING', justice.conviction_list,
+        curry(sortoverlay.single_vector_search,
+            {
+                get_search_key_fn=get_unit_search_key,
+                matches_filters_fn=self:callback('matches_filters'),
+            }))
+end
+
+function InterrogationOverlay:reset()
+    InterrogationOverlay.super.reset(self)
+    self.subviews.include_interviewed:setOption(true, false)
+    self.subviews.subset:setOption('all')
+end
+
+function InterrogationOverlay:get_key()
+    if justice.interrogating then
+        return 'INTERROGATING'
+    elseif justice.convicting then
+        return 'CONVICTING'
+    end
 end
 
 local RISKY_PROFESSIONS = utils.invert{
@@ -521,18 +377,20 @@ local function is_risky(unit)
     return not dfhack.units.isAlive(unit)  -- detect intelligent undead
 end
 
-function InterrogationOverlay:matches_filters(unit, idx)
+function InterrogationOverlay:matches_filters(unit, flag)
     if justice.interrogating then
         local include_interviewed = self.subviews.include_interviewed:getOptionValue()
-        if not include_interviewed and justice.interrogation_list_flag[idx] == 2 then
-            return false
-        end
+        if not include_interviewed and flag == 2 then return false end
     end
     local subset = self.subviews.subset:getOptionValue()
     if subset == 'all' then
         return true
     elseif dfhack.units.isDead(unit) or not dfhack.units.isActive(unit) then
         return subset == 'deceased'
+    elseif dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit)
+        or unit.flags2.visitor_uninvited or unit.flags4.agitated_wilderness_creature
+    then
+        return subset == 'others'
     elseif dfhack.units.isVisiting(unit) then
         local risky = is_risky(unit)
         return (subset == 'risky' and risky) or (subset == 'visitors' and not risky)
@@ -567,21 +425,6 @@ function InterrogationOverlay:render(dc)
     end
 
     InterrogationOverlay.super.render(self, dc)
-end
-
-function InterrogationOverlay:onRenderBody(dc)
-    if next(state) then
-        check_context(self, InterrogationOverlay)
-    else
-        self.subviews.include_interviewed:setOption(true, false)
-        self.subviews.subset:setOption('all')
-    end
-    self.overlay_onupdate_max_freq_seconds = 0
-    InterrogationOverlay.super.onRenderBody(self, dc)
-end
-
-function InterrogationOverlay:onInput(keys)
-    return on_input(self, InterrogationOverlay, keys)
 end
 
 return _ENV

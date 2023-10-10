@@ -89,6 +89,7 @@ using namespace DFHack;
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
+#include "df/viewscreen_worldst.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -222,6 +223,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(legends)
         focusStrings.push_back(baseFocus + "/Default");
     else
         focusStrings.push_back(baseFocus + '/' + screen->page[screen->active_page_index]->header);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(world)
+{
+    focusStrings.push_back(baseFocus + '/' + enum_item_key(screen->view_mode));
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)

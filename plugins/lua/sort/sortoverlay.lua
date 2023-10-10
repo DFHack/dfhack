@@ -31,21 +31,12 @@ function SortOverlay:init()
     -- subclasses expected to provide an EditField widget with view_id='search'
 end
 
-function SortOverlay:register_handler(key, vec, search_fn, restore_filtered_on_cleanup)
+function SortOverlay:register_handler(key, vec, search_fn, cleanup_fn)
     self.handlers[key] = {
         vec=vec,
         search_fn=search_fn,
-        restore_filtered_on_cleanup=restore_filtered_on_cleanup
+        cleanup_fn=cleanup_fn
     }
-end
-
-local function restore_filtered(vec, data)
-    if not data.saved_visible or not data.saved_original then return end
-    for _,elem in ipairs(data.saved_original) do
-        if not utils.linear_index(data.saved_visible, elem) then
-            vec:insert('#', elem)
-        end
-    end
 end
 
 -- handles reset and clean up when the player exits the handled scope
@@ -54,8 +45,9 @@ function SortOverlay:overlay_onupdate()
         not dfhack.gui.matchFocusString(self.viewscreens, dfhack.gui.getDFViewscreen(true))
     then
         for key,data in pairs(self.state) do
-            if safe_index(self.handlers, key, 'restore_filtered_on_cleanup') then
-                restore_filtered(self.handlers[key].vec, data)
+            local cleanup_fn = safe_index(self.handlers, key, 'cleanup_fn')
+            if cleanup_fn then
+                cleanup_fn(data)
             end
         end
         self:reset()
@@ -133,25 +125,33 @@ local function filter_vec(fns, flags_vec, vec, text, erase_fn)
 end
 
 function single_vector_search(fns, vec, data, text, incremental)
+    vec = utils.getval(vec)
     if not data.saved_original then
         data.saved_original = copy_to_lua_table(vec)
+        data.saved_original_size = #vec
     elseif not incremental then
         vec:assign(data.saved_original)
+        vec:resize(data.saved_original_size)
     end
     filter_vec(fns, nil, vec, text, function(idx) vec:erase(idx) end)
     data.saved_visible = copy_to_lua_table(vec)
     if fns.get_sort_fn then
         table.sort(data.saved_visible, fns.get_sort_fn())
         vec:assign(data.saved_visible)
+        vec:resize(data.saved_visible_size)
     end
 end
 
--- doesn't support cleanup since nothing that uses this needs it yet
+-- doesn't support sorting since nothing that uses this needs it yet
 function flags_vector_search(fns, flags_vec, vec, data, text, incremental)
     local get_elem_id_fn = fns.get_elem_id_fn or function(elem) return elem end
+    flags_vec, vec = utils.getval(flags_vec), utils.getval(vec)
     if not data.saved_original then
+        -- we save the sizes since trailing nils get lost in the lua -> vec assignment
         data.saved_original = copy_to_lua_table(vec)
+        data.saved_original_size = #vec
         data.saved_flags = copy_to_lua_table(flags_vec)
+        data.saved_flags_size = #flags_vec
         data.saved_idx_map = {}
         for idx,elem in ipairs(data.saved_original) do
             data.saved_idx_map[get_elem_id_fn(elem)] = idx  -- 1-based idx
@@ -164,7 +164,9 @@ function flags_vector_search(fns, flags_vec, vec, data, text, incremental)
 
     if not incremental then
         vec:assign(data.saved_original)
+        vec:resize(data.saved_original_size)
         flags_vec:assign(data.saved_flags)
+        flags_vec:resize(data.saved_flags_size)
     end
 
     filter_vec(fns, flags_vec, vec, text, function(idx)

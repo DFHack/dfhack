@@ -1267,6 +1267,10 @@ static string get_caste_name(df::unit* unit) {
 
 string Units::getReadableName(df::unit* unit) {
     string race_name = isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit);
+    if (isHunter(unit))
+        race_name = "hunter " + race_name;
+    if (isWar(unit))
+        race_name = "war " + race_name;
     string name = Translation::TranslateName(getVisibleName(unit));
     if (name.empty()) {
         name = race_name;

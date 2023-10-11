@@ -1289,6 +1289,7 @@ OVERLAY_WIDGETS = {
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
+    world=require('plugins.sort.world').WorldOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

@@ -135,6 +135,15 @@ local function work_details_search(vec, data, text, incremental)
         vec, data, text, incremental)
 end
 
+local function cleanup_cri_unit(vec, data)
+    if not data.saved_visible or not data.saved_original then return end
+    for _,elem in ipairs(data.saved_original) do
+        if not utils.linear_index(data.saved_visible, elem) then
+            vec:insert('#', elem)
+        end
+    end
+end
+
 -- ----------------------
 -- InfoOverlay
 --
@@ -177,12 +186,12 @@ function InfoOverlay:init()
                     get_search_key_fn=get_cri_unit_search_key,
                     get_sort_fn=get_sort
                 }),
-            true)
+            curry(cleanup_cri_unit, vec))
     end
 
     self:register_handler('JOBS', tasks.cri_job,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_cri_unit_search_key}),
-        true)
+        curry(cleanup_cri_unit, vec))
     self:register_handler('PET_OT', creatures.atk_index,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
     self:register_handler('PET_AT', creatures.trainer,

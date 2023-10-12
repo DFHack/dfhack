@@ -43,10 +43,11 @@ local function get_world_artifact_search_key(artifact, rumor)
 end
 
 local function cleanup_artifact_vectors(data)
-    print('cleanng up')
     local vs_world = dfhack.gui.getDFViewscreen(true)
     vs_world.artifact:assign(data.saved_original)
+    vs_world.artifact:resize(data.saved_original_size)
     vs_world.artifact_arl:assign(data.saved_flags)
+    vs_world.artifact_arl:resize(data.saved_flags_size)
 end
 
 function WorldOverlay:init()

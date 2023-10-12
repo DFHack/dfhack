@@ -135,6 +135,7 @@ function single_vector_search(fns, vec, data, text, incremental)
     end
     filter_vec(fns, nil, vec, text, function(idx) vec:erase(idx) end)
     data.saved_visible = copy_to_lua_table(vec)
+    data.saved_visible_size = #vec
     if fns.get_sort_fn then
         table.sort(data.saved_visible, fns.get_sort_fn())
         vec:assign(data.saved_visible)

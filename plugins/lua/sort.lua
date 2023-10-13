@@ -1290,6 +1290,7 @@ OVERLAY_WIDGETS = {
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
+    worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
     world=require('plugins.sort.world').WorldOverlay,
 }
 

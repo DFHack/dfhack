@@ -280,6 +280,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             else
                 newFocusString += "/Default";
             break;
+        case df::enums::info_interface_mode_type::ADMINISTRATORS:
+            if (game->main_interface.info.administrators.choosing_candidate)
+                newFocusString += "/Candidates";
+            else if (game->main_interface.info.administrators.assigning_symbol)
+                newFocusString += "/Symbols";
+            else
+                newFocusString += "/Default";
+            break;
         default:
             break;
         }

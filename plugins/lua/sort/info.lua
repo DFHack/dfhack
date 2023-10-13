@@ -6,6 +6,7 @@ local widgets = require('gui.widgets')
 local utils = require('utils')
 
 local info = df.global.game.main_interface.info
+local administrators = info.administrators
 local creatures = info.creatures
 local justice = info.justice
 local objects = info.artifacts
@@ -135,13 +136,33 @@ local function work_details_search(vec, data, text, incremental)
         vec, data, text, incremental)
 end
 
-local function cleanup_cri_unit(vec, data)
+local function restore_allocated_data(vec, data)
     if not data.saved_visible or not data.saved_original then return end
     for _,elem in ipairs(data.saved_original) do
         if not utils.linear_index(data.saved_visible, elem) then
             vec:insert('#', elem)
         end
     end
+end
+
+local function serialize_skills(unit)
+    if not unit or not unit.status or not unit.status.current_soul then
+        return ''
+    end
+    local skills = {}
+    for _, skill in ipairs(unit.status.current_soul.skills) do
+        if skill.rating > 0 then -- ignore dabbling
+            table.insert(skills, df.job_skill[skill.id])
+        end
+    end
+    return table.concat(skills, ' ')
+end
+
+local function get_candidate_search_key(cand)
+    if not cand.un then return end
+    return ('%s %s'):format(
+        get_unit_search_key(cand.un),
+        serialize_skills(cand.un))
 end
 
 -- ----------------------
@@ -186,12 +207,12 @@ function InfoOverlay:init()
                     get_search_key_fn=get_cri_unit_search_key,
                     get_sort_fn=get_sort
                 }),
-            curry(cleanup_cri_unit, vec))
+            curry(restore_allocated_data, vec))
     end
 
     self:register_handler('JOBS', tasks.cri_job,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_cri_unit_search_key}),
-        curry(cleanup_cri_unit, vec))
+        curry(restore_allocated_data, tasks.cri_job))
     self:register_handler('PET_OT', creatures.atk_index,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
     self:register_handler('PET_AT', creatures.trainer,
@@ -259,7 +280,7 @@ function InfoOverlay:updateFrames()
     local ret = resize_overlay(self)
     local l, t = get_panel_offsets()
     local frame = self.subviews.panel.frame
-    if (frame.l == l and frame.t == t) then return ret end
+    if frame.l == l and frame.t == t then return ret end
     frame.l, frame.t = l, t
     return true
 end
@@ -280,6 +301,60 @@ function InfoOverlay:onInput(keys)
         self.refresh_search = true
     end
     return InfoOverlay.super.onInput(self, keys)
+end
+
+-- ----------------------
+-- CandidatesOverlay
+--
+
+CandidatesOverlay = defclass(CandidatesOverlay, sortoverlay.SortOverlay)
+CandidatesOverlay.ATTRS{
+    default_pos={x=54, y=8},
+    viewscreens='dwarfmode/Info/ADMINISTRATORS/Candidates',
+    frame={w=27, h=3},
+}
+
+function CandidatesOverlay:init()
+    self:addviews{
+        widgets.BannerPanel{
+            view_id='panel',
+            frame={l=0, t=0, r=0, h=1},
+            subviews={
+                widgets.EditField{
+                    view_id='search',
+                    frame={l=1, t=0, r=1},
+                    label_text="Search: ",
+                    key='CUSTOM_ALT_S',
+                    on_change=function(text) self:do_search(text) end,
+                },
+            },
+        },
+    }
+
+    self:register_handler('CANDIDATE', administrators.candidate,
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_candidate_search_key}),
+        curry(restore_allocated_data, administrators.candidate))
+end
+
+function CandidatesOverlay:get_key()
+    if administrators.choosing_candidate then
+        return 'CANDIDATE'
+    end
+end
+
+function CandidatesOverlay:updateFrames()
+    local t = is_tabs_in_two_rows() and 2 or 0
+    local frame = self.subviews.panel.frame
+    if frame.t == t then return end
+    frame.t = t
+    return true
+end
+
+function CandidatesOverlay:onRenderBody(dc)
+    CandidatesOverlay.super.onRenderBody(self, dc)
+    if self:updateFrames() then
+        self:updateLayout()
+    end
 end
 
 -- ----------------------

@@ -115,6 +115,15 @@ necromancers, necromancer experiments, and intelligent undead.
 On the interrogations screen, you can also filter units by whether they have
 already been interrogated.
 
+Candidates overlay
+------------------
+
+When you select the button to choose a candidate to assign to a noble role on
+the nobles screen, you can search for units by name, profession, or any of the
+skills in which they have achieved at least "novice" level. For example, when
+assigning a broker, you can search for "appraisal" to find candidates that have
+at least some appraisal skill.
+
 Location selection overlay
 --------------------------
 

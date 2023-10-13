@@ -1286,6 +1286,7 @@ OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
     info=require('plugins.sort.info').InfoOverlay,
+    candidates=require('plugins.sort.info').CandidatesOverlay,
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,

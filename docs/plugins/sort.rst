@@ -119,7 +119,9 @@ Location selection overlay
 --------------------------
 
 When choosing the type of guildhall or temple to dedicate, you can search for
-the relevant profession, religion, or deity by name.
+the relevant profession, religion, or deity by name. For temples, you can also
+search for the "spheres" associated with the deity or religion, such as
+"wealth" or "lies".
 
 World overlay
 -------------

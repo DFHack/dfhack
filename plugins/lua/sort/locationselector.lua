@@ -16,16 +16,38 @@ LocationSelectorOverlay.ATTRS{
     frame={w=26, h=1},
 }
 
+local function add_spheres(hf, spheres)
+    if not hf then return end
+    for _, sphere in ipairs(hf.info.spheres.spheres) do
+        spheres[sphere] = true
+    end
+end
+
+local function stringify_spheres(spheres)
+    local strs = {}
+    for sphere in pairs(spheres) do
+        table.insert(strs, df.sphere_type[sphere])
+    end
+    return table.concat(strs, ' ')
+end
+
 local function get_religion_string(religion_id, religion_type)
     if religion_id == -1 then return end
     local entity
+    local spheres = {}
     if religion_type == 0 then
         entity = df.historical_figure.find(religion_id)
+        add_spheres(entity, spheres)
     elseif religion_type == 1 then
         entity = df.historical_entity.find(religion_id)
+        if entity then
+            for _, deity in ipairs(entity.relations.deities) do
+                add_spheres(df.historical_figure.find(deity), spheres)
+            end
+        end
     end
     if not entity then return end
-    return dfhack.TranslateName(entity.name, true)
+    return ('%s %s'):format(dfhack.TranslateName(entity.name, true), stringify_spheres(spheres))
 end
 
 local function get_profession_string(profession)

@@ -3,7 +3,7 @@ zone
 
 .. dfhack-tool::
     :summary: Manage activity zones, cages, and the animals therein.
-    :tags: unavailable fort productivity animals buildings interface
+    :tags: unavailable
 
 Usage
 -----

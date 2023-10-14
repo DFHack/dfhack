@@ -5,7 +5,7 @@ jobutils
 
 .. dfhack-tool::
     :summary: Provides commands for interacting with jobs.
-    :tags: unavailable fort inspection jobs
+    :tags: unavailable
     :no-command:
 
 .. dfhack-command:: job

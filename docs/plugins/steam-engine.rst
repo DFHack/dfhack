@@ -3,7 +3,7 @@ steam-engine
 
 .. dfhack-tool::
     :summary: Allow modded steam engine buildings to function.
-    :tags: unavailable fort gameplay buildings
+    :tags: unavailable
     :no-command:
 
 The steam-engine plugin detects custom workshops with the string

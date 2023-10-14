@@ -75,6 +75,7 @@ Template for new versions:
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 
 ## Documentation
+- unavailable tools are no longer listed in the tag indices in the online docs
 
 ## API
 - Translate: will use DF's ``translate_name`` function, if available, instead of the DFHack emulation

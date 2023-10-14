@@ -3,8 +3,8 @@
 DFHack tools
 ============
 
-DFHack has **a lot** of tools. This page attempts to make it clearer what they
-are, how they work, and how to find the ones you want.
+DFHack comes with **a lot** of tools. This page attempts to make it clearer
+what they are, how they work, and how to find the ones you want.
 
 .. contents:: Contents
   :local:
@@ -35,6 +35,12 @@ categories are listed in the next few sections. Note that a tool can belong to
 more than one category. If you already know what you're looking for, try the
 `search` or Ctrl-F on this page. If you'd like to see the full list of tools in
 one flat list, please refer to the `annotated index <all-tag-index>`.
+
+Some tools are part of our back catalog and haven't been updated yet for v50 of
+Dwarf Fortress. These tools are tagged as
+`unavailable <unavailable-tag-index>`. They will still appear in the
+alphabetical list at the bottom of this page, but unavailable tools will not
+listed in any of the indices.
 
 DFHack tools by game mode
 -------------------------

@@ -1225,8 +1225,12 @@ string Units::getRaceBabyNameById(int32_t id)
     if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
     {
         df::creature_raw* raw = world->raws.creatures.all[id];
-        if (raw)
-            return raw->general_baby_name[0];
+        if (raw) {
+            string & baby_name = raw->general_baby_name[0];
+            if (!baby_name.empty())
+                return baby_name;
+            return getRaceReadableNameById(id) + " baby";
+        }
     }
     return "";
 }
@@ -1242,8 +1246,12 @@ string Units::getRaceChildNameById(int32_t id)
     if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
     {
         df::creature_raw* raw = world->raws.creatures.all[id];
-        if (raw)
-            return raw->general_child_name[0];
+        if (raw) {
+            string & child_name = raw->general_child_name[0];
+            if (!child_name.empty())
+                return child_name;
+            return getRaceReadableNameById(id) + " child";
+        }
     }
     return "";
 }
@@ -1266,7 +1274,10 @@ static string get_caste_name(df::unit* unit) {
 }
 
 string Units::getReadableName(df::unit* unit) {
-    string race_name = isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit);
+    string race_name = isBaby(unit) ? getRaceBabyName(unit) :
+        (isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit));
+    if (race_name.empty())
+        race_name = getRaceReadableName(unit);
     if (isHunter(unit))
         race_name = "hunter " + race_name;
     if (isWar(unit))

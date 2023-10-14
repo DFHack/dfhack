@@ -64,6 +64,7 @@ Template for new versions:
 - `sort`: new search widgets for artifacts on the world/raid screen
 
 ## Fixes
+- `zone`: races without specific child or baby names will now get generic child/baby names instead of an empty string
 - `zone`: don't show animal assignment link for cages and restraints linked to dungeon zones (which aren't normally assignable)
 - `dwarfvet`: fix invalid job id assigned to ``Rest`` job, which could cause crashes on reload
 

@@ -92,13 +92,12 @@ function HospitalZone:assign_spot(unit, unit_pos)
     local pos = self:find_spot(unit_pos)
     if not pos then return false end
     local job = df.new(df.job)
-    dfhack.job.linkIntoWorld(job)
+    dfhack.job.linkIntoWorld(job, true)
     job.pos.x = pos.x
     job.pos.y = pos.y
     job.pos.z = pos.z
     job.flags.special = true
     job.job_type = df.job_type.Rest
-    job.wait_timer = 1600
     local gref = df.new(df.general_ref_unit_workerst)
     gref.unit_id = unit.id
     job.general_refs:insert('#', gref)

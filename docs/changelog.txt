@@ -65,6 +65,7 @@ Template for new versions:
 
 ## Fixes
 - `zone`: don't show animal assignment link for cages and restraints linked to dungeon zones (which aren't normally assignable)
+- `dwarfvet`: fix invalid job id assigned to ``Rest`` job, which could cause crashes on reload
 
 ## Misc Improvements
 - `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates

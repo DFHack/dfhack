@@ -91,3 +91,49 @@ and "ranged combat potential" are explained in detail here:
 https://www.reddit.com/r/dwarffortress/comments/163kczo/enhancing_military_candidate_selection_part_3/
 "Mental stability" is explained here:
 https://www.reddit.com/r/dwarffortress/comments/1617s11/enhancing_military_candidate_selection_part_2/
+
+Info tabs overlay
+-----------------
+
+The Info overlay adds search support to many of the fort-wide "Info" panels
+(e.g. "Creatures", "Tasks", etc.). When searching for units, you can search by
+name (with either English or native language last names), profession, or
+special status (like "necromancer"). If there is text in the second column, you
+can search for that text as well. This is often a job name or a status, like
+"caged".
+
+Interrogation overlay
+---------------------
+
+In the interrogation and conviction screens under the "Justice" tab, you can
+search for units by name. You can also filter by the classification of the
+unit. The classification groups are ordered by how likely a member of that
+group is to be involved in a plot. The groups are: All, Risky visitors, Other
+visitors, Residents, Citizens, Animals, Deceased, and Others. "Risky" visitors are those who are especially likely to be involved in plots, such as criminals,
+necromancers, necromancer experiments, and intelligent undead.
+
+On the interrogations screen, you can also filter units by whether they have
+already been interrogated.
+
+Candidates overlay
+------------------
+
+When you select the button to choose a candidate to assign to a noble role on
+the nobles screen, you can search for units by name, profession, or any of the
+skills in which they have achieved at least "novice" level. For example, when
+assigning a broker, you can search for "appraisal" to find candidates that have
+at least some appraisal skill.
+
+Location selection overlay
+--------------------------
+
+When choosing the type of guildhall or temple to dedicate, you can search for
+the relevant profession, religion, or deity by name. For temples, you can also
+search for the "spheres" associated with the deity or religion, such as
+"wealth" or "lies".
+
+World overlay
+-------------
+
+Searching is supported for the Artifacts list when viewing the world map (where
+you can initiate raids).

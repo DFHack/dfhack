@@ -684,7 +684,7 @@ Persistent configuration storage
 --------------------------------
 
 This api is intended for storing configuration options in the world itself.
-It probably should be restricted to data that is world-dependent.
+It is intended for data that is world-dependent.
 
 Entries are identified by a string ``key``, but it is also possible to manage
 multiple entries with the same key; their identity is determined by ``entry_id``.
@@ -717,10 +717,8 @@ Every entry has a mutable string ``value``, and an array of 7 mutable ``ints``.
   otherwise the existing one is simply updated.
   Returns *entry, did_create_new*
 
-Since the data is hidden in data structures owned by the DF world,
-and automatically stored in the save game, these save and retrieval
-functions can just copy values in memory without doing any actual I/O.
-However, currently every entry has a 180+-byte dead-weight overhead.
+The data is kept in memory, so no I/O occurs when getting or saving keys. It is
+all written to a json file in the game save directory when the game is saved.
 
 It is also possible to associate one bit per map tile with an entry,
 using these two methods:
@@ -1611,7 +1609,8 @@ Units module
 * ``dfhack.units.getReadableName(unit)``
 
   Returns a string that includes the language name of the unit (if any), the
-  race of the unit, and any syndrome-given descriptions (such as "necromancer").
+  race of the unit, whether it is trained for war or hunting, and any
+  syndrome-given descriptions (such as "necromancer").
 
 * ``dfhack.units.getStressCategory(unit)``
 
@@ -3083,6 +3082,9 @@ environment by the mandatory init file dfhack.lua:
     COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
     COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
 
+  ``COLOR_GREY`` and ``COLOR_DARKGREY`` can also be spelled ``COLOR_GRAY`` and
+  ``COLOR_DARKGRAY``.
+
 * State change event codes, used by ``dfhack.onStateChange``
 
   Available only in the `core context <lua-core-context>`, as is the event itself:
@@ -3338,6 +3340,20 @@ utils
 * ``utils.erase_sorted(vector,item,field,cmpfun)``
 
   Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
+
+* ``utils.search_text(text,search_tokens)``
+
+  Returns true if all the search tokens are found within ``text``. The text and
+  search tokens are normalized to lower case and special characters (e.g. ``A``
+  with a circle on it) are converted to their "basic" forms (e.g. ``a``).
+  ``search_tokens`` can be a string or a table of strings. If it is a string,
+  it is split into space-separated tokens before matching. The search tokens
+  are treated literally, so any special regular expression characters do not
+  need to be escaped. If ``utils.FILTER_FULL_TEXT`` is ``true``, then the
+  search tokens can match any part of ``text``. If it is ``false``, then the
+  matches must happen at the beginning of words within ``text``. You can change
+  the value of ``utils.FILTER_FULL_TEXT`` in `gui/control-panel` on the
+  "Preferences" tab.
 
 * ``utils.call_with_string(obj,methodname,...)``
 
@@ -5293,12 +5309,11 @@ FilteredList class
 ------------------
 
 This widget combines List, EditField and Label into a combo-box like
-construction that allows filtering the list by subwords of its items.
+construction that allows filtering the list.
 
 In addition to passing through all attributes supported by List, it
 supports:
 
-:case_sensitive: If ``true``, matching is case sensitive. Defaults to ``false``.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
@@ -5347,9 +5362,9 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring with a command like::
+substring across the full text with a command like::
 
-  :lua require('gui.widgets').FILTER_FULL_TEXT=true
+  :lua require('utils').FILTER_FULL_TEXT=true
 
 TabBar class
 ------------

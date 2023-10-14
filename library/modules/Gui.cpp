@@ -89,6 +89,7 @@ using namespace DFHack;
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
+#include "df/viewscreen_worldst.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -224,6 +225,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(legends)
         focusStrings.push_back(baseFocus + '/' + screen->page[screen->active_page_index]->header);
 }
 
+DEFINE_GET_FOCUS_STRING_HANDLER(world)
+{
+    focusStrings.push_back(baseFocus + '/' + enum_item_key(screen->view_mode));
+}
+
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
@@ -240,7 +246,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
+            if (game->main_interface.info.creatures.showing_overall_training)
+                newFocusString += "/OverallTraining";
+            else if (game->main_interface.info.creatures.showing_activity_details)
+                newFocusString += "/ActivityDetails";
+            else if (game->main_interface.info.creatures.adding_trainer)
+                newFocusString += "/AddingTrainer";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
@@ -252,13 +265,26 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
         case df::enums::info_interface_mode_type::JUSTICE:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
+            if (game->main_interface.info.justice.interrogating)
+                newFocusString += "/Interrogating";
+            else if (game->main_interface.info.justice.convicting)
+                newFocusString += "/Convicting";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
         case df::enums::info_interface_mode_type::WORK_ORDERS:
             if (game->main_interface.info.work_orders.conditions.open)
                 newFocusString += "/Conditions";
             else if (game->main_interface.create_work_order.open)
                 newFocusString += "/Create";
+            else
+                newFocusString += "/Default";
+            break;
+        case df::enums::info_interface_mode_type::ADMINISTRATORS:
+            if (game->main_interface.info.administrators.choosing_candidate)
+                newFocusString += "/Candidates";
+            else if (game->main_interface.info.administrators.assigning_symbol)
+                newFocusString += "/Symbols";
             else
                 newFocusString += "/Default";
             break;
@@ -556,7 +582,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.location_selector.open) {
         newFocusString = baseFocus;
-        newFocusString += "/LocationSelector";
+        newFocusString += "/LocationSelector/";
+        if (game->main_interface.location_selector.choosing_temple_religious_practice)
+            newFocusString += "Temple";
+        else if (game->main_interface.location_selector.choosing_craft_guild)
+            newFocusString += "Guildhall";
+        else
+            newFocusString += "Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.location_details.open) {

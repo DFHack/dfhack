@@ -147,15 +147,15 @@ Designation options:
 
 Other options:
 
-``--zdown``, ``-d``
+``-d``, ``--zdown``
     Only designates tiles on the cursor's z-level and below.
-``--zup``, ``-u``
+``-u``, ``--zup``
     Only designates tiles on the cursor's z-level and above.
-``--cur-zlevel``, ``-z``
+``-z``, ``--cur-zlevel``
     Only designates tiles on the same z-level as the cursor.
-``--hidden``, ``-h``
+``-h``, ``--hidden``
     Allows designation of hidden tiles, and picking a hidden tile as the target type.
-``--no-auto``, ``-a``
+``-a``, ``--no-auto``
     No automatic mining mode designation - useful if you want to avoid dwarves digging where you don't want them.
 
 digexp

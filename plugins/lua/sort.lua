@@ -3,6 +3,7 @@ local _ENV = mkmodule('plugins.sort')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
+local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -275,29 +276,29 @@ local function get_ranged_skill_effectiveness_rating(unit)
     return get_rating(ranged_skill_effectiveness(unit), 0, 800000, 72, 52, 31, 11)
 end
 
-local function make_sort_by_ranged_skill_effectiveness_desc(list)
+local function make_sort_by_ranged_skill_effectiveness_desc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit1, list)
-        local rating2 = ranged_skill_effectiveness(unit2, list)
+        local rating1 = ranged_skill_effectiveness(unit1)
+        local rating2 = ranged_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating2, rating1)
     end
 end
 
-local function make_sort_by_ranged_skill_effectiveness_asc(list)
+local function make_sort_by_ranged_skill_effectiveness_asc()
     return function(unit_id_1, unit_id_2)
         if unit_id_1 == unit_id_2 then return 0 end
         local unit1 = df.unit.find(unit_id_1)
         local unit2 = df.unit.find(unit_id_2)
         if not unit1 then return -1 end
         if not unit2 then return 1 end
-        local rating1 = ranged_skill_effectiveness(unit1, list)
-        local rating2 = ranged_skill_effectiveness(unit2, list)
+        local rating1 = ranged_skill_effectiveness(unit1)
+        local rating2 = ranged_skill_effectiveness(unit2)
         if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
         return utils.compare(rating1, rating2)
     end
@@ -630,10 +631,6 @@ SquadAssignmentOverlay.ATTRS{
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
     version='2',
     frame={w=38, h=31},
-    frame_style=gui.FRAME_PANEL,
-    frame_background=gui.CLEAR_PEN,
-    autoarrange_subviews=true,
-    autoarrange_gap=1,
 }
 
 -- allow initial spacebar or two successive spacebars to fall through and
@@ -660,7 +657,14 @@ function SquadAssignmentOverlay:init()
         })
     end
 
-    self:addviews{
+    local main_panel = widgets.Panel{
+        frame={l=0, r=0, t=0, b=0},
+        frame_style=gui.FRAME_PANEL,
+        frame_background=gui.CLEAR_PEN,
+        autoarrange_subviews=true,
+        autoarrange_gap=1,
+    }
+    main_panel:addviews{
         widgets.EditField{
             view_id='search',
             frame={l=0},
@@ -937,6 +941,26 @@ function SquadAssignmentOverlay:init()
             },
             initial_option='include',
             on_change=function() self:refresh_list() end,
+        },
+    }
+
+    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+    local help_pen_center = dfhack.pen.parse{
+        tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+
+    self:addviews{
+        main_panel,
+        widgets.Label{
+            frame={t=0, r=1, w=3},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', 'sort ') end,
         },
     }
 end
@@ -1261,6 +1285,13 @@ end
 OVERLAY_WIDGETS = {
     squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
+    info=require('plugins.sort.info').InfoOverlay,
+    candidates=require('plugins.sort.info').CandidatesOverlay,
+    interrogation=require('plugins.sort.info').InterrogationOverlay,
+    location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
+    unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
+    worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
+    world=require('plugins.sort.world').WorldOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

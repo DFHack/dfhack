@@ -72,3 +72,7 @@ Options
     Causes the command to act upon stockpiles with the given names or numbers
     instead of the stockpile that is currently selected in the UI. Note that
     the numbers are the stockpile numbers, not the building ids.
+``-m``, ``--melt-masterworks``
+    If specified with a ``logistics add melt`` command, will configure the
+    stockpile to allow melting of masterworks. By default, masterworks are not
+    marked for melting, even if they are in an automelt stockpile.

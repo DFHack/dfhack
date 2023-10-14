@@ -1036,11 +1036,15 @@ static command_result orders_sort_command(color_ostream & out)
 
 static command_result orders_recheck_command(color_ostream & out)
 {
-    for (auto it : world->manager_orders)
-    {
-        it->status.bits.active = false;
-        it->status.bits.validated = false;
+    size_t count = 0;
+    for (auto it : world->manager_orders) {
+        if (it->item_conditions.size() && it->status.bits.active) {
+            ++count;
+            it->status.bits.active = false;
+            it->status.bits.validated = false;
+        }
     }
+    out << "Re-checking conditions for " << count << " manager orders." << std::endl;
     return CR_OK;
 }
 

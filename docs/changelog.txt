@@ -52,22 +52,39 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `spectate`: automatically follow productive dwarves (returned to availability)
+- `spectate`: (reinstated) automatically follow dwarves, cycling among interesting ones
+- `preserve-tombs`: keep tombs assigned to units when they die
 
 ## New Features
+- `logistics`: ``automelt`` now optionally supports melting masterworks; click on gear icon on `stockpiles` overlay frame
+- `sort`: new search widgets for Info panel tabs, including all "Creatures" subtabs, all "Objects" subtabs, "Tasks", candidate assignment on the "Noble" subtab, and the "Work details" subtab under "Labor"
+- `sort`: new search and filter widgets for the "Interrogate" and "Convict" screens under "Justice"
+- `sort`: new search widgets for location selection screen (when you're choosing what kind of guildhall or temple to dedicate)
+- `sort`: new search widgets for burrow assignment screen and other unit assignment dialogs
+- `sort`: new search widgets for artifacts on the world/raid screen
 
 ## Fixes
+- `zone`: races without specific child or baby names will now get generic child/baby names instead of an empty string
+- `zone`: don't show animal assignment link for cages and restraints linked to dungeon zones (which aren't normally assignable)
+- `dwarfvet`: fix invalid job id assigned to ``Rest`` job, which could cause crashes on reload
 
 ## Misc Improvements
-- Translate: will use DF's ``translate_name`` function, if available, instead of the DFHack emulation
+- `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates
+- `orders`: ``recheck`` command now only resets orders that have conditions that can be rechecked
+- `sort`: added help button for squad assignment search/filter/sort
+- `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 
 ## Documentation
 
 ## API
+- Translate: will use DF's ``translate_name`` function, if available, instead of the DFHack emulation
 
 ## Lua
+- added ``GRAY`` color aliases for ``GREY`` colors
+- ``utils.search_text``: text search routine (generalized from internal ``widgets.FilteredList`` logic)
 
 ## Removed
+- ``FILTER_FULL_TEXT``: moved from ``gui.widgets`` to ``utils``; if your full text search preference is lost, please reset it in `gui/control-panel`
 
 # 50.11-r1
 

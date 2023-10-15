@@ -162,6 +162,10 @@ local function is_slab()
     return uibs.building_type == df.building_type.Slab
 end
 
+local function is_cage()
+    return uibs.building_type == df.building_type.Cage
+end
+
 local function is_stairs()
     return is_construction()
             and uibs.building_subtype == df.construction_type.UpDownStair
@@ -475,6 +479,16 @@ function PlannerOverlay:init()
             visible=is_slab,
             on_change=function(val)
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'engraved', val)
+            end,
+        },
+        widgets.ToggleHotkeyLabel {
+            view_id='empty',
+            frame={b=4, l=1, w=22},
+            key='CUSTOM_T',
+            label='Empty only:',
+            visible=is_cage,
+            on_change=function(val)
+                buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
             end,
         },
         widgets.Label{
@@ -847,6 +861,8 @@ function PlannerOverlay:onRenderFrame(dc, rect)
         local buildingplan = require('plugins.buildingplan')
         self.subviews.engraved:setOption(buildingplan.getSpecials(
             uibs.building_type, uibs.building_subtype, uibs.custom_type).engraved or false)
+        self.subviews.empty:setOption(buildingplan.getSpecials(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type).empty or false)
         self.subviews.choose:setOption(buildingplan.getChooseItems(
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
         self.subviews.safety:setOption(buildingplan.getHeatSafetyFilter(

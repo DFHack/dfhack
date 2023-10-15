@@ -62,6 +62,7 @@ Template for new versions:
 - `sort`: new search widgets for location selection screen (when you're choosing what kind of guildhall or temple to dedicate)
 - `sort`: new search widgets for burrow assignment screen and other unit assignment dialogs
 - `sort`: new search widgets for artifacts on the world/raid screen
+- `sort`: new search widgets for slab engraving menu; can filter for only units that need a slab to prevent rising as a ghost
 
 ## Fixes
 - `zone`: races without specific child or baby names will now get generic child/baby names instead of an empty string

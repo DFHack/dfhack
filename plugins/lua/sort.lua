@@ -1291,6 +1291,7 @@ OVERLAY_WIDGETS = {
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
     worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
+    slab=require('plugins.sort.slab').SlabOverlay,
     world=require('plugins.sort.world').WorldOverlay,
 }
 

@@ -114,7 +114,7 @@ local function filter_vec(fns, flags_vec, vec, text, erase_fn)
         local search_tokens = text:split()
         for idx = #vec-1,0,-1 do
             local flag = flags_vec and flags_vec[idx] or nil
-            local search_key = fns.get_search_key_fn(vec[idx], flag)
+            local search_key = fns.get_search_key_fn and fns.get_search_key_fn(vec[idx], flag) or nil
             if (search_key and not utils.search_text(search_key, search_tokens)) or
                 (fns.matches_filters_fn and not fns.matches_filters_fn(vec[idx], flag))
             then

@@ -135,6 +135,14 @@ search for the "spheres" associated with the deity or religion, such as
 You can also choose whether to filter out temple or guildhall types that you
 have already established.
 
+Slab engraving overlay
+----------------------
+
+When choosing a unit to engrave a slab for, you can search for units by name,
+either in their native language or in English (though only their native name
+will be displayed). This overlay also adds a filter for showing only units that
+would need a slab in order to prevent them rising as a ghost.
+
 World overlay
 -------------
 

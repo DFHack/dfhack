@@ -978,7 +978,11 @@ local function is_in_military(unit)
 end
 
 local function is_elected_or_appointed_official(unit)
-    if #unit.occupations > 0 then return true end
+    for _,occupation in ipairs(unit.occupations) do
+        if occupation.type ~= df.occupation_type.MERCENARY then
+            return true
+        end
+    end
     for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
         if noble_pos.position.flags.ELECTED or
             (noble_pos.position.mandate_max == 0 and noble_pos.position.demand_max == 0)

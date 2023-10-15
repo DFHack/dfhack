@@ -11,9 +11,9 @@ local location_selector = df.global.game.main_interface.location_selector
 
 LocationSelectorOverlay = defclass(LocationSelectorOverlay, sortoverlay.SortOverlay)
 LocationSelectorOverlay.ATTRS{
-    default_pos={x=48, y=7},
+    default_pos={x=48, y=6},
     viewscreens='dwarfmode/LocationSelector',
-    frame={w=26, h=1},
+    frame={w=26, h=3},
 }
 
 local function add_spheres(hf, spheres)
@@ -55,10 +55,12 @@ local function get_profession_string(profession)
 end
 
 function LocationSelectorOverlay:init()
-    self:addviews{
+    local panel = widgets.Panel{
+        visible=self:callback('get_key'),
+    }
+    panel:addviews{
         widgets.BannerPanel{
             frame={l=0, t=0, r=0, h=1},
-            visible=self:callback('get_key'),
             subviews={
                 widgets.EditField{
                     view_id='search',
@@ -69,13 +71,35 @@ function LocationSelectorOverlay:init()
                 },
             },
         },
+        widgets.BannerPanel{
+            frame={l=0, t=2, r=0, h=1},
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='hide_established',
+                    frame={l=1, t=0, r=1},
+                    label="Hide established:",
+                    key='CUSTOM_SHIFT_E',
+                    initial_option=true,
+                    on_change=function() self:do_search(self.subviews.search.text, true) end,
+                },
+            },
+        },
     }
+    self:addviews{panel}
 
     self:register_handler('TEMPLE', location_selector.valid_religious_practice_id,
-        curry(sortoverlay.flags_vector_search, {get_search_key_fn=get_religion_string},
+        curry(sortoverlay.flags_vector_search,
+            {
+                get_search_key_fn=get_religion_string,
+                matches_filters_fn=self:callback('matches_temple_filter'),
+            },
             location_selector.valid_religious_practice))
     self:register_handler('GUILDHALL', location_selector.valid_craft_guild_type,
-        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_profession_string}))
+        curry(sortoverlay.single_vector_search,
+            {
+                get_search_key_fn=get_profession_string,
+                matches_filters_fn=self:callback('matches_guildhall_filter'),
+            }))
 end
 
 function LocationSelectorOverlay:get_key()
@@ -84,6 +108,37 @@ function LocationSelectorOverlay:get_key()
     elseif location_selector.choosing_craft_guild then
         return 'GUILDHALL'
     end
+end
+
+function LocationSelectorOverlay:reset()
+    LocationSelectorOverlay.super.reset(self)
+    self.cache = nil
+    self.subviews.hide_established:setOption(true, false)
+end
+
+function LocationSelectorOverlay:get_cache()
+    if self.cache then return self.cache end
+    local cache = {}
+    for _,location in ipairs(df.global.world.world_data.active_site[0].buildings) do
+        if df.abstract_building_templest:is_instance(location) then
+            ensure_keys(cache, 'temple', location.deity_type)[location.deity_data.Religion] = true
+        elseif df.abstract_building_guildhallst:is_instance(location) then
+            ensure_keys(cache, 'guildhall')[location.contents.profession] = true
+        end
+    end
+    self.cache = cache
+    return self.cache
+end
+
+function LocationSelectorOverlay:matches_temple_filter(id, flag)
+    if id == -1 then return true end
+    local hide_established = self.subviews.hide_established:getOptionValue()
+    return not hide_established or not safe_index(self:get_cache(), 'temple', flag, id)
+end
+
+function LocationSelectorOverlay:matches_guildhall_filter(id)
+    local hide_established = self.subviews.hide_established:getOptionValue()
+    return not hide_established or not safe_index(self:get_cache(), 'guildhall', id)
 end
 
 return _ENV

@@ -119,6 +119,11 @@ bool matchesFilters(df::item * item, const df::job_item * jitem, HeatSafety heat
         && static_cast<df::item_slabst *>(item)->engraving_type != df::slab_engraving_type::Memorial)
         return false;
 
+    if (item->getType() == df::item_type::CAGE && specials.count("empty")
+        && (Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT)
+            || Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM)))
+        return false;
+
     if (!matchesHeatSafety(item->getMaterial(), item->getMaterialIndex(), heat))
         return false;
 

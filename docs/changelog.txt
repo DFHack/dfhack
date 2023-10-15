@@ -74,6 +74,7 @@ Template for new versions:
 - `orders`: ``recheck`` command now only resets orders that have conditions that can be rechecked
 - `sort`: added help button for squad assignment search/filter/sort
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
+- `buildingplan`: support filtering cages by whether they are occupied
 
 ## Documentation
 - unavailable tools are no longer listed in the tag indices in the online docs

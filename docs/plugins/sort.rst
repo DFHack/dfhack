@@ -132,6 +132,9 @@ the relevant profession, religion, or deity by name. For temples, you can also
 search for the "spheres" associated with the deity or religion, such as
 "wealth" or "lies".
 
+You can also choose whether to filter out temple or guildhall types that you
+have already established.
+
 World overlay
 -------------
 

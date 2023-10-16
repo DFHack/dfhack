@@ -59,11 +59,28 @@ static bool isAccessible(color_ostream& out, df::item* item) {
     return is_walkable;
 }
 
+// as of v50, soap, coal, and ash are no longer valid building materials
+static bool isUnusableBar(color_ostream& out, df::item* item) {
+    if (item->getType() != df::item_type::BAR)
+        return false;
+
+    MaterialInfo minfo(item);
+    string token = minfo.getToken();
+    if (token.starts_with("COAL:") || token == "ASH")
+        return true;
+
+    df::job_item_flags2 ok;
+    df::job_item_flags2 mask;
+    minfo.getMatchBits(ok, mask);
+    return ok.bits.soap;
+}
+
 bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile()
-        && isAccessible(out, item);
+        && isAccessible(out, item)
+        && !isUnusableBar(out, item);
 }
 
 bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {

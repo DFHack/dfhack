@@ -268,6 +268,7 @@ function BuildingDialog:onInput(keys)
         return true
     end
     self:inputToSubviews(keys)
+    return true
 end
 
 function showBuildingPrompt(title, prompt, on_select, on_cancel, build_filter)

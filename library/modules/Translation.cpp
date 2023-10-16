@@ -27,7 +27,6 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
-using namespace std;
 
 #include "modules/Translation.h"
 #include "VersionInfo.h"
@@ -43,6 +42,8 @@ using namespace df::enums;
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/d_init.h"
+
+using std::vector, std::string;
 
 using df::global::world;
 using df::global::d_init;

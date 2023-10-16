@@ -944,23 +944,11 @@ function SquadAssignmentOverlay:init()
         },
     }
 
-    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-        tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
-    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-        tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
-    local help_pen_center = dfhack.pen.parse{
-        tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
-
     self:addviews{
         main_panel,
-        widgets.Label{
-            frame={t=0, r=1, w=3},
-            text={
-                {tile=button_pen_left},
-                {tile=help_pen_center},
-                {tile=button_pen_right},
-            },
-            on_click=function() dfhack.run_command('gui/launcher', 'sort ') end,
+        widgets.HelpButton{
+            frame={t=0, r=1},
+            command='sort',
         },
     }
 end

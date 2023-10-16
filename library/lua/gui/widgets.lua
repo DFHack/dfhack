@@ -4,6 +4,7 @@ local _ENV = mkmodule('gui.widgets')
 
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local textures = require('gui.textures')
 local utils = require('utils')
 
 local getval = utils.getval
@@ -1110,7 +1111,7 @@ end
 -- returns it (in parsed pen form)
 local function make_hpen(pen, hpen)
     if not hpen then
-        pen = dfhack.pen.parse(pen)
+        pen = to_pen(pen)
 
         -- Swap the foreground and background
         hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
@@ -1119,7 +1120,7 @@ local function make_hpen(pen, hpen)
     -- text_hpen needs a character in order to paint the background using
     -- Painter:fill(), so let's make it paint a space to show the background
     -- color
-    local hpen_parsed = dfhack.pen.parse(hpen)
+    local hpen_parsed = to_pen(hpen)
     hpen_parsed.ch = string.byte(' ')
     return hpen_parsed
 end
@@ -1502,6 +1503,77 @@ function HotkeyLabel:onInput(keys)
         self.on_activate()
         return true
     end
+end
+
+----------------
+-- HelpButton --
+----------------
+
+HelpButton = defclass(HelpButton, Panel)
+
+HelpButton.ATTRS{
+    command=DEFAULT_NIL,
+}
+
+local button_pen_left = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+local button_pen_right = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+local help_pen_center = to_pen{
+    tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+local configure_pen_center = dfhack.pen.parse{
+    tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
+
+function HelpButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function HelpButton:init()
+    local command = self.command .. ' '
+
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', command) end,
+        },
+    }
+end
+
+---------------------
+-- ConfigureButton --
+---------------------
+
+ConfigureButton = defclass(ConfigureButton, Panel)
+
+ConfigureButton.ATTRS{
+    on_click=DEFAULT_NIL,
+}
+
+function ConfigureButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function ConfigureButton:init()
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=configure_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=self.on_click,
+        },
+    }
 end
 
 -----------------

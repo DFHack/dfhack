@@ -1707,3 +1707,15 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
 
     return true;
 }
+
+void Buildings::completebuild(df::building* bld, char in_play)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto fp = df::global::buildingst_completebuild;
+    CHECK_NULL_POINTER(fp);
+
+    typedef std::function<void(df::building* bld, char)> FT;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(bld, in_play);
+}

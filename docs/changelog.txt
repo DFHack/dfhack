@@ -130,11 +130,12 @@ Template for new versions:
 - unavailable tools are no longer listed in the tag indices in the online docs
 
 ## API
+- added ``Buildings::completebuild``, used to link a newly created building into the world
 - added ``Items::getCapacity``, returns the capacity of an item as a container (reverse-engineered), needed for `combine`
 
 ## Lua
 - added ``GRAY`` color aliases for ``GREY`` colors
-- added ``dfhack.items.getCapacity`` to expose the new module API
+- added ``dfhack.items.completebuild`` and ``dfhack.items.getCapacity`` to expose new module APIs
 - ``utils.search_text``: text search routine (generalized from internal ``widgets.FilteredList`` logic)
 
 ## Removed

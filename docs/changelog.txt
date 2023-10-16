@@ -86,6 +86,7 @@ Template for new versions:
 - unavailable tools are no longer listed in the tag indices in the online docs
 
 ## API
+- added ``Items::getCapacity``, returns the capacity of an item as a container (reverse-engineered), needed for `combine`
 
 ## Lua
 - added ``GRAY`` color aliases for ``GREY`` colors

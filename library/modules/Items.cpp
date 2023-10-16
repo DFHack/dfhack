@@ -2283,3 +2283,40 @@ bool Items::isSquadEquipment(df::item *item)
     auto &vec = plotinfo->equipment.items_assigned[item->getType()];
     return binsearch_index(vec, item->id) >= 0;
 }
+
+// reverse engineered, code reference: 0x140953150 in 50.11-win64-steam
+// our name for this function: itemst::getCapacity
+// bay12 name for this function: not known
+
+int32_t Items::getCapacity(df::item* item)
+{
+    CHECK_NULL_POINTER(item);
+
+    switch (item->getType()) {
+    case df::enums::item_type::FLASK:
+    case df::enums::item_type::GOBLET:
+        return 180;
+    case df::enums::item_type::CAGE:
+    case df::enums::item_type::BARREL:
+    case df::enums::item_type::COFFIN:
+    case df::enums::item_type::BOX:
+    case df::enums::item_type::BAG:
+    case df::enums::item_type::BIN:
+    case df::enums::item_type::ARMORSTAND:
+    case df::enums::item_type::WEAPONRACK:
+    case df::enums::item_type::CABINET:
+        return 6000;
+    case df::enums::item_type::BUCKET:
+        return 600;
+    case df::enums::item_type::ANIMALTRAP:
+    case df::enums::item_type::BACKPACK:
+        return 3000;
+    case df::enums::item_type::QUIVER:
+        return 1200;
+    case df::enums::item_type::TOOL:
+        auto tool = virtual_cast<df::item_toolst>(item);
+        if (tool)
+            return tool->subtype->container_capacity;
+    }
+    return 0;
+}

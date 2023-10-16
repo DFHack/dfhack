@@ -212,6 +212,8 @@ DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *carav
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);
 /// Checks whether the item is assigned to a squad
 DFHACK_EXPORT bool isSquadEquipment(df::item *item);
+/// Returns the item's capacity as a storage container
+DFHACK_EXPORT int32_t getCapacity(df::item* item);
 
 }
 }

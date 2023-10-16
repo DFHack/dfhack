@@ -652,6 +652,7 @@ end
 function PlannerOverlay:toggle_minimized()
     self.state.minimized = not self.state.minimized
     config:write()
+    self:reset()
 end
 
 function PlannerOverlay:draw_divider_h(dc)

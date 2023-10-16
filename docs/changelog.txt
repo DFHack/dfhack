@@ -66,6 +66,7 @@ Template for new versions:
 
 ## Fixes
 - `buildingplan`: remove bars of ash, coal, and soap as valid building materials to match v50 rules
+- `buildingplan`: fix incorrect required items being displayed sometimes when switching the planner overlay on and off
 - `zone`: races without specific child or baby names will now get generic child/baby names instead of an empty string
 - `zone`: don't show animal assignment link for cages and restraints linked to dungeon zones (which aren't normally assignable)
 - `sort`: don't count mercenaries as appointed officials in the squad assignment screen

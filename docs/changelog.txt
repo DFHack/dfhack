@@ -83,7 +83,6 @@ Template for new versions:
 - unavailable tools are no longer listed in the tag indices in the online docs
 
 ## API
-- Translate: will use DF's ``translate_name`` function, if available, instead of the DFHack emulation
 
 ## Lua
 - added ``GRAY`` color aliases for ``GREY`` colors

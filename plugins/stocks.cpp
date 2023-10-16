@@ -1,3 +1,13 @@
+#include "PluginManager.h"
+
+using std::vector;
+using std::string;
+
+using namespace DFHack;
+
+DFHACK_PLUGIN("stocks");
+
+/*
 #include "uicommon.h"
 #include "listcolumn.h"
 
@@ -41,12 +51,12 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 #define MAX_NAME 30
 #define SIDEBAR_WIDTH 30
-
+*/
 
 /*
  * Utility
  */
-
+/*
 static string get_quality_name(const df::item_quality quality)
 {
     if (gps->dimx - SIDEBAR_WIDTH < 60)
@@ -66,12 +76,12 @@ static df::item *get_container_of(df::unit *unit)
     auto ref = Units::getGeneralRef(unit, general_ref_type::CONTAINED_IN_ITEM);
     return (ref) ? ref->getItem() : nullptr;
 }
-
+*/
 
 /*
  * Trade Info
  */
-
+/*
 class TradeDepotInfo
 {
 public:
@@ -168,12 +178,12 @@ private:
 };
 
 static TradeDepotInfo depot_info;
-
+*/
 
 /*
  * Item manipulation
  */
-
+/*
 static map<df::item *, bool> items_in_cages;
 
 static df::job *get_item_job(df::item *item)
@@ -950,7 +960,7 @@ public:
 
         OutputHotkeyString(x, y, "Min Qual: ", "-+");
         OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
-        OutputHotkeyString(x, y, "Max Qual: ", "/*");
+        OutputHotkeyString(x, y, "Max Qual: ", "/ *");
         OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
@@ -1466,19 +1476,22 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
 
     return CR_WRONG_USAGE;
 }
+*/
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
+    /*
     commands.push_back(PluginCommand(
         "stocks",
         "An improved stocks management screen.",
         stocks_cmd));
 
     ViewscreenStocks::reset();
-
+    */
     return CR_OK;
 }
 
+/*
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
@@ -1491,3 +1504,4 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
+*/

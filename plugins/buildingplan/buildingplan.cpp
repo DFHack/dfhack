@@ -677,7 +677,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
         int32_t custom, int index, bool ignore_filters, vector<int> *item_ids = NULL,
         map<MaterialInfo, int32_t> *counts = NULL) {
     DEBUG(status,out).print(
-            "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
+            "entering scanAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
@@ -755,7 +755,30 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
-    return scanAvailableItems(out, type, subtype, custom, index, false);
+    int count = scanAvailableItems(out, type, subtype, custom, index, false);
+    if (count)
+        return count;
+
+    // nothing in stock; return how many are waiting in line as a negative
+    BuildingTypeKey key(type, subtype, custom);
+    auto &job_items = get_job_items(out, key);
+    if (index < 0 || job_items.size() <= (size_t)index)
+        return 0;
+    auto &jitem = job_items[index];
+
+    for (auto &entry : planned_buildings) {
+        auto &pb = entry.second;
+        // don't actually remove bad buildings from the list while we're
+        // actively iterating through that list
+        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
+        if (!bld || bld->jobs.size() != 1)
+            continue;
+        for (auto pb_jitem : bld->jobs[0]->job_items) {
+            if (pb_jitem->item_type == jitem->item_type && pb_jitem->item_subtype == jitem->item_subtype)
+                count -= pb_jitem->quantity;
+        }
+    }
+    return count;
 }
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {

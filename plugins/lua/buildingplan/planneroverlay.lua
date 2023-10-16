@@ -295,9 +295,12 @@ function ItemLine:get_item_line_text()
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
         self.note = ' Available now'
+    elseif self.available >= 0 then
+        self.note_pen = COLOR_BROWN
+        self.note = (' Will link next (need to make %d)'):format(quantity - self.available)
     else
         self.note_pen = COLOR_BROWN
-        self.note = ' Will link later'
+        self.note = (' Will link later (need to make %d)'):format(-self.available + quantity)
     end
     self.note = string.char(192) .. self.note -- character 192 is "└"
 
@@ -318,7 +321,7 @@ function ItemLine:reduce_quantity(used_quantity)
     if not self.available then return end
     local filter = get_cur_filters()[self.idx]
     used_quantity = used_quantity or get_quantity(filter, self.is_hollow_fn())
-    self.available = math.max(0, self.available - used_quantity)
+    self.available = self.available - used_quantity
 end
 
 local function get_placement_errors()

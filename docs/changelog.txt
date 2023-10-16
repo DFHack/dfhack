@@ -63,6 +63,7 @@ Template for new versions:
 - `sort`: new search widgets for burrow assignment screen and other unit assignment dialogs
 - `sort`: new search widgets for artifacts on the world/raid screen
 - `sort`: new search widgets for slab engraving menu; can filter for only units that need a slab to prevent rising as a ghost
+- `stocks`: hotkey for collapsing all categories on stocks screen
 
 ## Fixes
 - `buildingplan`: remove bars of ash, coal, and soap as valid building materials to match v50 rules

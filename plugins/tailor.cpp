@@ -425,7 +425,6 @@ public:
 
             int size = world->raws.creatures.all[race]->adultsize;
 
-
             auto tt = jobTypeMap.find(o->job_type);
             if (tt == jobTypeMap.end())
             {
@@ -439,6 +438,21 @@ public:
                 size);
         }
 
+    }
+
+    static df::manager_order * get_existing_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat) {
+        for (auto order : world->manager_orders) {
+            if (order->job_type == ty &&
+                    order->item_type == df::item_type::NONE &&
+                    order->item_subtype == sub &&
+                    order->mat_type == -1 &&
+                    order->mat_index == -1 &&
+                    order->hist_figure_id == hfid &&
+                    order->material_category.whole == mcat.whole &&
+                    order->frequency == df::manager_order::T_frequency::OneTime)
+                return order;
+        }
+        return NULL;
     }
 
     int place_orders()
@@ -532,21 +546,29 @@ public:
                         }
                         supply[m] -= c;
 
-                        auto order = new df::manager_order;
-                        order->job_type = ty;
-                        order->item_type = df::item_type::NONE;
-                        order->item_subtype = sub;
-                        order->mat_type = -1;
-                        order->mat_index = -1;
-                        order->amount_left = c;
-                        order->amount_total = c;
-                        order->status.bits.validated = false;
-                        order->status.bits.active = false;
-                        order->id = world->manager_order_next_id++;
-                        order->hist_figure_id = sizes[size];
-                        order->material_category = m.job_material;
+                        auto order = get_existing_order(ty, sub, sizes[size], m.job_material);
+                        if (order) {
+                            if (order->amount_total > 0) {
+                                order->amount_left += c;
+                                order->amount_total += c;
+                            }
+                        } else {
+                            order = new df::manager_order;
+                            order->job_type = ty;
+                            order->item_type = df::item_type::NONE;
+                            order->item_subtype = sub;
+                            order->mat_type = -1;
+                            order->mat_index = -1;
+                            order->amount_left = c;
+                            order->amount_total = c;
+                            order->status.bits.validated = false;
+                            order->status.bits.active = false;
+                            order->id = world->manager_order_next_id++;
+                            order->hist_figure_id = sizes[size];
+                            order->material_category = m.job_material;
 
-                        world->manager_orders.push_back(order);
+                            world->manager_orders.push_back(order);
+                        }
 
                         INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
                             order->id,

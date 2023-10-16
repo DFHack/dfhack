@@ -81,6 +81,7 @@ Template for new versions:
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 - `buildingplan`: support filtering cages by whether they are occupied
 - `buildingplan`: show how many items you need to make when planning buildings
+- `tailor`: now adds to existing orders if possilbe instead of creating new ones
 
 ## Documentation
 - unavailable tools are no longer listed in the tag indices in the online docs

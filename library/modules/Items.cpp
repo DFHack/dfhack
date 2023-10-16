@@ -2317,6 +2317,7 @@ int32_t Items::getCapacity(df::item* item)
         auto tool = virtual_cast<df::item_toolst>(item);
         if (tool)
             return tool->subtype->container_capacity;
+    default:
     }
     return 0;
 }

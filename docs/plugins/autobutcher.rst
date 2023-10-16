@@ -70,7 +70,7 @@ Usage
 ``autobutcher list_export``
     Print commands required to set the current settings in another fort.
 
-To see a list of all races, run this command:
+To see a list of all races, run this command::
 
     devel/query --table df.global.world.raws.creatures.all --search ^creature_id --maxdepth 1
 

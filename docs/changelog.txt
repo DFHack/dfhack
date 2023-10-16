@@ -78,6 +78,7 @@ Template for new versions:
 - `sort`: added help button for squad assignment search/filter/sort
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 - `buildingplan`: support filtering cages by whether they are occupied
+- `buildingplan`: show how many items you need to make when planning buildings
 
 ## Documentation
 - unavailable tools are no longer listed in the tag indices in the online docs

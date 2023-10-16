@@ -27,7 +27,6 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
-#include <functional>
 
 #include "modules/Translation.h"
 #include "VersionInfo.h"
@@ -36,7 +35,6 @@ distribution.
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "Error.h"
-#include "Debug.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -50,10 +48,6 @@ using std::vector, std::string;
 using df::global::world;
 using df::global::d_init;
 using df::global::gametype;
-
-namespace DFHack {
-    DBG_DECLARE(core, translate, DebugCategory::LINFO);
-}
 
 bool Translation::IsValid ()
 {
@@ -174,23 +168,6 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
     CHECK_NULL_POINTER(name);
 
     string out;
-
-    auto fp = df::global::translate_name;
-
-    if (fp) {
-        DEBUG(translate).print("using df provided translate_name function\n");
-        typedef std::function<void(const df::language_name&, std::string&, bool, bool)> fun_type;
-        auto f = reinterpret_cast<fun_type*>(fp);
-        try {
-            (*f)(*name, out, inEnglish, onlyLastPart);
-            return out;
-        }
-        catch (...) {
-            WARN(translate).print("df provided translate_name function threw an exception, falling back\n");
-        }
-    }
-
-    DEBUG(translate).print("using dfhack fallback translate_name function\n");
     string word;
 
     if (!onlyLastPart) {

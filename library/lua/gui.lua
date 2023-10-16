@@ -1027,6 +1027,11 @@ function FramedScreen:onRenderFrame(dc, rect)
     paint_frame(dc,rect,self.frame_style,self.frame_title)
 end
 
+function FramedScreen:onInput(keys)
+    FramedScreen.super.onInput(self, keys)
+    return true -- FramedScreens are modal
+end
+
 -- Inverts the brightness of the color, optionally taking a "bold" parameter,
 -- which you should include if you're reading the fg color of a pen.
 function invert_color(color, bold)

@@ -358,10 +358,10 @@ function PlannerOverlay:init()
     }
 
     local minimized_panel = widgets.Panel{
-        frame={t=0, r=1, w=17, h=1},
+        frame={t=0, r=1, w=20, h=1},
         subviews={
             widgets.Label{
-                frame={t=0, r=0, h=1},
+                frame={t=0, r=3, h=1},
                 text={
                     {text=' show Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(31)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
@@ -370,7 +370,7 @@ function PlannerOverlay:init()
                 on_click=self:callback('toggle_minimized'),
             },
             widgets.Label{
-                frame={t=0, r=0, h=1},
+                frame={t=0, r=3, h=1},
                 text={
                     {text=' hide Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(30)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
@@ -378,6 +378,10 @@ function PlannerOverlay:init()
                 visible=self:callback('is_not_minimized'),
                 on_click=self:callback('toggle_minimized'),
             },
+            widgets.HelpButton{
+                frame={t=0, r=0},
+                command='buildingplan',
+            }
         },
     }
 

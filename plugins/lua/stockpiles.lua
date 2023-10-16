@@ -4,7 +4,6 @@ local argparse = require('argparse')
 local gui = require('gui')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
-local textures = require('gui.textures')
 local widgets = require('gui.widgets')
 
 local STOCKPILES_DIR = 'dfhack-config/stockpiles'
@@ -477,15 +476,6 @@ function StockpilesOverlay:init()
         },
     }
 
-    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-        tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
-    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-        tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
-    local help_pen_center = dfhack.pen.parse{
-        tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
-    local configure_pen_center = dfhack.pen.parse{
-        tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
-
     self:addviews{
         main_panel,
         MinimizeButton{
@@ -493,23 +483,13 @@ function StockpilesOverlay:init()
             get_minimized_fn=function() return self.minimized end,
             on_click=self:callback('toggleMinimized'),
         },
-        widgets.Label{
-            frame={t=0, r=5, w=3},
-            text={
-                {tile=button_pen_left},
-                {tile=configure_pen_center},
-                {tile=button_pen_right},
-            },
+        widgets.ConfigureButton{
+            frame={t=0, r=5},
             on_click=function() ConfigModal{on_close=self:callback('on_custom_config')}:show() end,
         },
-        widgets.Label{
-            frame={t=0, r=1, w=3},
-            text={
-                {tile=button_pen_left},
-                {tile=help_pen_center},
-                {tile=button_pen_right},
-            },
-            on_click=function() dfhack.run_command('gui/launcher', 'stockpiles ') end,
+        widgets.HelpButton{
+            frame={t=0, r=1},
+            command='stockpiles',
         },
     }
 end

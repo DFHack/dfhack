@@ -75,6 +75,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates
+- Help icons added to several complex overlays. clicking the icon runs `gui/launcher` with the help text in the help area
 - `orders`: ``recheck`` command now only resets orders that have conditions that can be rechecked
 - `sort`: added help button for squad assignment search/filter/sort
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens

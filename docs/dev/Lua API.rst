@@ -5207,6 +5207,27 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+HelpButton class
+----------------
+
+A 3x1 tile button with a question mark on it, intended to represent a help
+icon. Clicking on the icon will launch `gui/launcher` with a given command
+string, showing the help text for that command.
+
+It has the following attributes:
+
+:command: The command to load in `gui/launcher`.
+
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear mark on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback.
+
+It has the following attributes:
+
+:on_click: The function on run when the icon is clicked.
+
 BannerPanel class
 -----------------
 

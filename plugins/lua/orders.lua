@@ -122,7 +122,7 @@ function OrdersOverlay:init()
     }
 
     local minimized_panel = widgets.Panel{
-        frame={t=0, r=0, w=3, h=1},
+        frame={t=0, r=4, w=3, h=1},
         subviews={
             widgets.Label{
                 frame={t=0, l=0, w=1, h=1},
@@ -149,6 +149,11 @@ function OrdersOverlay:init()
     self:addviews{
         main_panel,
         minimized_panel,
+        widgets.HelpButton{
+            frame={t=0, r=1},
+            command='orders',
+            visible=function() return not self.minimized end,
+        },
     }
 end
 

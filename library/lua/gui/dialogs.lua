@@ -66,7 +66,8 @@ function MessageBox:onInput(keys)
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -135,7 +136,8 @@ function InputBox:onInput(keys)
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -236,7 +238,8 @@ function ListBox:onInput(keys)
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

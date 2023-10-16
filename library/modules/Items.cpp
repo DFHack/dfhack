@@ -2314,10 +2314,14 @@ int32_t Items::getCapacity(df::item* item)
     case df::enums::item_type::QUIVER:
         return 1200;
     case df::enums::item_type::TOOL:
-        auto tool = virtual_cast<df::item_toolst>(item);
-        if (tool)
-            return tool->subtype->container_capacity;
+        {
+            auto tool = virtual_cast<df::item_toolst>(item);
+            if (tool)
+                return tool->subtype->container_capacity;
+        }
+        // fall through
     default:
+        ; // fall through to default exit
     }
     return 0;
 }

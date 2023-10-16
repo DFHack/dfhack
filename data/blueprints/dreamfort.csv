@@ -413,7 +413,7 @@ corridor_traps/surface_corridor_traps
 
 
 
-"#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs, your grazing animals to the large pasture, and your male birds to the zone between the rows of nestboxes.) pastures and training areas"
+"#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs, your grazing animals to the large pasture, and your male birds to the zone between the rows of nestboxes. If your wagon is far away, you can let your animals wander closer to the fort before pasturing them to save hauling time.) pastures and training areas"
 
 
 
@@ -835,7 +835,7 @@ You might also want to set the ""trade goods quantum"" stockpile to autotrade.) 
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,"a{name=""Pets/Prisoner feeder"" autotrain=true}(9x5)",,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,"a10{name=""Pets/Prisoner feeder"" autotrain=true}(9x5)",,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -2452,7 +2452,7 @@ doors/guildhall_doors
 "#build label(guildhall_furnish) start(15; 15; central stairs) hidden() furnish 4 guildhalls, 3 temples, and a library"
 
 
-,,`,`,`,`,s,`,`,,,`,s,`,c,`,`,f,,,`,`,s,`,`,`,`
+,,F,`,`,`,s,`,`,,,F,s,`,c,`,`,f,,,`,`,s,`,`,`,F
 ,,`,`,c,`,`,`,`,,,`,`,h,~a,`,`,f,,,`,`,`,`,c,`,`
 ,,`,c,t,c,`,`,s,,,`,`,`,`,`,`,`,,,s,`,`,c,t,c,`
 ,,`,`,c,`,c,`,`,,,`,`,`,`,`,`,`,,,`,`,c,`,c,`,`
@@ -2467,7 +2467,7 @@ doors/guildhall_doors
 ,,c,~a,`,`,c,c,`,,~,,`,,`,,`,,~,,`,c,c,`,`,~a,c
 ,,`,h,`,`,c,c,`,~,`,~,`,,,,`,~,`,~,`,c,c,`,`,h,`
 ,,s,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,s
-,,`,`,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,`,`
+,,F,`,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,`,F
 ,,,,,,,~,,,,,,`,~,`,,,,,,~
 ,,,,,,,~,,,,,,~,,~,,,,,,~
 ,,`,`,s,`,`,`,t,,,t,`,`,`,`,`,t,,,t,`,`,`,s,`,`
@@ -2476,7 +2476,7 @@ doors/guildhall_doors
 ,,`,`,c,`,c,`,`,,,t,c,`,`,`,c,t,,,`,`,c,`,c,`,`
 ,,`,c,t,c,`,`,s,,,t,c,`,`,`,c,t,,,s,`,`,c,t,c,`
 ,,`,`,c,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,c,`,`
-,,`,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,`
+,,F,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,F
 
 
 #notes label(beds_help)

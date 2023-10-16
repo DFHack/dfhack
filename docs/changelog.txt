@@ -90,6 +90,7 @@ Template for new versions:
 
 ## Lua
 - added ``GRAY`` color aliases for ``GREY`` colors
+- added ``dfhack.items.getCapacity`` to expose the new module API
 - ``utils.search_text``: text search routine (generalized from internal ``widgets.FilteredList`` logic)
 
 ## Removed

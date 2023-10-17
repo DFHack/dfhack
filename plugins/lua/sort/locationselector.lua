@@ -79,7 +79,7 @@ function LocationSelectorOverlay:init()
                     frame={l=1, t=0, r=1},
                     label="Hide established:",
                     key='CUSTOM_SHIFT_E',
-                    initial_option=true,
+                    initial_option=false,
                     on_change=function() self:do_search(self.subviews.search.text, true) end,
                 },
             },
@@ -113,7 +113,7 @@ end
 function LocationSelectorOverlay:reset()
     LocationSelectorOverlay.super.reset(self)
     self.cache = nil
-    self.subviews.hide_established:setOption(true, false)
+    self.subviews.hide_established:setOption(false, false)
 end
 
 function LocationSelectorOverlay:get_cache()

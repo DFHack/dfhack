@@ -52,6 +52,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r2
+
+## New Tools
 - `spectate`: (reinstated) automatically follow dwarves, cycling among interesting ones
 - `preserve-tombs`: keep tombs assigned to units when they die
 

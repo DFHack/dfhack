@@ -50,7 +50,7 @@ Many DFHack tools that worked in previous (pre-Steam) versions of DF have not be
 
 The in-game interface for running DFHack commands (`gui/launcher`) will not show "unavailable" tools by default. You can still run them if you know their names, or you can turn on dev mode by hitting Ctrl-D while in `gui/launcher` and they will be added to the autocomplete list. Some tools do not compile yet and are not available at all, even when in dev mode.
 
-If you see a tool complaining about the lack of a cursor, know that it's referring to the **keyboard** cursor (which used to be the only real option in Dwarf Fortress). You can enable the keyboard cursor by entering mining mode or selecting the dump/forbid tool and hitting Alt-K (the DFHack keybinding for `toggle-kbd-cursor`. We're working on making DFHack tools more mouse-aware and accessible so this step isn't necessary in the future.
+If you see a tool complaining about the lack of a cursor, know that it's referring to the **keyboard** cursor (which used to be the only real option in Dwarf Fortress). You can enable the keyboard cursor by entering mining mode or selecting the dump/forbid tool and hitting Alt-K (the DFHack keybinding for `toggle-kbd-cursor`). We're working on making DFHack tools more mouse-aware and accessible so this step isn't necessary in the future.
 
 </details>
 

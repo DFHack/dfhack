@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `stockpiles`: hide configure and help buttons when the overlay panel is minimized
 
 ## Misc Improvements
 

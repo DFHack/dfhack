@@ -403,11 +403,15 @@ StockpilesOverlay.ATTRS{
 function StockpilesOverlay:init()
     self.minimized = false
 
+    local function is_expanded()
+        return not self.minimized
+    end
+
     local main_panel = widgets.Panel{
         view_id='main',
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
-        visible=function() return not self.minimized end,
+        visible=is_expanded,
         subviews={
             -- widgets.HotkeyLabel{
             --     frame={t=0, l=0},
@@ -486,10 +490,12 @@ function StockpilesOverlay:init()
         widgets.ConfigureButton{
             frame={t=0, r=5},
             on_click=function() ConfigModal{on_close=self:callback('on_custom_config')}:show() end,
+            visible=is_expanded,
         },
         widgets.HelpButton{
             frame={t=0, r=1},
             command='stockpiles',
+            visible=is_expanded,
         },
     }
 end

@@ -1715,7 +1715,7 @@ void Buildings::completebuild(df::building* bld, char in_play)
     auto fp = df::global::buildingst_completebuild;
     CHECK_NULL_POINTER(fp);
 
-    typedef std::function<void(df::building* bld, char)> FT;
+    using FT = std::function<void(df::building* bld, char)>;
     auto f = reinterpret_cast<FT*>(fp);
     (*f)(bld, in_play);
 }

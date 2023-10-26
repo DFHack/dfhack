@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `buildingplan`: display how many items are available on the planner panel
 
 ## Documentation
 

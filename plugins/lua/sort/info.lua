@@ -97,16 +97,9 @@ local function get_sort()
     end
 end
 
-local function get_unit_search_key(unit)
-    return ('%s %s %s'):format(
-        dfhack.units.getReadableName(unit),  -- last name is in english
-        dfhack.units.getProfessionName(unit),
-        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
-end
-
 local function get_cri_unit_search_key(cri_unit)
     return ('%s %s'):format(
-        cri_unit.un and get_unit_search_key(cri_unit.un) or '',
+        cri_unit.un and sortoverlay.get_unit_search_key(cri_unit.un) or '',
         cri_unit.job_sort_name)
 end
 
@@ -132,7 +125,7 @@ local function work_details_search(vec, data, text, incremental)
         data.selected = work_details.selected_work_detail_index
     end
     sortoverlay.single_vector_search(
-        {get_search_key_fn=get_unit_search_key},
+        {get_search_key_fn=sortoverlay.get_unit_search_key},
         vec, data, text, incremental)
 end
 
@@ -161,7 +154,7 @@ end
 local function get_candidate_search_key(cand)
     if not cand.un then return end
     return ('%s %s'):format(
-        get_unit_search_key(cand.un),
+        sortoverlay.get_unit_search_key(cand.un),
         serialize_skills(cand.un))
 end
 
@@ -420,7 +413,7 @@ function InterrogationOverlay:init()
     self:register_handler('INTERROGATING', justice.interrogation_list,
         curry(sortoverlay.flags_vector_search,
             {
-                get_search_key_fn=get_unit_search_key,
+                get_search_key_fn=sortoverlay.get_unit_search_key,
                 get_elem_id_fn=function(unit) return unit.id end,
                 matches_filters_fn=self:callback('matches_filters'),
             },
@@ -428,7 +421,7 @@ function InterrogationOverlay:init()
     self:register_handler('CONVICTING', justice.conviction_list,
         curry(sortoverlay.single_vector_search,
             {
-                get_search_key_fn=get_unit_search_key,
+                get_search_key_fn=sortoverlay.get_unit_search_key,
                 matches_filters_fn=self:callback('matches_filters'),
             }))
 end

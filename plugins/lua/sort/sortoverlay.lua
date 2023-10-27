@@ -3,6 +3,13 @@ local _ENV = mkmodule('plugins.sort.sortoverlay')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
 
+function get_unit_search_key(unit)
+    return ('%s %s %s'):format(
+        dfhack.units.getReadableName(unit),  -- last name is in english
+        dfhack.units.getProfessionName(unit),
+        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
+end
+
 local function copy_to_lua_table(vec)
     local tab = {}
     for k,v in ipairs(vec) do

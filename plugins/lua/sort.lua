@@ -3,7 +3,7 @@ local _ENV = mkmodule('plugins.sort')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
-local textures = require('gui.textures')
+local sortoverlay = require('plugins.sort.sortoverlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -1031,7 +1031,7 @@ local function filter_matches(unit_id, filter)
     if filter.maimed == 'only' and not is_maimed(unit) then return false end
     if filter.maimed == 'exclude' and is_maimed(unit) then return false end
     if #filter.search == 0 then return true end
-    local search_key = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
+    local search_key = sortoverlay.get_unit_search_key(unit)
     return normalize_search_key(search_key):find(dfhack.toSearchNormalized(filter.search))
 end
 
@@ -1233,6 +1233,7 @@ local function init_face_tiles()
         FACE_TILES[idx-1] = face
     end
 end
+init_face_tiles()
 
 function get_stress_face_tile(idx, x, y)
     local elem = rating_annotations[idx]
@@ -1240,7 +1241,7 @@ function get_stress_face_tile(idx, x, y)
         return x == 0 and y == 1 and DASH_PEN or gui.CLEAR_PEN
     end
     local val = math.min(6, elem.val)
-    return FACE_TILES[val][y][x]
+    return safe_index(FACE_TILES, val, y, x)
 end
 
 function SquadAnnotationOverlay:init()

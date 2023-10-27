@@ -20,10 +20,7 @@ UnitSelectorOverlay.ATTRS{
 local function get_unit_id_search_key(unit_id)
     local unit = df.unit.find(unit_id)
     if not unit then return end
-    return ('%s %s %s'):format(
-        dfhack.units.getReadableName(unit),  -- last name is in english
-        dfhack.units.getProfessionName(unit),
-        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
+    return sortoverlay.get_unit_search_key(unit)
 end
 
 function UnitSelectorOverlay:init()

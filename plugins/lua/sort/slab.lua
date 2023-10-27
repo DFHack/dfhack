@@ -5,7 +5,6 @@ local sortoverlay = require('plugins.sort.sortoverlay')
 local widgets = require('gui.widgets')
 
 local building = df.global.game.main_interface.building
-local view_sheets = df.global.game.main_interface.view_sheets
 
 -- ----------------------
 -- SlabOverlay
@@ -95,9 +94,7 @@ end
 function SlabOverlay:get_search_key(if_button)
     local unit = get_unit(if_button)
     if not unit then return if_button.filter_str end
-    return ('%s %s'):format(
-        dfhack.units.getReadableName(unit),  -- last name is in english
-        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
+    return sortoverlay.get_unit_search_key(unit)
 end
 
 local function needs_slab(if_button)

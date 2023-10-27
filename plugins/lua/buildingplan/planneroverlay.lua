@@ -294,7 +294,7 @@ function ItemLine:get_item_line_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
-        self.note = ' Available now'
+        self.note = (' %d available now'):format(self.available)
     elseif self.available >= 0 then
         self.note_pen = COLOR_BROWN
         self.note = (' Will link next (need to make %d)'):format(quantity - self.available)

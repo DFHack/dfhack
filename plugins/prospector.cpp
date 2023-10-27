@@ -567,23 +567,8 @@ static command_result embark_prospector(color_ostream &out,
                                         df::viewscreen_choose_start_sitest *screen,
                                         const prospect_options &options)
 {
-    out.printerr("prospector at embark is not currently available.\n");
-    return CR_FAILURE;
-
-/*
-    if (!world || !world->world_data)
-    {
+    if (!world->world_data) {
         out.printerr("World data is not available.\n");
-        return CR_FAILURE;
-    }
-
-    df::world_data *data = world->world_data;
-    coord2d cur_region = screen->location.region_pos;
-    auto cur_details = get_details(data, cur_region);
-
-    if (!cur_details)
-    {
-        out.printerr("Current region details are not available.\n");
         return CR_FAILURE;
     }
 
@@ -595,12 +580,18 @@ static command_result embark_prospector(color_ostream &out,
     // Compute biomes
     std::map<coord2d, int> biomes;
 
-    for (int x = screen->location.embark_pos_min.x; x <= 15 && x <= screen->location.embark_pos_max.x; x++)
-    {
-        for (int y = screen->location.embark_pos_min.y; y <= 15 && y <= screen->location.embark_pos_max.y; y++)
-        {
+    int32_t max_x = (world->worldgen.worldgen_parms.dim_x * 16) - 1;
+    int32_t max_y = (world->worldgen.worldgen_parms.dim_y * 16) - 1;
+
+    for (int x = screen->location.embark_pos_min.x; x <= max_x && x <= screen->location.embark_pos_max.x; ++x) {
+        for (int y = screen->location.embark_pos_min.y; y <= max_y && y <= screen->location.embark_pos_max.y; ++y) {
+            auto cur_details = get_details(world->world_data, coord2d(x / 16, y / 16));
+
+            if (!cur_details)
+                continue;
+
             EmbarkTileLayout tile;
-            if (!estimate_underground(out, tile, cur_details, x, y) ||
+            if (!estimate_underground(out, tile, cur_details, x % 16, y % 16) ||
                 !estimate_materials(out, tile, layerMats, veinMats))
                 return CR_FAILURE;
 
@@ -627,7 +618,6 @@ static command_result embark_prospector(color_ostream &out,
     out << std::endl << "Warning: the above data is only a very rough estimate." << std::endl;
 
     return CR_OK;
-*/
 }
 
 static command_result map_prospector(color_ostream &con,

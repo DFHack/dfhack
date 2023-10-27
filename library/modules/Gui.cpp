@@ -2094,13 +2094,13 @@ void Gui::resetDwarfmodeView(bool pause)
         *df::global::pause_state = true;
 }
 
-bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
+bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, bool highlight)
 {   // Reverse-engineered from DF announcement and scrolling code
     using df::global::window_x;
     using df::global::window_y;
     using df::global::window_z;
 
-    if (!window_x || !window_y || !window_z || !world)
+    if (!window_x || !window_y || !window_z || !world || !game)
         return false;
 
     auto dims = getDwarfmodeViewDims();
@@ -2136,6 +2136,12 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;
+
+    if (highlight) {
+        game->main_interface.recenter_indicator_m.x = x;
+        game->main_interface.recenter_indicator_m.y = y;
+        game->main_interface.recenter_indicator_m.z = z;
+    }
 
     return true;
 }

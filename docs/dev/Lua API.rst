@@ -1053,11 +1053,13 @@ Fortress mode
   Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
   ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
 
-* ``dfhack.gui.revealInDwarfmodeMap(pos[,center])``
-  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center])``
+* ``dfhack.gui.revealInDwarfmodeMap(pos[,center[,highlight]])``
+  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center[,highlight]])``
 
-  Centers the view on the given coordinates. If ``center`` is true, make sure the
-  position is in the exact center of the view, else just bring it on screen.
+  Centers the view on the given coordinates. If ``center`` is true, make sure
+  the position is in the exact center of the view, else just bring it on screen.
+  If ``highlight`` is true, then mark the target tile with a pulsing highlight
+  until the player clicks somewhere else.
 
   ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::

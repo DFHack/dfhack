@@ -1660,11 +1660,19 @@ static int gui_revealInDwarfmodeMap(lua_State *state)
     switch (lua_gettop(state))
     {
         default:
+        case 5:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4), lua_toboolean(state, 5));
+            break;
         case 4:
             rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
             break;
         case 3:
-            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
+            if (lua_isboolean(state, 3)) {
+                Lua::CheckDFAssign(state, &p, 1);
+                rv = Gui::revealInDwarfmodeMap(p, lua_toboolean(state, 2), lua_toboolean(state, 3));
+            }
+            else
+                rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
             break;
         case 2:
             Lua::CheckDFAssign(state, &p, 1);

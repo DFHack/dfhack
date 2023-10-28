@@ -66,8 +66,10 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 
 ## Lua
+- ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 
 ## Removed
 

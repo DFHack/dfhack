@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - `stockpiles`: hide configure and help buttons when the overlay panel is minimized
+- `caravan`: price of vermin swarms correctly adjusted down. a stack of 10000 is worth 1, not 10000
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel

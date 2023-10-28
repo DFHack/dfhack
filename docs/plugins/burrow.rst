@@ -1,46 +1,36 @@
-burrows
-=======
+burrow
+======
 
 .. dfhack-tool::
-    :summary: Auto-expand burrows as you dig.
-    :tags: unavailable
-    :no-command:
+    :summary: Quickly adjust burrow tiles and units.
+    :tags: fort auto design productivity units
 
-.. dfhack-command:: burrow
-    :summary: Quickly add units/tiles to burrows.
+This tool has two modes. When enabled, it monitors burrows with names that end
+in ``+``. If a wall at the edge of such a burrow is dug out, the burrow will be
+automatically extended to include the newly-revealed adjacent walls.
 
-When a wall inside a burrow with a name ending in ``+`` is dug out, the burrow
-will be extended to newly-revealed adjacent walls.
+When run as a command, it can quickly adjust which tiles and/or units are
+associated with the burrow.
 
 Usage
 -----
 
-``burrow enable auto-grow``
-    When a wall inside a burrow with a name ending in '+' is dug out, the burrow
-    will be extended to newly-revealed adjacent walls. This final '+' may be
-    omitted in burrow name args of other ``burrow`` commands. Note that digging
-    1-wide corridors with the miner inside the burrow is SLOW.
-``burrow disable auto-grow``
-    Disables auto-grow processing.
-``burrow clear-unit <burrow> [<burrow> ...]``
-    Remove all units from the named burrows.
-``burrow clear-tiles <burrow> [<burrow> ...]``
-    Remove all tiles from the named burrows.
-``burrow set-units target-burrow <burrow> [<burrow> ...]``
-    Clear all units from the target burrow, then add units from the named source
-    burrows.
-``burrow add-units target-burrow <burrow> [<burrow> ...]``
-    Add units from the source burrows to the target.
-``burrow remove-units target-burrow <burrow> [<burrow> ...]``
-    Remove units in source burrows from the target.
-``burrow set-tiles target-burrow <burrow> [<burrow> ...]``
-    Clear target burrow tiles and add tiles from the names source burrows.
-``burrow add-tiles target-burrow <burrow> [<burrow> ...]``
-    Add tiles from the source burrows to the target.
-``burrow remove-tiles target-burrow <burrow> [<burrow> ...]``
-    Remove tiles in source burrows from the target.
+::
 
-In place of a source burrow, you can use one of the following keywords:
+    enable burrow
+    burrow tiles|units clear <target burrow> [<target burrow> ...] [<options>]
+    burrow tiles|units set|add|remove <target burrow> <burrow> [...] [<options>]
+    burrow tiles box-add|box-remove <target burrow> <pos> [<pos>] [<options>]
+    burrow tiles flood-add|flood-remove <target burrow> [<options>]
+
+The burrows can be referenced by name or by the internal numeric burrow ID. If
+referenced by name, all burrows that match the name (case sensitive) will be
+included. If a burrow name ends in ``+`` (to indicate that it should be
+auto-expanded), the final ``+`` does not need to be specified on the
+commandline.
+
+For ``set``, ``add``, or ``remove`` commands, instead of a burrow, you can
+specify one of the following all-caps keywords:
 
 - ``ABOVE_GROUND``
 - ``SUBTERRANEAN``
@@ -51,4 +41,57 @@ In place of a source burrow, you can use one of the following keywords:
 - ``HIDDEN``
 - ``REVEALED``
 
-to add tiles with the given properties.
+to add or remove tiles with the corresponding properties.
+
+For flood fill, all tiles that match the properties (from the list above) of
+the specified start tile will be included. When flood adding, the flood fill
+will also stop at any tiles that have already been added to the burrow.
+Similarly for flood removing, the flood will also stop at tiles that are not in
+the burrow.
+
+Examples
+--------
+
+``enable burrow``
+    Start monitoring burrows that have names ending in '+' and automatically
+    expand them when walls that border the burrows are dug out.
+``burrow tiles clear Safety``
+    Remove all tiles from the burrow named ``Safety`` (in preparation for
+    adding new tiles elsewhere, presumably).
+``burrow units clear Farmhouse Workshops``
+    Remove all units from the burrows named ``Farmhouse`` and ``Workshops``.
+``multicmd burrow tiles set Inside INSIDE; burrow tiles remove Inside HIDDEN``
+    Reset the burrow named ``Inside`` to include all the currently revealed,
+    interior tiles.
+``burrow units set "Core Fort" Peasants Skilled``
+    Clear all units from the burrow named ``Core Fort``, then add units
+    currently assigned to the ``Peasants`` and ``Skilled`` burrows.
+``burrow tiles box-add Safety 0,0,0``
+    Add all tiles to the burrow named ``Safety`` that are within the volume of
+    the box starting at coordinate 0, 0, 0 (the upper left corner of the bottom
+    level) and ending at the current location of the keyboard cursor.
+``burrow tiles flood-add Safety --cur-zlevel``
+    Flood-add the tiles on the current z-level with the same properties as the
+    tile under the keyboard cursor to the burrow named ``Safety``.
+
+Options
+-------
+
+``-c``, ``--cursor <pos>``
+    Indicate the starting position of the box or flood fill. If not specified,
+    the position of the keyboard cursor is used.
+``-d``, ``--dry-run``
+    Report what would be done, but don't actually change anything.
+``-z``, ``--cur-zlevel``
+    Restricts the operation to the currently visible z-level.
+
+Note
+----
+
+If you are auto-expanding a burrow (whose name ends in a ``+``) and the miner
+who is digging to expand the burrow is assigned to that burrow, then 1-wide
+corridors that expand the burrow will have very slow progress. This is because
+the burrow is expanded to include the next dig job only after the miner has
+chosen a next tile to dig, which may be far away. 2-wide cooridors are much
+more efficient when expanding a burrow since the "next" tile to dig will still
+be nearby.

@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `prospect`: can now give you an estimate of resources from the embark screen. hover the mouse over a potential embark area and run `prospect`.
 
 ## Fixes
 - `stockpiles`: hide configure and help buttons when the overlay panel is minimized

@@ -87,14 +87,15 @@ function BurrowDesignationOverlay:init()
             subviews={
                 widgets.Label{
                     frame={t=0, l=1},
-                    text='Double-click to fill.',
+                    text='Double-click to fill. Shift double-click to 3D fill.',
                     auto_width=true,
+                    visible=function() return not is_choosing_area() end,
                 },
                 widgets.Label{
-                    frame={t=0, l=25},
+                    frame={t=0, l=1},
                     text_pen=COLOR_DARKGREY,
                     text={
-                        'Selected area: ',
+                        '3D box select enabled: ',
                         {text=function() return ('%dx%dx%d'):format(get_cur_area_dims()) end},
                     },
                     visible=is_choosing_area,
@@ -104,23 +105,22 @@ function BurrowDesignationOverlay:init()
     }
 end
 
-local function flood_fill(pos, erasing, painting_burrow)
+local function flood_fill(pos, erasing, do_3d, painting_burrow)
+    local opts = {zlevel=not do_3d}
     if erasing then
-        burrow_tiles_flood_remove(painting_burrow, pos)
+        burrow_tiles_flood_remove(painting_burrow, pos, opts)
     else
-        burrow_tiles_flood_add(painting_burrow, pos)
+        burrow_tiles_flood_add(painting_burrow, pos, opts)
     end
     reset_selection_rect()
 end
 
 local function box_fill(bounds, erasing, painting_burrow)
     if bounds.z1 == bounds.z2 then return end
-    local pos1 = xyz2pos(bounds.x1, bounds.y1, bounds.z1)
-    local pos2 = xyz2pos(bounds.x2, bounds.y2, bounds.z2)
     if erasing then
-        burrow_tiles_box_remove(painting_burrow, pos1, pos2)
+        burrow_tiles_box_remove(painting_burrow, bounds)
     else
-        burrow_tiles_box_add(painting_burrow, pos1, pos2)
+        burrow_tiles_box_add(painting_burrow, bounds)
     end
 end
 
@@ -140,7 +140,7 @@ function BurrowDesignationOverlay:onInput(keys)
             else
                 if now_ms - self.last_click_ms <= widgets.DOUBLE_CLICK_MS then
                     self.last_click_ms = 0
-                    self.pending_fn = curry(flood_fill, pos, if_burrow.erasing)
+                    self.pending_fn = curry(flood_fill, pos, if_burrow.erasing, dfhack.internal.getModifiers().shift)
                     return
                 else
                     self.last_click_ms = now_ms

@@ -182,12 +182,41 @@ static void do_cycle(color_ostream &out)
 // Lua API
 //
 
-static void get_opts(lua_State *L, int idx, bool &dry_run, bool &cur_zlevel) {
-    // TODO
+static void get_bool_field(lua_State *L, int idx, const char *name, bool *dest) {
+    lua_getfield(L, idx, name);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+    *dest = lua_toboolean(L, -1);
+    lua_pop(L, 1);
 }
 
-static void get_bounds(lua_State *L, int idx, df::coord &pos1, df::coord &pos2) {
-    // TODO
+static void get_opts(lua_State *L, int idx, bool &dry_run, bool &zlevel) {
+    if (lua_gettop(L) < idx)
+        return;
+    get_bool_field(L, idx, "dry_run", &dry_run);
+    get_bool_field(L, idx, "zlevel", &zlevel);
+}
+
+static bool get_int_field(lua_State *L, int idx, const char *name, int16_t *dest) {
+    lua_getfield(L, idx, name);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return false;
+    }
+    *dest = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    return true;
+}
+
+static bool get_bounds(lua_State *L, int idx, df::coord &pos1, df::coord &pos2) {
+    return get_int_field(L, idx, "x1", &pos1.x) &&
+        get_int_field(L, idx, "y1", &pos1.y) &&
+        get_int_field(L, idx, "z1", &pos1.z) &&
+        get_int_field(L, idx, "x2", &pos2.x) &&
+        get_int_field(L, idx, "y2", &pos2.y) &&
+        get_int_field(L, idx, "z2", &pos2.z);
 }
 
 static int burrow_tiles_clear(lua_State *L) {
@@ -195,6 +224,7 @@ static int burrow_tiles_clear(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_clear\n");
+    // TODO
     return 0;
 }
 
@@ -203,6 +233,7 @@ static int burrow_tiles_set(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_set\n");
+    // TODO
     return 0;
 }
 
@@ -211,6 +242,7 @@ static int burrow_tiles_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_add\n");
+    // TODO
     return 0;
 }
 
@@ -219,12 +251,13 @@ static int burrow_tiles_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_remove\n");
+    // TODO
     return 0;
 }
 
 static int box_fill(lua_State *L, bool enable) {
     df::coord pos_start, pos_end;
-    bool dry_run = false, cur_zlevel = false;
+    bool dry_run = false, zlevel = false;
 
     df::burrow *burrow = NULL;
     if (lua_isuserdata(L, 1))
@@ -239,10 +272,13 @@ static int box_fill(lua_State *L, bool enable) {
         return 0;
     }
 
-    get_bounds(L, 2, pos_start, pos_end);
-    get_opts(L, 3, dry_run, cur_zlevel);
+    if (!get_bounds(L, 2, pos_start, pos_end)) {
+        luaL_argerror(L, 2, "invalid box bounds");
+        return 0;
+    }
+    get_opts(L, 3, dry_run, zlevel);
 
-    if (cur_zlevel) {
+    if (zlevel) {
         pos_start.z = *window_z;
         pos_end.z = *window_z;
     }
@@ -252,10 +288,10 @@ static int box_fill(lua_State *L, bool enable) {
         for (int32_t y = pos_start.y; y <= pos_end.y; ++y) {
             for (int32_t x = pos_start.x; x <= pos_end.x; ++x) {
                 df::coord pos(x, y, z);
-                if (!Burrows::isAssignedTile(burrow, pos))
+                if (enable != Burrows::isAssignedTile(burrow, pos))
                     ++count;
                 if (!dry_run)
-                    Burrows::setAssignedTile(burrow, pos, true);
+                    Burrows::setAssignedTile(burrow, pos, enable);
             }
         }
     }
@@ -285,6 +321,7 @@ static int burrow_tiles_flood_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_add\n");
+    // TODO
     return 0;
 }
 
@@ -293,6 +330,7 @@ static int burrow_tiles_flood_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_remove\n");
+    // TODO
     return 0;
 }
 
@@ -301,6 +339,7 @@ static int burrow_units_clear(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_clear\n");
+    // TODO
     return 0;
 }
 
@@ -309,6 +348,7 @@ static int burrow_units_set(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_set\n");
+    // TODO
     return 0;
 }
 
@@ -317,6 +357,7 @@ static int burrow_units_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_add\n");
+    // TODO
     return 0;
 }
 
@@ -325,6 +366,7 @@ static int burrow_units_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_remove\n");
+    // TODO
     return 0;
 }
 

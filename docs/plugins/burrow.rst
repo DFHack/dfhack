@@ -43,11 +43,16 @@ specify one of the following all-caps keywords:
 
 to add or remove tiles with the corresponding properties.
 
-For flood fill, all tiles that match the properties (from the list above) of
-the specified start tile will be included. When flood adding, the flood fill
-will also stop at any tiles that have already been added to the burrow.
-Similarly for flood removing, the flood will also stop at tiles that are not in
-the burrow.
+Flood fill selects tiles spreading out from a starting tile if they:
+
+- match the inside/outside and hidden/revealed properties of the starting tile
+- match the walkability group of the starting tile OR (if the starting tile is
+  walkable) is adjacent to a tile with the same walkability group as the
+  starting tile
+
+When flood adding, the flood fill will also stop at any tiles that have already
+been added to the burrow. Similarly for flood removing, the flood will also
+stop at tiles that are not in the burrow.
 
 Examples
 --------
@@ -95,3 +100,13 @@ the burrow is expanded to include the next dig job only after the miner has
 chosen a next tile to dig, which may be far away. 2-wide cooridors are much
 more efficient when expanding a burrow since the "next" tile to dig will still
 be nearby.
+
+Overlay
+-------
+
+When painting burrows in the vanilla UI, a few extra mouse operations are
+supported. If you box select across multiple z-levels, you will be able to
+select the entire volume instead of just the selected area on the z-level that
+you are currently looking at.
+
+In addition, double-clicking will start a flood fill from the target tile.

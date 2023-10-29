@@ -2,12 +2,14 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "TileTypes.h"
 
 #include "modules/Burrows.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
 #include "df/burrow.h"
+#include "df/tile_designation.h"
 #include "df/world.h"
 
 using std::vector;
@@ -255,18 +257,22 @@ static int burrow_tiles_remove(lua_State *L) {
     return 0;
 }
 
+static df::burrow* get_burrow(lua_State *L, int idx) {
+    df::burrow *burrow = NULL;
+    if (lua_isuserdata(L, idx))
+        burrow = Lua::GetDFObject<df::burrow>(L, idx);
+    else if (lua_isstring(L, idx))
+        burrow = Burrows::findByName(luaL_checkstring(L, idx));
+    else if (lua_isinteger(L, idx))
+        burrow = df::burrow::find(luaL_checkinteger(L, idx));
+    return burrow;
+}
+
 static int box_fill(lua_State *L, bool enable) {
     df::coord pos_start, pos_end;
     bool dry_run = false, zlevel = false;
 
-    df::burrow *burrow = NULL;
-    if (lua_isuserdata(L, 1))
-        burrow = Lua::GetDFObject<df::burrow>(L, 1);
-    else if (lua_isstring(L, 1))
-        burrow = Burrows::findByName(luaL_checkstring(L, 1));
-    else if (lua_isinteger(L, 1))
-        burrow = df::burrow::find(luaL_checkinteger(L, 1));
-
+    df::burrow *burrow = get_burrow(L, 1);
     if (!burrow) {
         luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
         return 0;
@@ -316,13 +322,89 @@ static int burrow_tiles_box_remove(lua_State *L) {
     return box_fill(L, false);
 }
 
+static int flood_fill(lua_State *L, bool enable) {
+    df::coord start_pos;
+    bool dry_run = false, zlevel = false;
+
+    df::burrow *burrow = get_burrow(L, 1);
+    if (!burrow) {
+        luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
+        return 0;
+    }
+
+    Lua::CheckDFAssign(L, &start_pos, 2);
+    get_opts(L, 3, dry_run, zlevel);
+
+    // record properties to match
+    df::tile_designation *start_des = Maps::getTileDesignation(start_pos);
+    if (!start_des) {
+        luaL_argerror(L, 2, "invalid starting coordinates");
+        return 0;
+    }
+    uint16_t start_walk = Maps::getWalkableGroup(start_pos);
+
+    int32_t count = 0;
+
+    std::stack<df::coord> flood;
+    flood.emplace(start_pos);
+
+    while(!flood.empty()) {
+        const df::coord pos = flood.top();
+        flood.pop();
+
+        df::tile_designation *des = Maps::getTileDesignation(pos);
+        if(!des ||
+            des->bits.outside != start_des->bits.outside ||
+            des->bits.hidden != start_des->bits.hidden)
+        {
+            continue;
+        }
+
+        if (!start_walk && Maps::getWalkableGroup(pos))
+            continue;
+
+        if (pos != start_pos && enable == Burrows::isAssignedTile(burrow, pos))
+            continue;
+
+        ++count;
+        if (!dry_run)
+            Burrows::setAssignedTile(burrow, pos, enable);
+
+        // only go one tile outside of a walkability group
+        if (start_walk && start_walk != Maps::getWalkableGroup(pos))
+            continue;
+
+        flood.emplace(pos.x-1, pos.y-1, pos.z);
+        flood.emplace(pos.x,   pos.y-1, pos.z);
+        flood.emplace(pos.x+1, pos.y-1, pos.z);
+        flood.emplace(pos.x-1, pos.y,   pos.z);
+        flood.emplace(pos.x+1, pos.y,   pos.z);
+        flood.emplace(pos.x-1, pos.y+1, pos.z);
+        flood.emplace(pos.x,   pos.y+1, pos.z);
+        flood.emplace(pos.x+1, pos.y+1, pos.z);
+
+        if (!zlevel) {
+            df::coord pos_above(pos);
+            ++pos_above.z;
+            df::tiletype *tt = Maps::getTileType(pos);
+            df::tiletype *tt_above = Maps::getTileType(pos_above);
+            if (tt_above && LowPassable(*tt_above))
+                flood.emplace(pos_above);
+            if (tt && LowPassable(*tt))
+                flood.emplace(pos.x, pos.y, pos.z-1);
+        }
+    }
+
+    Lua::Push(L, count);
+    return 1;
+}
+
 static int burrow_tiles_flood_add(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_add\n");
-    // TODO
-    return 0;
+    return flood_fill(L, true);
 }
 
 static int burrow_tiles_flood_remove(lua_State *L) {
@@ -330,8 +412,7 @@ static int burrow_tiles_flood_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_remove\n");
-    // TODO
-    return 0;
+    return flood_fill(L, false);
 }
 
 static int burrow_units_clear(lua_State *L) {

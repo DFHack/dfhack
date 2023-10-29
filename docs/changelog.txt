@@ -67,9 +67,11 @@ Template for new versions:
 
 ## API
 - ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
+- ``Maps::getWalkableGroup``: get the walkability group of a tile
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
+- ``dfhack.maps.getWalkableGroup``: get the walkability group of a tile
 
 ## Removed
 

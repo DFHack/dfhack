@@ -2042,10 +2042,16 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     {
         int divisor = 1;
         auto creature = vector_get(world->raws.creatures.all, mat_type);
-        if (creature && size_t(mat_subtype) < creature->caste.size())
-            divisor = creature->caste[mat_subtype]->misc.petvalue_divisor;
-        if (divisor > 1)
+        if (creature) {
+            size_t caste = std::max(0, mat_subtype);
+            if (caste < creature->caste.size())
+                divisor = creature->caste[caste]->misc.petvalue_divisor;
+        }
+        if (divisor > 1) {
             value /= divisor;
+            if (!value)
+                value = 1;
+        }
     }
 
     // Add in value from units contained in cages

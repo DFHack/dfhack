@@ -20,12 +20,12 @@ Usage
     enable burrow
     burrow tiles|units clear <target burrow> [<target burrow> ...] [<options>]
     burrow tiles|units set|add|remove <target burrow> <burrow> [...] [<options>]
-    burrow tiles box-add|box-remove <target burrow> <pos> [<pos>] [<options>]
+    burrow tiles box-add|box-remove <target burrow> [<pos>] [<pos>] [<options>]
     burrow tiles flood-add|flood-remove <target burrow> [<options>]
 
 The burrows can be referenced by name or by the internal numeric burrow ID. If
-referenced by name, all burrows that match the name (case sensitive) will be
-included. If a burrow name ends in ``+`` (to indicate that it should be
+referenced by name, the first burrow that matches the name (case sensitive)
+will be targeted. If a burrow name ends in ``+`` (to indicate that it should be
 auto-expanded), the final ``+`` does not need to be specified on the
 commandline.
 

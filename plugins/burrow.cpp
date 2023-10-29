@@ -1,4 +1,362 @@
 #include "Core.h"
+#include "Debug.h"
+#include "LuaTools.h"
+#include "PluginManager.h"
+
+#include "modules/Burrows.h"
+#include "modules/Persistence.h"
+#include "modules/World.h"
+
+#include "df/burrow.h"
+#include "df/world.h"
+
+using std::vector;
+using std::string;
+using namespace DFHack;
+
+DFHACK_PLUGIN("burrow");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(window_z);
+REQUIRE_GLOBAL(world);
+
+// logging levels can be dynamically controlled with the `debugfilter` command.
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(burrow, status, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(burrow, cycle, DebugCategory::LINFO);
+}
+
+static const auto CONFIG_KEY = std::string(plugin_name) + "/config";
+static PersistentDataItem config;
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+};
+static int get_config_val(int index) {
+    if (!config.isValid())
+        return -1;
+    return config.ival(index);
+}
+static bool get_config_bool(int index) {
+    return get_config_val(index) == 1;
+}
+static void set_config_val(int index, int value) {
+    if (config.isValid())
+        config.ival(index) = value;
+}
+static void set_config_bool(int index, bool value) {
+    set_config_val(index, value ? 1 : 0);
+}
+
+static const int32_t CYCLE_TICKS = 100;
+static int32_t cycle_timestamp = 0; // world->frame_counter at last cycle
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static void do_cycle(color_ostream &out);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+    DEBUG(status, out).print("initializing %s\n", plugin_name);
+    commands.push_back(
+        PluginCommand("burrow",
+                      "Quickly adjust burrow tiles and units.",
+                      do_command));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(status, out).print("%s from the API; persisting\n", is_enabled ? "enabled" : "disabled");
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out);
+    }
+    else {
+        DEBUG(status, out).print("%s from the API, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
+    DEBUG(status, out).print("shutting down %s\n", plugin_name);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data(color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(status, out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+    }
+
+    // we have to copy our enabled flag into the global plugin variable, but
+    // all the other state we can directly read/modify from the persistent
+    // data structure.
+    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
+    DEBUG(status, out).print("loading persisted enabled state: %s\n", is_enabled ? "true" : "false");
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(status, out).print("world unloaded; disabling %s\n", plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    CoreSuspender suspend;
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
+    return CR_OK;
+}
+
+static bool call_burrow_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(status).print("calling %s lua function: '%s'\n", plugin_name, fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.burrow", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    bool show_help = false;
+    if (!call_burrow_lua(&out, "parse_commandline", parameters.size(), 1,
+            [&](lua_State *L) {
+                for (const string &param : parameters)
+                    Lua::Push(L, param);
+            },
+            [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
+        return CR_FAILURE;
+    }
+
+    return show_help ? CR_WRONG_USAGE : CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static void do_cycle(color_ostream &out)
+{
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    // TODO
+}
+
+/////////////////////////////////////////////////////
+// Lua API
+//
+
+static void get_opts(lua_State *L, int idx, bool &dry_run, bool &cur_zlevel) {
+    // TODO
+}
+
+static void get_bounds(lua_State *L, int idx, df::coord &pos1, df::coord &pos2) {
+    // TODO
+}
+
+static int burrow_tiles_clear(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_clear\n");
+    return 0;
+}
+
+static int burrow_tiles_set(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_set\n");
+    return 0;
+}
+
+static int burrow_tiles_add(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_add\n");
+    return 0;
+}
+
+static int burrow_tiles_remove(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_remove\n");
+    return 0;
+}
+
+static int box_fill(lua_State *L, bool enable) {
+    df::coord pos_start, pos_end;
+    bool dry_run = false, cur_zlevel = false;
+
+    df::burrow *burrow = NULL;
+    if (lua_isuserdata(L, 1))
+        burrow = Lua::GetDFObject<df::burrow>(L, 1);
+    else if (lua_isstring(L, 1))
+        burrow = Burrows::findByName(luaL_checkstring(L, 1));
+    else if (lua_isinteger(L, 1))
+        burrow = df::burrow::find(luaL_checkinteger(L, 1));
+
+    if (!burrow) {
+        luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
+        return 0;
+    }
+
+    get_bounds(L, 2, pos_start, pos_end);
+    get_opts(L, 3, dry_run, cur_zlevel);
+
+    if (cur_zlevel) {
+        pos_start.z = *window_z;
+        pos_end.z = *window_z;
+    }
+
+    int32_t count = 0;
+    for (int32_t z = pos_start.z; z <= pos_end.z; ++z) {
+        for (int32_t y = pos_start.y; y <= pos_end.y; ++y) {
+            for (int32_t x = pos_start.x; x <= pos_end.x; ++x) {
+                df::coord pos(x, y, z);
+                if (!Burrows::isAssignedTile(burrow, pos))
+                    ++count;
+                if (!dry_run)
+                    Burrows::setAssignedTile(burrow, pos, true);
+            }
+        }
+    }
+
+    Lua::Push(L, count);
+    return 1;
+}
+
+static int burrow_tiles_box_add(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_box_add\n");
+    return box_fill(L, true);
+}
+
+static int burrow_tiles_box_remove(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_box_remove\n");
+    return box_fill(L, false);
+}
+
+static int burrow_tiles_flood_add(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_flood_add\n");
+    return 0;
+}
+
+static int burrow_tiles_flood_remove(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_tiles_flood_remove\n");
+    return 0;
+}
+
+static int burrow_units_clear(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_units_clear\n");
+    return 0;
+}
+
+static int burrow_units_set(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_units_set\n");
+    return 0;
+}
+
+static int burrow_units_add(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_units_add\n");
+    return 0;
+}
+
+static int burrow_units_remove(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering burrow_units_remove\n");
+    return 0;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(burrow_tiles_clear),
+    DFHACK_LUA_COMMAND(burrow_tiles_set),
+    DFHACK_LUA_COMMAND(burrow_tiles_add),
+    DFHACK_LUA_COMMAND(burrow_tiles_remove),
+    DFHACK_LUA_COMMAND(burrow_tiles_box_add),
+    DFHACK_LUA_COMMAND(burrow_tiles_box_remove),
+    DFHACK_LUA_COMMAND(burrow_tiles_flood_add),
+    DFHACK_LUA_COMMAND(burrow_tiles_flood_remove),
+    DFHACK_LUA_COMMAND(burrow_units_clear),
+    DFHACK_LUA_COMMAND(burrow_units_set),
+    DFHACK_LUA_COMMAND(burrow_units_add),
+    DFHACK_LUA_COMMAND(burrow_units_remove),
+    DFHACK_LUA_END
+};
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -13,7 +371,6 @@
 #include "modules/MapCache.h"
 #include "modules/World.h"
 #include "modules/Units.h"
-#include "modules/Burrows.h"
 #include "TileTypes.h"
 
 #include "DataDefs.h"
@@ -37,26 +394,16 @@ using namespace DFHack;
 using namespace df::enums;
 using namespace dfproto;
 
-DFHACK_PLUGIN("burrows");
+DFHACK_PLUGIN("burrow");
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gamemode);
-
-/*
- * Initialization.
- */
-
-static command_result burrow(color_ostream &out, vector <string> & parameters);
 
 static void init_map(color_ostream &out);
 static void deinit_map(color_ostream &out);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(
-        PluginCommand("burrow",
-                      "Quick commands for burrow control.",
-                      burrow));
 
     if (Core::getInstance().isMapLoaded())
         init_map(out);
@@ -89,10 +436,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
-
-/*
- * State change tracking.
- */
 
 static int name_burrow_id = -1;
 
@@ -213,10 +556,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
     return CR_OK;
 }
-
-/*
- * Config and processing
- */
 
 static std::map<std::string,int> name_lookup;
 
@@ -680,3 +1019,4 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
 
     return CR_OK;
 }
+*/

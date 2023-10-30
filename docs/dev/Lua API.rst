@@ -1912,10 +1912,11 @@ Maps module
 
   Returns the plant struct that owns the tile at the specified position.
 
-* ``dfhack.maps.canWalkBetween(pos1, pos2)``
+* ``dfhack.maps.getWalkableGroup(pos)``
 
-  Checks if a dwarf may be able to walk between the two tiles,
-  using a pathfinding cache maintained by the game.
+  Returns the walkability group for the given tile position. A return value of
+  ``0`` indicates that the tile is not walkable. The data comes from a
+  pathfinding cache maintained by DF.
 
   .. note::
     This cache is only updated when the game is unpaused, and thus
@@ -1923,6 +1924,10 @@ Maps module
     tools like `liquids` or `tiletypes` are used. It also cannot possibly
     take into account anything that depends on the actual units, like
     burrows, or the presence of invaders.
+
+* ``dfhack.maps.canWalkBetween(pos1, pos2)``
+
+  Checks if both positions are walkable and also share a walkability group.
 
 * ``dfhack.maps.hasTileAssignment(tilemask)``
 

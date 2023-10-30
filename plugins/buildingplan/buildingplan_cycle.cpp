@@ -12,7 +12,6 @@
 #include "df/item.h"
 #include "df/item_slabst.h"
 #include "df/job.h"
-#include "df/map_block.h"
 #include "df/world.h"
 
 #include <unordered_map>
@@ -48,14 +47,10 @@ struct BadFlags {
 // up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
 static bool isAccessible(color_ostream& out, df::item* item) {
     df::coord item_pos = Items::getPosition(item);
-    df::map_block* block = Maps::getTileBlock(item_pos);
-    bool is_walkable = false;
-    if (block) {
-        uint16_t walkability_group = index_tile(block->walkable, item_pos);
-        is_walkable = walkability_group != 0;
-        TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
-            item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
-    }
+    uint16_t walkability_group = Maps::getWalkableGroup(item_pos);
+    bool is_walkable = walkability_group != 0;
+    TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+        item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
     return is_walkable;
 }
 

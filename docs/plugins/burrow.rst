@@ -110,3 +110,6 @@ select the entire volume instead of just the selected area on the z-level that
 you are currently looking at.
 
 In addition, double-clicking will start a flood fill from the target tile.
+
+The box and flood fill actions respect the UI setting for whether the burrow is
+being added to or erased.

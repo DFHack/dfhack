@@ -2,19 +2,10 @@ local _ENV = mkmodule('plugins.burrow')
 
 --[[
 
- Native events:
+ Provided events:
 
  * onBurrowRename(burrow)
  * onDigComplete(job_type,pos,old_tiletype,new_tiletype)
-
- Native functions:
-
- * findByName(name) -> burrow
- * copyUnits(dest,src,enable)
- * copyTiles(dest,src,enable)
- * setTilesByKeyword(dest,kwd,enable) -> success
-
- 'enable' selects between add and remove modes
 
 --]]
 

@@ -221,13 +221,36 @@ static bool get_bounds(lua_State *L, int idx, df::coord &pos1, df::coord &pos2) 
         get_int_field(L, idx, "z2", &pos2.z);
 }
 
+static df::burrow* get_burrow(lua_State *L, int idx) {
+    df::burrow *burrow = NULL;
+    if (lua_isuserdata(L, idx))
+        burrow = Lua::GetDFObject<df::burrow>(L, idx);
+    else if (lua_isstring(L, idx))
+        burrow = Burrows::findByName(luaL_checkstring(L, idx));
+    else if (lua_isinteger(L, idx))
+        burrow = df::burrow::find(luaL_checkinteger(L, idx));
+    return burrow;
+}
+
 static int burrow_tiles_clear(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_clear\n");
-    // TODO
-    return 0;
+
+    int32_t count = 0;
+    lua_pushnil(L);   // first key
+    while (lua_next(L, 1)) {
+        df::burrow * burrow = get_burrow(L, -1);
+        if (burrow) {
+            count += burrow->block_x.size();
+            Burrows::clearTiles(burrow);
+        }
+        lua_pop(L, 1);  // remove value, leave key
+    }
+
+    Lua::Push(L, count);
+    return 1;
 }
 
 static int burrow_tiles_set(lua_State *L) {
@@ -255,17 +278,6 @@ static int burrow_tiles_remove(lua_State *L) {
     DEBUG(status,*out).print("entering burrow_tiles_remove\n");
     // TODO
     return 0;
-}
-
-static df::burrow* get_burrow(lua_State *L, int idx) {
-    df::burrow *burrow = NULL;
-    if (lua_isuserdata(L, idx))
-        burrow = Lua::GetDFObject<df::burrow>(L, idx);
-    else if (lua_isstring(L, idx))
-        burrow = Burrows::findByName(luaL_checkstring(L, idx));
-    else if (lua_isinteger(L, idx))
-        burrow = df::burrow::find(luaL_checkinteger(L, idx));
-    return burrow;
 }
 
 static int box_fill(lua_State *L, bool enable) {

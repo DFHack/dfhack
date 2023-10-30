@@ -5608,10 +5608,10 @@ Native functions provided by the `buildingplan` plugin:
 * ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
 * ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
 
-burrows
-=======
+burrow
+======
 
-The `burrows` plugin implements extended burrow manipulations.
+The `burrow` plugin implements extended burrow manipulations.
 
 Events:
 

@@ -8,8 +8,10 @@
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
+#include "df/block_burrow.h"
 #include "df/burrow.h"
 #include "df/tile_designation.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::vector;
@@ -253,6 +255,42 @@ static int burrow_tiles_clear(lua_State *L) {
     return 1;
 }
 
+static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
+{
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
+    if (source == target) {
+        if (!enable)
+            Burrows::clearTiles(target);
+        return;
+    }
+
+    vector<df::map_block*> pvec;
+    Burrows::listBlocks(&pvec, source);
+
+    for (auto block : pvec) {
+        auto smask = Burrows::getBlockMask(source, block);
+        if (!smask)
+            continue;
+
+        auto tmask = Burrows::getBlockMask(target, block, enable);
+        if (!tmask)
+            continue;
+
+        if (enable) {
+            for (int j = 0; j < 16; j++)
+                tmask->tile_bitmask[j] |= smask->tile_bitmask[j];
+        } else {
+            for (int j = 0; j < 16; j++)
+                tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
+
+            if (!tmask->has_assignments())
+                Burrows::deleteBlockMask(target, block, tmask);
+        }
+    }
+}
+
 static int burrow_tiles_set(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
@@ -434,6 +472,28 @@ static int burrow_units_clear(lua_State *L) {
     DEBUG(status,*out).print("entering burrow_units_clear\n");
     // TODO
     return 0;
+}
+
+static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
+{
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
+    if (source == target)
+    {
+        if (!enable)
+            Burrows::clearUnits(target);
+
+        return;
+    }
+
+    for (size_t i = 0; i < source->units.size(); i++)
+    {
+        auto unit = df::unit::find(source->units[i]);
+
+        if (unit)
+            Burrows::setAssignedUnit(target, unit, enable);
+    }
 }
 
 static int burrow_units_set(lua_State *L) {
@@ -892,70 +952,6 @@ static df::burrow *findByName(color_ostream &out, std::string name, bool silent 
     return rv;
 }
 
-static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-    CHECK_NULL_POINTER(source);
-
-    if (source == target)
-    {
-        if (!enable)
-            Burrows::clearUnits(target);
-
-        return;
-    }
-
-    for (size_t i = 0; i < source->units.size(); i++)
-    {
-        auto unit = df::unit::find(source->units[i]);
-
-        if (unit)
-            Burrows::setAssignedUnit(target, unit, enable);
-    }
-}
-
-static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-    CHECK_NULL_POINTER(source);
-
-    if (source == target)
-    {
-        if (!enable)
-            Burrows::clearTiles(target);
-
-        return;
-    }
-
-    std::vector<df::map_block*> pvec;
-    Burrows::listBlocks(&pvec, source);
-
-    for (size_t i = 0; i < pvec.size(); i++)
-    {
-        auto block = pvec[i];
-        auto smask = Burrows::getBlockMask(source, block);
-        if (!smask)
-            continue;
-
-        auto tmask = Burrows::getBlockMask(target, block, enable);
-        if (!tmask)
-            continue;
-
-        if (enable)
-        {
-            for (int j = 0; j < 16; j++)
-                tmask->tile_bitmask[j] |= smask->tile_bitmask[j];
-        }
-        else
-        {
-            for (int j = 0; j < 16; j++)
-                tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
-
-            if (!tmask->has_assignments())
-                Burrows::deleteBlockMask(target, block, tmask);
-        }
-    }
-}
 
 static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mask,
                                   df::tile_designation d_value, bool enable)

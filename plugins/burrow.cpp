@@ -449,6 +449,21 @@ static int burrow_tiles_box_remove(lua_State *L) {
     return 0;
 }
 
+// ramp tops inherit walkability group of the tile below
+static uint16_t get_walk_group(const df::coord & pos) {
+    uint16_t walk = Maps::getWalkableGroup(pos);
+    if (walk)
+        return walk;
+    if (auto tt = Maps::getTileType(pos)) {
+        if (tileShape(*tt) == df::tiletype_shape::RAMP_TOP) {
+            df::coord pos_below(pos);
+            --pos_below.z;
+            walk = Maps::getWalkableGroup(pos_below);
+        }
+    }
+    return walk;
+}
+
 static void flood_fill(lua_State *L, bool enable) {
     df::coord start_pos;
     bool zlevel = false;
@@ -484,7 +499,8 @@ static void flood_fill(lua_State *L, bool enable) {
             continue;
         }
 
-        if (!start_walk && Maps::getWalkableGroup(pos))
+        uint16_t walk = get_walk_group(pos);
+        if (!start_walk && walk)
             continue;
 
         if (pos != start_pos && enable == Burrows::isAssignedTile(burrow, pos))
@@ -493,7 +509,7 @@ static void flood_fill(lua_State *L, bool enable) {
         Burrows::setAssignedTile(burrow, pos, enable);
 
         // only go one tile outside of a walkability group
-        if (start_walk && start_walk != Maps::getWalkableGroup(pos))
+        if (start_walk && start_walk != walk)
             continue;
 
         flood.emplace(pos.x-1, pos.y-1, pos.z);

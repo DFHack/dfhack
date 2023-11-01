@@ -9,6 +9,7 @@ local _ENV = mkmodule('plugins.burrow')
 
 --]]
 
+local argparse = require('argparse')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
@@ -164,9 +165,9 @@ rawset_default(_ENV, dfhack.burrows)
 -- commandline handling
 --
 
-local function set_add_remove(mode, which, params, opts)
+local function set_add_remove(mode, which, params, _)
     local target_burrow = table.remove(params, 1)
-    return _ENV[('burrow_%s_%s'):format(mode, which)](target_burrow, params, opts)
+    _ENV[('burrow_%s_%s'):format(mode, which)](target_burrow, params)
 end
 
 local function tiles_box_add_remove(which, params, opts)
@@ -174,39 +175,40 @@ local function tiles_box_add_remove(which, params, opts)
     local pos1 = argparse.coords(params[1] or 'here', 'pos')
     local pos2 = opts.cursor or argparse.coords(params[2] or 'here', 'pos')
     local bounds = get_bounds(pos1, pos2)
-    return _ENV['burrow_tiles_box_'..which](target_burrow, bounds, opts)
+    _ENV['burrow_tiles_box_'..which](target_burrow, bounds)
 end
 
 local function tiles_flood_add_remove(which, params, opts)
     local target_burrow = table.remove(params, 1)
     local pos = opts.cursor or argparse.coords('here', 'pos')
-    return _ENV['burrow_tiles_flood_'..which](target_burrow, pos, opts)
+    _ENV['burrow_tiles_flood_'..which](target_burrow, pos, opts)
 end
 
 local function run_command(mode, command, params, opts)
     if mode == 'tiles' then
         if command == 'clear' then
-            return burrow_tiles_clear(params, opts)
+            burrow_tiles_clear(params)
         elseif command == 'set' or command == 'add' or command == 'remove' then
-            return set_add_remove('tiles', command, params, opts)
+            set_add_remove('tiles', command, params, opts)
         elseif command == 'box-add' or command == 'box-remove' then
-            return tiles_box_add_remove(command:sub(5), params, opts)
+            tiles_box_add_remove(command:sub(5), params, opts)
         elseif command == 'flood-add' or command == 'flood-remove' then
-            return tiles_flood_add_remove(command:sub(7), params, opts)
+            tiles_flood_add_remove(command:sub(7), params, opts)
         else
             return false
         end
     elseif mode == 'units' then
         if command == 'clear' then
-            return burrow_units_clear(params)
+            burrow_units_clear(params)
         elseif command == 'set' or command == 'add' or command == 'remove' then
-            return set_add_remove('units', command, params, opts)
+            set_add_remove('units', command, params, opts)
         else
             return false
         end
     else
         return false
     end
+    return true
 end
 
 function parse_commandline(...)
@@ -219,7 +221,6 @@ function parse_commandline(...)
     local positionals = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(optarg) opts.cursor = argparse.coords(optarg, 'cursor') end},
-            {'d', 'dry-run', handler=function() opts.dry_run = true end},
             {'h', 'help', handler=function() opts.help = true end},
             {'z', 'cur-zlevel', handler=function() opts.zlevel = true end},
         })
@@ -234,7 +235,7 @@ function parse_commandline(...)
 
     if not ret then return false end
 
-    print(('%d %s affected'):format(ret, mode))
+    print('done')
     return true
 end
 

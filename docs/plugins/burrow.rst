@@ -85,10 +85,8 @@ Options
 ``-c``, ``--cursor <pos>``
     Indicate the starting position of the box or flood fill. If not specified,
     the position of the keyboard cursor is used.
-``-d``, ``--dry-run``
-    Report what would be done, but don't actually change anything.
 ``-z``, ``--cur-zlevel``
-    Restricts the operation to the currently visible z-level.
+    Restricts a flood fill operation to the currently visible z-level.
 
 Note
 ----

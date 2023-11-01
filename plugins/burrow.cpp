@@ -8,8 +8,11 @@
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
+#include "df/block_burrow.h"
 #include "df/burrow.h"
+#include "df/map_block.h"
 #include "df/tile_designation.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::vector;
@@ -194,10 +197,9 @@ static void get_bool_field(lua_State *L, int idx, const char *name, bool *dest) 
     lua_pop(L, 1);
 }
 
-static void get_opts(lua_State *L, int idx, bool &dry_run, bool &zlevel) {
+static void get_opts(lua_State *L, int idx, bool &zlevel) {
     if (lua_gettop(L) < idx)
         return;
-    get_bool_field(L, idx, "dry_run", &dry_run);
     get_bool_field(L, idx, "zlevel", &zlevel);
 }
 
@@ -232,25 +234,151 @@ static df::burrow* get_burrow(lua_State *L, int idx) {
     return burrow;
 }
 
+static void copyTiles(df::burrow *target, df::burrow *source, bool enable) {
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
+    if (source == target) {
+        if (!enable)
+            Burrows::clearTiles(target);
+        return;
+    }
+
+    vector<df::map_block*> pvec;
+    Burrows::listBlocks(&pvec, source);
+
+    for (auto block : pvec) {
+        auto smask = Burrows::getBlockMask(source, block);
+        if (!smask)
+            continue;
+
+        auto tmask = Burrows::getBlockMask(target, block, enable);
+        if (!tmask)
+            continue;
+
+        if (enable) {
+            for (int j = 0; j < 16; j++)
+                tmask->tile_bitmask[j] |= smask->tile_bitmask[j];
+        } else {
+            for (int j = 0; j < 16; j++)
+                tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
+
+            if (!tmask->has_assignments())
+                Burrows::deleteBlockMask(target, block, tmask);
+        }
+    }
+}
+
+static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mask,
+                                  df::tile_designation d_value, bool enable) {
+    CHECK_NULL_POINTER(target);
+
+    auto &blocks = world->map.map_blocks;
+
+    for (auto block : blocks) {
+        df::block_burrow *mask = NULL;
+
+        for (int x = 0; x < 16; x++) {
+            for (int y = 0; y < 16; y++) {
+                if ((block->designation[x][y].whole & d_mask.whole) != d_value.whole)
+                    continue;
+
+                if (!mask)
+                    mask = Burrows::getBlockMask(target, block, enable);
+                if (!mask)
+                    goto next_block;
+
+                mask->setassignment(x, y, enable);
+            }
+        }
+
+        if (mask && !enable && !mask->has_assignments())
+            Burrows::deleteBlockMask(target, block, mask);
+
+    next_block:;
+    }
+}
+
+static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable) {
+    CHECK_NULL_POINTER(target);
+
+    df::tile_designation mask;
+    df::tile_designation value;
+
+    if (name == "ABOVE_GROUND")
+        mask.bits.subterranean = true;
+    else if (name == "SUBTERRANEAN")
+        mask.bits.subterranean = value.bits.subterranean = true;
+    else if (name == "LIGHT")
+        mask.bits.light = value.bits.light = true;
+    else if (name == "DARK")
+        mask.bits.light = true;
+    else if (name == "OUTSIDE")
+        mask.bits.outside = value.bits.outside = true;
+    else if (name == "INSIDE")
+        mask.bits.outside = true;
+    else if (name == "HIDDEN")
+        mask.bits.hidden = value.bits.hidden = true;
+    else if (name == "REVEALED")
+        mask.bits.hidden = true;
+    else
+        return false;
+
+    setTilesByDesignation(target, mask, value, enable);
+    return true;
+}
+
+static void copyUnits(df::burrow *target, df::burrow *source, bool enable) {
+    CHECK_NULL_POINTER(target);
+    CHECK_NULL_POINTER(source);
+
+    if (source == target) {
+        if (!enable)
+            Burrows::clearUnits(target);
+        return;
+    }
+
+    for (size_t i = 0; i < source->units.size(); i++) {
+        if (auto unit = df::unit::find(source->units[i]))
+            Burrows::setAssignedUnit(target, unit, enable);
+    }
+}
+
 static int burrow_tiles_clear(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_clear\n");
 
-    int32_t count = 0;
     lua_pushnil(L);   // first key
     while (lua_next(L, 1)) {
         df::burrow * burrow = get_burrow(L, -1);
-        if (burrow) {
-            count += burrow->block_x.size();
+        if (burrow)
             Burrows::clearTiles(burrow);
-        }
         lua_pop(L, 1);  // remove value, leave key
     }
 
-    Lua::Push(L, count);
-    return 1;
+    return 0;
+}
+
+static void tiles_set_add_remove(lua_State *L, bool do_set, bool enable) {
+    df::burrow *target = get_burrow(L, 1);
+    if (!target) {
+        luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
+        return;
+    }
+
+    if (do_set)
+        Burrows::clearTiles(target);
+
+    lua_pushnil(L);   // first key
+    while (lua_next(L, 2)) {
+        if (!lua_isstring(L, -1) || !setTilesByKeyword(target, luaL_checkstring(L, -1), enable)) {
+            if (auto burrow = get_burrow(L, -1))
+                copyTiles(target, burrow, enable);
+        }
+        lua_pop(L, 1);  // remove value, leave key
+    }
 }
 
 static int burrow_tiles_set(lua_State *L) {
@@ -258,7 +386,7 @@ static int burrow_tiles_set(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_set\n");
-    // TODO
+    tiles_set_add_remove(L, true, true);
     return 0;
 }
 
@@ -267,7 +395,7 @@ static int burrow_tiles_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_add\n");
-    // TODO
+    tiles_set_add_remove(L, false, true);
     return 0;
 }
 
@@ -276,46 +404,31 @@ static int burrow_tiles_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_remove\n");
-    // TODO
+    tiles_set_add_remove(L, false, false);
     return 0;
 }
 
-static int box_fill(lua_State *L, bool enable) {
-    df::coord pos_start, pos_end;
-    bool dry_run = false, zlevel = false;
-
+static void box_fill(lua_State *L, bool enable) {
     df::burrow *burrow = get_burrow(L, 1);
     if (!burrow) {
         luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
-        return 0;
+        return;
     }
 
+    df::coord pos_start, pos_end;
     if (!get_bounds(L, 2, pos_start, pos_end)) {
         luaL_argerror(L, 2, "invalid box bounds");
-        return 0;
-    }
-    get_opts(L, 3, dry_run, zlevel);
-
-    if (zlevel) {
-        pos_start.z = *window_z;
-        pos_end.z = *window_z;
+        return;
     }
 
-    int32_t count = 0;
     for (int32_t z = pos_start.z; z <= pos_end.z; ++z) {
         for (int32_t y = pos_start.y; y <= pos_end.y; ++y) {
             for (int32_t x = pos_start.x; x <= pos_end.x; ++x) {
                 df::coord pos(x, y, z);
-                if (enable != Burrows::isAssignedTile(burrow, pos))
-                    ++count;
-                if (!dry_run)
-                    Burrows::setAssignedTile(burrow, pos, enable);
+                Burrows::setAssignedTile(burrow, pos, enable);
             }
         }
     }
-
-    Lua::Push(L, count);
-    return 1;
 }
 
 static int burrow_tiles_box_add(lua_State *L) {
@@ -323,7 +436,8 @@ static int burrow_tiles_box_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_box_add\n");
-    return box_fill(L, true);
+    box_fill(L, true);
+    return 0;
 }
 
 static int burrow_tiles_box_remove(lua_State *L) {
@@ -331,31 +445,44 @@ static int burrow_tiles_box_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_box_remove\n");
-    return box_fill(L, false);
+    box_fill(L, false);
+    return 0;
 }
 
-static int flood_fill(lua_State *L, bool enable) {
+// ramp tops inherit walkability group of the tile below
+static uint16_t get_walk_group(const df::coord & pos) {
+    uint16_t walk = Maps::getWalkableGroup(pos);
+    if (walk)
+        return walk;
+    if (auto tt = Maps::getTileType(pos)) {
+        if (tileShape(*tt) == df::tiletype_shape::RAMP_TOP) {
+            df::coord pos_below(pos);
+            --pos_below.z;
+            walk = Maps::getWalkableGroup(pos_below);
+        }
+    }
+    return walk;
+}
+
+static void flood_fill(lua_State *L, bool enable) {
     df::coord start_pos;
-    bool dry_run = false, zlevel = false;
+    bool zlevel = false;
 
     df::burrow *burrow = get_burrow(L, 1);
     if (!burrow) {
         luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
-        return 0;
+        return;
     }
 
     Lua::CheckDFAssign(L, &start_pos, 2);
-    get_opts(L, 3, dry_run, zlevel);
+    get_opts(L, 3, zlevel);
 
-    // record properties to match
     df::tile_designation *start_des = Maps::getTileDesignation(start_pos);
     if (!start_des) {
         luaL_argerror(L, 2, "invalid starting coordinates");
-        return 0;
+        return;
     }
     uint16_t start_walk = Maps::getWalkableGroup(start_pos);
-
-    int32_t count = 0;
 
     std::stack<df::coord> flood;
     flood.emplace(start_pos);
@@ -372,18 +499,17 @@ static int flood_fill(lua_State *L, bool enable) {
             continue;
         }
 
-        if (!start_walk && Maps::getWalkableGroup(pos))
+        uint16_t walk = get_walk_group(pos);
+        if (!start_walk && walk)
             continue;
 
         if (pos != start_pos && enable == Burrows::isAssignedTile(burrow, pos))
             continue;
 
-        ++count;
-        if (!dry_run)
-            Burrows::setAssignedTile(burrow, pos, enable);
+        Burrows::setAssignedTile(burrow, pos, enable);
 
         // only go one tile outside of a walkability group
-        if (start_walk && start_walk != Maps::getWalkableGroup(pos))
+        if (start_walk && start_walk != walk)
             continue;
 
         flood.emplace(pos.x-1, pos.y-1, pos.z);
@@ -406,9 +532,6 @@ static int flood_fill(lua_State *L, bool enable) {
                 flood.emplace(pos.x, pos.y, pos.z-1);
         }
     }
-
-    Lua::Push(L, count);
-    return 1;
 }
 
 static int burrow_tiles_flood_add(lua_State *L) {
@@ -416,7 +539,8 @@ static int burrow_tiles_flood_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_add\n");
-    return flood_fill(L, true);
+    flood_fill(L, true);
+    return 0;
 }
 
 static int burrow_tiles_flood_remove(lua_State *L) {
@@ -424,7 +548,8 @@ static int burrow_tiles_flood_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_tiles_flood_remove\n");
-    return flood_fill(L, false);
+    flood_fill(L, false);
+    return 0;
 }
 
 static int burrow_units_clear(lua_State *L) {
@@ -432,8 +557,38 @@ static int burrow_units_clear(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_clear\n");
-    // TODO
-    return 0;
+
+    int32_t count = 0;
+    lua_pushnil(L);   // first key
+    while (lua_next(L, 1)) {
+        df::burrow * burrow = get_burrow(L, -1);
+        if (burrow) {
+            count += burrow->units.size();
+            Burrows::clearUnits(burrow);
+        }
+        lua_pop(L, 1);  // remove value, leave key
+    }
+
+    Lua::Push(L, count);
+    return 1;
+}
+
+static void units_set_add_remove(lua_State *L, bool do_set, bool enable) {
+    df::burrow *target = get_burrow(L, 1);
+    if (!target) {
+        luaL_argerror(L, 1, "invalid burrow specifier or burrow not found");
+        return;
+    }
+
+    if (do_set)
+        Burrows::clearUnits(target);
+
+    lua_pushnil(L);   // first key
+    while (lua_next(L, 2)) {
+        if (auto burrow = get_burrow(L, -1))
+            copyUnits(target, burrow, enable);
+        lua_pop(L, 1);  // remove value, leave key
+    }
 }
 
 static int burrow_units_set(lua_State *L) {
@@ -441,7 +596,7 @@ static int burrow_units_set(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_set\n");
-    // TODO
+    units_set_add_remove(L, true, true);
     return 0;
 }
 
@@ -450,7 +605,7 @@ static int burrow_units_add(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_add\n");
-    // TODO
+    units_set_add_remove(L, false, true);
     return 0;
 }
 
@@ -459,7 +614,7 @@ static int burrow_units_remove(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
     DEBUG(status,*out).print("entering burrow_units_remove\n");
-    // TODO
+    units_set_add_remove(L, false, false);
     return 0;
 }
 
@@ -480,17 +635,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
 };
 
 
-
-
-
-
-
-
-
-
 /*
-
-
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
@@ -892,136 +1037,6 @@ static df::burrow *findByName(color_ostream &out, std::string name, bool silent 
     return rv;
 }
 
-static void copyUnits(df::burrow *target, df::burrow *source, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-    CHECK_NULL_POINTER(source);
-
-    if (source == target)
-    {
-        if (!enable)
-            Burrows::clearUnits(target);
-
-        return;
-    }
-
-    for (size_t i = 0; i < source->units.size(); i++)
-    {
-        auto unit = df::unit::find(source->units[i]);
-
-        if (unit)
-            Burrows::setAssignedUnit(target, unit, enable);
-    }
-}
-
-static void copyTiles(df::burrow *target, df::burrow *source, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-    CHECK_NULL_POINTER(source);
-
-    if (source == target)
-    {
-        if (!enable)
-            Burrows::clearTiles(target);
-
-        return;
-    }
-
-    std::vector<df::map_block*> pvec;
-    Burrows::listBlocks(&pvec, source);
-
-    for (size_t i = 0; i < pvec.size(); i++)
-    {
-        auto block = pvec[i];
-        auto smask = Burrows::getBlockMask(source, block);
-        if (!smask)
-            continue;
-
-        auto tmask = Burrows::getBlockMask(target, block, enable);
-        if (!tmask)
-            continue;
-
-        if (enable)
-        {
-            for (int j = 0; j < 16; j++)
-                tmask->tile_bitmask[j] |= smask->tile_bitmask[j];
-        }
-        else
-        {
-            for (int j = 0; j < 16; j++)
-                tmask->tile_bitmask[j] &= ~smask->tile_bitmask[j];
-
-            if (!tmask->has_assignments())
-                Burrows::deleteBlockMask(target, block, tmask);
-        }
-    }
-}
-
-static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mask,
-                                  df::tile_designation d_value, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-
-    auto &blocks = world->map.map_blocks;
-
-    for (size_t i = 0; i < blocks.size(); i++)
-    {
-        auto block = blocks[i];
-        df::block_burrow *mask = NULL;
-
-        for (int x = 0; x < 16; x++)
-        {
-            for (int y = 0; y < 16; y++)
-            {
-                if ((block->designation[x][y].whole & d_mask.whole) != d_value.whole)
-                    continue;
-
-                if (!mask)
-                    mask = Burrows::getBlockMask(target, block, enable);
-                if (!mask)
-                    goto next_block;
-
-                mask->setassignment(x, y, enable);
-            }
-        }
-
-        if (mask && !enable && !mask->has_assignments())
-            Burrows::deleteBlockMask(target, block, mask);
-
-    next_block:;
-    }
-}
-
-static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable)
-{
-    CHECK_NULL_POINTER(target);
-
-    df::tile_designation mask;
-    df::tile_designation value;
-
-    if (name == "ABOVE_GROUND")
-        mask.bits.subterranean = true;
-    else if (name == "SUBTERRANEAN")
-        mask.bits.subterranean = value.bits.subterranean = true;
-    else if (name == "LIGHT")
-        mask.bits.light = value.bits.light = true;
-    else if (name == "DARK")
-        mask.bits.light = true;
-    else if (name == "OUTSIDE")
-        mask.bits.outside = value.bits.outside = true;
-    else if (name == "INSIDE")
-        mask.bits.outside = true;
-    else if (name == "HIDDEN")
-        mask.bits.hidden = value.bits.hidden = true;
-    else if (name == "REVEALED")
-        mask.bits.hidden = true;
-    else
-        return false;
-
-    setTilesByDesignation(target, mask, value, enable);
-    return true;
-}
-
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(renameBurrow),
     DFHACK_LUA_FUNCTION(findByName),
@@ -1037,121 +1052,4 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_END
 };
 
-static command_result burrow(color_ostream &out, vector <string> &parameters)
-{
-    CoreSuspender suspend;
-
-    if (!active)
-    {
-        out.printerr("The plugin cannot be used without map.\n");
-        return CR_FAILURE;
-    }
-
-    string cmd;
-    if (!parameters.empty())
-        cmd = parameters[0];
-
-    if (cmd == "enable" || cmd == "disable")
-    {
-        if (parameters.size() < 2)
-            return CR_WRONG_USAGE;
-
-        bool state = (cmd == "enable");
-
-        for (size_t i = 1; i < parameters.size(); i++)
-        {
-            string &option = parameters[i];
-
-            if (option == "auto-grow")
-                enable_auto_grow(out, state);
-            else
-                return CR_WRONG_USAGE;
-        }
-    }
-    else if (cmd == "clear-units")
-    {
-        if (parameters.size() < 2)
-            return CR_WRONG_USAGE;
-
-        for (size_t i = 1; i < parameters.size(); i++)
-        {
-            auto target = findByName(out, parameters[i]);
-            if (!target)
-                return CR_WRONG_USAGE;
-
-            Burrows::clearUnits(target);
-        }
-    }
-    else if (cmd == "set-units" || cmd == "add-units" || cmd == "remove-units")
-    {
-        if (parameters.size() < 3)
-            return CR_WRONG_USAGE;
-
-        auto target = findByName(out, parameters[1]);
-        if (!target)
-            return CR_WRONG_USAGE;
-
-        if (cmd == "set-units")
-            Burrows::clearUnits(target);
-
-        bool enable = (cmd != "remove-units");
-
-        for (size_t i = 2; i < parameters.size(); i++)
-        {
-            auto source = findByName(out, parameters[i]);
-            if (!source)
-                return CR_WRONG_USAGE;
-
-            copyUnits(target, source, enable);
-        }
-    }
-    else if (cmd == "clear-tiles")
-    {
-        if (parameters.size() < 2)
-            return CR_WRONG_USAGE;
-
-        for (size_t i = 1; i < parameters.size(); i++)
-        {
-            auto target = findByName(out, parameters[i]);
-            if (!target)
-                return CR_WRONG_USAGE;
-
-            Burrows::clearTiles(target);
-        }
-    }
-    else if (cmd == "set-tiles" || cmd == "add-tiles" || cmd == "remove-tiles")
-    {
-        if (parameters.size() < 3)
-            return CR_WRONG_USAGE;
-
-        auto target = findByName(out, parameters[1]);
-        if (!target)
-            return CR_WRONG_USAGE;
-
-        if (cmd == "set-tiles")
-            Burrows::clearTiles(target);
-
-        bool enable = (cmd != "remove-tiles");
-
-        for (size_t i = 2; i < parameters.size(); i++)
-        {
-            if (setTilesByKeyword(target, parameters[i], enable))
-                continue;
-
-            auto source = findByName(out, parameters[i]);
-            if (!source)
-                return CR_WRONG_USAGE;
-
-            copyTiles(target, source, enable);
-        }
-    }
-    else
-    {
-        if (!parameters.empty() && cmd != "?")
-            out.printerr("Invalid command: %s\n", cmd.c_str());
-        return CR_WRONG_USAGE;
-    }
-
-    return CR_OK;
-}
 */

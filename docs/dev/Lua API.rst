@@ -1949,9 +1949,11 @@ Maps module
 Burrows module
 --------------
 
-* ``dfhack.burrows.findByName(name)``
+* ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 
-  Returns the burrow pointer or *nil*.
+  Returns the burrow pointer or *nil*. if ``ignore_final_plus`` is ``true``,
+  then ``+`` characters at the end of the names are ignored, both for the
+  specified ``name`` and the names of the burrows that it matches against.
 
 * ``dfhack.burrows.clearUnits(burrow)``
 

@@ -279,7 +279,7 @@ static df::burrow* get_burrow(lua_State *L, int idx) {
     if (lua_isuserdata(L, idx))
         burrow = Lua::GetDFObject<df::burrow>(L, idx);
     else if (lua_isstring(L, idx))
-        burrow = Burrows::findByName(luaL_checkstring(L, idx));
+        burrow = Burrows::findByName(luaL_checkstring(L, idx), true);
     else if (lua_isinteger(L, idx))
         burrow = df::burrow::find(luaL_checkinteger(L, idx));
     return burrow;

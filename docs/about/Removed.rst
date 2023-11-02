@@ -191,6 +191,12 @@ gui/hack-wish
 =============
 Replaced by `gui/create-item`.
 
+.. _gui/mechanisms:
+
+gui/mechanisms
+==============
+Linked building interface has been added to the vanilla UI.
+
 .. _gui/no-dfhack-init:
 
 gui/no-dfhack-init

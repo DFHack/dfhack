@@ -6,10 +6,12 @@ sort
     :tags: fort productivity interface
     :no-command:
 
-The ``sort`` tool provides overlays that sorting and searching options for
-lists displayed in the DF interface.
+The ``sort`` tool provides search and sort functionality for lists displayed in
+the DF interface.
 
-Searching and sorting functionality is provided by `overlay` widgets, and widgets for individual lists can be moved via `gui/overlay` or turned on or off via `gui/control-panel`.
+Searching and sorting functionality is provided by `overlay` widgets, and
+widgets for individual lists can be moved via `gui/overlay` or turned on or off
+via `gui/control-panel`.
 
 Squad assignment overlay
 ------------------------

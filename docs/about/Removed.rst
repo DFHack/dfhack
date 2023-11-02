@@ -220,6 +220,12 @@ ruby
 Support for the Ruby language in DFHack scripts was removed due to the issues
 the Ruby library causes when used as an embedded language.
 
+.. _search-plugin:
+
+search
+======
+Functionality was merged into `sort`.
+
 .. _show-unit-syndromes:
 
 show-unit-syndromes

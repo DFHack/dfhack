@@ -940,6 +940,9 @@ end
 function FRAME_BOLD()
     return make_frame(textures.tp_border_bold, true)
 end
+function FRAME_THIN()
+    return make_frame(textures.tp_border_thin, false)
+end
 function FRAME_INTERIOR()
     local frame = make_frame(textures.tp_border_thin, false)
     frame.signature_pen = false

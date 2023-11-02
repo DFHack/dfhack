@@ -73,6 +73,7 @@ Template for new versions:
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 - ``dfhack.maps.getWalkableGroup``: get the walkability group of a tile
+- ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
 
 ## Removed
 

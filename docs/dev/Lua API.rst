@@ -4583,6 +4583,10 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
+* ``FRAME_THIN``
+
+  A frame suitable for floating tooltip panels that need the DFHack signature.
+
 * ``FRAME_BOLD``
 
   A frame suitable for a non-draggable panel meant to capture the user's focus,

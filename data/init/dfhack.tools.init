@@ -80,6 +80,7 @@
 
 # Enable system services
 enable buildingplan
+enable burrow
 enable confirm
 enable logistics
 enable overlay

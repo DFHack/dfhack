@@ -1,14 +1,5 @@
 local _ENV = mkmodule('plugins.burrow')
 
---[[
-
- Provided events:
-
- * onBurrowRename(burrow)
- * onDigComplete(job_type,pos,old_tiletype,new_tiletype)
-
---]]
-
 local argparse = require('argparse')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')

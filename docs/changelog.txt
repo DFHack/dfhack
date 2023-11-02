@@ -52,9 +52,11 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `burrow`: (reinstated) automatically expand burrows as you dig
 
 ## New Features
 - `prospect`: can now give you an estimate of resources from the embark screen. hover the mouse over a potential embark area and run `prospect`.
+- `burrow`: integrated 3d box fill and 2d/3d flood fill extensions for burrow painting mode
 
 ## Fixes
 - `stockpiles`: hide configure and help buttons when the overlay panel is minimized

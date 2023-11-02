@@ -5612,51 +5612,6 @@ Native functions provided by the `buildingplan` plugin:
 * ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
 * ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
 
-burrow
-======
-
-The `burrow` plugin implements extended burrow manipulations.
-
-Events:
-
-* ``onBurrowRename.foo = function(burrow)``
-
-  Emitted when a burrow might have been renamed either through
-  the game UI, or ``renameBurrow()``.
-
-* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)``
-
-  Emitted when a tile might have been dug out. Only tracked if the
-  auto-growing burrows feature is enabled.
-
-Native functions:
-
-* ``renameBurrow(burrow,name)``
-
-  Renames the burrow, emitting ``onBurrowRename`` and updating auto-grow state properly.
-
-* ``findByName(burrow,name)``
-
-  Finds a burrow by name, using the same rules as the plugin command line interface.
-  Namely, trailing ``'+'`` characters marking auto-grow burrows are ignored.
-
-* ``copyUnits(target,source,enable)``
-
-  Applies units from ``source`` burrow to ``target``. The ``enable``
-  parameter specifies if they are to be added or removed.
-
-* ``copyTiles(target,source,enable)``
-
-  Applies tiles from ``source`` burrow to ``target``. The ``enable``
-  parameter specifies if they are to be added or removed.
-
-* ``setTilesByKeyword(target,keyword,enable)``
-
-  Adds or removes tiles matching a predefined keyword. The keyword
-  set is the same as used by the command line.
-
-The lua module file also re-exports functions from ``dfhack.burrows``.
-
 .. _cxxrandom-api:
 
 cxxrandom

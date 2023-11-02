@@ -7,7 +7,9 @@ burrow
 
 This tool has two modes. When enabled, it monitors burrows with names that end
 in ``+``. If a wall at the edge of such a burrow is dug out, the burrow will be
-automatically extended to include the newly-revealed adjacent walls.
+automatically extended to include the newly-revealed adjacent walls. If a miner
+digs into an open space, such as a cavern, the open space will *not* be
+included in the burrow.
 
 When run as a command, it can quickly adjust which tiles and/or units are
 associated with the burrow.

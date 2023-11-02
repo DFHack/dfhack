@@ -206,6 +206,9 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
 //job initiated
 static int32_t lastJobId = -1;
 
+//job started
+static unordered_set<int32_t> startedJobs;
+
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
@@ -269,6 +272,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
+        startedJobs.clear();
         for (auto &prevJob : prevJobs) {
             Job::deleteJobStruct(prevJob.second, true);
         }
@@ -461,29 +465,27 @@ static void manageJobStartedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
 
-    static unordered_set<int32_t> startedJobs;
-
-    vector<df::job*> new_started_jobs;
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
 
+    unordered_set<int32_t> newStartedJobs;
+
     for (df::job_list_link* link = &df::global::world->jobs.list; link->next != nullptr; link = link->next) {
         df::job* job = link->next->item;
+        if (!job || !Job::getWorker(job))
+            continue;
+
         int32_t j_id = job->id;
-        if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
-            startedJobs.emplace(job->id);
+        newStartedJobs.emplace(j_id);
+        if (!startedJobs.count(j_id)) {
             for (auto &[_,handle] : copy) {
-                // the jobs must have a worker to start
                 DEBUG(log,out).print("calling handler for job started event\n");
                 handle.eventHandler(out, job);
             }
         }
-        if (link->next == nullptr || link->next->item->id != j_id) {
-            if ( Once::doOnce("EventManager jobstarted job removed") ) {
-                out.print("%s,%d: job %u removed from  jobs linked list\n", __FILE__, __LINE__, j_id);
-            }
-        }
     }
+
+    startedJobs = newStartedJobs;
 }
 
 //helper function for manageJobCompletedEvent
@@ -498,6 +500,7 @@ TODO: consider checking item creation / experience gain just in case
 static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
+
     int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
     int32_t tick1 = df::global::world->frame_counter;
 

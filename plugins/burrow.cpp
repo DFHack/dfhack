@@ -54,7 +54,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 }
 
 static void reset() {
-    EventManager::unregisterAll(plugin_self);
     active_dig_jobs.clear();
 }
 

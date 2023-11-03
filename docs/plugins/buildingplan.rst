@@ -190,3 +190,10 @@ bump the items for this building to the front of their respective queues.
 Note that each item type and filter configuration has its own queue, so even if
 an item is in queue position 1, there may be other queues that snag the needed
 item first.
+
+Lever linking
+-------------
+
+When linking levers, `buildingplan` extends the vanilla panel by offering
+control over which mechanisms are chosen for installation at the lever and at
+the target. Heat safety filters are provided for convenience.

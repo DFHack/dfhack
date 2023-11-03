@@ -809,8 +809,12 @@ function PlannerOverlay:onInput(keys)
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         local filter = filters[idx]
+                        local get_available_items_fn = function()
+                            return require('plugins.buildingplan').getAvailableItems(
+                                uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+                        end
                         local selection_screen = itemselection.ItemSelectionScreen{
-                            index=idx,
+                            get_available_items_fn=get_available_items_fn,
                             desc=require('plugins.buildingplan').get_desc(filter),
                             quantity=get_quantity(filter, is_hollow, bounds),
                             autoselect=autoselect,

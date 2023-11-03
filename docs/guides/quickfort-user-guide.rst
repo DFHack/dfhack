@@ -84,7 +84,7 @@ Feature summary
     - Configurable zone/location settings, such as the pit/pond toggle or
       hospital supply quantities
 
--  Build mode
+- Build mode
 
     - Integrated with DFHack `buildingplan`: you can place buildings before
       manufacturing building materials and you can use the `buildingplan` UI
@@ -107,6 +107,10 @@ Feature summary
       workshops)
     - Set building properties (such as a name)
     - Can attach and configure track stops as part of hauling routes
+
+- Burrow mode
+
+    - Supports creating, adding to, and subtracting from burrows.
 
 Introduction to blueprints
 --------------------------
@@ -865,6 +869,36 @@ names an existing route, the stop will be added to that route::
 
 These two track stops (which do not dump their contents) simply exist on a
 common route at the ends of a connected carved track.
+
+#burrow mode
+------------
+
+``#burrow`` mode can create, extend, and remove tiles from burrows.
+
+Burrow designation syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The syntax should look familiar by now::
+
+    symbol{properties}(expansion)
+
+See the `#burrow mode reference`_ for symbol and property definitions.
+
+Here's how to create (or add to, if a burrow by that name already exists) a
+5x5 burrow named ``Inside+``. It will also register this burrow with
+`gui/civ-alert` if no burrow has yet been registered::
+
+    #burrow
+    a{create=true name=Inside+ civalert=true}(5x5)
+
+Why the trailing ``+``? That's to indicate to the `burrow` plugin that the
+burrow should grow as adjacent tiles are dug out.
+
+Similarly, here is how to erase a tile from all burrows that currently include
+it::
+
+    #burrow
+    e
 
 .. _quickfort-modeline:
 
@@ -2199,3 +2233,25 @@ Symbol            Type                          Properties
 ``trackrampSEW``  track ramp tee to the S, E, W
 ``trackrampNSEW`` track ramp cross
 ================= ============================= ==========
+
+#burrow mode reference
+~~~~~~~~~~~~~~~~~~~~~~
+
+====== ======= ==========
+Symbol Meaning Properties
+====== ======= ==========
+``a``  add     ``name``: if set, will add to an existing burrow of this name.
+               ``create``: if set to ``true``, will create a burrow with the
+               specified ``name`` if it doesn't already exist.
+               ``civalert``: if set to ``true``, will register this burrow with
+               `gui/civ-alert` if no burrow has already been registered.
+               ``autochop_clear``: if set to ``true``, register the burrow with
+               `autochop` so that all trees in the burrow are immediately
+               chopped down, regardless of how many logs are in stock.
+               ``autochop_chop``: if set to ``true``, register the burrow with
+               ``autochop`` so that woodcutting activity is constrained to this
+               burrow (and others marked for ``chop``).
+``e``  erase   ``name``: if set, will only affect the first burrow of the given
+               name. if not set, will affect all burrows that cover the given
+               tiles.
+====== ======= ==========

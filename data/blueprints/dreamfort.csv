@@ -20,7 +20,7 @@
 "Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Note that blueprints will designate buildings to build even if you don't have the materials needed to build them. You can use the ""o"" hotkey to automatically create the manager orders for all the needed items when you have a blueprint loaded in gui/quickfort. Make sure your manager is available to validate all the incoming work orders!"
 ""
 "There are some tasks common to all forts that Dreamfort doesn't specifically handle for you. For example, Dreamfort sets up a barracks, but managing squads is up to you. Here are some other common tasks that may need to be done manually (or with some other tool):"
-- Exploratory mining for specific resources like iron
+- Exploratory mining for specific resources like iron (see gui/design for help with this)
 "- Filling the well system with water (if you have a light aquifer, see library/aquifer_tap.csv for help with this)"
 - Bringing magma up to the industry level to power magma forges/furnaces (see library/pump_stack.csv for help with this)
 - Manufacturing trade goods
@@ -70,7 +70,7 @@ gui/quickfort,/farming1,,Dig out the farming level. Run when channels on the sur
 gui/quickfort,/farming2,,Build farming level. Run as soon as the farming level has been completely dug out.
 gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central staircase from early invasions. Run right after /farming2.
 gui/quickfort,/industry2,,Build industry level. Run as soon as the industry level has been completely dug out.
-prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. **Be sure that there are no items attached to jobs left in the workshops before deconstructing them, otherwise you'll get canceled jobs!**"
+prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. Be sure that there are no items attached to jobs left in the surface workshops before deconstructing them, otherwise you'll get canceled jobs!"
 gui/quickfort,/surface4,,Finish protecting the staircase and lay flooring for future buildings. Run after the walls and floors around the staircase are built and you have moved production from the surface to the industry level.
 gui/quickfort,/industry3,,Build the rest of the industry level. Run once /surface4 is mostly complete.
 orders import library/basic,,,"Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
@@ -145,9 +145,6 @@ On the work details screen (Labor -> Work details)
 In standing orders (Labor -> Standing orders):
 "  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
 "- On the ""Other"" tab, change ""Everybody harvests"" to ""Only farmers harvest"""
-""
-"Finally, in the burrows screen:"
-"- Create a burrow named ""Inside"" and register it as a civilian alert burrow in gui/civ-alert so you can use it to get your civilians to safety during sieges. You will have to periodically expand the burrow area as the fort expands."
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -249,6 +246,8 @@ Features:
 - Optional extended trap hallways (to handle larger sieges with a smaller/no military)
 "- Protected trade depot, with separate trade goods stockpiles for organics and inorganics (for easy elven trading)"
 - A grid of small farm plots for lucrative surface farming
+"- A burrow named ""Inside+"" that grows with your fort as you dig it out. It is pre-registered as a civilian alert burrow so you can use it to get your civilians to safety during sieges."
+"- A burrow named ""Clearcutting area"" that is automatically registered with autochop (if you have it enabled) to keep the area around your fort clear of trees"
 ""
 Manual steps you have to take:
 "- Assign grazing livestock to the large pasture, dogs to the pasture over the central stairs, and male birds to the zone between the rows of nestboxes (DFHack's autonestbox will auto-assign the female egg-laying birds to the nestbox zones)"
@@ -281,11 +280,11 @@ Surface Walkthrough:
 Sieges and Prisoner Processing:
 Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
 ""
-"- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
+"- Your ""Inside+"" burrow will automatically grow with your fort and should include only safe areas of your fort. In particular, it should not include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
 ""
-"- When a siege begins, set your civilian alert (attach the alert to your ""Inside"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
+"- When a siege begins, set your civilian alert (attach the alert to your ""Inside+"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
 ""
-"- During a siege, use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway."
+"- During a siege, you can use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway. You can also choose *not* to use the trap hallways and meet the siege with your military. It's up to you!"
 ""
 "- If your cage traps fill up, ensure your hallways are free of uncaged attackers, then close the trap hallway outer gates and open the inner gates. Clear the civilian alert and allow your dwarves to reset all the traps -- make some extra cages in preparation for this! Then re-enable the civilian alert and open the trap hallway outer gates."
 ""
@@ -293,13 +292,13 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 ""
 "After a siege, you can use the caged prisoners to safely train your military. Here's how:"
 ""
-"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in DFHack's gui/launcher."
+"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile in the barracks, run ""stripcaged all"" in DFHack's gui/launcher."
 ""
 "- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
 ""
 - Assign a group of prisoners to the pasture that overlaps the prisoner quantum stockpile
 ""
-"- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
+"- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoners and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed"". Some prisoners are not directly hostile (like cavern-caught gorlaks) and you may need to be target them explicitly to get your soldiers to attack them."
 #dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
 `,j6,`
 u,`,u
@@ -331,6 +330,7 @@ message(Once the central stairs are mined out deeply enough, you should start di
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
 clear_small/surface_clear_small
+burrow_start/surface_burrow_start
 zones/surface_zones
 #>
 central_stairs/central_stairs repeat(down 10)
@@ -368,7 +368,8 @@ traps/surface_traps
 clear_large/surface_clear_large
 ""
 "#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint.
-For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
+For extra security, you can run /surface8 at any time to extend the trap corridors.) expand Inside+ burrow to safe surface areas and build roof"
+burrows/surface_burrows
 #<
 roof/surface_roof
 roof2/surface_roof2
@@ -409,6 +410,40 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,,,,,,,,t1,,,t1,t1,t1,,,t1,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,t1,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+
+
+
+#burrow label(surface_burrow_start) start(19; 19) hidden() create safety burrow that will grow with your fort
+
+
+
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,,`,`,,`
+,,,`,,`,,`,,,,,,,,`,a{name=Inside+ create=true civalert=true}(5x5),,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1028,6 +1063,40 @@ t1(37x33)
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
 ,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
+
+#burrow label(surface_burrows) start(19; 19) hidden() extend safety burrow to newly safe surface areas and set up surrounding clearcutting area
+
+
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x-10)"
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x27)",`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x27)"
+,,,`,,`,a{name=Inside+}(25x17),,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,,`,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,a{name=Inside+},`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(7x6),,,,,,,`,,`
+,,,`,,`,a{name=Inside+}(7x5),,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x10)"
+
 
 #build label(surface_roof) start(19; 19) hidden() roof hatch and adjacent tiles
 

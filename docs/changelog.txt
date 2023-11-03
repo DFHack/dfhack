@@ -65,6 +65,7 @@ Template for new versions:
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel
 - `sort`: allow searching by profession on the squad assignment page
+- `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
 
 ## Documentation
 

@@ -885,10 +885,11 @@ The syntax should look familiar by now::
 See the `#burrow mode reference`_ for symbol and property definitions.
 
 Here's how to create (or add to, if a burrow by that name already exists) a
-5x5 burrow named ``Inside+``::
+5x5 burrow named ``Inside+``. It will also register this burrow with
+`gui/civ-alert` if no burrow has yet been registered::
 
     #burrow
-    a{create=true name=Inside+}(5x5)
+    a{create=true name=Inside+ civalert=true}(5x5)
 
 Why the trailing ``+``? That's to indicate to the `burrow` plugin that the
 burrow should grow as adjacent tiles are dug out.
@@ -2242,6 +2243,8 @@ Symbol Meaning Properties
 ``a``  add     ``name``: if set, will add to an existing burrow of this name.
                ``create``: if set to ``true``, will create a burrow with the
                specified ``name`` if it doesn't already exist.
+               ``civalert``: if set to ``true``, will register this burrow with
+               `gui/civ-alert` if no burrow has already been registered.
 ``e``  erase   ``name``: if set, will only affect the first burrow of the given
                name. if not set, will affect all burrows that cover the given
                tiles.

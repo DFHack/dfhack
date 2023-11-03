@@ -2245,6 +2245,12 @@ Symbol Meaning Properties
                specified ``name`` if it doesn't already exist.
                ``civalert``: if set to ``true``, will register this burrow with
                `gui/civ-alert` if no burrow has already been registered.
+               ``autochop_clear``: if set to ``true``, register the burrow with
+               `autochop` so that all trees in the burrow are immediately
+               chopped down, regardless of how many logs are in stock.
+               ``autochop_chop``: if set to ``true``, register the burrow with
+               ``autochop`` so that woodcutting activity is constrained to this
+               burrow (and others marked for ``chop``).
 ``e``  erase   ``name``: if set, will only affect the first burrow of the given
                name. if not set, will affect all burrows that cover the given
                tiles.

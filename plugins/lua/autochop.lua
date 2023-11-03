@@ -51,7 +51,7 @@ function parse_commandline(...)
     local args, opts = {...}, {}
     local positionals = process_args(opts, args)
 
-    if opts.help then
+    if opts.help or not positionals then
         return false
     end
 

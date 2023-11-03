@@ -182,7 +182,7 @@ static void add_walls_to_burrow(color_ostream &out, df::burrow* b,
 }
 
 static void expand_burrows(color_ostream &out, const df::coord & pos, df::tiletype prev_tt, df::tiletype tt) {
-    if (!isWalkable(tt))
+    if (!isWalkable(tt) && tileShape(tt) != tiletype_shape::RAMP_TOP)
         return;
 
     bool changed = false;

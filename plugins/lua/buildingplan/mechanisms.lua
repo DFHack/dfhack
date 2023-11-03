@@ -20,35 +20,40 @@ MechanismOverlay.ATTRS{
 
 function MechanismOverlay:init()
     self:addviews{
-        widgets.Label{
-            frame={t=4, l=2},
-            text='Mechanism safety:'
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='safety_lever',
-            frame={t=4, l=21, w=15},
-            key='CUSTOM_G',
-            label='Lever:',
-            options={
-                {label='Any', value=0},
-                {label='Magma', value=2, pen=COLOR_RED},
-                {label='Fire', value=1, pen=COLOR_LIGHTRED},
-            },
-            initial_option=0,
-            on_change=self:callback('choose_mechanism', 'lever', true),
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='safety_target',
-            frame={t=4, l=38, w=16},
-            key='CUSTOM_SHIFT_G',
-            label='Target:',
-            options={
-                {label='Any', value=0},
-                {label='Magma', value=2, pen=COLOR_RED},
-                {label='Fire', value=1, pen=COLOR_LIGHTRED},
-            },
-            initial_option=0,
-            on_change=self:callback('choose_mechanism', 'target', true),
+        widgets.BannerPanel{
+            frame={t=4, l=1, r=1, h=1},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=1},
+                    text='Mechanism safety:'
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='safety_lever',
+                    frame={t=0, l=20, w=15},
+                    key='CUSTOM_G',
+                    label='Lever:',
+                    options={
+                        {label='Any', value=0},
+                        {label='Magma', value=2, pen=COLOR_RED},
+                        {label='Fire', value=1, pen=COLOR_LIGHTRED},
+                    },
+                    initial_option=0,
+                    on_change=self:callback('choose_mechanism', 'lever', true),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='safety_target',
+                    frame={t=0, l=38, w=16},
+                    key='CUSTOM_SHIFT_G',
+                    label='Target:',
+                    options={
+                        {label='Any', value=0},
+                        {label='Magma', value=2, pen=COLOR_RED},
+                        {label='Fire', value=1, pen=COLOR_LIGHTRED},
+                    },
+                    initial_option=0,
+                    on_change=self:callback('choose_mechanism', 'target', true),
+                },
+            }
         },
         widgets.HotkeyLabel{
             frame={t=7, l=8, w=49, h=2},

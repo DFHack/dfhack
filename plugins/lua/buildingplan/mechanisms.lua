@@ -21,7 +21,7 @@ MechanismOverlay.ATTRS{
 function MechanismOverlay:init()
     self:addviews{
         widgets.BannerPanel{
-            frame={t=4, l=1, r=1, h=1},
+            frame={t=5, l=1, r=1, h=1},
             subviews={
                 widgets.Label{
                     frame={t=0, l=1},

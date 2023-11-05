@@ -431,14 +431,19 @@ local function get_melee_combat_potential(unit)
     local spatial_sense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
     local kinesthetic_sense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
+    -- assume highest skill ratings
+    local skill_rating = df.skill_rating.Legendary5
+    local melee_combat_rating = df.skill_rating.Legendary5
+
     -- melee combat potential rating
-    local rating = strength * 264 + endurance * 84 + body_size_base * 77 + kinesthetic_sense * 74
-            + agility * 33 + willpower * 31 + spatial_sense * 27 + toughness * 25
+    local rating = skill_rating * 27000 + melee_combat_rating * 9000
+            + strength * 180 + body_size_base * 100 + kinesthetic_sense * 50 + endurance * 50
+            + agility * 30 + toughness * 20 + willpower * 20 + spatial_sense * 20
     return rating
 end
 
 local function get_melee_combat_potential_rating(unit)
-    return get_rating(get_melee_combat_potential(unit), 300000, 2600000, 81, 64, 46, 29)
+    return get_rating(get_melee_combat_potential(unit), 350000, 2750000, 64, 52, 40, 28)
 end
 
 local function sort_by_melee_combat_potential_desc(unit_id_1, unit_id_2)
@@ -480,13 +485,18 @@ local function get_ranged_combat_potential(unit)
     local spatial_sense = unit.status.current_soul.mental_attrs.SPATIAL_SENSE.max_value
     local kinesthetic_sense = unit.status.current_soul.mental_attrs.KINESTHETIC_SENSE.max_value
 
+    -- assume highest skill ratings
+    local skill_rating = df.skill_rating.Legendary5
+    local ranged_combat = df.skill_rating.Legendary5
+
     -- ranged combat potential formula
-    local rating = agility * 5 + kinesthetic_sense * 2 + spatial_sense * 5 + focus * 2
+    local rating = skill_rating * 24000 + ranged_combat * 8000
+            + agility * 15 + spatial_sense * 15 + kinesthetic_sense * 6 + focus * 6
     return rating
 end
 
 local function get_ranged_combat_potential_rating(unit)
-    return get_rating(get_ranged_combat_potential(unit), 0, 70000, 73, 57, 41, 25)
+    return get_rating(get_ranged_combat_potential(unit), 0, 800000, 72, 52, 31, 11)
 end
 
 local function sort_by_ranged_combat_potential_desc(unit_id_1, unit_id_2)

@@ -180,7 +180,10 @@ local function get_squad_options()
 end
 
 local function get_burrow_options()
-    local options = {{label='Any', value='all', pen=COLOR_GREEN}}
+    local options = {
+        {label='Any', value='all', pen=COLOR_GREEN},
+        {label='Unburrowed', value='none', pen=COLOR_LIGHTRED},
+    }
     for _, burrow in ipairs(df.global.plotinfo.burrows.list) do
         table.insert(options, {
             label=#burrow.name > 0 and burrow.name or ('Burrow %d'):format(burrow.id + 1),
@@ -410,8 +413,9 @@ function InfoOverlay:matches_filters(unit)
         return target_id == squad_id
     elseif subset == 'burrow' then
         local target_id = self.subviews.burrow:getOptionValue()
-        if target_id == 'all' then return true end
-        return utils.binsearch(unit.burrows, target_id)
+        if target_id == 'all' then return #unit.burrows + #unit.inactive_burrows > 0 end
+        if target_id == 'none' then return #unit.burrows + #unit.inactive_burrows == 0 end
+        return utils.binsearch(unit.burrows, target_id) or utils.binsearch(unit.inactive_burrows, target_id)
     end
     return true
 end

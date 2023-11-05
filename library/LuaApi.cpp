@@ -1505,7 +1505,7 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
 
 static int gui_getMousePos(lua_State *L)
 {
-    auto pos = Gui::getMousePos();
+    auto pos = Gui::getMousePos(lua_toboolean(L, 1));
     if (pos.isValid())
         Lua::Push(L, pos);
     else

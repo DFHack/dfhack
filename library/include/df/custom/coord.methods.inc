@@ -3,7 +3,7 @@ coord(uint16_t _x, uint16_t _y, uint16_t _z) : x(_x), y(_y), z(_z) {}
 
 operator coord2d() const { return coord2d(x,y); }
 
-bool isValid() const { return x >= 0; }
+bool isValid() const { return z >= 0; }
 void clear() { x = y = z = -30000; }
 
 bool operator==(const coord &other) const

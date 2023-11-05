@@ -1140,10 +1140,12 @@ Announcements
 
   If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
-* ``dfhack.gui.getMousePos()``
+* ``dfhack.gui.getMousePos([allow_out_of_bounds])``
 
   Returns the map coordinates of the map tile the mouse is over as a table of
-  ``{x, y, z}``. If the cursor is not over the map, returns ``nil``.
+  ``{x, y, z}``. If the cursor is not over a valid tile, returns ``nil``. To
+  allow the function to return coordinates outside of the map, set
+  ``allow_out_of_bounds`` to ``true``.
 
 Other
 ~~~~~

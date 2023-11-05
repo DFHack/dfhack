@@ -131,7 +131,6 @@ function LocationSelectorOverlay:get_cache()
 end
 
 function LocationSelectorOverlay:matches_temple_filter(id, flag)
-    if id == -1 then return true end
     local hide_established = self.subviews.hide_established:getOptionValue()
     return not hide_established or not safe_index(self:get_cache(), 'temple', flag, id)
 end

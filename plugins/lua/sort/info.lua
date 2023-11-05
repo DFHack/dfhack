@@ -109,11 +109,6 @@ local function get_race_name(raw_id)
     return raw.name[1]
 end
 
-local function get_trainer_search_key(unit)
-    if not unit then return end
-    return ('%s %s'):format(dfhack.TranslateName(unit.name), dfhack.units.getProfessionName(unit))
-end
-
 -- get name in both dwarvish and English
 local function get_artifact_search_key(artifact)
     return ('%s %s'):format(dfhack.TranslateName(artifact.name), dfhack.TranslateName(artifact.name, true))
@@ -166,7 +161,7 @@ InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
 InfoOverlay.ATTRS{
     default_pos={x=64, y=8},
     viewscreens='dwarfmode/Info',
-    frame={w=40, h=4},
+    frame={w=40, h=5},
 }
 
 function InfoOverlay:init()
@@ -182,6 +177,25 @@ function InfoOverlay:init()
                     label_text="Search: ",
                     key='CUSTOM_ALT_S',
                     on_change=function(text) self:do_search(text) end,
+                },
+            },
+        },
+        widgets.BannerPanel{
+            view_id='filter_panel',
+            frame={l=0, t=1, r=0, h=1},
+            visible=function() return self:get_key() == 'PET_WA' end,
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='subset',
+                    frame={l=1, t=0},
+                    key='CUSTOM_SHIFT_F',
+                    label='Show:',
+                    options={
+                        {label='All', value='all', pen=COLOR_GREEN},
+                        {label='Military', value='military', pen=COLOR_YELLOW},
+                        {label='Civilians', value='civilian', pen=COLOR_CYAN},
+                    },
+                    on_change=function() self:do_search(self.subviews.search.text, true) end,
                 },
             },
         },
@@ -209,7 +223,12 @@ function InfoOverlay:init()
     self:register_handler('PET_OT', creatures.atk_index,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
     self:register_handler('PET_AT', creatures.trainer,
-        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_trainer_search_key}))
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=sortoverlay.get_unit_search_key}))
+    self:register_handler('PET_WA', creatures.work_animal_recipient,
+        curry(sortoverlay.single_vector_search, {
+            get_search_key_fn=sortoverlay.get_unit_search_key,
+            matches_filters_fn=self:callback('matches_filters'),
+        }))
     self:register_handler('WORK_DETAILS', work_details.assignable_unit, work_details_search)
 
     for idx,name in ipairs(df.artifacts_mode_type) do
@@ -227,6 +246,8 @@ function InfoOverlay:get_key()
                 return 'PET_OT'
             elseif creatures.adding_trainer then
                 return 'PET_AT'
+            elseif creatures.assign_work_animal then
+                return 'PET_WA'
             end
         end
         return df.unit_list_mode_type[creatures.current_mode]
@@ -275,6 +296,8 @@ function InfoOverlay:updateFrames()
     local frame = self.subviews.panel.frame
     if frame.l == l and frame.t == t then return ret end
     frame.l, frame.t = l, t
+    local frame2 = self.subviews.filter_panel.frame
+    frame2.l, frame2.t = l, t + 1
     return true
 end
 
@@ -294,6 +317,16 @@ function InfoOverlay:onInput(keys)
         self.refresh_search = true
     end
     return InfoOverlay.super.onInput(self, keys)
+end
+
+function InfoOverlay:matches_filters(unit)
+    local subset = self.subviews.subset:getOptionValue()
+    if subset == 'all' then
+        return true
+    elseif unit.military.squad_id == -1 then
+        return subset == 'civilian'
+    end
+    return subset == 'military'
 end
 
 -- ----------------------

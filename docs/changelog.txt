@@ -77,6 +77,7 @@ Template for new versions:
 - ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 - ``Maps::getWalkableGroup``: get the walkability group of a tile
 - ``Units::getReadableName``: now returns the *untranslated* name
+- ``Burrows::setAssignedUnit``: now properly handles inactive burrows
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target

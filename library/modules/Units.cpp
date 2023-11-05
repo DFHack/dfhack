@@ -1282,7 +1282,7 @@ string Units::getReadableName(df::unit* unit) {
         race_name = "hunter " + race_name;
     if (isWar(unit))
         race_name = "war " + race_name;
-    string name = Translation::TranslateName(getVisibleName(unit));
+    string name = Translation::TranslateName(getVisibleName(unit), false);
     if (name.empty()) {
         name = race_name;
     } else {

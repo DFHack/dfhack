@@ -70,6 +70,7 @@ Template for new versions:
 - `sort`: allow searching by profession on the squad assignment page
 - `sort`: add search for work animal assignment screen; allow filtering by miltary/squad/civilian/burrow
 - `sort`: on the squad assignment screen, make effectiveness and potential ratings use the same scale so effectiveness is always less than or equal to potential for a unit and so you can tell when units are approaching their maximum potential
+- `sort`: new overlay on the animal assignment screen that shows how many work animals each visible unit already has assigned to them
 - `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
 
 ## Documentation
@@ -77,6 +78,8 @@ Template for new versions:
 ## API
 - ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 - ``Maps::getWalkableGroup``: get the walkability group of a tile
+- ``Units::getReadableName``: now returns the *untranslated* name
+- ``Burrows::setAssignedUnit``: now properly handles inactive burrows
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target

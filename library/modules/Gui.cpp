@@ -252,6 +252,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 newFocusString += "/ActivityDetails";
             else if (game->main_interface.info.creatures.adding_trainer)
                 newFocusString += "/AddingTrainer";
+            else if (game->main_interface.info.creatures.assign_work_animal)
+                newFocusString += "/AssignWorkAnimal";
             else
                 newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;

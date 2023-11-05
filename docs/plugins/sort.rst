@@ -102,7 +102,8 @@ The Info overlay adds search support to many of the fort-wide "Info" panels
 name (with either English or native language last names), profession, or
 special status (like "necromancer"). If there is text in the second column, you
 can search for that text as well. This is often a job name or a status, like
-"caged".
+"caged". The work animal assignment page can also filter by squad or burrow
+membership.
 
 Interrogation overlay
 ---------------------

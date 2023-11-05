@@ -161,8 +161,34 @@ InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
 InfoOverlay.ATTRS{
     default_pos={x=64, y=8},
     viewscreens='dwarfmode/Info',
-    frame={w=40, h=5},
+    frame={w=40, h=6},
 }
+
+local function get_squad_options()
+    local options = {{label='Any', value='all', pen=COLOR_GREEN}}
+    local fort = df.historical_entity.find(df.global.plotinfo.group_id)
+    if not fort then return options end
+    for _, squad_id in ipairs(fort.squads) do
+        table.insert(options, {
+            label=dfhack.military.getSquadName(squad_id),
+            value=squad_id,
+            pen=COLOR_YELLOW,
+        })
+    end
+    return options
+end
+
+local function get_burrow_options()
+    local options = {{label='Any', value='all', pen=COLOR_GREEN}}
+    for _, burrow in ipairs(df.global.plotinfo.burrows.list) do
+        table.insert(options, {
+            label=#burrow.name > 0 and burrow.name or ('Burrow %d'):format(burrow.id + 1),
+            value=burrow.id,
+            pen=COLOR_YELLOW,
+        })
+    end
+    return options
+end
 
 function InfoOverlay:init()
     self:addviews{
@@ -181,7 +207,7 @@ function InfoOverlay:init()
             },
         },
         widgets.BannerPanel{
-            view_id='filter_panel',
+            view_id='subset_panel',
             frame={l=0, t=1, r=0, h=1},
             visible=function() return self:get_key() == 'PET_WA' end,
             subviews={
@@ -194,7 +220,55 @@ function InfoOverlay:init()
                         {label='All', value='all', pen=COLOR_GREEN},
                         {label='Military', value='military', pen=COLOR_YELLOW},
                         {label='Civilians', value='civilian', pen=COLOR_CYAN},
+                        {label='Burrowed', value='burrow', pen=COLOR_MAGENTA},
                     },
+                    on_change=function(value)
+                        local squad = self.subviews.squad
+                        local burrow = self.subviews.burrow
+                        squad.visible = false
+                        burrow.visible = false
+                        if value == 'military' then
+                            squad.options = get_squad_options()
+                            squad:setOption('all')
+                            squad.visible = true
+                        elseif value == 'burrow' then
+                            burrow.options = get_burrow_options()
+                            burrow:setOption('all')
+                            burrow.visible = true
+                        end
+                        self:do_search(self.subviews.search.text, true)
+                    end,
+                },
+            },
+        },
+        widgets.BannerPanel{
+            view_id='subfilter_panel',
+            frame={l=0, t=2, r=0, h=1},
+            visible=function()
+                local subset = self.subviews.subset:getOptionValue()
+                return self:get_key() == 'PET_WA' and (subset == 'military' or subset == 'burrow')
+            end,
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='squad',
+                    frame={l=1, t=0},
+                    key='CUSTOM_SHIFT_S',
+                    label='Squad:',
+                    options={
+                        {label='Any', value='all', pen=COLOR_GREEN},
+                    },
+                    visible=false,
+                    on_change=function() self:do_search(self.subviews.search.text, true) end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='burrow',
+                    frame={l=1, t=0},
+                    key='CUSTOM_SHIFT_B',
+                    label='Burrow:',
+                    options={
+                        {label='Any', value='all', pen=COLOR_GREEN},
+                    },
+                    visible=false,
                     on_change=function() self:do_search(self.subviews.search.text, true) end,
                 },
             },
@@ -296,8 +370,10 @@ function InfoOverlay:updateFrames()
     local frame = self.subviews.panel.frame
     if frame.l == l and frame.t == t then return ret end
     frame.l, frame.t = l, t
-    local frame2 = self.subviews.filter_panel.frame
+    local frame2 = self.subviews.subset_panel.frame
     frame2.l, frame2.t = l, t + 1
+    local frame3 = self.subviews.subfilter_panel.frame
+    frame3.l, frame3.t = l, t + 2
     return true
 end
 
@@ -323,10 +399,20 @@ function InfoOverlay:matches_filters(unit)
     local subset = self.subviews.subset:getOptionValue()
     if subset == 'all' then
         return true
-    elseif unit.military.squad_id == -1 then
-        return subset == 'civilian'
+    elseif subset == 'civilian' then
+        return unit.military.squad_id == -1
+    elseif subset == 'military' then
+        local squad_id = unit.military.squad_id
+        if squad_id == -1 then return false end
+        local target_id = self.subviews.squad:getOptionValue()
+        if target_id == 'all' then return true end
+        return target_id == squad_id
+    elseif subset == 'burrow' then
+        local target_id = self.subviews.burrow:getOptionValue()
+        if target_id == 'all' then return true end
+        return utils.binsearch(unit.burrows, target_id)
     end
-    return subset == 'military'
+    return true
 end
 
 -- ----------------------

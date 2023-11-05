@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.sort.info')
 
 local gui = require('gui')
+local overlay = require('plugins.overlay')
 local sortoverlay = require('plugins.sort.sortoverlay')
 local widgets = require('gui.widgets')
 local utils = require('utils')
@@ -179,7 +180,10 @@ local function get_squad_options()
 end
 
 local function get_burrow_options()
-    local options = {{label='Any', value='all', pen=COLOR_GREEN}}
+    local options = {
+        {label='Any', value='all', pen=COLOR_GREEN},
+        {label='Unburrowed', value='none', pen=COLOR_LIGHTRED},
+    }
     for _, burrow in ipairs(df.global.plotinfo.burrows.list) do
         table.insert(options, {
             label=#burrow.name > 0 and burrow.name or ('Burrow %d'):format(burrow.id + 1),
@@ -409,8 +413,9 @@ function InfoOverlay:matches_filters(unit)
         return target_id == squad_id
     elseif subset == 'burrow' then
         local target_id = self.subviews.burrow:getOptionValue()
-        if target_id == 'all' then return true end
-        return utils.binsearch(unit.burrows, target_id)
+        if target_id == 'all' then return #unit.burrows + #unit.inactive_burrows > 0 end
+        if target_id == 'none' then return #unit.burrows + #unit.inactive_burrows == 0 end
+        return utils.binsearch(unit.burrows, target_id) or utils.binsearch(unit.inactive_burrows, target_id)
     end
     return true
 end
@@ -467,6 +472,73 @@ function CandidatesOverlay:onRenderBody(dc)
     if self:updateFrames() then
         self:updateLayout()
     end
+end
+
+-- ----------------------
+-- WorkAnimalOverlay
+--
+
+WorkAnimalOverlay = defclass(WorkAnimalOverlay, overlay.OverlayWidget)
+WorkAnimalOverlay.ATTRS{
+    default_pos={x=-33, y=12},
+    viewscreens='dwarfmode/Info/CREATURES/AssignWorkAnimal',
+    default_enabled=true,
+    frame={w=29, h=1},
+}
+
+function WorkAnimalOverlay:init()
+    self:addviews{
+        widgets.Label{
+            view_id='annotations',
+            frame={t=0, l=0},
+            text='',
+        }
+    }
+end
+
+local function get_work_animal_counts()
+    local counts = {}
+    for _,unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isOwnCiv(unit) or
+            (not dfhack.units.isWar(unit) and not dfhack.units.isHunter(unit))
+        then
+            goto continue
+        end
+        local owner_id = unit.relationship_ids.Pet
+        if owner_id == -1 then goto continue end
+        counts[owner_id] = (counts[owner_id] or 0) + 1
+        ::continue::
+    end
+    return counts
+end
+
+function WorkAnimalOverlay:onRenderFrame(dc, rect)
+    local _, sh = dfhack.screen.getWindowSize()
+    local _, t = get_panel_offsets()
+    local list_height = sh - (17 + t)
+    local num_elems = list_height // 3
+    local max_elem = math.min(#creatures.work_animal_recipient-1,
+        creatures.scroll_position_work_animal+num_elems-1)
+
+    local annotations = {}
+    local counts = get_work_animal_counts()
+    for idx=creatures.scroll_position_work_animal,max_elem do
+        table.insert(annotations, NEWLINE)
+        table.insert(annotations, NEWLINE)
+        local animal_count = counts[creatures.work_animal_recipient[idx].id]
+        if animal_count and animal_count > 0 then
+            table.insert(annotations, {text='[', pen=COLOR_RED})
+            table.insert(annotations, ('Assigned work animals: %d'):format(animal_count))
+            table.insert(annotations, {text=']', pen=COLOR_RED})
+        end
+        table.insert(annotations, NEWLINE)
+    end
+
+    self.subviews.annotations.frame.t = t
+    self.subviews.annotations:setText(annotations)
+    self.frame.h = list_height + t
+
+    WorkAnimalOverlay.super.onRenderFrame(self, dc, rect)
 end
 
 -- ----------------------

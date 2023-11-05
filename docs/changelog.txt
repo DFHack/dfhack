@@ -66,6 +66,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel
+- `buildingplan`: clarify interface when building single-tile staircases
 - `sort`: allow searching by profession on the squad assignment page
 - `sort`: add search for work animal assignment screen; allow filtering by miltary/civilian
 - `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed

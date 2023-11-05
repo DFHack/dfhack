@@ -1,22 +1,22 @@
-#include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <stack>
-#include <string>
 #include <cmath>
-#include <memory>
 
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
+#include "Debug.h"
+#include "LuaTools.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
-#include "modules/Maps.h"
-#include "modules/Materials.h"
+#include "modules/Job.h"
+#include "modules/Persistence.h"
+#include "modules/Screen.h"
+#include "modules/World.h"
 
+#include "df/block_square_event_designation_priorityst.h"
 #include "df/gamest.h"
+#include "df/job_list_link.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;
@@ -33,9 +33,32 @@ command_result digcircle (color_ostream &out, vector <string> & parameters);
 command_result digtype (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("dig");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(window_x);
+REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);
+
+namespace DFHack {
+    DBG_DECLARE(dig, log, DebugCategory::LINFO);
+}
+
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
+
+std::unordered_set<df::coord> warmdamp_tagged_tiles;
+
+static void jobInitiatedHandler(color_ostream& out, void* ptr);
+static void jobCompletedHandler(color_ostream& out, void* ptr);
+
+static const int32_t CYCLE_TICKS = 1223; // a prime number that's about a day
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static void reset_warm_damp() {
+    warmdamp_tagged_tiles.clear();
+}
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -74,8 +97,109 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(log, out).print("%s from the API\n", is_enabled ? "enabled" : "disabled");
+        reset_warm_damp();
+        if (enable) {
+            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, EventManager::EventHandler(jobInitiatedHandler, 0), plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, EventManager::EventHandler(jobCompletedHandler, 0), plugin_self);
+        } else {
+            EventManager::unregisterAll(plugin_self);
+        }
+    }
+    else {
+        DEBUG(log, out).print("%s from the API, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data(color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(log,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        config.val() = "";
+    }
+
+    vector<string> pos_strs;
+    split_string(&pos_strs, config.val(), "|");
+    for (auto &pos_str : pos_strs) {
+        vector<string> coord_strs;
+        split_string(&coord_strs, pos_str, ",");
+        if (coord_strs.size() != 3)
+            continue;
+        df::coord pos(string_to_int(coord_strs[0]), string_to_int(coord_strs[1]), string_to_int(coord_strs[2]));
+        auto des = Maps::getTileDesignation(pos);
+        if (des && des->bits.dig != df::tile_dig_designation::No)
+            warmdamp_tagged_tiles.emplace(pos);
+    }
+
+    DEBUG(log,out).print("loaded %zd tagged tiles\n", warmdamp_tagged_tiles.size());
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_save_data(color_ostream &out) {
+    DEBUG(log,out).print("serializing %zd tagged tiles to persistent state\n",
+        warmdamp_tagged_tiles.size());
+    vector<string> pos_strs;
+    for (auto & pos : warmdamp_tagged_tiles) {
+        vector<string> coord_strs;
+        coord_strs.emplace_back(int_to_string(pos.x));
+        coord_strs.emplace_back(int_to_string(pos.y));
+        coord_strs.emplace_back(int_to_string(pos.z));
+        pos_strs.emplace_back(join_strings(",", coord_strs));
+    }
+    config.val() = join_strings("|", pos_strs);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED)
+        reset_warm_damp();
+    return CR_OK;
+}
+
+// scrub tagged tiles
+static void do_cycle(color_ostream &out) {
+    cycle_timestamp = world->frame_counter;
+
+    std::unordered_set<df::coord> job_tiles;
+
+    std::vector<df::job*> pvec;
+    int start_id = 0;
+    if (Job::listNewlyCreated(&pvec, &start_id)) {
+        for (auto job : pvec) {
+            auto type = ENUM_ATTR(job_type, type, job->job_type);
+            if (type != job_type_class::Digging)
+                continue;
+            job_tiles.emplace(job->pos);
+        }
+    }
+
+    std::unordered_set<df::coord> good_tiles;
+    for (auto & pos : warmdamp_tagged_tiles) {
+        auto des = Maps::getTileDesignation(pos);
+        if ((des && des->bits.dig != df::tile_dig_designation::No) || job_tiles.contains(pos))
+            good_tiles.emplace(pos);
+    }
+
+    DEBUG(log,out).print("scrubbed tagged tiles; before: %zd after: %zd\n",
+        warmdamp_tagged_tiles.size(), good_tiles.size());
+    warmdamp_tagged_tiles = good_tiles;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
     return CR_OK;
 }
 
@@ -1545,3 +1669,403 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     mCache->WriteAll();
     return CR_OK;
 }
+
+/////////////////////////////////////////////////////
+// listener logic
+//
+
+static void jobInitiatedHandler(color_ostream& out, void* ptr) {
+    df::job *job = (df::job *)ptr;
+    auto type = ENUM_ATTR(job_type, type, job->job_type);
+    if (type != job_type_class::Digging)
+        return;
+
+
+}
+
+static void jobCompletedHandler(color_ostream& out, void* ptr) {
+
+}
+
+/////////////////////////////////////////////////////
+// Lua API
+//
+
+static void check_tile(const df::coord & pos) {
+    auto des = Maps::getTileDesignation(pos);
+    if (!des || des->bits.dig == df::tile_dig_designation::No) {
+        if (warmdamp_tagged_tiles.contains(pos)) {
+            DEBUG(log).print("removing pos (%d, %d, %d)\n", pos.x, pos.y, pos.z);
+            warmdamp_tagged_tiles.erase(pos);
+        }
+    }
+    else if (!warmdamp_tagged_tiles.contains(pos)) {
+        DEBUG(log).print("adding pos (%d, %d, %d)\n", pos.x, pos.y, pos.z);
+        warmdamp_tagged_tiles.emplace(pos);
+    }
+}
+
+static int registerWarmDampTile(lua_State *L) {
+    TRACE(log).print("entering registerWarmDampTile\n");
+    df::coord pos;
+    Lua::CheckDFAssign(L, &pos, 1);
+    check_tile(pos);
+    return 0;
+}
+
+static bool get_int_field(lua_State *L, int idx, const char *name, int16_t *dest) {
+    lua_getfield(L, idx, name);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return false;
+    }
+    *dest = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    return true;
+}
+
+static bool get_bounds(lua_State *L, int idx, df::coord &pos1, df::coord &pos2) {
+    return get_int_field(L, idx, "x1", &pos1.x) &&
+        get_int_field(L, idx, "y1", &pos1.y) &&
+        get_int_field(L, idx, "z1", &pos1.z) &&
+        get_int_field(L, idx, "x2", &pos2.x) &&
+        get_int_field(L, idx, "y2", &pos2.y) &&
+        get_int_field(L, idx, "z2", &pos2.z);
+}
+
+static int registerWarmDampBox(lua_State *L) {
+    TRACE(log).print("entering registerWarmDampBox\n");
+    df::coord pos_start, pos_end;
+    if (!get_bounds(L, 1, pos_start, pos_end)) {
+        luaL_argerror(L, 1, "invalid box bounds");
+        return 0;
+    }
+
+    for (int32_t z = pos_start.z; z <= pos_end.z; ++z) {
+        for (int32_t y = pos_start.y; y <= pos_end.y; ++y) {
+            for (int32_t x = pos_start.x; x <= pos_end.x; ++x) {
+                df::coord pos(x, y, z);
+                check_tile(pos);
+            }
+        }
+    }
+
+    return 0;
+}
+
+static bool is_warm(const df::coord &pos) {
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+    return block->temperature_1[pos.x&15][pos.y&15] >= 10075;
+}
+
+static bool is_rough_wall(int16_t x, int16_t y, int16_t z) {
+    df::tiletype *tt = Maps::getTileType(x, y, z);
+    if (!tt)
+        return false;
+
+    return tileShape(*tt) == df::tiletype_shape::WALL &&
+        tileSpecial(*tt) != df::tiletype_special::SMOOTH;
+}
+
+static bool will_leak(int16_t x, int16_t y, int16_t z) {
+    auto des = Maps::getTileDesignation(x, y, z);
+    if (!des)
+        return false;
+    if (des->bits.liquid_type == df::tile_liquid::Water && des->bits.flow_size >= 1)
+        return true;
+    if (des->bits.water_table && is_rough_wall(x, y, z))
+        return true;
+    return false;
+}
+
+static bool is_damp(const df::coord &pos) {
+    return will_leak(pos.x-1, pos.y-1, pos.z) ||
+        will_leak(pos.x, pos.y-1, pos.z) ||
+        will_leak(pos.x+1, pos.y-1, pos.z) ||
+        will_leak(pos.x-1, pos.y, pos.z) ||
+        will_leak(pos.x+1, pos.y, pos.z) ||
+        will_leak(pos.x-1, pos.y+1, pos.z) ||
+        will_leak(pos.x, pos.y+1, pos.z) ||
+        will_leak(pos.x+1, pos.y+1, pos.z);
+        will_leak(pos.x, pos.y+1, pos.z+1);
+}
+
+static void paintScreenWarmDamp(bool show_hidden = false) {
+    TRACE(log).print("entering paintScreenDampWarm\n");
+
+    if (Screen::inGraphicsMode())
+        return;
+
+    auto dims = Gui::getDwarfmodeViewDims().map();
+    for (int y = dims.first.y; y <= dims.second.y; ++y) {
+        for (int x = dims.first.x; x <= dims.second.x; ++x) {
+            df::coord map_pos(*window_x + x, *window_y + y, *window_z);
+
+            if (!Maps::isValidTilePos(map_pos))
+                continue;
+
+            if (!show_hidden && !Maps::isTileVisible(map_pos)) {
+                TRACE(log).print("skipping hidden tile\n");
+                continue;
+            }
+
+            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                map_pos.x, map_pos.y, map_pos.z, x, y);
+
+            Screen::Pen cur_tile = Screen::readTile(x, y, true);
+            if (!cur_tile.valid()) {
+                DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
+                continue;
+            }
+
+            int color = is_warm(map_pos) ? COLOR_RED : is_damp(map_pos) ? COLOR_BLUE : COLOR_BLACK;
+            if (color == COLOR_BLACK) {
+                TRACE(log).print("skipping non-warm, non-damp tile\n");
+                continue;
+            }
+
+            // this will also change the color of the cursor or any selection box that overlaps
+            // the tile. this is intentional since it makes the UI more readable
+            if (cur_tile.fg && cur_tile.ch != ' ') {
+                cur_tile.fg = color;
+                cur_tile.bg = 0;
+            } else {
+                cur_tile.fg = 0;
+                cur_tile.bg = color;
+            }
+
+            cur_tile.bold = false;
+
+            if (cur_tile.tile)
+                cur_tile.tile_mode = Screen::Pen::CharColor;
+
+            Screen::paintTile(cur_tile, x, y, true);
+        }
+    }
+}
+
+struct designation{
+    df::coord pos;
+    df::tile_designation td;
+    df::tile_occupancy to;
+    designation() = default;
+    designation(const df::coord &c, const df::tile_designation &td, const df::tile_occupancy &to) : pos(c), td(td), to(to) {}
+
+    bool operator==(const designation &rhs) const {
+        return pos == rhs.pos;
+    }
+
+    bool operator!=(const designation &rhs) const {
+        return !(rhs == *this);
+    }
+};
+
+namespace std {
+    template<>
+    struct hash<designation> {
+        std::size_t operator()(const designation &c) const {
+            std::hash<df::coord> hash_coord;
+            return hash_coord(c.pos);
+        }
+    };
+}
+
+class Designations {
+private:
+    std::unordered_map<df::coord, designation> designations;
+public:
+    Designations() {
+        df::job_list_link *link = world->jobs.list.next;
+        for (; link; link = link->next) {
+            df::job *job = link->item;
+
+            if(!job || !Maps::isValidTilePos(job->pos))
+                continue;
+
+            df::tile_designation td;
+            df::tile_occupancy to;
+            bool keep_if_taken = false;
+
+            switch (job->job_type) {
+                case df::job_type::SmoothWall:
+                case df::job_type::SmoothFloor:
+                    keep_if_taken = true;
+                    // fallthrough
+                case df::job_type::CarveFortification:
+                    td.bits.smooth = 1;
+                    break;
+                case df::job_type::DetailWall:
+                case df::job_type::DetailFloor:
+                    td.bits.smooth = 2;
+                    break;
+                case job_type::CarveTrack:
+                    to.bits.carve_track_north = (job->item_category.whole >> 18) & 1;
+                    to.bits.carve_track_south = (job->item_category.whole >> 19) & 1;
+                    to.bits.carve_track_west = (job->item_category.whole >> 20) & 1;
+                    to.bits.carve_track_east = (job->item_category.whole >> 21) & 1;
+                    break;
+                default:
+                    continue;
+            }
+            if (keep_if_taken || !Job::getWorker(job))
+                designations.emplace(job->pos, designation(job->pos, td, to));
+        }
+    }
+
+    // get from job; if no job, then fall back to querying map
+    designation get(const df::coord &pos) const {
+        if (designations.count(pos)) {
+            return designations.at(pos);
+        }
+        auto pdes = Maps::getTileDesignation(pos);
+        auto pocc = Maps::getTileOccupancy(pos);
+        if (!pdes || !pocc)
+            return {};
+        return designation(pos, *pdes, *pocc);
+    }
+};
+
+static bool is_designated_for_smoothing(const designation &designation) {
+    return designation.td.bits.smooth == 1;
+}
+
+static bool is_designated_for_engraving(const designation &designation) {
+    return designation.td.bits.smooth == 2;
+}
+
+static bool is_designated_for_track_carving(const designation &designation) {
+    const df::tile_occupancy &occ = designation.to;
+    return occ.bits.carve_track_east || occ.bits.carve_track_north || occ.bits.carve_track_south || occ.bits.carve_track_west;
+}
+
+static char get_track_char(const designation &designation) {
+    const df::tile_occupancy &occ = designation.to;
+    if (occ.bits.carve_track_east && occ.bits.carve_track_north && occ.bits.carve_track_south && occ.bits.carve_track_west)
+        return (char)0xCE; // NSEW
+    if (occ.bits.carve_track_east && occ.bits.carve_track_north && occ.bits.carve_track_south)
+        return (char)0xCC; // NSE
+    if (occ.bits.carve_track_east && occ.bits.carve_track_north && occ.bits.carve_track_west)
+        return (char)0xCA; // NEW
+    if (occ.bits.carve_track_east && occ.bits.carve_track_south && occ.bits.carve_track_west)
+        return (char)0xCB; // SEW
+    if (occ.bits.carve_track_north && occ.bits.carve_track_south && occ.bits.carve_track_west)
+        return (char)0xB9; // NSW
+    if (occ.bits.carve_track_north && occ.bits.carve_track_south)
+        return (char)0xBA; // NS
+    if (occ.bits.carve_track_east && occ.bits.carve_track_west)
+        return (char)0xCD; // EW
+    if (occ.bits.carve_track_east && occ.bits.carve_track_north)
+        return (char)0xC8; // NE
+    if (occ.bits.carve_track_north && occ.bits.carve_track_west)
+        return (char)0xBC; // NW
+    if (occ.bits.carve_track_east && occ.bits.carve_track_south)
+        return (char)0xC9; // SE
+    if (occ.bits.carve_track_south && occ.bits.carve_track_west)
+        return (char)0xBB; // SW
+    if (occ.bits.carve_track_north)
+        return (char)0xD0; // N
+    if (occ.bits.carve_track_south)
+        return (char)0xD2; // S
+    if (occ.bits.carve_track_east)
+        return (char)0xC6; // E
+    if (occ.bits.carve_track_west)
+        return (char)0xB5; // W
+    return (char)0xC5; // single line cross; should never happen
+}
+
+static bool is_smooth_wall(const df::coord &pos) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    return tt && tileSpecial(*tt) == df::tiletype_special::SMOOTH
+                && tileShape(*tt) == df::tiletype_shape::WALL;
+}
+
+static bool blink(int delay) {
+    return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
+}
+
+static char get_tile_char(const df::coord &pos, char desig_char, bool draw_priority) {
+    if (!draw_priority)
+        return desig_char;
+
+    std::vector<df::block_square_event_designation_priorityst *> priorities;
+    Maps::SortBlockEvents(Maps::getTileBlock(pos), NULL, NULL, NULL, NULL, NULL, NULL, NULL, &priorities);
+    if (priorities.empty())
+        return desig_char;
+    switch (priorities[0]->priority[pos.x % 16][pos.y % 16] / 1000) {
+    case 1: return '1';
+    case 2: return '2';
+    case 3: return '3';
+    case 4: return '4';
+    case 5: return '5';
+    case 6: return '6';
+    case 7: return '7';
+    default:
+        return '4';
+    }
+}
+
+static void paintScreenCarve() {
+    TRACE(log).print("entering paintScreenCarve\n");
+
+    if (Screen::inGraphicsMode() || blink(500))
+        return;
+
+    Designations designations;
+    bool draw_priority = blink(1000);
+
+    auto dims = Gui::getDwarfmodeViewDims().map();
+    for (int y = dims.first.y; y <= dims.second.y; ++y) {
+        for (int x = dims.first.x; x <= dims.second.x; ++x) {
+            df::coord map_pos(*window_x + x, *window_y + y, *window_z);
+
+            if (!Maps::isValidTilePos(map_pos))
+                continue;
+
+            if (!Maps::isTileVisible(map_pos)) {
+                TRACE(log).print("skipping hidden tile\n");
+                continue;
+            }
+
+            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                map_pos.x, map_pos.y, map_pos.z, x, y);
+
+            Screen::Pen cur_tile;
+            cur_tile.fg = COLOR_DARKGREY;
+
+            auto des = designations.get(map_pos);
+
+            if (is_designated_for_smoothing(des)) {
+                if (is_smooth_wall(map_pos))
+                    cur_tile.ch = get_tile_char(map_pos, (char)206, draw_priority); // hash, indicating a fortification designation
+                else
+                    cur_tile.ch = get_tile_char(map_pos, (char)219, draw_priority); // solid block, indicating a smoothing designation
+            }
+            else if (is_designated_for_engraving(des)) {
+                cur_tile.ch = get_tile_char(map_pos, (char)10, draw_priority); // solid block with a circle on it
+            }
+            else if (is_designated_for_track_carving(des)) {
+                cur_tile.ch = get_tile_char(map_pos, get_track_char(des), draw_priority); // directional track
+            }
+            else {
+                TRACE(log).print("skipping tile with no carving designation\n");
+                continue;
+            }
+
+            Screen::paintTile(cur_tile, x, y, true);
+        }
+    }
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS{
+    DFHACK_LUA_COMMAND(registerWarmDampTile),
+    DFHACK_LUA_COMMAND(registerWarmDampBox),
+    DFHACK_LUA_END,
+};
+
+DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
+    DFHACK_LUA_FUNCTION(paintScreenCarve),
+    DFHACK_LUA_END
+};

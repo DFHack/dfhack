@@ -5,9 +5,9 @@ local utils = require('utils')
 
 function get_unit_search_key(unit)
     return ('%s %s %s'):format(
-        dfhack.units.getReadableName(unit),  -- last name is in english
+        dfhack.units.getReadableName(unit),
         dfhack.units.getProfessionName(unit),
-        dfhack.TranslateName(unit.name, false, true))  -- get untranslated last name
+        dfhack.TranslateName(unit.name, true, true))  -- get English last name
 end
 
 local function copy_to_lua_table(vec)

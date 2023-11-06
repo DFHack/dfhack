@@ -1505,8 +1505,9 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
 
 static int gui_getMousePos(lua_State *L)
 {
-    auto pos = Gui::getMousePos();
-    if (pos.isValid())
+    bool allow_out_of_bounds = lua_toboolean(L, 1);
+    df::coord pos = Gui::getMousePos(allow_out_of_bounds);
+    if ((allow_out_of_bounds && pos.z >= 0) || pos.isValid())
         Lua::Push(L, pos);
     else
         lua_pushnil(L);

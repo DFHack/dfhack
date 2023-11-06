@@ -2257,7 +2257,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 }
 
 // returns the map coordinates that the mouse cursor is over
-df::coord Gui::getMousePos()
+df::coord Gui::getMousePos(bool allow_out_of_bounds)
 {
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
@@ -2271,7 +2271,7 @@ df::coord Gui::getMousePos()
             pos.y += gps->mouse_y;
         }
     }
-    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+    if (!allow_out_of_bounds && !Maps::isValidTilePos(pos.x, pos.y, pos.z))
         return df::coord();
     return pos;
 }

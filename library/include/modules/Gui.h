@@ -150,7 +150,7 @@ namespace DFHack
          */
         DFHACK_EXPORT df::coord getViewportPos();
         DFHACK_EXPORT df::coord getCursorPos();
-        DFHACK_EXPORT df::coord getMousePos();
+        DFHACK_EXPORT df::coord getMousePos(bool allow_out_of_bounds = false);
 
         static const int AREA_MAP_WIDTH = 23;
         static const int MENU_WIDTH = 30;

@@ -165,7 +165,7 @@ InfoOverlay.ATTRS{
     frame={w=40, h=6},
 }
 
-local function get_squad_options()
+function get_squad_options()
     local options = {{label='Any', value='all', pen=COLOR_GREEN}}
     local fort = df.historical_entity.find(df.global.plotinfo.group_id)
     if not fort then return options end
@@ -179,7 +179,7 @@ local function get_squad_options()
     return options
 end
 
-local function get_burrow_options()
+function get_burrow_options()
     local options = {
         {label='Any', value='all', pen=COLOR_GREEN},
         {label='Unburrowed', value='none', pen=COLOR_LIGHTRED},
@@ -192,6 +192,25 @@ local function get_burrow_options()
         })
     end
     return options
+end
+
+function matches_squad_burrow_filters(unit, subset, target_squad_id, target_burrow_id)
+    if subset == 'all' then
+        return true
+    elseif subset == 'civilian' then
+        return unit.military.squad_id == -1
+    elseif subset == 'military' then
+        local squad_id = unit.military.squad_id
+        if squad_id == -1 then return false end
+        if target_squad_id == 'all' then return true end
+        return target_squad_id == squad_id
+    elseif subset == 'burrow' then
+        if target_burrow_id == 'all' then return #unit.burrows + #unit.inactive_burrows > 0 end
+        if target_burrow_id == 'none' then return #unit.burrows + #unit.inactive_burrows == 0 end
+        return utils.binsearch(unit.burrows, target_burrow_id) or
+            utils.binsearch(unit.inactive_burrows, target_burrow_id)
+    end
+    return true
 end
 
 function InfoOverlay:init()
@@ -217,7 +236,7 @@ function InfoOverlay:init()
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='subset',
-                    frame={l=1, t=0},
+                    frame={l=1, t=0, r=1},
                     key='CUSTOM_SHIFT_F',
                     label='Show:',
                     options={
@@ -255,7 +274,7 @@ function InfoOverlay:init()
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='squad',
-                    frame={l=1, t=0},
+                    frame={l=1, t=0, r=1},
                     key='CUSTOM_SHIFT_S',
                     label='Squad:',
                     options={
@@ -266,7 +285,7 @@ function InfoOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='burrow',
-                    frame={l=1, t=0},
+                    frame={l=1, t=0, r=1},
                     key='CUSTOM_SHIFT_B',
                     label='Burrow:',
                     options={
@@ -315,6 +334,11 @@ function InfoOverlay:init()
             curry(sortoverlay.single_vector_search, {get_search_key_fn=get_artifact_search_key}))
         ::continue::
     end
+end
+
+function InfoOverlay:reset()
+    InfoOverlay.super.reset(self)
+    self.subviews.subset:setOption('all')
 end
 
 function InfoOverlay:get_key()
@@ -400,24 +424,8 @@ function InfoOverlay:onInput(keys)
 end
 
 function InfoOverlay:matches_filters(unit)
-    local subset = self.subviews.subset:getOptionValue()
-    if subset == 'all' then
-        return true
-    elseif subset == 'civilian' then
-        return unit.military.squad_id == -1
-    elseif subset == 'military' then
-        local squad_id = unit.military.squad_id
-        if squad_id == -1 then return false end
-        local target_id = self.subviews.squad:getOptionValue()
-        if target_id == 'all' then return true end
-        return target_id == squad_id
-    elseif subset == 'burrow' then
-        local target_id = self.subviews.burrow:getOptionValue()
-        if target_id == 'all' then return #unit.burrows + #unit.inactive_burrows > 0 end
-        if target_id == 'none' then return #unit.burrows + #unit.inactive_burrows == 0 end
-        return utils.binsearch(unit.burrows, target_id) or utils.binsearch(unit.inactive_burrows, target_id)
-    end
-    return true
+    return matches_squad_burrow_filters(unit, self.subviews.subset:getOptionValue(),
+        self.subviews.squad:getOptionValue(), self.subviews.burrow:getOptionValue())
 end
 
 -- ----------------------

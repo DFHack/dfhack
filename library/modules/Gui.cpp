@@ -380,8 +380,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::view_sheet_type::BUILDING:
             if (game->main_interface.view_sheets.linking_lever)
                 newFocusString = baseFocus + "/LinkingLever";
-            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid))
+            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
                 newFocusString += '/' + enum_item_key(bld->getType());
+                if (bld->getType() == df::enums::building_type::Trap) {
+                    df::building_trapst* trap = strict_virtual_cast<df::building_trapst>(bld);
+                    newFocusString += '/' + enum_item_key(trap->trap_type);
+                }
+            }
             break;
         default:
             break;
@@ -2257,7 +2262,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 }
 
 // returns the map coordinates that the mouse cursor is over
-df::coord Gui::getMousePos()
+df::coord Gui::getMousePos(bool allow_out_of_bounds)
 {
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
@@ -2271,7 +2276,7 @@ df::coord Gui::getMousePos()
             pos.y += gps->mouse_y;
         }
     }
-    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+    if (!allow_out_of_bounds && !Maps::isValidTilePos(pos.x, pos.y, pos.z))
         return df::coord();
     return pos;
 }

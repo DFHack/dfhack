@@ -58,11 +58,13 @@ Template for new versions:
 - `prospect`: can now give you an estimate of resources from the embark screen. hover the mouse over a potential embark area and run `prospect`.
 - `burrow`: integrated 3d box fill and 2d/3d flood fill extensions for burrow painting mode
 - `buildingplan`: allow specific mechanisms to be selected when linking levers
+- `sort`: military and burrow membership filters for the burrow assignment screen
 
 ## Fixes
 - `stockpiles`: hide configure and help buttons when the overlay panel is minimized
 - `caravan`: price of vermin swarms correctly adjusted down. a stack of 10000 bees is worth 10, not 10000
 - `sort`: when filtering out already-established temples in the location assignment screen, also filter out the "No specific deity" option if a non-denominational temple has already been established
+- RemoteServer: continue to accept connections as long as the listening socket is valid instead of closing the socket after the first disconnect
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel
@@ -80,11 +82,15 @@ Template for new versions:
 - ``Maps::getWalkableGroup``: get the walkability group of a tile
 - ``Units::getReadableName``: now returns the *untranslated* name
 - ``Burrows::setAssignedUnit``: now properly handles inactive burrows
+- ``Gui::getMousePos``: now takes an optional ``allow_out_of_bounds`` parameter so coordinates can be returned for mouse positions outside of the game map (i.e. in the blank space around the map)
+- ``Buildings::completebuild``: used to link a newly created building into the world
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 - ``dfhack.maps.getWalkableGroup``: get the walkability group of a tile
+- ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
 - ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
+- ``dfhack.buildings.completebuild``: expose new module API
 
 ## Removed
 

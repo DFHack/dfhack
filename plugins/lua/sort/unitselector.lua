@@ -247,6 +247,11 @@ function BurrowAssignmentOverlay:register_handlers()
     end
 end
 
+function BurrowAssignmentOverlay:reset()
+    BurrowAssignmentOverlay.super.reset(self)
+    self.subviews.subset:setOption('all')
+end
+
 function BurrowAssignmentOverlay:matches_filters(unit_id)
     local unit = df.unit.find(unit_id)
     if not unit then return false end

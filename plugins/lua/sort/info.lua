@@ -336,6 +336,11 @@ function InfoOverlay:init()
     end
 end
 
+function InfoOverlay:reset()
+    InfoOverlay.super.reset(self)
+    self.subviews.subset:setOption('all')
+end
+
 function InfoOverlay:get_key()
     if info.current_mode == df.info_interface_mode_type.CREATURES then
         if creatures.current_mode == df.unit_list_mode_type.PET then

@@ -53,9 +53,9 @@ local function get_zone_search_key(zone)
         table.insert(result, df.civzone_type[zone.type]);
     else -- zone is a special location and we need to get its type from world data
         local building, success, _ = utils.binsearch(site.buildings, zone.location_id, 'id')
-        if success then
+        if success and building.name then
             table.insert(result, df.language_name_type[building.name.type])
-            if building.name and building.name.has_name then
+            if building.name.has_name then
                 table.insert(result, dfhack.TranslateName(building.name, true))
             end
         end

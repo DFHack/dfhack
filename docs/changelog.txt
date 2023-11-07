@@ -83,6 +83,7 @@ Template for new versions:
 - ``Units::getReadableName``: now returns the *untranslated* name
 - ``Burrows::setAssignedUnit``: now properly handles inactive burrows
 - ``Gui::getMousePos``: now takes an optional ``allow_out_of_bounds`` parameter so coordinates can be returned for mouse positions outside of the game map (i.e. in the blank space around the map)
+- Gui focus strings will now include the trap type for traps (e.g. dwarfmode/ViewSheets/BUILDING/Trap/StoneFallTrap)
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target

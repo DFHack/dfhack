@@ -2,31 +2,34 @@ local _ENV = mkmodule('plugins.sort.places')
 
 local sortoverlay = require('plugins.sort.sortoverlay')
 local widgets = require('gui.widgets')
+local utils = require('utils')
 
 local info = df.global.game.main_interface.info
 local buildings = info.buildings
 
-local function get_default_zone_name(zone_type)
-    if zone_type == df.civzone_type.Dump then return 'Garbage dump' end
-    if zone_type == df.civzone_type.WaterSource then return 'Water source' end
-    if zone_type == df.civzone_type.SandCollection then return 'Sand' end
-    if zone_type == df.civzone_type.FishingArea then return 'Fishing' end
-    if zone_type == df.civzone_type.Pond then return 'Pit/pond' end
-    if zone_type == df.civzone_type.Pen then return 'Pen/pasture' end
-    if zone_type == df.civzone_type.ClayCollection then return 'Clay' end
-    if zone_type == df.civzone_type.AnimalTraining then return 'Animal training' end
-    if zone_type == df.civzone_type.PlantGathering then return 'Gather fruit' end
-    if zone_type == df.civzone_type.Dungeon then return 'Dungeon' end
-    if zone_type == df.civzone_type.MeetingHall then return 'Meeting area' end
-    if zone_type == df.civzone_type.Barracks then return 'Barracks' end
-    if zone_type == df.civzone_type.ArcheryRange then return 'Archery range' end
-    if zone_type == df.civzone_type.Office then return 'Office' end
-    if zone_type == df.civzone_type.DiningHall then return 'Dining hall' end
-    if zone_type == df.civzone_type.Dormitory then return 'Dormitory' end
-    if zone_type == df.civzone_type.Bedroom then return 'Bedroom' end
-    if zone_type == df.civzone_type.Tomb then return 'Tomb' end
+local zone_names = {
+    [df.civzone_type.MeetingHall] = 'Meeting Area',
+    [df.civzone_type.Bedroom] = 'Bedroom',
+    [df.civzone_type.DiningHall] = 'Dining Hall',
+    [df.civzone_type.Pen] = 'Pen/Pasture',
+    [df.civzone_type.Pond] = 'Pit/Pond',
+    [df.civzone_type.WaterSource] = 'Water Source',
+    [df.civzone_type.Dungeon] = 'Dungeon',
+    [df.civzone_type.FishingArea] = 'Fishing',
+    [df.civzone_type.SandCollection] = 'Sand',
+    [df.civzone_type.Office] = 'Office',
+    [df.civzone_type.Dormitory] = 'Dormitory',
+    [df.civzone_type.Barracks] = 'Barrachs',
+    [df.civzone_type.ArcheryRange] = 'Archery Range',
+    [df.civzone_type.Dump] = 'Garbage Dump',
+    [df.civzone_type.AnimalTraining] = 'Animal Training',
+    [df.civzone_type.Tomb] = 'Tomb',
+    [df.civzone_type.PlantGathering] = 'Gather Fruit',
+    [df.civzone_type.ClayCollection] = 'Clay'
+}
 
-    return '' -- If zone_type is anything else it will not have a default name populated in the Zones page when left nameless
+local function get_default_zone_name(zone_type)
+    return zone_names[zone_type] or ''
 end
 
 local function get_zone_search_key(zone)
@@ -34,7 +37,7 @@ local function get_zone_search_key(zone)
     local result = {}
 
     -- allow zones to be searchable by their name
-    if zone.name == nil or zone.name == '' then
+    if #zone.name == 0 then
         table.insert(result, get_default_zone_name(zone.type))
     else
         table.insert(result, zone.name)
@@ -42,16 +45,20 @@ local function get_zone_search_key(zone)
 
     -- allow zones w/ assignments to be searchable by their assigned unit
     if zone.assigned_unit ~= nil then
-        table.insert(result, dfhack.TranslateName(zone.assigned_unit.name))
-        table.insert(result, dfhack.units.getReadableName(zone.assigned_unit))
+        table.insert(result, sortoverlay.get_unit_search_key(zone.assigned_unit))
     end
 
     -- allow zones to be searchable by type
     if zone.location_id == -1 then -- zone is NOT a special location and we don't need to do anything special for type searching
         table.insert(result, df.civzone_type[zone.type]);
     else -- zone is a special location and we need to get its type from world data
-        table.insert(result, dfhack.TranslateName(site.buildings[zone.location_id].name, true))
-        table.insert(result, df.civzone_type[site.buildings[zone.location_id].name.type])
+        local building, success, _ = utils.binsearch(site.buildings, zone.location_id, 'id')
+        if success then
+            table.insert(result, df.language_name_type[building.name.type])
+            if building.name and building.name.has_name then
+                table.insert(result, dfhack.TranslateName(building.name, true))
+            end
+        end
     end
 
     -- allow barracks to be searchable by assigned squad
@@ -68,7 +75,7 @@ end
 
 PlacesOverlay = defclass(PlacesOverlay, sortoverlay.SortOverlay)
 PlacesOverlay.ATTRS{
-    default_pos={x=71, y=8},
+    default_pos={x=71, y=9},
     viewscreens='dwarfmode/Info',
     frame={w=40, h=6}
 }
@@ -101,21 +108,6 @@ function PlacesOverlay:get_key()
             return 'ZONES'
         end
     end
-end
-
-function PlacesOverlay:onRenderBody(dc)
-    PlacesOverlay.super.onRenderBody(self, dc)
-    if self.refresh_search then
-        self.refresh_search = nil
-        self:do_search(self.subviews.search.text)
-    end
-end
-
-function PlacesOverlay:onInput(keys)
-    if keys._MOUSE_L then
-        self.refresh_search = true
-    end
-    return PlacesOverlay.super.onInput(self, keys)
 end
 
 return _ENV

@@ -380,8 +380,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::view_sheet_type::BUILDING:
             if (game->main_interface.view_sheets.linking_lever)
                 newFocusString = baseFocus + "/LinkingLever";
-            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid))
+            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
                 newFocusString += '/' + enum_item_key(bld->getType());
+                if (bld->getType() == df::enums::building_type::Trap) {
+                    df::building_trapst* trap = strict_virtual_cast<df::building_trapst>(bld);
+                    newFocusString += '/' + enum_item_key(trap->trap_type);
+                }
+            }
             break;
         default:
             break;

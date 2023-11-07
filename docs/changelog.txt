@@ -83,12 +83,14 @@ Template for new versions:
 - ``Units::getReadableName``: now returns the *untranslated* name
 - ``Burrows::setAssignedUnit``: now properly handles inactive burrows
 - ``Gui::getMousePos``: now takes an optional ``allow_out_of_bounds`` parameter so coordinates can be returned for mouse positions outside of the game map (i.e. in the blank space around the map)
+- ``Buildings::completebuild``: used to link a newly created building into the world
 
 ## Lua
 - ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
 - ``dfhack.maps.getWalkableGroup``: get the walkability group of a tile
 - ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
 - ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
+- ``dfhack.buildings.completebuild``: expose new module API
 
 ## Removed
 

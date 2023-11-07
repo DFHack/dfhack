@@ -289,5 +289,10 @@ DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
  * Returns the units currently in the given cage
  */
 DFHACK_EXPORT bool getCageOccupants(df::building_cagest *cage, std::vector<df::unit*> &units);
+
+/**
+ * Finalizes a new building into the world
+ */
+DFHACK_EXPORT void completebuild(df::building* bld, char in_play);
 }
 }

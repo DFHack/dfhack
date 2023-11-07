@@ -66,6 +66,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             init_diggers(out);
             EventManager::registerListener(EventManager::EventType::JOB_STARTED, EventManager::EventHandler(jobStartedHandler, 0), plugin_self);
             EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, EventManager::EventHandler(jobCompletedHandler, 0), plugin_self);
+        } else {
+            EventManager::unregisterAll(plugin_self);
         }
     }
     else {

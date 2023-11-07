@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "Debug.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -85,6 +86,7 @@ namespace {
 }
 
 namespace DFHack {
+    DBG_DECLARE(core, socket, DebugCategory::LINFO);
 
     struct BlockGuard {
         std::lock_guard<std::mutex> lock;
@@ -476,16 +478,32 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
     CActiveSocket *client = nullptr;
 
     try {
-        while ((client = server.socket.Accept()) != NULL)
+        for (int acceptFail = 0 ; server.socket.IsSocketValid() && acceptFail < 5 ; acceptFail++)
         {
-            BlockGuard lock;
-            ServerConnection::Accepted(client);
-            client = nullptr;
+            if ((client = server.socket.Accept()) != NULL)
+            {
+                BlockGuard lock;
+                ServerConnection::Accepted(client);
+                client = nullptr;
+            }
+            else
+            {
+                WARN(socket).print("Connection failure: %s (%d of %d)\n", server.socket.DescribeError(), acceptFail + 1, 5);
+            }
         }
     } catch(BlockedException &) {
         if (client)
             client->Close();
         delete client;
+    }
+
+    if (server.socket.IsSocketValid())
+    {
+        WARN(socket).print("Too many failed accepts, shutting down RemoteServer\n");
+    }
+    else
+    {
+        WARN(socket).print("Listening socket invalid, shutting down RemoteServer\n");
     }
 }
 

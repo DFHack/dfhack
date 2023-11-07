@@ -13,7 +13,7 @@ local if_burrow = df.global.game.main_interface.burrow
 
 local function is_choosing_area(pos)
     return if_burrow.doing_rectangle and
-        selection_rect.start_x >= 0 and
+        selection_rect.start_z >= 0 and
         (pos or dfhack.gui.getMousePos())
 end
 
@@ -23,10 +23,17 @@ local function reset_selection_rect()
     selection_rect.start_z = -30000
 end
 
+local function clamp(pos)
+    return xyz2pos(
+        math.max(0, math.min(df.global.world.map.x_count-1, pos.x)),
+        math.max(0, math.min(df.global.world.map.y_count-1, pos.y)),
+        math.max(0, math.min(df.global.world.map.z_count-1, pos.z)))
+end
+
 local function get_bounds(pos1, pos2)
-    pos1 = pos1 or dfhack.gui.getMousePos()
-    pos2 = pos2 or xyz2pos(selection_rect.start_x, selection_rect.start_y, selection_rect.start_z)
-    local bounds = {
+    pos1 = clamp(pos1 or dfhack.gui.getMousePos(true))
+    pos2 = clamp(pos2 or xyz2pos(selection_rect.start_x, selection_rect.start_y, selection_rect.start_z))
+    return {
         x1=math.min(pos1.x, pos2.x),
         x2=math.max(pos1.x, pos2.x),
         y1=math.min(pos1.y, pos2.y),
@@ -34,18 +41,6 @@ local function get_bounds(pos1, pos2)
         z1=math.min(pos1.z, pos2.z),
         z2=math.max(pos1.z, pos2.z),
     }
-
-    -- clamp to map edges
-    bounds = {
-        x1=math.max(0, bounds.x1),
-        x2=math.min(df.global.world.map.x_count-1, bounds.x2),
-        y1=math.max(0, bounds.y1),
-        y2=math.min(df.global.world.map.y_count-1, bounds.y2),
-        z1=math.max(0, bounds.z1),
-        z2=math.min(df.global.world.map.z_count-1, bounds.z2),
-    }
-
-    return bounds
 end
 
 local function get_cur_area_dims()
@@ -114,7 +109,7 @@ function BurrowDesignationOverlay:onInput(keys)
     -- have been initialized. instead, allow clicks to go through so that vanilla
     -- behavior is triggered before we modify the burrow further
     elseif keys._MOUSE_L then
-        local pos = dfhack.gui.getMousePos()
+        local pos = dfhack.gui.getMousePos(true)
         if pos then
             local now_ms = dfhack.getTickCount()
             if not same_xyz(pos, self.saved_pos) then

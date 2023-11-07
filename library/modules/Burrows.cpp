@@ -78,8 +78,10 @@ void Burrows::clearUnits(df::burrow *burrow)
     {
         auto unit = df::unit::find(burrow->units[i]);
 
-        if (unit)
+        if (unit) {
             erase_from_vector(unit->burrows, burrow->id);
+            erase_from_vector(unit->inactive_burrows, burrow->id);
+        }
     }
 
     burrow->units.clear();
@@ -90,7 +92,8 @@ bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 
-    return binsearch_index(unit->burrows, burrow->id) >= 0;
+    return binsearch_index(unit->burrows, burrow->id) >= 0 ||
+        binsearch_index(unit->inactive_burrows, burrow->id) >= 0;
 }
 
 void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
@@ -100,14 +103,15 @@ void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 
-    if (enable)
-    {
-        insert_into_vector(unit->burrows, burrow->id);
+    if (enable) {
+        if (burrow->limit_workshops & 2)  // inactive flag
+            insert_into_vector(unit->inactive_burrows, burrow->id);
+        else
+            insert_into_vector(unit->burrows, burrow->id);
         insert_into_vector(burrow->units, unit->id);
-    }
-    else
-    {
+    } else {
         erase_from_vector(unit->burrows, burrow->id);
+        erase_from_vector(unit->inactive_burrows, burrow->id);
         erase_from_vector(burrow->units, unit->id);
     }
 }

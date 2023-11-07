@@ -171,6 +171,18 @@ local function is_stairs()
             and uibs.building_subtype == df.construction_type.UpDownStair
 end
 
+local function is_single_level_stairs()
+    if not is_stairs() then return false end
+    local _, _, dimz = get_cur_area_dims()
+    return dimz == 1
+end
+
+local function is_multi_level_stairs()
+    if not is_stairs() then return false end
+    local _, _, dimz = get_cur_area_dims()
+    return dimz > 1
+end
+
 local direction_panel_frame = {t=4, h=13, w=46, r=28}
 
 local direction_panel_types = utils.invert{
@@ -435,10 +447,10 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={b=5, l=23, w=30},
+            frame={b=7, l=1, w=30},
             key='CUSTOM_R',
-            label='Top Stair Type:   ',
-            visible=is_stairs,
+            label='Top stair type:   ',
+            visible=is_multi_level_stairs,
             options={
                 {label='Auto', value='auto'},
                 {label='UpDown', value=df.construction_type.UpDownStair},
@@ -447,14 +459,26 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={b=4, l=23, w=30},
+            frame={b=6, l=1, w=30},
             key='CUSTOM_B',
             label='Bottom Stair Type:',
-            visible=is_stairs,
+            visible=is_multi_level_stairs,
             options={
                 {label='Auto', value='auto'},
                 {label='UpDown', value=df.construction_type.UpDownStair},
                 {label='Up', value=df.construction_type.UpStair},
+            },
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='stairs_only_subtype',
+            frame={b=7, l=1, w=30},
+            key='CUSTOM_R',
+            label='Single level stair:',
+            visible=is_single_level_stairs,
+            options={
+                {label='Up', value=df.construction_type.UpStair},
+                {label='UpDown', value=df.construction_type.UpDownStair},
+                {label='Down', value=df.construction_type.DownStair},
             },
         },
         widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
@@ -809,8 +833,12 @@ function PlannerOverlay:onInput(keys)
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         local filter = filters[idx]
+                        local get_available_items_fn = function()
+                            return require('plugins.buildingplan').getAvailableItems(
+                                uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+                        end
                         local selection_screen = itemselection.ItemSelectionScreen{
-                            index=idx,
+                            get_available_items_fn=get_available_items_fn,
                             desc=require('plugins.buildingplan').get_desc(filter),
                             quantity=get_quantity(filter, is_hollow, bounds),
                             autoselect=autoselect,
@@ -906,7 +934,8 @@ end
 function PlannerOverlay:get_stairs_subtype(pos, bounds)
     local subtype = uibs.building_subtype
     if pos.z == bounds.z1 then
-        local opt = self.subviews.stairs_bottom_subtype:getOptionValue()
+        local opt = bounds.z1 == bounds.z2 and self.subviews.stairs_only_subtype:getOptionValue() or
+            self.subviews.stairs_bottom_subtype:getOptionValue()
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape

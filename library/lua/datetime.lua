@@ -1,72 +1,161 @@
 local _ENV = mkmodule('datetime')
 
---[[
-TODO: investigate applicability for adv mode.
-if advmode then TICKS_PER_DAY = 86400 ? or only for cur_year_tick?
-advmod_TU / 72 = ticks
---]]
+local DAYS_PER_MONTH    = 28
+local DAYS_PER_YEAR     = 336
+local MONTHS_PER_YEAR   = 12
 
--- are these locals better in DwarfCalendar?
-local DAYS_PER_MONTH = 28
-local DAYS_PER_YEAR = 336
-local MONTHS_PER_YEAR = 12
-local TICKS_PER_DAY = 1200
-local TICKS_PER_MONTH = TICKS_PER_DAY * DAYS_PER_MONTH
-local TICKS_PER_YEAR = TICKS_PER_MONTH * MONTHS_PER_YEAR
+DWARF_TICKS_PER_DAY     = 1200
+--local DWARF_TICKS_PER_MONTH = DWARF_TICKS_PER_DAY * DAYS_PER_MONTH
+--local DWARF_TICKS_PER_YEAR  = DWARF_TICKS_PER_MONTH * MONTHS_PER_YEAR
 
-local MONTHS = {
- 'Granite',
- 'Slate',
- 'Felsite',
- 'Hematite',
- 'Malachite',
- 'Galena',
- 'Limestone',
- 'Sandstone',
- 'Timber',
- 'Moonstone',
- 'Opal',
- 'Obsidian',
+ADVENTURE_TICKS_PER_DAY = 172800
+--local ADVENTURE_TICKS_PER_MONTH = ADVENTURE_TICKS_PER_DAY * DAYS_PER_MONTH
+--local ADVENTURE_TICKS_PER_YEAR  = ADVENTURE_TICKS_PER_MONTH * MONTHS_PER_YEAR
+
+--local TICKS_PER_DAY   = DWARF_TICKS_PER_DAY
+--local TICKS_PER_MONTH = DWARF_TICKS_PER_MONTH
+--local TICKS_PER_YEAR  = TICKS_PER_MONTH * MONTHS_PER_YEAR
+
+local CALENDAR_MONTHS = {
+    'Granite',
+    'Slate',
+    'Felsite',
+    'Hematite',
+    'Malachite',
+    'Galena',
+    'Limestone',
+    'Sandstone',
+    'Timber',
+    'Moonstone',
+    'Opal',
+    'Obsidian'
 }
+
+-- day -> month
+local CALENDAR_FULLMOON_MAP = {
+    [25] = 1,
+    [23] = 2,
+    [21] = 3,
+    [19] = 4,
+    [17] = 5,
+    [15] = 6,
+    [13] = 7,
+    [10] = 8,
+    [8]  = 9,
+    [6]  = 10,
+    [4]  = 11,
+    [2]  = 12,
+    [28] = 12
+}
+
+-- Ordinal suffix rules found here: https://en.wikipedia.org/wiki/Ordinal_indicator
+-- global for scripts to use
+function getOrdinalSuffix(ordinal)
+    if (ordinal < 0) then
+        ordinal = math.abs(ordinal)
+    end
+
+    local rem = (ordinal < 100) and (ordinal % 10) or (ordinal % 100)
+    -- rem can be between 11 and 13 only when ordinal is > 100
+    if (ordinal >= 11 and ordinal <= 13) or (rem >= 11 and rem <= 13) then
+        return 'th'
+    end
+    -- modulo again to handle the case when ordinal is > 100
+    return ({'st', 'nd', 'rd'})[rem % 10] or 'th'
+end
 
 DwarfCalendar = defclass(DwarfCalendar)
 
 DwarfCalendar.ATTRS{
     year=0,
     year_tick=0,
+    ticks_per_day=DWARF_TICKS_PER_DAY
 }
 
 function DwarfCalendar:init()
+    self:setTickRates(self.ticks_per_day)
     self:normalize()
+end
+
+function DwarfCalendar:setTickRates(ticks_per_day)
+    -- game_mode.DWARF and .ADVENTURE values are < 10
+    -- too low for sane tick rates, so we can utilize em.
+    -- this might be useful if the caller wants to set by game mode
+    if (ticks_per_day == df.game_mode.DWARF) then
+        self.ticks_per_day = DWARF_TICKS_PER_DAY
+    elseif (ticks_per_day == df.game_mode.ADVENTURE)
+        self.ticks_per_day = ADVENTURE_TICKS_PER_DAY
+    else
+        -- should we throw an error if caller passed in <= 0 here?
+        -- if not, we'll divide by zero later
+        self.ticks_per_day = (ticks_per_day > 0) and ticks_per_day or DWARF_TICKS_PER_DAY
+    end
+    self.ticks_per_month = self.ticks_per_day * DAYS_PER_MONTH
+    self.ticks_per_year  = self.ticks_per_month * MONTHS_PER_YEAR
 end
 
 function DwarfCalendar:addTicks(ticks)
     self.year_tick = self.year_tick + ticks
     self:normalize()
+    return self
 end
 
 function DwarfCalendar:addDays(days)
     self.year_tick = self.year_tick + self.daysToTicks(days)
     self:normalize()
+    return self
 end
 
 function DwarfCalendar:addMonths(months)
     self.year_tick = self.year_tick + self.monthsToTicks(months)
     self:normalize()
+    return self
 end
 
 function DwarfCalendar:addYears(years)
     self.year = self.year + years
+    return self
 end
 
+-- should this be named getYear()?
 -- returns an integer pair: (year), (year tick count)
 function DwarfCalendar:getYears()
     return self.year, self.year_tick
 end
 
+function DwarfCalendar:setDayOfMonth(month, day)
+    self.year_tick = DwarfCalendar.monthsToTicks(month) + DwarfCalendar.daysToTicks(day)
+end
+
+-- returns an integer pair: (day of month starting from 1), (day tick count)
+function DwarfCalendar:getDayOfMonth()
+    return self:ticksToDayOfMonth() + 1, self:getDayTicks()
+end
+
+-- returns a string in ordinal form (e.g. 1st, 12th, 22nd, 101st, 111th, 133rd)
+function DwarfCalendar:getDayOfMonthWithSuffix()
+    local d = self:getDayOfMonth()
+    return tostring(d)..getOrdinalSuffix(d)
+end
+
+-- returns an integer pair: (current day of year, from 1), (day tick count)
+function DwarfCalendar:getDayOfYear()
+    return self:ticksToDays() + 1, self:getDayTicks()
+end
+
+-- returns an integer pair: (current month of the year, from 1), (month tick count)
+function DwarfCalendar:getMonth()
+    return self:ticksToMonths() + 1, self:getMonthTicks()
+end
+
+-- returns a string of the current month of the year
+function DwarfCalendar:getNameOfMonth()
+    return CALENDAR_MONTHS[self:getMonth()] or error("bad index?")
+end
+
 -- returns days since beginning of a year, starting from zero
 function DwarfCalendar:ticksToDays()
-    return self.year_tick // TICKS_PER_DAY
+    return self.year_tick // self.ticks_per_day
 end
 
 -- returns days since the beginning of a month, starting from zero
@@ -76,30 +165,76 @@ end
 
 -- returns months since the beginning of a year, starting from zero
 function DwarfCalendar:ticksToMonths()
-    return self.year_tick // TICKS_PER_MONTH
+    return self.year_tick // self.ticks_per_month
 end
 
 -- returns ticks since the beginning of a day
 function DwarfCalendar:getDayTicks()
-    return self.year_tick % TICKS_PER_DAY
+    return self.year_tick % self.ticks_per_day
 end
 
 -- returns ticks since the beginning of a month
 function DwarfCalendar:getMonthTicks()
-    return self.year_tick % TICKS_PER_MONTH
+    return self.year_tick % self.ticks_per_month
+end
+
+function DwarfCalendar:daysToTicks(days)
+    return days * self.ticks_per_day
+end
+
+function DwarfCalendar:monthsToTicks(months)
+    return months * self.ticks_per_month
+end
+
+function DwarfCalendar:isFullMoon()
+    return (self:getMonth() == CALENDAR_FULLMOON_MAP[self:getDayOfMonth()])
+        and true or false
+end
+
+function DwarfCalendar:nextFullMoon()
+    local dateT = DateTime{ year = self.year, year_tick = self.year_tick }
+    if (dateT:isFullMoon()) then dateT:addDays(1) end
+
+    local cur_m = dateT:getMonth()
+    local fm = {
+        25,
+        23,
+        21,
+        19,
+        17,
+        15,
+        13,
+        10,
+        8,
+        6,
+        4,
+        2, 28
+    }
+
+    if (dateT:getDayOfMonth() < fm[cur_m])
+        dateT:setDayOfMonth(cur_m, fm[cur_m])
+    else
+        -- Next full moon is on the next month
+        -- or next year if addDays() rolled us over.
+        -- Obsidian is a possible exception since it has 2 full moons
+        -- this also handles the case when Obsidian day is between 2 and 28 exclusive
+        dateT:setDayOfMonth(cur_m, fm[cur_m+1])
+    end
+
+    return dateT
 end
 
 function DwarfCalendar:normalize()
-    if (self.year_tick > TICKS_PER_YEAR) then
-        self.year = self.year + (self.year_tick // TICKS_PER_YEAR)
-        self.year_tick = self.year_tick % TICKS_PER_YEAR
+    if (self.year_tick > self.ticks_per_year) then
+        self.year = self.year + (self.year_tick // self.ticks_per_year)
+        self.year_tick = self.year_tick % self.ticks_per_year
     elseif (self.year_tick < 0) then
         -- going backwards in time, subtract year by at least one.
-        self.year = self.year - math.max(1, math.abs(self.year_tick) // TICKS_PER_YEAR)
+        self.year = self.year - math.max(1, math.abs(self.year_tick) // self.ticks_per_year)
         -- Lua's modulo operator applies floor division,
         -- hence year_tick will always be positive after assignment
         -- equivalent to: year_tick - (TICKS_PER_YEAR * (year_tick // TICKS_PER_YEAR))
-        self.year_tick = self.year_tick % TICKS_PER_YEAR
+        self.year_tick = self.year_tick % self.ticks_per_year
     end
 end
 
@@ -120,48 +255,42 @@ function DwarfCalendar:_debugOps(other)
     print('second: '..other.year,other.year_tick)
 end
 
--- utility functions
-function DwarfCalendar.daysToTicks(days)
-    return days * TICKS_PER_DAY
-end
-
-function DwarfCalendar.monthsToTicks(months)
-    return months * TICKS_PER_MONTH
-end
 
 function DwarfCalendar.getMonthNames()
-    return MONTHS
+    return CALENDAR_MONTHS
 end
 
 
 DateTime = defclass(DateTime, DwarfCalendar)
 
--- returns an integer pair: (day of month starting from 1), (day tick count)
-function DateTime:getDayOfMonth()
-    return self:ticksToDayOfMonth() + 1, self:getDayTicks()
+
+-- returns hours (24 hour format), minutes, seconds
+function DateTime:getTime()
+    -- probably only useful in adv mode where a day is 144x longer
+    local h = self:getDayTicks() / (self.ticks_per_day / 24)
+    local m = (h * 60) % 60
+    local s = (m * 60) % 60
+    -- return as integers, rounded down
+    return h//1, m//1, s//1
 end
 
--- returns a string in ordinal form (e.g. 1st, 12th, 22nd, 101st, 111th, 133rd)
-function DateTime:getDayOfMonthWithSuffix()
-    local d = self:getDayOfMonth()
-    return tostring(d)..self.getOrdinalSuffix(d)
-end
+-- TODO: maybe add setTime()
 
--- returns an integer pair: (current day of year, from 1), (day tick count)
-function DateTime:getDayOfYear()
-    return self:ticksToDays() + 1, self:getDayTicks()
-end
+--function DateTime:daysTo(other)
+--    local dateT = other - self
+--    return dateT.year * DAYS_PER_YEAR + dateT:ticksToDays()
+--end
+-- maybe useful addition
+--function DateTime:daysTo(other)
+--    return (other - self):toDuration().getDays()
+--end
 
--- returns an integer pair: (current month of the year, from 1), (month tick count)
-function DateTime:getMonth()
-    return self:ticksToMonths() + 1, self:getMonthTicks()
-end
-
--- returns a string of the current month of the year
-function DateTime:getNameOfMonth()
-    return MONTHS[self:getMonth()] or error("getMonth(): bad index?")
-end
-
+-- Alternatively, instead of a Duration object,
+-- we can simply synthesize a table with
+-- key value pairs of years, months, days, ticks.
+-- If table, it could optionally take an argument or variadic
+-- where the caller provides the time unit specifiers
+-- i.e. getDuration/toDuration('ymd') or toDuration('y', 'm', 'd'), etc
 function DateTime:toDuration()
     return Duration{ year = self.year, year_tick = self.year_tick }
 end
@@ -179,31 +308,19 @@ function DateTime:__sub(other)
     return DateTime{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
 end
 
--- Static functions
-function DateTime.now()
-    return DateTime{ year = df.global.cur_year, year_tick = df.global.cur_year_tick }
-end
-
--- Ordinal suffix rules found here: https://en.wikipedia.org/wiki/Ordinal_indicator
-function DateTime.getOrdinalSuffix(ordinal)
-    if (ordinal < 0) then
-        ordinal = math.abs(ordinal)
-    end
-
-    local rem = (ordinal < 100) and (ordinal % 10) or (ordinal % 100)
-    -- rem can be between 11 and 13 only when ordinal is > 100
-    if (ordinal >= 11 and ordinal <= 13) or (rem >= 11 and rem <= 13) then
-        return 'th'
-    end
-    -- modulo again to handle the case when ordinal is > 100
-    return ({'st', 'nd', 'rd'})[rem % 10] or 'th'
+function DateTime.now(game_mode)
+    game_mode = game_mode or df.global.gamemode
+    -- if game_mode is not given or not ADVENTURE then default to DWARF mode
+    local ticks = (game_mode == df.game_mode.ADVENTURE) and
+            (df.global.cur_year_tick_advmode) or (df.global.cur_year_tick)
+    return DateTime{ year = df.global.cur_year, year_tick = ticks }
 end
 
 Duration = defclass(Duration, DwarfCalendar)
 
 -- returns ticks since year zero
 function Duration:getTicks()
-    return self.year * TICKS_PER_YEAR + self.year_tick
+    return self.year * self.ticks_per_year + self.year_tick
 end
 
 -- returns an integer pair: (days since year zero), (day tick count)
@@ -236,5 +353,6 @@ function Duration:__sub(other)
     -- normalize() handles adjustments to year and year_tick
     return Duration{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
 end
+
 
 return _ENV

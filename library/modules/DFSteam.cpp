@@ -108,7 +108,7 @@ static bool is_running_on_wine() {
     return !!pwine_get_version;
 }
 
-static DWORD findProcess(LPWSTR name) {
+static DWORD findProcess(LPCWSTR name) {
     PROCESSENTRY32W entry;
     entry.dwSize = sizeof(PROCESSENTRY32W);
 
@@ -150,11 +150,14 @@ static bool launchDFHack(color_ostream& out) {
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    // note that the enviornment must be explicitly zeroed out and not NULL,
+    static LPCWSTR procname = L"hack/launchdf.exe";
+    static const char * env = "\0";
+
+    // note that the environment must be explicitly zeroed out and not NULL,
     // otherwise the launched process will inherit this process's environment,
     // and the Steam API in the launchdf process will think it is in DF's context.
-    BOOL res = CreateProcessW(L"hack/launchdf.exe",
-            NULL, NULL, NULL, FALSE, 0, "\0", NULL, &si, &pi);
+    BOOL res = CreateProcessW(procname,
+            NULL, NULL, NULL, FALSE, 0, (LPVOID)env, NULL, &si, &pi);
 
     return !!res;
 }

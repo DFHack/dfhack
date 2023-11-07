@@ -51,9 +51,10 @@ function reload(refresh_active_mod_scripts)
     enabled_map = utils.OrderedTable()
     local force_refresh_fn = refresh_active_mod_scripts and function(script_path, script_name)
         if script_path:find('scripts_modactive') then
-            internal_script = dfhack.internal.scripts[script_path..'/'..script_name]
+            local full_path = script_path..'/'..script_name
+            internal_script = dfhack.internal.scripts[full_path]
             if internal_script then
-                internal_script.env = nil
+                dfhack.internal.scripts[full_path] = nil
             end
         end
     end or nil
@@ -74,7 +75,7 @@ function list()
 end
 
 ---------------------
--- mod script paths
+-- mod paths
 
 -- this perhaps could/should be queried from the Steam API
 -- are there any installation configurations where this will be wrong, though?
@@ -98,8 +99,8 @@ local function get_mod_id_and_version(path)
         end
         if not version then
             -- note this doesn't include the closing brace since some people put
-            -- non-number characters in here, and DF only reads the digits as the
-            -- numeric version
+            -- non-number characters in here, and DF only reads the leading digits
+            -- as the numeric version
             _,_,version = line:find('^%[NUMERIC_VERSION:(%d+)')
         end
         -- note that we do *not* want to break out of this loop early since
@@ -108,37 +109,31 @@ local function get_mod_id_and_version(path)
     return id, version
 end
 
-local function add_script_path(mod_script_paths, path)
+local function add_mod_paths(mod_paths, id, base_path, subdir)
+    local sep = base_path:endswith('/') and '' or '/'
+    local path = ('%s%s%s'):format(base_path, sep, subdir)
     if dfhack.filesystem.isdir(path) then
-        print('indexing mod scripts: ' .. path)
-        table.insert(mod_script_paths, path)
+        print('indexing mod path: ' .. path)
+        table.insert(mod_paths, {id=id, path=path})
     end
 end
 
-local function add_script_paths(mod_script_paths, base_path, include_modactive)
-    if not base_path:endswith('/') then
-        base_path = base_path .. '/'
-    end
-    if include_modactive then
-        add_script_path(mod_script_paths, base_path..'scripts_modactive')
-    end
-    add_script_path(mod_script_paths, base_path..'scripts_modinstalled')
-end
-
-function get_mod_script_paths()
+function get_mod_paths(installed_subdir, active_subdir)
     -- ordered map of mod id -> {handled=bool, versions=map of version -> path}
     local mods = utils.OrderedTable()
-    local mod_script_paths = {}
+    local mod_paths = {}
 
     -- if a world is loaded, process active mods first, and lock to active version
-    if dfhack.isWorldLoaded() then
+    if active_subdir and dfhack.isWorldLoaded() then
         for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
             path = tostring(path.value)
+            -- skip vanilla "mods"
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
             local id = get_mod_id_and_version(path)
             if not id then goto continue end
             mods[id] = {handled=true}
-            add_script_paths(mod_script_paths, path, true)
+            add_mod_paths(mod_paths, id, path, active_subdir)
+            add_mod_paths(mod_paths, id, path, installed_subdir)
             ::continue::
         end
     end
@@ -159,8 +154,8 @@ function get_mod_script_paths()
         ::skip_path_root::
     end
 
-    -- add script paths from most recent version of all not-yet-handled mods
-    for _,v in pairs(mods) do
+    -- add paths from most recent version of all not-yet-handled mods
+    for id,v in pairs(mods) do
         if v.handled then goto continue end
         local max_version, path
         for version,mod_path in pairs(v.versions) do
@@ -169,11 +164,19 @@ function get_mod_script_paths()
                 max_version = version
             end
         end
-        add_script_paths(mod_script_paths, path)
+        add_mod_paths(mod_paths, id, path, installed_subdir)
         ::continue::
     end
 
-    return mod_script_paths
+    return mod_paths
+end
+
+function get_mod_script_paths()
+    local paths = {}
+    for _,v in ipairs(get_mod_paths('scripts_modinstalled', 'scripts_modactive')) do
+        table.insert(paths, v.path)
+    end
+    return paths
 end
 
 return _ENV

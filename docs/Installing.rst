@@ -48,10 +48,6 @@ DF version - see `above <installing-df-version>` for details. For example:
 
 * ``dfhack-50.07-r1-Windows-64bit.zip`` supports 64-bit DF on Windows
 
-In between stable releases, we may create beta releases to test new features.
-These are available via the beta release channel on Steam or from our regular
-Github page as a pre-release tagged with a "beta" suffix.
-
 .. warning::
 
     Do *not* download the source code from GitHub, either from the releases page
@@ -59,6 +55,31 @@ Github page as a pre-release tagged with a "beta" suffix.
     incomplete copy of the DFHack source code, which will not work as-is. (If
     you want to compile DFHack instead of using a pre-built release, see
     `building-dfhack-index` for instructions.)
+
+Beta releases
+-------------
+
+In between stable releases, we may create beta releases to test new features.
+These are available via the ``beta`` release channel on Steam or from our
+regular Github page as a pre-release tagged with a "beta" or "rc" suffix.
+
+Development builds
+------------------
+
+If you are actively working with the DFHack team on testing a feature, you may
+want to download and install a development build. They are available via the
+``testing`` release channel on Steam or can be downloaded from the build
+artifact list on GitHub for specific repository commits.
+
+To download a development build from GitHub:
+
+- Ensure you are logged into your GitHub account
+- Go to https://github.com/DFHack/dfhack/actions/workflows/build.yml?query=branch%3Adevelop+event%3Apush
+- Click on the first entry that has a green checkmark
+- Click the number under "Artifacts" (or scroll down)
+- Click on the "dfhack-*-build-*" artifact for your platform to download
+
+You can extract this package the same as if you are doing a manual install (see the next section).
 
 Installing DFHack
 =================

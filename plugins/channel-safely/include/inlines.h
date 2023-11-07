@@ -23,7 +23,7 @@ namespace CSP {
 inline uint32_t calc_distance(df::coord p1, df::coord p2) {
     // calculate chebyshev (chessboard) distance
     uint32_t distance = abs(p2.z - p1.z);
-    distance += max(abs(p2.x - p1.x), abs(p2.y - p1.y));
+    distance += std::max(abs(p2.x - p1.x), abs(p2.y - p1.y));
     return distance;
 }
 

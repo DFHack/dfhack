@@ -5,7 +5,6 @@ local _ENV = mkmodule('gui.materials')
 local gui = require('gui')
 local widgets = require('gui.widgets')
 local dlg = require('gui.dialogs')
-local utils = require('utils')
 
 ARROW = string.char(26)
 
@@ -266,7 +265,8 @@ function MaterialDialog:onInput(keys)
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showMaterialPrompt(title, prompt, on_select, on_cancel, mat_filter)

@@ -517,11 +517,13 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000
                     && material->heat.boiling_point > 11000
                     && material->heat.ignite_point > 11000
-                    && material->heat.heatdam_point > 11000);
+                    && material->heat.heatdam_point > 11000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 11000));
     TEST(magma_safe, material->heat.melting_point > 12000
                     && material->heat.boiling_point > 12000
                     && material->heat.ignite_point > 12000
-                    && material->heat.heatdam_point > 12000);
+                    && material->heat.heatdam_point > 12000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 12000));
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
     TEST(non_economic, !inorganic || !(plotinfo && vector_get(plotinfo->economic_stone, index)));
 
@@ -604,7 +606,7 @@ bool DFHack::isStoneInorganic(int material)
 
 std::unique_ptr<Module> DFHack::createMaterials()
 {
-    return dts::make_unique<Materials>();
+    return std::make_unique<Materials>();
 }
 
 Materials::Materials()

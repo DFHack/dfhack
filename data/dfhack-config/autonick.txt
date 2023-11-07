@@ -7,6 +7,332 @@
 Toady One
 Threetoe
 
+#Dwarven single  names  taken from Classic Fantasy works
+Balin
+Dwalin
+Fili
+Kili
+Gloin
+Oin
+Bifur
+Bofur
+Bombur
+Ori
+Gimli
+Thrain
+Thror
+Fundin
+Frerin
+Gror
+Ibun
+Khim
+Fimbrethil
+Floi
+Nali
+Thor
+Vili
+Regin
+Fafnir
+Brokkr
+Sindri
+Nordri
+Sudri
+Austri
+Doriath
+Thingol
+Eol
+Mim
+Telchar
+Narvi
+Gundabad
+Muhrak
+Skorri
+Draupnir
+Alaric
+Grimr
+Eitri
+Svidurr
+Thorgar
+Hrungnir
+Galar
+Skirni
+Hreinn
+Dori
+Hreimr
+Hreinir
+Hroaldr
+Groin
+Vestri
+Nori
+Durin
+Dvalin
+Eikinskjaldi
+Bafur
+Snorri
+Fimafeng
+Vitr
+Dvali
+Dain
+Nain
+Nipingr
+Hrodvitnir
+Sveinn
+Ivaldi
+Svein
+Sveinbjorn
+Havardr
+Haki
+Hakon
+Mouri
+Motsognir
+Eberk
+Thromar
+Kragar
+Borgar
+Throk
+Orvald
+Berric
+Rogar
+Urgen
+Morgrim
+Keldar
+Ingvar
+Frandar
+Grimsi
+Hrokur
+Orik
+Rundar
+Bjornar
+Throki
+Dworin
+Thranduil
+Faldar
+Galdor
+Thorkel
+Dorrin
+Borkan
+Gundrik
+Throkir
+Raldor
+Helgrim
+Throgar
+Borin
+Ragnir
+Orvar
+Skalf
+Baldir
+Fror
+Thorgil
+Ulfar
+Grimbold
+Faldur
+Varrin
+Dornir
+Halgrim
+Gundin
+Ulfgar
+Skalfar
+Yngvarr
+Kaldur
+Thrandar
+Keldin
+Rundin
+Skaldur
+Borgin
+Haldur
+Bjornulf
+Orkarn
+Ragnor
+Baldrick
+Thorlin
+Graldor
+Ulfrik
+Fornir
+Egil
+Grimnor
+Roldor
+Ulfgard
+Borgrim
+Faldrik
+Rognir
+Balfor
+Volmar
+Thormund
+Brynhild
+
+#Dwarven composite  names  taken from Classic Fantasy works
+Gorin Stonehammer
+Brundar Ironfoot
+Haldrek Battlebeard
+Orin Stonefist
+Frida Stormaxe
+Torvald Rockjaw
+Einar Blackforge
+Thorgar Granitebeard
+Ragnir Hammerhelm
+Hilda Ironbrow
+Grimnar Deepdelver
+Ulfrik Ironmane
+Freya Thunderstone
+Ragnar Firebeard
+Gunnar Ironpeak
+Astrid Ironheart
+Bjorn Steelbreaker
+Hrolf Thunderhammer
+Sigrun Stonebreaker
+Eirik Rockbeard
+Helga Frostbeard
+Skaldur Stormguard
+Agnar Stonehand
+Ingrid Mountainmace
+Hjalmar Blackstone
+Solveig Steelhelm
+Rurik Stonegrip
+Freyja Silveraxe
+Thordur Goldbeard
+Gudrun Ironfoot
+Vali Fireforge
+Thora Frostbeard
+Vargr Stoneborn
+Astrid Ironbrow
+Einar Blackstone
+Hilda Hammerheart
+Leif Ironshaper
+Thrain Stormbrow
+Sigrid Steelheart
+Haldor Boulderbreaker
+Ragnhild Strongarm
+Brynjar Ironmantle
+Sigrun Thunderbeard
+Valgard Steelbeard
+Gunnhild Stonefist
+Ingrid Ironrock
+Eirik Frostbane
+Helga Deepforge
+Skaldur Ironshield
+Agnar Stonemace
+Solveig Stormgrip
+Hjalmar Mountainheart
+Gudrun Firebeard
+Thora Thunderstrike
+Vargr Ironhand
+Freyja Stoneguard
+Thordur Blackstone
+Rurik Hammerbeard
+Solveig Ironbreaker
+Astrid Goldhand
+Einar Stormbrew
+Hilda Steelbeard
+Thrain Ironmane
+Sigrid Fireheart
+Haldor Thunderstone
+Ragnhild Ironfoot
+Brynjar Blackhelm
+Sigrun Frostbeard
+Valgard Stoneshield
+Gunnhild Ironheart
+Bjorn Deepdelver
+Ingrid Ironpeak
+Eirik Thunderhammer
+Gormund Stoneforge
+Eovar Broadshield
+Thrunir Hammerstone
+Brunhild Steelbraid
+Garrik Frostbeard
+Haldrek Ironhand
+Astrid Rockrider
+Dagmar Stonefury
+Borgar Thunderhelm
+Ingrid Ironstrike
+Rurik Blackmane
+Fjorn Stoneborn
+Siv Ironbreaker
+Gudrik Stormbeard
+Ulfgar Emberforge
+Eilif Silverstone
+Hilda Stormwarden
+Ormar Ironjaw
+Vali Steelshaper
+Eira Frostbeard
+Torgar Graniteheart
+Brunhild Firebrand
+Haldrek Ironmantle
+Solveig Rockbreaker
+Thrain Thunderaxe
+Brynjar Stoneclaw
+Asa Ironhide
+Grimnar Blackmane
+Ragnvald Hammerfall
+Gudbrand Ironhand
+Astrid Flamebeard
+Ormur Steelbender
+Hjalmar Rockjaw
+Inga Thunderheart
+Valgard Ironbeard
+Eirik Swiftstrike
+Sylvi Stoneguard
+Helge Hammerfist
+Jorunn Fireforge
+Solveig Ironroot
+Thora Stormbeard
+Baldur Stonemane
+Freydis Ironshaper
+Gunnvald Deepstone
+Bjorn Blackstone
+Ingrid Frostmane
+Agnar Steelhammer
+Thordur Ironbeard
+Ylva Goldhand
+Greta Firestone
+Rurik Rockhelm
+Gunnhild Ironsong
+Vali Steelgrip
+Brynhild Stormblade
+Astrid Ironmantle
+Einar Stoneshield
+Hilda Frostbeard
+Ormr Ironheart
+Inga Steelbreaker
+Ulfrik Thunderaxe
+Freyja Stonebeard
+Sigrun Frostfury
+Sylvi Blackmane
+Thorvald Ironhelm
+Eirik Stormstone
+Haldora Deepdelver
+Sigrid Steelshaper
+Gunnar Thunderheart
+Bjorn Ironbrow
+Ingrid Goldmantle
+Agnar Stormforge
+Solveig Ironclaw
+Thora Rockguard
+Grimur Emberstone
+Ragnhild Hammerstrike
+Vali Ironfist
+Brynjar Blackbraid
+Astrid Flameforge
+Einar Stonestorm
+Hilda Frostbane
+Ormur Ironhelm
+Inga Steelshaper
+Gudbrand Thunderbeard
+Freya Stonefist
+Gunnvald Stormmane
+Bjorn Ironhelm
+Ingrid Frostforge
+Agnar Steelgrip
+Thordur Ironhand
+Ylva Flameheart
+Greta Stonemane
+Rurik Ironroot
+Gunnhild Steelbeard
+Vali Thunderstrike
+Thorin Oakenshield
+Dain Ironfoot
+Gamil Zirak
+
+
 # animals
 Mouse
 Otter

@@ -3,7 +3,7 @@ fix-unit-occupancy
 
 .. dfhack-tool::
     :summary: Fix phantom unit occupancy issues.
-    :tags: unavailable fort bugfix map
+    :tags: unavailable
 
 If you see "unit blocking tile" messages that you can't account for
 (:bug:`3499`), this tool can help.

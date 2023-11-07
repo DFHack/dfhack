@@ -1,0 +1,92 @@
+name: Deploy to Steam
+
+on:
+  push:
+    tags:
+    - '*-r*'
+
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit hash
+        type: string
+        required: true
+        default: develop
+      version:
+        description: Version or build description
+        type: string
+        required: true
+      release_channel:
+        description: Steam release channel
+        type: string
+        required: true
+        default: staging
+
+jobs:
+  depot-common:
+    name: Common depot files
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: common-depot
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      platform-files: false
+      docs: true
+      stonesense: true
+    secrets: inherit
+
+  depot-win64:
+    name: Windows depot files
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      artifact-name: win64-depot
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      cache-id: release
+      cache-readonly: true
+      common-files: false
+      stonesense: true
+      launchdf: true
+    secrets: inherit
+
+  depot-linux64:
+    name: Linux depot files
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      artifact-name: linux64-depot
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      cache-id: release
+      cache-readonly: true
+      common-files: false
+      stonesense: true
+    secrets: inherit
+
+  deploy-to-steam:
+    name: Deploy to Steam
+    needs:
+    - depot-common
+    - depot-win64
+    - depot-linux64
+    runs-on: ubuntu-latest
+    concurrency: steam
+    steps:
+    - name: Download depot files
+      uses: actions/download-artifact@v3
+    - name: Stage depot files
+      run: |
+        for name in common win64 linux64; do
+          cd ${name}-depot
+          tar xjf ${name}-depot.tar.bz2
+          rm ${name}-depot.tar.bz2
+          cd ..
+        done
+    - name: Steam deploy
+      uses: game-ci/steam-deploy@v3
+      with:
+        username: ${{ secrets.STEAM_USERNAME }}
+        configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
+        appId: 2346660
+        buildDescription: ${{ github.event.inputs && github.event.inputs.version || github.ref_name }}
+        rootPath: .
+        depot1Path: common-depot
+        depot2Path: win64-depot
+        depot3Path: linux64-depot
+        releaseBranch: ${{ github.event.inputs && github.event.inputs.release_channel || 'staging' }}

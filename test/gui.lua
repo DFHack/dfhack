@@ -1,3 +1,5 @@
+config.target = 'core'
+
 function test.getCurViewscreen()
     local scr = dfhack.gui.getCurViewscreen()
     local scr2 = df.global.gview.view
@@ -18,7 +20,7 @@ function test.getViewscreenByType()
 
     local bad_type = df.viewscreen_titlest
     if scr._type == bad_type then
-        bad_type = df.viewscreen_optionst
+        bad_type = df.viewscreen_dwarfmodest
     end
     local scr_bad = dfhack.gui.getViewscreenByType(bad_type)
     expect.eq(scr_bad, nil)

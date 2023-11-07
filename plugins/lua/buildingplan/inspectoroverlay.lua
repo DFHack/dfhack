@@ -124,19 +124,19 @@ local function mouse_is_over_resume_button(rect)
 end
 
 function InspectorOverlay:onInput(keys)
-    if not require('plugins.buildingplan').isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
+    if not require('plugins.buildingplan').isPlannedBuilding(dfhack.gui.getSelectedBuilding(true)) then
         return false
     end
-    if keys._MOUSE_L_DOWN and mouse_is_over_resume_button(self.frame_parent_rect) then
+    if keys._MOUSE_L and mouse_is_over_resume_button(self.frame_parent_rect) then
         return true
-    elseif keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+    elseif keys._MOUSE_L or keys._MOUSE_R or keys.LEAVESCREEN then
         self:reset()
     end
     return InspectorOverlay.super.onInput(self, keys)
 end
 
 function InspectorOverlay:render(dc)
-    if not require('plugins.buildingplan').isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
+    if not require('plugins.buildingplan').isPlannedBuilding(dfhack.gui.getSelectedBuilding(true)) then
         return
     end
     if reset_inspector_flag then

@@ -22,6 +22,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
   spans multiple lines. Three ``]`` characters indicate the end of such a block.
 - ``!`` immediately before a phrase set up to be replaced (see gen_changelog.py) stops that occurrence from being replaced.
 
+Template for new versions:
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 ===end
 ]]]
 
@@ -33,22 +51,234 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
-## New Plugins
+## New Tools
+- `burrow`: (reinstated) automatically expand burrows as you dig
+
+## New Features
+- `prospect`: can now give you an estimate of resources from the embark screen. hover the mouse over a potential embark area and run `prospect`.
+- `burrow`: integrated 3d box fill and 2d/3d flood fill extensions for burrow painting mode
+- `buildingplan`: allow specific mechanisms to be selected when linking levers
+- `sort`: military and burrow membership filters for the burrow assignment screen
 
 ## Fixes
-- RemoteServer: fix accept continue to accept connections as long as the listening socket is valid and logs errors
+- `stockpiles`: hide configure and help buttons when the overlay panel is minimized
+- `caravan`: price of vermin swarms correctly adjusted down. a stack of 10000 bees is worth 10, not 10000
+- `sort`: when filtering out already-established temples in the location assignment screen, also filter out the "No specific deity" option if a non-denominational temple has already been established
+- RemoteServer: continue to accept connections as long as the listening socket is valid instead of closing the socket after the first disconnect
 
 ## Misc Improvements
+- `buildingplan`: display how many items are available on the planner panel
+- `buildingplan`: clarify interface when building single-tile staircases
+- `sort`: allow searching by profession on the squad assignment page
+- `sort`: add search for work animal assignment screen; allow filtering by miltary/squad/civilian/burrow
+- `sort`: on the squad assignment screen, make effectiveness and potential ratings use the same scale so effectiveness is always less than or equal to potential for a unit and so you can tell when units are approaching their maximum potential
+- `sort`: new overlay on the animal assignment screen that shows how many work animals each visible unit already has assigned to them
+- `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
 
 ## Documentation
 
 ## API
+- ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
+- ``Maps::getWalkableGroup``: get the walkability group of a tile
+- ``Units::getReadableName``: now returns the *untranslated* name
+- ``Burrows::setAssignedUnit``: now properly handles inactive burrows
+- ``Gui::getMousePos``: now takes an optional ``allow_out_of_bounds`` parameter so coordinates can be returned for mouse positions outside of the game map (i.e. in the blank space around the map)
+
+## Lua
+- ``dfhack.gui.revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
+- ``dfhack.maps.getWalkableGroup``: get the walkability group of a tile
+- ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
+- ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
+
+## Removed
+
+# 50.11-r2
+
+## New Tools
+- `spectate`: (reinstated) automatically follow dwarves, cycling among interesting ones
+- `preserve-tombs`: keep tombs assigned to units when they die
+
+## New Features
+- `logistics`: ``automelt`` now optionally supports melting masterworks; click on gear icon on `stockpiles` overlay frame
+- `sort`: new search widgets for Info panel tabs, including all "Creatures" subtabs, all "Objects" subtabs, "Tasks", candidate assignment on the "Noble" subtab, and the "Work details" subtab under "Labor"
+- `sort`: new search and filter widgets for the "Interrogate" and "Convict" screens under "Justice"
+- `sort`: new search widgets for location selection screen (when you're choosing what kind of guildhall or temple to dedicate)
+- `sort`: new search widgets for burrow assignment screen and other unit assignment dialogs
+- `sort`: new search widgets for artifacts on the world/raid screen
+- `sort`: new search widgets for slab engraving menu; can filter for only units that need a slab to prevent rising as a ghost
+- `stocks`: hotkey for collapsing all categories on stocks screen
+
+## Fixes
+- `buildingplan`: remove bars of ash, coal, and soap as valid building materials to match v50 rules
+- `buildingplan`: fix incorrect required items being displayed sometimes when switching the planner overlay on and off
+- `zone`: races without specific child or baby names will now get generic child/baby names instead of an empty string
+- `zone`: don't show animal assignment link for cages and restraints linked to dungeon zones (which aren't normally assignable)
+- `sort`: don't count mercenaries as appointed officials in the squad assignment screen
+- `dwarfvet`: fix invalid job id assigned to ``Rest`` job, which could cause crashes on reload
+
+## Misc Improvements
+- `overlay`: allow ``overlay_onupdate_max_freq_seconds`` to be dynamically set to 0 for a burst of high-frequency updates
+- Help icons added to several complex overlays. clicking the icon runs `gui/launcher` with the help text in the help area
+- `orders`: ``recheck`` command now only resets orders that have conditions that can be rechecked
+- `sort`: added help button for squad assignment search/filter/sort
+- `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
+- `buildingplan`: support filtering cages by whether they are occupied
+- `buildingplan`: show how many items you need to make when planning buildings
+- `tailor`: now adds to existing orders if possilbe instead of creating new ones
+
+## Documentation
+- unavailable tools are no longer listed in the tag indices in the online docs
+
+## API
+- added ``Items::getCapacity``, returns the capacity of an item as a container (reverse-engineered), needed for `combine`
+
+## Lua
+- added ``GRAY`` color aliases for ``GREY`` colors
+- added ``dfhack.items.getCapacity`` to expose the new module API
+- ``utils.search_text``: text search routine (generalized from internal ``widgets.FilteredList`` logic)
+
+## Removed
+- ``FILTER_FULL_TEXT``: moved from ``gui.widgets`` to ``utils``; if your full text search preference is lost, please reset it in `gui/control-panel`
+
+# 50.11-r1
+
+## New Tools
+- `tubefill`: (reinstated) replenishes mined-out adamantine
+
+## Fixes
+- `autolabor`: ensure vanilla work details are reinstated when the fort or the plugin is unloaded
+- ``dfhack.TranslateName()``: fixed crash on certain invalid names, which affected `warn-starving`
+- EventManager: Unit death event no longer misfires on units leaving the map
+
+## Misc Improvements
+- `digtype`: designate only visible tiles by default, and use "auto" dig mode for following veins
+- `digtype`: added options for designating only current z-level, this z-level and above, and this z-level and below
+- `hotkeys`: make the DFHack logo brighten on hover in ascii mode to indicate that it is clickable
+- `hotkeys`: use vertical bars instead of "!" symbols for the DFHack logo in ascii mode to make it easier to read
+- EventManager: guard against potential iterator invalidation if one of the event listeners were to modify the global data structure being iterated over
+- EventManager: for ``onBuildingCreatedDestroyed`` events, changed firing order of events so destroyed events come before created events
+
+## Lua
+- mouse key events are now aligned with internal DF semantics: ``_MOUSE_L`` indicates that the left mouse button has just been pressed and ``_MOUSE_L_DOWN`` indicates that the left mouse button is being held down. similarly for ``_MOUSE_R`` and ``_MOUSE_M``. 3rd party scripts may have to adjust.
+
+# 50.10-r1
+
+## Fixes
+- Linux launcher: allow Steam Overlay and game streaming to function
+- `autobutcher`: don't ignore semi-wild units when marking units for slaughter
+
+## Misc Improvements
+- 'sort': Improve combat skill scale thresholds
+
+# 50.09-r4
+
+## New Features
+- `dig`: new overlay for ASCII mode that visualizes designations for smoothing, engraving, carving tracks, and carving fortifications
+
+## Fixes
+- `buildingplan`: make the construction dimensions readout visible again
+- `seedwatch`: fix a crash when reading data saved by very very old versions of the plugin
+- `gui/mod-manager`: don't continue to display overlay after the raws loading progress bar appears
+
+## Misc Improvements
+- `sort`: add sort option for training need on squad assignment screen
+- `sort`: filter mothers with infants, units with weak mental fortitude, and critically injured units on the squad assignment screen
+- `sort`: display a rating relative to the current sort order next to the visible units on the squad assignment screen
+
+## Documentation
+- add instructions for downloading development builds to the ``Installing`` page
+
+## API
+- `overlay`: overlay widgets can now declare a ``version`` attribute. changing the version of a widget will reset its settings to defaults. this is useful when changing the overlay layout and old saved positions will no longer be valid.
+
+## Lua
+- ``argparse.boolean``: convert arguments to lua boolean values.
+
+# 50.09-r3
+
+## New Features
+- `sort`: search, sort, and filter for squad assignment screen
+- `zone`: advanced unit assignment screens for cages, restraints, and pits/ponds
+- `buildingplan`: one-click magma/fire safety filter for planned buildings
+
+## Fixes
+- Core: reload scripts in mods when a world is unloaded and immediately loaded again
+- Core: fix text getting added to DFHack text entry widgets when Alt- or Ctrl- keys are hit
+- `buildingplan`: ensure selected barrels and buckets are empty (or at least free of lye and milk) as per the requirements of the building
+- `orders`: prevent import/export overlay from appearing on the create workorder screen
+- `caravan`: corrected prices for cages that have units inside of them
+- `tailor`: remove crash caused by clothing items with an invalid ``maker_race``
+- ``dialogs.MessageBox``: fix spacing around scrollable text
+- `seedwatch`: ignore unplantable tree seeds
+- `autobutcher`: fix ``ticks`` commandline option incorrectly rejecting positive integers as valid values
+
+## Misc Improvements
+- Surround DFHack-specific UI elements with square brackets instead of red-yellow blocks for better readability
+- `autobutcher`: don't mark animals for butchering if they are already marked for some kind of training (war, hunt)
+- `hotkeys`: don't display DFHack logo in legends mode since it covers up important interface elements. the Ctrl-Shift-C hotkey to bring up the menu and the mouseover hotspot still function, though.
+- `sort`: animals are now sortable by race on the assignment screens
+- `createitem`: support creating items inside of bags
+
+## API
+- ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
+- `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
+- ``Units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``Gui``: ``getAnyStockpile`` and ``getAnyCivzone`` (along with their ``getSelected`` variants) now work through layers of ZScreens. This means that they will still return valid results even if a DFHack tool window is in the foereground.
+
+## Lua
+- ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
+- ``dfhack.items.getValue()``: remove ``caravan_buying`` param as per C++ API change
+- ``widgets.BannerPanel``: panel with distinctive border for marking DFHack UI elements on otherwise vanilla screens
+- ``widgets.Panel``: new functions to override instead of setting corresponding properties (useful when subclassing instead of just setting attributes): ``onDragBegin``, ``onDragEnd``, ``onResizeBegin``, ``onResizeEnd``
+- ``dfhack.screen.readTile()``: now populates extended tile property fields (like ``top_of_text``) in the returned ``Pen`` object
+- ``dfhack.units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``dfhack.gui``: new ``getAnyCivZone`` and ``getAnyStockpile`` functions; also behavior of ``getSelectedCivZone`` and ``getSelectedStockpile`` functions has changes as per the related API notes
+
+# 50.09-r2
+
+## New Plugins
+- `3dveins`: reinstated for v50, this plugin replaces vanilla DF's blobby vein generation with veins that flow smoothly and naturally between z-levels
+- `zone`: new searchable, sortable, filterable screen for assigning units to pastures
+- `dwarfvet`: reinstated and updated for v50's new hospital mechanics; allow your animals to have their wounds treated at hospitals
+- `dig`: new ``dig.asciiwarmdamp`` overlay that highlights warm and damp tiles when in ASCII mode. there is no effect in graphics mode since the tiles are already highlighted there
+
+## Fixes
+- Fix extra keys appearing in DFHack text boxes when shift (or any other modifier) is released before the other key you were pressing
+- `logistics`: don't autotrain domestic animals brought by invaders (they'll get attacked by friendly creatures as soon as you let them out of their cage)
+- `logistics`: don't bring trade goods to depot if the only caravans present are tribute caravans
+- `gui/create-item`: when choosing a citizen to create the chosen items, avoid choosing a dead citizen
+- `logistics`: fix potential crash when removing stockpiles or turning off stockpile features
+
+## Misc Improvements
+- `stockpiles`: include exotic pets in the "tameable" filter
+- `logistics`: bring an autotraded bin to the depot if any item inside is tradeable instead of marking all items within the bin as untradeable if any individual item is untradeable
+- `autonick`: add more variety to nicknames based on famous literary dwarves
+- ``widgets.EditField``: DFHack edit fields now support cut/copy/paste with the system clipboard with Ctrl-X/Ctrl-C/Ctrl-V
+- Suppress DF keyboard events when a DFHack keybinding is matched. This prevents, for example, a backtick from appearing in a textbox as text when you launch `gui/launcher` from the backtick keybinding.
+- Dreamfort: give noble suites double-thick walls and add apartment doors
+
+## Documentation
+- `misery`: rewrite the documentation to clarify the actual effects of the plugin
+
+## API
+- ``Units::getUnitByNobleRole``, ``Units::getUnitsByNobleRole``: unit lookup API by role
+- ``Items::markForTrade()``, ``Items::isRequestedTradeGood()``, ``Items::getValue``: see Lua notes below
+
+## Internals
+- Price calculations fixed for many item types
+
+## Lua
+- ``dfhack.units.getUnitByNobleRole``, ``dfhack.units.getUnitsByNobleRole``: unit lookup API by role
+- ``dfhack.items.markForTrade``: mark items for trade
+- ``dfhack.items.isRequestedTradeGood``: discover whether an item is named in a trade agreement with an active caravan
+- ``dfhack.items.getValue``: gained optional ``caravan`` and ``caravan_buying`` parameters for prices that take trader races and agreements into account
+- ``widgets.TextButton``: wraps a ``HotkeyLabel`` and decorates it to look more like a button
+
+# 50.09-r1
 
 ## Internals
 
-## Lua
-
-## Removed
+- Core: update SDL interface from SDL1 to SDL2
 
 # 50.08-r4
 

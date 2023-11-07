@@ -78,7 +78,6 @@ namespace DFHack {
     DBG_DECLARE(core, screen, DebugCategory::LINFO);
 }
 
-
 /*
  * Screen painting API.
  */
@@ -106,9 +105,11 @@ df::coord2d Screen::getWindowSize()
     return df::coord2d(gps->dimx, gps->dimy);
 }
 
+/*
 void Screen::zoom(df::zoom_commands cmd) {
     enabler->zoom_display(cmd);
 }
+*/
 
 bool Screen::inGraphicsMode()
 {
@@ -293,6 +294,7 @@ static Pen doGetTile_default(int x, int y, bool map) {
         return Pen(0, 0, 0, -1);
 
     long *texpos = &gps->screentexpos[index];
+    long *texpos_lower = &gps->screentexpos_lower[index];
     uint32_t *flag = &gps->screentexpos_flag[index];
 
     if (gps->top_in_use &&
@@ -300,6 +302,7 @@ static Pen doGetTile_default(int x, int y, bool map) {
              (use_graphics && gps->screentexpos_top[index]))) {
         screen = &gps->screen_top[index * 8];
         texpos = &gps->screentexpos_top[index];
+        texpos_lower = &gps->screentexpos_top_lower[index];
         flag = &gps->screentexpos_top_flag[index];
     }
 
@@ -307,19 +310,37 @@ static Pen doGetTile_default(int x, int y, bool map) {
     uint8_t fg = to_16_bit_color(&screen[1]);
     uint8_t bg = to_16_bit_color(&screen[4]);
     int tile = 0;
-    if (use_graphics)
+    bool write_to_lower = false;
+    bool top_of_text = false;
+    bool bottom_of_text = false;
+    if (use_graphics) {
         tile = *texpos;
-
-    if (*flag & 1) {
-        // TileColor
-        return Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
-    } else if (*flag & 2) {
-        // CharColor
-        return Pen(ch, fg, bg, tile, true);
+        if (!tile && *texpos_lower) {
+            tile = *texpos_lower;
+            write_to_lower = true;
+        }
+        if (*flag & 0x8)
+            top_of_text = true;
+        else if (*flag &0x10)
+            bottom_of_text = true;
     }
 
-    // AsIs
-    return Pen(ch, fg, bg, tile, false);
+    Pen ret;
+    if (*flag & 1) {
+        // TileColor
+        ret = Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
+    } else if (*flag & 2) {
+        // CharColor
+        ret = Pen(ch, fg, bg, tile, true);
+    } else {
+        // AsIs
+        ret = Pen(ch, fg, bg, tile, false);
+    }
+
+    ret.write_to_lower = write_to_lower;
+    ret.top_of_text = top_of_text;
+    ret.bottom_of_text = bottom_of_text;
+    return ret;
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
@@ -584,12 +605,27 @@ void Hide::merge() {
 }
 } }
 
+std::set<df::interface_key> Screen::normalize_text_keys(const std::set<df::interface_key>& keys) {
+    std::set<df::interface_key> combined_keys;
+    std::copy_if(keys.begin(), keys.end(), std::inserter(combined_keys, combined_keys.begin()),
+        [](df::interface_key k){ return k <= df::interface_key::STRING_A000 || k > df::interface_key::STRING_A255; } );
+    if (!(Core::getInstance().getModstate() & (DFH_MOD_CTRL | DFH_MOD_ALT)) && df::global::enabler->last_text_input[0]) {
+        char c = df::global::enabler->last_text_input[0];
+        df::interface_key key = charToKey(c);
+        DEBUG(screen).print("adding character %c as interface key %ld\n", c, key);
+        combined_keys.emplace(key);
+    }
+    return combined_keys;
+}
+
 string Screen::getKeyDisplay(df::interface_key key)
 {
-    if (enabler)
-        return enabler->GetKeyDisplay(key);
-
-    return "?";
+    int c = keyToChar(key);
+    if (c != -1)
+        return string(1, c);
+    if (key >= df::interface_key::CUSTOM_SHIFT_A && key <= df::interface_key::CUSTOM_SHIFT_Z)
+        return string(1, 'A' + (key - df::interface_key::CUSTOM_SHIFT_A));
+    return enabler->GetKeyDisplay(key);
 }
 
 int Screen::keyToChar(df::interface_key key)
@@ -920,12 +956,25 @@ int dfhack_lua_viewscreen::do_notify(lua_State *L)
     return 1;
 }
 
+void dfhack_lua_viewscreen::markInputAsHandled() {
+    if (!enabler)
+        return;
+
+    // clear text buffer
+    enabler->last_text_input[0] = '\0';
+
+    // mark clicked mouse buttons as handled
+    enabler->mouse_lbut = 0;
+    enabler->mouse_rbut = 0;
+}
+
 int dfhack_lua_viewscreen::do_input(lua_State *L)
 {
     auto self = get_self(L);
     if (!self) return 0;
 
     auto keys = (std::set<df::interface_key>*)lua_touserdata(L, 2);
+    if (!keys) return 0;
 
     lua_getfield(L, -1, "onInput");
 
@@ -938,9 +987,13 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     }
 
     lua_pushvalue(L, -2);
-    Lua::PushInterfaceKeys(L, *keys);
+    Lua::PushInterfaceKeys(L, Screen::normalize_text_keys(*keys));
 
-    lua_call(L, 2, 0);
+    lua_call(L, 2, 1);
+    if (lua_toboolean(L, -1))
+        markInputAsHandled();
+    lua_pop(L, 1);
+
     self->update_focus(L, -1);
     return 0;
 }
@@ -967,11 +1020,21 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
 void dfhack_lua_viewscreen::render()
 {
+    using df::global::enabler;
+
     if (Screen::isDismissed(this))
     {
         if (parent)
             parent->render();
         return;
+    }
+
+    if (enabler &&
+        (enabler->mouse_lbut_down || enabler->mouse_rbut_down || enabler->mouse_mbut_down))
+    {
+        // synthesize feed events for held mouse buttons
+        std::set<df::interface_key> keys;
+        feed(&keys);
     }
 
     dfhack_viewscreen::render();
@@ -1021,6 +1084,7 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+    df::global::enabler->last_text_input[0] = '\0';
 }
 
 void dfhack_lua_viewscreen::onShow()
@@ -1067,6 +1131,22 @@ df::building *dfhack_lua_viewscreen::getSelectedBuilding()
     return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
 }
 
+df::building_stockpilest *dfhack_lua_viewscreen::getSelectedStockpile()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedStockpile");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::building_stockpilest>(Lua::Core::State, -1);
+}
+
+df::building_civzonest *dfhack_lua_viewscreen::getSelectedCivZone()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedCivZone");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::building_civzonest>(Lua::Core::State, -1);
+}
+
 df::plant *dfhack_lua_viewscreen::getSelectedPlant()
 {
     Lua::StackUnwinder frame(Lua::Core::State);
@@ -1075,8 +1155,7 @@ df::plant *dfhack_lua_viewscreen::getSelectedPlant()
     return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }
 
-#define STATIC_FIELDS_GROUP
-#include "../DataStaticsFields.cpp"
+#include "DataStaticsFields.inc"
 
 using df::identity_traits;
 

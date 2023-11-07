@@ -3,7 +3,7 @@ List of authors
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.
 
-If you should be here and aren't, please get in touch on IRC or the forums,
+If you should be here and aren't, please get in touch on Discord or the forums,
 or make a pull request!
 
 ======================= ======================= ===========================
@@ -83,6 +83,7 @@ Herwig Hochleitner      bendlas
 Hevlikn                 Hevlikn
 Ian S                   kremlin-
 IndigoFenix
+Jacek Konieczny         Jajcus
 James                   20k
 James Gilles            kazimuth
 James Logsdon           jlogsdon
@@ -129,6 +130,7 @@ Michael Crouch          creidieki
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
+Mikhail Panov           Halifay
 Mikko Juola             Noeda                   Adeon
 Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
@@ -137,6 +139,7 @@ moversti                moversti
 mrrho                   mrrho
 Murad Beybalaev         Erquint
 Myk Taylor              myk002
+Najeeb Al-Shabibi       master-spike
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
@@ -203,6 +206,7 @@ Sebastian Wolfertz      Enkrod
 SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
+shevernitskiy           shevernitskiy
 Shim Panze              Shim-Panze
 Silver                  silverflyone
 simon

@@ -131,12 +131,12 @@ void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec, in
     }
 }
 
-static bool trigger_inhibit_l_down = false;
-static bool trigger_inhibit_r_down = false;
-static bool trigger_inhibit_m_down = false;
-static bool inhibit_l_down = false;
-static bool inhibit_r_down = false;
-static bool inhibit_m_down = false;
+static bool trigger_inhibit_l = false;
+static bool trigger_inhibit_r = false;
+static bool trigger_inhibit_m = false;
+static bool inhibit_l = false;
+static bool inhibit_r = false;
+static bool inhibit_m = false;
 
 void DFHack::Lua::PushInterfaceKeys(lua_State *L,
                             const std::set<df::interface_key> &keys) {
@@ -161,32 +161,32 @@ void DFHack::Lua::PushInterfaceKeys(lua_State *L,
     }
 
     if (df::global::enabler) {
-        if (!inhibit_l_down && df::global::enabler->mouse_lbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L_DOWN");
-            trigger_inhibit_l_down = true;
-        }
-        if (!inhibit_r_down && df::global::enabler->mouse_rbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R_DOWN");
-            trigger_inhibit_r_down = true;
-        }
-        if (!inhibit_m_down && df::global::enabler->mouse_mbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_M_DOWN");
-            trigger_inhibit_m_down = true;
-        }
-        if (df::global::enabler->mouse_lbut) {
+        if (!inhibit_l && df::global::enabler->mouse_lbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_L");
+            trigger_inhibit_l = true;
         }
-        if (df::global::enabler->mouse_rbut) {
+        if (!inhibit_r && df::global::enabler->mouse_rbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_R");
+            trigger_inhibit_r = true;
         }
-        if (df::global::enabler->mouse_mbut) {
+        if (!inhibit_m && df::global::enabler->mouse_mbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_M");
+            trigger_inhibit_m = true;
+        }
+        if (df::global::enabler->mouse_lbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+        }
+        if (df::global::enabler->mouse_rbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+        }
+        if (df::global::enabler->mouse_mbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_M_DOWN");
         }
     }
 }
@@ -2159,23 +2159,25 @@ void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
         lua_settop(State, 0);
     }
 
-    if (trigger_inhibit_l_down) {
-        trigger_inhibit_l_down = false;
-        inhibit_l_down = true;
+    if (trigger_inhibit_l) {
+        trigger_inhibit_l = false;
+        inhibit_l = true;
     }
-    if (trigger_inhibit_r_down) {
-        trigger_inhibit_r_down = false;
-        inhibit_r_down = true;
+    if (trigger_inhibit_r) {
+        trigger_inhibit_r = false;
+        inhibit_r = true;
     }
-    if (trigger_inhibit_m_down) {
-        trigger_inhibit_m_down = false;
-        inhibit_m_down = true;
+    if (trigger_inhibit_m) {
+        trigger_inhibit_m = false;
+        inhibit_m = true;
     }
 
-    if (!df::global::enabler->mouse_lbut)
-        inhibit_l_down = false;
-    if (!df::global::enabler->mouse_rbut)
-        inhibit_r_down = false;
-    if (!df::global::enabler->mouse_mbut)
-        inhibit_m_down = false;
+    if (df::global::enabler) {
+        if (!df::global::enabler->mouse_lbut_down)
+            inhibit_l = false;
+        if (!df::global::enabler->mouse_rbut_down)
+            inhibit_r = false;
+        if (!df::global::enabler->mouse_mbut_down)
+            inhibit_m = false;
+    }
 }

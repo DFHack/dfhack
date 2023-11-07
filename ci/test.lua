@@ -1,11 +1,13 @@
 -- DFHack developer test harness
 --@ module = true
 
-local expect = require 'test_util.expect'
-local json = require 'json'
-local mock = require 'test_util.mock'
-local script = require 'gui.script'
-local utils = require 'utils'
+local expect = require('test_util.expect')
+local gui = require('gui')
+local helpdb = require('helpdb')
+local json = require('json')
+local mock = require('test_util.mock')
+local script = require('gui.script')
+local utils = require('utils')
 
 local help_text =
 [====[
@@ -13,49 +15,59 @@ local help_text =
 test
 ====
 
-Run DFHack tests.
+Tags: dev
 
-Usage:
+Command: "test"
+
+    Run DFHack regression tests.
+
+Discover DFHack functionality that has broken due to recent changes in DF or DFHack.
+
+Usage
+-----
 
     test [<options>] [<done_command>]
 
 If a done_command is specified, it will be run after the tests complete.
 
-Options:
+Options
+-------
 
-    -h, --help      display this help message and exit.
-    -d, --test_dir  specifies which directory to look in for tests. defaults to
-                    the "hack/scripts/test" folder in your DF installation.
-    -m, --modes     only run tests in the given comma separated list of modes.
-                    see the next section for a list of valid modes. if not
-                    specified, the tests are not filtered by modes.
-    -r, --resume    skip tests that have already been run. remove the
-                    test_status.json file to reset the record.
-    -s, --save_dir  the save folder to load for "fortress" mode tests. this
-                    save is only loaded if a fort is not already loaded when
-                    a "fortress" mode test is run. if not specified, defaults to
-                    'region1'.
-    -t, --tests     only run tests that match one of the comma separated list of
-                    patterns. if not specified, no tests are filtered.
+-d, --test_dir  specifies which directory to look in for tests. defaults to
+                the "hack/scripts/test" folder in your DF installation.
+-m, --modes     only run tests in the given comma separated list of modes.
+                see the next section for a list of valid modes. if not
+                specified, the tests are not filtered by modes.
+-r, --resume    skip tests that have already been run. remove the
+                test_status.json file to reset the record.
+-s, --save_dir  the save folder to load for "fortress" mode tests. this
+                save is only loaded if a fort is not already loaded when
+                a "fortress" mode test is run. if not specified, defaults to
+                'region1'.
+-t, --tests     only run tests that match one of the comma separated list of
+                patterns. if not specified, no tests are filtered and all tessts
+                are run.
 
-Modes:
+Modes
+-----
 
-    none      the test can be run on any screen
-    title     the test must be run on the DF title screen. note that if the game
-              has a map loaded, "title" mode tests cannot be run
-    fortress  the test must be run while a map is loaded. if the game is
-              currently on the title screen, the save specified by the save_dir
-              parameter will be loaded.
+none      the test can be run on any screen
+title     the test must be run on the DF title screen. note that if the game
+          has a map loaded, "title" mode tests cannot be run
+fortress  the test must be run while a map is loaded. if the game is
+          currently on the title screen, the save specified by the save_dir
+          parameter will be loaded.
 
-Examples:
+Examples
+--------
 
-    test                 runs all tests
-    test -r              runs all tests that haven't been run before
-    test -m none         runs tests that don't need the game to be in a
-                         specific mode
-    test -t quickfort    runs quickfort tests
-    test -d /path/to/dfhack-scripts/repo/test
-                         runs tests in your dev scripts repo
+test                 runs all tests
+test -r              runs all tests that haven't been run before
+test -m none         runs tests that don't need the game to be in a
+                     specific mode
+test -t quickfort    runs quickfort tests
+test -d /path/to/dfhack-scripts/repo/test
+                     runs tests in your dev scripts repo
 
 Default values for the options may be set in a file named test_config.json in
 your DF folder. Options with comma-separated values should be written as json
@@ -140,18 +152,37 @@ end
 test_envvars.require = clean_require
 test_envvars.reqscript = clean_reqscript
 
-local function is_title_screen(scr)
-    scr = scr or dfhack.gui.getCurViewscreen()
-    return df.viewscreen_titlest:is_instance(scr)
+local function is_title_screen()
+    return dfhack.gui.matchFocusString('title/Default')
+end
+
+local function wait_for(ms, desc, predicate)
+    local start_ms = dfhack.getTickCount()
+    local prev_ms = start_ms
+    while not predicate() do
+        delay(10)
+        local now_ms = dfhack.getTickCount()
+        if now_ms - start_ms > ms then
+            qerror(('%s took too long (timed out at %s)'):format(
+                desc, dfhack.gui.getCurFocus(true)[1]))
+        end
+        if now_ms - prev_ms > 1000 then
+            print(('Waiting for %s...'):format(desc))
+            prev_ms = now_ms
+        end
+    end
 end
 
 -- This only handles pre-fortress-load screens. It will time out if the player
 -- has already loaded a fortress or is in any screen that can't get to the title
 -- screen by sending ESC keys.
 local function ensure_title_screen()
+    if df.viewscreen_dwarfmodest:is_instance(dfhack.gui.getDFViewscreen(true)) then
+        qerror('Cannot reach title screen from loaded fort')
+    end
     for i = 1, 100 do
         local scr = dfhack.gui.getCurViewscreen()
-        if is_title_screen(scr) then
+        if is_title_screen() then
             print('Found title screen')
             return
         end
@@ -160,57 +191,94 @@ local function ensure_title_screen()
         if i % 10 == 0 then print('Looking for title screen...') end
     end
     qerror(string.format('Could not find title screen (timed out at %s)',
-                         dfhack.gui.getCurFocus(true)))
+                         dfhack.gui.getCurFocus(true)[1]))
 end
 
-local function is_fortress(focus_string)
-    focus_string = focus_string or dfhack.gui.getCurFocus(true)
-    return focus_string == 'dwarfmode/Default'
+local function is_fortress()
+    return dfhack.gui.matchFocusString('dwarfmode/Default')
+end
+
+-- error out if we're not running in a CI environment
+-- the tests may corrupt saves, and we don't want to unexpectedly ruin a real player save
+-- this heuristic is not perfect, but it should be able to detect most cases
+local function ensure_ci_save(scr)
+    if #scr.savegame_header ~= 1
+        or #scr.savegame_header_world ~= 1
+        or not string.find(scr.savegame_header[0].fort_name, 'Dream')
+    then
+        qerror('Unexpected test save in slot 0; please manually load a fort for ' ..
+            'running fortress mode tests. note that tests may alter or corrupt the ' ..
+            'fort! Do not save after running tests.')
+    end
+end
+
+local function click_top_title_button(scr)
+    local sw, sh = dfhack.screen.getWindowSize()
+    df.global.gps.mouse_x = sw // 2
+    df.global.gps.precise_mouse_x = df.global.gps.mouse_x * df.global.gps.tile_pixel_x
+    if sh < 60 then
+        df.global.gps.mouse_y = 25
+    else
+        df.global.gps.mouse_y = (sh // 2) + 3
+    end
+    df.global.gps.precise_mouse_y = df.global.gps.mouse_y * df.global.gps.tile_pixel_y
+    gui.simulateInput(scr, '_MOUSE_L')
+end
+
+local function load_first_save(scr)
+    if #scr.savegame_header == 0 then
+        qerror('no savegames available to load')
+    end
+
+    click_top_title_button(scr)
+    wait_for(1000, 'world list', function()
+        return scr.mode == 2
+    end)
+    click_top_title_button(scr)
+    wait_for(1000, 'savegame list', function()
+        return scr.mode == 3
+    end)
+    click_top_title_button(scr)
+    wait_for(1000, 'loadgame progress bar', function()
+        return dfhack.gui.matchFocusString('loadgame')
+    end)
 end
 
 -- Requires that a fortress game is already loaded or is ready to be loaded via
--- the "Continue Playing" option in the title screen. Otherwise the function
+-- the "Continue active game" option in the title screen. Otherwise the function
 -- will time out and/or exit with error.
 local function ensure_fortress(config)
-    local focus_string = dfhack.gui.getCurFocus(true)
     for screen_timeout = 1,10 do
-        if is_fortress(focus_string) then
-            print('Loaded fortress map')
+        if is_fortress() then
+            print('Fortress map is loaded')
             -- pause the game (if it's not already paused)
             dfhack.gui.resetDwarfmodeView(true)
             return
         end
-        local scr = dfhack.gui.getCurViewscreen(true)
-        if focus_string == 'title' or
-                focus_string == 'dfhack/lua/load_screen' then
+        local scr = dfhack.gui.getCurViewscreen()
+        if dfhack.gui.matchFocusString('title/Default', scr) then
+            print('Attempting to load the test fortress')
+            -- TODO: reinstate loading of a specified save dir; for now
+            -- just load the first possible save, which will at least let us
+            -- run fortress tests in CI
             -- qerror()'s on falure
-            dfhack.run_script('load-save', config.save_dir)
-        elseif focus_string ~= 'loadgame' then
+            -- dfhack.run_script('load-save', config.save_dir)
+            ensure_ci_save(scr)
+            load_first_save(scr)
+        elseif not dfhack.gui.matchFocusString('loadgame', scr) then
             -- if we're not actively loading a game, hope we're in
             -- a screen where hitting ESC will get us to the game map
             -- or the title screen
             scr:feed_key(df.interface_key.LEAVESCREEN)
         end
         -- wait for current screen to change
-        local prev_focus_string = focus_string
-        for frame_timeout = 1,100 do
-            delay(10)
-            focus_string = dfhack.gui.getCurFocus(true)
-            if focus_string ~= prev_focus_string then
-                goto next_screen
-            end
-            if frame_timeout % 10 == 0 then
-                print(string.format(
-                    'Loading fortress (currently at screen: %s)',
-                    focus_string))
-            end
-        end
-        print('Timed out waiting for screen to change')
-        break
-        ::next_screen::
+        local prev_focus_string = dfhack.gui.getCurFocus()[1]
+        wait_for(60000, 'screen change', function()
+            return dfhack.gui.getCurFocus()[1] ~= prev_focus_string
+        end)
     end
     qerror(string.format('Could not load fortress (timed out at %s)',
-                         focus_string))
+                         table.concat(dfhack.gui.getCurFocus(), ' ')))
 end
 
 local MODES = {
@@ -234,6 +302,25 @@ local function load_test_config(config_file)
     end
 
     return config
+end
+
+local function TestTable()
+    local inner = utils.OrderedTable()
+    local meta = copyall(getmetatable(inner))
+
+    function meta:__newindex(k, v)
+        if inner[k] then
+            error('Attempt to overwrite existing test: ' .. k)
+        elseif type(v) ~= 'function' then
+            error('Attempt to define test as non-function: ' .. k .. ' = ' .. tostring(v))
+        else
+            inner[k] = v
+        end
+    end
+
+    local self = {}
+    setmetatable(self, meta)
+    return self
 end
 
 -- we have to save and use the original dfhack.printerr here so our test harness
@@ -280,7 +367,7 @@ end
 
 local function build_test_env(path)
     local env = {
-        test = utils.OrderedTable(),
+        test = TestTable(),
         -- config values can be overridden in the test file to define
         -- requirements for the tests in that file
         config = {
@@ -352,33 +439,46 @@ local function load_tests(file, tests)
     if not code then
         dfhack.printerr('Failed to load file: ' .. tostring(err))
         return false
-    else
-        dfhack.internal.IN_TEST = true
-        local ok, err = dfhack.pcall(code)
-        dfhack.internal.IN_TEST = false
-        if not ok then
-            dfhack.printerr('Error when running file: ' .. tostring(err))
-            return false
-        else
-            if not MODES[env.config.mode] then
-                dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
-                return false
-            end
-            for name, test_func in pairs(env.test) do
-                if env.config.wrapper then
-                    local fn = test_func
-                    test_func = function() env.config.wrapper(fn) end
-                end
-                local test_data = {
-                    full_name = short_filename .. ':' .. name,
-                    func = test_func,
-                    private = env_private,
-                    config = env.config,
-                }
-                test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
-                table.insert(tests, test_data)
-            end
+    end
+    dfhack.internal.IN_TEST = true
+    local ok, err = dfhack.pcall(code)
+    dfhack.internal.IN_TEST = false
+    if not ok then
+        dfhack.printerr('Error when running file: ' .. tostring(err))
+        return false
+    end
+    if not MODES[env.config.mode] then
+        dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
+        return false
+    end
+    if not env.config.target then
+        dfhack.printerr('Skipping tests for unspecified target in ' .. file)
+        return true  -- TODO: change to false once existing tests have targets specified
+    end
+    local targets = type(env.config.target) == 'table' and env.config.target or {env.config.target}
+    for _,target in ipairs(targets) do
+        if target == 'core' then goto continue end
+        if type(target) ~= 'string' or not helpdb.is_entry(target) or
+            helpdb.get_entry_tags(target).unavailable
+        then
+            dfhack.printerr('Skipping tests for unavailable target: ' .. target)
+            return true
         end
+        ::continue::
+    end
+    for name, test_func in pairs(env.test) do
+        if env.config.wrapper then
+            local fn = test_func
+            test_func = function() env.config.wrapper(fn) end
+        end
+        local test_data = {
+            full_name = short_filename .. ':' .. name,
+            func = test_func,
+            private = env_private,
+            config = env.config,
+        }
+        test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
+        table.insert(tests, test_data)
     end
     return true
 end
@@ -520,6 +620,10 @@ local function filter_tests(tests, config)
 end
 
 local function run_tests(tests, status, counts, config)
+    wait_for(60000, 'game load', function()
+        local scr = dfhack.gui.getDFViewscreen()
+        return not df.viewscreen_initial_prepst:is_instance(scr)
+    end)
     print(('Running %d tests'):format(#tests))
     local start_ms = dfhack.getTickCount()
     local num_skipped = 0
@@ -529,6 +633,7 @@ local function run_tests(tests, status, counts, config)
             goto skip
         end
         if not MODES[test.config.mode].detect() then
+            print(('Switching to %s mode for test: %s'):format(test.config.mode, test.name))
             local ok, err = pcall(MODES[test.config.mode].navigate, config)
             if not ok then
                 MODES[test.config.mode].failed = true
@@ -537,12 +642,13 @@ local function run_tests(tests, status, counts, config)
                 goto skip
             end
         end
+        -- pre-emptively mark the test as failed in case we induce a crash
+        status[test.full_name] = TestStatus.FAILED
+        save_test_status(status)
         if run_test(test, status, counts) then
             status[test.full_name] = TestStatus.PASSED
-        else
-            status[test.full_name] = TestStatus.FAILED
+            save_test_status(status)
         end
-        save_test_status(status)
         ::skip::
     end
     local elapsed_ms = dfhack.getTickCount() - start_ms
@@ -575,7 +681,7 @@ local function dump_df_state()
         enabler = {
             fps = df.global.enabler.fps,
             gfps = df.global.enabler.gfps,
-            fullscreen = df.global.enabler.fullscreen,
+            fullscreen_state = df.global.enabler.fullscreen_state.whole,
         },
         gps = {
             dimx = df.global.gps.dimx,

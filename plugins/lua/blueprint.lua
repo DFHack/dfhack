@@ -207,7 +207,7 @@ end
 -- returns the name of the output file for the given context
 function get_filename(opts, phase, ordinal)
     local fullname = 'dfhack-config/blueprints/' .. opts.name
-    local _,_,basename = fullname:find('/([^/]+)/?$')
+    local _,_,basename = opts.name:find('([^/]+)/*$')
     if not basename then
         -- should not happen since opts.name should already be validated
         error(('could not parse basename out of "%s"'):format(fullname))

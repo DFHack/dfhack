@@ -2,6 +2,7 @@
 
 local _ENV = mkmodule('gui')
 
+local textures = require('gui.textures')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -9,13 +10,19 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=df.global.init.texpos_border_interior, ch=32, fg=0, bg=0, write_to_lower=true}
+CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.texpos_border_interior, ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
+local function set_and_get_undo(field, is_set)
+    local prev_value = df.global.enabler[field]
+    df.global.enabler[field] = is_set and 1 or 0
+    return function() df.global.enabler[field] = prev_value end
+end
+
 local MOUSE_KEYS = {
-    _MOUSE_L = true,
-    _MOUSE_R = true,
+    _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
+    _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
@@ -26,13 +33,17 @@ local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
 FAKE_INPUT_KEYS._STRING = true
 
 function simulateInput(screen,...)
-    local keys = {}
+    local keys, enabled_mouse_keys = {}, {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
             if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
+            end
+            if MOUSE_KEYS[arg] then
+                df.global.enabler.tracking_on = 1
+                enabled_mouse_keys[arg] = true
             end
         end
         if type(kv) == 'number' then
@@ -56,7 +67,16 @@ function simulateInput(screen,...)
             end
         end
     end
+    local undo_fns = {}
+    for mk, fn in pairs(MOUSE_KEYS) do
+        if type(fn) == 'function' then
+            table.insert(undo_fns, fn(enabled_mouse_keys[mk]))
+        end
+    end
     dscreen._doSimulateInput(screen, keys)
+    for _, undo_fn in ipairs(undo_fns) do
+        undo_fn()
+    end
 end
 
 function mkdims_xy(x1,y1,x2,y2)
@@ -695,21 +715,6 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
-local zscreen_inhibit_mouse_l = false
-
--- ensure underlying DF screens don't also react to handled clicks
-function markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        -- note we can't clear mouse_lbut here. otherwise we break dragging,
-        df.global.enabler.mouse_lbut_down = 0
-        zscreen_inhibit_mouse_l = true
-    end
-    if keys._MOUSE_R_DOWN then
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
-    end
-end
-
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -788,37 +793,24 @@ function ZScreen:onInput(keys)
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
         if has_mouse and
-                (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN or
+                (keys._MOUSE_L or keys._MOUSE_R or
                  keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
                  keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
         else
             self:sendInputToParent(keys)
-            return
+            return true
         end
     end
 
     if ZScreen.super.onInput(self, keys) then
-        markMouseClicksHandled(keys)
-        return
-    end
-
-    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
+        -- noop
+    elseif self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
         self:sendInputToParent(keys)
-        return
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
-        markMouseClicksHandled(keys)
-        return
     else
-        if zscreen_inhibit_mouse_l then
-            if keys._MOUSE_L then
-                return
-            else
-                zscreen_inhibit_mouse_l = false
-            end
-        end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
             if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
@@ -839,8 +831,8 @@ function ZScreen:onInput(keys)
         if passit then
             self:sendInputToParent(keys)
         end
-        return
     end
+    return true
 end
 
 function ZScreen:raise()
@@ -870,6 +862,12 @@ function ZScreen:onGetSelectedItem()
 end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')
+end
+function ZScreen:onGetSelectedStockpile()
+    return zscreen_get_any(self, 'Stockpile')
+end
+function ZScreen:onGetSelectedCivZone()
+    return zscreen_get_any(self, 'CivZone')
 end
 function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
@@ -912,33 +910,49 @@ local BASE_FRAME = {
     paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
-local function make_frame(name, double_line)
-    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
-    local tp = function(offset)
-        if texpos == -1 then return nil end
-        return texpos + offset
-    end
 
+local function make_frame(tp, double_line)
     local frame = copyall(BASE_FRAME)
-    frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.t_frame_pen = to_pen{ tile=curry(tp, 2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=curry(tp, 8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=curry(tp, 16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=curry(tp, 10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lt_frame_pen = to_pen{ tile=curry(tp, 1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=curry(tp, 15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=curry(tp, 3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=curry(tp, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
     return frame
 end
 
-FRAME_WINDOW = make_frame('Window', true)
-FRAME_PANEL = make_frame('Panel', false)
-FRAME_MEDIUM = make_frame('Medium', false)
-FRAME_BOLD = make_frame('Bold', true)
-FRAME_INTERIOR = make_frame('Thin', false)
-FRAME_INTERIOR.signature_pen = false
-FRAME_INTERIOR_MEDIUM = copyall(FRAME_MEDIUM)
-FRAME_INTERIOR_MEDIUM.signature_pen = false
+function FRAME_WINDOW(resizable)
+    local frame = make_frame(textures.tp_border_window, true)
+    if not resizable then
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    end
+    return frame
+end
+function FRAME_PANEL()
+    return make_frame(textures.tp_border_panel, false)
+end
+function FRAME_MEDIUM()
+    return make_frame(textures.tp_border_medium, false)
+end
+function FRAME_BOLD()
+    return make_frame(textures.tp_border_bold, true)
+end
+function FRAME_THIN()
+    return make_frame(textures.tp_border_thin, false)
+end
+function FRAME_INTERIOR()
+    local frame = make_frame(textures.tp_border_thin, false)
+    frame.signature_pen = false
+    return frame
+end
+function FRAME_INTERIOR_MEDIUM()
+    local frame = make_frame(textures.tp_border_medium, false)
+    frame.signature_pen = false
+    return frame
+end
 
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = FRAME_PANEL
@@ -951,18 +965,16 @@ BOLD_FRAME = FRAME_BOLD
 INTERIOR_FRAME = FRAME_INTERIOR
 INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
 
-
-function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
+function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
+    if type(style) == 'function' then
+        style = style(resizable)
+    end
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    local rb_frame_pen = style.rb_frame_pen
-    if rb_frame_pen == FRAME_WINDOW.rb_frame_pen and not resizable then
-        rb_frame_pen = FRAME_PANEL.rb_frame_pen
-    end
-    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
+    dscreen.paintTile(style.rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
@@ -1016,6 +1028,11 @@ function FramedScreen:onRenderFrame(dc, rect)
         dc:fill(rect, self.frame_background)
     end
     paint_frame(dc,rect,self.frame_style,self.frame_title)
+end
+
+function FramedScreen:onInput(keys)
+    FramedScreen.super.onInput(self, keys)
+    return true -- FramedScreens are modal
 end
 
 -- Inverts the brightness of the color, optionally taking a "bold" parameter,

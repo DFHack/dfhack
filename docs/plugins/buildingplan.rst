@@ -19,11 +19,11 @@ periodically scan for appropriate items and attach them to the planned
 building. Once all items are attached, the construction job will be unsuspended
 and a dwarf will come and build the building. If you have the `unsuspend`
 overlay enabled (it is enabled by default), then buildingplan-suspended
-buildings will appear with a ``P`` marker on the main map, as opposed to the
-usual ``x`` marker for "regular" suspended buildings. If you have
-`suspendmanager` running, then buildings will be left suspended when their
-items are all attached and ``suspendmanager`` will unsuspend them for
-construction when it is safe to do so.
+buildings will be tagged with a clock graphic in graphics mode or a ``P``
+marker in ASCII mode, as opposed to the ``x`` marker for "regular" suspended
+buildings. If you have `suspendmanager` running, then buildings will be left
+suspended when their items are all attached and ``suspendmanager`` will
+unsuspend them for construction when it is safe to do so.
 
 If you want to impose restrictions on which items are chosen for the buildings,
 buildingplan has full support for quality and material filters (see `below
@@ -45,10 +45,10 @@ from the buildingplan placement UI.
 
 One way to integrate buildingplan into your gameplay is to create manager
 workorders to ensure you always have a few blocks/doors/beds/etc. available. You
-can then place as many of each building as you like. Produced items will be used
-to build the planned buildings as they are produced, with minimal space
-dedicated to stockpiles. The DFHack `orders` library can help with setting
-these manager workorders up for you.
+can then place as many of each building as you like. Items will be used to
+build the planned buildings as they are produced, with minimal space dedicated
+to stockpiles. The DFHack `orders` library can help with setting these manager
+workorders up for you.
 
 If you don't want to use the ``buildingplan`` interface for the building you're
 currently trying to place, you can hit :kbd:`Alt`:kbd:`M` or click on the
@@ -125,16 +125,17 @@ tiles selected in the construction area are not appropriate for building. For
 example, if you want to fill an area with flooring, you can select the entire
 area, and any tiles with existing buildings or walls will simply be skipped.
 
-For weapon and spike traps, you can choose how many weapons will be included
-on this panel.
+Some building types will have other options available as well, such as a
+selector for how many weapons you want in weapon traps or whether you want your
+built cages to not have any occupants.
 
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++
 
 If you want to set restrictions on the items chosen to complete the planned
-building, you can click on the "filter" button next to the item name or select
-the item with the :kbd:`*` and :kbd:`/` keys and hit :kbd:`f` to bring up the
-filter dialog.
+building, you can click on the "[any material]" link next to the item name or
+select the item with the :kbd:`q` or :kbd:`Q` keys and hit :kbd:`f` to bring up
+the filter dialog.
 
 You can select whether the item must be decorated, and you can drag the ends of
 the "Item quality" slider to set your desired quality range. Note that blocks,
@@ -147,32 +148,33 @@ You can click on specific materials to allow only items of those materials when
 building the current type of building. You can also allow or disallow entire
 categories of materials by clicking on the "Type" options on the left. Note
 that it is perfectly fine to choose materials that currently show zero quantity.
-`buildingplan` will patiently watch for items made of materials you have
-selected.
+`buildingplan` will patiently wait for items made of materials you have
+selected to become available.
 
 Choosing specific items
 +++++++++++++++++++++++
 
-If you want to choose specific items, click on the "Choose from items" toggle
-or hit :kbd:`i` before placing the building. When you click to place the
-building, a dialog will come up that allows you choose which items to use. The
-list is sorted by most recently used materials for that building type by
-default, but you can change to sort by name or by available quantity by
-clicking on the "Sort by" selector or hitting :kbd:`R`. The configuration for
-whether you would like to choose specific items is saved per building type and
-will be restored when you plan more of that building type.
+If you want to choose specific items instead of using the filters, click on the
+"Choose items" selector or hit :kbd:`z` before placing the building. You can
+choose to be prompted for every item ("Manually") or you can have it
+automatically select the type of item that you last chose for this building
+type. The list you are prompted with is sorted by most recently used materials
+for that building type by default, but you can change to sort by name or by
+available quantity by clicking on the "Sort by" selector or hitting :kbd:`R`.
+The configuration for whether you would like to choose specific items is saved
+per building type and will be restored when you plan more of that building type.
 
 You can select the maximum quantity of a specified item by clicking on the item
 name or selecting it with the arrow keys and hitting :kbd:`Enter`. You can
 instead select items one at a time by Ctrl-clicking (:kbd:`Shift`:kbd:`Right`)
 to increment or Ctrl-Shift-clicking (:kbd:`Shift`:kbd:`Left`) to decrement.
 
-Once you are satisfied with your choices, click on the "Confirm" button or hit
+Once you are satisfied with your choices, click on the large green button or hit
 :kbd:`C` to continue building. Note that you don't have to select all the items
 that the building needs. Any remaining items will be automatically chosen from
-other available items (or future items if not all items are available yet). If
-there are multiple item types to choose for the current building, one dialog
-will appear per item type.
+other available items (or from items produced in the future if not all items
+are available yet). If there are multiple item types to choose for the current
+building, one dialog will appear per item type.
 
 Building status
 ---------------
@@ -180,10 +182,18 @@ Building status
 When viewing a planned building, a separate `overlay` widget appears on the
 building info sheet, showing you which items have been attached and which items
 are still pending. For a pending item, you can see its position in the
-fulfillment queue. If there is a particular building that you need built ASAP,
+fulfillment queue. You need to manufacture these items for them to be attached
+to the building. If there is a particular building that you need built ASAP,
 you can click on the "make top priority" button (or hit :kbd:`Ctrl`:kbd:`T`) to
 bump the items for this building to the front of their respective queues.
 
 Note that each item type and filter configuration has its own queue, so even if
 an item is in queue position 1, there may be other queues that snag the needed
 item first.
+
+Lever linking
+-------------
+
+When linking levers, `buildingplan` extends the vanilla panel by offering
+control over which mechanisms are chosen for installation at the lever and at
+the target. Heat safety filters are provided for convenience.

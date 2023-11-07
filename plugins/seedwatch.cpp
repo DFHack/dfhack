@@ -96,6 +96,24 @@ static void remove_seed_config(color_ostream &out, int id) {
     watched_seeds.erase(id);
 }
 
+// this validation removes configuration data from versions prior to 50.09-r3
+// it can be removed once saves from 50.09 are no longer loadable
+
+static bool validate_seed_config(color_ostream& out, PersistentDataItem c)
+{
+    int seed_id = get_config_val(c, SEED_CONFIG_ID);
+    auto plant = df::plant_raw::find(seed_id);
+    if (!plant) {
+        WARN(config, out).print("discarded invalid seed id: %d\n", seed_id);
+        return false;
+    }
+    bool valid = (!plant->flags.is_set(df::enums::plant_raw_flags::TREE));
+    if (!valid) {
+        DEBUG(config, out).print("invalid configuration for %s discarded\n", plant->id.c_str());
+    }
+    return valid;
+}
+
 static const int32_t CYCLE_TICKS = 1200;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
@@ -171,7 +189,8 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     world_plant_ids.clear();
     for (size_t i = 0; i < world->raws.plants.all.size(); ++i) {
         auto & plant = world->raws.plants.all[i];
-        if (plant->material_defs.type[plant_material_def::seed] != -1)
+        if (plant->material_defs.type[plant_material_def::seed] != -1 &&
+            !plant->flags.is_set(df::enums::plant_raw_flags::TREE))
             world_plant_ids[plant->id] = i;
     }
 
@@ -180,8 +199,9 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     World::GetPersistentData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
     const size_t num_seed_configs = seed_configs.size();
     for (size_t idx = 0; idx < num_seed_configs; ++idx) {
-        auto &c = seed_configs[idx];
-        watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
+        auto& c = seed_configs[idx];
+        if (validate_seed_config(out, c))
+            watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
     }
 
     config = World::GetPersistentData(CONFIG_KEY);

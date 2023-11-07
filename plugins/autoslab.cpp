@@ -151,24 +151,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     return CR_OK;
 }
 
-// Name functions taken from manipulator.cpp
-static std::string get_first_name(df::unit *unit)
-{
-    return Translation::capitalize(unit->name.first_name);
-}
-
-static std::string get_last_name(df::unit *unit)
-{
-    df::language_name name = unit->name;
-    std::string ret = "";
-    for (int i = 0; i < 2; i++)
-    {
-        if (name.words[i] >= 0)
-            ret += *world->raws.language.translations[name.language]->words[name.words[i]];
-    }
-    return Translation::capitalize(ret);
-}
-
 // Queue up a single order to engrave the slab for the given unit
 static void createSlabJob(df::unit *unit)
 {
@@ -212,7 +194,7 @@ static void checkslabs(color_ostream &out)
             )
         {
             createSlabJob(ghost);
-            auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);
+            auto fullName = Translation::TranslateName(&ghost->name, false);
             out.print("Added slab order for ghost %s\n", fullName.c_str());
         }
     }

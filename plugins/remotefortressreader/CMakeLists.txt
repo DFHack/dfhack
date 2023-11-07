@@ -25,7 +25,7 @@ set(PROJECT_PROTO
 )
 
 if(UNIX AND NOT APPLE)
-    set(PROJECT_LIBS ${PROJECT_LIBS} SDL)
+    set(PROJECT_LIBS ${PROJECT_LIBS})
 endif()
 
 # this makes sure all the stuff is put in proper places and linked to dfhack

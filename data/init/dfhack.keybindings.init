@@ -38,7 +38,7 @@ keybinding add Ctrl-V@dwarfmode digv
 keybinding add Ctrl-Shift-V@dwarfmode "digv x"
 
 # clean the selected tile of blood etc
-keybinding add Ctrl-C spotclean
+keybinding add Ctrl-C@dwarfmode spotclean
 
 # destroy the selected item
 keybinding add Ctrl-K@dwarfmode autodump-destroy-item
@@ -157,7 +157,7 @@ keybinding add Alt-K@dwarfmode toggle-kbd-cursor
 #keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
 # gui/design
-keybinding add Ctrl-D@dwarfmode gui/design
+keybinding add Ctrl-D@dwarfmode/Default gui/design
 
 
 

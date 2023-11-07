@@ -7,8 +7,8 @@ cmake_policy(SET CMP0074 NEW)
 project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.08")
-set(DFHACK_RELEASE "r4")
+set(DF_VERSION "50.11")
+set(DFHACK_RELEASE "r2")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -30,14 +30,16 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 option(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
+option(BUILD_DOCS_NO_HTML "Don't build the HTML docs, only the in-game docs." OFF)
 option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduces libdfhack size to about half but removes a few useful symbols)" ON)
 
 macro(CHECK_GCC compiler_path)
     execute_process(COMMAND ${compiler_path} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-    if(${GCC_VERSION_OUT} VERSION_LESS "4.8")
-        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.8 or later")
-    elseif(${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
+    if(${GCC_VERSION_OUT} VERSION_LESS "10")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
+        # TODO: this may need to be removed when DF linux actually comes out
+        # TODO: and we can test
         # GCC 5 changes ABI name mangling to enable C++11 changes.
         # This must be disabled to enable linking against DF.
         # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
@@ -60,14 +62,14 @@ endif()
 
 if(WIN32)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1935 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1935))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1935 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1937 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1937))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1937 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
-# Ask for C++11 standard from compilers
-set(CMAKE_CXX_STANDARD 11)
+# Ask for C++-20 standard from compilers
+set(CMAKE_CXX_STANDARD 20)
 # Require the standard support from compilers.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Use only standard c++ to keep code portable
@@ -209,28 +211,23 @@ set(DFHACK_BINARY_DESTINATION .)
 set(DFHACK_PLUGIN_DESTINATION ${DFHACK_DATA_DESTINATION}/plugins)
 # dfhack lua files go here:
 set(DFHACK_LUA_DESTINATION ${DFHACK_DATA_DESTINATION}/lua)
-# the windows .lib file goes here:
-set(DFHACK_DEVLIB_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # user documentation goes here:
 set(DFHACK_USERDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
-# developer documentation goes here:
-set(DFHACK_DEVDOC_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # some options for the user/developer to play with
 option(BUILD_LIBRARY "Build the DFHack library." ON)
 option(BUILD_PLUGINS "Build the DFHack plugins." ON)
+option(INSTALL_SCRIPTS "Install DFHack scripts." ON)
+option(INSTALL_DATA_FILES "Install DFHack platform independent files." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 if(UNIX)
     ## flags for GCC
     # default to hidden symbols
     # ensure compatibility with older CPUs
-    # enable C++11 features
     add_definitions(-DLINUX_BUILD)
-    add_definitions(-D_GLIBCXX_USE_C99)
-    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")
     if(DFHACK_BUILD_64)
@@ -292,22 +289,21 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-if(WIN32)
-    # Do the same for SDL.dll
-    # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    # TODO: remove SDL.dll from our distribution once DF moves to SDL2. we only
-    # continue to include it so we don't break Steam players on update by removing
-    # the SDL.dll that DF needs.
-    set(SDL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
-    if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "1ae242c4b94cb03756a1288122a66faf")
-    else()
-        download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
-            ${SDL_DOWNLOAD_DIR}/SDL.dll
-            "5a09604daca6b2b5ce049d79af935d6a")
-    endif()
+if(BUILD_LIBRARY)
+    # Download SDL release and extract into depends in the build dir
+    # all we need are the header files (including generated headers), so the same release package
+    # will work for all platforms
+    # (the above statement is untested for OSX)
+    set(SDL_VERSION 2.26.2)
+    set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
+    set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
+    set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
+    download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+        ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+        ${SDL_ZIP_MD5})
+    file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+        DESTINATION ${SDL_ZIP_PATH})
+    include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
 endif()
 
 if(APPLE)
@@ -391,14 +387,17 @@ include_directories(depends/lodepng)
 include_directories(depends/tthread)
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
-add_subdirectory(depends)
+
+if(BUILD_LIBRARY)
+    add_subdirectory(depends)
+endif()
 
 # Testing with CTest
 macro(dfhack_test name files)
-if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
+if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
-    target_link_libraries(${name} dfhack gtest SDL)
+    target_link_libraries(${name} dfhack gtest)
     add_test(NAME ${name} COMMAND ${name})
 endif()
 endmacro()
@@ -410,22 +409,25 @@ if(NOT GIT_FOUND)
 endif()
 
 # build the lib itself
+add_subdirectory(library)
 if(BUILD_LIBRARY)
-    add_subdirectory(library)
-    install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
+    file(WRITE ${CMAKE_BINARY_DIR}/dfhack_setarch.txt ${DFHACK_SETARCH})
+    install(FILES ${CMAKE_BINARY_DIR}/dfhack_setarch.txt DESTINATION ${DFHACK_DATA_DESTINATION})
 endif()
-
-file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
-install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
-if(BUILD_PLUGINS)
-    add_subdirectory(plugins)
+add_subdirectory(plugins)
+
+if(INSTALL_DATA_FILES)
+    add_subdirectory(data)
+    install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/depends/luacov/src/luacov/ DESTINATION ${DFHACK_DATA_DESTINATION}/lua/luacov)
 endif()
 
-add_subdirectory(data)
-add_subdirectory(scripts)
+if(INSTALL_SCRIPTS)
+    add_subdirectory(scripts)
+endif()
 
 if(BUILD_DOCS)
     find_package(Python3)
@@ -466,7 +468,14 @@ if(BUILD_DOCS)
         "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
     )
 
-    set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+    if(BUILD_DOCS_NO_HTML)
+        set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/text/index.txt")
+        set(SPHINX_BUILD_TARGETS text)
+    else()
+        set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+        set(SPHINX_BUILD_TARGETS html text)
+    endif()
+
     set_property(
         DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES TRUE
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelogs"
@@ -483,9 +492,10 @@ if(BUILD_DOCS)
         "${CMAKE_BINARY_DIR}/docs/text"
         "${CMAKE_BINARY_DIR}/docs/xml"
     )
+
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
-            html text --sphinx="${SPHINX_EXECUTABLE}" -- -q
+        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" -- -q -W
         DEPENDS ${SPHINX_DEPS}
         COMMENT "Building documentation with Sphinx"
     )
@@ -498,10 +508,12 @@ if(BUILD_DOCS)
     add_custom_command(TARGET dfhack_docs POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
-    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
-        DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
-        FILES_MATCHING PATTERN "*"
-                       PATTERN html/_sources EXCLUDE)
+    if(NOT BUILD_DOCS_NO_HTML)
+        install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
+            DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
+            FILES_MATCHING PATTERN "*"
+                           PATTERN html/_sources EXCLUDE)
+    endif()
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/text/
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
     install(FILES docs/changelogs/news.rst docs/changelogs/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
@@ -586,7 +598,7 @@ endif()
 set(DFHACK_BUILD_ARCH_PREV "${DFHACK_BUILD_ARCH}" CACHE STRING "Previous build architecture" FORCE)
 
 option(BUILD_SIZECHECK "Build the sizecheck library, for research" OFF)
-if(BUILD_SIZECHECK)
+if(BUILD_LIBRARY AND BUILD_SIZECHECK)
     add_subdirectory(depends/sizecheck)
     add_dependencies(dfhack sizecheck)
 endif()

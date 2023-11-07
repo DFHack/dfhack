@@ -746,6 +746,8 @@ static bool isInappropriateUnit(df::unit *unit) {
 static bool isProtectedUnit(df::unit *unit) {
     return Units::isWar(unit)    // ignore war dogs etc
         || Units::isHunter(unit) // ignore hunting dogs etc
+        || Units::isMarkedForWarTraining(unit) // ignore units marked for any kind of training
+        || Units::isMarkedForHuntTraining(unit)
         // ignore creatures in built cages which are defined as rooms to leave zoos alone
         // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
         || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()

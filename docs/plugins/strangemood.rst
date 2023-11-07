@@ -12,10 +12,10 @@ Usage
 
     strangemood [<options>]
 
-Examples
---------
+Example
+-------
 
-``strangemood -force -unit -type secretive -skill armorsmith``
+``strangemood --force --unit --type secretive --skill armorsmith``
     Trigger a strange mood for the selected unit that will cause them to become
     a legendary armorsmith.
 

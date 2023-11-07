@@ -263,6 +263,45 @@ local function do_export()
 end
 
 --------------------
+-- ConfigModal
+--------------------
+
+ConfigModal = defclass(ConfigModal, gui.ZScreenModal)
+ConfigModal.ATTRS{
+    focus_path='stockpiles_config',
+    on_close=DEFAULT_NIL,
+}
+
+function ConfigModal:init()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    local cur_setting = false
+    if sp then
+        local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+        cur_setting = config.melt_masterworks == 1
+    end
+
+    self:addviews{
+        widgets.Window{
+            frame={w=35, h=10},
+            frame_title='Advanced logistics settings',
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='melt_masterworks',
+                    frame={l=0, t=0},
+                    key='CUSTOM_M',
+                    label='Melt masterworks',
+                    initial_option=cur_setting,
+                },
+            },
+        },
+    }
+end
+
+function ConfigModal:onDismiss()
+    self.on_close{melt_masterworks=self.subviews.melt_masterworks:getOptionValue()}
+end
+
+--------------------
 -- MinimizeButton
 --------------------
 
@@ -364,13 +403,15 @@ StockpilesOverlay.ATTRS{
 function StockpilesOverlay:init()
     self.minimized = false
 
+    local function is_expanded()
+        return not self.minimized
+    end
+
     local main_panel = widgets.Panel{
         view_id='main',
         frame_style=gui.MEDIUM_FRAME,
         frame_background=gui.CLEAR_PEN,
-        visible=function()
-            return not self.minimized
-        end,
+        visible=is_expanded,
         subviews={
             -- widgets.HotkeyLabel{
             --     frame={t=0, l=0},
@@ -440,12 +481,21 @@ function StockpilesOverlay:init()
     }
 
     self:addviews{
-        main_panel, MinimizeButton{
+        main_panel,
+        MinimizeButton{
             frame={t=0, r=9},
-            get_minimized_fn=function()
-                return self.minimized
-            end,
+            get_minimized_fn=function() return self.minimized end,
             on_click=self:callback('toggleMinimized'),
+        },
+        widgets.ConfigureButton{
+            frame={t=0, r=5},
+            on_click=function() ConfigModal{on_close=self:callback('on_custom_config')}:show() end,
+            visible=is_expanded,
+        },
+        widgets.HelpButton{
+            frame={t=0, r=1},
+            command='stockpiles',
+            visible=is_expanded,
         },
     }
 end
@@ -475,7 +525,16 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
-            (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1))
+            (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1),
+            config.melt_masterworks == 1)
+end
+
+function StockpilesOverlay:on_custom_config(custom)
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    if not sp then return end
+    local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+    logistics.logistics_setStockpileConfig(config.stockpile_number,
+            config.melt == 1, config.trade == 1, config.dump == 1, config.train == 1, custom.melt_masterworks)
 end
 
 function StockpilesOverlay:toggleMinimized()

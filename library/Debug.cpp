@@ -26,6 +26,7 @@ redistribute it freely, subject to the following restrictions:
 #include "Debug.h"
 #include "DebugManager.h"
 
+#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <thread>

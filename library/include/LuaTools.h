@@ -410,6 +410,17 @@ namespace DFHack {namespace Lua {
         }
     }
 
+    template<typename T>
+    requires std::is_arithmetic_v<T>
+    void GetVector(lua_State *state, std::vector<T> &pvec, int idx = 1) {
+        lua_pushnil(state);   // first key
+        while (lua_next(state, idx) != 0)
+        {
+            pvec.push_back(lua_tointeger(state, -1));
+            lua_pop(state, 1);  // remove value, leave key
+        }
+    }
+
     DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec, int idx = 1);
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);

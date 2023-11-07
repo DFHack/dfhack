@@ -55,33 +55,32 @@ if os.path.exists(test_status_file):
     os.remove(test_status_file)
 
 print('Backing up init.txt to init.txt.orig')
-init_txt_path = 'data/init/init.txt'
+default_init_txt_path = 'data/init/init_default.txt'
+prefs_path = 'prefs'
+init_txt_path = 'prefs/init.txt'
+if not os.path.exists(init_txt_path):
+    os.makedirs(prefs_path, exist_ok=True)
+    shutil.copyfile(default_init_txt_path, init_txt_path)
+
 shutil.copyfile(init_txt_path, init_txt_path + '.orig')
 with open(init_txt_path) as f:
     init_contents = f.read()
-init_contents = change_setting(init_contents, 'INTRO', 'NO')
 init_contents = change_setting(init_contents, 'SOUND', 'NO')
 init_contents = change_setting(init_contents, 'WINDOWED', 'YES')
-init_contents = change_setting(init_contents, 'WINDOWEDX', '80')
-init_contents = change_setting(init_contents, 'WINDOWEDY', '25')
-init_contents = change_setting(init_contents, 'FPS', 'YES')
-if args.headless:
-    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
+init_contents = change_setting(init_contents, 'WINDOWEDX', '1200')
+init_contents = change_setting(init_contents, 'WINDOWEDY', '800')
+#if args.headless:
+#    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
 init_path = 'dfhack-config/init'
 if not os.path.isdir('hack/init'):
     # we're on an old branch that still reads init files from the root dir
     init_path = '.'
-try:
-    os.mkdir(init_path)
-except OSError as error:
-    # ignore already exists errors
-    pass
+os.makedirs(init_path, exist_ok=True)
 test_init_file = os.path.join(init_path, 'dfhackzzz_test.init')  # Core sorts these alphabetically
 with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt
-    :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
     test --resume -- lua scr.breakdown_level=df.interface_breakdown_types.%s
     ''' % ('NONE' if args.no_quit else 'QUIT'))
 

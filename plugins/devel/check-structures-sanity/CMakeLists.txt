@@ -5,4 +5,4 @@ set(PLUGIN_SRCS
     validate.cpp
 )
 
-dfhack_plugin(check-structures-sanity ${PLUGIN_SRCS} LINK_LIBRARIES lua)
+dfhack_plugin(check-structures-sanity ${PLUGIN_SRCS} LINK_LIBRARIES lua COMPILE_FLAGS_GCC "-O0 -ggdb3" COMPILE_FLAGS_MSVC "/Od")

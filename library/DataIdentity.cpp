@@ -1,24 +1,26 @@
 #include <stddef.h>
 
+#include <condition_variable>
 #include <fstream>
-
-#ifndef STATIC_FIELDS_GROUP
-#include "DataDefs.h"
-#endif
+#include <mutex>
+#include <string>
+#include <vector>
 
 #include "DataFuncs.h"
+#include "DataIdentity.h"
 
-#ifdef __GNUC__
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif
+// the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
+// without it the macro generates a syntax error when type is a template specification
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(category, type, name) \
     category##_identity<type> identity_traits<type>::identity(name);
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
+#define OPAQUE_IDENTITY_TRAITS_NAME(type, name) \
+    opaque_identity identity_traits<type >::identity(sizeof(type), allocator_noassign_fn<type >, name)
+#define STL_OPAQUE_IDENTITY_TRAITS(type) OPAQUE_IDENTITY_TRAITS_NAME(std::type, #type)
 
-#ifndef STATIC_FIELDS_GROUP
     INTEGER_IDENTITY_TRAITS(char,               "char");
     INTEGER_IDENTITY_TRAITS(signed char,        "int8_t");
     INTEGER_IDENTITY_TRAITS(unsigned char,      "uint8_t");
@@ -42,25 +44,12 @@ namespace df {
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     bit_array_identity identity_traits<BitArray<int> >::identity;
 
-    static void *fstream_allocator_fn(void *out, const void *in) {
-        if (out) { /* *(T*)out = *(const T*)in;*/ return NULL; }
-        else if (in) { delete (std::fstream*)in; return (std::fstream*)in; }
-        else return new std::fstream();
-    }
-    opaque_identity identity_traits<std::fstream>::identity(
-        sizeof(std::fstream), fstream_allocator_fn, "fstream");
+    STL_OPAQUE_IDENTITY_TRAITS(condition_variable);
+    STL_OPAQUE_IDENTITY_TRAITS(fstream);
+    STL_OPAQUE_IDENTITY_TRAITS(mutex);
+    STL_OPAQUE_IDENTITY_TRAITS(future<void>);
+    STL_OPAQUE_IDENTITY_TRAITS(function<void()>);
+    STL_OPAQUE_IDENTITY_TRAITS(optional<std::function<void()> >);
 
     buffer_container_identity buffer_container_identity::base_instance;
-#endif
-#undef NUMBER_IDENTITY_TRAITS
-#undef INTEGER_IDENTITY_TRAITS
-#undef FLOAT_IDENTITY_TRAITS
 }
-
-#define TID(type) (&identity_traits< type >::identity)
-
-#define FLD(mode, name) struct_field_info::mode, #name, offsetof(CUR_STRUCT, name)
-#define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
-#define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
-#define METHOD_N(mode, func, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::func)
-#define FLD_END struct_field_info::END

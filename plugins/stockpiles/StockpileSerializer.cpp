@@ -615,7 +615,9 @@ static bool serialize_list_creature(color_ostream& out, FuncWriteExport add_valu
 }
 
 static string get_filter_string(df::creature_raw *r) {
-    if (!r->caste.size() || !r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET))
+    if (!r->caste.size() ||
+            (!r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET) &&
+             !r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET_EXOTIC)))
         return r->name[0];
     return r->name[0] + "/tameable";
 }

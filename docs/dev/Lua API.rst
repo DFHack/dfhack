@@ -306,7 +306,32 @@ All types and the global object have the following features:
 * ``type._identity``
 
   Contains a lightuserdata pointing to the underlying
-  ``DFHack::type_instance`` object.
+  ``DFHack::type_identity`` object.
+
+All compound types (structs, classes, unions, and the global object) support:
+
+* ``type._fields``
+
+  Contains a table mapping field names to descriptions of the type's fields,
+  including data members and functions. Iterating with ``pairs()`` returns data
+  fields in the order they are defined in the type. Functions and globals may
+  appear in an arbitrary order.
+
+  Each entry contains the following fields:
+
+  * ``name``: the name of the field (matches the ``_fields`` table key)
+  * ``offset``: for data members, the position of the field relative to the start of the type, in bytes
+  * ``count``: for arrays, the number of elements
+  * ``mode``: implementation detail. See ``struct_field_info::Mode`` in ``DataDefs.h``.
+
+  Each entry may also contain the following fields, depending on its type:
+
+  * ``type_name``: present for most fields; a string representation of the field's type
+  * ``type``: the type object matching the field's type; present if such an object exists
+    (e.g. present for DF types, absent for primitive types)
+  * ``type_identity``: present for most fields; a lightuserdata pointing to the field's underlying ``DFHack::type_identity`` object
+  * ``index_enum``, ``ref_target``: the type object corresponding to the field's similarly-named XML attribute, if present
+  * ``union_tag_field``, ``union_tag_attr``, ``original_name``: the string value of the field's similarly-named XML attribute, if present
 
 Types excluding the global object also support:
 
@@ -659,7 +684,7 @@ Persistent configuration storage
 --------------------------------
 
 This api is intended for storing configuration options in the world itself.
-It probably should be restricted to data that is world-dependent.
+It is intended for data that is world-dependent.
 
 Entries are identified by a string ``key``, but it is also possible to manage
 multiple entries with the same key; their identity is determined by ``entry_id``.
@@ -692,10 +717,8 @@ Every entry has a mutable string ``value``, and an array of 7 mutable ``ints``.
   otherwise the existing one is simply updated.
   Returns *entry, did_create_new*
 
-Since the data is hidden in data structures owned by the DF world,
-and automatically stored in the save game, these save and retrieval
-functions can just copy values in memory without doing any actual I/O.
-However, currently every entry has a 180+-byte dead-weight overhead.
+The data is kept in memory, so no I/O occurs when getting or saving keys. It is
+all written to a json file in the game save directory when the game is saved.
 
 It is also possible to associate one bit per map tile with an entry,
 using these two methods:
@@ -985,41 +1008,26 @@ General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
-
-  When a job is selected in :kbd:`q` mode, returns the job, else
-  prints error unless silent and returns *nil*.
-
 * ``dfhack.gui.getSelectedJob([silent])``
-
-  Returns the job selected in a workshop or unit/jobs screen.
-
 * ``dfhack.gui.getSelectedUnit([silent])``
-
-  Returns the unit selected via :kbd:`v`, :kbd:`k`, unit/jobs, or
-  a full-screen item view of a cage or suchlike.
-
 * ``dfhack.gui.getSelectedItem([silent])``
-
-  Returns the item selected via :kbd:`v` ->inventory, :kbd:`k`, :kbd:`t`, or
-  a full-screen item view of a container. Note that in the
-  last case, the highlighted *contained item* is returned, not
-  the container itself.
-
 * ``dfhack.gui.getSelectedBuilding([silent])``
-
-  Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
-
 * ``dfhack.gui.getSelectedCivZone([silent])``
-
-  Returns the zone currently selected via :kbd:`z`
-
+* ``dfhack.gui.getSelectedStockpile([silent])``
 * ``dfhack.gui.getSelectedPlant([silent])``
 
-  Returns the plant selected via :kbd:`k`.
+  Returns the currently selected in-game object or the indicated thing
+  associated with the selected in-game object. For example, Calling
+  ``getSelectedJob`` when a building is selected will return the job associated
+  with the building (e.g. the ``ConstructBuilding`` job). If ``silent`` is
+  ommitted or set to ``false`` and a selected object cannot be found, then an
+  error is printed to the console.
 
 * ``dfhack.gui.getAnyUnit(screen)``
 * ``dfhack.gui.getAnyItem(screen)``
 * ``dfhack.gui.getAnyBuilding(screen)``
+* ``dfhack.gui.getAnyCivZone(screen)``
+* ``dfhack.gui.getAnyStockpile(screen)``
 * ``dfhack.gui.getAnyPlant(screen)``
 
   Similar to the corresponding ``getSelected`` functions, but operate on the
@@ -1045,11 +1053,13 @@ Fortress mode
   Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
   ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
 
-* ``dfhack.gui.revealInDwarfmodeMap(pos[,center])``
-  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center])``
+* ``dfhack.gui.revealInDwarfmodeMap(pos[,center[,highlight]])``
+  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center[,highlight]])``
 
-  Centers the view on the given coordinates. If ``center`` is true, make sure the
-  position is in the exact center of the view, else just bring it on screen.
+  Centers the view on the given coordinates. If ``center`` is true, make sure
+  the position is in the exact center of the view, else just bring it on screen.
+  If ``highlight`` is true, then mark the target tile with a pulsing highlight
+  until the player clicks somewhere else.
 
   ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::
@@ -1130,10 +1140,12 @@ Announcements
 
   If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
-* ``dfhack.gui.getMousePos()``
+* ``dfhack.gui.getMousePos([allow_out_of_bounds])``
 
   Returns the map coordinates of the map tile the mouse is over as a table of
-  ``{x, y, z}``. If the cursor is not over the map, returns ``nil``.
+  ``{x, y, z}``. If the cursor is not over a valid tile, returns ``nil``. To
+  allow the function to return coordinates outside of the map, set
+  ``allow_out_of_bounds`` to ``true``.
 
 Other
 ~~~~~
@@ -1355,11 +1367,16 @@ Units module
 * ``dfhack.units.isTame(unit)``
 * ``dfhack.units.isTamable(unit)``
 * ``dfhack.units.isDomesticated(unit)``
+* ``dfhack.units.isMarkedForTraining(unit)``
+* ``dfhack.units.isMarkedForTaming(unit)``
+* ``dfhack.units.isMarkedForWarTraining(unit)``
+* ``dfhack.units.isMarkedForHuntTraining(unit)``
 * ``dfhack.units.isMarkedForSlaughter(unit)``
 * ``dfhack.units.isMarkedForGelding(unit)``
 * ``dfhack.units.isGeldable(unit)``
 * ``dfhack.units.isGelded(unit)``
 * ``dfhack.units.isEggLayer(unit)``
+* ``dfhack.units.isEggLayerRace(unit)``
 * ``dfhack.units.isGrazer(unit)``
 * ``dfhack.units.isMilkable(unit)``
 
@@ -1438,10 +1455,22 @@ Units module
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
 
+* ``dfhack.units.getUnitByNobleRole(role_name)``
+
+  Returns the unit assigned to the given noble role, if any. ``role_name`` must
+  be one of the position codes associated with the active fort or civilization
+  government. For example: ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
+  Note that if more than one unit has the role, only the first will be
+  returned. See ``getUnitsByNobleRole`` below for retrieving all units with a
+  particular role.
+
+* ``dfhack.units.getUnitsByNobleRole(role_name)``
+
+  Returns a list of units (possibly empty) assigned to the given noble role.
+
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a table (list) of all citizens, which you would otherwise have to loop over all
-  units in world and test against ``isCitizen()`` to discover.
+  Returns a list of all living citizens.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1486,6 +1515,11 @@ Units module
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 
   Computes the effective attribute value, including curse effect.
+
+* ``dfhack.units.casteFlagSet(race, caste, flag)``
+
+  Returns whether the given ``df.caste_raw_flags`` flag is set for the given
+  race and caste.
 
 * ``dfhack.units.getMiscTrait(unit, type[, create])``
 
@@ -1575,6 +1609,12 @@ Units module
   The goalIndex parameter may be used to check additional dream goals.
   Currently only one dream per unit is supported by Dwarf Fortress.
   Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.getReadableName(unit)``
+
+  Returns a string that includes the language name of the unit (if any), the
+  race of the unit, whether it is trained for war or hunting, and any
+  syndrome-given descriptions (such as "necromancer").
 
 * ``dfhack.units.getStressCategory(unit)``
 
@@ -1755,9 +1795,17 @@ Items module
 
   Calculates the base value for an item of the specified type and material.
 
-* ``dfhack.items.getValue(item)``
+* ``dfhack.items.getValue(item[, caravan_state])``
 
-  Calculates the Basic Value of an item, as seen in the View Item screen.
+  Calculates the value of an item. If a ``df.caravan_state`` object is given
+  (from ``df.global.plotinfo.caravans`` or
+  ``df.global.main_interface.trade.mer``), then the value is modified by civ
+  properties and any trade agreements that might be in effect.
+
+* ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
+
+  Returns whether a caravan will pay extra for the given item. If caravan_state
+  is not given, checks all active caravans.
 
 * ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
 
@@ -1773,7 +1821,16 @@ Items module
 
 * ``dfhack.items.canTradeWithContents(item)``
 
-  Checks whether the item and all items it contains, if any, can be traded.
+  Returns false if the item or any contained items cannot be traded.
+
+* ``canTradeAnyWithContents(item)``
+
+  Returns true if the item is empty and can be traded or if the item contains
+  any item that can be traded.
+
+* ``dfhack.items.markForTrade(item, depot)``
+
+  Marks the given item for trade at the given depot.
 
 * ``dfhack.items.isRouteVehicle(item)``
 
@@ -1857,10 +1914,11 @@ Maps module
 
   Returns the plant struct that owns the tile at the specified position.
 
-* ``dfhack.maps.canWalkBetween(pos1, pos2)``
+* ``dfhack.maps.getWalkableGroup(pos)``
 
-  Checks if a dwarf may be able to walk between the two tiles,
-  using a pathfinding cache maintained by the game.
+  Returns the walkability group for the given tile position. A return value of
+  ``0`` indicates that the tile is not walkable. The data comes from a
+  pathfinding cache maintained by DF.
 
   .. note::
     This cache is only updated when the game is unpaused, and thus
@@ -1868,6 +1926,10 @@ Maps module
     tools like `liquids` or `tiletypes` are used. It also cannot possibly
     take into account anything that depends on the actual units, like
     burrows, or the presence of invaders.
+
+* ``dfhack.maps.canWalkBetween(pos1, pos2)``
+
+  Checks if both positions are walkable and also share a walkability group.
 
 * ``dfhack.maps.hasTileAssignment(tilemask)``
 
@@ -1889,9 +1951,11 @@ Maps module
 Burrows module
 --------------
 
-* ``dfhack.burrows.findByName(name)``
+* ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 
-  Returns the burrow pointer or *nil*.
+  Returns the burrow pointer or *nil*. if ``ignore_final_plus`` is ``true``,
+  then ``+`` characters at the end of the names are ignored, both for the
+  specified ``name`` and the names of the burrows that it matches against.
 
 * ``dfhack.burrows.clearUnits(burrow)``
 
@@ -2474,10 +2538,10 @@ Supported callbacks and fields are:
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
   ``_MOUSE_L, _MOUSE_R, _MOUSE_M``
-    If the left, right, and/or middle mouse button is being pressed.
+    If the left, right, and/or middle mouse button was just pressed.
 
   ``_MOUSE_L_DOWN, _MOUSE_R_DOWN, _MOUSE_M_DOWN``
-    If the left, right, and/or middle mouse button was just pressed.
+    If the left, right, and/or middle mouse button is being held down.
 
   If this method is omitted, the screen is dismissed on reception of the ``LEAVESCREEN`` key.
 
@@ -2526,6 +2590,67 @@ a ``dfhack.penarray`` instance to cache their output.
   are skipped.
 
   ``bufferx`` and ``buffery`` default to 0.
+
+
+Textures module
+---------------
+
+In order for the game to render a particular tile (graphic), it needs to know the
+``texpos`` - the position in the vector of the registered game textures (also the
+graphical tile id passed as the ``tile`` field in a `Pen <lua-screen-pen>`).
+Adding new textures to the vector is not difficult, but the game periodically
+deletes textures that are in the vector, and that's a problem since it
+invalidates the ``texpos`` value that used to point to that texture.
+The ``textures`` module solves this problem by providing a stable handle instead of a
+raw ``texpos``. When we need to draw a particular tile, we can look up the current
+``texpos`` value via the handle.
+Texture module can register textures in two ways: to reserved and dynamic ranges.
+Reserved range is a limit buffer in a game texture vector, that will never be wiped.
+It is good for static assets, which need to be loaded at the very beginning and will be used during the process running.
+In other cases, it is better to use dynamic range.
+If reserved range buffer limit has been reached, dynamic range will be used by default.
+
+* ``loadTileset(file, tile_px_w, tile_px_h[, reserved])``
+
+  Loads a tileset from the image ``file`` with give tile dimensions in pixels. The
+  image will be sliced in row major order. Returns an array of ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
+
+  Example usage::
+
+    local logo_textures = dfhack.textures.loadTileset('hack/data/art/dfhack.png', 8, 12)
+    local first_texposhandle = logo_textures[1]
+
+* ``getTexposByHandle(handle)``
+
+  Get the current ``texpos`` for the given ``TexposHandle``. Always use this method to
+  get the ``texpos`` for your texture. ``texpos`` can change when game textures are
+  reset, but the handle will be the same.
+
+* ``createTile(pixels, tile_px_w, tile_px_h[, reserved])``
+
+  Create and register a new texture with the given tile dimensions and an array of
+  ``pixels`` in row major order. Each pixel is an integer representing color in packed
+  RBGA format (for example, #0022FF11). Returns a ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
+
+* ``createTileset(pixels, texture_px_w, texture_px_h, tile_px_w, tile_px_h[, reserved])``
+
+  Create and register a new texture with the given texture dimensions and an array of
+  ``pixels`` in row major order. Then slice it into tiles with the given tile
+  dimensions. Each pixel is an integer representing color in packed RBGA format (for
+  example #0022FF11). Returns an array of ``TexposHandle``.
+  ``reserved`` is optional boolean argument, which indicates texpos range.
+  ``true`` - reserved, ``false`` - dynamic (default).
+
+* ``deleteHandle(handle)``
+
+  ``handle`` here can be single ``TexposHandle`` or an array of ``TexposHandle``.
+  Deletes all metadata and texture(s) related to the given handle(s). The handles
+  become invalid after this call.
+
 
 Filesystem module
 -----------------
@@ -2697,6 +2822,11 @@ and are only documented here for completeness:
   The oldval, newval or delta arguments may be used to specify additional constraints.
   Returns: *found_index*, or *nil* if end reached.
 
+* ``dfhack.internal.cxxDemangle(mangled_name)``
+
+  Decodes a mangled C++ symbol name. Returns the demangled name on success, or
+  ``nil, error_message`` on failure.
+
 * ``dfhack.internal.getDir(path)``
 
   Lists files/directories in a directory.
@@ -2815,6 +2945,19 @@ and are only documented here for completeness:
   Returns 0 if the address is not found.
   Requires a heap snapshot.
 
+* ``dfhack.internal.getClipboardTextCp437()``
+
+  Gets the system clipboard text (and converts text to CP437 encoding).
+
+* ``dfhack.internal.setClipboardTextCp437(text)``
+
+  Sets the system clipboard text from a CP437 string.
+
+* ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
+* ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
+
+  Gets and sets the flag for whether to suppress DF key events when a DFHack
+  keybinding is matched and a command is launched.
 
 .. _lua-core-context:
 
@@ -2949,6 +3092,9 @@ environment by the mandatory init file dfhack.lua:
     COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
     COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
     COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
+
+  ``COLOR_GREY`` and ``COLOR_DARKGREY`` can also be spelled ``COLOR_GRAY`` and
+  ``COLOR_DARKGRAY``.
 
 * State change event codes, used by ``dfhack.onStateChange``
 
@@ -3206,6 +3352,20 @@ utils
 
   Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
 
+* ``utils.search_text(text,search_tokens)``
+
+  Returns true if all the search tokens are found within ``text``. The text and
+  search tokens are normalized to lower case and special characters (e.g. ``A``
+  with a circle on it) are converted to their "basic" forms (e.g. ``a``).
+  ``search_tokens`` can be a string or a table of strings. If it is a string,
+  it is split into space-separated tokens before matching. The search tokens
+  are treated literally, so any special regular expression characters do not
+  need to be escaped. If ``utils.FILTER_FULL_TEXT`` is ``true``, then the
+  search tokens can match any part of ``text``. If it is ``false``, then the
+  matches must happen at the beginning of words within ``text``. You can change
+  the value of ``utils.FILTER_FULL_TEXT`` in `gui/control-panel` on the
+  "Preferences" tab.
+
 * ``utils.call_with_string(obj,methodname,...)``
 
   Allocates a temporary string object, calls ``obj:method(tmp,...)``, and
@@ -3414,6 +3574,13 @@ parameters.
 
   Throws if ``tonumber(arg)`` is not a non-negative integer; otherwise returns
   ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
+* ``argparse.boolean(arg, arg_name)``
+
+  Converts ``string.lower(arg)`` from "yes/no/on/off/true/false/etc..." to a lua
+  boolean. Throws if the value can't be converted, otherwise returns
+  ``true``/``false``. If ``arg_name`` is specified, it is used to make error
   messages more useful.
 
 dumper
@@ -3811,6 +3978,14 @@ Misc
   a string keycode, a sequence of numeric or string keycodes, or a mapping
   of keycodes to *true* or *false*. For instance, it is possible to use the
   table passed as argument to ``onInput``.
+
+  You can send mouse clicks as will by setting the ``_MOUSE_L`` key or other
+  mouse-related pseudo-keys documented with the ``screen:onInput(keys)``
+  function above. Note that if you are simulating a click at a specific spot on
+  the screen, you must set ``df.global.gps.mouse_x`` and
+  ``df.global.gps.mouse_y`` if you are clicking on the interface layer or
+  ``df.global.gps.precise_mouse_x`` and ``df.global.gps.precise_mouse_y`` if
+  you are clicking on the map.
 
 * ``mkdims_xy(x1,y1,x2,y2)``
 
@@ -4412,6 +4587,10 @@ There are the following predefined frame style tables:
 
   A frame suitable for overlay widget panels.
 
+* ``FRAME_THIN``
+
+  A frame suitable for floating tooltip panels that need the DFHack signature.
+
 * ``FRAME_BOLD``
 
   A frame suitable for a non-draggable panel meant to capture the user's focus,
@@ -4511,7 +4690,7 @@ Has attributes:
 * ``drag_anchors = {}`` (default: ``{title=true, frame=false/true, body=true}``)
 * ``drag_bound = 'frame' or 'body'`` (default: ``'frame'``)
 * ``on_drag_begin = function()`` (default: ``nil``)
-* ``on_drag_end = function(bool)`` (default: ``nil``)
+* ``on_drag_end = function(success, new_frame)`` (default: ``nil``)
 
   If ``draggable`` is set to ``true``, then the above attributes come into play
   when the panel is dragged around the screen, either with the mouse or the
@@ -4525,13 +4704,15 @@ Has attributes:
   otherwise. Dragging can be canceled by right clicking while dragging with the
   mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
   calling ``Panel:setKeyboaredDragEnabled(false)`` (while dragging with the
-  keyboard).
+  keyboard). If it is more convenient to do so, you can choose to override the
+  ``panel:onDragBegin`` and/or the ``panel:onDragEnd`` methods instead of
+  setting the ``on_drag_begin`` and/or ``on_drag_end`` attributes.
 
 * ``resizable = bool`` (default: ``false``)
 * ``resize_anchors = {}`` (default: ``{t=false, l=true, r=true, b=true}``
 * ``resize_min = {}`` (default: w and h from the ``frame``, or ``{w=5, h=5}``)
 * ``on_resize_begin = function()`` (default: ``nil``)
-* ``on_resize_end = function(bool)`` (default: ``nil``)
+* ``on_resize_end = function(success, new_frame)`` (default: ``nil``)
 
   If ``resizable`` is set to ``true``, then the player can click the mouse on
   any edge specified in ``resize_anchors`` and drag the border to resize the
@@ -4545,6 +4726,9 @@ Has attributes:
   Dragging can be canceled by right clicking while resizing with the mouse,
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
+  If it is more convenient to do so, you can choose to override the
+  ``panel:onResizeBegin`` and/or the ``panel:onResizeEnd`` methods instead of
+  setting the ``on_resize_begin`` and/or ``on_resize_end`` attributes.
 
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
@@ -4588,6 +4772,15 @@ Has functions:
   be chosen. Shift-cursor keys move by larger amounts. Hit :kbd:`Enter` to
   commit the new window size or :kbd:`Esc` to cancel. If resizing is canceled,
   then the window size from before the resize operation is restored.
+
+* ``panel:onDragBegin()``
+* ``panel:onDragEnd(success, new_frame)``
+* ``panel:onResizeBegin()``
+* ``panel:onResizeEnd(success, new_frame)``
+
+The default implementations of these methods call the associated attribute (if
+set). You can override them in a subclass if that is more convenient than
+setting the attributes.
 
 Double clicking:
 
@@ -4687,6 +4880,12 @@ following keyboard hotkeys:
 - Left/Right arrow: move the cursor one character to the left or right.
 - Ctrl-B/Ctrl-F: move the cursor one word back or forward.
 - Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+
+The widget also supports integration with the system clipboard:
+
+- Ctrl-C: copy current text to the system clipboard
+- Ctrl-X: copy current text to the system clipboard and clear text in widget
+- Ctrl-V: paste text from the system clipboard (text is converted to cp437)
 
 The ``EditField`` class also provides the following functions:
 
@@ -5016,12 +5215,49 @@ The CycleHotkeyLabel widget implements the following methods:
     selected option if no index is given. If an option was defined as just a
     string, then this function will return ``nil`` for that option.
 
-ToggleHotkeyLabel
------------------
+ToggleHotkeyLabel class
+-----------------------
 
 This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
+
+HelpButton class
+----------------
+
+A 3x1 tile button with a question mark on it, intended to represent a help
+icon. Clicking on the icon will launch `gui/launcher` with a given command
+string, showing the help text for that command.
+
+It has the following attributes:
+
+:command: The command to load in `gui/launcher`.
+
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear mark on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback.
+
+It has the following attributes:
+
+:on_click: The function on run when the icon is clicked.
+
+BannerPanel class
+-----------------
+
+This is a Panel subclass that prints a distinctive banner along the far left
+and right columns of the widget frame. Note that this is not a "proper" frame
+since it doesn't have top or bottom borders. Subviews of this panel should
+inset their frames one tile from the left and right edges.
+
+TextButton class
+----------------
+
+This is a BannerPanel subclass that wraps a HotkeyLabel with some decorators on
+the sides to make it look more like a button, suitable for both graphics and
+ASCII modes. All HotkeyLabel parameters passed to the constructor are passed
+through to the wrapped HotkeyLabel.
 
 List class
 ----------
@@ -5109,12 +5345,11 @@ FilteredList class
 ------------------
 
 This widget combines List, EditField and Label into a combo-box like
-construction that allows filtering the list by subwords of its items.
+construction that allows filtering the list.
 
 In addition to passing through all attributes supported by List, it
 supports:
 
-:case_sensitive: If ``true``, matching is case sensitive. Defaults to ``false``.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
@@ -5163,9 +5398,9 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring with a command like::
+substring across the full text with a command like::
 
-  :lua require('gui.widgets').FILTER_FULL_TEXT=true
+  :lua require('utils').FILTER_FULL_TEXT=true
 
 TabBar class
 ------------
@@ -5218,6 +5453,31 @@ The parent widget owns the range values, and can control them independently (e.g
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+
+gui.textures
+============
+
+This module contains convenience methods for accessing default DFHack graphic assets.
+Pass the ``offset`` in tiles (in row major position) to get a particular tile from the
+asset. ``offset`` 0 is the first tile.
+
+* ``tp_green_pin(offset)`` tileset: ``hack/data/art/green-pin.png``
+* ``tp_red_pin(offset)`` tileset: ``hack/data/art/red-pin.png``
+* ``tp_icons(offset)`` tileset: ``hack/data/art/icons.png``
+* ``tp_on_off(offset)`` tileset: ``hack/data/art/on-off.png``
+* ``tp_control_panel(offset)`` tileset: ``hack/data/art/control-panel.png``
+* ``tp_border_thin(offset)`` tileset: ``hack/data/art/border-thin.png``
+* ``tp_border_medium(offset)`` tileset: ``hack/data/art/border-medium.png``
+* ``tp_border_bold(offset)`` tileset: ``hack/data/art/border-bold.png``
+* ``tp_border_panel(offset)`` tileset: ``hack/data/art/border-panel.png``
+* ``tp_border_window(offset)`` tileset: ``hack/data/art/order-window.png``
+
+Example usage::
+
+  local textures = require('gui.textures')
+  local first_border_texpos = textures.tp_border_thin(1)
+
 
 .. _lua-plugins:
 
@@ -5355,51 +5615,6 @@ Native functions provided by the `buildingplan` plugin:
 * ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list.
 * ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
 * ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
-
-burrows
-=======
-
-The `burrows` plugin implements extended burrow manipulations.
-
-Events:
-
-* ``onBurrowRename.foo = function(burrow)``
-
-  Emitted when a burrow might have been renamed either through
-  the game UI, or ``renameBurrow()``.
-
-* ``onDigComplete.foo = function(job_type,pos,old_tiletype,new_tiletype,worker)``
-
-  Emitted when a tile might have been dug out. Only tracked if the
-  auto-growing burrows feature is enabled.
-
-Native functions:
-
-* ``renameBurrow(burrow,name)``
-
-  Renames the burrow, emitting ``onBurrowRename`` and updating auto-grow state properly.
-
-* ``findByName(burrow,name)``
-
-  Finds a burrow by name, using the same rules as the plugin command line interface.
-  Namely, trailing ``'+'`` characters marking auto-grow burrows are ignored.
-
-* ``copyUnits(target,source,enable)``
-
-  Applies units from ``source`` burrow to ``target``. The ``enable``
-  parameter specifies if they are to be added or removed.
-
-* ``copyTiles(target,source,enable)``
-
-  Applies tiles from ``source`` burrow to ``target``. The ``enable``
-  parameter specifies if they are to be added or removed.
-
-* ``setTilesByKeyword(target,keyword,enable)``
-
-  Adds or removes tiles matching a predefined keyword. The keyword
-  set is the same as used by the command line.
-
-The lua module file also re-exports functions from ``dfhack.burrows``.
 
 .. _cxxrandom-api:
 

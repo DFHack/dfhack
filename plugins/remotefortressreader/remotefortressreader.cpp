@@ -14,8 +14,6 @@
 #include "PluginManager.h"
 #include "RemoteFortressReader.pb.h"
 #include "RemoteServer.h"
-#include "SDL_events.h"
-#include "SDL_keyboard.h"
 #include "TileTypes.h"
 #include "VersionInfo.h"
 #if DF_VERSION_INT > 34011
@@ -126,10 +124,12 @@
 #include "dwarf_control.h"
 #include "item_reader.h"
 
+#include <SDL_events.h>
+#include <SDL_keyboard.h>
+
 using namespace DFHack;
 using namespace df::enums;
 using namespace RemoteFortressReader;
-using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
 
@@ -192,7 +192,7 @@ const char* growth_locations[] = {
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
 #include "df/art_image_ref.h"
-command_result loadArtImageChunk(color_ostream &out, vector <string> & parameters)
+command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & parameters)
 {
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
@@ -213,7 +213,7 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     return CR_OK;
 }
 
-command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
+command_result RemoteFortressReader_version(color_ostream &out, std::vector<std::string> &parameters)
 {
     out.print(RFR_VERSION);
     return CR_OK;
@@ -644,7 +644,7 @@ void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 
 }
 
-map<DFCoord, uint16_t> hashes;
+std::map<DFCoord, uint16_t> hashes;
 
 bool IsTiletypeChanged(DFCoord pos)
 {
@@ -662,7 +662,7 @@ bool IsTiletypeChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint16_t> waterHashes;
+std::map<DFCoord, uint16_t> waterHashes;
 
 bool IsDesignationChanged(DFCoord pos)
 {
@@ -680,7 +680,7 @@ bool IsDesignationChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint8_t> buildingHashes;
+std::map<DFCoord, uint8_t> buildingHashes;
 
 bool IsBuildingChanged(DFCoord pos)
 {
@@ -699,7 +699,7 @@ bool IsBuildingChanged(DFCoord pos)
     return changed;
 }
 
-map<DFCoord, uint16_t> spatterHashes;
+std::map<DFCoord, uint16_t> spatterHashes;
 
 bool IsspatterChanged(DFCoord pos)
 {
@@ -736,7 +736,7 @@ bool IsspatterChanged(DFCoord pos)
     return false;
 }
 
-map<int, uint16_t> itemHashes;
+std::map<int, uint16_t> itemHashes;
 
 bool isItemChanged(int i)
 {
@@ -754,7 +754,7 @@ bool isItemChanged(int i)
     return false;
 }
 
-bool areItemsChanged(vector<int> * items)
+bool areItemsChanged(std::vector<int> * items)
 {
     bool result = false;
     for (size_t i = 0; i < items->size(); i++)
@@ -765,7 +765,7 @@ bool areItemsChanged(vector<int> * items)
     return result;
 }
 
-map<int, int> engravingHashes;
+std::map<int, int> engravingHashes;
 
 bool isEngravingNew(int index)
 {
@@ -1392,6 +1392,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y();
     int min_z = in->min_z();
     int max_z = in->max_z();
+    bool forceReload = in->force_reload();
     bool firstBlock = true; //Always send all the buildings needed on the first block, and none on the rest.
                                 //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = max_z - 1; zz >= min_z; zz--)
@@ -1439,19 +1440,19 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool itemsChanged = block->items.size() > 0;
                         bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block = nullptr;
-                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows || forceReload)
                         {
                             net_block = out->add_map_blocks();
                             net_block->set_map_x(block->map_pos.x);
                             net_block->set_map_y(block->map_pos.y);
                             net_block->set_map_z(block->map_pos.z);
                         }
-                        if (tileChanged)
+                        if (tileChanged || forceReload)
                         {
                             CopyBlock(block, net_block, &MC, pos);
                             blocks_sent++;
                         }
-                        if (desChanged)
+                        if (desChanged || forceReload)
                             CopyDesignation(block, net_block, &MC, pos);
                         if (firstBlock)
                         {
@@ -1459,7 +1460,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyProjectiles(net_block);
                             firstBlock = false;
                         }
-                        if (spatterChanged)
+                        if (spatterChanged || forceReload)
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)
                             CopyItems(block, net_block, &MC, pos);
@@ -2894,13 +2895,12 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
 {
 #if DF_VERSION_INT > 34011
-    SDL::Event e;
+    SDL_Event e;
     e.key.type = in->type();
     e.key.state = in->state();
-    e.key.ksym.mod = (SDL::Mod)in->mod();
-    e.key.ksym.scancode = in->scancode();
-    e.key.ksym.sym = (SDL::Key)in->sym();
-    e.key.ksym.unicode = in->unicode();
+    e.key.keysym.mod = in->mod();
+    e.key.keysym.scancode = (SDL_Scancode)in->scancode();
+    e.key.keysym.sym = in->sym();
     DFHack::DFSDL::DFSDL_PushEvent(&e);
 #endif
     return CR_OK;

@@ -216,9 +216,8 @@ static void load_material_cache() {
 }
 
 static HeatSafety get_heat_safety_filter(const BuildingTypeKey &key) {
-    // comment out until we can get heat safety working as intended
-    // if (cur_heat_safety.count(key))
-    //     return cur_heat_safety.at(key);
+    if (cur_heat_safety.count(key))
+        return cur_heat_safety.at(key);
     return HEAT_SAFETY_ANY;
 }
 
@@ -675,13 +674,14 @@ static void scheduleCycle(color_ostream &out) {
 }
 
 static int scanAvailableItems(color_ostream &out, df::building_type type, int16_t subtype,
-        int32_t custom, int index, bool ignore_filters, vector<int> *item_ids = NULL,
-        map<MaterialInfo, int32_t> *counts = NULL) {
+        int32_t custom, int index, bool ignore_filters, bool ignore_quality, HeatSafety *heat_override = NULL,
+        vector<int> *item_ids = NULL, map<MaterialInfo, int32_t> *counts = NULL)
+{
     DEBUG(status,out).print(
-            "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
+            "entering scanAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
-    HeatSafety heat = get_heat_safety_filter(key);
+    HeatSafety heat = heat_override ? *heat_override : get_heat_safety_filter(key);
     auto &job_items = get_job_items(out, key);
     if (index < 0 || job_items.size() <= (size_t)index)
         return 0;
@@ -703,6 +703,10 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
                 filter.setMaterialMask(0);
                 filter.setMaterials(set<MaterialInfo>());
                 special.clear();
+            }
+            if (ignore_quality) {
+                filter.setMinQuality(df::item_quality::Ordinary);
+                filter.setMaxQuality(df::item_quality::Artifact);
             }
             if (itemPassesScreen(out, item) && matchesFilters(item, jitem, heat, filter, special)) {
                 if (item_ids)
@@ -733,7 +737,25 @@ static int getAvailableItems(lua_State *L) {
             "entering getAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
     vector<int> item_ids;
-    scanAvailableItems(*out, type, subtype, custom, index, true, &item_ids);
+    scanAvailableItems(*out, type, subtype, custom, index, true, false, NULL, &item_ids);
+    Lua::PushVector(L, item_ids);
+    return 1;
+}
+
+static int getAvailableItemsByHeat(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    df::building_type type = (df::building_type)luaL_checkint(L, 1);
+    int16_t subtype = luaL_checkint(L, 2);
+    int32_t custom = luaL_checkint(L, 3);
+    int index = luaL_checkint(L, 4);
+    HeatSafety heat = (HeatSafety)luaL_checkint(L, 5);
+    DEBUG(status,*out).print(
+            "entering getAvailableItemsByHeat building_type=%d subtype=%d custom=%d index=%d\n",
+            type, subtype, custom, index);
+    vector<int> item_ids;
+    scanAvailableItems(*out, type, subtype, custom, index, true, true, &heat, &item_ids);
     Lua::PushVector(L, item_ids);
     return 1;
 }
@@ -756,7 +778,30 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
     DEBUG(status,out).print(
             "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
             type, subtype, custom, index);
-    return scanAvailableItems(out, type, subtype, custom, index, false);
+    int count = scanAvailableItems(out, type, subtype, custom, index, false, false);
+    if (count)
+        return count;
+
+    // nothing in stock; return how many are waiting in line as a negative
+    BuildingTypeKey key(type, subtype, custom);
+    auto &job_items = get_job_items(out, key);
+    if (index < 0 || job_items.size() <= (size_t)index)
+        return 0;
+    auto &jitem = job_items[index];
+
+    for (auto &entry : planned_buildings) {
+        auto &pb = entry.second;
+        // don't actually remove bad buildings from the list while we're
+        // actively iterating through that list
+        auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
+        if (!bld || bld->jobs.size() != 1)
+            continue;
+        for (auto pb_jitem : bld->jobs[0]->job_items) {
+            if (pb_jitem->item_type == jitem->item_type && pb_jitem->item_subtype == jitem->item_subtype)
+                count -= pb_jitem->quantity;
+        }
+    }
+    return count;
 }
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
@@ -946,24 +991,21 @@ static int getMaterialFilter(lua_State *L) {
         return 0;
     const auto &mat_filter = filters[index].getMaterials();
     map<MaterialInfo, int32_t> counts;
-    scanAvailableItems(*out, type, subtype, custom, index, false, NULL, &counts);
+    scanAvailableItems(*out, type, subtype, custom, index, false, false, NULL, NULL, &counts);
     HeatSafety heat = get_heat_safety_filter(key);
-    df::job_item jitem_cur_heat = getJobItemWithHeatSafety(
-            get_job_items(*out, key)[index], heat);
-    df::job_item jitem_fire = getJobItemWithHeatSafety(
-            get_job_items(*out, key)[index], HEAT_SAFETY_FIRE);
-    df::job_item jitem_magma = getJobItemWithHeatSafety(
-            get_job_items(*out, key)[index], HEAT_SAFETY_MAGMA);
+    const df::job_item *jitem = get_job_items(*out, key)[index];
     // name -> {count=int, enabled=bool, category=string, heat=string}
     map<string, map<string, string>> ret;
     for (auto & entry : mat_cache) {
         auto &mat = entry.second.first;
-        if (!mat.matches(jitem_cur_heat))
+        if (!mat.matches(jitem))
+            continue;
+        if (!matchesHeatSafety(mat.type, mat.index, heat))
             continue;
         string heat_safety = "";
-        if (mat.matches(jitem_magma))
+        if (matchesHeatSafety(mat.type, mat.index, HEAT_SAFETY_MAGMA))
             heat_safety = "magma-safe";
-        else if (mat.matches(jitem_fire))
+        else if (matchesHeatSafety(mat.type, mat.index, HEAT_SAFETY_FIRE))
             heat_safety = "fire-safe";
         auto &name = entry.first;
         auto &cat = entry.second.second;
@@ -1213,6 +1255,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getGlobalSettings),
     DFHACK_LUA_COMMAND(getAvailableItems),
+    DFHACK_LUA_COMMAND(getAvailableItemsByHeat),
     DFHACK_LUA_COMMAND(setMaterialMaskFilter),
     DFHACK_LUA_COMMAND(getMaterialMaskFilter),
     DFHACK_LUA_COMMAND(setMaterialFilter),

@@ -40,8 +40,6 @@ distribution.
 #include <mutex>
 #include <thread>
 
-#include "RemoteClient.h"
-
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
 #define DFH_MOD_ALT 4
@@ -74,6 +72,17 @@ namespace DFHack
         struct Hide;
     }
 
+    enum command_result
+    {
+        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
+        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
+        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
+        CR_OK = 0,               // Success
+        CR_FAILURE = 1,          // Failure
+        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
+        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
+    };
+
     enum state_change_event
     {
         SC_UNKNOWN = -1,
@@ -97,9 +106,13 @@ namespace DFHack
         StateChangeScript(state_change_event event, std::string path, bool save_specific = false)
             :event(event), path(path), save_specific(save_specific)
         { }
-        bool operator==(const StateChangeScript& other)
+        bool const operator==(const StateChangeScript& other)
         {
             return event == other.event && path == other.path && save_specific == other.save_specific;
+        }
+        bool const operator!=(const StateChangeScript& other)
+        {
+            return !(operator==(other));
         }
     };
 
@@ -112,15 +125,11 @@ namespace DFHack
         friend void ::dfhooks_shutdown();
         friend void ::dfhooks_update();
         friend void ::dfhooks_prerender();
-        friend bool ::dfhooks_sdl_event(SDL::Event* event);
+        friend bool ::dfhooks_sdl_event(SDL_Event* event);
         friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
-        static Core& getInstance()
-        {
-            static Core instance;
-            return instance;
-        }
+        static Core& getInstance();
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -150,6 +159,9 @@ namespace DFHack
         std::string findScript(std::string name);
         void getScriptPaths(std::vector<std::string> *dest);
 
+        bool getSuppressDuplicateKeyboardEvents();
+        void setSuppressDuplicateKeyboardEvents(bool suppress);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
@@ -168,7 +180,7 @@ namespace DFHack
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
 
-        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+        static df::viewscreen *getTopViewscreen();
 
         DFHack::Console &getConsole() { return con; }
 
@@ -195,7 +207,7 @@ namespace DFHack
         bool InitSimulationThread();
         int Update (void);
         int Shutdown (void);
-        bool DFH_SDL_Event(SDL::Event* event);
+        bool DFH_SDL_Event(SDL_Event* event);
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 
@@ -240,8 +252,8 @@ namespace DFHack
         };
         int8_t modstate;
 
+        bool suppress_duplicate_keyboard_events;
         std::map<int, std::vector<KeyBinding> > key_bindings;
-        std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
         enum hotkey_set_t {
             NO,

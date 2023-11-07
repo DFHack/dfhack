@@ -17,6 +17,9 @@ For autotrade, items will be marked for trading only when a caravan is
 approaching or is already at the trade depot. Items (or bins that contain
 items) of which a noble has forbidden export will not be marked for trade.
 
+Stockpiles can be registered for ``logistics`` features by toggling the options
+in the `stockpiles` overlay that comes up when you select a stockpile in the UI.
+
 Usage
 -----
 
@@ -69,3 +72,7 @@ Options
     Causes the command to act upon stockpiles with the given names or numbers
     instead of the stockpile that is currently selected in the UI. Note that
     the numbers are the stockpile numbers, not the building ids.
+``-m``, ``--melt-masterworks``
+    If specified with a ``logistics add melt`` command, will configure the
+    stockpile to allow melting of masterworks. By default, masterworks are not
+    marked for melting, even if they are in an automelt stockpile.

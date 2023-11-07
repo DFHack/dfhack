@@ -95,6 +95,19 @@ file are:
     specific item types, and any toggles the category might have (like Prepared
     meals for the Food category).
 
+Overlay
+-------
+
+This plugin provides a panel that appears when you select a stockpile via an
+`overlay` widget. You can use it to easily toggle `logistics` plugin features
+like autotrade, automelt, or autotrain. There are also buttons along the top frame for:
+
+- minimizing the panel (if it is in the way of the vanilla stockpile
+  configuration widgets)
+- showing help for the overlay widget in `gui/launcher` (this page)
+- configuring advanced settings for the stockpile, such as whether automelt
+  will melt masterworks
+
 .. _stockpiles-library:
 
 The stockpiles settings library

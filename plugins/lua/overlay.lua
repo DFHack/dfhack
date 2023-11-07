@@ -261,7 +261,11 @@ local function load_widget(name, widget_class)
         next_update_ms=widget.overlay_onupdate and 0 or math.huge,
     }
     if not overlay_config[name] then overlay_config[name] = {} end
+    if widget.version ~= overlay_config[name].version then
+        overlay_config[name] = {}
+    end
     local config = overlay_config[name]
+    config.version = widget.version
     if config.enabled == nil then
         config.enabled = widget.default_enabled
     end
@@ -429,8 +433,12 @@ end
 -- reduces the next call by a small random amount to introduce jitter into the
 -- widget processing timings
 local function do_update(name, db_entry, now_ms, vs)
-    if db_entry.next_update_ms > now_ms then return end
     local w = db_entry.widget
+    if w.overlay_onupdate_max_freq_seconds ~= 0 and
+        db_entry.next_update_ms > now_ms
+    then
+        return
+    end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then
@@ -501,10 +509,6 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
     if not _feed_viewscreen_widgets(vs_name, vs, keys) and
             not _feed_viewscreen_widgets('all', nil, keys) then
         return false
-    end
-    gui.markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        df.global.enabler.mouse_lbut = 0
     end
     return true
 end
@@ -577,7 +581,8 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
-    default_pos={x=7, y=2},
+    default_pos={x=11, y=1},
+    version=2,
     default_enabled=true,
     viewscreens='title/Default',
     frame={w=35, h=5},
@@ -595,6 +600,10 @@ function TitleVersionOverlay:init()
     if dfhack.isPrerelease() then
         table.insert(text, NEWLINE)
         table.insert(text, {text='Pre-release build', pen=COLOR_LIGHTRED})
+    end
+
+    for _,t in ipairs(text) do
+        self.frame.w = math.max(self.frame.w, #t)
     end
 
     self:addviews{

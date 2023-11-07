@@ -377,6 +377,23 @@ Other (non-DFHack-specific) variables that affect DFHack:
   sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
   should be the case in most UTF-8-capable \*nix terminal emulators already.
 
+Core preferences
+================
+
+There are a few settings that can be changed dynamically via
+`gui/control-panel` to affect runtime behavior. You can also toggle these from
+the commandline using the `lua` command, e.g.
+``lua dfhack.HIDE_ARMOK_TOOLS=true`` or by editing the generated
+``dfhack-config/init/dfhack.control-panel-preferences.init`` file and
+restarting DF.
+
+- ``dfhack.HIDE_CONSOLE_ON_STARTUP``: Whether to hide the external DFHack
+  terminal window on startup. This, of course, is not useful to change
+  dynamically. You'll have to use `gui/control-panel` or edit the init file
+  directly and restart DF for it to have an effect.
+
+- ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
+
 Miscellaneous notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.

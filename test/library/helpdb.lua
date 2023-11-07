@@ -1,3 +1,5 @@
+--config.target = 'core'
+
 local h = require('helpdb')
 
 local mock_plugin_db = {

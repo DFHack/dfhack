@@ -4,9 +4,9 @@ local _ENV = mkmodule('gui.widgets')
 
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local textures = require('gui.textures')
 local utils = require('utils')
 
-local dscreen = dfhack.screen
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
 
@@ -223,9 +223,9 @@ local function Panel_begin_drag(self, drag_offset, resize_edge)
     self.prev_focus_owner = self.focus_group.cur
     self:setFocus(true)
     if self.resize_edge then
-        if self.on_resize_begin then self.on_resize_begin(success) end
+        self:onResizeBegin()
     else
-        if self.on_drag_begin then self.on_drag_begin(success) end
+        self:onDragBegin()
     end
 end
 
@@ -236,11 +236,12 @@ local function Panel_end_drag(self, frame, success)
     else
         self:setFocus(false)
     end
+    local resize_edge = self.resize_edge
     Panel_update_frame(self, frame, true)
-    if self.resize_edge then
-        if self.on_resize_end then self.on_resize_end(success) end
+    if resize_edge then
+        self:onResizeEnd(success, self.frame)
     else
-        if self.on_drag_end then self.on_drag_end(success) end
+        self:onDragEnd(success, self.frame)
     end
 end
 
@@ -273,7 +274,7 @@ end
 
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
             Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
@@ -281,7 +282,6 @@ function Panel:onInput(keys)
         for code in pairs(keys) do
             local dx, dy = guidm.get_movement_delta(code, 1, 10)
             if dx then
-                local frame_rect = self.frame_rect
                 local kbd_pos = self.kbd_get_pos()
                 kbd_pos.x = kbd_pos.x + dx
                 kbd_pos.y = kbd_pos.y + dy
@@ -292,9 +292,9 @@ function Panel:onInput(keys)
         return
     end
     if self.drag_offset then
-        if keys._MOUSE_R_DOWN then
+        if keys._MOUSE_R then
             Panel_end_drag(self, self.saved_frame)
-        elseif keys._MOUSE_L then
+        elseif keys._MOUSE_L_DOWN then
             Panel_update_frame(self, Panel_make_frame(self))
         end
         return true
@@ -302,7 +302,7 @@ function Panel:onInput(keys)
     if Panel.super.onInput(self, keys) then
         return true
     end
-    if not keys._MOUSE_L_DOWN then return end
+    if not keys._MOUSE_L then return end
     local x,y = self:getMouseFramePos()
     if not x then return end
 
@@ -489,9 +489,25 @@ function Panel:onRenderFrame(dc, rect)
         dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
     end
     if self.drag_offset and not self.kbd_get_pos
-            and df.global.enabler.mouse_lbut == 0 then
+            and df.global.enabler.mouse_lbut_down == 0 then
         Panel_end_drag(self, nil, true)
     end
+end
+
+function Panel:onDragBegin()
+    if self.on_drag_begin then self.on_drag_begin() end
+end
+
+function Panel:onDragEnd(success, new_frame)
+    if self.on_drag_end then self.on_drag_end(success, new_frame) end
+end
+
+function Panel:onResizeBegin()
+    if self.on_resize_begin then self.on_resize_begin() end
+end
+
+function Panel:onResizeEnd(success, new_frame)
+    if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
 
 ------------
@@ -640,8 +656,12 @@ function EditField:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
+    local old = self.text
     self.text = text
     self:setCursor(cursor)
+    if self.on_change and text ~= old then
+        self.on_change(self.text, old)
+    end
 end
 
 function EditField:postUpdateLayout()
@@ -698,12 +718,8 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
-        local old = self.text
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then
         self:setText(self.saved_text)
-        if self.on_change and old ~= self.saved_text then
-            self.on_change(self.text, old)
-        end
         self:setFocus(false)
         return true
     end
@@ -724,12 +740,6 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
-    elseif keys._MOUSE_L then
-        local mouse_x, mouse_y = self:getMousePos()
-        if mouse_x then
-            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
-            return true
-        end
     elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
@@ -747,9 +757,6 @@ function EditField:onInput(keys)
                 return self.modal
             end
         end
-        if self.on_change and self.text ~= old then
-            self.on_change(self.text, old)
-        end
         return true
     elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
@@ -759,9 +766,10 @@ function EditField:onInput(keys)
                                                find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.CUSTOM_CTRL_A then -- home
-        self:setCursor(1)
-        return true
+    -- commented out until we get HOME key support from DF
+    -- elseif keys.CUSTOM_CTRL_A then -- home
+    --     self:setCursor(1)
+    --     return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
@@ -772,6 +780,22 @@ function EditField:onInput(keys)
     elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
         return true
+    elseif keys.CUSTOM_CTRL_C then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        return true
+    elseif keys.CUSTOM_CTRL_X then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        self:setText('')
+        return true
+    elseif keys.CUSTOM_CTRL_V then
+        self:insert(dfhack.internal.getClipboardTextCp437())
+        return true
+    elseif keys._MOUSE_L_DOWN then
+        local mouse_x = self:getMousePos()
+        if mouse_x then
+            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
+            return true
+        end
     end
 
     -- if we're modal, then unconditionally eat all the input
@@ -962,7 +986,7 @@ function Scrollbar:onRenderBody(dc)
     if self.is_dragging then
         scrollbar_do_drag(self)
     end
-    if df.global.enabler.mouse_lbut == 0 then
+    if df.global.enabler.mouse_lbut_down == 0 then
         self.last_scroll_ms = 0
         self.is_dragging = false
         self.scroll_spec = nil
@@ -984,7 +1008,7 @@ function Scrollbar:onInput(keys)
         return false
     end
 
-    if self.parent_view:getMousePos() then
+    if self.parent_view and self.parent_view:getMousePos() then
         if keys.CONTEXT_SCROLL_UP then
             self.on_scroll('up_small')
             return true
@@ -999,7 +1023,7 @@ function Scrollbar:onInput(keys)
             return true
         end
     end
-    if not keys._MOUSE_L_DOWN then return false end
+    if not keys._MOUSE_L then return false end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil
@@ -1087,7 +1111,7 @@ end
 -- returns it (in parsed pen form)
 local function make_hpen(pen, hpen)
     if not hpen then
-        pen = dfhack.pen.parse(pen)
+        pen = to_pen(pen)
 
         -- Swap the foreground and background
         hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
@@ -1096,7 +1120,7 @@ local function make_hpen(pen, hpen)
     -- text_hpen needs a character in order to paint the background using
     -- Painter:fill(), so let's make it paint a space to show the background
     -- color
-    local hpen_parsed = dfhack.pen.parse(hpen)
+    local hpen_parsed = to_pen(hpen)
     hpen_parsed.ch = string.byte(' ')
     return hpen_parsed
 end
@@ -1362,11 +1386,11 @@ function Label:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
     end
-    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+    if keys._MOUSE_L and self:getMousePos() and self.on_click then
         self.on_click()
         return true
     end
-    if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
+    if keys._MOUSE_R and self:getMousePos() and self.on_rclick then
         self.on_rclick()
         return true
     end
@@ -1474,11 +1498,128 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+    elseif keys._MOUSE_L and self:getMousePos() and self.on_activate
             and not is_disabled(self) then
         self.on_activate()
         return true
     end
+end
+
+----------------
+-- HelpButton --
+----------------
+
+HelpButton = defclass(HelpButton, Panel)
+
+HelpButton.ATTRS{
+    command=DEFAULT_NIL,
+}
+
+local button_pen_left = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+local button_pen_right = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+local help_pen_center = to_pen{
+    tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+local configure_pen_center = dfhack.pen.parse{
+    tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
+
+function HelpButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function HelpButton:init()
+    local command = self.command .. ' '
+
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', command) end,
+        },
+    }
+end
+
+---------------------
+-- ConfigureButton --
+---------------------
+
+ConfigureButton = defclass(ConfigureButton, Panel)
+
+ConfigureButton.ATTRS{
+    on_click=DEFAULT_NIL,
+}
+
+function ConfigureButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function ConfigureButton:init()
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=configure_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=self.on_click,
+        },
+    }
+end
+
+-----------------
+-- BannerPanel --
+-----------------
+
+BannerPanel = defclass(BannerPanel, Panel)
+
+function BannerPanel:onRenderBody(dc)
+    dc:pen(COLOR_RED)
+    for y=0,self.frame_rect.height-1 do
+        dc:seek(0, y):char('[')
+        dc:seek(self.frame_rect.width-1):char(']')
+    end
+end
+
+----------------
+-- TextButton --
+----------------
+
+TextButton = defclass(TextButton, BannerPanel)
+
+function TextButton:init(info)
+    self.label = HotkeyLabel{
+        frame={t=0, l=1, r=1},
+        key=info.key,
+        key_sep=info.key_sep,
+        label=info.label,
+        on_activate=info.on_activate,
+        text_pen=info.text_pen,
+        text_dpen=info.text_dpen,
+        text_hpen=info.text_hpen,
+        disabled=info.disabled,
+        enabled=info.enabled,
+        auto_height=info.auto_height,
+        auto_width=info.auto_width,
+        on_click=info.on_click,
+        on_rclick=info.on_rclick,
+        scroll_keys=info.scroll_keys,
+    }
+
+    self:addviews{self.label}
+end
+
+function TextButton:setLabel(label)
+    self.label:setLabel(label)
 end
 
 ----------------------
@@ -1552,8 +1693,7 @@ function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
         end
     end
     if not option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(value_or_index))
+        option_idx = 1
     end
     local old_option_idx = self.option_idx
     self.option_idx = option_idx
@@ -1589,7 +1729,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
+    elseif keys._MOUSE_L and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end
@@ -1893,7 +2033,7 @@ function List:onInput(keys)
         return self:submit()
     elseif keys.CUSTOM_SHIFT_ENTER then
         return self:submit2()
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local idx = self:getIdxUnderMouse()
         if idx then
             local now_ms = dfhack.getTickCount()
@@ -1949,12 +2089,9 @@ end
 -- Filtered List --
 -------------------
 
-FILTER_FULL_TEXT = false
-
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
-    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2104,7 +2241,6 @@ function FilteredList:setFilter(filter, pos)
         pos = nil
 
         for i,v in ipairs(self.choices) do
-            local ok = true
             local search_key = v.search_key
             if not search_key then
                 if type(v.text) ~= 'table' then
@@ -2119,28 +2255,7 @@ function FilteredList:setFilter(filter, pos)
                     search_key = table.concat(texts, ' ')
                 end
             end
-            for _,key in ipairs(tokens) do
-                key = key:escape_pattern()
-                if key ~= '' then
-                    if not self.case_sensitive then
-                        search_key = string.lower(search_key)
-                        key = string.lower(key)
-                    end
-
-                    -- the separate checks for non-space or non-punctuation allows
-                    -- punctuation itself to be matched if that is useful (e.g.
-                    -- filenames or parameter names)
-                    if not FILTER_FULL_TEXT and not search_key:match('%f[^%p\x00]'..key)
-                            and not search_key:match('%f[^%s\x00]'..key) then
-                        ok = false
-                        break
-                    elseif FILTER_FULL_TEXT and not search_key:find(key) then
-                        ok = false
-                        break
-                    end
-                end
-            end
-            if ok then
+            if utils.search_text(search_key, tokens) then
                 table.insert(choices, v)
                 cidx[#choices] = i
                 if ipos == i then
@@ -2246,7 +2361,7 @@ end
 
 function Tab:onInput(keys)
     if Tab.super.onInput(self, keys) then return true end
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
+    if keys._MOUSE_L and self:getMousePos() then
         self.on_select(self.id)
         return true
     end
@@ -2348,7 +2463,7 @@ local function rangeslider_get_width_per_idx(self)
 end
 
 function RangeSlider:onInput(keys)
-    if not keys._MOUSE_L_DOWN then return false end
+    if not keys._MOUSE_L then return false end
     local x = self:getMousePos()
     if not x then return false end
     local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
@@ -2392,9 +2507,15 @@ local function rangeslider_do_drag(self, width_per_idx)
         end
     end
     if new_left_idx and new_left_idx ~= self.get_left_idx_fn() then
+        if not new_right_idx and new_left_idx > self.get_right_idx_fn() then
+            self.on_right_change(new_left_idx)
+        end
         self.on_left_change(new_left_idx)
     end
     if new_right_idx and new_right_idx ~= self.get_right_idx_fn() then
+        if new_right_idx < self.get_left_idx_fn() then
+            self.on_left_change(new_right_idx)
+        end
         self.on_right_change(new_right_idx)
     end
 end
@@ -2450,7 +2571,7 @@ function RangeSlider:onRenderBody(dc, rect)
     if self.is_dragging_target then
         rangeslider_do_drag(self, width_per_idx)
     end
-    if df.global.enabler.mouse_lbut == 0 then
+    if df.global.enabler.mouse_lbut_down == 0 then
         self.is_dragging_target = nil
         self.is_dragging_idx = nil
     end

@@ -162,9 +162,25 @@ local function is_slab()
     return uibs.building_type == df.building_type.Slab
 end
 
+local function is_cage()
+    return uibs.building_type == df.building_type.Cage
+end
+
 local function is_stairs()
     return is_construction()
             and uibs.building_subtype == df.construction_type.UpDownStair
+end
+
+local function is_single_level_stairs()
+    if not is_stairs() then return false end
+    local _, _, dimz = get_cur_area_dims()
+    return dimz == 1
+end
+
+local function is_multi_level_stairs()
+    if not is_stairs() then return false end
+    local _, _, dimz = get_cur_area_dims()
+    return dimz > 1
 end
 
 local direction_panel_frame = {t=4, h=13, w=46, r=28}
@@ -272,7 +288,7 @@ function ItemLine:reset()
 end
 
 function ItemLine:onInput(keys)
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
+    if keys._MOUSE_L and self:getMousePos() then
         self.on_select(self.idx)
     end
     return ItemLine.super.onInput(self, keys)
@@ -290,10 +306,13 @@ function ItemLine:get_item_line_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
     if self.available >= quantity then
         self.note_pen = COLOR_GREEN
-        self.note = ' Available now'
+        self.note = (' %d available now'):format(self.available)
+    elseif self.available >= 0 then
+        self.note_pen = COLOR_BROWN
+        self.note = (' Will link next (need to make %d)'):format(quantity - self.available)
     else
         self.note_pen = COLOR_BROWN
-        self.note = ' Will link later'
+        self.note = (' Will link later (need to make %d)'):format(-self.available + quantity)
     end
     self.note = string.char(192) .. self.note -- character 192 is "└"
 
@@ -314,7 +333,7 @@ function ItemLine:reduce_quantity(used_quantity)
     if not self.available then return end
     local filter = get_cur_filters()[self.idx]
     used_quantity = used_quantity or get_quantity(filter, self.is_hollow_fn())
-    self.available = math.max(0, self.available - used_quantity)
+    self.available = self.available - used_quantity
 end
 
 local function get_placement_errors()
@@ -351,10 +370,10 @@ function PlannerOverlay:init()
     }
 
     local minimized_panel = widgets.Panel{
-        frame={t=0, r=1, w=17, h=1},
+        frame={t=0, r=1, w=20, h=1},
         subviews={
             widgets.Label{
-                frame={t=0, r=0, h=1},
+                frame={t=0, r=3, h=1},
                 text={
                     {text=' show Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(31)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
@@ -363,7 +382,7 @@ function PlannerOverlay:init()
                 on_click=self:callback('toggle_minimized'),
             },
             widgets.Label{
-                frame={t=0, r=0, h=1},
+                frame={t=0, r=3, h=1},
                 text={
                     {text=' hide Planner ', pen=pens.MINI_TEXT_PEN, hpen=pens.MINI_TEXT_HPEN},
                     {text='['..string.char(30)..']', pen=pens.MINI_BUTT_PEN, hpen=pens.MINI_BUTT_HPEN},
@@ -371,6 +390,10 @@ function PlannerOverlay:init()
                 visible=self:callback('is_not_minimized'),
                 on_click=self:callback('toggle_minimized'),
             },
+            widgets.HelpButton{
+                frame={t=0, r=0},
+                command='buildingplan',
+            }
         },
     }
 
@@ -424,10 +447,10 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={b=5, l=23, w=30},
+            frame={b=7, l=1, w=30},
             key='CUSTOM_R',
-            label='Top Stair Type:   ',
-            visible=is_stairs,
+            label='Top stair type:   ',
+            visible=is_multi_level_stairs,
             options={
                 {label='Auto', value='auto'},
                 {label='UpDown', value=df.construction_type.UpDownStair},
@@ -436,14 +459,26 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={b=4, l=23, w=30},
+            frame={b=6, l=1, w=30},
             key='CUSTOM_B',
             label='Bottom Stair Type:',
-            visible=is_stairs,
+            visible=is_multi_level_stairs,
             options={
                 {label='Auto', value='auto'},
                 {label='UpDown', value=df.construction_type.UpDownStair},
                 {label='Up', value=df.construction_type.UpStair},
+            },
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='stairs_only_subtype',
+            frame={b=7, l=1, w=30},
+            key='CUSTOM_R',
+            label='Single level stair:',
+            visible=is_single_level_stairs,
+            options={
+                {label='Up', value=df.construction_type.UpStair},
+                {label='UpDown', value=df.construction_type.UpDownStair},
+                {label='Down', value=df.construction_type.DownStair},
             },
         },
         widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
@@ -477,8 +512,18 @@ function PlannerOverlay:init()
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'engraved', val)
             end,
         },
+        widgets.ToggleHotkeyLabel {
+            view_id='empty',
+            frame={b=4, l=1, w=22},
+            key='CUSTOM_T',
+            label='Empty only:',
+            visible=is_cage,
+            on_change=function(val)
+                buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
+            end,
+        },
         widgets.Label{
-            frame={b=2, l=23},
+            frame={b=4, l=23},
             text_pen=COLOR_DARKGREY,
             text={
                 'Selected area: ',
@@ -548,7 +593,6 @@ function PlannerOverlay:init()
                     on_change=function(heat)
                         buildingplan.setHeatSafetyFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, heat)
                     end,
-                    visible=false, -- until we can make this work the way it's intended
                 },
             },
         },
@@ -639,6 +683,7 @@ end
 function PlannerOverlay:toggle_minimized()
     self.state.minimized = not self.state.minimized
     config:write()
+    self:reset()
 end
 
 function PlannerOverlay:draw_divider_h(dc)
@@ -740,7 +785,7 @@ end
 
 function PlannerOverlay:onInput(keys)
     if not is_plannable() then return false end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if uibs.selection_pos:isValid() then
             uibs.selection_pos:clear()
             return true
@@ -759,7 +804,7 @@ function PlannerOverlay:onInput(keys)
         return true
     end
     if self:is_minimized() then return false end
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         if is_over_options_panel() then return false end
         local detect_rect = copyall(self.frame_rect)
         detect_rect.height = self.subviews.main.frame_rect.height +
@@ -775,7 +820,9 @@ function PlannerOverlay:onInput(keys)
                 local filters = get_cur_filters()
                 local num_filters = #filters
                 local choose = self.subviews.choose:getOptionValue()
-                if choose > 0 then
+                if choose == 0 then
+                    self:place_building(get_placement_data())
+                else
                     local bounds = get_selected_bounds()
                     self:save_placement()
                     local autoselect = choose == 2
@@ -786,8 +833,12 @@ function PlannerOverlay:onInput(keys)
                     for idx = num_filters,1,-1 do
                         chosen_items[idx] = {}
                         local filter = filters[idx]
+                        local get_available_items_fn = function()
+                            return require('plugins.buildingplan').getAvailableItems(
+                                uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+                        end
                         local selection_screen = itemselection.ItemSelectionScreen{
-                            index=idx,
+                            get_available_items_fn=get_available_items_fn,
                             desc=require('plugins.buildingplan').get_desc(filter),
                             quantity=get_quantity(filter, is_hollow, bounds),
                             autoselect=autoselect,
@@ -806,7 +857,7 @@ function PlannerOverlay:onInput(keys)
                                 end
                             end,
                             on_cancel=function()
-                                for i,scr in pairs(active_screens) do
+                                for _,scr in pairs(active_screens) do
                                     scr:dismiss()
                                 end
                                 df.global.game.main_interface.bottom_mode_selected = df.main_bottom_mode_type.BUILDING_PLACEMENT
@@ -820,8 +871,6 @@ function PlannerOverlay:onInput(keys)
                             active_screens[idx] = selection_screen:show()
                         end
                     end
-                else
-                    self:place_building(get_placement_data())
                 end
                 return true
             elseif not is_choosing_area() then
@@ -829,7 +878,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L or keys.SELECT
+   return keys._MOUSE_L_DOWN or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)
@@ -848,6 +897,8 @@ function PlannerOverlay:onRenderFrame(dc, rect)
         local buildingplan = require('plugins.buildingplan')
         self.subviews.engraved:setOption(buildingplan.getSpecials(
             uibs.building_type, uibs.building_subtype, uibs.custom_type).engraved or false)
+        self.subviews.empty:setOption(buildingplan.getSpecials(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type).empty or false)
         self.subviews.choose:setOption(buildingplan.getChooseItems(
             uibs.building_type, uibs.building_subtype, uibs.custom_type))
         self.subviews.safety:setOption(buildingplan.getHeatSafetyFilter(
@@ -883,7 +934,8 @@ end
 function PlannerOverlay:get_stairs_subtype(pos, bounds)
     local subtype = uibs.building_subtype
     if pos.z == bounds.z1 then
-        local opt = self.subviews.stairs_bottom_subtype:getOptionValue()
+        local opt = bounds.z1 == bounds.z2 and self.subviews.stairs_only_subtype:getOptionValue() or
+            self.subviews.stairs_bottom_subtype:getOptionValue()
         if opt == 'auto' then
             local tt = dfhack.maps.getTileType(pos)
             local shape = df.tiletype.attrs[tt].shape

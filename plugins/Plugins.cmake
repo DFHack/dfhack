@@ -115,42 +115,44 @@ macro(dfhack_plugin)
         endif()
     endif()
 
-    add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
-    ide_folder(${PLUGIN_NAME} "Plugins")
+    if(BUILD_LIBRARY AND BUILD_PLUGINS)
+        add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
+        ide_folder(${PLUGIN_NAME} "Plugins")
 
-    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/include")
-    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/proto")
-    target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
-    target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/depends/xgetopt")
+        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/include")
+        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/proto")
+        target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
+        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/depends/xgetopt")
 
-    if(NUM_PROTO)
-        add_dependencies(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
-        target_link_libraries(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
-    else()
-        target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
+        if(NUM_PROTO)
+            add_dependencies(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
+            target_link_libraries(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
+        else()
+            target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
+        endif()
+
+        add_dependencies(${PLUGIN_NAME} dfhack-version)
+
+        # Make sure the source is generated before the executable builds.
+        add_dependencies(${PLUGIN_NAME} generate_proto)
+
+        if(UNIX)
+            set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")
+        else()
+            set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_MSVC}")
+        endif()
+        set_target_properties(${PLUGIN_NAME} PROPERTIES COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS}")
+
+        if(APPLE)
+            set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dylib PREFIX "")
+        elseif(UNIX)
+            set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.so PREFIX "")
+        else()
+            set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dll)
+        endif()
+
+        install(TARGETS ${PLUGIN_NAME}
+            LIBRARY DESTINATION ${DFHACK_PLUGIN_DESTINATION}
+            RUNTIME DESTINATION ${DFHACK_PLUGIN_DESTINATION})
     endif()
-
-    add_dependencies(${PLUGIN_NAME} dfhack-version)
-
-    # Make sure the source is generated before the executable builds.
-    add_dependencies(${PLUGIN_NAME} generate_proto)
-
-    if(UNIX)
-        set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")
-    else()
-        set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_MSVC}")
-    endif()
-    set_target_properties(${PLUGIN_NAME} PROPERTIES COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS}")
-
-    if(APPLE)
-        set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dylib PREFIX "")
-    elseif(UNIX)
-        set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.so PREFIX "")
-    else()
-        set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dll)
-    endif()
-
-    install(TARGETS ${PLUGIN_NAME}
-        LIBRARY DESTINATION ${DFHACK_PLUGIN_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_PLUGIN_DESTINATION})
 endmacro()

@@ -20,7 +20,7 @@
 "Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Note that blueprints will designate buildings to build even if you don't have the materials needed to build them. You can use the ""o"" hotkey to automatically create the manager orders for all the needed items when you have a blueprint loaded in gui/quickfort. Make sure your manager is available to validate all the incoming work orders!"
 ""
 "There are some tasks common to all forts that Dreamfort doesn't specifically handle for you. For example, Dreamfort sets up a barracks, but managing squads is up to you. Here are some other common tasks that may need to be done manually (or with some other tool):"
-- Exploratory mining for specific resources like iron
+- Exploratory mining for specific resources like iron (see gui/design for help with this)
 "- Filling the well system with water (if you have a light aquifer, see library/aquifer_tap.csv for help with this)"
 - Bringing magma up to the industry level to power magma forges/furnaces (see library/pump_stack.csv for help with this)
 - Manufacturing trade goods
@@ -42,7 +42,7 @@ interactively."
 "# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-"Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details."
+"Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details. You can also copy text from this spreadsheet online and paste it in gui/launcher with Ctrl-V."
 "If the checklist indicates that you should generate orders, that means to hit the ""o"" hotkey when the blueprint is loaded in gui/quickfort. You'll get a popup saying which orders were generated. Also remember to read the messages the blueprints display after you run them so you don't miss any important manual steps!"
 ""
 -- Preparation (before you embark!) --
@@ -61,7 +61,7 @@ gui/quickfort,/perimeter,,Run at embark. Don't actually apply the blueprint -- i
 -- Dig  --
 DFHack command,Blueprint,Generate orders,Notes
 gui/quickfort,/surface1,,Clear some trees and dig central staircase. Run when you find your center tile. Deconstruct your wagon if it is in the way.
-gui/quickfort,/dig_all,,"Run when you find a suitable (non-aquifer) rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
+gui/quickfort,/dig_all,,"Run when you find a suitable (non-aquifer) rock layer for the industry level. It designates digging for industry, services, guildhall, suites, apartments, and the crypt all in one go. This list does not include the farming level, which we'll designate in the uppermost soil layer once the surface miasma channels are dug. Note that it is more efficient for your miners if you designate the digging for a level before they dig the central stairs past that level. The stairs down on each level are designated at priority 5 instead of the regular priority 4. This lets the miners focus on one z-level at a time and not run up and down the stairs attempting to dig out two blueprints simultaneously. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, 3 levels of /apartments1, and /crypt1) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) --
 DFHack command,Blueprint,Generate orders,Notes
@@ -70,7 +70,7 @@ gui/quickfort,/farming1,,Dig out the farming level. Run when channels on the sur
 gui/quickfort,/farming2,,Build farming level. Run as soon as the farming level has been completely dug out.
 gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central staircase from early invasions. Run right after /farming2.
 gui/quickfort,/industry2,,Build industry level. Run as soon as the industry level has been completely dug out.
-prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. **Be sure that there are no items attached to jobs left in the workshops before deconstructing them, otherwise you'll get canceled jobs!**"
+prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. Be sure that there are no items attached to jobs left in the surface workshops before deconstructing them, otherwise you'll get canceled jobs!"
 gui/quickfort,/surface4,,Finish protecting the staircase and lay flooring for future buildings. Run after the walls and floors around the staircase are built and you have moved production from the surface to the industry level.
 gui/quickfort,/industry3,,Build the rest of the industry level. Run once /surface4 is mostly complete.
 orders import library/basic,,,"Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
@@ -81,7 +81,7 @@ gui/quickfort,/surface6,Yes,Build security perimeter. Run once you have linked a
 gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down. Be sure to give your haulers some time to fill the stonecutter's stockpile with some stone first so your stonecutters won't be hauling it up from the depths by hand.
 ""
 -- Plumbing --
-"If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
+"If you haven't done it already, this is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the aquifer_tap library blueprint for help with this)."
 Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through this checklist!
 ""
 -- Mature fort (fourth migration wave onward) --
@@ -112,7 +112,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 ""
 "On the gui/control-panel ""Autostart"" tab, additionally enable:"
 - autobutcher
-- autobutcher target 50 50 14 2 BIRD_GOOSE
+- autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
 - autofarm
 - autofish
@@ -121,6 +121,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 - ban-cooking all
 - buildingplan set boulders false
 - buildingplan set logs false
+- dwarfvet
 - nestboxes
 - prioritize
 - seedwatch
@@ -144,9 +145,6 @@ On the work details screen (Labor -> Work details)
 In standing orders (Labor -> Standing orders):
 "  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
 "- On the ""Other"" tab, change ""Everybody harvests"" to ""Only farmers harvest"""
-""
-"Finally, in the burrows screen:"
-"- Create a burrow named ""Inside"" and register it as a civilian alert burrow in gui/civ-alert so you can use it to get your civilians to safety during sieges. You will have to periodically expand the burrow area as the fort expands."
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -248,6 +246,8 @@ Features:
 - Optional extended trap hallways (to handle larger sieges with a smaller/no military)
 "- Protected trade depot, with separate trade goods stockpiles for organics and inorganics (for easy elven trading)"
 - A grid of small farm plots for lucrative surface farming
+"- A burrow named ""Inside+"" that grows with your fort as you dig it out. It is pre-registered as a civilian alert burrow so you can use it to get your civilians to safety during sieges."
+"- A burrow named ""Clearcutting area"" that is automatically registered with autochop (if you have it enabled) to keep the area around your fort clear of trees"
 ""
 Manual steps you have to take:
 "- Assign grazing livestock to the large pasture, dogs to the pasture over the central stairs, and male birds to the zone between the rows of nestboxes (DFHack's autonestbox will auto-assign the female egg-laying birds to the nestbox zones)"
@@ -280,11 +280,11 @@ Surface Walkthrough:
 Sieges and Prisoner Processing:
 Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
 ""
-"- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
+"- Your ""Inside+"" burrow will automatically grow with your fort and should include only safe areas of your fort. In particular, it should not include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
 ""
-"- When a siege begins, set your civilian alert (attach the alert to your ""Inside"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
+"- When a siege begins, set your civilian alert (attach the alert to your ""Inside+"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
 ""
-"- During a siege, use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway."
+"- During a siege, you can use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway. You can also choose *not* to use the trap hallways and meet the siege with your military. It's up to you!"
 ""
 "- If your cage traps fill up, ensure your hallways are free of uncaged attackers, then close the trap hallway outer gates and open the inner gates. Clear the civilian alert and allow your dwarves to reset all the traps -- make some extra cages in preparation for this! Then re-enable the civilian alert and open the trap hallway outer gates."
 ""
@@ -292,13 +292,13 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 ""
 "After a siege, you can use the caged prisoners to safely train your military. Here's how:"
 ""
-"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in the DFHack gui/launcher."
+"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile in the barracks, run ""stripcaged all"" in DFHack's gui/launcher."
 ""
 "- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
 ""
-- Assign a group prisoners to the pasture that overlaps the prisoner quantum stockpile
+- Assign a group of prisoners to the pasture that overlaps the prisoner quantum stockpile
 ""
-"- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
+"- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoners and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed"". Some prisoners are not directly hostile (like cavern-caught gorlaks) and you may need to be target them explicitly to get your soldiers to attack them."
 #dig label(central_stairs_odd) start(2;2) hidden() carved spiral stairs odd levels
 `,j6,`
 u,`,u
@@ -330,6 +330,7 @@ message(Once the central stairs are mined out deeply enough, you should start di
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
 clear_small/surface_clear_small
+burrow_start/surface_burrow_start
 zones/surface_zones
 #>
 central_stairs/central_stairs repeat(down 10)
@@ -367,7 +368,8 @@ traps/surface_traps
 clear_large/surface_clear_large
 ""
 "#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint.
-For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
+For extra security, you can run /surface8 at any time to extend the trap corridors.) expand Inside+ burrow to safe surface areas and build roof"
+burrows/surface_burrows
 #<
 roof/surface_roof
 roof2/surface_roof2
@@ -412,7 +414,41 @@ corridor_traps/surface_corridor_traps
 
 
 
-"#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs, your grazing animals to the large pasture, and your male birds to the zone between the rows of nestboxes.) pastures and training areas"
+#burrow label(surface_burrow_start) start(19; 19) hidden() create safety burrow that will grow with your fort
+
+
+
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,,`,`,,`
+,,,`,,`,,`,,,,,,,,`,a{name=Inside+ create=true civalert=true}(5x5),,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+
+
+
+"#zone label(surface_zones) start(19; 19) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs, your grazing animals to the large pasture, and your male birds to the zone between the rows of nestboxes. If your wagon is far away, you can let your animals wander closer to the fort before pasturing them to save hauling time.) pastures and training areas"
 
 
 
@@ -783,7 +819,7 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,Cf,Cf,,,,,Cf,,`,,,~,~,~,,,`,Cf,,Cf,,,Cf,,Cf,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,Cf,Cf,,,,,,,,Cf,Cf,,,,~,,,,Cf,Cf,,,,,,,,Cf,Cf,`
-,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,`,`
 
 
 
@@ -834,7 +870,7 @@ You might also want to set the ""trade goods quantum"" stockpile to autotrade.) 
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,"a{name=""Pets/Prisoner feeder"" autotrain=true}(9x5)",,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,"a10{name=""Pets/Prisoner feeder"" autotrain=true}(9x5)",,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -857,7 +893,6 @@ You might also want to set the ""trade goods quantum"" stockpile to autotrade.) 
 
 
 
-#aliases
 "#build label(surface_build) start(19; 19) hidden() message(Use autofarm to manage farm crop selection.
 Remember to connect the levers to the gates once they are built.) gates, barracks, farm area, and trade area"
 
@@ -1028,6 +1063,40 @@ t1(37x33)
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
 ,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
+
+#burrow label(surface_burrows) start(19; 19) hidden() extend safety burrow to newly safe surface areas and set up surrounding clearcutting area
+
+
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x-10)"
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x27)",`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x27)"
+,,,`,,`,a{name=Inside+}(25x17),,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,,`,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,a{name=Inside+},`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(7x6),,,,,,,`,,`
+,,,`,,`,a{name=Inside+}(7x5),,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x10)"
+
 
 #build label(surface_roof) start(19; 19) hidden() roof hatch and adjacent tiles
 
@@ -1431,7 +1500,7 @@ doors/farming_doors
 ,,c,c,c,c,c,c,c,c,c,,,,`,,`,,,,c,c,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,c,,,c,`,`,`,`,`,c,,,c,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,c,,"c{name=""Unprepared fish"" take_from=""Starting food""}:+unpreparedfish",c,,,`,,,"c{name=""Rawhides"" take_from=""Starting cloth/trash""}:+rawhides",c,,c,c,c,c,c,c,c,c
-,,c,c,c,c,c,c,c,,,c,c,,"c{name=""Refuse feeder"" give_to=""Rawhides"" take_from=""Starting cloth/trash""}:+cat_refuse/type(1x3)","y{name=""Corpse feeder"" take_from=""Starting cloth/trash""}:+cat_refuse/corpses,bodyparts(2x3)",~,,c,c,,,c,c,c,c,c,c,c
+,,c,c,c,c,c,c,c,,,c,c,,"c{name=""Refuse feeder"" give_to=""Rawhides"" take_from=""Starting cloth/trash""}:+cat_refuse/type(1x3)","y2{name=""Corpse feeder"" take_from=""Starting cloth/trash""}:+cat_refuse/corpses,bodyparts(2x3)",~,,c,c,,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,~,~,~,,`,`,`,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,~,~,~,,`,`,`,,c,c,c,c,c,c,c
 ,,c,c,c,c,c,c,c,,`,`,`,,,`,,,`,`,`,,c,c,c,c,c,c,c
@@ -1687,7 +1756,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
-,,"c{name=""Lye"" barrels=2}:+miscliquid",`,`,`,`,`,`,~,~,"u{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
+,,"c{name=""Lye"" barrels=0}:+miscliquid",`,`,`,`,`,`,~,~,"u2{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,`,"bnpdz{name=""Bar/military feeder"" containers=0}:-potash+adamantinethread(5x3)",,,,~,`,`,`,`,`,`,`,`,`,`,`,`,c
@@ -1709,7 +1778,7 @@ build2/industry_build2
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf""}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
@@ -1745,7 +1814,7 @@ build2/industry_build2
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
@@ -1771,7 +1840,7 @@ build2/industry_build2
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,eg,`,`,`,wf,`,`,`,ek,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,eg,`,`,`,wf{max_general_orders=9},`,`,`,ek,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 
@@ -2452,7 +2521,7 @@ doors/guildhall_doors
 "#build label(guildhall_furnish) start(15; 15; central stairs) hidden() furnish 4 guildhalls, 3 temples, and a library"
 
 
-,,`,`,`,`,s,`,`,,,`,s,`,c,`,`,f,,,`,`,s,`,`,`,`
+,,F,`,`,`,s,`,`,,,F,s,`,c,`,`,f,,,`,`,s,`,`,`,F
 ,,`,`,c,`,`,`,`,,,`,`,h,~a,`,`,f,,,`,`,`,`,c,`,`
 ,,`,c,t,c,`,`,s,,,`,`,`,`,`,`,`,,,s,`,`,c,t,c,`
 ,,`,`,c,`,c,`,`,,,`,`,`,`,`,`,`,,,`,`,c,`,c,`,`
@@ -2467,7 +2536,7 @@ doors/guildhall_doors
 ,,c,~a,`,`,c,c,`,,~,,`,,`,,`,,~,,`,c,c,`,`,~a,c
 ,,`,h,`,`,c,c,`,~,`,~,`,,,,`,~,`,~,`,c,c,`,`,h,`
 ,,s,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,s
-,,`,`,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,`,`
+,,F,`,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,`,F
 ,,,,,,,~,,,,,,`,~,`,,,,,,~
 ,,,,,,,~,,,,,,~,,~,,,,,,~
 ,,`,`,s,`,`,`,t,,,t,`,`,`,`,`,t,,,t,`,`,`,s,`,`
@@ -2476,7 +2545,7 @@ doors/guildhall_doors
 ,,`,`,c,`,c,`,`,,,t,c,`,`,`,c,t,,,`,`,c,`,c,`,`
 ,,`,c,t,c,`,`,s,,,t,c,`,`,`,c,t,,,s,`,`,c,t,c,`
 ,,`,`,c,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,c,`,`
-,,`,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,`
+,,F,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,F
 
 
 #notes label(beds_help)
@@ -2501,37 +2570,37 @@ Apartments Walkthrough:
 "#dig label(suites1) start(18; 18; central stairs) message(Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,,d,,,,,,d,,,,d,,d,,,,d,,,,,,d,,,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
+,d,,,,d,,,,,,,d,,,,d,d,d,,,,d,,,,,,,d,,,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,,d
+,d,,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,,,d,,,,,,,d,,,,d,d,d,,,,d,,,,,,,d,,,,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,~,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
-,d,d,,,,d,,,,,,d,,,,d,,d,,,,d,,,,,,d,,,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,d,,,,d,,,,,,,d,,,,d,d,d,,,,d,,,,,,,d,,,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,,d
+,d,,,,,,,,,,,,,,,d,d,d,,,,,,,,,,,,,,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,d,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,d,d,d,d,d,,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,,d,d,d,d,d,,d
+,d,,,,d,,,,,,,d,,,,d,d,d,,,,d,,,,,,,d,,,,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 
 "#meta label(suites2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
@@ -2541,73 +2610,73 @@ build_suites/suites_build
 #dig label(suites_traffic) start(18; 18; central stairs) hidden() don't path through other dwarves' rooms
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,,or,,,,,,or,,,,oh,,oh,,,,or,,,,,,or,,,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,,,or,,,,,,or,,,,oh,`,oh,,,,or,,,,,,or,,,,`,`
+,`,,,,or,,,,,,,or,,,,`,`,`,,,,or,,,,,,,or,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,or,`,`,`,`,`,,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,,`,`,`,`,`,or,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,or,`,`,`,`,`,,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,,`,`,`,`,`,or,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,or,,,,,,,or,,,,oh,`,oh,,,,or,,,,,,,or,,,,`
 ,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`
 ,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
 ,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`
-,`,`,,,,or,,,,,,or,,,,oh,`,oh,,,,or,,,,,,or,,,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,or,`,`,`,`,`,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,`,`,`,`,`,or,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,`,`,`,`,`,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,`,`,`,`,`,,`,`
-,`,`,,,,or,,,,,,or,,,,oh,,oh,,,,or,,,,,,or,,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,or,,,,,,,or,,,,oh,`,oh,,,,or,,,,,,,or,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,or,`,`,`,`,`,,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,,`,`,`,`,`,or,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,oh,`,oh,,,,,,,,,,,,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,or,`,`,`,`,`,,,`,`,`,`,`,or,oh,`,oh,or,`,`,`,`,`,,,`,`,`,`,`,or,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,`,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,oh,,oh,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,or,,,,,,,or,,,,`,`,`,,,,or,,,,,,,or,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 #build label(suites_build) start(18; 18; central stairs) hidden()
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,,d,,,,,,d,,,,d,,d,,,,d,,,,,,d,,,,`,`
-,`,`,,a,r,`,`,h,,h,`,`,r,a,,`,s,`,,a,r,`,`,h,,h,`,`,r,a,,`,`
-,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,`
-,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`
-,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,s,`,,c,`,`,`,f,,f,`,`,`,c,,`,`
-,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,`
-,`,`,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,`,`
-,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,n,`,s,`,t,,`,`
-,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,`
-,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`
-,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,h,`,`,`,`,,`,`
-,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
-,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
+,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
+,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
+,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
+,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
+,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
-,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
-,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,h,`,`,`,`,,`,`
-,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`
-,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,`
-,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,n,`,s,`,t,,`,`
-,`,`,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,`,`
-,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,`,`,,t,`,s,`,n,,n,`,s,`,t,,`,`
-,`,`,,c,`,`,`,f,,f,`,`,`,c,,`,s,`,,c,`,`,`,f,,f,`,`,`,c,,`,`
-,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,`,`,b,`,`,d,`,`
-,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,h,`,`,`,`,,`,`
-,`,`,,a,r,`,`,h,,h,`,`,r,a,,`,s,`,,a,r,`,`,h,,h,`,`,r,a,,`,`
-,`,`,,,,d,,,,,,d,,,,d,,d,,,,d,,,,,,d,,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
+,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
+,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
+,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
+,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 "#dig label(apartments1) start(18; 18; central stairs) message(Once the area is dug out, continue with /apartments2.) apartment complex"
@@ -2700,13 +2769,13 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,,,,,,,,,,,,,,,,`,`,`
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
-,`,b,,`,b,,`,b,,`,b,,`,b,,`,,`,,b,`,,b,`,,b,`,,b,`,,b,`
+,`,b,,`,b,,`,b,,`,b,,`,b,,d,,d,,b,`,,b,`,,b,`,,b,`,,b,`
 ,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
-,`,b,,`,b,,`,b,,`,b,,`,b,,`,,`,,b,`,,b,`,,b,`,,b,`,,b,`
+,`,b,,`,b,,`,b,,`,b,,`,b,,d,,d,,b,`,,b,`,,b,`,,b,`,,b,`
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
 ,,,,,,,,,,,,,,,,`,`,`

@@ -90,6 +90,10 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     This will be filled in with the display name of your widget, in case you
     have multiple widgets with the same implementation but different
     configurations.
+- ``version``
+    You can set this to any string. If the version string of a loaded widget
+    does not match the saved settings for that widget, then the configuration
+    for the widget (position, enabled status) will be reset to defaults.
 - ``default_pos`` (default: ``{x=-2, y=-2}``)
     Override this attribute with your desired default widget position. See
     the `overlay` docs for information on what positive and negative numbers
@@ -131,7 +135,10 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     seconds) that your widget can take to react to changes in information and
     not annoy the player. Set to 0 to be called at the maximum rate. Be aware
     that running more often than you really need to will impact game FPS,
-    especially if your widget can run while the game is unpaused.
+    especially if your widget can run while the game is unpaused. If you change
+    the value of this attribute dynamically, it may not be noticed until the
+    previous timeout expires. However, if you need a burst of high-frequency
+    updates, set it to ``0`` and it will be noticed immediately.
 
 Registering a widget with the overlay framework
 ***********************************************

@@ -55,7 +55,7 @@ void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
 std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, const df::job_item *job_item, bool ignore_filters);
 bool itemPassesScreen(DFHack::color_ostream& out, df::item* item);
-df::job_item getJobItemWithHeatSafety(const df::job_item *job_item, HeatSafety heat);
+bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat);
 bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<std::string> &special);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
 void finalizeBuilding(DFHack::color_ostream &out, df::building *bld, bool unsuspend_on_finalize);

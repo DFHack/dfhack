@@ -237,7 +237,7 @@ DFHACK_EXPORT std::string getRoomDescription(df::building *building, df::unit *u
  * starting at the top left and moving right, row by row,
  * the block's items are checked for anything on the ground within that stockpile.
  */
-class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator_tag, df::item>
+class DFHACK_EXPORT StockpileIterator
 {
     df::building_stockpilest* stockpile;
     df::map_block* block;
@@ -245,6 +245,12 @@ class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator
     df::item *item;
 
 public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = df::item*;
+    using difference_type = std::ptrdiff_t;
+    using pointer = df::item**;
+    using reference = df::item*&;
+
     StockpileIterator() {
         stockpile = NULL;
         block = NULL;

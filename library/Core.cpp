@@ -84,7 +84,7 @@ using namespace DFHack;
 #include <condition_variable>
 #include "md5wrapper.h"
 
-#include "SDL_events.h"
+#include <SDL_events.h>
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
@@ -1033,7 +1033,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "die")
     {
+#ifdef WIN32
+        TerminateProcess(GetCurrentProcess(),666);
+#else
         std::_Exit(666);
+#endif
     }
     else if (first == "kill-lua")
     {
@@ -1249,7 +1253,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         else if (res == CR_NEEDS_CONSOLE)
             con.printerr("%s needs an interactive console to work.\n"
-                          "Please run this command from the DFHack terminal.\n", first.c_str());
+                          "Please run this command from the DFHack console.\n\n"
+#ifdef WIN32
+                          "You can show the console with the 'show' command."
+#else
+                          "The console is accessible when you run DF from the commandline\n"
+                          "via the './dfhack' script."
+#endif
+                          "\n", first.c_str());
         return res;
     }
 
@@ -1404,7 +1415,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d(dts::make_unique<Private>()),
+    d(std::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},
@@ -1423,6 +1434,7 @@ Core::Core() :
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
+    suppress_duplicate_keyboard_events = true;
     hotkey_set = NO;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
@@ -1430,7 +1442,6 @@ Core::Core() :
     top_viewscreen = NULL;
 
     color_ostream::log_errors_to_stderr = true;
-
 };
 
 void Core::fatal (std::string output)
@@ -1448,12 +1459,9 @@ void Core::fatal (std::string output)
         con.print("\n");
     }
     fprintf(stderr, "%s\n", out.str().c_str());
-#ifndef LINUX_BUILD
-    out << "Check file stderr.log for details\n";
-    MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
-#else
+    out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-#endif
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1469,6 +1477,10 @@ std::string Core::getHackPath()
 #else
     return p->getPath() + "\\hack\\";
 #endif
+}
+
+df::viewscreen * Core::getTopViewscreen() {
+    return getInstance().top_viewscreen;
 }
 
 bool Core::InitMainThread() {
@@ -1491,13 +1503,19 @@ bool Core::InitMainThread() {
     std::cerr << "DFHack build: " << Version::git_description() << "\n"
          << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
 
+    std::cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
+
     // find out what we are...
     #ifdef LINUX_BUILD
         const char * path = "hack/symbols.xml";
     #else
         const char * path = "hack\\symbols.xml";
     #endif
-    auto local_vif = dts::make_unique<DFHack::VersionInfoFactory>();
+    auto local_vif = std::make_unique<DFHack::VersionInfoFactory>();
     std::cerr << "Identifying DF version.\n";
     try
     {
@@ -1513,7 +1531,7 @@ bool Core::InitMainThread() {
         return false;
     }
     vif = std::move(local_vif);
-    auto local_p = dts::make_unique<DFHack::Process>(*vif);
+    auto local_p = std::make_unique<DFHack::Process>(*vif);
     local_p->ValidateDescriptionOS();
     vinfo = local_p->getDescriptor();
 
@@ -1677,11 +1695,6 @@ bool Core::InitSimulationThread()
         return false;
     }
 
-    std::cerr << "Binding to SDL.\n";
-    if (!DFSDL::init(con)) {
-        fatal("cannot bind SDL libraries");
-        return false;
-    }
     if (DFSteam::init(con)) {
         std::cerr << "Found Steam.\n";
         DFSteam::launchSteamDFHackIfNecessary(con);
@@ -1855,6 +1868,11 @@ void *Core::GetData( std::string key )
     }
 }
 
+Core& Core::getInstance() {
+    static Core instance;
+    return instance;
+}
+
 bool Core::isSuspended(void)
 {
     return ownerThread.load() == std::this_thread::get_id();
@@ -1887,8 +1905,8 @@ void Core::doUpdate(color_ostream &out)
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
-    if ((df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
-        (df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
+    if ((df::global::game && df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
+        (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
         doSaveData(out);
@@ -1950,8 +1968,10 @@ void Core::doUpdate(color_ostream &out)
     // Execute per-frame handlers
     onUpdate(out);
 
-    d->last_autosave_request = df::global::plotinfo->main.autosave_request;
-    d->last_manual_save_request = df::global::game->main_interface.options.do_manual_save;
+    if (df::global::game && df::global::plotinfo) {
+        d->last_autosave_request = df::global::plotinfo->main.autosave_request;
+        d->last_manual_save_request = df::global::game->main_interface.options.do_manual_save;
+    }
     d->was_load_save = is_load_save;
 
     out << std::flush;
@@ -2206,9 +2226,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             }
         }
         break;
-    case SC_VIEWSCREEN_CHANGED:
-        Textures::init(out);
-        break;
     default:
         break;
     }
@@ -2347,101 +2364,78 @@ bool Core::DFH_ncurses_key(int key)
     return ncurses_wgetch(key, dummy);
 }
 
-int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
-{
-    // Assume keyboard layouts don't change the order of numbers:
-    if( '0' <= ke.ksym.sym && ke.ksym.sym <= '9') return ke.ksym.sym;
-    if(SDL::K_F1 <= ke.ksym.sym && ke.ksym.sym <= SDL::K_F12) return ke.ksym.sym;
+bool Core::getSuppressDuplicateKeyboardEvents() {
+    return suppress_duplicate_keyboard_events;
+}
 
-    // These keys are mapped to the same control codes as Ctrl-?
-    switch (ke.ksym.sym)
-    {
-        case SDL::K_RETURN:
-        case SDL::K_KP_ENTER:
-        case SDL::K_TAB:
-        case SDL::K_ESCAPE:
-        case SDL::K_DELETE:
-            return ke.ksym.sym;
-        default:
-            break;
-    }
-
-    int unicode = ke.ksym.unicode;
-
-    // convert Ctrl characters to their 0x40-0x5F counterparts:
-    if (unicode < ' ')
-    {
-        unicode += 'A' - 1;
-    }
-
-    // convert A-Z to their a-z counterparts:
-    if('A' <= unicode && unicode <= 'Z')
-    {
-        unicode += 'a' - 'A';
-    }
-
-    // convert various other punctuation marks:
-    if('\"' == unicode) unicode = '\'';
-    if('+' == unicode) unicode = '=';
-    if(':' == unicode) unicode = ';';
-    if('<' == unicode) unicode = ',';
-    if('>' == unicode) unicode = '.';
-    if('?' == unicode) unicode = '/';
-    if('{' == unicode) unicode = '[';
-    if('|' == unicode) unicode = '\\';
-    if('}' == unicode) unicode = ']';
-    if('~' == unicode) unicode = '`';
-
-    return unicode;
+void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
+    DEBUG(keybinding).print("setting suppress_duplicate_keyboard_events to %s\n",
+        suppress ? "true" : "false");
+    suppress_duplicate_keyboard_events = suppress;
 }
 
 // returns true if the event is handled
-bool Core::DFH_SDL_Event(SDL::Event* ev)
+bool Core::DFH_SDL_Event(SDL_Event* ev)
 {
+    static std::map<int, bool> hotkey_states;
+
     // do NOT process events before we are ready.
-    if(!started || !ev)
+    if (!started || !ev)
         return false;
 
-    if(ev->type == SDL::ET_ACTIVEEVENT && ev->active.gain)
-    {
+    if (ev->type == SDL_WINDOWEVENT && ev->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         // clear modstate when gaining focus in case alt-tab was used when
         // losing focus and modstate is now incorrectly set
         modstate = 0;
         return false;
     }
 
-    if(ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
-    {
-        auto ke = (SDL::KeyboardEvent *)ev;
+    if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
+        auto &ke = ev->key;
+        auto &sym = ke.keysym.sym;
 
-        if (ke->ksym.sym == SDL::K_LSHIFT || ke->ksym.sym == SDL::K_RSHIFT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
-        else if (ke->ksym.sym == SDL::K_LCTRL || ke->ksym.sym == SDL::K_RCTRL)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
-        else if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
-        else if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
+        if (sym == SDLK_LSHIFT || sym == SDLK_RSHIFT)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
+        else if (sym == SDLK_LCTRL || sym == SDLK_RCTRL)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
+        else if (sym == SDLK_LALT || sym == SDLK_RALT)
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
+        else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
-            hotkey_states[ke->ksym.sym] = true;
-
-            // Use unicode so Windows gives the correct value for the
-            // user's Input Language
-            if(ke->ksym.unicode && ((ke->ksym.unicode & 0xff80) == 0))
-            {
-                int key = UnicodeAwareSym(*ke);
-                SelectHotkey(key, modstate);
-            }
-            else
-            {
-                // Pretend non-ascii characters don't happen:
-                SelectHotkey(ke->ksym.sym, modstate);
+            // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
+            DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
+            bool handled = SelectHotkey(sym, modstate);
+            if (handled) {
+                hotkey_states[sym] = true;
+                if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
+                    DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
+                    return false;
+                }
+                DEBUG(keybinding).print("%sinhibiting SDL key down event\n",
+                    suppress_duplicate_keyboard_events ? "" : "not ");
+                return suppress_duplicate_keyboard_events;
             }
         }
-        else if(ke->state == SDL::BTN_RELEASED)
+        else if (ke.state == SDL_RELEASED)
         {
-            hotkey_states[ke->ksym.sym] = false;
+            DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
+            hotkey_states[sym] = false;
         }
     }
+    else if (ev->type == SDL_TEXTINPUT) {
+        auto &te = ev->text;
+        DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
+            te.text,
+            modstate & DFH_MOD_SHIFT ? "Shift" : "",
+            modstate & DFH_MOD_CTRL ? "Ctrl" : "",
+            modstate & DFH_MOD_ALT ? "Alt" : "");
+        if (strlen(te.text) == 1 && hotkey_states[te.text[0]]) {
+            DEBUG(keybinding).print("%sinhibiting SDL text event\n",
+                suppress_duplicate_keyboard_events ? "" : "not ");
+            return suppress_duplicate_keyboard_events;
+        }
+    }
+
     return false;
 }
 
@@ -2455,12 +2449,12 @@ bool Core::SelectHotkey(int sym, int modifiers)
     while (screen->child)
         screen = screen->child;
 
-    if (sym == SDL::K_KP_ENTER)
-        sym = SDL::K_RETURN;
+    if (sym == SDLK_KP_ENTER)
+        sym = SDLK_RETURN;
 
     std::string cmd;
 
-    DEBUG(keybinding).print("checking hotkeys for sym=%d, modifiers=%x\n", sym, modifiers);
+    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
 
     {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
@@ -2497,7 +2491,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
         if (cmd.empty()) {
             // Check the hotkey keybindings
-            int idx = sym - SDL::K_F1;
+            int idx = sym - SDLK_F1;
             if(idx >= 0 && idx < 8)
             {
 /* TODO: understand how this changes for v50
@@ -2555,22 +2549,22 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     }
 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDL::K_a + (keyspec[0]-'A');
+        *psym = SDLK_a + (keyspec[0]-'A');
         return true;
     } else if (keyspec.size() == 1 && keyspec[0] == '`') {
-        *psym = SDL::K_BACKQUOTE;
+        *psym = SDLK_BACKQUOTE;
         return true;
     } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
-        *psym = SDL::K_0 + (keyspec[0]-'0');
+        *psym = SDLK_0 + (keyspec[0]-'0');
         return true;
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDL::K_F1 + (keyspec[1]-'1');
+        *psym = SDLK_F1 + (keyspec[1]-'1');
         return true;
     } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
-        *psym = SDL::K_F10 + (keyspec[2]-'0');
+        *psym = SDLK_F10 + (keyspec[2]-'0');
         return true;
     } else if (keyspec == "Enter") {
-        *psym = SDL::K_RETURN;
+        *psym = SDLK_RETURN;
         return true;
     } else
         return false;

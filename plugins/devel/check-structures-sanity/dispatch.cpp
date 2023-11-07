@@ -296,7 +296,7 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
     else if (cs.identity == df::identity_traits<bool>::get())
     {
         auto val = *reinterpret_cast<const uint8_t *>(item.ptr);
-        if (val > 1 && val != 0xd2)
+        if (val > 1 && perturb_byte && val != perturb_byte && val != (perturb_byte ^ 0xff))
         {
             FAIL("invalid value for bool: " << int(val));
         }

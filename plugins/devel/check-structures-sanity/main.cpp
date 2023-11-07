@@ -33,28 +33,33 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
     return CR_OK;
 }
 
-bool check_malloc_perturb()
+// returns 0 if MALLOC_PERTURB_ is unset, or if set to 0, because 0 is not useful
+uint8_t check_malloc_perturb()
 {
-    struct T_test {
-        uint32_t data[1024];
-    };
-    auto test = new T_test;
-    bool ret = (test->data[0] == 0xd2d2d2d2);
-    delete test;
-    return ret;
+    const size_t TEST_DATA_LEN = 5000;  // >1 4kb page
+    std::unique_ptr<uint8_t[]> test_data{new uint8_t[TEST_DATA_LEN]};
+
+    uint8_t expected_perturb = test_data[0];
+    if (getenv("MALLOC_PERTURB_"))
+        expected_perturb = 0xff ^ static_cast<uint8_t>(atoi(getenv("MALLOC_PERTURB_")));
+
+    for (size_t i = 0; i < TEST_DATA_LEN; i++)
+        if (expected_perturb != test_data[i])
+            return 0;
+
+    return expected_perturb;
 }
 
 static command_result command(color_ostream & out, std::vector<std::string> & parameters)
 {
-    if (!check_malloc_perturb())
-    {
-        out.printerr("check-structures-sanity: MALLOC_PERTURB_ not set, cannot continue\n");
-        return CR_FAILURE;
-    }
+    uint8_t perturb_byte = check_malloc_perturb();
+    if (!perturb_byte)
+        out.printerr("check-structures-sanity: MALLOC_PERTURB_ not set. Some checks may be bypassed or fail.\n");
 
     CoreSuspender suspend;
 
     Checker checker(out);
+    checker.perturb_byte = perturb_byte;
 
     // check parameters with values first
 #define VAL_PARAM(name, expr_using_value) \

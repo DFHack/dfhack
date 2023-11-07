@@ -488,7 +488,7 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
             }
             else
             {
-                WARN(socket).print("Accepting connection error: %s %d of %d\n", server.socket.DescribeError(), acceptFail + 1, 5);
+                WARN(socket).print("Connection failure: %s (%d of %d)\n", server.socket.DescribeError(), acceptFail + 1, 5);
             }
         }
     } catch(BlockedException &) {

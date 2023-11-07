@@ -499,7 +499,7 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
 
     if (server.socket.IsSocketValid())
     {
-        WARN(socket).print("To many failed accept, shutting down RemoteServer \n");
+        WARN(socket).print("Too many failed accepts, shutting down RemoteServer\n");
     }
     else
     {

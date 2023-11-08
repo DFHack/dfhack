@@ -39,7 +39,7 @@ local language_name_types = {
 }
 
 local function get_location_religion(religion_id, religion_type)
-    if religion_type == -1 then return 'Temple' 
+    if religion_type == -1 then return 'Temple'
     else return locationselector.get_religion_string(religion_id, religion_type) or '' end
 end
 

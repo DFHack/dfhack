@@ -31,7 +31,7 @@ local function stringify_spheres(spheres)
     return table.concat(strs, ' ')
 end
 
-local function get_religion_string(religion_id, religion_type)
+function get_religion_string(religion_id, religion_type)
     if religion_id == -1 then return end
     local entity
     local spheres = {}

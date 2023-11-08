@@ -1298,6 +1298,7 @@ OVERLAY_WIDGETS = {
     burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,
     slab=require('plugins.sort.slab').SlabOverlay,
     world=require('plugins.sort.world').WorldOverlay,
+    places=require('plugins.sort.places').PlacesOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

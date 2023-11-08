@@ -29,19 +29,15 @@ local zone_names = {
 }
 
 -- I used strings rather than df.civzone_type because nobody is going to search "MeadHall" they're going to search "Tavern"
-local language_name_type_strings = {
+local language_name_types = {
     [df.language_name_type.SymbolFood] = 'Inn/Tavern',
-    [df.language_name_type.SymbolDomestic] = 'MarketStall'
+    [df.language_name_type.Temple] = 'Temple',
+    [df.language_name_type.Hospital] = 'Hospital',
+    [df.language_name_type.Guildhall] = 'Guildhall'
 }
 
 local function get_default_zone_name(zone_type)
     return zone_names[zone_type] or ''
-end
-
-local function get_location_type_from_language_name(language_name_type)
-    -- Looking at df.language.xml I think SymbolFood and SymbolDomestic are the only two we need to override?
-    -- Every other df.language_name_type for a location matches the displayed type name (e.g. Temples are language_name_type.Temple, etc)
-    return language_name_type_strings[language_name_type] or df.language_name_type[language_name_type]
 end
 
 local function get_zone_search_key(zone)
@@ -66,7 +62,7 @@ local function get_zone_search_key(zone)
     else -- zone is a special location and we need to get its type from world data
         local building, success, _ = utils.binsearch(site.buildings, zone.location_id, 'id')
         if success and building.name then
-            table.insert(result, get_location_type_from_language_name(building.name.type))
+            table.insert(result, language_name_types[building.name.type] or '')
             if building.name.has_name then
                 table.insert(result, dfhack.TranslateName(building.name, true))
             end

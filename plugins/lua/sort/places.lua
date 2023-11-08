@@ -11,8 +11,8 @@ local zone_names = {
     [df.civzone_type.MeetingHall] = 'Meeting Area',
     [df.civzone_type.Bedroom] = 'Bedroom',
     [df.civzone_type.DiningHall] = 'Dining Hall',
-    [df.civzone_type.Pen] = 'Pen/Pasture',
-    [df.civzone_type.Pond] = 'Pit/Pond',
+    [df.civzone_type.Pen] = 'Pen Pasture',
+    [df.civzone_type.Pond] = 'Pit Pond',
     [df.civzone_type.WaterSource] = 'Water Source',
     [df.civzone_type.Dungeon] = 'Dungeon',
     [df.civzone_type.FishingArea] = 'Fishing',
@@ -30,7 +30,7 @@ local zone_names = {
 
 -- I used strings rather than df.civzone_type because nobody is going to search "MeadHall" they're going to search "Tavern"
 local language_name_types = {
-    [df.language_name_type.SymbolFood] = 'Inn/Tavern',
+    [df.language_name_type.SymbolFood] = 'Inn Tavern',
     [df.language_name_type.Temple] = 'Temple',
     [df.language_name_type.Hospital] = 'Hospital',
     [df.language_name_type.Guildhall] = 'Guildhall'

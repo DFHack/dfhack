@@ -1,8 +1,8 @@
 local _ENV = mkmodule('datetime')
 
-local DAYS_PER_MONTH    = 28
-local DAYS_PER_YEAR     = 336
-local MONTHS_PER_YEAR   = 12
+DAYS_PER_MONTH    = 28
+DAYS_PER_YEAR     = 336
+MONTHS_PER_YEAR   = 12
 
 DWARF_TICKS_PER_DAY     = 1200
 --local DWARF_TICKS_PER_MONTH = DWARF_TICKS_PER_DAY * DAYS_PER_MONTH
@@ -16,7 +16,7 @@ ADVENTURE_TICKS_PER_DAY = 172800
 --local TICKS_PER_MONTH = DWARF_TICKS_PER_MONTH
 --local TICKS_PER_YEAR  = TICKS_PER_MONTH * MONTHS_PER_YEAR
 
-local CALENDAR_MONTHS = {
+CALENDAR_MONTHS = {
     'Granite',
     'Slate',
     'Felsite',
@@ -73,25 +73,24 @@ DwarfCalendar.ATTRS{
 }
 
 function DwarfCalendar:init()
-    self:setTickRates(self.ticks_per_day)
+    self:setTickRate(self.ticks_per_day)
     self:normalize()
 end
 
-function DwarfCalendar:setTickRates(ticks_per_day)
+function DwarfCalendar:setTickRate(ticks_per_day)
     -- game_mode.DWARF and .ADVENTURE values are < 10
     -- too low for sane tick rates, so we can utilize em.
     -- this might be useful if the caller wants to set by game mode
     if (ticks_per_day == df.game_mode.DWARF) then
         self.ticks_per_day = DWARF_TICKS_PER_DAY
-    elseif (ticks_per_day == df.game_mode.ADVENTURE)
+    elseif (ticks_per_day == df.game_mode.ADVENTURE) then
         self.ticks_per_day = ADVENTURE_TICKS_PER_DAY
     else
-        -- should we throw an error if caller passed in <= 0 here?
-        -- if not, we'll divide by zero later
         self.ticks_per_day = (ticks_per_day > 0) and ticks_per_day or DWARF_TICKS_PER_DAY
     end
     self.ticks_per_month = self.ticks_per_day * DAYS_PER_MONTH
-    self.ticks_per_year  = self.ticks_per_month * MONTHS_PER_YEAR
+    self.ticks_per_year  = self.ticks_per_day * DAYS_PER_YEAR
+    return self
 end
 
 function DwarfCalendar:addTicks(ticks)
@@ -101,13 +100,13 @@ function DwarfCalendar:addTicks(ticks)
 end
 
 function DwarfCalendar:addDays(days)
-    self.year_tick = self.year_tick + self.daysToTicks(days)
+    self.year_tick = self.year_tick + self:daysToTicks(days)
     self:normalize()
     return self
 end
 
 function DwarfCalendar:addMonths(months)
-    self.year_tick = self.year_tick + self.monthsToTicks(months)
+    self.year_tick = self.year_tick + self:monthsToTicks(months)
     self:normalize()
     return self
 end
@@ -123,8 +122,11 @@ function DwarfCalendar:getYears()
     return self.year, self.year_tick
 end
 
-function DwarfCalendar:setDayOfMonth(month, day)
-    self.year_tick = DwarfCalendar.monthsToTicks(month) + DwarfCalendar.daysToTicks(day)
+function DwarfCalendar:setDayOfMonth(day, month)
+    month = month or self:getMonth()
+    -- zero based when converting to ticks
+    self.year_tick = self:monthsToTicks(month-1) + self:daysToTicks(day-1)
+    return self
 end
 
 -- returns an integer pair: (day of month starting from 1), (day tick count)
@@ -211,14 +213,14 @@ function DwarfCalendar:nextFullMoon()
         2, 28
     }
 
-    if (dateT:getDayOfMonth() < fm[cur_m])
-        dateT:setDayOfMonth(cur_m, fm[cur_m])
+    if (dateT:getDayOfMonth() < fm[cur_m]) then
+        dateT:setDayOfMonth(fm[cur_m], cur_m)
     else
         -- Next full moon is on the next month
         -- or next year if addDays() rolled us over.
-        -- Obsidian is a possible exception since it has 2 full moons
-        -- this also handles the case when Obsidian day is between 2 and 28 exclusive
-        dateT:setDayOfMonth(cur_m, fm[cur_m+1])
+        -- Obsidian is special since it has 2 full moons
+        -- also handles the case when Obsidian day is between 2 and 28 exclusive
+        dateT:setDayOfMonth(fm[cur_m+1], cur_m)
     end
 
     return dateT
@@ -241,13 +243,13 @@ end
 function DwarfCalendar:__add(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DwarfCalendar{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick) }
+    return DwarfCalendar{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick), ticks_per_day = self.ticks_per_day }
 end
 
 function DwarfCalendar:__sub(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DwarfCalendar{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
+    return DwarfCalendar{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick), ticks_per_day = self.ticks_per_day }
 end
 
 function DwarfCalendar:_debugOps(other)
@@ -255,14 +257,7 @@ function DwarfCalendar:_debugOps(other)
     print('second: '..other.year,other.year_tick)
 end
 
-
-function DwarfCalendar.getMonthNames()
-    return CALENDAR_MONTHS
-end
-
-
 DateTime = defclass(DateTime, DwarfCalendar)
-
 
 -- returns hours (24 hour format), minutes, seconds
 function DateTime:getTime()
@@ -292,20 +287,20 @@ end
 -- where the caller provides the time unit specifiers
 -- i.e. getDuration/toDuration('ymd') or toDuration('y', 'm', 'd'), etc
 function DateTime:toDuration()
-    return Duration{ year = self.year, year_tick = self.year_tick }
+    return Duration{ year = self.year, year_tick = self.year_tick, ticks_per_day = self.ticks_per_day }
 end
 
 function DateTime:__add(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DateTime{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick) }
+    return DateTime{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick), ticks_per_day = self.ticks_per_day }
 end
 
 -- might make sense to return a Duration here
 function DateTime:__sub(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DateTime{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
+    return DateTime{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick), ticks_per_day = self.ticks_per_day }
 end
 
 function DateTime.now(game_mode)
@@ -313,7 +308,10 @@ function DateTime.now(game_mode)
     -- if game_mode is not given or not ADVENTURE then default to DWARF mode
     local ticks = (game_mode == df.game_mode.ADVENTURE) and
             (df.global.cur_year_tick_advmode) or (df.global.cur_year_tick)
-    return DateTime{ year = df.global.cur_year, year_tick = ticks }
+    -- Tick rate defaults to DWARF mode, we should set the tick rate here as well
+    -- For a custom rate the caller can use setTickRate() or we can add a second
+    -- optional parameter
+    return DateTime{ year = df.global.cur_year, year_tick = ticks }:setTickRate(game_mode)
 end
 
 Duration = defclass(Duration, DwarfCalendar)
@@ -353,6 +351,5 @@ function Duration:__sub(other)
     -- normalize() handles adjustments to year and year_tick
     return Duration{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
 end
-
 
 return _ENV

@@ -116,17 +116,17 @@ function DwarfCalendar:addYears(years)
     return self
 end
 
--- should this be named getYear()?
--- returns an integer pair: (year), (year tick count)
-function DwarfCalendar:getYears()
-    return self.year, self.year_tick
-end
-
 function DwarfCalendar:setDayOfMonth(day, month)
     month = month or self:getMonth()
     -- zero based when converting to ticks
     self.year_tick = self:monthsToTicks(month-1) + self:daysToTicks(day-1)
     return self
+end
+
+-- should this be named getYear()?
+-- returns an integer pair: (year), (year tick count)
+function DwarfCalendar:getYears()
+    return self.year, self.year_tick
 end
 
 -- returns an integer pair: (day of month starting from 1), (day tick count)
@@ -194,7 +194,9 @@ function DwarfCalendar:isFullMoon()
 end
 
 function DwarfCalendar:nextFullMoon()
-    local dateT = DateTime{ year = self.year, year_tick = self.year_tick }
+    local dateT = DateTime{ year = self.year,
+                            year_tick = self.year_tick,
+                            ticks_per_day = self.ticks_per_day }
     if (dateT:isFullMoon()) then dateT:addDays(1) end
 
     local cur_m = dateT:getMonth()
@@ -243,13 +245,17 @@ end
 function DwarfCalendar:__add(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DwarfCalendar{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick), ticks_per_day = self.ticks_per_day }
+    return DwarfCalendar{ year = (self.year + other.year),
+                          year_tick = (self.year_tick + other.year_tick),
+                          ticks_per_day = self.ticks_per_day }
 end
 
 function DwarfCalendar:__sub(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DwarfCalendar{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick), ticks_per_day = self.ticks_per_day }
+    return DwarfCalendar{ year = (self.year - other.year),
+                          year_tick = (self.year_tick - other.year_tick),
+                          ticks_per_day = self.ticks_per_day }
 end
 
 function DwarfCalendar:_debugOps(other)
@@ -287,20 +293,26 @@ end
 -- where the caller provides the time unit specifiers
 -- i.e. getDuration/toDuration('ymd') or toDuration('y', 'm', 'd'), etc
 function DateTime:toDuration()
-    return Duration{ year = self.year, year_tick = self.year_tick, ticks_per_day = self.ticks_per_day }
+    return Duration{ year = self.year,
+                     year_tick = self.year_tick,
+                     ticks_per_day = self.ticks_per_day }
 end
 
 function DateTime:__add(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DateTime{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick), ticks_per_day = self.ticks_per_day }
+    return DateTime{ year = (self.year + other.year),
+                     year_tick = (self.year_tick + other.year_tick),
+                     ticks_per_day = self.ticks_per_day }
 end
 
 -- might make sense to return a Duration here
 function DateTime:__sub(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return DateTime{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick), ticks_per_day = self.ticks_per_day }
+    return DateTime{ year = (self.year - other.year),
+                     year_tick = (self.year_tick - other.year_tick),
+                     ticks_per_day = self.ticks_per_day }
 end
 
 function DateTime.now(game_mode)
@@ -311,7 +323,8 @@ function DateTime.now(game_mode)
     -- Tick rate defaults to DWARF mode, we should set the tick rate here as well
     -- For a custom rate the caller can use setTickRate() or we can add a second
     -- optional parameter
-    return DateTime{ year = df.global.cur_year, year_tick = ticks }:setTickRate(game_mode)
+    return DateTime{ year = df.global.cur_year,
+                     year_tick = ticks }:setTickRate(game_mode)
 end
 
 Duration = defclass(Duration, DwarfCalendar)
@@ -343,13 +356,17 @@ end
 function Duration:__add(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return Duration{ year = (self.year + other.year), year_tick = (self.year_tick + other.year_tick) }
+    return Duration{ year = (self.year + other.year),
+                     year_tick = (self.year_tick + other.year_tick),
+                     ticks_per_day = self.ticks_per_day }
 end
 
 function Duration:__sub(other)
     if DEBUG then self:_debugOps(other) end
     -- normalize() handles adjustments to year and year_tick
-    return Duration{ year = (self.year - other.year) , year_tick = (self.year_tick - other.year_tick) }
+    return Duration{ year = (self.year - other.year),
+                     year_tick = (self.year_tick - other.year_tick),
+                     ticks_per_day = self.ticks_per_day }
 end
 
 return _ENV

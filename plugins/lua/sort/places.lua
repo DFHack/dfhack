@@ -35,11 +35,11 @@ local language_name_types = {
     [df.language_name_type.Temple] = 'Temple',
     [df.language_name_type.Hospital] = 'Hospital',
     [df.language_name_type.Guildhall] = 'Guildhall',
-    [df.language_name_type.Library] = 'Library'
+    [df.language_name_type.Library] = 'Library',
 }
 
 local function get_location_religion(religion_id, religion_type)
-    if religion_type == -1 then return 'Temple'
+    if religion_type == df.temple_deity_type.None then return 'Temple'
     else return locationselector.get_religion_string(religion_id, religion_type) or '' end
 end
 
@@ -101,7 +101,7 @@ local function get_location_search_key(zone)
         if df.abstract_building_templest:is_instance(building) then
             table.insert(result, get_location_religion(building.deity_data.Deity or building.deity_data.Religion, building.deity_type))
         elseif df.abstract_building_guildhallst:is_instance(building) then
-            local dwarfified_profession = locationselector.get_profession_string(building.contents.profession):gsub('[Mm][Aa][Nn]', 'dwarf') -- Craftsman becomes Craftsdwarf, etc
+            local dwarfified_profession = locationselector.get_profession_string(building.contents.profession)
             table.insert(result, dwarfified_profession)
         end
 

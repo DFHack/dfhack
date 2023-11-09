@@ -53,7 +53,7 @@ end
 function get_profession_string(profession)
     local profession_string = df.profession[profession]:gsub('_', ' ')
     local dwarfified_string = profession_string:gsub('[Mm][Aa][Nn]', 'dwarf')
-    return profession_string + " " + dwarfified_string
+    return profession_string .. " " .. dwarfified_string
 end
 
 function LocationSelectorOverlay:init()

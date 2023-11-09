@@ -50,7 +50,7 @@ function get_religion_string(religion_id, religion_type)
     return ('%s %s'):format(dfhack.TranslateName(entity.name, true), stringify_spheres(spheres))
 end
 
-local function get_profession_string(profession)
+function get_profession_string(profession)
     return df.profession[profession]:gsub('_', ' ')
 end
 

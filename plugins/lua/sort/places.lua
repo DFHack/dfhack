@@ -101,9 +101,7 @@ local function get_location_search_key(zone)
         if language_name_types[building.name.type] == 'Temple' then
             table.insert(result, get_location_religion(building.deity_data.Deity or building.deity_data.Religion, building.deity_type))
         elseif language_name_types[building.name.type] == 'Guildhall' then
-            -- Broke this up into two locals because table.insert doesn't like it all being inside the second argument for some reason
-            local profession = df.profession[building.contents.profession]
-            local dwarfified_profession = profession:gsub('[Mm][Aa][Nn]', 'dwarf') -- Craftsman becomes Craftsdwarf, etc
+            local dwarfified_profession = locationselector.get_profession_string(building.contents.profession):gsub('[Mm][Aa][Nn]', 'dwarf') -- Craftsman becomes Craftsdwarf, etc
             table.insert(result, dwarfified_profession)
         end
 

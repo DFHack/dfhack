@@ -1,44 +1,14 @@
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
 #include "PluginManager.h"
-
-#include "modules/Gui.h"
-#include "modules/Translation.h"
-#include "modules/Units.h"
-#include "modules/Job.h"
-
-#include "LuaTools.h"
-
-#include "DataDefs.h"
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/viewscreen_joblistst.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/viewscreen_layer_militaryst.h"
-#include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_layer_overall_healthst.h"
-#include "df/viewscreen_layer_assigntradest.h"
-#include "df/viewscreen_tradegoodsst.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_petst.h"
-#include "df/viewscreen_storesst.h"
-#include "df/viewscreen_workshop_profilest.h"
-#include "df/layer_object_listst.h"
-#include "df/assign_trade_status.h"
-
-#include "MiscUtils.h"
-
-#include <stdlib.h>
 
 using std::vector;
 using std::string;
-using std::endl;
+
 using namespace DFHack;
-using namespace df::enums;
 
 DFHACK_PLUGIN("sort");
-REQUIRE_GLOBAL(ui);
+
+/*
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_item_cursor);
@@ -52,16 +22,18 @@ static bool item_list_hotkey(df::viewscreen *top);
 
 static command_result sort_units(color_ostream &out, vector <string> & parameters);
 static command_result sort_items(color_ostream &out, vector <string> & parameters);
+*/
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand(
-        "sort-units", "Sort the visible unit list.", sort_units, unit_list_hotkey));
-    commands.push_back(PluginCommand(
-        "sort-items", "Sort the visible item list.", sort_items, item_list_hotkey));
+    // commands.push_back(PluginCommand(
+    //     "sort-units", "Sort the visible unit list.", sort_units, unit_list_hotkey));
+    // commands.push_back(PluginCommand(
+    //     "sort-items", "Sort the visible item list.", sort_items, item_list_hotkey));
     return CR_OK;
 }
 
+/*
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
@@ -232,10 +204,7 @@ typedef void (*SortHandler)(color_ostream *pout, lua_State *L, int top,
 
 static std::map<std::string, SortHandler> unit_sorters;
 
-/*
- * Sort units in the 'u'nit list screen.
- */
-
+// Sort units in the 'u'nit list screen.
 DEFINE_SORT_HANDLER(unit_sorters, unitlist, "", units)
 {
     PARSE_SPEC("units", parameters);
@@ -250,10 +219,7 @@ DEFINE_SORT_HANDLER(unit_sorters, unitlist, "", units)
     }
 }
 
-/*
- * Sort units in the 'j'ob list screen.
- */
-
+//Sort units in the 'j'ob list screen.
 DEFINE_SORT_HANDLER(unit_sorters, joblist, "", jobs)
 {
     PARSE_SPEC("units", parameters);
@@ -275,10 +241,7 @@ DEFINE_SORT_HANDLER(unit_sorters, joblist, "", jobs)
     }
 }
 
-/*
- * Sort candidate units in the 'p'osition page of the 'm'ilitary screen.
- */
-
+// Sort candidate units in the 'p'osition page of the 'm'ilitary screen.
 DEFINE_SORT_HANDLER(unit_sorters, layer_military, "/Positions/Candidates", military)
 {
     auto &candidates = military->positions.candidates;
@@ -292,7 +255,6 @@ DEFINE_SORT_HANDLER(unit_sorters, layer_military, "/Positions/Candidates", milit
         reorder_vector(&candidates, order);
     }
 }
-
 
 DEFINE_SORT_HANDLER(unit_sorters, layer_noblelist, "/Appoint", nobles)
 {
@@ -312,10 +274,7 @@ DEFINE_SORT_HANDLER(unit_sorters, layer_noblelist, "/Appoint", nobles)
     }
 }
 
-/*
- * Sort animal units in the Animal page of the 'z' status screen.
- */
-
+//Sort animal units in the Animal page of the 'z' status screen.
 DEFINE_SORT_HANDLER(unit_sorters, pet, "/List", animals)
 {
     PARSE_SPEC("units", parameters);
@@ -334,10 +293,7 @@ DEFINE_SORT_HANDLER(unit_sorters, pet, "/List", animals)
     }
 }
 
-/*
- * Sort candidate trainers in the Animal page of the 'z' status screen.
- */
-
+// Sort candidate trainers in the Animal page of the 'z' status screen.
 DEFINE_SORT_HANDLER(unit_sorters, pet, "/SelectTrainer", animals)
 {
     sort_null_first(parameters);
@@ -351,10 +307,7 @@ DEFINE_SORT_HANDLER(unit_sorters, pet, "/SelectTrainer", animals)
     }
 }
 
-/*
- * Sort units in the Health page of the 'z' status screen.
- */
-
+// Sort units in the Health page of the 'z' status screen.
 DEFINE_SORT_HANDLER(unit_sorters, layer_overall_health, "/Units", health)
 {
     auto list1 = getLayerList(health, 0);
@@ -371,26 +324,20 @@ DEFINE_SORT_HANDLER(unit_sorters, layer_overall_health, "/Units", health)
     }
 }
 
-/*
- * Sort burrow member candidate units in the 'w' sidebar mode.
- */
-
+// Sort burrow member candidate units in the 'w' sidebar mode.
 DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/Burrows/AddUnits", screen)
 {
     PARSE_SPEC("units", parameters);
 
-    if (compute_order(*pout, L, top, &order, ui->burrows.list_units))
+    if (compute_order(*pout, L, top, &order, plotinfo->burrows.list_units))
     {
-        reorder_cursor(&ui->burrows.unit_cursor_pos, order);
-        reorder_vector(&ui->burrows.list_units, order);
-        reorder_vector(&ui->burrows.sel_units, order);
+        reorder_cursor(&plotinfo->burrows.unit_cursor_pos, order);
+        reorder_vector(&plotinfo->burrows.list_units, order);
+        reorder_vector(&plotinfo->burrows.sel_units, order);
     }
 }
 
-/*
- * Sort building owner candidate units in the 'q' sidebar mode, or cage assignment.
- */
-
+// Sort building owner candidate units in the 'q' sidebar mode, or cage assignment.
 DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/QueryBuilding/Some/Assign", screen)
 {
     sort_null_first(parameters);
@@ -410,10 +357,7 @@ DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/QueryBuilding/Some/Assign", scree
     }
 }
 
-/*
- * Sort units in the workshop 'q'uery 'P'rofile modification screen.
- */
-
+// Sort units in the workshop 'q'uery 'P'rofile modification screen.
 DEFINE_SORT_HANDLER(unit_sorters, workshop_profile, "/Unit", profile)
 {
     PARSE_SPEC("units", parameters);
@@ -425,10 +369,7 @@ DEFINE_SORT_HANDLER(unit_sorters, workshop_profile, "/Unit", profile)
     }
 }
 
-/*
- * Sort pen assignment candidate units in 'z'->'N'.
- */
-
+// Sort pen assignment candidate units in 'z'->'N'.
 DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/ZonesPenInfo/Assign", screen)
 {
     PARSE_SPEC("units", parameters);
@@ -562,3 +503,4 @@ static command_result sort_items(color_ostream &out, vector <string> &parameters
 
     return CR_OK;
 }
+*/

@@ -102,10 +102,12 @@ namespace DFHack {
 
 #ifdef NDEBUG
 /*!
- * Reduce minimum compiled in debug levels if NDEBUG is defined. This is LDEBUG
- * and not LINFO so users can usefully increase logging levels for bug reports.
+ * This is here so we can reduce minimum compiled in debug levels if NDEBUG is
+ * defined if we want to. If LTRACE slows down the binary, we can change it to
+ * LDEBUG (but no lower than that so users can usefully increase logging levels
+ *for bug reports).
  */
-#define DBG_FILTER DFHack::DebugCategory::LDEBUG
+#define DBG_FILTER DFHack::DebugCategory::LTRACE
 #else
 //! Set default compiled in debug levels to include all prints
 #define DBG_FILTER DFHack::DebugCategory::LTRACE

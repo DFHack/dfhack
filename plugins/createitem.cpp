@@ -16,7 +16,7 @@
 #include "DataDefs.h"
 #include "df/game_type.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/historical_entity.h"
 #include "df/world_site.h"
@@ -38,7 +38,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("createitem");
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(cur_year_tick);
 
@@ -78,7 +78,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
 
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
         0, df::historical_entity::find(unit->civ_id),
-        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL, NULL);
+        (World::isFortressMode()) ? df::world_site::find(plotinfo->site_id) : NULL, NULL);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
@@ -178,6 +178,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             case item_type::BUCKET:
             case item_type::ANIMALTRAP:
             case item_type::BOX:
+            case item_type::BAG:
             case item_type::BIN:
             case item_type::BACKPACK:
             case item_type::QUIVER:

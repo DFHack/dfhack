@@ -3,7 +3,6 @@
 local _ENV = mkmodule('argparse')
 
 local getopt = require('3rdparty.alt_getopt')
-local guidm = require('gui.dwarfmode')
 
 function processArgs(args, validArgs)
     local result = {}
@@ -174,6 +173,7 @@ end
 
 function coords(arg, arg_name, skip_validation)
     if arg == 'here' then
+        local guidm = require('gui.dwarfmode')  -- globals may not be available yet
         local cursor = guidm.getCursorPos()
         if not cursor then
             arg_error(arg_name,
@@ -194,6 +194,18 @@ function coords(arg, arg_name, skip_validation)
                   'specified coordinates not on current map: "%s"', arg)
     end
     return pos
+end
+
+local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,
+              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false}
+function boolean(arg, arg_name)
+    local arg_lower = string.lower(arg)
+    if toBool[arg_lower] == nil then
+        arg_error(arg_name,
+            'unknown value: "%s"; expected "true", "yes", "false", or "no"', arg)
+    end
+
+    return toBool[arg_lower]
 end
 
 return _ENV

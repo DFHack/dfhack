@@ -20,8 +20,10 @@ Usage
 anything your civilization can produce, such as "dress" or "mitten".
 
 When invoked without parameters, it shows a summary of all managed clothing
-orders. When invoked with a material and item, but without a quantity, it shows
+orders, and the overall clothing situation in your fort.
+When invoked with a material and item, but without a quantity, it shows
 the current configuration for that material and item.
+
 
 Examples
 --------

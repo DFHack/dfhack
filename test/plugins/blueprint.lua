@@ -1,3 +1,5 @@
+config.target = 'blueprint'
+
 local b = require('plugins.blueprint')
 
 -- also covers code shared between parse_gui_commandline and parse_commandline
@@ -117,9 +119,9 @@ function test.parse_gui_commandline()
                        function() b.parse_gui_commandline({}, {''}) end)
 
     opts = {}
-    b.parse_gui_commandline(opts, {'imaname', 'dig', 'query'})
+    b.parse_gui_commandline(opts, {'imaname', 'dig', 'place'})
     expect.table_eq({auto_phase=false, format='minimal', split_strategy='none',
-                     name='imaname', dig=true, query=true},
+                     name='imaname', dig=true, place=true},
                     opts)
 
     expect.error_match('unknown phase',
@@ -203,9 +205,9 @@ function test.do_phase_positive_dims()
         function()
               local spos = {x=10, y=20, z=30}
               local epos = {x=11, y=21, z=31}
-              b.query(spos, epos, 'imaname')
+              b.place(spos, epos, 'imaname')
               expect.eq(1, mock_run.call_count)
-              expect.table_eq({'2', '2', '2', 'imaname', 'query',
+              expect.table_eq({'2', '2', '2', 'imaname', 'place',
                                '--cursor=10,20,30'},
                               mock_run.call_args[1])
         end)
@@ -217,9 +219,9 @@ function test.do_phase_negative_dims()
         function()
               local spos = {x=11, y=21, z=31}
               local epos = {x=10, y=20, z=30}
-              b.query(spos, epos, 'imaname')
+              b.place(spos, epos, 'imaname')
               expect.eq(1, mock_run.call_count)
-              expect.table_eq({'2', '2', '-2', 'imaname', 'query',
+              expect.table_eq({'2', '2', '-2', 'imaname', 'place',
                                '--cursor=10,20,31'},
                               mock_run.call_args[1])
         end)
@@ -231,9 +233,9 @@ function test.do_phase_ensure_cursor_is_at_upper_left()
         function()
               local spos = {x=11, y=20, z=30}
               local epos = {x=10, y=21, z=31}
-              b.query(spos, epos, 'imaname')
+              b.place(spos, epos, 'imaname')
               expect.eq(1, mock_run.call_count)
-              expect.table_eq({'2', '2', '2', 'imaname', 'query',
+              expect.table_eq({'2', '2', '2', 'imaname', 'place',
                                '--cursor=10,20,30'},
                               mock_run.call_args[1])
         end)
@@ -241,16 +243,16 @@ end
 
 function test.get_filename()
     local opts = {name='a', split_strategy='none'}
-    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq('dfhack-config/blueprints/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='none'}
-    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq('dfhack-config/blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a', split_strategy='phase'}
-    expect.eq('blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq('dfhack-config/blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='phase'}
-    expect.eq('blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
+    expect.eq('dfhack-config/blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
 
     expect.error_match('could not parse basename', function()
             b.get_filename({name='', split_strategy='none'})

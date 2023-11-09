@@ -3,7 +3,7 @@ stocks
 
 .. dfhack-tool::
     :summary: Enhanced fortress stock management interface.
-    :tags: fort productivity items
+    :tags: unavailable
 
 When the plugin is enabled, two new hotkeys become available:
 

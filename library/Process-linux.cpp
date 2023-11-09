@@ -138,7 +138,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     {
         t_memrange temp;
         temp.name[0] = 0;
-        sscanf(buffer, "%zx-%zx %s %zx %2zx:%2zx %zu %[^\n]",
+        sscanf(buffer, "%zx-%zx %s %zx %zx:%zx %zu %[^\n]",
                &start,
                &end,
                (char*)&permissions,

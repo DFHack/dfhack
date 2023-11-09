@@ -78,8 +78,7 @@ def write_tool_docs():
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
-            if k[0] != 'search':
-                outfile.write(label)
+            outfile.write(label)
             outfile.write(include)
 
 

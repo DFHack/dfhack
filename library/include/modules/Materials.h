@@ -139,25 +139,25 @@ namespace DFHack
         std::string getToken() const;
         std::string toString(uint16_t temp = 10015, bool named = true) const;
 
-        bool isAnyCloth();
+        bool isAnyCloth() const;
 
-        void getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask);
-        void getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask);
-        void getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask);
+        void getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const;
+        void getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask) const;
+        void getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask) const;
 
         df::craft_material_class getCraftClass();
 
-        bool matches(const MaterialInfo &mat)
+        bool matches(const MaterialInfo &mat) const
         {
             if (!mat.isValid()) return true;
             return (type == mat.type) &&
                    (mat.index == -1 || index == mat.index);
         }
 
-        bool matches(const df::job_material_category &cat);
-        bool matches(const df::dfhack_material_category &cat);
+        bool matches(const df::job_material_category &cat) const;
+        bool matches(const df::dfhack_material_category &cat) const;
         bool matches(const df::job_item &item,
-                     df::item_type itype = df::item_type::NONE);
+                     df::item_type itype = df::item_type::NONE) const;
     };
 
     DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category *cat, const std::string &token);
@@ -168,6 +168,9 @@ namespace DFHack
     }
     inline bool operator!= (const MaterialInfo &a, const MaterialInfo &b) {
         return a.type != b.type || a.index != b.index;
+    }
+    inline bool operator< (const MaterialInfo &a, const MaterialInfo &b) {
+        return a.type < b.type || (a.type == b.type && a.index < b.index);
     }
 
     DFHACK_EXPORT bool isSoilInorganic(int material);

@@ -27,6 +27,8 @@ distribution.
 #include "MiscUtils.h"
 #include "ColorText.h"
 
+#include "modules/DFSDL.h"
+
 #ifndef LINUX_BUILD
 // We don't want min and max macros
 #define NOMINMAX
@@ -34,6 +36,7 @@ distribution.
 #else
     #include <sys/time.h>
     #include <ctime>
+    #include <cxxabi.h>
 #endif
 
 #include <ctype.h>
@@ -469,4 +472,30 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in)
 {
     return out.is_console() ? DF2CONSOLE(in) : in;
+}
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out)
+{
+#ifdef __GNUC__
+    int status;
+    char *demangled = abi::__cxa_demangle(mangled_name.c_str(), nullptr, nullptr, &status);
+    std::string out;
+    if (demangled) {
+        out = demangled;
+        free(demangled);
+    }
+    if (status_out) {
+        if (status == 0) *status_out = "success";
+        else if (status == -1) *status_out = "memory allocation failure";
+        else if (status == -2) *status_out = "invalid mangled name";
+        else if (status == -3) *status_out = "invalid arguments";
+        else *status_out = "unknown error";
+    }
+    return out;
+#else
+    if (status_out) {
+        *status_out = "not implemented on this platform";
+    }
+    return "";
+#endif
 }

@@ -54,10 +54,10 @@ local function onPostSidebar(workshop)
     if shop_id then
         if _registeredStuff.shopNonNative and _registeredStuff.shopNonNative[shop_id]  then
             if _registeredStuff.shopNonNative[shop_id].all then
-                --[[for _,button in ipairs(df.global.ui_sidebar_menus.workshop_job.choices_all) do
+                --[[for _,button in ipairs(df.global.game.workshop_job.choices_all) do
                     button.is_hidden=true
                 end]]
-                df.global.ui_sidebar_menus.workshop_job.choices_visible:resize(0)
+                df.global.game.workshop_job.choices_visible:resize(0)
             else
                 --todo by name
             end
@@ -72,7 +72,7 @@ local function onPostSidebar(workshop)
                 new_button.job_type=df.job_type.CustomReaction --could be used for other stuff too i guess...
                 new_button.reaction_name=reaction_name
                 new_button.is_custom=true
-                local wjob=df.global.ui_sidebar_menus.workshop_job
+                local wjob=df.global.game.workshop_job
                 wjob.choices_all:insert("#",new_button)
                 wjob.choices_visible:insert("#",new_button)
             end

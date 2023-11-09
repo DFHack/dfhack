@@ -38,6 +38,9 @@ COLOR_LIGHTMAGENTA = 13
 COLOR_YELLOW = 14
 COLOR_WHITE = 15
 
+COLOR_GRAY = COLOR_GREY
+COLOR_DARKGRAY = COLOR_DARKGREY
+
 -- Events
 
 if dfhack.is_core_context then
@@ -49,6 +52,18 @@ if dfhack.is_core_context then
     SC_CORE_INITIALIZED = 5
     SC_PAUSED = 7
     SC_UNPAUSED = 8
+end
+
+-- User-changeable options
+
+dfhack.HIDE_CONSOLE_ON_STARTUP = true
+function dfhack.getHideConsoleOnStartup()
+    return dfhack.HIDE_CONSOLE_ON_STARTUP
+end
+
+dfhack.HIDE_ARMOK_TOOLS = false
+function dfhack.getHideArmokTools()
+    return dfhack.HIDE_ARMOK_TOOLS
 end
 
 -- Error handling
@@ -321,7 +336,7 @@ end
 function pos2xyz(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y, pos.z
         end
     end
@@ -346,7 +361,7 @@ end
 function pos2xy(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y
         end
     end
@@ -390,6 +405,14 @@ function ensure_key(t, key, default_value)
         t[key] = (default_value ~= nil) and default_value or {}
     end
     return t[key]
+end
+
+function ensure_keys(t, key, ...)
+    t = ensure_key(t, key)
+    if select('#', ...) > 0 then
+        return ensure_keys(t, ...)
+    end
+    return t
 end
 
 -- String class extentions
@@ -657,16 +680,18 @@ function Script:get_flags()
         self.flags_mtime = mtime
         self._flags = {}
         local f = io.open(self.path)
-        local contents = f:read('*all')
-        f:close()
-        for line in contents:gmatch('%-%-@([^\n]+)') do
-            local chunk = load(line, self.path, 't', self._flags)
+        for line in f:lines() do
+            local at_tag = line:match('^%-%-@(.+)')
+            if not at_tag then goto continue end
+            local chunk = load(at_tag, self.path, 't', self._flags)
             if chunk then
                 chunk()
             else
                 dfhack.printerr('Parse error: ' .. line)
             end
+            ::continue::
         end
+        f:close()
     end
     return self._flags
 end
@@ -695,7 +720,19 @@ local valid_script_flags = {
     scripts = {required = false},
 }
 
+local warned_scripts = {}
+
 function dfhack.run_script(name,...)
+    if not warned_scripts[name] then
+        local helpdb = require('helpdb')
+        if helpdb.is_entry(name) and helpdb.get_entry_tags(name).unavailable then
+            warned_scripts[name] = true
+            dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
+            dfhack.printerr('It may not work as expected, or it may corrupt your game.')
+            qerror('Please run the command again to ignore this warning and proceed.')
+        end
+    end
+
     return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
@@ -756,7 +793,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
             elseif ((type(v.required) == 'boolean' and v.required) or
                     (type(v.required) == 'function' and v.required(flags))) then
                 if not script_flags[flag] then
-                    local msg = v.error or 'Flag "' .. flag .. '" not recognized'
+                    local msg = v.error or ('Flag "' .. flag .. '" not recognized')
                     error(name .. ': ' .. msg)
                 end
             end
@@ -859,7 +896,7 @@ end
 
 function dfhack.getSavePath()
     if dfhack.isWorldLoaded() then
-        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+        return dfhack.getDFPath() .. '/save/' .. df.global.world.cur_savegame.save_dir
     end
 end
 
@@ -893,14 +930,14 @@ if dfhack.is_core_context then
             local path = dfhack.getSavePath()
 
             if path and op == SC_WORLD_LOADED then
-                loadInitFile(path, path..'/raw/init.lua')
+                loadInitFile(path, path..'/init.lua')
 
-                local dirlist = dfhack.internal.getDir(path..'/raw/init.d/')
+                local dirlist = dfhack.internal.getDir(path..'/init.d/')
                 if dirlist then
                     table.sort(dirlist)
                     for i,name in ipairs(dirlist) do
                         if string.match(name,'%.lua$') then
-                            loadInitFile(path, path..'/raw/init.d/'..name)
+                            loadInitFile(path, path..'/init.d/'..name)
                         end
                     end
                 end

@@ -3,7 +3,7 @@ siege-engine
 
 .. dfhack-tool::
     :summary: Extend the functionality and usability of siege engines.
-    :tags: fort gameplay buildings
+    :tags: unavailable
     :no-command:
 
 Siege engines in DF haven't been updated since the game was 2D, and can only aim

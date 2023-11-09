@@ -14,14 +14,16 @@ for the tag assignment spreadsheet.
 "when" tags
 -----------
 - `adventure <adventure-tag-index>`: Tools that are useful while in adventure mode. Note that some tools only tagged with "fort" might also work in adventure mode, but not always in expected ways. Feel free to experiment, though!
-- `dfhack <dfhack-tag-index>`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. settings, saving, etc.)
+- `dfhack <dfhack-tag-index>`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. quicksave, etc.)
 - `embark <embark-tag-index>`: Tools that are useful while on the fort embark screen or while creating an adventurer.
 - `fort <fort-tag-index>`: Tools that are useful while in fort mode.
 - `legends <legends-tag-index>`: Tools that are useful while in legends mode.
 
 "why" tags
 ----------
-- `armok <armok-tag-index>`: Tools that give you complete control over an aspect of the game or provide access to information that the game intentionally keeps hidden.
+- `armok <armok-tag-index>`: Tools which give the player god-like powers of any variety, such as control over game events, creating items from thin air, or viewing information the game intentionally keeps hidden. Players that do not wish to see these tools listed in DFHack command lists can hide them in the ``Preferences`` tab of `gui/control-panel`.
+
+
 - `auto <auto-tag-index>`: Tools that run in the background and automatically manage routine, toilsome aspects of your fortress.
 - `bugfix <bugfix-tag-index>`: Tools that fix specific bugs, either permanently or on-demand.
 - `design <design-tag-index>`: Tools that help you design your fort.
@@ -46,3 +48,7 @@ for the tag assignment spreadsheet.
 - `stockpiles <stockpiles-tag-index>`: Tools that interact with stockpiles.
 - `units <units-tag-index>`: Tools that interact with units.
 - `workorders <workorders-tag-index>`: Tools that interact with workorders.
+
+"misc" tags
+-----------
+- `unavailable <unavailable-tag-index>`: Tools that are not yet available for the current release.

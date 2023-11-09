@@ -5,7 +5,7 @@
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/building_stockpilest.h"
 #include "df/global_objects.h"
 #include "df/item.h"
@@ -24,7 +24,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::selection_rect;
 
 using df::building_stockpilest;
@@ -35,7 +35,7 @@ DFHACK_PLUGIN("stockcheck");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (world && ui) {
+    if (world && plotinfo) {
         commands.push_back(
             PluginCommand("stockcheck", "Check for unprotected rottable items.",
                 stockcheck, false,

@@ -1,52 +1,53 @@
 #!/bin/sh
 
+DF_FOLDER=$1
+OS_TARGET=$2
+DF_VERSION=$3
+
 set -e
 
-df_tardest="df.tar.bz2"
-save_tardest="test_save.tgz"
-
-cd "$(dirname "$0")"
-echo "DF_VERSION: $DF_VERSION"
-echo "DF_FOLDER: $DF_FOLDER"
-mkdir -p "$DF_FOLDER"
-# back out of df_linux
-cd "$DF_FOLDER/.."
-
-if ! test -f "$df_tardest"; then
-    minor=$(echo "$DF_VERSION" | cut -d. -f2)
-    patch=$(echo "$DF_VERSION" | cut -d. -f3)
-    echo "Downloading DF $DF_VERSION"
-    while read url; do
-        echo "Attempting download: ${url}"
-        if wget -v "$url" -O "$df_tardest"; then
-            break
-        fi
-    done <<URLS
-    https://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2
-    https://files.dfhack.org/DF/0.${minor}.${patch}/df_${minor}_${patch}_linux.tar.bz2
-URLS
-    echo $df_tardest
-    if ! test -f "$df_tardest"; then
-        echo "DF failed to download: $df_tardest not found"
-        exit 1
-    fi
-
-    echo "Downloading test save"
-    #test_save_url="https://files.dfhack.org/DF/0.${minor}.${patch}/test_save.tgz"
-    test_save_url="https://drive.google.com/uc?export=download&id=1XvYngl-DFONiZ9SD9OC4B2Ooecu8rPFz"
-    if ! wget -v "$test_save_url" -O "$save_tardest"; then
-        echo "failed to download test save"
-        exit 1
-    fi
-    echo $save_tardest
+minor=$(echo "$DF_VERSION" | cut -d. -f1)
+patch=$(echo "$DF_VERSION" | cut -d. -f2)
+df_url="https://www.bay12games.com/dwarves/df_${minor}_${patch}"
+if test "$OS_TARGET" = "windows"; then
+    WGET="C:/msys64/usr/bin/wget.exe"
+    df_url="${df_url}_win_s.zip"
+    df_archive_name="df.zip"
+    df_extract_cmd="unzip -d ${DF_FOLDER}"
+elif test "$OS_TARGET" = "ubuntu"; then
+    WGET=wget
+    df_url="${df_url}_linux.tar.bz2"
+    df_archive_name="df.tar.bz2"
+    df_extract_cmd="tar -x -j -C ${DF_FOLDER} -f"
+else
+    echo "Unhandled OS target: ${OS_TARGET}"
+    exit 1
 fi
 
-rm -rf df_linux
-mkdir -p df_linux/data/save
+if ! $WGET -v "$df_url" -O "$df_archive_name"; then
+    echo "Failed to download DF from $df_url"
+    exit 1
+fi
+
+md5sum "$df_archive_name"
+
+save_url="https://dffd.bay12games.com/download.php?id=15434&f=dreamfort.7z"
+save_archive_name="test_save.7z"
+save_extract_cmd="7z x -o${DF_FOLDER}/save"
+
+if ! $WGET -v "$save_url" -O "$save_archive_name"; then
+    echo "Failed to download test save from $save_url"
+    exit 1
+fi
+
+md5sum "$save_archive_name"
 
 echo Extracting
-tar xf "$df_tardest" --strip-components=1 -C df_linux
-tar xf "$save_tardest" -C df_linux/data/save
+mkdir -p ${DF_FOLDER}
+$df_extract_cmd "$df_archive_name"
+$save_extract_cmd "$save_archive_name"
+mv ${DF_FOLDER}/save/* ${DF_FOLDER}/save/region1
+
 echo Done
 
 ls -l

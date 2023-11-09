@@ -13,10 +13,64 @@ void ChannelJobs::load_channel_jobs() {
     while (node) {
         df::job* job = node->item;
         node = node->next;
-        if (is_dig_job(job)) {
+        if (is_channel_job(job)) {
             locations.emplace(job->pos);
+            jobs.emplace(job->pos, job);
         }
     }
+}
+
+bool ChannelJobs::has_cavein_conditions(const df::coord &map_pos) {
+    if likely(Maps::isValidTilePos(map_pos)) {
+        auto p = map_pos;
+        auto ttype = *Maps::getTileType(p);
+        if (!DFHack::isOpenTerrain(ttype)) {
+            // check shared neighbour for cave-in conditions
+            df::coord neighbours[4];
+            get_connected_neighbours(map_pos, neighbours);
+            int connectedness = 4;
+            for (auto n: neighbours) {
+                if (!Maps::isValidTilePos(n) || active.count(n) || DFHack::isOpenTerrain(*Maps::getTileType(n))) {
+                    connectedness--;
+                }
+            }
+            if (!connectedness) {
+                // do what?
+                p.z--;
+                if (!Maps::isValidTilePos(p)) return false;
+                ttype = *Maps::getTileType(p);
+                if (DFHack::isOpenTerrain(ttype) || DFHack::isFloorTerrain(ttype)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool ChannelJobs::possible_cavein(const df::coord &job_pos) {
+    for (auto iter : active) {
+        if (iter == job_pos) continue;
+        if (calc_distance(job_pos, iter) <= 2) {
+            // find neighbours
+            df::coord n1[8];
+            df::coord n2[8];
+            get_neighbours(job_pos, n1);
+            get_neighbours(iter, n2);
+            // find shared neighbours
+            for (int i = 0; i < 7; ++i) {
+                for (int j = i + 1; j < 8; ++j) {
+                    if (n1[i] == n2[j]) {
+                        if (has_cavein_conditions(n1[i])) {
+                            WARN(jobs).print("Channel-Safely::jobs: Cave-in conditions detected at (" COORD ")\n", COORDARGS(n1[i]));
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 // adds map_pos to a group if an adjacent one exists, or creates one if none exist... if multiple exist they're merged into the first found
@@ -37,6 +91,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
     DEBUG(groups).print("    add(" COORD ")\n", COORDARGS(map_pos));
     // and so we begin iterating the neighbours
     for (auto &neighbour: neighbors) {
+        if unlikely(!Maps::isValidTilePos(neighbour)) continue;
         // go to the next neighbour if this one doesn't have a group
         if (!groups_map.count(neighbour)) {
             TRACE(groups).print(" -> neighbour is not designated\n");
@@ -82,7 +137,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
             TRACE(groups).print(" -> brand new group\n");
             // we create a brand-new group to use
             group_index = groups.size();
-            groups.push_back(Group());
+            groups.emplace_back();
             group = &groups[group_index];
         }
     }
@@ -137,6 +192,7 @@ void ChannelGroups::scan(bool full_scan) {
     std::set<df::coord> gone_jobs;
     set_difference(last_jobs, jobs, gone_jobs);
     set_difference(jobs, last_jobs, new_jobs);
+    INFO(groups).print("gone jobs: %zd\nnew jobs: %zd\n",gone_jobs.size(), new_jobs.size());
     for (auto &pos : new_jobs) {
         add(pos);
     }
@@ -155,6 +211,7 @@ void ChannelGroups::scan(bool full_scan) {
                     if (!full_scan && !block->flags.bits.designated) {
                         continue;
                     }
+                    df::map_block* block_above = Maps::getBlock(bx, by, z+1);
                     // foreach tile
                     bool empty_group = true;
                     for (int16_t lx = 0; lx < 16; ++lx) {
@@ -168,7 +225,14 @@ void ChannelGroups::scan(bool full_scan) {
                                     jobs.erase(map_pos);
                                 }
                                 block->designation[lx][ly].bits.dig = df::tile_dig_designation::No;
-                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked) {
+                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked ) {
+                                // We have a dig designated, or marked. Some of these will not need intervention.
+                                if (block_above &&
+                                    !is_channel_designation(block->designation[lx][ly]) &&
+                                    !is_channel_designation(block_above->designation[lx][ly])) {
+                                    // if this tile isn't a channel designation, and doesn't have a channel designation above it.. we can skip it
+                                    continue;
+                                }
                                 for (df::block_square_event* event: block->block_events) {
                                     if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                                         // we want to let the user keep some designations free of being managed
@@ -203,6 +267,7 @@ void ChannelGroups::scan(bool full_scan) {
 void ChannelGroups::clear() {
     debug_map();
     WARN(groups).print(" <- clearing groups\n");
+    jobs.clear();
     group_blocks.clear();
     free_spots.clear();
     groups_map.clear();
@@ -269,13 +334,13 @@ size_t ChannelGroups::count(const df::coord &map_pos) const {
 
 // prints debug info about the groups stored, and their members
 void ChannelGroups::debug_groups() {
-    if (DFHack::debug_groups.isEnabled(DebugCategory::LTRACE)) {
+    if (DFHack::debug_groups.isEnabled(DebugCategory::LDEBUG)) {
         int idx = 0;
-        TRACE(groups).print(" debugging group data\n");
+        DEBUG(groups).print(" debugging group data\n");
         for (auto &group: groups) {
-            TRACE(groups).print("  group %d (size: %zu)\n", idx, group.size());
+            DEBUG(groups).print("  group %d (size: %zu)\n", idx, group.size());
             for (auto &pos: group) {
-                TRACE(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+                DEBUG(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
             }
             idx++;
         }
@@ -284,10 +349,10 @@ void ChannelGroups::debug_groups() {
 
 // prints debug info group mappings
 void ChannelGroups::debug_map() {
-    if (DFHack::debug_groups.isEnabled(DebugCategory::LDEBUG)) {
+    if (DFHack::debug_groups.isEnabled(DebugCategory::LTRACE)) {
         INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
         for (auto &pair: groups_map) {
-            DEBUG(groups).print(" map[" COORD "] = %d\n", COORDARGS(pair.first), pair.second);
+            TRACE(groups).print(" map[" COORD "] = %d\n", COORDARGS(pair.first), pair.second);
         }
     }
 }

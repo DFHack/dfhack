@@ -12,7 +12,7 @@
 
 // DF data structure definition headers
 #include "DataDefs.h"
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_soul.h>
@@ -32,8 +32,10 @@
 #include <df/building_tradedepotst.h>
 #include <df/building_stockpilest.h>
 #include <df/items_other_id.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/activity_info.h>
+#include <df/gamest.h>
+#include <df/global_objects.h>
 
 #include <MiscUtils.h>
 
@@ -47,8 +49,9 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("autolabor");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(game);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -172,9 +175,9 @@ static const struct labor_default default_labor_infos[] = {
     /* CLEAN */                 {HAULERS, false, 1, 200, 0},
     /* CUTWOOD */               {AUTOMATIC, true, 1, 200, 0},
     /* CARPENTER */             {AUTOMATIC, false, 1, 200, 0},
-    /* DETAIL */                {AUTOMATIC, false, 1, 200, 0},
+    /* STONECUTTER */           {AUTOMATIC, false, 1, 200, 0},
+    /* STONE_CARVER */          {AUTOMATIC, false, 1, 200, 0},
     /* MASON */                 {AUTOMATIC, false, 1, 200, 0},
-    /* ARCHITECT */             {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALTRAIN */           {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALCARE */            {AUTOMATIC, false, 1, 200, 0},
     /* DIAGNOSE */              {AUTOMATIC, false, 1, 200, 0},
@@ -242,7 +245,18 @@ static const struct labor_default default_labor_infos[] = {
     /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0},
     /* PAPERMAKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0}
+    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0},
+    /* ANON_LABOR_83 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_84 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_85 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_86 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_87 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_88 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_89 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_90 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_91 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_92 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_93 */         {DISABLE, false, 0, 0, 0},
 };
 
 static const int responsibility_penalties[] = {
@@ -291,6 +305,7 @@ static void cleanup_state()
 {
     enable_autolabor = false;
     labor_infos.clear();
+    game->external_flag &= ~1; // reinstate DF's work detail system
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -311,6 +326,8 @@ static void init_state()
 
     if (!enable_autolabor)
         return;
+
+    game->external_flag |= 1; // bypass DF's work detail system
 
     auto cfg_haulpct = World::GetPersistentData("autolabor/haulpct");
     if (cfg_haulpct.isValid())
@@ -399,6 +416,17 @@ static void enable_plugin(color_ostream &out)
 
     cleanup_state();
     init_state();
+}
+
+static void disable_plugin(color_ostream& out)
+{
+    if (config.isValid())
+        setOptionEnabled(CF_ENABLED, false);
+
+    enable_autolabor = false;
+    out << "Disabling autolabor." << std::endl;
+
+    cleanup_state();
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -711,15 +739,18 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    static int step_count = 0;
+    static int last_run = 0;
+    static const int run_frequency = 60;
+
     if(!world || !world->map.block_index || !enable_autolabor)
     {
         return CR_OK;
     }
 
-    if (++step_count < 60)
+    if (world->frame_counter - last_run <= run_frequency)
         return CR_OK;
-    step_count = 0;
+
+    last_run = world->frame_counter;
 
     std::vector<df::unit *> dwarfs;
 
@@ -742,7 +773,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            INFO(cycle,out).print(trader_requested
+            TRACE(cycle,out).print(trader_requested
                 ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
                 : "Trade depot found but trader is not requested.\n"
                 );
@@ -813,16 +844,16 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // identify dwarfs who are needed for meetings and mark them for exclusion
 
-        for (auto& act : ui->activities)
+        for (auto& act : plotinfo->activities)
         {
             if (!act) continue;
-            bool p1 = act->unit_actor == dwarfs[dwarf];
-            bool p2 = act->unit_noble == dwarfs[dwarf];
+            bool p1 = act->unit_actor == dwarfs[dwarf]->id;
+            bool p2 = act->unit_noble == dwarfs[dwarf]->id;
 
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
+                DEBUG(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
                     dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }
@@ -1062,10 +1093,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
     }
     else if(!enable && enable_autolabor)
     {
-        enable_autolabor = false;
-        setOptionEnabled(CF_ENABLED, false);
-
-        out << "Autolabor is disabled." << std::endl;
+        disable_plugin(out);
     }
 
     return CR_OK;

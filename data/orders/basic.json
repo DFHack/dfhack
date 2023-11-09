@@ -1,31 +1,9 @@
 [
 	{
-		"amount_left" : 150,
-		"amount_total" : 150,
-		"frequency" : "Monthly",
-		"id" : 0,
-		"is_active" : false,
-		"is_validated" : false,
-		"item_conditions" : 
-		[
-			{
-				"condition" : "LessThan",
-				"flags" : 
-				[
-					"unrotten"
-				],
-				"item_type" : "FOOD",
-				"value" : 400
-			}
-		],
-		"job" : "PrepareMeal",
-		"meal_ingredients" : 2
-	},
-	{
 		"amount_left" : 10,
 		"amount_total" : 10,
 		"frequency" : "Daily",
-		"id" : 1,
+		"id" : 0,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -47,7 +25,7 @@
 					"unrotten",
 					"cookable"
 				],
-				"value" : 500
+				"value" : 80
 			},
 			{
 				"condition" : "AtMost",
@@ -57,15 +35,6 @@
 				],
 				"item_type" : "FOOD",
 				"value" : 3500
-			},
-			{
-				"condition" : "AtLeast",
-				"flags" : 
-				[
-					"unrotten"
-				],
-				"item_type" : "FOOD",
-				"value" : 400
 			}
 		],
 		"job" : "PrepareMeal",
@@ -75,7 +44,7 @@
 		"amount_left" : 2,
 		"amount_total" : 2,
 		"frequency" : "Daily",
-		"id" : 2,
+		"id" : 1,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -112,7 +81,7 @@
 		"amount_left" : 2,
 		"amount_total" : 2,
 		"frequency" : "Daily",
-		"id" : 3,
+		"id" : 2,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -149,7 +118,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 4,
+		"id" : 3,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -170,7 +139,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 5,
+		"id" : 4,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -205,7 +174,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 6,
+		"id" : 5,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -237,7 +206,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 7,
+		"id" : 6,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -256,10 +225,9 @@
 				"condition" : "AtLeast",
 				"flags" : 
 				[
-					"empty",
-					"bag"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 5
 			}
 		],
@@ -269,7 +237,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 8,
+		"id" : 7,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -291,7 +259,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 9,
+		"id" : 8,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -310,10 +278,9 @@
 				"condition" : "AtLeast",
 				"flags" : 
 				[
-					"empty",
-					"bag"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 5
 			}
 		],
@@ -324,7 +291,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 10,
+		"id" : 9,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -355,7 +322,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 11,
+		"id" : 10,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -388,7 +355,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 12,
+		"id" : 11,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -428,7 +395,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 13,
+		"id" : 12,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -454,7 +421,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 14,
+		"id" : 13,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -489,7 +456,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 15,
+		"id" : 14,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -524,7 +491,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 16,
+		"id" : 15,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -559,7 +526,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 17,
+		"id" : 16,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -589,7 +556,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 18,
+		"id" : 17,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -619,6 +586,36 @@
 		"item_subtype" : "ITEM_TOOL_LARGE_POT",
 		"job" : "MakeTool",
 		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 18,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "BIN",
+				"value" : 5
+			}
+		],
+		"job" : "ConstructBin",
+		"material_category" : 
+		[
+			"wood"
+		]
 	},
 	{
 		"amount_left" : 1,
@@ -725,6 +722,10 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
 				"item_subtype" : "ITEM_TOOL_MINECART",
 				"item_type" : "TOOL",
 				"value" : 2
@@ -844,14 +845,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"leather"
@@ -880,14 +880,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"silk"
@@ -916,14 +915,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"cloth"
@@ -952,14 +950,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"yarn"
@@ -1137,8 +1134,11 @@
 			},
 			{
 				"condition" : "AtMost",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 5
 			}
 		],
@@ -1166,8 +1166,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 3
 			},
 			{
@@ -1200,8 +1203,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_OIL",
 				"value" : 3
 			},
 			{

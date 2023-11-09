@@ -15,6 +15,13 @@
 // - unassign single creature under cursor from current zone
 // - pitting own dwarves :)
 
+#include "PluginManager.h"
+
+using namespace DFHack;
+
+DFHACK_PLUGIN("zone");
+
+/*
 #include <functional>
 #include <stdexcept>
 #include <unordered_map>
@@ -24,13 +31,11 @@
 #include "df/building_chainst.h"
 #include "df/building_civzonest.h"
 #include "df/general_ref_building_civzone_assignedst.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
-
-#include "PluginManager.h"
 #include "uicommon.h"
 #include "VTableInterpose.h"
 
@@ -49,14 +54,11 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-using namespace DFHack;
-
-DFHACK_PLUGIN("zone");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_building_assign_type);
 REQUIRE_GLOBAL(ui_building_assign_is_marked);
@@ -1565,7 +1567,7 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
 
     if(!race_filter_set && (building_assign || cagezone_assign || unit_slaughter))
     {
-        string own_race_name = Units::getRaceNameById(ui->race_id);
+        string own_race_name = Units::getRaceNameById(plotinfo->race_id);
         out.color(COLOR_BROWN);
         out << "Default filter for " << parameters[0]
             << ": 'not (race " << own_race_name << " or own civilization)'; use 'race "
@@ -2128,14 +2130,14 @@ struct zone_hook : public df::viewscreen_dwarfmodest
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        if ( ( (ui->main.mode == ui_sidebar_mode::ZonesPenInfo || ui->main.mode == ui_sidebar_mode::ZonesPitInfo) &&
+        if ( ( (plotinfo->main.mode == ui_sidebar_mode::ZonesPenInfo || plotinfo->main.mode == ui_sidebar_mode::ZonesPitInfo) &&
             ui_building_assign_type && ui_building_assign_units &&
             ui_building_assign_is_marked && ui_building_assign_items &&
             ui_building_assign_type->size() == ui_building_assign_units->size() &&
             ui_building_item_cursor)
             // allow mode QueryBuilding, but only for cages (bedrooms will crash DF with this code, chains don't work either etc)
             ||
-            (   ui->main.mode == ui_sidebar_mode::QueryBuilding &&
+            (   plotinfo->main.mode == ui_sidebar_mode::QueryBuilding &&
                 ui_building_in_assign && *ui_building_in_assign &&
                 ui_building_assign_type && ui_building_assign_units &&
                 ui_building_assign_type->size() == ui_building_assign_units->size() &&
@@ -2146,7 +2148,7 @@ struct zone_hook : public df::viewscreen_dwarfmodest
             )
         {
             if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
-                filter.initialize(ui->main.mode);
+                filter.initialize(plotinfo->main.mode);
         }
         else
         {
@@ -2177,11 +2179,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     return CR_OK;
 }
+*/
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "zone",
-        "Manage activity zones.",
-        df_zone));
+    // commands.push_back(PluginCommand(
+    //     "zone",
+    //     "Manage activity zones.",
+    //     df_zone));
     return CR_OK;
 }

@@ -1,0 +1,1283 @@
+# autonick config file
+# every line in this file that is not empty and does
+# not start with "#" will be used as a nickname by the
+# autonick script.
+
+# nicknames can be multiple words
+Toady One
+Threetoe
+
+#Dwarven single  names  taken from Classic Fantasy works
+Balin
+Dwalin
+Fili
+Kili
+Gloin
+Oin
+Bifur
+Bofur
+Bombur
+Ori
+Gimli
+Thrain
+Thror
+Fundin
+Frerin
+Gror
+Ibun
+Khim
+Fimbrethil
+Floi
+Nali
+Thor
+Vili
+Regin
+Fafnir
+Brokkr
+Sindri
+Nordri
+Sudri
+Austri
+Doriath
+Thingol
+Eol
+Mim
+Telchar
+Narvi
+Gundabad
+Muhrak
+Skorri
+Draupnir
+Alaric
+Grimr
+Eitri
+Svidurr
+Thorgar
+Hrungnir
+Galar
+Skirni
+Hreinn
+Dori
+Hreimr
+Hreinir
+Hroaldr
+Groin
+Vestri
+Nori
+Durin
+Dvalin
+Eikinskjaldi
+Bafur
+Snorri
+Fimafeng
+Vitr
+Dvali
+Dain
+Nain
+Nipingr
+Hrodvitnir
+Sveinn
+Ivaldi
+Svein
+Sveinbjorn
+Havardr
+Haki
+Hakon
+Mouri
+Motsognir
+Eberk
+Thromar
+Kragar
+Borgar
+Throk
+Orvald
+Berric
+Rogar
+Urgen
+Morgrim
+Keldar
+Ingvar
+Frandar
+Grimsi
+Hrokur
+Orik
+Rundar
+Bjornar
+Throki
+Dworin
+Thranduil
+Faldar
+Galdor
+Thorkel
+Dorrin
+Borkan
+Gundrik
+Throkir
+Raldor
+Helgrim
+Throgar
+Borin
+Ragnir
+Orvar
+Skalf
+Baldir
+Fror
+Thorgil
+Ulfar
+Grimbold
+Faldur
+Varrin
+Dornir
+Halgrim
+Gundin
+Ulfgar
+Skalfar
+Yngvarr
+Kaldur
+Thrandar
+Keldin
+Rundin
+Skaldur
+Borgin
+Haldur
+Bjornulf
+Orkarn
+Ragnor
+Baldrick
+Thorlin
+Graldor
+Ulfrik
+Fornir
+Egil
+Grimnor
+Roldor
+Ulfgard
+Borgrim
+Faldrik
+Rognir
+Balfor
+Volmar
+Thormund
+Brynhild
+
+#Dwarven composite  names  taken from Classic Fantasy works
+Gorin Stonehammer
+Brundar Ironfoot
+Haldrek Battlebeard
+Orin Stonefist
+Frida Stormaxe
+Torvald Rockjaw
+Einar Blackforge
+Thorgar Granitebeard
+Ragnir Hammerhelm
+Hilda Ironbrow
+Grimnar Deepdelver
+Ulfrik Ironmane
+Freya Thunderstone
+Ragnar Firebeard
+Gunnar Ironpeak
+Astrid Ironheart
+Bjorn Steelbreaker
+Hrolf Thunderhammer
+Sigrun Stonebreaker
+Eirik Rockbeard
+Helga Frostbeard
+Skaldur Stormguard
+Agnar Stonehand
+Ingrid Mountainmace
+Hjalmar Blackstone
+Solveig Steelhelm
+Rurik Stonegrip
+Freyja Silveraxe
+Thordur Goldbeard
+Gudrun Ironfoot
+Vali Fireforge
+Thora Frostbeard
+Vargr Stoneborn
+Astrid Ironbrow
+Einar Blackstone
+Hilda Hammerheart
+Leif Ironshaper
+Thrain Stormbrow
+Sigrid Steelheart
+Haldor Boulderbreaker
+Ragnhild Strongarm
+Brynjar Ironmantle
+Sigrun Thunderbeard
+Valgard Steelbeard
+Gunnhild Stonefist
+Ingrid Ironrock
+Eirik Frostbane
+Helga Deepforge
+Skaldur Ironshield
+Agnar Stonemace
+Solveig Stormgrip
+Hjalmar Mountainheart
+Gudrun Firebeard
+Thora Thunderstrike
+Vargr Ironhand
+Freyja Stoneguard
+Thordur Blackstone
+Rurik Hammerbeard
+Solveig Ironbreaker
+Astrid Goldhand
+Einar Stormbrew
+Hilda Steelbeard
+Thrain Ironmane
+Sigrid Fireheart
+Haldor Thunderstone
+Ragnhild Ironfoot
+Brynjar Blackhelm
+Sigrun Frostbeard
+Valgard Stoneshield
+Gunnhild Ironheart
+Bjorn Deepdelver
+Ingrid Ironpeak
+Eirik Thunderhammer
+Gormund Stoneforge
+Eovar Broadshield
+Thrunir Hammerstone
+Brunhild Steelbraid
+Garrik Frostbeard
+Haldrek Ironhand
+Astrid Rockrider
+Dagmar Stonefury
+Borgar Thunderhelm
+Ingrid Ironstrike
+Rurik Blackmane
+Fjorn Stoneborn
+Siv Ironbreaker
+Gudrik Stormbeard
+Ulfgar Emberforge
+Eilif Silverstone
+Hilda Stormwarden
+Ormar Ironjaw
+Vali Steelshaper
+Eira Frostbeard
+Torgar Graniteheart
+Brunhild Firebrand
+Haldrek Ironmantle
+Solveig Rockbreaker
+Thrain Thunderaxe
+Brynjar Stoneclaw
+Asa Ironhide
+Grimnar Blackmane
+Ragnvald Hammerfall
+Gudbrand Ironhand
+Astrid Flamebeard
+Ormur Steelbender
+Hjalmar Rockjaw
+Inga Thunderheart
+Valgard Ironbeard
+Eirik Swiftstrike
+Sylvi Stoneguard
+Helge Hammerfist
+Jorunn Fireforge
+Solveig Ironroot
+Thora Stormbeard
+Baldur Stonemane
+Freydis Ironshaper
+Gunnvald Deepstone
+Bjorn Blackstone
+Ingrid Frostmane
+Agnar Steelhammer
+Thordur Ironbeard
+Ylva Goldhand
+Greta Firestone
+Rurik Rockhelm
+Gunnhild Ironsong
+Vali Steelgrip
+Brynhild Stormblade
+Astrid Ironmantle
+Einar Stoneshield
+Hilda Frostbeard
+Ormr Ironheart
+Inga Steelbreaker
+Ulfrik Thunderaxe
+Freyja Stonebeard
+Sigrun Frostfury
+Sylvi Blackmane
+Thorvald Ironhelm
+Eirik Stormstone
+Haldora Deepdelver
+Sigrid Steelshaper
+Gunnar Thunderheart
+Bjorn Ironbrow
+Ingrid Goldmantle
+Agnar Stormforge
+Solveig Ironclaw
+Thora Rockguard
+Grimur Emberstone
+Ragnhild Hammerstrike
+Vali Ironfist
+Brynjar Blackbraid
+Astrid Flameforge
+Einar Stonestorm
+Hilda Frostbane
+Ormur Ironhelm
+Inga Steelshaper
+Gudbrand Thunderbeard
+Freya Stonefist
+Gunnvald Stormmane
+Bjorn Ironhelm
+Ingrid Frostforge
+Agnar Steelgrip
+Thordur Ironhand
+Ylva Flameheart
+Greta Stonemane
+Rurik Ironroot
+Gunnhild Steelbeard
+Vali Thunderstrike
+Thorin Oakenshield
+Dain Ironfoot
+Gamil Zirak
+
+
+# animals
+Mouse
+Otter
+Snake
+Owl
+Bat
+Fox
+Mole
+Cat
+Badger
+Squirrel
+Kit
+Wren
+Jay
+Crow
+Raven
+Sparrow
+Platypus
+House Mouse
+Pangolin
+Funnel Web
+Weasel
+Meerkats
+Rat
+Ant
+Gopher
+Fennec
+Groundhog
+Aardvark
+Rabbit
+Olm
+Chipmunk
+Bilbie
+Vole
+Nile Croc
+Wombat
+Worm
+Gerbil
+Armodillo
+Thrinaxodon
+Binky
+Bandicoot
+Bettongs
+Potoroos
+Antechinus
+Jerboas
+Numbat
+
+# colours
+Flash
+Red
+Gray
+Blue
+Shadow
+Indigo
+Jade
+Silver
+Bistre
+Black
+Black bean
+Noir
+Charcoal
+Ebony
+Eerie
+Jet
+Licorice
+Midnight
+Night
+Onyx
+Space
+Raisin
+Rich
+Russ violet
+Smoky
+Aero
+Alice
+Argent Lue
+Azure
+Azul
+Baby blue
+Berkeley
+Bice
+Bleu
+Bondi
+Brandeis Byzant
+Cambridge
+Carolina
+Celestial
+Celtic
+Cerulean
+Chefchaouen
+Chrysler
+Cobalt
+Columbia
+Cornflower
+Delft
+Denim
+Dodger
+Duke
+Federal
+Electrindigo
+Eclipse
+Illini
+Klein
+Jordy
+Lapis Lazuli
+Majorelle
+Marian
+Maya
+Slate
+Munsell
+Navy
+Neon blue
+Oxford
+Palatinate
+Penn
+Periwinkle
+Phthalo
+Picton
+Poly
+Powder
+Prussia
+Royal
+Ruddy
+Honolulu
+Savoy
+Silver Lake
+Space cadet
+Steel
+Tang
+Tufts
+Ultramarine
+Uranian
+Vista
+Yale
+Zaffre
+Auburn
+Almond
+Beaver
+Beige
+Bole
+Bone
+Bronze
+Sienna
+Umber
+Camel
+Caput mortuum
+Caramel
+Chamoisee
+Chestnut
+Chocolate
+Citron
+Cocoa
+Coffee
+Copper
+Coyote
+Desert
+Drab
+Dun
+Earth
+Fallow
+Fawn
+Field
+Fulvous
+Goldenrod
+Harvest
+Khaki
+Kobicha
+Lion
+Liver
+Mahogany
+Maroon
+Ochre
+Redwood
+Rufous
+Russet
+Rust
+Sand
+Satin
+Sheen
+Seal
+Sepia
+Sinopia
+Tan
+Tawny
+Van Dyke
+Walnut
+Wenge
+Aqua
+Aquamarine
+Capri
+Caribbean
+Celeste
+Cyprus
+Fluorescent
+Jungle
+Keppel
+Ice
+Sea
+Myrtle
+Pacific
+Robin
+Skobeloff
+Teal
+Verdigris
+Vivid
+Zomp
+Platinum
+Timberwolf
+Rose quartz
+Cinereous
+Cadet
+Cool
+Davys
+Paynes
+Glaucous
+Gunmetal
+Feldgrau
+Asparagus
+Avocado
+Brunswick
+Cal Poly
+Castleton
+Celadon
+Chartreuse
+Moss
+Pastel
+Dartmouth
+Emerald
+Fern
+Forest
+Harlequin
+Honeydew
+Hunter
+Kelly green
+Lawn
+Malachite
+Mantis
+Neon
+Olivine
+Paris
+Pear
+Pigment
+Pistachio
+Reseda
+Rifle
+Sage
+Screamin'
+Shamrock
+Bud
+Amaranth
+Baker-Miller
+Cerise
+Carmine
+Magenta
+Eggplant
+Fandango
+Finn
+Fuchsia
+Haze
+Plum
+Pizzazz
+Quinacridone
+Razzle dazzle
+Rose
+Shocking
+Telemagenta
+Aerospace
+Alloy
+Amber
+Atomic
+Tangerine
+Burnt
+Butterscotch
+Carrot
+Champagne
+Coral
+Flame
+Gold
+Hunyadi
+Melon
+Peel
+Papaya
+Peach
+Persimmon
+Princeton
+Pumpkin
+Safety orange
+Saffron
+Tangelo
+Tigers Eye
+Titian
+Xanthous
+Blush
+Brilliant
+Brink
+Carnation
+Cherry
+Cyclamen
+Dogwood
+Hollywood
+Hot
+Lavender
+Mimi
+Misty
+Mountbatten
+Orchid
+Phlox
+Pompadour
+Puce
+Raspberry
+Razzmatazz
+Bonbon
+Quartz
+Taupe
+Vale
+Rosewood
+Rosy
+Salmon
+Tea
+Tickle
+Thulian
+Ultra
+Burgundy
+Byzantium
+Eminence
+Grape
+Iris
+Mardi Gras
+Mauve
+Mauveine
+Mulberry
+Murrey
+Pale
+Pomp
+Power
+Purpureus
+Tekhelet
+Thistle
+Tropical
+Tyrian
+Wisteria
+Barn
+Bittersweet
+Shimmer
+Blood
+Candy apple
+Cantaloupe
+Cardinal
+Chili
+Cosmos
+Cinnabar
+Claret
+Coquelicot
+Cordovan
+Cornell
+Crimson
+Falu
+Brick
+Engine
+Folly
+Imperial
+Jaspar
+Poppy
+Rojo
+Rusty
+Scarlet
+Syracuse
+Tomato
+Turkey
+Vermilion
+Wine
+Alabaster
+Antique
+Cornsilk
+Latte
+Cream
+Eggshell
+Flax
+Floral
+Ghost
+Isabelline
+Ivory
+Lemon
+chiffon
+Linen
+Navajo
+Nyanza
+Lace
+Parchment
+Pearl
+Seasalt
+Seashell
+Vanilla
+Smoke
+Apricot
+Arylide
+Aureolin
+Buff
+Canary
+Ecru
+Gamboge
+Icterine
+Jonquil
+Maize
+Mikado
+Mindaro
+Mustard
+Selective
+Stil de grain
+Straw
+Sunglow
+Sunset
+Wheat
+
+# planets
+Mars
+Jupiter
+Saturn
+Pluto
+Neptune
+Europa
+
+# charites
+Damia
+Auxesia
+Cleta
+Phaenna
+Hegemone
+Peitho
+Paregoros
+Pasithea
+Charis
+Kale
+Antheia
+Eudaimonia
+Euthymia
+Eutychia
+Paidia
+Pandaisia
+Pannychis
+Aglaea
+Euphrosyne
+Thalia
+
+# nature
+Blaze
+River
+Snow
+Bones
+Rain
+Reed
+Lake
+Briar
+Brook
+Sky
+Storm
+Clay
+Ember
+Marsh
+Star
+
+# trees
+Ash
+Oak
+Rowan
+Aspen
+Alder
+Apple
+Beech
+Birch
+Box
+Cedar
+Cypress
+Elder
+Elm
+Larch
+Fir
+Juniper
+Lime
+Pine
+Poplar
+Spruce
+Yew
+
+# seasons
+Spring
+Summer
+Autumn
+Winter
+
+# cardinals
+North
+South
+East
+West
+
+# other
+Ink
+Echo
+Mint
+Mel
+X
+Sam
+Tango
+Gadget
+Brum
+Wall
+Beam
+Ud
+Tal
+Ren
+Aki
+Jun
+Kei
+Lynn
+Lex
+Cid
+Miles
+Rotor
+Mesa
+Verse
+
+# from the "300 list"
+Aiden
+Arden
+Auden
+August
+Avery
+Avis
+Bay
+Blake
+Erin
+Ezra
+Kai
+Lane
+Leah
+Noel
+Pat
+Ray
+Remi
+Roan
+Robyn
+Salem
+Sean
+Tate
+Tobin
+Tori
+True
+Val
+Wilder
+Wisdom
+Wyatt
+Zephyr
+
+# Gemstones
+Actinolite
+Nephrite
+Adamite
+Aegirine
+Afghanite
+Agrellite
+Algodonite
+Alunite
+Amblygonite
+Analcime
+Anatase
+Andalusite
+Chiastolite
+Anglesite
+Anhydrite
+Annabergite
+Anorthite
+Antigorite
+Bowenite
+Apatite
+Apophyllite
+Aragonite
+Asbestos
+Astrophyllite
+Augelite
+Austinite
+Ferro
+Magnes
+Mangan
+Tinzenite
+Azurmalachite
+Azurite
+Baryte
+Bast
+Bayldonite
+Benitoite
+Beryl
+Maxixe
+Goshenite
+Golden beryl
+Heliodor
+Morganite
+Red beryl
+Beryllonite
+Beudantite
+Bismutot
+Biotit
+Boracite
+Bornite
+Brazilianite
+Brookite
+Brucite
+Bustam
+Bytown
+Calcite
+Caledonite
+Canasite
+Cancrin
+Vishnev
+Carleton
+Carnall
+Cassiterite
+Cataplei
+Cavans
+Celestite
+Ceruleite
+Cerussite
+Chalcopyr
+Chambers
+Charlesite
+Charoite
+Childrenite
+Chiolite
+Chrysoberyl
+Alexandrite
+Cymophane
+Chromite
+Chrysocolla
+Clinochlore
+Clinohumite
+Clintonite
+Cobaltite
+Coleman
+Cordierite
+Iolite
+Cornwallite
+Corundum
+Ruby
+Sapphire
+Padparadscha
+Covell
+Creedite
+Crocite
+Cuprite
+Danburite
+Datolite
+Descloiz
+Diamond
+Bort
+Ballas
+Diaspore
+Dickinsonite
+Diopside
+Dioptase
+Dolomite
+Dumortier
+Ekanite
+Trapiche
+Enstatite
+Bronzite
+Hypersthene
+Eosphorite
+Epidote
+Piemont
+Erythrite
+Esperite
+Ettring
+Eudialyte
+Faya
+Feldspar
+Andesine
+Albite
+Anorth
+Anorthoc
+Amazon
+Celsian
+Microcline
+Moonstone
+Adularia
+Rainbow
+Ortho
+Kite
+Plagioclase
+Labradorite
+Oligoclase
+Sunstone
+Oregon Sunstone
+Rainbow Lattice
+Fergusonite
+Ferroaxin
+Fluora
+Fluorapophyl
+Fluorite
+Forster
+Friedelite
+Gadolin
+Gahnite
+Gahnospinel
+Garnet
+Pyralspite
+Almandine
+Spessartine
+Ugrand
+Demantoid
+Melanite
+Topazolita
+Grossular
+Hessonite
+Hydrogrossular
+Tsavorite
+Pyrope
+Rhodolite
+Mali garnet
+Malaia
+Umbal
+Gaspe
+Gayluss
+Gibbsite
+Glaucophane
+Goeth
+Goosecreek
+Grandidier
+Gypsum
+Gyro
+Halite
+Hambergite
+Hanksite
+Hardystonite
+Helenite
+Hematite
+Herder
+Hexagonite
+Hibonite
+Hidden
+Hodgkinsonite
+Holtite
+Howlite
+Huebnerite
+Humite
+Hurlbut
+Ilmenite
+Inderite
+Jadeite
+Jasper
+Jeremejevite
+Kainite
+Kämmerer
+Kaolin
+Kornerup
+Kurnakov
+Kyanite
+Langbein
+Lawsonite
+Lazulite
+Lazurite
+Legrandite
+Lepidolite
+Leucite
+Leucophan
+Linarite
+Lizardite
+Londonite
+Ludlamite
+Ludwigite
+Maria-meionite
+Werner
+Marcasite
+Meliphanite
+Mellite
+Mesolite
+Milar
+Millerite
+Mime
+Monazite
+Mordenite
+Mottram
+Muscovite
+Fuchsite
+Nambul
+Natrolite
+Nepheline
+Neptunite
+Nickeline
+Niccolite
+Nosean
+Nuumm
+Opal
+Fire opal
+Moss opal
+Painite
+Papagoite
+Pargas
+Parisite
+Pectol
+Larimar
+Pentland
+Periclase
+Perthite
+Petal
+Castor
+Pezzottaite
+Phena
+Phosgen
+Phospho
+Piemontite
+Realgar
+Rhodizite
+Rhodochros
+Rhodon
+Richter
+Riebeck
+Crocidolite
+Rosasite
+Rutile
+Samarskite
+Sanidine
+Sapphirine
+Sarcol
+Scapol
+Marialite
+Meionite
+Scheel
+Schizol
+Scorod
+Selenite
+Sella
+Senarmon
+Sepio
+Meerschaum
+Sérandite
+Seraph
+Serendibite
+Serpentine
+Bowen
+Stich
+Shattuck
+Shiga
+Shortite
+Shung
+Siderite
+Silliman
+Simpsonite
+Sinhal
+Smalt
+Smithsonite
+Sodalite
+Hackman
+Sogdian
+Sperry
+Spessar
+Sphaler
+Spinel
+Ceylon
+Spodumene
+Triphane
+Spurrite
+Stauro
+Strontian
+Titanate
+Sulfur
+Bustamite
+Sylvite
+Taaffeita
+Talc
+Tantalite
+Tektites
+Tephroite
+Thomsonite
+Thaumasite
+Topaz
+Tourmaline
+Achroite
+Chrome
+Dravite
+Elbaite
+Indicol
+Olenite
+Paraiba
+Rossman
+Rubellite
+Tremol
+Triphyl
+Triplite
+Tugtup
+Turquoise
+Ulex
+Ussing
+Vanadinite
+Variscite
+Vesuvianite
+Californite
+Villiaum
+Vivianite
+Vlasov
+Wardite
+Wavell
+Welogan
+Whewell
+Wilkeite
+Willemite
+Wither
+Wollastone
+Wulfenite
+Wurtzite
+Xonot
+Yugawara
+Zektzer
+Zeolites
+Chabaz
+Steller
+Stilbite
+Zinc
+Zinnwald
+Zircon
+Jacinth
+Zoisite
+Tanzan
+Thulite
+Zultan
+Zany
+Lapis lazuli
+Desert glass
+Llanite
+Maw sit-sit
+Obsidian
+Tears
+Pallas
+Peridot
+Soapstone
+Tact
+Unakite
+Bauxite
+Concretions
+Bloodstone
+Heliotrope
+Eilat stone
+Epidos
+Glimmer
+Goldstone
+Hawks eye
+Iddings
+Lampro

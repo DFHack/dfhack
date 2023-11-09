@@ -23,17 +23,20 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
+
 #include <algorithm>
-#include <iostream>
-#include <iomanip>
 #include <cctype>
 #include <climits>
+#include <cstdio>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
 #include <stdint.h>
 #include <vector>
-#include <sstream>
-#include <cstdio>
-#include <memory>
 
 #if defined(_MSC_VER)
     #define DFHACK_FUNCTION_SIG __FUNCSIG__
@@ -56,28 +59,6 @@ distribution.
 
 namespace DFHack {
     class color_ostream;
-}
-
-/*! \namespace dts
- * std.reverse() == dts, The namespace that include forward compatible helpers
- * which can be used from newer standards. The preprocessor check prefers
- * standard version if one is available. The standard version gets imported with
- * using.
- */
-namespace dts {
-//  Check if lib supports the feature test macro or version is over c++14.
-#if __cpp_lib_make_unique < 201304 && __cplusplus < 201402L
-//! Insert c++14 make_unique to be forward compatible. Array versions are
-//! missing
-template<typename T, typename... Args>
-typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T> >::type
-make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>{new T{std::forward<Args>(args)...}};
-}
-#else /* >= c++14 */
-using std::make_unique;
-#endif
 }
 
 template <typename T>
@@ -164,8 +145,8 @@ int linear_index(const std::vector<CT*> &vec, FT CT::*field, FT key)
     return -1;
 }
 
-template <typename CT, typename FT>
-int binsearch_index(const std::vector<CT*> &vec, FT CT::*field, FT key, bool exact = true)
+template <typename CT, typename FT, typename MT>
+int binsearch_index(const std::vector<CT*> &vec, FT MT::*field, FT key, bool exact = true)
 {
     // Returns the index of the value >= the key
     int min = -1, max = (int)vec.size();
@@ -242,8 +223,8 @@ unsigned insert_into_vector(std::vector<FT> &vec, FT key, bool *inserted = NULL)
     return pos;
 }
 
-template<typename CT, typename FT>
-unsigned insert_into_vector(std::vector<CT*> &vec, FT CT::*field, CT *obj, bool *inserted = NULL)
+template<typename CT, typename FT, typename MT>
+unsigned insert_into_vector(std::vector<CT*> &vec, FT MT::*field, CT *obj, bool *inserted = NULL)
 {
     unsigned pos = (unsigned)binsearch_index(vec, field, obj->*field, false);
     bool to_ins = (pos >= vec.size() || vec[pos] != obj);
@@ -338,6 +319,24 @@ inline typename T::mapped_type map_find(
     return (it == map.end()) ? defval : it->second;
 }
 
+template <class T, typename Fn>
+static void for_each_(std::vector<T> &v, Fn func)
+{
+    std::for_each(v.begin(), v.end(), func);
+}
+
+template <class T, class V, typename Fn>
+static void for_each_(std::map<T, V> &v, Fn func)
+{
+    std::for_each(v.begin(), v.end(), func);
+}
+
+template <class T, class V, typename Fn>
+static void transform_(const std::vector<T> &src, std::vector<V> &dst, Fn func)
+{
+    std::transform(src.begin(), src.end(), std::back_inserter(dst), func);
+}
+
 DFHACK_EXPORT bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail = NULL);
 
 template<typename T>
@@ -382,6 +381,22 @@ DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
                                 const std::string &str, const std::string &separator,
                                 bool squash_empty = false);
 DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::vector<std::string> &items);
+
+template<typename T>
+inline std::string join_strings(const std::string &separator, T &items) {
+    std::stringstream ss;
+
+    bool first = true;
+    for (auto &item : items) {
+        if (first)
+            first = false;
+        else
+            ss << separator;
+        ss << item;
+    }
+
+    return ss.str();
+}
 
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
@@ -459,3 +474,5 @@ DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out);

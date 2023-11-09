@@ -508,6 +508,7 @@ bool Console::init(bool)
     inited = true;
     // DOESN'T WORK - locks up DF!
     // ForceForegroundWindow(d->MainWindow);
+    hide();
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?

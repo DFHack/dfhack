@@ -18,8 +18,8 @@ watch list. Units will be ignored if they are:
 Creatures who will not reproduce (because they're not interested in the
 opposite sex or have been gelded) will be butchered before those who will.
 Older adults and younger children will be butchered first if the population
-is above the target (defaults are: 1 male kid, 5 female kids, 1 male adult,
-5 female adults). Note that you may need to set a target above 1 to have a
+is above the target (defaults are: 2 male kids, 4 female kids, 2 male adults,
+4 female adults). Note that you may need to set a target above 1 to have a
 reliable breeding population due to asexuality etc. See `fix-ster` if this is a
 problem.
 
@@ -34,7 +34,7 @@ Usage
 ``autobutcher autowatch``
     Automatically add all new races (animals you buy from merchants, tame
     yourself, or get from migrants) to the watch list using the default target
-    counts.
+    counts. This option is enabled by default.
 ``autobutcher noautowatch``
     Stop auto-adding new races to the watch list.
 ``autobutcher target <fk> <mk> <fa> <ma> all|new|<race> [<race> ...]``
@@ -70,7 +70,7 @@ Usage
 ``autobutcher list_export``
     Print commands required to set the current settings in another fort.
 
-To see a list of all races, run this command:
+To see a list of all races, run this command::
 
     devel/query --table df.global.world.raws.creatures.all --search ^creature_id --maxdepth 1
 
@@ -108,4 +108,3 @@ fortress::
     autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
     autobutcher target 5 5 6 2 PIG
     autobutcher target 0 0 0 0 new
-    autobutcher autowatch

@@ -4,9 +4,9 @@ package dfproto;
 
 option optimize_for = LITE_RUNTIME;
 
-// Plugin: rename
+// DISABLED Plugin: rename
 
-// RPC RenameSquad : RenameSquadIn -> EmptyMessage
+// DISABLED RPC RenameSquad : RenameSquadIn -> EmptyMessage
 message RenameSquadIn {
     required int32 squad_id = 1;
 
@@ -14,7 +14,7 @@ message RenameSquadIn {
     optional string alias = 3;
 }
 
-// RPC RenameUnit : RenameUnitIn -> EmptyMessage
+// DISABLED RPC RenameUnit : RenameUnitIn -> EmptyMessage
 message RenameUnitIn {
     required int32 unit_id = 1;
 
@@ -22,7 +22,7 @@ message RenameUnitIn {
     optional string profession = 3;
 }
 
-// RPC RenameBuilding : RenameBuildingIn -> EmptyMessage
+// DISABLED RPC RenameBuilding : RenameBuildingIn -> EmptyMessage
 message RenameBuildingIn {
     required int32 building_id = 1;
 

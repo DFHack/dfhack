@@ -25,12 +25,20 @@ distribution.
 #pragma once
 
 #include <deque>
-#include <string>
-#include <sstream>
-#include <vector>
+#include <future>
 #include <map>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "DataDefs.h"
+
+namespace std {
+    class condition_variable;
+    class mutex;
+};
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.
@@ -394,6 +402,7 @@ namespace df
 
     template<class T>
     class ro_stl_container_identity : public container_identity {
+    protected:
         const char *name;
 
     public:
@@ -416,6 +425,30 @@ namespace df
             auto iter = (*(T*)ptr).begin();
             for (; idx > 0; idx--) ++iter;
             return (void*)&*iter;
+        }
+    };
+
+    template<class T>
+    class ro_stl_assoc_container_identity : public ro_stl_container_identity<T> {
+        type_identity *key_identity;
+        type_identity *item_identity;
+
+    public:
+        ro_stl_assoc_container_identity(const char *name, type_identity *key, type_identity *item)
+            : ro_stl_container_identity<T>(name, item),
+              key_identity(key),
+              item_identity(item)
+        {}
+
+        virtual std::string getFullName(type_identity*) override {
+            return std::string(ro_stl_assoc_container_identity<T>::name) + "<" + key_identity->getFullName() + ", " + item_identity->getFullName() + ">";
+        }
+
+    protected:
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) override {
+            auto iter = (*(T*)ptr).begin();
+            for (; idx > 0; idx--) ++iter;
+            return (void*)&iter->second;
         }
     };
 
@@ -516,6 +549,15 @@ namespace df
 #define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
 
+// the space after the use of "type" in OPAQUE_IDENTITY_TRAITS is _required_
+// without it the macro generates a syntax error when type is a template specification
+
+#define OPAQUE_IDENTITY_TRAITS(type) \
+    template<> struct DFHACK_EXPORT identity_traits<type > { \
+        static opaque_identity identity; \
+        static opaque_identity *get() { return &identity; } \
+    };
+
     INTEGER_IDENTITY_TRAITS(char);
     INTEGER_IDENTITY_TRAITS(signed char);
     INTEGER_IDENTITY_TRAITS(unsigned char);
@@ -529,6 +571,24 @@ namespace df
     INTEGER_IDENTITY_TRAITS(unsigned long long);
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
+    OPAQUE_IDENTITY_TRAITS(std::condition_variable);
+    OPAQUE_IDENTITY_TRAITS(std::fstream);
+    OPAQUE_IDENTITY_TRAITS(std::mutex);
+    OPAQUE_IDENTITY_TRAITS(std::future<void>);
+    OPAQUE_IDENTITY_TRAITS(std::function<void()>);
+    OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
+
+#ifdef BUILD_DFHACK_LIB
+    template<typename T>
+    struct DFHACK_EXPORT identity_traits<std::shared_ptr<T>> {
+        static opaque_identity *get() {
+            typedef std::shared_ptr<T> type;
+            static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
+            static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
+            return &identity;
+        }
+    };
+#endif
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
@@ -538,11 +598,6 @@ namespace df
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
-    };
-
-    template<> struct DFHACK_EXPORT identity_traits<std::fstream> {
-        static opaque_identity identity;
-        static opaque_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<char*> {
@@ -573,6 +628,7 @@ namespace df
 #undef NUMBER_IDENTITY_TRAITS
 #undef INTEGER_IDENTITY_TRAITS
 #undef FLOAT_IDENTITY_TRAITS
+#undef OPAQUE_IDENTITY_TRAITS
 
     // Container declarations
 
@@ -606,6 +662,14 @@ namespace df
     };
 
     template<class T> struct identity_traits<std::set<T> > {
+        static container_identity *get();
+    };
+
+    template<class KT, class T> struct identity_traits<std::map<KT, T>> {
+        static container_identity *get();
+    };
+
+    template<class KT, class T> struct identity_traits<std::unordered_map<KT, T>> {
         static container_identity *get();
     };
 
@@ -676,6 +740,20 @@ namespace df
     inline container_identity *identity_traits<std::set<T> >::get() {
         typedef std::set<T> container;
         static ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class KT, class T>
+    inline container_identity *identity_traits<std::map<KT, T>>::get() {
+        typedef std::map<KT, T> container;
+        static ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class KT, class T>
+    inline container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
+        typedef std::unordered_map<KT, T> container;
+        static ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 

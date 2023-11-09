@@ -4,11 +4,19 @@ add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
 
+if(UNIX)
+    set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
+    set_target_properties(protoc PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protoc-bin PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+    set_target_properties(protobuf PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
+endif()
+
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)
-    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")
+    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare -Wno-restrict")
 endif()
 endif()
 
@@ -30,8 +38,6 @@ option(CLSOCKET_SHARED "Build clsocket lib as shared." OFF)
 option(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependency." ON)
 add_subdirectory(clsocket)
 ide_folder(clsocket "Depends")
-
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/luacov/src/luacov/ DESTINATION ${DFHACK_DATA_DESTINATION}/lua/luacov)
 
 # set the default values of libexpat options - the descriptions are left empty
 # because later option() calls *do* override those

@@ -694,7 +694,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 
     void display_settings()
     {
-        Screen::show(dts::make_unique<embark_tools_settings>(), plugin_self);
+        Screen::show(std::make_unique<embark_tools_settings>(), plugin_self);
     }
 
     inline bool is_valid_page()

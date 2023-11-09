@@ -25,7 +25,7 @@
 #include "DataDefs.h"
 #include <MiscUtils.h>
 
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_relationship_type.h>
@@ -46,7 +46,7 @@
 #include <df/building_tradedepotst.h>
 #include <df/building_stockpilest.h>
 #include <df/items_other_id.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/activity_info.h>
 #include <df/tile_dig_designation.h>
 #include <df/item_weaponst.h>
@@ -64,7 +64,7 @@
 #include <df/building_design.h>
 #include <df/vehicle.h>
 #include <df/units_other_id.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/training_assignment.h>
 #include <df/general_ref_contains_itemst.h>
 #include <df/personality_facet_type.h>
@@ -82,7 +82,7 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::world;
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
@@ -948,9 +948,9 @@ private:
 
                 // identify dwarfs who are needed for meetings and mark them for exclusion
 
-                for (size_t i = 0; i < ui->activities.size(); ++i)
+                for (size_t i = 0; i < plotinfo->activities.size(); ++i)
                 {
-                    df::activity_info *act = ui->activities[i];
+                    df::activity_info *act = plotinfo->activities[i];
                     if (!act) continue;
 
                     bool p1 = act->unit_actor == dwarf->dwarf;
@@ -996,11 +996,11 @@ private:
 
                 for (size_t j = 0; j < dwarf->dwarf->inventory.size(); j++)
                 {
-                    df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
-                    if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
+                    df::unit_inventory_item* plotinfo = dwarf->dwarf->inventory[j];
+                    if (plotinfo->mode == df::unit_inventory_item::Weapon && plotinfo->item->isWeapon())
                     {
                         dwarf->armed = true;
-                        df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
+                        df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(plotinfo->item))->subtype;
                         df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
                         df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
                         if (weaponsk == df::job_skill::AXE)
@@ -1408,8 +1408,8 @@ public:
             (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers) ? 1 : 0;
 
         /* add animal trainers */
-        for (auto a = df::global::ui->equipment.training_assignments.begin();
-            a != df::global::ui->equipment.training_assignments.end();
+        for (auto a = df::global::plotinfo->equipment.training_assignments.begin();
+            a != df::global::plotinfo->equipment.training_assignments.end();
             a++)
         {
             labor_needed[df::unit_labor::ANIMALTRAIN]++;

@@ -15,16 +15,11 @@
 #include "modules/Gui.h"
 #include "uicommon.h"
 
-#include "df/building_tradedepotst.h"
+#include "df/gamest.h"
 #include "df/general_ref.h"
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_jobmanagementst.h"
-#include "df/viewscreen_justicest.h"
-#include "df/viewscreen_layer_militaryst.h"
-#include "df/viewscreen_locationsst.h"
-#include "df/viewscreen_tradegoodsst.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -35,8 +30,8 @@ using std::vector;
 
 DFHACK_PLUGIN("confirm");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
 
 typedef std::set<df::interface_key> ikey_set;
 command_result df_confirm (color_ostream &out, vector <string> & parameters);
@@ -45,11 +40,6 @@ struct conf_wrapper;
 static map<string, conf_wrapper*> confirmations;
 string active_id;
 queue<string> cmds;
-
-// true when confirm is paused
-bool paused = false;
-// if set, confirm will unpause when this screen is no longer on the stack
-df::viewscreen *paused_screen = NULL;
 
 namespace DFHack {
     DBG_DECLARE(confirm,status);
@@ -72,11 +62,14 @@ string char_replace (string s, char a, char b)
 }
 
 bool set_conf_state (string name, bool state);
+bool set_conf_paused (string name, bool pause);
 
 class confirmation_base {
 public:
+    bool dirty = false;
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
+    virtual string get_focus_string() = 0;
     virtual bool set_state(cstate) = 0;
 
     static bool set_state(string id, cstate state)
@@ -96,10 +89,12 @@ confirmation_base *confirmation_base::active = nullptr;
 struct conf_wrapper {
 private:
     bool enabled;
+    bool paused;
     std::set<VMethodInterposeLinkBase*> hooks;
 public:
     conf_wrapper()
-        :enabled(false)
+        :enabled(false),
+        paused(false)
     {}
     void add_hook(VMethodInterposeLinkBase *hook)
     {
@@ -117,29 +112,35 @@ public:
         enabled = state;
         return true;
     }
+    bool set_paused (bool pause) {
+        paused = pause;
+        return true;
+    }
     inline bool is_enabled() { return enabled; }
+    inline bool is_paused() { return paused; }
 };
 
 namespace trade {
-    static bool goods_selected (const std::vector<char> &selected)
+    static bool goods_selected (std::vector<uint8_t> &selected)
     {
-        for (char c : selected)
-            if (c)
+        if(!game->main_interface.trade.open)
+            return false;
+
+        for (uint8_t sel : selected)
+            if (sel == 1)
                 return true;
         return false;
     }
-    inline bool trader_goods_selected (df::viewscreen_tradegoodsst *screen)
+    inline bool trader_goods_selected ()
     {
-        CHECK_NULL_POINTER(screen);
-        return goods_selected(screen->trader_selected);
+        return goods_selected(game->main_interface.trade.goodflag[0]);
     }
-    inline bool broker_goods_selected (df::viewscreen_tradegoodsst *screen)
+    inline bool broker_goods_selected ()
     {
-        CHECK_NULL_POINTER(screen);
-        return goods_selected(screen->broker_selected);
+        return goods_selected(game->main_interface.trade.goodflag[1]);
     }
 
-    static bool goods_all_selected(const std::vector<char> &selected, const std::vector<df::item*> &items)  \
+    /*static bool goods_all_selected(const std::vector<char>& selected, const std::vector<df::item*>& items)  \
     {
         for (size_t i = 0; i < selected.size(); ++i)
         {
@@ -162,16 +163,14 @@ namespace trade {
         }
         return true;
     }
-    inline bool trader_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    inline bool trader_goods_all_selected()
     {
-        CHECK_NULL_POINTER(screen);
         return goods_all_selected(screen->trader_selected, screen->trader_items);
     }
-    inline bool broker_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    inline bool broker_goods_all_selected()
     {
-        CHECK_NULL_POINTER(screen);
         return goods_all_selected(screen->broker_selected, screen->broker_items);
-    }
+    }*/
 }
 
 namespace conf_lua {
@@ -228,6 +227,7 @@ namespace conf_lua {
                 lua_newtable(L);
                 Lua::TableInsert(L, "id", item.first);
                 Lua::TableInsert(L, "enabled", item.second->is_enabled());
+                Lua::TableInsert(L, "paused", item.second->is_paused());
                 lua_settable(L, -3);
             }
             return 1;
@@ -240,28 +240,17 @@ namespace conf_lua {
                 lua_pushnil(L);
             return 1;
         }
-        int unpause(lua_State *)
-        {
-            DEBUG(status).print("unpausing\n");
-            paused = false;
-            paused_screen = NULL;
-            return 0;
-        }
-        int get_paused (lua_State *L)
-        {
-            Lua::Push(L, paused);
-            return 1;
-        }
     }
 }
 
 #define CONF_LUA_FUNC(ns, name) {#name, df::wrap_function(ns::name, true)}
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     CONF_LUA_FUNC( , set_conf_state),
+    CONF_LUA_FUNC( , set_conf_paused),
     CONF_LUA_FUNC(trade, broker_goods_selected),
-    CONF_LUA_FUNC(trade, broker_goods_all_selected),
+    //CONF_LUA_FUNC(trade, broker_goods_all_selected),
     CONF_LUA_FUNC(trade, trader_goods_selected),
-    CONF_LUA_FUNC(trade, trader_goods_all_selected),
+    //CONF_LUA_FUNC(trade, trader_goods_all_selected),
     DFHACK_LUA_END
 };
 
@@ -270,14 +259,12 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     CONF_LUA_CMD(get_ids),
     CONF_LUA_CMD(get_conf_data),
     CONF_LUA_CMD(get_active_id),
-    CONF_LUA_CMD(unpause),
-    CONF_LUA_CMD(get_paused),
     DFHACK_LUA_END
 };
 
 void show_options()
 {
-    cmds.push("gui/confirm-opts");
+    cmds.push("gui/confirm");
 }
 
 template <class T>
@@ -295,6 +282,7 @@ public:
         }
 
         state = s;
+        dirty = true;
         if (s == INACTIVE) {
             active_id = "";
             confirmation_base::active = nullptr;
@@ -306,45 +294,70 @@ public:
         return true;
     }
     bool feed (ikey_set *input) {
-        if (paused)
-        {
-            // we can only detect that we've left the screen by intercepting the
-            // ESC key
-            if (!paused_screen && input->count(df::interface_key::LEAVESCREEN))
-                conf_lua::api::unpause(NULL);
-            return false;
+        bool mouseExit = false;
+        if(df::global::enabler->mouse_rbut) {
+            mouseExit = true;
         }
-        else if (state == INACTIVE)
+        bool mouseSelect = false;
+        if(df::global::enabler->mouse_lbut) {
+            mouseSelect = true;
+        }
+
+        conf_wrapper *wrapper = confirmations[this->get_id()];
+        if(wrapper->is_paused()) {
+            std::string concernedFocus = this->get_focus_string();
+            if(!Gui::matchFocusString(this->get_focus_string()))
+                wrapper->set_paused(false);
+            return false;
+        } else if (state == INACTIVE)
         {
+            if(mouseExit) {
+                if(intercept_key("MOUSE_RIGHT") && set_state(ACTIVE)) {
+                    df::global::enabler->mouse_rbut = 0;
+                    df::global::enabler->mouse_rbut_down = 0;
+                    mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
+                    last_key_is_right_click = true;
+                    return true;
+                }
+            } else
+                last_key_is_right_click = false;
+
+            if(mouseSelect) {
+                if(intercept_key("MOUSE_LEFT") && set_state(ACTIVE)) {
+                    df::global::enabler->mouse_lbut = 0;
+                    df::global::enabler->mouse_lbut_down = 0;
+                    mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
+                    last_key_is_left_click = true;
+                    return true;
+                }
+            } else
+                last_key_is_left_click = false;
+
             for (df::interface_key key : *input)
             {
-                if (intercept_key(key))
+                if (intercept_key(key) && set_state(ACTIVE))
                 {
-                    if (set_state(ACTIVE))
-                    {
-                        last_key = key;
-                        return true;
-                    }
+                    last_key = key;
+                    return true;
                 }
             }
             return false;
         }
         else if (state == ACTIVE)
         {
-            if (input->count(df::interface_key::LEAVESCREEN))
+            if (input->count(df::interface_key::LEAVESCREEN) || mouseExit) {
+                if(mouseExit) {
+                    df::global::enabler->mouse_rbut = 0;
+                    df::global::enabler->mouse_rbut_down = 0;
+                }
                 set_state(INACTIVE);
-            else if (input->count(df::interface_key::SELECT))
+            } else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
             {
                 DEBUG(status).print("pausing\n");
-                paused = true;
-                // only record the screen when we're not at the top viewscreen
-                // since this screen will *always* be on the stack. for
-                // dwarfmode screens, use ESC detection to discover when to
-                // unpause
-                if (!df::viewscreen_dwarfmodest::_identity.is_instance(screen))
-                    paused_screen = screen;
+
+                wrapper->set_paused(true);
                 set_state(INACTIVE);
             }
             else if (input->count(df::interface_key::CUSTOM_S))
@@ -360,17 +373,18 @@ public:
         return state == ACTIVE;
     }
     void render() {
-        static vector<string> lines;
-        static const std::string pause_message =
-               "Pause confirmations until you exit this screen";
-        Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen corner_dr = Screen::Pen((char)188, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen border_ud = Screen::Pen((char)205, COLOR_GREY, COLOR_BLACK);
-        Screen::Pen border_lr = Screen::Pen((char)186, COLOR_GREY, COLOR_BLACK);
         if (state == ACTIVE)
         {
+            static vector<string> lines;
+            static const std::string pause_message =
+                   "Pause confirmations until you exit this screen";
+            Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen corner_dr = Screen::Pen((char)188, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen border_ud = Screen::Pen((char)205, COLOR_GREY, COLOR_BLACK);
+            Screen::Pen border_lr = Screen::Pen((char)186, COLOR_GREY, COLOR_BLACK);
+
             split_string(&lines, get_message(), "\n");
             size_t max_length = 40;
             for (string line : lines)
@@ -397,7 +411,7 @@ public:
             Screen::paintTile(corner_ur, x2, y1);
             Screen::paintTile(corner_dl, x1, y2);
             Screen::paintTile(corner_dr, x2, y2);
-            string title = " " + get_title() + " ";
+            string title = ' ' + get_title() + ' ';
             Screen::paintString(Screen::Pen(' ', COLOR_DARKGREY, COLOR_BLACK),
                 x2 - 6, y1, "DFHack");
             Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY),
@@ -429,17 +443,50 @@ public:
         else if (state == SELECTED)
         {
             ikey_set tmp;
-            tmp.insert(last_key);
-            screen->feed(&tmp);
+            if(last_key_is_left_click) {
+                long prevx = df::global::gps->mouse_x;
+                long prevy = df::global::gps->mouse_y;
+                df::global::gps->mouse_x = mouse_pos.x;
+                df::global::gps->mouse_y = mouse_pos.y;
+                df::global::enabler->mouse_lbut = 1;
+                df::global::enabler->mouse_lbut_down = 1;
+                screen->feed(&tmp);
+                df::global::enabler->mouse_lbut = 0;
+                df::global::enabler->mouse_lbut_down = 0;
+                df::global::gps->mouse_x = prevx;
+                df::global::gps->mouse_y = prevy;
+            }
+            else if(last_key_is_right_click) {
+                tmp.insert(df::interface_key::LEAVESCREEN);
+                screen->feed(&tmp);
+            }
+            else {
+                tmp.insert(last_key);
+                screen->feed(&tmp);
+            }
             set_state(INACTIVE);
         }
+        if(dirty) {
+            dirty = false;
+            df::global::gps->force_full_display_count = 1;
+        }
     }
-    virtual string get_id() override = 0;
+    string get_id() override = 0;
+    string get_focus_string() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
         CONF_LUA_START;
         push(key);
+        if (call("intercept_key", 3, 1))
+            return lua_toboolean(l_state, -1);
+        else
+            return false;
+    };
+    bool intercept_key (std::string mouse_button = "MOUSE_LEFT")
+    {
+        CONF_LUA_START;
+        push(mouse_button);
         if (call("intercept_key", 3, 1))
             return lua_toboolean(l_state, -1);
         else
@@ -473,6 +520,9 @@ public:
 protected:
     cstate state;
     df::interface_key last_key;
+    bool last_key_is_left_click;
+    bool last_key_is_right_click;
+    df::coord2d mouse_pos;
 };
 
 template<typename T>
@@ -501,23 +551,18 @@ struct cls##_hooks : cls::screen_type { \
         INTERPOSE_NEXT(render)(); \
         cls##_instance.render(); \
     } \
-    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key)) \
-    { \
-        return cls##_instance.key_conflict(key) || INTERPOSE_NEXT(key_conflict)(key); \
-    } \
 }; \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, feed, prio); \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, render, prio); \
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio); \
 static int conf_register_##cls = conf_register(&cls##_instance, {\
     &INTERPOSE_HOOK(cls##_hooks, feed), \
     &INTERPOSE_HOOK(cls##_hooks, render), \
-    &INTERPOSE_HOOK(cls##_hooks, key_conflict), \
 });
 
-#define DEFINE_CONFIRMATION(cls, screen) \
+#define DEFINE_CONFIRMATION(cls, screen, focusString) \
     class confirmation_##cls : public confirmation<df::screen> { \
         virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
+        virtual string get_focus_string() { return focusString; } \
     }; \
     IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, 0);
 
@@ -525,21 +570,39 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     implemented in plugins/lua/confirm.lua.
     IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
+
+    The second argument to DEFINE_CONFIRMATION determines the viewscreen that any
+    intercepted input will be fed to.
+
+    The third argument to DEFINE_CONFIRMATION determines the focus string that will
+    be used to determine if the confirmation should be unpaused. If a confirmation is paused
+    and the focus string is no longer found in the current focus, the confirmation will be
+    unpaused. Focus strings ending in "*" will use prefix matching e.g. "dwarfmode/Info*" would
+    match "dwarfmode/Info/Foo", "dwarfmode/Info/Bar" and so on. All matching is case insensitive.
 */
-DEFINE_CONFIRMATION(trade,              viewscreen_tradegoodsst);
-DEFINE_CONFIRMATION(trade_cancel,       viewscreen_tradegoodsst);
-DEFINE_CONFIRMATION(trade_seize,        viewscreen_tradegoodsst);
-DEFINE_CONFIRMATION(trade_offer,        viewscreen_tradegoodsst);
-DEFINE_CONFIRMATION(trade_select_all,   viewscreen_tradegoodsst);
-DEFINE_CONFIRMATION(haul_delete,        viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(depot_remove,       viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(squad_disband,      viewscreen_layer_militaryst);
-DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst);
-DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
-DEFINE_CONFIRMATION(convict,            viewscreen_justicest);
-DEFINE_CONFIRMATION(order_remove,       viewscreen_jobmanagementst);
+
+DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest, "dwarfmode/Trade");
+DEFINE_CONFIRMATION(haul_delete_route,    viewscreen_dwarfmodest, "dwarfmode/Hauling");
+DEFINE_CONFIRMATION(haul_delete_stop,     viewscreen_dwarfmodest, "dwarfmode/Hauling");
+DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest, "dwarfmode/ViewSheets/BUILDING");
+DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest, "dwarfmode/Squads");
+DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest, "dwarfmode/Info/WORK_ORDERS");
+DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest, "dwarfmode/Zone");
+DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest, "dwarfmode/Burrow");
+DEFINE_CONFIRMATION(stockpile_remove,     viewscreen_dwarfmodest, "dwarfmode/Some/Stockpile");
+
+// these are more complex to implement
+//DEFINE_CONFIRMATION(convict,            viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade,              viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_seize,        viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_offer,        viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_select_all,   viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(uniform_delete,     viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
+
+// locations can't be retired currently
+//DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
@@ -554,15 +617,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 {
-    if (is_enabled != enable)
-    {
-        for (auto c : confirmations)
-        {
-            if (!c.second->apply(enable))
-                return CR_FAILURE;
-        }
-        is_enabled = enable;
-    }
+    is_enabled = enable;
     if (is_enabled)
     {
         conf_lua::simple_call("check");
@@ -585,22 +640,6 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
-static bool screen_found(df::viewscreen *target_screen)
-{
-    if (!df::global::gview)
-        return false;
-
-    df::viewscreen *screen = &df::global::gview->view;
-    while (screen)
-    {
-        if (screen == target_screen)
-            return true;
-        screen = screen->child;
-    }
-
-    return false;
-}
-
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     while (!cmds.empty())
@@ -608,10 +647,6 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
         Core::getInstance().runCommand(out, cmds.front());
         cmds.pop();
     }
-
-    // if the screen that we paused on is no longer on the stack, unpause
-    if (paused_screen && !screen_found(paused_screen))
-        conf_lua::api::unpause(NULL);
 
     return CR_OK;
 }
@@ -629,6 +664,27 @@ bool set_conf_state (string name, bool state)
     }
 
     if (state == false)
+    {
+        // dismiss the confirmation too
+        confirmation_base::set_state(name, confirmation_base::INACTIVE);
+    }
+
+    return found;
+}
+
+bool set_conf_paused (string name, bool pause)
+{
+    bool found = false;
+    for (auto it : confirmations)
+    {
+        if (it.first == name)
+        {
+            found = true;
+            it.second->set_paused(pause);
+        }
+    }
+
+    if (pause == true)
     {
         // dismiss the confirmation too
         confirmation_base::set_state(name, confirmation_base::INACTIVE);

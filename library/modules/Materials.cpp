@@ -42,7 +42,7 @@ using namespace std;
 #include "MiscUtils.h"
 
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/item.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
@@ -68,7 +68,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 bool MaterialInfo::decode(df::item *item)
 {
@@ -376,7 +376,7 @@ df::craft_material_class MaterialInfo::getCraftClass()
     return craft_material_class::None;
 }
 
-bool MaterialInfo::isAnyCloth()
+bool MaterialInfo::isAnyCloth() const
 {
     using namespace df::enums::material_flags;
 
@@ -387,7 +387,7 @@ bool MaterialInfo::isAnyCloth()
     );
 }
 
-bool MaterialInfo::matches(const df::job_material_category &cat)
+bool MaterialInfo::matches(const df::job_material_category &cat) const
 {
     if (!material)
         return false;
@@ -416,7 +416,7 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
     return false;
 }
 
-bool MaterialInfo::matches(const df::dfhack_material_category &cat)
+bool MaterialInfo::matches(const df::dfhack_material_category &cat) const
 {
     if (!material)
         return false;
@@ -439,12 +439,13 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
         return true;
     if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
         return true;
+    TEST(gem, IS_GEM);
     return false;
 }
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
+bool MaterialInfo::matches(const df::job_item &item, df::item_type itype) const
 {
     if (!isValid()) return false;
 
@@ -465,7 +466,7 @@ bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
            bits_match(item.flags3.whole, ok3.whole, mask3.whole);
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -500,7 +501,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     //04000000 - "milkable" - vtable[107],1,1
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -513,10 +514,18 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(sewn_imageless, is_cloth);
     TEST(glass_making, MAT_FLAG(CRYSTAL_GLASSABLE));
 
-    TEST(fire_safe, material->heat.melting_point > 11000);
-    TEST(magma_safe, material->heat.melting_point > 12000);
+    TEST(fire_safe, material->heat.melting_point > 11000
+                    && material->heat.boiling_point > 11000
+                    && material->heat.ignite_point > 11000
+                    && material->heat.heatdam_point > 11000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 11000));
+    TEST(magma_safe, material->heat.melting_point > 12000
+                    && material->heat.boiling_point > 12000
+                    && material->heat.ignite_point > 12000
+                    && material->heat.heatdam_point > 12000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 12000));
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
+    TEST(non_economic, !inorganic || !(plotinfo && vector_get(plotinfo->economic_stone, index)));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
@@ -532,7 +541,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(yarn, MAT_FLAG(YARN));
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -597,7 +606,7 @@ bool DFHack::isStoneInorganic(int material)
 
 std::unique_ptr<Module> DFHack::createMaterials()
 {
-    return dts::make_unique<Materials>();
+    return std::make_unique<Materials>();
 }
 
 Materials::Materials()

@@ -94,7 +94,7 @@ rect2d getMapViewport()
     {
         view_rb=area_x2;
     }
-    if (menu_pos<area_pos || df::global::ui->main.mode!=0)
+    if (menu_pos<area_pos || df::global::plotinfo->main.mode!=0)
     {
         if (menu_pos >= area_pos)
             menu_pos = area_pos-1;
@@ -1171,11 +1171,11 @@ void lightingEngineViewscreen::loadSettings()
     std::string rawFolder;
     if(df::global::world->cur_savegame.save_dir!="")
     {
-        rawFolder= "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+        rawFolder= "save/" + (df::global::world->cur_savegame.save_dir) + "/";
     }
     else
     {
-        rawFolder= "raw/";
+        rawFolder= "dfhack-config/";
     }
     const std::string settingsfile=rawFolder+"rendermax.lua";
 

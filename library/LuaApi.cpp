@@ -55,8 +55,10 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Military.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
+#include "modules/Textures.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -159,6 +161,26 @@ static bool get_int_field(lua_State *L, T *pf, int idx, const char *name, int de
     return !nil;
 }
 
+template<class T>
+static bool get_int_or_closure_field(lua_State *L, T *pf, int idx, const char *name, int defval)
+{
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil) {
+        *pf = T(defval);
+    } else if (lua_isnumber(L, -1)) {
+        *pf = T(lua_tointeger(L, -1));
+    } else if (lua_isfunction(L, -1)) {
+        lua_call(L, 0, 1);
+        *pf = T(lua_tointeger(L, -1));
+        lua_pop(L, 1);
+    } else {
+        luaL_error(L, "Field %s is not a number or closure function.", name);
+    }
+    lua_pop(L, 1);
+    return !nil;
+}
+
 static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, char defval)
 {
     lua_getfield(L, idx, name);
@@ -174,6 +196,17 @@ static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, ch
         lua_pop(L, 1);
         return get_int_field(L, pf, idx, name, defval);
     }
+}
+
+static bool get_bool_field(lua_State *L, bool *pf, int idx, const char *name, bool defval) {
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil)
+        *pf = defval;
+    else
+        *pf = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return !nil;
 }
 
 static void decode_pen(lua_State *L, Pen &pen, int idx)
@@ -194,7 +227,7 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
     else pen.bold = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
-    get_int_field(L, &pen.tile, idx, "tile", 0);
+    get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
     bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
     tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
@@ -207,6 +240,11 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
         pen.tile_mode = (lua_toboolean(L, -1) ? Pen::CharColor : Pen::AsIs);
         lua_pop(L, 1);
     }
+
+    get_bool_field(L, &pen.keep_lower, idx, "keep_lower", false);
+    get_bool_field(L, &pen.write_to_lower, idx, "write_to_lower", false);
+    get_bool_field(L, &pen.top_of_text, idx, "top_of_text", false);
+    get_bool_field(L, &pen.bottom_of_text, idx, "bottom_of_text", false);
 }
 
 /**************************************************
@@ -461,7 +499,7 @@ static void OpenPersistent(lua_State *state)
 
 static int DFHACK_MATINFO_TOKEN = 0;
 
-void Lua::Push(lua_State *state, MaterialInfo &info)
+void Lua::Push(lua_State *state, const MaterialInfo &info)
 {
     if (!info.isValid())
     {
@@ -825,6 +863,23 @@ static void make_pen_table(lua_State *L, Pen &pen)
             default:
                 lua_pushboolean(L, false); lua_setfield(L, -2, "tile_color");
                 break;
+        }
+
+        if (pen.keep_lower) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "keep_lower");
+        }
+        if (pen.write_to_lower) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "write_to_lower");
+        }
+        if (pen.top_of_text) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "top_of_text");
+        }
+        if (pen.bottom_of_text) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "bottom_of_text");
         }
     }
 }
@@ -1313,8 +1368,8 @@ static CommandHistory * ensureCommandHistory(std::string id,
 
 static int getCommandHistory(lua_State *state)
 {
-    std::string id = lua_tostring(state, 1);
-    std::string src_file = lua_tostring(state, 2);
+    std::string id = luaL_checkstring(state, 1);
+    std::string src_file = luaL_checkstring(state, 2);
     std::vector<std::string> entries;
     ensureCommandHistory(id, src_file)->getEntries(entries);
     Lua::PushVector(state, entries);
@@ -1339,6 +1394,13 @@ static void OpenModule(lua_State *state, const char *mname,
     LuaWrapper::SetFunctionWrappers(state, reg);
     if (reg2)
         luaL_setfuncs(state, reg2, 0);
+    lua_pop(state, 1);
+}
+
+static void OpenModule(lua_State *state, const char *mname, const luaL_Reg *reg2)
+{
+    luaL_getsubtable(state, lua_gettop(state), mname);
+    luaL_setfuncs(state, reg2, 0);
     lua_pop(state, 1);
 }
 
@@ -1443,8 +1505,9 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
 
 static int gui_getMousePos(lua_State *L)
 {
-    auto pos = Gui::getMousePos();
-    if (pos.isValid())
+    bool allow_out_of_bounds = lua_toboolean(L, 1);
+    df::coord pos = Gui::getMousePos(allow_out_of_bounds);
+    if ((allow_out_of_bounds && pos.z >= 0) || pos.isValid())
         Lua::Push(L, pos);
     else
         lua_pushnil(L);
@@ -1453,17 +1516,20 @@ static int gui_getMousePos(lua_State *L)
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
-    WRAPM(Gui, getFocusString),
-    WRAPM(Gui, getCurFocus),
+    WRAPM(Gui, getDFViewscreen),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, getSelectedBuilding),
+    WRAPM(Gui, getSelectedCivZone),
+    WRAPM(Gui, getSelectedStockpile),
     WRAPM(Gui, getSelectedPlant),
     WRAPM(Gui, getAnyUnit),
     WRAPM(Gui, getAnyItem),
     WRAPM(Gui, getAnyBuilding),
+    WRAPM(Gui, getAnyCivZone),
+    WRAPM(Gui, getAnyStockpile),
     WRAPM(Gui, getAnyPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),
@@ -1477,8 +1543,23 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
+    WRAPM(Gui, matchFocusString),
     { NULL, NULL }
 };
+
+static int gui_getFocusStrings(lua_State *state) {
+    df::viewscreen *r = Lua::GetDFObject<df::viewscreen>(state, 1);
+    std::vector<std::string> focusStrings = Gui::getFocusStrings(r);
+    Lua::PushVector(state, focusStrings);
+    return 1;
+}
+
+static int gui_getCurFocus(lua_State *state) {
+    bool skip_dismissed = lua_toboolean(state, 1);
+    std::vector<std::string> cur_focus = Gui::getCurFocus(skip_dismissed);
+    Lua::PushVector(state, cur_focus);
+    return 1;
+}
 
 static int gui_autoDFAnnouncement(lua_State *state)
 {
@@ -1580,11 +1661,19 @@ static int gui_revealInDwarfmodeMap(lua_State *state)
     switch (lua_gettop(state))
     {
         default:
+        case 5:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4), lua_toboolean(state, 5));
+            break;
         case 4:
             rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
             break;
         case 3:
-            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
+            if (lua_isboolean(state, 3)) {
+                Lua::CheckDFAssign(state, &p, 1);
+                rv = Gui::revealInDwarfmodeMap(p, lua_toboolean(state, 2), lua_toboolean(state, 3));
+            }
+            else
+                rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
             break;
         case 2:
             Lua::CheckDFAssign(state, &p, 1);
@@ -1605,6 +1694,8 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "pauseRecenter", gui_pauseRecenter },
     { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
+    { "getFocusStrings", gui_getFocusStrings },
+    { "getCurFocus", gui_getCurFocus },
     { NULL, NULL }
 };
 
@@ -1624,6 +1715,7 @@ static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
 }
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
+    WRAPM(Job,attachJobItem),
     WRAPM(Job,cloneJobStruct),
     WRAPM(Job,printItemDetails),
     WRAPM(Job,printJobDetails),
@@ -1670,6 +1762,81 @@ static const luaL_Reg dfhack_job_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Textures module *****/
+
+static int textures_loadTileset(lua_State *state)
+{
+    std::string file = luaL_checkstring(state, 1);
+    auto tile_w = luaL_checkint(state, 2);
+    auto tile_h = luaL_checkint(state, 3);
+    bool reserved = lua_isboolean(state, 4) ? lua_toboolean(state, 4) : false;
+    auto handles = Textures::loadTileset(file, tile_w, tile_h, reserved);
+    Lua::PushVector(state, handles);
+    return 1;
+}
+
+static int textures_getTexposByHandle(lua_State *state)
+{
+    auto handle = luaL_checkunsigned(state, 1);
+    auto texpos = Textures::getTexposByHandle(handle);
+    if (texpos == -1) {
+        lua_pushnil(state);
+    } else {
+        Lua::Push(state, texpos);
+    }
+    return 1;
+}
+
+static int textures_deleteHandle(lua_State *state)
+{
+    if (lua_isinteger(state,1)) {
+        auto handle = luaL_checkunsigned(state, 1);
+        Textures::deleteHandle(handle);
+    } else if (lua_istable(state,1)) {
+        std::vector<TexposHandle> handles;
+        Lua::GetVector(state, handles);
+        for (auto& handle: handles) {
+            Textures::deleteHandle(handle);
+        }
+    }
+    return 0;
+}
+
+static int textures_createTile(lua_State *state)
+{
+    std::vector<uint32_t> pixels;
+    Lua::GetVector(state, pixels);
+    auto tile_w = luaL_checkint(state, 2);
+    auto tile_h = luaL_checkint(state, 3);
+    bool reserved = lua_isboolean(state, 4) ? lua_toboolean(state, 4) : false;
+    auto handle = Textures::createTile(pixels, tile_w, tile_h, reserved);
+    Lua::Push(state, handle);
+    return 1;
+}
+
+static int textures_createTileset(lua_State *state)
+{
+    std::vector<uint32_t> pixels;
+    Lua::GetVector(state, pixels);
+    auto texture_w = luaL_checkint(state, 2);
+    auto texture_h = luaL_checkint(state, 3);
+    auto tile_w = luaL_checkint(state, 4);
+    auto tile_h = luaL_checkint(state, 5);
+    bool reserved = lua_isboolean(state, 6) ? lua_toboolean(state, 6) : false;
+    auto handles = Textures::createTileset(pixels, texture_w, texture_h, tile_w, tile_h, reserved);
+    Lua::PushVector(state, handles);
+    return 1;
+}
+
+static const luaL_Reg dfhack_textures_funcs[] = {
+    { "loadTileset", textures_loadTileset },
+    { "getTexposByHandle", textures_getTexposByHandle },
+    { "deleteHandle", textures_deleteHandle },
+    { "createTile", textures_createTile },
+    { "createTileset", textures_createTileset },
+    { NULL, NULL }
+};
+
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
@@ -1705,14 +1872,22 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isTame),
     WRAPM(Units, isTamable),
     WRAPM(Units, isDomesticated),
+    WRAPM(Units, isMarkedForTraining),
+    WRAPM(Units, isMarkedForTaming),
+    WRAPM(Units, isMarkedForWarTraining),
+    WRAPM(Units, isMarkedForHuntTraining),
     WRAPM(Units, isMarkedForSlaughter),
+    WRAPM(Units, isMarkedForGelding),
+    WRAPM(Units, isGeldable),
     WRAPM(Units, isGelded),
     WRAPM(Units, isEggLayer),
+    WRAPM(Units, isEggLayerRace),
     WRAPM(Units, isGrazer),
     WRAPM(Units, isMilkable),
     WRAPM(Units, isForest),
     WRAPM(Units, isMischievous),
     WRAPM(Units, isAvailableForAdoption),
+    WRAPM(Units, isPet),
     WRAPM(Units, hasExtravision),
     WRAPM(Units, isOpposedToLife),
     WRAPM(Units, isBloodsucker),
@@ -1740,6 +1915,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getNemesis),
     WRAPM(Units, getPhysicalAttrValue),
     WRAPM(Units, getMentalAttrValue),
+    WRAPM(Units, casteFlagSet),
     WRAPM(Units, getMiscTrait),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
@@ -1757,7 +1933,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getGoalType),
     WRAPM(Units, getGoalName),
     WRAPM(Units, isGoalAchieved),
-    WRAPM(Units, getSquadName),
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1766,6 +1941,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
     WRAPM(Units, getRaceChildNameById),
+    WRAPM(Units, getReadableName),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),
@@ -1776,6 +1952,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, multiplyGroupActionTimers),
     WRAPM(Units, setActionTimers),
     WRAPM(Units, setGroupActionTimers),
+    WRAPM(Units, getUnitByNobleRole),
     { NULL, NULL }
 };
 
@@ -1853,6 +2030,25 @@ static int units_getUnitsInBox(lua_State *state)
     return 2;
 }
 
+static int units_getCitizens(lua_State *L) {
+    bool ignore_sanity = lua_toboolean(L, -1); // defaults to false
+
+    std::vector<df::unit *> citizens;
+    if (Units::getCitizens(citizens, ignore_sanity)) {
+        Lua::PushVector(L, citizens);
+        return 1;
+    }
+    return 0;
+}
+
+static int units_getUnitsByNobleRole(lua_State *L) {
+    std::string role_name = luaL_checkstring(L, -1);
+    std::vector<df::unit *> units;
+    Units::getUnitsByNobleRole(units, role_name);
+    Lua::PushVector(L, units);
+    return 1;
+}
+
 static int units_getStressCutoffs(lua_State *L)
 {
     lua_newtable(L);
@@ -1866,7 +2062,18 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getOuterContainerRef", units_getOuterContainerRef },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
+    { "getCitizens", units_getCitizens },
+    { "getUnitsByNobleRole", units_getUnitsByNobleRole},
     { "getStressCutoffs", units_getStressCutoffs },
+    { NULL, NULL }
+};
+
+/***** Military Module *****/
+
+static const LuaWrapper::FunctionReg dfhack_military_module[] = {
+    WRAPM(Military, makeSquad),
+    WRAPM(Military, updateRoomAssignments),
+    WRAPM(Military, getSquadName),
     { NULL, NULL }
 };
 
@@ -1932,12 +2139,16 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getSubtypeDef),
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
+    WRAPM(Items, isRequestedTradeGood),
     WRAPM(Items, createItem),
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
     WRAPM(Items, canTradeWithContents),
+    WRAPM(Items, canTradeAnyWithContents),
+    WRAPM(Items, markForTrade),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
+    WRAPM(Items, getCapacity),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToInventory, items_moveToInventory),
@@ -2029,6 +2240,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, enableBlockUpdates),
     WRAPM(Maps, getGlobalInitFeature),
     WRAPM(Maps, getLocalInitFeature),
+    WRAPM(Maps, getWalkableGroup),
     WRAPM(Maps, canWalkBetween),
     WRAPM(Maps, spawnFlow),
     WRAPN(hasTileAssignment, hasTileAssignment),
@@ -2105,6 +2317,13 @@ static int maps_getPlantAtTile(lua_State *L)
     return 1;
 }
 
+static int maps_getBiomeType(lua_State *L)
+{
+    auto pos = CheckCoordXY(L, 1, true);
+    lua_pushinteger(L, Maps::getBiomeType(pos.x, pos.y));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -2115,6 +2334,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { "getPlantAtTile", maps_getPlantAtTile },
+    { "getBiomeType", maps_getBiomeType },
     { NULL, NULL }
 };
 
@@ -2196,8 +2416,8 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 
 /***** Buildings module *****/
 
-static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
-    return Buildings::containsTile(bld, df::coord2d(x,y), room);
+static bool buildings_containsTile(df::building *bld, int x, int y) {
+    return Buildings::containsTile(bld, df::coord2d(x,y));
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
@@ -2213,12 +2433,14 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     WRAPM(Buildings, deconstruct),
+    WRAPM(Buildings, notifyCivzoneModified),
     WRAPM(Buildings, markedForRemoval),
     WRAPM(Buildings, getRoomDescription),
     WRAPM(Buildings, isActivityZone),
     WRAPM(Buildings, isPenPasture),
     WRAPM(Buildings, isPitPond),
     WRAPM(Buildings, isActive),
+    WRAPM(Buildings, completebuild),
     { NULL, NULL }
 };
 
@@ -2448,6 +2670,17 @@ static int screen_findGraphicsTile(lua_State *L)
     }
 }
 
+static int screen_raise(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::raise(screen);
+
+    return 0;
+}
+
 static int screen_hideGuard(lua_State *L) {
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
     luaL_checktype(L, 2, LUA_TFUNCTION);
@@ -2505,14 +2738,29 @@ static int screen_doSimulateInput(lua_State *L)
     int sz = lua_rawlen(L, 2);
     std::set<df::interface_key> keys;
 
+    char str = '\0';
     for (int j = 1; j <= sz; j++)
     {
         lua_rawgeti(L, 2, j);
-        keys.insert((df::interface_key)lua_tointeger(L, -1));
+        df::interface_key k = (df::interface_key)lua_tointeger(L, -1);
+        if (!str && k > df::interface_key::STRING_A000 && k <= df::interface_key::STRING_A255)
+            str = Screen::keyToChar(k);
+        keys.insert(k);
         lua_pop(L, 1);
     }
 
+    // if we're injecting a text keybinding, ensure it is reflected in the enabler text buffer
+    std::string prev_input;
+    if (str) {
+        prev_input = (const char *)&df::global::enabler->last_text_input[0];
+        df::global::enabler->last_text_input[0] = str;
+        df::global::enabler->last_text_input[1] = '\0';
+    }
+
     screen->feed(&keys);
+
+    if (str)
+        strcpy((char *)&df::global::enabler->last_text_input[0], prev_input.c_str());
     return 0;
 }
 
@@ -2538,6 +2786,7 @@ static int screen_charToKey(lua_State *L)
     return 1;
 }
 
+/*
 static int screen_zoom(lua_State *L)
 {
     using df::global::enabler;
@@ -2554,6 +2803,7 @@ static int screen_zoom(lua_State *L)
     enabler->zoom_display(cmd);
     return 0;
 }
+*/
 
 }
 
@@ -2566,6 +2816,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(raise, screen_raise),
     CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),
@@ -2573,7 +2824,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "_doSimulateInput", screen_doSimulateInput },
     { "keyToChar", screen_keyToChar },
     { "charToKey", screen_charToKey },
-    { "zoom", screen_zoom },
+    //{ "zoom", screen_zoom },
     { NULL, NULL }
 };
 
@@ -2631,13 +2882,9 @@ static int filesystem_listdir_recursive(lua_State *L)
         include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
-    if (err)
-    {
+    if (err != 0 && err != -1) {
         lua_pushnil(L);
-        if (err == -1)
-            lua_pushfstring(L, "max depth exceeded: %d", depth);
-        else
-            lua_pushstring(L, strerror(err));
+        lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
         return 3;
     }
@@ -2736,12 +2983,188 @@ static int8_t getModstate() { return Core::getInstance().getModstate(); }
 static std::string internal_strerror(int n) { return strerror(n); }
 static std::string internal_md5(std::string s) { return md5_wrap.getHashFromString(s); }
 
+struct heap_pointer_info
+{
+    size_t address = 0;
+    size_t size = 0;
+    int status = 0;
+};
+
+//fixed sized, sorted
+static std::vector<heap_pointer_info> heap_data;
+
+//when dfhack upgrades to c++17, this would do well as a std::optional
+static std::pair<bool, heap_pointer_info> heap_find(uintptr_t address)
+{
+    auto it = std::lower_bound(heap_data.begin(), heap_data.end(), address,
+    [](heap_pointer_info t, uintptr_t address)
+    {
+        return t.address < address;
+    });
+
+    if (it == heap_data.end() || it->address != address)
+        return {false, heap_pointer_info()};
+
+    return {true, *it};
+}
+
+//this function only allocates the first time it is called
+static int heap_take_snapshot()
+{
+    #ifdef _WIN32
+    size_t max_entries = 256 * 1024 * 1024 / sizeof(heap_pointer_info);
+
+    //clearing the vector is guaranteed not to deallocate the memory
+    heap_data.clear();
+    heap_data.reserve(max_entries);
+
+    _HEAPINFO hinfo;
+    hinfo._pentry = nullptr;
+    int heap_status = 0;
+
+    while ((heap_status = _heapwalk(&hinfo)) == _HEAPOK && heap_data.size() < max_entries)
+    {
+        heap_pointer_info inf;
+        inf.address = reinterpret_cast<uintptr_t>(hinfo._pentry);
+        inf.size = hinfo._size;
+        inf.status = hinfo._useflag; //0 == _FREEENTRY, 1 == _USEDENTRY
+
+        heap_data.push_back(inf);
+    }
+
+    //sort by address
+    std::sort(heap_data.begin(), heap_data.end(),
+    [](heap_pointer_info t1, heap_pointer_info t2)
+    {
+        return t1.address < t2.address;
+    });
+
+    if (heap_status == _HEAPEMPTY || heap_status == _HEAPEND)
+        return 0;
+
+    if (heap_status == _HEAPBADPTR)
+        return 1;
+
+    if (heap_status == _HEAPBADBEGIN)
+        return 2;
+
+    if (heap_status == _HEAPBADNODE)
+        return 3;
+    #endif
+
+    return 0;
+}
+
+static int get_heap_state()
+{
+    #ifdef _WIN32
+    int heap_status = _heapchk();
+
+    if (heap_status == _HEAPEMPTY || heap_status == _HEAPOK)
+        return 0;
+
+    if (heap_status == _HEAPBADPTR)
+        return 1;
+
+    if (heap_status == _HEAPBADBEGIN)
+        return 2;
+
+    if (heap_status == _HEAPBADNODE)
+        return 3;
+    #endif
+
+    return 0;
+}
+
+static bool is_address_in_heap(uintptr_t ptr)
+{
+    return heap_find(ptr).first;
+}
+
+static bool is_address_active_in_heap(uintptr_t ptr)
+{
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
+
+    if (!inf.first)
+        return false;
+
+    return inf.second.status == 1;
+}
+
+static bool is_address_used_after_free_in_heap(uintptr_t ptr)
+{
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
+
+    if (!inf.first)
+        return false;
+
+    return inf.second.status != 1;
+}
+
+static int get_address_size_in_heap(uintptr_t ptr)
+{
+    std::pair<bool, heap_pointer_info> inf = heap_find(ptr);
+
+    if (!inf.first)
+        return -1;
+
+    return inf.second.size;
+}
+
+//eg if I have a struct, does any address lie within the struct?
+static uintptr_t get_root_address_of_heap_object(uintptr_t ptr)
+{
+    //find the first element strictly greater than our pointer
+    auto it = std::upper_bound(heap_data.begin(), heap_data.end(), ptr, [](uintptr_t ptr, heap_pointer_info t1)
+    {
+        return ptr < t1.address;
+    });
+
+    //if we're at the start of the snapshot, no elements are less than our pointer
+    //therefore it is invalid
+    if (it == heap_data.begin())
+        return 0;
+
+    //get the first element less than or equal to ours
+    it--;
+
+    //our pointer is only valid if we lie in the first pointer lower in memory than it
+    if (ptr >= it->address && ptr < it->address + it->size)
+        return it->address;
+
+    return 0;
+}
+
+//msize crashes if you pass an invalid pointer to it, only use it if you *know* the thing you're looking at
+//is in the heap/valid
+static int msize_address(uintptr_t ptr)
+{
+    #ifdef _WIN32
+    void* vptr = reinterpret_cast<void*>(ptr);
+
+    if (vptr)
+        return _msize(vptr);
+    #endif
+
+    return -1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
     WRAP(getModstate),
     WRAPN(strerror, internal_strerror),
     WRAPN(md5, internal_md5),
+    WRAPN(heapTakeSnapshot, heap_take_snapshot),
+    WRAPN(getHeapState, get_heap_state),
+    WRAPN(isAddressInHeap, is_address_in_heap),
+    WRAPN(isAddressActiveInHeap, is_address_active_in_heap),
+    WRAPN(isAddressUsedAfterFreeInHeap, is_address_used_after_free_in_heap),
+    WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
+    WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
+    WRAPN(msizeAddress, msize_address),
+    WRAP(getClipboardTextCp437),
+    WRAP(setClipboardTextCp437),
     { NULL, NULL }
 };
 
@@ -3030,6 +3453,24 @@ static int internal_diffscan(lua_State *L)
     return 1;
 }
 
+static int internal_cxxDemangle(lua_State *L)
+{
+    std::string mangled = luaL_checkstring(L, 1);
+    std::string status;
+    std::string demangled = cxx_demangle(mangled, &status);
+    if (demangled.length())
+    {
+        lua_pushstring(L, demangled.c_str());
+        return 1;
+    }
+    else
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, status.c_str());
+        return 2;
+    }
+}
+
 static int internal_runCommand(lua_State *L)
 {
     color_ostream *out = NULL;
@@ -3309,13 +3750,23 @@ static int internal_md5file(lua_State *L)
     }
 }
 
+static int internal_getSuppressDuplicateKeyboardEvents(lua_State *L) {
+    Lua::Push(L, Core::getInstance().getSuppressDuplicateKeyboardEvents());
+    return 1;
+}
+
+static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
+    bool suppress = lua_toboolean(L, 1);
+    Core::getInstance().setSuppressDuplicateKeyboardEvents(suppress);
+    return 0;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
-
     { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
@@ -3324,6 +3775,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
+    { "cxxDemangle", internal_cxxDemangle },
     { "getDir", filesystem_listdir },
     { "runCommand", internal_runCommand },
     { "getModifiers", internal_getModifiers },
@@ -3337,6 +3789,8 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
+    { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
+    { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
     { NULL, NULL }
 };
 
@@ -3357,7 +3811,9 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
+    OpenModule(state, "textures", dfhack_textures_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
+    OpenModule(state, "military", dfhack_military_module);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);

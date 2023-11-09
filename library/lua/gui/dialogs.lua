@@ -4,17 +4,14 @@ local _ENV = mkmodule('gui.dialogs')
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local utils = require('utils')
-
-local dscreen = dfhack.screen
 
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
 MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_inset = 1,
+    frame_style = gui.WINDOW_FRAME,
+    frame_inset = {l=1, t=1, b=1, r=0},
     -- new attrs
     on_accept = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
@@ -36,13 +33,14 @@ end
 function MessageBox:getWantedFrameSize()
     local label = self.subviews.label
     local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
-    local text_area_width = label:getTextWidth()
-    if label.frame_inset then
-        -- account for scroll icons
-        text_area_width = text_area_width + (label.frame_inset.l or 0)
-        text_area_width = text_area_width + (label.frame_inset.r or 0)
+    local text_area_width = label:getTextWidth() + 1
+    local text_height = label:getTextHeight()
+    local sw, sh = dfhack.screen.getWindowSize()
+    if text_height > sh - 4 then
+        -- account for scrollbar
+        text_area_width = text_area_width + 2
     end
-    return math.max(width, text_area_width), label:getTextHeight()
+    return math.max(width, text_area_width), text_height
 end
 
 function MessageBox:onRenderFrame(dc,rect)
@@ -59,16 +57,17 @@ function MessageBox:onDestroy()
 end
 
 function MessageBox:onInput(keys)
-    if keys.SELECT or keys.LEAVESCREEN then
+    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if keys.SELECT and self.on_accept then
             self.on_accept()
-        elseif keys.LEAVESCREEN and self.on_cancel then
+        elseif (keys.LEAVESCREEN or keys._MOUSE_R) and self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -130,14 +129,15 @@ function InputBox:onInput(keys)
             self.on_input(self.subviews.edit.text)
         end
         return true
-    elseif keys.LEAVESCREEN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -219,7 +219,7 @@ end
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
     if self.select2_hint then
-        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
+       dc:seek(rect.x1+2,rect.y2):string('Shift-Click', COLOR_LIGHTGREEN):string(': '..self.select2_hint, COLOR_GREY)
     end
 end
 
@@ -231,14 +231,15 @@ function ListBox:getWantedFrameSize()
 end
 
 function ListBox:onInput(keys)
-    if keys.LEAVESCREEN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

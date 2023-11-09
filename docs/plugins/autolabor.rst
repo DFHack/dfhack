@@ -18,8 +18,31 @@ untouched by autolabor.
 
 .. warning::
 
-    autolabor will override any manual changes you make to labors while it is
-    enabled, including through other tools such as Dwarf Therapist.
+    **This plugin is still being tested. Use at your own risk.**
+
+    The algorithms that autolabor uses to choose labor assignments have *not* been updated for version 50 of
+    Dwarf Fortress. There is no particular guarantee that the labor assignments autolabor is making are optimal,
+    and it is entirely possible that the assignments it makes will lead to unforeseen consequences. You should
+    monitor what your dwarves are doing, and more importantly not doing, when using autolabor.
+
+    At this time there is no way to easily see what labors are being assigned to whom, as there is no longer
+    any vanilla means for seeing the labor assignment table. Until `manipulator` is once again available,
+    probably the best way to see what autolabor is doing is to use
+    `Dwarf Therapist <https://github.com/Dwarf-Therapist/Dwarf-Therapist>`_. You can also increase autolabor's
+    logging level using the `debugfilter<debug>` command (setting either ``debug`` or ``trace`` level for the
+    ``cycle`` mode) but be warned that this may generate a large amount of console spam, especially in a large fort.
+
+    When it is enabled, autolabor automatically disables the work detail system. You cannot
+    use autolabor and work details at the same time. If you attempt to open the work detail screen while
+    autolabor is active, a warning box should appear advising you that autolabor is managing labors and preventing
+    you from making any changes on that screen.
+
+    Finally, should you disable autolabor, autolabor will automatically reenable the vanilla work detail system.
+    However, the work detail system only updates labors when the work detail screen is open and some change is
+    made on that screen. Therefore, if you choose to disable autolabor, you should probably immediately
+    thereafter open the work details screen and make some change to force the game to recompute all labor
+    assignments based on the vanilla algorithm. At this time, it is not possible for autolabor to do this
+    automatically.
 
 Usage
 -----

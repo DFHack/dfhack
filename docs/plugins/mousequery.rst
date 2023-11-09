@@ -3,7 +3,7 @@ mousequery
 
 .. dfhack-tool::
     :summary: Adds mouse controls to the DF interface.
-    :tags: fort productivity interface
+    :tags: unavailable
 
 Adds mouse controls to the DF interface. For example, with ``mousequery`` you
 can click on buildings to configure them, hold the mouse button to draw dig

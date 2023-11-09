@@ -74,8 +74,6 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    out.print("Found total %zd items.\n", world->items.all.size());
-
     for (std::size_t i=0; i < world->items.all.size(); i++)
     {
         df::item * item = world->items.all[i];
@@ -149,14 +147,14 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             out.print(
                 "[%d] %s (wear level %d)",
                 item->id,
-                description.c_str(),
+                DF2CONSOLE(description).c_str(),
                 item->getWear()
             );
 
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
+                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name,false)).c_str());
 
             if (!dry_run)
             {

@@ -5,60 +5,107 @@ local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
+local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12, true)
+local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12, true)
+
+local function get_command(cmdline)
+    local first_word = cmdline:trim():split(' +')[1]
+    if first_word:startswith(':') then first_word = first_word:sub(2) end
+    return first_word
+end
+
+function should_hide_armok(cmdline)
+    local command = get_command(cmdline)
+    return dfhack.getHideArmokTools() and
+            helpdb.is_entry(command) and
+            helpdb.get_entry_tags(command).armok
+end
+
 -- ----------------- --
 -- HotspotMenuWidget --
 -- ----------------- --
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    default_pos={x=2,y=2},
-    hotspot=true,
-    viewscreens='all',
-    overlay_onupdate_max_freq_seconds=0,
+    default_pos={x=5,y=1},
+    default_enabled=true,
+    version=2,
+    viewscreens={
+        'adopt_region',
+        'choose_game_type',
+        -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'dwarfmode',
+        'export_region',
+        'game_cleaner',
+        'initial_prep',
+        -- 'legends', -- conflicts with vanilla export button and info text
+        -- 'loadgame', -- disable temporarily while we get texture reloading sorted
+        -- 'new_arena', -- conflicts with vanilla panel layouts
+        -- 'new_region', -- conflicts with vanilla panel layouts
+        'savegame',
+        'setupdwarfgame',
+        'title/Default',
+        'update_region',
+        'world'
+    },
     frame={w=4, h=3}
 }
 
 function HotspotMenuWidget:init()
-    self:addviews{widgets.Label{text={'!DF!', NEWLINE, '!Ha!', NEWLINE, '!ck!'}}}
-    self.mouseover = false
-end
-
-function HotspotMenuWidget:overlay_onupdate()
-    local hasMouse = self:getMousePos()
-    if hasMouse and not self.mouseover then
-        self.mouseover = true
-        return true
+    local to_pen = dfhack.pen.parse
+    local function tp(idx, ch)
+        return to_pen{
+            tile=function() return dfhack.textures.getTexposByHandle(logo_textures[idx]) end,
+            ch=ch,
+            fg=COLOR_GREY,
+        }
     end
-    self.mouseover = hasMouse
+    local function tph(idx, ch)
+        return to_pen{
+            tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
+            ch=ch,
+            fg=COLOR_WHITE,
+            bold=true,
+        }
+    end
+    local function get_tile_token(idx, ch)
+        return {
+            tile=tp(idx, ch),
+            htile=tph(idx, ch),
+            width=1,
+        }
+    end
+
+    self:addviews{
+        widgets.Label{
+            text={
+                get_tile_token(1, 179), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, 179), NEWLINE,
+                get_tile_token(5, 179), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, 179), NEWLINE,
+                get_tile_token(9, 179), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, 179),
+            },
+            on_click=function() dfhack.run_command('hotkeys') end,
+        },
+    }
 end
 
 function HotspotMenuWidget:overlay_trigger()
-    local hotkeys, bindings = getHotkeys()
-    return MenuScreen{
-        hotspot_frame=self.frame,
-        hotkeys=hotkeys,
-        bindings=bindings,
-        mouseover=self.mouseover}:show()
+    return MenuScreen{hotspot=self}:show()
 end
 
 -- register the menu hotspot with the overlay
 OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
 
--- ---------- --
--- MenuScreen --
--- ---------- --
+-- ---- --
+-- Menu --
+-- ---- --
 
 local ARROW = string.char(26)
 local MAX_LIST_WIDTH = 45
 local MAX_LIST_HEIGHT = 15
 
-MenuScreen = defclass(MenuScreen, gui.Screen)
-MenuScreen.ATTRS{
-    focus_path='hotkeys/menu',
-    hotspot_frame=DEFAULT_NIL,
-    hotkeys=DEFAULT_NIL,
-    bindings=DEFAULT_NIL,
-    mouseover=false,
+Menu = defclass(Menu, widgets.Panel)
+Menu.ATTRS{
+    hotspot=DEFAULT_NIL,
 }
 
 -- get a map from the binding string to a list of hotkey strings that all
@@ -72,8 +119,8 @@ local function get_bindings_to_hotkeys(hotkeys, bindings)
     return bindings_to_hotkeys
 end
 
--- number of non-text tiles: icon, space, space between cmd and hk, scrollbar
-local LIST_BUFFER = 2 + 1 + 1
+-- number of non-text tiles: icon, space between cmd and hk, scrollbar+margin
+local LIST_BUFFER = 2 + 1 + 3
 
 local function get_choices(hotkeys, bindings, is_inverted)
     local choices, max_width, seen = {}, 0, {}
@@ -109,29 +156,42 @@ local function get_choices(hotkeys, bindings, is_inverted)
     -- adjust width of command fields so the hotkey tokens are right justified
     for _,choice in ipairs(choices) do
         local command_token = choice.text[1]
-        command_token.width = max_width - choice.hk_width - 3
+        command_token.width = max_width - choice.hk_width - (LIST_BUFFER - 1)
     end
 
     return choices, max_width
 end
 
-function MenuScreen:init()
-    local is_inverted = not not self.hotspot_frame.b
-    local choices,list_width = get_choices(self.hotkeys, self.bindings,
-                                           is_inverted)
+function Menu:init()
+    local hotkeys, bindings = getHotkeys()
+    if #hotkeys == 0 then
+        hotkeys = {''}
+        bindings = {['']='gui/launcher'}
+    end
 
-    local list_frame = copyall(self.hotspot_frame)
+    local is_inverted = not not self.hotspot.frame.b
+    local choices,list_width = get_choices(hotkeys, bindings, is_inverted)
+
+    list_width = math.max(35, list_width)
+
+    local list_frame = copyall(self.hotspot.frame)
+    local list_widget_frame = {h=math.min(#choices, MAX_LIST_HEIGHT)}
+    local quickstart_frame = {}
     list_frame.w = list_width + 2
-    list_frame.h = math.min(#choices, MAX_LIST_HEIGHT) + 2
+    list_frame.h = list_widget_frame.h + 4
     if list_frame.t then
         list_frame.t = math.max(0, list_frame.t - 1)
+        list_widget_frame.t = 0
+        quickstart_frame.b = 0
     else
         list_frame.b = math.max(0, list_frame.b - 1)
+        list_widget_frame.b = 0
+        quickstart_frame.t = 0
     end
     if list_frame.l then
-        list_frame.l = math.max(0, list_frame.l - 1)
+        list_frame.l = math.max(0, list_frame.l + 5)
     else
-        list_frame.r = math.max(0, list_frame.r - 1)
+        list_frame.r = math.max(0, list_frame.r + 5)
     end
 
     local help_frame = {w=list_frame.w, l=list_frame.l, r=list_frame.r}
@@ -142,20 +202,29 @@ function MenuScreen:init()
     end
 
     self:addviews{
-        widgets.ResizingPanel{
+        widgets.Panel{
             view_id='list_panel',
-            autoarrange_subviews=true,
             frame=list_frame,
-            frame_style=gui.GREY_LINE_FRAME,
+            frame_style=gui.PANEL_FRAME,
             frame_background=gui.CLEAR_PEN,
             subviews={
                 widgets.List{
                     view_id='list',
+                    frame=list_widget_frame,
                     choices=choices,
                     icon_width=2,
                     on_select=self:callback('onSelect'),
                     on_submit=self:callback('onSubmit'),
                     on_submit2=self:callback('onSubmit2'),
+                },
+                widgets.Panel{frame={h=1}},
+                widgets.HotkeyLabel{
+                    frame=quickstart_frame,
+                    label='Quickstart guide',
+                    key='STRING_A063',
+                    on_activate=function()
+                        self:onSubmit(nil, {command='quickstart-guide'})
+                    end,
                 },
             },
         },
@@ -163,7 +232,7 @@ function MenuScreen:init()
             view_id='help_panel',
             autoarrange_subviews=true,
             frame=help_frame,
-            frame_style=gui.GREY_LINE_FRAME,
+            frame_style=gui.PANEL_FRAME,
             frame_background=gui.CLEAR_PEN,
             subviews={
                 widgets.WrappedLabel{
@@ -180,59 +249,63 @@ function MenuScreen:init()
     end
 end
 
-function MenuScreen:onDismiss()
-    cleanupHotkeys()
-end
-
-function MenuScreen:onSelect(_, choice)
+function Menu:onSelect(_, choice)
     if not choice or #self.subviews == 0 then return end
-    local first_word = choice.command:trim():split(' +')[1]
-    if first_word:startswith(':') then first_word = first_word:sub(2) end
-    self.subviews.help.text_to_wrap = helpdb.is_entry(first_word) and
-            helpdb.get_entry_short_help(first_word) or 'Command not found'
+    local command = get_command(choice.command)
+    self.subviews.help.text_to_wrap = helpdb.is_entry(command) and
+            helpdb.get_entry_short_help(command) or 'Command not found'
     self.subviews.help_panel:updateLayout()
 end
 
-function MenuScreen:onSubmit(_, choice)
+function Menu:onSubmit(_, choice)
     if not choice then return end
-    dfhack.screen.hideGuard(self, dfhack.run_command, choice.command)
-    self:dismiss()
+    dfhack.screen.hideGuard(self.parent_view, dfhack.run_command, choice.command)
+    self.parent_view:dismiss()
 end
 
-function MenuScreen:onSubmit2(_, choice)
+function Menu:onSubmit2(_, choice)
     if not choice then return end
-    self:dismiss()
+    self.parent_view:dismiss()
     dfhack.run_script('gui/launcher', choice.command)
 end
 
-function MenuScreen:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-        return true
-    elseif keys.STANDARDSCROLL_RIGHT then
+function Menu:onInput(keys)
+    if keys.LEAVESCREEN or keys._MOUSE_R then
+        return false
+    elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:onSubmit2(self.subviews.list:getSelected())
         return true
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local list = self.subviews.list
         local x = list:getMousePos()
         if x == 0 then -- clicked on icon
             self:onSubmit2(list:getSelected())
             return true
         end
+        if not self:getMouseFramePos() then
+            self.parent_view:dismiss()
+            return true
+        end
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true -- we're modal
 end
 
-function MenuScreen:onRenderFrame(dc, rect)
+function Menu:onRenderFrame(dc, rect)
     if self.initialize then
         self.initialize()
         self.initialize = nil
     end
-    self:renderParent()
+    Menu.super.onRenderFrame(self, dc, rect)
 end
 
-function MenuScreen:onRenderBody(dc)
-    local panel = self.subviews.list_panel
+function Menu:getMouseFramePos()
+    return self.subviews.list_panel:getMouseFramePos() or
+            self.subviews.help_panel:getMouseFramePos()
+end
+
+function Menu:onRenderBody(dc)
+    Menu.super.onRenderBody(self, dc)
     local list = self.subviews.list
     local idx = list:getIdxUnderMouse()
     if idx and idx ~= self.last_mouse_idx then
@@ -240,14 +313,29 @@ function MenuScreen:onRenderBody(dc)
         -- selection, don't override the selection until the mouse moves to
         -- another item
         list:setSelected(idx)
-        self.mouseover = true
         self.last_mouse_idx = idx
-    elseif not panel:getMousePos(gui.ViewRect{rect=panel.frame_rect})
-            and self.mouseover then
-        -- once the mouse has entered the list area, leaving the frame should
-        -- close the menu screen
-        self:dismiss()
     end
+end
+
+-- ---------- --
+-- MenuScreen --
+-- ---------- --
+
+MenuScreen = defclass(MenuScreen, gui.ZScreen)
+MenuScreen.ATTRS {
+    focus_path='hotkeys/menu',
+    initial_pause=false,
+    hotspot=DEFAULT_NIL,
+}
+
+function MenuScreen:init()
+    self:addviews{
+        Menu{hotspot=self.hotspot},
+    }
+end
+
+function MenuScreen:onDismiss()
+    cleanupHotkeys()
 end
 
 return _ENV

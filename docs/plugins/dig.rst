@@ -50,7 +50,7 @@ Usage
     Designate circles. The diameter is the number of tiles across the center of
     the circle that you want to dig. See the `digcircle`_ section below for
     options.
-``digtype [<designation>] [-p<number>] [-z]``
+``digtype [<designation>] [-p<number>] [--zup|-u] [--zdown|-zu] [--cur-zlevel|-z] [--hidden|-h] [--no-auto|-a]``
     Designate all vein tiles of the same type as the selected tile. See the
     `digtype`_ section below for options.
 ``digexp [<pattern>] [<filter>] [-p<number>]``
@@ -119,9 +119,11 @@ the last selected parameters.
 digtype
 -------
 
-For every tile on the map of the same vein type as the selected tile, this
-command designates it to have the same designation as the selected tile. If the
-selected tile has no designation, they will be dig designated.
+For every tile on the map of the same vein type as the selected tile, this command
+designates it to have the same designation as the selected tile. If the selected
+tile has no designation, they will be dig designated. By default, only designates
+visible tiles, and in the case of dig designation, applies automatic mining to them
+(designates uncovered neighbouring tiles of the same type to be dug).
 
 If an argument is given, the designation of the selected tile is ignored, and
 all appropriate tiles are set to the specified designation.
@@ -143,9 +145,18 @@ Designation options:
 ``clear``
     Clear any designations.
 
-You can also pass a ``-z`` option, which restricts designations to the current
-z-level and down. This is useful when you don't want to designate tiles on the
-same z-levels as your carefully dug fort above.
+Other options:
+
+``-d``, ``--zdown``
+    Only designates tiles on the cursor's z-level and below.
+``-u``, ``--zup``
+    Only designates tiles on the cursor's z-level and above.
+``-z``, ``--cur-zlevel``
+    Only designates tiles on the same z-level as the cursor.
+``-h``, ``--hidden``
+    Allows designation of hidden tiles, and picking a hidden tile as the target type.
+``-a``, ``--no-auto``
+    No automatic mining mode designation - useful if you want to avoid dwarves digging where you don't want them.
 
 digexp
 ------
@@ -179,3 +190,23 @@ Filters:
     Take current designation and apply the selected pattern to it.
 
 After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Overlay
+-------
+
+This tool also provides two overlays that are managed by the `overlay`
+framework. Both have no effect when in graphics mode, but when in ASCII mode,
+they display useful highlights that are otherwise missing from the ASCII mode
+interface.
+
+The ``dig.asciiwarmdamp`` overlay highlights warm tiles red and damp tiles in
+blue. Box selection characters and the keyboard cursor will also
+change color as appropriate when over the warm or damp tile.
+
+The ``dig.asciicarve`` overlay highlights tiles that are designated for
+smoothing, engraving, track carving, or fortification carving. The designations
+blink so you can still see what is underneath them.
+
+Note that due to the limitations of the ASCII mode screen buffer, the
+designation highlights may show through other interface elements that overlap
+the designated area.

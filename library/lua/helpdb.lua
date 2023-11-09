@@ -1,22 +1,8 @@
 -- The help text database and query interface.
---
--- Help text is read from the rendered text in hack/docs/docs/. If no rendered
--- text exists, it is read from the script sources (for scripts) or the string
--- passed to the PluginCommand initializer (for plugins).
---
--- There should be one help file for each plugin that contains a summary for the
--- plugin itself and help for all the commands that plugin provides (if any).
--- Each script should also have one documentation file.
---
--- The database is lazy-loaded when an API method is called. It rechecks its
--- help sources for updates if an API method has not been called in the last
--- 60 seconds.
 
 local _ENV = mkmodule('helpdb')
 
 local argparse = require('argparse')
-
-local MAX_STALE_MS = 60000
 
 -- paths
 local RENDERED_PATH = 'hack/docs/docs/tools/'
@@ -25,8 +11,8 @@ local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 -- used when reading help text embedded in script sources
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
-local SCRIPT_DOC_BEGIN_RUBY = '=begin'
-local SCRIPT_DOC_END_RUBY = '=end'
+
+local GLOBAL_KEY = 'HELPDB'
 
 -- enums
 local ENTRY_TYPES = {
@@ -274,11 +260,10 @@ local function make_script_entry(old_entry, entry_name, kwargs)
     if not ok then
         return entry
     end
-    local is_rb = source_path:endswith('.rb')
     update_entry(entry, lines,
-            {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
-             end_marker=(is_rb and SCRIPT_DOC_END_RUBY or SCRIPT_DOC_END),
-             first_line_is_short_help=(is_rb and '#' or '%-%-')})
+            {begin_marker=SCRIPT_DOC_BEGIN,
+             end_marker=SCRIPT_DOC_END,
+             first_line_is_short_help='%-%-'})
     return entry
 end
 
@@ -364,7 +349,7 @@ local function scan_scripts(old_db)
         if not files then goto skip_path end
         for _,f in ipairs(files) do
             if f.isdir or
-                (not f.path:endswith('.lua') and not f.path:endswith('.rb')) or
+                    not f.path:endswith('.lua') or
                     f.path:startswith('test/') or
                     f.path:startswith('internal/') then
                 goto continue
@@ -418,13 +403,12 @@ local function index_tags()
     end
 end
 
--- ensures the db is up to date by scanning all help sources. does not do
--- anything if it has already been run within the last MAX_STALE_MS milliseconds
-local last_refresh_ms = 0
+local needs_refresh = true
+
+-- ensures the db is loaded
 local function ensure_db()
-    local now_ms = dfhack.getTickCount()
-    if now_ms - last_refresh_ms <= MAX_STALE_MS then return end
-    last_refresh_ms = now_ms
+    if not needs_refresh then return end
+    needs_refresh = false
 
     local old_db = textdb
     textdb, entrydb, tag_index = {}, {}, {}
@@ -434,6 +418,19 @@ local function ensure_db()
     scan_plugins(old_db)
     scan_scripts(old_db)
     index_tags()
+end
+
+function refresh()
+    needs_refresh = true
+    ensure_db()
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    refresh()
 end
 
 local function parse_blocks(text)
@@ -791,7 +788,11 @@ function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
         table.insert(excludes, {str=argparse.stringList(exclude_strs)})
     end
     if not show_dev_commands then
-        table.insert(excludes, {tag='dev'})
+        local dev_tags = {'dev', 'unavailable'}
+        if filter_str ~= 'armok' and dfhack.getHideArmokTools() then
+            table.insert(dev_tags, 'armok')
+        end
+        table.insert(excludes, {tag=dev_tags})
     end
     list_entries(skip_tags, include, excludes)
 end
@@ -816,7 +817,16 @@ function tags(tag)
 
     local skip_tags = true
     local include = {entry_type={ENTRY_TYPES.COMMAND}, tag=tag}
-    list_entries(skip_tags, include)
+
+    local excludes = {tag={}}
+    if tag ~= 'unavailable' then
+        table.insert(excludes.tag, 'unavailable')
+    end
+    if tag ~= 'armok' and dfhack.getHideArmokTools() then
+        table.insert(excludes.tag, 'armok')
+    end
+
+    list_entries(skip_tags, include, excludes)
 end
 
 return _ENV

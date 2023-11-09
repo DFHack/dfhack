@@ -6,15 +6,15 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 struct egg_fertile_hook : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
     df::building_nest_boxst* getNestBox()
     {
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding &&
-            ui->main.mode != ui_sidebar_mode::BuildingItems)
+        if (plotinfo->main.mode != ui_sidebar_mode::QueryBuilding &&
+            plotinfo->main.mode != ui_sidebar_mode::BuildingItems)
             return NULL;
         return virtual_cast<df::building_nest_boxst>(world->selected_building);
     }
@@ -38,7 +38,7 @@ struct egg_fertile_hook : df::viewscreen_dwarfmodest {
                     has_eggs = true;
                     if (egg->egg_flags.bits.fertile)
                         fertile = true;
-                    if (ui->main.mode == ui_sidebar_mode::BuildingItems)
+                    if (plotinfo->main.mode == ui_sidebar_mode::BuildingItems)
                     {
                         Screen::paintString(
                             Screen::Pen(' ', fertile ? COLOR_LIGHTGREEN : COLOR_LIGHTRED),
@@ -50,7 +50,7 @@ struct egg_fertile_hook : df::viewscreen_dwarfmodest {
                 }
                 ++idx;
             }
-            if (has_eggs && ui->main.mode == ui_sidebar_mode::QueryBuilding)
+            if (has_eggs && plotinfo->main.mode == ui_sidebar_mode::QueryBuilding)
             {
                 Screen::paintString(
                     Screen::Pen(' ', fertile ? COLOR_LIGHTGREEN : COLOR_LIGHTRED),

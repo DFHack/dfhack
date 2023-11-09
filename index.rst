@@ -15,9 +15,10 @@ Quick Links
 
 * `Downloads <https://www.github.com/DFHack/dfhack/releases>`_
 * `Installation guide <installing>`
+* `quickstart`
 * `Getting help <support>`
 * :source:`Source code <>`
-    (**important:** read `compile` before attempting to build from source.)
+    (**important:** read `building-dfhack-index` before attempting to build from source.)
 
 User Manual
 ===========
@@ -26,6 +27,7 @@ User Manual
    :maxdepth: 2
 
    /docs/Introduction
+   /docs/Quickstart
    /docs/Installing
    /docs/Core
    /docs/Tools

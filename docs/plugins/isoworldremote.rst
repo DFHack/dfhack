@@ -3,7 +3,7 @@ isoworldremote
 
 .. dfhack-tool::
     :summary: Provides a remote API used by Isoworld.
-    :tags: dev graphics
+    :tags: unavailable
     :no-command:
 
 See `remote` for related remote APIs.

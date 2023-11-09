@@ -35,6 +35,8 @@ def main():
                     error(line_number, 'bad table divider')
                 if line != lines[first_div_index]:
                     error(line_number, 'malformed table divider')
+            if line == lines[first_div_index + i - 1]:
+                error(line_number, 'duplicate of previous line')
         if len(div_indices) < 3:
             error(len(lines), 'missing table divider(s)')
         for i in div_indices[3:]:

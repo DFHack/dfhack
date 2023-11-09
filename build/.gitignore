@@ -6,3 +6,4 @@ DF_PATH.txt
 _CPack_Packages
 *.tar.*
 .cmake
+win64-cross

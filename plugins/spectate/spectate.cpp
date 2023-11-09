@@ -37,7 +37,7 @@ namespace DFHack {
 DFHACK_PLUGIN("spectate");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(pause_state);
 REQUIRE_GLOBAL(d_init);
 
@@ -106,7 +106,7 @@ namespace SP {
         out.print(" SETTINGS:\n");
         out.print("  %-20s\t%" PRIi32 "\n", "tick-threshold: ", config.tick_threshold);
         if (following_dwarf)
-            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", df::global::ui->follow_unit);
+            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", df::global::plotinfo->follow_unit);
     }
 
     void SetUnpauseState(bool state) {
@@ -311,7 +311,7 @@ namespace SP {
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
                 size_t idx = follow_any(RNG);
                 our_dorf = units[idx];
-                df::global::ui->follow_unit = our_dorf->id;
+                df::global::plotinfo->follow_unit = our_dorf->id;
                 timestamp = df::global::world->frame_counter;
                 return true;
             } else {
@@ -362,7 +362,7 @@ namespace SP {
         if (!World::ReadPauseState() && tick - last_tick >= 1) {
             last_tick = tick;
             // validate follow state
-            if (!following_dwarf || !our_dorf || df::global::ui->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
+            if (!following_dwarf || !our_dorf || df::global::plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
                 // we're not following anyone
                 following_dwarf = false;
                 if (!config.disengage) {

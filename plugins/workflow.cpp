@@ -15,7 +15,7 @@
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/building_workshopst.h"
 #include "df/building_furnacest.h"
 #include "df/job.h"
@@ -51,7 +51,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("workflow");
 
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_workshop_job_cursor);
 REQUIRE_GLOBAL(job_next_id);
 
@@ -64,7 +64,7 @@ static void cleanup_state(color_ostream &out);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!world || !ui)
+    if (!world || !plotinfo)
         return CR_FAILURE;
 
     if (ui_workshop_job_cursor && job_next_id) {
@@ -1684,7 +1684,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
     //df::job *job = NULL;
 
     if (Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
-        ui->main.mode == ui_sidebar_mode::QueryBuilding)
+        plotinfo->main.mode == ui_sidebar_mode::QueryBuilding)
     {
         workshop = world->selected_building;
         //job = Gui::getSelectedWorkshopJob(out, true);

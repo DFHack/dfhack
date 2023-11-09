@@ -1,0 +1,52 @@
+name: Package
+
+on:
+  workflow_call:
+    inputs:
+      dfhack_ref:
+        type: string
+      scripts_ref:
+        type: string
+      structures_ref:
+        type: string
+      append-date-and-hash:
+        type: boolean
+        default: true
+      cache-readonly:
+        type: boolean
+        default: false
+      launchdf:
+        type: boolean
+        default: false
+
+jobs:
+  package-win64:
+    name: Windows
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_ref: ${{ inputs.scripts_ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: dfhack-windows64-build
+      append-date-and-hash: ${{ inputs.append-date-and-hash }}
+      cache-id: release
+      cache-readonly: ${{ inputs.cache-readonly }}
+      stonesense: true
+      docs: true
+      launchdf: ${{ inputs.launchdf }}
+    secrets: inherit
+
+  package-linux:
+    name: Linux
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_ref: ${{ inputs.scripts_ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: dfhack-linux64-build
+      append-date-and-hash: ${{ inputs.append-date-and-hash }}
+      cache-id: release
+      cache-readonly: ${{ inputs.cache-readonly }}
+      stonesense: true
+      docs: true
+    secrets: inherit

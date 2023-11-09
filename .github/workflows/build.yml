@@ -3,190 +3,32 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    name: build (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-        - ubuntu-18.04
-        gcc:
-        - 4.8
-        - 7
-        plugins:
-        - default
-        include:
-        - os: ubuntu-22.04
-          gcc: 12
-          plugins: all
-    steps:
-    - name: Set up Python 3
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install \
-            ccache \
-            libgtk2.0-0 \
-            libncursesw5 \
-            libsdl-image1.2-dev \
-            libsdl-ttf2.0-dev \
-            libsdl1.2-dev \
-            libxml-libxml-perl \
-            libxml-libxslt-perl \
-            lua5.3 \
-            ninja-build \
-            zlib1g-dev
-        pip install 'sphinx<4.4.0'
-    - name: Install GCC
-      run: |
-        sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
-    - name: Clone DFHack
-      uses: actions/checkout@v1
-      with:
-        fetch-depth: 0  # unlimited - we need past tags
-        submodules: true
-    - name: Set up environment
-      id: env_setup
-      run: |
-        DF_VERSION="$(sh ci/get-df-version.sh)"
-        echo "df_version=${DF_VERSION}" >> $GITHUB_OUTPUT
-        echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
-        echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
-        echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
-        #    - name: Fetch DF cache
-        #      uses: actions/cache@v3
-        #      with:
-        #        path: ~/DF
-        #        key: dfcache-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
-    - name: Fetch ccache
-      uses: actions/cache@v3
-      with:
-        path: ~/.ccache
-        key: ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}
-          ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}
-          #    - name: Download DF
-          #      run: |
-          #        sh ci/download-df.sh
-    - name: Configure DFHack
-      env:
-        CC: gcc-${{ matrix.gcc }}
-        CXX: g++-${{ matrix.gcc }}
-      run: |
-        cmake \
-          -S . \
-          -B build-ci \
-          -G Ninja \
-          -DDFHACK_BUILD_ARCH=64 \
-          -DBUILD_TESTS:BOOL=ON \
-          -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
-          -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
-          -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
-          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
-          -DBUILD_SUPPORTED:BOOL=1 \
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
-    - name: Build DFHack
-      run: |
-        ninja -C build-ci install
-        ccache --show-stats
-    - name: Run cpp unit tests
-      id: run_tests_cpp
-      run: |
-        ninja -C build-ci test
-        exit $?
-        #    - name: Run lua tests
-        #      id: run_tests_lua
-        #      run: |
-        #        export TERM=dumb
-        #        status=0
-        #        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-        #        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-        #        mkdir -p artifacts
-        #        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-        #        exit $status
-        #    - name: Upload test artifacts
-        #      uses: actions/upload-artifact@v1
-        #      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
-        #      continue-on-error: true
-        #      with:
-        #        name: test-artifacts-${{ matrix.gcc }}
-        #        path: artifacts
-    - name: Clean up DF folder
-      # prevent DFHack-generated files from ending up in the cache
-      # (download-df.sh also removes them, this is just to save cache space)
-      if: success() || failure()
-      run: |
-        rm -rf "$DF_FOLDER"
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
+    secrets: inherit
+
+  package:
+    uses: ./.github/workflows/package.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
+    secrets: inherit
 
   docs:
-    runs-on: ubuntu-18.04
-    steps:
-    - name: Set up Python 3
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3
-    - name: Install dependencies
-      run: |
-        pip install 'sphinx'
-    - name: Clone DFHack
-      uses: actions/checkout@v1
-      with:
-        submodules: true
-    - name: Build docs
-      run: |
-        sphinx-build -W --keep-going -j auto --color . docs/html
-    - name: Upload docs
-      uses: actions/upload-artifact@v1
-      with:
-        name: docs
-        path: docs/html
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
+      platform-files: false
+      common-files: false
+      docs: true
+    secrets: inherit
 
   lint:
-    runs-on: ubuntu-18.04
-    steps:
-    - name: Set up Python 3
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3
-    - name: Set up Ruby 2.7
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.7
-    - name: Install Lua
-      run: |
-        sudo apt-get update
-        sudo apt-get install lua5.3
-    - name: Clone DFHack
-      uses: actions/checkout@v1
-      with:
-        submodules: true
-        # don't need tags here
-    - name: Check whitespace
-      run: |
-        python ci/lint.py --git-only --github-actions
-    - name: Check Authors.rst
-      if: success() || failure()
-      run: |
-        python ci/authors-rst.py
-    - name: Check for missing documentation
-      if: success() || failure()
-      run: |
-        python ci/script-docs.py
-    - name: Check Lua syntax
-      if: success() || failure()
-      run: |
-        python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
-    - name: Check Ruby syntax
-      if: success() || failure()
-      run: |
-        python ci/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+    uses: ./.github/workflows/lint.yml
+    with:
+      dfhack_ref: ${{ github.ref }}
+    secrets: inherit
 
   check-pr:
     runs-on: ubuntu-latest

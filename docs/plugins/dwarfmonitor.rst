@@ -3,7 +3,7 @@ dwarfmonitor
 
 .. dfhack-tool::
     :summary: Report on dwarf preferences and efficiency.
-    :tags: fort inspection jobs units
+    :tags: unavailable
 
 It can also show heads-up display widgets with live fort statistics.
 

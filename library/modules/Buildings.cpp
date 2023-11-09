@@ -68,6 +68,7 @@ using namespace DFHack;
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
+#include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
@@ -81,14 +82,15 @@ using namespace DFHack;
 #include "df/job_item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
+#include "df/squad.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
 
 using namespace df::enums;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::world;
 using df::global::d_init;
 using df::global::building_next_id;
@@ -102,7 +104,6 @@ struct CoordHash {
 };
 
 static unordered_map<df::coord, int32_t, CoordHash> locationToBuilding;
-static unordered_map<df::coord, vector<int32_t>, CoordHash> locationToCivzones;
 
 static df::building_extents_type *getExtentTile(df::building_extents &extent, df::coord2d tile)
 {
@@ -167,6 +168,139 @@ void buildings_onUpdate(color_ostream &out)
     }
 }
 
+static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
+{
+    for (auto contained_building : zone->contained_buildings)
+    {
+        if (contained_building == bld)
+            return;
+    }
+
+    insert_into_vector(zone->contained_buildings, &df::building::id, bld);
+}
+
+static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
+{
+    for (auto relation : bld->relations)
+    {
+        if (relation == zone)
+            return;
+    }
+
+    insert_into_vector(bld->relations, &df::building_civzonest::id, zone);
+}
+
+static bool is_suitable_building_for_zoning(df::building* bld)
+{
+    return bld->canMakeRoom();
+}
+
+static void add_building_to_zone(df::building* bld, df::building_civzonest* zone)
+{
+    if (!is_suitable_building_for_zoning(bld))
+        return;
+
+    building_into_zone_unidir(bld, zone);
+    zone_into_building_unidir(bld, zone);
+}
+
+static void add_building_to_all_zones(df::building* bld)
+{
+    if (!is_suitable_building_for_zoning(bld))
+        return;
+
+    df::coord coord(bld->centerx, bld->centery, bld->z);
+
+    std::vector<df::building_civzonest*> cv;
+    Buildings::findCivzonesAt(&cv, coord);
+
+    for (auto zone : cv)
+        add_building_to_zone(bld, zone);
+}
+
+static void add_zone_to_all_buildings(df::building* zone_as_building)
+{
+    if (zone_as_building->getType() != building_type::Civzone)
+        return;
+
+    auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
+
+    if (zone == nullptr)
+        return;
+
+    for (auto bld : world->buildings.other.IN_PLAY)
+    {
+        if (zone->z != bld->z)
+            continue;
+
+        if (!is_suitable_building_for_zoning(bld))
+            continue;
+
+        int32_t cx = bld->centerx;
+        int32_t cy = bld->centery;
+
+        df::coord2d coord(cx, cy);
+
+        //can a zone without extents exist?
+        if (zone->room.extents && zone->isExtentShaped())
+        {
+            auto etile = getExtentTile(zone->room, coord);
+            if (!etile || !*etile)
+                continue;
+
+            add_building_to_zone(bld, zone);
+        }
+    }
+}
+
+static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone)
+{
+    for (int bid = 0; bid < (int)zone->contained_buildings.size(); bid++)
+    {
+        if (zone->contained_buildings[bid] == bld)
+        {
+            zone->contained_buildings.erase(zone->contained_buildings.begin() + bid);
+            bid--;
+        }
+    }
+
+    for (int bid = 0; bid < (int)bld->relations.size(); bid++)
+    {
+        if (bld->relations[bid] == zone)
+        {
+            bld->relations.erase(bld->relations.begin() + bid);
+            bid--;
+        }
+    }
+}
+
+static void remove_building_from_all_zones(df::building* bld)
+{
+    df::coord coord(bld->centerx, bld->centery, bld->z);
+
+    std::vector<df::building_civzonest*> cv;
+    Buildings::findCivzonesAt(&cv, coord);
+
+    for (auto zone : cv)
+        remove_building_from_zone(bld, zone);
+}
+
+static void remove_zone_from_all_buildings(df::building* zone_as_building)
+{
+    if (zone_as_building->getType() != building_type::Civzone)
+        return;
+
+    auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
+
+    if (zone == nullptr)
+        return;
+
+    //this is a paranoid check and slower than it could be. Zones contain a list of children
+    //good for fixing potentially bad game states when deleting a zone
+    for (auto bld : world->buildings.other.IN_PLAY)
+        remove_building_from_zone(bld, zone);
+}
+
 uint32_t Buildings::getNumBuildings()
 {
     return world->buildings.all.size();
@@ -216,46 +350,45 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     return findRef(building->specific_refs, type);
 }
 
-bool Buildings::setOwner(df::building *bld, df::unit *unit)
+bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
-/* TODO: understand how this changes for v50
-    if (!bld->is_room)
-        return false;
-    if (bld->owner == unit)
+
+    if (bld->assigned_unit == unit)
         return true;
 
-    if (bld->owner)
-    {
-        auto &blist = bld->owner->owned_buildings;
-        vector_erase_at(blist, linear_index(blist, bld));
+    df::building * pbld = virtual_cast<df::building>(bld);
 
-        if (auto spouse = df::unit::find(bld->owner->relationship_ids[df::unit_relationship_type::Spouse]))
+    if (bld->assigned_unit)
+    {
+        auto &blist = bld->assigned_unit->owned_buildings;
+        vector_erase_at(blist, linear_index(blist, pbld));
+
+        if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            vector_erase_at(blist, linear_index(blist, bld));
+            vector_erase_at(blist, linear_index(blist, pbld));
         }
     }
 
-    bld->owner = unit;
+    bld->assigned_unit = unit;
 
     if (unit)
     {
-        bld->owner_id = unit->id;
+        bld->assigned_unit_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
+            if (bld->canUseSpouseRoom() && linear_index(blist, pbld) < 0)
                 blist.push_back(bld);
         }
     }
     else
     {
-        bld->owner_id = -1;
+        bld->assigned_unit_id = -1;
     }
-*/
 
     return true;
 }
@@ -274,7 +407,7 @@ df::building *Buildings::findAtTile(df::coord pos)
 
         if (building && building->z == pos.z &&
             building->isSettingOccupancy() &&
-            containsTile(building, pos, false))
+            containsTile(building, pos))
         {
             return building;
         }
@@ -309,94 +442,41 @@ df::building *Buildings::findAtTile(df::coord pos)
 
 static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
-static void cacheBuilding(df::building *building, bool is_civzone) {
+static void cacheBuilding(df::building *building) {
     int32_t id = building->id;
     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
-    if (!is_civzone) {
-        // civzones can be dynamically shrunk so we don't bother to cache
-        // their boundaries. findCivzonesAt() will trim the cache as needed.
-        corner1[id] = p1;
-        corner2[id] = p2;
-    }
+    corner1[id] = p1;
+    corner2[id] = p2;
 
     for (int32_t x = p1.x; x <= p2.x; x++) {
         for (int32_t y = p1.y; y <= p2.y; y++) {
             df::coord pt(x, y, building->z);
-            if (Buildings::containsTile(building, pt, is_civzone)) {
-                if (is_civzone)
-                    locationToCivzones[pt].push_back(id);
-                else
-                    locationToBuilding[pt] = id;
+            if (Buildings::containsTile(building, pt)) {
+                locationToBuilding[pt] = id;
             }
         }
     }
-}
-
-static int32_t nextCivzone = 0;
-static void cacheNewCivzones() {
-    if (!world || !building_next_id)
-        return;
-
-    int32_t nextBuildingId = *building_next_id;
-    for (int32_t id = nextCivzone; id < nextBuildingId; ++id) {
-        auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
-        int32_t idx = df::building::binsearch_index(vec, id);
-        if (idx > -1)
-            cacheBuilding(vec[idx], true);
-    }
-    nextCivzone = nextBuildingId;
 }
 
 bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
                                df::coord pos) {
     pvec->clear();
 
-    // Tiles have an occupancy->bits.building flag to quickly determine if it is
-    // covered by a buildling, but there is no such flag for civzones.
-    // Therefore, we need to make sure that our cache is authoratative.
-    // Otherwise, we would have to fall back to linearly scanning the list of
-    // all civzones on a cache miss.
-    //
-    // Since we guarantee our cache contains *at least* all tiles that are
-    // currently covered by civzones, we can conclude that if a tile is not in
-    // the cache, there is no civzone there. Civzones *can* be dynamically
-    // shrunk, so we still need to verify that civzones that once covered this
-    // tile continue to cover this tile.
-    cacheNewCivzones();
-
-    auto civzones_it = locationToCivzones.find(pos);
-    if (civzones_it == locationToCivzones.end())
-        return false;
-
-    set<int32_t> ids_to_remove;
-    auto &civzones = civzones_it->second;
-    for (int32_t id : civzones) {
-        int32_t idx = df::building::binsearch_index(
-                world->buildings.other[buildings_other_id::ANY_ZONE], id);
-        df::building_civzonest *civzone = NULL;
-        if (idx > -1)
-            civzone = world->buildings.other.ANY_ZONE[idx];
-        if (!civzone || civzone->z != pos.z ||
-                !containsTile(civzone, pos, true)) {
-            ids_to_remove.insert(id);
+    for (df::building_civzonest* zone : world->buildings.other.ANY_ZONE)
+    {
+        if (pos.z != zone->z)
             continue;
-        }
-        pvec->push_back(civzone);
-    }
 
-    // civzone no longer occupies this tile; update the cache
-    if (!ids_to_remove.empty()) {
-        for (auto it = civzones.begin(); it != civzones.end(); ) {
-            if (ids_to_remove.count(*it)) {
-                it = civzones.erase(it);
+        if (zone->room.extents && zone->isExtentShaped())
+        {
+            auto etile = getExtentTile(zone->room, pos);
+            if (!etile || !*etile)
                 continue;
-            }
-            ++it;
+
+            pvec->push_back(zone);
         }
-        if (civzones.empty())
-            locationToCivzones.erase(pos);
     }
 
     return !pvec->empty();
@@ -425,7 +505,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     bld->y1 = bld->y2 = bld->centery = pos.y;
     bld->z = pos.z;
 
-    bld->race = ui->race_id;
+    bld->race = plotinfo->race_id;
 
     if (subtype != -1)
         bld->setSubtype(subtype);
@@ -508,6 +588,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     case building_type::Bridge:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bridgest, bld))
+            obj->gate_flags.bits.closed = false;
+        break;
+    }
+    case building_type::Weapon:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
             obj->gate_flags.bits.closed = false;
         break;
     }
@@ -712,10 +798,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             if (!allow_occupied &&
                 block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
-            else
+            else if (!allow_wall)
             {
-                auto tile = block->tiletype[btile.x][btile.y];
-                if (!allow_wall && !HighPassable(tile))
+                auto &tt = block->tiletype[btile.x][btile.y];
+                auto &des = block->designation[btile.x][btile.y];
+                if (!HighPassable(tt) ||
+                        des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma))
                     allowed = false;
             }
 
@@ -783,31 +872,16 @@ int Buildings::countExtentTiles(df::building_extents *ext, int defval)
     return cnt;
 }
 
-bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
-{
+bool Buildings::containsTile(df::building *bld, df::coord2d tile) {
     CHECK_NULL_POINTER(bld);
 
-    if (room)
-    {
-/* TODO: understand how this changes for v50
-        if (!bld->is_room || !bld->room.extents)
-            return false;
-*/
-    }
-    else
-    {
+    if (!bld->isExtentShaped() || !bld->room.extents) {
         if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y > bld->y2)
             return false;
     }
 
-    if (bld->room.extents && (room || bld->isExtentShaped()))
-    {
-        df::building_extents_type *etile = getExtentTile(bld->room, tile);
-        if (!etile || !*etile)
-            return false;
-    }
-
-    return true;
+    df::building_extents_type *etile = getExtentTile(bld->room, tile);
+    return etile && *etile;
 }
 
 bool Buildings::hasSupport(df::coord pos, df::coord2d size)
@@ -989,7 +1063,7 @@ static void linkRooms(df::building *bld)
     }
 
     if (changed)
-        df::global::ui->equipment.update.bits.buildings = true;
+        df::global::plotinfo->equipment.update.bits.buildings = true;
 */
 }
 
@@ -1040,35 +1114,19 @@ static void createDesign(df::building *bld, bool rough)
 
 static int getMaxStockpileId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::STOCKPILE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_stockpilest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->stockpile_number);
-    }
-
+    for (auto bld : world->buildings.other.STOCKPILE)
+        max_id = std::max(max_id, bld->stockpile_number);
     return max_id;
 }
 
-/* TODO: understand how this changes for v50
 static int getMaxCivzoneId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->zone_num);
-    }
-
+    for (auto bld : world->buildings.other.ANY_ZONE)
+        max_id = std::max(max_id, bld->zone_num);
     return max_id;
 }
-*/
 
 bool Buildings::constructAbstract(df::building *bld)
 {
@@ -1087,12 +1145,14 @@ bool Buildings::constructAbstract(df::building *bld)
                 stock->stockpile_number = getMaxStockpileId() + 1;
             break;
 
-/* TODO: understand how this changes for v50
         case building_type::Civzone:
             if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
+            {
                 zone->zone_num = getMaxCivzoneId() + 1;
+
+                add_zone_to_all_buildings(zone);
+            }
             break;
-*/
 
         default:
             break;
@@ -1186,6 +1246,8 @@ bool Buildings::constructWithItems(df::building *bld, std::vector<df::item*> ite
             bld->mat_index = items[i]->getMaterialIndex();
     }
 
+    add_building_to_all_zones(bld);
+
     createDesign(bld, rough);
     return true;
 }
@@ -1232,13 +1294,71 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
 
     buildings_do_onupdate = true;
 
+    add_building_to_all_zones(bld);
+
     createDesign(bld, rough);
     return true;
 }
 
+static void delete_civzone_squad_links(df::building_civzonest* zone)
+{
+    for (df::building_civzonest::T_squad_room_info* room_info : zone->squad_room_info)
+    {
+        int32_t squad_id = room_info->squad_id;
+
+        df::squad* squad = df::squad::find(squad_id);
+
+        //if this is null, something has gone just *terribly* wrong
+        if (squad)
+        {
+            for (int i=(int)squad->rooms.size() - 1; i >= 0; i--)
+            {
+                if (squad->rooms[i]->building_id == zone->id)
+                {
+                    auto room = squad->rooms[i];
+                    squad->rooms.erase(squad->rooms.begin() + i);
+                    delete room;
+                }
+            }
+        }
+
+        delete room_info;
+    }
+
+    zone->squad_room_info.clear();
+}
+
+//unit owned_building pointers are known-bad as of 50.05 and dangle on zone delete
+//do not use anything that touches anything other than the pointer value
+//this means also that if dwarf fortress reuses a memory allocation, we will end up with duplicates
+//this vector is also not sorted by id
+//it also turns out that multiple units eg (solely?) spouses can point to one room
+static void delete_assigned_unit_links(df::building_civzonest* zone)
+{
+    //not clear if this is always true
+    /*if (zone->assigned_unit_id == -1)
+        return;*/
+
+    for (df::unit* unit : world->units.active)
+    {
+        for (int i=(int)unit->owned_buildings.size() - 1; i >= 0; i--)
+        {
+            if (unit->owned_buildings[i] == zone)
+                unit->owned_buildings.erase(unit->owned_buildings.begin() + i);
+        }
+    }
+}
+
+static void on_civzone_delete(df::building_civzonest* civzone)
+{
+    remove_zone_from_all_buildings(civzone);
+    delete_civzone_squad_links(civzone);
+    delete_assigned_unit_links(civzone);
+}
+
 bool Buildings::deconstruct(df::building *bld)
 {
-    using df::global::ui;
+    using df::global::plotinfo;
     using df::global::world;
     using df::global::ui_look_list;
 
@@ -1263,7 +1383,8 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld->id));
+    int id = bld->id;
+    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding
@@ -1271,6 +1392,17 @@ bool Buildings::deconstruct(df::building *bld)
     // Don't clear arrows.
 
     bld->uncategorize();
+
+    remove_building_from_all_zones(bld);
+
+    if (bld->getType() == df::building_type::Civzone)
+    {
+        auto zone = strict_virtual_cast<df::building_civzonest>(bld);
+
+        if (zone)
+            on_civzone_delete(zone);
+    }
+
     delete bld;
 
     if (world->selected_building == bld)
@@ -1283,7 +1415,7 @@ bool Buildings::deconstruct(df::building *bld)
     {
         auto item = ui_look_list->items[i];
         if (item->type == df::ui_look_list::T_items::Building &&
-            item->data.Building == bld)
+            item->data.building.bld_id == id)
         {
             vector_erase_at(ui_look_list->items, i);
             delete item;
@@ -1309,12 +1441,20 @@ bool Buildings::markedForRemoval(df::building *bld)
     return false;
 }
 
+void Buildings::notifyCivzoneModified(df::building* bld)
+{
+    if (bld->getType() != building_type::Civzone)
+        return;
+
+    //remove zone here needs to be the slow method
+    remove_zone_from_all_buildings(bld);
+    add_zone_to_all_buildings(bld);
+}
+
 void Buildings::clearBuildings(color_ostream& out) {
     corner1.clear();
     corner2.clear();
     locationToBuilding.clear();
-    locationToCivzones.clear();
-    nextCivzone = 0;
 }
 
 void Buildings::updateBuildings(color_ostream&, void* ptr)
@@ -1326,7 +1466,7 @@ void Buildings::updateBuildings(color_ostream&, void* ptr)
     {
         bool is_civzone = !building->isSettingOccupancy();
         if (!corner1.count(id) && !is_civzone)
-            cacheBuilding(building, false);
+            cacheBuilding(building);
     }
     else if (corner1.count(id))
     {
@@ -1444,45 +1584,31 @@ bool Buildings::isPenPasture(df::building * building)
     if (!isActivityZone(building))
         return false;
 
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
-*/ return false;
+    return ((df::building_civzonest*)building)->type == civzone_type::Pen;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
-*/ return false;
+
+    return ((df::building_civzonest*)building)->type == civzone_type::Pond;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
-*/ return false;
+    // 8 is the value obtained by reverse engineering
+    return ((df::building_civzonest*)building)->is_active == 8;
 }
-
-bool Buildings::isHospital(df::building * building)
- {
-     if (!isActivityZone(building))
-         return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
-*/ return false;
- }
 
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
-*/ return false;
+
+     return ((df::building_civzonest*)building)->type == civzone_type::AnimalTraining;
  }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)
@@ -1504,19 +1630,25 @@ StockpileIterator& StockpileIterator::operator++() {
         if (block) {
             // Check the next item in the current block.
             ++current;
+        }
+        else if (stockpile->x2 < 0 || stockpile->y2 < 0 || stockpile->z < 0 || stockpile->x1 > world->map.x_count - 1 || stockpile->y1 > world->map.y_count - 1 || stockpile->z > world->map.z_count - 1) {
+            // if the stockpile bounds exist outside of valid map plane then no items can be in the stockpile
+            block = NULL;
+            item = NULL;
+            return *this;
         } else {
             // Start with the top-left block covering the stockpile.
-            block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+            block = Maps::getTileBlock(std::min(std::max(stockpile->x1, 0), world->map.x_count-1), std::min(std::max(stockpile->y1, 0), world->map.y_count-1), stockpile->z);
             current = 0;
         }
 
         while (current >= block->items.size()) {
             // Out of items in this block; find the next block to search.
-            if (block->map_pos.x + 16 < stockpile->x2) {
+            if (block->map_pos.x + 16 <= std::min(stockpile->x2, world->map.x_count-1)) {
                 block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
                 current = 0;
-            } else if (block->map_pos.y + 16 < stockpile->y2) {
-                block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+            } else if (block->map_pos.y + 16 <= std::min(stockpile->y2, world->map.y_count-1)) {
+                block = Maps::getTileBlock(std::max(stockpile->x1, 0), block->map_pos.y + 16, stockpile->z);
                 current = 0;
             } else {
                 // All items in all blocks have been checked.
@@ -1532,7 +1664,7 @@ StockpileIterator& StockpileIterator::operator++() {
             continue;
         }
 
-        if (!Buildings::containsTile(stockpile, item->pos, false)) {
+        if (!Buildings::containsTile(stockpile, item->pos)) {
             continue;
         }
 
@@ -1574,4 +1706,16 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
     }
 
     return true;
+}
+
+void Buildings::completebuild(df::building* bld, char in_play)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto fp = df::global::buildingst_completebuild;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::building* bld, char)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(bld, in_play);
 }

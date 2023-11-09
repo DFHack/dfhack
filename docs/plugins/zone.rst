@@ -3,7 +3,7 @@ zone
 
 .. dfhack-tool::
     :summary: Manage activity zones, cages, and the animals therein.
-    :tags: fort productivity animals buildings
+    :tags: unavailable
 
 Usage
 -----
@@ -157,3 +157,32 @@ cages and then place one pen/pasture activity zone above them, covering all
 cages you want to use. Then use ``zone set`` (like with ``assign``) and run
 ``zone tocages <filter>``. ``tocages`` can be used together with ``nick`` or
 ``remnick`` to adjust nicknames while assigning to cages.
+
+Overlay
+-------
+
+Advanced unit selection is available via an `overlay` widget that appears when
+you select a cage, restraint, pasture zone, or pit/pond zone.
+
+In the window that pops up when you click the hotkey hint or hit the hotkey on your keyboard, you can:
+
+- search for units by name
+- sort or filter by status (Assigned here, Pastured elsewhere, On restraint, On
+    display in cage, In movable cage, or Roaming)
+- sort or filter by disposition (Pet, Domesticated, Partially trained, Wild
+    (trainable), Wild (untrainable), or Hostile)
+- sort by gender
+- sort by name
+- filter by whether the unit lays eggs
+- filter by whether the unit needs a grazing area
+
+The window is fully navigatable via keyboard or mouse. Hit Enter or click on a
+unit to assign/unassign it to the currently selected zone or building. Shift
+click to assign/unassign a range of units.
+
+You can also keep the window open and click around on different cages,
+restraints, pastures, or pit/ponds, so you can manage multiple buildings/zones
+without having to close and reopen the window.
+
+Just like all other overlays, you can disable this one in `gui/control-panel` on
+the Overlays tab if you don't want the option of using it.

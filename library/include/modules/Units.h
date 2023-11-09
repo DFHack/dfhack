@@ -109,14 +109,22 @@ DFHACK_EXPORT bool isWar(df::unit* unit);
 DFHACK_EXPORT bool isTame(df::unit* unit);
 DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isDomesticated(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForTraining(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForTaming(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForWarTraining(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForHuntTraining(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForGelding(df::unit* unit);
+DFHACK_EXPORT bool isGeldable(df::unit* unit);
 DFHACK_EXPORT bool isGelded(df::unit* unit);
 DFHACK_EXPORT bool isEggLayer(df::unit* unit);
+DFHACK_EXPORT bool isEggLayerRace(df::unit* unit);
 DFHACK_EXPORT bool isGrazer(df::unit* unit);
 DFHACK_EXPORT bool isMilkable(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMischievous(df::unit *unit);
 DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
+DFHACK_EXPORT bool isPet(df::unit* unit);
 
 DFHACK_EXPORT bool hasExtravision(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
@@ -145,6 +153,9 @@ DFHACK_EXPORT df::unit *getUnit(const int32_t index);
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2);
+DFHACK_EXPORT bool getUnitsByNobleRole(std::vector<df::unit *> &units, std::string noble);
+DFHACK_EXPORT df::unit *getUnitByNobleRole(std::string noble);
+DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity = false);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);
 
@@ -179,11 +190,13 @@ DFHACK_EXPORT std::string getRaceName(df::unit* unit);
 DFHACK_EXPORT std::string getPhysicalDescription(df::unit* unit);
 DFHACK_EXPORT std::string getRaceNamePluralById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceNamePlural(df::unit* unit);
+DFHACK_EXPORT std::string getRaceReadableNameById(int32_t race_id);
+DFHACK_EXPORT std::string getRaceReadableName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceBabyNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
-
+DFHACK_EXPORT std::string getReadableName(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 DFHACK_EXPORT int getKillCount(df::unit *unit);
@@ -215,8 +228,6 @@ DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession
 DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
-
-DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);

@@ -1,13 +1,13 @@
 #include "df/viewscreen_dwarfmodest.h"
 
 using namespace df::enums;
-using df::global::ui;
+using df::global::plotinfo;
 
 struct shift_8_scroll_hook : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input))
     {
-        if (ui->main.mode != ui_sidebar_mode::Default &&
+        if (plotinfo->main.mode != ui_sidebar_mode::Default &&
             input->count(interface_key::CURSOR_UP_FAST) &&
             input->count(interface_key::SECONDSCROLL_PAGEDOWN)
             )

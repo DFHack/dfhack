@@ -21,7 +21,7 @@ DFHack commands can be implemented in any of three ways:
             same version of DFHack.  They are less flexible than scripts,
             but used for complex or ongoing tasks because they run faster.
 
-:scripts:   are Ruby or Lua scripts stored in ``hack/scripts/`` or other
+:scripts:   are Lua scripts stored in ``hack/scripts/`` or other
             directories in the `script-paths`. Because they don't need to
             be compiled, scripts are more flexible about versions, and
             they are easier to distribute. Most third-party DFHack addons
@@ -53,7 +53,7 @@ double quotes.  To include a double quote character, use ``\"``.
 If the first non-whitespace character is ``:``, the command is parsed in
 an alternative mode.  The non-whitespace characters following the ``:`` are
 the command name, and the remaining part of the line is used verbatim as
-the first argument.  This is very useful for the `lua` and `rb` commands.
+the first argument.  This is very useful for the `lua` command.
 As an example, the following two command lines are exactly equivalent::
 
   :foo a b "c d" e f
@@ -144,11 +144,10 @@ savegave portability, mod merging, and general organization of init files,
 DFHack supports multiple init files both in the main DF directory and
 save-specific init files in the save folders.
 
-DFHack looks for init files in three places each time they could be run:
+DFHack looks for init files in two places each time they could be run:
 
-#. The :file:`dfhack-config/init` subdirectory in the main DF directory
-#. :file:`data/save/{world}/raw`, where ``{world}`` is the current save, and
-#. :file:`data/save/{world}/raw/objects`
+#. The :file:`dfhack-config/init` subdirectory in the main DF directory and
+#. :file:`save/{world}/init`, where ``{world}`` is the current save
 
 For each of those directories, all matching init files will be executed in
 alphabetical order.
@@ -156,7 +155,7 @@ alphabetical order.
 Before running matched init scripts in any of those locations, the
 :file:`dfhack-config/init/default.*` file that matches the event will be run to
 load DFHack defaults. Only the :file:`dfhack-config/init` directory is checked
-for this file, not any :file:`raw` directories. If you want DFHack to load
+for this file, not any :file:`save` directories. If you want DFHack to load
 without running any of its default configuration commands, edit the
 :file:`dfhack-config/init/default.*` files and comment out the commands you see
 there.
@@ -217,10 +216,10 @@ after a modded save is unloaded.
 
 .. _other_init_files:
 
-raw/init.d/\*.lua
-.................
+init.d/\*.lua
+.............
 
-Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
+Any lua script named ``init.d/*.lua``, in the save or main DF directory,
 will be run when any world or that save is loaded.
 
 
@@ -234,12 +233,58 @@ run. By default, the following folders are searched, in order (relative to the
 root DF folder):
 
 #. :file:`dfhack-config/scripts`
-#. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
-#. :file:`raw/scripts`
+#. :file:`save/{world}/scripts` (only if a save is loaded)
 #. :file:`hack/scripts`
+#. :file:`data/installed_mods/...` (see below)
 
 For example, if ``teleport`` is run, these folders are searched in order for
-``teleport.lua`` or ``teleport.rb``, and the first matching file is run.
+``teleport.lua``, and the first matching file is run.
+
+Scripts in installed mods
+.........................
+
+Scripts in mods are automatically added to the script path. The following
+directories are searched for mods::
+
+    ../../workshop/content/975370/ (the DF Steam workshop directory)
+    mods/
+    data/installed_mods/
+
+Each mod can have two directories that contain scripts:
+
+- ``scripts_modactive/`` is added to the script path if and only if the mod is
+    active in the loaded world.
+- ``scripts_modinstalled/`` is added to the script path as long as the mod is
+    installed in one of the searched mod directories.
+
+Multiple versions of a mod may be installed at the same time. If a mod is
+active in a loaded world, then the scripts for the version of the mod that is
+active will be added to the script path. Otherwise, the latest version of each
+mod is added to the script path.
+
+Scripts for active mods take precedence according to their load order when you
+generated the current world.
+
+Scripts for non-active mods are ordered by their containing mod's ID.
+
+For example, the search paths for mods might look like this::
+
+    activemod_last_in_load_order/scripts_modactive
+    activemod_last_in_load_order/scripts_modinstalled
+    activemod_second_to_last_in_load_order/scripts_modactive
+    activemod_second_to_last_in_load_order/scripts_modinstalled
+    ...
+    inactivemod1/scripts_modinstalled
+    inactivemod2/scripts_modinstalled
+    ...
+
+Not all mods will have script directories, of course, and those mods will not be
+added to the script search path. Mods are re-scanned whenever a world is loaded
+or unloaded. For more information on scripts and mods, check out the
+`modding-guide`.
+
+Custom script paths
+...................
 
 Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
 Each line should start with one of these characters:
@@ -261,6 +306,23 @@ the root DF folder.
 Note that ``script-paths.txt`` is only read at startup, but the paths can also be
 modified programmatically at any time through the `Lua API <lua-api-internal>`.
 
+Commandline options
+===================
+
+In addition to `Using an OS terminal`_ to execute commands on startup, DFHack
+also recognizes a single commandline option that can be specified on the
+commandline:
+
+- ``--disable-dfhack``: If this option is passed on the Dwarf Fortress
+  commandline, then DFHack will be disabled for the session. You will have to
+  restart Dwarf Fortress without specifying this option in order to use DFHack.
+  If you are launching Dwarf Fortress from Steam, you can enter the option in
+  the "Launch Options" text box in the properties for the Dwarf Fortress app.
+  Note that if you do this, DFHack will be disabled regardless of whether you
+  run Dwarf Fortress from its own app or DFHack's. You will have to clear the
+  DF Launch Options in order to use DFHack again. Note that even if DFHack is
+  disabled, :file:`stdout.txt` and :file:`stderr.txt` will still be redirected
+  to :file:`stdout.log` and :file:`stderr.log`, respectively.
 
 .. _env-vars:
 
@@ -273,6 +335,11 @@ on UNIX-like systems:
 .. code-block:: shell
 
   DFHACK_SOME_VAR=1 ./dfhack
+
+- ``DFHACK_DISABLE``: if set, DFHack will not initialize, not even to redirect
+  standard output or standard error. This is provided as an alternative
+  to the ``--disable-dfhack`` commandline parameter above for when environment
+  variables are more convenient.
 
 - ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
   and `remotefortressreader` among others) instead of the default ``5000``. As
@@ -309,6 +376,23 @@ Other (non-DFHack-specific) variables that affect DFHack:
 - ``LANG``, ``LC_CTYPE``: if either of these contain "UTF8" or "UTF-8" (not case
   sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
   should be the case in most UTF-8-capable \*nix terminal emulators already.
+
+Core preferences
+================
+
+There are a few settings that can be changed dynamically via
+`gui/control-panel` to affect runtime behavior. You can also toggle these from
+the commandline using the `lua` command, e.g.
+``lua dfhack.HIDE_ARMOK_TOOLS=true`` or by editing the generated
+``dfhack-config/init/dfhack.control-panel-preferences.init`` file and
+restarting DF.
+
+- ``dfhack.HIDE_CONSOLE_ON_STARTUP``: Whether to hide the external DFHack
+  terminal window on startup. This, of course, is not useful to change
+  dynamically. You'll have to use `gui/control-panel` or edit the init file
+  directly and restart DF for it to have an effect.
+
+- ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
 
 Miscellaneous notes
 ===================

@@ -1,5 +1,7 @@
 #include "check-structures-sanity.h"
 
+#include <cinttypes>
+
 #include "df/large_integer.h"
 
 Checker::Checker(color_ostream & out) :
@@ -294,7 +296,7 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
     else if (cs.identity == df::identity_traits<bool>::get())
     {
         auto val = *reinterpret_cast<const uint8_t *>(item.ptr);
-        if (val > 1 && val != 0xd2)
+        if (val > 1 && perturb_byte && val != perturb_byte && val != (perturb_byte ^ 0xff))
         {
             FAIL("invalid value for bool: " << int(val));
         }
@@ -374,6 +376,14 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     else if (base_container == "DfArray<void>")
     {
         // TODO: check DfArray
+    }
+    else if (base_container.starts_with("map<"))
+    {
+        // TODO: check map
+    }
+    else if (base_container.starts_with("unordered_map<"))
+    {
+        // TODO: check unordered_map
     }
     else
     {
@@ -815,7 +825,7 @@ void Checker::check_stl_vector(const QueueItem & item, type_identity *item_ident
     auto vec_items = validate_vector_size(item, CheckedStructure(item_identity));
 
     // skip bad pointer vectors
-    if (item.path.length() > 4 && item.path.substr(item.path.length() - 4) == ".bad" && item_identity->type() == IDTYPE_POINTER)
+    if ((item.path.ends_with(".bad") || item.path.ends_with(".temp_save")) && item_identity->type() == IDTYPE_POINTER)
     {
         return;
     }
@@ -845,69 +855,51 @@ void Checker::check_stl_string(const QueueItem & item)
 #else
     struct string_data
     {
-        struct string_data_inner
+        uintptr_t start;
+        size_t length;
+        union
         {
-            size_t length;
+            char local_data[16];
             size_t capacity;
-            int32_t refcount;
-        } *ptr;
+        };
     };
 #endif
 
     auto string = reinterpret_cast<const string_data *>(item.ptr);
 #ifdef WIN32
-    bool is_local = string->capacity < 16;
+    const bool is_gcc = false;
+    const bool is_local = string->capacity < 16;
+#else
+    const bool is_gcc = true;
+    const bool is_local = string->start == reinterpret_cast<uintptr_t>(&string->local_data[0]);
+#endif
     const char *start = is_local ? &string->local_data[0] : reinterpret_cast<const char *>(string->start);
     ptrdiff_t length = string->length;
     ptrdiff_t capacity = string->capacity;
-#else
-    if (!is_valid_dereference(QueueItem(item, "?ptr?", string->ptr), 1))
-    {
-        // nullptr is NOT okay here
-        FAIL("invalid string pointer " << stl_sprintf("%p", string->ptr));
-        return;
-    }
-    if (!is_valid_dereference(QueueItem(item, "?hdr?", string->ptr - 1), sizeof(*string->ptr)))
-    {
-        return;
-    }
-    const char *start = reinterpret_cast<const char *>(string->ptr);
-    ptrdiff_t length = (string->ptr - 1)->length;
-    ptrdiff_t capacity = (string->ptr - 1)->capacity;
-#endif
 
     (void)start;
     if (length < 0)
     {
         FAIL("string length is negative (" << length << ")");
     }
-    else if (capacity < 0)
+    else if (is_gcc && length > 0 && !is_valid_dereference(QueueItem(item, "?start?", reinterpret_cast<void *>(string->start)), 1))
+    {
+        // nullptr is NOT okay here
+        FAIL("invalid string pointer " << stl_sprintf("0x%" PRIxPTR, string->start));
+        return;
+    }
+    else if (is_local && length >= 16)
+    {
+        FAIL("string length is too large for small string (" << length << ")");
+    }
+    else if ((!is_gcc || !is_local) && capacity < 0)
     {
         FAIL("string capacity is negative (" << capacity << ")");
     }
-    else if (capacity < length)
+    else if ((!is_gcc || !is_local) && capacity < length)
     {
         FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
     }
-
-#ifndef WIN32
-    const std::string empty_string;
-    auto empty_string_data = reinterpret_cast<const string_data *>(&empty_string);
-    if (sizes && string->ptr != empty_string_data->ptr)
-    {
-        size_t allocated_size = get_allocated_size(QueueItem(item, "?hdr?", string->ptr - 1));
-        size_t expected_size = sizeof(*string->ptr) + capacity + 1;
-
-        if (!allocated_size)
-        {
-            FAIL("pointer does not appear to be a string");
-        }
-        else if (allocated_size != expected_size)
-        {
-            FAIL("allocated string data size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
-        }
-    }
-#endif
 }
 void Checker::check_possible_pointer(const QueueItem & item, const CheckedStructure & cs)
 {

@@ -20,7 +20,7 @@ static std::string original_title;
 
 static DFLibrary *sdl_handle = NULL;
 static const std::vector<std::string> sdl_libs {
-    "SDLreal.dll",
+    "SDL.dll",
     "SDL.framework/Versions/A/SDL",
     "SDL.framework/SDL",
     "libSDL-1.2.so.0"

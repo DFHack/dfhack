@@ -4,7 +4,7 @@
 #include "DataDefs.h"
 
 #include "df/job.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
@@ -53,7 +53,7 @@ using std::deque;
 DFHACK_PLUGIN("dwarfmonitor");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 typedef int16_t activity_type;
 
@@ -951,7 +951,7 @@ public:
         {
             df::unit *selected_unit = (selected_column == 1) ? dwarf_activity_column.getFirstSelectedElem() : nullptr;
             Screen::dismiss(this);
-            Screen::show(dts::make_unique<ViewscreenDwarfStats>(selected_unit), plugin_self);
+            Screen::show(std::make_unique<ViewscreenDwarfStats>(selected_unit), plugin_self);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
@@ -1676,7 +1676,7 @@ private:
 
 
 static void open_stats_screen() {
-    Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
+    Screen::show(std::make_unique<ViewscreenFortStats>(), plugin_self);
 }
 
 static void add_work_history(df::unit *unit, activity_type type) {
@@ -1776,12 +1776,12 @@ static command_result dwarfmonitor_cmd(color_ostream &, vector <string> & parame
     if (cmd == 's' || cmd == 'S') {
         CoreSuspender guard;
         if(Maps::IsValid())
-            Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
+            Screen::show(std::make_unique<ViewscreenFortStats>(), plugin_self);
     }
     else if (cmd == 'p' || cmd == 'P') {
         CoreSuspender guard;
         if(Maps::IsValid())
-            Screen::show(dts::make_unique<ViewscreenPreferences>(), plugin_self);
+            Screen::show(std::make_unique<ViewscreenPreferences>(), plugin_self);
     }
     else
         return CR_WRONG_USAGE;

@@ -255,13 +255,14 @@ static int listdir_recursive_impl (std::string prefix, std::string path,
         std::string path_file = path + *file;
         if (Filesystem::isdir(prefixed_file))
         {
+            files.insert(std::pair<std::string, bool>(include_prefix ? prefixed_file : path_file, true));
+
             if (depth == 0)
             {
                 out_of_depth = true;
                 continue;
             }
 
-            files.insert(std::pair<std::string, bool>(include_prefix ? prefixed_file : path_file, true));
             err = listdir_recursive_impl(prefix, path_file + "/", files, depth - 1, include_prefix);
             if (err)
                 return err;
@@ -277,5 +278,7 @@ static int listdir_recursive_impl (std::string prefix, std::string path,
 int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> &files,
     int depth /* = 10 */, bool include_prefix /* = true */)
 {
+    if (dir.size() && dir[dir.size()-1] == '/')
+        dir.resize(dir.size()-1);
     return listdir_recursive_impl(dir, "", files, depth, include_prefix);
 }

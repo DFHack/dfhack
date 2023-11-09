@@ -3,7 +3,7 @@ power-meter
 
 .. dfhack-tool::
     :summary: Allow pressure plates to measure power.
-    :tags: fort gameplay buildings
+    :tags: unavailable
     :no-command:
 
 If you run `gui/power-meter` while building a pressure plate, the pressure

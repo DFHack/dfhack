@@ -8,7 +8,7 @@ orders
 Usage
 -----
 
-``orders orders list``
+``orders list``
     Shows the list of previously exported orders, including the orders library.
 ``orders export <name>``
     Saves all the current manager orders in a file.
@@ -17,13 +17,21 @@ Usage
     manager orders. It will not clear the orders that already exist.
 ``orders clear``
     Deletes all manager orders in the current embark.
+``orders recheck [this]``
+    Sets the status to ``Checking`` (from ``Active``) for all work orders that
+    have conditions that can be re-checked. If the "this" option is passed,
+    only sets the status for the workorder whose condition details page is
+    open. This makes the manager reevaluate its conditions. This is especially
+    useful for an order that had its conditions met when it was started, but
+    the requisite items have since disappeared and the workorder is now
+    generating job cancellation spam.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't
     prevent one-time orders from ever being completed. The sorting order is:
     one-time orders first, then yearly, seasonally, monthly, and finally, daily.
 
 You can keep your orders automatically sorted by adding the following command to
-your ``onMapLoad.init`` file::
+your ``dfhack-config/init/onMapLoad.init`` file::
 
     repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
@@ -40,6 +48,20 @@ Examples
     Import manager orders from the library that keep your fort stocked with
     basic essentials.
 
+Overlay
+-------
+
+Orders plugin functionality is directly available when the manager orders screen
+is open via an `overlay` widget. There are hotkeys assigned to export, import,
+sort, and clear. You can also click on the hotkey hints as if they were buttons.
+Clearing will ask for confirmation before acting.
+
+If you want to change where the overlay panel appears, you can move it via
+`gui/overlay`. If you just need to get the overlay out of the way temporarily,
+for example to read a long description of a historical figure when choosing a
+subject for a statue, click on the small arrow in the upper right corner of the
+overlay panel. Click on the arrow again to restore the panel.
+
 The orders library
 ------------------
 
@@ -53,7 +75,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets/mugs
+- pots/bins/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts, totems, and shleggings from otherwise unusable by-products
 - mechanisms/cages
@@ -66,7 +88,10 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-Armok's note: shleggings? Yes, `shleggings <https://youtu.be/bLN8cOcTjdo>`__.
+Note that the jugs are specifically made out of wood. This is so, as long as you don't may any other "Tools" out of wood, you can have a stockpile just for jugs by restricting a finished goods stockpile to only take wooden tools.
+
+Armok's additional note: "shleggings? Yes,
+`shleggings <https://youtu.be/bLN8cOcTjdo>`__."
 
 :source:`library/furnace <data/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,13 +115,15 @@ Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 This collection adds high-volume smelting jobs for military-grade metal ores and
 produces weapons and armor:
 
-- leather backpacks/waterskins/cloaks/quivers/armor
+- leather backpacks/waterskins/quivers/armor
+- silk cloaks
 - bone/wooden bolts
 - smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
   their dependencies)
 - bronze/bismuth bronze/copper bolts
-- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+- steel/silver/iron/bismuth bronze/bronze/copper weapons and armor,
   with checks to ensure only the best available materials are being used
+- wooden shields (if metal isn't available)
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
 and turn on `automelt` (like what `dreamfort` provides on its industry level),

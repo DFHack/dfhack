@@ -35,8 +35,6 @@ distribution.
 #include "Core.h"
 #include "DataFuncs.h"
 
-#include "RemoteClient.h"
-
 typedef struct lua_State lua_State;
 
 namespace tthread
@@ -201,12 +199,6 @@ namespace DFHack
 
         void open_lua(lua_State *state, int table);
 
-        command_result eval_ruby(color_ostream &out, const char* cmd) {
-            if (!plugin_eval_ruby || !is_enabled())
-                return CR_FAILURE;
-            return plugin_eval_ruby(out, cmd);
-        }
-
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
@@ -244,7 +236,6 @@ namespace DFHack
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_eval_ruby)(color_ostream &, const char*);
         command_result (*plugin_save_data)(color_ostream &);
         command_result (*plugin_load_data)(color_ostream &);
     };
@@ -282,7 +273,6 @@ namespace DFHack
         bool CanInvokeHotkey(const std::string &command, df::viewscreen *top);
         Plugin* operator[] (const std::string name);
         std::size_t size();
-        Plugin *ruby;
 
         std::map<std::string, Plugin*>::iterator begin();
         std::map<std::string, Plugin*>::iterator end();
@@ -308,14 +298,16 @@ namespace DFHack
 };
 
 #define DFHACK_PLUGIN_AUX(m_plugin_name, is_dev) \
+extern "C" { \
     DFhackDataExport const char * plugin_name = m_plugin_name;\
     DFhackDataExport const char * plugin_version = DFHack::Version::dfhack_version();\
     DFhackDataExport const char * plugin_git_description = DFHack::Version::git_description();\
     DFhackDataExport int plugin_abi_version = DFHack::Version::dfhack_abi_version();\
     DFhackDataExport DFHack::Plugin *plugin_self = NULL;\
-    std::vector<std::string> _plugin_globals;\
-    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \
-    DFhackDataExport bool plugin_dev = is_dev;
+    std::vector<std::string> plugin_globals_noptr;\
+    DFhackDataExport std::vector<std::string>* plugin_globals = &plugin_globals_noptr; \
+    DFhackDataExport bool plugin_dev = is_dev; \
+}
 
 /// You have to include DFHACK_PLUGIN("plugin_name") in every plugin you write - just once. Ideally at the top of the main file.
 #ifdef DEV_PLUGIN

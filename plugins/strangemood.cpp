@@ -23,7 +23,7 @@
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/map_block.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_preference.h"
 #include "df/unit_relationship_type.h"
@@ -39,7 +39,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("strangemood");
 
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(d_init);
 REQUIRE_GLOBAL(created_item_count);
 REQUIRE_GLOBAL(created_item_type);
@@ -80,7 +80,7 @@ df::job_skill getMoodSkill (df::unit *unit)
         {
         case job_skill::MINING:
         case job_skill::CARPENTRY:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::TANNER:
         case job_skill::WEAVING:
@@ -288,15 +288,15 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
             return CR_WRONG_USAGE;
-        else if(parameters[i] == "-force")
+        else if(parameters[i] == "--force")
             force = true;
-        else if(parameters[i] == "-unit")
+        else if(parameters[i] == "--unit")
         {
             unit = DFHack::Gui::getSelectedUnit(out);
             if (!unit)
                 return CR_FAILURE;
         }
-        else if (parameters[i] == "-type")
+        else if (parameters[i] == "--type")
         {
             i++;
             if (i == parameters.size())
@@ -320,7 +320,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             }
         }
-        else if (parameters[i] == "-skill")
+        else if (parameters[i] == "--skill")
         {
             i++;
             if (i == parameters.size())
@@ -333,7 +333,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             else if (parameters[i] == "carpenter")
                 skill = job_skill::CARPENTRY;
             else if (parameters[i] == "engraver")
-                skill = job_skill::DETAILSTONE;
+                skill = job_skill::ENGRAVE_STONE;
             else if (parameters[i] == "mason")
                 skill = job_skill::MASONRY;
             else if (parameters[i] == "tanner")
@@ -394,7 +394,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("Strange moods disabled via debug flag!\n");
         return CR_FAILURE;
     }
-    if (ui->mood_cooldown && !force)
+    if (plotinfo->mood_cooldown && !force)
     {
         out.printerr("Last strange mood happened too recently!\n");
         return CR_FAILURE;
@@ -406,7 +406,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         df::unit *cur = world->units.active[i];
         if (Units::isCitizen(cur) && cur->flags1.bits.has_mood)
         {
-            ui->mood_cooldown = 1000;
+            plotinfo->mood_cooldown = 1000;
             out.printerr("A strange mood is already in progress!\n");
             return CR_FAILURE;
         }
@@ -466,12 +466,12 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     if (blk->designation[x][y].bits.subterranean && !blk->designation[x][y].bits.hidden)
                         num_revealed_tiles++;
         }
-        if (num_revealed_tiles / 2304 < ui->tasks.num_artifacts)
+        if (num_revealed_tiles / 2304 < plotinfo->tasks.num_artifacts)
         {
             out.printerr("Fortress is not eligible for a strange mood at this time - not enough subterranean tiles revealed.\n");
             return CR_FAILURE;
         }
-        if (num_items / 200 < ui->tasks.num_artifacts)
+        if (num_items / 200 < plotinfo->tasks.num_artifacts)
         {
             out.printerr("Fortress is not eligible for a strange mood at this time - not enough items created\n");
             return CR_FAILURE;
@@ -544,14 +544,14 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    ui->mood_cooldown = 1000;
+    plotinfo->mood_cooldown = 1000;
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
         if (soul && (
-            (soul->personality.stress_level >= 500000) ||
-            (soul->personality.stress_level >= 250000 && !rng.df_trandom(2)) ||
-            (soul->personality.stress_level >= 100000 && !rng.df_trandom(10))
+            (soul->personality.stress >= 500000) ||
+            (soul->personality.stress >= 250000 && !rng.df_trandom(2)) ||
+            (soul->personality.stress >= 100000 && !rng.df_trandom(10))
             ))
         {
             switch (rng.df_trandom(2))
@@ -639,7 +639,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::CARPENTRY:
             job->job_type = job_type::StrangeMoodCarpenter;
             break;
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::WOODCRAFT:
         case job_skill::STONECRAFT:
         case job_skill::BONECARVE:
@@ -749,7 +749,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         switch (skill)
         {
         case job_skill::MINING:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
         case job_skill::MECHANICS:
@@ -1034,13 +1034,13 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
          (job->job_type == job_type::StrangeMoodFell)
        ))
     {
-        int extra_items = std::min(rng.df_trandom((ui->tasks.num_artifacts * 20 + moodable_units.size()) / 20 + 1), 7);
+        int extra_items = std::min(rng.df_trandom((plotinfo->tasks.num_artifacts * 20 + moodable_units.size()) / 20 + 1), 7);
         df::item_type avoid_type = item_type::NONE;
         int avoid_glass = 0;
         switch (skill)
         {
         case job_skill::MINING:
-        case job_skill::DETAILSTONE:
+        case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
             avoid_type = item_type::BLOCKS;
@@ -1217,7 +1217,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     ref->setID(unit->id);
     job->general_refs.push_back(ref);
     unit->job.current_job = job;
-    job->wait_timer = 0;
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)

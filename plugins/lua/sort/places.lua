@@ -124,6 +124,7 @@ PlacesOverlay.ATTRS{
 function PlacesOverlay:init()
     self:addviews{
         widgets.BannerPanel{
+            view_id='panel',
             frame={l=0, t=0, r=0, h=1},
             visible=self:callback('get_key'),
             subviews={
@@ -151,6 +152,52 @@ function PlacesOverlay:get_key()
         elseif buildings.mode == df.buildings_mode_type.LOCATIONS then
             return 'LOCATIONS'
         end
+    end
+end
+
+local function resize_overlay(self)
+    local sw = dfhack.screen.getWindowSize()
+    local overlay_width = math.min(40, sw-(self.frame_rect.x1 + 30))
+    if overlay_width ~= self.frame.w then
+        self.frame.w = overlay_width
+        return true
+    end
+end
+
+local function is_tabs_in_two_rows()
+    return dfhack.screen.readTile(64, 6, false).ch == 0
+end
+
+local function get_panel_offsets()
+    local tabs_in_two_rows = is_tabs_in_two_rows()
+    local l_offset = (not tabs_in_two_rows) and 4 or 0
+    local t_offset = 1
+    if tabs_in_two_rows then
+        t_offset = shift_right and 0 or 3
+    end
+    if info.current_mode == df.info_interface_mode_type.BUILDINGS then
+        t_offset = t_offset - 1
+    end
+    return l_offset, t_offset
+end
+
+function PlacesOverlay:updateFrames()
+    local ret = resize_overlay(self)
+    local l, t = get_panel_offsets()
+    local frame = self.subviews.panel.frame
+    if frame.l == l and frame.t == t then return ret end
+    frame.l, frame.t = l, t
+    local frame2 = self.subviews.subset_panel.frame
+    frame2.l, frame2.t = l, t + 1
+    local frame3 = self.subviews.subfilter_panel.frame
+    frame3.l, frame3.t = l, t + 2
+    return true
+end
+
+function PlacesOverlay:onRenderBody(dc)
+    PlacesOverlay.super.onRenderBody(self, dc)
+    if self:updateFrames() then
+        self:updateLayout()
     end
 end
 

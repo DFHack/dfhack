@@ -2,6 +2,7 @@ local _ENV = mkmodule('plugins.sort.places')
 
 local sortoverlay = require('plugins.sort.sortoverlay')
 local locationselector = require('plugins.sort.locationselector')
+local info_overlay = require('plugins.sort.info')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
@@ -155,35 +156,9 @@ function PlacesOverlay:get_key()
     end
 end
 
-local function resize_overlay(self)
-    local sw = dfhack.screen.getWindowSize()
-    local overlay_width = math.min(40, sw-(self.frame_rect.x1 + 30))
-    if overlay_width ~= self.frame.w then
-        self.frame.w = overlay_width
-        return true
-    end
-end
-
-local function is_tabs_in_two_rows()
-    return dfhack.screen.readTile(64, 6, false).ch == 0
-end
-
-local function get_panel_offsets()
-    local tabs_in_two_rows = is_tabs_in_two_rows()
-    local l_offset = (not tabs_in_two_rows) and 4 or 0
-    local t_offset = 1
-    if tabs_in_two_rows then
-        t_offset = shift_right and 0 or 3
-    end
-    if info.current_mode == df.info_interface_mode_type.BUILDINGS then
-        t_offset = t_offset - 1
-    end
-    return l_offset, t_offset
-end
-
 function PlacesOverlay:updateFrames()
-    local ret = resize_overlay(self)
-    local l, t = get_panel_offsets()
+    local ret = info_overlay.resize_overlay(self)
+    local l, t = info_overlay.get_panel_offsets()
     local frame = self.subviews.panel.frame
     if frame.l == l and frame.t == t then return ret end
     frame.l, frame.t = l, t

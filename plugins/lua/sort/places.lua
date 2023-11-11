@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.sort.places')
 
 local sortoverlay = require('plugins.sort.sortoverlay')
+local locationselector = require('plugins.sort.locationselector')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
@@ -33,8 +34,14 @@ local language_name_types = {
     [df.language_name_type.SymbolFood] = 'Inn Tavern',
     [df.language_name_type.Temple] = 'Temple',
     [df.language_name_type.Hospital] = 'Hospital',
-    [df.language_name_type.Guildhall] = 'Guildhall'
+    [df.language_name_type.Guildhall] = 'Guildhall',
+    [df.language_name_type.Library] = 'Library',
 }
+
+local function get_location_religion(religion_id, religion_type)
+    if religion_type == df.temple_deity_type.None then return 'Temple'
+    else return locationselector.get_religion_string(religion_id, religion_type) or '' end
+end
 
 local function get_default_zone_name(zone_type)
     return zone_names[zone_type] or ''
@@ -60,7 +67,8 @@ local function get_zone_search_key(zone)
     if zone.location_id == -1 then -- zone is NOT a special location and we don't need to do anything special for type searching
         table.insert(result, df.civzone_type[zone.type]);
     else -- zone is a special location and we need to get its type from world data
-        local building, success, _ = utils.binsearch(site.buildings, zone.location_id, 'id')
+        local building, success = utils.binsearch(site.buildings, zone.location_id, 'id')
+
         if success and building.name then
             table.insert(result, language_name_types[building.name.type] or '')
             if building.name.has_name then
@@ -72,6 +80,31 @@ local function get_zone_search_key(zone)
     -- allow barracks to be searchable by assigned squad
     for _, squad in ipairs(zone.squad_room_info) do
         table.insert(result, dfhack.military.getSquadName(squad.squad_id))
+    end
+
+    return table.concat(result, ' ')
+end
+
+local function get_location_search_key(zone)
+    local site = df.global.world.world_data.active_site[0]
+    local result = {}
+
+    -- get language_name and type (we dont need user-given zone name because it does not appear on this page)
+    local building, success = utils.binsearch(site.buildings, zone.location_id, 'id')
+    if success and building.name then
+        table.insert(result, language_name_types[building.name.type] or '')
+        if building.name.has_name then
+            table.insert(result, dfhack.TranslateName(building.name, true))
+        end
+
+        -- for temples and guildhalls, get assigned organization
+        if df.abstract_building_templest:is_instance(building) then
+            table.insert(result, get_location_religion(building.deity_data.Deity or building.deity_data.Religion, building.deity_type))
+        elseif df.abstract_building_guildhallst:is_instance(building) then
+            local dwarfified_profession = locationselector.get_profession_string(building.contents.profession)
+            table.insert(result, dwarfified_profession)
+        end
+
     end
 
     return table.concat(result, ' ')
@@ -106,6 +139,7 @@ function PlacesOverlay:init()
     }
 
     self:register_handler('ZONES', buildings.list[df.buildings_mode_type.ZONES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_zone_search_key}))
+    self:register_handler('LOCATIONS', buildings.list[df.buildings_mode_type.LOCATIONS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_location_search_key}))
 end
 
 function PlacesOverlay:get_key()
@@ -114,6 +148,8 @@ function PlacesOverlay:get_key()
         -- Not there right now so it doesn't render a search bar on unsupported Places subpages
         if buildings.mode == df.buildings_mode_type.ZONES then
             return 'ZONES'
+        elseif buildings.mode == df.buildings_mode_type.LOCATIONS then
+            return 'LOCATIONS'
         end
     end
 end

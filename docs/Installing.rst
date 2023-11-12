@@ -31,7 +31,7 @@ Downloading DFHack
 ==================
 
 Stable builds of DFHack are available on
-`Steam <https://store.steampowered.com/app/2346660/DFHack__Dwarf_Fortress_Modding_Engine/>`__
+`Steam <https://store.steampowered.com/app/2346660/DFHack>`__
 or from our `GitHub <https://github.com/dfhack/dfhack/releases>`__. Either
 location will give you exactly the same package.
 
@@ -53,7 +53,7 @@ DF version - see `above <installing-df-version>` for details. For example:
     Do *not* download the source code from GitHub, either from the releases page
     or by clicking "Download ZIP" on the repo homepage. This will give you an
     incomplete copy of the DFHack source code, which will not work as-is. (If
-    you want to compile DFHack instead of using a pre-built release, see
+    you want to compile DFHack instead of using a pre-built release, please see
     `building-dfhack-index` for instructions.)
 
 Beta releases
@@ -91,6 +91,10 @@ When you `download DFHack <downloading>`, you will end up with a release archive
 (a ``.zip`` file on Windows, or a ``.tar.bz2`` file on other platforms). Your
 operating system should have built-in utilities capable of extracting files from
 these archives.
+
+If you are on Windows, please remember to right click on the file after
+downloading, open the file properties, and select the "Unblock" checkbox. This
+will prevent issues with Windows antivirus programs.
 
 The release archives contain a ``hack`` folder where DFHack binary and system
 data is stored, a ``stonesense`` folder that contains data specific to the

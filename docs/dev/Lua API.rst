@@ -1814,11 +1814,11 @@ World module
 
 * ``dfhack.world.ReadCurrentWeather()``
 
-  Returns the current game weather (`df.weather_type`).
+  Returns the current game weather (``df.weather_type``).
 
 * ``dfhack.world.SetCurrentWeather(weather)``
 
-  Sets the current game weather to `weather`.
+  Sets the current game weather to ``weather``.
 
 * ``dfhack.world.ReadWorldFolder()``
 

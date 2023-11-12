@@ -519,6 +519,31 @@ static uint16_t get_walk_group(const df::coord & pos) {
     return walk;
 }
 
+static bool is_tree(const df::tiletype *tt) {
+    return tileMaterial(*tt) == tiletype_material::TREE ||
+        tileMaterial(*tt) == tiletype_material::MUSHROOM;
+}
+
+// if the outside tile flag is set
+// or it's light and it's a tree
+// or there are just outside or light tree tiles above it
+static bool is_outside(const df::coord & pos, const df::tile_designation *des) {
+    if (!des)
+        return false;
+    if (des->bits.outside)
+        return true;
+    if (!des->bits.light)
+        return false;
+
+    df::coord pos_above = pos + df::coord(0, 0, 1);
+    df::tile_designation *des_above = Maps::getTileDesignation(pos_above);
+    df::tiletype *tt_above = Maps::getTileType(pos_above);
+    if (!des_above || !tt_above || (!is_tree(tt_above) && !LowPassable(*tt_above)))
+        return false;
+
+    return is_outside(pos_above, des_above);
+}
+
 static void flood_fill(lua_State *L, bool enable) {
     df::coord start_pos;
     bool zlevel = false;
@@ -537,7 +562,11 @@ static void flood_fill(lua_State *L, bool enable) {
         luaL_argerror(L, 2, "invalid starting coordinates");
         return;
     }
+    bool start_outside = is_outside(start_pos, start_des);
+    bool start_hidden = start_des->bits.hidden;
     uint16_t start_walk = Maps::getWalkableGroup(start_pos);
+    DEBUG(status).print("starting pos: (%d,%d,%d); outside: %d; hidden: %d\n",
+        start_pos.x, start_pos.y, start_pos.z, start_outside, start_hidden);
 
     std::stack<df::coord> flood;
     flood.emplace(start_pos);
@@ -546,10 +575,12 @@ static void flood_fill(lua_State *L, bool enable) {
         const df::coord pos = flood.top();
         flood.pop();
 
+        TRACE(status).print("pos: (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+
         df::tile_designation *des = Maps::getTileDesignation(pos);
         if (!des ||
-            des->bits.outside != start_des->bits.outside ||
-            des->bits.hidden != start_des->bits.hidden)
+            is_outside(pos, des) != start_outside ||
+            des->bits.hidden != start_hidden)
         {
             continue;
         }
@@ -563,8 +594,9 @@ static void flood_fill(lua_State *L, bool enable) {
 
         Burrows::setAssignedTile(burrow, pos, enable);
 
-        // only go one tile outside of a walkability group
-        if (start_walk && start_walk != walk)
+        // only go one tile outside of a walkability group (trees don't count)
+        df::tiletype *tt = Maps::getTileType(pos);
+        if (start_walk && start_walk != walk && tt && !is_tree(tt))
             continue;
 
         flood.emplace(pos.x-1, pos.y-1, pos.z);
@@ -577,14 +609,21 @@ static void flood_fill(lua_State *L, bool enable) {
         flood.emplace(pos.x+1, pos.y+1, pos.z);
 
         if (!zlevel) {
-            df::coord pos_above(pos);
-            ++pos_above.z;
-            df::tiletype *tt = Maps::getTileType(pos);
+            df::coord pos_above = pos + df::coord(0, 0, 1);
             df::tiletype *tt_above = Maps::getTileType(pos_above);
-            if (tt_above && (!start_walk || LowPassable(*tt_above)))
-                flood.emplace(pos_above);
-            if (tt && (!start_walk || LowPassable(*tt)))
-                flood.emplace(pos.x, pos.y, pos.z-1);
+            if (tt_above) {
+                uint16_t walk_above = get_walk_group(pos_above);
+                if (start_walk == walk_above)
+                    flood.emplace(pos_above);
+            }
+
+            df::coord pos_below = pos + df::coord(0, 0, -1);
+            df::tiletype *tt_below = Maps::getTileType(pos_below);
+            if (tt_below) {
+                uint16_t walk_below = get_walk_group(pos_below);
+                if (start_walk == walk_below)
+                    flood.emplace(pos_below);
+            }
         }
     }
 }

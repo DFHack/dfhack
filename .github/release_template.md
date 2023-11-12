@@ -1,5 +1,5 @@
 #### Q: How do I download DFHack?
-**A:** Either add to your Steam library from our [Steam page](https://store.steampowered.com/app/2346660/DFHack) or scroll to the latest release on our [GitHub releases page](https://github.com/DFHack/dfhack/releases), expand the "Assets" list, and download the file for your platform (e.g. `dfhack-XX.XX-rX-Windows-64bit.zip`.
+**A:** Either add to your Steam library from our [Steam page](https://store.steampowered.com/app/2346660/DFHack) or scroll to the latest release on our [GitHub releases page](https://github.com/DFHack/dfhack/releases), expand the "Assets" list, and download the file for your platform (e.g. `dfhack-XX.XX-rX-Windows-64bit.zip`. If you are on Windows and are manually installing from the zip file, please remember to right click on the file after downloading, open the file properties, and select the "Unblock" checkbox. This will prevent issues with Windows antivirus programs.
 
 -------------
 

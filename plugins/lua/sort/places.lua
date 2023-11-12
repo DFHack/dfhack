@@ -2,6 +2,7 @@ local _ENV = mkmodule('plugins.sort.places')
 
 local sortoverlay = require('plugins.sort.sortoverlay')
 local locationselector = require('plugins.sort.locationselector')
+local info_overlay = require('plugins.sort.info')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
@@ -124,6 +125,7 @@ PlacesOverlay.ATTRS{
 function PlacesOverlay:init()
     self:addviews{
         widgets.BannerPanel{
+            view_id='panel',
             frame={l=0, t=0, r=0, h=1},
             visible=self:callback('get_key'),
             subviews={
@@ -151,6 +153,26 @@ function PlacesOverlay:get_key()
         elseif buildings.mode == df.buildings_mode_type.LOCATIONS then
             return 'LOCATIONS'
         end
+    end
+end
+
+function PlacesOverlay:updateFrames()
+    local ret = info_overlay.resize_overlay(self)
+    local l, t = info_overlay.get_panel_offsets()
+    local frame = self.subviews.panel.frame
+    if frame.l == l and frame.t == t then return ret end
+    frame.l, frame.t = l, t
+    local frame2 = self.subviews.subset_panel.frame
+    frame2.l, frame2.t = l, t + 1
+    local frame3 = self.subviews.subfilter_panel.frame
+    frame3.l, frame3.t = l, t + 2
+    return true
+end
+
+function PlacesOverlay:onRenderBody(dc)
+    PlacesOverlay.super.onRenderBody(self, dc)
+    if self:updateFrames() then
+        self:updateLayout()
     end
 end
 

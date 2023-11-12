@@ -503,6 +503,9 @@ static int burrow_tiles_box_remove(lua_State *L) {
 
 // ramp tops inherit walkability group of the tile below
 static uint16_t get_walk_group(const df::coord & pos) {
+    df::tile_designation *des = Maps::getTileDesignation(pos);
+    if (!des || des->bits.hidden)
+        return 0;
     uint16_t walk = Maps::getWalkableGroup(pos);
     if (walk)
         return walk;
@@ -544,7 +547,7 @@ static void flood_fill(lua_State *L, bool enable) {
         flood.pop();
 
         df::tile_designation *des = Maps::getTileDesignation(pos);
-        if(!des ||
+        if (!des ||
             des->bits.outside != start_des->bits.outside ||
             des->bits.hidden != start_des->bits.hidden)
         {
@@ -578,9 +581,9 @@ static void flood_fill(lua_State *L, bool enable) {
             ++pos_above.z;
             df::tiletype *tt = Maps::getTileType(pos);
             df::tiletype *tt_above = Maps::getTileType(pos_above);
-            if (tt_above && LowPassable(*tt_above))
+            if (tt_above && (!start_walk || LowPassable(*tt_above)))
                 flood.emplace(pos_above);
-            if (tt && LowPassable(*tt))
+            if (tt && (!start_walk || LowPassable(*tt)))
                 flood.emplace(pos.x, pos.y, pos.z-1);
         }
     }

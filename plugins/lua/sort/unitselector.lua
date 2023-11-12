@@ -142,23 +142,24 @@ function BurrowAssignmentOverlay:init()
             view_id='top_mask',
             frame={l=WIDGET_WIDTH, r=0, t=0, h=1},
             frame_background=gui.CLEAR_PEN,
-            visible=function() return get_screen_width() >= 144 end,
+            visible=function() return self:get_key() and get_screen_width() >= 144 end,
         },
         widgets.Panel{
             view_id='wide_mask',
             frame={r=0, t=1, h=2, w=DEFAULT_OVERLAY_WIDTH},
             frame_background=gui.CLEAR_PEN,
-            visible=function() return get_screen_width() >= 144 end,
+            visible=function() return self:get_key() and get_screen_width() >= 144 end,
         },
         widgets.Panel{
             view_id='narrow_mask',
             frame={l=0, t=1, h=2, w=24},
             frame_background=gui.CLEAR_PEN,
-            visible=function() return get_screen_width() < 144 end,
+            visible=function() return self:get_key() and get_screen_width() < 144 end,
         },
         widgets.BannerPanel{
             view_id='subset_panel',
             frame={l=0, t=1, w=WIDGET_WIDTH, h=1},
+            visible=self:callback('get_key'),
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='subset',
@@ -194,6 +195,7 @@ function BurrowAssignmentOverlay:init()
             view_id='subfilter_panel',
             frame={l=0, t=2, w=WIDGET_WIDTH, h=1},
             visible=function()
+                if not self:get_key() then return false end
                 local subset = self.subviews.subset:getOptionValue()
                 return subset == 'military' or subset == 'burrow'
             end,
@@ -224,6 +226,7 @@ function BurrowAssignmentOverlay:init()
         },
         widgets.BannerPanel{
             frame={r=0, t=4, w=25, h=1},
+            visible=self:callback('get_key'),
             subviews={
                 widgets.HotkeyLabel{
                     frame={l=1, t=0, r=1},

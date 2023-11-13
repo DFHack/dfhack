@@ -61,28 +61,6 @@ namespace DFHack {
     class color_ostream;
 }
 
-/*! \namespace dts
- * std.reverse() == dts, The namespace that include forward compatible helpers
- * which can be used from newer standards. The preprocessor check prefers
- * standard version if one is available. The standard version gets imported with
- * using.
- */
-namespace dts {
-//  Check if lib supports the feature test macro or version is over c++14.
-#if __cpp_lib_make_unique < 201304 && __cplusplus < 201402L
-//! Insert c++14 make_unique to be forward compatible. Array versions are
-//! missing
-template<typename T, typename... Args>
-typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T> >::type
-make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>{new T{std::forward<Args>(args)...}};
-}
-#else /* >= c++14 */
-using std::make_unique;
-#endif
-}
-
 template <typename T>
 void print_bits ( T val, std::ostream& out )
 {
@@ -496,3 +474,5 @@ DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out);

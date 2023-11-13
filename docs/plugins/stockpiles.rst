@@ -2,11 +2,11 @@ stockpiles
 ==========
 
 .. dfhack-tool::
-    :summary: Import, export, or modify stockpile settings and features.
+    :summary: Import, export, or modify stockpile settings.
     :tags: fort design productivity stockpiles
 
-If you are importing or exporting setting and don't want to specify a building
-ID, select a stockpile in the UI before running the command.
+Commands act upon the stockpile selected in the UI unless another stockpile
+identifier is specified on the commandline.
 
 Usage
 -----
@@ -15,8 +15,8 @@ Usage
 
     stockpiles [status]
     stockpiles list [<search>]
-    stockpiles export <name> [<options>]
     stockpiles import <name> [<options>]
+    stockpiles export <name> [<options>]
 
 Exported stockpile settings are saved in the ``dfhack-config/stockpiles``
 folder, where you can view and delete them, if desired. Names can only
@@ -61,9 +61,9 @@ Examples
 Options
 -------
 
-``-s``, ``--stockpile <id>``
-    Specify a specific stockpile ID instead of using the one currently selected
-    in the UI.
+``-s``, ``--stockpile <name or id>``
+    Specify a specific stockpile by name or internal ID instead of using the
+    stockpile currently selected in the UI.
 ``-i``, ``--include <comma separated list of elements to include>``
     When exporting, you can include this option to select only specific elements
     of the stockpile to record. If not specified, everything is included. When
@@ -94,6 +94,19 @@ file are:
 :types: The elements below the categories, which include the sub-categories, the
     specific item types, and any toggles the category might have (like Prepared
     meals for the Food category).
+
+Overlay
+-------
+
+This plugin provides a panel that appears when you select a stockpile via an
+`overlay` widget. You can use it to easily toggle `logistics` plugin features
+like autotrade, automelt, or autotrain. There are also buttons along the top frame for:
+
+- minimizing the panel (if it is in the way of the vanilla stockpile
+  configuration widgets)
+- showing help for the overlay widget in `gui/launcher` (this page)
+- configuring advanced settings for the stockpile, such as whether automelt
+  will melt masterworks
 
 .. _stockpiles-library:
 
@@ -134,9 +147,29 @@ entire category, or with a filter, any matchable subset thereof::
     cat_weapons
     cat_wood
 
-For many of the categories, there are also flags and subcategory prefixes that
-you can match with filters and convenient pre-made settings files that
-manipulate interesting category subsets.
+In addition, there are files for ``all``, which includes all categories except
+refuse and corpses (mirroring the "all" configuration in-game), and
+``everything``, which really includes all categories.
+
+For many of the categories, there are also flags, subcategory prefixes, and
+item properties that you can match with filters. In addition, there are
+normally at least a few convenient pre-made settings files that manipulate
+interesting category subsets.
+
+Cross-category stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Settings files::
+
+    artifacts
+    masterworks
+
+Example command for a meltable weapons stockpile::
+
+    stockpiles import cat_weapons
+    stockpiles import -m disable cat_weapons -f other/
+    stockpiles import -m disable artifacts
+    stockpiles import -m disable masterworks
 
 Ammo stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +201,10 @@ Flags::
 
     cages
     traps
+
+Properties::
+
+    tameable
 
 Settings files::
 
@@ -271,6 +308,13 @@ Notes:
 * ``thread`` and ``cloth`` settings files set all materials that are not
     adamantine.
 
+Corpse stockpile adjustments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Properties::
+
+    tameable
+
 Finished goods stockpile adjustments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -292,7 +336,7 @@ Settings files::
 
 Example commands for a toy stockpile::
 
-    stockpiles import cat_furniture -f mats/,other/,core/,total/
+    stockpiles import cat_finished_goods -f mats/,other/,core/,total/
     stockpiles import -m enable toys
 
 Food stockpile adjustments
@@ -353,6 +397,7 @@ Subcategory prefixes::
 Settings files::
 
     pots
+    barrels
     bags
     buckets
     sand
@@ -400,6 +445,10 @@ Flags and subcategory prefixes::
     shells/
     teeth/
     horns/
+
+Properties::
+
+    tameable
 
 Settings files::
 

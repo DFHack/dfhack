@@ -38,6 +38,9 @@ COLOR_LIGHTMAGENTA = 13
 COLOR_YELLOW = 14
 COLOR_WHITE = 15
 
+COLOR_GRAY = COLOR_GREY
+COLOR_DARKGRAY = COLOR_DARKGREY
+
 -- Events
 
 if dfhack.is_core_context then
@@ -49,6 +52,18 @@ if dfhack.is_core_context then
     SC_CORE_INITIALIZED = 5
     SC_PAUSED = 7
     SC_UNPAUSED = 8
+end
+
+-- User-changeable options
+
+dfhack.HIDE_CONSOLE_ON_STARTUP = true
+function dfhack.getHideConsoleOnStartup()
+    return dfhack.HIDE_CONSOLE_ON_STARTUP
+end
+
+dfhack.HIDE_ARMOK_TOOLS = false
+function dfhack.getHideArmokTools()
+    return dfhack.HIDE_ARMOK_TOOLS
 end
 
 -- Error handling
@@ -390,6 +405,14 @@ function ensure_key(t, key, default_value)
         t[key] = (default_value ~= nil) and default_value or {}
     end
     return t[key]
+end
+
+function ensure_keys(t, key, ...)
+    t = ensure_key(t, key)
+    if select('#', ...) > 0 then
+        return ensure_keys(t, ...)
+    end
+    return t
 end
 
 -- String class extentions

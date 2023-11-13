@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import glob
+import itertools
 import sys
 
 actual = {'': {}}
+SEP = ('=' * 80)
 
 with open(sys.argv[1]) as f:
     plugin_name = ''
@@ -26,7 +28,7 @@ for p in glob.iglob('library/proto/*.proto'):
                 parts = line.split(' ')
                 expected[''][parts[2]] = (parts[4], parts[6])
 
-for p in glob.iglob('plugins/proto/*.proto'):
+for p in itertools.chain(glob.iglob('plugins/proto/*.proto'), glob.iglob('plugins/*/proto/*.proto')):
     plugin_name = ''
     with open(p) as f:
         for line in f:
@@ -53,6 +55,7 @@ for plugin_name in actual:
     methods = actual[plugin_name]
 
     if plugin_name not in expected:
+        print(SEP)
         print('Missing documentation for plugin proto files: ' + plugin_name)
         print('Add the following lines:')
         print('// Plugin: ' + plugin_name)
@@ -73,12 +76,14 @@ for plugin_name in actual:
                 missing.append('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
 
         if len(missing) > 0:
+            print(SEP)
             print('Incomplete documentation for ' + ('core' if plugin_name == '' else 'plugin "' + plugin_name + '"') + ' proto files. Add the following lines:')
             for m in missing:
                 print(m)
                 error_count += 1
 
         if len(wrong) > 0:
+            print(SEP)
             print('Incorrect documentation for ' + ('core' if plugin_name == '' else 'plugin "' + plugin_name + '"') + ' proto files. Replace the following comments:')
             for m in wrong:
                 print(m)
@@ -88,6 +93,7 @@ for plugin_name in expected:
     methods = expected[plugin_name]
 
     if plugin_name not in actual:
+        print(SEP)
         print('Incorrect documentation for plugin proto files: ' + plugin_name)
         print('The following methods are documented, but the plugin does not provide any RPC methods:')
         for m in methods:
@@ -102,6 +108,7 @@ for plugin_name in expected:
                 missing.append('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
 
         if len(missing) > 0:
+            print(SEP)
             print('Incorrect documentation for ' + ('core' if plugin_name == '' else 'plugin "' + plugin_name + '"') + ' proto files. Remove the following lines:')
             for m in missing:
                 print(m)

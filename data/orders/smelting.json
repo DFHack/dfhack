@@ -43,7 +43,7 @@
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
 				"material" : "INORGANIC:CASSITERITE",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",
@@ -668,7 +668,7 @@
 				"bearing" : "TIN",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",
@@ -729,7 +729,7 @@
 				"bearing" : "TIN",
 				"condition" : "AtMost",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",
@@ -791,13 +791,13 @@
 				"bearing" : "TIN",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",
@@ -828,13 +828,13 @@
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:TIN",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:COPPER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",
@@ -1068,13 +1068,13 @@
 				"bearing" : "TIN",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"bearing" : "COPPER",
 				"condition" : "AtLeast",
 				"item_type" : "BOULDER",
-				"value" : 5
+				"value" : 25
 			},
 			{
 				"condition" : "AtLeast",

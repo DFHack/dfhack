@@ -82,7 +82,7 @@ haul_delete_stop.message = "Are you sure you want to delete this stop?"
 
 depot_remove = defconf('depot-remove')
 function depot_remove.intercept_key(key)
-    if df.global.game.main_interface.current_hover == 299 and
+    if df.global.game.main_interface.current_hover == 301 and
             key == MOUSE_LEFT and
             df.building_tradedepotst:is_instance(dfhack.gui.getSelectedBuilding(true)) then
         for _, caravan in pairs(df.global.plotinfo.caravans) do
@@ -98,7 +98,7 @@ depot_remove.message = "Are you sure you want to remove this depot?\n" ..
 
 squad_disband = defconf('squad-disband')
 function squad_disband.intercept_key(key)
-    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 341
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 343
 end
 squad_disband.title = "Disband squad"
 squad_disband.message = "Are you sure you want to disband this squad?"

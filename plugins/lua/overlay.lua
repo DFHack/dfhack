@@ -261,7 +261,11 @@ local function load_widget(name, widget_class)
         next_update_ms=widget.overlay_onupdate and 0 or math.huge,
     }
     if not overlay_config[name] then overlay_config[name] = {} end
+    if widget.version ~= overlay_config[name].version then
+        overlay_config[name] = {}
+    end
     local config = overlay_config[name]
+    config.version = widget.version
     if config.enabled == nil then
         config.enabled = widget.default_enabled
     end
@@ -292,7 +296,7 @@ local function load_widgets(env_name, env)
 end
 
 -- called directly from cpp on plugin enable
-function reload()
+function rescan()
     reset()
 
     for _,plugin in ipairs(dfhack.internal.listPlugins()) do
@@ -317,7 +321,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
     -- pick up widgets from active mods
-    reload()
+    rescan()
 end
 
 local function dump_widget_config(name, widget)
@@ -429,8 +433,12 @@ end
 -- reduces the next call by a small random amount to introduce jitter into the
 -- widget processing timings
 local function do_update(name, db_entry, now_ms, vs)
-    if db_entry.next_update_ms > now_ms then return end
     local w = db_entry.widget
+    if w.overlay_onupdate_max_freq_seconds ~= 0 and
+        db_entry.next_update_ms > now_ms
+    then
+        return
+    end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then
@@ -447,7 +455,7 @@ function update_hotspot_widgets()
     end
 end
 
-local function matches_focus_strings(db_entry, vs_name)
+local function matches_focus_strings(db_entry, vs_name, vs)
     if not db_entry.focus_strings then return true end
     local matched = true
     local simple_vs_name = simplify_viewscreen_name(vs_name)
@@ -465,9 +473,10 @@ end
 local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
+    local is_all = vs_name == 'all'
     now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
-        if matches_focus_strings(db_entry, vs_name) and
+        if (is_all or matches_focus_strings(db_entry, vs_name, vs)) and
                 do_update(name, db_entry, now_ms, vs) then
             return
         end
@@ -483,12 +492,12 @@ function update_viewscreen_widgets(vs_name, vs)
     end
 end
 
-local function _feed_viewscreen_widgets(vs_name, keys)
+local function _feed_viewscreen_widgets(vs_name, vs, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if matches_focus_strings(db_entry, vs_name) and
+        if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
@@ -496,33 +505,36 @@ local function _feed_viewscreen_widgets(vs_name, keys)
     return false
 end
 
-function feed_viewscreen_widgets(vs_name, keys)
-    if not _feed_viewscreen_widgets(vs_name, keys) and
-            not _feed_viewscreen_widgets('all', keys) then
+function feed_viewscreen_widgets(vs_name, vs, keys)
+    if not _feed_viewscreen_widgets(vs_name, vs, keys) and
+            not _feed_viewscreen_widgets('all', nil, keys) then
         return false
-    end
-    gui.markMouseClicksHandled(keys)
-    if keys._MOUSE_L_DOWN then
-        df.global.enabler.mouse_lbut = 0
     end
     return true
 end
 
-local function _render_viewscreen_widgets(vs_name, dc)
+local function _render_viewscreen_widgets(vs_name, vs, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
-    if not vs_widgets then return false end
+    if not vs_widgets then return end
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if matches_focus_strings(db_entry, vs_name) then
+        if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
     end
+    return dc
 end
 
-function render_viewscreen_widgets(vs_name)
-    local dc = _render_viewscreen_widgets(vs_name, nil)
-    _render_viewscreen_widgets('all', dc)
+local force_refresh
+
+function render_viewscreen_widgets(vs_name, vs)
+    local dc = _render_viewscreen_widgets(vs_name, vs, nil)
+    _render_viewscreen_widgets('all', nil, dc)
+    if force_refresh then
+        force_refresh = nil
+        df.global.gps.force_full_display_count = 1
+    end
 end
 
 -- called when the DF window is resized
@@ -531,6 +543,7 @@ function reposition_widgets()
     for _,db_entry in pairs(widget_db) do
         db_entry.widget:updateLayout(sr)
     end
+    force_refresh = true
 end
 
 -- ------------------------------------------------- --
@@ -561,5 +574,63 @@ function OverlayWidget:init()
     self.frame.w = self.frame.w or 5
     self.frame.h = self.frame.h or 1
 end
+
+-- ------------------- --
+-- TitleVersionOverlay --
+-- ------------------- --
+
+TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
+TitleVersionOverlay.ATTRS{
+    default_pos={x=11, y=1},
+    version=2,
+    default_enabled=true,
+    viewscreens='title/Default',
+    frame={w=35, h=5},
+    autoarrange_subviews=1,
+}
+
+function TitleVersionOverlay:init()
+    local text = {}
+    table.insert(text, 'DFHack ' .. dfhack.getDFHackVersion() ..
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true))))
+    if #dfhack.getDFHackBuildID() > 0 then
+        table.insert(text, NEWLINE)
+        table.insert(text, 'Build ID: ' .. dfhack.getDFHackBuildID())
+    end
+    if dfhack.isPrerelease() then
+        table.insert(text, NEWLINE)
+        table.insert(text, {text='Pre-release build', pen=COLOR_LIGHTRED})
+    end
+
+    for _,t in ipairs(text) do
+        self.frame.w = math.max(self.frame.w, #t)
+    end
+
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text=text,
+            text_pen=COLOR_WHITE,
+        },
+        widgets.HotkeyLabel{
+            frame={l=0},
+            label='Quickstart guide',
+            auto_width=true,
+            key='STRING_A063',
+            on_activate=function() dfhack.run_script('quickstart-guide') end,
+        },
+        widgets.HotkeyLabel{
+            frame={l=0},
+            label='Control panel',
+            auto_width=true,
+            key='STRING_A047',
+            on_activate=function() dfhack.run_script('gui/control-panel') end,
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {
+    title_version = TitleVersionOverlay,
+}
 
 return _ENV

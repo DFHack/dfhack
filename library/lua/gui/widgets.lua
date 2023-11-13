@@ -4,9 +4,9 @@ local _ENV = mkmodule('gui.widgets')
 
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local textures = require('gui.textures')
 local utils = require('utils')
 
-local dscreen = dfhack.screen
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
 
@@ -87,7 +87,7 @@ Panel.ATTRS {
 
 function Panel:init(args)
     if not self.drag_anchors then
-        self.drag_anchors = {title=true, frame=false, body=true}
+        self.drag_anchors = {title=true, frame=not self.resizable, body=true}
     end
     if not self.resize_anchors then
         self.resize_anchors = {t=false, l=true, r=true, b=true}
@@ -223,9 +223,9 @@ local function Panel_begin_drag(self, drag_offset, resize_edge)
     self.prev_focus_owner = self.focus_group.cur
     self:setFocus(true)
     if self.resize_edge then
-        if self.on_resize_begin then self.on_resize_begin(success) end
+        self:onResizeBegin()
     else
-        if self.on_drag_begin then self.on_drag_begin(success) end
+        self:onDragBegin()
     end
 end
 
@@ -236,11 +236,12 @@ local function Panel_end_drag(self, frame, success)
     else
         self:setFocus(false)
     end
+    local resize_edge = self.resize_edge
     Panel_update_frame(self, frame, true)
-    if self.resize_edge then
-        if self.on_resize_end then self.on_resize_end(success) end
+    if resize_edge then
+        self:onResizeEnd(success, self.frame)
     else
-        if self.on_drag_end then self.on_drag_end(success) end
+        self:onDragEnd(success, self.frame)
     end
 end
 
@@ -273,7 +274,7 @@ end
 
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
             Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
@@ -281,7 +282,6 @@ function Panel:onInput(keys)
         for code in pairs(keys) do
             local dx, dy = guidm.get_movement_delta(code, 1, 10)
             if dx then
-                local frame_rect = self.frame_rect
                 local kbd_pos = self.kbd_get_pos()
                 kbd_pos.x = kbd_pos.x + dx
                 kbd_pos.y = kbd_pos.y + dy
@@ -292,9 +292,9 @@ function Panel:onInput(keys)
         return
     end
     if self.drag_offset then
-        if keys._MOUSE_R_DOWN then
+        if keys._MOUSE_R then
             Panel_end_drag(self, self.saved_frame)
-        elseif keys._MOUSE_L then
+        elseif keys._MOUSE_L_DOWN then
             Panel_update_frame(self, Panel_make_frame(self))
         end
         return true
@@ -302,7 +302,7 @@ function Panel:onInput(keys)
     if Panel.super.onInput(self, keys) then
         return true
     end
-    if not keys._MOUSE_L_DOWN then return end
+    if not keys._MOUSE_L then return end
     local x,y = self:getMouseFramePos()
     if not x then return end
 
@@ -489,9 +489,25 @@ function Panel:onRenderFrame(dc, rect)
         dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
     end
     if self.drag_offset and not self.kbd_get_pos
-            and df.global.enabler.mouse_lbut == 0 then
+            and df.global.enabler.mouse_lbut_down == 0 then
         Panel_end_drag(self, nil, true)
     end
+end
+
+function Panel:onDragBegin()
+    if self.on_drag_begin then self.on_drag_begin() end
+end
+
+function Panel:onDragEnd(success, new_frame)
+    if self.on_drag_end then self.on_drag_end(success, new_frame) end
+end
+
+function Panel:onResizeBegin()
+    if self.on_resize_begin then self.on_resize_begin() end
+end
+
+function Panel:onResizeEnd(success, new_frame)
+    if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
 
 ------------
@@ -640,8 +656,12 @@ function EditField:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
+    local old = self.text
     self.text = text
     self:setCursor(cursor)
+    if self.on_change and text ~= old then
+        self.on_change(self.text, old)
+    end
 end
 
 function EditField:postUpdateLayout()
@@ -698,12 +718,8 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
-        local old = self.text
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then
         self:setText(self.saved_text)
-        if self.on_change and old ~= self.saved_text then
-            self.on_change(self.text, old)
-        end
         self:setFocus(false)
         return true
     end
@@ -724,12 +740,6 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
-    elseif keys._MOUSE_L then
-        local mouse_x, mouse_y = self:getMousePos()
-        if mouse_x then
-            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
-            return true
-        end
     elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
@@ -747,9 +757,6 @@ function EditField:onInput(keys)
                 return self.modal
             end
         end
-        if self.on_change and self.text ~= old then
-            self.on_change(self.text, old)
-        end
         return true
     elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
@@ -759,9 +766,10 @@ function EditField:onInput(keys)
                                                find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.CUSTOM_CTRL_A then -- home
-        self:setCursor(1)
-        return true
+    -- commented out until we get HOME key support from DF
+    -- elseif keys.CUSTOM_CTRL_A then -- home
+    --     self:setCursor(1)
+    --     return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
@@ -772,6 +780,22 @@ function EditField:onInput(keys)
     elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
         return true
+    elseif keys.CUSTOM_CTRL_C then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        return true
+    elseif keys.CUSTOM_CTRL_X then
+        dfhack.internal.setClipboardTextCp437(self.text)
+        self:setText('')
+        return true
+    elseif keys.CUSTOM_CTRL_V then
+        self:insert(dfhack.internal.getClipboardTextCp437())
+        return true
+    elseif keys._MOUSE_L_DOWN then
+        local mouse_x = self:getMousePos()
+        if mouse_x then
+            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
+            return true
+        end
     end
 
     -- if we're modal, then unconditionally eat all the input
@@ -836,7 +860,9 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
 end
 
 local function scrollbar_do_drag(scrollbar)
-    local _,y = scrollbar.frame_body:localXY(dfhack.screen.getMousePos())
+    local x,y = dfhack.screen.getMousePos()
+    if not y then return end
+    x,y = scrollbar.frame_body:localXY(x, y)
     local cur_pos = y - scrollbar.is_dragging
     local max_top = scrollbar.num_elems - scrollbar.elems_per_page + 1
     local max_pos = scrollbar_get_max_pos_and_height(scrollbar)
@@ -851,7 +877,7 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local SBSO = 922 --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
+local SBSO = df.global.init.scrollbar_texpos[0] --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
 local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=SBSO+0, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=SBSO+1, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+24, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
@@ -960,7 +986,7 @@ function Scrollbar:onRenderBody(dc)
     if self.is_dragging then
         scrollbar_do_drag(self)
     end
-    if df.global.enabler.mouse_lbut == 0 then
+    if df.global.enabler.mouse_lbut_down == 0 then
         self.last_scroll_ms = 0
         self.is_dragging = false
         self.scroll_spec = nil
@@ -982,7 +1008,7 @@ function Scrollbar:onInput(keys)
         return false
     end
 
-    if self.parent_view:getMousePos() then
+    if self.parent_view and self.parent_view:getMousePos() then
         if keys.CONTEXT_SCROLL_UP then
             self.on_scroll('up_small')
             return true
@@ -997,7 +1023,7 @@ function Scrollbar:onInput(keys)
             return true
         end
     end
-    if not keys._MOUSE_L_DOWN then return false end
+    if not keys._MOUSE_L then return false end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil
@@ -1085,7 +1111,7 @@ end
 -- returns it (in parsed pen form)
 local function make_hpen(pen, hpen)
     if not hpen then
-        pen = dfhack.pen.parse(pen)
+        pen = to_pen(pen)
 
         -- Swap the foreground and background
         hpen = dfhack.pen.make(pen.bg, nil, pen.fg + (pen.bold and 8 or 0))
@@ -1094,7 +1120,7 @@ local function make_hpen(pen, hpen)
     -- text_hpen needs a character in order to paint the background using
     -- Painter:fill(), so let's make it paint a space to show the background
     -- color
-    local hpen_parsed = dfhack.pen.parse(hpen)
+    local hpen_parsed = to_pen(hpen)
     hpen_parsed.ch = string.byte(' ')
     return hpen_parsed
 end
@@ -1360,11 +1386,11 @@ function Label:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
     end
-    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+    if keys._MOUSE_L and self:getMousePos() and self.on_click then
         self.on_click()
         return true
     end
-    if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
+    if keys._MOUSE_R and self:getMousePos() and self.on_rclick then
         self.on_rclick()
         return true
     end
@@ -1472,11 +1498,128 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate
+    elseif keys._MOUSE_L and self:getMousePos() and self.on_activate
             and not is_disabled(self) then
         self.on_activate()
         return true
     end
+end
+
+----------------
+-- HelpButton --
+----------------
+
+HelpButton = defclass(HelpButton, Panel)
+
+HelpButton.ATTRS{
+    command=DEFAULT_NIL,
+}
+
+local button_pen_left = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+local button_pen_right = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
+local help_pen_center = to_pen{
+    tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
+local configure_pen_center = dfhack.pen.parse{
+    tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
+
+function HelpButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function HelpButton:init()
+    local command = self.command .. ' '
+
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=help_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=function() dfhack.run_command('gui/launcher', command) end,
+        },
+    }
+end
+
+---------------------
+-- ConfigureButton --
+---------------------
+
+ConfigureButton = defclass(ConfigureButton, Panel)
+
+ConfigureButton.ATTRS{
+    on_click=DEFAULT_NIL,
+}
+
+function ConfigureButton:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+    init_table.frame.w = init_table.frame.w or 3
+end
+
+function ConfigureButton:init()
+    self:addviews{
+        Label{
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=button_pen_left},
+                {tile=configure_pen_center},
+                {tile=button_pen_right},
+            },
+            on_click=self.on_click,
+        },
+    }
+end
+
+-----------------
+-- BannerPanel --
+-----------------
+
+BannerPanel = defclass(BannerPanel, Panel)
+
+function BannerPanel:onRenderBody(dc)
+    dc:pen(COLOR_RED)
+    for y=0,self.frame_rect.height-1 do
+        dc:seek(0, y):char('[')
+        dc:seek(self.frame_rect.width-1):char(']')
+    end
+end
+
+----------------
+-- TextButton --
+----------------
+
+TextButton = defclass(TextButton, BannerPanel)
+
+function TextButton:init(info)
+    self.label = HotkeyLabel{
+        frame={t=0, l=1, r=1},
+        key=info.key,
+        key_sep=info.key_sep,
+        label=info.label,
+        on_activate=info.on_activate,
+        text_pen=info.text_pen,
+        text_dpen=info.text_dpen,
+        text_hpen=info.text_hpen,
+        disabled=info.disabled,
+        enabled=info.enabled,
+        auto_height=info.auto_height,
+        auto_width=info.auto_width,
+        on_click=info.on_click,
+        on_rclick=info.on_rclick,
+        scroll_keys=info.scroll_keys,
+    }
+
+    self:addviews{self.label}
+end
+
+function TextButton:setLabel(label)
+    self.label:setLabel(label)
 end
 
 ----------------------
@@ -1488,6 +1631,8 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
     key_back=DEFAULT_NIL,
+    key_sep=': ',
+    option_gap=1,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     label_below=false,
@@ -1499,17 +1644,16 @@ CycleHotkeyLabel.ATTRS{
 function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
-    local val_gap = 1
     if self.label_below then
-        val_gap = 0 + (self.key_back and 1 or 0) + (self.key and 3 or 0)
+        self.option_gap = self.option_gap + (self.key_back and 1 or 0) + (self.key and 2 or 0)
     end
 
     self:setText{
         self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
-        {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
+        {key=self.key, key_sep=self.key_sep, text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         self.label_below and NEWLINE or '',
-        {gap=val_gap, text=self:callback('getOptionLabel'),
+        {gap=self.option_gap, text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }
 end
@@ -1549,8 +1693,7 @@ function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
         end
     end
     if not option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(value_or_index))
+        option_idx = 1
     end
     local old_option_idx = self.option_idx
     self.option_idx = option_idx
@@ -1586,7 +1729,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() and not is_disabled(self) then
+    elseif keys._MOUSE_L and self:getMousePos() and not is_disabled(self) then
         self:cycle()
         return true
     end
@@ -1657,6 +1800,13 @@ function List:setChoices(choices, selected)
     end
 
     self:setSelected(selected)
+
+    -- Check if page_top needs to be adjusted
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    elseif self.page_top > #self.choices - self.page_size + 1 then
+        self.page_top = #self.choices - self.page_size + 1
+    end
 end
 
 function List:setSelected(selected)
@@ -1697,10 +1847,20 @@ local function update_list_scrollbar(list)
 end
 
 function List:postComputeFrame(body)
-    self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    if #self.choices - self.page_size < 0 then
+    local row_count = body.height // self.row_height
+    self.page_size = math.max(1, row_count)
+
+    local num_choices = #self.choices
+    if num_choices == 0 then
         self.page_top = 1
+        update_list_scrollbar(self)
+        return
     end
+
+    if self.page_top > num_choices - self.page_size + 1 then
+        self.page_top = math.max(1, num_choices - self.page_size + 1)
+    end
+
     update_list_scrollbar(self)
 end
 
@@ -1873,7 +2033,7 @@ function List:onInput(keys)
         return self:submit()
     elseif keys.CUSTOM_SHIFT_ENTER then
         return self:submit2()
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local idx = self:getIdxUnderMouse()
         if idx then
             local now_ms = dfhack.getTickCount()
@@ -1932,7 +2092,6 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
-    case_sensitive = false,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2082,7 +2241,6 @@ function FilteredList:setFilter(filter, pos)
         pos = nil
 
         for i,v in ipairs(self.choices) do
-            local ok = true
             local search_key = v.search_key
             if not search_key then
                 if type(v.text) ~= 'table' then
@@ -2097,25 +2255,7 @@ function FilteredList:setFilter(filter, pos)
                     search_key = table.concat(texts, ' ')
                 end
             end
-            for _,key in ipairs(tokens) do
-                key = key:escape_pattern()
-                -- start matches at non-space or non-punctuation. this allows
-                -- punctuation itself to be matched if that is useful (e.g.
-                -- filenames or parameter names)
-                if key ~= '' then
-                    if not self.case_sensitive then
-                        search_key = string.lower(search_key)
-                        key = string.lower(key)
-                    end
-
-                    if not search_key:match('%f[^%p\x00]'..key) and
-                        not search_key:match('%f[^%s\x00]'..key) then
-                            ok = false
-                            break
-                    end
-                end
-            end
-            if ok then
+            if utils.search_text(search_key, tokens) then
                 table.insert(choices, v)
                 cidx[#choices] = i
                 if ipos == i then
@@ -2141,34 +2281,35 @@ function FilteredList:onFilterChar(char, text)
     return true
 end
 
+local TSO = df.global.init.tabs_texpos[0] -- tab spritesheet offset
 local DEFAULT_ACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
     text_mode_label_pen=to_pen{fg=COLOR_WHITE},
-    lt=to_pen{tile=1005, write_to_lower=true},
-    lt2=to_pen{tile=1006, write_to_lower=true},
-    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1008, write_to_lower=true},
-    rt=to_pen{tile=1009, write_to_lower=true},
-    lb=to_pen{tile=1015, write_to_lower=true},
-    lb2=to_pen{tile=1016, write_to_lower=true},
-    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1018, write_to_lower=true},
-    rb=to_pen{tile=1019, write_to_lower=true},
+    lt=to_pen{tile=TSO+5, write_to_lower=true},
+    lt2=to_pen{tile=TSO+6, write_to_lower=true},
+    t=to_pen{tile=TSO+7, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+8, write_to_lower=true},
+    rt=to_pen{tile=TSO+9, write_to_lower=true},
+    lb=to_pen{tile=TSO+15, write_to_lower=true},
+    lb2=to_pen{tile=TSO+16, write_to_lower=true},
+    b=to_pen{tile=TSO+17, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+18, write_to_lower=true},
+    rb=to_pen{tile=TSO+19, write_to_lower=true},
 }
 
 local DEFAULT_INACTIVE_TAB_PENS = {
     text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
     text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
-    lt=to_pen{tile=1000, write_to_lower=true},
-    lt2=to_pen{tile=1001, write_to_lower=true},
-    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1003, write_to_lower=true},
-    rt=to_pen{tile=1004, write_to_lower=true},
-    lb=to_pen{tile=1010, write_to_lower=true},
-    lb2=to_pen{tile=1011, write_to_lower=true},
-    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1013, write_to_lower=true},
-    rb=to_pen{tile=1014, write_to_lower=true},
+    lt=to_pen{tile=TSO+0, write_to_lower=true},
+    lt2=to_pen{tile=TSO+1, write_to_lower=true},
+    t=to_pen{tile=TSO+2, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=TSO+3, write_to_lower=true},
+    rt=to_pen{tile=TSO+4, write_to_lower=true},
+    lb=to_pen{tile=TSO+10, write_to_lower=true},
+    lb2=to_pen{tile=TSO+11, write_to_lower=true},
+    b=to_pen{tile=TSO+12, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=TSO+13, write_to_lower=true},
+    rb=to_pen{tile=TSO+14, write_to_lower=true},
 }
 
 ---------
@@ -2220,7 +2361,7 @@ end
 
 function Tab:onInput(keys)
     if Tab.super.onInput(self, keys) then return true end
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
+    if keys._MOUSE_L and self:getMousePos() then
         self.on_select(self.id)
         return true
     end
@@ -2238,8 +2379,8 @@ TabBar.ATTRS{
     active_tab_pens=DEFAULT_ACTIVE_TAB_PENS,
     inactive_tab_pens=DEFAULT_INACTIVE_TAB_PENS,
     get_pens=DEFAULT_NIL,
-    key=DEFAULT_NIL,
-    key_back=DEFAULT_NIL,
+    key='CUSTOM_CTRL_T',
+    key_back='CUSTOM_CTRL_Y',
 }
 
 function TabBar:init()
@@ -2290,6 +2431,149 @@ function TabBar:onInput(keys)
         local prev_zero_idx = (zero_idx - 1) % #self.labels
         self.on_select(prev_zero_idx + 1)
         return true
+    end
+end
+
+--------------------------------
+-- RangeSlider
+--
+
+RangeSlider = defclass(RangeSlider, Widget)
+RangeSlider.ATTRS{
+    num_stops=DEFAULT_NIL,
+    get_left_idx_fn=DEFAULT_NIL,
+    get_right_idx_fn=DEFAULT_NIL,
+    on_left_change=DEFAULT_NIL,
+    on_right_change=DEFAULT_NIL,
+}
+
+function RangeSlider:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+end
+
+function RangeSlider:init()
+    if self.num_stops < 2 then error('too few RangeSlider stops') end
+    self.is_dragging_target = nil -- 'left', 'right', or 'both'
+    self.is_dragging_idx = nil -- offset from leftmost dragged tile
+end
+
+local function rangeslider_get_width_per_idx(self)
+    return math.max(5, (self.frame_body.width-7) // (self.num_stops-1))
+end
+
+function RangeSlider:onInput(keys)
+    if not keys._MOUSE_L then return false end
+    local x = self:getMousePos()
+    if not x then return false end
+    local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
+    local width_per_idx = rangeslider_get_width_per_idx(self)
+    local left_pos = width_per_idx*(left_idx-1)
+    local right_pos = width_per_idx*(right_idx-1) + 4
+    if x < left_pos then
+        self.on_left_change(self.get_left_idx_fn() - 1)
+    elseif x < left_pos+3 then
+        self.is_dragging_target = 'left'
+        self.is_dragging_idx = x - left_pos
+    elseif x < right_pos then
+        self.is_dragging_target = 'both'
+        self.is_dragging_idx = x - left_pos
+    elseif x < right_pos+3 then
+        self.is_dragging_target = 'right'
+        self.is_dragging_idx = x - right_pos
+    else
+        self.on_right_change(self.get_right_idx_fn() + 1)
+    end
+    return true
+end
+
+local function rangeslider_do_drag(self, width_per_idx)
+    local x = self.frame_body:localXY(dfhack.screen.getMousePos())
+    local cur_pos = x - self.is_dragging_idx
+    cur_pos = math.max(0, cur_pos)
+    cur_pos = math.min(width_per_idx*(self.num_stops-1)+7, cur_pos)
+    local offset = self.is_dragging_target == 'right' and -2 or 1
+    local new_idx = math.max(0, cur_pos+offset)//width_per_idx + 1
+    local new_left_idx, new_right_idx
+    if self.is_dragging_target == 'right' then
+        new_right_idx = new_idx
+    else
+        new_left_idx = new_idx
+        if self.is_dragging_target == 'both' then
+            new_right_idx = new_left_idx + self.get_right_idx_fn() - self.get_left_idx_fn()
+            if new_right_idx > self.num_stops then
+                return
+            end
+        end
+    end
+    if new_left_idx and new_left_idx ~= self.get_left_idx_fn() then
+        if not new_right_idx and new_left_idx > self.get_right_idx_fn() then
+            self.on_right_change(new_left_idx)
+        end
+        self.on_left_change(new_left_idx)
+    end
+    if new_right_idx and new_right_idx ~= self.get_right_idx_fn() then
+        if new_right_idx < self.get_left_idx_fn() then
+            self.on_left_change(new_right_idx)
+        end
+        self.on_right_change(new_right_idx)
+    end
+end
+
+local SLIDER_LEFT_END = to_pen{ch=198, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK = to_pen{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_SELECTED = to_pen{ch=205, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP = to_pen{ch=216, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TRACK_STOP_SELECTED = to_pen{ch=216, fg=COLOR_LIGHTGREEN, bg=COLOR_BLACK}
+local SLIDER_RIGHT_END = to_pen{ch=181, fg=COLOR_GREY, bg=COLOR_BLACK}
+local SLIDER_TAB_LEFT = to_pen{ch=60, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_CENTER = to_pen{ch=9, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+local SLIDER_TAB_RIGHT = to_pen{ch=62, fg=COLOR_BLACK, bg=COLOR_YELLOW}
+
+function RangeSlider:onRenderBody(dc, rect)
+    local left_idx, right_idx = self.get_left_idx_fn(), self.get_right_idx_fn()
+    local width_per_idx = rangeslider_get_width_per_idx(self)
+    -- draw track
+    dc:seek(1,0)
+    dc:char(nil, SLIDER_LEFT_END)
+    dc:char(nil, SLIDER_TRACK)
+    for stop_idx=1,self.num_stops-1 do
+        local track_stop_pen = SLIDER_TRACK_STOP_SELECTED
+        local track_pen = SLIDER_TRACK_SELECTED
+        if left_idx > stop_idx or right_idx < stop_idx then
+            track_stop_pen = SLIDER_TRACK_STOP
+            track_pen = SLIDER_TRACK
+        elseif right_idx == stop_idx then
+            track_pen = SLIDER_TRACK
+        end
+        dc:char(nil, track_stop_pen)
+        for i=2,width_per_idx do
+            dc:char(nil, track_pen)
+        end
+    end
+    if right_idx >= self.num_stops then
+        dc:char(nil, SLIDER_TRACK_STOP_SELECTED)
+    else
+        dc:char(nil, SLIDER_TRACK_STOP)
+    end
+    dc:char(nil, SLIDER_TRACK)
+    dc:char(nil, SLIDER_RIGHT_END)
+    -- draw tabs
+    dc:seek(width_per_idx*(left_idx-1))
+    dc:char(nil, SLIDER_TAB_LEFT)
+    dc:char(nil, SLIDER_TAB_CENTER)
+    dc:char(nil, SLIDER_TAB_RIGHT)
+    dc:seek(width_per_idx*(right_idx-1)+4)
+    dc:char(nil, SLIDER_TAB_LEFT)
+    dc:char(nil, SLIDER_TAB_CENTER)
+    dc:char(nil, SLIDER_TAB_RIGHT)
+    -- manage dragging
+    if self.is_dragging_target then
+        rangeslider_do_drag(self, width_per_idx)
+    end
+    if df.global.enabler.mouse_lbut_down == 0 then
+        self.is_dragging_target = nil
+        self.is_dragging_idx = nil
     end
 end
 

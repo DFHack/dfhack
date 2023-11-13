@@ -3,7 +3,7 @@ List of authors
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.
 
-If you should be here and aren't, please get in touch on IRC or the forums,
+If you should be here and aren't, please get in touch on Discord or the forums,
 or make a pull request!
 
 ======================= ======================= ===========================
@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 Abel                    abstern
 acwatkins               acwatkins
+Alex Blamey             Cubittus
 Alexander Collins       gearsix
 Alexander Gavrilov      angavrilov              ag
 Amber Brown             hawkowl
@@ -82,6 +83,7 @@ Herwig Hochleitner      bendlas
 Hevlikn                 Hevlikn
 Ian S                   kremlin-
 IndigoFenix
+Jacek Konieczny         Jajcus
 James                   20k
 James Gilles            kazimuth
 James Logsdon           jlogsdon
@@ -128,13 +130,16 @@ Michael Crouch          creidieki
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
+Mikhail Panov           Halifay
 Mikko Juola             Noeda                   Adeon
 Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+mrrho                   mrrho
 Murad Beybalaev         Erquint
 Myk Taylor              myk002
+Najeeb Al-Shabibi       master-spike
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
@@ -158,6 +163,7 @@ Petr Mrázek             peterix
 Pfhreak                 Pfhreak
 Pierre Lulé             plule
 Pierre-David Bélanger   pierredavidbelanger
+PopnROFL                PopnROFL
 potato
 ppaawwll                ppaawwll                🐇🐇🐇🐇
 Priit Laes              plaes
@@ -192,6 +198,7 @@ rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
 Ryan Bennitt            ryanbennitt
+Ryan Dwyer              ToxicBananaParty        Jimdude2435
 Ryan Williams           Bumber64                Bumber
 sami
 scamtank                scamtank
@@ -200,7 +207,9 @@ Sebastian Wolfertz      Enkrod
 SeerSkye                SeerSkye
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
+shevernitskiy           shevernitskiy
 Shim Panze              Shim-Panze
+Silver                  silverflyone
 simon
 Simon Jackson           sizeak
 Simon Lees              simotek
@@ -235,6 +244,7 @@ ViTuRaS                 ViTuRaS
 Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
+Will H                  TSM-EVO
 Will Rogers             wjrogers
 WoosterUK               WoosterUK
 XianMaeve               XianMaeve

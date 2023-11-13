@@ -293,13 +293,13 @@ extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);
 
-inline df::tiletype *getTileType(df::coord pos) {
+inline df::tiletype *getTileType(const df::coord &pos) {
     return getTileType(pos.x, pos.y, pos.z);
 }
-inline df::tile_designation *getTileDesignation(df::coord pos) {
+inline df::tile_designation *getTileDesignation(const df::coord &pos) {
     return getTileDesignation(pos.x, pos.y, pos.z);
 }
-inline df::tile_occupancy *getTileOccupancy(df::coord pos) {
+inline df::tile_occupancy *getTileOccupancy(const df::coord &pos) {
     return getTileOccupancy(pos.x, pos.y, pos.z);
 }
 
@@ -339,6 +339,7 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 extern DFHACK_EXPORT bool RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event * which );
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which ); // todo: deprecate me
 
+DFHACK_EXPORT uint16_t getWalkableGroup(df::coord pos);
 DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
 DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 

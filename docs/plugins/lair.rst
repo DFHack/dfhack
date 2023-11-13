@@ -3,7 +3,7 @@ lair
 
 .. dfhack-tool::
     :summary: Mark the map as a monster lair.
-    :tags: unavailable fort armok map
+    :tags: fort armok map
 
 This avoids item scatter when the fortress is abandoned.
 

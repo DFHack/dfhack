@@ -16,11 +16,12 @@ CHANGELOG_PATHS = (
 CHANGELOG_PATHS = (os.path.join(DFHACK_ROOT, p) for p in CHANGELOG_PATHS)
 
 CHANGELOG_SECTIONS = [
-    'New Plugins',
-    'New Scripts',
-    'New Tweaks',
+    'New Tools',
+    'New Plugins', # deprecated
+    'New Scripts', # deprecated
+    'New Tweaks', # deprecated
     'New Features',
-    'New Internal Commands',
+    'New Internal Commands', # deprecated
     'Fixes',
     'Misc Improvements',
     'Removed',

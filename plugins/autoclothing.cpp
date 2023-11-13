@@ -565,7 +565,7 @@ static void find_needed_clothing_items()
 
                 if (!item)
                 {
-                    WARN(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
+                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
                     continue;
                 }
 
@@ -818,7 +818,7 @@ static void generate_report(color_ostream& out)
             auto item = Items::findItemByID(itemId);
             if (!item)
             {
-                WARN(cycle,out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
+                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
                 continue;
             }
             if (item->getWear() >= 1)

@@ -69,6 +69,7 @@ using namespace DFHack;
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
+#include "df/legend_pagest.h"
 #include "df/occupation.h"
 #include "df/plant.h"
 #include "df/popup_message.h"
@@ -84,6 +85,11 @@ using namespace DFHack;
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_legendsst.h"
+#include "df/viewscreen_new_regionst.h"
+#include "df/viewscreen_setupdwarfgamest.h"
+#include "df/viewscreen_titlest.h"
+#include "df/viewscreen_worldst.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -144,6 +150,86 @@ static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandle
     ); \
     static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
 
+DEFINE_GET_FOCUS_STRING_HANDLER(title)
+{
+    if (screen->managing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (game->main_interface.settings.open)
+        focusStrings.push_back(baseFocus + "/Settings");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
+{
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (screen->doing_simple_params)
+        focusStrings.push_back(baseFocus + "/Basic");
+    else if (screen->doing_params)
+        focusStrings.push_back(baseFocus + "/Advanced");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(setupdwarfgame)
+{
+    if (screen->doing_custom_settings)
+        focusStrings.push_back(baseFocus + "/CustomSettings");
+    else if (game->main_interface.options.open)
+        focusStrings.push_back(baseFocus + "/Abort");
+    else if (screen->initial_selection == 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else if (game->main_interface.name_creator.open) {
+        switch (game->main_interface.name_creator.context) {
+        case df::name_creator_context_type::EMBARK_FORT_NAME:
+            focusStrings.push_back(baseFocus + "/FortName");
+            break;
+        case df::name_creator_context_type::EMBARK_GROUP_NAME:
+            focusStrings.push_back(baseFocus + "/GroupName");
+            break;
+        default:
+            break;
+        }
+    }
+    else if (game->main_interface.image_creator.open) {
+        focusStrings.push_back(baseFocus + "/GroupSymbol");
+    }
+    else if (screen->viewing_objections != 0)
+        focusStrings.push_back(baseFocus + "/Objections");
+    else {
+        switch (screen->mode) {
+        case 0: focusStrings.push_back(baseFocus + "/Dwarves"); break;
+        case 1: focusStrings.push_back(baseFocus + "/Items"); break;
+        case 2: focusStrings.push_back(baseFocus + "/Animals"); break;
+        default:
+            break;
+        }
+    }
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(legends)
+{
+    if (screen->init_stage != -1)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->page.size() <= 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else
+        focusStrings.push_back(baseFocus + '/' + screen->page[screen->active_page_index]->header);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(world)
+{
+    focusStrings.push_back(baseFocus + '/' + enum_item_key(screen->view_mode));
+}
+
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
@@ -156,23 +242,53 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.info.open) {
         newFocusString = baseFocus;
         newFocusString += "/Info";
-        newFocusString += "/" + enum_item_key(game->main_interface.info.current_mode);
+        newFocusString += '/' + enum_item_key(game->main_interface.info.current_mode);
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.creatures.current_mode);
+            if (game->main_interface.info.creatures.showing_overall_training)
+                newFocusString += "/OverallTraining";
+            else if (game->main_interface.info.creatures.showing_activity_details)
+                newFocusString += "/ActivityDetails";
+            else if (game->main_interface.info.creatures.adding_trainer)
+                newFocusString += "/AddingTrainer";
+            else if (game->main_interface.info.creatures.assign_work_animal)
+                newFocusString += "/AssignWorkAnimal";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.buildings.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
             break;
         case df::enums::info_interface_mode_type::LABOR:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.labor.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.labor.mode);
             break;
         case df::enums::info_interface_mode_type::ARTIFACTS:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.artifacts.mode);
+            newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
         case df::enums::info_interface_mode_type::JUSTICE:
-            newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
+            if (game->main_interface.info.justice.interrogating)
+                newFocusString += "/Interrogating";
+            else if (game->main_interface.info.justice.convicting)
+                newFocusString += "/Convicting";
+            else
+                newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
+            break;
+        case df::enums::info_interface_mode_type::WORK_ORDERS:
+            if (game->main_interface.info.work_orders.conditions.open)
+                newFocusString += "/Conditions";
+            else if (game->main_interface.create_work_order.open)
+                newFocusString += "/Create";
+            else
+                newFocusString += "/Default";
+            break;
+        case df::enums::info_interface_mode_type::ADMINISTRATORS:
+            if (game->main_interface.info.administrators.choosing_candidate)
+                newFocusString += "/Candidates";
+            else if (game->main_interface.info.administrators.assigning_symbol)
+                newFocusString += "/Symbols";
+            else
+                newFocusString += "/Default";
             break;
         default:
             break;
@@ -183,7 +299,98 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.view_sheets.open) {
         newFocusString = baseFocus;
         newFocusString += "/ViewSheets";
-        newFocusString += "/" + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        newFocusString += '/' + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        switch (game->main_interface.view_sheets.active_sheet) {
+        case df::view_sheet_type::UNIT:
+            switch (game->main_interface.view_sheets.active_sub_tab) {
+            case 0: newFocusString += "/Overview"; break;
+            case 1: newFocusString += "/Items"; break;
+            case 2:
+                newFocusString += "/Health";
+                switch (game->main_interface.view_sheets.unit_health_active_tab) {
+                    case 0: newFocusString += "/Status"; break;
+                    case 1: newFocusString += "/Wounds"; break;
+                    case 2: newFocusString += "/Treatment"; break;
+                    case 3: newFocusString += "/History"; break;
+                    case 4: newFocusString += "/Description"; break;
+                    default: break;
+                }
+                break;
+            case 3:
+                newFocusString += "/Skills";
+                switch (game->main_interface.view_sheets.unit_skill_active_tab) {
+                    case 0: newFocusString += "/Labor"; break;
+                    case 1: newFocusString += "/Combat"; break;
+                    case 2: newFocusString += "/Social"; break;
+                    case 3: newFocusString += "/Other"; break;
+                    case 4:
+                        newFocusString += "/Knowledge";
+                        if (game->main_interface.view_sheets.skill_description_raw_str.size())
+                            newFocusString += "/Details";
+                        else
+                            newFocusString += "/Default";
+                        break;
+                    default: break;
+                }
+                break;
+            case 4: newFocusString += "/Rooms"; break;
+            case 5:
+                newFocusString += "/Labor";
+                switch (game->main_interface.view_sheets.unit_labor_active_tab) {
+                    case 0: newFocusString += "/WorkDetails"; break;
+                    case 1: newFocusString += "/Workshops"; break;
+                    case 2: newFocusString += "/Locations"; break;
+                    case 3: newFocusString += "/WorkAnimals"; break;
+                    default: break;
+                }
+                break;
+            case 6: newFocusString += "/Relations"; break;
+            case 7: newFocusString += "/Groups"; break;
+            case 8:
+                newFocusString += "/Military";
+                switch (game->main_interface.view_sheets.unit_military_active_tab) {
+                    case 0: newFocusString += "/Squad"; break;
+                    case 1: newFocusString += "/Uniform"; break;
+                    case 2: newFocusString += "/Kills"; break;
+                    default: break;
+                }
+                break;
+            case 9:
+                newFocusString += "/Thoughts";
+                switch (game->main_interface.view_sheets.thoughts_active_tab) {
+                    case 0: newFocusString += "/Recent"; break;
+                    case 1: newFocusString += "/Memories"; break;
+                    default: break;
+                }
+                break;
+            case 10:
+                newFocusString += "/Personality";
+                switch (game->main_interface.view_sheets.personality_active_tab) {
+                    case 0: newFocusString += "/Traits"; break;
+                    case 1: newFocusString += "/Values"; break;
+                    case 2: newFocusString += "/Preferences"; break;
+                    case 3: newFocusString += "/Needs"; break;
+                    default: break;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case df::view_sheet_type::BUILDING:
+            if (game->main_interface.view_sheets.linking_lever)
+                newFocusString = baseFocus + "/LinkingLever";
+            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
+                newFocusString += '/' + enum_item_key(bld->getType());
+                if (bld->getType() == df::enums::building_type::Trap) {
+                    df::building_trapst* trap = strict_virtual_cast<df::building_trapst>(bld);
+                    newFocusString += '/' + enum_item_key(trap->trap_type);
+                }
+            }
+            break;
+        default:
+            break;
+        }
         focusStrings.push_back(newFocusString);
     }
 
@@ -207,7 +414,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Zone";
             if (game->main_interface.civzone.cur_bld) {
                 newFocusString += "/Some";
-                newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
+                newFocusString += '/' + enum_item_key(game->main_interface.civzone.cur_bld->type);
             }
             break;
         case df::enums::main_bottom_mode_type::ZONE_PAINT:
@@ -296,11 +503,15 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.trade.open) {
         newFocusString = baseFocus;
         newFocusString += "/Trade";
+        if (game->main_interface.trade.choosing_merchant)
+            newFocusString += "/ChoosingMerchant";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.job_details.open) {
         newFocusString = baseFocus;
-        newFocusString += "/JobDetails";
+        newFocusString += "/JobDetails/" + enum_item_key(game->main_interface.job_details.context);
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.assign_trade.open) {
@@ -311,6 +522,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.diplomacy.open) {
         newFocusString = baseFocus;
         newFocusString += "/Diplomacy";
+        if (game->main_interface.diplomacy.taking_requests)
+            newFocusString += "/Requests";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.petitions.open) {
@@ -341,6 +556,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.unit_selector.open) {
         newFocusString = baseFocus;
         newFocusString += "/UnitSelector";
+        newFocusString += '/' + enum_item_key(game->main_interface.unit_selector.context);
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.announcement_alert.open) {
@@ -375,7 +591,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     if (game->main_interface.location_selector.open) {
         newFocusString = baseFocus;
-        newFocusString += "/LocationSelector";
+        newFocusString += "/LocationSelector/";
+        if (game->main_interface.location_selector.choosing_temple_religious_practice)
+            newFocusString += "Temple";
+        else if (game->main_interface.location_selector.choosing_craft_guild)
+            newFocusString += "Guildhall";
+        else
+            newFocusString += "Default";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.location_details.open) {
@@ -423,11 +645,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/AssignUniform";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.create_work_order.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/CreateWorkOrder";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.hotkey.open) {
         newFocusString = baseFocus;
         newFocusString += "/Hotkey";
@@ -473,7 +690,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
     if (!adventure)
         return;
 
-    focus += "/" + enum_item_key(adventure->menu);
+    focus += '/' + enum_item_key(adventure->menu);
 }
 */
 
@@ -1101,9 +1318,11 @@ bool Gui::any_stockpile_hotkey(df::viewscreen* top)
 }
 
 df::building_stockpilest* Gui::getAnyStockpile(df::viewscreen* top) {
-    if (matchFocusString("dwarfmode/Some/Stockpile")) {
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedStockpile();
+
+    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::STOCKPILE)
         return game->main_interface.stockpile.cur_bld;
-    }
 
     return NULL;
 }
@@ -1122,9 +1341,12 @@ bool Gui::any_civzone_hotkey(df::viewscreen* top) {
 }
 
 df::building_civzonest *Gui::getAnyCivZone(df::viewscreen* top) {
-    if (matchFocusString("dwarfmode/Zone")) {
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedCivZone();
+
+    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::ZONE)
         return game->main_interface.civzone.cur_bld;
-    }
+
     return NULL;
 }
 
@@ -1139,8 +1361,6 @@ df::building_civzonest *Gui::getSelectedCivZone(color_ostream &out, bool quiet) 
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
-    using df::global::game;
-
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();
 
@@ -1401,7 +1621,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         if (flags.bits.D_DISPLAY)
         {
             world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
         }
         return -1;
     }
@@ -1663,7 +1883,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (a_flags.bits.D_DISPLAY)
         {
             world->status.display_timer = r.display_timer;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            Gui::writeToGamelog('x' + to_string(repeat_count + 1));
         }
         DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
         return true;
@@ -1883,13 +2103,13 @@ void Gui::resetDwarfmodeView(bool pause)
         *df::global::pause_state = true;
 }
 
-bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
+bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, bool highlight)
 {   // Reverse-engineered from DF announcement and scrolling code
     using df::global::window_x;
     using df::global::window_y;
     using df::global::window_z;
 
-    if (!window_x || !window_y || !window_z || !world)
+    if (!window_x || !window_y || !window_z || !world || !game)
         return false;
 
     auto dims = getDwarfmodeViewDims();
@@ -1925,6 +2145,12 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;
+
+    if (highlight) {
+        game->main_interface.recenter_indicator_m.x = x;
+        game->main_interface.recenter_indicator_m.y = y;
+        game->main_interface.recenter_indicator_m.z = z;
+    }
 
     return true;
 }
@@ -2036,7 +2262,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 }
 
 // returns the map coordinates that the mouse cursor is over
-df::coord Gui::getMousePos()
+df::coord Gui::getMousePos(bool allow_out_of_bounds)
 {
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
@@ -2050,7 +2276,7 @@ df::coord Gui::getMousePos()
             pos.y += gps->mouse_y;
         }
     }
-    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+    if (!allow_out_of_bounds && !Maps::isValidTilePos(pos.x, pos.y, pos.z))
         return df::coord();
     return pos;
 }

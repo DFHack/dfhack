@@ -21,6 +21,29 @@ function get_automaterial_selection(building_type)
     return tracker.list[#tracker.list]
 end
 
+local function get_artifact_name(item)
+    local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.IS_ARTIFACT)
+    if not gref then return end
+    local artifact = df.artifact_record.find(gref.artifact_id)
+    if not artifact then return end
+    return dfhack.TranslateName(artifact.name)
+end
+
+function get_item_description(item_id, item, safety_label)
+    item = item or df.item.find(item_id)
+    if not item then
+        return ('No %s safe mechanisms available'):format(safety_label:lower())
+    end
+    local desc = item.flags.artifact and get_artifact_name(item) or
+        dfhack.items.getDescription(item, 0, true)
+    local wear_level = item:getWear()
+    if wear_level == 1 then desc = ('x%sx'):format(desc)
+    elseif wear_level == 2 then desc = ('X%sX'):format(desc)
+    elseif wear_level == 3 then desc = ('XX%sXX'):format(desc)
+    end
+    return desc
+end
+
 local function sort_by_type(a, b)
     local ad, bd = a.data, b.data
     return ad.item_type < bd.item_type or
@@ -57,7 +80,7 @@ ItemSelection.ATTRS{
     frame_title='Choose items',
     frame={w=56, h=24, l=4, t=7},
     resizable=true,
-    index=DEFAULT_NIL,
+    get_available_items_fn=DEFAULT_NIL,
     desc=DEFAULT_NIL,
     quantity=DEFAULT_NIL,
     autoselect=DEFAULT_NIL,
@@ -99,9 +122,9 @@ function ItemSelection:init()
                     text_pen=BUILD_TEXT_PEN,
                     text_hpen=BUILD_TEXT_HPEN,
                     text={
-                        '   Use filter  ', NEWLINE,
-                        ' for remaining ', NEWLINE,
-                        '     items     ',
+                        '               ', NEWLINE,
+                        '   Autoselect  ', NEWLINE,
+                        '               ',
                     },
                     on_click=self:callback('submit'),
                     visible=function() return self.num_selected < self.quantity end,
@@ -151,7 +174,6 @@ function ItemSelection:init()
                         widgets.FilteredList{
                             view_id='flist',
                             frame={t=0, b=0},
-                            case_sensitive=false,
                             choices=choices,
                             icon_width=2,
                             on_submit=self:callback('toggle_group'),
@@ -239,13 +261,12 @@ local function make_search_key(str)
 end
 
 function ItemSelection:get_choices(sort_fn)
-    local item_ids = require('plugins.buildingplan').getAvailableItems(uibs.building_type,
-            uibs.building_subtype, uibs.custom_type, self.index-1)
+    local item_ids = self.get_available_items_fn()
     local buckets = {}
     for _,item_id in ipairs(item_ids) do
         local item = df.item.find(item_id)
         if not item then goto continue end
-        local desc = dfhack.items.getDescription(item, 0, true)
+        local desc = get_item_description(item_id, item)
         if buckets[desc] then
             local bucket = buckets[desc]
             table.insert(bucket.data.item_ids, item_id)
@@ -366,10 +387,10 @@ function ItemSelection:submit(choices)
 end
 
 function ItemSelection:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self.on_cancel()
         return true
-    elseif keys._MOUSE_L_DOWN then
+    elseif keys._MOUSE_L then
         local list = self.subviews.flist.list
         local idx = list:getIdxUnderMouse()
         if idx then
@@ -397,7 +418,7 @@ ItemSelectionScreen.ATTRS {
     pass_pause=false,
     pass_mouse_clicks=false,
     defocusable=false,
-    index=DEFAULT_NIL,
+    get_available_items_fn=DEFAULT_NIL,
     desc=DEFAULT_NIL,
     quantity=DEFAULT_NIL,
     autoselect=DEFAULT_NIL,
@@ -408,7 +429,7 @@ ItemSelectionScreen.ATTRS {
 function ItemSelectionScreen:init()
     self:addviews{
         ItemSelection{
-            index=self.index,
+            get_available_items_fn=self.get_available_items_fn,
             desc=self.desc,
             quantity=self.quantity,
             autoselect=self.autoselect,

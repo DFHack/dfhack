@@ -11,8 +11,8 @@ prospector
 .. dfhack-command:: prospect
    :summary: Shows a summary of resources that exist on the map.
 
-It can also calculate an estimate of resources available in the selected embark
-area.
+It can also calculate an estimate of resources available in the currently
+highlighted embark area.
 
 Usage
 -----

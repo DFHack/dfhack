@@ -35,8 +35,6 @@ distribution.
 #include "Core.h"
 #include "DataFuncs.h"
 
-#include "RemoteClient.h"
-
 typedef struct lua_State lua_State;
 
 namespace tthread
@@ -300,14 +298,16 @@ namespace DFHack
 };
 
 #define DFHACK_PLUGIN_AUX(m_plugin_name, is_dev) \
+extern "C" { \
     DFhackDataExport const char * plugin_name = m_plugin_name;\
     DFhackDataExport const char * plugin_version = DFHack::Version::dfhack_version();\
     DFhackDataExport const char * plugin_git_description = DFHack::Version::git_description();\
     DFhackDataExport int plugin_abi_version = DFHack::Version::dfhack_abi_version();\
     DFhackDataExport DFHack::Plugin *plugin_self = NULL;\
-    std::vector<std::string> _plugin_globals;\
-    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \
-    DFhackDataExport bool plugin_dev = is_dev;
+    std::vector<std::string> plugin_globals_noptr;\
+    DFhackDataExport std::vector<std::string>* plugin_globals = &plugin_globals_noptr; \
+    DFhackDataExport bool plugin_dev = is_dev; \
+}
 
 /// You have to include DFHACK_PLUGIN("plugin_name") in every plugin you write - just once. Ideally at the top of the main file.
 #ifdef DEV_PLUGIN

@@ -1,3 +1,4 @@
+#include "df/enabler.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -7,6 +8,7 @@
 #include "df/viewscreen_initial_prepst.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
 #include "df/viewscreen_setupdwarfgamest.h"
@@ -29,6 +31,7 @@ DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(enabler);
 
 namespace DFHack {
     DBG_DECLARE(overlay, control, DebugCategory::LINFO);
@@ -72,15 +75,18 @@ struct viewscreen_overlay : T {
         bool input_is_handled = false;
         // don't send input to the overlays if there is a modal dialog up
         if (!world->status.popups.size())
-            call_overlay_lua(NULL, "feed_viewscreen_widgets", 2, 1,
+            call_overlay_lua(NULL, "feed_viewscreen_widgets", 3, 1,
                     [&](lua_State *L) {
                         Lua::Push(L, T::_identity.getName());
-                        Lua::PushInterfaceKeys(L, *input);
+                        Lua::Push(L, this);
+                        Lua::PushInterfaceKeys(L, Screen::normalize_text_keys(*input));
                     }, [&](lua_State *L) {
                         input_is_handled = lua_toboolean(L, -1);
                     });
         if (!input_is_handled)
             INTERPOSE_NEXT(feed)(input);
+        else
+            dfhack_lua_viewscreen::markInputAsHandled();
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
@@ -107,6 +113,7 @@ IMPLEMENT_HOOKS(game_cleaner)
 IMPLEMENT_HOOKS(initial_prep)
 IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
+IMPLEMENT_HOOKS(new_arena)
 IMPLEMENT_HOOKS(new_region)
 IMPLEMENT_HOOKS(savegame)
 IMPLEMENT_HOOKS(setupdwarfgame)
@@ -127,7 +134,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable) {
         screenSize = Screen::getWindowSize();
-        call_overlay_lua(&out, "reload");
+        call_overlay_lua(&out, "rescan");
     }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
@@ -141,6 +148,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             INTERPOSE_HOOKS_FAILED(initial_prep) ||
             INTERPOSE_HOOKS_FAILED(legends) ||
             INTERPOSE_HOOKS_FAILED(loadgame) ||
+            INTERPOSE_HOOKS_FAILED(new_arena) ||
             INTERPOSE_HOOKS_FAILED(new_region) ||
             INTERPOSE_HOOKS_FAILED(savegame) ||
             INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||

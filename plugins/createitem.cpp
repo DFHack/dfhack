@@ -178,6 +178,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             case item_type::BUCKET:
             case item_type::ANIMALTRAP:
             case item_type::BOX:
+            case item_type::BAG:
             case item_type::BIN:
             case item_type::BACKPACK:
             case item_type::QUIVER:

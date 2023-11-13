@@ -38,16 +38,19 @@ keybinding add Ctrl-V@dwarfmode digv
 keybinding add Ctrl-Shift-V@dwarfmode "digv x"
 
 # clean the selected tile of blood etc
-keybinding add Ctrl-C spotclean
+keybinding add Ctrl-C@dwarfmode spotclean
 
 # destroy the selected item
 keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
-# destroy items designated for dump in the selected tile
-keybinding add Ctrl-H@dwarfmode autodump-destroy-here
+# bring up the autodump UI
+keybinding add Ctrl-H@dwarfmode gui/autodump
 
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
+
+# toggle keyboard cursor
+keybinding add Alt-K@dwarfmode toggle-kbd-cursor
 
 # show information collected by dwarfmonitor
 #keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
@@ -154,7 +157,7 @@ keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 #keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
 # gui/design
-keybinding add Ctrl-D@dwarfmode gui/design
+keybinding add Ctrl-D@dwarfmode/Default gui/design
 
 
 

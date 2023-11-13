@@ -14,6 +14,7 @@ local _ENV = mkmodule('plugins.buildingplan')
 
 local argparse = require('argparse')
 local inspector = require('plugins.buildingplan.inspectoroverlay')
+local mechanisms = require('plugins.buildingplan.mechanisms')
 local pens = require('plugins.buildingplan.pens')
 local planner = require('plugins.buildingplan.planneroverlay')
 require('dfhack.buildings')
@@ -111,6 +112,8 @@ function get_desc(filter)
         desc = 'Ballista part'
     elseif desc == 'Catapultpart' then
         desc = 'Catapult part'
+    elseif desc == 'Smallgem' then
+        desc = 'Small, cut gem'
     end
 
     return desc
@@ -132,12 +135,14 @@ function reload_modules()
     reload('plugins.buildingplan.itemselection')
     reload('plugins.buildingplan.planneroverlay')
     reload('plugins.buildingplan.inspectoroverlay')
+    reload('plugins.buildingplan.mechanisms')
     reload('plugins.buildingplan')
 end
 
 OVERLAY_WIDGETS = {
     planner=planner.PlannerOverlay,
     inspector=inspector.InspectorOverlay,
+    mechanisms=mechanisms.MechanismOverlay,
 }
 
 return _ENV

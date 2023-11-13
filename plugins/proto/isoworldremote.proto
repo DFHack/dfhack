@@ -5,7 +5,7 @@ package isoworldremote;
 
 option optimize_for = LITE_RUNTIME;
 
-// Plugin: isoworldremote
+// DISABLED Plugin: isoworldremote
 
 enum BasicMaterial {
     AIR = 0;
@@ -54,7 +54,7 @@ message EmbarkTile {
     optional bool is_valid = 7;
 }
 
-// RPC GetEmbarkTile : TileRequest -> EmbarkTile
+// DISABLED RPC GetEmbarkTile : TileRequest -> EmbarkTile
 message TileRequest {
     optional int32 want_x = 1;
     optional int32 want_y = 2;
@@ -64,7 +64,7 @@ message MapRequest {
     optional string save_folder = 1;
 }
 
-// RPC GetEmbarkInfo : MapRequest -> MapReply
+// DISABLED RPC GetEmbarkInfo : MapRequest -> MapReply
 message MapReply {
     required bool available = 1;
     optional int32 region_x = 2;
@@ -75,7 +75,7 @@ message MapReply {
     optional int32 current_season = 7;
 }
 
-// RPC GetRawNames : MapRequest -> RawNames
+// DISABLED RPC GetRawNames : MapRequest -> RawNames
 message RawNames {
     required bool available = 1;
     repeated string inorganic = 2;

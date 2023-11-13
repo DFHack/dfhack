@@ -350,46 +350,45 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     return findRef(building->specific_refs, type);
 }
 
-bool Buildings::setOwner(df::building *bld, df::unit *unit)
+bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
-/* TODO: understand how this changes for v50
-    if (!bld->is_room)
-        return false;
-    if (bld->owner == unit)
+
+    if (bld->assigned_unit == unit)
         return true;
 
-    if (bld->owner)
-    {
-        auto &blist = bld->owner->owned_buildings;
-        vector_erase_at(blist, linear_index(blist, bld));
+    df::building * pbld = virtual_cast<df::building>(bld);
 
-        if (auto spouse = df::unit::find(bld->owner->relationship_ids[df::unit_relationship_type::Spouse]))
+    if (bld->assigned_unit)
+    {
+        auto &blist = bld->assigned_unit->owned_buildings;
+        vector_erase_at(blist, linear_index(blist, pbld));
+
+        if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            vector_erase_at(blist, linear_index(blist, bld));
+            vector_erase_at(blist, linear_index(blist, pbld));
         }
     }
 
-    bld->owner = unit;
+    bld->assigned_unit = unit;
 
     if (unit)
     {
-        bld->owner_id = unit->id;
+        bld->assigned_unit_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
+            if (bld->canUseSpouseRoom() && linear_index(blist, pbld) < 0)
                 blist.push_back(bld);
         }
     }
     else
     {
-        bld->owner_id = -1;
+        bld->assigned_unit_id = -1;
     }
-*/
 
     return true;
 }
@@ -465,7 +464,7 @@ bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
                                df::coord pos) {
     pvec->clear();
 
-    for (df::building_civzonest* zone : world->buildings.other.ACTIVITY_ZONE)
+    for (df::building_civzonest* zone : world->buildings.other.ANY_ZONE)
     {
         if (pos.z != zone->z)
             continue;
@@ -1115,31 +1114,17 @@ static void createDesign(df::building *bld, bool rough)
 
 static int getMaxStockpileId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::STOCKPILE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_stockpilest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->stockpile_number);
-    }
-
+    for (auto bld : world->buildings.other.STOCKPILE)
+        max_id = std::max(max_id, bld->stockpile_number);
     return max_id;
 }
 
 static int getMaxCivzoneId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->zone_num);
-    }
-
+    for (auto bld : world->buildings.other.ANY_ZONE)
+        max_id = std::max(max_id, bld->zone_num);
     return max_id;
 }
 
@@ -1721,4 +1706,16 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
     }
 
     return true;
+}
+
+void Buildings::completebuild(df::building* bld, char in_play)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto fp = df::global::buildingst_completebuild;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::building* bld, char)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(bld, in_play);
 }

@@ -17,6 +17,14 @@ Usage
     manager orders. It will not clear the orders that already exist.
 ``orders clear``
     Deletes all manager orders in the current embark.
+``orders recheck [this]``
+    Sets the status to ``Checking`` (from ``Active``) for all work orders that
+    have conditions that can be re-checked. If the "this" option is passed,
+    only sets the status for the workorder whose condition details page is
+    open. This makes the manager reevaluate its conditions. This is especially
+    useful for an order that had its conditions met when it was started, but
+    the requisite items have since disappeared and the workorder is now
+    generating job cancellation spam.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't
     prevent one-time orders from ever being completed. The sorting order is:
@@ -67,7 +75,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets/mugs
+- pots/bins/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts, totems, and shleggings from otherwise unusable by-products
 - mechanisms/cages
@@ -80,7 +88,10 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-Armok's note: shleggings? Yes, `shleggings <https://youtu.be/bLN8cOcTjdo>`__.
+Note that the jugs are specifically made out of wood. This is so, as long as you don't may any other "Tools" out of wood, you can have a stockpile just for jugs by restricting a finished goods stockpile to only take wooden tools.
+
+Armok's additional note: "shleggings? Yes,
+`shleggings <https://youtu.be/bLN8cOcTjdo>`__."
 
 :source:`library/furnace <data/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -104,13 +115,15 @@ Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 This collection adds high-volume smelting jobs for military-grade metal ores and
 produces weapons and armor:
 
-- leather backpacks/waterskins/cloaks/quivers/armor
+- leather backpacks/waterskins/quivers/armor
+- silk cloaks
 - bone/wooden bolts
 - smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
   their dependencies)
 - bronze/bismuth bronze/copper bolts
-- silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+- steel/silver/iron/bismuth bronze/bronze/copper weapons and armor,
   with checks to ensure only the best available materials are being used
+- wooden shields (if metal isn't available)
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
 and turn on `automelt` (like what `dreamfort` provides on its industry level),
@@ -119,16 +132,6 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 ``automelt`` on, though!
 
 This file should only be imported, of course, if you need to equip a military.
-
-:source:`library/military_include_artifact_materials <data/orders/military_include_artifact_materials.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As above, but this collection will also allow creation of platinum blunt weapons.
-Normally these are only created by artifact moods, work orders can't be created
-manually for them.
-
-- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
-  with checks to ensure only the best available materials are being used
 
 :source:`library/smelting <data/orders/smelting.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

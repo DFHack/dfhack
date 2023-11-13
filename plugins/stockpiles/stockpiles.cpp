@@ -8,9 +8,8 @@
 
 #include "df/building.h"
 #include "df/building_stockpilest.h"
-
-#include <string>
-#include <vector>
+#include "df/hauling_route.h"
+#include "df/hauling_stop.h"
 
 using std::string;
 using std::vector;
@@ -21,27 +20,27 @@ DFHACK_PLUGIN("stockpiles");
 
 REQUIRE_GLOBAL(world);
 
-namespace DFHack {
-    DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
+namespace DFHack
+{
+DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
 }
 
-static command_result do_command(color_ostream &out, vector<string> &parameters);
+static command_result do_command(color_ostream& out, vector<string>& parameters);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
+    DEBUG(log, out).print("initializing %s\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
-        "Import, export, or modify stockpile settings and features.",
+        "Import, export, or modify stockpile settings.",
         do_command));
 
     return CR_OK;
 }
 
-static bool call_stockpiles_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+bool call_stockpiles_lua(color_ostream* out, const char* fn_name,
+    int nargs, int nres, Lua::LuaLambda&& args_lambda, Lua::LuaLambda&& res_lambda) {
+
     DEBUG(log).print("calling stockpiles lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
@@ -95,7 +94,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.serialize_to_file(fname, includedElements)) {
+        if (!cereal.serialize_to_file(out, fname, includedElements)) {
             out.printerr("could not save to '%s'\n", fname.c_str());
             return false;
         }
@@ -134,7 +133,52 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
 
     try {
         StockpileSerializer cereal(sp);
-        if (!cereal.unserialize_from_file(fname, mode, filters)) {
+        if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
+            out.printerr("deserialization failed: '%s'\n", fname.c_str());
+            return false;
+        }
+    }
+    catch (std::exception& e) {
+        out.printerr("deserialization failed: protobuf exception: %s\n", e.what());
+        return false;
+    }
+
+    return true;
+}
+
+static bool stockpiles_route_import(color_ostream& out, string fname, int route_id, int stop_id, string mode_str, string filter) {
+    auto route = df::hauling_route::find(route_id);
+    if (!route) {
+        out.printerr("Specified hauling route not found: %d.\n", route_id);
+        return false;
+    }
+
+    df::hauling_stop *stop = binsearch_in_vector(route->stops, &df::hauling_stop::id, stop_id);
+    if (!stop) {
+        out.printerr("Specified hauling stop not found in route %d: %d.\n", route_id, stop_id);
+        return false;
+    }
+
+    if (!is_dfstockfile(fname))
+        fname += ".dfstock";
+
+    if (!Filesystem::exists(fname)) {
+        out.printerr("ERROR: file doesn't exist: '%s'\n", fname.c_str());
+        return false;
+    }
+
+    DeserializeMode mode = DESERIALIZE_MODE_SET;
+    if (mode_str == "enable")
+        mode = DESERIALIZE_MODE_ENABLE;
+    else if (mode_str == "disable")
+        mode = DESERIALIZE_MODE_DISABLE;
+
+    vector<string> filters;
+    split_string(&filters, filter, ",", true);
+
+    try {
+        StockpileSettingsSerializer cereal(&stop->settings);
+        if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
         }
@@ -150,5 +194,6 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(stockpiles_export),
     DFHACK_LUA_FUNCTION(stockpiles_import),
+    DFHACK_LUA_FUNCTION(stockpiles_route_import),
     DFHACK_LUA_END
 };

@@ -11,6 +11,7 @@
 //  df
 #include "df/building_stockpilest.h"
 #include "df/creature_raw.h"
+#include "df/caste_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/item_quality.h"
 #include <df/itemdef_ammost.h>
@@ -40,9 +41,11 @@ using namespace dfstockpiles;
 using df::global::world;
 
 using std::placeholders::_1;
+using std::placeholders::_2;
 
-namespace DFHack {
-    DBG_EXTERN(stockpiles, log);
+namespace DFHack
+{
+DBG_EXTERN(stockpiles, log);
 }
 
 static struct OtherMatsFurniture {
@@ -150,16 +153,21 @@ static struct OtherMatsWeaponsArmor {
     }
 } mOtherMatsWeaponsArmor;
 
+StockpileSettingsSerializer::StockpileSettingsSerializer(df::stockpile_settings *settings)
+    : mSettings(settings) { }
+
+StockpileSettingsSerializer::~StockpileSettingsSerializer() { }
+
 StockpileSerializer::StockpileSerializer(df::building_stockpilest* stockpile)
-    : mPile(stockpile) { }
+    : StockpileSettingsSerializer(&stockpile->settings), mPile(stockpile) { }
 
 StockpileSerializer::~StockpileSerializer() { }
 
-bool StockpileSerializer::serialize_to_ostream(std::ostream* output, uint32_t includedElements) {
+bool StockpileSettingsSerializer::serialize_to_ostream(color_ostream& out, std::ostream* output, uint32_t includedElements) {
     if (output->fail())
         return false;
     mBuffer.Clear();
-    write(includedElements);
+    write(out, includedElements);
     {
         io::OstreamOutputStream zero_copy_output(output);
         if (!mBuffer.SerializeToZeroCopyStream(&zero_copy_output))
@@ -168,17 +176,17 @@ bool StockpileSerializer::serialize_to_ostream(std::ostream* output, uint32_t in
     return output->good();
 }
 
-bool StockpileSerializer::serialize_to_file(const string& file, uint32_t includedElements) {
+bool StockpileSettingsSerializer::serialize_to_file(color_ostream& out, const string& file, uint32_t includedElements) {
     std::fstream output(file, std::ios::out | std::ios::binary | std::ios::trunc);
     if (output.fail()) {
-        WARN(log).print("ERROR: failed to open file for writing: '%s'\n",
+        WARN(log, out).print("ERROR: failed to open file for writing: '%s'\n",
                 file.c_str());
         return false;
     }
-    return serialize_to_ostream(&output, includedElements);
+    return serialize_to_ostream(out, &output, includedElements);
 }
 
-bool StockpileSerializer::parse_from_istream(std::istream* input, DeserializeMode mode, const vector<string>& filters) {
+bool StockpileSettingsSerializer::parse_from_istream(color_ostream &out, std::istream* input, DeserializeMode mode, const vector<string>& filters) {
     if (input->fail())
         return false;
     mBuffer.Clear();
@@ -186,18 +194,18 @@ bool StockpileSerializer::parse_from_istream(std::istream* input, DeserializeMod
     const bool res = mBuffer.ParseFromZeroCopyStream(&zero_copy_input)
             && input->eof();
     if (res)
-        read(mode, filters);
+        read(out, mode, filters);
     return res;
 }
 
-bool StockpileSerializer::unserialize_from_file(const string& file, DeserializeMode mode, const vector<string>& filters) {
+bool StockpileSettingsSerializer::unserialize_from_file(color_ostream &out, const string& file, DeserializeMode mode, const vector<string>& filters) {
     std::fstream input(file, std::ios::in | std::ios::binary);
     if (input.fail()) {
-        WARN(log).print("failed to open file for reading: '%s'\n",
+        WARN(log, out).print("failed to open file for reading: '%s'\n",
                 file.c_str());
         return false;
     }
-    return parse_from_istream(&input, mode, filters);
+    return parse_from_istream(out, &input, mode, filters);
 }
 
 /**
@@ -222,37 +230,37 @@ static typename df::enum_traits<E>::base_type linear_index(df::enum_traits<E> tr
     return -1;
 }
 
-static bool matches_filter(const vector<string>& filters, const string& name) {
+static bool matches_filter(color_ostream& out, const vector<string>& filters, const string& name) {
     for (auto & filter : filters) {
-        DEBUG(log).print("searching for '%s' in '%s'\n", filter.c_str(), name.c_str());
+        DEBUG(log, out).print("searching for '%s' in '%s'\n", filter.c_str(), name.c_str());
         if (std::search(name.begin(), name.end(), filter.begin(), filter.end(),
             [](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
-                ) != name.end())
+        ) != name.end())
             return true;
     }
     return !filters.size();
 }
 
-static void set_flag(const char* name, const vector<string>& filters, bool all, char val, bool enabled, bool& elem) {
-    if ((all || enabled) && matches_filter(filters, name)) {
-        DEBUG(log).print("setting %s to %d\n", name, val);
+static void set_flag(color_ostream& out, const char* name, const vector<string>& filters, bool all, char val, bool enabled, bool& elem) {
+    if ((all || enabled) && matches_filter(out, filters, name)) {
+        DEBUG(log, out).print("setting %s to %d\n", name, val);
         elem = val;
     }
 }
 
-static void set_filter_elem(const char* subcat, const vector<string>& filters, char val,
+static void set_filter_elem(color_ostream& out, const char* subcat, const vector<string>& filters, char val,
         const string& name, const string& id, char& elem) {
-    if (matches_filter(filters, subcat + ((*subcat ? "/" : "") + name))) {
-        DEBUG(log).print("setting %s (%s) to %d\n", name.c_str(), id.c_str(), val);
+    if (matches_filter(out, filters, subcat + ((*subcat ? "/" : "") + name))) {
+        DEBUG(log, out).print("setting %s (%s) to %d\n", name.c_str(), id.c_str(), val);
         elem = val;
     }
 }
 
 template<typename T_val, typename T_id>
-static void set_filter_elem(const char* subcat, const vector<string>& filters, T_val val,
+static void set_filter_elem(color_ostream& out, const char* subcat, const vector<string>& filters, T_val val,
         const string& name, T_id id, T_val& elem) {
-    if (matches_filter(filters, subcat + ((*subcat ? "/" : "") + name))) {
-        DEBUG(log).print("setting %s (%d) to %d\n", name.c_str(), (int32_t)id, val);
+    if (matches_filter(out, filters, subcat + ((*subcat ? "/" : "") + name))) {
+        DEBUG(log, out).print("setting %s (%d) to %d\n", name.c_str(), (int32_t)id, val);
         elem = val;
     }
 }
@@ -270,7 +278,7 @@ static void set_filter_elem(const char* subcat, const vector<string>& filters, T
  *
  * The unserialization process is the same in reverse.
  */
-static bool serialize_list_itemdef(FuncWriteExport add_value,
+static bool serialize_list_itemdef(color_ostream& out, FuncWriteExport add_value,
         vector<char> list,
         vector<df::itemdef*> items,
         item_type::item_type type) {
@@ -287,13 +295,13 @@ static bool serialize_list_itemdef(FuncWriteExport add_value,
         ItemTypeInfo ii;
         if (!ii.decode(type, i))
             continue;
-        DEBUG(log).print("adding itemdef type %s\n", ii.getToken().c_str());
+        DEBUG(log, out).print("adding itemdef type %s\n", ii.getToken().c_str());
         add_value(ii.getToken());
     }
     return all;
 }
 
-static void unserialize_list_itemdef(const char* subcat, bool all, char val, const vector<string>& filters,
+static void unserialize_list_itemdef(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, int32_t list_size, vector<char>& pile_list, item_type::item_type type) {
     int num_elems = Items::getSubtypeCount(type);
     pile_list.resize(num_elems, '\0');
@@ -301,7 +309,7 @@ static void unserialize_list_itemdef(const char* subcat, bool all, char val, con
         for (auto idx = 0; idx < num_elems; ++idx) {
             ItemTypeInfo ii;
             ii.decode(type, idx);
-            set_filter_elem(subcat, filters, val, ii.toString(), idx, pile_list.at(idx));
+            set_filter_elem(out, subcat, filters, val, ii.toString(), idx, pile_list.at(idx));
         }
         return;
     }
@@ -312,14 +320,14 @@ static void unserialize_list_itemdef(const char* subcat, bool all, char val, con
         if (!ii.find(id))
             continue;
         if (ii.subtype < 0 || size_t(ii.subtype) >= pile_list.size()) {
-            WARN(log).print("item type index invalid: %d\n", ii.subtype);
+            WARN(log, out).print("item type index invalid: %d\n", ii.subtype);
             continue;
         }
-        set_filter_elem(subcat, filters, val, id, ii.subtype, pile_list.at(ii.subtype));
+        set_filter_elem(out, subcat, filters, val, id, ii.subtype, pile_list.at(ii.subtype));
     }
 }
 
-static bool serialize_list_quality(FuncWriteExport add_value,
+static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value,
         const bool(&quality_list)[7]) {
     using df::enums::item_quality::item_quality;
     using quality_traits = df::enum_traits<item_quality>;
@@ -332,7 +340,7 @@ static bool serialize_list_quality(FuncWriteExport add_value,
         }
         const string f_type(quality_traits::key_table[i]);
         add_value(f_type);
-        DEBUG(log).print("adding quality %s\n", f_type.c_str());
+        DEBUG(log, out).print("adding quality %s\n", f_type.c_str());
     }
     return all;
 }
@@ -341,12 +349,12 @@ static void quality_clear(bool(&pile_list)[7]) {
     std::fill(pile_list, pile_list + 7, false);
 }
 
-static void unserialize_list_quality(const char* subcat, bool all, bool val, const vector<string>& filters,
+static void unserialize_list_quality(color_ostream& out, const char* subcat, bool all, bool val, const vector<string>& filters,
         FuncReadImport read_value, int32_t list_size, bool(&pile_list)[7]) {
     if (all) {
         for (auto idx = 0; idx < 7; ++idx) {
             string id = ENUM_KEY_STR(item_quality, (df::item_quality)idx);
-            set_filter_elem(subcat, filters, val, id, idx, pile_list[idx]);
+            set_filter_elem(out, subcat, filters, val, id, idx, pile_list[idx]);
         }
         return;
     }
@@ -357,10 +365,10 @@ static void unserialize_list_quality(const char* subcat, bool all, bool val, con
         const string quality = read_value(i);
         df::enum_traits<item_quality>::base_type idx = linear_index(quality_traits, quality);
         if (idx < 0) {
-            WARN(log).print("invalid quality token: %s\n", quality.c_str());
+            WARN(log, out).print("invalid quality token: %s\n", quality.c_str());
             continue;
         }
-        set_filter_elem(subcat, filters, val, quality, idx, pile_list[idx]);
+        set_filter_elem(out, subcat, filters, val, quality, idx, pile_list[idx]);
     }
 }
 
@@ -381,7 +389,7 @@ static int other_mats_token(const std::map<int, string> other_mats,
     return -1;
 }
 
-static bool serialize_list_other_mats(
+static bool serialize_list_other_mats(color_ostream& out,
             const std::map<int, string> other_mats,
             FuncWriteExport add_value,
             vector<char> list) {
@@ -393,23 +401,23 @@ static bool serialize_list_other_mats(
         }
         const string token = other_mats_index(other_mats, i);
         if (token.empty()) {
-            WARN(log).print("invalid other material with index %zd\n", i);
+            WARN(log, out).print("invalid other material with index %zd\n", i);
             continue;
         }
         add_value(token);
-        DEBUG(log).print("other mats %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("other mats %zd is %s\n", i, token.c_str());
     }
     return all;
 }
 
-static void unserialize_list_other_mats(const char* subcat, bool all, char val, const vector<string>& filters,
+static void unserialize_list_other_mats(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
             const std::map<int, string> other_mats, FuncReadImport read_value, int32_t list_size, vector<char>& pile_list) {
     size_t num_elems = other_mats.size();
     pile_list.resize(num_elems, '\0');
 
     if (all) {
         for (auto & entry : other_mats)
-            set_filter_elem(subcat, filters, val, entry.second, entry.first, pile_list.at(entry.first));
+            set_filter_elem(out, subcat, filters, val, entry.second, entry.first, pile_list.at(entry.first));
         return;
     }
 
@@ -417,23 +425,23 @@ static void unserialize_list_other_mats(const char* subcat, bool all, char val, 
         const string token = read_value(i);
         size_t idx = other_mats_token(other_mats, token);
         if (idx < 0) {
-            WARN(log).print("invalid other mat with token %s\n", token.c_str());
+            WARN(log, out).print("invalid other mat with token %s\n", token.c_str());
             continue;
         }
         if (idx >= num_elems) {
-            WARN(log).print("other_mats index too large! idx[%zd] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("other_mats index too large! idx[%zd] max_size[%zd]\n", idx, num_elems);
             continue;
         }
-        set_filter_elem(subcat, filters, val, token, idx, pile_list.at(idx));
+        set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
     }
 }
 
-static bool serialize_list_organic_mat(FuncWriteExport add_value,
+static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_value,
         const vector<char>* list,
         organic_mat_category::organic_mat_category cat) {
     bool all = true;
     if (!list) {
-        DEBUG(log).print("serialize_list_organic_mat: list null\n");
+        DEBUG(log, out).print("serialize_list_organic_mat: list null\n");
         return all;
     }
     for (size_t i = 0; i < list->size(); ++i) {
@@ -441,49 +449,49 @@ static bool serialize_list_organic_mat(FuncWriteExport add_value,
             all = false;
             continue;
         }
-        string token = OrganicMatLookup::food_token_by_idx(cat, i);
+        string token = OrganicMatLookup::food_token_by_idx(out, cat, i);
         if (token.empty()) {
-            DEBUG(log).print("food mat invalid :(\n");
+            DEBUG(log, out).print("food mat invalid :(\n");
             continue;
         }
-        DEBUG(log).print("organic_material %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("organic_material %zd is %s\n", i, token.c_str());
         add_value(token);
     }
     return all;
 }
 
-static void unserialize_list_organic_mat(const char* subcat, bool all, char val, const vector<string>& filters,
+static void unserialize_list_organic_mat(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, size_t list_size, vector<char>& pile_list,
         organic_mat_category::organic_mat_category cat) {
     size_t num_elems = OrganicMatLookup::food_max_size(cat);
     pile_list.resize(num_elems, '\0');
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
-            string token = OrganicMatLookup::food_token_by_idx(cat, idx);
-            set_filter_elem(subcat, filters, val, token, idx, pile_list.at(idx));
+            string token = OrganicMatLookup::food_token_by_idx(out, cat, idx);
+            set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
         }
         return;
     }
 
     for (size_t i = 0; i < list_size; ++i) {
         const string token = read_value(i);
-        int16_t idx = OrganicMatLookup::food_idx_by_token(cat, token);
+        int16_t idx = OrganicMatLookup::food_idx_by_token(out, cat, token);
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log).print("organic mat index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("organic mat index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
             continue;
         }
-        set_filter_elem(subcat, filters, val, token, idx, pile_list.at(idx));
+        set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
     }
 }
 
-static bool serialize_list_item_type(FuncItemAllowed is_allowed,
+static bool serialize_list_item_type(color_ostream& out, FuncItemAllowed is_allowed,
         FuncWriteExport add_value, const vector<char>& list) {
     using df::enums::item_type::item_type;
     using type_traits = df::enum_traits<item_type>;
 
     bool all = true;
     size_t num_item_types = list.size();
-    DEBUG(log).print("item_type size = %zd size limit = %d typecasted: %zd\n",
+    DEBUG(log, out).print("item_type size = %zd size limit = %d typecasted: %zd\n",
             num_item_types, type_traits::last_item_value,
             (size_t)type_traits::last_item_value);
     for (size_t i = 0; i <= (size_t)type_traits::last_item_value; ++i) {
@@ -496,12 +504,12 @@ static bool serialize_list_item_type(FuncItemAllowed is_allowed,
         if (!is_allowed(type))
             continue;
         add_value(r_type);
-        DEBUG(log).print("item_type key_table[%zd] type[%d] is %s\n", i + 1, (int16_t)type, r_type.c_str());
+        DEBUG(log, out).print("item_type key_table[%zd] type[%d] is %s\n", i + 1, (int16_t)type, r_type.c_str());
     }
     return all;
 }
 
-static void unserialize_list_item_type(const char* subcat, bool all, char val, const vector<string>& filters,
+static void unserialize_list_item_type(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncItemAllowed is_allowed, FuncReadImport read_value, int32_t list_size, vector<char>& pile_list) {
     // TODO can we remove the hardcoded list size?
     size_t num_elems = 112;
@@ -514,7 +522,7 @@ static void unserialize_list_item_type(const char* subcat, bool all, char val, c
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
             string id = ENUM_KEY_STR(item_type, (df::item_type)idx);
-            set_filter_elem(subcat, filters, val, id, idx, pile_list.at(idx));
+            set_filter_elem(out, subcat, filters, val, id, idx, pile_list.at(idx));
         }
         return;
     }
@@ -528,14 +536,14 @@ static void unserialize_list_item_type(const char* subcat, bool all, char val, c
         if (!is_allowed((item_type)idx))
             continue;
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log).print("error item_type index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("error item_type index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
             continue;
         }
-        set_filter_elem(subcat, filters, val, token, idx, pile_list.at(idx));
+        set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
     }
 }
 
-static bool serialize_list_material(FuncMaterialAllowed is_allowed,
+static bool serialize_list_material(color_ostream& out, FuncMaterialAllowed is_allowed,
         FuncWriteExport add_value, const vector<char>& list) {
     bool all = true;
     MaterialInfo mi;
@@ -547,13 +555,13 @@ static bool serialize_list_material(FuncMaterialAllowed is_allowed,
         mi.decode(0, i);
         if (!is_allowed(mi))
             continue;
-        DEBUG(log).print("adding material %s\n", mi.getToken().c_str());
+        DEBUG(log, out).print("adding material %s\n", mi.getToken().c_str());
         add_value(mi.getToken());
     }
     return all;
 }
 
-static void unserialize_list_material(const char* subcat, bool all, char val, const vector<string>& filters,
+static void unserialize_list_material(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncMaterialAllowed is_allowed, FuncReadImport read_value, int32_t list_size,
         vector<char>& pile_list) {
     // we initialize all disallowed values to 1
@@ -570,7 +578,7 @@ static void unserialize_list_material(const char* subcat, bool all, char val, co
         for (size_t idx = 0; idx < num_elems; ++idx) {
             MaterialInfo mi;
             mi.decode(0, idx);
-            set_filter_elem(subcat, filters, val, mi.toString(), idx, pile_list.at(idx));
+            set_filter_elem(out, subcat, filters, val, mi.toString(), idx, pile_list.at(idx));
         }
         return;
     }
@@ -581,14 +589,14 @@ static void unserialize_list_material(const char* subcat, bool all, char val, co
         if (!mi.find(id) || !is_allowed(mi))
             continue;
         if (mi.index < 0 || size_t(mi.index) >= pile_list.size()) {
-            WARN(log).print("material type index invalid: %d\n", mi.index);
+            WARN(log, out).print("material type index invalid: %d\n", mi.index);
             continue;
         }
-        set_filter_elem(subcat, filters, val, id, mi.index, pile_list.at(mi.index));
+        set_filter_elem(out, subcat, filters, val, id, mi.index, pile_list.at(mi.index));
     }
 }
 
-static bool serialize_list_creature(FuncWriteExport add_value, const vector<char>& list) {
+static bool serialize_list_creature(color_ostream& out, FuncWriteExport add_value, const vector<char>& list) {
     bool all = true;
 
     for (size_t i = 0; i < list.size(); ++i) {
@@ -600,20 +608,28 @@ static bool serialize_list_creature(FuncWriteExport add_value, const vector<char
         if (r->flags.is_set(creature_raw_flags::GENERATED)
                 || r->creature_id == "EQUIPMENT_WAGON")
             continue;
-        DEBUG(log).print("adding creature %s\n", r->creature_id.c_str());
+        DEBUG(log, out).print("adding creature %s\n", r->creature_id.c_str());
         add_value(r->creature_id);
     }
     return all;
 }
 
-static void unserialize_list_creature(const char* subcat, bool all, char val, const vector<string>& filters,
+static string get_filter_string(df::creature_raw *r) {
+    if (!r->caste.size() ||
+            (!r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET) &&
+             !r->caste[0]->flags.is_set(df::enums::caste_raw_flags::PET_EXOTIC)))
+        return r->name[0];
+    return r->name[0] + "/tameable";
+}
+
+static void unserialize_list_creature(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, int32_t list_size, vector<char>& pile_list) {
     size_t num_elems = world->raws.creatures.all.size();
     pile_list.resize(num_elems, '\0');
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
             auto r = find_creature(idx);
-            set_filter_elem(subcat, filters, val, r->name[0], r->creature_id, pile_list.at(idx));
+            set_filter_elem(out, subcat, filters, val, get_filter_string(r), r->creature_id, pile_list.at(idx));
         }
         return;
     }
@@ -622,179 +638,189 @@ static void unserialize_list_creature(const char* subcat, bool all, char val, co
         string id = read_value(i);
         int idx = find_creature(id);
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log).print("animal index invalid: %d\n", idx);
+            WARN(log, out).print("animal index invalid: %d\n", idx);
             continue;
         }
         auto r = find_creature(idx);
-        set_filter_elem(subcat, filters, val, r->name[0], r->creature_id, pile_list.at(idx));
+        set_filter_elem(out, subcat, filters, val, get_filter_string(r), r->creature_id, pile_list.at(idx));
     }
 }
 
 template<typename T_cat_set>
-static void write_cat(const char *name, bool include_types, uint32_t cat_flags,
-        enum df::stockpile_group_set::Mask cat_mask,
-        std::function<T_cat_set*()> mutable_cat_fn,
-        std::function<bool(T_cat_set*)> write_cat_fn) {
+static void write_cat(color_ostream& out, const char* name, bool include_types, uint32_t cat_flags,
+    enum df::stockpile_group_set::Mask cat_mask,
+    std::function<T_cat_set* ()> mutable_cat_fn,
+    std::function<bool(color_ostream&, T_cat_set*)> write_cat_fn) {
+
     if (!(cat_flags & cat_mask))
         return;
 
     T_cat_set* cat_set = mutable_cat_fn();
 
     if (!include_types) {
-        DEBUG(log).print("including all for %s since only category is being recorded\n", name);
+        DEBUG(log, out).print("including all for %s since only category is being recorded\n", name);
         cat_set->set_all(true);
         return;
     }
 
-    if (write_cat_fn(cat_set)) {
+    if (write_cat_fn(out, cat_set)) {
         // all fields were set. clear them and use the "all" flag instead so "all" can be applied
         // to other worlds with other generated types
-        DEBUG(log).print("including all for %s since all fields were enabled\n", name);
+        DEBUG(log, out).print("including all for %s since all fields were enabled\n", name);
         cat_set->Clear();
         cat_set->set_all(true);
     }
 }
 
-void StockpileSerializer::write(uint32_t includedElements) {
-    if (includedElements & INCLUDED_ELEMENTS_CONTAINERS)
-        write_containers();
+void StockpileSettingsSerializer::write(color_ostream& out, uint32_t includedElements) {
     if (includedElements & INCLUDED_ELEMENTS_GENERAL)
-        write_general();
+        write_general(out);
 
     if (!(includedElements & INCLUDED_ELEMENTS_CATEGORIES))
         return;
 
-    DEBUG(log).print("GROUP SET %s\n",
-            bitfield_to_string(mPile->settings.flags).c_str());
+    DEBUG(log, out).print("GROUP SET %s\n",
+            bitfield_to_string(mSettings->flags).c_str());
 
     bool include_types = 0 != (includedElements & INCLUDED_ELEMENTS_TYPES);
 
-    write_cat<StockpileSettings_AmmoSet>("ammo", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_ammo,
+    write_cat<StockpileSettings_AmmoSet>(out, "ammo", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_ammo,
         std::bind(&StockpileSettings::mutable_ammo, &mBuffer),
-        std::bind(&StockpileSerializer::write_ammo, this, _1));
-    write_cat<StockpileSettings_AnimalsSet>("animals", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_animals,
+        std::bind(&StockpileSettingsSerializer::write_ammo, this, _1, _2));
+    write_cat<StockpileSettings_AnimalsSet>(out, "animals", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_animals,
         std::bind(&StockpileSettings::mutable_animals, &mBuffer),
-        std::bind(&StockpileSerializer::write_animals, this, _1));
-    write_cat<StockpileSettings_ArmorSet>("armor", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_armor,
+        std::bind(&StockpileSettingsSerializer::write_animals, this, _1, _2));
+    write_cat<StockpileSettings_ArmorSet>(out, "armor", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_armor,
         std::bind(&StockpileSettings::mutable_armor, &mBuffer),
-        std::bind(&StockpileSerializer::write_armor, this, _1));
-    write_cat<StockpileSettings_BarsBlocksSet>("bars_blocks", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_bars_blocks,
+        std::bind(&StockpileSettingsSerializer::write_armor, this, _1, _2));
+    write_cat<StockpileSettings_BarsBlocksSet>(out, "bars_blocks", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_bars_blocks,
         std::bind(&StockpileSettings::mutable_barsblocks, &mBuffer),
-        std::bind(&StockpileSerializer::write_bars_blocks, this, _1));
-    write_cat<StockpileSettings_ClothSet>("cloth", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_cloth,
+        std::bind(&StockpileSettingsSerializer::write_bars_blocks, this, _1, _2));
+    write_cat<StockpileSettings_ClothSet>(out, "cloth", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_cloth,
         std::bind(&StockpileSettings::mutable_cloth, &mBuffer),
-        std::bind(&StockpileSerializer::write_cloth, this, _1));
-    write_cat<StockpileSettings_CoinSet>("coin", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_coins,
+        std::bind(&StockpileSettingsSerializer::write_cloth, this, _1, _2));
+    write_cat<StockpileSettings_CoinSet>(out, "coin", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_coins,
         std::bind(&StockpileSettings::mutable_coin, &mBuffer),
-        std::bind(&StockpileSerializer::write_coins, this, _1));
-    write_cat<StockpileSettings_FinishedGoodsSet>("finished_goods", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_finished_goods,
+        std::bind(&StockpileSettingsSerializer::write_coins, this, _1, _2));
+    write_cat<StockpileSettings_FinishedGoodsSet>(out, "finished_goods", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_finished_goods,
         std::bind(&StockpileSettings::mutable_finished_goods, &mBuffer),
-        std::bind(&StockpileSerializer::write_finished_goods, this, _1));
-    write_cat<StockpileSettings_FoodSet>("food", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_food,
+        std::bind(&StockpileSettingsSerializer::write_finished_goods, this, _1, _2));
+    write_cat<StockpileSettings_FoodSet>(out, "food", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_food,
         std::bind(&StockpileSettings::mutable_food, &mBuffer),
-        std::bind(&StockpileSerializer::write_food, this, _1));
-    write_cat<StockpileSettings_FurnitureSet>("furniture", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_furniture,
+        std::bind(&StockpileSettingsSerializer::write_food, this, _1, _2));
+    write_cat<StockpileSettings_FurnitureSet>(out, "furniture", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_furniture,
         std::bind(&StockpileSettings::mutable_furniture, &mBuffer),
-        std::bind(&StockpileSerializer::write_furniture, this, _1));
-    write_cat<StockpileSettings_GemsSet>("gems", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_gems,
+        std::bind(&StockpileSettingsSerializer::write_furniture, this, _1, _2));
+    write_cat<StockpileSettings_GemsSet>(out, "gems", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_gems,
         std::bind(&StockpileSettings::mutable_gems, &mBuffer),
-        std::bind(&StockpileSerializer::write_gems, this, _1));
-    write_cat<StockpileSettings_LeatherSet>("leather", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_leather,
+        std::bind(&StockpileSettingsSerializer::write_gems, this, _1, _2));
+    write_cat<StockpileSettings_LeatherSet>(out, "leather", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_leather,
         std::bind(&StockpileSettings::mutable_leather, &mBuffer),
-        std::bind(&StockpileSerializer::write_leather, this, _1));
-    write_cat<StockpileSettings_CorpsesSet>("corpses", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_corpses,
+        std::bind(&StockpileSettingsSerializer::write_leather, this, _1, _2));
+    write_cat<StockpileSettings_CorpsesSet>(out, "corpses", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_corpses,
         std::bind(&StockpileSettings::mutable_corpses_v50, &mBuffer),
-        std::bind(&StockpileSerializer::write_corpses, this, _1));
-    write_cat<StockpileSettings_RefuseSet>("refuse", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_refuse,
+        std::bind(&StockpileSettingsSerializer::write_corpses, this, _1, _2));
+    write_cat<StockpileSettings_RefuseSet>(out, "refuse", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_refuse,
         std::bind(&StockpileSettings::mutable_refuse, &mBuffer),
-        std::bind(&StockpileSerializer::write_refuse, this, _1));
-    write_cat<StockpileSettings_SheetSet>("sheet", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_sheet,
+        std::bind(&StockpileSettingsSerializer::write_refuse, this, _1, _2));
+    write_cat<StockpileSettings_SheetSet>(out, "sheet", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_sheet,
         std::bind(&StockpileSettings::mutable_sheet, &mBuffer),
-        std::bind(&StockpileSerializer::write_sheet, this, _1));
-    write_cat<StockpileSettings_StoneSet>("stone", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_stone,
+        std::bind(&StockpileSettingsSerializer::write_sheet, this, _1, _2));
+    write_cat<StockpileSettings_StoneSet>(out, "stone", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_stone,
         std::bind(&StockpileSettings::mutable_stone, &mBuffer),
-        std::bind(&StockpileSerializer::write_stone, this, _1));
-    write_cat<StockpileSettings_WeaponsSet>("weapons", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_weapons,
+        std::bind(&StockpileSettingsSerializer::write_stone, this, _1, _2));
+    write_cat<StockpileSettings_WeaponsSet>(out, "weapons", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_weapons,
         std::bind(&StockpileSettings::mutable_weapons, &mBuffer),
-        std::bind(&StockpileSerializer::write_weapons, this, _1));
-    write_cat<StockpileSettings_WoodSet>("wood", include_types,
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_wood,
+        std::bind(&StockpileSettingsSerializer::write_weapons, this, _1, _2));
+    write_cat<StockpileSettings_WoodSet>(out, "wood", include_types,
+        mSettings->flags.whole,
+        mSettings->flags.mask_wood,
         std::bind(&StockpileSettings::mutable_wood, &mBuffer),
-        std::bind(&StockpileSerializer::write_wood, this, _1));
+        std::bind(&StockpileSettingsSerializer::write_wood, this, _1, _2));
 }
 
-void StockpileSerializer::read(DeserializeMode mode, const vector<string>& filters) {
+void StockpileSerializer::write(color_ostream& out, uint32_t includedElements) {
+    if (includedElements & INCLUDED_ELEMENTS_CONTAINERS)
+        write_containers(out);
+
+    StockpileSettingsSerializer::write(out, includedElements);
+}
+
+void StockpileSettingsSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
     DEBUG(log).print("==READ==\n");
-    read_containers(mode);
-    read_general(mode);
-    read_ammo(mode, filters);
-    read_animals(mode, filters);
-    read_armor(mode, filters);
-    read_bars_blocks(mode, filters);
-    read_cloth(mode, filters);
-    read_coins(mode, filters);
-    read_finished_goods(mode, filters);
-    read_food(mode, filters);
-    read_furniture(mode, filters);
-    read_gems(mode, filters);
-    read_leather(mode, filters);
+    read_general(out, mode);
+    read_ammo(out, mode, filters);
+    read_animals(out, mode, filters);
+    read_armor(out, mode, filters);
+    read_bars_blocks(out, mode, filters);
+    read_cloth(out, mode, filters);
+    read_coins(out, mode, filters);
+    read_finished_goods(out, mode, filters);
+    read_food(out, mode, filters);
+    read_furniture(out, mode, filters);
+    read_gems(out, mode, filters);
+    read_leather(out, mode, filters);
 
     // support for old versions before corpses had a set
     if (mBuffer.has_corpses()) {
         StockpileSettings::CorpsesSet* corpses = mBuffer.mutable_corpses_v50();
         corpses->set_all(true);
     }
-    read_corpses(mode, filters);
+    read_corpses(out, mode, filters);
 
-    read_refuse(mode, filters);
-    read_sheet(mode, filters);
-    read_stone(mode, filters);
-    read_weapons(mode, filters);
-    read_wood(mode, filters);
+    read_refuse(out, mode, filters);
+    read_sheet(out, mode, filters);
+    read_stone(out, mode, filters);
+    read_weapons(out, mode, filters);
+    read_wood(out, mode, filters);
 }
 
-void StockpileSerializer::write_containers() {
-    DEBUG(log).print("writing container settings\n");
+void StockpileSerializer::read(color_ostream &out, DeserializeMode mode, const vector<string>& filters) {
+    read_containers(out, mode);
+    StockpileSettingsSerializer::read(out, mode, filters);
+}
+
+void StockpileSerializer::write_containers(color_ostream& out) {
+    DEBUG(log, out).print("writing container settings\n");
     mBuffer.set_max_bins(mPile->max_bins);
     mBuffer.set_max_barrels(mPile->max_barrels);
     mBuffer.set_max_wheelbarrows(mPile->max_wheelbarrows);
 }
 
 template<typename T_elem, typename T_elem_ret>
-static void read_elem(const char *name, DeserializeMode mode,
+static void read_elem(color_ostream& out, const char* name, DeserializeMode mode,
         std::function<bool()> has_elem_fn,
         std::function<T_elem_ret()> elem_fn,
         T_elem &setting) {
@@ -804,13 +830,13 @@ static void read_elem(const char *name, DeserializeMode mode,
     bool is_set = elem_fn() != 0;
     if (mode == DESERIALIZE_MODE_SET || is_set) {
         T_elem val = (mode == DESERIALIZE_MODE_DISABLE) ? 0 : elem_fn();
-        DEBUG(log).print("setting %s to %d\n", name, val);
+        DEBUG(log, out).print("setting %s to %d\n", name, val);
         setting = val;
     }
 }
 
 template<typename T_cat>
-static void read_category(const char *name, DeserializeMode mode,
+static void read_category(color_ostream& out, const char* name, DeserializeMode mode,
         std::function<bool()> has_cat_fn,
         std::function<const T_cat &()> cat_fn,
         uint32_t & cat_flags,
@@ -818,7 +844,7 @@ static void read_category(const char *name, DeserializeMode mode,
         std::function<void()> clear_fn,
         std::function<void(bool, char)> set_fn) {
     if (mode == DESERIALIZE_MODE_SET) {
-        DEBUG(log).print("clearing %s\n", name);
+        DEBUG(log, out).print("clearing %s\n", name);
         cat_flags &= ~cat_mask;
         clear_fn();
     }
@@ -834,99 +860,107 @@ static void read_category(const char *name, DeserializeMode mode,
 
     bool all = cat_fn().all();
     char val = (mode == DESERIALIZE_MODE_DISABLE) ? (char)0 : (char)1;
-    DEBUG(log).print("setting %s %s elements to %d\n",
+    DEBUG(log, out).print("setting %s %s elements to %d\n",
             all ? "all" : "marked", name, val);
     set_fn(all, val);
 }
 
-void StockpileSerializer::read_containers(DeserializeMode mode) {
-    read_elem<int16_t, int32_t>("max_bins", mode,
+void StockpileSerializer::read_containers(color_ostream& out, DeserializeMode mode) {
+    read_elem<int16_t, int32_t>(out, "max_bins", mode,
             std::bind(&StockpileSettings::has_max_bins, mBuffer),
             std::bind(&StockpileSettings::max_bins, mBuffer),
             mPile->max_bins);
-    read_elem<int16_t, int32_t>("max_barrels", mode,
+    read_elem<int16_t, int32_t>(out, "max_barrels", mode,
             std::bind(&StockpileSettings::has_max_barrels, mBuffer),
             std::bind(&StockpileSettings::max_barrels, mBuffer),
             mPile->max_barrels);
-    read_elem<int16_t, int32_t>("max_wheelbarrows", mode,
+    read_elem<int16_t, int32_t>(out, "max_wheelbarrows", mode,
             std::bind(&StockpileSettings::has_max_wheelbarrows, mBuffer),
             std::bind(&StockpileSettings::max_wheelbarrows, mBuffer),
             mPile->max_wheelbarrows);
 }
 
-void StockpileSerializer::write_general() {
-    DEBUG(log).print("writing general settings\n");
-    mBuffer.set_use_links_only(mPile->use_links_only);
-    mBuffer.set_allow_inorganic(mPile->settings.allow_inorganic);
-    mBuffer.set_allow_organic(mPile->settings.allow_organic);
+void StockpileSettingsSerializer::write_general(color_ostream& out) {
+    DEBUG(log, out).print("writing general settings\n");
+    mBuffer.set_allow_inorganic(mSettings->allow_inorganic);
+    mBuffer.set_allow_organic(mSettings->allow_organic);
 }
 
-void StockpileSerializer::read_general(DeserializeMode mode) {
-    read_elem<int32_t, bool>("use_links_only", mode,
+void StockpileSerializer::write_general(color_ostream& out) {
+    StockpileSettingsSerializer::write_general(out);
+    mBuffer.set_use_links_only(mPile->use_links_only);
+}
+
+void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMode mode) {
+    read_elem<bool, bool>(out, "allow_inorganic", mode,
+            std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
+            std::bind(&StockpileSettings::allow_inorganic, mBuffer),
+            mSettings->allow_inorganic);
+    read_elem<bool, bool>(out, "allow_organic", mode,
+            std::bind(&StockpileSettings::has_allow_organic, mBuffer),
+            std::bind(&StockpileSettings::allow_organic, mBuffer),
+            mSettings->allow_organic);
+}
+
+void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode) {
+    StockpileSettingsSerializer::read_general(out, mode);
+    read_elem<int32_t, bool>(out, "use_links_only", mode,
             std::bind(&StockpileSettings::has_use_links_only, mBuffer),
             std::bind(&StockpileSettings::use_links_only, mBuffer),
             mPile->use_links_only);
-    read_elem<bool, bool>("allow_inorganic", mode,
-            std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
-            std::bind(&StockpileSettings::allow_inorganic, mBuffer),
-            mPile->settings.allow_inorganic);
-    read_elem<bool, bool>("allow_organic", mode,
-            std::bind(&StockpileSettings::has_allow_organic, mBuffer),
-            std::bind(&StockpileSettings::allow_organic, mBuffer),
-            mPile->settings.allow_organic);
 }
 
 static bool ammo_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && mi.material->flags.is_set(material_flags::IS_METAL);
 }
 
-bool StockpileSerializer::write_ammo(StockpileSettings::AmmoSet* ammo) {
-    bool all = serialize_list_itemdef(
+bool StockpileSettingsSerializer::write_ammo(color_ostream& out, StockpileSettings::AmmoSet* ammo) {
+    bool all = serialize_list_itemdef(out,
         [&](const string& token) { ammo->add_type(token); },
-        mPile->settings.ammo.type,
+        mSettings->ammo.type,
         vector<df::itemdef*>(world->raws.itemdefs.ammo.begin(), world->raws.itemdefs.ammo.end()),
         item_type::AMMO);
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         ammo_mat_is_allowed,
         [&](const string& token) { ammo->add_mats(token); },
-        mPile->settings.ammo.mats) && all;
+        mSettings->ammo.mats) && all;
 
-    if (mPile->settings.ammo.other_mats.size() > 2) {
-        WARN(log).print("ammo other materials > 2: %zd\n",
-                mPile->settings.ammo.other_mats.size());
+    if (mSettings->ammo.other_mats.size() > 2) {
+        WARN(log, out).print("ammo other materials > 2: %zd\n",
+            mSettings->ammo.other_mats.size());
     }
 
     size_t num_other_mats = std::min(size_t(2),
-            mPile->settings.ammo.other_mats.size());
+            mSettings->ammo.other_mats.size());
     for (size_t i = 0; i < num_other_mats; ++i) {
-        if (!mPile->settings.ammo.other_mats.at(i)) {
+        if (!mSettings->ammo.other_mats.at(i)) {
             all = false;
             continue;
         }
         const string token = i == 0 ? "WOOD" : "BONE";
         ammo->add_other_mats(token);
-        DEBUG(log).print("other mats %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("other mats %zd is %s\n", i, token.c_str());
     }
 
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { ammo->add_quality_core(token); },
-        mPile->settings.ammo.quality_core) && all;
+        mSettings->ammo.quality_core) && all;
 
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { ammo->add_quality_total(token); },
-        mPile->settings.ammo.quality_total) && all;
+        mSettings->ammo.quality_total) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_ammo(DeserializeMode mode, const vector<string>& filters) {
-    auto & pammo = mPile->settings.ammo;
-    read_category<StockpileSettings_AmmoSet>("ammo", mode,
+void StockpileSettingsSerializer::read_ammo(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pammo = mSettings->ammo;
+    read_category<StockpileSettings_AmmoSet>(out, "ammo", mode,
         std::bind(&StockpileSettings::has_ammo, mBuffer),
         std::bind(&StockpileSettings::ammo, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_ammo,
+        mSettings->flags.whole,
+        mSettings->flags.mask_ammo,
         [&]() {
             pammo.type.clear();
             pammo.mats.clear();
@@ -937,18 +971,18 @@ void StockpileSerializer::read_ammo(DeserializeMode mode, const vector<string>& 
         [&](bool all, char val) {
             auto & bammo = mBuffer.ammo();
 
-            unserialize_list_itemdef("type", all, val, filters,
+            unserialize_list_itemdef(out, "type", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bammo.type(idx); },
                 bammo.type_size(), pammo.type, item_type::AMMO);
 
-            unserialize_list_material("mats", all, val, filters, ammo_mat_is_allowed,
+            unserialize_list_material(out, "mats", all, val, filters, ammo_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bammo.mats(idx); },
                 bammo.mats_size(), pammo.mats);
 
             pammo.other_mats.resize(2, '\0');
             if (all) {
-                set_filter_elem("other", filters, val, "WOOD", 0, pammo.other_mats.at(0));
-                set_filter_elem("other", filters, val, "BONE", 1, pammo.other_mats.at(1));
+                set_filter_elem(out, "other", filters, val, "WOOD", 0, pammo.other_mats.at(0));
+                set_filter_elem(out, "other", filters, val, "BONE", 1, pammo.other_mats.at(1));
             } else {
                 // TODO can we un-hardcode the values?
                 for (int i = 0; i < bammo.other_mats_size(); ++i) {
@@ -956,39 +990,39 @@ void StockpileSerializer::read_ammo(DeserializeMode mode, const vector<string>& 
                     const int32_t idx = id == "WOOD" ? 0 : id == "BONE" ? 1 : -1;
                     if (idx == -1)
                         continue;
-                    set_filter_elem("other", filters, val, id, idx, pammo.other_mats.at(idx));
+                    set_filter_elem(out, "other", filters, val, id, idx, pammo.other_mats.at(idx));
                 }
             }
 
-            unserialize_list_quality("core", all, val, filters,
+            unserialize_list_quality(out, "core", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bammo.quality_core(idx); },
                 bammo.quality_core_size(), pammo.quality_core);
 
-            unserialize_list_quality("total", all, val, filters,
+            unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bammo.quality_total(idx); },
                 bammo.quality_total_size(), pammo.quality_total);
         });
 }
 
-bool StockpileSerializer::write_animals(StockpileSettings::AnimalsSet* animals) {
-    auto & panimals = mPile->settings.animals;
+bool StockpileSettingsSerializer::write_animals(color_ostream& out, StockpileSettings::AnimalsSet* animals) {
+    auto & panimals = mSettings->animals;
     bool all = panimals.empty_cages && panimals.empty_traps;
 
     animals->set_empty_cages(panimals.empty_cages);
     animals->set_empty_traps(panimals.empty_traps);
 
-    return serialize_list_creature(
+    return serialize_list_creature(out,
         [&](const string& token) { animals->add_enabled(token); },
         panimals.enabled) && all;
 }
 
-void StockpileSerializer::read_animals(DeserializeMode mode, const vector<string>& filters) {
-    auto & panimals = mPile->settings.animals;
-    read_category<StockpileSettings_AnimalsSet>("animals", mode,
+void StockpileSettingsSerializer::read_animals(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & panimals = mSettings->animals;
+    read_category<StockpileSettings_AnimalsSet>(out, "animals", mode,
         std::bind(&StockpileSettings::has_animals, mBuffer),
         std::bind(&StockpileSettings::animals, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_animals,
+        mSettings->flags.whole,
+        mSettings->flags.mask_animals,
         [&]() {
             panimals.empty_cages = false;
             panimals.empty_traps = false;
@@ -997,10 +1031,10 @@ void StockpileSerializer::read_animals(DeserializeMode mode, const vector<string
         [&](bool all, char val) {
             auto & banimals = mBuffer.animals();
 
-            set_flag("cages", filters, all, val, banimals.empty_cages(), panimals.empty_cages);
-            set_flag("traps", filters, all, val, banimals.empty_traps(), panimals.empty_traps);
+            set_flag(out, "cages", filters, all, val, banimals.empty_cages(), panimals.empty_cages);
+            set_flag(out, "traps", filters, all, val, banimals.empty_traps(), panimals.empty_traps);
 
-            unserialize_list_creature("", all, val, filters,
+            unserialize_list_creature(out, "", all, val, filters,
                 [&](const size_t& idx) -> const string& { return banimals.enabled(idx); },
                 banimals.enabled_size(), panimals.enabled);
         });
@@ -1010,85 +1044,85 @@ static bool armor_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && mi.material->flags.is_set(material_flags::IS_METAL);
 }
 
-bool StockpileSerializer::write_armor(StockpileSettings::ArmorSet* armor) {
+bool StockpileSettingsSerializer::write_armor(color_ostream& out, StockpileSettings::ArmorSet* armor) {
 
-    auto & parmor = mPile->settings.armor;
+    auto & parmor = mSettings->armor;
     bool all = parmor.unusable && parmor.usable;
 
     armor->set_unusable(parmor.unusable);
     armor->set_usable(parmor.usable);
 
     // armor type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_body(token); },
         parmor.body,
         vector<df::itemdef*>(world->raws.itemdefs.armor.begin(), world->raws.itemdefs.armor.end()),
         item_type::ARMOR) && all;
 
     // helm type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_head(token); },
         parmor.head,
         vector<df::itemdef*>(world->raws.itemdefs.helms.begin(), world->raws.itemdefs.helms.end()),
         item_type::HELM) && all;
 
     // shoes type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_feet(token); },
         parmor.feet,
         vector<df::itemdef*>(world->raws.itemdefs.shoes.begin(), world->raws.itemdefs.shoes.end()),
         item_type::SHOES) && all;
 
     // gloves type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_hands(token); },
         parmor.hands,
         vector<df::itemdef*>(world->raws.itemdefs.gloves.begin(), world->raws.itemdefs.gloves.end()),
         item_type::GLOVES) && all;
 
     // pant type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_legs(token); },
         parmor.legs,
         vector<df::itemdef*>(world->raws.itemdefs.pants.begin(), world->raws.itemdefs.pants.end()),
         item_type::PANTS) && all;
 
     // shield type
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { armor->add_shield(token); },
         parmor.shield,
         vector<df::itemdef*>(world->raws.itemdefs.shields.begin(), world->raws.itemdefs.shields.end()),
         item_type::SHIELD) && all;
 
     // materials
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         armor_mat_is_allowed,
         [&](const string& token) { armor->add_mats(token); },
         parmor.mats) && all;
 
     // other mats
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsWeaponsArmor.mats, [&](const string& token) { armor->add_other_mats(token); },
         parmor.other_mats) && all;
 
     // quality core
-    all = serialize_list_quality([&](const string& token) { armor->add_quality_core(token); },
+    all = serialize_list_quality(out, [&](const string& token) { armor->add_quality_core(token); },
         parmor.quality_core) && all;
 
     // quality total
-    all = serialize_list_quality([&](const string& token) { armor->add_quality_total(token); },
+    all = serialize_list_quality(out, [&](const string& token) { armor->add_quality_total(token); },
         parmor.quality_total) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_armor(DeserializeMode mode, const vector<string>& filters) {
-    auto & parmor = mPile->settings.armor;
-    read_category<StockpileSettings_ArmorSet>("armor", mode,
+void StockpileSettingsSerializer::read_armor(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & parmor = mSettings->armor;
+    read_category<StockpileSettings_ArmorSet>(out, "armor", mode,
         std::bind(&StockpileSettings::has_armor, mBuffer),
         std::bind(&StockpileSettings::armor, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_armor,
+        mSettings->flags.whole,
+        mSettings->flags.mask_armor,
         [&]() {
             parmor.unusable = false;
             parmor.usable = false;
@@ -1106,47 +1140,47 @@ void StockpileSerializer::read_armor(DeserializeMode mode, const vector<string>&
         [&](bool all, char val) {
             auto & barmor = mBuffer.armor();
 
-            set_flag("nouse", filters, all, val, barmor.unusable(), parmor.unusable);
-            set_flag("canuse", filters, all, val, barmor.usable(), parmor.usable);
+            set_flag(out, "nouse", filters, all, val, barmor.unusable(), parmor.unusable);
+            set_flag(out, "canuse", filters, all, val, barmor.usable(), parmor.usable);
 
-            unserialize_list_itemdef("body", all, val, filters,
+            unserialize_list_itemdef(out, "body", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.body(idx); },
                 barmor.body_size(), parmor.body, item_type::ARMOR);
 
-            unserialize_list_itemdef("head", all, val, filters,
+            unserialize_list_itemdef(out, "head", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.head(idx); },
                 barmor.head_size(), parmor.head, item_type::HELM);
 
-            unserialize_list_itemdef("feet", all, val, filters,
+            unserialize_list_itemdef(out, "feet", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.feet(idx); },
                 barmor.feet_size(), parmor.feet, item_type::SHOES);
 
-            unserialize_list_itemdef("hands", all, val, filters,
+            unserialize_list_itemdef(out, "hands", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.hands(idx); },
                 barmor.hands_size(), parmor.hands, item_type::GLOVES);
 
-            unserialize_list_itemdef("legs", all, val, filters,
+            unserialize_list_itemdef(out, "legs", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.legs(idx); },
                 barmor.legs_size(), parmor.legs, item_type::PANTS);
 
-            unserialize_list_itemdef("shield", all, val, filters,
+            unserialize_list_itemdef(out, "shield", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.shield(idx); },
                 barmor.shield_size(), parmor.shield, item_type::SHIELD);
 
-            unserialize_list_material("mats", all, val, filters,
+            unserialize_list_material(out, "mats", all, val, filters,
                 armor_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return barmor.mats(idx); },
                 barmor.mats_size(), parmor.mats);
 
-            unserialize_list_other_mats("other", all, val, filters,
+            unserialize_list_other_mats(out, "other", all, val, filters,
                 mOtherMatsWeaponsArmor.mats, [&](const size_t& idx) -> const string& { return barmor.other_mats(idx); },
                 barmor.other_mats_size(), parmor.other_mats);
 
-            unserialize_list_quality("core", all, val, filters,
+            unserialize_list_quality(out, "core", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.quality_core(idx); },
                 barmor.quality_core_size(), parmor.quality_core);
 
-            unserialize_list_quality("total", all, val, filters,
+            unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.quality_total(idx); },
                 barmor.quality_total_size(), parmor.quality_total);
         });
@@ -1160,35 +1194,35 @@ static bool blocks_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && (mi.material->flags.is_set(material_flags::IS_METAL) || mi.material->flags.is_set(material_flags::IS_STONE));
 }
 
-bool StockpileSerializer::write_bars_blocks(StockpileSettings::BarsBlocksSet* bars_blocks) {
-    bool all = serialize_list_material(
+bool StockpileSettingsSerializer::write_bars_blocks(color_ostream& out, StockpileSettings::BarsBlocksSet* bars_blocks) {
+    bool all = serialize_list_material(out,
         bars_mat_is_allowed,
         [&](const string& token) { bars_blocks->add_bars_mats(token); },
-        mPile->settings.bars_blocks.bars_mats);
+        mSettings->bars_blocks.bars_mats);
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         blocks_mat_is_allowed,
         [&](const string& token) { bars_blocks->add_blocks_mats(token); },
-        mPile->settings.bars_blocks.blocks_mats) && all;
+        mSettings->bars_blocks.blocks_mats) && all;
 
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsBars.mats, [&](const string& token) { bars_blocks->add_bars_other_mats(token); },
-        mPile->settings.bars_blocks.bars_other_mats) && all;
+        mSettings->bars_blocks.bars_other_mats) && all;
 
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsBlocks.mats, [&](const string& token) { bars_blocks->add_blocks_other_mats(token); },
-        mPile->settings.bars_blocks.blocks_other_mats) && all;
+        mSettings->bars_blocks.blocks_other_mats) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_bars_blocks(DeserializeMode mode, const vector<string>& filters) {
-    auto & pbarsblocks = mPile->settings.bars_blocks;
-    read_category<StockpileSettings_BarsBlocksSet>("bars_blocks", mode,
+void StockpileSettingsSerializer::read_bars_blocks(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pbarsblocks = mSettings->bars_blocks;
+    read_category<StockpileSettings_BarsBlocksSet>(out, "bars_blocks", mode,
         std::bind(&StockpileSettings::has_barsblocks, mBuffer),
         std::bind(&StockpileSettings::barsblocks, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_bars_blocks,
+        mSettings->flags.whole,
+        mSettings->flags.mask_bars_blocks,
         [&]() {
             pbarsblocks.bars_mats.clear();
             pbarsblocks.bars_other_mats.clear();
@@ -1198,72 +1232,72 @@ void StockpileSerializer::read_bars_blocks(DeserializeMode mode, const vector<st
         [&](bool all, char val) {
             auto & bbarsblocks = mBuffer.barsblocks();
 
-            unserialize_list_material("mats/bars", all, val, filters, bars_mat_is_allowed,
+            unserialize_list_material(out, "mats/bars", all, val, filters, bars_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bbarsblocks.bars_mats(idx); },
                 bbarsblocks.bars_mats_size(), pbarsblocks.bars_mats);
 
-            unserialize_list_other_mats("other/bars", all, val, filters,
+            unserialize_list_other_mats(out, "other/bars", all, val, filters,
                 mOtherMatsBars.mats,
                 [&](const size_t& idx) -> const string& { return bbarsblocks.bars_other_mats(idx); },
                 bbarsblocks.bars_other_mats_size(), pbarsblocks.bars_other_mats);
 
-            unserialize_list_material("mats/blocks", all, val, filters,
+            unserialize_list_material(out, "mats/blocks", all, val, filters,
                 blocks_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bbarsblocks.blocks_mats(idx); },
                 bbarsblocks.blocks_mats_size(), pbarsblocks.blocks_mats);
 
-            unserialize_list_other_mats("other/blocks", all, val, filters,
+            unserialize_list_other_mats(out, "other/blocks", all, val, filters,
                 mOtherMatsBlocks.mats,
                 [&](const size_t& idx) -> const string& { return bbarsblocks.blocks_other_mats(idx); },
                 bbarsblocks.blocks_other_mats_size(), pbarsblocks.blocks_other_mats);
         });
 }
 
-bool StockpileSerializer::write_cloth(StockpileSettings::ClothSet* cloth) {
+bool StockpileSettingsSerializer::write_cloth(color_ostream& out, StockpileSettings::ClothSet* cloth) {
     bool all = true;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_thread_silk(token); },
-        &mPile->settings.cloth.thread_silk, organic_mat_category::Silk) && all;
+        &mSettings->cloth.thread_silk, organic_mat_category::Silk) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_thread_plant(token); },
-        &mPile->settings.cloth.thread_plant, organic_mat_category::PlantFiber) && all;
+        &mSettings->cloth.thread_plant, organic_mat_category::PlantFiber) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_thread_yarn(token); },
-        &mPile->settings.cloth.thread_yarn, organic_mat_category::Yarn) && all;
+        &mSettings->cloth.thread_yarn, organic_mat_category::Yarn) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_thread_metal(token); },
-        &mPile->settings.cloth.thread_metal, organic_mat_category::MetalThread) && all;
+        &mSettings->cloth.thread_metal, organic_mat_category::MetalThread) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_cloth_silk(token); },
-        &mPile->settings.cloth.cloth_silk, organic_mat_category::Silk) && all;
+        &mSettings->cloth.cloth_silk, organic_mat_category::Silk) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_cloth_plant(token); },
-        &mPile->settings.cloth.cloth_plant, organic_mat_category::PlantFiber) && all;
+        &mSettings->cloth.cloth_plant, organic_mat_category::PlantFiber) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_cloth_yarn(token); },
-        &mPile->settings.cloth.cloth_yarn, organic_mat_category::Yarn) && all;
+        &mSettings->cloth.cloth_yarn, organic_mat_category::Yarn) && all;
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_cloth_metal(token); },
-        &mPile->settings.cloth.cloth_metal, organic_mat_category::MetalThread) && all;
+        &mSettings->cloth.cloth_metal, organic_mat_category::MetalThread) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_cloth(DeserializeMode mode, const vector<string>& filters) {
-    auto & pcloth = mPile->settings.cloth;
-    read_category<StockpileSettings_ClothSet>("cloth", mode,
+void StockpileSettingsSerializer::read_cloth(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pcloth = mSettings->cloth;
+    read_category<StockpileSettings_ClothSet>(out, "cloth", mode,
         std::bind(&StockpileSettings::has_cloth, mBuffer),
         std::bind(&StockpileSettings::cloth, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_cloth,
+        mSettings->flags.whole,
+        mSettings->flags.mask_cloth,
         [&]() {
             pcloth.thread_silk.clear();
             pcloth.thread_yarn.clear();
@@ -1277,35 +1311,35 @@ void StockpileSerializer::read_cloth(DeserializeMode mode, const vector<string>&
         [&](bool all, char val) {
             auto & bcloth = mBuffer.cloth();
 
-            unserialize_list_organic_mat("thread/silk", all, val, filters,
+            unserialize_list_organic_mat(out, "thread/silk", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.thread_silk(idx); },
                 bcloth.thread_silk_size(), pcloth.thread_silk, organic_mat_category::Silk);
 
-            unserialize_list_organic_mat("thread/plant", all, val, filters,
+            unserialize_list_organic_mat(out, "thread/plant", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.thread_plant(idx); },
                 bcloth.thread_plant_size(), pcloth.thread_plant, organic_mat_category::PlantFiber);
 
-            unserialize_list_organic_mat("thread/yarn", all, val, filters,
+            unserialize_list_organic_mat(out, "thread/yarn", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.thread_yarn(idx); },
                 bcloth.thread_yarn_size(), pcloth.thread_yarn, organic_mat_category::Yarn);
 
-            unserialize_list_organic_mat("thread/metal", all, val, filters,
+            unserialize_list_organic_mat(out, "thread/metal", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.thread_metal(idx); },
                 bcloth.thread_metal_size(), pcloth.thread_metal, organic_mat_category::MetalThread);
 
-            unserialize_list_organic_mat("cloth/silk", all, val, filters,
+            unserialize_list_organic_mat(out, "cloth/silk", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.cloth_silk(idx); },
                 bcloth.cloth_silk_size(), pcloth.cloth_silk, organic_mat_category::Silk);
 
-            unserialize_list_organic_mat("cloth/plant", all, val, filters,
+            unserialize_list_organic_mat(out, "cloth/plant", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.cloth_plant(idx); },
                 bcloth.cloth_plant_size(), pcloth.cloth_plant, organic_mat_category::PlantFiber);
 
-            unserialize_list_organic_mat("cloth/yarn", all, val, filters,
+            unserialize_list_organic_mat(out, "cloth/yarn", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.cloth_yarn(idx); },
                 bcloth.cloth_yarn_size(), pcloth.cloth_yarn, organic_mat_category::Yarn);
 
-            unserialize_list_organic_mat("cloth/metal", all, val, filters,
+            unserialize_list_organic_mat(out, "cloth/metal", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.cloth_metal(idx); },
                 bcloth.cloth_metal_size(), pcloth.cloth_metal, organic_mat_category::MetalThread);
         });
@@ -1315,27 +1349,27 @@ static bool coins_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid();
 }
 
-bool StockpileSerializer::write_coins(StockpileSettings::CoinSet* coins) {
-    return serialize_list_material(
+bool StockpileSettingsSerializer::write_coins(color_ostream& out, StockpileSettings::CoinSet* coins) {
+    return serialize_list_material(out,
         coins_mat_is_allowed,
         [&](const string& token) { coins->add_mats(token); },
-        mPile->settings.coins.mats);
+        mSettings->coins.mats);
 }
 
-void StockpileSerializer::read_coins(DeserializeMode mode, const vector<string>& filters) {
-    auto & pcoins = mPile->settings.coins;
-    read_category<StockpileSettings_CoinSet>("coin", mode,
+void StockpileSettingsSerializer::read_coins(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pcoins = mSettings->coins;
+    read_category<StockpileSettings_CoinSet>(out, "coin", mode,
         std::bind(&StockpileSettings::has_coin, mBuffer),
         std::bind(&StockpileSettings::coin, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_coins,
+        mSettings->flags.whole,
+        mSettings->flags.mask_coins,
         [&]() {
             pcoins.mats.clear();
         },
         [&](bool all, char val) {
             auto & bcoin = mBuffer.coin();
 
-            unserialize_list_material("", all, val, filters, coins_mat_is_allowed,
+            unserialize_list_material(out, "", all, val, filters, coins_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bcoin.mats(idx); },
                 bcoin.mats_size(), pcoins.mats);
         });
@@ -1378,37 +1412,39 @@ static bool finished_goods_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && (mi.material->flags.is_set(material_flags::IS_GEM) || mi.material->flags.is_set(material_flags::IS_METAL) || mi.material->flags.is_set(material_flags::IS_STONE));
 }
 
-bool StockpileSerializer::write_finished_goods(StockpileSettings::FinishedGoodsSet* finished_goods) {
-    bool all = serialize_list_item_type(
+bool StockpileSettingsSerializer::write_finished_goods(color_ostream& out, StockpileSettings::FinishedGoodsSet* finished_goods) {
+    bool all = serialize_list_item_type(out,
         finished_goods_type_is_allowed,
         [&](const string& token) { finished_goods->add_type(token); },
-        mPile->settings.finished_goods.type);
+        mSettings->finished_goods.type);
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         finished_goods_mat_is_allowed,
         [&](const string& token) { finished_goods->add_mats(token); },
-        mPile->settings.finished_goods.mats) && all;
+        mSettings->finished_goods.mats) && all;
 
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsFinishedGoods.mats, [&](const string& token) { finished_goods->add_other_mats(token); },
-        mPile->settings.finished_goods.other_mats) && all;
+        mSettings->finished_goods.other_mats) && all;
 
-    all = serialize_list_quality([&](const string& token) { finished_goods->add_quality_core(token); },
-        mPile->settings.finished_goods.quality_core) && all;
+    all = serialize_list_quality(out,
+        [&](const string& token) { finished_goods->add_quality_core(token); },
+        mSettings->finished_goods.quality_core) && all;
 
-    all = serialize_list_quality([&](const string& token) { finished_goods->add_quality_total(token); },
-        mPile->settings.finished_goods.quality_total) && all;
+    all = serialize_list_quality(out,
+        [&](const string& token) { finished_goods->add_quality_total(token); },
+        mSettings->finished_goods.quality_total) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_finished_goods(DeserializeMode mode, const vector<string>& filters) {
-    auto & pfinished_goods = mPile->settings.finished_goods;
-    read_category<StockpileSettings_FinishedGoodsSet>("finished_goods", mode,
+void StockpileSettingsSerializer::read_finished_goods(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pfinished_goods = mSettings->finished_goods;
+    read_category<StockpileSettings_FinishedGoodsSet>(out, "finished_goods", mode,
         std::bind(&StockpileSettings::has_finished_goods, mBuffer),
         std::bind(&StockpileSettings::finished_goods, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_finished_goods,
+        mSettings->flags.whole,
+        mSettings->flags.mask_finished_goods,
         [&]() {
             pfinished_goods.type.clear();
             pfinished_goods.other_mats.clear();
@@ -1419,29 +1455,29 @@ void StockpileSerializer::read_finished_goods(DeserializeMode mode, const vector
         [&](bool all, char val) {
             auto & bfinished_goods = mBuffer.finished_goods();
 
-            unserialize_list_item_type("type", all, val, filters, finished_goods_type_is_allowed,
+            unserialize_list_item_type(out, "type", all, val, filters, finished_goods_type_is_allowed,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.type(idx); },
                 bfinished_goods.type_size(), pfinished_goods.type);
 
-            unserialize_list_material("mats", all, val, filters, finished_goods_mat_is_allowed,
+            unserialize_list_material(out, "mats", all, val, filters, finished_goods_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.mats(idx); },
                 bfinished_goods.mats_size(), pfinished_goods.mats);
 
-            unserialize_list_other_mats("other", all, val, filters, mOtherMatsFinishedGoods.mats,
+            unserialize_list_other_mats(out, "other", all, val, filters, mOtherMatsFinishedGoods.mats,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.other_mats(idx); },
                 bfinished_goods.other_mats_size(), pfinished_goods.other_mats);
 
-            unserialize_list_quality("core", all, val, filters,
+            unserialize_list_quality(out, "core", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.quality_core(idx); },
                 bfinished_goods.quality_core_size(), pfinished_goods.quality_core);
 
-            unserialize_list_quality("total", all, val, filters,
+            unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.quality_total(idx); },
                 bfinished_goods.quality_total_size(), pfinished_goods.quality_total);
         });
 }
 
-food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_category cat) {
+food_pair StockpileSettingsSerializer::food_map(organic_mat_category::organic_mat_category cat) {
     using df::enums::organic_mat_category::organic_mat_category;
 
     switch (cat) {
@@ -1451,7 +1487,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_meat(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().meat(idx); };
-        return food_pair("meat", setter, &mPile->settings.food.meat, getter, mBuffer.food().meat_size());
+        return food_pair("meat", setter, &mSettings->food.meat, getter, mBuffer.food().meat_size());
     }
     case organic_mat_category::Fish:
     {
@@ -1459,7 +1495,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_fish(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().fish(idx); };
-        return food_pair("fish/prepared", setter, &mPile->settings.food.fish, getter, mBuffer.food().fish_size());
+        return food_pair("fish/prepared", setter, &mSettings->food.fish, getter, mBuffer.food().fish_size());
     }
     case organic_mat_category::UnpreparedFish:
     {
@@ -1467,7 +1503,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_unprepared_fish(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().unprepared_fish(idx); };
-        return food_pair("fish/unprepared", setter, &mPile->settings.food.unprepared_fish, getter, mBuffer.food().unprepared_fish_size());
+        return food_pair("fish/unprepared", setter, &mSettings->food.unprepared_fish, getter, mBuffer.food().unprepared_fish_size());
     }
     case organic_mat_category::Eggs:
     {
@@ -1475,7 +1511,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_egg(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().egg(idx); };
-        return food_pair("egg", setter, &mPile->settings.food.egg, getter, mBuffer.food().egg_size());
+        return food_pair("egg", setter, &mSettings->food.egg, getter, mBuffer.food().egg_size());
     }
     case organic_mat_category::Plants:
     {
@@ -1483,7 +1519,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_plants(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().plants(idx); };
-        return food_pair("plants", setter, &mPile->settings.food.plants, getter, mBuffer.food().plants_size());
+        return food_pair("plants", setter, &mSettings->food.plants, getter, mBuffer.food().plants_size());
     }
     case organic_mat_category::PlantDrink:
     {
@@ -1491,7 +1527,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_drink_plant(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().drink_plant(idx); };
-        return food_pair("drink/plant", setter, &mPile->settings.food.drink_plant, getter, mBuffer.food().drink_plant_size());
+        return food_pair("drink/plant", setter, &mSettings->food.drink_plant, getter, mBuffer.food().drink_plant_size());
     }
     case organic_mat_category::CreatureDrink:
     {
@@ -1499,7 +1535,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_drink_animal(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().drink_animal(idx); };
-        return food_pair("drink/animal", setter, &mPile->settings.food.drink_animal, getter, mBuffer.food().drink_animal_size());
+        return food_pair("drink/animal", setter, &mSettings->food.drink_animal, getter, mBuffer.food().drink_animal_size());
     }
     case organic_mat_category::PlantCheese:
     {
@@ -1507,7 +1543,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_cheese_plant(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().cheese_plant(idx); };
-        return food_pair("cheese/plant", setter, &mPile->settings.food.cheese_plant, getter, mBuffer.food().cheese_plant_size());
+        return food_pair("cheese/plant", setter, &mSettings->food.cheese_plant, getter, mBuffer.food().cheese_plant_size());
     }
     case organic_mat_category::CreatureCheese:
     {
@@ -1515,7 +1551,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_cheese_animal(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().cheese_animal(idx); };
-        return food_pair("cheese/animal", setter, &mPile->settings.food.cheese_animal, getter, mBuffer.food().cheese_animal_size());
+        return food_pair("cheese/animal", setter, &mSettings->food.cheese_animal, getter, mBuffer.food().cheese_animal_size());
     }
     case organic_mat_category::Seed:
     {
@@ -1523,7 +1559,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_seeds(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().seeds(idx); };
-        return food_pair("seeds", setter, &mPile->settings.food.seeds, getter, mBuffer.food().seeds_size());
+        return food_pair("seeds", setter, &mSettings->food.seeds, getter, mBuffer.food().seeds_size());
     }
     case organic_mat_category::Leaf:
     {
@@ -1531,7 +1567,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_leaves(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().leaves(idx); };
-        return food_pair("leaves", setter, &mPile->settings.food.leaves, getter, mBuffer.food().leaves_size());
+        return food_pair("leaves", setter, &mSettings->food.leaves, getter, mBuffer.food().leaves_size());
     }
     case organic_mat_category::PlantPowder:
     {
@@ -1539,7 +1575,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_powder_plant(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().powder_plant(idx); };
-        return food_pair("powder/plant", setter, &mPile->settings.food.powder_plant, getter, mBuffer.food().powder_plant_size());
+        return food_pair("powder/plant", setter, &mSettings->food.powder_plant, getter, mBuffer.food().powder_plant_size());
     }
     case organic_mat_category::CreaturePowder:
     {
@@ -1547,7 +1583,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_powder_creature(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().powder_creature(idx); };
-        return food_pair("powder/animal", setter, &mPile->settings.food.powder_creature, getter, mBuffer.food().powder_creature_size());
+        return food_pair("powder/animal", setter, &mSettings->food.powder_creature, getter, mBuffer.food().powder_creature_size());
     }
     case organic_mat_category::Glob:
     {
@@ -1555,7 +1591,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_glob(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().glob(idx); };
-        return food_pair("glob", setter, &mPile->settings.food.glob, getter, mBuffer.food().glob_size());
+        return food_pair("glob", setter, &mSettings->food.glob, getter, mBuffer.food().glob_size());
     }
     case organic_mat_category::PlantLiquid:
     {
@@ -1563,7 +1599,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_liquid_plant(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().liquid_plant(idx); };
-        return food_pair("liquid/plant", setter, &mPile->settings.food.liquid_plant, getter, mBuffer.food().liquid_plant_size());
+        return food_pair("liquid/plant", setter, &mSettings->food.liquid_plant, getter, mBuffer.food().liquid_plant_size());
     }
     case organic_mat_category::CreatureLiquid:
     {
@@ -1571,7 +1607,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_liquid_animal(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().liquid_animal(idx); };
-        return food_pair("liquid/animal", setter, &mPile->settings.food.liquid_animal, getter, mBuffer.food().liquid_animal_size());
+        return food_pair("liquid/animal", setter, &mSettings->food.liquid_animal, getter, mBuffer.food().liquid_animal_size());
     }
     case organic_mat_category::MiscLiquid:
     {
@@ -1579,7 +1615,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_liquid_misc(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().liquid_misc(idx); };
-        return food_pair("liquid/misc", setter, &mPile->settings.food.liquid_misc, getter, mBuffer.food().liquid_misc_size());
+        return food_pair("liquid/misc", setter, &mSettings->food.liquid_misc, getter, mBuffer.food().liquid_misc_size());
     }
 
     case organic_mat_category::Paste:
@@ -1588,7 +1624,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_glob_paste(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().glob_paste(idx); };
-        return food_pair("paste", setter, &mPile->settings.food.glob_paste, getter, mBuffer.food().glob_paste_size());
+        return food_pair("paste", setter, &mSettings->food.glob_paste, getter, mBuffer.food().glob_paste_size());
     }
     case organic_mat_category::Pressed:
     {
@@ -1596,7 +1632,7 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
             mBuffer.mutable_food()->add_glob_pressed(id);
         };
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().glob_pressed(idx); };
-        return food_pair("pressed", setter, &mPile->settings.food.glob_pressed, getter, mBuffer.food().glob_pressed_size());
+        return food_pair("pressed", setter, &mSettings->food.glob_pressed, getter, mBuffer.food().glob_pressed_size());
     }
     case organic_mat_category::Leather:
     case organic_mat_category::Silk:
@@ -1623,8 +1659,8 @@ food_pair StockpileSerializer::food_map(organic_mat_category::organic_mat_catego
     return food_pair();
 }
 
-bool StockpileSerializer::write_food(StockpileSettings::FoodSet* food) {
-    auto & pfood = mPile->settings.food;
+bool StockpileSettingsSerializer::write_food(color_ostream& out, StockpileSettings::FoodSet* food) {
+    auto & pfood = mSettings->food;
     bool all = pfood.prepared_meals;
 
     food->set_prepared_meals(pfood.prepared_meals);
@@ -1635,23 +1671,23 @@ bool StockpileSerializer::write_food(StockpileSettings::FoodSet* food) {
         food_pair p = food_map((organic_mat_category)mat_category);
         if (!p.valid)
             continue;
-        all = serialize_list_organic_mat(p.set_value, p.stockpile_values,
+        all = serialize_list_organic_mat(out, p.set_value, p.stockpile_values,
                 (organic_mat_category)mat_category) && all;
     }
 
     return all;
 }
 
-void StockpileSerializer::read_food(DeserializeMode mode, const vector<string>& filters) {
+void StockpileSettingsSerializer::read_food(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
     using df::enums::organic_mat_category::organic_mat_category;
     using traits = df::enum_traits<organic_mat_category>;
 
-    auto & pfood = mPile->settings.food;
-    read_category<StockpileSettings_FoodSet>("food", mode,
+    auto & pfood = mSettings->food;
+    read_category<StockpileSettings_FoodSet>(out, "food", mode,
         std::bind(&StockpileSettings::has_food, mBuffer),
         std::bind(&StockpileSettings::food, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_food,
+        mSettings->flags.whole,
+        mSettings->flags.mask_food,
         [&]() {
             pfood.prepared_meals = false;
             for (int32_t mat_category = traits::first_item_value; mat_category < traits::last_item_value; ++mat_category) {
@@ -1664,29 +1700,28 @@ void StockpileSerializer::read_food(DeserializeMode mode, const vector<string>& 
         [&](bool all, char val) {
             auto & bfood = mBuffer.food();
 
-            set_flag("preparedmeals", filters, all, val, bfood.prepared_meals(), pfood.prepared_meals);
+            set_flag(out, "preparedmeals", filters, all, val, bfood.prepared_meals(), pfood.prepared_meals);
 
             for (int32_t mat_category = traits::first_item_value; mat_category < traits::last_item_value; ++mat_category) {
                 food_pair p = food_map((organic_mat_category)mat_category);
                 if (!p.valid)
                     continue;
-                unserialize_list_organic_mat(p.name, all, val, filters,
+                unserialize_list_organic_mat(out, p.name, all, val, filters,
                     p.get_value, p.serialized_count, *p.stockpile_values,
                     (organic_mat_category)mat_category);
             }
         });
-
 }
 
 static bool furniture_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && (mi.material->flags.is_set(material_flags::IS_METAL) || mi.material->flags.is_set(material_flags::IS_STONE));
 }
 
-bool StockpileSerializer::write_furniture(StockpileSettings::FurnitureSet* furniture) {
+bool StockpileSettingsSerializer::write_furniture(color_ostream& out, StockpileSettings::FurnitureSet* furniture) {
     using df::enums::furniture_type::furniture_type;
     using type_traits = df::enum_traits<furniture_type>;
 
-    auto & pfurniture = mPile->settings.furniture;
+    auto & pfurniture = mSettings->furniture;
     bool all = true;
 
     for (size_t i = 0; i < pfurniture.type.size(); ++i) {
@@ -1696,34 +1731,34 @@ bool StockpileSerializer::write_furniture(StockpileSettings::FurnitureSet* furni
         }
         string f_type(type_traits::key_table[i]);
         furniture->add_type(f_type);
-        DEBUG(log).print("furniture_type %zd is %s\n", i, f_type.c_str());
+        DEBUG(log, out).print("furniture_type %zd is %s\n", i, f_type.c_str());
     }
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         furniture_mat_is_allowed,
         [&](const string& token) { furniture->add_mats(token); },
         pfurniture.mats) && all;
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsFurniture.mats,
         [&](const string& token) { furniture->add_other_mats(token); },
         pfurniture.other_mats) && all;
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { furniture->add_quality_core(token); },
         pfurniture.quality_core) && all;
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { furniture->add_quality_total(token); },
         pfurniture.quality_total) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_furniture(DeserializeMode mode, const vector<string>& filters) {
-    auto & pfurniture = mPile->settings.furniture;
-    read_category<StockpileSettings_FurnitureSet>("furniture", mode,
+void StockpileSettingsSerializer::read_furniture(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pfurniture = mSettings->furniture;
+    read_category<StockpileSettings_FurnitureSet>(out, "furniture", mode,
         std::bind(&StockpileSettings::has_furniture, mBuffer),
         std::bind(&StockpileSettings::furniture, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_furniture,
+        mSettings->flags.whole,
+        mSettings->flags.mask_furniture,
         [&]() {
             pfurniture.type.clear();
             pfurniture.other_mats.clear();
@@ -1742,33 +1777,33 @@ void StockpileSerializer::read_furniture(DeserializeMode mode, const vector<stri
             if (all) {
                 for (size_t idx = 0; idx < num_elems; ++idx) {
                     string id = ENUM_KEY_STR(furniture_type, (df::furniture_type)idx);
-                    set_filter_elem("type", filters, val, id, idx, pfurniture.type.at(idx));
+                    set_filter_elem(out, "type", filters, val, id, idx, pfurniture.type.at(idx));
                 }
             } else {
                 for (int i = 0; i < bfurniture.type_size(); ++i) {
                     const string token = bfurniture.type(i);
                     df::enum_traits<furniture_type>::base_type idx = linear_index(type_traits, token);
                     if (idx < 0 || size_t(idx) >= pfurniture.type.size()) {
-                        WARN(log).print("furniture type index invalid %s, idx=%d\n", token.c_str(), idx);
+                        WARN(log, out).print("furniture type index invalid %s, idx=%d\n", token.c_str(), idx);
                         continue;
                     }
-                    set_filter_elem("type", filters, val, token, idx, pfurniture.type.at(idx));
+                    set_filter_elem(out, "type", filters, val, token, idx, pfurniture.type.at(idx));
                 }
             }
 
-            unserialize_list_material("mats", all, val, filters, furniture_mat_is_allowed,
+            unserialize_list_material(out, "mats", all, val, filters, furniture_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bfurniture.mats(idx); },
                 bfurniture.mats_size(), pfurniture.mats);
 
-            unserialize_list_other_mats("other", all, val, filters,
+            unserialize_list_other_mats(out, "other", all, val, filters,
                 mOtherMatsFurniture.mats, [&](const size_t& idx) -> const string& { return bfurniture.other_mats(idx); },
                 bfurniture.other_mats_size(), pfurniture.other_mats);
 
-            unserialize_list_quality("core", all, val, filters,
+            unserialize_list_quality(out, "core", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bfurniture.quality_core(idx); },
                 bfurniture.quality_core_size(), pfurniture.quality_core);
 
-            unserialize_list_quality("total", all, val, filters,
+            unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bfurniture.quality_total(idx); },
                 bfurniture.quality_total_size(), pfurniture.quality_total);
         });
@@ -1786,17 +1821,17 @@ static bool gem_other_mat_is_allowed(MaterialInfo& mi) {
     return mi.isValid() && (mi.getToken() == "GLASS_GREEN" || mi.getToken() == "GLASS_CLEAR" || mi.getToken() == "GLASS_CRYSTAL");
 }
 
-bool StockpileSerializer::write_gems(StockpileSettings::GemsSet* gems) {
+bool StockpileSettingsSerializer::write_gems(color_ostream& out, StockpileSettings::GemsSet* gems) {
     MaterialInfo mi;
 
-    auto & pgems = mPile->settings.gems;
+    auto & pgems = mSettings->gems;
 
-    bool all = serialize_list_material(
+    bool all = serialize_list_material(out,
         gem_mat_is_allowed,
         [&](const string& token) { gems->add_rough_mats(token); },
         pgems.rough_mats);
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         gem_cut_mat_is_allowed,
         [&](const string& token) { gems->add_cut_mats(token); },
         pgems.cut_mats) && all;
@@ -1809,7 +1844,7 @@ bool StockpileSerializer::write_gems(StockpileSettings::GemsSet* gems) {
         mi.decode(i, -1);
         if (!gem_other_mat_is_allowed(mi))
             continue;
-        DEBUG(log).print("gem rough_other mat %zd is %s\n", i, mi.getToken().c_str());
+        DEBUG(log, out).print("gem rough_other mat %zd is %s\n", i, mi.getToken().c_str());
         gems->add_rough_other_mats(mi.getToken());
     }
 
@@ -1823,20 +1858,20 @@ bool StockpileSerializer::write_gems(StockpileSettings::GemsSet* gems) {
             mi.decode(0, i);
         if (!gem_other_mat_is_allowed(mi))
             continue;
-        DEBUG(log).print("gem cut_other mat %zd is %s\n", i, mi.getToken().c_str());
+        DEBUG(log, out).print("gem cut_other mat %zd is %s\n", i, mi.getToken().c_str());
         gems->add_cut_other_mats(mi.getToken());
     }
 
     return all;
 }
 
-void StockpileSerializer::read_gems(DeserializeMode mode, const vector<string>& filters) {
-    auto & pgems = mPile->settings.gems;
-    read_category<StockpileSettings_GemsSet>("gems", mode,
+void StockpileSettingsSerializer::read_gems(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pgems = mSettings->gems;
+    read_category<StockpileSettings_GemsSet>(out, "gems", mode,
         std::bind(&StockpileSettings::has_gems, mBuffer),
         std::bind(&StockpileSettings::gems, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_gems,
+        mSettings->flags.whole,
+        mSettings->flags.mask_gems,
         [&]() {
             pgems.cut_other_mats.clear();
             pgems.cut_mats.clear();
@@ -1846,11 +1881,11 @@ void StockpileSerializer::read_gems(DeserializeMode mode, const vector<string>& 
         [&](bool all, char val) {
             auto & bgems = mBuffer.gems();
 
-            unserialize_list_material("mats/rough", all, val, filters, gem_mat_is_allowed,
+            unserialize_list_material(out, "mats/rough", all, val, filters, gem_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
-                bgems.rough_mats_size(),pgems.rough_mats);
+                bgems.rough_mats_size(), pgems.rough_mats);
 
-            unserialize_list_material("mats/cut", all, val, filters, gem_cut_mat_is_allowed,
+            unserialize_list_material(out, "mats/cut", all, val, filters, gem_cut_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
                 bgems.cut_mats_size(), pgems.cut_mats);
 
@@ -1862,71 +1897,75 @@ void StockpileSerializer::read_gems(DeserializeMode mode, const vector<string>& 
                     MaterialInfo mi;
                     mi.decode(idx, -1);
                     if (gem_other_mat_is_allowed(mi))
-                        set_filter_elem("other/rough", filters, val, mi.getToken(), idx, pgems.rough_other_mats.at(idx));
+                        set_filter_elem(out, "other/rough", filters, val, mi.getToken(), idx, pgems.rough_other_mats.at(idx));
                     if (!mi.isValid())
                         mi.decode(0, idx);
                     if (gem_other_mat_is_allowed(mi))
-                        set_filter_elem("other/cut", filters, val, mi.getToken(), idx, pgems.cut_other_mats.at(idx));
+                        set_filter_elem(out, "other/cut", filters, val, mi.getToken(), idx, pgems.cut_other_mats.at(idx));
                 }
                 return;
             } else {
                 MaterialInfo mi;
-                for (size_t i = 0; i < builtin_size; ++i) {
-                    string id = bgems.rough_other_mats(i);
-                    if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
-                        set_filter_elem("other/rough", filters, val, id, mi.type, pgems.rough_other_mats.at(mi.type));
-                    id = bgems.cut_other_mats(i);
-                    if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
-                        set_filter_elem("other/cut", filters, val, id, mi.type, pgems.cut_other_mats.at(mi.type));
+                for (int i = 0; i < (int)builtin_size; ++i) {
+                    if (i < bgems.rough_other_mats_size()) {
+                        string id = bgems.rough_other_mats(i);
+                        if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
+                            set_filter_elem(out, "other/rough", filters, val, id, mi.type, pgems.rough_other_mats.at(mi.type));
+                    }
+                    if (i < bgems.cut_other_mats_size()) {
+                        string id = bgems.cut_other_mats(i);
+                        if (mi.find(id) && mi.isValid() && size_t(mi.type) < builtin_size)
+                            set_filter_elem(out, "other/cut", filters, val, id, mi.type, pgems.cut_other_mats.at(mi.type));
+                    }
                 }
             }
         });
 }
 
-bool StockpileSerializer::write_leather(StockpileSettings::LeatherSet* leather) {
-    return serialize_list_organic_mat(
+bool StockpileSettingsSerializer::write_leather(color_ostream& out, StockpileSettings::LeatherSet* leather) {
+    return serialize_list_organic_mat(out,
         [&](const string& id) { leather->add_mats(id); },
-        &mPile->settings.leather.mats, organic_mat_category::Leather);
+        &mSettings->leather.mats, organic_mat_category::Leather);
 }
 
-void StockpileSerializer::read_leather(DeserializeMode mode, const vector<string>& filters) {
-    auto & pleather = mPile->settings.leather;
-    read_category<StockpileSettings_LeatherSet>("leather", mode,
+void StockpileSettingsSerializer::read_leather(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pleather = mSettings->leather;
+    read_category<StockpileSettings_LeatherSet>(out, "leather", mode,
         std::bind(&StockpileSettings::has_leather, mBuffer),
         std::bind(&StockpileSettings::leather, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_leather,
+        mSettings->flags.whole,
+        mSettings->flags.mask_leather,
         [&]() {
             pleather.mats.clear();
         },
         [&](bool all, char val) {
             auto & bleather = mBuffer.leather();
 
-            unserialize_list_organic_mat("", all, val, filters,
+            unserialize_list_organic_mat(out, "", all, val, filters,
                 [&](size_t idx) -> string { return bleather.mats(idx); },
                 bleather.mats_size(), pleather.mats, organic_mat_category::Leather);
         });
 }
 
-bool StockpileSerializer::write_corpses(StockpileSettings::CorpsesSet* corpses) {
-    return serialize_list_creature(
+bool StockpileSettingsSerializer::write_corpses(color_ostream& out, StockpileSettings::CorpsesSet* corpses) {
+    return serialize_list_creature(out,
         [&](const string& token) { corpses->add_corpses(token); },
-        mPile->settings.corpses.corpses);
+        mSettings->corpses.corpses);
 }
 
-void StockpileSerializer::read_corpses(DeserializeMode mode, const vector<string>& filters) {
-    auto & pcorpses = mPile->settings.corpses;
-    read_category<StockpileSettings_CorpsesSet>("corpses", mode,
+void StockpileSettingsSerializer::read_corpses(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pcorpses = mSettings->corpses;
+    read_category<StockpileSettings_CorpsesSet>(out, "corpses", mode,
         std::bind(&StockpileSettings::has_corpses_v50, mBuffer),
         std::bind(&StockpileSettings::corpses_v50, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_corpses,
+        mSettings->flags.whole,
+        mSettings->flags.mask_corpses,
         [&]() {
             pcorpses.corpses.clear();
         },
         [&](bool all, char val) {
             auto & bcorpses = mBuffer.corpses_v50();
-            unserialize_list_creature("", all, val, filters,
+            unserialize_list_creature(out, "", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bcorpses.corpses(idx); },
                 bcorpses.corpses_size(), pcorpses.corpses);
         });
@@ -1941,52 +1980,52 @@ static bool refuse_type_is_allowed(item_type::item_type type) {
     return true;
 }
 
-bool StockpileSerializer::write_refuse(StockpileSettings::RefuseSet* refuse) {
-    auto & prefuse = mPile->settings.refuse;
+bool StockpileSettingsSerializer::write_refuse(color_ostream& out, StockpileSettings::RefuseSet* refuse) {
+    auto & prefuse = mSettings->refuse;
     bool all = prefuse.fresh_raw_hide && prefuse.rotten_raw_hide;
 
     refuse->set_fresh_raw_hide(prefuse.fresh_raw_hide);
     refuse->set_rotten_raw_hide(prefuse.rotten_raw_hide);
 
-    all = serialize_list_item_type(refuse_type_is_allowed,
+    all = serialize_list_item_type(out, refuse_type_is_allowed,
         [&](const string& token) { refuse->add_type(token); },
         prefuse.type) && all;
 
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_corpses(token); },
         prefuse.corpses) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_body_parts(token); },
         prefuse.body_parts) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_skulls(token); },
         prefuse.skulls) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_bones(token); },
         prefuse.bones) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_hair(token); },
         prefuse.hair) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_shells(token); },
         prefuse.shells) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_teeth(token); },
         prefuse.teeth) && all;
-    all = serialize_list_creature(
+    all = serialize_list_creature(out,
         [&](const string& token) { refuse->add_horns(token); },
         prefuse.horns) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_refuse(DeserializeMode mode, const vector<string>& filters) {
-    auto & prefuse = mPile->settings.refuse;
-    read_category<StockpileSettings_RefuseSet>("refuse", mode,
+void StockpileSettingsSerializer::read_refuse(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & prefuse = mSettings->refuse;
+    read_category<StockpileSettings_RefuseSet>(out, "refuse", mode,
         std::bind(&StockpileSettings::has_refuse, mBuffer),
         std::bind(&StockpileSettings::refuse, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_refuse,
+        mSettings->flags.whole,
+        mSettings->flags.mask_refuse,
         [&]() {
             prefuse.fresh_raw_hide = false;
             prefuse.rotten_raw_hide = false;
@@ -2003,60 +2042,60 @@ void StockpileSerializer::read_refuse(DeserializeMode mode, const vector<string>
         [&](bool all, char val) {
             auto & brefuse = mBuffer.refuse();
 
-            set_flag("rawhide/fresh", filters, all, val, brefuse.fresh_raw_hide(), prefuse.fresh_raw_hide);
-            set_flag("rawhide/rotten", filters, all, val, brefuse.rotten_raw_hide(), prefuse.rotten_raw_hide);
+            set_flag(out, "rawhide/fresh", filters, all, val, brefuse.fresh_raw_hide(), prefuse.fresh_raw_hide);
+            set_flag(out, "rawhide/rotten", filters, all, val, brefuse.rotten_raw_hide(), prefuse.rotten_raw_hide);
 
-            unserialize_list_item_type("type", all, val, filters, refuse_type_is_allowed,
+            unserialize_list_item_type(out, "type", all, val, filters, refuse_type_is_allowed,
                 [&](const size_t& idx) -> const string& { return brefuse.type(idx); },
                 brefuse.type_size(), prefuse.type);
 
-            unserialize_list_creature("corpses", all, val, filters,
+            unserialize_list_creature(out, "corpses", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.corpses(idx); },
                 brefuse.corpses_size(), prefuse.corpses);
-            unserialize_list_creature("bodyparts", all, val, filters,
+            unserialize_list_creature(out, "bodyparts", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.body_parts(idx); },
                 brefuse.body_parts_size(), prefuse.body_parts);
-            unserialize_list_creature("skulls", all, val, filters,
+            unserialize_list_creature(out, "skulls", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.skulls(idx); },
                 brefuse.skulls_size(), prefuse.skulls);
-            unserialize_list_creature("bones", all, val, filters,
+            unserialize_list_creature(out, "bones", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.bones(idx); },
                 brefuse.bones_size(), prefuse.bones);
-            unserialize_list_creature("hair", all, val, filters,
+            unserialize_list_creature(out, "hair", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.hair(idx); },
                 brefuse.hair_size(), prefuse.hair);
-            unserialize_list_creature("shells", all, val, filters,
+            unserialize_list_creature(out, "shells", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.shells(idx); },
                 brefuse.shells_size(), prefuse.shells);
-            unserialize_list_creature("teeth", all, val, filters,
+            unserialize_list_creature(out, "teeth", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.teeth(idx); },
                 brefuse.teeth_size(), prefuse.teeth);
-            unserialize_list_creature("horns", all, val, filters,
+            unserialize_list_creature(out, "horns", all, val, filters,
                 [&](const size_t& idx) -> const string& { return brefuse.horns(idx); },
                 brefuse.horns_size(), prefuse.horns);
         });
 
 }
 
-bool StockpileSerializer::write_sheet(StockpileSettings::SheetSet* sheet) {
-    bool all = serialize_list_organic_mat(
+bool StockpileSettingsSerializer::write_sheet(color_ostream& out, StockpileSettings::SheetSet* sheet) {
+    bool all = serialize_list_organic_mat(out,
         [&](const string& token) { sheet->add_paper(token); },
-        &mPile->settings.sheet.paper, organic_mat_category::Paper);
+        &mSettings->sheet.paper, organic_mat_category::Paper);
 
-    all = serialize_list_organic_mat(
+    all = serialize_list_organic_mat(out,
         [&](const string& token) { sheet->add_parchment(token); },
-        &mPile->settings.sheet.parchment, organic_mat_category::Parchment) && all;
+        &mSettings->sheet.parchment, organic_mat_category::Parchment) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_sheet(DeserializeMode mode, const vector<string>& filters) {
-    auto & psheet = mPile->settings.sheet;
-    read_category<StockpileSettings_SheetSet>("sheet", mode,
+void StockpileSettingsSerializer::read_sheet(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & psheet = mSettings->sheet;
+    read_category<StockpileSettings_SheetSet>(out, "sheet", mode,
         std::bind(&StockpileSettings::has_sheet, mBuffer),
         std::bind(&StockpileSettings::sheet, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_sheet,
+        mSettings->flags.whole,
+        mSettings->flags.mask_sheet,
         [&]() {
             psheet.paper.clear();
             psheet.parchment.clear();
@@ -2064,11 +2103,11 @@ void StockpileSerializer::read_sheet(DeserializeMode mode, const vector<string>&
         [&](bool all, char val) {
             auto & bsheet = mBuffer.sheet();
 
-            unserialize_list_organic_mat("paper", all, val, filters,
+            unserialize_list_organic_mat(out, "paper", all, val, filters,
                 [&](size_t idx) -> string { return bsheet.paper(idx); },
                 bsheet.paper_size(), psheet.paper, organic_mat_category::Paper);
 
-            unserialize_list_organic_mat("parchment", all, val, filters,
+            unserialize_list_organic_mat(out, "parchment", all, val, filters,
                 [&](size_t idx) -> string { return bsheet.parchment(idx); },
                 bsheet.parchment_size(), psheet.parchment, organic_mat_category::Parchment);
         });
@@ -2082,27 +2121,27 @@ static bool stone_is_allowed(const MaterialInfo& mi) {
     return is_allowed_soil || is_allowed_stone;
 }
 
-bool StockpileSerializer::write_stone(StockpileSettings::StoneSet* stone) {
-    return serialize_list_material(
+bool StockpileSettingsSerializer::write_stone(color_ostream& out, StockpileSettings::StoneSet* stone) {
+    return serialize_list_material(out,
         stone_is_allowed,
         [&](const string& token) { stone->add_mats(token); },
-        mPile->settings.stone.mats);
+        mSettings->stone.mats);
 }
 
-void StockpileSerializer::read_stone(DeserializeMode mode, const vector<string>& filters) {
-    auto & pstone = mPile->settings.stone;
-    read_category<StockpileSettings_StoneSet>("stone", mode,
+void StockpileSettingsSerializer::read_stone(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pstone = mSettings->stone;
+    read_category<StockpileSettings_StoneSet>(out, "stone", mode,
         std::bind(&StockpileSettings::has_stone, mBuffer),
         std::bind(&StockpileSettings::stone, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_stone,
+        mSettings->flags.whole,
+        mSettings->flags.mask_stone,
         [&]() {
             pstone.mats.clear();
         },
         [&](bool all, char val) {
             auto & bstone = mBuffer.stone();
 
-            unserialize_list_material("", all, val, filters, stone_is_allowed,
+            unserialize_list_material(out, "", all, val, filters, stone_is_allowed,
                 [&](const size_t& idx) -> const string& { return bstone.mats(idx); },
                 bstone.mats_size(), pstone.mats);
         });
@@ -2112,53 +2151,53 @@ static bool weapons_mat_is_allowed(const MaterialInfo& mi) {
     return mi.isValid() && mi.material && (mi.material->flags.is_set(material_flags::IS_METAL) || mi.material->flags.is_set(material_flags::IS_STONE));
 }
 
-bool StockpileSerializer::write_weapons(StockpileSettings::WeaponsSet* weapons) {
-    auto & pweapons = mPile->settings.weapons;
+bool StockpileSettingsSerializer::write_weapons(color_ostream& out, StockpileSettings::WeaponsSet* weapons) {
+    auto & pweapons = mSettings->weapons;
     bool all = pweapons.unusable && pweapons.usable;
 
     weapons->set_unusable(pweapons.unusable);
     weapons->set_usable(pweapons.usable);
 
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { weapons->add_weapon_type(token); },
         pweapons.weapon_type,
         vector<df::itemdef*>(world->raws.itemdefs.weapons.begin(), world->raws.itemdefs.weapons.end()),
         item_type::WEAPON) && all;
 
-    all = serialize_list_itemdef(
+    all = serialize_list_itemdef(out,
         [&](const string& token) { weapons->add_trapcomp_type(token); },
         pweapons.trapcomp_type,
         vector<df::itemdef*>(world->raws.itemdefs.trapcomps.begin(), world->raws.itemdefs.trapcomps.end()),
         item_type::TRAPCOMP) && all;
 
-    all = serialize_list_material(
+    all = serialize_list_material(out,
         weapons_mat_is_allowed,
         [&](const string& token) { weapons->add_mats(token); },
         pweapons.mats) && all;
 
-    all = serialize_list_other_mats(
+    all = serialize_list_other_mats(out,
         mOtherMatsWeaponsArmor.mats,
         [&](const string& token) { weapons->add_other_mats(token); },
         pweapons.other_mats) && all;
 
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { weapons->add_quality_core(token); },
         pweapons.quality_core) && all;
 
-    all = serialize_list_quality(
+    all = serialize_list_quality(out,
         [&](const string& token) { weapons->add_quality_total(token); },
         pweapons.quality_total) && all;
 
     return all;
 }
 
-void StockpileSerializer::read_weapons(DeserializeMode mode, const vector<string>& filters) {
-    auto & pweapons = mPile->settings.weapons;
-    read_category<StockpileSettings_WeaponsSet>("weapons", mode,
+void StockpileSettingsSerializer::read_weapons(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pweapons = mSettings->weapons;
+    read_category<StockpileSettings_WeaponsSet>(out, "weapons", mode,
         std::bind(&StockpileSettings::has_weapons, mBuffer),
         std::bind(&StockpileSettings::weapons, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_weapons,
+        mSettings->flags.whole,
+        mSettings->flags.mask_weapons,
         [&]() {
             pweapons.unusable = false;
             pweapons.usable = false;
@@ -2172,30 +2211,30 @@ void StockpileSerializer::read_weapons(DeserializeMode mode, const vector<string
         [&](bool all, char val) {
             auto & bweapons = mBuffer.weapons();
 
-            set_flag("nouse", filters, all, val, bweapons.unusable(), pweapons.unusable);
-            set_flag("canuse", filters, all, val, bweapons.usable(), pweapons.usable);
+            set_flag(out, "nouse", filters, all, val, bweapons.unusable(), pweapons.unusable);
+            set_flag(out, "canuse", filters, all, val, bweapons.usable(), pweapons.usable);
 
-            unserialize_list_itemdef("type/weapon", all, val, filters,
+            unserialize_list_itemdef(out, "type/weapon", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bweapons.weapon_type(idx); },
                 bweapons.weapon_type_size(), pweapons.weapon_type, item_type::WEAPON);
 
-            unserialize_list_itemdef("type/trapcomp", all, val, filters,
+            unserialize_list_itemdef(out, "type/trapcomp", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bweapons.trapcomp_type(idx); },
                 bweapons.trapcomp_type_size(), pweapons.trapcomp_type, item_type::TRAPCOMP);
 
-            unserialize_list_material("mats", all, val, filters, weapons_mat_is_allowed,
+            unserialize_list_material(out, "mats", all, val, filters, weapons_mat_is_allowed,
                 [&](const size_t& idx) -> const string& { return bweapons.mats(idx); },
                 bweapons.mats_size(), pweapons.mats);
 
-            unserialize_list_other_mats("other", all, val, filters, mOtherMatsWeaponsArmor.mats,
+            unserialize_list_other_mats(out, "other", all, val, filters, mOtherMatsWeaponsArmor.mats,
                 [&](const size_t& idx) -> const string& { return bweapons.other_mats(idx); },
                 bweapons.other_mats_size(), pweapons.other_mats);
 
-            unserialize_list_quality("core", all, val, filters,
+            unserialize_list_quality(out, "core", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bweapons.quality_core(idx); },
                 bweapons.quality_core_size(), pweapons.quality_core);
 
-            unserialize_list_quality("total", all, val, filters,
+            unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bweapons.quality_total(idx); },
                 bweapons.quality_total_size(), pweapons.quality_total);
         });
@@ -2205,10 +2244,10 @@ static bool wood_mat_is_allowed(const df::plant_raw* plant) {
     return plant && plant->flags.is_set(plant_raw_flags::TREE);
 }
 
-bool StockpileSerializer::write_wood(StockpileSettings::WoodSet* wood) {
+bool StockpileSettingsSerializer::write_wood(color_ostream& out, StockpileSettings::WoodSet* wood) {
     bool all = true;
-    for (size_t i = 0; i < mPile->settings.wood.mats.size(); ++i) {
-        if (!mPile->settings.wood.mats.at(i)) {
+    for (size_t i = 0; i < mSettings->wood.mats.size(); ++i) {
+        if (!mSettings->wood.mats.at(i)) {
             all = false;
             continue;
         }
@@ -2216,18 +2255,18 @@ bool StockpileSerializer::write_wood(StockpileSettings::WoodSet* wood) {
         if (!wood_mat_is_allowed(plant))
             continue;
         wood->add_mats(plant->id);
-        DEBUG(log).print("plant %zd is %s\n", i, plant->id.c_str());
+        DEBUG(log, out).print("plant %zd is %s\n", i, plant->id.c_str());
     }
     return all;
 }
 
-void StockpileSerializer::read_wood(DeserializeMode mode, const vector<string>& filters) {
-    auto & pwood = mPile->settings.wood;
-    read_category<StockpileSettings_WoodSet>("wood", mode,
+void StockpileSettingsSerializer::read_wood(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
+    auto & pwood = mSettings->wood;
+    read_category<StockpileSettings_WoodSet>(out, "wood", mode,
         std::bind(&StockpileSettings::has_wood, mBuffer),
         std::bind(&StockpileSettings::wood, mBuffer),
-        mPile->settings.flags.whole,
-        mPile->settings.flags.mask_wood,
+        mSettings->flags.whole,
+        mSettings->flags.mask_wood,
         [&]() {
             pwood.mats.clear();
         },
@@ -2240,17 +2279,17 @@ void StockpileSerializer::read_wood(DeserializeMode mode, const vector<string>& 
             if (all) {
                 for (size_t idx = 0; idx < num_elems; ++idx) {
                     string id = world->raws.plants.all[idx]->id;
-                    set_filter_elem("", filters, val, id, idx, pwood.mats.at(idx));
+                    set_filter_elem(out, "", filters, val, id, idx, pwood.mats.at(idx));
                 }
             } else {
                 for (int i = 0; i < bwood.mats_size(); ++i) {
                     const string token = bwood.mats(i);
                     const size_t idx = find_plant(token);
                     if (idx < 0 || (size_t)idx >= num_elems) {
-                        WARN(log).print("wood mat index invalid %s idx=%zd\n", token.c_str(), idx);
+                        WARN(log, out).print("wood mat index invalid %s idx=%zd\n", token.c_str(), idx);
                         continue;
                     }
-                    set_filter_elem("", filters, val, token, idx, pwood.mats.at(idx));
+                    set_filter_elem(out, "", filters, val, token, idx, pwood.mats.at(idx));
                 }
             }
         });

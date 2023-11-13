@@ -51,13 +51,21 @@ using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 
-df::burrow *Burrows::findByName(std::string name)
+df::burrow *Burrows::findByName(std::string name, bool ignore_final_plus)
 {
     auto &vec = df::burrow::get_vector();
 
-    for (size_t i = 0; i < vec.size(); i++)
-        if (vec[i]->name == name)
+    if (ignore_final_plus && name.ends_with('+'))
+        name = name.substr(0, name.length() - 1);
+
+    for (size_t i = 0; i < vec.size(); i++) {
+        std::string bname = vec[i]->name;
+        if (ignore_final_plus && bname.ends_with('+'))
+            bname = bname.substr(0, bname.length() - 1);
+
+        if (bname == name)
             return vec[i];
+    }
 
     return NULL;
 }
@@ -70,23 +78,13 @@ void Burrows::clearUnits(df::burrow *burrow)
     {
         auto unit = df::unit::find(burrow->units[i]);
 
-        if (unit)
+        if (unit) {
             erase_from_vector(unit->burrows, burrow->id);
+            erase_from_vector(unit->inactive_burrows, burrow->id);
+        }
     }
 
     burrow->units.clear();
-
-/* TODO: understand how this changes for v50
-    // Sync plotinfo if active
-    if (plotinfo && plotinfo->main.mode == ui_sidebar_mode::Burrows &&
-        plotinfo->burrows.in_add_units_mode && plotinfo->burrows.sel_id == burrow->id)
-    {
-        auto &sel = plotinfo->burrows.sel_units;
-
-        for (size_t i = 0; i < sel.size(); i++)
-            sel[i] = false;
-    }
-*/
 }
 
 bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
@@ -94,7 +92,8 @@ bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 
-    return binsearch_index(unit->burrows, burrow->id) >= 0;
+    return binsearch_index(unit->burrows, burrow->id) >= 0 ||
+        binsearch_index(unit->inactive_burrows, burrow->id) >= 0;
 }
 
 void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
@@ -104,27 +103,17 @@ void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 
-    if (enable)
-    {
-        insert_into_vector(unit->burrows, burrow->id);
+    if (enable) {
+        if (burrow->limit_workshops & 2)  // inactive flag
+            insert_into_vector(unit->inactive_burrows, burrow->id);
+        else
+            insert_into_vector(unit->burrows, burrow->id);
         insert_into_vector(burrow->units, unit->id);
-    }
-    else
-    {
+    } else {
         erase_from_vector(unit->burrows, burrow->id);
+        erase_from_vector(unit->inactive_burrows, burrow->id);
         erase_from_vector(burrow->units, unit->id);
     }
-
-/* TODO: understand how this changes for v50
-    // Sync plotinfo if active
-    if (plotinfo && plotinfo->main.mode == ui_sidebar_mode::Burrows &&
-        plotinfo->burrows.in_add_units_mode && plotinfo->burrows.sel_id == burrow->id)
-    {
-        int idx = linear_index(plotinfo->burrows.list_units, unit);
-        if (idx >= 0)
-            plotinfo->burrows.sel_units[idx] = enable;
-    }
-*/
 }
 
 void Burrows::listBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow)

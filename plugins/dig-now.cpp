@@ -113,14 +113,10 @@ public:
                 case job_type::CarveUpDownStaircase:
                     td.bits.dig = tile_dig_designation::UpDownStair;
                     break;
-                case job_type::DetailWall:
-                case job_type::DetailFloor: {
-                    df::tiletype tt = map.tiletypeAt(job->pos);
-                    if (tileSpecial(tt) != df::tiletype_special::SMOOTH) {
-                        td.bits.smooth = 1;
-                    }
+                case job_type::SmoothWall:
+                case job_type::SmoothFloor:
+                    td.bits.smooth = 1;
                     break;
-                }
                 case job_type::CarveTrack:
                     to.bits.carve_track_north = (job->item_category.whole >> 18) & 1;
                     to.bits.carve_track_south = (job->item_category.whole >> 19) & 1;
@@ -392,21 +388,37 @@ struct dug_tile_info {
         df::tiletype tt = map.tiletypeAt(pos);
         tmat = tileMaterial(tt);
 
+        itype = df::item_type::BOULDER;
+        imat = -1;
+
+        df::tiletype_shape shape = tileShape(tt);
+        if (shape == df::tiletype_shape::WALL || shape == df::tiletype_shape::FORTIFICATION) {
+            switch (tmat) {
+                case df::tiletype_material::STONE:
+                case df::tiletype_material::MINERAL:
+                case df::tiletype_material::FEATURE:
+                    imat = map.baseMaterialAt(pos).mat_index;
+                    break;
+                case df::tiletype_material::LAVA_STONE:
+                {
+                    MaterialInfo mi;
+                    if (mi.findInorganic("OBSIDIAN"))
+                        imat = mi.index;
+                    return; // itype should always be BOULDER, regardless of vein
+                }
+                default:
+                    break;
+            }
+        }
+
         switch (map.BlockAtTile(pos)->veinTypeAt(pos)) {
             case df::inclusion_type::CLUSTER_ONE:
             case df::inclusion_type::CLUSTER_SMALL:
                 itype = df::item_type::ROUGH;
                 break;
             default:
-                itype = df::item_type::BOULDER;
+                break;
         }
-
-        imat = -1;
-        if (tileShape(tt) == df::tiletype_shape::WALL
-                && (tmat == df::tiletype_material::STONE
-                    || tmat == df::tiletype_material::MINERAL
-                    || tmat == df::tiletype_material::FEATURE))
-            imat = map.baseMaterialAt(pos).mat_index;
     }
 };
 
@@ -419,7 +431,6 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
-    case df::tiletype_material::LAVA_STONE:
     case df::tiletype_material::MAGMA:
     case df::tiletype_material::HFS:
     case df::tiletype_material::UNDERWORLD_GATE:
@@ -447,15 +458,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         DEBUG(general).print("dig_tile: not diggable\n");
         return false;
     }
-
-    /** The algorithm process seems to be:
-     * for each tile
-     *  check for a designation
-     *    if a designation exists send it to dig_tile
-     *
-     * dig_tile (below) then digs the layer below the channel designated tile
-     * thereby changing it and causing its designation to be lost
-     * */
 
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {
@@ -830,8 +832,7 @@ static DFCoord simulate_fall(const DFCoord &pos) {
 
     while (Maps::ensureTileBlock(resting_pos)) {
         df::tiletype tt = *Maps::getTileType(resting_pos);
-        df::tiletype_shape_basic basic_shape = tileShapeBasic(tileShape(tt));
-        if (isWalkable(tt) && basic_shape != df::tiletype_shape_basic::Open)
+        if (isWalkable(tt))
             break;
         --resting_pos.z;
     }
@@ -972,10 +973,20 @@ static void post_process_dug_tiles(color_ostream &out,
             }
 
             if (to.bits.item) {
-                for (auto item : world->items.other.IN_PLAY) {
-                    if (item->pos == pos && item->flags.bits.on_ground)
-                        item->moveToGround(
-                                resting_pos.x, resting_pos.y, resting_pos.z);
+                std::vector<df::item*> items;
+                if (auto b = Maps::ensureTileBlock(pos)) {
+                    for (auto item_id : b->items) {
+                        auto item = df::item::find(item_id);
+                        if (item && item->pos == pos)
+                            items.emplace_back(item);
+                    }
+                }
+                if (!items.empty()) {
+                    // fresh MapCache since tile properties are being actively changed
+                    MapExtras::MapCache mc;
+                    for (auto item : items)
+                        Items::moveToGround(mc, item, resting_pos);
+                    mc.WriteAll();
                 }
             }
         }

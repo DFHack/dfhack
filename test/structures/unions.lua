@@ -1,3 +1,5 @@
+config.target = 'core'
+
 local utils = require('utils')
 
 function test.unit_action_fields()

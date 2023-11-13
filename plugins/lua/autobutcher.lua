@@ -19,7 +19,7 @@ end
 local function process_args(opts, args)
     if args[1] == 'help' then
         opts.help = true
-        return
+        return {}
     end
 
     return argparse.processArgsGetopt(args, {
@@ -67,7 +67,7 @@ function parse_commandline(opts, ...)
         process_races(opts, positionals, 6)
     elseif command == 'ticks' then
         local ticks = tonumber(positionals[2])
-        if not is_positive_int(arg) then
+        if not is_positive_int(ticks) then
             qerror('number of ticks must be a positive integer: ' .. ticks)
         else
             opts.ticks = ticks

@@ -26,6 +26,7 @@ distribution.
 #include "Pragma.h"
 #include "Export.h"
 #include "ColorText.h"
+#include "Core.h"
 
 class CPassiveSocket;
 class CActiveSocket;
@@ -38,17 +39,6 @@ namespace  DFHack
     using dfproto::EmptyMessage;
     using dfproto::IntMessage;
     using dfproto::StringMessage;
-
-    enum command_result
-    {
-        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
-        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
-        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
-        CR_OK = 0,               // Success
-        CR_FAILURE = 1,          // Failure
-        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
-        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
-    };
 
     enum DFHackReplyCode : int16_t {
         RPC_REPLY_RESULT = -1,

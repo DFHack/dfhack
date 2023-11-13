@@ -57,6 +57,7 @@ using namespace std;
 #include "df/flow_info.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #include "df/region_map_entry.h"
@@ -621,16 +622,15 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
+uint16_t Maps::getWalkableGroup(df::coord pos) {
+    auto block = getTileBlock(pos);
+    return block ? index_tile(block->walkable, pos) : 0;
+}
+
 bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
 {
-    auto block1 = getTileBlock(pos1);
-    auto block2 = getTileBlock(pos2);
-
-    if (!block1 || !block2)
-        return false;
-
-    auto tile1 = index_tile(block1->walkable, pos1);
-    auto tile2 = index_tile(block2->walkable, pos2);
+    auto tile1 = getWalkableGroup(pos1);
+    auto tile2 = getWalkableGroup(pos2);
 
     return tile1 && tile1 == tile2;
 }

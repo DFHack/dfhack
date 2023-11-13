@@ -49,13 +49,33 @@ static int cleanupHotkeys(lua_State *) {
     return 0;
 }
 
-static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen, bool filtermenu) {
+static bool should_hide_armok(color_ostream &out, const string &cmdline) {
+    bool should_hide = false;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+    Lua::CallLuaModuleFunction(out, L, "plugins.hotkeys", "should_hide_armok", 1, 1,
+        [&](lua_State *L){
+            Lua::Push(L, cmdline);
+        }, [&](lua_State *L){
+            should_hide = lua_toboolean(L, -1);
+        });
+
+    return should_hide;
+}
+
+static void add_binding_if_valid(color_ostream &out, const string &sym, const string &cmdline, df::viewscreen *screen, bool filtermenu) {
     if (!can_invoke(cmdline, screen))
         return;
 
     if (filtermenu && (cmdline == INVOKE_MENU_COMMAND ||
                        cmdline == INVOKE_HOTKEYS_COMMAND)) {
         DEBUG(log).print("filtering out hotkey menu keybinding\n");
+        return;
+    }
+
+    if (should_hide_armok(out, cmdline)) {
+        DEBUG(log).print("filtering out armok keybinding\n");
         return;
     }
 
@@ -67,7 +87,7 @@ static void add_binding_if_valid(const string &sym, const string &cmdline, df::v
     Core::getInstance().AddKeyBinding(keyspec, binding);
 }
 
-static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
+static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, bool filtermenu) {
     DEBUG(log).print("scanning for active keybindings\n");
     if (valid)
         cleanupHotkeys(NULL);
@@ -83,7 +103,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
     }
 
     for (int i = 1; i <= 12; i++) {
-        valid_keys.push_back("F" + int_to_string(i));
+        valid_keys.push_back('F' + int_to_string(i));
     }
 
     valid_keys.push_back("`");
@@ -103,7 +123,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
                         string::size_type colon_pos = invoke_cmd->find(":");
                         // colons at location 0 are for commands like ":lua"
                         if (colon_pos == string::npos || colon_pos == 0) {
-                            add_binding_if_valid(sym, *invoke_cmd, screen, filtermenu);
+                            add_binding_if_valid(out, sym, *invoke_cmd, screen, filtermenu);
                         }
                         else {
                             vector<string> tokens;
@@ -111,7 +131,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
                             string focus = tokens[0].substr(1);
                             if(Gui::matchFocusString(focus)) {
                                 auto cmdline = trim(tokens[1]);
-                                add_binding_if_valid(sym, cmdline, screen, filtermenu);
+                                add_binding_if_valid(out, sym, cmdline, screen, filtermenu);
                             }
                         }
                     }
@@ -124,7 +144,10 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
 }
 
 static int getHotkeys(lua_State *L) {
-    find_active_keybindings(Gui::getCurViewscreen(true), true);
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    find_active_keybindings(*out, Gui::getCurViewscreen(true), true);
     Lua::PushVector(L, sorted_keys);
     Lua::Push(L, current_bindings);
     return 2;
@@ -140,7 +163,7 @@ static void list(color_ostream &out) {
     DEBUG(log).print("listing active hotkeys\n");
     bool was_valid = valid;
     if (!valid)
-        find_active_keybindings(Gui::getCurViewscreen(true), false);
+        find_active_keybindings(out, Gui::getCurViewscreen(true), false);
 
     out.print("Valid keybindings for the current focus:\n %s\n",
               join_strings("\n", Gui::getCurFocus(true)).c_str());
@@ -176,6 +199,8 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
         return Core::getInstance().runCommand(out, INVOKE_MENU_COMMAND );
     }
 
+    CoreSuspender guard;
+
     if (parameters[0] == "list") {
         list(out);
         return CR_OK;
@@ -184,8 +209,6 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
     // internal command -- intentionally undocumented
     if (parameters.size() != 2 || parameters[0] != "invoke")
         return CR_WRONG_USAGE;
-
-    CoreSuspender guard;
 
     int index = string_to_int(parameters[1], -1);
     if (index < 0)

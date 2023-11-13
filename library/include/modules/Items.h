@@ -33,6 +33,8 @@ distribution.
 #include "MemAccess.h"
 
 #include "DataDefs.h"
+#include "df/building_tradedepotst.h"
+#include "df/caravan_state.h"
 #include "df/item.h"
 #include "df/item_type.h"
 #include "df/general_ref.h"
@@ -188,8 +190,8 @@ DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item 
 /// Gets value of base-quality item with specified type and material
 DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype);
 
-/// Gets the value of a specific item, ignoring civ values and trade agreements
-DFHACK_EXPORT int getValue(df::item *item);
+/// Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given
+DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
 DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* creator);
 
@@ -197,13 +199,21 @@ DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16
 DFHACK_EXPORT bool checkMandates(df::item *item);
 /// Checks whether the item can be traded
 DFHACK_EXPORT bool canTrade(df::item *item);
-/// Checks whether the item and all items it contains, if any, can be traded
+/// Returns false if the item or any contained items cannot be traded
 DFHACK_EXPORT bool canTradeWithContents(df::item *item);
+/// Returns true if the item is empty and can be traded or if the item contains any item that can be traded
+DFHACK_EXPORT bool canTradeAnyWithContents(df::item *item);
+/// marks the given item for trade at the given depot
+DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
+/// Returns true if an active caravan will pay extra for the given item
+DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
 
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);
 /// Checks whether the item is assigned to a squad
 DFHACK_EXPORT bool isSquadEquipment(df::item *item);
+/// Returns the item's capacity as a storage container
+DFHACK_EXPORT int32_t getCapacity(df::item* item);
 
 }
 }

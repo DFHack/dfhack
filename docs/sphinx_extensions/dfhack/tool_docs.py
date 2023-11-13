@@ -140,7 +140,8 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
         anchor = to_anchor(self.get_tool_name_from_docname())
         tags = self.env.domaindata['tag-repo']['doctags'][docname]
         indexdata = (name, self.options.get('summary', ''), '', docname, anchor, 0)
-        self.env.domaindata['all']['objects'].append(indexdata)
+        if 'unavailable' not in tags:
+            self.env.domaindata['all']['objects'].append(indexdata)
         for tag in tags:
             self.env.domaindata[tag]['objects'].append(indexdata)
 

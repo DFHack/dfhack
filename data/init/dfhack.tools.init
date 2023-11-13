@@ -78,14 +78,12 @@
 # Display DFHack version on title screen
 #enable title-version
 
-# Allow DFHack tools to overlay functionality and information on the DF screen
-enable overlay
-
-# Allow buildings to be placed now and built later when materials are available
+# Enable system services
 enable buildingplan
-
-#Allow designated stockpiles to automatically mark items for melting
-enable automelt
+enable burrow
+enable confirm
+enable logistics
+enable overlay
 
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 #enable manipulator
@@ -97,27 +95,16 @@ enable automelt
 #enable automaterial
 
 # Other interface improvement tools
-enable \
- confirm
 # dwarfmonitor \
 # mousequery \
 # autogems \
-# autodump \
-# automelt \
-# autotrade \
-# buildingplan \
-# trackstop \
 # zone \
 # stocks \
-# autochop \
-# stockpiles
+#
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.
 # You cannot extend a commented line.
 # You can comment out the extension of a line.
-
-# enable mouse controls and sand indicator in embark screen
-#embark-tools enable sticky sand mouse
 
 # enable option to enter embark assistant
 #enable embark-assistant
@@ -144,3 +131,4 @@ enable \
 
 alias add autounsuspend suspendmanager
 alias add gui/dig gui/design
+alias add version help

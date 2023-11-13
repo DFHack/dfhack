@@ -66,3 +66,10 @@ For easy reference, the corners can be found at the following coordinates:
 :(-1, 1): top right corner
 :(1, -1): lower left corner
 :(-1, -1): lower right corner
+
+Overlay
+-------
+
+The `overlay` plugin also provides a standard overlay itself:
+``title_version``, which displays the DFHack version on the DF title screen,
+along with quick links to `quickstart-guide` and `gui/control-panel`.

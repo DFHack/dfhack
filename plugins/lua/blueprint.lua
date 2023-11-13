@@ -9,17 +9,17 @@ local valid_phase_list = {
     'construct',
     'build',
     'place',
-    'zone',
-    'query',
-    'rooms',
+    -- 'zone',
+    -- 'query',
+    -- 'rooms',
 }
 valid_phases = utils.invert(valid_phase_list)
 
 local meta_phase_list = {
     'build',
     'place',
-    'zone',
-    'query',
+    -- 'zone',
+    -- 'query',
 }
 meta_phases = utils.invert(meta_phase_list)
 
@@ -167,7 +167,7 @@ end
 
 function parse_commandline(opts, ...)
     local positionals = process_args(opts, {...})
-    if opts.help then return end
+    if not positionals or opts.help then return end
 
     local width, height = tonumber(positionals[1]), tonumber(positionals[2])
     if is_bad_dim(width) or is_bad_dim(height) then
@@ -207,7 +207,7 @@ end
 -- returns the name of the output file for the given context
 function get_filename(opts, phase, ordinal)
     local fullname = 'dfhack-config/blueprints/' .. opts.name
-    local _,_,basename = fullname:find('/([^/]+)/?$')
+    local _,_,basename = opts.name:find('([^/]+)/*$')
     if not basename then
         -- should not happen since opts.name should already be validated
         error(('could not parse basename out of "%s"'):format(fullname))

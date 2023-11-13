@@ -3,7 +3,7 @@ embark-tools
 
 .. dfhack-tool::
     :summary: Extend the embark screen functionality.
-
+    :tags: unavailable
 
 Usage
 -----

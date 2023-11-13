@@ -1,7 +1,7 @@
 # linux backup files
 *~
 
-#Kdevelop project files
+# Kdevelop project files
 *.kdev4
 .kdev4
 
@@ -70,7 +70,7 @@ tags
 # Mac OS X .DS_Store files
 .DS_Store
 
-#VS is annoying about this one.
+# VS is annoying about this one.
 /build/win64/DF_PATH.txt
 /build/win32/DF_PATH.txt
 /.vs
@@ -80,3 +80,7 @@ tags
 
 # external plugins
 /plugins/CMakeLists.custom.txt
+
+# 3rd party downloads
+depends/steam
+depends/SDL2

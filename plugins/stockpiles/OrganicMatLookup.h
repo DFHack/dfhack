@@ -28,13 +28,13 @@ public:
         FoodMat(): material(-1), creature(0), caste(0) { }
     };
 
-    static void food_mat_by_idx(df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat);
-    static std::string food_token_by_idx(df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx);
+    static void food_mat_by_idx(DFHack::color_ostream& out, df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat);
+    static std::string food_token_by_idx(DFHack::color_ostream& out, df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx);
 
     static size_t food_max_size(df::enums::organic_mat_category::organic_mat_category mat_category);
     static void food_build_map();
 
-    static int16_t food_idx_by_token(df::enums::organic_mat_category::organic_mat_category mat_category, const std::string& token);
+    static int16_t food_idx_by_token(DFHack::color_ostream& out, df::enums::organic_mat_category::organic_mat_category mat_category, const std::string& token);
 
     static DFHack::MaterialInfo food_mat_by_token(const std::string& token);
 

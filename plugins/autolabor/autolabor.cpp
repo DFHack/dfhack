@@ -34,8 +34,8 @@
 #include <df/items_other_id.h>
 #include <df/plotinfost.h>
 #include <df/activity_info.h>
+#include <df/gamest.h>
 #include <df/global_objects.h>
-#include <df/gamest_extra.h>
 
 #include <MiscUtils.h>
 
@@ -51,7 +51,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("autolabor");
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(game_extra);
+REQUIRE_GLOBAL(game);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -305,6 +305,7 @@ static void cleanup_state()
 {
     enable_autolabor = false;
     labor_infos.clear();
+    game->external_flag &= ~1; // reinstate DF's work detail system
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -325,6 +326,8 @@ static void init_state()
 
     if (!enable_autolabor)
         return;
+
+    game->external_flag |= 1; // bypass DF's work detail system
 
     auto cfg_haulpct = World::GetPersistentData("autolabor/haulpct");
     if (cfg_haulpct.isValid())
@@ -413,8 +416,17 @@ static void enable_plugin(color_ostream &out)
 
     cleanup_state();
     init_state();
+}
 
-    df::global::game_extra->external_flag |= 1; // shut down DF's work detail system
+static void disable_plugin(color_ostream& out)
+{
+    if (config.isValid())
+        setOptionEnabled(CF_ENABLED, false);
+
+    enable_autolabor = false;
+    out << "Disabling autolabor." << std::endl;
+
+    cleanup_state();
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -1081,12 +1093,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
     }
     else if(!enable && enable_autolabor)
     {
-        enable_autolabor = false;
-        setOptionEnabled(CF_ENABLED, false);
-
-        df::global::game_extra->external_flag &= ~1; // reenable DF's work detail system
-
-        out << "Autolabor is disabled." << std::endl;
+        disable_plugin(out);
     }
 
     return CR_OK;

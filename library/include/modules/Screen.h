@@ -36,6 +36,8 @@ distribution.
 #include "DataDefs.h"
 #include "df/graphic.h"
 #include "df/viewscreen.h"
+#include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
 #include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
@@ -191,7 +193,7 @@ namespace DFHack
         }
 
         /// Wrapper to call enabler->zoom_display from plugins
-        DFHACK_EXPORT void zoom(df::zoom_commands cmd);
+        //DFHACK_EXPORT void zoom(df::zoom_commands cmd);
 
         /// Returns the state of [GRAPHICS:YES/NO]
         DFHACK_EXPORT bool inGraphicsMode();
@@ -228,6 +230,9 @@ namespace DFHack
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
         DFHACK_EXPORT void raise(df::viewscreen *screen);
+
+        // returns a new set of interface keys that ensures that string input matches the DF text buffer
+        DFHACK_EXPORT std::set<df::interface_key> normalize_text_keys(const std::set<df::interface_key>& keys);
 
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
@@ -359,6 +364,8 @@ namespace DFHack
         virtual df::item *getSelectedItem() { return nullptr; }
         virtual df::job *getSelectedJob() { return nullptr; }
         virtual df::building *getSelectedBuilding() { return nullptr; }
+        virtual df::building_stockpilest *getSelectedStockpile() { return nullptr; }
+        virtual df::building_civzonest *getSelectedCivZone() { return nullptr; }
         virtual df::plant *getSelectedPlant() { return nullptr; }
 
         static virtual_identity _identity;
@@ -384,6 +391,7 @@ namespace DFHack
         virtual ~dfhack_lua_viewscreen();
 
         static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
+        static void markInputAsHandled();
 
         virtual bool is_lua_screen() { return true; }
         virtual bool isFocused() { return !defocused; }
@@ -403,6 +411,8 @@ namespace DFHack
         virtual df::item *getSelectedItem();
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
+        virtual df::building_civzonest *getSelectedCivZone();
+        virtual df::building_stockpilest *getSelectedStockpile();
         virtual df::plant *getSelectedPlant();
 
         static virtual_identity _identity;

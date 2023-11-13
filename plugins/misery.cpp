@@ -72,7 +72,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
         plugin_name,
-        "Increase the intensity of negative dwarven thoughts.",
+        "Make citizens more miserable.",
         do_command));
 
     return CR_OK;

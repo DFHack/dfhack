@@ -60,6 +60,7 @@ using namespace std;
 #include "df/flow_info.h"
 #include "df/job.h"
 #include "df/plant.h"
+#include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #include "df/region_map_entry.h"
@@ -805,14 +806,16 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
             // If the block is at or above the plant's base level, we use the body array
             // otherwise we use the roots.
             // TODO: verify that the tree bounds intersect the block.
-            df::plant_tree_tile tile;
+            bool has_tree_tile = false;
             int z_diff = block->map_pos.z - pp->pos.z;
-            if (z_diff >= 0)
-                tile = info->body[z_diff][xx + (yy*info->dim_x)];
-            else
-                tile = info->roots[-1 - z_diff][xx + (yy*info->dim_x)];
-            if (tile.whole && !(tile.bits.blocked))
-            {
+            if (z_diff >= 0) {
+                df::plant_tree_tile tile = info->body[z_diff][xx + (yy * info->dim_x)];
+                has_tree_tile = tile.whole && !(tile.bits.blocked);
+            } else {
+                df::plant_root_tile tile = info->roots[-1 - z_diff][xx + (yy * info->dim_x)];
+                has_tree_tile = tile.whole && !(tile.bits.blocked);
+            }
+            if (has_tree_tile) {
                 df::coord pos = pp->pos;
                 pos.x = pos.x - (info->dim_x / 2) + xx;
                 pos.y = pos.y - (info->dim_y / 2) + yy;

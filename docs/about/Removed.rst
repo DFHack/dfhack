@@ -10,6 +10,13 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _workorder-recheck:
+
+workorder-recheck
+=================
+Tool to set 'Checking' status of the selected work order, allowing conditions to be
+reevaluated. Merged into `orders`.
+
 .. _autohauler:
 
 autohauler
@@ -25,6 +32,20 @@ automaterial
 Moved frequently used materials to the top of the materials list when building
 buildings. Also offered extended options when building constructions. All
 functionality has been merged into `buildingplan`.
+
+.. _automelt:
+
+automelt
+========
+Automatically mark items for melting when they are brought to a monitored
+stockpile. Merged into `logistics`.
+
+.. _autotrade:
+
+autotrade
+=========
+Automatically mark items for trading when they are brought to a monitored
+stockpile. Merged into `logistics`.
 
 .. _autounsuspend:
 
@@ -56,7 +77,7 @@ Replaced by `gui/launcher --minimal <gui/launcher>`.
 
 create-items
 ============
-Replaced by `gui/create-item --multi <gui/create-item>`.
+Replaced by `gui/create-item`.
 
 .. _deteriorateclothes:
 
@@ -152,6 +173,12 @@ This script is no longer useful in current DF versions. The script required a
 binpatch <binpatches/needs-patch>`, which has not been available since DF
 0.34.11.
 
+.. _gui/automelt:
+
+gui/automelt
+============
+Replaced by the `stockpiles` overlay and the gui for `logistics`.
+
 .. _gui/dig:
 
 gui/dig
@@ -163,6 +190,12 @@ Renamed to gui/design
 gui/hack-wish
 =============
 Replaced by `gui/create-item`.
+
+.. _gui/mechanisms:
+
+gui/mechanisms
+==============
+Linked building interface has been added to the vanilla UI.
 
 .. _gui/no-dfhack-init:
 
@@ -193,6 +226,12 @@ ruby
 Support for the Ruby language in DFHack scripts was removed due to the issues
 the Ruby library causes when used as an embedded language.
 
+.. _search-plugin:
+
+search
+======
+Functionality was merged into `sort`.
+
 .. _show-unit-syndromes:
 
 show-unit-syndromes
@@ -205,6 +244,12 @@ stocksettings
 =============
 Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
 `stockpiles` API.
+
+.. _title-version:
+
+title-version
+=============
+Replaced with an `overlay`.
 
 .. _warn-stuck-trees:
 

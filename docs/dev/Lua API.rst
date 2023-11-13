@@ -1802,15 +1802,15 @@ World module
 
 * ``dfhack.world.ReadCurrentTick()``
 
-  Returns the current game tick.
+  Returns the number of game ticks (``df.global.world.frame_counter``) since the start of the current game year.
 
 * ``dfhack.world.ReadCurrentMonth()``
 
-  Returns the current game month.
+  Returns the current game month, ranging from 0-11 (The Dwarven year has 12 months).
 
 * ``dfhack.world.ReadCurrentDay()``
 
-  Returns the current game day.
+  Returns the current game day, ranging from 1-28 (Each Dwarven month as 28 days)
 
 * ``dfhack.world.ReadCurrentWeather()``
 

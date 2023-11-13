@@ -91,6 +91,7 @@ Template for new versions:
 - ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
 - ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
 - ``dfhack.buildings.completebuild``: expose new module API
+- ``dfhack.world``: add documentation for world module
 
 ## Removed
 

@@ -234,7 +234,7 @@ function QualityAndMaterialsPage:init()
                     frame={l=30, t=2},
                     label='Reset filter',
                     auto_width=true,
-                    key='CUSTOM_SHIFT_X',
+                    key='CUSTOM_CTRL_X',
                     on_activate=self:callback('clear_filter'),
                 },
             },

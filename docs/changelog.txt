@@ -65,6 +65,7 @@ Template for new versions:
 - `caravan`: price of vermin swarms correctly adjusted down. a stack of 10000 bees is worth 10, not 10000
 - `sort`: when filtering out already-established temples in the location assignment screen, also filter out the "No specific deity" option if a non-denominational temple has already been established
 - RemoteServer: continue to accept connections as long as the listening socket is valid instead of closing the socket after the first disconnect
+- `buildingplan`: edit filter interface now uses ctrl-x to reset the filter to avoid conflict with increasing the filter's minimum quality (shift-x)
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel

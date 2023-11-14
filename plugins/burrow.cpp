@@ -523,6 +523,10 @@ static bool is_tree(const df::tiletype *tt) {
     return tileMaterial(*tt) == tiletype_material::TREE;
 }
 
+static bool is_tree_trunk(const df::tiletype *tt) {
+    return is_tree(tt) && tileShape(*tt)== tiletype_shape::WALL;
+}
+
 // if the outside tile flag is set
 // or it's light and it's a tree
 // or there are just outside or light tree tiles above it
@@ -595,7 +599,7 @@ static void flood_fill(lua_State *L, bool enable) {
 
         // only go one tile outside of a walkability group (trees don't count)
         df::tiletype *tt = Maps::getTileType(pos);
-        if (start_walk && start_walk != walk && tt && !is_tree(tt))
+        if (start_walk && start_walk != walk && tt && !is_tree_trunk(tt))
             continue;
 
         if (tt && tileShape(*tt) != df::tiletype_shape::RAMP_TOP) {

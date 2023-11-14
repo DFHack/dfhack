@@ -112,14 +112,22 @@ local function get_location_search_key(zone)
 end
 
 local function get_stockpile_search_key(stockpile)
-    -- I put the stockpile_number in twice so you can search both with and without the octothorpe
-    -- (e.g. if your unnamed stockpile is listed as "Stockpile #16" you can search both "#16" or "16")
     if #stockpile.name ~= 0 then return stockpile.name
-    else return ('Stockpile #%s %s'):format(stockpile.stockpile_number, stockpile.stockpile_number) end
+    else return ('Stockpile #%s'):format(stockpile.stockpile_number) end
 end
 
 local function get_workshop_search_key(workshop)
-    return ('%s %s %s'):format(workshop.name, df.workshop_type.attrs[workshop.type].name or '', df.workshop_type[workshop.type])
+    local result = {}
+    for _, unit_id in ipairs(workshop.profile.permitted_workers) do
+        local unit = df.unit.find(unit_id)
+        if unit then table.insert(result, sortoverlay.get_unit_search_key(unit)) end
+    end
+
+    table.insert(result, workshop.name)
+    table.insert(result, df.workshop_type.attrs[workshop.type].name or '')
+    table.insert(result, df.workshop_type[workshop.type])
+
+    return table.concat(result, ' ')
 end
 
 local function get_farmplot_search_key(farmplot)

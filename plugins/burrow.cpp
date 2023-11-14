@@ -520,8 +520,7 @@ static uint16_t get_walk_group(const df::coord & pos) {
 }
 
 static bool is_tree(const df::tiletype *tt) {
-    return tileMaterial(*tt) == tiletype_material::TREE ||
-        tileMaterial(*tt) == tiletype_material::MUSHROOM;
+    return tileMaterial(*tt) == tiletype_material::TREE;
 }
 
 // if the outside tile flag is set
@@ -599,14 +598,16 @@ static void flood_fill(lua_State *L, bool enable) {
         if (start_walk && start_walk != walk && tt && !is_tree(tt))
             continue;
 
-        flood.emplace(pos.x-1, pos.y-1, pos.z);
-        flood.emplace(pos.x,   pos.y-1, pos.z);
-        flood.emplace(pos.x+1, pos.y-1, pos.z);
-        flood.emplace(pos.x-1, pos.y,   pos.z);
-        flood.emplace(pos.x+1, pos.y,   pos.z);
-        flood.emplace(pos.x-1, pos.y+1, pos.z);
-        flood.emplace(pos.x,   pos.y+1, pos.z);
-        flood.emplace(pos.x+1, pos.y+1, pos.z);
+        if (tt && tileShape(*tt) != df::tiletype_shape::RAMP_TOP) {
+            flood.emplace(pos.x-1, pos.y-1, pos.z);
+            flood.emplace(pos.x,   pos.y-1, pos.z);
+            flood.emplace(pos.x+1, pos.y-1, pos.z);
+            flood.emplace(pos.x-1, pos.y,   pos.z);
+            flood.emplace(pos.x+1, pos.y,   pos.z);
+            flood.emplace(pos.x-1, pos.y+1, pos.z);
+            flood.emplace(pos.x,   pos.y+1, pos.z);
+            flood.emplace(pos.x+1, pos.y+1, pos.z);
+        }
 
         if (!zlevel) {
             df::coord pos_above = pos + df::coord(0, 0, 1);

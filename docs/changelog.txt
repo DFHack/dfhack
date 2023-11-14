@@ -77,6 +77,7 @@ Template for new versions:
 - `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
 
 ## Documentation
+- Document the Lua API for the ``dfhack.world`` module
 
 ## API
 - ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target

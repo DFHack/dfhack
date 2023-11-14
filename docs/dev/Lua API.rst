@@ -1840,6 +1840,54 @@ Items module
 
   Checks whether the item is assigned to a squad.
 
+.. _lua-world:
+
+World module
+------------
+
+* ``dfhack.world.ReadPauseState()``
+
+  Returns *true* if the game is paused.
+
+* ``dfhack.world.SetPauseState(paused)``
+
+  Sets the pause state of the game.
+
+* ``dfhack.world.ReadCurrentYear()``
+
+  Returns the current game year.
+
+* ``dfhack.world.ReadCurrentTick()``
+
+  Returns the number of game ticks (``df.global.world.frame_counter``) since the start of the current game year.
+
+* ``dfhack.world.ReadCurrentMonth()``
+
+  Returns the current game month, ranging from 0-11 (The Dwarven year has 12 months).
+
+* ``dfhack.world.ReadCurrentDay()``
+
+  Returns the current game day, ranging from 1-28 (Each Dwarven month as 28 days)
+
+* ``dfhack.world.ReadCurrentWeather()``
+
+  Returns the current game weather (``df.weather_type``).
+
+* ``dfhack.world.SetCurrentWeather(weather)``
+
+  Sets the current game weather to ``weather``.
+
+* ``dfhack.world.ReadWorldFolder()``
+
+  Returns the name of the directory/folder the current saved game is under, or an empty string if no game was loaded this session.
+
+* ``dfhack.world.isFortressMode([gametype])``
+* ``dfhack.world.isAdventureMode([gametype])``
+* ``dfhack.world.isArena([gametype])``
+* ``dfhack.world.isLegends([gametype])``
+
+  Without any arguments, returns *true* if the current gametype matches. Optionally accepts a gametype id to match against.
+
 .. _lua-maps:
 
 Maps module

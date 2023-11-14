@@ -602,16 +602,14 @@ static void flood_fill(lua_State *L, bool enable) {
         if (start_walk && start_walk != walk && tt && !is_tree_trunk(tt))
             continue;
 
-        if (tt && tileShape(*tt) != df::tiletype_shape::RAMP_TOP) {
-            flood.emplace(pos.x-1, pos.y-1, pos.z);
-            flood.emplace(pos.x,   pos.y-1, pos.z);
-            flood.emplace(pos.x+1, pos.y-1, pos.z);
-            flood.emplace(pos.x-1, pos.y,   pos.z);
-            flood.emplace(pos.x+1, pos.y,   pos.z);
-            flood.emplace(pos.x-1, pos.y+1, pos.z);
-            flood.emplace(pos.x,   pos.y+1, pos.z);
-            flood.emplace(pos.x+1, pos.y+1, pos.z);
-        }
+        flood.emplace(pos.x-1, pos.y-1, pos.z);
+        flood.emplace(pos.x,   pos.y-1, pos.z);
+        flood.emplace(pos.x+1, pos.y-1, pos.z);
+        flood.emplace(pos.x-1, pos.y,   pos.z);
+        flood.emplace(pos.x+1, pos.y,   pos.z);
+        flood.emplace(pos.x-1, pos.y+1, pos.z);
+        flood.emplace(pos.x,   pos.y+1, pos.z);
+        flood.emplace(pos.x+1, pos.y+1, pos.z);
 
         if (!zlevel) {
             df::coord pos_above = pos + df::coord(0, 0, 1);

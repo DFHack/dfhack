@@ -111,6 +111,28 @@ local function get_location_search_key(zone)
     return table.concat(result, ' ')
 end
 
+local function get_stockpile_search_key(stockpile)
+    -- I put the stockpile_number in twice so you can search both with and without the octothorpe
+    -- (e.g. if your unnamed stockpile is listed as "Stockpile #16" you can search both "#16" or "16")
+    if #stockpile.name ~= 0 then return stockpile.name
+    else return ('Stockpile #%s %s'):format(stockpile.stockpile_number, stockpile.stockpile_number) end
+end
+
+local function get_workshop_search_key(workshop)
+    return ('%s %s %s'):format(workshop.name, df.workshop_type.attrs[workshop.type].name or '', df.workshop_type[workshop.type])
+end
+
+local function get_farmplot_search_key(farmplot)
+    local result = {}
+
+    if #farmplot.name ~= 0 then table.insert(result, farmplot.name) else table.insert(result, 'Farm Plot') end
+
+    local plant = df.plant_raw.find(farmplot.plant_id[farmplot.last_season])
+    if plant then table.insert(result, plant.name_plural) end
+
+    return table.concat(result, ' ')
+end
+
 -- ----------------------
 -- PlacesOverlay
 --
@@ -142,17 +164,14 @@ function PlacesOverlay:init()
 
     self:register_handler('ZONES', buildings.list[df.buildings_mode_type.ZONES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_zone_search_key}))
     self:register_handler('LOCATIONS', buildings.list[df.buildings_mode_type.LOCATIONS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_location_search_key}))
+    self:register_handler('STOCKPILES', buildings.list[df.buildings_mode_type.STOCKPILES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_stockpile_search_key}))
+    self:register_handler('WORKSHOPS', buildings.list[df.buildings_mode_type.WORKSHOPS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_workshop_search_key}))
+    self:register_handler('FARMPLOTS', buildings.list[df.buildings_mode_type.FARMPLOTS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_farmplot_search_key}))
 end
 
 function PlacesOverlay:get_key()
     if info.current_mode == df.info_interface_mode_type.BUILDINGS then
-        -- TODO: Replace nested if with 'return df.buildings_mode_type[buildings.mode]' once other handlers are written
-        -- Not there right now so it doesn't render a search bar on unsupported Places subpages
-        if buildings.mode == df.buildings_mode_type.ZONES then
-            return 'ZONES'
-        elseif buildings.mode == df.buildings_mode_type.LOCATIONS then
-            return 'LOCATIONS'
-        end
+        return df.buildings_mode_type[buildings.mode]
     end
 end
 

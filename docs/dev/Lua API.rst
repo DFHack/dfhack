@@ -197,11 +197,12 @@ They implement the following features:
     are automatically exposed in their exact type, and the reverse
     rule would make access to superclass fields unreliable.
 
-* ``ref._field(field)``
+* ``ref:_field(field)``
 
   Returns a reference to a valid field. That is, unlike regular
   subscript, it returns a reference to the field within the structure
-  even for primitive typed fields and pointers.
+  even for primitive typed fields and pointers. Fails with an error
+  if the field is not found.
 
 * ``ref:vmethod(args...)``
 
@@ -246,7 +247,7 @@ Implemented features:
   may return a default value, or auto-resize instead for convenience.
   Currently this relaxed mode is implemented by df-flagarray aka BitArray.
 
-* ``ref._field(index)``
+* ``ref:_field(index)``
 
   Like with structs, returns a pointer to the array element, if possible.
   Flag and bit arrays cannot return such pointer, so it fails with an error.

@@ -189,10 +189,6 @@ function PlacesOverlay:updateFrames()
     local frame = self.subviews.panel.frame
     if frame.l == l and frame.t == t then return ret end
     frame.l, frame.t = l, t
-    local frame2 = self.subviews.subset_panel.frame
-    frame2.l, frame2.t = l, t + 1
-    local frame3 = self.subviews.subfilter_panel.frame
-    frame3.l, frame3.t = l, t + 2
     return true
 end
 

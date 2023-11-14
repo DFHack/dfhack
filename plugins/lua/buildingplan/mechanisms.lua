@@ -18,6 +18,16 @@ MechanismOverlay.ATTRS{
     frame={w=57, h=13},
 }
 
+local function get_label()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if bld and bld:getType() == df.building_type.Trap and
+        bld:getSubtype() == df.trap_type.PressurePlate
+    then
+        return 'Plate:'
+    end
+    return 'Lever:'
+end
+
 function MechanismOverlay:init()
     self:addviews{
         widgets.BannerPanel{
@@ -31,7 +41,7 @@ function MechanismOverlay:init()
                     view_id='safety_lever',
                     frame={t=0, l=20, w=15},
                     key='CUSTOM_G',
-                    label='Lever:',
+                    label=get_label,
                     options={
                         {label='Any', value=0},
                         {label='Magma', value=2, pen=COLOR_RED},

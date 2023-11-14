@@ -635,7 +635,7 @@ static int meta_struct_index(lua_State *state)
 static int meta_struct_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(name)");
+        luaL_error(state, "Usage: object:_field(name)");
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
@@ -660,7 +660,7 @@ static int meta_struct_field_reference(lua_State *state)
 static int meta_global_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(name)");
+        luaL_error(state, "Usage: object:_field(name)");
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
         field_error(state, 2, "builtin property or method", "reference");
@@ -947,7 +947,7 @@ static int meta_container_index(lua_State *state)
 static int meta_container_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(index)");
+        luaL_error(state, "Usage: object:_field(index)");
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     int iidx = lookup_container_field(state, 2, "reference");
 

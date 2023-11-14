@@ -52,6 +52,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r3
+
+## New Tools
 - `burrow`: (reinstated) automatically expand burrows as you dig
 
 ## New Features
@@ -94,8 +112,6 @@ Template for new versions:
 - ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
 - ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
 - ``dfhack.buildings.completebuild``: expose new module API
-
-## Removed
 
 # 50.11-r2
 

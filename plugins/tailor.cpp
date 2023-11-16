@@ -277,6 +277,9 @@ public:
             {
                 if (inv->mode != df::unit_inventory_item::Worn)
                     continue;
+                // skip non-clothing
+                if (!inv->item->isClothing())
+                    continue;
                 if (inv->item->getWear() > 0)
                     worn.push_back(inv->item);
                 else
@@ -288,9 +291,17 @@ public:
 
             for (auto w : worn)
             {
+                // skip armor
+                if (w->getEffectiveArmorLevel() > 0)
+                    continue;
+
                 auto ty = w->getType();
 
-                int isize = world->raws.creatures.all[w->getMakerRace()]->adultsize;
+                auto makerRace = w->getMakerRace();
+                if (makerRace < 0 || makerRace >= world->raws.creatures.all.size())
+                    continue;
+
+                int isize = world->raws.creatures.all[makerRace]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 

@@ -2178,10 +2178,16 @@ Low-level building creation functions:
 
 * ``dfhack.buildings.getRoomDescription(building[, unit])``
 
-  If the building is a room, returns a description including quality modifiers, e.g. "Royal Bedroom".
-  Otherwise, returns an empty string.
+  If the building is a room, returns a description including quality modifiers,
+  e.g. "Royal Bedroom". Otherwise, returns an empty string.
 
-  The unit argument is passed through to DF and may modify the room's value depending on the unit given.
+  The unit argument is passed through to DF and may modify the room's value
+  depending on the unit given.
+
+* ``dfhack.buildings.completeBuild(building)``
+
+  Complete an unconstructed or partially-constructed building and link it into
+  the world.
 
 High-level
 ~~~~~~~~~~

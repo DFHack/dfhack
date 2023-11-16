@@ -550,8 +550,8 @@ function PlannerOverlay:init()
                 },
                 widgets.HotkeyLabel{
                     frame={b=0, l=1, w=22},
-                    key='CUSTOM_X',
-                    label='Clear filter',
+                    key='CUSTOM_CTRL_D',
+                    label='Delete filter',
                     on_activate=function() self:clear_filter(self.selected) end,
                     enabled=function()
                         return buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)

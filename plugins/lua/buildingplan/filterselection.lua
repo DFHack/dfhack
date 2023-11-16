@@ -232,9 +232,9 @@ function QualityAndMaterialsPage:init()
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=2},
-                    label='Reset filter',
+                    label='Delete filter',
                     auto_width=true,
-                    key='CUSTOM_CTRL_X',
+                    key='CUSTOM_CTRL_D',
                     on_activate=self:callback('clear_filter'),
                 },
             },

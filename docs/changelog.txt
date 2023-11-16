@@ -84,6 +84,7 @@ Template for new versions:
 - `sort`: when filtering out already-established temples in the location assignment screen, also filter out the "No specific deity" option if a non-denominational temple has already been established
 - RemoteServer: continue to accept connections as long as the listening socket is valid instead of closing the socket after the first disconnect
 - `buildingplan`: overlay and filter editor gui now uses ctrl-d to delete the filter to avoid conflict with increasing the filter's minimum quality (shift-x)
+- `tailor`: fix crash on Linux where scanned unit is wearing damaged non-clothing (e.g. a crown)
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel

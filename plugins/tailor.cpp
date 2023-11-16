@@ -298,7 +298,7 @@ public:
                 auto ty = w->getType();
 
                 auto makerRace = w->getMakerRace();
-                if (makerRace < 0 || makerRace >= world->raws.creatures.all.size())
+                if (makerRace < 0 || makerRace >= (int16_t) world->raws.creatures.all.size())
                     continue;
 
                 int isize = world->raws.creatures.all[makerRace]->adultsize;

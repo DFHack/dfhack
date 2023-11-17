@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `tailor`: corrected a corner case that resulted in existing stock being ignored in some circumstances
 
 ## Documentation
 

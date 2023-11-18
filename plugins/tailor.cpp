@@ -307,17 +307,9 @@ public:
 
                 if (wearing.count(ty) == 0)
                 {
-                    if (available[std::make_pair(ty, usize)] > 0)
+                    if (ordered.count(ty) == 0)
                     {
-                        available[std::make_pair(ty, usize)] -= 1;
-                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
-                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str());
-                        wearing.insert(ty);
-                    }
-                    else if (ordered.count(ty) == 0)
-                    {
-                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
+                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement\n",
                                             DF2CONSOLE(description).c_str(), isize,
                                             DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str(), usize);
                         needed[std::make_pair(ty, usize)] += 1;
@@ -368,6 +360,9 @@ public:
             df::item_type ty = a.first.first;
             int size = a.first.second;
             int count = a.second;
+
+            // decrease "need" by "available"
+            count -= available[std::make_pair(ty, size)];
 
             if (count <= 0)
                 continue;

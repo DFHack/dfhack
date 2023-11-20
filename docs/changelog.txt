@@ -56,8 +56,11 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: fix choosing the wrong mechanism (or something that isn't a mechanism) when linking a lever and manually choosing a mechanism, but then canceling the selection
 
 ## Misc Improvements
+- `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
+- `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
 - `tailor`: corrected a corner case that resulted in existing stock being ignored in some circumstances
 
 ## Documentation

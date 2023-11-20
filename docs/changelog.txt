@@ -58,6 +58,8 @@ Template for new versions:
 ## Fixes
 - `buildingplan`: fix choosing the wrong mechanism (or something that isn't a mechanism) when linking a lever and manually choosing a mechanism, but then canceling the selection
 - RemoteServer: don't shut down the socket prematurely, allowing continuing connections from, for example, dfhack-run
+- `sort`: fix potential crash when exiting and re-entering a creatures subtab with a search active
+- `sort`: prevent keyboard keys from affecting the UI when search is active and multiple keys are hit at once
 
 ## Misc Improvements
 - `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets

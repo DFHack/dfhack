@@ -1708,12 +1708,15 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
     return true;
 }
 
-void Buildings::completebuild(df::building* bld, char in_play)
+void Buildings::completeBuild(df::building* bld)
 {
     CHECK_NULL_POINTER(bld);
 
     auto fp = df::global::buildingst_completebuild;
     CHECK_NULL_POINTER(fp);
+
+    // whether to add to the IN_PLAY vector, which we always want to do
+    char in_play = 1;
 
     using FT = std::function<void(df::building* bld, char)>;
     auto f = reinterpret_cast<FT*>(fp);

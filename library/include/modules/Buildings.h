@@ -293,6 +293,6 @@ DFHACK_EXPORT bool getCageOccupants(df::building_cagest *cage, std::vector<df::u
 /**
  * Finalizes a new building into the world
  */
-DFHACK_EXPORT void completebuild(df::building* bld, char in_play);
+DFHACK_EXPORT void completeBuild(df::building* bld);
 }
 }

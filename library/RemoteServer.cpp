@@ -475,38 +475,28 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
 {
     ServerMainImpl server{std::move(promise), port};
 
-    CActiveSocket *client = nullptr;
-
+    server.socket.SetBlocking();
     try {
-        for (int acceptFail = 0; server.socket.IsSocketValid() && acceptFail < 5; acceptFail++)
-        {
-            if ((client = server.socket.Accept()) != NULL)
-            {
+        while (server.socket.IsSocketValid()) {
+            if (std::unique_ptr<CActiveSocket> client{server.socket.Accept()}) {
                 BlockGuard lock;
-                ServerConnection::Accepted(client);
-                client = nullptr;
-                acceptFail = 0;
+                ServerConnection::Accepted(client.release());
             }
-            else
-            {
-                WARN(socket).print("Connection failure: %s (%d of %d)\n", server.socket.DescribeError(), acceptFail + 1, 5);
+            else switch (server.socket.GetSocketError()) {
+            case CSimpleSocket::SocketInvalidSocket:
+                WARN(socket).print("Listening socket invalid, shutting down RemoteServer\n");
+                server.socket.Close();
+                break;
+            case CSimpleSocket::SocketFirewallError:
+            case CSimpleSocket::SocketProtocolError:
+                WARN(socket).print("Connection failed: %s\n", server.socket.DescribeError());
+                break;
+            default:
+                break;
             }
         }
     }
-    catch (BlockedException&) {
-        if (client)
-            client->Close();
-        delete client;
-        WARN(socket).print("Connection failure: unexpectedly blocked");
-    }
-
-    if (server.socket.IsSocketValid())
-    {
-        WARN(socket).print("Too many failed accepts, shutting down RemoteServer\n");
-    }
-    else
-    {
-        WARN(socket).print("Listening socket invalid, shutting down RemoteServer\n");
+    catch(BlockedException &) {
     }
 }
 

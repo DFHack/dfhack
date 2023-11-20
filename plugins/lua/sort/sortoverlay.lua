@@ -89,12 +89,23 @@ function SortOverlay:onRenderBody(dc)
     SortOverlay.super.onRenderBody(self, dc)
 end
 
+local function is_mouse_key(keys)
+    return keys._MOUSE_L
+        or keys._MOUSE_R
+        or keys._MOUSE_M
+        or keys.CONTEXT_SCROLL_UP
+        or keys.CONTEXT_SCROLL_DOWN
+        or keys.CONTEXT_SCROLL_PAGEUP
+        or keys.CONTEXT_SCROLL_PAGEDOWN
+end
+
 function SortOverlay:onInput(keys)
     if keys._MOUSE_R and self.subviews.search.focus and self:get_key() then
         self.subviews.search:setFocus(false)
         return true
     end
-    return SortOverlay.super.onInput(self, keys)
+    return SortOverlay.super.onInput(self, keys) or
+        (self.subviews.search.focus and not is_mouse_key(keys))
 end
 
 function SortOverlay:do_search(text, force_full_search)

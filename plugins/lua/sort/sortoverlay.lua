@@ -46,16 +46,22 @@ function SortOverlay:register_handler(key, vec, search_fn, cleanup_fn)
     }
 end
 
+local function do_cleanup(handlers, key, data)
+    if not key or not data then return end
+    local cleanup_fn = safe_index(handlers, key, 'cleanup_fn')
+    if cleanup_fn then
+        cleanup_fn(data)
+    end
+    data.saved_original = nil
+end
+
 -- handles reset and clean up when the player exits the handled scope
 function SortOverlay:overlay_onupdate()
     if self.overlay_onupdate_max_freq_seconds == 0 and
         not dfhack.gui.matchFocusString(self.viewscreens, dfhack.gui.getDFViewscreen(true))
     then
         for key,data in pairs(self.state) do
-            local cleanup_fn = safe_index(self.handlers, key, 'cleanup_fn')
-            if cleanup_fn then
-                cleanup_fn(data)
-            end
+            do_cleanup(self.handlers, key, data)
         end
         self:reset()
         self.overlay_onupdate_max_freq_seconds = 300
@@ -77,7 +83,11 @@ end
 -- handles saving/restoring search strings when the player moves between different contexts
 function SortOverlay:onRenderBody(dc)
     if next(self.state) then
-        local key = self:get_key()
+        local key, group = self:get_key()
+        if self.state.cur_group ~= group then
+            self.state.cur_group = group
+            do_cleanup(self.handlers, self.state.cur_key, self.state[self.state.cur_key])
+        end
         if self.state.cur_key ~= key then
             self.state.cur_key = key
             local prev_text = key and ensure_key(self.state, key).prev_text or ''

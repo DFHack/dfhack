@@ -125,13 +125,15 @@ local function work_details_search(vec, data, text, incremental)
         vec, data, text, incremental)
 end
 
-local function restore_allocated_data(vec, data)
-    if not data.saved_visible or not data.saved_original then return end
-    for _,elem in ipairs(data.saved_original) do
-        if not utils.linear_index(data.saved_visible, elem) then
-            vec:insert('#', elem)
+local function free_allocated_data(data)
+    if data.saved_visible and data.saved_original and #data.saved_visible ~= #data.saved_original then
+        for _,elem in ipairs(data.saved_original) do
+            if not utils.linear_index(data.saved_visible, elem) then
+                elem:delete()
+            end
         end
     end
+    data.saved_original, data.saved_visible = nil, nil
 end
 
 local function serialize_skills(unit)
@@ -311,12 +313,12 @@ function InfoOverlay:init()
                     get_search_key_fn=get_cri_unit_search_key,
                     get_sort_fn=get_sort
                 }),
-            curry(restore_allocated_data, vec))
+            free_allocated_data)
     end
 
     self:register_handler('JOBS', tasks.cri_job,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_cri_unit_search_key}),
-        curry(restore_allocated_data, tasks.cri_job))
+        free_allocated_data)
     self:register_handler('PET_OT', creatures.atk_index,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
     self:register_handler('PET_AT', creatures.trainer,
@@ -345,14 +347,14 @@ function InfoOverlay:get_key()
     if info.current_mode == df.info_interface_mode_type.CREATURES then
         if creatures.current_mode == df.unit_list_mode_type.PET then
             if creatures.showing_overall_training then
-                return 'PET_OT'
+                return 'PET_OT', 'cre'
             elseif creatures.adding_trainer then
-                return 'PET_AT'
+                return 'PET_AT', 'cre'
             elseif creatures.assign_work_animal then
-                return 'PET_WA'
+                return 'PET_WA', 'cre'
             end
         end
-        return df.unit_list_mode_type[creatures.current_mode]
+        return df.unit_list_mode_type[creatures.current_mode], 'cre'
     elseif info.current_mode == df.info_interface_mode_type.JOBS then
         return 'JOBS'
     elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
@@ -459,7 +461,7 @@ function CandidatesOverlay:init()
 
     self:register_handler('CANDIDATE', administrators.candidate,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_candidate_search_key}),
-        curry(restore_allocated_data, administrators.candidate))
+        free_allocated_data)
 end
 
 function CandidatesOverlay:get_key()

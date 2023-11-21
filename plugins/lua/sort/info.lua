@@ -104,6 +104,34 @@ local function get_cri_unit_search_key(cri_unit)
         cri_unit.job_sort_name)
 end
 
+local function get_task_search_key(cri_unit)
+    local result = {get_cri_unit_search_key(cri_unit)}
+
+    if cri_unit.jb then
+        local bld = dfhack.job.getHolder(cri_unit.jb)
+        if bld then
+            table.insert(result, bld.name)
+            local btype = bld:getType()
+            if btype == df.building_type.Workshop then
+                table.insert(result, df.workshop_type.attrs[bld.type].name or '')
+                table.insert(result, df.workshop_type[bld.type])
+            elseif btype == df.building_type.Furnace then
+                table.insert(result, df.furnace_type[bld.type])
+            elseif btype == df.building_type.Construction then
+                table.insert(result, df.construction_type[bld.type])
+            elseif btype == df.building_type.Trap then
+                table.insert(result, df.trap_type[bld.trap_type])
+            elseif btype == df.building_type.SiegeEngine then
+                table.insert(result, df.siegeengine_type[bld.type])
+            else
+                table.insert(result, df.building_type.attrs[btype].name)
+            end
+        end
+    end
+
+    return table.concat(result, ' ')
+end
+
 local function get_race_name(raw_id)
     local raw = df.creature_raw.find(raw_id)
     if not raw then return end
@@ -317,7 +345,7 @@ function InfoOverlay:init()
     end
 
     self:register_handler('JOBS', tasks.cri_job,
-        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_cri_unit_search_key}),
+        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_task_search_key}),
         free_allocated_data)
     self:register_handler('PET_OT', creatures.atk_index,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))

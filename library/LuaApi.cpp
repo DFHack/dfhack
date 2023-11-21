@@ -100,7 +100,7 @@ distribution.
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
 #include "df/vermin.h"
-#include "df/report_init.h"
+#include "df/announcement_infost.h"
 #include "df/report_zoom_type.h"
 
 #include <lua.h>
@@ -1564,7 +1564,7 @@ static int gui_getCurFocus(lua_State *state) {
 static int gui_autoDFAnnouncement(lua_State *state)
 {
     bool rv;
-    df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);
+    df::announcement_infost *r = Lua::GetDFObject<df::announcement_infost>(state, 1);
 
     if (r)
     {

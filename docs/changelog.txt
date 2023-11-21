@@ -65,6 +65,7 @@ Template for new versions:
 - `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
 - `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
 - `tailor`: corrected a corner case that resulted in existing stock being ignored in some circumstances
+- `sort`: when searching on the Tasks tab, also search the names of the things the task is associated with, such as the name of the stockpile that an item will be stored in
 
 ## Documentation
 

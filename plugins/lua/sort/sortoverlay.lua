@@ -61,7 +61,9 @@ function SortOverlay:overlay_onupdate()
         not dfhack.gui.matchFocusString(self.viewscreens, dfhack.gui.getDFViewscreen(true))
     then
         for key,data in pairs(self.state) do
-            do_cleanup(self.handlers, key, data)
+            if type(data) == 'table' then
+                do_cleanup(self.handlers, key, data)
+            end
         end
         self:reset()
         self.overlay_onupdate_max_freq_seconds = 300

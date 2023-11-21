@@ -911,14 +911,14 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,N,N,N,N,N,`,"Tl{name=""Barracks gate""}",,"Tl{name=""Inner main gate""}",,"Tl{name=""Trade depo gate""}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
+,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,N,N,N,N,N,`,"Tl{name=""Barracks gate""}",,"Tl{name=""Inner main gate""}",,"Tl{name=""Trade depot gate""}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,"~h{name=""reserved for splitting"" do_install=true}(1x1)",d,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),`,,`,`,`,,`,,,,~,~,D,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,N,N,N,N,N,N,N,`,"Tl{name=""Left outer gate""}(1x1)","Tl{name=""Left inner gate""}(1x1)","Tl{name=""Outer main gate""}(1x1)","Tl{name=""Right inner gate""}(1x1)","Tl{name=""Right outer gate""}(1x1)",`,"trackstopE{name=""Inorganic trade goods dumper"" take_from=""Trade goods,Organic trade goods quantum"" route=""Inorganic trade goods quantum""}:-organic",,,~,~,~,~,~,,`,,`
 ,,,`,,`,`,`,`,`,`,`,d,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
 ,,,`,,`,b,h,,a,r,,,,`,,"gw{name=""Inner main gate""}",gw,gw,gw,gw,,`,,,,,,,,,`,,`
-,,,`,,`,b,,,,,,,,"ga{name=""Barracks gate""}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depo gate""}",gd,,,,,,,,,`,,`
+,,,`,,`,b,,,,,,,,"ga{name=""Barracks gate""}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depot gate""}",gd,,,,,,,,,`,,`
 ,,,`,,`,b,,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,b,,,,,,"trackstopS{name=""Prisoner/cage dumper"" take_from=""Pets/Prisoner feeder"" route=""Prisoner/cage quantum""}:-cat_animals/tameable",,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,b,h,,,,,,,`,,,,,,,,`,s,,s,,,s,,s,`,,`

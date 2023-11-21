@@ -60,11 +60,11 @@ Template for new versions:
 - RemoteServer: don't shut down the socket prematurely, allowing continuing connections from, for example, dfhack-run
 - `sort`: fix potential crash when exiting and re-entering a creatures subtab with a search active
 - `sort`: prevent keyboard keys from affecting the UI when search is active and multiple keys are hit at once
+- `tailor`: fix corner case where existing stock was being ignored, leading to over-ordering
 
 ## Misc Improvements
 - `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
 - `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
-- `tailor`: corrected a corner case that resulted in existing stock being ignored in some circumstances
 - `sort`: when searching on the Tasks tab, also search the names of the things the task is associated with, such as the name of the stockpile that an item will be stored in
 
 ## Documentation

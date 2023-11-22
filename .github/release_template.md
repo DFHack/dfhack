@@ -54,7 +54,7 @@ If you see a tool complaining about the lack of a cursor, know that it's referri
 
 </details>
 
-Generated release notes
+Changelog
 ====================
 
 <details>

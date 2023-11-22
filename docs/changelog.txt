@@ -56,6 +56,20 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r4
+
+## Fixes
 - `buildingplan`: fix choosing the wrong mechanism (or something that isn't a mechanism) when linking a lever and manually choosing a mechanism, but then canceling the selection
 - RemoteServer: don't shut down the socket prematurely, allowing continuing connections from, for example, dfhack-run
 - `sort`: fix potential crash when exiting and re-entering a creatures subtab with a search active
@@ -66,14 +80,6 @@ Template for new versions:
 - `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
 - `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
 - `sort`: when searching on the Tasks tab, also search the names of the things the task is associated with, such as the name of the stockpile that an item will be stored in
-
-## Documentation
-
-## API
-
-## Lua
-
-## Removed
 
 # 50.11-r3
 

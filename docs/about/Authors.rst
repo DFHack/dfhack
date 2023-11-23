@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 Abel                    abstern
 acwatkins               acwatkins
+Aleksandr Glotov        glotov4
 Alex Blamey             Cubittus
 Alexander Collins       gearsix
 Alexander Gavrilov      angavrilov              ag

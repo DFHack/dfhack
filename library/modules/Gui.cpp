@@ -524,6 +524,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/Diplomacy";
         if (game->main_interface.diplomacy.taking_requests)
             newFocusString += "/Requests";
+        else if (game->main_interface.diplomacy.selecting_land_holder_position)
+            newFocusString += "/ElevateLandHolder";
         else
             newFocusString += "/Default";
         focusStrings.push_back(newFocusString);

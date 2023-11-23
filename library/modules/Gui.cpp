@@ -1771,7 +1771,7 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 
 void Gui::showAutoAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright,
-    df::unit *unit1, df::unit *unit2
+    df::unit *unit_a, df::unit *unit_d
 ) {
     using df::global::d_init;
 
@@ -1783,11 +1783,11 @@ void Gui::showAutoAnnouncement(
 
     int id = makeAnnouncement(type, flags, pos, message, color, bright);
 
-    addCombatReportAuto(unit1, flags, id);
-    addCombatReportAuto(unit2, flags, id);
+    addCombatReportAuto(unit_a, flags, id);
+    addCombatReportAuto(unit_d, flags, id);
 }
 
-bool Gui::autoDFAnnouncement(df::report_init r, string message)
+bool Gui::autoDFAnnouncement(df::announcement_infost r, string message)
 {   // Reverse-engineered from DF announcement code
     if (!world->allow_announcements)
     {
@@ -1816,7 +1816,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
             r.type != announcement_type::CONFLICT_CONVERSATION &&
             r.type != announcement_type::MECHANISM_SOUND)
         {   // If not sound, make sure we can see pos
-            if (world->units.active.empty() || (r.unit1 != world->units.active[0] && r.unit2 != world->units.active[0]))
+            if (world->units.active.empty() || (r.unit_a != world->units.active[0] && r.unit_d != world->units.active[0]))
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
                 if (!Maps::isValidTilePos(r.pos) || (Maps::getTileDesignation(r.pos)->whole & 0x10) == 0x0)
                 {
@@ -1828,7 +1828,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     }
     else
     {   // Dwarf mode
-        if ((r.unit1 != NULL || r.unit2 != NULL) && (r.unit1 == NULL || Units::isHidden(r.unit1)) && (r.unit2 == NULL || Units::isHidden(r.unit2)))
+        if ((r.unit_a != NULL || r.unit_d != NULL) && (r.unit_a == NULL || Units::isHidden(r.unit_a)) && (r.unit_d == NULL || Units::isHidden(r.unit_d)))
         {
             DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
             return false;
@@ -1838,7 +1838,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         {
             if (a_flags.bits.UNIT_COMBAT_REPORT)
             {
-                if (r.unit1 == NULL && r.unit2 == NULL)
+                if (r.unit_a == NULL && r.unit_d == NULL)
                 {
                     DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
                     return false;
@@ -1851,7 +1851,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
                     DEBUG(gui).print("Skipped announcement not enabled for this game mode:\n%s\n", message.c_str());
                     return false;
                 }
-                else if (!recent_report_any(r.unit1) && !recent_report_any(r.unit2))
+                else if (!recent_report_any(r.unit_a) && !recent_report_any(r.unit_d))
                 {
                     DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
                     return false;
@@ -1910,8 +1910,8 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         new_report->id = world->status.next_report_id++;
         new_report->year = *df::global::cur_year;
         new_report->time = *df::global::cur_year_tick;
-        new_report->unk_v40_1 = r.unk_v40_1;
-        new_report->unk_v40_2 = r.unk_v40_2;
+        new_report->activity_id = r.activity_id;
+        new_report->activity_event_id = r.activity_event_id;
         new_report->speaker_id = r.speaker_id;
         world->status.reports.push_back(new_report);
 
@@ -1934,22 +1934,22 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     {
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
-            if (r.unit1 != NULL)
-                success |= add_proper_report(r.unit1, !r.flags.bits.hostile_combat, new_report_index);
+            if (r.unit_a != NULL)
+                success |= add_proper_report(r.unit_a, !r.flags.bits.hostile_combat, new_report_index);
 
-            if (r.unit2 != NULL)
-                success |= add_proper_report(r.unit2, !r.flags.bits.hostile_combat, new_report_index);
+            if (r.unit_d != NULL)
+                success |= add_proper_report(r.unit_d, !r.flags.bits.hostile_combat, new_report_index);
         }
 
         if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
         {
             FOR_ENUM_ITEMS(unit_report_type, slot)
             {
-                if (recent_report(r.unit1, slot))
-                    success |= addCombatReport(r.unit1, slot, new_report_index);
+                if (recent_report(r.unit_a, slot))
+                    success |= addCombatReport(r.unit_a, slot, new_report_index);
 
-                if (recent_report(r.unit2, slot))
-                    success |= addCombatReport(r.unit2, slot, new_report_index);
+                if (recent_report(r.unit_d, slot))
+                    success |= addCombatReport(r.unit_a, slot, new_report_index);
             }
         }
     }
@@ -1974,16 +1974,16 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
 }
 
 bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color,
-                             bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring)
+                             bool bright, df::unit *unit_a, df::unit *unit_d, bool is_sparring)
 {
-    auto r = df::report_init();
+    auto r = df::announcement_infost();
     r.type = type;
     r.color = color;
     r.bright = bright;
     r.pos = pos;
     r.display_timer = ANNOUNCE_DISPLAY_TIME;
-    r.unit1 = unit1;
-    r.unit2 = unit2;
+    r.unit_a = unit_a;
+    r.unit_d = unit_d;
     r.flags.bits.hostile_combat = !is_sparring;
 
     return autoDFAnnouncement(r, message);

@@ -54,6 +54,21 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `sort`: search and sort for the "choose unit to elevate to the barony" screen. units are sorted by the number of item preferences they have and the units are annotated with the items that they have preferences for
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r4
 
 ## Fixes
 - `buildingplan`: fix choosing the wrong mechanism (or something that isn't a mechanism) when linking a lever and manually choosing a mechanism, but then canceling the selection
@@ -66,14 +81,6 @@ Template for new versions:
 - `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
 - `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
 - `sort`: when searching on the Tasks tab, also search the names of the things the task is associated with, such as the name of the stockpile that an item will be stored in
-
-## Documentation
-
-## API
-
-## Lua
-
-## Removed
 
 # 50.11-r3
 

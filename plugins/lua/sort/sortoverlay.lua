@@ -84,18 +84,16 @@ end
 
 -- handles saving/restoring search strings when the player moves between different contexts
 function SortOverlay:onRenderBody(dc)
-    if next(self.state) then
-        local key, group = self:get_key()
-        if self.state.cur_group ~= group then
-            self.state.cur_group = group
-            do_cleanup(self.handlers, self.state.cur_key, self.state[self.state.cur_key])
-        end
-        if self.state.cur_key ~= key then
-            self.state.cur_key = key
-            local prev_text = key and ensure_key(self.state, key).prev_text or ''
-            self.subviews.search:setText(prev_text)
-            self:do_search(self.subviews.search.text, true)
-        end
+    local key, group = self:get_key()
+    if self.state.cur_group ~= group then
+        self.state.cur_group = group
+        do_cleanup(self.handlers, self.state.cur_key, self.state[self.state.cur_key])
+    end
+    if self.state.cur_key ~= key then
+        self.state.cur_key = key
+        local prev_text = key and ensure_key(self.state, key).prev_text or ''
+        self.subviews.search:setText(prev_text)
+        self:do_search(self.subviews.search.text, true)
     end
     self.overlay_onupdate_max_freq_seconds = 0
     SortOverlay.super.onRenderBody(self, dc)
@@ -112,12 +110,13 @@ local function is_mouse_key(keys)
 end
 
 function SortOverlay:onInput(keys)
-    if keys._MOUSE_R and self.subviews.search.focus and self:get_key() then
+    local key = self:get_key()
+    if keys._MOUSE_R and self.subviews.search.focus and key then
         self.subviews.search:setFocus(false)
         return true
     end
-    return SortOverlay.super.onInput(self, keys) or
-        (self.subviews.search.focus and not is_mouse_key(keys))
+    return key and (SortOverlay.super.onInput(self, keys) or
+        (self.subviews.search.focus and not is_mouse_key(keys)))
 end
 
 function SortOverlay:do_search(text, force_full_search)
@@ -132,7 +131,7 @@ function SortOverlay:do_search(text, force_full_search)
     if not key then return end
     local prev_text = ensure_key(self.state, key).prev_text
     -- some screens reset their contents between context switches; regardless,
-    -- a switch back to the context should results in an incremental search
+    -- a switch back to the context should result in an incremental search
     local incremental = not force_full_search and prev_text and text:startswith(prev_text)
     local handler = self.handlers[key]
     handler.search_fn(handler.vec, self.state[key], text, incremental)

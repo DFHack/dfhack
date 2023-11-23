@@ -110,12 +110,13 @@ local function is_mouse_key(keys)
 end
 
 function SortOverlay:onInput(keys)
-    if keys._MOUSE_R and self.subviews.search.focus and self:get_key() then
+    local key = self:get_key()
+    if keys._MOUSE_R and self.subviews.search.focus and key then
         self.subviews.search:setFocus(false)
         return true
     end
-    return SortOverlay.super.onInput(self, keys) or
-        (self.subviews.search.focus and not is_mouse_key(keys))
+    return key and (SortOverlay.super.onInput(self, keys) or
+        (self.subviews.search.focus and not is_mouse_key(keys)))
 end
 
 function SortOverlay:do_search(text, force_full_search)

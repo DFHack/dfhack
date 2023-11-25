@@ -59,6 +59,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 
 ## Documentation
 

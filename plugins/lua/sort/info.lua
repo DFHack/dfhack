@@ -551,11 +551,16 @@ local function get_work_animal_counts()
     return counts
 end
 
-function WorkAnimalOverlay:onRenderFrame(dc, rect)
-    local _, sh = dfhack.screen.getWindowSize()
+function WorkAnimalOverlay:preUpdateLayout(parent_rect)
     local _, t = get_panel_offsets()
-    local list_height = sh - (17 + t)
-    local num_elems = list_height // 3
+    local list_height = parent_rect.height - (17 + t)
+    self.frame.h = list_height + t
+    self.subviews.annotations.frame.t = t
+end
+
+function WorkAnimalOverlay:onRenderFrame(dc, rect)
+    local t = self.subviews.annotations.frame.t
+    local num_elems = (self.frame.h - t) // 3
     local max_elem = math.min(#creatures.work_animal_recipient-1,
         creatures.scroll_position_work_animal+num_elems-1)
 
@@ -572,10 +577,8 @@ function WorkAnimalOverlay:onRenderFrame(dc, rect)
         end
         table.insert(annotations, NEWLINE)
     end
-
-    self.subviews.annotations.frame.t = t
     self.subviews.annotations:setText(annotations)
-    self.frame.h = list_height + t
+    self.subviews.annotations:updateLayout()
 
     WorkAnimalOverlay.super.onRenderFrame(self, dc, rect)
 end

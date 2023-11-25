@@ -1273,6 +1273,36 @@ static string get_caste_name(df::unit* unit) {
     return raw->caste[caste]->caste_name[0];
 }
 
+// must subtract 1 from animal_training_level value to index this array
+static const char * training_quality_table[] = {
+    "trained",     // Trained
+    "-trained-",    // WellTrained
+    "+trained+",    // SkilfullyTrained
+    "*trained*",    // ExpertlyTrained
+    "\xF0trained\xF0", // (≡) ExceptionallyTrained
+    "\x0Ftrained\x0F"  // (☼) MasterfullyTrained
+};
+
+static const char * getTameTag(df::unit *unit) {
+    int32_t level = unit->training_level;
+    switch (level) {
+        case df::animal_training_level::SemiWild:
+            return "semi-wild";
+        case df::animal_training_level::Trained:
+        case df::animal_training_level::WellTrained:
+        case df::animal_training_level::SkilfullyTrained:
+        case df::animal_training_level::ExpertlyTrained:
+        case df::animal_training_level::ExceptionallyTrained:
+        case df::animal_training_level::MasterfullyTrained:
+            return training_quality_table[level-1];
+        case df::animal_training_level::Domesticated:
+            return "tame";
+        case df::animal_training_level::WildUntamed:
+        default:
+            return "wild";
+    }
+}
+
 string Units::getReadableName(df::unit* unit) {
     string race_name = isBaby(unit) ? getRaceBabyName(unit) :
         (isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit));
@@ -1282,6 +1312,8 @@ string Units::getReadableName(df::unit* unit) {
         race_name = "hunter " + race_name;
     if (isWar(unit))
         race_name = "war " + race_name;
+    if (unit->flags4.bits.agitated_wilderness_creature)
+        race_name = "agitated " + race_name;
     string name = Translation::TranslateName(getVisibleName(unit), false);
     if (name.empty()) {
         name = race_name;
@@ -1301,6 +1333,11 @@ string Units::getReadableName(df::unit* unit) {
             name += cie->name;
             break;
         }
+    }
+    if (isTame(unit)) {
+        name += " (";
+        name += getTameTag(unit);
+        name += ")";
     }
     return name;
 }

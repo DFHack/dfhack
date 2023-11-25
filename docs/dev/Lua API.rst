@@ -1614,8 +1614,9 @@ Units module
 * ``dfhack.units.getReadableName(unit)``
 
   Returns a string that includes the language name of the unit (if any), the
-  race of the unit, whether it is trained for war or hunting, and any
-  syndrome-given descriptions (such as "necromancer").
+  race of the unit, whether it is trained for war or hunting, any
+  syndrome-given descriptions (such as "necromancer"), and the training level
+  (if tame).
 
 * ``dfhack.units.getStressCategory(unit)``
 

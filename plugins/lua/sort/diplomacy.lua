@@ -98,13 +98,10 @@ function DiplomacyOverlay:get_sort()
     end
 end
 
-function DiplomacyOverlay:onRenderFrame(dc, rect)
-    local sw = dfhack.screen.getWindowSize()
-    local margin = (sw - 114) // 3
+function DiplomacyOverlay:preUpdateLayout(parent_rect)
+    local margin = (parent_rect.width - 114) // 3
     self.frame.w = 57 + margin
     self.subviews.panel.frame.l = margin
-
-    DiplomacyOverlay.super.onRenderFrame(self, dc, rect)
 end
 
 -- ----------------------
@@ -130,15 +127,19 @@ function PreferenceOverlay:init()
     }
 end
 
+function PreferenceOverlay:preUpdateLayout(parent_rect)
+    local list_height = parent_rect.height - 17
+    self.frame.w = parent_rect.width - 85
+    self.frame.h = list_height
+    local margin = (parent_rect.width - 114) // 3
+    self.subviews.annotations.frame.l = margin
+end
+
 function PreferenceOverlay:onRenderFrame(dc, rect)
-    local sw, sh = dfhack.screen.getWindowSize()
-    local margin = (sw - 114) // 3
-    local list_height = sh - 17
-    local num_elems = list_height // 3
+    local margin = self.subviews.annotations.frame.l
+    local num_elems = self.frame.h // 3
     local max_elem = math.min(#diplomacy.land_holder_avail_hfid-1,
         diplomacy.scroll_position_land_holder_hf+num_elems-1)
-    self.frame.w = sw - 85
-    self.frame.h = list_height
 
     local annotations = {}
     for idx=diplomacy.scroll_position_land_holder_hf,max_elem do
@@ -156,8 +157,8 @@ function PreferenceOverlay:onRenderFrame(dc, rect)
         table.insert(annotations, {text=']', pen=COLOR_RED})
         table.insert(annotations, NEWLINE)
     end
-    self.subviews.annotations.frame.l = margin
     self.subviews.annotations:setText(annotations)
+    self.subviews.annotations:updateLayout()
 
     PreferenceOverlay.super.onRenderFrame(self, dc, rect)
 end

@@ -436,20 +436,48 @@ function InfoOverlay:updateFrames()
     return true
 end
 
+function InfoOverlay:do_refresh()
+    self.refresh_search = nil
+    if self:get_key() == 'JOBS' then
+        local data = self.state.JOBS
+        -- if any jobs have been canceled, fix up our data vectors
+        if data and data.saved_visible and data.saved_original then
+            local to_remove = {}
+            for _,elem in ipairs(data.saved_visible) do
+                if not utils.linear_index(tasks.cri_job, elem) then
+                    table.insert(to_remove, elem)
+                end
+            end
+            for _,elem in ipairs(to_remove) do
+                table.remove(data.saved_visible, utils.linear_index(data.saved_visible, elem))
+                data.saved_visible_size = data.saved_visible_size - 1
+                table.remove(data.saved_original, utils.linear_index(data.saved_original, elem))
+                data.saved_original_size = data.saved_original_size - 1
+            end
+        end
+    end
+    self:do_search(self.subviews.search.text, true)
+end
+
 function InfoOverlay:onRenderBody(dc)
+    if self.refresh_search then
+        self:do_refresh()
+    end
     InfoOverlay.super.onRenderBody(self, dc)
     if self:updateFrames() then
         self:updateLayout()
     end
-    if self.refresh_search then
-        self.refresh_search = nil
-        self:do_search(self.subviews.search.text)
-    end
 end
 
 function InfoOverlay:onInput(keys)
-    if keys._MOUSE_L and self:get_key() == 'WORK_DETAILS' then
-        self.refresh_search = true
+    if self.refresh_search then
+        self:do_refresh()
+    end
+    if keys._MOUSE_L then
+        local key = self:get_key()
+        if key == 'WORK_DETAILS' or key == 'JOBS' then
+            self.refresh_search = true
+        end
     end
     return InfoOverlay.super.onInput(self, keys)
 end

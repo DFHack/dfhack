@@ -67,6 +67,7 @@ This skeletal logic has not been kept up-to-date since ~v0.5
 #include <df/tile_traffic.h>
 #include <df/block_square_event_designation_priorityst.h>
 
+#include <memory>
 #include <cinttypes>
 #include <unordered_map>
 #include <unordered_set>
@@ -151,6 +152,9 @@ namespace CSP {
 
     std::unordered_map<int32_t, df::coord> last_safe;
     std::unordered_set<df::coord> dignow_queue;
+
+    std::unique_ptr<EM::EventHandler> scanningHandler;
+    std::unique_ptr<EM::EventHandler> monitorHandler;
 
     void ClearData() {
         ChannelManager::Get().destroy_groups();
@@ -360,27 +364,8 @@ namespace CSP {
         CoreSuspender suspend;
         if (enabled && World::isFortressMode() && Maps::IsValid() && !World::ReadPauseState()) {
             static int32_t last_tick = df::global::world->frame_counter;
-            static int32_t last_monitor_tick = df::global::world->frame_counter;
-            static int32_t last_refresh_tick = df::global::world->frame_counter;
             static int32_t last_resurrect_tick = df::global::world->frame_counter;
             int32_t tick = df::global::world->frame_counter;
-
-            // Refreshing the group data with full scanning
-            if (tick - last_refresh_tick >= config.refresh_freq) {
-                last_refresh_tick = tick;
-                TRACE(monitor).print("OnUpdate() refreshing now\n");
-                if (config.insta_dig) {
-                    TRACE(monitor).print(" -> evaluate dignow queue\n");
-                    for (auto iter = dignow_queue.begin(); iter != dignow_queue.end();) {
-                        auto map_pos = *iter;
-                        dig_now(out, map_pos); // teleports units to the bottom of a simulated fall
-                        ChannelManager::Get().mark_done(map_pos);
-                        iter = dignow_queue.erase(iter);
-                    }
-                }
-                UnpauseEvent(false);
-                TRACE(monitor).print("OnUpdate() refresh done\n");
-            }
 
             // Clean up stale df::job*
             if ((config.monitoring || config.resurrect) && tick - last_tick >= 1) {
@@ -403,66 +388,6 @@ namespace CSP {
                     active_jobs.erase(id);
                     active_workers.erase(id);
                 }
-            }
-
-            // Monitoring Active and Resurrecting Dead
-            if (config.monitoring && tick - last_monitor_tick >= config.monitor_freq) {
-                last_monitor_tick = tick;
-                TRACE(monitor).print("OnUpdate() monitoring now\n");
-
-                // iterate active jobs
-                for (auto pair: active_jobs) {
-                    df::job* job = pair.second;
-                    df::unit* unit = active_workers[job->id];
-                    if (!unit) continue;
-                    if (!Maps::isValidTilePos(job->pos)) continue;
-                    TRACE(monitor).print(" -> check for job in tracking\n");
-                    if (Units::isAlive(unit)) {
-                        if (!config.monitoring) continue;
-                        TRACE(monitor).print(" -> compare positions of worker and job\n");
-
-                        // check for fall safety
-                        if (unit->pos == job->pos && !is_safe_fall(job->pos)) {
-                            // unsafe
-                            WARN(monitor).print(" -> unsafe job\n");
-                            Job::removeWorker(job);
-
-                            // decide to insta-dig or marker mode
-                            if (config.insta_dig) {
-                                // delete the job
-                                Job::removeJob(job);
-                                // queue digging the job instantly
-                                dignow_queue.emplace(job->pos);
-                                DEBUG(monitor).print(" -> insta-dig\n");
-                            } else if (config.resurrect) {
-                                endangered_units.emplace(unit, tick);
-                            } else {
-                                // set marker mode
-                                Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
-
-                                // prevent algorithm from re-enabling designation
-                                for (auto &be: Maps::getBlock(job->pos)->block_events) {
-                                    if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(
-                                            be)) {
-                                        df::coord local(job->pos);
-                                        local.x = local.x % 16;
-                                        local.y = local.y % 16;
-                                        bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
-                                        break;
-                                    }
-                                }
-                                DEBUG(monitor).print(" -> set marker mode\n");
-                            }
-                        }
-                    } else if (config.resurrect) {
-                        resurrect(out, unit->id);
-                        if (last_safe.count(unit->id)) {
-                            df::coord lowest = simulate_fall(last_safe[unit->id]);
-                            Units::teleport(unit, lowest);
-                        }
-                    }
-                }
-                TRACE(monitor).print("OnUpdate() monitoring done\n");
             }
 
             // Resurrect Dead Workers
@@ -493,6 +418,80 @@ namespace CSP {
             }
         }
     }
+
+    void onTick_FullScan(color_ostream &out, void* tick) {
+        // Refreshing the group data with full scanning
+        TRACE(monitor).print("onTick() refreshing now\n");
+        if (config.insta_dig) {
+            TRACE(monitor).print(" -> evaluate dignow queue\n");
+            for (auto iter = dignow_queue.begin(); iter != dignow_queue.end();) {
+                auto map_pos = *iter;
+                dig_now(out, map_pos); // teleports units to the bottom of a simulated fall
+                ChannelManager::Get().mark_done(map_pos);
+                iter = dignow_queue.erase(iter);
+            }
+        }
+        UnpauseEvent(false);
+        TRACE(monitor).print("onTick() refresh done\n");
+    }
+
+    void onTick_Monitoring(color_ostream &out, void* tick) {
+        int32_t itick = df::global::world->frame_counter;
+        // iterate active jobs
+        TRACE(monitor).print("onTick() monitoring now\n");
+        for (auto pair: active_jobs) {
+            df::job* job = pair.second;
+            df::unit* unit = active_workers[job->id];
+            if (!unit) continue;
+            if (!Maps::isValidTilePos(job->pos)) continue;
+            TRACE(monitor).print(" -> check for job in tracking\n");
+            if (Units::isAlive(unit)) {
+                if (!config.monitoring) continue;
+                TRACE(monitor).print(" -> compare positions of worker and job\n");
+
+                // check for fall safety
+                if (unit->pos == job->pos && !is_safe_fall(job->pos)) {
+                    // unsafe
+                    WARN(monitor).print(" -> unsafe job\n");
+                    Job::removeWorker(job);
+
+                    // decide to insta-dig or marker mode
+                    if (config.insta_dig) {
+                        // delete the job
+                        Job::removeJob(job);
+                        // queue digging the job instantly
+                        dignow_queue.emplace(job->pos);
+                        DEBUG(monitor).print(" -> insta-dig\n");
+                    } else if (config.resurrect) {
+                        endangered_units.emplace(unit, itick);
+                    } else {
+                        // set marker mode
+                        Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
+
+                        // prevent algorithm from re-enabling designation
+                        for (auto &be: Maps::getBlock(job->pos)->block_events) {
+                            if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(
+                                    be)) {
+                                df::coord local(job->pos);
+                                local.x = local.x % 16;
+                                local.y = local.y % 16;
+                                bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
+                                break;
+                            }
+                        }
+                        DEBUG(monitor).print(" -> set marker mode\n");
+                    }
+                }
+            } else if (config.resurrect) {
+                resurrect(out, unit->id);
+                if (last_safe.count(unit->id)) {
+                    df::coord lowest = simulate_fall(last_safe[unit->id]);
+                    Units::teleport(unit, lowest);
+                }
+            }
+        }
+        TRACE(monitor).print("onTick() monitoring done\n");
+    }
 }
 
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters);
@@ -521,13 +520,20 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (enable && !enabled) {
+        // just to be safe
+        EM::unregisterAll(plugin_self);
         // register events to check jobs / update tracking
         EM::EventHandler jobStartHandler(CSP::JobStartedEvent, 0);
         EM::EventHandler jobCompletionHandler(CSP::JobCompletedEvent, 0);
         EM::EventHandler reportHandler(CSP::NewReportEvent, 0);
+        CSP::scanningHandler = std::unique_ptr<EM::EventHandler>(new EM::EventHandler(CSP::onTick_FullScan, config.refresh_freq));
+        CSP::monitorHandler = std::unique_ptr<EM::EventHandler>(new EM::EventHandler(CSP::onTick_Monitoring, config.monitor_freq));
+
         EM::registerListener(EventType::REPORT, reportHandler, plugin_self);
         EM::registerListener(EventType::JOB_STARTED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+        EM::registerListener(EventType::TICK, *CSP::scanningHandler, plugin_self);
+        EM::registerListener(EventType::TICK, *CSP::monitorHandler, plugin_self);
         // manage designations to start off (first time building groups [very important])
         out.print("channel-safely: enabled!\n");
         CSP::UnpauseEvent(true);
@@ -618,8 +624,18 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
                     }
                 } else if (parameters[1] == "refresh-freq" && set && parameters.size() == 3) {
                     config.refresh_freq = std::abs(std::stol(parameters[2]));
+                    if (enabled) {
+                        EM::unregister(EventType::TICK, *CSP::scanningHandler, plugin_self);
+                        CSP::scanningHandler = std::unique_ptr<EM::EventHandler>(new EM::EventHandler(CSP::onTick_FullScan, config.refresh_freq));
+                        EM::registerListener(EventType::TICK, *CSP::scanningHandler, plugin_self);
+                    }
                 } else if (parameters[1] == "monitor-freq" && set && parameters.size() == 3) {
                     config.monitor_freq = std::abs(std::stol(parameters[2]));
+                    if (enabled) {
+                        EM::unregister(EventType::TICK, *CSP::monitorHandler, plugin_self);
+                        CSP::monitorHandler = std::unique_ptr<EM::EventHandler>(new EM::EventHandler(CSP::onTick_Monitoring, config.monitor_freq));
+                        EM::registerListener(EventType::TICK, *CSP::monitorHandler, plugin_self);
+                    }
                 } else if (parameters[1] == "ignore-threshold" && set && parameters.size() == 3) {
                     config.ignore_threshold = std::abs(std::stol(parameters[2]));
                 } else if (parameters[1] == "fall-threshold" && set && parameters.size() == 3) {

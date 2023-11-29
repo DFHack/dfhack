@@ -68,8 +68,25 @@ static int32_t eventLastTick[EventType::EVENT_MAX];
 
 static const int32_t ticksPerYear = 403200;
 
+// this function is only used within the file in registerListener and manageTickEvent
+void enqueueTickEvent(EventHandler &handler){
+    int32_t when = 0;
+    df::world* world = df::global::world;
+    if ( world ) {
+        when = world->frame_counter + handler.freq;
+    } else {
+        if ( Once::doOnce("EventManager registerListener unhonored absolute=false") )
+            Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
+    }
+    handler.when = when;
+    tickQueue.emplace(handler.when, handler);
+}
+
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
     DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
+    if(e == EventType::TICK){
+        enqueueTickEvent(handler);
+    }
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
@@ -83,10 +100,12 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
                 Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
         }
     }
-    handler.freq = when;
-    tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
     DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, plugin->getName().c_str());
-    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    handler.when = when;
+    tickQueue.emplace(handler.when, handler);
+    // we don't track this handler, this allows registerTick to retain the old behaviour of needing to re-register the tick event
+    //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    // since the event isn't added to the handlers, we don't need to unregister these events
     return when;
 }
 
@@ -113,9 +132,10 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
         }
         DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
         i = handlers[e].erase(i);
-        if ( e == EventType::TICK )
-            removeFromTickQueue(handler);
     }
+    // we've removed it from the handlers multimap, all that's left is to make sure it's not in the tick queue
+    if ( e == EventType::TICK )
+        removeFromTickQueue(handler);
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
@@ -406,29 +426,25 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 static void manageTickEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    unordered_set<EventHandler> toRemove;
+    unordered_set<EventHandler> toRequeue;
     int32_t tick = df::global::world->frame_counter;
     while ( !tickQueue.empty() ) {
-        if ( tick < (*tickQueue.begin()).first )
+        auto iter = tickQueue.begin();
+        if ( tick < iter->first )
             break;
-        EventHandler &handle = (*tickQueue.begin()).second;
-        tickQueue.erase(tickQueue.begin());
+        EventHandler &handle = iter->second;
+        tickQueue.erase(iter);
         DEBUG(log,out).print("calling handler for tick event\n");
         handle.eventHandler(out, (void*)intptr_t(tick));
-        toRemove.insert(handle);
+        toRequeue.emplace(handle);
     }
-    if ( toRemove.empty() )
+    if ( toRequeue.empty() )
         return;
-    for ( auto a = handlers[EventType::TICK].begin(); a != handlers[EventType::TICK].end(); ) {
-        EventHandler &handle = (*a).second;
-        if ( toRemove.find(handle) == toRemove.end() ) {
-            a++;
-            continue;
+    for (auto pair : handlers[EventType::TICK]) {
+        if (toRequeue.count(pair.second)) {
+            EventHandler &handler = pair.second;
+            enqueueTickEvent(handler);
         }
-        a = handlers[EventType::TICK].erase(a);
-        toRemove.erase(handle);
-        if ( toRemove.empty() )
-            break;
     }
 }
 

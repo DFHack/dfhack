@@ -357,17 +357,15 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
     if (bld->assigned_unit == unit)
         return true;
 
-    df::building * pbld = virtual_cast<df::building>(bld);
-
     if (bld->assigned_unit)
     {
         auto &blist = bld->assigned_unit->owned_buildings;
-        vector_erase_at(blist, linear_index(blist, pbld));
+        vector_erase_at(blist, linear_index(blist, bld));
 
         if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            vector_erase_at(blist, linear_index(blist, pbld));
+            vector_erase_at(blist, linear_index(blist, bld));
         }
     }
 
@@ -381,7 +379,7 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            if (bld->canUseSpouseRoom() && linear_index(blist, pbld) < 0)
+            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
                 blist.push_back(bld);
         }
     }

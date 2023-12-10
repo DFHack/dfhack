@@ -31,6 +31,7 @@ distribution.
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include "DataDefs.h"
@@ -576,7 +577,11 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::mutex);
     OPAQUE_IDENTITY_TRAITS(std::future<void>);
     OPAQUE_IDENTITY_TRAITS(std::function<void()>);
-    OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
+
+    typedef std::function<void()> void_function;
+    #define COMMA ,
+    OPAQUE_IDENTITY_TRAITS(std::optional<void_function>);
+    OPAQUE_IDENTITY_TRAITS(std::variant<std::string COMMA void_function>);
 
 #ifdef BUILD_DFHACK_LIB
     template<typename T>

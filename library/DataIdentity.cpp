@@ -49,7 +49,9 @@ namespace df {
     STL_OPAQUE_IDENTITY_TRAITS(mutex);
     STL_OPAQUE_IDENTITY_TRAITS(future<void>);
     STL_OPAQUE_IDENTITY_TRAITS(function<void()>);
-    STL_OPAQUE_IDENTITY_TRAITS(optional<std::function<void()> >);
+    STL_OPAQUE_IDENTITY_TRAITS(optional<void_function>);
+    OPAQUE_IDENTITY_TRAITS_NAME(std::variant<std::string COMMA void_function>,
+        "variant<string, void_function>");
 
     buffer_container_identity buffer_container_identity::base_instance;
 }

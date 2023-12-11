@@ -50,8 +50,12 @@ namespace df {
     OPAQUE_IDENTITY_TRAITS(std::mutex);
     OPAQUE_IDENTITY_TRAITS(std::future<void>);
     OPAQUE_IDENTITY_TRAITS(std::function<void()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<bool()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<int*()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<std::string()>);
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
+    OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
 
     buffer_container_identity buffer_container_identity::base_instance;
 }

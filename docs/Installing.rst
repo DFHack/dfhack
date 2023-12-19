@@ -11,9 +11,8 @@ Requirements
 ============
 
 DFHack supports all operating systems and platforms that Dwarf Fortress itself
-supports, which at the moment is just 64-bit Windows. However, the Windows
-build of DFHack works well under ``wine`` (or ``Proton``, Steam's fork of
-``wine``) on other operating systems.
+supports, which at the moment is the 64-bit version of Windows and Linux. However, the Windows
+build of DFHack works well under ``wine`` for other platforms.
 
 .. _installing-df-version:
 

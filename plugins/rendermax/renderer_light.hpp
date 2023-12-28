@@ -1,3 +1,12 @@
+/*
+ * TODO - important!
+ * Rendermax needs testing for thread related bugs
+ * due to the move from tinythread to std::thread and other
+ * standard library counterparts.
+ *
+ * It may also need improvements in regards to thread safety.
+ */
+
 #pragma once
 
 #include <condition_variable>

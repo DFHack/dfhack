@@ -266,7 +266,7 @@ class lightThread
     void combine(); //combine existing canvas into global lightmap
 public:
     std::thread *myThread;
-    bool isDone; //no mutex, because bool is atomic
+    std::atomic<bool> isDone;
     lightThread(lightThreadDispatch& dispatch);
     ~lightThread();
     void run();

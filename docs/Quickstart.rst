@@ -177,7 +177,7 @@ panel.
 
 Next, try setting up `autochop` to automatically designate trees for chopping
 when you get low on usable logs. Run `gui/control-panel` and select
-``autochop`` in the ``Fort`` list. Click on the button to the left of the name
+``autochop`` in the ``Enabled`` tab. Click on the button to the left of the name
 or hit Enter to enable it. You can then click on the configure button (the gear
 icon) to launch `gui/autochop` if you'd like to customize its settings. If you
 have the extra screen space, you can go ahead and set the `gui/autochop` window

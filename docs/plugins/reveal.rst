@@ -32,8 +32,8 @@ Usage
 ``reveal [hell|demon]``
     Reveal the whole map. If ``hell`` is specified, also reveal HFS areas, but
     you are required to run ``unreveal`` before unpausing is allowed in order
-    to prevent the demons from spawning. If you really want to unpause with hell
-    revealed, specify ``demon`` instead of ``hell``.
+    to prevent the demons (or treasures) from spawning. If you really want to
+    unpause with secrets revealed, specify ``demon`` instead of ``hell``.
 ``unreveal``
     Reverts the effects of ``reveal``.
 ``revtoggle``

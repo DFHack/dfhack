@@ -57,6 +57,7 @@ Template for new versions:
 - `sort`: search and sort for the "choose unit to elevate to the barony" screen. units are sorted by the number of item preferences they have and the units are annotated with the items that they have preferences for
 
 ## Fixes
+- `reveal`: now avoids revealing blocks that contain divine treasures, encased horrors, and deep vein hollows (so the surprise triggers are not triggered prematurely)
 - `sort`: fix mouse clicks falling through the squad assignment overlay panel when clicking on the panel but not on a clickable widget
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
 

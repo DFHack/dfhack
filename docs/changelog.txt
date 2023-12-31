@@ -64,6 +64,7 @@ Template for new versions:
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 
 ## Documentation
+- UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
 
 ## API
 

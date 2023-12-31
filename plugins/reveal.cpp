@@ -5,9 +5,9 @@
 
 #include "Core.h"
 #include "Console.h"
-#include "Export.h"
 #include "PluginManager.h"
 
+#include "modules/EventManager.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 #include "modules/MapCache.h"
@@ -17,7 +17,12 @@
 
 #include "df/block_square_event_frozen_liquidst.h"
 #include "df/construction.h"
+#include "df/deep_vein_hollow.h"
+#include "df/divine_treasure.h"
+#include "df/encased_horror.h"
 #include "df/world.h"
+
+#include <unordered_set>
 
 using MapExtras::MapCache;
 
@@ -33,15 +38,23 @@ DFHACK_PLUGIN_IS_ENABLED(is_active);
 REQUIRE_GLOBAL(world);
 
 /*
- * Anything that might reveal Hell is unsafe.
+ * Anything that might reveal Hell or trigger gemstone pillar events is unsafe.
  */
-bool isSafe(df::coord c)
+bool isSafe(df::coord c, const std::unordered_set<df::coord> & trigger_cache)
 {
+    // convert to block coordinates
+    c.x >>= 4;
+    c.y >>= 4;
+
+    // Don't reveal blocks that contain trigger events
+    if (trigger_cache.contains(c))
+        return false;
+
     t_feature local_feature;
     t_feature global_feature;
     // get features of block
     // error -> obviously not safe to manipulate
-    if(!Maps::ReadFeatures(c.x >> 4,c.y >> 4,c.z,&local_feature,&global_feature))
+    if(!Maps::ReadFeatures(c.x,c.y,c.z,&local_feature,&global_feature))
         return false;
 
     // Adamantine tubes and temples lead to Hell
@@ -154,13 +167,13 @@ command_result nopause (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-void revealAdventure(color_ostream &out)
+void revealAdventure(color_ostream &out, const std::unordered_set<df::coord> & trigger_cache)
 {
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-        if (!isSafe(block->map_pos))
+        if (!isSafe(block->map_pos, trigger_cache))
             continue;
         designations40d & designations = block->designation;
         // for each tile in block
@@ -173,6 +186,28 @@ void revealAdventure(color_ostream &out)
         }
     }
     out.print("Local map revealed.\n");
+}
+
+static void cache_tiles(const df::coord_path & tiles, std::unordered_set<df::coord> & trigger_cache)
+{
+    size_t num_tiles = tiles.size();
+    for (size_t idx = 0; idx < num_tiles; ++idx)
+    {
+        df::coord pos = tiles[idx];
+        pos.x >>= 4;
+        pos.y >>= 4;
+        trigger_cache.insert(pos);
+    }
+}
+
+static void initialize_trigger_cache(std::unordered_set<df::coord> & trigger_cache)
+{
+    for (auto & horror : world->encased_horrors)
+        cache_tiles(horror->tiles, trigger_cache);
+    for (auto & hollow : world->deep_vein_hollows)
+        cache_tiles(hollow->tiles, trigger_cache);
+    for (auto & treasure : world->divine_treasures)
+        cache_tiles(treasure->tiles, trigger_cache);
 }
 
 command_result reveal(color_ostream &out, vector<string> & params)
@@ -211,11 +246,16 @@ command_result reveal(color_ostream &out, vector<string> & params)
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
+
+    size_t initial_buckets = 2 * (world->encased_horrors.size() + world->divine_treasures.size() + world->deep_vein_hollows.size());
+    std::unordered_set<df::coord> trigger_cache(initial_buckets);
+    initialize_trigger_cache(trigger_cache);
+
     t_gamemodes gm;
     World::ReadGameMode(gm);
     if(gm.g_mode == game_mode::ADVENTURE)
     {
-        revealAdventure(out);
+        revealAdventure(out, trigger_cache);
         return CR_OK;
     }
     if(gm.g_mode != game_mode::DWARF)
@@ -230,7 +270,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
     {
         df::map_block *block = world->map.map_blocks[i];
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-        if (no_hell && !isSafe(block->map_pos))
+        if (no_hell && !isSafe(block->map_pos, trigger_cache))
             continue;
         hideblock hb;
         hb.c = block->map_pos;

@@ -394,6 +394,7 @@ end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
+    desc='Shows a panel when a stockpile is selected for stockpile automation.',
     default_pos={x=24, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Some/Stockpile',

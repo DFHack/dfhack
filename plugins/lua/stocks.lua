@@ -20,6 +20,7 @@ end
 
 StocksOverlay = defclass(StocksOverlay, overlay.OverlayWidget)
 StocksOverlay.ATTRS{
+    desc='Adds a hotkey for collapse all to the stocks page.',
     default_pos={x=-3,y=-20},
     default_enabled=true,
     viewscreens='dwarfmode/Stocks',

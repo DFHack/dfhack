@@ -68,6 +68,7 @@ end
 
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
+    desc='Adds import, export, and other functions to the manager orders screen.',
     default_pos={x=53,y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
@@ -198,6 +199,7 @@ local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions'
 
 RecheckOverlay = defclass(RecheckOverlay, overlay.OverlayWidget)
 RecheckOverlay.ATTRS{
+    desc='Adds a button to the work order details page to tell the manager to recheck conditions.',
     default_pos={x=6,y=8},
     default_enabled=true,
     viewscreens=focusString,

@@ -12,6 +12,7 @@ local diplomacy = df.global.game.main_interface.diplomacy
 
 DiplomacyOverlay = defclass(DiplomacyOverlay, sortoverlay.SortOverlay)
 DiplomacyOverlay.ATTRS{
+    desc='Adds search and sort functionality to the elevate unit to barony screen.',
     default_pos={x=25, y=7},
     viewscreens='dwarfmode/Diplomacy',
     frame={w=57, h=1},
@@ -110,6 +111,7 @@ end
 
 PreferenceOverlay = defclass(PreferenceOverlay, overlay.OverlayWidget)
 PreferenceOverlay.ATTRS{
+    desc='Adds information about unit preferences to the elevate unit to barony screen.',
     default_pos={x=-34, y=9},
     viewscreens='dwarfmode/Diplomacy/ElevateLandHolder',
     default_enabled=true,

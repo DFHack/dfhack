@@ -13,6 +13,7 @@ local view_sheets = df.global.game.main_interface.view_sheets
 
 MechanismOverlay = defclass(MechanismOverlay, overlay.OverlayWidget)
 MechanismOverlay.ATTRS{
+    desc='Adds mechanism selection capabilities to the link lever/pressure plate screens.',
     default_pos={x=5,y=5},
     default_enabled=true,
     viewscreens='dwarfmode/LinkingLever',

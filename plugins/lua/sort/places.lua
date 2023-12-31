@@ -147,6 +147,7 @@ end
 
 PlacesOverlay = defclass(PlacesOverlay, sortoverlay.SortOverlay)
 PlacesOverlay.ATTRS{
+    desc='Adds search functionality to the places overview screens.',
     default_pos={x=71, y=9},
     viewscreens='dwarfmode/Info',
     frame={w=40, h=6}

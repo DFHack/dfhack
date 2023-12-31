@@ -351,6 +351,7 @@ end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
+    desc='Shows the building planner interface panel when building buildings.',
     default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',

@@ -16,6 +16,7 @@ local WIDGET_WIDTH = 31
 
 UnitSelectorOverlay = defclass(UnitSelectorOverlay, sortoverlay.SortOverlay)
 UnitSelectorOverlay.ATTRS{
+    desc='Adds search functionality to the unit assignment screens.',
     default_pos={x=62, y=6},
     viewscreens='dwarfmode/UnitSelector',
     frame={w=31, h=1},

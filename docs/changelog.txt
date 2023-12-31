@@ -59,6 +59,7 @@ Template for new versions:
 ## Fixes
 - `sort`: fix mouse clicks falling through the squad assignment overlay panel when clicking on the panel but not on a clickable widget
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
+- `misery`: fix error when changing the misery factor
 
 ## Misc Improvements
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown

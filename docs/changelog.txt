@@ -61,6 +61,7 @@ Template for new versions:
 
 ## Misc Improvements
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
+- `work-now`: now saves its enabled status with the fort
 
 ## Documentation
 

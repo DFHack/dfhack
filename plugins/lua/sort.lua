@@ -1179,7 +1179,8 @@ function SquadAssignmentOverlay:onInput(keys)
         -- if any click is made outside of our window, we may need to refresh our list
         self.dirty = true
     end
-    return SquadAssignmentOverlay.super.onInput(self, keys)
+    return SquadAssignmentOverlay.super.onInput(self, keys) or
+        (keys._MOUSE_L and self:getMouseFramePos())
 end
 
 function SquadAssignmentOverlay:onRenderFrame(dc, frame_rect)
@@ -1285,6 +1286,11 @@ function SquadAnnotationOverlay:init()
             },
         }
     end
+end
+
+function SquadAnnotationOverlay:onInput(keys)
+    return SquadAnnotationOverlay.super.onInput(self, keys) or
+        (keys._MOUSE_L and self:getMouseFramePos())
 end
 
 OVERLAY_WIDGETS = {

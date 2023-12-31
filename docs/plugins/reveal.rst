@@ -54,3 +54,14 @@ Usage
     forced by `reveal` ``hell``. This is nice for digging under rivers. Use
     ``nopause 1`` to prevent pausing and ``nopause 0`` to allow pausing like
     normal.
+
+Note
+----
+
+Sometimes, the map generates secret hollows adjacent to caverns in such a way
+that the ceiling of the hollow collapses on the first tick of the embark,
+leaving the hollow exposed to the caverns. In this case, the secret event will
+be triggered as soon as the cavern is discovered and that tile is unhidden.
+This would happen anyway even if you don't use `reveal`, but be aware that it
+is possible to trigger *some* events when you run `reveal`, even without the
+``hell`` option.

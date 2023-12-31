@@ -63,6 +63,7 @@ Template for new versions:
 
 ## Misc Improvements
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
+- `work-now`: now saves its enabled status with the fort
 
 ## Documentation
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)

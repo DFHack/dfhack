@@ -22,17 +22,17 @@ function parse_commandline(...)
     local args, opts = {...}, {}
     local positionals = process_args(opts, args)
 
-    if opts.help then
+    if opts.help or not positionals then
         return false
     end
 
     local command = table.remove(positionals, 1)
     if not command or command == 'status' then
         status()
-    elseif command == 'factor' then
-        misery_setFactor(positionals[1])
     elseif command == 'clear' then
         misery_clear()
+    elseif tonumber(command) then
+        misery_setFactor(tonumber(command))
     else
         return false
     end

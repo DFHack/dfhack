@@ -138,6 +138,7 @@ local function update_entry(entry, iterator, opts)
     local tags_found, short_help_found = false, opts.skip_short_help
     local in_tags, in_short_help = false, false
     for line in iterator do
+        line = dfhack.utf2df(line)
         if not short_help_found and first_line_is_short_help then
             line = line:trim()
             local _,_,text = line:find('^'..first_line_is_short_help..'%s*(.*)')

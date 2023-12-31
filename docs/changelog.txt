@@ -60,6 +60,7 @@ Template for new versions:
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
 
 ## Misc Improvements
+- `autochop`: better error output when target burrows are not specified on the commandline
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 
 ## Documentation

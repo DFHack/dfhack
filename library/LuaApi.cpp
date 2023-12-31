@@ -33,14 +33,12 @@ distribution.
 #include "Core.h"
 #include "Error.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
-#include "tinythread.h"
 #include "md5wrapper.h"
 
 #include "modules/Buildings.h"
@@ -3703,7 +3701,7 @@ static int internal_getCommandDescription(lua_State *L)
 static int internal_threadid(lua_State *L)
 {
     std::stringstream ss;
-    ss << tthread::this_thread::get_id();
+    ss << std::this_thread::get_id();
     int i;
     ss >> i;
     lua_pushinteger(L, i);

@@ -79,9 +79,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Hooks.h"
 using namespace DFHack;
 
-#include "tinythread.h"
-using namespace tthread;
-
 static int isUnsupportedTerm(void)
 {
     static const char *unsupported_term[] = {"dumb","cons25",NULL};
@@ -403,7 +400,7 @@ namespace DFHack
             prompt_refresh();
         }
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, recursive_mutex * lock, CommandHistory & ch)
+        int lineedit(const std::string& prompt, std::string& output, std::recursive_mutex * lock, CommandHistory & ch)
         {
             if(state == con_lineedit)
                 return Console::FAILURE;
@@ -518,7 +515,7 @@ namespace DFHack
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
         }
 
-        int prompt_loop(recursive_mutex * lock, CommandHistory & history)
+        int prompt_loop(std::recursive_mutex * lock, CommandHistory & history)
         {
             int fd = STDIN_FILENO;
             size_t plen = prompt.size();
@@ -841,7 +838,7 @@ Console::Console()
     d = 0;
     inited = false;
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
-    wlock = new recursive_mutex();
+    wlock = new std::recursive_mutex();
 }
 Console::~Console()
 {
@@ -890,7 +887,7 @@ bool Console::shutdown(void)
     if(!d)
         return true;
     d->reset_color();
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     close(d->exit_pipe[1]);
     if (d->state != Private::con_lineedit)
         inited = false;
@@ -917,14 +914,14 @@ void Console::end_batch()
 
 void Console::flush_proxy()
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->flush();
 }
 
 void Console::add_text(color_value color, const std::string &text)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->print_text(color, text);
     else
@@ -933,7 +930,7 @@ void Console::add_text(color_value color, const std::string &text)
 
 int Console::get_columns(void)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
     if(inited)
         ret = d->get_columns();
@@ -942,7 +939,7 @@ int Console::get_columns(void)
 
 int Console::get_rows(void)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
     if(inited)
         ret = d->get_rows();
@@ -951,28 +948,28 @@ int Console::get_rows(void)
 
 void Console::clear()
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->clear();
 }
 
 void Console::gotoxy(int x, int y)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->gotoxy(x,y);
 }
 
 void Console::cursor(bool enable)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->cursor(enable);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::SHUTDOWN;
     if(inited) {
         ret = d->lineedit(prompt,output,wlock,ch);

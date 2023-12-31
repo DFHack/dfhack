@@ -52,6 +52,7 @@ end
 
 BurrowDesignationOverlay = defclass(BurrowDesignationOverlay, overlay.OverlayWidget)
 BurrowDesignationOverlay.ATTRS{
+    desc='Adds flood fill and 3D box select functionality to burrow designations.',
     default_pos={x=6,y=9},
     viewscreens='dwarfmode/Burrow/Paint',
     default_enabled=true,

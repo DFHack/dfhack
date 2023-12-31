@@ -835,6 +835,7 @@ end
 
 PasturePondOverlay = defclass(PasturePondOverlay, overlay.OverlayWidget)
 PasturePondOverlay.ATTRS{
+    desc='Adds a link to launch the animal assignment UI to pastures and ponds.',
     default_pos={x=7,y=13},
     default_enabled=true,
     viewscreens={'dwarfmode/Zone/Some/Pen', 'dwarfmode/Zone/Some/Pond'},
@@ -952,6 +953,7 @@ end
 
 CageChainOverlay = defclass(CageChainOverlay, overlay.OverlayWidget)
 CageChainOverlay.ATTRS{
+    desc='Adds a link to launch the animal assignment UI to cages and chains.',
     default_pos={x=-40,y=34},
     default_enabled=true,
     viewscreens={'dwarfmode/ViewSheets/BUILDING/Cage', 'dwarfmode/ViewSheets/BUILDING/Chain'},

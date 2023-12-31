@@ -636,6 +636,7 @@ end
 
 SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
 SquadAssignmentOverlay.ATTRS{
+    desc='Adds search, sort, and filter capabilities to the squad assignment screen.',
     default_pos={x=18, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
@@ -1198,6 +1199,7 @@ end
 
 SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
 SquadAnnotationOverlay.ATTRS{
+    desc='Annotates squad selection candidates with the values of the current sort.',
     default_pos={x=56, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',

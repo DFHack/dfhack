@@ -553,6 +553,7 @@ end
 OverlayWidget = defclass(OverlayWidget, widgets.Panel)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
+    desc=DEFAULT_NIL, -- add a short description (<100 chars); displays in control panel
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
     default_enabled=false, -- initial enabled state if not in config
     overlay_only=false, -- true if there is no widget to reposition
@@ -581,6 +582,7 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
+    desc='Show DFHack version number and quick links on the DF title page.',
     default_pos={x=11, y=1},
     version=2,
     default_enabled=true,

@@ -11,6 +11,7 @@ local location_selector = df.global.game.main_interface.location_selector
 
 LocationSelectorOverlay = defclass(LocationSelectorOverlay, sortoverlay.SortOverlay)
 LocationSelectorOverlay.ATTRS{
+    desc='Adds search and filter capabilities to the temple and guildhall establishment screens.',
     default_pos={x=48, y=6},
     viewscreens='dwarfmode/LocationSelector',
     frame={w=26, h=3},

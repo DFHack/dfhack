@@ -190,6 +190,7 @@ end
 
 InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
 InfoOverlay.ATTRS{
+    desc='Adds search and filter functionality to most info panels.',
     default_pos={x=64, y=8},
     viewscreens='dwarfmode/Info',
     frame={w=40, h=6},
@@ -493,6 +494,7 @@ end
 
 CandidatesOverlay = defclass(CandidatesOverlay, sortoverlay.SortOverlay)
 CandidatesOverlay.ATTRS{
+    desc='Adds search functionality to the noble assignment page.',
     default_pos={x=54, y=8},
     viewscreens='dwarfmode/Info/ADMINISTRATORS/Candidates',
     frame={w=27, h=3},
@@ -547,6 +549,7 @@ end
 
 WorkAnimalOverlay = defclass(WorkAnimalOverlay, overlay.OverlayWidget)
 WorkAnimalOverlay.ATTRS{
+    desc='Annotates units with how many work animals they have assigned on the assign work animal screen.',
     default_pos={x=-33, y=12},
     viewscreens='dwarfmode/Info/CREATURES/AssignWorkAnimal',
     default_enabled=true,
@@ -617,6 +620,7 @@ end
 
 InterrogationOverlay = defclass(InterrogationOverlay, sortoverlay.SortOverlay)
 InterrogationOverlay.ATTRS{
+    desc='Adds search and filter capabilities to the justice screens.',
     default_pos={x=47, y=10},
     viewscreens='dwarfmode/Info/JUSTICE',
     frame={w=27, h=9},

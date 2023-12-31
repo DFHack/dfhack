@@ -9,6 +9,7 @@ local widgets = require('gui.widgets')
 
 WorldOverlay = defclass(WorldOverlay, sortoverlay.SortOverlay)
 WorldOverlay.ATTRS{
+    desc='Adds search functionality to the artifact list on the world raid screen.',
     default_pos={x=-18, y=2},
     viewscreens='world/ARTIFACTS',
     frame={w=40, h=1},

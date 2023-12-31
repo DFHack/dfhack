@@ -5,6 +5,7 @@ local pathable = require('plugins.pathable')
 
 WarmDampOverlay = defclass(WarmDampOverlay, overlay.OverlayWidget)
 WarmDampOverlay.ATTRS{
+    desc='Makes warm and damp tiles visible when in ASCII mode.',
     viewscreens={
         'dwarfmode/Designate/DIG_DIG',
         'dwarfmode/Designate/DIG_REMOVE_STAIRS_RAMPS',
@@ -26,6 +27,7 @@ end
 
 CarveOverlay = defclass(CarveOverlay, overlay.OverlayWidget)
 CarveOverlay.ATTRS{
+    desc='Makes existing carving designations visible when in ASCII mode.',
     viewscreens={
         'dwarfmode/Designate/SMOOTH',
         'dwarfmode/Designate/ENGRAVE',

@@ -32,7 +32,11 @@ function setTargets(max, min)
 end
 
 local function do_set_burrow_config(var_name, val, burrows)
-    for _,bspec in ipairs(argparse.stringList(burrows)) do
+    burrows = argparse.stringList(burrows)
+    if #burrows == 0 then
+        qerror('no target burrows specified')
+    end
+    for _,bspec in ipairs(burrows) do
         local config = autochop_getBurrowConfig(bspec)
         config[var_name] = val
         autochop_setBurrowConfig(config.id, config.chop, config.clearcut,

@@ -130,7 +130,7 @@ end
 
 function stringList(arg, arg_name, list_length)
     if not list_length then list_length = 0 end
-    local list = arg:split(',')
+    local list = arg and (arg):split(',') or {}
     if list_length > 0 and #list ~= list_length then
         arg_error(arg_name,
                   'expected %d elements; found %d', list_length, #list)

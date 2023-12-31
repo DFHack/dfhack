@@ -62,6 +62,7 @@ Template for new versions:
 - `misery`: fix error when changing the misery factor
 
 ## Misc Improvements
+- `autochop`: better error output when target burrows are not specified on the commandline
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort
 

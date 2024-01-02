@@ -34,7 +34,7 @@ local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
 local blueprint = require('plugins.blueprint')
-local confirm = require('plugins.confirm')
+--local confirm = require('plugins.confirm')
 
 local assign_minecarts = reqscript('assign-minecarts')
 local quantum = reqscript('gui/quantum')

@@ -936,31 +936,31 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
             }
             else if (region->rainfall > 19)
             {
-                if (tropical || potential_tropical && wet_dry < 7)
+                if (tropical || (potential_tropical && wet_dry < 7))
                     return biome_type::SAVANNA_TROPICAL;
                 else
                     return biome_type::SAVANNA_TEMPERATE;
             }
-            else if (tropical || potential_tropical && wet_dry < 66)
+            else if (tropical || (potential_tropical && wet_dry < 66))
                 return biome_type::GRASSLAND_TROPICAL;
             else
                 return biome_type::GRASSLAND_TEMPERATE;
         }
         else if (region->drainage > 32)
         {
-            if (tropical || potential_tropical && wet_dry < 66)
+            if (tropical || (potential_tropical && wet_dry < 66))
                 return biome_type::SHRUBLAND_TROPICAL;
             else
                 return biome_type::SHRUBLAND_TEMPERATE;
         }
         else if (region->salinity > 65)
         {
-            if (tropical || potential_tropical && wet_dry < 66)
+            if (tropical || (potential_tropical && wet_dry < 66))
                 return biome_type::MARSH_TROPICAL_SALTWATER;
             else
                 return biome_type::MARSH_TEMPERATE_SALTWATER;
         }
-        else if (tropical || potential_tropical && wet_dry < 66)
+        else if (tropical || (potential_tropical && wet_dry < 66))
             return biome_type::MARSH_TROPICAL_FRESHWATER;
         else
             return biome_type::MARSH_TEMPERATE_FRESHWATER;
@@ -970,7 +970,7 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     {
         if (region->salinity > 65)
         {
-            if (tropical || potential_tropical && wet_dry < 66)
+            if (tropical || (potential_tropical && wet_dry < 66))
             {
                 if (region->drainage < 10)
                     return biome_type::SWAMP_MANGROVE;
@@ -980,13 +980,13 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
             else
                 return biome_type::SWAMP_TEMPERATE_SALTWATER;
         }
-        else if (tropical || potential_tropical && wet_dry < 66)
+        else if (tropical || (potential_tropical && wet_dry < 66))
             return biome_type::SWAMP_TROPICAL_FRESHWATER;
         else
             return biome_type::SWAMP_TEMPERATE_FRESHWATER;
     }
 
-    if (tropical || potential_tropical && wet_dry < 66)
+    if (tropical || (potential_tropical && wet_dry < 66))
     {
         if (region->rainfall < 75)
             return biome_type::FOREST_TROPICAL_CONIFER;

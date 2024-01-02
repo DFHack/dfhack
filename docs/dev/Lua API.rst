@@ -4035,7 +4035,7 @@ Misc
   of keycodes to *true* or *false*. For instance, it is possible to use the
   table passed as argument to ``onInput``.
 
-  You can send mouse clicks as will by setting the ``_MOUSE_L`` key or other
+  You can send mouse clicks as well by setting the ``_MOUSE_L`` key or other
   mouse-related pseudo-keys documented with the ``screen:onInput(keys)``
   function above. Note that if you are simulating a click at a specific spot on
   the screen, you must set ``df.global.gps.mouse_x`` and

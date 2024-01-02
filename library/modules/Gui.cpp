@@ -399,10 +399,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.bottom_mode_selected) {
         case df::enums::main_bottom_mode_type::STOCKPILE:
+            newFocusString += "/Stockpile";
             if (game->main_interface.stockpile.cur_bld) {
                 newFocusString += "/Some";
             }
-            newFocusString += "/Stockpile";
             break;
         case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
             newFocusString += "/Stockpile/Paint";

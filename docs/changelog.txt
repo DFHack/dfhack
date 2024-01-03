@@ -71,8 +71,10 @@ Template for new versions:
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
 
 ## API
+- ``Units::getUnitFromHFID``: new function, retrieves unit from hf id
 
 ## Lua
+- ``dfhack.units.getUnitFromHFID``: new function, retrieves unit from hf id
 
 ## Removed
 

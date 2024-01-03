@@ -50,7 +50,7 @@ static PersistentDataItem config;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED  = 0,
-    CONFIG_CYCLE_TICKS = 1,
+    // CONFIG_CYCLE_TICKS = 1, deprecated; no longer configurable
     CONFIG_AUTOWATCH   = 2,
     CONFIG_DEFAULT_FK  = 3,
     CONFIG_DEFAULT_MK  = 4,
@@ -79,6 +79,8 @@ struct WatchedRace;
 // to ignore them for a while but still keep the target count settings
 static unordered_map<int, WatchedRace*> watched_races;
 static unordered_map<string, int> race_to_id;
+
+static const int32_t CYCLE_TICKS = 6000;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static void init_autobutcher(color_ostream &out);
@@ -129,7 +131,6 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(CONFIG_CYCLE_TICKS, 6000);
         set_config_bool(CONFIG_AUTOWATCH, true);
         set_config_val(CONFIG_DEFAULT_FK, 4);
         set_config_val(CONFIG_DEFAULT_MK, 2);
@@ -163,7 +164,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autobutcher_cycle(out);
     return CR_OK;
 }
@@ -501,10 +502,6 @@ static command_result df_autobutcher(color_ostream &out, vector<string> &paramet
             opts.command == "forget") {
         autobutcher_modify_watchlist(out, opts);
     }
-    else if (opts.command == "ticks") {
-        set_config_val(CONFIG_CYCLE_TICKS, opts.ticks);
-        INFO(status,out).print("New cycle timer: %d ticks.\n", opts.ticks);
-    }
     else {
         autobutcher_status(out);
     }
@@ -532,7 +529,6 @@ static vector<WatchedRace *> getSortedWatchList() {
 
 static void autobutcher_export(color_ostream &out) {
     out << "enable autobutcher" << endl;
-    out << "autobutcher ticks " << get_config_val(CONFIG_CYCLE_TICKS) << endl;
     out << "autobutcher " << (get_config_bool(CONFIG_AUTOWATCH) ? "" : "no")
         << "autowatch" << endl;
     out << "autobutcher target"
@@ -558,8 +554,6 @@ static void autobutcher_export(color_ostream &out) {
 
 static void autobutcher_status(color_ostream &out) {
     out << "autobutcher is " << (is_enabled ? "" : "not ") << "enabled\n";
-    if (is_enabled)
-        out << "  running every " << get_config_val(CONFIG_CYCLE_TICKS) << " game ticks\n";
     out << "  " << (get_config_bool(CONFIG_AUTOWATCH) ? "" : "not ") << "autowatching for new races\n";
 
     out << "\ndefault setting for new races:"
@@ -756,6 +750,8 @@ static bool isProtectedUnit(df::unit *unit) {
         || !unit->name.nickname.empty();
 }
 
+
+
 static void autobutcher_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
@@ -919,18 +915,11 @@ static bool autowatch_isEnabled() {
     return get_config_bool(CONFIG_AUTOWATCH);
 }
 
-static unsigned autobutcher_getSleep(color_ostream &out) {
-    return get_config_val(CONFIG_CYCLE_TICKS);
-}
-
-static void autobutcher_setSleep(color_ostream &out, unsigned ticks) {
-
-    set_config_val(CONFIG_CYCLE_TICKS, ticks);
-}
-
 static void autowatch_setEnabled(color_ostream &out, bool enable) {
     DEBUG(status,out).print("auto-adding to watchlist %s\n", enable ? "started" : "stopped");
     set_config_bool(CONFIG_AUTOWATCH, enable);
+    if (get_config_bool(CONFIG_IS_ENABLED))
+        autobutcher_cycle(out);
 }
 
 // set all data for a watchlist race in one go
@@ -1036,7 +1025,6 @@ static int autobutcher_getSettings(lua_State *L) {
     Lua::SetField(L, get_config_val(CONFIG_DEFAULT_MK), ctable, "mk");
     Lua::SetField(L, get_config_val(CONFIG_DEFAULT_FA), ctable, "fa");
     Lua::SetField(L, get_config_val(CONFIG_DEFAULT_MA), ctable, "ma");
-    Lua::SetField(L, get_config_val(CONFIG_CYCLE_TICKS), ctable, "sleep");
     return 1;
 }
 
@@ -1099,8 +1087,6 @@ static int autobutcher_getWatchList(lua_State *L) {
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(autowatch_isEnabled),
     DFHACK_LUA_FUNCTION(autowatch_setEnabled),
-    DFHACK_LUA_FUNCTION(autobutcher_getSleep),
-    DFHACK_LUA_FUNCTION(autobutcher_setSleep),
     DFHACK_LUA_FUNCTION(autobutcher_setWatchListRace),
     DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetNew),
     DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetAll),

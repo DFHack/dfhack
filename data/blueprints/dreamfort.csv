@@ -110,30 +110,33 @@ These are Dreamfort's suggestions for adjustments to settings and initial setup.
 You can save some time by setting up your settings in gui/control-panel before you embark.
 "Beyond the bugfix tools that are enabled by default, we recommend enabling the following DFHack tools in gui/control-panel (but they are not required if you prefer to do these things manually):"
 ""
-"On the gui/control-panel ""Autostart"" tab, additionally enable:"
+"On the gui/control-panel ""Autostart"" tab, enable:"
+"""Automation"" subtab:"
 - autobutcher
 - autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
 - autofarm
+- autofarm threshold 150 grass_tail_pig
 - autofish
+- automilk
 - autonestbox
+- autoshear
 - autoslab
 - ban-cooking all
 - buildingplan set boulders false
 - buildingplan set logs false
-- dwarfvet
+- cleanowned
 - nestboxes
+- orders-sort
 - prioritize
 - seedwatch
 - suspendmanager
 - tailor
-"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Fort"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
-""
-"On the gui/control-panel ""Maintenance"" tab, enable:"
-- everything
-""
-"On the gui/control-panel ""System"" tab, additionally enable:"
 - work-now
+"""Gameplay"" subtab:"
+- dwarfvet
+- warn-stranded
+"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""
 "Now, after you've arrived at your embark site, open the nobles screen and:"
 "- Assign dwarves to at least manager, chief medical dwarf, broker, and bookkeeper noble roles (they can all be the same dwarf)"
@@ -1086,8 +1089,8 @@ t1(37x33)
 ,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,`,a{name=Inside+},`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(7x6),,,,,,,`,,`
-,,,`,,`,a{name=Inside+}(7x5),,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,a{name=Inside+}(8x7),`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(8x7),,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -2380,7 +2383,7 @@ Features:
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
-"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for a full blank slate. Generate manager orders for your chosen variant."
+"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for just the zones and doors, leaving the furnishings up to you. Generate manager orders for your chosen variant."
 ""
 "Note that the default temple and library are created ""Citizens and Long-Term Residents only"", but you can change this in the location configuration screen if you want them to attract visitors. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"

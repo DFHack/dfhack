@@ -1444,6 +1444,9 @@ Units module
 
   The unit is of Great Danger. This include demons, titans, and megabeasts.
 
+* ``dfhack.units.getUnitFromHFID(hf_id)``
+
+  Returns an active unit represented by the given historical figure id, else ``nil``.
 
 * ``dfhack.units.getPosition(unit)``
 

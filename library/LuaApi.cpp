@@ -1903,6 +1903,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDemon),
     WRAPM(Units, isDanger),
     WRAPM(Units, isGreatDanger),
+    WRAPM(Units, getUnitFromHFID),
     WRAPM(Units, teleport),
     WRAPM(Units, getGeneralRef),
     WRAPM(Units, getSpecificRef),

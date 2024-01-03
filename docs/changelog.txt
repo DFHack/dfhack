@@ -61,6 +61,7 @@ Template for new versions:
 - `sort`: fix mouse clicks falling through the squad assignment overlay panel when clicking on the panel but not on a clickable widget
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
 - `misery`: fix error when changing the misery factor
+- ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix logic (for tropical oceans, etc.)
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline

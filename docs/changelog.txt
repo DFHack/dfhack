@@ -69,6 +69,7 @@ Template for new versions:
 
 ## Documentation
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
+- `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
 
 ## API
 

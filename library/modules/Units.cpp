@@ -790,8 +790,6 @@ bool Units::isGreatDanger(df::unit* unit)
     return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
 }
 
-
-
 int32_t Units::getNumUnits()
 {
     return world->units.all.size();
@@ -802,7 +800,15 @@ df::unit *Units::getUnit (const int32_t index)
     return vector_get(world->units.all, index);
 }
 
-// returns index of creature actually read or -1 if no creature can be found
+df::unit *Units::getUnitFromHFID(int32_t hf_id)
+{
+    auto hf = df::historical_figure::find(hf_id);
+    if (hf)
+        return df::unit::find(hf->unit_id);
+    else
+        return vector_get(world->units.all, linear_index(world->units.all, &df::unit::hist_figure_id, hf_id));
+}
+
 bool Units::getUnitsInBox (std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2)

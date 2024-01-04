@@ -181,6 +181,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
 {
     if (screen->doing_site_finder)
         focusStrings.push_back(baseFocus + "/SiteFinder");
+    else if (screen->choosing_civilization)
+        focusStrings.push_back(baseFocus + "/ChooseCiv");
+    else if (screen->choosing_reclaim)
+        focusStrings.push_back(baseFocus + "/Reclaim");
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);

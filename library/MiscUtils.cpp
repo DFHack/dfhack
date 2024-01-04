@@ -183,7 +183,7 @@ std::string capitalize_string_words(const std::string& str)
     int32_t bracket_count = 0;
     bool conf;
 
-    for (int32_t s = 0; s < out.length(); s++)
+    for (size_t s = 0; s < out.length(); s++)
     {
         if (out[s] == '[') { ++bracket_count; continue; }
         else if (out[s] == ']') { --bracket_count; continue; }

@@ -48,6 +48,11 @@ distribution.
 #include <map>
 #include <array>
 
+int random_int(int max)
+{
+    return int(int64_t(rand()) * max / (int64_t(RAND_MAX) + 1));
+}
+
 std::string stl_sprintf(const char *fmt, ...) {
     va_list lst;
     va_start(lst, fmt);
@@ -171,6 +176,64 @@ std::string to_search_normalized(const std::string &str)
     return result;
 }
 
+std::string capitalize_string_words(const std::string& str)
+{	// Cleaned up from g_src/basics.cpp, and returns new string
+    std::string out = str;
+    bool starting = true;
+    int32_t bracket_count = 0;
+    bool conf;
+
+    for (int32_t s = 0; s < out.length(); s++)
+    {
+        if (out[s] == '[') { ++bracket_count; continue; }
+        else if (out[s] == ']') { --bracket_count; continue; }
+        else if (bracket_count > 0) continue;
+
+        conf = false;
+        if (!starting)
+        {
+            if (out[s - 1] == ' ' || out[s - 1] == '\"')
+                conf = true;
+            // Discount single quote if it isn't preceded by space, comma, or nothing
+            else if (out[s - 1] == '\'' && s >= 2 && (out[s - 2] == ' ' || out[s - 2] == ','))
+                conf = true;
+        }
+
+        if (starting || conf)
+        {
+            // Capitalize
+            if (out[s] >= 'a' && out[s] <= 'z')
+                out[s] += 'A' - 'a';
+            else
+            {
+                switch (out[s])
+                {
+                case (char)129: // 'ü'
+                    out[s] = (char)154; break; // 'Ü'
+                case (char)164: // 'ñ'
+                    out[s] = (char)165; break; // 'Ñ'
+                case (char)132: // 'ä'
+                    out[s] = (char)142; break; // 'Ä'
+                case (char)134: // 'å'
+                    out[s] = (char)143; break; // 'Å'
+                case (char)130: // 'é'
+                    out[s] = (char)144; break; // 'É'
+                case (char)148: // 'ö'
+                    out[s] = (char)153; break; // 'Ö'
+                case (char)135: // 'ç'
+                    out[s] = (char)128; break; // 'Ç'
+                case (char)145: // 'æ'
+                    out[s] = (char)146; break; // 'Æ'
+                }
+            }
+
+            starting = false;
+        }
+    }
+
+    return out;
+}
+
 bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length,
                word_wrap_whitespace_mode mode)
 {
@@ -230,6 +293,21 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t lin
     return true;
 }
 
+std::string grab_token_string_pos(const std::string& source, int32_t pos, char compc)
+{	// Cleaned up from g_src/basics.cpp, return string instead of bool
+    std::string out;
+
+    // Go until you hit compc, ']', or the end
+    for (auto s = source.begin() + pos; s < source.end(); ++s)
+    {
+        if (*s == compc || *s == ']')
+            break;
+        out += *s;
+    }
+
+    return out;
+}
+
 bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail)
 {
     size_t ksize = key.size();
@@ -251,11 +329,6 @@ bool prefix_matches(const std::string &prefix, const std::string &key, std::stri
         return true;
     }
     return false;
-}
-
-int random_int(int max)
-{
-    return int(int64_t(rand())*max/(int64_t(RAND_MAX)+1));
 }
 
 #ifdef LINUX_BUILD // Linux

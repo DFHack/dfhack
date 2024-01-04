@@ -177,7 +177,7 @@ std::string to_search_normalized(const std::string &str)
 }
 
 std::string capitalize_string_words(const std::string& str)
-{	// Cleaned up from g_src/basics.cpp, and returns new string
+{   // Cleaned up from g_src/basics.cpp, and returns new string
     std::string out = str;
     bool starting = true;
     int32_t bracket_count = 0;
@@ -294,7 +294,7 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t lin
 }
 
 std::string grab_token_string_pos(const std::string& source, int32_t pos, char compc)
-{	// Cleaned up from g_src/basics.cpp, return string instead of bool
+{   // Cleaned up from g_src/basics.cpp, return string instead of bool
     std::string out;
 
     // Go until you hit compc, ']', or the end

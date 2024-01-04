@@ -84,6 +84,7 @@ using namespace DFHack;
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
@@ -171,6 +172,15 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
         focusStrings.push_back(baseFocus + "/Basic");
     else if (screen->doing_params)
         focusStrings.push_back(baseFocus + "/Advanced");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
+{
+    if (screen->doing_site_finder)
+        focusStrings.push_back(baseFocus + "/SiteFinder");
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);

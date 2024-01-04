@@ -670,6 +670,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.squad_equipment.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadEquipment";
+        if (game->main_interface.squad_equipment.customizing_equipment)
+            newFocusString += "/Customizing";
+        else
+            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
     // squads should be last because it's the only one not exclusive with the others? or something?

@@ -1103,13 +1103,12 @@ RetireLocationOverlay.ATTRS{
     default_pos={x=-39,y=6},
     default_enabled=true,
     viewscreens='dwarfmode/LocationDetails',
-    frame={w=25, h=4},
+    frame={w=25, h=3},
 }
 
 function RetireLocationOverlay:init()
     self:addviews{
         widgets.Panel{
-            frame={l=0, t=0, r=0, h=3},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
             visible=location_details_is_on_top,
@@ -1118,36 +1117,49 @@ function RetireLocationOverlay:init()
                     frame={t=0, l=0},
                     label='Retire location',
                     key='CUSTOM_CTRL_D',
-                    on_activate=self:callback('retire'),
+                    on_activate=self:callback('confirm_retire'),
                 },
             },
-        },
-        widgets.Label{
-            frame={l=1, b=0},
-            text='LOCATION RETIRED',
-            text_pen=COLOR_RED,
-            visible=function() return mi.location_details.selected_ab.flags.DOES_NOT_EXIST end
         },
     }
 end
 
-function RetireLocationOverlay:retire()
-    local details = mi.location_details
-    local location = details.selected_ab
-    local has_occupations, has_zones = false, #location.contents.building_ids ~= 0
-    for _, occupation in ipairs(location.occupations) do
-        if occupation.histfig_id ~= -1 then
-            has_occupations = true
+local function retire(location)
+    location.flags.DOES_NOT_EXIST = true
+    for idx, loc in ipairs(mi.location_selector.valid_ab) do
+        if loc.id == location.id then
+            mi.location_selector.valid_ab:erase(idx)
             break
         end
     end
-    if has_occupations or has_zones then
-        local messages = {'Cannot retire location! Please:', ''}
-        if has_occupations then
-            table.insert(messages, '- unassign location occupations')
+    local occupations = df.global.world.occupations.all
+    for idx = #occupations-1,0,-1 do
+        local occupation = occupations[idx]
+        if occupation.site_id == location.site_id and
+            occupation.location_id == location.id
+        then
+            occupations:erase(idx)
         end
-        if has_zones then
-            table.insert(messages, ('- detach this location from %d zone(s)'):format(#location.contents.building_ids))
+    end
+    mi.location_details.open = false
+end
+
+function RetireLocationOverlay:confirm_retire()
+    local details = mi.location_details
+    local location = details.selected_ab
+    local num_occupations, num_zones = 0, #location.contents.building_ids
+    for _, occupation in ipairs(location.occupations) do
+        if occupation.histfig_id ~= -1 then
+            num_occupations = num_occupations + 1
+        end
+    end
+    if num_occupations + num_zones > 0 then
+        local messages = {'Cannot retire location! Please:', ''}
+        if num_occupations > 0 then
+            table.insert(messages, ('- unassign %d location occupation(s)'):format(num_occupations))
+        end
+        if num_zones > 0 then
+            table.insert(messages, ('- detach this location from %d zone(s)'):format(num_zones))
         end
         table.insert(messages, '')
         table.insert(messages, 'and try again')
@@ -1157,15 +1169,7 @@ function RetireLocationOverlay:retire()
     dialogs.showYesNoPrompt('Confirm retire location',
         'Are you sure you want to retire this location?'..NEWLINE..'You won\'t be able to use it again.',
         COLOR_WHITE,
-        function()
-            location.flags.DOES_NOT_EXIST = true
-            for idx, loc in ipairs(mi.location_selector.valid_ab) do
-                if loc.id == location.id then
-                    mi.location_selector.valid_ab:erase(idx)
-                    break
-                end
-            end
-        end)
+        curry(retire, location))
 end
 
 OVERLAY_WIDGETS = {

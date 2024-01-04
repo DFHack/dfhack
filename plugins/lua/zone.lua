@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.zone')
 
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -1086,9 +1087,91 @@ function CageChainOverlay:init()
     }
 end
 
+-- ---------------------
+-- RetireLocationOverlay
+--
+
+local mi = df.global.game.main_interface
+
+local function location_details_is_on_top()
+    return not mi.name_creator.open and not mi.unit_selector.open
+end
+
+RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)
+RetireLocationOverlay.ATTRS{
+    desc='Adds a button to retire unneeded locations to the location details screen.',
+    default_pos={x=-39,y=6},
+    default_enabled=true,
+    viewscreens='dwarfmode/LocationDetails',
+    frame={w=25, h=4},
+}
+
+function RetireLocationOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            frame={l=0, t=0, r=0, h=3},
+            frame_background=gui.CLEAR_PEN,
+            frame_style=gui.FRAME_MEDIUM,
+            visible=location_details_is_on_top,
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={t=0, l=0},
+                    label='Retire location',
+                    key='CUSTOM_CTRL_D',
+                    on_activate=self:callback('retire'),
+                },
+            },
+        },
+        widgets.Label{
+            frame={l=1, b=0},
+            text='LOCATION RETIRED',
+            text_pen=COLOR_RED,
+            visible=function() return mi.location_details.selected_ab.flags.DOES_NOT_EXIST end
+        },
+    }
+end
+
+function RetireLocationOverlay:retire()
+    local details = mi.location_details
+    local location = details.selected_ab
+    local has_occupations, has_zones = false, #location.contents.building_ids ~= 0
+    for _, occupation in ipairs(location.occupations) do
+        if occupation.histfig_id ~= -1 then
+            has_occupations = true
+            break
+        end
+    end
+    if has_occupations or has_zones then
+        local messages = {'Cannot retire location! Please:', ''}
+        if has_occupations then
+            table.insert(messages, '- unassign location occupations')
+        end
+        if has_zones then
+            table.insert(messages, ('- detach this location from %d zone(s)'):format(#location.contents.building_ids))
+        end
+        table.insert(messages, '')
+        table.insert(messages, 'and try again')
+        dialogs.showMessage('Location in use', table.concat(messages, NEWLINE))
+        return
+    end
+    dialogs.showYesNoPrompt('Confirm retire location',
+        'Are you sure you want to retire this location?'..NEWLINE..'You won\'t be able to use it again.',
+        COLOR_WHITE,
+        function()
+            location.flags.DOES_NOT_EXIST = true
+            for idx, loc in ipairs(mi.location_selector.valid_ab) do
+                if loc.id == location.id then
+                    mi.location_selector.valid_ab:erase(idx)
+                    break
+                end
+            end
+        end)
+end
+
 OVERLAY_WIDGETS = {
     pasturepond=PasturePondOverlay,
     cagechain=CageChainOverlay,
+    retirelocation=RetireLocationOverlay,
 }
 
 return _ENV

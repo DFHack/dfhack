@@ -22,7 +22,7 @@ releases *never* support newer versions of DF -- DFHack requires data about DF
 that is only possible to obtain after DF has been released. Occasionally,
 DFHack releases will be able to maintain support for older versions of DF - for
 example, DFHack 0.34.11-r5 supported both DF 0.34.11 and 0.34.10. For maximum
-stability, you should usually use the latest versions of both DF and DFHack.
+stability, you should use the latest versions of both DF and DFHack.
 
 .. _downloading:
 
@@ -60,7 +60,8 @@ Beta releases
 
 In between stable releases, we may create beta releases to test new features.
 These are available via the ``beta`` release channel on Steam or from our
-regular Github page as a pre-release tagged with a "beta" or "rc" suffix.
+regular Github page as a pre-release tagged with a "beta" or "rc" ("release
+candidate") suffix.
 
 Development builds
 ------------------
@@ -103,6 +104,23 @@ folder, which should already include a ``data`` folder and a ``save`` folder,
 among other things. Some redistributions of Dwarf Fortress may place DF in
 another folder, so ensure that the ``hack`` folder ends up next to the ``data``
 folder, and you'll be fine.
+
+Installing into a wineskin on Mac
+---------------------------------
+
+Until DF (and DFHack) is natively available for Mac, you'll have to run the
+Windows version under emulation. Here are the instructions for adding DFHack to
+a wineskin that has DF installed in it:
+
+#. Find the location of your existing Dwarf Fortress app (default is
+   ``/user/applications/Wineskin/``). Control + click and select "Show package
+   contents" from the menu.
+#. Find the location of the ``Dwarf Fortress`` folder inside the package
+   contents (default is ``/drive_c/Program Files/``)
+#. Copy the contents of the unzipped DFHack folder (Windows versino) into the
+   ``Dwarf Fortress`` folder inside the package.
+
+These instructions were last tested on Mac Sonoma 14.1.2.
 
 Uninstalling DFHack
 ===================

@@ -1091,9 +1091,10 @@ end
 -- RetireLocationOverlay
 --
 
+local mi = df.global.game.main_interface
+
 local function location_details_is_on_top()
-    return not df.global.game.main_interface.name_creator.open and
-        not df.global.game.main_interface.unit_selector.open
+    return not mi.name_creator.open and not mi.unit_selector.open
 end
 
 RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)
@@ -1102,12 +1103,13 @@ RetireLocationOverlay.ATTRS{
     default_pos={x=-39,y=6},
     default_enabled=true,
     viewscreens='dwarfmode/LocationDetails',
-    frame={w=25, h=3},
+    frame={w=25, h=4},
 }
 
 function RetireLocationOverlay:init()
     self:addviews{
         widgets.Panel{
+            frame={l=0, t=0, r=0, h=3},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
             visible=location_details_is_on_top,
@@ -1120,11 +1122,16 @@ function RetireLocationOverlay:init()
                 },
             },
         },
+        widgets.Label{
+            frame={l=1, b=0},
+            text='LOCATION RETIRED',
+            text_pen=COLOR_RED,
+            visible=function() return mi.location_details.selected_ab.flags.DOES_NOT_EXIST end
+        },
     }
 end
 
 function RetireLocationOverlay:retire()
-    local mi = df.global.game.main_interface
     local details = mi.location_details
     local location = details.selected_ab
     local has_occupations, has_zones = false, #location.contents.building_ids ~= 0

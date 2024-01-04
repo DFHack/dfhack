@@ -69,7 +69,9 @@ Template for new versions:
 - `work-now`: now saves its enabled status with the fort
 
 ## Documentation
+- `installing`: Add installation instructions for winskin on Mac
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
+- `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
 
 ## API
 

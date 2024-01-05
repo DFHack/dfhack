@@ -208,6 +208,13 @@ DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot
 /// Returns true if an active caravan will pay extra for the given item
 DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
 
+/// Returns true if the item can be melted
+DFHACK_EXPORT bool canMelt(df::item *item, bool game_ui = false);
+/// Marks the item for melting
+DFHACK_EXPORT bool markForMelting(df::item *item);
+/// Cancels an existing melting designation
+DFHACK_EXPORT bool cancelMelting(df::item *item);
+
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);
 /// Checks whether the item is assigned to a squad

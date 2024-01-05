@@ -83,10 +83,12 @@ Template for new versions:
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
 - ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
 - ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
+- ``Items``: add item melting logic ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)``
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
 - ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
+- ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
 
 ## Removed
 

@@ -170,19 +170,19 @@ char cp437_tolower(char c)
     }
 }
 
-std::string toUpper(const std::string &str, bool non_ascii)
+std::string toUpper(const std::string &str, bool use_cp437)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = non_ascii ? cp437_toupper(str[i]) : toupper(str[i]);
+        rv[i] = use_cp437 ? cp437_toupper(str[i]) : toupper(str[i]);
     return rv;
 }
 
-std::string toLower(const std::string &str, bool non_ascii)
+std::string toLower(const std::string &str, bool use_cp437)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = non_ascii ? cp437_tolower(str[i]) : tolower(str[i]);
+        rv[i] = use_cp437 ? cp437_tolower(str[i]) : tolower(str[i]);
     return rv;
 }
 

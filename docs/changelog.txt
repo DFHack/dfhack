@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `sort`: search and sort for the "choose unit to elevate to the barony" screen. units are sorted by the number of item preferences they have and the units are annotated with the items that they have preferences for
+- `gui/mass-remove`: new global keybinding: Ctrl-M while on the fort map
 
 ## Fixes
 - `reveal`: now avoids revealing blocks that contain divine treasures, encased horrors, and deep vein hollows (so the surprise triggers are not triggered prematurely)

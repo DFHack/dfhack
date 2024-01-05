@@ -941,6 +941,10 @@ can be omitted.
   Note that the returned string may be longer than the input string. For
   example, ``ä`` is replaced with ``a``, and ``æ`` is replaced with ``ae``.
 
+* ``dfhack.capitalizeStringWords(string)``
+
+  Return a version of the string with each word capitalized.
+
 * ``dfhack.run_command(command[, ...])``
 
   Run an arbitrary DFHack command, with the core suspended, and send output to

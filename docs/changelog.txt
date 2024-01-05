@@ -74,8 +74,12 @@ Template for new versions:
 - `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
 
 ## API
+- ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
+- ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
+- ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
 
 ## Lua
+- ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
 
 ## Removed
 

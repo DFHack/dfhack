@@ -61,6 +61,8 @@ namespace DFHack {
     class color_ostream;
 }
 
+DFHACK_EXPORT int random_int(int max);
+
 template <typename T>
 void print_bits ( T val, std::ostream& out )
 {
@@ -178,6 +180,17 @@ inline int binsearch_index(const std::vector<CT*> &vec, typename CT::key_pointer
     return CT::binsearch_index(vec, key, exact);
 }
 
+template <typename FT>
+int random_index(const std::vector<FT>& vec)
+{
+    if (vec.empty())
+        return -1;
+    else if (vec.size() == 1)
+        return 0;
+
+    return random_int(vec.size());
+}
+
 template<typename FT, typename KT>
 inline bool vector_contains(const std::vector<FT> &vec, KT key)
 {
@@ -197,6 +210,12 @@ inline T vector_get(const std::vector<T> &vec, unsigned idx, const T &defval = T
         return vec[idx];
     else
         return defval;
+}
+
+template<typename T>
+inline T vector_get_random(const std::vector<T>& vec, const T& defval = T())
+{
+    return vector_get(vec, random_index(vec), defval);
 }
 
 template<typename T>
@@ -401,6 +420,7 @@ inline std::string join_strings(const std::string &separator, T &items) {
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
+DFHACK_EXPORT std::string capitalize_string_words(const std::string& str);
 
 static inline std::string int_to_string(const int n) {
     std::ostringstream ss;
@@ -444,6 +464,13 @@ DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
                              size_t line_length = 80,
                              word_wrap_whitespace_mode mode = WSMODE_KEEP_ALL);
+/**
+* Function to assist in parsing tokens. Returns string from source pos until next compc, ']', or end.
+* pos should be set to position after '[' to start with, then incremented by the result's size+1 before subsequent calls.
+* compc is usually ':', but can be '.' for parsing number ranges.
+* Based on Bay12's g_src/basics.cpp
+*/
+std::string grab_token_string_pos(const std::string& source, int32_t pos, char compc = ':');
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {
@@ -456,8 +483,6 @@ inline T clip_range(T a, T1 minv, T2 maxv) {
     if (a > maxv) return maxv;
     return a;
 }
-
-DFHACK_EXPORT int random_int(int max);
 
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.

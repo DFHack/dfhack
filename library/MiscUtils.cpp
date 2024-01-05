@@ -120,19 +120,69 @@ std::string join_strings(const std::string &separator, const std::vector<std::st
     return ss.str();
 }
 
-std::string toUpper(const std::string &str)
+char cp437_toupper(char c)
+{
+    switch (c)
+    {
+        case (char)129: // 'ü'
+            return (char)154; // 'Ü'
+        case (char)164: // 'ñ'
+            return (char)165; // 'Ñ'
+        case (char)132: // 'ä'
+            return (char)142; // 'Ä'
+        case (char)134: // 'å'
+            return (char)143; // 'Å'
+        case (char)130: // 'é'
+            return (char)144; // 'É'
+        case (char)148: // 'ö'
+            return (char)153; // 'Ö'
+        case (char)135: // 'ç'
+            return (char)128; // 'Ç'
+        case (char)145: // 'æ'
+            return (char)146; // 'Æ'
+        default:
+            return toupper(c);
+    }
+}
+
+char cp437_tolower(char c)
+{
+    switch (c)
+    {
+        case (char)154: // 'Ü'
+            return (char)129; // 'ü'
+        case (char)165: // 'Ñ'
+            return (char)164; // 'ñ'
+        case (char)142: // 'Ä'
+            return (char)132; // 'ä'
+        case (char)143: // 'Å'
+            return (char)134; // 'å'
+        case (char)144: // 'É'
+            return (char)130; // 'é'
+        case (char)153: // 'Ö'
+            return (char)148; // 'ö'
+        case (char)128: // 'Ç'
+            return (char)135; // 'ç'
+        case (char)146: // 'Æ'
+            return (char)145; // 'æ'
+        default:
+            return tolower(c);
+    }
+}
+
+std::string toUpper(const std::string &str, bool non_ascii)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = toupper(str[i]);
+        rv[i] = non_ascii ? cp437_toupper(str[i]) : toupper(str[i]);
     return rv;
 }
 
-std::string toLower(const std::string &str)
+std::string toLower(const std::string &str, bool non_ascii)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = tolower(str[i]);
+        rv[i] = non_ascii ? cp437_tolower(str[i]) : tolower(str[i]);
     return rv;
 }
 
@@ -200,33 +250,8 @@ std::string capitalize_string_words(const std::string& str)
         }
 
         if (starting || conf)
-        {
-            // Capitalize
-            if (out[s] >= 'a' && out[s] <= 'z')
-                out[s] += 'A' - 'a';
-            else
-            {
-                switch (out[s])
-                {
-                case (char)129: // 'ü'
-                    out[s] = (char)154; break; // 'Ü'
-                case (char)164: // 'ñ'
-                    out[s] = (char)165; break; // 'Ñ'
-                case (char)132: // 'ä'
-                    out[s] = (char)142; break; // 'Ä'
-                case (char)134: // 'å'
-                    out[s] = (char)143; break; // 'Å'
-                case (char)130: // 'é'
-                    out[s] = (char)144; break; // 'É'
-                case (char)148: // 'ö'
-                    out[s] = (char)153; break; // 'Ö'
-                case (char)135: // 'ç'
-                    out[s] = (char)128; break; // 'Ç'
-                case (char)145: // 'æ'
-                    out[s] = (char)146; break; // 'Æ'
-                }
-            }
-
+        {   // Capitalize
+            out[s] = cp437_toupper(out[s]);
             starting = false;
         }
     }

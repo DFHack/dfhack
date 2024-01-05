@@ -934,6 +934,18 @@ can be omitted.
 
   Convert a string from UTF-8 to DF's CP437 encoding.
 
+* ``dfhack.cp437Upper(string)``
+
+  Return a version of the string with all letters capitalized.
+  Non-ASCII CP437 characters are capitalized if a CP437 version exists.
+  For example, ``ä`` is replaced by ``Ä``, but ``â`` is never capitalized.
+
+
+* ``dfhack.cp437Lower(string)``
+
+  Return a version of the string with all letters in lower case.
+  Non-ASCII CP437 characters are downcased. For example, ``Ä`` is replaced by ``ä``.
+
 * ``dfhack.toSearchNormalized(string)``
 
   Replace non-ASCII alphabetic characters in a CP437-encoded string with their
@@ -943,7 +955,12 @@ can be omitted.
 
 * ``dfhack.capitalizeStringWords(string)``
 
-  Return a version of the string with each word capitalized.
+  Return a version of the string with the first letter of each word capitalized.
+  The beginning of a word is determined by a space or quote ``"``. It is also
+  determined by an apostrophe ``'`` when preceded by a space or comma.
+  Non-ASCII CP437 characters will be capitalized if a CP437 version exists.
+  This function does not downcase characters. Use ``dfhack.cp437Lower``
+  first, if desired.
 
 * ``dfhack.run_command(command[, ...])``
 

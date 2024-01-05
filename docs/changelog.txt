@@ -77,9 +77,12 @@ Template for new versions:
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
 - ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
 - ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
+- ``cp437_toupper(char)``, ``cp437_tolower(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions now accept optional bool to affect CP437 chars
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
+- ``dfhack.cp437Upper(string)``, ``dfhack.cp437Lower(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 

@@ -684,8 +684,15 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.squad_equipment.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadEquipment";
-        if (game->main_interface.squad_equipment.customizing_equipment)
+        if (game->main_interface.squad_equipment.customizing_equipment) {
             newFocusString += "/Customizing";
+            if (game->main_interface.squad_equipment.cs_setting_material)
+                newFocusString += "/Material";
+            else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
+                newFocusString += "/Color";
+            else
+                newFocusString += "/Default";
+        }
         else
             newFocusString += "/Default";
         focusStrings.push_back(newFocusString);

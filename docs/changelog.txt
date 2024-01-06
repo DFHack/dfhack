@@ -67,6 +67,9 @@ Template for new versions:
 - `autochop`: better error output when target burrows are not specified on the commandline
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort
+- `fastdwarf`: now saves its state with the fort
+- `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
+- `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
 
 ## Documentation
 - `installing`: Add installation instructions for winskin on Mac

@@ -65,15 +65,15 @@ end
 Divider = defclass(Divider, Widget)
 Divider.ATTRS{
     frame_style=gui.FRAME_THIN,
-    external=false,
+    interior=false,
     frame_style_t=DEFAULT_NIL,
-    external_t=DEFAULT_NIL,
+    interior_t=DEFAULT_NIL,
     frame_style_b=DEFAULT_NIL,
-    external_b=DEFAULT_NIL,
+    interior_b=DEFAULT_NIL,
     frame_style_l=DEFAULT_NIL,
-    external_l=DEFAULT_NIL,
+    interior_l=DEFAULT_NIL,
     frame_style_r=DEFAULT_NIL,
-    external_r=DEFAULT_NIL,
+    interior_r=DEFAULT_NIL,
 }
 
 local function divider_get_val(self, base_name, edge_name)
@@ -83,8 +83,8 @@ local function divider_get_val(self, base_name, edge_name)
 end
 
 local function divider_get_junction_pen(self, edge_name)
-    local external = divider_get_val(self, 'external', edge_name)
-    local pen_name = ('%sT%s_frame_pen'):format(edge_name, external and 'e' or 'i')
+    local interior = divider_get_val(self, 'interior', edge_name)
+    local pen_name = ('%sT%s_frame_pen'):format(edge_name, interior and 'i' or 'e')
     local frame_style = divider_get_val(self, 'frame_style', edge_name)
     if type(frame_style) == 'function' then
         frame_style = frame_style()

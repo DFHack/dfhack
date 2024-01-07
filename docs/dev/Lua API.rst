@@ -4919,12 +4919,12 @@ Attributes:
     The ``gui`` ``FRAME`` instance to use for the graphical tiles. Defaults to
     ``gui.FRAME_THIN``.
 
-* ``external``
+* ``interior``
 
     Whether the edge T-junction tiles should connect to interior lines (e.g. the
     vertical or horizontal segment of another ``Divider`` instance) or the
-    exterior border of a ``Panel`` frame. Defaults to ``false``, meaning interior
-    T-junctions will be chosen.
+    exterior border of a ``Panel`` frame. Defaults to ``false``, meaning
+    exterior T-junctions will be chosen.
 
 * ``frame_style_t``
 * ``frame_style_b``
@@ -4936,12 +4936,12 @@ Attributes:
     seamlessly connected. If set to ``false``, then the indicated edge will end
     in a straight segment instead of a T-junction.
 
-* ``external_t``
-* ``external_b``
-* ``external_l``
-* ``external_r``
+* ``interior_t``
+* ``interior_b``
+* ``interior_l``
+* ``interior_r``
 
-    Overrides for the internal/external specification for specific T-junctions.
+    Overrides for the interior/exterior specification for specific T-junctions.
 
 EditField class
 ---------------

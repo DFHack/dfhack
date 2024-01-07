@@ -68,7 +68,7 @@ InspectorOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
     frame={w=30, h=15},
-    frame_style=gui.MEDIUM_FRAME,
+    frame_style=gui.FRAME_MEDIUM,
     frame_background=gui.CLEAR_PEN,
 }
 

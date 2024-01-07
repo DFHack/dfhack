@@ -72,6 +72,7 @@ Template for new versions:
 - `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
 - `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
 - `zone`: add include/only/exclude filter for juveniles to the pasture/pit/cage/restraing assignment screen
+- The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
 
 ## Documentation
 - `installing`: Add installation instructions for winskin on Mac

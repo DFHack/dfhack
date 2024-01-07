@@ -765,6 +765,18 @@ end
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
     if self.force_pause and dfhack.isMapLoaded() then
+        if not df.global.pause_state and self.force_pause ~= 'blink' then
+            self.force_pause = 'blink'
+            local end_ms = dfhack.getTickCount() + 1000
+            local function blink_reset()
+                if dfhack.getTickCount() < end_ms then
+                    dfhack.timeout(10, 'frames', blink_reset)
+                else
+                    self.force_pause = true
+                end
+            end
+            blink_reset()
+        end
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
@@ -878,7 +890,6 @@ ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,
     force_pause = true,
-    pass_pause = false,
     pass_movement_keys = false,
     pass_mouse_clicks = false,
 }
@@ -994,8 +1005,12 @@ function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
     end
 
     if pause_forced then
+        local pause_label = ' PAUSE FORCED '
+        if pause_forced == 'blink' and blink_visible(100) then
+            pause_label = '              '
+        end
         dscreen.paintString(style.paused_pen or style.title_pen or pen,
-                            x1+2, y2, ' PAUSE FORCED ')
+                            x1+2, y2, pause_label)
     end
 end
 

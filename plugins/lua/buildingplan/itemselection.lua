@@ -415,7 +415,6 @@ ItemSelectionScreen.ATTRS {
     focus_path='dwarfmode/Building/Placement/dfhack/lua/buildingplan/itemselection',
     force_pause=true,
     pass_movement_keys=true,
-    pass_pause=false,
     pass_mouse_clicks=false,
     defocusable=false,
     get_available_items_fn=DEFAULT_NIL,

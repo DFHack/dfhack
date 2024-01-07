@@ -86,6 +86,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
+- ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
 
 ## Removed
 

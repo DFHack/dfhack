@@ -4745,9 +4745,9 @@ Base of all the widgets. Inherits from View and has the following attributes:
 Panel class
 -----------
 
-Inherits from Widget, and intended for framing and/or grouping subviews. It is
-a good class to choose for your "main screen" since it supports window dragging
-and frames.
+Inherits from Widget, and intended for framing and/or grouping subviews. Though
+this can be used for your "main window", see the `Window class`_ below for a
+more conveniently configured ``Panel`` subclass.
 
 Has attributes:
 
@@ -4910,6 +4910,55 @@ Subclass of Panel; keeps exactly one child visible.
 
   Selects the specified child, hiding the previous selected one.
   It is permitted to use the subview object, or its ``view_id`` as index.
+
+Divider class
+-------------
+
+Subclass of Widget; implements a divider line that can optionally connect to
+existing frames via T-junction edges. A ``Divider`` instance is required to
+have a ``frame`` that is either 1 unit tall or 1 unit wide.
+
+``Divider`` widgets should be a sibling with the framed ``Panel`` that they
+are dividing, and they should be added to the common parent widget **after**
+the ``Panel`` so that the ``Divider`` can overwrite the ``Panel`` frame  with
+the appropriate T-junction graphic. If the ``Divider`` will not have
+T-junction edges, then it could potentially be a child of the ``Panel`` since
+the ``Divider`` won't need to overwrite the ``Panel``'s frame.
+
+If two ``Divider`` widgets are set to cross, then you must have a third 1x1
+``Divider`` widget for the crossing tile so the other two ``Divider``\s can
+be seamlessly connected.
+
+Attributes:
+
+* ``frame_style``
+
+    The ``gui`` ``FRAME`` instance to use for the graphical tiles. Defaults to
+    ``gui.FRAME_THIN``.
+
+* ``interior``
+
+    Whether the edge T-junction tiles should connect to interior lines (e.g. the
+    vertical or horizontal segment of another ``Divider`` instance) or the
+    exterior border of a ``Panel`` frame. Defaults to ``false``, meaning
+    exterior T-junctions will be chosen.
+
+* ``frame_style_t``
+* ``frame_style_b``
+* ``frame_style_l``
+* ``frame_style_r``
+
+    Overrides for the frame style for specific T-junctions. Note that there are
+    not currently any frame styles that allow borders of different weights to be
+    seamlessly connected. If set to ``false``, then the indicated edge will end
+    in a straight segment instead of a T-junction.
+
+* ``interior_t``
+* ``interior_b``
+* ``interior_l``
+* ``interior_r``
+
+    Overrides for the interior/exterior specification for specific T-junctions.
 
 EditField class
 ---------------

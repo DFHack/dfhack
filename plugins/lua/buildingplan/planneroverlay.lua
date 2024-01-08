@@ -365,7 +365,7 @@ function PlannerOverlay:init()
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=1, l=0, r=0, h=14},
-        frame_style=gui.INTERIOR_MEDIUM_FRAME,
+        frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
     }
@@ -599,10 +599,9 @@ function PlannerOverlay:init()
         },
     }
 
-    local divider_widget = widgets.Panel{
-        view_id='divider',
+    local divider_widget = widgets.Divider{
         frame={t=10, l=0, r=0, h=1},
-        on_render=self:callback('draw_divider_h'),
+        frame_style=gui.FRAME_INTERIOR_MEDIUM,
         visible=self:callback('is_not_minimized'),
     }
 
@@ -685,20 +684,6 @@ function PlannerOverlay:toggle_minimized()
     self.state.minimized = not self.state.minimized
     config:write()
     self:reset()
-end
-
-function PlannerOverlay:draw_divider_h(dc)
-    local x2 = dc.width -1
-    for x=0,x2 do
-        dc:seek(x, 0)
-        if x == 0 then
-            dc:char(nil, pens.HORI_LEFT_PEN)
-        elseif x == x2 then
-            dc:char(nil, pens.HORI_RIGHT_PEN)
-        else
-            dc:char(nil, pens.HORI_MID_PEN)
-        end
-    end
 end
 
 function PlannerOverlay:reset()

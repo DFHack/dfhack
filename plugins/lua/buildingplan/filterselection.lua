@@ -130,10 +130,9 @@ function QualityAndMaterialsPage:init()
                 },
             },
         },
-        widgets.Panel{
-            view_id='divider',
+        widgets.Divider{
             frame={l=TYPE_COL_WIDTH-1, t=HEADER_HEIGHT, b=FOOTER_HEIGHT+QUALITY_HEIGHT, w=1},
-            on_render=self:callback('draw_divider'),
+            frame_style=gui.INTERIOR_FRAME,
         },
         widgets.Panel{
             view_id='quality_panel',
@@ -435,20 +434,6 @@ function QualityAndMaterialsPage:set_max_quality(idx)
     require('plugins.buildingplan').setQualityFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.index-1,
             subviews.decorated:getOptionValue() and 1 or 0, subviews.min_quality:getOptionValue(), idx)
     self.dirty = true
-end
-
-function QualityAndMaterialsPage:draw_divider(dc)
-    local y2 = dc.height - 1
-    for y=0,y2 do
-        dc:seek(0, y)
-        if y == 0 then
-            dc:char(nil, pens.VERT_TOP_PEN)
-        elseif y == y2 then
-            dc:char(nil, pens.VERT_BOT_PEN)
-        else
-            dc:char(nil, pens.VERT_MID_PEN)
-        end
-    end
 end
 
 function QualityAndMaterialsPage:onRenderFrame(dc, rect)

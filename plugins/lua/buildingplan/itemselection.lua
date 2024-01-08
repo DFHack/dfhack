@@ -169,7 +169,7 @@ function ItemSelection:init()
                 },
                 widgets.Panel{
                     frame={l=0, t=3, r=0, b=0},
-                    frame_style=gui.INTERIOR_FRAME,
+                    frame_style=gui.FRAME_INTERIOR,
                     subviews={
                         widgets.FilteredList{
                             view_id='flist',
@@ -415,7 +415,6 @@ ItemSelectionScreen.ATTRS {
     focus_path='dwarfmode/Building/Placement/dfhack/lua/buildingplan/itemselection',
     force_pause=true,
     pass_movement_keys=true,
-    pass_pause=false,
     pass_mouse_clicks=false,
     defocusable=false,
     get_available_items_fn=DEFAULT_NIL,

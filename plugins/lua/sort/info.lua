@@ -715,7 +715,7 @@ local function is_risky(unit)
     if RISKY_PROFESSIONS[unit.profession] or RISKY_PROFESSIONS[unit.profession2] then
         return true
     end
-    if dfhack.units.getReadableName(unit):endswith('necromancer') then return true end
+    if dfhack.units.getReadableName(unit):find('necromancer') then return true end
     return not dfhack.units.isAlive(unit)  -- detect intelligent undead
 end
 

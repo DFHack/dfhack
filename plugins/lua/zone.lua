@@ -266,7 +266,7 @@ function AssignAnimal:init()
             },
         },
         widgets.Panel{
-            frame={t=3, l=SLIDER_WIDTH+2, r=0, h=3},
+            frame={t=3, l=SLIDER_WIDTH+2, r=0, h=5},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='egg',
@@ -288,6 +288,20 @@ function AssignAnimal:init()
                     key_back='CUSTOM_SHIFT_T',
                     key='CUSTOM_SHIFT_Y',
                     label='Grazers:',
+                    options={
+                        {label='Include', value='include', pen=COLOR_GREEN},
+                        {label='Only', value='only', pen=COLOR_YELLOW},
+                        {label='Exclude', value='exclude', pen=COLOR_RED},
+                    },
+                    initial_option='include',
+                    on_change=function() self:refresh_list() end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='juvenile',
+                    frame={l=0, t=4, w=22},
+                    key_back='CUSTOM_SHIFT_U',
+                    key='CUSTOM_SHIFT_I',
+                    label='Juveniles:',
                     options={
                         {label='Include', value='include', pen=COLOR_GREEN},
                         {label='Only', value='only', pen=COLOR_YELLOW},
@@ -557,6 +571,7 @@ function AssignAnimal:cache_choices()
             disposition=get_unit_disposition(unit),
             egg=dfhack.units.isEggLayerRace(unit),
             graze=dfhack.units.isGrazer(unit),
+            juvenile=not dfhack.units.isAdult(unit),
         }
         local choice = {
             search_key=make_search_key(data.desc, raw),
@@ -609,6 +624,12 @@ function AssignAnimal:cache_choices()
     return choices
 end
 
+function matches_filter(filter, value)
+    if filter == 'only' and not value then return false end
+    if filter == 'exclude' and value then return false end
+    return true
+end
+
 function AssignAnimal:get_choices()
     local raw_choices = self:cache_choices()
     local show_vermin = self.get_allow_vermin()
@@ -618,6 +639,7 @@ function AssignAnimal:get_choices()
     local max_disposition = self.subviews.max_disposition:getOptionValue()
     local egg = self.subviews.egg:getOptionValue()
     local graze = self.subviews.graze:getOptionValue()
+    local juvenile = self.subviews.juvenile:getOptionValue()
     local choices = {}
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
@@ -626,10 +648,9 @@ function AssignAnimal:get_choices()
         if max_status < data.status then goto continue end
         if min_disposition > data.disposition then goto continue end
         if max_disposition < data.disposition then goto continue end
-        if egg == 'only' and not data.egg then goto continue end
-        if egg == 'exclude' and data.egg then goto continue end
-        if graze == 'only' and not data.graze then goto continue end
-        if graze == 'exclude' and data.graze then goto continue end
+        if not matches_filter(egg, data.egg) then goto continue end
+        if not matches_filter(graze, data.graze) then goto continue end
+        if not matches_filter(juvenile, data.juvenile) then goto continue end
         table.insert(choices, choice)
         ::continue::
     end

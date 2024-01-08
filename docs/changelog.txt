@@ -62,12 +62,18 @@ Template for new versions:
 - `sort`: fix mouse clicks falling through the squad assignment overlay panel when clicking on the panel but not on a clickable widget
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
 - `misery`: fix error when changing the misery factor
+- When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
 - ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix logic (for tropical oceans, etc.)
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort
+- `fastdwarf`: now saves its state with the fort
+- `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
+- `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
+- `zone`: add include/only/exclude filter for juveniles to the pasture/pit/cage/restraing assignment screen
+- The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
 
 ## Documentation
 - `installing`: Add installation instructions for winskin on Mac
@@ -75,8 +81,13 @@ Template for new versions:
 - `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
 
 ## API
+- ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
+- ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
+- ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
 
 ## Lua
+- ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
+- ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
 
 ## Removed
 

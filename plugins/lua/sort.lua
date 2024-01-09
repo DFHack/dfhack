@@ -930,7 +930,7 @@ function SquadAssignmentOverlay:init()
         widgets.CycleHotkeyLabel{
             view_id='unstable',
             frame={l=0},
-            key='CUSTOM_SHIFT_F',
+            key='CUSTOM_SHIFT_D',
             label='      Dislikes combat:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},

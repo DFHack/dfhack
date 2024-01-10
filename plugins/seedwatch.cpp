@@ -84,7 +84,7 @@ static PersistentDataItem & ensure_seed_config(color_ostream &out, int id) {
         return watched_seeds[id];
     string keyname = SEED_CONFIG_KEY_PREFIX + int_to_string(id);
     DEBUG(config,out).print("creating new persistent key for seed type %d\n", id);
-    watched_seeds.emplace(id, World::GetPersistentData(keyname, NULL));
+    watched_seeds.emplace(id, World::GetPersistentSiteData(keyname, true));
     set_config_val(watched_seeds[id], SEED_CONFIG_ID, id);
     return watched_seeds[id];
 }
@@ -196,7 +196,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 
     watched_seeds.clear();
     vector<PersistentDataItem> seed_configs;
-    World::GetPersistentData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
     const size_t num_seed_configs = seed_configs.size();
     for (size_t idx = 0; idx < num_seed_configs; ++idx) {
         auto& c = seed_configs[idx];
@@ -204,11 +204,11 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
             watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
     }
 
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
         seedwatch_setTarget(out, "all", DEFAULT_TARGET);
     }

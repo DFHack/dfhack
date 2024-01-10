@@ -95,11 +95,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         set_state(out, false, false);
     } else {
         is_enabled = get_config_val(config, CONFIG_FAST) || get_config_val(config, CONFIG_TELE);

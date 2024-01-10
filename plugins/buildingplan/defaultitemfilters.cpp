@@ -42,7 +42,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
         : key(key), choose_items(ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER) {
     DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key));
-    filter_config = World::AddPersistentData(FILTER_CONFIG_KEY);
+    filter_config = World::AddPersistentSiteData(FILTER_CONFIG_KEY);
     set_config_val(filter_config, FILTER_CONFIG_TYPE, std::get<0>(key));
     set_config_val(filter_config, FILTER_CONFIG_SUBTYPE, std::get<1>(key));
     set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));

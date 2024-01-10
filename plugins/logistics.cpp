@@ -75,7 +75,7 @@ static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stock
 
     string keyname = CONFIG_KEY_PREFIX + int_to_string(stockpile_number);
     DEBUG(status, out).print("creating new persistent key for stockpile %d\n", stockpile_number);
-    watched_stockpiles.emplace(stockpile_number, World::GetPersistentData(keyname, NULL));
+    watched_stockpiles.emplace(stockpile_number, World::GetPersistentSiteData(keyname, true));
     PersistentDataItem& c = watched_stockpiles[stockpile_number];
     set_config_val(c, STOCKPILE_CONFIG_STOCKPILE_NUMBER, stockpile_number);
     set_config_bool(c, STOCKPILE_CONFIG_MELT, false);
@@ -146,7 +146,7 @@ static void validate_stockpile_configs(color_ostream& out,
 // remove this function once saves from 50.08 are no longer compatible
 static void migrate_old_keys(color_ostream &out) {
     vector<PersistentDataItem> old_data;
-    World::GetPersistentData(&old_data, "automelt/stockpile/", true);
+    World::GetPersistentSiteData(&old_data, "automelt/stockpile/", true);
     const size_t num_old_keys = old_data.size();
     for (size_t idx = 0; idx < num_old_keys; ++idx) {
         auto& old_c = old_data[idx];
@@ -166,7 +166,7 @@ DFhackCExport command_result plugin_load_data(color_ostream &out) {
     cycle_timestamp = 0;
 
     vector<PersistentDataItem> loaded_persist_data;
-    World::GetPersistentData(&loaded_persist_data, CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&loaded_persist_data, CONFIG_KEY_PREFIX, true);
     watched_stockpiles.clear();
     const size_t num_watched_stockpiles = loaded_persist_data.size();
     for (size_t idx = 0; idx < num_watched_stockpiles; ++idx) {

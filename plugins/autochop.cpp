@@ -91,7 +91,7 @@ static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
         return watched_burrows[watched_burrows_indices[id]];
     string keyname = BURROW_CONFIG_KEY_PREFIX + int_to_string(id);
     DEBUG(status,out).print("creating new persistent key for burrow %d\n", id);
-    watched_burrows.emplace_back(World::GetPersistentData(keyname, NULL));
+    watched_burrows.emplace_back(World::GetPersistentSiteData(keyname, true));
     size_t idx = watched_burrows.size()-1;
     watched_burrows_indices.emplace(id, idx);
     return watched_burrows[idx];
@@ -161,11 +161,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
         set_config_val(config, CONFIG_MAX_LOGS, 200);
         set_config_val(config, CONFIG_MIN_LOGS, 160);
@@ -178,7 +178,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
     DEBUG(status,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
-    World::GetPersistentData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
     watched_burrows_indices.clear();
     const size_t num_watched_burrows = watched_burrows.size();
     for (size_t idx = 0; idx < num_watched_burrows; ++idx) {

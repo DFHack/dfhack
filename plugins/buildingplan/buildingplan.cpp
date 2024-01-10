@@ -325,11 +325,11 @@ static bool is_suspendmanager_enabled(color_ostream &out) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
     }
     validate_config(out);
 
@@ -339,14 +339,14 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     load_material_cache();
 
     vector<PersistentDataItem> filter_configs;
-    World::GetPersistentData(&filter_configs, FILTER_CONFIG_KEY);
+    World::GetPersistentSiteData(&filter_configs, FILTER_CONFIG_KEY);
     for (auto &cfg : filter_configs) {
         BuildingTypeKey key = DefaultItemFilters::getKey(cfg);
         cur_item_filters.emplace(key, DefaultItemFilters(out, cfg, get_job_items(out, key)));
     }
 
     vector<PersistentDataItem> building_configs;
-    World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
+    World::GetPersistentSiteData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
     bool unsuspend_on_finalize = !is_suspendmanager_enabled(out);
     for (size_t idx = 0; idx < num_building_configs; ++idx) {

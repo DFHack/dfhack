@@ -275,7 +275,7 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     }
 
     if (enable != autoclothing_enabled) {
-        auto enabled = World::GetPersistentData("autoclothing/enabled");
+        auto enabled = World::GetPersistentSiteData("autoclothing/enabled");
         autoclothing_enabled = enable;
         DEBUG(report, out).print("%s from the API; persisting\n",
             autoclothing_enabled ? "enabled" : "disabled");
@@ -695,7 +695,7 @@ static void cleanup_state(color_ostream &out)
 
 static void init_state(color_ostream &out)
 {
-    auto enabled = World::GetPersistentData("autoclothing/enabled");
+    auto enabled = World::GetPersistentSiteData("autoclothing/enabled");
     if (enabled.isValid() && enabled.ival(0) == 1)
     {
         out << "autoclothing enabled" << endl;
@@ -708,7 +708,7 @@ static void init_state(color_ostream &out)
 
     // Parse constraints
     vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autoclothing/clothingItems");
+    World::GetPersistentSiteData(&items, "autoclothing/clothingItems");
 
     for (auto& item : items)
     {
@@ -723,21 +723,21 @@ static void init_state(color_ostream &out)
 
 static void save_state(color_ostream &out)
 {
-    auto enabled = World::GetPersistentData("autoclothing/enabled");
+    auto enabled = World::GetPersistentSiteData("autoclothing/enabled");
     if (!enabled.isValid())
-        enabled = World::AddPersistentData("autoclothing/enabled");
+        enabled = World::AddPersistentSiteData("autoclothing/enabled");
     enabled.ival(0) = autoclothing_enabled;
 
     for (auto& order : clothingOrders)
     {
-        auto orderSave = World::AddPersistentData("autoclothing/clothingItems");
+        auto orderSave = World::AddPersistentSiteData("autoclothing/clothingItems");
         orderSave.val() = order.Serialize();
     }
 
 
     // Parse constraints
     vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autoclothing/clothingItems");
+    World::GetPersistentSiteData(&items, "autoclothing/clothingItems");
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -752,7 +752,7 @@ static void save_state(color_ostream &out)
     }
     for (size_t i = items.size(); i < clothingOrders.size(); i++)
     {
-        auto item = World::AddPersistentData("autoclothing/clothingItems");
+        auto item = World::AddPersistentSiteData("autoclothing/clothingItems");
         item.val() = clothingOrders[i].Serialize();
     }
 }

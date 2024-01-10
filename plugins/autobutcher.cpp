@@ -125,11 +125,11 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
         set_config_bool(CONFIG_AUTOWATCH, true);
         set_config_val(CONFIG_DEFAULT_FK, 4);
@@ -325,7 +325,7 @@ public:
     void UpdateConfig(color_ostream &out) {
         if(!rconfig.isValid()) {
             string keyname = WATCHLIST_CONFIG_KEY_PREFIX + Units::getRaceNameById(raceId);
-            rconfig = World::GetPersistentData(keyname, NULL);
+            rconfig = World::GetPersistentSiteData(keyname, true);
         }
         if(rconfig.isValid()) {
             rconfig.ival(0) = raceId;
@@ -449,7 +449,7 @@ static void init_autobutcher(color_ostream &out) {
     }
 
     std::vector<PersistentDataItem> watchlist;
-    World::GetPersistentData(&watchlist, WATCHLIST_CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&watchlist, WATCHLIST_CONFIG_KEY_PREFIX, true);
     for (auto & p : watchlist) {
         DEBUG(status,out).print("Reading from save: %s\n", p.key().c_str());
         WatchedRace *w = new WatchedRace(out, p);

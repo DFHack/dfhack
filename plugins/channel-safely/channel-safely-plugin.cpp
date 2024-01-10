@@ -182,12 +182,12 @@ namespace CSP {
     }
 
     void LoadSettings() {
-        pfeature = World::GetPersistentData(FCONFIG_KEY);
-        psetting = World::GetPersistentData(SCONFIG_KEY);
+        pfeature = World::GetPersistentSiteData(FCONFIG_KEY);
+        psetting = World::GetPersistentSiteData(SCONFIG_KEY);
 
         if (!pfeature.isValid() || !psetting.isValid()) {
-            pfeature = World::AddPersistentData(FCONFIG_KEY);
-            psetting = World::AddPersistentData(SCONFIG_KEY);
+            pfeature = World::AddPersistentSiteData(FCONFIG_KEY);
+            psetting = World::AddPersistentSiteData(SCONFIG_KEY);
             SaveSettings();
         } else {
             try {

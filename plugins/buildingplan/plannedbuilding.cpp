@@ -99,7 +99,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
           item_filters(item_filters.getItemFilters()),
           specials(item_filters.getSpecials()) {
     DEBUG(status,out).print("creating persistent data for building %d\n", id);
-    bld_config = World::AddPersistentData(BLD_CONFIG_KEY);
+    bld_config = World::AddPersistentSiteData(BLD_CONFIG_KEY);
     set_config_val(bld_config, BLD_CONFIG_ID, id);
     set_config_val(bld_config, BLD_CONFIG_HEAT, heat_safety);
     bld_config.val() = serialize(vector_ids, item_filters);

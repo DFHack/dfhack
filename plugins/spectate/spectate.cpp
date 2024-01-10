@@ -173,10 +173,10 @@ namespace SP {
     }
 
     void LoadSettings() {
-        pconfig = World::GetPersistentData(CONFIG_KEY);
+        pconfig = World::GetPersistentSiteData(CONFIG_KEY);
 
         if (!pconfig.isValid()) {
-            pconfig = World::AddPersistentData(CONFIG_KEY);
+            pconfig = World::AddPersistentSiteData(CONFIG_KEY);
             SaveSettings();
         } else {
             config.unpause = pconfig.ival(UNPAUSE);

@@ -97,11 +97,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
         set_config_val(CONFIG_CYCLE_TICKS, 6000);
     }

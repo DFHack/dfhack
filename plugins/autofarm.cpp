@@ -363,25 +363,25 @@ public:
         if (!(Core::getInstance().isWorldLoaded()))
             return;
 
-        cfg_enabled = World::GetPersistentData("autofarm/enabled");
+        cfg_enabled = World::GetPersistentSiteData("autofarm/enabled");
         if (cfg_enabled.isValid())
             enabled = cfg_enabled.ival(0) != 0;
         else {
-            cfg_enabled = World::AddPersistentData("autofarm/enabled");
+            cfg_enabled = World::AddPersistentSiteData("autofarm/enabled");
             cfg_enabled.ival(0) = enabled;
         }
 
-        cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
+        cfg_default_threshold = World::GetPersistentSiteData("autofarm/default_threshold");
 
         if (cfg_default_threshold.isValid())
             defaultThreshold = cfg_default_threshold.ival(0);
         else {
-            cfg_default_threshold = World::AddPersistentData("autofarm/default_threshold");
+            cfg_default_threshold = World::AddPersistentSiteData("autofarm/default_threshold");
             cfg_default_threshold.ival(0) = defaultThreshold;
         }
 
         std::vector<PersistentDataItem> items;
-        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        World::GetPersistentSiteData(&items, "autofarm/threshold/", true);
         for (auto& i: items) {
             if (i.isValid())
             {
@@ -409,7 +409,7 @@ public:
         cfg_enabled.ival(0) = enabled;
 
         std::vector<PersistentDataItem> items;
-        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        World::GetPersistentSiteData(&items, "autofarm/threshold/", true);
         for (auto& i : items)
             World::DeletePersistentData(i);
 
@@ -417,7 +417,7 @@ public:
         {
             const std::string& plantID = world->raws.plants.all[t.first]->id;
             const std::string keyName = "autofarm/threshold/" + plantID;
-            PersistentDataItem cfgThreshold = World::AddPersistentData(keyName);
+            PersistentDataItem cfgThreshold = World::AddPersistentSiteData(keyName);
             cfgThreshold.val() = plantID;
             cfgThreshold.ival(0) = t.second;
         }

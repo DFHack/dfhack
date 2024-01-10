@@ -573,6 +573,8 @@ static void find_needed_clothing_items()
                     continue;
                 if (item->getSubtype() != clothingOrder.item_subtype)
                     continue;
+                if (item->getWear() >= 1)
+                    continue;
 
                 MaterialInfo matInfo;
                 matInfo.decode(item);
@@ -599,6 +601,9 @@ static void remove_available_clothing()
     {
         //skip any owned items.
         if (getOwner(item))
+            continue;
+        //skip any worn or more items
+        if (item->getWear() >= 1)
             continue;
 
         //again, for each item, find if any clothing order matches
@@ -792,7 +797,7 @@ static bool isAvailableItem(df::item* item)
     if ((item->flags.whole & badFlags.whole) != 0)
         return false;
 
-    if (item->getWear() > 1)
+    if (item->getWear() >= 1)
         return false;
     if (!item->isClothing())
         return false;

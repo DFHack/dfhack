@@ -2244,7 +2244,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     if (event == SC_WORLD_UNLOADED)
     {
-        Persistence::Internal::clear();
+        Persistence::Internal::clear(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
@@ -2255,12 +2255,12 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 void Core::doSaveData(color_ostream &out)
 {
     plug_mgr->doSaveData(out);
-    Persistence::Internal::save();
+    Persistence::Internal::save(out);
 }
 
 void Core::doLoadData(color_ostream &out)
 {
-    Persistence::Internal::load();
+    Persistence::Internal::load(out);
     plug_mgr->doLoadData(out);
 }
 

@@ -88,25 +88,35 @@ namespace DFHack
         DFHACK_EXPORT bool isArena(df::game_type t = (df::game_type)-1);
         DFHACK_EXPORT bool isLegends(df::game_type t = (df::game_type)-1);
 
-        // Store data in fake historical figure names.
-        // This ensures that the values are stored in save games.
-        DFHACK_EXPORT PersistentDataItem AddPersistentData(const std::string &key);
-        DFHACK_EXPORT PersistentDataItem GetPersistentData(const std::string &key);
-        DFHACK_EXPORT PersistentDataItem GetPersistentData(int entry_id);
-        // Calls GetPersistentData(key); if not found, adds and sets added to true.
-        // The result can still be not isValid() e.g. if the world is not loaded.
-        DFHACK_EXPORT PersistentDataItem GetPersistentData(const std::string &key, bool *added);
-        // Lists all items with the given key.
+        // Store DFHack tool data in the game save directory.
+        // Use the relevant API depending on whether you are storing world-global data,
+        // site-specific data, or data specific to some other historical entity (including
+        // sites that may not be the current one).
+        DFHACK_EXPORT PersistentDataItem AddPersistentEntityData(int entity_id, const std::string &key);
+        DFHACK_EXPORT PersistentDataItem AddPersistentWorldData(const std::string &key);
+        DFHACK_EXPORT PersistentDataItem AddPersistentSiteData(const std::string &key);
+        // Calls GetPersistent*Data(key); if not found, creates and returns a new entry.
+        // The result can still be not isValid() e.g. if a world is not loaded.
+        DFHACK_EXPORT PersistentDataItem GetPersistentEntityData(int entity_id, const std::string &key, bool create = false);
+        DFHACK_EXPORT PersistentDataItem GetPersistentWorldData(const std::string &key, bool create = false);
+        DFHACK_EXPORT PersistentDataItem GetPersistentSiteData(const std::string &key, bool create = false);
+        // Get all items with the given key.
         // If prefix is true, search for keys starting with key+"/".
-        // GetPersistentData(&vec,"",true) returns all items.
+        // GetPersistent*Data(&vec, "", true) returns all items in the specified namespace.
         // Items have alphabetic order by key; same key ordering is undefined.
-        DFHACK_EXPORT void GetPersistentData(std::vector<PersistentDataItem> *vec,
-                                             const std::string &key, bool prefix = false);
+        DFHACK_EXPORT void GetPersistentEntityData(std::vector<PersistentDataItem> *vec, int entity_id,
+                                                 const std::string &key, bool prefix = false);
+        DFHACK_EXPORT void GetPersistentWorldData(std::vector<PersistentDataItem> *vec,
+                                                  const std::string &key, bool prefix = false);
+        DFHACK_EXPORT void GetPersistentSiteData(std::vector<PersistentDataItem> *vec,
+                                                 const std::string &key, bool prefix = false);
+
         // Deletes the item; returns true if success.
         DFHACK_EXPORT bool DeletePersistentData(const PersistentDataItem &item);
 
-        DFHACK_EXPORT df::tile_bitmask *getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create = false);
-        DFHACK_EXPORT bool deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block);
+        // Create or delete block data associated with the given persistent data item
+        DFHACK_EXPORT df::tile_bitmask *getPersistentTilemask(PersistentDataItem &item, df::map_block *block, bool create = false);
+        DFHACK_EXPORT bool deletePersistentTilemask(PersistentDataItem &item, df::map_block *block);
     }
 }
 #endif

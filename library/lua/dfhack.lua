@@ -560,6 +560,17 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
     end
 end
 
+function dfhack.persist.getSiteData(key, default)
+    local serialized = dfhack.persist.getSiteDataString(key)
+    if not serialized then return default end
+    return require('json').decode(serialized) or default
+end
+
+function dfhack.persist.saveSiteData(key, data)
+    local serialized = json.encode(data)
+    dfhack.persist.saveSiteDataString(key, serialized)
+end
+
 -- Interactive
 
 local print_banner = true

@@ -249,6 +249,43 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
  * Per-world persistent configuration storage API *
  **************************************************/
 
+static int dfhack_persistent_get_site_data_string(lua_State *L) {
+    CoreSuspender suspend;
+
+    const char *key = lua_tostring(L, 1);
+    if (!key)
+        luaL_argerror(L, 1, "no key specified");
+
+    PersistentDataItem data = World::GetPersistentSiteData(key);
+
+    if (!data.isValid())
+        lua_pushnil(L);
+    else
+        Lua::Push(L, data.val());
+
+    return 1;
+}
+
+static int dfhack_persistent_save_site_data_string(lua_State *L) {
+    CoreSuspender suspend;
+
+    const char *key = lua_tostring(L, 1);
+    if (!key)
+        luaL_argerror(L, 1, "no key specified");
+    const char *str = lua_tostring(L, 2);
+    if (!str)
+        luaL_argerror(L, 2, "no data string specified");
+
+    PersistentDataItem data = World::GetPersistentSiteData(key, true);
+    if (!data.isValid())
+        luaL_error(L, "unable to save data in key '%s'", key);
+
+    data.val() = str;
+
+    return 0;
+}
+
+/*
 static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
 {
     lua_getfield(state, idx, "entry_id");
@@ -322,15 +359,6 @@ static PersistentDataItem get_persistent(lua_State *state)
 
         return World::GetPersistentData(str);
     }
-}
-
-static int dfhack_persistent_get(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    auto ref = get_persistent(state);
-
-    return read_persistent(state, ref, !lua_istable(state, 1));
 }
 
 static int dfhack_persistent_delete(lua_State *state)
@@ -467,14 +495,15 @@ static int dfhack_persistent_deleteTilemask(lua_State *state)
     lua_pushboolean(state, World::deletePersistentTilemask(ref, block));
     return 1;
 }
+*/
 
 static const luaL_Reg dfhack_persistent_funcs[] = {
-    { "get", dfhack_persistent_get },
-    { "delete", dfhack_persistent_delete },
-    { "get_all", dfhack_persistent_get_all },
-    { "save", dfhack_persistent_save },
-    { "getTilemask", dfhack_persistent_getTilemask },
-    { "deleteTilemask", dfhack_persistent_deleteTilemask },
+    { "getSiteDataString", dfhack_persistent_get_site_data_string },
+    { "saveSiteDataString", dfhack_persistent_save_site_data_string },
+    //{ "delete", dfhack_persistent_delete },
+    //{ "get_all", dfhack_persistent_get_all },
+    //{ "getTilemask", dfhack_persistent_getTilemask },
+    //{ "deleteTilemask", dfhack_persistent_deleteTilemask },
     { NULL, NULL }
 };
 

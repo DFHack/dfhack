@@ -567,7 +567,7 @@ local function persistent_getData(which, key, default)
 end
 
 function persistent_saveData(which, key, data)
-    local serialized = json.encode(data)
+    local serialized = require('json').encode(data)
     dfhack.persistent['save'..which..'DataString'](key, serialized)
 end
 

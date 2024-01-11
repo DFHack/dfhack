@@ -2184,6 +2184,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     case SC_WORLD_LOADED:
     {
+        doLoadData(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
@@ -2191,11 +2192,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             [](lua_State* L) {
                 Lua::Push(L, true);
             });
-        // fallthrough
-    }
-    case SC_WORLD_UNLOADED:
-    case SC_MAP_LOADED:
-    case SC_MAP_UNLOADED:
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2225,20 +2221,15 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        if (Version::is_prerelease())
+        {
+            runCommand(out, "gui/prerelease-warning");
+            std::cerr << "loaded world in prerelease build" << std::endl;
+        }
         break;
+    }
     default:
         break;
-    }
-
-    if (event == SC_WORLD_LOADED && Version::is_prerelease())
-    {
-        runCommand(out, "gui/prerelease-warning");
-        std::cerr << "loaded map in prerelease build" << std::endl;
-    }
-
-    if (event == SC_WORLD_LOADED)
-    {
-        doLoadData(out);
     }
 
     EventManager::onStateChange(out, event);

@@ -1855,6 +1855,23 @@ Items module
 
   Marks the given item for trade at the given depot.
 
+* ``dfhack.items.canMelt(item[, game_ui])``
+
+  Returns true if the item can be designated for melting. Unless ``game_ui`` is
+  given and true, bars, non-empty metal containers, and items in unit
+  inventories are not considered meltable, even though they can be designated
+  for melting using the game UI.
+
+* ``dfhack.items.markForMelting(item)``
+
+  Marks the given item for melting, unless already marked. Returns true if the
+  melting status was changed.
+
+* ``dfhack.items.cancelMelting(item)``
+
+  Removes melting designation, if present, from the given item. Returns true if
+  the melting status was changed.
+
 * ``dfhack.items.isRouteVehicle(item)``
 
   Checks whether the item is an assigned hauling vehicle.

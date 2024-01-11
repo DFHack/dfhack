@@ -66,6 +66,10 @@ namespace DFHack
         int &ival(int i);
         int ival(int i) const;
 
+        // Data mangling functions below this point are deprecated and
+        // will be removed in some future release when we have provided
+        // an alternate way to store binary data.
+
         // Pack binary data into string field.
         // Since DF serialization chokes on NUL bytes,
         // use bit magic to ensure none of the bytes is 0.

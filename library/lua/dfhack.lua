@@ -561,14 +561,14 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
 end
 
 local function persistent_getData(which, key, default)
-    local serialized = dfhack.persist['get'..which..'DataString'](key)
+    local serialized = dfhack.persistent['get'..which..'DataString'](key)
     if not serialized then return default end
     return require('json').decode(serialized) or default
 end
 
 function persistent_saveData(which, key, data)
     local serialized = json.encode(data)
-    dfhack.persist['save'..which..'DataString'](key, serialized)
+    dfhack.persistent['save'..which..'DataString'](key, serialized)
 end
 
 function dfhack.persistent.getSiteData(key, default)

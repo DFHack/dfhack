@@ -199,7 +199,7 @@ void Persistence::Internal::save(color_ostream& out) {
 }
 
 static bool get_entity_id(const std::string & fname, int & entity_id) {
-    if (!fname.starts_with("dfhack-entity-" || !fname.ends_with(".dat")))
+    if (!fname.starts_with("dfhack-entity-"))
         return false;
     entity_id = string_to_int(fname.substr(14, fname.length() - 18), -1);
     return true;
@@ -229,6 +229,8 @@ static bool load_file(const std::string & path, int entity_id) {
         auto & entity_store_entry = store[entity_id];
         for (auto & value : json) {
             std::shared_ptr<Persistence::DataEntry> entry(new Persistence::DataEntry(entity_id, value));
+            if (entry->key.empty())
+                continue;
             // ensure fake DF IDs remain globally unique
             next_fake_df_id = std::min(next_fake_df_id, entry->fake_df_id - 1);
             add_entry(entity_store_entry, entry);
@@ -267,7 +269,7 @@ void Persistence::Internal::load(color_ostream& out) {
         return;
 
     // new file formats not found; attempt to load legacy file
-    const std::string legacy_fname = getSaveFilePath(world_name, "legacy_data");
+    const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
         using df::global::world;

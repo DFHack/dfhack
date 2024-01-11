@@ -560,15 +560,31 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
     end
 end
 
-function dfhack.persist.getSiteData(key, default)
-    local serialized = dfhack.persist.getSiteDataString(key)
+local function peristent_getData(which, key, default)
+    local serialized = dfhack.persist['get'..which..'DataString'](key)
     if not serialized then return default end
     return require('json').decode(serialized) or default
 end
 
-function dfhack.persist.saveSiteData(key, data)
+function peristent_saveData(which, key, data)
     local serialized = json.encode(data)
-    dfhack.persist.saveSiteDataString(key, serialized)
+    dfhack.persist['save'..which..'DataString'](key, serialized)
+end
+
+function dfhack.peristent.getSiteData(key, default)
+    return persistent_getData('Site', key, default)
+end
+
+function dfhack.peristent.saveSiteData(key, data)
+    persistent_saveData('Site', key, data)
+end
+
+function dfhack.peristent.getWorldData(key, default)
+    return persistent_getData('World', key, default)
+end
+
+function dfhack.peristent.saveWorldData(key, data)
+    persistent_saveData('World', key, data)
 end
 
 -- Interactive

@@ -74,6 +74,8 @@ Template for new versions:
 - `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
 - `zone`: add include/only/exclude filter for juveniles to the pasture/pit/cage/restraing assignment screen
 - The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
+- `sort`: add "Toggle all filters" hotkey button to the squad assignment panel
+- `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
 
 ## Documentation
 - `installing`: Add installation instructions for winskin on Mac
@@ -84,10 +86,12 @@ Template for new versions:
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
 - ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
 - ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
+- ``Items``: add item melting logic ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)``
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
 - ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
+- ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
 
 ## Removed
 

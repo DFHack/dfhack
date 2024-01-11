@@ -641,7 +641,7 @@ SquadAssignmentOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
     version='2',
-    frame={w=38, h=31},
+    frame={w=38, h=33},
 }
 
 -- allow initial spacebar or two successive spacebars to fall through and
@@ -892,7 +892,7 @@ function SquadAssignmentOverlay:init()
             view_id='officials',
             frame={l=0},
             key='CUSTOM_SHIFT_O',
-            label='Appointed officials:',
+            label='  Appointed officials:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -903,9 +903,9 @@ function SquadAssignmentOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='nobles',
-            frame={l=0, w=20},
+            frame={l=0},
             key='CUSTOM_SHIFT_N',
-            label='Nobility:',
+            label='             Nobility:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -918,7 +918,7 @@ function SquadAssignmentOverlay:init()
             view_id='infant',
             frame={l=0},
             key='CUSTOM_SHIFT_M',
-            label='Mothers with infants:',
+            label=' Mothers with infants:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -930,8 +930,8 @@ function SquadAssignmentOverlay:init()
         widgets.CycleHotkeyLabel{
             view_id='unstable',
             frame={l=0},
-            key='CUSTOM_SHIFT_F',
-            label='Weak mental fortitude:',
+            key='CUSTOM_SHIFT_D',
+            label='      Dislikes combat:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -944,7 +944,7 @@ function SquadAssignmentOverlay:init()
             view_id='maimed',
             frame={l=0},
             key='CUSTOM_SHIFT_I',
-            label='Critically injured:',
+            label='   Critically injured:',
             options={
                 {label='Include', value='include', pen=COLOR_GREEN},
                 {label='Only', value='only', pen=COLOR_YELLOW},
@@ -952,6 +952,20 @@ function SquadAssignmentOverlay:init()
             },
             initial_option='include',
             on_change=function() self:refresh_list() end,
+        },
+        widgets.HotkeyLabel{
+            key='CUSTOM_SHIFT_A',
+            label='Toggle all filters',
+            on_activate=function()
+                local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
+                self.subviews.military:setOption(target)
+                self.subviews.officials:setOption(target)
+                self.subviews.nobles:setOption(target)
+                self.subviews.infant:setOption(target)
+                self.subviews.unstable:setOption(target)
+                self.subviews.maimed:setOption(target)
+                self:refresh_list()
+            end,
         },
     }
 

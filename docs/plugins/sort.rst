@@ -16,11 +16,14 @@ via `gui/control-panel`.
 Squad assignment overlay
 ------------------------
 
-You can search for a dwarf by name by typing in the Search field. The search
-field is always focused, so any lowercase letter you type will appear there.
+You can search for a dwarf by name or profession by typing in the Search field.
+The search field is always focused, so any lowercase letter you type will
+appear there.
 
 The squad assignment screen can be sorted by name, by arrival order, by stress,
-by various military-related skills, or by long-term military potential.
+by various military-related skills, or by long-term military potential. The
+search parameters, sorting order, and filter settings will be saved for you
+when you close and reopen the squad member assignment panel.
 
 If sorted by "melee effectiveness" (the default), then the citizens are sorted
 according to how well they will perform in battle when using the weapon they
@@ -83,7 +86,7 @@ The following filters are provided:
 - Elected and appointed officials (e.g. mayor, priests, tavern keepers, etc.)
 - Nobility (e.g. monarch, barons, counts, etc.)
 - Mothers with infants (you may not want mothers using their babies as shields)
-- Weak mental fortitude (units that have facets and values that indicate that
+- Dislikes combat (units that have facets and values that indicate that
   they will react poorly to the stresses of battle)
 - Critically injured (units that have lost their ability to see, grasp weapons,
   or walk)

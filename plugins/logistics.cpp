@@ -269,44 +269,13 @@ public:
     }
 
     bool can_designate(color_ostream &out, df::item *item) override {
-        MaterialInfo mat(item);
-        if (mat.getCraftClass() != df::craft_material_class::Metal)
-            return false;
-
-        if (item->getType() == df::item_type::BAR)
-            return false;
-
-        for (auto &g : item->general_refs) {
-            switch (g->getType()) {
-            case df::general_ref_type::CONTAINS_ITEM:
-            case df::general_ref_type::UNIT_HOLDER:
-            case df::general_ref_type::CONTAINS_UNIT:
-                return false;
-            case df::general_ref_type::CONTAINED_IN_ITEM:
-            {
-                df::item *c = g->getItem();
-                for (auto &gg : c->general_refs) {
-                    if (gg->getType() == df::general_ref_type::UNIT_HOLDER)
-                        return false;
-                }
-                break;
-            }
-            default:
-                break;
-            }
-        }
-
         if (!melt_masterworks && item->getQuality() >= df::item_quality::Masterful)
             return false;
-        if (item->flags.bits.artifact)
-            return false;
-
-        return true;
+        return Items::canMelt(item);
     }
 
     bool designate(color_ostream &out, df::item *item) override {
-        insert_into_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item);
-        item->flags.bits.melt = 1;
+        Items::markForMelting(item);
         return true;
     }
 

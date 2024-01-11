@@ -1,49 +1,37 @@
-#include "Core.h"
-#include <Console.h>
-#include <Debug.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "laborstatemap.h"
 
-#include <vector>
-#include <algorithm>
+#include "Debug.h"
+#include "PluginManager.h"
 
 #include "modules/Units.h"
 #include "modules/World.h"
-
-// DF data structure definition headers
-#include "DataDefs.h"
-#include <df/plotinfost.h>
-#include <df/world.h>
-#include <df/unit.h>
-#include <df/unit_soul.h>
-#include <df/unit_labor.h>
-#include <df/unit_skill.h>
-#include <df/job.h>
-#include <df/building.h>
-#include <df/workshop_type.h>
-#include <df/unit_misc_trait.h>
-#include <df/entity_position_responsibility.h>
-#include <df/historical_figure.h>
-#include <df/historical_entity.h>
-#include <df/histfig_entity_link.h>
-#include <df/histfig_entity_link_positionst.h>
-#include <df/entity_position_assignment.h>
-#include <df/entity_position.h>
-#include <df/building_tradedepotst.h>
-#include <df/building_stockpilest.h>
-#include <df/items_other_id.h>
-#include <df/plotinfost.h>
-#include <df/activity_info.h>
-#include <df/gamest.h>
-#include <df/global_objects.h>
-
-#include <MiscUtils.h>
-
 #include "modules/MapCache.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
 
-#include "laborstatemap.h"
+#include <df/activity_info.h>
+#include <df/building.h>
+#include <df/building_stockpilest.h>
+#include <df/building_tradedepotst.h>
+#include <df/entity_position.h>
+#include <df/entity_position_assignment.h>
+#include <df/entity_position_responsibility.h>
+#include <df/gamest.h>
+#include <df/global_objects.h>
+#include <df/histfig_entity_link.h>
+#include <df/histfig_entity_link_positionst.h>
+#include <df/historical_entity.h>
+#include <df/historical_figure.h>
+#include <df/items_other_id.h>
+#include <df/job.h>
+#include <df/plotinfost.h>
+#include <df/unit.h>
+#include <df/unit_labor.h>
+#include <df/unit_misc_trait.h>
+#include <df/unit_skill.h>
+#include <df/unit_soul.h>
+#include <df/workshop_type.h>
+#include <df/world.h>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -719,14 +707,19 @@ static void assign_labor(unit_labor::unit_labor labor,
         }
 }
 
+static const int32_t CYCLE_TICKS = 61;
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    cleanup_state();
+    init_state();
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_MAP_LOADED:
-        cleanup_state();
-        init_state();
-        break;
     case SC_MAP_UNLOADED:
         cleanup_state();
         break;
@@ -739,18 +732,15 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    static int last_run = 0;
-    static const int run_frequency = 60;
-
     if(!world || !world->map.block_index || !enable_autolabor)
     {
         return CR_OK;
     }
 
-    if (world->frame_counter - last_run <= run_frequency)
+    if (world->frame_counter - cycle_timestamp <= CYCLE_TICKS)
         return CR_OK;
 
-    last_run = world->frame_counter;
+    cycle_timestamp = world->frame_counter;
 
     std::vector<df::unit *> dwarfs;
 
@@ -785,7 +775,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (Units::isCitizen(cre))
         {
             if (cre->burrows.size() > 0)
-                continue;        // dwarfs assigned to burrows are skipped entirely
+                continue;        // dwarfs assigned to active burrows are skipped entirely
             dwarfs.push_back(cre);
         }
     }
@@ -1082,8 +1072,8 @@ void print_labor (df::unit_labor labor, color_ostream &out)
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("World is not loaded: please load a game first.\n");
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -1103,8 +1093,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("World is not loaded: please load a game first.\n");
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 

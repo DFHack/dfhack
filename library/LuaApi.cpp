@@ -313,11 +313,11 @@ static int delete_site_data(lua_State *L, get_data_fn get_data) {
 }
 
 static int dfhack_persistent_get_site_data_string(lua_State *L) {
-    dfhack_persistent_get_data_string(L, get_site_data);
+    return dfhack_persistent_get_data_string(L, get_site_data);
 }
 
 static int dfhack_persistent_save_site_data_string(lua_State *L) {
-    dfhack_persistent_save_data_string(L, World::GetPersistentSiteData);
+    return dfhack_persistent_save_data_string(L, World::GetPersistentSiteData);
 }
 
 static int dfhack_persistent_delete_site_data(lua_State *L) {
@@ -325,11 +325,11 @@ static int dfhack_persistent_delete_site_data(lua_State *L) {
 }
 
 static int dfhack_persistent_get_world_data_string(lua_State *L) {
-    dfhack_persistent_get_data_string(L, get_world_data);
+    return dfhack_persistent_get_data_string(L, get_world_data);
 }
 
 static int dfhack_persistent_save_world_data_string(lua_State *L) {
-    dfhack_persistent_save_data_string(L, World::GetPersistentWorldData);
+    return dfhack_persistent_save_data_string(L, World::GetPersistentWorldData);
 }
 
 static int dfhack_persistent_delete_world_data(lua_State *L) {

@@ -26,6 +26,7 @@ distribution.
 #include "Internal.h"
 
 #include "modules/Filesystem.h"
+#include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
@@ -244,6 +245,10 @@ void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
 
     clear(out);
+
+    // if we're creating a new world, there is no save directory yet
+    if (Gui::matchFocusString("new_region", Gui::getDFViewscreen(true)))
+        return;
 
     std::string world_name = World::ReadWorldFolder();
     std::string save_path = getSavePath(world_name);

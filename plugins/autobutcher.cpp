@@ -4,16 +4,6 @@
 // config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
 // config for watchlist entries is saved when they are created or modified
 
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
-#include "df/building_cagest.h"
-#include "df/building_civzonest.h"
-#include "df/creature_raw.h"
-#include "df/world.h"
-
 #include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
@@ -22,6 +12,11 @@
 #include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+
+#include "df/building_cagest.h"
+#include "df/building_civzonest.h"
+#include "df/creature_raw.h"
+#include "df/world.h"
 
 using std::endl;
 using std::string;
@@ -39,7 +34,7 @@ REQUIRE_GLOBAL(world);
 // logging levels can be dynamically controlled with the `debugfilter` command.
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(autobutcher, status, DebugCategory::LINFO);
+    DBG_DECLARE(autobutcher, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autobutcher, cycle, DebugCategory::LINFO);
 }
@@ -57,21 +52,6 @@ enum ConfigValues {
     CONFIG_DEFAULT_FA  = 5,
     CONFIG_DEFAULT_MA  = 6,
 };
-static int get_config_val(int index) {
-    if (!config.isValid())
-        return -1;
-    return config.ival(index);
-}
-static bool get_config_bool(int index) {
-    return get_config_val(index) == 1;
-}
-static void set_config_val(int index, int value) {
-    if (config.isValid())
-        config.ival(index) = value;
-}
-static void set_config_bool(int index, bool value) {
-    set_config_val(index, value ? 1 : 0);
-}
 
 struct WatchedRace;
 // vector of races handled by autobutcher
@@ -80,7 +60,7 @@ struct WatchedRace;
 static unordered_map<int, WatchedRace*> watched_races;
 static unordered_map<string, int> race_to_id;
 
-static const int32_t CYCLE_TICKS = 6000;
+static const int32_t CYCLE_TICKS = 5987;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static void init_autobutcher(color_ostream &out);
@@ -97,20 +77,20 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(status,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             autobutcher_cycle(out);
     } else {
-        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -118,31 +98,31 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
     cleanup_autobutcher(out);
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(status,out).print("no config found in this save; initializing\n");
+        DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
-        set_config_bool(CONFIG_AUTOWATCH, true);
-        set_config_val(CONFIG_DEFAULT_FK, 4);
-        set_config_val(CONFIG_DEFAULT_MK, 2);
-        set_config_val(CONFIG_DEFAULT_FA, 4);
-        set_config_val(CONFIG_DEFAULT_MA, 2);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_AUTOWATCH, true);
+        config.set_int(CONFIG_DEFAULT_FK, 4);
+        config.set_int(CONFIG_DEFAULT_MK, 2);
+        config.set_int(CONFIG_DEFAULT_FA, 4);
+        config.set_int(CONFIG_DEFAULT_MA, 2);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but
     // all the other state we can directly read/modify from the persistent
     // data structure.
-    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
     // load the persisted watchlist
@@ -154,7 +134,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(status,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -309,7 +289,7 @@ public:
         ma = _ma;
         fk_prot = fa_prot = mk_prot = ma_prot = 0;
 
-        DEBUG(status,out).print("creating new WatchedRace: id=%d, watched=%s, fk=%u, mk=%u, fa=%u, ma=%u\n",
+        DEBUG(control,out).print("creating new WatchedRace: id=%d, watched=%s, fk=%u, mk=%u, fa=%u, ma=%u\n",
                 id, watch ? "true" : "false", fk, mk, fa, ma);
     }
 
@@ -336,7 +316,7 @@ public:
             rconfig.ival(5) = ma;
         }
         else {
-            ERR(status,out).print("could not create persistent key for race: %s",
+            ERR(control,out).print("could not create persistent key for race: %s",
                                   Units::getRaceNameById(raceId).c_str());
         }
     }
@@ -451,14 +431,14 @@ static void init_autobutcher(color_ostream &out) {
     std::vector<PersistentDataItem> watchlist;
     World::GetPersistentSiteData(&watchlist, WATCHLIST_CONFIG_KEY_PREFIX, true);
     for (auto & p : watchlist) {
-        DEBUG(status,out).print("Reading from save: %s\n", p.key().c_str());
+        DEBUG(control,out).print("Reading from save: %s\n", p.key().c_str());
         WatchedRace *w = new WatchedRace(out, p);
         watched_races.emplace(w->raceId, w);
     }
 }
 
 static void cleanup_autobutcher(color_ostream &out) {
-    DEBUG(status,out).print("cleaning %s state\n", plugin_name);
+    DEBUG(control,out).print("cleaning %s state\n", plugin_name);
     race_to_id.clear();
     for (auto w : watched_races)
         delete w.second;
@@ -466,15 +446,15 @@ static void cleanup_autobutcher(color_ostream &out) {
 }
 
 static void autobutcher_export(color_ostream &out);
-static void autobutcher_status(color_ostream &out);
+static void autobutcher_control(color_ostream &out);
 static void autobutcher_target(color_ostream &out, const autobutcher_options &opts);
 static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_options &opts);
 
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -486,10 +466,10 @@ static command_result df_autobutcher(color_ostream &out, vector<string> &paramet
         autobutcher_cycle(out);
     }
     else if (opts.command == "autowatch") {
-        set_config_bool(CONFIG_AUTOWATCH, true);
+        config.set_bool(CONFIG_AUTOWATCH, true);
     }
     else if (opts.command == "noautowatch") {
-        set_config_bool(CONFIG_AUTOWATCH, false);
+        config.set_bool(CONFIG_AUTOWATCH, false);
     }
     else if (opts.command == "list_export") {
         autobutcher_export(out);
@@ -503,7 +483,7 @@ static command_result df_autobutcher(color_ostream &out, vector<string> &paramet
         autobutcher_modify_watchlist(out, opts);
     }
     else {
-        autobutcher_status(out);
+        autobutcher_control(out);
     }
 
     return CR_OK;
@@ -529,13 +509,13 @@ static vector<WatchedRace *> getSortedWatchList() {
 
 static void autobutcher_export(color_ostream &out) {
     out << "enable autobutcher" << endl;
-    out << "autobutcher " << (get_config_bool(CONFIG_AUTOWATCH) ? "" : "no")
+    out << "autobutcher " << (config.get_bool(CONFIG_AUTOWATCH) ? "" : "no")
         << "autowatch" << endl;
     out << "autobutcher target"
-        << " " << get_config_val(CONFIG_DEFAULT_FK)
-        << " " << get_config_val(CONFIG_DEFAULT_MK)
-        << " " << get_config_val(CONFIG_DEFAULT_FA)
-        << " " << get_config_val(CONFIG_DEFAULT_MA)
+        << " " << config.get_int(CONFIG_DEFAULT_FK)
+        << " " << config.get_int(CONFIG_DEFAULT_MK)
+        << " " << config.get_int(CONFIG_DEFAULT_FA)
+        << " " << config.get_int(CONFIG_DEFAULT_MA)
         << " new" << endl;
 
     for (auto w : getSortedWatchList()) {
@@ -552,15 +532,15 @@ static void autobutcher_export(color_ostream &out) {
     }
 }
 
-static void autobutcher_status(color_ostream &out) {
+static void autobutcher_control(color_ostream &out) {
     out << "autobutcher is " << (is_enabled ? "" : "not ") << "enabled\n";
-    out << "  " << (get_config_bool(CONFIG_AUTOWATCH) ? "" : "not ") << "autowatching for new races\n";
+    out << "  " << (config.get_bool(CONFIG_AUTOWATCH) ? "" : "not ") << "autowatching for new races\n";
 
     out << "\ndefault setting for new races:"
-        << " fk=" << get_config_val(CONFIG_DEFAULT_FK)
-        << " mk=" << get_config_val(CONFIG_DEFAULT_MK)
-        << " fa=" << get_config_val(CONFIG_DEFAULT_FA)
-        << " ma=" << get_config_val(CONFIG_DEFAULT_MA)
+        << " fk=" << config.get_int(CONFIG_DEFAULT_FK)
+        << " mk=" << config.get_int(CONFIG_DEFAULT_MK)
+        << " fa=" << config.get_int(CONFIG_DEFAULT_FA)
+        << " ma=" << config.get_int(CONFIG_DEFAULT_MA)
         << endl << endl;
 
     if (!watched_races.size()) {
@@ -585,16 +565,16 @@ static void autobutcher_status(color_ostream &out) {
 
 static void autobutcher_target(color_ostream &out, const autobutcher_options &opts) {
     if (opts.races_new) {
-        DEBUG(status,out).print("setting targets for new races to fk=%u, mk=%u, fa=%u, ma=%u\n",
+        DEBUG(control,out).print("setting targets for new races to fk=%u, mk=%u, fa=%u, ma=%u\n",
                                 opts.fk, opts.mk, opts.fa, opts.ma);
-        set_config_val(CONFIG_DEFAULT_FK, opts.fk);
-        set_config_val(CONFIG_DEFAULT_MK, opts.mk);
-        set_config_val(CONFIG_DEFAULT_FA, opts.fa);
-        set_config_val(CONFIG_DEFAULT_MA, opts.ma);
+        config.set_int(CONFIG_DEFAULT_FK, opts.fk);
+        config.set_int(CONFIG_DEFAULT_MK, opts.mk);
+        config.set_int(CONFIG_DEFAULT_FA, opts.fa);
+        config.set_int(CONFIG_DEFAULT_MA, opts.ma);
     }
 
     if (opts.races_all) {
-        DEBUG(status,out).print("setting targets for all races on watchlist to fk=%u, mk=%u, fa=%u, ma=%u\n",
+        DEBUG(control,out).print("setting targets for all races on watchlist to fk=%u, mk=%u, fa=%u, ma=%u\n",
                                 opts.fk, opts.mk, opts.fa, opts.ma);
         for (auto w : watched_races) {
             w.second->fk = opts.fk;
@@ -647,13 +627,13 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
             if (!watched_races.count(id)) {
                 watched_races.emplace(id,
                     new WatchedRace(out, id, true,
-                                    get_config_val(CONFIG_DEFAULT_FK),
-                                    get_config_val(CONFIG_DEFAULT_MK),
-                                    get_config_val(CONFIG_DEFAULT_FA),
-                                    get_config_val(CONFIG_DEFAULT_MA)));
+                                    config.get_int(CONFIG_DEFAULT_FK),
+                                    config.get_int(CONFIG_DEFAULT_MK),
+                                    config.get_int(CONFIG_DEFAULT_FA),
+                                    config.get_int(CONFIG_DEFAULT_MA)));
             }
             else if (!watched_races[id]->isWatched) {
-                DEBUG(status,out).print("watching: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("watching: %s\n", opts.command.c_str());
                 watched_races[id]->isWatched = true;
             }
         }
@@ -661,19 +641,19 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
             if (!watched_races.count(id)) {
                 watched_races.emplace(id,
                     new WatchedRace(out, id, false,
-                                    get_config_val(CONFIG_DEFAULT_FK),
-                                    get_config_val(CONFIG_DEFAULT_MK),
-                                    get_config_val(CONFIG_DEFAULT_FA),
-                                    get_config_val(CONFIG_DEFAULT_MA)));
+                                    config.get_int(CONFIG_DEFAULT_FK),
+                                    config.get_int(CONFIG_DEFAULT_MK),
+                                    config.get_int(CONFIG_DEFAULT_FA),
+                                    config.get_int(CONFIG_DEFAULT_MA)));
             }
             else if (watched_races[id]->isWatched) {
-                DEBUG(status,out).print("unwatching: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("unwatching: %s\n", opts.command.c_str());
                 watched_races[id]->isWatched = false;
             }
         }
         else if (opts.command == "forget") {
             if (watched_races.count(id)) {
-                DEBUG(status,out).print("forgetting: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("forgetting: %s\n", opts.command.c_str());
                 watched_races[id]->RemoveConfig(out);
                 delete watched_races[id];
                 watched_races.erase(id);
@@ -759,7 +739,7 @@ static void autobutcher_cycle(color_ostream &out) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
     // check if there is anything to watch before walking through units vector
-    if (!get_config_bool(CONFIG_AUTOWATCH)) {
+    if (!config.get_bool(CONFIG_AUTOWATCH)) {
         bool watching = false;
         for (auto w : watched_races) {
             if (w.second->isWatched) {
@@ -791,13 +771,13 @@ static void autobutcher_cycle(color_ostream &out) {
         if (watched_races.count(unit->race)) {
             w = watched_races[unit->race];
         }
-        else if (!get_config_bool(CONFIG_AUTOWATCH)) {
+        else if (!config.get_bool(CONFIG_AUTOWATCH)) {
             continue;
         }
         else {
-            w = new WatchedRace(out, unit->race, true, get_config_val(CONFIG_DEFAULT_FK),
-                get_config_val(CONFIG_DEFAULT_MK), get_config_val(CONFIG_DEFAULT_FA),
-                get_config_val(CONFIG_DEFAULT_MA));
+            w = new WatchedRace(out, unit->race, true, config.get_int(CONFIG_DEFAULT_FK),
+                config.get_int(CONFIG_DEFAULT_MK), config.get_int(CONFIG_DEFAULT_FA),
+                config.get_int(CONFIG_DEFAULT_MA));
             w->UpdateConfig(out);
             watched_races.emplace(unit->race, w);
 
@@ -912,13 +892,13 @@ WatchedRace * checkRaceStocksButcherFlag(color_ostream &out, int race) {
 }
 
 static bool autowatch_isEnabled() {
-    return get_config_bool(CONFIG_AUTOWATCH);
+    return config.get_bool(CONFIG_AUTOWATCH);
 }
 
 static void autowatch_setEnabled(color_ostream &out, bool enable) {
-    DEBUG(status,out).print("auto-adding to watchlist %s\n", enable ? "started" : "stopped");
-    set_config_bool(CONFIG_AUTOWATCH, enable);
-    if (get_config_bool(CONFIG_IS_ENABLED))
+    DEBUG(control,out).print("auto-adding to watchlist %s\n", enable ? "started" : "stopped");
+    config.set_bool(CONFIG_AUTOWATCH, enable);
+    if (config.get_bool(CONFIG_IS_ENABLED))
         autobutcher_cycle(out);
 }
 
@@ -927,7 +907,7 @@ static void autowatch_setEnabled(color_ostream &out, bool enable) {
 // params: (id, fk, mk, fa, ma, watched)
 static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsigned fk, unsigned mk, unsigned fa, unsigned ma, bool watched) {
     if (watched_races.count(id)) {
-        DEBUG(status,out).print("updating watchlist entry\n");
+        DEBUG(control,out).print("updating watchlist entry\n");
         WatchedRace * w = watched_races[id];
         w->fk = fk;
         w->mk = mk;
@@ -938,18 +918,18 @@ static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsign
         return;
     }
 
-    DEBUG(status,out).print("creating new watchlist entry\n");
+    DEBUG(control,out).print("creating new watchlist entry\n");
     WatchedRace * w = new WatchedRace(out, id, watched, fk, mk, fa, ma);
     w->UpdateConfig(out);
     watched_races.emplace(id, w);
-    INFO(status,out).print("New race added to autobutcher watchlist: %s\n",
+    INFO(control,out).print("New race added to autobutcher watchlist: %s\n",
         Units::getRaceNamePluralById(id).c_str());
 }
 
 // remove entry from watchlist
 static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id) {
     if (watched_races.count(id)) {
-        DEBUG(status,out).print("removing watchlist entry\n");
+        DEBUG(control,out).print("removing watchlist entry\n");
         WatchedRace * w = watched_races[id];
         w->RemoveConfig(out);
         watched_races.erase(id);
@@ -958,10 +938,10 @@ static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id) {
 
 // set default target values for new races
 static void autobutcher_setDefaultTargetNew(color_ostream &out, unsigned fk, unsigned mk, unsigned fa, unsigned ma) {
-    set_config_val(CONFIG_DEFAULT_FK, fk);
-    set_config_val(CONFIG_DEFAULT_MK, mk);
-    set_config_val(CONFIG_DEFAULT_FA, fa);
-    set_config_val(CONFIG_DEFAULT_MA, ma);
+    config.set_int(CONFIG_DEFAULT_FK, fk);
+    config.set_int(CONFIG_DEFAULT_MK, mk);
+    config.set_int(CONFIG_DEFAULT_FA, fa);
+    config.set_int(CONFIG_DEFAULT_MA, ma);
 }
 
 // set default target values for ALL races (update watchlist and set new default)
@@ -1019,12 +999,12 @@ static void autobutcher_unbutcherRace(color_ostream &out, int id) {
 static int autobutcher_getSettings(lua_State *L) {
     lua_newtable(L);
     int ctable = lua_gettop(L);
-    Lua::SetField(L, get_config_bool(CONFIG_IS_ENABLED), ctable, "enable_autobutcher");
-    Lua::SetField(L, get_config_bool(CONFIG_AUTOWATCH), ctable, "enable_autowatch");
-    Lua::SetField(L, get_config_val(CONFIG_DEFAULT_FK), ctable, "fk");
-    Lua::SetField(L, get_config_val(CONFIG_DEFAULT_MK), ctable, "mk");
-    Lua::SetField(L, get_config_val(CONFIG_DEFAULT_FA), ctable, "fa");
-    Lua::SetField(L, get_config_val(CONFIG_DEFAULT_MA), ctable, "ma");
+    Lua::SetField(L, config.get_bool(CONFIG_IS_ENABLED), ctable, "enable_autobutcher");
+    Lua::SetField(L, config.get_bool(CONFIG_AUTOWATCH), ctable, "enable_autowatch");
+    Lua::SetField(L, config.get_int(CONFIG_DEFAULT_FK), ctable, "fk");
+    Lua::SetField(L, config.get_int(CONFIG_DEFAULT_MK), ctable, "mk");
+    Lua::SetField(L, config.get_int(CONFIG_DEFAULT_FA), ctable, "fa");
+    Lua::SetField(L, config.get_int(CONFIG_DEFAULT_MA), ctable, "ma");
     return 1;
 }
 

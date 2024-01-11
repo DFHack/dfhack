@@ -6,7 +6,7 @@
 #include "modules/World.h"
 
 namespace DFHack {
-    DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, control);
 }
 
 using std::string;
@@ -15,9 +15,9 @@ using namespace DFHack;
 
 BuildingTypeKey DefaultItemFilters::getKey(PersistentDataItem &filter_config) {
     return BuildingTypeKey(
-        (df::building_type)get_config_val(filter_config, FILTER_CONFIG_TYPE),
-                           get_config_val(filter_config, FILTER_CONFIG_SUBTYPE),
-                           get_config_val(filter_config, FILTER_CONFIG_CUSTOM));
+        (df::building_type)filter_config.get_int(FILTER_CONFIG_TYPE),
+                           filter_config.get_int(FILTER_CONFIG_SUBTYPE),
+                           filter_config.get_int(FILTER_CONFIG_CUSTOM));
 }
 
 static int get_max_quality(const df::job_item *jitem) {
@@ -40,13 +40,13 @@ static string serialize(const std::vector<ItemFilter> &item_filters, const std::
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
         : key(key), choose_items(ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER) {
-    DEBUG(status,out).print("creating persistent data for filter key %d,%d,%d\n",
+    DEBUG(control,out).print("creating persistent data for filter key %d,%d,%d\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key));
     filter_config = World::AddPersistentSiteData(FILTER_CONFIG_KEY);
-    set_config_val(filter_config, FILTER_CONFIG_TYPE, std::get<0>(key));
-    set_config_val(filter_config, FILTER_CONFIG_SUBTYPE, std::get<1>(key));
-    set_config_val(filter_config, FILTER_CONFIG_CUSTOM, std::get<2>(key));
-    set_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose_items);
+    filter_config.set_int(FILTER_CONFIG_TYPE, std::get<0>(key));
+    filter_config.set_int(FILTER_CONFIG_SUBTYPE, std::get<1>(key));
+    filter_config.set_int(FILTER_CONFIG_CUSTOM, std::get<2>(key));
+    filter_config.set_int(FILTER_CONFIG_CHOOSE_ITEMS, choose_items);
     item_filters.resize(jitems.size());
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
         item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
@@ -56,12 +56,12 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
         : key(getKey(filter_config)), filter_config(filter_config) {
-    choose_items = get_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS);
+    choose_items = filter_config.get_int(FILTER_CONFIG_CHOOSE_ITEMS);
     if (choose_items < ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER ||
             choose_items > ItemSelectionChoice::ITEM_SELECTION_CHOICE_AUTOMATERIAL)
         choose_items = ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER;
     auto &serialized = filter_config.val();
-    DEBUG(status,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
+    DEBUG(control,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
     if (!jitems.size())
         return;
@@ -69,7 +69,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
     split_string(&elems, serialized, "|");
     std::vector<ItemFilter> filters = deserialize_item_filters(out, elems[0]);
     if (filters.size() != jitems.size()) {
-        WARN(status,out).print("ignoring invalid filters_str for key %d,%d,%d: '%s'\n",
+        WARN(control,out).print("ignoring invalid filters_str for key %d,%d,%d: '%s'\n",
             std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
         item_filters.resize(jitems.size());
     } else
@@ -86,7 +86,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
 
 void DefaultItemFilters::setChooseItems(int choose) {
     choose_items = choose;
-    set_config_val(filter_config, FILTER_CONFIG_CHOOSE_ITEMS, choose);
+    filter_config.set_int(FILTER_CONFIG_CHOOSE_ITEMS, choose);
 }
 
 void DefaultItemFilters::setSpecial(const std::string &special, bool val) {
@@ -99,13 +99,13 @@ void DefaultItemFilters::setSpecial(const std::string &special, bool val) {
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {
     if (index < 0 || item_filters.size() <= (size_t)index) {
-        WARN(status,out).print("invalid index for filter key %d,%d,%d: %d\n",
+        WARN(control,out).print("invalid index for filter key %d,%d,%d: %d\n",
                 std::get<0>(key), std::get<1>(key), std::get<2>(key), index);
         return;
     }
 
     item_filters[index] = filter;
     filter_config.val() = serialize(item_filters, specials);
-    DEBUG(status,out).print("updated item filter and persisted for key %d,%d,%d: %s\n",
+    DEBUG(control,out).print("updated item filter and persisted for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), filter_config.val().c_str());
 }

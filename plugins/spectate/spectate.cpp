@@ -1,8 +1,3 @@
-//
-// Created by josh on 7/28/21.
-// Last updated: 11//10/22
-//
-
 #include "pause.h"
 
 #include <Debug.h>
@@ -16,6 +11,7 @@
 #include <modules/Gui.h>
 #include <modules/Job.h>
 #include <modules/Units.h>
+
 #include <df/job.h>
 #include <df/unit.h>
 #include <df/historical_figure.h>
@@ -24,14 +20,12 @@
 #include <df/viewscreen.h>
 #include <df/creature_raw.h>
 
-#include <array>
 #include <random>
 #include <cinttypes>
-#include <functional>
 
 // Debugging
 namespace DFHack {
-    DBG_DECLARE(spectate, plugin, DebugCategory::LINFO);
+    DBG_DECLARE(log, plugin, DebugCategory::LINFO);
 }
 
 DFHACK_PLUGIN("spectate");
@@ -51,7 +45,7 @@ struct Configuration {
     bool animals = false;
     bool hostiles = true;
     bool visitors = false;
-    int32_t tick_threshold = 1000;
+    int32_t tick_threshold = 1009;
 } config;
 
 Pausing::AnnouncementLock* pause_lock = nullptr;
@@ -68,7 +62,6 @@ enum ConfigData {
     ANIMALS,
     HOSTILES,
     VISITORS
-
 };
 
 static PersistentDataItem pconfig;
@@ -390,7 +383,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     SP::LoadSettings();
     if (enabled) {
         SP::following_dwarf = SP::FollowADwarf();
@@ -400,6 +393,11 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (enable && !enabled) {
         out.print("Spectate mode enabled!\n");
         enabled = true; // enable_auto_unpause won't do anything without this set now
@@ -419,8 +417,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (enabled) {
         switch (event) {
-            case SC_MAP_UNLOADED:
-            case SC_BEGIN_UNLOAD:
             case SC_WORLD_UNLOADED:
                 SP::our_dorf = nullptr;
                 SP::following_dwarf = false;
@@ -437,6 +433,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (!parameters.empty()) {
         if (parameters.size() >= 2 && parameters.size() <= 3) {
             bool state =false;

@@ -60,8 +60,10 @@ This skeletal logic has not been kept up-to-date since ~v0.5
 
 #include <Debug.h>
 #include <PluginManager.h>
+
 #include <modules/EventManager.h>
 #include <modules/Units.h>
+
 #include <df/world.h>
 #include <df/report.h>
 #include <df/tile_traffic.h>
@@ -510,7 +512,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     CSP::LoadSettings();
     if (enabled) {
         std::vector<std::string> params;
@@ -520,6 +522,11 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (enable && !enabled) {
         // register events to check jobs / update tracking
         EM::EventHandler jobStartHandler(CSP::JobStartedEvent, 0);
@@ -570,6 +577,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 }
 
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (!parameters.empty()) {
         if (parameters[0] == "runonce") {
             CSP::UnpauseEvent(true);

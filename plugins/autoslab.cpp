@@ -36,7 +36,7 @@ REQUIRE_GLOBAL(world);
 namespace DFHack
 {
     // for configuration-related logging
-    DBG_DECLARE(autoslab, status, DebugCategory::LINFO);
+    DBG_DECLARE(autoslab, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autoslab, cycle, DebugCategory::LINFO);
 }
@@ -47,25 +47,6 @@ enum ConfigValues
 {
     CONFIG_IS_ENABLED = 0,
 };
-static int get_config_val(int index)
-{
-    if (!config.isValid())
-        return -1;
-    return config.ival(index);
-}
-static bool get_config_bool(int index)
-{
-    return get_config_val(index) == 1;
-}
-static void set_config_val(int index, int value)
-{
-    if (config.isValid())
-        config.ival(index) = value;
-}
-static void set_config_bool(int index, bool value)
-{
-    set_config_val(index, value ? 1 : 0);
-}
 
 static int32_t cycle_timestamp = 0; // world->frame_counter at last cycle
 
@@ -73,58 +54,58 @@ static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    DEBUG(status, out).print("initializing %s\n", plugin_name);
+    DEBUG(control, out).print("initializing %s\n", plugin_name);
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!Core::getInstance().isWorldLoaded())
+    if (!Core::getInstance().isMapLoaded())
     {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled)
     {
         is_enabled = enable;
-        DEBUG(status, out).print("%s from the API; persisting\n", is_enabled ? "enabled" : "disabled");
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        DEBUG(control, out).print("%s from the API; persisting\n", is_enabled ? "enabled" : "disabled");
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     }
     else
     {
-        DEBUG(status, out).print("%s from the API, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
+        DEBUG(control, out).print("%s from the API, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
     }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
-    DEBUG(status, out).print("shutting down %s\n", plugin_name);
+    DEBUG(control, out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data(color_ostream &out)
+DFhackCExport command_result plugin_load_site_data(color_ostream &out)
 {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid())
     {
-        DEBUG(status, out).print("no config found in this save; initializing\n");
+        DEBUG(control, out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but
     // all the other state we can directly read/modify from the persistent
     // data structure.
-    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(status, out).print("loading persisted enabled state: %s\n", is_enabled ? "true" : "false");
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control, out).print("loading persisted enabled state: %s\n", is_enabled ? "true" : "false");
     return CR_OK;
 }
 
@@ -134,14 +115,14 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     {
         if (is_enabled)
         {
-            DEBUG(status, out).print("world unloaded; disabling %s\n", plugin_name);
+            DEBUG(control, out).print("world unloaded; disabling %s\n", plugin_name);
             is_enabled = false;
         }
     }
     return CR_OK;
 }
 
-static const int32_t CYCLE_TICKS = 1200;
+static const int32_t CYCLE_TICKS = 1289;
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {

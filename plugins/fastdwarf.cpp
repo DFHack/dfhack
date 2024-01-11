@@ -20,7 +20,7 @@ using df::global::debug_turbospeed;  // soft dependency, so not REQUIRE_GLOBAL
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(fastdwarf, config, DebugCategory::LINFO);
+    DBG_DECLARE(fastdwarf, control, DebugCategory::LINFO);
     // for logging during the update cycle
     DBG_DECLARE(fastdwarf, cycle, DebugCategory::LINFO);
 }
@@ -33,20 +33,10 @@ enum ConfigValues {
     CONFIG_TELE = 1,
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-
 static command_result do_command(color_ostream &out, vector<string> & parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> & commands) {
-    DEBUG(config,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     commands.push_back(PluginCommand(
         "fastdwarf",
@@ -57,10 +47,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 }
 
 static void set_state(color_ostream &out, int fast, int tele) {
-    DEBUG(config,out).print("setting state: fast=%d, tele=%d\n", fast, tele);
+    DEBUG(control,out).print("setting state: fast=%d, tele=%d\n", fast, tele);
     is_enabled = fast || tele;
-    set_config_val(config, CONFIG_FAST, fast);
-    set_config_val(config, CONFIG_TELE, tele);
+    config.set_int(CONFIG_FAST, fast);
+    config.set_int(CONFIG_TELE, tele);
 
     if (debug_turbospeed)
         *debug_turbospeed = fast == 2;
@@ -69,15 +59,15 @@ static void set_state(color_ostream &out, int fast, int tele) {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         set_state(out, enable ? 1 : 0, 0);
     } else {
-        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -85,7 +75,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     // make sure the debug flag doesn't get left on
     if (debug_turbospeed)
@@ -94,18 +84,18 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
+        DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
         set_state(out, false, false);
     } else {
-        is_enabled = get_config_val(config, CONFIG_FAST) || get_config_val(config, CONFIG_TELE);
-        DEBUG(config,out).print("loading persisted state: fast=%d, tele=%d\n",
-            get_config_val(config, CONFIG_FAST),
-            get_config_val(config, CONFIG_TELE));
+        is_enabled = config.get_int(CONFIG_FAST) || config.get_int(CONFIG_TELE);
+        DEBUG(control,out).print("loading persisted state: fast=%d, tele=%d\n",
+            config.get_int(CONFIG_FAST),
+            config.get_int(CONFIG_TELE));
     }
 
     return CR_OK;
@@ -114,7 +104,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -162,8 +152,8 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
     // fast mode 2 is handled by DF itself
-    bool is_fast = get_config_val(config, CONFIG_FAST) == 1;
-    bool is_tele = get_config_val(config, CONFIG_TELE) == 1;
+    bool is_fast = config.get_int(CONFIG_FAST) == 1;
+    bool is_tele = config.get_int(CONFIG_TELE) == 1;
 
     std::vector<df::unit *> citizens;
     Units::getCitizens(citizens);
@@ -186,6 +176,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector <string> & parameters)
 {
+    if (!Core::getInstance().isMapLoaded()) {
+        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     const size_t num_params = parameters.size();
 
     if (num_params > 2 || (num_params > 1 && parameters[0] == "help"))
@@ -193,8 +188,8 @@ static command_result do_command(color_ostream &out, vector <string> & parameter
 
     if (num_params == 0 || parameters[0] == "status") {
         out.print("Current state: fast = %d, teleport = %d.\n",
-            get_config_val(config, CONFIG_FAST),
-            get_config_val(config, CONFIG_TELE));
+            config.get_int(CONFIG_FAST),
+            config.get_int(CONFIG_TELE));
         return CR_OK;
     }
 

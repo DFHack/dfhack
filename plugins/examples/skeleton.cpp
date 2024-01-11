@@ -145,11 +145,12 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     return CR_OK;
 }
 
-// If you need to save or load world-specific data, define these functions.
+// If you need to save or load world- or site-specific data, define these functions.
 // plugin_save_data is called when the game might be about to save the world,
-// and plugin_load_data is called whenever a new world is loaded. If the plugin
-// is loaded or unloaded while a world is active, plugin_save_data or
-// plugin_load_data will be called immediately.
+// plugin_load_world_data is called whenever a new world is loaded, and
+// plugin_load_site_data is called whenever a new site is loaded. If the plugin
+// is loaded or unloaded while a world is active, plugin_load_*_data or
+// plugin_save_data will be called immediately as appropriate.
 DFhackCExport command_result plugin_save_data (color_ostream &out) {
     DEBUG(status,out).print("save or unload is imminent; time to persist state\n");
 
@@ -159,8 +160,16 @@ DFhackCExport command_result plugin_save_data (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    DEBUG(status,out).print("world is loading; time to load persisted state\n");
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
+    DEBUG(status,out).print("world is loading; time to load world-global persisted state\n");
+
+    // Call functions in the Persistence module here. See
+    // persistent_per_save_example.cpp for an example.
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    DEBUG(status,out).print("site is loading; time to load site-local persisted state\n");
 
     // Call functions in the Persistence module here. See
     // persistent_per_save_example.cpp for an example.

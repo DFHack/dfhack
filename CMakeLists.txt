@@ -12,7 +12,7 @@ set(DFHACK_RELEASE "r5rc1")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
-set(DFHACK_ABI_VERSION 1)
+set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
 # Set up build types

@@ -148,7 +148,8 @@ namespace DFHack
         command_result on_update(color_ostream &out);
         command_result on_state_change(color_ostream &out, state_change_event event);
         command_result save_data(color_ostream &out);
-        command_result load_data(color_ostream &out);
+        command_result load_world_data(color_ostream &out);
+        command_result load_site_data(color_ostream &out);
         void detach_connection(RPCService *svc);
     public:
         enum plugin_state
@@ -233,7 +234,8 @@ namespace DFHack
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
         command_result (*plugin_save_data)(color_ostream &);
-        command_result (*plugin_load_data)(color_ostream &);
+        command_result (*plugin_load_world_data)(color_ostream &);
+        command_result (*plugin_load_site_data)(color_ostream &);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -248,7 +250,8 @@ namespace DFHack
         void registerCommands( Plugin * p );
         void unregisterCommands( Plugin * p );
         void doSaveData(color_ostream &out);
-        void doLoadData(color_ostream &out);
+        void doLoadWorldData(color_ostream &out);
+        void doLoadSiteData(color_ostream &out);
     // PUBLIC METHODS
     public:
         // list names of all plugins present in hack/plugins

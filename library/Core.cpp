@@ -1909,7 +1909,8 @@ void Core::doUpdate(color_ostream &out)
         (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
-        doSaveData(out);
+        plug_mgr->doSaveData(out);
+        Persistence::Internal::save(out);
     }
 
     // detect if the game was loaded or unloaded in the meantime
@@ -2184,7 +2185,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     case SC_WORLD_LOADED:
     {
-        doLoadData(out);
+        Persistence::Internal::load(out);
+        plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
@@ -2228,6 +2230,9 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         }
         break;
     }
+    case SC_MAP_LOADED:
+        plug_mgr->doLoadSiteData(out);
+        break;
     default:
         break;
     }
@@ -2250,18 +2255,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         Lua::StackUnwinder top(L);
         Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
     }
-}
-
-void Core::doSaveData(color_ostream &out)
-{
-    plug_mgr->doSaveData(out);
-    Persistence::Internal::save(out);
-}
-
-void Core::doLoadData(color_ostream &out)
-{
-    Persistence::Internal::load(out);
-    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )

@@ -191,7 +191,8 @@ Plugin::Plugin(Core * core, const std::string & path,
     plugin_enable = 0;
     plugin_is_enabled = 0;
     plugin_save_data = 0;
-    plugin_load_data = 0;
+    plugin_load_world_data = 0;
+    plugin_load_site_data = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -348,7 +349,8 @@ bool Plugin::load(color_ostream &con)
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_save_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_data");
-    plugin_load_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_data");
+    plugin_load_world_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_world_data");
+    plugin_load_site_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_site_data");
     index_lua(plug);
     plugin_lib = plug;
     commands.clear();
@@ -359,8 +361,10 @@ bool Plugin::load(color_ostream &con)
         parent->registerCommands(this);
         if ((plugin_onupdate || plugin_enable) && !plugin_is_enabled)
             con.printerr("Plugin %s has no enabled var!\n", name.c_str());
-        if (Core::getInstance().isWorldLoaded() && plugin_load_data && plugin_load_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to load saved data.\n", name.c_str());
+        if (Core::getInstance().isWorldLoaded() && plugin_load_world_data && plugin_load_world_data(con) != CR_OK)
+            con.printerr("Plugin %s has failed to load saved world data.\n", name.c_str());
+        if (Core::getInstance().isMapLoaded() && plugin_load_site_data && plugin_load_site_data(con) != CR_OK)
+            con.printerr("Plugin %s has failed to load saved site data.\n", name.c_str());
         fprintf(stderr, "loaded plugin %s; DFHack build %s\n", name.c_str(), plug_git_desc);
         fflush(stderr);
         return true;
@@ -415,7 +419,8 @@ bool Plugin::unload(color_ostream &con)
         plugin_is_enabled = 0;
         plugin_onupdate = 0;
         plugin_save_data = 0;
-        plugin_load_data = 0;
+        plugin_load_world_data = 0;
+        plugin_load_site_data = 0;
         reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
@@ -587,14 +592,27 @@ command_result Plugin::save_data(color_ostream &out)
     return cr;
 }
 
-command_result Plugin::load_data(color_ostream &out)
+command_result Plugin::load_world_data(color_ostream &out)
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED && plugin_load_data)
+    if(state == PS_LOADED && plugin_load_world_data)
     {
-        cr = plugin_load_data(out);
-        Lua::Core::Reset(out, "plugin_load_data");
+        cr = plugin_load_world_data(out);
+        Lua::Core::Reset(out, "plugin_load_world_data");
+    }
+    access->lock_sub();
+    return cr;
+}
+
+command_result Plugin::load_site_data(color_ostream &out)
+{
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_load_site_data)
+    {
+        cr = plugin_load_site_data(out);
+        Lua::Core::Reset(out, "plugin_load_site_data");
     }
     access->lock_sub();
     return cr;
@@ -1048,14 +1066,25 @@ void PluginManager::doSaveData(color_ostream &out)
     }
 }
 
-void PluginManager::doLoadData(color_ostream &out)
+void PluginManager::doLoadWorldData(color_ostream &out)
 {
     for (auto it = begin(); it != end(); ++it)
     {
-        command_result cr = it->second->load_data(out);
+        command_result cr = it->second->load_world_data(out);
 
         if (cr != CR_OK && cr != CR_NOT_IMPLEMENTED)
-            out.printerr("Plugin %s has failed to load saved data.\n", it->first.c_str());
+            out.printerr("Plugin %s has failed to load saved world data.\n", it->first.c_str());
+    }
+}
+
+void PluginManager::doLoadSiteData(color_ostream &out)
+{
+    for (auto it = begin(); it != end(); ++it)
+    {
+        command_result cr = it->second->load_site_data(out);
+
+        if (cr != CR_OK && cr != CR_NOT_IMPLEMENTED)
+            out.printerr("Plugin %s has failed to load saved site data.\n", it->first.c_str());
     }
 }
 

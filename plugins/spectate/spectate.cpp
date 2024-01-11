@@ -20,6 +20,7 @@
 #include <df/viewscreen.h>
 #include <df/creature_raw.h>
 
+#include <array>
 #include <random>
 #include <cinttypes>
 
@@ -30,10 +31,10 @@ namespace DFHack {
 
 DFHACK_PLUGIN("spectate");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
+
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(plotinfo);
-REQUIRE_GLOBAL(pause_state);
-REQUIRE_GLOBAL(d_init);
+REQUIRE_GLOBAL(d_init); // used in pause.cpp
 
 using namespace DFHack;
 using namespace Pausing;
@@ -45,7 +46,7 @@ struct Configuration {
     bool animals = false;
     bool hostiles = true;
     bool visitors = false;
-    int32_t tick_threshold = 1009;
+    int32_t tick_threshold = 1000;
 } config;
 
 Pausing::AnnouncementLock* pause_lock = nullptr;
@@ -99,7 +100,7 @@ namespace SP {
         out.print(" SETTINGS:\n");
         out.print("  %-20s\t%" PRIi32 "\n", "tick-threshold: ", config.tick_threshold);
         if (following_dwarf)
-            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", df::global::plotinfo->follow_unit);
+            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", plotinfo->follow_unit);
     }
 
     void SetUnpauseState(bool state) {
@@ -304,8 +305,8 @@ namespace SP {
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
                 size_t idx = follow_any(RNG);
                 our_dorf = units[idx];
-                df::global::plotinfo->follow_unit = our_dorf->id;
-                timestamp = df::global::world->frame_counter;
+                plotinfo->follow_unit = our_dorf->id;
+                timestamp = world->frame_counter;
                 return true;
             } else {
                 WARN(plugin).print("units vector is empty!\n");
@@ -315,9 +316,6 @@ namespace SP {
     }
 
     void onUpdate(color_ostream &out) {
-        if (!World::isFortressMode() || !Maps::IsValid())
-            return;
-
         // keeps announcement pause settings locked
         World::Update(); // from pause.h
 
@@ -355,7 +353,7 @@ namespace SP {
         if (!World::ReadPauseState() && tick - last_tick >= 1) {
             last_tick = tick;
             // validate follow state
-            if (!following_dwarf || !our_dorf || df::global::plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
+            if (!following_dwarf || !our_dorf || plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
                 // we're not following anyone
                 following_dwarf = false;
                 if (!config.disengage) {
@@ -420,6 +418,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             case SC_WORLD_UNLOADED:
                 SP::our_dorf = nullptr;
                 SP::following_dwarf = false;
+                enabled = false;
             default:
                 break;
         }

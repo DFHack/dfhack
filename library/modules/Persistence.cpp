@@ -23,7 +23,6 @@ distribution.
 */
 
 #include "Core.h"
-#include "Error.h"
 #include "Internal.h"
 
 #include "modules/Filesystem.h"

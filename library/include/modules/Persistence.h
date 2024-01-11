@@ -29,8 +29,9 @@ distribution.
  * @ingroup grp_modules
  */
 
-#include "Export.h"
 #include "ColorText.h"
+#include "Error.h"
+#include "Export.h"
 
 #include <memory>
 #include <string>
@@ -64,6 +65,91 @@ namespace DFHack
         const std::string &val() const;
         int &ival(int i);
         int ival(int i) const;
+
+        // Pack binary data into string field.
+        // Since DF serialization chokes on NUL bytes,
+        // use bit magic to ensure none of the bytes is 0.
+        // Choose the lowest bit for padding so that
+        // sign-extend can be used normally.
+
+        size_t data_size() const
+        {
+            return val().size();
+        }
+
+        bool check_data(size_t off, size_t sz = 1) const
+        {
+            return (data_size() >= off + sz);
+        }
+        void ensure_data(size_t off, size_t sz = 0)
+        {
+            if (data_size() < off + sz)
+            {
+                val().resize(off + sz, '\x01');
+            }
+        }
+        template<size_t N>
+        uint8_t (&pdata(size_t off))[N]
+        {
+            ensure_data(off, N);
+            typedef uint8_t array[N];
+            return *(array *)(val().data() + off);
+        }
+        template<size_t N>
+        const uint8_t (&pdata(size_t off) const)[N]
+        {
+            CHECK_INVALID_ARGUMENT(check_data(off, N));
+            typedef const uint8_t array[N];
+            return *(array *)(val().data() + off);
+        }
+        template<size_t N>
+        const uint8_t (&cpdata(size_t off) const)[N]
+        {
+            return pdata<N>(off);
+        }
+
+        static const size_t int7_size = 1;
+        uint8_t get_uint7(size_t off) const
+        {
+            auto p = pdata<int7_size>(off);
+            return p[0] >> 1;
+        }
+        int8_t get_int7(size_t off) const
+        {
+            return int8_t(get_uint7(off));
+        }
+        void set_uint7(size_t off, uint8_t val)
+        {
+            auto p = pdata<int7_size>(off);
+            p[0] = uint8_t((val << 1) | 1);
+        }
+        void set_int7(size_t off, int8_t val)
+        {
+            set_uint7(off, uint8_t(val));
+        }
+
+        static const size_t int28_size = 4;
+        uint32_t get_uint28(size_t off) const
+        {
+            auto p = pdata<int28_size>(off);
+            return (p[0]>>1) | ((p[1]&~1U)<<6) | ((p[2]&~1U)<<13) | ((p[3]&~1U)<<20);
+        }
+        int32_t get_int28(size_t off) const
+        {
+            return int32_t(get_uint28(off));
+        }
+        void set_uint28(size_t off, uint32_t val)
+        {
+            auto p = pdata<int28_size>(off);
+            p[0] = uint8_t((val<<1) | 1);
+            p[1] = uint8_t((val>>6) | 1);
+            p[2] = uint8_t((val>>13) | 1);
+            p[3] = uint8_t((val>>20) | 1);
+        }
+        void set_int28(size_t off, int32_t val)
+        {
+            set_uint28(off, val);
+        }
 
         PersistentDataItem() : data(nullptr) {}
         PersistentDataItem(const std::shared_ptr<Persistence::DataEntry> &data) : data(data) {}

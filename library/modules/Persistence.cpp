@@ -229,6 +229,8 @@ static bool load_file(const std::string & path, int entity_id) {
         auto & entity_store_entry = store[entity_id];
         for (auto & value : json) {
             std::shared_ptr<Persistence::DataEntry> entry(new Persistence::DataEntry(entity_id, value));
+            // ensure fake DF IDs remain globally unique
+            next_fake_df_id = std::min(next_fake_df_id, entry->fake_df_id - 1);
             add_entry(entity_store_entry, entry);
         }
     }
@@ -269,7 +271,7 @@ void Persistence::Internal::load(color_ostream& out) {
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
         using df::global::world;
-        if (world && !world->world_data->active_site.empty())
+        if (world && world->world_data && !world->world_data->active_site.empty())
             synthesized_entity_id = world->world_data->active_site[0]->id;
         load_file(legacy_fname, synthesized_entity_id);
     }

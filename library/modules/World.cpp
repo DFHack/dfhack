@@ -161,7 +161,7 @@ bool World::isLegends(df::game_type t)
 }
 
 static int get_site_id() {
-    if (!world && world->world_data->active_site.empty())
+    if (!world || !world->world_data || world->world_data->active_site.empty())
         return -1;
     return world->world_data->active_site[0]->id;
 }

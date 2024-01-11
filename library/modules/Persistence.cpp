@@ -29,6 +29,10 @@ distribution.
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_site.h"
+
 #include <json/json.h>
 
 #include <unordered_map>
@@ -211,42 +215,63 @@ static void add_entry(int entity_id, std::shared_ptr<Persistence::DataEntry> ent
     add_entry(store[entity_id], entry);
 }
 
+static bool load_file(const std::string & path, int entity_id) {
+    Json::Value json;
+    try {
+        std::ifstream file(path);
+        file >> json;
+    } catch (std::exception &) {
+        // empty file?
+        return false;
+    }
+
+    if (json.isArray()) {
+        auto & entity_store_entry = store[entity_id];
+        for (auto & value : json) {
+            std::shared_ptr<Persistence::DataEntry> entry(new Persistence::DataEntry(entity_id, value));
+            add_entry(entity_store_entry, entry);
+        }
+    }
+
+    return true;
+}
+
 void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
 
     clear(out);
 
-    std::string world = World::ReadWorldFolder();
-    std::string save_path = getSavePath(world);
+    std::string world_name = World::ReadWorldFolder();
+    std::string save_path = getSavePath(world_name);
     std::vector<std::string> files;
     if (0 != Filesystem::listdir(save_path, files)) {
         out.printerr("Unable to find save directory: '%s'\n", save_path.c_str());
         return;
     }
 
+    bool found = false;
     for (auto & fname : files) {
         int entity_id = Persistence::WORLD_ENTITY_ID;
         if (fname != "dfhack-world.dat" && !get_entity_id(fname, entity_id))
             continue;
 
-        const std::string load_path = save_path + "/" + fname;
-        Json::Value json;
-        try {
-            std::ifstream file(load_path);
-            file >> json;
-        } catch (std::exception &) {
-            // empty file?
-            out.printerr("Cannot load data from: '%s'\n", load_path.c_str());
-            continue;
-        }
+        found = true;
+        std::string path = save_path + "/" + fname;
+        if (!load_file(path, entity_id))
+            out.printerr("Cannot load data from: '%s'\n", path.c_str());
+    }
 
-        if (json.isArray()) {
-            auto & entity_store_entry = store[entity_id];
-            for (auto & value : json) {
-                std::shared_ptr<DataEntry> entry(new DataEntry(entity_id, value));
-                add_entry(entity_store_entry, entry);
-            }
-        }
+    if (found)
+        return;
+
+    // new file formats not found; attempt to load legacy file
+    const std::string legacy_fname = getSaveFilePath(world_name, "legacy_data");
+    if (Filesystem::exists(legacy_fname)) {
+        int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
+        using df::global::world;
+        if (world && !world->world_data->active_site.empty())
+            synthesized_entity_id = world->world_data->active_site[0]->id;
+        load_file(legacy_fname, synthesized_entity_id);
     }
 }
 

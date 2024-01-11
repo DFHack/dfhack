@@ -2270,6 +2270,83 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     return true;
 }
 
+// When called with game_ui = true, this is equivalent to bay12's itemst::meltable()
+// (i.e., returning true if and only if the item has a "designate for melting" button in game)
+bool Items::canMelt(df::item *item, bool game_ui)
+{
+    CHECK_NULL_POINTER(item);
+
+    MaterialInfo mat(item);
+    if (mat.getCraftClass() != df::craft_material_class::Metal)
+        return false;
+
+    switch(item->getType()) {
+        // these are not meltable, even if made from metal
+        case item_type::CORPSE:
+        case item_type::CORPSEPIECE:
+        case item_type::REMAINS:
+        case item_type::FISH:
+        case item_type::FISH_RAW:
+        case item_type::VERMIN:
+        case item_type::PET:
+        case item_type::FOOD:
+        case item_type::EGG:
+            return false;
+        default:
+            break;
+    }
+
+    if (item->flags.bits.artifact)
+        return false;
+
+    // ignore checks below, when asked to behave like itemst::meltable()
+    if (game_ui) return true;
+
+    if (item->getType() == item_type::BAR)
+        return false;
+
+    // do not melt nonempty containers and items in unit inventories
+    for (auto &g : item->general_refs) {
+        switch (g->getType()) {
+            case df::general_ref_type::CONTAINS_ITEM:
+            case df::general_ref_type::UNIT_HOLDER:
+            case df::general_ref_type::CONTAINS_UNIT:
+                return false;
+            case df::general_ref_type::CONTAINED_IN_ITEM:
+            {
+                df::item *c = g->getItem();
+                for (auto &gg : c->general_refs) {
+                    if (gg->getType() == df::general_ref_type::UNIT_HOLDER)
+                        return false;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    return true;
+};
+
+bool Items::markForMelting(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    if (item->flags.bits.melt || !canMelt(item,true)) return false;
+    insert_into_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item);
+    item->flags.bits.melt = 1;
+    return true;
+}
+
+bool Items::cancelMelting(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    if (!item->flags.bits.melt) return false;
+    erase_from_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item->id);
+    item->flags.bits.melt = 0;
+    return true;
+}
+
 bool Items::isRouteVehicle(df::item *item)
 {
     CHECK_NULL_POINTER(item);

@@ -66,6 +66,23 @@ namespace DFHack
         int &ival(int i);
         int ival(int i) const;
 
+        // safer, non-throwing accessors with convenience bool functions
+        int get_int(int i) const {
+            if (!isValid())
+                return -1;
+            return ival(i);
+        }
+        bool get_bool(int i) {
+            return get_int(i) == 1;
+        }
+        void set_int(int i, int value) {
+            if (isValid())
+                ival(i) = value;
+        }
+        void set_bool(int i, bool value) {
+            set_int(i, value ? 1 : 0);
+        }
+
         // Data mangling functions below this point are deprecated and
         // will be removed in some future release when we have provided
         // an alternate way to store binary data.

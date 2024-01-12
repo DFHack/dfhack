@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "Core.h"
+#include "Debug.h"
 #include "Internal.h"
 
 #include "modules/Filesystem.h"
@@ -37,6 +38,10 @@ distribution.
 #include <json/json.h>
 
 #include <unordered_map>
+
+namespace DFHack {
+    DBG_DECLARE(core, persistence, DebugCategory::LINFO);
+}
 
 using namespace DFHack;
 
@@ -246,15 +251,11 @@ void Persistence::Internal::load(color_ostream& out) {
 
     clear(out);
 
-    // if we're creating a new world, there is no save directory yet
-    if (Gui::matchFocusString("new_region", Gui::getDFViewscreen(true)))
-        return;
-
     std::string world_name = World::ReadWorldFolder();
     std::string save_path = getSavePath(world_name);
     std::vector<std::string> files;
     if (0 != Filesystem::listdir(save_path, files)) {
-        out.printerr("Unable to find save directory: '%s'\n", save_path.c_str());
+        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '%s'\n", save_path.c_str());
         return;
     }
 

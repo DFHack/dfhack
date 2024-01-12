@@ -1270,8 +1270,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 bool Core::loadScriptFile(color_ostream &out, std::string fname, bool silent)
 {
     if(!silent) {
-        INFO(script,out) << "Loading script: " << fname << std::endl;
-        std::cerr << "Loading script: " << fname << std::endl;
+        INFO(script,out) << "Running script: " << fname << std::endl;
+        std::cerr << "Running script: " << fname << std::endl;
     }
     std::ifstream script(fname.c_str());
     if ( !script.good() )

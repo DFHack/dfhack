@@ -61,6 +61,7 @@ namespace DFHack
         int entity_id() const;
         const std::string &key() const;
 
+        // these throw if used when isValid() returns false
         std::string &val();
         const std::string &val() const;
         int &ival(int i);
@@ -81,6 +82,14 @@ namespace DFHack
         }
         void set_bool(int i, bool value) {
             set_int(i, value ? 1 : 0);
+        }
+        const std::string & get_str() {
+            static const std::string empty;
+            return isValid() ? val() : empty;
+        }
+        void set_str(const std::string value) {
+            if (isValid())
+                val() = value;
         }
 
         // Data mangling functions below this point are deprecated and

@@ -51,7 +51,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, 
     for (size_t idx = 0; idx < jitems.size(); ++idx) {
         item_filters[idx].setMaxQuality(get_max_quality(jitems[idx]), true);
     }
-    filter_config.val() = serialize(item_filters, specials);
+    filter_config.set_str(serialize(item_filters, specials));
 }
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &filter_config, const std::vector<const df::job_item *> &jitems)
@@ -60,7 +60,7 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
     if (choose_items < ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER ||
             choose_items > ItemSelectionChoice::ITEM_SELECTION_CHOICE_AUTOMATERIAL)
         choose_items = ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER;
-    auto &serialized = filter_config.val();
+    auto &serialized = filter_config.get_str();
     DEBUG(control,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
         std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
     if (!jitems.size())
@@ -94,7 +94,7 @@ void DefaultItemFilters::setSpecial(const std::string &special, bool val) {
         specials.emplace(special);
     else
         specials.erase(special);
-    filter_config.val() = serialize(item_filters, specials);
+    filter_config.set_str(serialize(item_filters, specials));
 }
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {
@@ -105,7 +105,7 @@ void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFil
     }
 
     item_filters[index] = filter;
-    filter_config.val() = serialize(item_filters, specials);
+    filter_config.set_str( serialize(item_filters, specials));
     DEBUG(control,out).print("updated item filter and persisted for key %d,%d,%d: %s\n",
-        std::get<0>(key), std::get<1>(key), std::get<2>(key), filter_config.val().c_str());
+        std::get<0>(key), std::get<1>(key), std::get<2>(key), filter_config.get_str().c_str());
 }

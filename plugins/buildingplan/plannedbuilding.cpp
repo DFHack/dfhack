@@ -38,7 +38,7 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
     vector<vector<df::job_item_vector_id>> ret;
 
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     const string &serialized = rawstrs[0];
 
     DEBUG(control,out).print("deserializing vector ids for building %d: %s\n",
@@ -63,7 +63,7 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
 
 static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     if (rawstrs.size() < 2)
         return vector<ItemFilter>();
     return deserialize_item_filters(out, rawstrs[1]);
@@ -71,7 +71,7 @@ static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataIte
 
 static set<string> get_specials(color_ostream &out, PersistentDataItem &bld_config) {
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     set<string> ret;
     if (rawstrs.size() < 3)
         return ret;
@@ -102,7 +102,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
     bld_config = World::AddPersistentSiteData(BLD_CONFIG_KEY);
     bld_config.set_int(BLD_CONFIG_ID, id);
     bld_config.set_int(BLD_CONFIG_HEAT, heat_safety);
-    bld_config.val() = serialize(vector_ids, item_filters);
+    bld_config.set_str(serialize(vector_ids, item_filters));
     DEBUG(control,out).print("serialized state for building %d: %s\n", id, bld_config.val().c_str());
 }
 

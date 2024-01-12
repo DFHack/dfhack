@@ -66,6 +66,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline
+- `autoclothing` : now does not consider worn (x) clothing as usable/available, should help with using with `tailor` at same time
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort
 - `fastdwarf`: now saves its state with the fort

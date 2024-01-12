@@ -6,6 +6,7 @@
 
 #include "modules/Filesystem.h"
 #include "modules/Materials.h"
+#include "modules/World.h"
 
 #include "json/json.h"
 
@@ -91,8 +92,8 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_list_command(out);
     }
 
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

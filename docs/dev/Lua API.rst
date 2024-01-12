@@ -910,6 +910,10 @@ can be omitted.
 
   Checks if the world and map are loaded.
 
+* ``dfhack.isSiteLoaded()``
+
+  Checks if a site (e.g. a player fort) is loaded.
+
 * ``dfhack.TranslateName(name[,in_english,only_last_name])``
 
   Convert a language_name or only the last name part to string.

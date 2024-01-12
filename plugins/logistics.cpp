@@ -160,7 +160,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!is_enabled || !Core::getInstance().isMapLoaded())
+    if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0;
@@ -200,8 +200,8 @@ static bool call_logistics_lua(color_ostream* out, const char* fn_name,
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

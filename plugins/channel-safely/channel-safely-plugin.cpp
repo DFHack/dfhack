@@ -526,8 +526,8 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -583,8 +583,8 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 }
 
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

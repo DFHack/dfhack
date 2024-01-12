@@ -61,9 +61,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!Core::getInstance().isMapLoaded())
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
     {
-        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

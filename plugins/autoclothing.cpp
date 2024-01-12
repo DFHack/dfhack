@@ -297,8 +297,8 @@ DFhackCExport command_result plugin_save_site_data (color_ostream &out)
 }
 
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot enable %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -440,8 +440,8 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
     // be sure to suspend the core if any DF state is read or modified
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

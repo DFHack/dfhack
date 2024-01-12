@@ -360,7 +360,7 @@ static void do_cycle(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!Core::getInstance().isMapLoaded())
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
         return CR_OK;
 
     if (is_enabled &&
@@ -372,8 +372,8 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot configure %s without a loaded map.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot configure %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -784,7 +784,7 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
 
 static bool hasFilter(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     TRACE(control,out).print("entering hasFilter\n");
-    if (!Core::getInstance().isMapLoaded())
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
         return false;
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);

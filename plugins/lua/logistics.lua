@@ -67,7 +67,7 @@ local function print_status()
     print(('logistics is %sactively monitoring stockpiles and marking items')
             :format(isEnabled() and '' or 'not '))
 
-    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() or not dfhack.isSiteLoaded() then
         return
     end
 

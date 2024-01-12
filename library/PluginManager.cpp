@@ -25,6 +25,7 @@ distribution.
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Screen.h"
+#include "modules/World.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
@@ -190,7 +191,8 @@ Plugin::Plugin(Core * core, const std::string & path,
     plugin_rpcconnect = 0;
     plugin_enable = 0;
     plugin_is_enabled = 0;
-    plugin_save_data = 0;
+    plugin_save_world_data = 0;
+    plugin_save_site_data = 0;
     plugin_load_world_data = 0;
     plugin_load_site_data = 0;
     state = PS_UNLOADED;
@@ -348,13 +350,14 @@ bool Plugin::load(color_ostream &con)
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
-    plugin_save_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_data");
+    plugin_save_world_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_world_data");
+    plugin_save_site_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_site_data");
     plugin_load_world_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_world_data");
     plugin_load_site_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_site_data");
     index_lua(plug);
     plugin_lib = plug;
     commands.clear();
-    if(plugin_init(con,commands) == CR_OK)
+    if (plugin_init(con, commands) == CR_OK)
     {
         RefAutolock lock(access);
         state = PS_LOADED;
@@ -363,7 +366,7 @@ bool Plugin::load(color_ostream &con)
             con.printerr("Plugin %s has no enabled var!\n", name.c_str());
         if (Core::getInstance().isWorldLoaded() && plugin_load_world_data && plugin_load_world_data(con) != CR_OK)
             con.printerr("Plugin %s has failed to load saved world data.\n", name.c_str());
-        if (Core::getInstance().isMapLoaded() && plugin_load_site_data && plugin_load_site_data(con) != CR_OK)
+        if (Core::getInstance().isMapLoaded() && plugin_load_site_data && World::IsSiteLoaded() && plugin_load_site_data(con) != CR_OK)
             con.printerr("Plugin %s has failed to load saved site data.\n", name.c_str());
         fprintf(stderr, "loaded plugin %s; DFHack build %s\n", name.c_str(), plug_git_desc);
         fflush(stderr);
@@ -409,8 +412,10 @@ bool Plugin::unload(color_ostream &con)
         // enter suspend
         CoreSuspender suspend;
         access->lock();
-        if (Core::getInstance().isWorldLoaded() && plugin_save_data && plugin_save_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to save data.\n", name.c_str());
+        if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
+            con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
+        if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
+            con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)
@@ -418,7 +423,8 @@ bool Plugin::unload(color_ostream &con)
         // cleanup...
         plugin_is_enabled = 0;
         plugin_onupdate = 0;
-        plugin_save_data = 0;
+        plugin_save_world_data = 0;
+        plugin_save_site_data = 0;
         plugin_load_world_data = 0;
         plugin_load_site_data = 0;
         reset_lua();
@@ -579,14 +585,27 @@ command_result Plugin::on_state_change(color_ostream &out, state_change_event ev
     return cr;
 }
 
-command_result Plugin::save_data(color_ostream &out)
+command_result Plugin::save_world_data(color_ostream &out)
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED && plugin_save_data)
+    if(state == PS_LOADED && plugin_save_world_data)
     {
-        cr = plugin_save_data(out);
-        Lua::Core::Reset(out, "plugin_save_data");
+        cr = plugin_save_world_data(out);
+        Lua::Core::Reset(out, "plugin_save_world_data");
+    }
+    access->lock_sub();
+    return cr;
+}
+
+command_result Plugin::save_site_data(color_ostream &out)
+{
+    command_result cr = CR_NOT_IMPLEMENTED;
+    access->lock_add();
+    if(state == PS_LOADED && plugin_save_site_data)
+    {
+        cr = plugin_save_site_data(out);
+        Lua::Core::Reset(out, "plugin_save_site_data");
     }
     access->lock_sub();
     return cr;
@@ -1059,10 +1078,17 @@ void PluginManager::doSaveData(color_ostream &out)
 {
     for (auto it = begin(); it != end(); ++it)
     {
-        command_result cr = it->second->save_data(out);
+        command_result cr = CR_NOT_IMPLEMENTED;
 
+        if (World::IsSiteLoaded()) {
+            cr = it->second->save_site_data(out);
+            if (cr != CR_OK && cr != CR_NOT_IMPLEMENTED)
+                out.printerr("Plugin %s has failed to save site data.\n", it->first.c_str());
+        }
+
+        cr = it->second->save_world_data(out);
         if (cr != CR_OK && cr != CR_NOT_IMPLEMENTED)
-            out.printerr("Plugin %s has failed to save data.\n", it->first.c_str());
+            out.printerr("Plugin %s has failed to save world data.\n", it->first.c_str());
     }
 }
 

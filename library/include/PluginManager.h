@@ -147,7 +147,8 @@ namespace DFHack
         ~Plugin();
         command_result on_update(color_ostream &out);
         command_result on_state_change(color_ostream &out, state_change_event event);
-        command_result save_data(color_ostream &out);
+        command_result save_world_data(color_ostream &out);
+        command_result save_site_data(color_ostream &out);
         command_result load_world_data(color_ostream &out);
         command_result load_site_data(color_ostream &out);
         void detach_connection(RPCService *svc);
@@ -233,7 +234,8 @@ namespace DFHack
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_save_data)(color_ostream &);
+        command_result (*plugin_save_world_data)(color_ostream &);
+        command_result (*plugin_save_site_data)(color_ostream &);
         command_result (*plugin_load_world_data)(color_ostream &);
         command_result (*plugin_load_site_data)(color_ostream &);
     };

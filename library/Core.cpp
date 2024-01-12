@@ -2231,7 +2231,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         break;
     }
     case SC_MAP_LOADED:
-        plug_mgr->doLoadSiteData(out);
+        if (World::IsSiteLoaded())
+            plug_mgr->doLoadSiteData(out);
         break;
     default:
         break;

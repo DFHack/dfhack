@@ -160,10 +160,14 @@ bool World::isLegends(df::game_type t)
     return (t == game_type::VIEW_LEGENDS);
 }
 
-static int get_site_id() {
+int32_t World::GetCurrentSiteId() {
     if (!world || !world->world_data || world->world_data->active_site.empty())
         return -1;
     return world->world_data->active_site[0]->id;
+}
+
+bool World::IsSiteLoaded() {
+    return GetCurrentSiteId() != -1;
 }
 
 PersistentDataItem World::AddPersistentEntityData(int entity_id, const std::string &key) {
@@ -175,7 +179,7 @@ PersistentDataItem World::AddPersistentWorldData(const std::string &key) {
 }
 
 PersistentDataItem World::AddPersistentSiteData(const std::string &key) {
-    return AddPersistentEntityData(get_site_id(), key);
+    return AddPersistentEntityData(GetCurrentSiteId(), key);
 }
 
 PersistentDataItem World::GetPersistentEntityData(int entity_id, const std::string &key, bool create) {
@@ -188,7 +192,7 @@ PersistentDataItem World::GetPersistentWorldData(const std::string &key, bool cr
 }
 
 PersistentDataItem World::GetPersistentSiteData(const std::string &key, bool create) {
-    return GetPersistentEntityData(get_site_id(), key, create);
+    return GetPersistentEntityData(GetCurrentSiteId(), key, create);
 }
 
 void World::GetPersistentEntityData(std::vector<PersistentDataItem> *vec, int entity_id, const std::string &key, bool prefix) {
@@ -211,7 +215,7 @@ void World::GetPersistentWorldData(std::vector<PersistentDataItem> *vec, const s
 }
 
 void World::GetPersistentSiteData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix) {
-    GetPersistentEntityData(vec, get_site_id(), key, prefix);
+    GetPersistentEntityData(vec, GetCurrentSiteId(), key, prefix);
 }
 
 bool World::DeletePersistentData(const PersistentDataItem &item) {

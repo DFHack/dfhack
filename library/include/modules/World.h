@@ -88,6 +88,9 @@ namespace DFHack
         DFHACK_EXPORT bool isArena(df::game_type t = (df::game_type)-1);
         DFHACK_EXPORT bool isLegends(df::game_type t = (df::game_type)-1);
 
+        DFHACK_EXPORT int32_t GetCurrentSiteId();
+        DFHACK_EXPORT bool IsSiteLoaded();
+
         // Store DFHack tool data in the game save directory.
         // Use the relevant API depending on whether you are storing world-global data,
         // site-specific data, or data specific to some other historical entity (including

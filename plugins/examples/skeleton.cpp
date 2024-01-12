@@ -146,17 +146,28 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
 }
 
 // If you need to save or load world- or site-specific data, define these functions.
-// plugin_save_data is called when the game might be about to save the world,
+// plugin_save_world_data is called when the game might be about to save,
+// plugin_save_site_data is called when the game might be about to save and a site is loaded,
 // plugin_load_world_data is called whenever a new world is loaded, and
-// plugin_load_site_data is called whenever a new site is loaded. If the plugin
-// is loaded or unloaded while a world is active, plugin_load_*_data or
-// plugin_save_data will be called immediately as appropriate.
-DFhackCExport command_result plugin_save_data (color_ostream &out) {
-    DEBUG(status,out).print("save or unload is imminent; time to persist state\n");
+// plugin_load_site_data is called whenever a new site is loaded.
+//
+// If the plugin is loaded or unloaded while a world is active, plugin_load_*_data or
+// plugin_save_*_data will be called immediately as appropriate.
+DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
+    DEBUG(status,out).print("save or unload is imminent; time to persist state for site\n");
 
     // Call functions in the Persistence module here. If your PersistantDataItem
     // objects are already up to date, then they will get persisted with the
-    // save automatically and there is nothing extra you need to do here.
+    // save automatically and you do not need to implement this function.
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_save_world_data (color_ostream &out) {
+    DEBUG(status,out).print("save or unload is imminent; time to persist state for world\n");
+
+    // Call functions in the Persistence module here. If your PersistantDataItem
+    // objects are already up to date, then they will get persisted with the
+    // save automatically and you do not need to implement this function.
     return CR_OK;
 }
 

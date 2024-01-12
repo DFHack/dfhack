@@ -257,7 +257,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         if (!item.isValid())
             continue;
         ClothingRequirement req;
-        req.Deserialize(item.val());
+        req.Deserialize(item.get_str());
         clothingOrders.push_back(req);
         out << "autoclothing added " << req.ToReadableLabel() << endl;
     }
@@ -265,12 +265,12 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_save_data (color_ostream &out)
+DFhackCExport command_result plugin_save_site_data (color_ostream &out)
 {
     for (auto& order : clothingOrders)
     {
         auto orderSave = World::AddPersistentSiteData("autoclothing/clothingItems");
-        orderSave.val() = order.Serialize();
+        orderSave.set_str(order.Serialize());
     }
 
     // Parse constraints
@@ -281,7 +281,7 @@ DFhackCExport command_result plugin_save_data (color_ostream &out)
     {
         if (i < clothingOrders.size())
         {
-            items[i].val() = clothingOrders[i].Serialize();
+            items[i].set_str(clothingOrders[i].Serialize());
         }
         else
         {
@@ -291,7 +291,7 @@ DFhackCExport command_result plugin_save_data (color_ostream &out)
     for (size_t i = items.size(); i < clothingOrders.size(); i++)
     {
         auto item = World::AddPersistentSiteData("autoclothing/clothingItems");
-        item.val() = clothingOrders[i].Serialize();
+        item.set_str(clothingOrders[i].Serialize());
     }
     return CR_OK;
 }

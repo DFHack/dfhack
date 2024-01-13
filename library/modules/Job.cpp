@@ -379,8 +379,8 @@ bool DFHack::Job::removeJob(df::job* job) {
 
     // clean up item refs and delete them
     for (auto &item_ref : job->items) {
-       disconnectJobItem(job, item_ref);
-       if (item_ref) delete item_ref;
+        disconnectJobItem(job, item_ref);
+        if (item_ref) delete item_ref;
     }
     job->items.resize(0);
 

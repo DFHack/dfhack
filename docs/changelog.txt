@@ -94,6 +94,7 @@ Template for new versions:
 - ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
 
 ## Removed
+- `channel-safely`: (temporarily) removed due to stability issues with the underlying DF API
 
 # 50.11-r4
 

@@ -69,7 +69,14 @@ static void remove_elem_config(color_ostream &out, int id) {
     elems.erase(id);
 }
 
-static const int32_t CYCLE_TICKS = 1200; // one day
+// When choosing a cycle timer, think about performance -- how often do you
+// really need to run? Also, don't choose exactly one day or hour. Choose a
+// number of ticks close to your target, but choose it from this list of prime
+// numbers: https://www-users.york.ac.uk/~ss44/cyc/p/prime100.htm
+// Do a search in the codebase for CYCLE_TICKS and try to choose a number that
+// isn't there yet. This will help prevent too many tools from running on the
+// same tick and causing noticeable FPS stuttering.
+static const int32_t CYCLE_TICKS = 1217; // about one day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);

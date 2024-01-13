@@ -503,11 +503,6 @@ end
 
 -- String conversions
 
-function dfhack.persistent:__tostring()
-    return "<persistent "..self.entry_id..":"..self.key.."=\""
-           ..self.value.."\":"..table.concat(self.ints,",")..">"
-end
-
 function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
 end
@@ -558,6 +553,10 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
         end
         scr = scr.parent
     end
+end
+
+function dfhack.getCurrentSite()
+    return df.world_site.find(df.global.plotinfo.site_id)
 end
 
 local function persistent_getData(which, key, default)

@@ -684,60 +684,59 @@ Locking and finalization
 Persistent configuration storage
 --------------------------------
 
-This api is intended for storing configuration options in the world itself.
-It is intended for data that is world-dependent.
+This api is intended for storing tool state in the world savegame directory. It
+is intended for data that is world-dependent. Global state that is independent
+of the loaded world should be saved into a separate file named after the tool
+in the ``dfhack-config/`` directory.
 
-Entries are identified by a string ``key``, but it is also possible to manage
-multiple entries with the same key; their identity is determined by ``entry_id``.
-Every entry has a mutable string ``value``, and an array of 7 mutable ``ints``.
+Entries are associated with the current loaded site (fortress) and are
+identified by a string ``key``. The data will still be associated with a fort
+if the fort is retired and then later unretired. Entries are stored as
+serialized strings, but there are convenience functions for working with
+arbitrary Lua tables.
 
-* ``dfhack.persistent.get(key)``, ``entry:get()``
+* ``dfhack.persistent.getSiteData(key[, default])``
 
-  Retrieves a persistent config record with the given string key,
-  or refreshes an already retrieved entry. If there are multiple
-  entries with the same key, it is undefined which one is retrieved
-  by the first version of the call.
+  Retrieves the Lua table associated with the current site and the given string
+  ``key``. If ``default`` is supplied, then it is returned if the key isn't
+  found in the current site's persistent data.
 
-  Returns entry, or *nil* if not found.
+  Example usage::
 
-* ``dfhack.persistent.delete(key)``, ``entry:delete()``
+    local state = dfhack.persistent.getSiteData('my-script-name', {somedata={}})
 
-  Removes an existing entry. Returns *true* if succeeded.
+* ``dfhack.peristent.getSiteDataString(key)``
 
-* ``dfhack.persistent.get_all(key[,match_prefix])``
+  Retrieves the underlying serialized string associated with the current site
+  and the given string ``key``. Returns *nil* if the key isn't found in the
+  current site's persistent data. Most scripts will want to use ``getSiteData``
+  instead.
 
-  Retrieves all entries with the same key, or starting with key..'/'.
-  Calling ``get_all('',true)`` will match all entries.
+* ``dfhack.peristent.saveSiteData(key, data)``
 
-  If none found, returns nil; otherwise returns an array of entries.
+  Persists the given ``data`` (usually a table; can be of arbitrary complexity and depth) in the world save, associated with the current site and the given ``key``.
 
-* ``dfhack.persistent.save({key=str1, ...}[,new])``, ``entry:save([new])``
+* ``dfhack.persistent.saveSiteDataString(key, data_str)``
 
-  Saves changes in an entry, or creates a new one. Passing true as
-  new forces creation of a new entry even if one already exists;
-  otherwise the existing one is simply updated.
-  Returns *entry, did_create_new*
+  Persists the given string in the world save, associated with the current site
+  and the given ``key``.
+
+* ``dfhack.persistent.deleteSiteData(key)``
+
+  Removes the existing entry associated with the current site and the given
+  ``key``. Returns *true* if succeeded.
+
+* ``dfhack.persistent.getWorldData(key[, default])``
+* ``dfhack.peristent.getWorldDataString(key)``
+* ``dfhack.peristent.saveWorldData(key, data)``
+* ``dfhack.persistent.saveWorldDataString(key, data_str)``
+* ``dfhack.persistent.deleteWorldData(key)``
+
+  Same semantics as for the ``Site`` functions, but will associated the data
+  with the global world context.
 
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
-
-It is also possible to associate one bit per map tile with an entry,
-using these two methods:
-
-* ``entry:getTilemask(block[, create])``
-
-  Retrieves the tile bitmask associated with this entry in the given map
-  block. If ``create`` is *true*, an empty mask is created if none exists;
-  otherwise the function returns *nil*, which must be assumed to be the same
-  as an all-zero mask.
-
-* ``entry:deleteTilemask(block)``
-
-  Deletes the associated tile mask from the given map block.
-
-Note that these masks are only saved in fortress mode, and also that deleting
-the persistent entry will **NOT** delete the associated masks.
-
 
 Material info lookup
 --------------------
@@ -910,6 +909,10 @@ can be omitted.
 * ``dfhack.isMapLoaded()``
 
   Checks if the world and map are loaded.
+
+* ``dfhack.isSiteLoaded()``
+
+  Checks if a site (e.g. a player fort) is loaded.
 
 * ``dfhack.TranslateName(name[,in_english,only_last_name])``
 

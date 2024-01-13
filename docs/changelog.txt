@@ -88,13 +88,23 @@ Template for new versions:
 - ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
 - ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
 - ``Items``: add item melting logic ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)``
+- ``World``: ``GetCurrentSiteId()`` returns the loaded fort site ID (or -1 if no site is loaded)
+- ``World``: ``IsSiteLoaded()`` check to detect if a site (e.g. a player fort) is active (as opposed to the world or a map)
+- ``World``: ``AddPersistentData`` and related functions replaced with ``AddPersistentSiteData`` and ``AddPersistentWorldData`` equivalents
+- New plugin API for saving and loading persistent data. See plugins/examples/skeleton.cpp and plugins/examples/persistent_per_save_example.cpp for details
+- Plugin ABI (binary interface) version bump! Any external plugins must be recompiled against this version of DFHack source code in order to load.
+- ``Persistence``: persistent keys are now namespaced by an entity_id (e.g. a player fort site ID)
+- ``Persistence``: data is now stored one file per entity ID (plus one for the global world) in the DF savegame directory
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
 - ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
+- ``dfhack.persistent``: new, table-driven API for easier world- and site-associated persistent storage. See the Lua API docs for details.
+- ``dfhack.isSiteLoaded``: returns whether a site (e.g. a player fort) is loaded
 - ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
 
 ## Removed
+- ``persist-table``: replaced by new ``dfhack.persistent`` API
 - `channel-safely`: (temporarily) removed due to stability issues with the underlying DF API
 
 # 50.11-r4

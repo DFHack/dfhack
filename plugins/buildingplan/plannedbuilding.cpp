@@ -9,7 +9,7 @@
 #include "df/job.h"
 
 namespace DFHack {
-    DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, control);
 }
 
 using std::set;
@@ -38,11 +38,11 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
     vector<vector<df::job_item_vector_id>> ret;
 
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     const string &serialized = rawstrs[0];
 
-    DEBUG(status,out).print("deserializing vector ids for building %d: %s\n",
-            get_config_val(bld_config, BLD_CONFIG_ID), serialized.c_str());
+    DEBUG(control,out).print("deserializing vector ids for building %d: %s\n",
+            bld_config.get_int(BLD_CONFIG_ID), serialized.c_str());
 
     vector<string> joined;
     split_string(&joined, serialized, ";");
@@ -56,14 +56,14 @@ static vector<vector<df::job_item_vector_id>> deserialize_vector_ids(color_ostre
     }
 
     if (!ret.size())
-        ret = get_vector_ids(out, get_config_val(bld_config, BLD_CONFIG_ID));
+        ret = get_vector_ids(out, bld_config.get_int(BLD_CONFIG_ID));
 
     return ret;
 }
 
 static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataItem &bld_config) {
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     if (rawstrs.size() < 2)
         return vector<ItemFilter>();
     return deserialize_item_filters(out, rawstrs[1]);
@@ -71,7 +71,7 @@ static vector<ItemFilter> get_item_filters(color_ostream &out, PersistentDataIte
 
 static set<string> get_specials(color_ostream &out, PersistentDataItem &bld_config) {
     vector<string> rawstrs;
-    split_string(&rawstrs, bld_config.val(), "|");
+    split_string(&rawstrs, bld_config.get_str(), "|");
     set<string> ret;
     if (rawstrs.size() < 3)
         return ret;
@@ -98,18 +98,18 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
         : id(bld->id), vector_ids(get_vector_ids(out, id)), heat_safety(heat),
           item_filters(item_filters.getItemFilters()),
           specials(item_filters.getSpecials()) {
-    DEBUG(status,out).print("creating persistent data for building %d\n", id);
-    bld_config = World::AddPersistentData(BLD_CONFIG_KEY);
-    set_config_val(bld_config, BLD_CONFIG_ID, id);
-    set_config_val(bld_config, BLD_CONFIG_HEAT, heat_safety);
-    bld_config.val() = serialize(vector_ids, item_filters);
-    DEBUG(status,out).print("serialized state for building %d: %s\n", id, bld_config.val().c_str());
+    DEBUG(control,out).print("creating persistent data for building %d\n", id);
+    bld_config = World::AddPersistentSiteData(BLD_CONFIG_KEY);
+    bld_config.set_int(BLD_CONFIG_ID, id);
+    bld_config.set_int(BLD_CONFIG_HEAT, heat_safety);
+    bld_config.set_str(serialize(vector_ids, item_filters));
+    DEBUG(control,out).print("serialized state for building %d: %s\n", id, bld_config.val().c_str());
 }
 
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)
-    : id(get_config_val(bld_config, BLD_CONFIG_ID)),
+    : id(bld_config.get_int(BLD_CONFIG_ID)),
         vector_ids(deserialize_vector_ids(out, bld_config)),
-        heat_safety((HeatSafety)get_config_val(bld_config, BLD_CONFIG_HEAT)),
+        heat_safety((HeatSafety)bld_config.get_int(BLD_CONFIG_HEAT)),
         item_filters(get_item_filters(out, bld_config)),
         specials(get_specials(out, bld_config)),
         bld_config(bld_config) { }

@@ -113,7 +113,7 @@ local function add_mod_paths(mod_paths, id, base_path, subdir)
     local sep = base_path:endswith('/') and '' or '/'
     local path = ('%s%s%s'):format(base_path, sep, subdir)
     if dfhack.filesystem.isdir(path) then
-        print('indexing mod path: ' .. path)
+        print(('indexing %s for mod: %s'):format(subdir, id))
         table.insert(mod_paths, {id=id, path=path})
     end
 end

@@ -1,6 +1,11 @@
-#include <algorithm>
-#include <string>
-#include <vector>
+#include "Core.h"
+#include "Debug.h"
+#include "LuaTools.h"
+#include "PluginManager.h"
+
+#include "modules/Persistence.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
 #include "df/emotion_type.h"
 #include "df/plotinfost.h"
@@ -9,15 +14,6 @@
 #include "df/unit_soul.h"
 #include "df/unit_thought_type.h"
 #include "df/world.h"
-
-#include "modules/Persistence.h"
-#include "modules/Units.h"
-#include "modules/World.h"
-
-#include "Core.h"
-#include "Debug.h"
-#include "LuaTools.h"
-#include "PluginManager.h"
 
 using std::string;
 using std::vector;
@@ -32,8 +28,8 @@ REQUIRE_GLOBAL(cur_year_tick);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
+    DBG_DECLARE(misery, control, DebugCategory::LINFO);
     DBG_DECLARE(misery, cycle, DebugCategory::LINFO);
-    DBG_DECLARE(misery, config, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -44,30 +40,14 @@ enum ConfigValues {
     CONFIG_FACTOR = 1,
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
-}
-
-static const int32_t CYCLE_TICKS = 1200; // one day
+static const int32_t CYCLE_TICKS = 1229; // one day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(config,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -79,20 +59,20 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(config,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     } else {
-        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -100,24 +80,24 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(config, CONFIG_FACTOR, 2);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_int(CONFIG_FACTOR, 2);
     }
 
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
     return CR_OK;
@@ -126,7 +106,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -144,7 +124,7 @@ static bool call_misery_lua(color_ostream *out, const char *fn_name,
         int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(config).print("calling misery lua function: '%s'\n", fn_name);
+    DEBUG(control).print("calling misery lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
 
@@ -163,8 +143,8 @@ static bool call_misery_lua(color_ostream *out, const char *fn_name,
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -227,7 +207,7 @@ static void do_cycle(color_ostream &out) {
 
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
-    int strength = STRENGTH_MULTIPLIER * get_config_val(config, CONFIG_FACTOR);
+    int strength = STRENGTH_MULTIPLIER * config.get_int(CONFIG_FACTOR);
 
     affect_units([&](df::unit *unit) {
         Emotion *e = new Emotion;
@@ -247,24 +227,24 @@ static void do_cycle(color_ostream &out) {
 //
 
 static void misery_clear(color_ostream &out) {
-    DEBUG(config,out).print("entering misery_clear\n");
+    DEBUG(control,out).print("entering misery_clear\n");
     affect_units();
 }
 
 static void misery_setFactor(color_ostream &out, int32_t factor) {
-    DEBUG(config,out).print("entering misery_setFactor\n");
+    DEBUG(control,out).print("entering misery_setFactor\n");
     if (1 >= factor) {
         out.printerr("factor must be at least 2\n");
         return;
     }
-    set_config_val(config, CONFIG_FACTOR, factor);
+    config.set_int(CONFIG_FACTOR, factor);
     if (is_enabled)
         do_cycle(out);
 }
 
 static int misery_getFactor(color_ostream &out) {
-    DEBUG(config,out).print("entering tailor_getFactor\n");
-    return get_config_val(config, CONFIG_FACTOR);
+    DEBUG(control,out).print("entering tailor_getFactor\n");
+    return config.get_int(CONFIG_FACTOR);
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

@@ -22,68 +22,91 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
-#include <array>
-#include <map>
-#include <json/json.h>
-
 #include "Core.h"
-#include "DataDefs.h"
+#include "Debug.h"
+#include "Internal.h"
+
+#include "modules/Filesystem.h"
+#include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
-#include "df/historical_figure.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_site.h"
+
+#include <json/json.h>
+
+#include <unordered_map>
+
+namespace DFHack {
+    DBG_DECLARE(core, persistence, DebugCategory::LINFO);
+}
 
 using namespace DFHack;
 
-static std::vector<std::shared_ptr<Persistence::LegacyData>> legacy_data;
-static std::multimap<std::string, size_t> index_cache;
+static std::unordered_map<int, std::multimap<std::string, std::shared_ptr<Persistence::DataEntry>>> store;
+static std::unordered_map<size_t, std::shared_ptr<Persistence::DataEntry>> entry_cache;
 
-struct Persistence::LegacyData
-{
+size_t next_entry_id = 0;   // goes more positive
+int next_fake_df_id = -101; // goes more negative
+
+struct Persistence::DataEntry {
+    const size_t entry_id;
+    const int entity_id;
     const std::string key;
+    int fake_df_id;
     std::string str_value;
     std::array<int, PersistentDataItem::NumInts> int_values;
 
-    explicit LegacyData(const std::string &key) : key(key)
-    {
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
+    explicit DataEntry(int entity_id, const std::string &key)
+    : entry_id(next_entry_id++), entity_id(entity_id), key(key) {
+        fake_df_id = 0;
+        for (size_t i = 0; i < PersistentDataItem::NumInts; i++)
             int_values.at(i) = -1;
-        }
     }
-    explicit LegacyData(Json::Value &json) : key(json["k"].asString())
-    {
+
+    explicit DataEntry(int entity_id, Json::Value &json)
+    : DataEntry(entity_id, json["k"].asString()) {
+        if (json.isMember("f"))
+            fake_df_id = json["f"].asInt();
         str_value = json["s"].asString();
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
-            int_values.at(i) = json["i"][i].asInt();
-        }
-    }
-    explicit LegacyData(const df::language_name &name) : key(name.first_name)
-    {
-        str_value = name.nickname;
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
-            int_values.at(i) = name.words[i];
+        if (json.isMember("i")) {
+            for (size_t i = 0; i < PersistentDataItem::NumInts; i++)
+                int_values.at(i) = json["i"].get(i, Json::Value(-1)).asInt();
         }
     }
 
-    Json::Value toJSON()
-    {
+    Json::Value toJSON() const {
         Json::Value json(Json::objectValue);
         json["k"] = key;
-        json["s"] = str_value;
-        Json::Value ints(Json::arrayValue);
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
-            ints[i] = int_values.at(i);
+        if (fake_df_id < 0)
+            json["f"] = fake_df_id;
+        if (str_value.size())
+            json["s"] = str_value;
+        size_t num_set_ints = 0;
+        for (size_t i = 0; i < PersistentDataItem::NumInts; i++) {
+            if (int_values.at(i) != -1)
+                num_set_ints = i + 1;
         }
-        json["i"] = std::move(ints);
-
+        if (num_set_ints) {
+            Json::Value ints(Json::arrayValue);
+            for (size_t i = 0; i < num_set_ints; i++)
+                ints.append(int_values.at(i));
+            json["i"] = std::move(ints);
+        }
         return json;
     }
+
+    bool isReferencedBy(const PersistentDataItem & item) {
+        return item.data.get() == this;
+    }
 };
+
+int PersistentDataItem::entity_id() const {
+    CHECK_INVALID_ARGUMENT(isValid());
+    return data->entity_id;
+}
 
 const std::string &PersistentDataItem::key() const
 {
@@ -104,13 +127,13 @@ const std::string &PersistentDataItem::val() const
 int &PersistentDataItem::ival(int i)
 {
     CHECK_INVALID_ARGUMENT(isValid());
-    CHECK_INVALID_ARGUMENT(i >= 0 && i < NumInts);
+    CHECK_INVALID_ARGUMENT(i >= 0 && i < (int)NumInts);
     return data->int_values.at(i);
 }
 int PersistentDataItem::ival(int i) const
 {
     CHECK_INVALID_ARGUMENT(isValid());
-    CHECK_INVALID_ARGUMENT(i >= 0 && i < NumInts);
+    CHECK_INVALID_ARGUMENT(i >= 0 && i < (int)NumInts);
     return data->int_values.at(i);
 }
 
@@ -121,300 +144,240 @@ bool PersistentDataItem::isValid() const
 
     CoreSuspender suspend;
 
-    if (legacy_data.size() <= index)
-        return false;
-
-    return legacy_data.at(index) == data;
+    return entry_cache.contains(data->entry_id) && entry_cache.at(data->entry_id) == data;
 }
 
-void Persistence::Internal::clear()
-{
+int PersistentDataItem::fake_df_id() {
+    if (!isValid())
+        return 0;
+
+    // set it if unset
+    if (data->fake_df_id == 0)
+        data->fake_df_id = next_fake_df_id--;
+
+    return data->fake_df_id;
+}
+
+void Persistence::Internal::clear(color_ostream& out) {
     CoreSuspender suspend;
 
-    legacy_data.clear();
-    index_cache.clear();
+    store.clear();
+    entry_cache.clear();
+    next_entry_id = 0;
+    next_fake_df_id = -101;
 }
 
-void Persistence::Internal::save()
-{
-    CoreSuspender suspend;
-
-    Json::Value json(Json::arrayValue);
-    for (size_t i = 0; i < legacy_data.size(); i++)
-    {
-        if (legacy_data.at(i) != nullptr)
-        {
-            while (json.size() < i)
-            {
-                json[json.size()] = Json::Value();
-            }
-
-            json[int(i)] = legacy_data.at(i)->toJSON();
-        }
-    }
-
-    auto file = writeSaveData("legacy-data");
-    file << json;
-}
-
-static void convertHFigs()
-{
-    auto &figs = df::historical_figure::get_vector();
-
-    auto src = figs.begin();
-    while (src != figs.end() && (*src)->id > -100)
-    {
-        ++src;
-    }
-
-    if (src == figs.end())
-    {
-        return;
-    }
-
-    auto dst = src;
-    while (src != figs.end())
-    {
-        auto fig = *src;
-        if (fig->id > -100)
-        {
-            *dst = *src;
-            ++dst;
-        }
-        else
-        {
-            if (fig->name.has_name && !fig->name.first_name.empty())
-            {
-                size_t index = size_t(-fig->id - 100);
-                if (legacy_data.size() <= index)
-                {
-                    legacy_data.resize(index + 1);
-                }
-                legacy_data.at(index) = std::shared_ptr<Persistence::LegacyData>(new Persistence::LegacyData(fig->name));
-            }
-            delete fig;
-        }
-        ++src;
-    }
-
-    figs.erase(dst, figs.end());
-}
-
-void Persistence::Internal::load()
-{
-    CoreSuspender suspend;
-
-    clear();
-
-    auto file = readSaveData("legacy-data");
-    Json::Value json;
-    try
-    {
-        file >> json;
-    }
-    catch (std::exception &)
-    {
-        // empty file?
-    }
-
-    if (json.isArray())
-    {
-        legacy_data.resize(json.size());
-        for (size_t i = 0; i < legacy_data.size(); i++)
-        {
-            if (json[int(i)].isObject())
-            {
-                legacy_data.at(i) = std::shared_ptr<LegacyData>(new LegacyData(json[int(i)]));
-            }
-        }
-    }
-
-    convertHFigs();
-
-    for (size_t i = 0; i < legacy_data.size(); i++)
-    {
-        if (legacy_data.at(i) == nullptr)
-        {
-            continue;
-        }
-
-        index_cache.insert(std::make_pair(legacy_data.at(i)->key, i));
-    }
-}
-
-PersistentDataItem Persistence::addItem(const std::string &key)
-{
-    if (key.empty() || !Core::getInstance().isWorldLoaded())
-        return PersistentDataItem();
-
-    CoreSuspender suspend;
-
-    size_t index = 0;
-    while (index < legacy_data.size() && legacy_data.at(index) != nullptr)
-    {
-        index++;
-    }
-
-    auto ptr = std::shared_ptr<LegacyData>(new LegacyData(key));
-
-    if (index == legacy_data.size())
-    {
-        legacy_data.push_back(ptr);
-    }
-    else
-    {
-        legacy_data.at(index) = ptr;
-    }
-
-    index_cache.insert(std::make_pair(key, index));
-
-    return PersistentDataItem(index, ptr);
-}
-
-PersistentDataItem Persistence::getByKey(const std::string &key, bool *added)
-{
-    CoreSuspender suspend;
-
-    auto it = index_cache.find(key);
-
-    if (added)
-    {
-        *added = it == index_cache.end();
-    }
-
-    if (it != index_cache.end())
-    {
-        return PersistentDataItem(it->second, legacy_data.at(it->second));
-    }
-
-    if (!added)
-    {
-        return PersistentDataItem();
-    }
-
-    return addItem(key);
-}
-
-PersistentDataItem Persistence::getByIndex(size_t index)
-{
-    CoreSuspender suspend;
-
-    if (index < legacy_data.size() && legacy_data.at(index) != nullptr)
-    {
-        return PersistentDataItem(index, legacy_data.at(index));
-    }
-
-    return PersistentDataItem();
-}
-
-bool Persistence::deleteItem(const PersistentDataItem &item)
-{
-    CoreSuspender suspend;
-
-    if (!item.isValid())
-    {
-        return false;
-    }
-
-    size_t index = item.get_index();
-    auto range = index_cache.equal_range(item.key());
-    for (auto it = range.first; it != range.second; ++it)
-    {
-        if (it->second == index)
-        {
-            index_cache.erase(it);
-            break;
-        }
-    }
-    legacy_data.at(index) = nullptr;
-
-    return true;
-}
-
-void Persistence::getAll(std::vector<PersistentDataItem> &vec)
-{
-    vec.clear();
-
-    CoreSuspender suspend;
-
-    for (size_t i = 0; i < legacy_data.size(); i++)
-    {
-        if (legacy_data.at(i) != nullptr)
-        {
-            vec.push_back(PersistentDataItem(i, legacy_data.at(i)));
-        }
-    }
-}
-
-void Persistence::getAllByKeyRange(std::vector<PersistentDataItem> &vec, const std::string &min, const std::string &max)
-{
-    vec.clear();
-
-    CoreSuspender suspend;
-
-    auto begin = index_cache.lower_bound(min);
-    auto end = index_cache.lower_bound(max);
-    for (auto it = begin; it != end; ++it)
-    {
-        vec.push_back(PersistentDataItem(it->second, legacy_data.at(it->second)));
-    }
-}
-
-void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, const std::string &key)
-{
-    vec.clear();
-
-    CoreSuspender suspend;
-
-    auto range = index_cache.equal_range(key);
-    for (auto it = range.first; it != range.second; ++it)
-    {
-        vec.push_back(PersistentDataItem(it->second, legacy_data.at(it->second)));
-    }
-}
-
-static std::string filterSaveFileName(std::string s)
-{
-    for (auto &ch : s)
-    {
+static std::string filterSaveFileName(std::string s) {
+    for (auto &ch : s) {
         if (!isalnum(ch) && ch != '-' && ch != '_')
-        {
             ch = '_';
-        }
     }
     return s;
 }
 
-static std::string getSaveFilePath(const std::string &world, const std::string &name)
-{
-    return "save/" + world + "/dfhack-" + filterSaveFileName(name) + ".dat";
+static std::string getSavePath(const std::string &world) {
+    return "save/" + world;
 }
 
-#if defined(__GNUC__) && __GNUC__ < 5
-// file stream move constructors are missing in libstdc++ before version 5.
-#define FSTREAM(x) Persistence::gcc_4_fstream_shim<x>
-#else
-#define FSTREAM(x) x
-#endif
-FSTREAM(std::ifstream) Persistence::readSaveData(const std::string &name)
-{
+static std::string getSaveFilePath(const std::string &world, const std::string &name) {
+    return getSavePath(world) + "/dfhack-" + filterSaveFileName(name) + ".dat";
+}
+
+void Persistence::Internal::save(color_ostream& out) {
     if (!Core::getInstance().isWorldLoaded())
-    {
-        // No world loaded - return unopened stream.
-        return FSTREAM(std::ifstream)();
+        return;
+
+    CoreSuspender suspend;
+
+    for (auto & entity_store_entry : store) {
+        int entity_id = entity_store_entry.first;
+        Json::Value json(Json::arrayValue);
+        for (auto & entries : entity_store_entry.second) {
+            if (entries.second == nullptr)
+                continue;
+            json.append(entries.second->toJSON());
+        }
+        std::string name = (entity_id == Persistence::WORLD_ENTITY_ID) ?
+            "world" : "entity-" + int_to_string(entity_id);
+        auto file = std::ofstream(getSaveFilePath("current", name));
+        file << json;
+    }
+}
+
+static bool get_entity_id(const std::string & fname, int & entity_id) {
+    if (!fname.starts_with("dfhack-entity-"))
+        return false;
+    entity_id = string_to_int(fname.substr(14, fname.length() - 18), -1);
+    return true;
+}
+
+static void add_entry(std::multimap<std::string, std::shared_ptr<Persistence::DataEntry>> & entity_store_entry,
+        std::shared_ptr<Persistence::DataEntry> entry) {
+    entity_store_entry.emplace(entry->key, entry);
+    entry_cache.emplace(entry->entry_id, entry);
+}
+
+static void add_entry(int entity_id, std::shared_ptr<Persistence::DataEntry> entry) {
+    add_entry(store[entity_id], entry);
+}
+
+static bool load_file(const std::string & path, int entity_id) {
+    Json::Value json;
+    try {
+        std::ifstream file(path);
+        file >> json;
+    } catch (std::exception &) {
+        // empty file?
+        return false;
     }
 
-    return FSTREAM(std::ifstream)(getSaveFilePath(World::ReadWorldFolder(), name));
-}
-
-FSTREAM(std::ofstream) Persistence::writeSaveData(const std::string &name)
-{
-    if (!Core::getInstance().isWorldLoaded())
-    {
-        // No world loaded - return unopened stream.
-        return FSTREAM(std::ofstream)();
+    if (json.isArray()) {
+        auto & entity_store_entry = store[entity_id];
+        for (auto & value : json) {
+            std::shared_ptr<Persistence::DataEntry> entry(new Persistence::DataEntry(entity_id, value));
+            if (entry->key.empty())
+                continue;
+            // ensure fake DF IDs remain globally unique
+            next_fake_df_id = std::min(next_fake_df_id, entry->fake_df_id - 1);
+            add_entry(entity_store_entry, entry);
+        }
     }
 
-    return FSTREAM(std::ofstream)(getSaveFilePath("current", name));
+    return true;
 }
-#undef FSTREAM
+
+void Persistence::Internal::load(color_ostream& out) {
+    CoreSuspender suspend;
+
+    clear(out);
+
+    std::string world_name = World::ReadWorldFolder();
+    std::string save_path = getSavePath(world_name);
+    std::vector<std::string> files;
+    if (0 != Filesystem::listdir(save_path, files)) {
+        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '%s'\n", save_path.c_str());
+        return;
+    }
+
+    bool found = false;
+    for (auto & fname : files) {
+        int entity_id = Persistence::WORLD_ENTITY_ID;
+        if (fname != "dfhack-world.dat" && !get_entity_id(fname, entity_id))
+            continue;
+
+        found = true;
+        std::string path = save_path + "/" + fname;
+        if (!load_file(path, entity_id))
+            out.printerr("Cannot load data from: '%s'\n", path.c_str());
+    }
+
+    if (found)
+        return;
+
+    // new file formats not found; attempt to load legacy file
+    const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
+    if (Filesystem::exists(legacy_fname)) {
+        int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
+        using df::global::world;
+        if (world && world->world_data && !world->world_data->active_site.empty())
+            synthesized_entity_id = world->world_data->active_site[0]->id;
+        load_file(legacy_fname, synthesized_entity_id);
+    }
+}
+
+static bool is_good_entity_id(int entity_id) {
+    return entity_id == Persistence::WORLD_ENTITY_ID || entity_id >= 0;
+}
+
+PersistentDataItem Persistence::addItem(int entity_id, const std::string &key) {
+    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+        return PersistentDataItem();
+
+    CoreSuspender suspend;
+
+    auto ptr = std::shared_ptr<DataEntry>(new DataEntry(entity_id, key));
+    add_entry(entity_id, ptr);
+    return PersistentDataItem(ptr);
+}
+
+PersistentDataItem Persistence::getByKey(int entity_id, const std::string &key, bool *added) {
+    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+        return PersistentDataItem();
+
+    CoreSuspender suspend;
+
+    bool found = store.contains(entity_id) && store[entity_id].contains(key);
+    if (added)
+        *added = !found;
+    if (found)
+        return PersistentDataItem(store[entity_id].find(key)->second);
+    if (!added)
+        return PersistentDataItem();
+    return addItem(entity_id, key);
+}
+
+bool Persistence::deleteItem(const PersistentDataItem &item) {
+    if (!item.isValid())
+        return false;
+
+    CoreSuspender suspend;
+
+    auto range = store[item.entity_id()].equal_range(item.key());
+    for (auto it = range.first; it != range.second; ++it) {
+        if (it->second->isReferencedBy(item)) {
+            entry_cache.erase(it->second->entry_id);
+            store[item.entity_id()].erase(it);
+            break;
+        }
+    }
+    return true;
+}
+
+void Persistence::getAll(std::vector<PersistentDataItem> &vec, int entity_id) {
+    vec.clear();
+
+    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+        return;
+
+    CoreSuspender suspend;
+
+    if (!store.contains(entity_id))
+        return;
+
+    for (auto & entries : store[entity_id])
+        vec.emplace_back(entries.second);
+}
+
+void Persistence::getAllByKeyRange(std::vector<PersistentDataItem> &vec, int entity_id,
+        const std::string &min, const std::string &max) {
+    vec.clear();
+
+    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+        return;
+
+    CoreSuspender suspend;
+
+    if (!store.contains(entity_id))
+        return;
+
+    auto begin = store[entity_id].lower_bound(min);
+    auto end = store[entity_id].lower_bound(max);
+    for (auto it = begin; it != end; ++it)
+        vec.emplace_back(it->second);
+}
+
+void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &key) {
+    vec.clear();
+
+    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+        return;
+
+    CoreSuspender suspend;
+
+    if (!store.contains(entity_id))
+        return;
+
+    auto range = store[entity_id].equal_range(key);
+    for (auto it = range.first; it != range.second; ++it)
+        vec.emplace_back(it->second);
+}

@@ -443,7 +443,7 @@ static void start_protect(color_ostream &out)
 
 static void init_state(color_ostream &out)
 {
-    config = World::GetPersistentData("workflow/config");
+    config = World::GetPersistentSiteData("workflow/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -451,7 +451,7 @@ static void init_state(color_ostream &out)
 
     // Parse constraints
     std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "workflow/constraints");
+    World::GetPersistentSiteData(&items, "workflow/constraints");
 
     for (int i = items.size()-1; i >= 0; i--) {
         if (get_constraint(out, items[i].val(), &items[i]))
@@ -474,7 +474,7 @@ static void enable_plugin(color_ostream &out)
 {
     if (!config.isValid())
     {
-        config = World::AddPersistentData("workflow/config");
+        config = World::AddPersistentSiteData("workflow/config");
         config.ival(0) = 0;
     }
 
@@ -649,7 +649,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
  ******************************/
 
 static std::string history_key(PersistentDataItem &config) {
-    return stl_sprintf("workflow/history/%d", config.entry_id());
+    return stl_sprintf("workflow/history/%d", -config.fake_df_id());
 }
 
 static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg, bool create)
@@ -765,11 +765,11 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         nct->config = *cfg;
     else
     {
-        nct->config = World::AddPersistentData("workflow/constraints");
+        nct->config = World::AddPersistentSiteData("workflow/constraints");
         nct->init(str);
     }
 
-    nct->history = World::GetPersistentData(history_key(nct->config), NULL);
+    nct->history = World::GetPersistentSiteData(history_key(nct->config), true);
 
     constraints.push_back(nct);
     return nct;
@@ -1359,7 +1359,7 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
     lua_newtable(L);
     int ctable = lua_gettop(L);
 
-    Lua::SetField(L, cv->config.entry_id(), ctable, "id");
+    Lua::SetField(L, -cv->config.fake_df_id(), ctable, "id");
     Lua::SetField(L, cv->config.val(), ctable, "token");
 
     // Constraint key

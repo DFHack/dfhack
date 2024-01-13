@@ -4,15 +4,6 @@
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
 //   state and sleep setting is saved the first time autonestbox is started (to avoid writing stuff if the plugin is never used)
 
-#include <string>
-#include <vector>
-
-#include "df/building_cagest.h"
-#include "df/building_civzonest.h"
-#include "df/building_nest_boxst.h"
-#include "df/general_ref_building_civzone_assignedst.h"
-#include "df/world.h"
-
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -22,6 +13,12 @@
 #include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+
+#include "df/building_cagest.h"
+#include "df/building_civzonest.h"
+#include "df/building_nest_boxst.h"
+#include "df/general_ref_building_civzone_assignedst.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;
@@ -35,7 +32,7 @@ REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(autonestbox, status, DebugCategory::LINFO);
+    DBG_DECLARE(autonestbox, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autonestbox, cycle, DebugCategory::LINFO);
 }
@@ -44,25 +41,10 @@ static const string CONFIG_KEY = string(plugin_name) + "/config";
 static PersistentDataItem config;
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
-    CONFIG_CYCLE_TICKS = 1,
 };
-static int get_config_val(int index) {
-    if (!config.isValid())
-        return -1;
-    return config.ival(index);
-}
-static bool get_config_bool(int index) {
-    return get_config_val(index) == 1;
-}
-static void set_config_val(int index, int value) {
-    if (config.isValid())
-        config.ival(index) = value;
-}
-static void set_config_bool(int index, bool value) {
-    set_config_val(index, value ? 1 : 0);
-}
 
 static bool did_complain = false; // avoids message spam
+static const int32_t CYCLE_TICKS = 6067;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters);
@@ -77,40 +59,39 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(status,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     } else {
-        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(CONFIG_CYCLE_TICKS, 6000);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but
     // all the other state we can directly read/modify from the persistent
     // data structure.
-    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
     did_complain = false;
     return CR_OK;
@@ -119,7 +100,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(status,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -128,7 +109,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autonestbox_cycle(out);
     return CR_OK;
 }
@@ -144,15 +125,11 @@ struct autonestbox_options {
     // whether to run a cycle right now
     bool now = false;
 
-    // how many ticks to wait between automatic cycles, -1 means unset
-    int32_t ticks = -1;
-
     static struct_identity _identity;
 };
 static const struct_field_info autonestbox_options_fields[] = {
     { struct_field_info::PRIMITIVE, "help",  offsetof(autonestbox_options, help),  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "now",   offsetof(autonestbox_options, now),   &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "ticks", offsetof(autonestbox_options, ticks), &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::END }
 };
 struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df::allocator_fn<autonestbox_options>, NULL, "autonestbox_options", NULL, autonestbox_options_fields);
@@ -184,8 +161,8 @@ static bool get_options(color_ostream &out,
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -193,11 +170,7 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
     if (!get_options(out, opts, parameters) || opts.help)
         return CR_WRONG_USAGE;
 
-    if (opts.ticks > -1) {
-        set_config_val(CONFIG_CYCLE_TICKS, opts.ticks);
-        INFO(status,out).print("New cycle timer: %d ticks.\n", opts.ticks);
-    }
-    else if (opts.now) {
+    if (opts.now) {
         autonestbox_cycle(out);
     }
     else {

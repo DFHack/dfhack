@@ -54,6 +54,7 @@ David                   Nilsolm
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm
+Dean Golden             LightHardt
 Deon
 dhthwy                  dhthwy
 dikbut                  Tjudge1

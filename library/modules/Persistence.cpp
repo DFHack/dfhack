@@ -322,11 +322,13 @@ bool Persistence::deleteItem(const PersistentDataItem &item) {
 
     CoreSuspender suspend;
 
-    auto range = store[item.entity_id()].equal_range(item.key());
+    int entity_id = item.entity_id();
+
+    auto range = store[entity_id].equal_range(item.key());
     for (auto it = range.first; it != range.second; ++it) {
         if (it->second->isReferencedBy(item)) {
             entry_cache.erase(it->second->entry_id);
-            store[item.entity_id()].erase(it);
+            store[entity_id].erase(it);
             break;
         }
     }

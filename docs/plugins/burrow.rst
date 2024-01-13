@@ -109,7 +109,16 @@ supported. If you box select across multiple z-levels, you will be able to
 select the entire volume instead of just the selected area on the z-level that
 you are currently looking at.
 
-In addition, double-clicking will start a flood fill from the target tile.
+In addition, you can enable a mode where double-clicking will flood fill from a
+target tile. If 2D flood fill is enabled, then the flood fill will not extend
+beyond the current z-level. It will stop at walls, forbidden doors, closed
+gates, and boundaries between inside and outside. When the flood hits a wall
+boundary, it includes one tile of wall so that units inside the burrow can
+interact with the walls (e.g. dig, smooth, or engrave).
+
+If 3D flood fill is enabled, then the flood will follow stairways and ramps --
+anywhere a unit standing on the target tile can path to. If you start a flood
+fill in mid-air, then the flood will extend to other adjacent air tiles.
 
 The box and flood fill actions respect the UI setting for whether the burrow is
 being added to or erased.

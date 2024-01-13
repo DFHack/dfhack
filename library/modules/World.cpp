@@ -24,39 +24,20 @@ distribution.
 
 
 #include "Internal.h"
-#include <array>
-#include <string>
-#include <vector>
-#include <map>
-#include <cstring>
-using namespace std;
 
 #include "modules/World.h"
-#include "MemAccess.h"
-#include "VersionInfo.h"
-#include "Types.h"
-#include "Error.h"
-#include "ModuleFactory.h"
-#include "Core.h"
 
-#include "modules/Maps.h"
-
-#include "MiscUtils.h"
-
-#include "VTableInterpose.h"
-
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/world_site.h"
-#include "df/historical_figure.h"
-#include "df/map_block.h"
 #include "df/block_square_event_world_constructionst.h"
-#include "df/viewscreen_legendsst.h"
+#include "df/map_block.h"
+#include "df/plotinfost.h"
+#include "df/world.h"
+
+using std::string;
 
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::plotinfo;
 using df::global::world;
 
 bool World::ReadPauseState()
@@ -161,9 +142,9 @@ bool World::isLegends(df::game_type t)
 }
 
 int32_t World::GetCurrentSiteId() {
-    if (!world || !world->world_data || world->world_data->active_site.empty())
+    if (!plotinfo)
         return -1;
-    return world->world_data->active_site[0]->id;
+    return plotinfo->site_id;
 }
 
 bool World::IsSiteLoaded() {

@@ -31,10 +31,6 @@ distribution.
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/world_site.h"
-
 #include <json/json.h>
 
 #include <unordered_map>
@@ -279,8 +275,8 @@ void Persistence::Internal::load(color_ostream& out) {
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
         using df::global::world;
-        if (world && world->world_data && !world->world_data->active_site.empty())
-            synthesized_entity_id = world->world_data->active_site[0]->id;
+        if (World::IsSiteLoaded())
+            synthesized_entity_id = World::GetCurrentSiteId();
         load_file(legacy_fname, synthesized_entity_id);
     }
 }

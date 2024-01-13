@@ -46,6 +46,7 @@ using namespace std;
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
+#include "modules/World.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "MiscUtils.h"
@@ -85,7 +86,6 @@ using namespace std;
 #include "df/unit_syndrome.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
-#include "df/world_data.h"
 #include "df/world_site.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
@@ -847,7 +847,9 @@ static void add_assigned_noble_units(vector<df::unit *> &units, const df::histor
 }
 
 static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
-    auto &site = df::global::world->world_data->active_site[0];
+    auto site = df::world_site::find(World::GetCurrentSiteId());
+    if (!site)
+        return;
     for (auto &link : site->entity_links) {
         auto he = df::historical_entity::find(link->entity_id);
         if (!he ||

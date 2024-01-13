@@ -914,6 +914,11 @@ can be omitted.
 
   Checks if a site (e.g. a player fort) is loaded.
 
+* ``dfhack.getCurrentSite()``
+
+  Returns the currently loaded ``df.world_site`` or ``nil`` if no site is
+  loaded.
+
 * ``dfhack.TranslateName(name[,in_english,only_last_name])``
 
   Convert a language_name or only the last name part to string.

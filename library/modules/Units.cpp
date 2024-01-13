@@ -846,21 +846,20 @@ static void add_assigned_noble_units(vector<df::unit *> &units, const df::histor
     }
 }
 
-static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
-    auto site = df::world_site::find(World::GetCurrentSiteId());
-    if (!site)
-        return;
-    for (auto &link : site->entity_links) {
-        auto he = df::historical_entity::find(link->entity_id);
-        if (!he ||
-                (he->type != df::historical_entity_type::SiteGovernment &&
-                 he->type != df::historical_entity_type::Civilization))
-            continue;
-        int32_t noble_position_id = get_noble_position_id(he->positions, noble);
-        if (noble_position_id < 0)
-            continue;
+static void add_entity_nobles(vector<df::unit *> &units, string noble, size_t limit, df::historical_entity *he) {
+    if (!he)
+        return ;
+    int32_t noble_position_id = get_noble_position_id(he->positions, noble);
+    if (noble_position_id >= 0)
         add_assigned_noble_units(units, he->positions, noble_position_id, limit);
-    }
+}
+
+
+static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
+    if (!plotinfo)
+        return;
+    add_entity_nobles(units, noble, limit, df::historical_entity::find(plotinfo->civ_id));
+    add_entity_nobles(units, noble, limit, df::historical_entity::find(plotinfo->group_id));
 }
 
 bool Units::getUnitsByNobleRole(vector<df::unit *> &units, std::string noble) {

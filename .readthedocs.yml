@@ -16,3 +16,7 @@ sphinx:
   configuration: conf.py
 
 formats: all
+
+python:
+  install:
+  - requirements: .readthedocs.requirements.txt

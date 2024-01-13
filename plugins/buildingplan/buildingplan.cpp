@@ -57,8 +57,7 @@ static Tasks tasks;
 void PlannedBuilding::remove(color_ostream &out) {
     DEBUG(control,out).print("removing persistent data for building %d\n", id);
     World::DeletePersistentData(bld_config);
-    if (planned_buildings.count(id))
-        planned_buildings.erase(id);
+    planned_buildings.erase(id);
 }
 
 static const int32_t CYCLE_TICKS = 599; // twice per game day

@@ -103,7 +103,7 @@ PlannedBuilding::PlannedBuilding(color_ostream &out, df::building *bld, HeatSafe
     bld_config.set_int(BLD_CONFIG_ID, id);
     bld_config.set_int(BLD_CONFIG_HEAT, heat_safety);
     bld_config.set_str(serialize(vector_ids, item_filters));
-    DEBUG(control,out).print("serialized state for building %d: %s\n", id, bld_config.val().c_str());
+    DEBUG(control,out).print("serialized state for building %d: %s\n", id, bld_config.get_str().c_str());
 }
 
 PlannedBuilding::PlannedBuilding(color_ostream &out, PersistentDataItem &bld_config)

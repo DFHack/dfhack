@@ -107,7 +107,7 @@ end
 
 local function get_hospital_zones()
     local hospital_zones = {}
-    local site = dfhack.getCurrentSite() or {buildings={}}
+    local site = dfhack.world.getCurrentSite() or {buildings={}}
     for _,location in ipairs(site.buildings) do
         if not df.abstract_building_hospitalst:is_instance(location) then goto continue end
         for _,bld_id in ipairs(location.contents.building_ids) do

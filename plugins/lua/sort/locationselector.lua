@@ -122,7 +122,7 @@ end
 function LocationSelectorOverlay:get_cache()
     if self.cache then return self.cache end
     local cache = {}
-    local site = dfhack.getCurrentSite() or {}
+    local site = dfhack.world.getCurrentSite() or {}
     for _,location in ipairs(site.buildings or {}) do
         if df.abstract_building_templest:is_instance(location) then
             ensure_keys(cache, 'temple', location.deity_type)[location.deity_data.Religion] = true

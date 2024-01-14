@@ -555,7 +555,7 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
     end
 end
 
-function dfhack.getCurrentSite()
+function dfhack.world.getCurrentSite()
     return df.world_site.find(df.global.plotinfo.site_id)
 end
 

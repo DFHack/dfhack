@@ -49,7 +49,7 @@ jobs:
         TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
         head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
         CHANGELOG_LINES=$(wc -l <$CHANGELOG_FILE)
-        tail -n $((CHANGELOG_LINES - 4)) $CHANGELOG_FILE >> release_body.md
+        tail -n $((CHANGELOG_LINES - 3)) $CHANGELOG_FILE >> release_body.md
         tail -n 1 .github/release_template.md >> release_body.md
         cat release_body.md
     - name: Stage release

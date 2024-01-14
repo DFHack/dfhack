@@ -63,6 +63,7 @@ Template for new versions:
 - `sort`: fix potential crash when removing jobs directly from the Tasks info screen
 - `misery`: fix error when changing the misery factor
 - When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
+- `getplants`: fix crash when processing mod-added plants with invalid materials
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline

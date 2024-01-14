@@ -103,6 +103,7 @@ Template for new versions:
 - ``dfhack.persistent``: new, table-driven API for easier world- and site-associated persistent storage. See the Lua API docs for details.
 - ``dfhack.isSiteLoaded``: returns whether a site (e.g. a player fort) is loaded
 - ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
+- ``dfhack.world.getCurrentSite``: returns the ``df.world_site`` instance of the currently loaded fort
 
 ## Removed
 - ``persist-table``: replaced by new ``dfhack.persistent`` API

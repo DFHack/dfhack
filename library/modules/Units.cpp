@@ -2346,3 +2346,15 @@ void Units::setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amo
         }
     }
 }
+
+void Units::chopTree(df::unit *un, int16_t x, int16_t y, int16_t z)
+{
+    CHECK_NULL_POINTER(un);
+
+    auto fp = df::global::unitst_choptree;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit *un, int16_t x, int16_t y, int16_t z) > ;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(un, x, y, z);
+}

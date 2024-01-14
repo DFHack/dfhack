@@ -67,7 +67,7 @@ local function get_zone_search_key(zone)
     if zone.location_id == -1 then -- zone is NOT a special location and we don't need to do anything special for type searching
         table.insert(result, df.civzone_type[zone.type]);
     else -- zone is a special location and we need to get its type from world data
-        local site = dfhack.getCurrentSite() or {}
+        local site = dfhack.world.getCurrentSite() or {}
         local building, success = utils.binsearch(site.buildings or {}, zone.location_id, 'id')
 
         if success and building.name then
@@ -87,7 +87,7 @@ local function get_zone_search_key(zone)
 end
 
 local function get_location_search_key(zone)
-    local site = dfhack.getCurrentSite() or {}
+    local site = dfhack.world.getCurrentSite() or {}
     local result = {}
 
     -- get language_name and type (we dont need user-given zone name because it does not appear on this page)

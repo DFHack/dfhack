@@ -80,7 +80,7 @@ Template for new versions:
 - `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
 
 ## Documentation
-- `installing`: Add installation instructions for winskin on Mac
+- `installing`: Add installation instructions for wineskin on Mac
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
 - `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
 

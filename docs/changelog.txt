@@ -64,6 +64,7 @@ Template for new versions:
 - `misery`: fix error when changing the misery factor
 - When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
 - `getplants`: fix crash when processing mod-added plants with invalid materials
+- Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline
@@ -78,6 +79,7 @@ Template for new versions:
 - The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
 - `sort`: add "Toggle all filters" hotkey button to the squad assignment panel
 - `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
+- Dreamfort: put more chairs adjacent to each other to make the tavern more "social"
 
 ## Documentation
 - `installing`: Add installation instructions for wineskin on Mac

@@ -679,6 +679,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.settings.open) {
         newFocusString = baseFocus;
         newFocusString += "/Settings";
+        newFocusString += '/' + enum_item_key(game->main_interface.settings.current_mode);
+        if (game->main_interface.settings.doing_custom_settings)
+            newFocusString += "/CustomSettings";
+        else
+            newFocusString += "/Default";
+
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.squad_equipment.open) {

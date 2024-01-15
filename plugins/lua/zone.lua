@@ -1168,10 +1168,17 @@ end
 function RetireLocationOverlay:confirm_retire()
     local details = mi.location_details
     local location = details.selected_ab
-    local num_occupations, num_zones = 0, #location.contents.building_ids
+    local num_occupations, num_zones = 0, 0
     for _, occupation in ipairs(location.occupations) do
         if occupation.histfig_id ~= -1 then
             num_occupations = num_occupations + 1
+        end
+    end
+    for _, zone_id in ipairs(location.contents.building_ids) do
+        -- there can be dangling references in this list; only count
+        -- "attached" zones that actually exist
+        if df.building.find(zone_id) then
+            num_zones = num_zones + 1
         end
     end
     if num_occupations + num_zones > 0 then

@@ -203,6 +203,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 
         if (pen.top_of_text || pen.bottom_of_text) {
             screen[0] = uint8_t(pen.ch);
+            *flag &= ~0x18;
             if (pen.top_of_text)
                 *flag |= 0x8;
             if (pen.bottom_of_text)

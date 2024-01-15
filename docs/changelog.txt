@@ -66,6 +66,7 @@ Template for new versions:
 - When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
 - `getplants`: fix crash when processing mod-added plants with invalid materials
 - Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
+- DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there is a vanilla tab behind them
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline

@@ -2347,14 +2347,18 @@ void Units::setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     }
 }
 
-void Units::chopTree(df::unit *un, int16_t x, int16_t y, int16_t z)
+// the only reason this function would ever fail is if the global is not defined,
+// the underlying DF function has no failure mode
+bool Units::chopTree(df::unit* unit, int16_t x, int16_t y, int16_t z)
 {
-    CHECK_NULL_POINTER(un);
+    CHECK_NULL_POINTER(unit);
 
     auto fp = df::global::unitst_choptree;
-    CHECK_NULL_POINTER(fp);
+    if (fp == NULL)
+        return false;
 
-    using FT = std::function<void(df::unit *un, int16_t x, int16_t y, int16_t z) > ;
+    using FT = std::function<void(df::unit *unit, int16_t x, int16_t y, int16_t z) > ;
     auto f = reinterpret_cast<FT*>(fp);
-    (*f)(un, x, y, z);
+    (*f)(unit, x, y, z);
+    return true;
 }

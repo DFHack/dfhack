@@ -244,6 +244,6 @@ namespace DFHack
         DFHACK_EXPORT void setActionTimers(color_ostream& out, df::unit* unit, int32_t amount, df::unit_action_type affectedActionType);
         DFHACK_EXPORT void setGroupActionTimers(color_ostream& out, df::unit* unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
 
-        DFHACK_EXPORT void chopTree(df::unit* un, int16_t x, int16_t y, int16_t z);
+        DFHACK_EXPORT bool chopTree(df::unit* unit, int16_t x, int16_t y, int16_t z);
     }
 }

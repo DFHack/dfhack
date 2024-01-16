@@ -100,6 +100,7 @@ Template for new versions:
 - Plugin ABI (binary interface) version bump! Any external plugins must be recompiled against this version of DFHack source code in order to load.
 - ``Persistence``: persistent keys are now namespaced by an entity_id (e.g. a player fort site ID)
 - ``Persistence``: data is now stored one file per entity ID (plus one for the global world) in the DF savegame directory
+- ``Units.isDanger``: now returns true for agitated wildlife
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized

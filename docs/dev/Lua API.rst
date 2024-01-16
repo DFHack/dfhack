@@ -1445,7 +1445,7 @@ Units module
 
   The unit is dangerous, and probably hostile. This includes
   Great Dangers (see below), semi-megabeasts, night creatures,
-  undead, invaders, and crazed units.
+  undead, invaders, agitated wildlife, and crazed units.
 
 * ``dfhack.units.isGreatDanger(unit)``
 

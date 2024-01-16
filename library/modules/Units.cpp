@@ -779,6 +779,7 @@ bool Units::isDanger(df::unit* unit) {
     return isCrazed(unit) ||
            isInvader(unit) ||
            isUndead(unit, true) ||
+           unit->flags4.bits.agitated_wilderness_creature ||
            isSemiMegabeast(unit) ||
            isNightCreature(unit) ||
            isGreatDanger(unit);

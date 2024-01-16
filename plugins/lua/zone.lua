@@ -87,14 +87,24 @@ end
 
 local function sort_by_gender_desc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_by_race_desc(a, b)
+        local ag = a.data.gelded or false
+        local bg = b.data.gelded or false
+        if ag == bg then
+            return sort_by_race_desc(a, b)
+        end
+        return bg
     end
     return a.data.gender < b.data.gender
 end
 
 local function sort_by_gender_asc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_by_race_desc(a, b)
+        local ag = a.data.gelded or false
+        local bg = b.data.gelded or false
+        if ag == bg then
+            return sort_by_race_desc(a, b)
+        end
+        return ag
     end
     return a.data.gender > b.data.gender
 end
@@ -447,6 +457,7 @@ function AssignAnimal:make_choice_text(data)
     elseif data.gender == df.pronoun_type.he then
         gender_ch = CH_MALE
     end
+    gender_ch = string.format(data.gelded and 'x%sx' or ' %s ', gender_ch)
     return {
         {width=STATUS_COL_WIDTH, text=function() return self.status[self.status_revmap[data.status]].label end},
         {gap=2, width=DISPOSITION_COL_WIDTH, text=function() return DISPOSITION[DISPOSITION_REVMAP[data.disposition]].label end},
@@ -562,9 +573,13 @@ function AssignAnimal:cache_choices()
     for _, unit in ipairs(df.global.world.units.active) do
         if not is_assignable_unit(unit) then goto continue end
         local raw = df.creature_raw.find(unit.race)
+        local desc = dfhack.units.getReadableName(unit)
+        if #unit.custom_profession > 0 then
+            desc = unit.custom_profession .. ', ' .. desc
+        end
         local data = {
             unit=unit,
-            desc=dfhack.units.getReadableName(unit),
+            desc=desc,
             gender=unit.sex,
             race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
@@ -572,6 +587,7 @@ function AssignAnimal:cache_choices()
             egg=dfhack.units.isEggLayerRace(unit),
             graze=dfhack.units.isGrazer(unit),
             juvenile=not dfhack.units.isAdult(unit),
+            gelded=dfhack.units.isGelded(unit),
         }
         local choice = {
             search_key=make_search_key(data.desc, raw),

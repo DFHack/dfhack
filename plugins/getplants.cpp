@@ -74,6 +74,7 @@ enum class selectability {
 //  result in the plants not being usable for farming or even collectable at all).
 
 selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bool farming) {
+    TRACE(log, out).print("analyzing %s\n", plant->id.c_str());
     const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type[plant_material_def::basic_mat], plant->material_defs.idx[plant_material_def::basic_mat]);
     bool outOfSeason = false;
     selectability result = selectability::Nonselectable;
@@ -96,8 +97,10 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
         return selectability::Nonselectable;
     }
 
-    if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
-        basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)) {
+    if (basic_mat.isValid() &&
+        (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
+         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)))
+    {
         DEBUG(log, out).print("%s is edible\n", plant->id.c_str());
         if (farming) {
             if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW)) {
@@ -123,8 +126,10 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
         }
     }
 
-    if (basic_mat.material->reaction_product.id.size() > 0 ||
-        basic_mat.material->reaction_class.size() > 0) {
+    if (basic_mat.isValid() &&
+        (basic_mat.material->reaction_product.id.size() > 0 ||
+         basic_mat.material->reaction_class.size() > 0))
+    {
         DEBUG(log, out).print("%s has a reaction\n", plant->id.c_str());
         if (farming) {
             result = selectability::Selectable;

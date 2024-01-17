@@ -26,22 +26,6 @@ enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
-}
-
 static command_result work_now(color_ostream& out, vector<string>& parameters);
 
 static void jobCompletedHandler(color_ostream& out, void* ptr);
@@ -61,8 +45,8 @@ static void cleanup() {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -70,7 +54,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         is_enabled = enable;
         DEBUG(log,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handler, plugin_self);
         else
@@ -89,16 +73,16 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out ) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    config = World::GetPersistentData(CONFIG_KEY);
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
         DEBUG(log,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
     DEBUG(log,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
@@ -126,6 +110,11 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 static command_result work_now(color_ostream& out, vector<string>& parameters) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (parameters.empty() || parameters[0] == "status") {
         out.print("work_now is %sactively poking idle dwarves.\n", is_enabled ? "" : "not ");
         return CR_OK;

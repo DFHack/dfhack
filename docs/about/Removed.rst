@@ -117,6 +117,13 @@ existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
 
+.. _embark-tools:
+
+embark-tools
+============
+Replaced by `gui/embark-anywhere`. Other functionality was replaced by the DF
+v50 UI.
+
 .. _fix-armory:
 
 fix-armory

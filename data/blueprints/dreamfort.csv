@@ -1070,8 +1070,8 @@ t1(37x33)
 #burrow label(surface_burrows) start(19; 19) hidden() extend safety burrow to newly safe surface areas and set up surrounding clearcutting area
 
 
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x-10)"
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x27)",`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x27)"
+,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(28x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x-10)"
+,,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x27)",`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x27)",`
 ,,,`,,`,a{name=Inside+}(25x17),,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -1098,7 +1098,7 @@ t1(37x33)
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x10)"
+,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(28x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x10)"
 
 
 #build label(surface_roof) start(19; 19) hidden() roof hatch and adjacent tiles
@@ -1445,6 +1445,7 @@ zone/farming_zone
 place/farming_place
 build/farming_build
 traffic/farming_traffic
+burrow/farming_burrow
 ""
 #meta label(farming3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build remaining doors
 doors/farming_doors
@@ -1571,6 +1572,37 @@ doors/farming_doors
 ,,or,or,or,or,or,or,or,,or,or,or,,,or,,,or,or,or,,or,or,or,or,or,or,or
 ,,,,,,,,,,,,,,,or
 
+
+#burrow label(farming_burrow) start(16; 18) hidden() fix up safety burrow after channel incursions
+
+,,,,,,,,a{name=Inside+}(16x4)
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,a{name=Inside+}(18x3),,,,,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,a{name=Inside+}(19x1),`,`,`,,`,,`,`,`,`,`,,`
+,,,,,a{name=Inside+}(20x2),,,,,,`,,`,`,`,`,`,,`,,`,`,`
+,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,`,`
+,,a{name=Inside+}(23x1),,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`
+,a{name=Inside+}(28x4),,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
+,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,,`,`,,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
+,a{name=Inside+}(29x12),,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
+,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,,`,`,,,`,,,`,`,,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,a{name=Inside+}(3x1)
 
 #build label(farming_doors) start(16; 18) hidden() remaining doors
 
@@ -2012,16 +2044,16 @@ build3/services_build3
 ,`,`,`,`,`,`,`,`,`,`,`,,or,or,or,or,or,or,or,or,or,,or,,or,,or,,or
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,or,,or,,,,,or,,or,,or,,or
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
-,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,oh,oh,oh,oh,oh,ol,or
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,or,,,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
+,`,ol,ol,ol,or,or,or,ol,ol,ol,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
+,`,or,or,ol,or,or,or,ol,or,or,`,,`,,`,`,`,`,`,,`,,oh,oh,oh,oh,oh,ol,or
+,`,or,or,ol,or,or,or,ol,or,or,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
+,`,or,or,or,ol,ol,ol,or,or,or,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`,,,,,,or,,,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`,,,,,,,,,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,,`,`
@@ -2216,10 +2248,10 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,`,,`,,`,,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,h,`,`,`,`,`
 ,,,,`,`,,`,`
@@ -2288,10 +2320,10 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,`,,`,,`,,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,h,`,`,`,`,~,`,`,`,`,h
 ,,,,`,`,,`,`
@@ -2355,11 +2387,11 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,~,,~,,~,,~
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,~,`,`,~,~
-,`,c,t,`,`,~,`,`,t,c,`,,s,,`,`,`,`,`,,s,,`,`,`,~,`,`,~
-,`,c,t,`,`,`,`,`,t,c,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,t,`,`,~,~
-,`,c,t,t,c,`,c,t,t,c,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
-,`,c,t,t,c,`,c,t,t,c,`,,,,,,`,,,,,,d,,d,,d,,d
-,`,c,t,t,c,`,c,t,t,c,`,,,,,,,,,,,,b,,b,,b,,b
+,`,t,c,`,`,~,`,`,c,t,`,,s,,`,`,`,`,`,,s,,`,`,`,~,`,`,~
+,`,t,c,`,`,`,`,`,c,t,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,t,`,`,~,~
+,`,t,c,c,t,`,t,c,c,t,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
+,`,t,c,c,t,`,t,c,c,t,`,,,,,,`,,,,,,d,,d,,d,,d
+,`,t,c,c,t,`,t,c,c,t,`,,,,,,,,,,,,b,,b,,b,,b
 ,`,~,~,~,~,`,~,~,~,~,`
 ,`,~,~,~,~,`,~,~,~,~,`
 ,`,~,~,~,~,`,~,~,~,~,`

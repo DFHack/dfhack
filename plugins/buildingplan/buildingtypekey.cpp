@@ -8,7 +8,7 @@ using std::string;
 using std::vector;
 
 namespace DFHack {
-    DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, control);
 }
 
 using namespace DFHack;
@@ -21,7 +21,7 @@ static BuildingTypeKey deserialize(color_ostream &out, const std::string &serial
     vector<string> key_parts;
     split_string(&key_parts, serialized, ",");
     if (key_parts.size() != 3) {
-        WARN(status,out).print("invalid key_str: '%s'\n", serialized.c_str());
+        WARN(control,out).print("invalid key_str: '%s'\n", serialized.c_str());
         return BuildingTypeKey(df::building_type::NONE, -1, -1);
     }
     return BuildingTypeKey((df::building_type)string_to_int(key_parts[0]),

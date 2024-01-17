@@ -111,8 +111,8 @@ static bool call_burrow_lua(color_ostream *out, const char *fn_name,
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -136,8 +136,8 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 //
 
 static void init_diggers(color_ostream& out) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        DEBUG(status, out).print("world not yet loaded; not scanning jobs\n");
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        DEBUG(status, out).print("map not yet loaded; not scanning jobs\n");
         return;
     }
 

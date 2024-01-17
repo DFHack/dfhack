@@ -2,13 +2,6 @@
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <algorithm>
-#include <utility>
-#include <cstdint>
-
 #include "modules/Units.h"
 #include "modules/Buildings.h"
 #include "modules/Persistence.h"
@@ -24,19 +17,16 @@
 using namespace DFHack;
 using namespace df::enums;
 
-
-// <BOILERPLATE>
 DFHACK_PLUGIN("preserve-tombs");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 
-
 static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
 static PersistentDataItem config;
 
 static int32_t cycle_timestamp;
-static constexpr int32_t cycle_freq = 100;
+static constexpr int32_t cycle_freq = 107;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
@@ -45,26 +35,9 @@ enum ConfigValues {
 static std::unordered_map<int32_t, int32_t> tomb_assignments;
 
 namespace DFHack {
-    DBG_DECLARE(preservetombs, config, DebugCategory::LINFO);
+    DBG_DECLARE(preservetombs, control, DebugCategory::LINFO);
     DBG_DECLARE(preservetombs, cycle, DebugCategory::LINFO);
     DBG_DECLARE(preservetombs, event, DebugCategory::LINFO);
-}
-
-
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
 }
 
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id);
@@ -81,8 +54,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot use %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot use %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
     if (params.size() == 0 || params[0] == "status") {
@@ -115,16 +88,16 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
 EventManager::EventHandler assign_tomb_handler(onUnitDeath, 0);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(config,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
             EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler, plugin_self);
             update_tomb_assignments(out);
@@ -134,7 +107,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::unregisterAll(plugin_self);
         }
     } else {
-        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -142,25 +115,25 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
 // PluginManager handles unregistering our handler from EventManager,
 // so we don't have to do that here
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
     return CR_OK;
@@ -170,7 +143,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (event == DFHack::SC_WORLD_UNLOADED) {
         tomb_assignments.clear();
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -184,10 +157,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         update_tomb_assignments(out);
     return CR_OK;
 }
-// </BOILERPLATE>
-
-
-
 
 // On unit death - check if we assigned them a tomb
 //
@@ -212,7 +181,6 @@ void onUnitDeath(color_ostream& out, void* ptr) {
 
 }
 
-
 // Update tomb assignments
 //
 //
@@ -220,7 +188,6 @@ static void update_tomb_assignments(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
     // check tomb civzones for assigned units
     for (auto* bld : world->buildings.other.ZONE_TOMB) {
-
         auto* tomb = virtual_cast<df::building_civzonest>(bld);
         if (!tomb || !tomb->flags.bits.exists) continue;
         if (!tomb->assigned_unit) continue;
@@ -232,14 +199,11 @@ static void update_tomb_assignments(color_ostream &out) {
             tomb_assignments.emplace(tomb->assigned_unit_id, tomb->id);
             DEBUG(cycle, out).print("%s new tomb assignment, unit %d to tomb %d\n",
                                     plugin_name, tomb->assigned_unit_id, tomb->id);
-        }
-
-        else if (it->second != tomb->id) {
+        } else if (it->second != tomb->id) {
             DEBUG(cycle, out).print("%s tomb assignment to %d changed, (old: %d, new: %d)\n",
                                     plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
             it->second = tomb->id;
         }
-
     }
 
     // now check our civzones for unassignment / deleted zone
@@ -263,15 +227,12 @@ static void update_tomb_assignments(color_ostream &out) {
 
         return false;
     });
-
 }
-
 
 // ASSIGN UNIT TO TOMB
 //
 //
 static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
-
     df::unit* unit = df::unit::find(unit_id);
 
     if (!unit || !Units::isDead(unit)) return false;

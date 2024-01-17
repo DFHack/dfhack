@@ -372,7 +372,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(product_hook, produce).apply(enable);
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
     if (find_reactions(out)) {
         out.print("Detected spatter add reactions - enabling plugin.\n");
         enable_hooks(true);

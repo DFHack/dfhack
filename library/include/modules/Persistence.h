@@ -23,21 +23,19 @@ distribution.
 */
 
 #pragma once
-#ifndef CL_MOD_PERSISTENCE
-#define CL_MOD_PERSISTENCE
 
 /**
  * \defgroup grp_persistence Persistence: code related to saving and loading data
  * @ingroup grp_modules
  */
 
-#include <fstream>
+#include "ColorText.h"
+#include "Error.h"
+#include "Export.h"
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "Export.h"
-#include "Error.h"
 
 namespace DFHack
 {
@@ -45,33 +43,58 @@ namespace DFHack
 
     namespace Persistence
     {
-        struct LegacyData;
-        class Internal;
+        struct DataEntry;
     }
 
     class DFHACK_EXPORT PersistentDataItem {
-        size_t index;
-        std::shared_ptr<Persistence::LegacyData> data;
+        std::shared_ptr<Persistence::DataEntry> data;
+        friend struct Persistence::DataEntry;
 
     public:
-        static const int NumInts = 7;
+        static const size_t NumInts = 7;
 
         bool isValid() const;
-        size_t get_index() const
-        {
-            CHECK_INVALID_ARGUMENT(isValid());
-            return index;
-        }
-        int entry_id() const { return isValid() ? int(index) + 100 : 0; }
 
-        int raw_id() const { return isValid() ? -int(index) - 100 : 0; }
+        // Used for associating this data item with a map block tile mask
+        int fake_df_id();
 
+        int entity_id() const;
         const std::string &key() const;
 
+        // these throw if used when isValid() returns false
         std::string &val();
         const std::string &val() const;
         int &ival(int i);
         int ival(int i) const;
+
+        // safer, non-throwing accessors with convenience bool functions
+        int get_int(int i) const {
+            if (!isValid())
+                return -1;
+            return ival(i);
+        }
+        bool get_bool(int i) {
+            return get_int(i) == 1;
+        }
+        void set_int(int i, int value) {
+            if (isValid())
+                ival(i) = value;
+        }
+        void set_bool(int i, bool value) {
+            set_int(i, value ? 1 : 0);
+        }
+        const std::string & get_str() {
+            static const std::string empty;
+            return isValid() ? val() : empty;
+        }
+        void set_str(const std::string value) {
+            if (isValid())
+                val() = value;
+        }
+
+        // Data mangling functions below this point are deprecated and
+        // will be removed in some future release when we have provided
+        // an alternate way to store binary data.
 
         // Pack binary data into string field.
         // Since DF serialization chokes on NUL bytes,
@@ -158,75 +181,40 @@ namespace DFHack
             set_uint28(off, val);
         }
 
-        PersistentDataItem() : index(0), data(nullptr) {}
-        PersistentDataItem(size_t index, const std::shared_ptr<Persistence::LegacyData> &data)
-            : index(index), data(data) {}
+        PersistentDataItem() : data(nullptr) {}
+        PersistentDataItem(const std::shared_ptr<Persistence::DataEntry> &data) : data(data) {}
     };
+
     namespace Persistence
     {
-        class Internal
-        {
-            static void clear();
-            static void save();
-            static void load();
+        class Internal {
+            static void clear(color_ostream& out);
+            static void save(color_ostream& out);
+            static void load(color_ostream& out);
             friend class ::DFHack::Core;
         };
 
-        // Returns a new PersistentDataItem with the specified key.
+        const int WORLD_ENTITY_ID = -30000;
+
+        // Returns a new PersistentDataItem with the specified key associated wtih the specified
+        // entity_id. Pass WORLD_ENTITY_ID for the entity_id to indicate the global world context.
         // If there is no world loaded or the key is empty, returns an invalid item.
-        DFHACK_EXPORT PersistentDataItem addItem(const std::string &key);
+        DFHACK_EXPORT PersistentDataItem addItem(int entity_id, const std::string &key);
         // Returns an existing PersistentDataItem with the specified key.
         // If "added" is not null and there is no such item, a new item is returned and
         // the bool value is set to true. If "added" is not null and an item is found or
         // no new item can be created, the bool value is set to false.
-        DFHACK_EXPORT PersistentDataItem getByKey(const std::string &key, bool *added = nullptr);
-        // Returns an existing PersistentDataItem with the specified index.
-        // If there is no world loaded or the index is empty, returns an invalid item.
-        DFHACK_EXPORT PersistentDataItem getByIndex(size_t index);
+        DFHACK_EXPORT PersistentDataItem getByKey(int entity_id, const std::string &key, bool *added = nullptr);
         // If the item is invalid, returns false. Otherwise, deletes the item and returns
         // true. All references to the item are invalid as soon as this function returns.
         DFHACK_EXPORT bool deleteItem(const PersistentDataItem &item);
         // Fills the vector with references to each persistent item.
-        DFHACK_EXPORT void getAll(std::vector<PersistentDataItem> &vec);
+        DFHACK_EXPORT void getAll(std::vector<PersistentDataItem> &vec, int entity_id);
         // Fills the vector with references to each persistent item with a key that is
         // greater than or equal to "min" and less than "max".
-        DFHACK_EXPORT void getAllByKeyRange(std::vector<PersistentDataItem> &vec, const std::string &min, const std::string &max);
+        DFHACK_EXPORT void getAllByKeyRange(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &min, const std::string &max);
         // Fills the vector with references to each persistent item with a key that is
         // equal to the given key.
-        DFHACK_EXPORT void getAllByKey(std::vector<PersistentDataItem> &vec, const std::string &key);
-
-#if defined(__GNUC__) && __GNUC__ < 5
-        // file stream move constructors are missing in libstdc++ before version 5.
-        template<typename T>
-        class DFHACK_EXPORT gcc_4_fstream_shim : public T
-        {
-            const std::string file;
-        public:
-            explicit gcc_4_fstream_shim() : T(), file() {}
-            explicit gcc_4_fstream_shim(const std::string &file) : T(file), file() {}
-            gcc_4_fstream_shim(gcc_4_fstream_shim<T> && s) : T(), file(s.file)
-            {
-                if (!file.empty())
-                {
-                    T::open(file.c_str());
-                }
-            }
-        };
-#define FSTREAM(x) gcc_4_fstream_shim<x>
-#else
-#define FSTREAM(x) x
-#endif
-
-        // Returns an input stream that data can be read from. If no world is currently loaded,
-        // or no data has been saved with the specified key, the stream is invalid and acts
-        // as if the file is empty.
-        DFHACK_EXPORT FSTREAM(std::ifstream) readSaveData(const std::string &key);
-        // Returns an output stream that data can be saved to. If no world is currently loaded,
-        // an invalid stream is returned, and writing to it has no effect.
-        DFHACK_EXPORT FSTREAM(std::ofstream) writeSaveData(const std::string &key);
-
-#undef FSTREAM
+        DFHACK_EXPORT void getAllByKey(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &key);
     }
 }
-
-#endif

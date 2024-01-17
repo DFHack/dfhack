@@ -70,7 +70,7 @@ jobs:
         run: sudo apt-get install libgl-dev
       - name: Install doc dependencies
         if: inputs.docs
-        run: pip install 'sphinx<4.4.0'
+        run: pip install 'sphinx'
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:

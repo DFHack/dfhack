@@ -249,232 +249,100 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
  * Per-world persistent configuration storage API *
  **************************************************/
 
-static PersistentDataItem persistent_by_struct(lua_State *state, int idx)
-{
-    lua_getfield(state, idx, "entry_id");
-    int id = lua_tointeger(state, -1);
-    lua_pop(state, 1);
+typedef PersistentDataItem (*get_data_fn)(lua_State *);
 
-    PersistentDataItem ref = World::GetPersistentData(id);
+static PersistentDataItem get_site_data(lua_State *L) {
+    const char *key = lua_tostring(L, 1);
+    if (!key)
+        luaL_argerror(L, 1, "no key specified");
 
-    if (ref.isValid())
-    {
-        lua_getfield(state, idx, "key");
-        const char *str = lua_tostring(state, -1);
-        if (!str || str != ref.key())
-            luaL_argerror(state, idx, "inconsistent id and key");
-        lua_pop(state, 1);
-    }
-
-    return ref;
+    return World::GetPersistentSiteData(key);
 }
 
-static int read_persistent(lua_State *state, PersistentDataItem ref, bool create)
-{
-    if (!ref.isValid())
-    {
-        lua_pushnil(state);
-        lua_pushstring(state, "entry not found");
-        return 2;
-    }
+static PersistentDataItem get_world_data(lua_State *L) {
+    const char *key = lua_tostring(L, 1);
+    if (!key)
+        luaL_argerror(L, 1, "no key specified");
 
-    if (create)
-        lua_createtable(state, 0, 4);
-
-    lua_pushvalue(state, lua_upvalueindex(1));
-    lua_setmetatable(state, -2);
-
-    lua_pushinteger(state, ref.entry_id());
-    lua_setfield(state, -2, "entry_id");
-    lua_pushstring(state, ref.key().c_str());
-    lua_setfield(state, -2, "key");
-    lua_pushstring(state, ref.val().c_str());
-    lua_setfield(state, -2, "value");
-
-    lua_createtable(state, PersistentDataItem::NumInts, 0);
-    for (int i = 0; i < PersistentDataItem::NumInts; i++)
-    {
-        lua_pushinteger(state, ref.ival(i));
-        lua_rawseti(state, -2, i+1);
-    }
-    lua_setfield(state, -2, "ints");
-
-    return 1;
+    return World::GetPersistentWorldData(key);
 }
 
-static PersistentDataItem get_persistent(lua_State *state)
-{
-    luaL_checkany(state, 1);
+static int dfhack_persistent_get_data_string(lua_State *L, get_data_fn get_data) {
+    CoreSuspender suspend;
 
-    if (lua_istable(state, 1))
-    {
-        Lua::StackUnwinder frame(state);
+    PersistentDataItem data = get_data(L);
 
-        if (!lua_getmetatable(state, 1) ||
-            !lua_rawequal(state, -1, lua_upvalueindex(1)))
-            luaL_argerror(state, 1, "invalid table type");
-
-        return persistent_by_struct(state, 1);
-    }
+    if (!data.isValid())
+        lua_pushnil(L);
     else
-    {
-        const char *str = luaL_checkstring(state, 1);
-
-        return World::GetPersistentData(str);
-    }
-}
-
-static int dfhack_persistent_get(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    auto ref = get_persistent(state);
-
-    return read_persistent(state, ref, !lua_istable(state, 1));
-}
-
-static int dfhack_persistent_delete(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    auto ref = get_persistent(state);
-
-    bool ok = World::DeletePersistentData(ref);
-
-    lua_pushboolean(state, ok);
-    return 1;
-}
-
-static int dfhack_persistent_get_all(lua_State *state)
-{
-    CoreSuspender suspend;
-
-    const char *str = luaL_checkstring(state, 1);
-    bool prefix = (lua_gettop(state)>=2 ? lua_toboolean(state,2) : false);
-
-    std::vector<PersistentDataItem> data;
-    World::GetPersistentData(&data, str, prefix);
-
-    if (data.empty())
-    {
-        lua_pushnil(state);
-    }
-    else
-    {
-        lua_createtable(state, data.size(), 0);
-        for (size_t i = 0; i < data.size(); ++i)
-        {
-            read_persistent(state, data[i], true);
-            lua_rawseti(state, -2, i+1);
-        }
-    }
+        Lua::Push(L, data.val());
 
     return 1;
 }
 
-static int dfhack_persistent_save(lua_State *state)
-{
+typedef PersistentDataItem (*raw_get_data_fn)(const std::string &, bool);
+
+static int dfhack_persistent_save_data_string(lua_State *L, raw_get_data_fn get_data) {
     CoreSuspender suspend;
 
-    lua_settop(state, 2);
-    luaL_checktype(state, 1, LUA_TTABLE);
-    bool add = lua_toboolean(state, 2);
-
-    lua_getfield(state, 1, "key");
-    const char *str = lua_tostring(state, -1);
+    const char *key = lua_tostring(L, 1);
+    if (!key)
+        luaL_argerror(L, 1, "no key specified");
+    const char *str = lua_tostring(L, 2);
     if (!str)
-        luaL_argerror(state, 1, "no key field");
+        luaL_argerror(L, 2, "no data string specified");
 
-    lua_settop(state, 1);
+    PersistentDataItem data = get_data(key, true);
+    if (!data.isValid())
+        luaL_error(L, "unable to save data in key '%s'", key);
 
-    // Retrieve existing or create a new entry
-    PersistentDataItem ref;
-    bool added = false;
+    data.val() = str;
 
-    if (add)
-    {
-        ref = World::AddPersistentData(str);
-        added = true;
-    }
-    else if (lua_getmetatable(state, 1))
-    {
-        if (!lua_rawequal(state, -1, lua_upvalueindex(1)))
-            return luaL_argerror(state, 1, "invalid table type");
-        lua_pop(state, 1);
-
-        ref = persistent_by_struct(state, 1);
-    }
-    else
-    {
-        ref = World::GetPersistentData(str);
-    }
-
-    // Auto-add if not found
-    if (!ref.isValid())
-    {
-        ref = World::AddPersistentData(str);
-        if (!ref.isValid())
-            luaL_error(state, "cannot create persistent entry");
-        added = true;
-    }
-
-    // Copy data from lua to C++ memory
-    lua_getfield(state, 1, "value");
-    if (const char *str = lua_tostring(state, -1))
-        ref.val() = str;
-    lua_pop(state, 1);
-
-    lua_getfield(state, 1, "ints");
-    if (lua_istable(state, -1))
-    {
-        for (int i = 0; i < PersistentDataItem::NumInts; i++)
-        {
-            lua_rawgeti(state, -1, i+1);
-            if (lua_isnumber(state, -1))
-                ref.ival(i) = lua_tointeger(state, -1);
-            lua_pop(state, 1);
-        }
-    }
-    lua_pop(state, 1);
-
-    // Reinitialize lua from C++ and return
-    read_persistent(state, ref, false);
-    lua_pushboolean(state, added);
-    return 2;
+    return 0;
 }
 
-static int dfhack_persistent_getTilemask(lua_State *state)
-{
+static int delete_site_data(lua_State *L, get_data_fn get_data) {
     CoreSuspender suspend;
 
-    lua_settop(state, 3);
-    auto ref = get_persistent(state);
-    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
-    bool create = lua_toboolean(state, 3);
+    PersistentDataItem data = get_data(L);
 
-    Lua::PushDFObject(state, World::getPersistentTilemask(ref, block, create));
+    bool ok = World::DeletePersistentData(data);
+
+    lua_pushboolean(L, ok);
     return 1;
 }
 
-static int dfhack_persistent_deleteTilemask(lua_State *state)
-{
-    CoreSuspender suspend;
+static int dfhack_persistent_get_site_data_string(lua_State *L) {
+    return dfhack_persistent_get_data_string(L, get_site_data);
+}
 
-    lua_settop(state, 2);
-    auto ref = get_persistent(state);
-    auto block = Lua::CheckDFObject<df::map_block>(state, 2);
+static int dfhack_persistent_save_site_data_string(lua_State *L) {
+    return dfhack_persistent_save_data_string(L, World::GetPersistentSiteData);
+}
 
-    lua_pushboolean(state, World::deletePersistentTilemask(ref, block));
-    return 1;
+static int dfhack_persistent_delete_site_data(lua_State *L) {
+    return delete_site_data(L, get_site_data);
+}
+
+static int dfhack_persistent_get_world_data_string(lua_State *L) {
+    return dfhack_persistent_get_data_string(L, get_world_data);
+}
+
+static int dfhack_persistent_save_world_data_string(lua_State *L) {
+    return dfhack_persistent_save_data_string(L, World::GetPersistentWorldData);
+}
+
+static int dfhack_persistent_delete_world_data(lua_State *L) {
+    return delete_site_data(L, get_world_data);
 }
 
 static const luaL_Reg dfhack_persistent_funcs[] = {
-    { "get", dfhack_persistent_get },
-    { "delete", dfhack_persistent_delete },
-    { "get_all", dfhack_persistent_get_all },
-    { "save", dfhack_persistent_save },
-    { "getTilemask", dfhack_persistent_getTilemask },
-    { "deleteTilemask", dfhack_persistent_deleteTilemask },
+    { "getSiteDataString", dfhack_persistent_get_site_data_string },
+    { "saveSiteDataString", dfhack_persistent_save_site_data_string },
+    { "deleteSiteData", dfhack_persistent_delete_site_data },
+    { "getWorldDataString", dfhack_persistent_get_world_data_string },
+    { "saveWorldDataString", dfhack_persistent_save_world_data_string },
+    { "deleteWorldData", dfhack_persistent_delete_world_data },
     { NULL, NULL }
 };
 
@@ -1445,6 +1313,7 @@ static std::string getHackPath() { return Core::getInstance().getHackPath(); }
 
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
+static bool isSiteLoaded() { return World::IsSiteLoaded(); }
 
 static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
@@ -1464,6 +1333,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
+    WRAP(isSiteLoaded),
     WRAPM(Translation, TranslateName),
     WRAP(df2utf),
     WRAP(utf2df),

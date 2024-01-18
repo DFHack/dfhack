@@ -112,7 +112,7 @@ end
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
--- TODO: this should account for erroring constructions
+-- ** TODO: this should account for erroring constructions
 local function get_quantity(filter, hollow, bounds)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
@@ -873,14 +873,24 @@ function PlannerOverlay:render(dc)
     PlannerOverlay.super.render(self, dc)
 end
 
+local function tile_is_construction(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if not tt then return false end
+    return df.tiletype.attrs[tt].material == df.tiletype_material.CONSTRUCTION
+end
+
 local ONE_BY_ONE = xy2pos(1, 1)
+
+local function can_place_construction(can_reconstruct, pos)
+    return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and (can_reconstruct or not tile_is_construction(pos))
+end
 
 function PlannerOverlay:onRenderFrame(dc, rect)
     PlannerOverlay.super.onRenderFrame(self, dc, rect)
 
+    local buildingplan = require('plugins.buildingplan')
     if reset_counts_flag then
         self:reset()
-        local buildingplan = require('plugins.buildingplan')
         self.subviews.engraved:setOption(buildingplan.getSpecials(
             uibs.building_type, uibs.building_subtype, uibs.custom_type).engraved or false)
         self.subviews.empty:setOption(buildingplan.getSpecials(
@@ -898,12 +908,14 @@ function PlannerOverlay:onRenderFrame(dc, rect)
 
     local hollow = self.subviews.hollow:getOptionValue()
     local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
+    local can_reconstruct = buildingplan.getGlobalSettings().reconstruct
 
-    local get_pen_fn = is_construction() and function(pos)
-        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
-    end or function()
-        return default_pen
-    end
+    local get_pen_fn = is_construction() and
+        function(pos)
+            return can_place_construction(can_reconstruct, pos) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
+        end or function()
+            return default_pen
+        end
 
     local function get_overlay_pen(pos)
         if not hollow then return get_pen_fn(pos) end

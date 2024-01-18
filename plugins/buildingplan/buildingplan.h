@@ -22,6 +22,7 @@ enum ConfigValues {
     CONFIG_BOULDERS = 2,
     CONFIG_LOGS = 3,
     CONFIG_BARS = 4,
+    CONFIG_RECONSTRUCT = 5,
 };
 
 enum FilterConfigValues {

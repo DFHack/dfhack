@@ -248,7 +248,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-static void validate_config(color_ostream &out, bool verbose = false) {
+static void validate_materials_config(color_ostream &out, bool verbose = false) {
     if (config.get_bool(CONFIG_BLOCKS)
             || config.get_bool(CONFIG_BOULDERS)
             || config.get_bool(CONFIG_LOGS)
@@ -307,7 +307,9 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
     }
-    validate_config(out);
+    if (config.get_int(CONFIG_RECONSTRUCT) == -1)
+        config.set_bool(CONFIG_RECONSTRUCT, true);
+    validate_materials_config(out);
 
     DEBUG(control,out).print("loading persisted state\n");
 
@@ -548,6 +550,8 @@ static void printStatus(color_ostream &out) {
     out.print("  use boulders: %s\n", config.get_bool(CONFIG_BOULDERS) ? "yes" : "no");
     out.print("  use logs:     %s\n", config.get_bool(CONFIG_LOGS) ? "yes" : "no");
     out.print("  use bars:     %s\n", config.get_bool(CONFIG_BARS) ? "yes" : "no");
+    out.print("  plan constructions on tiles with existing constructed floors/ramps when using box select: %s\n",
+        config.get_bool(CONFIG_RECONSTRUCT) ? "yes" : "no");
     out.print("\n");
 
     size_t bld_count = 0;
@@ -598,12 +602,14 @@ static bool setSetting(color_ostream &out, string name, bool value) {
         config.set_bool(CONFIG_LOGS, value);
     else if (name == "bars")
         config.set_bool(CONFIG_BARS, value);
+    else if (name == "reconstruct")
+        config.set_bool(CONFIG_RECONSTRUCT, value);
     else {
         out.printerr("unrecognized setting: '%s'\n", name.c_str());
         return false;
     }
 
-    validate_config(out, true);
+    validate_materials_config(out, true);
     call_buildingplan_lua(&out, "signal_reset");
     return true;
 }
@@ -747,6 +753,7 @@ static int getGlobalSettings(lua_State *L) {
     settings.emplace("logs", config.get_bool(CONFIG_LOGS));
     settings.emplace("boulders", config.get_bool(CONFIG_BOULDERS));
     settings.emplace("bars", config.get_bool(CONFIG_BARS));
+    settings.emplace("reconstruct", config.get_bool(CONFIG_RECONSTRUCT));
     Lua::Push(L, settings);
     return 1;
 }

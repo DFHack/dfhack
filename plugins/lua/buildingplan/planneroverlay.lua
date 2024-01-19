@@ -91,6 +91,11 @@ local function get_cur_area_dims(bounds)
             bounds.z2 - bounds.z1 + 1
 end
 
+local function get_selected_volume(bounds)
+    local w, h, depth = get_cur_area_dims(bounds)
+    return w * h * depth
+end
+
 local function is_pressure_plate()
     return uibs.building_type == df.building_type.Trap
             and uibs.building_subtype == df.trap_type.PressurePlate
@@ -109,10 +114,34 @@ local function is_weapon_or_spike_trap()
     return is_weapon_trap() or is_spike_trap()
 end
 
+local function is_construction()
+    return uibs.building_type == df.building_type.Construction
+end
+
+local function tile_is_construction(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if not tt then return false end
+    return df.tiletype.attrs[tt].material == df.tiletype_material.CONSTRUCTION
+end
+
+local ONE_BY_ONE = xy2pos(1, 1)
+
+local function can_reconstruct(bounds)
+    return get_selected_volume(bounds) == 1 or require('plugins.buildingplan').getGlobalSettings().reconstruct
+end
+
+local function can_place_construction(reconstruct, pos)
+    return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and (reconstruct or not tile_is_construction(pos))
+end
+
+local function is_interior(bounds, x, y)
+    return x ~= bounds.x1 and x ~= bounds.x2 and
+        y ~= bounds.y1 and y ~= bounds.y2
+end
+
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
--- TODO: this should account for erroring constructions
 local function get_quantity(filter, hollow, bounds)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
@@ -122,14 +151,28 @@ local function get_quantity(filter, hollow, bounds)
         return weapon_quantity
     end
     local quantity = filter.quantity or 1
+    bounds = bounds or get_selected_bounds()
     local dimx, dimy, dimz = get_cur_area_dims(bounds)
     if quantity < 1 then
         return (((dimx * dimy) // 4) + 1) * dimz
     end
-    if hollow and dimx > 2 and dimy > 2 then
-        return quantity * (2*dimx + 2*dimy - 4) * dimz
+    if bounds and is_construction() then
+        local reconstruct = can_reconstruct(bounds)
+        local count = 0
+        for z = bounds.z1, bounds.z2 do
+            for y = bounds.y1, bounds.y2 do
+                for x = bounds.x1, bounds.x2 do
+                    if hollow and is_interior(bounds, x, y) then goto continue end
+                    if can_place_construction(reconstruct, xyz2pos(x, y, z)) then
+                        count = count + 1
+                    end
+                    ::continue::
+                end
+            end
+        end
+        return quantity * count
     end
-    return quantity * dimx * dimy * dimz
+    return quantity * get_selected_volume(bounds)
 end
 
 local function cur_building_has_no_area()
@@ -139,10 +182,6 @@ local function cur_building_has_no_area()
     -- this works because all variable-size buildings have either no item
     -- filters or a quantity of -1 for their first (and only) item
     return filters and filters[1] and (not filters[1].quantity or filters[1].quantity > 0)
-end
-
-local function is_construction()
-    return uibs.building_type == df.building_type.Construction
 end
 
 local function is_tutorial_open()
@@ -873,8 +912,6 @@ function PlannerOverlay:render(dc)
     PlannerOverlay.super.render(self, dc)
 end
 
-local ONE_BY_ONE = xy2pos(1, 1)
-
 function PlannerOverlay:onRenderFrame(dc, rect)
     PlannerOverlay.super.onRenderFrame(self, dc, rect)
 
@@ -899,11 +936,15 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     local hollow = self.subviews.hollow:getOptionValue()
     local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
 
-    local get_pen_fn = is_construction() and function(pos)
-        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
-    end or function()
-        return default_pen
-    end
+    -- always allow reconstruction if it's a 1x1x1 selection (meaning the player selected that spot specifically)
+    local reconstruct = can_reconstruct(bounds)
+
+    local get_pen_fn = is_construction() and
+        function(pos)
+            return can_place_construction(reconstruct, pos) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
+        end or function()
+            return default_pen
+        end
 
     local function get_overlay_pen(pos)
         if not hollow then return get_pen_fn(pos) end
@@ -958,7 +999,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         filters[2].quantity = get_quantity(filters[2])
     end
     for z=pd.z1,pd.z2 do for y=pd.y1,pd.y2 do for x=pd.x1,pd.x2 do
-        if hollow and x ~= pd.x1 and x ~= pd.x2 and y ~= pd.y1 and y ~= pd.y2 then
+        if hollow and is_interior(pd, x, y) then
             goto continue
         end
         local pos = xyz2pos(x, y, z)

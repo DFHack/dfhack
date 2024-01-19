@@ -495,6 +495,23 @@ function GlobalSettingsPage:init()
             label_width=8,
             on_change=self:callback('update_setting', 'bars'),
         },
+        widgets.Panel{
+            frame={h=1},
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='reconstruct',
+            frame={l=0},
+            key='CUSTOM_M',
+            label='Multi-rebuild',
+            on_change=self:callback('update_setting', 'reconstruct'),
+        },
+        widgets.Label{
+            text={
+                '  Plan constructions on tiles with existing', NEWLINE,
+                '  constructed floors/ramps when using box select.'
+            },
+            text_pen=COLOR_GRAY,
+        },
     }
 
     self:init_settings()
@@ -507,6 +524,7 @@ function GlobalSettingsPage:init_settings()
     subviews.logs:setOption(settings.logs)
     subviews.boulders:setOption(settings.boulders)
     subviews.bars:setOption(settings.bars)
+    subviews.reconstruct:setOption(settings.reconstruct)
 end
 
 function GlobalSettingsPage:update_setting(setting, val)

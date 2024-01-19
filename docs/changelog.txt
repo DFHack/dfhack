@@ -68,10 +68,12 @@ Template for new versions:
 - Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
 - DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there are certain vanilla screen elements behind them
 - `buildingplan`: when you save a game and load it again, newly planned buildings are now correctly placed in line after existing planned buildings of the same type
+- `buildingplan`: show correct number of materials required when laying down areas of constructions and some of those constructions are on invalid tiles
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline
 - `autoclothing` : now does not consider worn (x) clothing as usable/available, should help with using with `tailor` at same time
+- `buildingplan`: add option for preventing constructions from being planned on top of existing constructions
 - `burrow`: flood fill now requires an explicit toggle before it is enabled to help prevent accidental flood fills
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort

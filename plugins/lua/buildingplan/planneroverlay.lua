@@ -121,7 +121,11 @@ end
 local function tile_is_construction(pos)
     local tt = dfhack.maps.getTileType(pos)
     if not tt then return false end
-    return df.tiletype.attrs[tt].material == df.tiletype_material.CONSTRUCTION
+    if df.tiletype.attrs[tt].material ~= df.tiletype_material.CONSTRUCTION then
+        return false
+    end
+    local construction = df.construction.find(pos)
+    return construction and not construction.flags.top_of_wall
 end
 
 local ONE_BY_ONE = xy2pos(1, 1)
@@ -903,7 +907,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L_DOWN or keys.SELECT
+   return keys._MOUSE_L or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)
@@ -998,11 +1002,15 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     elseif is_weapon_trap() then
         filters[2].quantity = get_quantity(filters[2])
     end
+    local reconstruct = can_reconstruct(pd)
     for z=pd.z1,pd.z2 do for y=pd.y1,pd.y2 do for x=pd.x1,pd.x2 do
         if hollow and is_interior(pd, x, y) then
             goto continue
         end
         local pos = xyz2pos(x, y, z)
+        if is_construction() and not can_place_construction(reconstruct, pos) then
+            goto continue
+        end
         if is_stairs() then
             subtype = self:get_stairs_subtype(pos, pd)
         end
@@ -1017,7 +1025,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         -- assign fields for the types that need them. we can't pass them all in
         -- to the call to constructBuilding since attempting to assign unrelated
         -- fields to building types that don't support them causes errors.
-        for k,v in pairs(bld) do
+        for k in pairs(bld) do
             if k == 'friction' then bld.friction = uibs.friction end
             if k == 'use_dump' then bld.use_dump = uibs.use_dump end
             if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end

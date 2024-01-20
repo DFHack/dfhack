@@ -68,6 +68,7 @@ Template for new versions:
 - Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
 - DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there are certain vanilla screen elements behind them
 - `buildingplan`: when you save a game and load it again, newly planned buildings are now correctly placed in line after existing planned buildings of the same type
+- `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so items aren't permanently unavailable!
 - `buildingplan`: show correct number of materials required when laying down areas of constructions and some of those constructions are on invalid tiles
 
 ## Misc Improvements

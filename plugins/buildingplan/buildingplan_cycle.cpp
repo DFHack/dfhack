@@ -70,12 +70,20 @@ static bool isUnusableBar(color_ostream& out, df::item* item) {
     return ok.bits.soap;
 }
 
+static bool isInWheelbarrow(color_ostream& out, df::item* item) {
+    auto container = Items::getContainer(item);
+    if (!container || container->getType() != df::item_type::TOOL)
+        return false;
+    return container->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING);
+}
+
 bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile()
         && isAccessible(out, item)
-        && !isUnusableBar(out, item);
+        && !isUnusableBar(out, item)
+        && !isInWheelbarrow(out, item);
 }
 
 bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {

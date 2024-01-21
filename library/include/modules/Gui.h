@@ -32,14 +32,17 @@ distribution.
 #include "Types.h"
 
 #include "DataDefs.h"
-#include "df/init.h"
-#include "df/plotinfost.h"
-#include "df/announcement_type.h"
 #include "df/announcement_flags.h"
-#include "df/building_stockpilest.h"
 #include "df/announcement_infost.h"
+#include "df/announcement_type.h"
+#include "df/building_stockpilest.h"
+#include "df/init.h"
+#include "df/markup_text_boxst.h"
+#include "df/plotinfost.h"
+#include "df/report.h"
 #include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
+#include "df/world.h"
 
 #include "modules/GuiHooks.h"
 
@@ -129,8 +132,18 @@ namespace DFHack
         DFHACK_EXPORT void writeToGamelog(std::string message);
 
         DFHACK_EXPORT int makeAnnouncement(df::announcement_type type, df::announcement_flags mode, df::coord pos, std::string message, int color = 7, bool bright = true);
-        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index);
-        DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index);
+
+        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, df::report *report, bool update_alert = false);
+        DFHACK_EXPORT inline bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert = false)
+        {
+            return addCombatReport(unit, slot, vector_get(df::global::world->status.reports, report_index), update_alert);
+        }
+
+        DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::report *report);
+        DFHACK_EXPORT inline bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
+        {
+            return addCombatReportAuto(unit, mode, vector_get(df::global::world->status.reports, report_index));
+        }
 
         // Show a plain announcement, or a titan-style popup message
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);
@@ -138,12 +151,22 @@ namespace DFHack
         DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
 
         // Show an announcement with effects determined by announcements.txt
-        DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL);
+        DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
+                                                df::unit *unit1 = NULL, df::unit *unit2 = NULL);
 
         // Process an announcement exactly like DF would, which might result in no announcement
-        DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_infost r, std::string message);
+        DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_infost info, std::string message);
         DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
                                               df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool is_sparring = false);
+        /*
+         * Markup Text Box functions
+         */
+        // Clear MTB before use
+        DFHACK_EXPORT void MTB_Clear(df::markup_text_boxst *mtb);
+        // Build MTB's word vector from string
+        DFHACK_EXPORT void MTB_Parse(df::markup_text_boxst *mtb, std::string parse_text);
+        // Size MTB appropriately and place words at proper positions
+        DFHACK_EXPORT void MTB_Prepare(df::markup_text_boxst *mtb, int32_t width = 50);
 
         /*
          * Cursor and window map coords

@@ -66,6 +66,7 @@ Template for new versions:
 - When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
 - `getplants`: fix crash when processing mod-added plants with invalid materials
 - Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
+- ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix logic (for tropical oceans, etc.)
 - DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there are certain vanilla screen elements behind them
 - `buildingplan`: when you save a game and load it again, newly planned buildings are now correctly placed in line after existing planned buildings of the same type
 - `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so items aren't permanently unavailable!

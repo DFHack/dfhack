@@ -4013,6 +4013,211 @@ Examples:
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
 
+DateTime
+========
+
+A module to display, compare, and manipulate dates and times for the dwarven calendar.
+The *DateTime* and *Duration* objects in this module support *addition*, *subtraction*,
+and *<, <=, >, >=, ==* equality operators
+
+DateTime class
+==============
+
+* ``DateTime{ year = ..., year_tick = ..., ticks_per_day = ...}``
+
+  A DateTime object is constructed with the following properties:
+
+  :year: A year. Defaults to zero.
+  :year_tick: A year tick. Defaults to zero.
+  :ticks_per_day: The rate at which time passes in a day.
+                  Defaults to DWARF/fortress mode.
+                  note: if ticks_per_day is given a value <= 1,
+                  it will default to fortress mode.
+  Examples::
+
+    -- create a new instance with year and year_tick set to
+    -- the current game time.
+    local dateTime = DateTime.now()
+    -- construct and set year to 1, year_tick to 1
+    dateTime = DateTime{ year = 1, year_tick = 1 }
+    -- set ticks_per_day to adventure mode
+    dateTime = DateTime{ ticks_per_day = df.game_mode.ADVENTURE }
+
+    local dateTimeOne = DateTime{ year = 1, year_tick = 1}
+    local dateTimeTwo = DateTime{ year = 1, year_tick = 2}
+    local deltaDateTime = dateTimeTwo - dateTimeOne
+    deltaDateTime = dateTimeOne + dateTimeTwo
+    if (dateTimeOne < deltaDateTime) then print('is less than') end
+
+* ``dateTime:year()``
+
+  Returns an integer pair: *year*, *year tick count*.
+
+* ``dateTime:setYear(year)``
+
+  Sets the year. Returns *DateTime*.
+
+* ``dateTime:setYearTick(ticks)``
+
+  Sets year_tick to ticks, normalizing if needed.
+  It is advised to use this function instead of
+  assigning to year_tick directly due to normalization.
+  returns *DateTime*.
+
+* ``dateTime:dayOfYear()``
+
+  Returns an integer pair: *the current day of the year starting from one*, *day tick count*.
+
+* ``dateTime:setDayOfYear(day)``
+
+  Sets the day of year starting from one.
+  returns *DateTime*.
+
+* ``dateTime:dayOfMonth()``
+
+  Returns an integer pair: *the current day of the month starting from one*, *day tick count*.
+
+* ``dateTime:setDayOfMonth(day[, month])``
+
+  Sets the day of month. If month is not given, defaults to current month.
+  returns *DateTime*.
+
+* ``dateTime:dayOfMonthWithSuffix()``
+
+  Returns *day of month, as a string, including its ordinal suffix*.
+
+* ``dateTime:month()``
+
+  Returns *current month, as a number, starting from one*.
+
+* ``dateTime:setMonth(month)``
+
+  Sets the current month starting from one.
+  Returns *DateTime*.
+
+* ``dateTime:nameOfMonth()``
+
+  Returns *name of the current month*.
+
+* ``dateTime:dayOfYearTick()``
+
+  Returns *days from ticks since beginning of current year starting from zero*.
+
+* ``dateTime:dayOfMonthTick()``
+
+  Returns *days from ticks since the beginning of current month starting from zero*.
+
+* ``dateTime:dayTick()``
+
+  Returns *ticks since beginning of the current day starting from zero*.
+
+* ``dateTime:setDayTick(ticks)``
+
+  Sets the current day's tick count.
+
+* ``dateTime:monthOfYearTick()``
+
+  Returns *months from ticks since the beginning of the current year starting from zero*.
+
+* ``dateTime:monthTick()``
+
+  Returns *ticks since the beginning of a month*.
+
+* ``dateTime:daysToTicks(days)``
+
+  Returns *days converted to ticks*.
+
+* ``dateTime:monthsToTicks(months)``
+
+  Returns *months converted to ticks*.
+
+* ``dateTime:addTicks(ticks)``
+
+  Adds *ticks*, normalizing if needed.
+  Returns *DateTime*.
+
+* ``dateTime:addDays(days)``
+
+  Adds *days*, normalizing if needed.
+  Returns *DateTime*.
+
+* ``dateTime:addMonths(months)``
+
+  Adds *months*, normalizing if needed.
+  Returns *DateTime*.
+
+* ``dateTime:addYears(years)``
+
+  Adds *years* to dateTime. Returns *DateTime*.
+
+* ``dateTime:time()``
+
+  Returns three integers: *hours (24 hour time)*, *minutes*, *seconds* of the current day.
+
+* ``dateTime:setTime(hours, minutes, seconds)``
+
+  Sets *hours*, *minutes*, *seconds* of the current day.
+  returns *DateTime*.
+
+* ``dateTime:toDuration()``
+
+  Returns a *Duration object*.
+
+* ``dateTime:normalize()``
+
+  Ensure's year_tick is within bounds of a year, otherwise
+  adjusts year and year_tick accordingly. Note: should only
+  call this function when directly modifying year_tick.
+
+* ``dateTime:setTickRate(ticks_per_day)``
+
+  Sets the tick rate from the provided ticks_per_day. Returns *DateTime*.
+  If ticks_per_day is equal to the value of df.game_mode.DWARF (currently 0)
+  or df.game_mode.ADVENTURE (currently 1) then the tick rate will be set to the
+  respective rate. *Defaults to fortress mode*.
+
+* ``DateTime.now([game_mode])``
+
+  Returns *DateTime* initialized from the current game time.
+  If game_mode is not given. It detects the current game mode.
+  When in *adventure mode*, DateTime is initialized by adventure mode time.
+  Otherwise *defaults to fortress mode* time. This function sets tick rate by game mode.
+  If you need a custom tick rate, call dateTime:setTickRate(custom_ticks_per_day).
+
+Duration Class
+==============
+
+Inherits DateTime's constructor and methods. Used for measuring the difference
+between DateTime and Duration objects.
+
+* ``duration:ticks()``
+
+  Returns ticks since year zero.
+
+* ``duration:days()``
+
+  Returns an integer pair: *days since year zero*, *day tick count*
+
+* ``duration:months()``
+
+  Returns an integer pair: *months since year zero*, *month tick count*
+
+* ``duration:yearsMonthsDays()``
+
+  Returns four parts of an elapsed time: *years*, *months*, *days*, *day tick count*
+
+DwarfCalendar
+=============
+
+* ``DwarfCalendar.isFullMoon(DateTime)``
+
+  Returns *true* if DateTime is currently on a full moon day.
+  Otherwise, returns *false*.
+
+* ``DwarfCalendar.nextFullMoon(DateTime)``
+
+  Returns a new *DateTime* set to the day and month of the next full moon.
+
 ==================
 In-game UI Library
 ==================

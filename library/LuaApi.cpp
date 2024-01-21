@@ -68,38 +68,38 @@ distribution.
 
 #include "df/activity_entry.h"
 #include "df/activity_event.h"
-#include "df/enabler.h"
-#include "df/job.h"
-#include "df/job_item.h"
+#include "df/announcement_infost.h"
 #include "df/building.h"
-#include "df/unit.h"
-#include "df/item.h"
-#include "df/material.h"
-#include "df/viewscreen.h"
-#include "df/identity.h"
-#include "df/nemesis_record.h"
-#include "df/historical_figure.h"
-#include "df/histfig_entity_link_positionst.h"
-#include "df/plant_raw.h"
-#include "df/creature_raw.h"
-#include "df/inorganic_raw.h"
-#include "df/dfhack_material_category.h"
-#include "df/job_material_category.h"
-#include "df/burrow.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
-#include "df/region_map_entry.h"
-#include "df/flow_info.h"
-#include "df/unit_misc_trait.h"
-#include "df/proj_itemst.h"
-#include "df/itemdef.h"
+#include "df/burrow.h"
+#include "df/creature_raw.h"
+#include "df/dfhack_material_category.h"
+#include "df/enabler.h"
 #include "df/feature_init.h"
+#include "df/flow_info.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/historical_figure.h"
+#include "df/identity.h"
+#include "df/inorganic_raw.h"
+#include "df/item.h"
+#include "df/itemdef.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/job_material_category.h"
+#include "df/material.h"
+#include "df/nemesis_record.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
+#include "df/proj_itemst.h"
+#include "df/region_map_entry.h"
+#include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/unit.h"
+#include "df/unit_misc_trait.h"
 #include "df/vermin.h"
-#include "df/announcement_infost.h"
-#include "df/report_zoom_type.h"
+#include "df/viewscreen.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1385,6 +1385,8 @@ static int gui_getMousePos(lua_State *L)
 }
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
+    WRAPN(addCombatReport, (bool (*)(df::unit*, df::unit_report_type, int, bool))Gui::addCombatReport),
+    WRAPN(addCombatReportAuto, (bool (*)(df::unit*, df::announcement_flags, int))Gui::addCombatReportAuto),
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getDFViewscreen),
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -1403,8 +1405,6 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getAnyPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),
-    WRAPM(Gui, addCombatReport),
-    WRAPM(Gui, addCombatReportAuto),
     WRAPM(Gui, showAnnouncement),
     WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),

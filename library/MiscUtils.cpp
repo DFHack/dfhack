@@ -120,7 +120,7 @@ std::string join_strings(const std::string &separator, const std::vector<std::st
     return ss.str();
 }
 
-char cp437_toupper(char c)
+char toupper_cp437(char c)
 {
     switch (c)
     {
@@ -140,12 +140,12 @@ char cp437_toupper(char c)
             return (char)128; // 'Ç'
         case (char)145: // 'æ'
             return (char)146; // 'Æ'
-        default:
-            return toupper(c);
+        default: // toupper consistently across locales
+            return (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
     }
 }
 
-char cp437_tolower(char c)
+char tolower_cp437(char c)
 {
     switch (c)
     {
@@ -165,24 +165,24 @@ char cp437_tolower(char c)
             return (char)135; // 'ç'
         case (char)146: // 'Æ'
             return (char)145; // 'æ'
-        default:
-            return tolower(c);
+        default: // tolower consistently across locales
+            return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
     }
 }
 
-std::string toUpper(const std::string &str, bool use_cp437)
+std::string toUpper_cp437(const std::string &str)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = use_cp437 ? cp437_toupper(str[i]) : toupper(str[i]);
+        rv[i] = toupper_cp437(str[i]);
     return rv;
 }
 
-std::string toLower(const std::string &str, bool use_cp437)
+std::string toLower_cp437(const std::string &str)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = use_cp437 ? cp437_tolower(str[i]) : tolower(str[i]);
+        rv[i] = tolower_cp437(str[i]);
     return rv;
 }
 
@@ -251,7 +251,7 @@ std::string capitalize_string_words(const std::string& str)
 
         if (starting || conf)
         {   // Capitalize
-            out[s] = cp437_toupper(out[s]);
+            out[s] = toupper_cp437(out[s]);
             starting = false;
         }
     }

@@ -417,10 +417,10 @@ inline std::string join_strings(const std::string &separator, T &items) {
     return ss.str();
 }
 
-DFHACK_EXPORT char cp437_toupper(char c);
-DFHACK_EXPORT char cp437_tolower(char c);
-DFHACK_EXPORT std::string toUpper(const std::string &str, bool use_cp437 = false);
-DFHACK_EXPORT std::string toLower(const std::string &str, bool use_cp437 = false);
+DFHACK_EXPORT char toupper_cp437(char c);
+DFHACK_EXPORT char tolower_cp437(char c);
+DFHACK_EXPORT std::string toUpper_cp437(const std::string &str);
+DFHACK_EXPORT std::string toLower_cp437(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 DFHACK_EXPORT std::string capitalize_string_words(const std::string& str);
 

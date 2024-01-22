@@ -26,6 +26,11 @@ This reveals all z-layers in fort mode. It also works in adventure mode, but any
 of its effects are negated once you move. When you use it this way, you don't
 need to run ``unreveal`` to hide the map again.
 
+In graphics mode, solid tiles that are not adjacent to open space will not be
+rendered, but they can still be examined by hovering over them with the mouse.
+Switching to ASCII mode (in the game settings) will allow the display of the
+revealed tiles.
+
 Usage
 -----
 
@@ -33,7 +38,9 @@ Usage
     Reveal the whole map. If ``hell`` is specified, also reveal HFS areas, but
     you are required to run ``unreveal`` before unpausing is allowed in order
     to prevent the demons (or treasures) from spawning. If you really want to
-    unpause with secrets revealed, specify ``demon`` instead of ``hell``.
+    unpause with secrets revealed, specify ``demon`` instead of ``hell``. Note
+    that unpausing with secrets revealed may result in a flood of announcements
+    about the revealed secrets!
 ``unreveal``
     Reverts the effects of ``reveal``.
 ``revtoggle``

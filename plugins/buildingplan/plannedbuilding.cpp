@@ -77,8 +77,10 @@ static set<string> get_specials(color_ostream &out, PersistentDataItem &bld_conf
         return ret;
     vector<string> specials;
     split_string(&specials, rawstrs[2], ",");
-    for (auto & special : specials)
-        ret.emplace(special);
+    for (auto & special : specials) {
+        if (special.size())
+            ret.emplace(special);
+    }
     return ret;
 }
 

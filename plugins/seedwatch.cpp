@@ -404,7 +404,7 @@ static void seedwatch_setTarget(color_ostream &out, string name, int32_t num) {
 
     string token = searchAbbreviations(name);
     if (!world_plant_ids.count(token)) {
-        token = toUpper(token);
+        token = toUpper_cp437(token);
         if (!world_plant_ids.count(token)) {
             out.printerr("%s has not been found as a material.\n", token.c_str());
             return;

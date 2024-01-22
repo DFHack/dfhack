@@ -145,7 +145,7 @@ bool Constructions::designateRemove(df::coord pos, bool *immediate)
     {
         // don't designate pseudo-constructions
         auto constr = df::construction::find(pos);
-        if (constr->flags.bits.top_of_wall)
+        if (!constr || constr->flags.bits.top_of_wall)
             return false;
 
         auto &dsgn = block->designation[pos.x&15][pos.y&15];

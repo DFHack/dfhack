@@ -2076,8 +2076,8 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     }
 
     if (*gamemode == game_mode::DWARF || // Did dwarf announcement or UCR
-        *gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY || // Did adventure announcement
-        a_flags.bits.DO_MEGA && !adv_unconscious) // Did popup
+        (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
+        (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
     {
         DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
     }
@@ -2434,7 +2434,7 @@ void Gui::MTB_Prepare(df::markup_text_boxst* mtb, int32_t width)
             continue;
         }
 
-        auto str_size = cur_word.str.size();
+        int32_t str_size = cur_word.str.size();
         if (remain_width < str_size)
         {
             remain_width = width;

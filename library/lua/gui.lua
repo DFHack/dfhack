@@ -728,7 +728,7 @@ ZScreen.ATTRS{
 function ZScreen:preinit(args)
     if self.ATTRS.initial_pause == nil then
         args.initial_pause = DEFAULT_INITIAL_PAUSE or
-                not self.ATTRS.pass_mouse_clicks or
+                self.ATTRS.pass_mouse_clicks == false or
                 self.ATTRS.force_pause
     end
 end

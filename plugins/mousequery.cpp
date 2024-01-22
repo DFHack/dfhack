@@ -822,8 +822,8 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
     }
     else
     {
-        auto cmd = toLower(parameters[0]);
-        auto state = (parameters.size() == 2) ? toLower(parameters[1]) : "-1";
+        auto cmd = toLower_cp437(parameters[0]);
+        auto state = (parameters.size() == 2) ? toLower_cp437(parameters[1]) : "-1";
         if (cmd[0] == 'v')
         {
             out << "MouseQuery" << endl << "Version: " << PLUGIN_VERSION << endl;

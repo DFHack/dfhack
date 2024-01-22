@@ -558,7 +558,7 @@ bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std:
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -574,7 +574,7 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {

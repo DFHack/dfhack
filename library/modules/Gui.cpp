@@ -741,13 +741,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 */
 
 bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
-    focus_string = toLower(focus_string);
+    focus_string = toLower_cp437(focus_string);
     if (!top)
         top = getCurViewscreen(true);
     std::vector<std::string> currentFocusStrings = getFocusStrings(top);
 
     return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focus_string](std::string item) {
-        return prefix_matches(focus_string, toLower(item));
+        return prefix_matches(focus_string, toLower_cp437(item));
     }) != currentFocusStrings.end();
 }
 

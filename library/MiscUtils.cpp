@@ -560,7 +560,7 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
         locale += getenv("LANG");
     if (getenv("LC_CTYPE"))
         locale += getenv("LC_CTYPE");
-    locale = toUpper(locale);
+    locale = toUpper_cp437(locale);
     is_utf = (locale.find("UTF-8") != std::string::npos) ||
              (locale.find("UTF8") != std::string::npos);
 #endif

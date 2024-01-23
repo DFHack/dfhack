@@ -73,6 +73,7 @@ Template for new versions:
 - `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so items aren't permanently unavailable!
 - `buildingplan`: show correct number of materials required when laying down areas of constructions and some of those constructions are on invalid tiles
 - `stonesense`: fix crash in cleanup code after mega screenshot (Ctrl-F5) completes; however, the mega screenshot will still make stonesense unresponsive. close and open the stonesense window to continue using it.
+- `gui/design`: fix incorrect highlight when box selecting area in ASCII mode
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline

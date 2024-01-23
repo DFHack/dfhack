@@ -88,6 +88,7 @@ Template for new versions:
 - `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
 - Dreamfort: put more chairs adjacent to each other to make the tavern more "social"
 - `zone`: show geld status and custom profession (2nd editable line in creature description) in pasture/pit/cage/restraint assignment screen
+- `orders`: reduce prepared meal target and raise booze target in ``basic`` importable orders in the orders library
 
 ## Documentation
 - `installing`: Add installation instructions for wineskin on Mac

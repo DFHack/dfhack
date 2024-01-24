@@ -97,6 +97,7 @@ Template for new versions:
 - `installing`: Add installation instructions for wineskin on Mac
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
 - `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
+- DFHack developer's guide updated, with refreshed `architectural-diagrams`
 
 ## API
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector

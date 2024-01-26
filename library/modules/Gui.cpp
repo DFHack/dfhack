@@ -260,15 +260,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            if (game->main_interface.info.creatures.showing_overall_training)
-                newFocusString += "/OverallTraining";
-            else if (game->main_interface.info.creatures.showing_activity_details)
-                newFocusString += "/ActivityDetails";
-            else if (game->main_interface.info.creatures.adding_trainer)
-                newFocusString += "/AddingTrainer";
-            else if (game->main_interface.info.creatures.assign_work_animal)
-                newFocusString += "/AssignWorkAnimal";
-            else
+            // TODO: rewrite for 50.12
+            // if (game->main_interface.info.creatures.showing_overall_training)
+            //     newFocusString += "/OverallTraining";
+            // else if (game->main_interface.info.creatures.showing_activity_details)
+            //     newFocusString += "/ActivityDetails";
+            // else if (game->main_interface.info.creatures.adding_trainer)
+            //     newFocusString += "/AddingTrainer";
+            // else if (game->main_interface.info.creatures.assign_work_animal)
+            //     newFocusString += "/AssignWorkAnimal";
+            // else
                 newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
             break;
         case df::enums::info_interface_mode_type::BUILDINGS:
@@ -582,12 +583,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/ImageCreator";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.unit_selector.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/UnitSelector";
-        newFocusString += '/' + enum_item_key(game->main_interface.unit_selector.context);
-        focusStrings.push_back(newFocusString);
-    }
+    // TODO: rewrite for 50.12
+    // if (game->main_interface.unit_selector.open) {
+    //     newFocusString = baseFocus;
+    //     newFocusString += "/UnitSelector";
+    //     newFocusString += '/' + enum_item_key(game->main_interface.unit_selector.context);
+    //     focusStrings.push_back(newFocusString);
+    // }
     if (game->main_interface.announcement_alert.open) {
         newFocusString = baseFocus;
         newFocusString += "/AnnouncementAlert";

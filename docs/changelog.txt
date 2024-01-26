@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `reveal`: automatically reset saved map state when a new save is loaded
 
 ## Documentation
 
@@ -66,6 +67,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
+- ``nopause``: functionality has moved to `spectate`
 
 # 50.11-r5
 

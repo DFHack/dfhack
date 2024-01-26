@@ -489,6 +489,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     if (td_below == df::tile_dig_designation::Default) {
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
                     }
+                    propagate_vertical_flags(map, pos);
                     return true;
                 }
             } else {

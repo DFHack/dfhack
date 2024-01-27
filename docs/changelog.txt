@@ -65,8 +65,13 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units::assignTrainer``: assign a trainer to a trainable animal
+- ``Units::unassignTrainer``: unassign a trainer from an animal
 
 ## Lua
+- ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
+- ``dfhack.units.assignTrainer``: expose new API to Lua
+- ``dfhack.units.unassignTrainer``: expose new API to Lua
 
 ## Removed
 - ``nopause``: functionality has moved to `spectate`

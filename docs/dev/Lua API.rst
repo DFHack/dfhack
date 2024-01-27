@@ -1485,6 +1485,13 @@ Units module
   Moves the specified unit and any riders to the target coordinates, setting
   tile occupancy flags appropriately. Returns true if successful.
 
+* ``dfhack.units.assignTrainer(unit[, trainer_id])``
+* ``dfhack.units.unassignTrainer(unit)``
+
+  Assignes (or unassigns) a trainer for the specified trainable unit. The
+  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
+  indicating whether the operation was successful.
+
 * ``dfhack.units.getGeneralRef(unit, type)``
 
   Searches for a general_ref with the given type.

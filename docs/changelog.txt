@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `sort`: fix potential crash when switching between info tabs
 
 ## Misc Improvements
 - `reveal`: automatically reset saved map state when a new save is loaded

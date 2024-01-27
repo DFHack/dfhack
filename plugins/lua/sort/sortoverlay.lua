@@ -55,11 +55,20 @@ local function do_cleanup(handlers, key, data)
     data.saved_original = nil
 end
 
+local function get_in_scope(scopes)
+    if type(scopes) == 'string' then scopes = {scopes} end
+    local scr = dfhack.gui.getDFViewscreen(true)
+    for _,scope in ipairs(scopes) do
+        if dfhack.gui.matchFocusString(scope, scr) then
+            return true
+        end
+    end
+end
+
 -- handles reset and clean up when the player exits the handled scope
 function SortOverlay:overlay_onupdate()
-    if self.overlay_onupdate_max_freq_seconds == 0 and
-        not dfhack.gui.matchFocusString(self.viewscreens, dfhack.gui.getDFViewscreen(true))
-    then
+    if self.overlay_onupdate_max_freq_seconds ~= 0 then return end
+    if not get_in_scope(self.viewscreens) then
         for key,data in pairs(self.state) do
             if type(data) == 'table' then
                 do_cleanup(self.handlers, key, data)

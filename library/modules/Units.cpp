@@ -507,6 +507,12 @@ bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
     return true;
 }
 
+bool Units::unassignTrainer(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    return erase_from_vector(plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, unit->id);
+}
+
 // check if creature is domesticated
 // seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
 bool Units::isDomesticated(df::unit* unit)

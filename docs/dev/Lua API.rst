@@ -1486,10 +1486,11 @@ Units module
   tile occupancy flags appropriately. Returns true if successful.
 
 * ``dfhack.units.assignTrainer(unit[, trainer_id])``
+* ``dfhack.units.unassignTrainer(unit)``
 
-  Assignes a trainer to the specified trainable unit. The trainer ID can be
-  omitted if "any trainer" is desired. Returns a boolean indicating whether the
-  operation was successful.
+  Assignes (or unassigns) a trainer for the specified trainable unit. The
+  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
+  indicating whether the operation was successful.
 
 * ``dfhack.units.getGeneralRef(unit, type)``
 

@@ -484,10 +484,27 @@ bool Units::isTame(df::unit* unit)
 bool Units::isTamable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
+    if (isInvader(unit))
+        return false;
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
     df::caste_raw *caste = raw->caste.at(unit->caste);
     return caste->flags.is_set(caste_raw_flags::PET)
            || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
+}
+
+bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
+    CHECK_NULL_POINTER(unit);
+    if (!isTamable(unit) || isDomesticated(unit) || isMarkedForTraining(unit))
+        return false;
+    if (trainer_id != -1 && !df::unit::find(trainer_id))
+        return false;
+    df::training_assignment *assignment = new df::training_assignment();
+    assignment->animal_id = unit->id;
+    assignment->trainer_id = trainer_id;
+    assignment->flags.bits.any_trainer = trainer_id == -1;
+    insert_into_vector(plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, assignment);
+    return true;
 }
 
 // check if creature is domesticated
@@ -512,7 +529,7 @@ bool Units::isDomesticated(df::unit* unit)
 }
 
 static df::training_assignment * get_training_assignment(df::unit* unit) {
-    return binsearch_in_vector(df::global::plotinfo->equipment.training_assignments,
+    return binsearch_in_vector(plotinfo->equipment.training_assignments,
         &df::training_assignment::animal_id, unit->id);
 }
 

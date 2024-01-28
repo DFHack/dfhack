@@ -1238,7 +1238,7 @@ end
 local function is_not_pet()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    return not dfhack.units.isPet(unit)
+    return not unit or not dfhack.units.isPet(unit)
 end
 
 local function is_avail_adoption()

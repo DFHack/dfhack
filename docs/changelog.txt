@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
 
 ## Fixes
 - `sort`: fix potential crash when switching between info tabs

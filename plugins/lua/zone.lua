@@ -1216,10 +1216,194 @@ function RetireLocationOverlay:confirm_retire()
         curry(retire, location))
 end
 
+-- -------------------
+-- AnimalActionsWidget
+--
+
+-- Make sure an animal unit of your civ is selected
+local function check_valid_unit()
+    local unit = dfhack.gui.getSelectedUnit(true)
+    return unit
+        and dfhack.units.isFortControlled(unit)
+        and dfhack.units.isAlive(unit)
+        and dfhack.units.isAnimal(unit)
+end
+
+local function is_geldable()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return unit and dfhack.units.isGeldable(unit)
+end
+
+local function is_not_pet()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return not unit or not dfhack.units.isPet(unit)
+end
+
+local function is_avail_adoption()
+    local unit = dfhack.gui.getSelectedUnit(true)
+    if not unit then return false end
+
+    if dfhack.units.isPet(unit) then return false end
+
+    local raw = df.creature_raw.find(unit.race)
+    if not raw then return false end
+
+    -- cats adopt owners; owners can't adopt cats
+    return raw.creature_id ~= 'CAT'
+end
+
+local function is_tamable()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return dfhack.units.isTamable(unit) and not dfhack.units.isDomesticated(unit)
+end
+
+AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
+AnimalActionsWidget.ATTRS {
+    desc = "Add options to tamed animals view sheet",
+    default_pos={x=-41,y=37},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/UNIT/Overview',
+    frame={w=25, h=6},
+}
+
+-- The above function already handles checking if valid unit
+-- so just set slaughter flag
+function AnimalActionsWidget:set_slaughter_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    -- emulate vanilla game behavior by only being able to have
+    -- 1 set at a time
+    if option then
+        self:set_geld_flag(false)
+        self:set_adoption_flag(false)
+    end
+
+    unit.flags2.slaughter = option
+end
+
+-- set units marked for gelding flag
+function AnimalActionsWidget:set_geld_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        self:set_slaughter_flag(false)
+    end
+
+    unit.flags3.marked_for_gelding = option
+end
+
+-- set available for adoption flag
+function AnimalActionsWidget:set_adoption_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        self:set_slaughter_flag(false)
+    end
+
+    unit.flags3.available_for_adoption = option
+end
+
+-- Assign any trainer
+function AnimalActionsWidget:set_tame(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        dfhack.units.assignTrainer(unit)
+    else
+        dfhack.units.unassignTrainer(unit)
+    end
+end
+
+-- Use render to set On/Off dynamically for each unit
+function AnimalActionsWidget:render(dc)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if unit then
+        self.subviews.butcher_animal:setOption(dfhack.units.isMarkedForSlaughter(unit))
+        self.subviews.geld_animal:setOption(dfhack.units.isMarkedForGelding(unit))
+        self.subviews.adopt_animal:setOption(dfhack.units.isAvailableForAdoption(unit))
+        self.subviews.tame_animal:setOption(dfhack.units.isMarkedForTraining(unit))
+    end
+
+    AnimalActionsWidget.super.render(self, dc)
+end
+
+function AnimalActionsWidget:init()
+    self:addviews{
+        widgets.Panel{
+            frame_background=gui.CLEAR_PEN,
+            frame_style=gui.FRAME_MEDIUM,
+            visible=check_valid_unit,
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    frame={t=0,l=0},
+                    label='Butcher    ',
+                    key='CUSTOM_CTRL_B',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='butcher_animal',
+                    enabled=is_not_pet,
+                    on_change=self:callback('set_slaughter_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=1,l=0},
+                    label='Geld       ',
+                    key='CUSTOM_CTRL_G',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='geld_animal',
+                    enabled=is_geldable,
+                    on_change=self:callback('set_geld_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=2,l=0},
+                    label='Adopt      ',
+                    key='CUSTOM_CTRL_A',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='adopt_animal',
+                    enabled=is_avail_adoption,
+                    on_change=self:callback('set_adoption_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=3,l=0},
+                    label='Has Trainer',
+                    key='CUSTOM_CTRL_T',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='tame_animal',
+                    enabled=is_tamable,
+                    on_change=self:callback('set_tame'),
+                },
+            },
+        },
+    }
+end
+
 OVERLAY_WIDGETS = {
     pasturepond=PasturePondOverlay,
     cagechain=CageChainOverlay,
     retirelocation=RetireLocationOverlay,
+    animal_actions=AnimalActionsWidget,
 }
 
 return _ENV

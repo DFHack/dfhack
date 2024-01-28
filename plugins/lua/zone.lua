@@ -1217,7 +1217,7 @@ function RetireLocationOverlay:confirm_retire()
 end
 
 -- -------------------
--- AssignActionsWidget
+-- AnimalActionsWidget
 --
 
 local YES = 'Yes'

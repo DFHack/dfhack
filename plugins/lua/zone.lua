@@ -1294,7 +1294,6 @@ function AnimalActionsWidget:set_geld_flag(option)
 
     if option then
         self:set_slaughter_flag(false)
-        self:set_adoption_flag(false)
     end
 
     unit.flags3.marked_for_gelding = option
@@ -1307,7 +1306,6 @@ function AnimalActionsWidget:set_adoption_flag(option)
     if not unit then return end
 
     if option then
-        self:set_geld_flag(false)
         self:set_slaughter_flag(false)
     end
 

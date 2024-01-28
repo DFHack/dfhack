@@ -532,6 +532,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     map.setTiletypeAt(pos_above,
                             get_target_type(tt, df::tiletype_shape::RAMP_TOP));
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
+                    propagate_vertical_flags(map, DFCoord(pos.x, pos.y, pos.z + 1));
                 }
             }
             break;

@@ -1232,7 +1232,7 @@ end
 local function is_geldable()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    return dfhack.units.isGeldable(unit)
+    return unit and dfhack.units.isGeldable(unit)
 end
 
 local function is_not_pet()

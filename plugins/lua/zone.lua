@@ -1285,11 +1285,7 @@ function AnimalActionsWidget:set_geld_flag(option)
 
     if not unit then return end
 
-    if option then
-        unit.flags3.marked_for_gelding = option
-    else
-        unit.flags3.marked_for_gelding = option
-    end
+    unit.flags3.marked_for_gelding = option
 end
 
 -- set available for adoption flag

@@ -1031,6 +1031,8 @@ General-purpose selections
   ommitted or set to ``false`` and a selected object cannot be found, then an
   error is printed to the console.
 
+* ``dfhack.gui.getAnyWorkshopJob(screen)``
+* ``dfhack.gui.getAnyJob(screen)``
 * ``dfhack.gui.getAnyUnit(screen)``
 * ``dfhack.gui.getAnyItem(screen)``
 * ``dfhack.gui.getAnyBuilding(screen)``
@@ -1039,7 +1041,7 @@ General-purpose selections
 * ``dfhack.gui.getAnyPlant(screen)``
 
   Similar to the corresponding ``getSelected`` functions, but operate on the
-  screen given instead of the current screen and always return ``nil`` silently
+  given screen instead of the current screen and always return ``nil`` silently
   on failure.
 
 Fortress mode
@@ -2641,8 +2643,11 @@ Supported callbacks and fields are:
 * ``function screen:onGetSelectedItem()``
 * ``function screen:onGetSelectedJob()``
 * ``function screen:onGetSelectedBuilding()``
+* ``function screen:onGetSelectedStockpile()``
+* ``function screen:onGetSelectedCivZone()``
+* ``function screen:onGetSelectedPlant()``
 
-  Implement these to provide a return value for the matching
+  Override these if you want to provide a custom return value for the matching
   ``dfhack.gui.getSelected...`` function.
 
 

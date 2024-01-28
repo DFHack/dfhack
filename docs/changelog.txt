@@ -57,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - `sort`: fix potential crash when switching between info tabs
+- `suspendmanager`: overlays for suspended building info panels no longer disappear when another window has focus
 
 ## Misc Improvements
 - `reveal`: automatically reset saved map state when a new save is loaded
@@ -67,11 +68,15 @@ Template for new versions:
 ## API
 - ``Units::assignTrainer``: assign a trainer to a trainable animal
 - ``Units::unassignTrainer``: unassign a trainer from an animal
+- ``Gui::getAnyWorkshopJob``: get the first job associated with the selected workshop
+- ``Gui::getAnyJob``: get the job associated with the selected game element (item, unit, workshop, etc.)
 
 ## Lua
 - ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
-- ``dfhack.units.assignTrainer``: expose new API to Lua
-- ``dfhack.units.unassignTrainer``: expose new API to Lua
+- ``dfhack.units.assignTrainer``: expose API to Lua
+- ``dfhack.units.unassignTrainer``: expose API to Lua
+- ``dfhack.gui.getAnyWorkshopJob``: expose API to Lua
+- ``dfhack.gui.getAnyJob``: expose API to Lua
 
 ## Removed
 - ``nopause``: functionality has moved to `spectate`

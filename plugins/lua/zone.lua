@@ -1294,11 +1294,7 @@ function AnimalActionsWidget:set_adoption_flag(option)
 
     if not unit then return end
 
-    if option then
-        unit.flags3.available_for_adoption = option
-    else
-        unit.flags3.available_for_adoption = option
-    end
+    unit.flags3.available_for_adoption = option
 end
 
 -- Assign any trainer

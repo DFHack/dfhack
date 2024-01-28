@@ -873,6 +873,9 @@ end
 function ZScreen:onGetSelectedItem()
     return zscreen_get_any(self, 'Item')
 end
+function ZScreen:onGetSelectedJob()
+    return zscreen_get_any(self, 'Job')
+end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')
 end

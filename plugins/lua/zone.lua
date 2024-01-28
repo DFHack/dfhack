@@ -1220,9 +1220,6 @@ end
 -- AnimalActionsWidget
 --
 
-local YES = 'Yes'
-local NO = 'No'
-
 -- Make sure an animal unit of your civ is selected
 local function check_valid_unit()
     local unit = dfhack.gui.getSelectedUnit(true)
@@ -1248,8 +1245,9 @@ end
 local function is_avail_adoption()
     local unit = dfhack.gui.getSelectedUnit(true)
 
+    local creature_id = df.creature_raw.find(unit.race).creature_id
     -- Make sure not already a pet and not a cat as they adopt owner
-    return not dfhack.units.isPet(unit) and unit.race ~= 171
+    return not dfhack.units.isPet(unit) and creature_id ~= 'CAT'
 end
 
 AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
@@ -1269,9 +1267,9 @@ function AnimalActionsWidget:set_slaughter_flag(option)
     if not unit then return end
 
     if option then
-        unit.flags2.slaughter = true
+        unit.flags2.slaughter = option
     else
-        unit.flags2.slaughter = false
+        unit.flags2.slaughter = option
     end
 end
 
@@ -1282,9 +1280,9 @@ function AnimalActionsWidget:set_geld_flag(option)
     if not unit then return end
 
     if option then
-        unit.flags3.marked_for_gelding = true
+        unit.flags3.marked_for_gelding = option
     else
-        unit.flags3.marked_for_gelding = false
+        unit.flags3.marked_for_gelding = option
     end
 end
 
@@ -1295,40 +1293,9 @@ function AnimalActionsWidget:set_adoption_flag(option)
     if not unit then return end
 
     if option then
-        unit.flags3.available_for_adoption = true
+        unit.flags3.available_for_adoption = option
     else
-        unit.flags3.available_for_adoption = false
-    end
-end
-
--- Check current flag status of animal to dynamically set on/off
-function AnimalActionsWidget:get_butcher(unit)
-    if not unit then return end
-
-    if unit.flags2.slaughter then
-        return YES
-    else
-        return NO
-    end
-end
-
-function AnimalActionsWidget:get_geld(unit)
-    if not unit then return end
-
-    if unit.flags3.marked_for_gelding then
-        return YES
-    else
-        return NO
-    end
-end
-
-function AnimalActionsWidget:get_adopt(unit)
-    if not unit then return end
-
-    if unit.flags3.available_for_adoption then
-        return YES
-    else
-        return NO
+        unit.flags3.available_for_adoption = option
     end
 end
 
@@ -1357,8 +1324,8 @@ function AnimalActionsWidget:init()
                     label='Butcher',
                     key='CUSTOM_CTRL_B',
                     options={
-                        {label=NO, value=false, pen=COLOR_WHITE},
-                        {label=YES, value=true, pen=COLOR_YELLOW},
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
                     },
                     view_id='butcher_animal',
                     enabled=is_not_pet,
@@ -1369,8 +1336,8 @@ function AnimalActionsWidget:init()
                     label='Geld',
                     key='CUSTOM_CTRL_G',
                     options={
-                        {label=NO, value=false, pen=COLOR_WHITE},
-                        {label=YES, value=true, pen=COLOR_YELLOW},
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
                     },
                     view_id='geld_animal',
                     enabled=is_geldable,
@@ -1381,8 +1348,8 @@ function AnimalActionsWidget:init()
                     label='Adopt',
                     key='CUSTOM_CTRL_A',
                     options={
-                        {label=NO, value=false, pen=COLOR_WHITE},
-                        {label=YES, value=true, pen=COLOR_YELLOW},
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
                     },
                     view_id='adopt_animal',
                     enabled=is_avail_adoption,

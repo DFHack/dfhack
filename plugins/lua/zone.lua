@@ -1235,7 +1235,7 @@ end
 local function is_geldable()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    return unit and dfhack.units.isGeldable(unit) and dfhack.units.isFortControlled(unit)
+    return unit and dfhack.units.isGeldable(unit) and dfhack.units.isFortControlled(unit) and not units.flags3.gelded
 end
 
 local function is_not_pet()

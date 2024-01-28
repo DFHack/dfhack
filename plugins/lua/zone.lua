@@ -1276,6 +1276,13 @@ function AnimalActionsWidget:set_slaughter_flag(option)
 
     if not unit then return end
 
+    -- emulate vanilla game behavior by only being able to have
+    -- 1 set at a time
+    if option then
+        self:set_geld_flag(false)
+        self:set_adoption_flag(false)
+    end
+
     unit.flags2.slaughter = option
 end
 
@@ -1285,6 +1292,11 @@ function AnimalActionsWidget:set_geld_flag(option)
 
     if not unit then return end
 
+    if option then
+        self:set_slaughter_flag(false)
+        self:set_adoption_flag(false)
+    end
+
     unit.flags3.marked_for_gelding = option
 end
 
@@ -1293,6 +1305,11 @@ function AnimalActionsWidget:set_adoption_flag(option)
     local unit = dfhack.gui.getSelectedUnit(true)
 
     if not unit then return end
+
+    if option then
+        self:set_geld_flag(false)
+        self:set_slaughter_flag(false)
+    end
 
     unit.flags3.available_for_adoption = option
 end

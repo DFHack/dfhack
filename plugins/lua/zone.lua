@@ -1243,6 +1243,7 @@ end
 
 local function is_avail_adoption()
     local unit = dfhack.gui.getSelectedUnit(true)
+    if not unit then return false end
 
     local creature_id = df.creature_raw.find(unit.race).creature_id
     -- Make sure not already a pet and not a cat as they adopt owner

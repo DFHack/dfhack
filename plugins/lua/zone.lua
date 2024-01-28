@@ -1249,6 +1249,12 @@ local function is_avail_adoption()
     return not dfhack.units.isPet(unit) and creature_id ~= 'CAT'
 end
 
+local function is_tamable()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return dfhack.units.isTamable(unit) and not dfhack.units.isDomesticated(unit)
+end
+
 AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
 AnimalActionsWidget.ATTRS {
     desc = "Add options to tamed animals view sheet",
@@ -1298,6 +1304,19 @@ function AnimalActionsWidget:set_adoption_flag(option)
     end
 end
 
+-- Assign any trainer
+function AnimalActionsWidget:set_tame(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        dfhack.units.assignTrainer(unit)
+    else
+        dfhack.units.unassignTrainer(unit)
+    end
+end
+
 -- Use render to set On/Off dynamically for each unit
 function AnimalActionsWidget:render(dc)
     local unit = dfhack.gui.getSelectedUnit(true)
@@ -1306,6 +1325,7 @@ function AnimalActionsWidget:render(dc)
         self.subviews.butcher_animal:setOption(dfhack.units.isMarkedForSlaughter(unit))
         self.subviews.geld_animal:setOption(dfhack.units.isMarkedForGelding(unit))
         self.subviews.adopt_animal:setOption(dfhack.units.isAvailableForAdoption(unit))
+        self.subviews.tame_animal:setOption(dfhack.units.isMarkedForTraining(unit))
     end
 
     AnimalActionsWidget.super.render(self, dc)
@@ -1353,6 +1373,18 @@ function AnimalActionsWidget:init()
                     view_id='adopt_animal',
                     enabled=is_avail_adoption,
                     on_change=self:callback('set_adoption_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=3,l=0},
+                    label='Tame',
+                    key='CUSTOM_CTRL_T',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='tame_animal',
+                    enabled=is_tamable,
+                    on_change=self:callback('set_tame'),
                 },
             },
         },

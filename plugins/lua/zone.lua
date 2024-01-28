@@ -1245,11 +1245,11 @@ local function is_avail_adoption()
     local unit = dfhack.gui.getSelectedUnit(true)
     if not unit then return false end
 
-    if dfhack.units.isPet(unit) return false end
-    
+    if dfhack.units.isPet(unit) then return false end
+
     local raw = df.creature_raw.find(unit.race)
     if not raw then return false end
-    
+
     -- cats adopt owners; owners can't adopt cats
     return raw.creature_id ~= 'CAT'
 end
@@ -1263,10 +1263,10 @@ end
 AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
 AnimalActionsWidget.ATTRS {
     desc = "Add options to tamed animals view sheet",
-    default_pos={x=-42,y=37},
+    default_pos={x=-41,y=37},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/UNIT/Overview',
-    frame={w=23, h=6},
+    frame={w=25, h=6},
 }
 
 -- The above function already handles checking if valid unit
@@ -1333,7 +1333,7 @@ function AnimalActionsWidget:init()
             subviews={
                 widgets.ToggleHotkeyLabel{
                     frame={t=0,l=0},
-                    label='Butcher',
+                    label='Butcher    ',
                     key='CUSTOM_CTRL_B',
                     options={
                         {label='No', value=false, pen=COLOR_WHITE},
@@ -1345,7 +1345,7 @@ function AnimalActionsWidget:init()
                 },
                 widgets.ToggleHotkeyLabel{
                     frame={t=1,l=0},
-                    label='Geld',
+                    label='Geld       ',
                     key='CUSTOM_CTRL_G',
                     options={
                         {label='No', value=false, pen=COLOR_WHITE},
@@ -1357,7 +1357,7 @@ function AnimalActionsWidget:init()
                 },
                 widgets.ToggleHotkeyLabel{
                     frame={t=2,l=0},
-                    label='Adopt',
+                    label='Adopt      ',
                     key='CUSTOM_CTRL_A',
                     options={
                         {label='No', value=false, pen=COLOR_WHITE},
@@ -1369,7 +1369,7 @@ function AnimalActionsWidget:init()
                 },
                 widgets.ToggleHotkeyLabel{
                     frame={t=3,l=0},
-                    label='Tame',
+                    label='Has Trainer',
                     key='CUSTOM_CTRL_T',
                     options={
                         {label='No', value=false, pen=COLOR_WHITE},

@@ -1276,11 +1276,7 @@ function AnimalActionsWidget:set_slaughter_flag(option)
 
     if not unit then return end
 
-    if option then
-        unit.flags2.slaughter = option
-    else
-        unit.flags2.slaughter = option
-    end
+    unit.flags2.slaughter = option
 end
 
 -- set units marked for gelding flag

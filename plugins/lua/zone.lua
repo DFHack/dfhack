@@ -1232,7 +1232,6 @@ end
 local function is_geldable()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    -- If the unit is not male or already gelded do nothing
     return dfhack.units.isGeldable(unit)
 end
 

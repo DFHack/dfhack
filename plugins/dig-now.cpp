@@ -552,9 +552,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     TRACE(general).print("dig_tile: digging the designation tile at (" COORD ")\n",COORDARGS(pos));
     dig_type(map, pos, target_type);
 
-    // let light filter down to newly exposed tiles
-    propagate_vertical_flags(map, pos);
-
     return true;
 }
 

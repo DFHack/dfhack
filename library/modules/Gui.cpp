@@ -895,7 +895,7 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet) {
     df::job *job = getAnyWorkshopJob(Core::getTopViewscreen());
 
     if (!job && !quiet)
-        out.printerr("No workshop selected or job can be found in the selected workshop.\n");
+        out.printerr("No workshop selected or job cannot be found in the selected workshop.\n");
 
     return job;
 }

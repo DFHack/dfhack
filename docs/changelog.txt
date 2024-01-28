@@ -27,6 +27,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `zone.animal_actions` : Add overlay to tamed animals of civ for butchering/gelding/adoption options in their "Overview" tab
 
 ## Fixes
 

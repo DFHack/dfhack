@@ -54,7 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- ``zone.animal_actions``: Add overlay to tamed animals of civ for butchering/gelding/adoption/tame(assign trainer) options in their "Overview" tab
+- `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
 
 ## Fixes
 - `sort`: fix potential crash when switching between info tabs

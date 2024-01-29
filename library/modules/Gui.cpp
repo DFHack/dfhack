@@ -1667,20 +1667,21 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     // Check for repeat report as part of an existing alert
     if (*gamemode == game_mode::DWARF && !flags.bits.ALERT)
     {
-        auto alert_type = ENUM_ATTR(announcement_type, alert_type, type);
-        for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+        if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, type)) >= 0) // Alert of type exists
         {
-            auto& cur_report = **it;
-            if (cur_report.text == message && linear_index(alerts, &df::announcement_alertst::type, alert_type) >= 0)
-            {   // Repeat if text matches and an alert of same type exists
-                cur_report.duration = ANNOUNCE_LINE_DURATION;
-                cur_report.repeat_count++;
+            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+            {
+                auto& cur_report = **it;
+                if (cur_report.text == message) // Repeat if text matches
+                {
+                    cur_report.duration = ANNOUNCE_LINE_DURATION;
+                    cur_report.repeat_count++;
 
-                if (flags.bits.D_DISPLAY)
-                    world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
+                    if (flags.bits.D_DISPLAY)
+                        world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
 
-                DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
-                return -1;
+                    return -1;
+                }
             }
         }
     }
@@ -1881,7 +1882,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     // Check if the announcement will actually be used and written to gamelog
     if (*gamemode == game_mode::ADVENTURE)
     {
-        //TODO: Expect this check when adventure mode is re-added; sound and gamelog will happen otherwise
+        // TODO: Expect this check when adventure mode is re-added; sound and gamelog will happen otherwise
         /*if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
         {
             DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
@@ -1965,7 +1966,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         if (samp_index >= 0)
         {
             DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
-            //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h //TODO: implement this
+            //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
     
@@ -1975,26 +1976,25 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     auto &alerts = world->status.announcement_alert;
     
     // Check for repeat report as part of an existing alert
-    //TODO: Combat reports are considered type GENERAL and are caught by this, causing premature return? Bay12 needs to check the commented conditions to fix
-    if (*gamemode == game_mode::DWARF && !a_flags.bits.ALERT /*&&
-        (!info.unit_a && !info.unit_d ||
-        !a_flags.bits.UNIT_COMBAT_REPORT && (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE ||
-            !recent_report_any(info.unit_a) && !recent_report_any(info.unit_d)))*/)
+    // TODO: Implement fix for https://dwarffortressbugtracker.com/view.php?id=12670
+    if (*gamemode == game_mode::DWARF && !a_flags.bits.ALERT)
     {
-        auto alert_type = ENUM_ATTR(announcement_type, alert_type, info.type);
-        for(vector<df::report *>::iterator it = reports.end()-1; it > reports.begin(); it--) //TODO: why do we check all reports? test in-game
+        if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, info.type)) >= 0) // Alert of type exists
         {
-            auto &cur_report = **it;
-            if (cur_report.text == message && linear_index(alerts, &df::announcement_alertst::type, alert_type) >= 0) //TODO: why don't we check report id? test in-game
-            {   // Repeat if text matches and an alert of same type exists
-                cur_report.duration = ANNOUNCE_LINE_DURATION;
-                cur_report.repeat_count++;
-                
-                if (a_flags.bits.D_DISPLAY)
-                    world->status.display_timer = info.display_timer;
-                
-                DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
-                return true;
+            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+            {
+                auto& cur_report = **it;
+                if (cur_report.text == message) // Repeat if text matches
+                {
+                    cur_report.duration = ANNOUNCE_LINE_DURATION;
+                    cur_report.repeat_count++;
+
+                    if (a_flags.bits.D_DISPLAY)
+                        world->status.display_timer = info.display_timer;
+
+                    DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+                    return true;
+                }
             }
         }
     }
@@ -2076,8 +2076,8 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     }
 
     if (*gamemode == game_mode::DWARF || // Did dwarf announcement or UCR
-        (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
-        (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
+        *gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY || // Did adventure announcement
+        a_flags.bits.DO_MEGA && !adv_unconscious) // Did popup
     {
         DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
     }
@@ -2112,7 +2112,7 @@ void Gui::MTB_Clear(df::markup_text_boxst *mtb)
     mtb->environment = NULL;
 }
 
-static bool insert_markup_text_wordst(vector<df::markup_text_wordst *>& vec, string str, int32_t link_index, int32_t color)
+static bool insert_markup_text_wordst(vector<df::markup_text_wordst *> &vec, string &str, int32_t link_index, int32_t color)
 {
     if (str.empty())
         return false;
@@ -2131,7 +2131,7 @@ static bool insert_markup_text_wordst(vector<df::markup_text_wordst *>& vec, str
     return true;
 }
 
-void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: spaces are being ignored
+void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text)
 {   // Reverse-engineered from FUN_1409f70b0 (v50.11 win64 Steam)
     CHECK_NULL_POINTER(mtb);
     auto &word_vec = mtb->word;
@@ -2151,7 +2151,7 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: space
 
     size_t i_max = parse_text.size();
     size_t i = 0;
-    while (i < i_max) //TODO: run through -1 iter in debugger
+    while (i < i_max)
     {
         char char_token = '\0';
         use_char = true;
@@ -2175,7 +2175,7 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: space
                 break;
 
             if (parse_text[i] == '.' || parse_text[i] == ':' || parse_text[i] == '?' || parse_text[i] == ' ' || parse_text[i] == '!') // Immediately after '['
-                no_split_space = true;
+                no_split_space = true; // Completely pointless for everything but ' '?
             else if (parse_text[i] != '[') // else "[[", append '[' to str since use_char == true
             {
                 use_char = false;
@@ -2286,7 +2286,7 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: space
                     string buff3 = grab_token_string_pos(parse_text, i, ':');
                     i += buff3.size();
 
-                    if (buff1 == "VAR")
+                    if (buff1 == "VAR") // Color from dipscript var
                     {
                         DEBUG(gui).print("MTB_Parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
                             buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
@@ -2363,11 +2363,13 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: space
             }
         }
 
-        if (use_char) //TODO: when do we actually split str on space?
+        if (use_char)
         {
             char ch = (char_token == '\0') ? parse_text[i] : char_token;
             if (ch != ' ' || no_split_space)
                 str += ch;
+            else
+                insert_markup_text_wordst(word_vec, str, link_index, color);
         }
 
         i++;
@@ -2375,12 +2377,12 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text) //TODO: space
 
     insert_markup_text_wordst(word_vec, str, link_index, color);
 
-    if (word_vec.size() > 1) // Merge punctuation after "[/LPAGE]" left into link word; TODO: check "[/LPAGE][.")
+    if (word_vec.size() > 1) // Merge punctuation after "[/LPAGE]" left into link word
     {
         for (vector<df::markup_text_wordst*>::iterator it = word_vec.end() - 1; it > word_vec.begin(); it--)
         {
             auto cur_entry = *it;
-            if (cur_entry->link_index != -1 || cur_entry->str.empty())
+            if (cur_entry->link_index != -1 || cur_entry->str.empty()) // Doesn't check (cur_entry->str.size() != 1)
                 continue;
             auto prev_entry = *(it - 1);
             if (prev_entry->link_index == -1 || prev_entry->str.empty())
@@ -2434,7 +2436,7 @@ void Gui::MTB_Prepare(df::markup_text_boxst* mtb, int32_t width)
             continue;
         }
 
-        int32_t str_size = cur_word.str.size();
+        auto str_size = cur_word.str.size();
         if (remain_width < str_size)
         {
             remain_width = width;

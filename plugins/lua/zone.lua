@@ -1220,16 +1220,23 @@ end
 -- AnimalActionsWidget
 --
 
+local function isFortAnimal(unit)
+    return dfhack.units.isFortControlled(unit)
+        and dfhack.units.isAlive(unit)
+        and dfhack.units.isAnimal(unit)
+end
+
+local function isCagedWildAnimal(unit)
+    return dfhack.units.isTamable(unit)
+        and unit.flags1.caged
+        and not unit.flags1.tame
+end
+
 -- Make sure an animal unit of your civ is selected
 local function check_valid_unit()
     local unit = dfhack.gui.getSelectedUnit(true)
-    return unit
-        and dfhack.units.isFortControlled(unit)
-        and dfhack.units.isAlive(unit)
-        and dfhack.units.isAnimal(unit)
-        or dfhack.units.isTamable(unit)  -- account for caged animals
-        and unit.flags1.caged
-        and not unit.flags1.tame -- dont show on merchant animals
+
+    return unit and (isFortAnimal(unit) or isCagedWildAnimal(unit))
 end
 
 local function is_geldable()

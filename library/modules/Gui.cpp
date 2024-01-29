@@ -1946,15 +1946,15 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             }
         }
     }
-    
+
     if (a_flags.bits.PAUSE || a_flags.bits.RECENTER)
         pauseRecenter((a_flags.bits.RECENTER ? info.pos : df::coord()), a_flags.bits.PAUSE); // Does nothing if not dwarf mode
-    
+
     bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
 
     if (a_flags.bits.DO_MEGA && !adv_unconscious)
         showPopupAnnouncement(message, info.color, info.bright);
-    
+
     // Play announcement sound
     //if (!adv_unconscious)
     {
@@ -1965,25 +1965,25 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             if (binsearch_index(cur_sound.announcement, info.type) >= 0)
                 valid_sounds.push_back(cur_sound.sound);
         }
-        
+
         int32_t samp_index;
         if (valid_sounds.empty() && *gamemode == game_mode::DWARF && a_flags.bits.ALERT)
             samp_index = 10; // Default to SOUND_ALERT
         else
             samp_index = random_index(valid_sounds);
-        
+
         if (samp_index >= 0)
         {
             DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
             //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
-    
+
     writeToGamelog(message);
-    
+
     auto &reports = world->status.reports;
     auto &alerts = world->status.announcement_alert;
-    
+
     // Check for repeat report as part of an existing alert
     // TODO: Implement fix for https://dwarffortressbugtracker.com/view.php?id=12670
     if (*gamemode == game_mode::DWARF && !a_flags.bits.ALERT)
@@ -2007,7 +2007,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             }
         }
     }
-    
+
     auto new_report = new df::report();
     new_report->type = info.type;
     new_report->text = message;
@@ -2025,7 +2025,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     new_report->activity_event_id = info.activity_event_id;
     new_report->speaker_id = info.speaker_id;
     reports.push_back(new_report);
-    
+
     // Handle alerts and combat reports
     if (*gamemode == game_mode::DWARF)
     {
@@ -2040,30 +2040,30 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             add_recent_reports(info.unit_a, new_report, true);
             add_recent_reports(info.unit_d, new_report, true);
         }
-        
+
         if (a_flags.bits.D_DISPLAY)
         {
             // Find existing alert of same type, else create new
             auto alert_type = ENUM_ATTR(announcement_type, alert_type, info.type);
             df::announcement_alertst *alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
-            
+
             if (!alert)
             {
                 alert = new df::announcement_alertst();
                 alert->type = alert_type;
                 alerts.push_back(alert);
             }
-            
+
             alert->announcement_id.push_back(new_report->id);
         }
-        
+
         if (a_flags.bits.ALERT)
         {
             world->status.alert_button_announcement_id.push_back(new_report->id);
             game->main_interface.hover_announcement_alert_button_width = 0;
         }
     }
-    
+
     // Handle proper announcements
     if ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY))
     {

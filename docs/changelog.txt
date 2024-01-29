@@ -29,7 +29,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-
+- `dig-now`: now properly changes newly exposed areas to light/outside when digging around the surface.
 ## Misc Improvements
 
 ## Documentation

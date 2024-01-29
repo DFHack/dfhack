@@ -26,6 +26,13 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 keybinding add Ctrl-Shift-A gui/quickcmd
 
 
+###################
+# embark bindings #
+###################
+
+keybinding add Ctrl-A@choose_start_site gui/embark-anywhere
+
+
 ######################
 # dwarfmode bindings #
 ######################

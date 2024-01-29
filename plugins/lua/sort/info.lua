@@ -192,7 +192,21 @@ InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
 InfoOverlay.ATTRS{
     desc='Adds search and filter functionality to most info panels.',
     default_pos={x=64, y=8},
-    viewscreens='dwarfmode/Info',
+    viewscreens={
+        'dwarfmode/Info/CREATURES/CITIZEN',
+        'dwarfmode/Info/CREATURES/PET',
+        'dwarfmode/Info/CREATURES/AddingTrainer',
+        'dwarfmode/Info/CREATURES/AssignWorkAnimal',
+        'dwarfmode/Info/CREATURES/OverallTraining',
+        'dwarfmode/Info/CREATURES/OTHER',
+        'dwarfmode/Info/CREATURES/DECEASED',
+        'dwarfmode/Info/JOBS',
+        'dwarfmode/Info/Labor/WORK_DETAILS',
+        'dwarfmode/Info/ARTIFACTS/ARTIFACTS',
+        'dwarfmode/Info/ARTIFACTS/SYMBOLS',
+        'dwarfmode/Info/ARTIFACTS/NAMED_OBJECTS',
+        'dwarfmode/Info/ARTIFACTS/WRITTEN_CONTENT',
+    },
     frame={w=40, h=6},
 }
 

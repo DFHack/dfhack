@@ -224,10 +224,8 @@ static int design_draw_shape(lua_State *L) {
 
     for (auto x : arr) {
         for (auto y : x.second) {
-            Screen::Pen cur_tile = Screen::readTile(x.first, y.first, true);
             Screen::Pen pen = get_pen(x.first, y.first, arr);
-            cur_tile.tile = pen.tile;
-            Screen::paintTile(cur_tile, x.first - *window_x,
+            Screen::paintTile(pen, x.first - *window_x,
                               y.first - *window_y, true);
         }
     }
@@ -253,10 +251,8 @@ static int design_draw_points(lua_State *L) {
             x = lua_tointeger(L, -1);
             lua_pop(L, 3);
 
-            Screen::Pen cur_tile = Screen::readTile(x, y, true);
             Screen::Pen pen = get_pen(x, y, arr, str);
-            cur_tile.tile = pen.tile;
-            Screen::paintTile(cur_tile, x - *window_x, y - *window_y, true);
+            Screen::paintTile(pen, x - *window_x, y - *window_y, true);
         }
         lua_pop(L, 1);
     }

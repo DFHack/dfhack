@@ -247,11 +247,17 @@ static bool isAssigned(df::unit *unit) {
     return false;
 }
 
+static bool unlikely_to_revert_to_wild(df::unit *unit) {
+    if (Units::isDomesticated(unit))
+        return true;
+    return Units::isTame(unit) && Units::isMarkedForTraining(unit);
+}
+
 static bool isFreeEgglayer(df::unit *unit)
 {
     return Units::isActive(unit) && !Units::isUndead(unit)
         && Units::isFemale(unit)
-        && Units::isTame(unit)
+        && unlikely_to_revert_to_wild(unit)
         && Units::isOwnCiv(unit)
         && Units::isEggLayer(unit)
         && !isAssigned(unit)

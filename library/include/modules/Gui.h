@@ -88,10 +88,12 @@ namespace DFHack
         DFHACK_EXPORT bool unit_inventory_hotkey(df::viewscreen *top);
 
         // In workshop_job_hotkey, returns the job
+        DFHACK_EXPORT df::job *getAnyWorkshopJob(df::viewscreen *top);
         DFHACK_EXPORT df::job *getSelectedWorkshopJob(color_ostream &out, bool quiet = false);
 
         // A job is selected in a workshop, or unitjobs
         DFHACK_EXPORT bool any_job_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::job *getAnyJob(df::viewscreen *top);
         DFHACK_EXPORT df::job *getSelectedJob(color_ostream &out, bool quiet = false);
 
         // A unit is selected via 'v', 'k', unitjobs, or

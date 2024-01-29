@@ -1397,6 +1397,8 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedCivZone),
     WRAPM(Gui, getSelectedStockpile),
     WRAPM(Gui, getSelectedPlant),
+    WRAPM(Gui, getAnyWorkshopJob),
+    WRAPM(Gui, getAnyJob),
     WRAPM(Gui, getAnyUnit),
     WRAPM(Gui, getAnyItem),
     WRAPM(Gui, getAnyBuilding),
@@ -1823,6 +1825,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, setActionTimers),
     WRAPM(Units, setGroupActionTimers),
     WRAPM(Units, getUnitByNobleRole),
+    WRAPM(Units, unassignTrainer),
     { NULL, NULL }
 };
 
@@ -1927,6 +1930,16 @@ static int units_getStressCutoffs(lua_State *L)
     return 1;
 }
 
+static int units_assignTrainer(lua_State *L) {
+    df::unit * unit = Lua::CheckDFObject<df::unit>(L, 1);
+    int isNum = 0;
+    int trainer_id = lua_tointegerx(L, 2, &isNum);
+    if (!isNum || trainer_id < 0)
+        trainer_id = -1;
+    Lua::Push(L, Units::assignTrainer(unit, trainer_id));
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getOuterContainerRef", units_getOuterContainerRef },
@@ -1935,6 +1948,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getCitizens", units_getCitizens },
     { "getUnitsByNobleRole", units_getUnitsByNobleRole},
     { "getStressCutoffs", units_getStressCutoffs },
+    { "assignTrainer", units_assignTrainer },
     { NULL, NULL }
 };
 

@@ -888,9 +888,8 @@ bool Gui::any_job_hotkey(df::viewscreen *top)
             || workshop_job_hotkey(top);
 }
 
-df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
-{
-    auto bld = getSelectedBuilding(out, true);
+df::job *Gui::getAnyWorkshopJob(df::viewscreen *top) {
+    auto bld = getAnyBuilding(top);
     if (!bld)
         return NULL;
 
@@ -898,11 +897,16 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
     return bld->jobs.size() ? bld->jobs[0] : NULL;
 }
 
-df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
-{
-    using df::global::game;
+df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet) {
+    df::job *job = getAnyWorkshopJob(Core::getTopViewscreen());
 
-    auto top = Core::getTopViewscreen();
+    if (!job && !quiet)
+        out.printerr("No workshop selected or job cannot be found in the selected workshop.\n");
+
+    return job;
+}
+
+df::job *Gui::getAnyJob(df::viewscreen *top) {
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedJob();
 
@@ -913,15 +917,20 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
     }
 
     if (auto unit = getAnyUnit(top)) {
-        df::job *job = unit->job.current_job;
-
-        if (!job && !quiet)
-            out.printerr("Selected unit has no job\n");
-
-        return job;
+        return unit->job.current_job;
     }
 
-    return getSelectedWorkshopJob(out, quiet);
+    return getAnyWorkshopJob(top);
+}
+
+df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
+{
+    df::job *job = getAnyJob(Core::getTopViewscreen());
+
+    if (!job && !quiet)
+        out.printerr("No job can be found from what is selected in the UI.\n");
+
+    return job;
 }
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)

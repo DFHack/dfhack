@@ -4,11 +4,11 @@ reveal
 ======
 
 .. dfhack-tool::
-    :summary: Reveals the map.
+    :summary: Reveal the map.
     :tags: adventure fort armok inspection map
 
 .. dfhack-command:: unreveal
-   :summary: Hides previously hidden tiles again.
+   :summary: Revert a revealed map to its unrevealed state.
 
 .. dfhack-command:: revforget
    :summary: Discard records about what was visible before revealing the map.
@@ -19,17 +19,15 @@ reveal
 .. dfhack-command:: revflood
    :summary: Hide everything, then reveal tiles with a path to a unit.
 
-.. dfhack-command:: nopause
-   :summary: Disable pausing.
-
 This reveals all z-layers in fort mode. It also works in adventure mode, but any
-of its effects are negated once you move. When you use it this way, you don't
-need to run ``unreveal`` to hide the map again.
+of its effects are negated once you move.
 
 In graphics mode, solid tiles that are not adjacent to open space will not be
 rendered, but they can still be examined by hovering over them with the mouse.
 Switching to ASCII mode (in the game settings) will allow the display of the
-revealed tiles.
+revealed solid tiles.
+
+For a GUI that auto-restores the map when closed, see `gui/reveal`.
 
 Usage
 -----
@@ -42,7 +40,9 @@ Usage
     that unpausing with secrets revealed may result in a flood of announcements
     about the revealed secrets!
 ``unreveal``
-    Reverts the effects of ``reveal``.
+    Reverts the effects of ``reveal`` if run immediately afterwards. If you
+    have saved the fort in a revealed state and want to restore the map, use
+    ``revflood``.
 ``revtoggle``
     Switches between ``reveal`` and ``unreveal``. Convenient to bind to a
     hotkey.
@@ -52,15 +52,10 @@ Usage
     the saved map data when you load a new fort.
 ``revflood``
     Hide everything, then reveal tiles with a path to the keyboard cursor (if
-    enabled) or the selected unit (if a unit is selected) or else a random citizen.
-    This allows reparing maps that you accidentally saved while they were revealed.
-    Note that tiles behind constructed walls are also revealed as a workaround for
-    :bug:`1871`.
-``nopause 1|0``
-    Disables pausing (both manual and automatic) with the exception of the pause
-    forced by `reveal` ``hell``. This is nice for digging under rivers. Use
-    ``nopause 1`` to prevent pausing and ``nopause 0`` to allow pausing like
-    normal.
+    enabled) or the selected unit (if a unit is selected) or else a random
+    citizen. This allows reparing maps that you accidentally saved while they
+    were revealed. Note that tiles behind constructed walls are also revealed
+    as a workaround for :bug:`1871`.
 
 Note
 ----

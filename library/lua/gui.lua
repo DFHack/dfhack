@@ -728,7 +728,7 @@ ZScreen.ATTRS{
 function ZScreen:preinit(args)
     if self.ATTRS.initial_pause == nil then
         args.initial_pause = DEFAULT_INITIAL_PAUSE or
-                not self.ATTRS.pass_mouse_clicks or
+                self.ATTRS.pass_mouse_clicks == false or
                 self.ATTRS.force_pause
     end
 end
@@ -872,6 +872,9 @@ function ZScreen:onGetSelectedUnit()
 end
 function ZScreen:onGetSelectedItem()
     return zscreen_get_any(self, 'Item')
+end
+function ZScreen:onGetSelectedJob()
+    return zscreen_get_any(self, 'Job')
 end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')

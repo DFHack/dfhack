@@ -63,6 +63,7 @@ Template for new versions:
 ## Misc Improvements
 - `reveal`: automatically reset saved map state when a new save is loaded
 - `autonestbox`: don't automatically assign partially trained egg-layers to nestboxes if they don't have an ongoing trainer assigned since they might revert to wild
+- `buildingplan`: replace ``[edit filters]`` button in planner overlay with abbreviated filter information
 
 ## Documentation
 

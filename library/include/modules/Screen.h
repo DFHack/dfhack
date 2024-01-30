@@ -348,7 +348,7 @@ namespace DFHack
         static dfhack_viewscreen *try_cast(df::viewscreen *screen);
 
         virtual void logic();
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void resize(int w, int h) { return; }
 
         virtual int8_t movies_okay() { return 1; }
@@ -397,7 +397,7 @@ namespace DFHack
         virtual bool isFocused() { return !defocused; }
         virtual std::string getFocusString() { return focus; }
 
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void logic();
         virtual void help();
         virtual void resize(int w, int h);

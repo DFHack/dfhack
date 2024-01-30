@@ -781,7 +781,7 @@ void dfhack_viewscreen::logic()
     }
 }
 
-void dfhack_viewscreen::render()
+void dfhack_viewscreen::render(uint32_t curtick)
 {
     check_resize();
 }
@@ -1019,14 +1019,14 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
     safe_call_lua(do_destroy, 0, 0);
 }
 
-void dfhack_lua_viewscreen::render()
+void dfhack_lua_viewscreen::render(uint32_t curtick)
 {
     using df::global::enabler;
 
     if (Screen::isDismissed(this))
     {
         if (parent)
-            parent->render();
+            parent->render(curtick);
         return;
     }
 
@@ -1038,7 +1038,7 @@ void dfhack_lua_viewscreen::render()
         feed(&keys);
     }
 
-    dfhack_viewscreen::render();
+    dfhack_viewscreen::render(curtick);
 
     safe_call_lua(do_render, 0, 0);
 }

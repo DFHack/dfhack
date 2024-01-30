@@ -89,7 +89,7 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v3
       with:
-        repository: ${{ inputs.dfhack_ref && github.repository || 'DFHack/dfhack' }}
+        repository: ${{ format('{0}/dfhack', inputs.dfhack_ref && github.repository_owner || 'DFHack') }}
         ref: ${{ inputs.dfhack_ref }}
     - name: Detect DF version
       shell: bash

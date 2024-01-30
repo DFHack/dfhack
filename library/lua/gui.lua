@@ -649,7 +649,7 @@ end
 
 function Screen:renderParent()
     if self._native and self._native.parent then
-        self._native.parent:render()
+        self._native.parent:render(dfhack.getTickCount())
     else
         dscreen.clear()
     end

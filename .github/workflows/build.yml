@@ -7,21 +7,18 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       dfhack_ref: ${{ github.ref }}
-      structures_ref: ${{ github.repository_owner == 'DFHack' && (((github.base_ref || github.ref_name) == 'develop') && 'master' || (github.base_ref || github.ref_name)) || 'master' }}
     secrets: inherit
 
   package:
     uses: ./.github/workflows/package.yml
     with:
       dfhack_ref: ${{ github.ref }}
-      structures_ref: ${{ github.repository_owner == 'DFHack' && (((github.base_ref || github.ref_name) == 'develop') && 'master' || (github.base_ref || github.ref_name)) || 'master' }}
     secrets: inherit
 
   docs:
     uses: ./.github/workflows/build-linux.yml
     with:
       dfhack_ref: ${{ github.ref }}
-      structures_ref: ${{ github.repository_owner == 'DFHack' && (((github.base_ref || github.ref_name) == 'develop') && 'master' || (github.base_ref || github.ref_name)) || 'master' }}
       platform-files: false
       common-files: false
       docs: true
@@ -31,7 +28,6 @@ jobs:
     uses: ./.github/workflows/lint.yml
     with:
       dfhack_ref: ${{ github.ref }}
-      structures_ref: ${{ github.repository_owner == 'DFHack' && (((github.base_ref || github.ref_name) == 'develop') && 'master' || (github.base_ref || github.ref_name)) || 'master' }}
     secrets: inherit
 
   check-pr:

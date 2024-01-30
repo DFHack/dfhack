@@ -176,6 +176,9 @@ DFHACK_EXPORT inline df::specific_ref getOuterContainerRef(df::unit *unit) { df:
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
+DFHACK_EXPORT bool assignTrainer(df::unit *unit, int32_t trainer_id = -1);
+DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
+
 DFHACK_EXPORT df::identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 

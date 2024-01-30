@@ -1220,25 +1220,35 @@ end
 -- AnimalActionsWidget
 --
 
+local function isFortAnimal(unit)
+    return dfhack.units.isFortControlled(unit)
+        and dfhack.units.isAlive(unit)
+        and dfhack.units.isAnimal(unit)
+end
+
+local function isCagedWildAnimal(unit)
+    return dfhack.units.isTamable(unit)
+        and unit.flags1.caged
+        and not unit.flags1.tame
+end
+
 -- Make sure an animal unit of your civ is selected
 local function check_valid_unit()
     local unit = dfhack.gui.getSelectedUnit(true)
-    return unit
-        and dfhack.units.isFortControlled(unit)
-        and dfhack.units.isAlive(unit)
-        and dfhack.units.isAnimal(unit)
+
+    return unit and (isFortAnimal(unit) or isCagedWildAnimal(unit))
 end
 
 local function is_geldable()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    return unit and dfhack.units.isGeldable(unit)
+    return unit and dfhack.units.isGeldable(unit) and dfhack.units.isFortControlled(unit) and not dfhack.units.isGelded(unit)
 end
 
 local function is_not_pet()
     local unit = dfhack.gui.getSelectedUnit(true)
 
-    return not unit or not dfhack.units.isPet(unit)
+    return not unit or not dfhack.units.isPet(unit) and dfhack.units.isFortControlled(unit)
 end
 
 local function is_avail_adoption()
@@ -1249,6 +1259,8 @@ local function is_avail_adoption()
 
     local raw = df.creature_raw.find(unit.race)
     if not raw then return false end
+
+    if not dfhack.units.isFortControlled(unit) then return false end
 
     -- cats adopt owners; owners can't adopt cats
     return raw.creature_id ~= 'CAT'

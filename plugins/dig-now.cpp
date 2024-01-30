@@ -489,6 +489,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     if (td_below == df::tile_dig_designation::Default) {
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
                     }
+                    propagate_vertical_flags(map, pos);
                     return true;
                 }
             } else {
@@ -531,6 +532,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     map.setTiletypeAt(pos_above,
                             get_target_type(tt, df::tiletype_shape::RAMP_TOP));
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
+                    propagate_vertical_flags(map, DFCoord(pos.x, pos.y, pos.z + 1));
                 }
             }
             break;
@@ -549,9 +551,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     dug_tiles.emplace_back(map, pos);
     TRACE(general).print("dig_tile: digging the designation tile at (" COORD ")\n",COORDARGS(pos));
     dig_type(map, pos, target_type);
-
-    // let light filter down to newly exposed tiles
-    propagate_vertical_flags(map, pos);
 
     return true;
 }

@@ -264,11 +264,11 @@ local function is_over_options_panel()
 end
 
 local function compress(str, len)
-    if str:len() <= len then
+    if #str <= len then
         return str
     else
         local no_vowels = str:gsub('[aeiou]','')
-        if no_vowels:len() <= len then
+        if #no_vowels <= len then
             return no_vowels
         else
             return no_vowels:sub(1,len-3)..'...'

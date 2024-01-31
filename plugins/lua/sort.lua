@@ -1308,21 +1308,22 @@ function SquadAnnotationOverlay:onInput(keys)
 end
 
 OVERLAY_WIDGETS = {
-    squad_assignment=SquadAssignmentOverlay,
-    squad_annotation=SquadAnnotationOverlay,
-    info=require('plugins.sort.info').InfoOverlay,
-    workanimals=require('plugins.sort.info').WorkAnimalOverlay,
-    candidates=require('plugins.sort.info').CandidatesOverlay,
-    interrogation=require('plugins.sort.info').InterrogationOverlay,
-    location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
-    unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
-    worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
-    burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,
-    slab=require('plugins.sort.slab').SlabOverlay,
-    world=require('plugins.sort.world').WorldOverlay,
-    places=require('plugins.sort.places').PlacesOverlay,
-    elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
-    elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
+    -- TODO: rewrite for 50.12
+    -- squad_assignment=SquadAssignmentOverlay,
+    -- squad_annotation=SquadAnnotationOverlay,
+    -- info=require('plugins.sort.info').InfoOverlay,
+    -- workanimals=require('plugins.sort.info').WorkAnimalOverlay,
+    -- candidates=require('plugins.sort.info').CandidatesOverlay,
+    -- interrogation=require('plugins.sort.info').InterrogationOverlay,
+    -- location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
+    -- unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
+    -- worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
+    -- burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,
+    -- slab=require('plugins.sort.slab').SlabOverlay,
+    -- world=require('plugins.sort.world').WorldOverlay,
+    -- places=require('plugins.sort.places').PlacesOverlay,
+    -- elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
+    -- elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

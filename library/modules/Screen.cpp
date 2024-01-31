@@ -786,6 +786,14 @@ void dfhack_viewscreen::render(uint32_t curtick)
     check_resize();
 }
 
+// always pass calls directly through to the DF screen below since this is called on
+// the top viewscreen, but used to arrange the widgets on the underlying DF viewscreen
+df::extentst dfhack_viewscreen::get_rect() {
+    if (parent)
+        return parent->get_rect();
+    return df::extentst();
+}
+
 bool dfhack_viewscreen::key_conflict(df::interface_key key)
 {
     if (key == interface_key::OPTIONS)

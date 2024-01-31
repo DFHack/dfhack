@@ -350,6 +350,7 @@ namespace DFHack
         virtual void logic();
         virtual void render(uint32_t curtick);
         virtual void resize(int w, int h) { return; }
+        virtual df::extentst get_rect();
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);

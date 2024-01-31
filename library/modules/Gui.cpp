@@ -276,20 +276,21 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
             break;
         case df::enums::info_interface_mode_type::LABOR:
-            newFocusString += '/' + enum_item_key(game->main_interface.info.labor.mode);
-            switch(game->main_interface.info.labor.mode) {
-                case df::labor_mode_type::STANDING_ORDERS:
-                    newFocusString += '/' + enum_item_key(game->main_interface.info.labor.standing_orders.current_category);
-                    break;
-                case df::labor_mode_type::KITCHEN:
-                    newFocusString += '/' + enum_item_key(game->main_interface.info.labor.kitchen.current_category);
-                    break;
-                case df::labor_mode_type::STONE_USE:
-                    newFocusString += '/' + enum_item_key(game->main_interface.info.labor.stone_use.current_category);
-                    break;
-                default:
-                    break;
-            }
+            // TODO: rewrite for 50.12
+            // newFocusString += '/' + enum_item_key(game->main_interface.info.labor.mode);
+            // switch(game->main_interface.info.labor.mode) {
+            //     case df::labor_mode_type::STANDING_ORDERS:
+            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.standing_orders.current_category);
+            //         break;
+            //     case df::labor_mode_type::KITCHEN:
+            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.kitchen.current_category);
+            //         break;
+            //     case df::labor_mode_type::STONE_USE:
+            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.stone_use.current_category);
+            //         break;
+            //     default:
+            //         break;
+            // }
             break;
         case df::enums::info_interface_mode_type::ARTIFACTS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);

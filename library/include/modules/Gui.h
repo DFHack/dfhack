@@ -40,6 +40,8 @@ distribution.
 #include "df/announcement_infost.h"
 #include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
+#include "df/widget.h"
+#include "df/widget_container.h"
 
 #include "modules/GuiHooks.h"
 
@@ -198,6 +200,9 @@ namespace DFHack
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
         DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);
+
+        DFHACK_EXPORT df::widget * getWidget(df::widget_container *container, std::string name);
+        DFHACK_EXPORT df::widget * getWidget(df::widget_container *container, size_t idx);
 
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match

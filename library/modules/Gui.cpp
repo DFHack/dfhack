@@ -244,6 +244,32 @@ DEFINE_GET_FOCUS_STRING_HANDLER(world)
     focusStrings.push_back(baseFocus + '/' + enum_item_key(screen->view_mode));
 }
 
+static bool widget_is_visible(df::widget * w) {
+    return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
+}
+
+static df::widget * get_visible_child(df::widget *parent) {
+    df::widget_container *container = virtual_cast<df::widget_container>(parent);
+    if (!container)
+        return NULL;
+    for (auto child : container->children) {
+        if (widget_is_visible(child.get()))
+            return child.get();
+    }
+    return NULL;
+}
+
+static df::widget_container * get_visible_child_container(df::widget *parent) {
+    df::widget_container *container = virtual_cast<df::widget_container>(parent);
+    if (!container)
+        return NULL;
+    for (auto child : container->children) {
+        if (widget_is_visible(child.get()))
+            return virtual_cast<df::widget_container>(child.get());
+    }
+    return NULL;
+}
+
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
@@ -260,38 +286,56 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         switch(game->main_interface.info.current_mode) {
         case df::enums::info_interface_mode_type::CREATURES:
-            // TODO: rewrite for 50.12
-            // if (game->main_interface.info.creatures.showing_overall_training)
-            //     newFocusString += "/OverallTraining";
-            // else if (game->main_interface.info.creatures.showing_activity_details)
-            //     newFocusString += "/ActivityDetails";
-            // else if (game->main_interface.info.creatures.adding_trainer)
-            //     newFocusString += "/AddingTrainer";
-            // else if (game->main_interface.info.creatures.assign_work_animal)
-            //     newFocusString += "/AssignWorkAnimal";
-            // else
-                newFocusString += '/' + enum_item_key(game->main_interface.info.creatures.current_mode);
+        {
+            auto tab = get_visible_child_container(Gui::getWidget(&game->main_interface.info.creatures, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Info tab widget not found\n");
+            } else if (tab->name == "Citizens") {
+                if (tab->children.size() > 1)
+                    newFocusString += "/ActivityDetails";
+                else
+                    newFocusString += "/CITIZEN";
+            } else if (tab->name == "Pets/Livestock") {
+                newFocusString += "/PET";
+        // TODO: rewrite for 50.12
+        // if (game->main_interface.info.creatures.showing_overall_training)
+        //     newFocusString += "/OverallTraining";
+        // else if (game->main_interface.info.creatures.adding_trainer)
+        //     newFocusString += "/AddingTrainer";
+        // else if (game->main_interface.info.creatures.assign_work_animal)
+        //     newFocusString += "/AssignWorkAnimal";
+            } else if (tab->name == "Other") {
+                newFocusString += "/OTHER";
+            } else if (tab->name == "Dead/Missing") {
+                newFocusString += "/DECEASED";
+            }
             break;
+        }
         case df::enums::info_interface_mode_type::BUILDINGS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
             break;
         case df::enums::info_interface_mode_type::LABOR:
-            // TODO: rewrite for 50.12
-            // newFocusString += '/' + enum_item_key(game->main_interface.info.labor.mode);
-            // switch(game->main_interface.info.labor.mode) {
-            //     case df::labor_mode_type::STANDING_ORDERS:
-            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.standing_orders.current_category);
-            //         break;
-            //     case df::labor_mode_type::KITCHEN:
-            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.kitchen.current_category);
-            //         break;
-            //     case df::labor_mode_type::STONE_USE:
-            //         newFocusString += '/' + enum_item_key(game->main_interface.info.labor.stone_use.current_category);
-            //         break;
-            //     default:
-            //         break;
-            // }
+        {
+            auto tab = get_visible_child(Gui::getWidget(&game->main_interface.info.labor, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Labor tab widget not found\n");
+            } else if (tab->name == "Work Details") {
+                newFocusString += "/WORK_DETAILS";
+            } else if (tab->name == "Standing orders") {
+                newFocusString += "/STANDING_ORDERS";
+                auto lsoi = virtual_cast<df::labor_standing_orders_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lsoi->current_category);
+            } else if (tab->name == "Kitchen") {
+                newFocusString += "/KITCHEN";
+                auto lki = virtual_cast<df::labor_kitchen_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lki->current_category);
+            } else if (tab->name == "Stone use") {
+                newFocusString += "/STONE_USE";
+                auto lsui = virtual_cast<df::labor_stone_use_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lsui->current_category);
+            }
             break;
+        }
         case df::enums::info_interface_mode_type::ARTIFACTS:
             newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
@@ -2043,6 +2087,23 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     r.flags.bits.hostile_combat = !is_sparring;
 
     return autoDFAnnouncement(r, message);
+}
+
+df::widget * Gui::getWidget(df::widget_container *container, string name) {
+    CHECK_NULL_POINTER(container);
+    // ensure the compiler catches the change if we ever fix the template parameters
+    std::map<void *, void *> & orig_field = container->children_by_name;
+    auto children_by_name = reinterpret_cast<std::map<std::string, std::shared_ptr<df::widget>> *>(&orig_field);
+    if (children_by_name->contains(name))
+        return (*children_by_name)[name].get();
+    return NULL;
+}
+
+df::widget * Gui::getWidget(df::widget_container *container, size_t idx) {
+    CHECK_NULL_POINTER(container);
+    if (idx >= container->children.size())
+        return NULL;
+    return container->children[idx].get();
 }
 
 static df::viewscreen * do_skip_dismissed(df::viewscreen * ws) {

@@ -1560,6 +1560,33 @@ static int gui_revealInDwarfmodeMap(lua_State *state)
     return 1;
 }
 
+static df::widget * get_one_widget(lua_State *L, int32_t idx, df::widget_container *container) {
+    if (lua_isinteger(L, idx))
+        return Gui::getWidget(container, lua_tointeger(L, idx));
+    else if (lua_isstring(L, idx))
+        return Gui::getWidget(container, luaL_checkstring(L, idx));
+    return NULL;
+}
+
+static int gui_getWidget(lua_State *L) {
+    df::widget_container *container = Lua::CheckDFObject<df::widget_container>(L, 1);
+
+    df::widget *w = NULL;
+    int max_arg_idx = lua_gettop(L);
+    for (int32_t idx = 2; idx <= max_arg_idx; ++idx) {
+        if (!container)
+            return 0;
+        w = get_one_widget(L, idx, container);
+        if (!w)
+            return 0;
+        if (idx < max_arg_idx)
+            container = virtual_cast<df::widget_container>(w);
+    }
+
+    Lua::PushDFObject(L, w);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "autoDFAnnouncement", gui_autoDFAnnouncement },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
@@ -1568,6 +1595,7 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "getMousePos", gui_getMousePos },
     { "getFocusStrings", gui_getFocusStrings },
     { "getCurFocus", gui_getCurFocus },
+    { "getWidget", gui_getWidget },
     { NULL, NULL }
 };
 

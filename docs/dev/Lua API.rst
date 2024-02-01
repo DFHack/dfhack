@@ -1012,6 +1012,13 @@ Screens
   ``true``, ignores screens already marked to be removed. If ``viewscreen`` is
   specified, starts the scan at the given viewscreen.
 
+* ``dfhack.gui.getWidget(container, <name or index>[, <name or index>...])``
+
+  Returns the DF widget in the given widget container with the given name or
+  (zero-based) numeric index. You can follow a chain of widget containers by
+  passing additional names or indices. For example:
+  ``:lua ~dfhack.gui.getWidget(game.main_interface.info.labor, "Tabs", 0)``
+
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

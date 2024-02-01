@@ -296,14 +296,15 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 else
                     newFocusString += "/CITIZEN";
             } else if (tab->name == "Pets/Livestock") {
+                // TODO: rewrite for 50.12
+                // if (game->main_interface.info.creatures.showing_overall_training)
+                //     newFocusString += "/OverallTraining";
+                // else if (game->main_interface.info.creatures.adding_trainer)
+                //     newFocusString += "/AddingTrainer";
+                // else if (game->main_interface.info.creatures.assign_work_animal)
+                //     newFocusString += "/AssignWorkAnimal";
+                // else
                 newFocusString += "/PET";
-        // TODO: rewrite for 50.12
-        // if (game->main_interface.info.creatures.showing_overall_training)
-        //     newFocusString += "/OverallTraining";
-        // else if (game->main_interface.info.creatures.adding_trainer)
-        //     newFocusString += "/AddingTrainer";
-        // else if (game->main_interface.info.creatures.assign_work_animal)
-        //     newFocusString += "/AssignWorkAnimal";
             } else if (tab->name == "Other") {
                 newFocusString += "/OTHER";
             } else if (tab->name == "Dead/Missing") {
@@ -340,13 +341,31 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
             break;
         case df::enums::info_interface_mode_type::JUSTICE:
-            if (game->main_interface.info.justice.interrogating)
-                newFocusString += "/Interrogating";
-            else if (game->main_interface.info.justice.convicting)
-                newFocusString += "/Convicting";
-            else
-                newFocusString += '/' + enum_item_key(game->main_interface.info.justice.current_mode);
+        {
+            auto tab = get_visible_child(Gui::getWidget(&game->main_interface.info.justice, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Justice tab widget not found\n");
+            } else if (tab->name == "Open cases") {
+                // TODO: rewrite for 50.12
+                // if (game->main_interface.info.justice.interrogating)
+                //     newFocusString += "/Interrogating";
+                // else if (game->main_interface.info.justice.convicting)
+                //     newFocusString += "/Convicting";
+                // else
+                newFocusString += "/OPEN_CASES";
+            } else if (tab->name == "Closed cases") {
+                newFocusString += "/CLOSED_CASES";
+            } else if (tab->name == "Cold cases") {
+                newFocusString += "/COLD_CASES";
+            } else if (tab->name == "Fortress guard") {
+                newFocusString += "/FORTRESS_GUARD";
+            } else if (tab->name == "Convicts") {
+                newFocusString += "/CONVICTS";
+            } else if (tab->name == "Intelligence") {
+                newFocusString += "/COUNTERINTELLIGENCE";
+            }
             break;
+        }
         case df::enums::info_interface_mode_type::WORK_ORDERS:
             if (game->main_interface.info.work_orders.conditions.open)
                 newFocusString += "/Conditions";
@@ -628,13 +647,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/ImageCreator";
         focusStrings.push_back(newFocusString);
     }
-    // TODO: rewrite for 50.12
-    // if (game->main_interface.unit_selector.open) {
-    //     newFocusString = baseFocus;
-    //     newFocusString += "/UnitSelector";
-    //     newFocusString += '/' + enum_item_key(game->main_interface.unit_selector.context);
-    //     focusStrings.push_back(newFocusString);
-    // }
+    if (game->main_interface.unit_selector.visibility_flags.bits.WIDGET_VISIBILITY_ACTIVE) {
+        newFocusString = baseFocus;
+        newFocusString += "/UnitSelector/";
+        newFocusString += enum_item_key(game->main_interface.unit_selector.context);
+        focusStrings.push_back(newFocusString);
+    }
     if (game->main_interface.announcement_alert.open) {
         newFocusString = baseFocus;
         newFocusString += "/AnnouncementAlert";

@@ -129,9 +129,11 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
                 if (nodump)
                     out.print("Confiscating litter: \t");
                 else
+                {
                     out.print("Confiscating and dumping litter: \t");
-                confiscate = true;
-                dump = true;
+                    dump = true;
+                }
+                confiscate = true;   
             }
         }
         else if (item->getWear() >= wear_dump_level)
@@ -139,9 +141,11 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             if (nodump)
                 out.print("Confiscating a worn item: \t");
             else
+            {
                 out.print("Confiscating and dumping a worn item: \t");
+                dump = true;
+            }
             confiscate = true;
-            dump = true;
         }
         else if (confiscate_all)
         {
@@ -169,7 +173,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             {
                 if (!Items::setOwner(item,NULL))
                     out.print("(unsuccessfully) ");
-                if (dump && !nodump)
+                if (dump)
                     item->flags.bits.dump = 1;
             }
             out.print("\n");

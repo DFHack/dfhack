@@ -263,9 +263,24 @@ local function is_over_options_panel()
     return v:getMousePos()
 end
 
+local function compress(str, len)
+    if #str <= len then
+        return str
+    else
+        local no_vowels = str:gsub('[aeiou]','')
+        if #no_vowels <= len then
+            return no_vowels
+        else
+            return no_vowels:sub(1,len-3)..'...'
+        end
+    end
+end
 --------------------------------
 -- ItemLine
 --
+
+-- number of characters for item filter summary (excluding surrounding [ ])
+local item_filter_chars = 17
 
 ItemLine = defclass(ItemLine, widgets.Panel)
 ItemLine.ATTRS{
@@ -302,13 +317,17 @@ function ItemLine:init()
             frame={t=0, l=28},
             text={
                 {text=self:callback('get_filter_text'),
-                 pen=function() return gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
+                 width=item_filter_chars+2,
+                 rjustify=true,
+                 pen=function() return
+                         self:is_impossible() and COLOR_RED or
+                         gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
             },
             auto_width=true,
             on_click=function() self.on_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=42},
+            frame={t=0, l=47},
             text='[clear]',
             text_pen=COLOR_LIGHTRED,
             auto_width=true,
@@ -368,8 +387,53 @@ function ItemLine:has_filter()
 end
 
 function ItemLine:get_filter_text()
-    -- TODO: make this show the filter's materials instead of "edit filters"
-    return self:has_filter() and '[edit filters]' or '[any material]'
+    local buildingplan = require('plugins.buildingplan')
+    if not buildingplan.hasFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    then
+        return '[any material]'
+    end
+    local mats = buildingplan.getMaterialFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    local cats = buildingplan.getMaterialMaskFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    local enabled_mat_names = {}
+    local enabled_cat_names = {}
+    for name, props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if enabled then table.insert(enabled_mat_names, name) end
+    end
+    if #enabled_mat_names == 1 then
+        return '['..compress(enabled_mat_names[1], item_filter_chars)..']'
+    elseif #enabled_mat_names > 1 then
+        for cat, _ in pairs(cats) do
+            if cat ~= 'unset' and cats[cat] then
+                table.insert(enabled_cat_names, cat)
+            end
+        end
+        if #enabled_cat_names == 1 then
+            return '[' .. enabled_cat_names[1]:gsub("^%l", string.upper) .. ']'
+        else
+            return '['..#enabled_cat_names..' mat. categories]'
+        end
+    else
+        -- can result from selecting wood and then toggling "fire safe" etc.
+        return '[impossible filter]'
+    end
+end
+
+-- short circuit version of the '[impossible filter]' case above
+function ItemLine:is_impossible()
+    local buildingplan = require('plugins.buildingplan')
+    local mats = buildingplan.getMaterialFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
+    local cats = buildingplan.getMaterialMaskFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+     for _,props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if enabled then return false end
+    end
+    return true
 end
 
 function ItemLine:reduce_quantity(used_quantity)

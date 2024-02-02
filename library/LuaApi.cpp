@@ -1385,8 +1385,8 @@ static int gui_getMousePos(lua_State *L)
 }
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
-    WRAPN(addCombatReport, (bool (*)(df::unit*, df::unit_report_type, int, bool))Gui::addCombatReport),
-    WRAPN(addCombatReportAuto, (bool (*)(df::unit*, df::announcement_flags, int))Gui::addCombatReportAuto),
+    WRAPN(addCombatReport, (bool (*)(df::unit *, df::unit_report_type, int, bool))Gui::addCombatReport),
+    WRAPN(addCombatReportAuto, (bool (*)(df::unit *, df::announcement_flags, int))Gui::addCombatReportAuto),
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getDFViewscreen),
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -1406,11 +1406,6 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getAnyStockpile),
     WRAPM(Gui, getAnyPlant),
     WRAPM(Gui, writeToGamelog),
-    WRAPM(Gui, makeAnnouncement),
-    WRAPM(Gui, showAnnouncement),
-    WRAPM(Gui, showZoomAnnouncement),
-    WRAPM(Gui, showPopupAnnouncement),
-    WRAPM(Gui, showAutoAnnouncement),
     WRAPM(Gui, resetDwarfmodeView),
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
@@ -1433,9 +1428,202 @@ static int gui_getCurFocus(lua_State *state) {
     return 1;
 }
 
+static int gui_makeAnnouncement(lua_State *state)
+{
+    int rv; // return the index into reports vector or -1
+    df::coord pos;
+    int color = 0; // initialize these to prevent warning
+    bool bright = false;
+
+    auto type = (df::announcement_type)lua_tointeger(state, 1);
+    df::announcement_flags *mode = Lua::CheckDFObject<df::announcement_flags>(state, 2);
+    Lua::CheckDFAssign(state, &pos, 3);
+    std::string message = luaL_checkstring(state, 4);
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 6:
+            bright = lua_toboolean(state, 6);
+        case 5:
+            color = lua_tointeger(state, 5);
+        case 4:
+            break;
+    }
+
+    switch (lua_gettop(state))
+    {   // Use the defaults in Gui.h
+        default:
+        case 6:
+            rv = Gui::makeAnnouncement(type, *mode, pos, message, color, bright);
+            break;
+        case 5:
+            rv = Gui::makeAnnouncement(type, *mode, pos, message, color);
+            break;
+        case 4:
+            rv = Gui::makeAnnouncement(type, *mode, pos, message);
+    }
+
+    lua_pushinteger(state, rv);
+    return 1;
+}
+
+static int gui_showAnnouncement(lua_State *state)
+{
+    int color = 0;
+    bool bright = false;
+
+    std::string message = luaL_checkstring(state, 1);
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 3:
+            bright = lua_toboolean(state, 3);
+        case 2:
+            color = lua_tointeger(state, 2);
+        case 1:
+            break;
+    }
+
+    switch (lua_gettop(state))
+    {   // Use the defaults in Gui.h
+        default:
+        case 3:
+            Gui::showAnnouncement(message, color, bright);
+            break;
+        case 2:
+            Gui::showAnnouncement(message, color);
+            break;
+        case 1:
+            Gui::showAnnouncement(message);
+    }
+
+    return 1;
+}
+
+static int gui_showZoomAnnouncement(lua_State *state)
+{
+    df::coord pos;
+    int color = 0;
+    bool bright = false;
+
+    auto type = (df::announcement_type)lua_tointeger(state, 1);
+    Lua::CheckDFAssign(state, &pos, 2);
+    std::string message = luaL_checkstring(state, 3);
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 5:
+            bright = lua_toboolean(state, 5);
+        case 4:
+            color = lua_tointeger(state, 4);
+        case 3:
+            break;
+    }
+
+    switch (lua_gettop(state))
+    {   // Use the defaults in Gui.h
+        default:
+        case 5:
+            Gui::showZoomAnnouncement(type, pos, message, color, bright);
+            break;
+        case 4:
+            Gui::showZoomAnnouncement(type, pos, message, color);
+            break;
+        case 3:
+            Gui::showZoomAnnouncement(type, pos, message);
+    }
+
+    return 1;
+}
+
+static int gui_showPopupAnnouncement(lua_State *state)
+{
+    int color = 0;
+    bool bright = false;
+
+    std::string message = luaL_checkstring(state, 1);
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 3:
+            bright = lua_toboolean(state, 3);
+        case 2:
+            color = lua_tointeger(state, 2);
+        case 1:
+            break;
+    }
+
+    switch (lua_gettop(state))
+    {   // Use the defaults in Gui.h
+        default:
+        case 3:
+            Gui::showPopupAnnouncement(message, color, bright);
+            break;
+        case 2:
+            Gui::showPopupAnnouncement(message, color);
+            break;
+        case 1:
+            Gui::showPopupAnnouncement(message);
+    }
+
+    return 1;
+}
+
+static int gui_showAutoAnnouncement(lua_State *state)
+{
+    df::coord pos;
+    int color = 0;
+    bool bright = false;
+    df::unit *unit_a = NULL, *unit_d = NULL;
+
+    auto type = (df::announcement_type)lua_tointeger(state, 1);
+    Lua::CheckDFAssign(state, &pos, 2);
+    std::string message = luaL_checkstring(state, 3);
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 7:
+            unit_d = Lua::CheckDFObject<df::unit>(state, 7);
+        case 6:
+            unit_a = Lua::CheckDFObject<df::unit>(state, 6);
+        case 5:
+            bright = lua_toboolean(state, 5);
+        case 4:
+            color = lua_tointeger(state, 4);
+        case 3:
+            break;
+    }
+
+    switch (lua_gettop(state))
+    {   // Use the defaults in Gui.h
+        default:
+        case 7:
+            Gui::showAutoAnnouncement(type, pos, message, color, bright, unit_a, unit_d);
+            break;
+        case 6:
+            Gui::showAutoAnnouncement(type, pos, message, color, bright, unit_a);
+            break;
+        case 5:
+            Gui::showAutoAnnouncement(type, pos, message, color, bright);
+            break;
+        case 4:
+            Gui::showAutoAnnouncement(type, pos, message, color);
+            break;
+        case 3:
+            Gui::showAutoAnnouncement(type, pos, message);
+    }
+
+    return 1;
+}
+
 static int gui_autoDFAnnouncement(lua_State *state)
 {
-    bool rv;
+    bool rv; // success
     df::announcement_infost *r = Lua::GetDFObject<df::announcement_infost>(state, 1);
 
     if (r)
@@ -1446,9 +1634,9 @@ static int gui_autoDFAnnouncement(lua_State *state)
     else
     {
         df::coord pos;
-        int color = 0; // initialize these to prevent warning
+        int color = 0;
         bool bright = false, is_sparring = false;
-        df::unit *unit1 = NULL, *unit2 = NULL;
+        df::unit *unit_a = NULL, *unit_d = NULL;
 
         auto type = (df::announcement_type)lua_tointeger(state, 1);
         Lua::CheckDFAssign(state, &pos, 2);
@@ -1460,9 +1648,9 @@ static int gui_autoDFAnnouncement(lua_State *state)
             case 8:
                 is_sparring = lua_toboolean(state, 8);
             case 7:
-                unit2 = Lua::CheckDFObject<df::unit>(state, 7);
+                unit_d = Lua::CheckDFObject<df::unit>(state, 7);
             case 6:
-                unit1 = Lua::CheckDFObject<df::unit>(state, 6);
+                unit_a = Lua::CheckDFObject<df::unit>(state, 6);
             case 5:
                 bright = lua_toboolean(state, 5);
             case 4:
@@ -1475,13 +1663,13 @@ static int gui_autoDFAnnouncement(lua_State *state)
         {   // Use the defaults in Gui.h
             default:
             case 8:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring);
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit_a, unit_d, is_sparring);
                 break;
             case 7:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2);
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit_a, unit_d);
                 break;
             case 6:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1);
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit_a);
                 break;
             case 5:
                 rv = Gui::autoDFAnnouncement(type, pos, message, color, bright);
@@ -1561,6 +1749,11 @@ static int gui_revealInDwarfmodeMap(lua_State *state)
 }
 
 static const luaL_Reg dfhack_gui_funcs[] = {
+    { "makeAnnouncement", gui_makeAnnouncement },
+    { "showAnnouncement", gui_showAnnouncement },
+    { "showZoomAnnouncement", gui_showZoomAnnouncement },
+    { "showPopupAnnouncement", gui_showPopupAnnouncement },
+    { "showAutoAnnouncement", gui_showAutoAnnouncement },
     { "autoDFAnnouncement", gui_autoDFAnnouncement },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
     { "pauseRecenter", gui_pauseRecenter },

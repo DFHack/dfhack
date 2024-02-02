@@ -1322,8 +1322,8 @@ OVERLAY_WIDGETS = {
     slab=require('plugins.sort.slab').SlabOverlay,
     world=require('plugins.sort.world').WorldOverlay,
     places=require('plugins.sort.places').PlacesOverlay,
-    -- elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
-    -- elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
+    elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
+    elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

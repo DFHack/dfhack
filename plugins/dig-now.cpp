@@ -344,7 +344,11 @@ static void clean_ramp(MapExtras::MapCache &map, const DFCoord &pos) {
     if (is_wall(map, DFCoord(pos.x-1, pos.y, pos.z)) ||
             is_wall(map, DFCoord(pos.x+1, pos.y, pos.z)) ||
             is_wall(map, DFCoord(pos.x, pos.y-1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x, pos.y+1, pos.z)))
+            is_wall(map, DFCoord(pos.x, pos.y+1, pos.z)) ||
+            is_wall(map, DFCoord(pos.x-1, pos.y-1, pos.z)) ||
+            is_wall(map, DFCoord(pos.x-1, pos.y+1, pos.z)) ||
+            is_wall(map, DFCoord(pos.x+1, pos.y-1, pos.z)) ||
+            is_wall(map, DFCoord(pos.x+1, pos.y+1, pos.z)))
         return;
 
     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+1));
@@ -359,6 +363,10 @@ static void clean_ramps(MapExtras::MapCache &map, const DFCoord &pos) {
     clean_ramp(map, DFCoord(pos.x+1, pos.y, pos.z));
     clean_ramp(map, DFCoord(pos.x, pos.y-1, pos.z));
     clean_ramp(map, DFCoord(pos.x, pos.y+1, pos.z));
+    clean_ramp(map, DFCoord(pos.x-1, pos.y-1, pos.z));
+    clean_ramp(map, DFCoord(pos.x-1, pos.y+1, pos.z));
+    clean_ramp(map, DFCoord(pos.x+1, pos.y-1, pos.z));
+    clean_ramp(map, DFCoord(pos.x+1, pos.y+1, pos.z));
 }
 
 // destroys any colonies located at pos
@@ -489,6 +497,8 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     if (td_below == df::tile_dig_designation::Default) {
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
                     }
+                    clean_ramps(map, pos);
+                    propagate_vertical_flags(map, pos);
                     return true;
                 }
             } else {
@@ -531,6 +541,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     map.setTiletypeAt(pos_above,
                             get_target_type(tt, df::tiletype_shape::RAMP_TOP));
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
+                    propagate_vertical_flags(map, DFCoord(pos.x, pos.y, pos.z + 1));
                 }
             }
             break;
@@ -550,9 +561,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     TRACE(general).print("dig_tile: digging the designation tile at (" COORD ")\n",COORDARGS(pos));
     dig_type(map, pos, target_type);
 
-    // let light filter down to newly exposed tiles
-    propagate_vertical_flags(map, pos);
-
+    clean_ramps(map, pos);
     return true;
 }
 

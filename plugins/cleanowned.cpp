@@ -133,7 +133,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
                     out.print("Confiscating and dumping litter: \t");
                     dump = true;
                 }
-                confiscate = true;   
+                confiscate = true;
             }
         }
         else if (item->getWear() >= wear_dump_level)

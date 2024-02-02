@@ -30,6 +30,8 @@ You can confiscate additional types of items by adding them to the commandline:
     Confiscate/dump items with wear level 'x' (lightly worn) and more.
 ``X``
     Confiscate/dump items with wear level 'X' (heavily worn) and more.
+``nodump``
+    Don't dump items only confiscate
 
 Or you can confiscate all owned items by specifying ``all``.
 

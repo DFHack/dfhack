@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
+- `cleanowned`: Add a "nodump" option to allow for confiscating of items without dumping
 
 ## Fixes
 - `sort`: fix potential crash when switching between info tabs

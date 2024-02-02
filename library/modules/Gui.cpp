@@ -1652,7 +1652,7 @@ static bool add_recent_reports(df::unit *unit, df::report *report, bool update_a
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
 {
-    if (!is_valid_enum_item(type) || type == df::announcement_type::NONE)
+    if (!world->allow_announcements || !is_valid_enum_item(type) || type == df::announcement_type::NONE)
         return -1;
     else if (message.empty())
     {
@@ -1670,8 +1670,8 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
 
     writeToGamelog(message);
 
-    auto& reports = world->status.reports;
-    auto& alerts = world->status.announcement_alert;
+    auto &reports = world->status.reports;
+    auto &alerts = world->status.announcement_alert;
 
     // Check for repeat report as part of an existing alert
     if (*gamemode == game_mode::DWARF && !flags.bits.ALERT)
@@ -1694,8 +1694,6 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
             }
         }
     }
-
-    int report_idx = world->status.reports.size();
 
     auto new_report = new df::report();
     new_report->type = type;
@@ -1755,7 +1753,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         reports.erase(reports.begin());
     }
 
-    return report_idx;
+    return world->status.reports.size() - 1;
 }
 
 bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report *report, bool update_alert)
@@ -1828,8 +1826,8 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 {
     df::popup_message *popup = new df::popup_message();
     popup->text = message;
-    popup->color = color;
-    popup->bright = bright;
+    popup->color = color; // Doesn't do anything anymore? Popups are always [C:7:0:0] gray text
+    popup->bright = bright; // To color popup use: "[C:" + to_string(color) + ":0:" + (bright ? '1' : '0') + ']' + message
 
     auto &popups = world->status.popups;
     popups.push_back(popup);
@@ -1956,14 +1954,18 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         showPopupAnnouncement(message, info.color, info.bright);
 
     // Play announcement sound
-    //if (!adv_unconscious)
+    //if (!adv_unconscious) // TODO: Find out if sounds will be played while unconscious
     {
         vector<int32_t> valid_sounds;
         for(vector<df::soundst *>::iterator it = world->raws.sound.sound.begin(); it < world->raws.sound.sound.end(); it++)
         {
             auto &cur_sound = **it;
+            DEBUG(gui).print("Testing sound #%d\n", cur_sound.sound);
             if (binsearch_index(cur_sound.announcement, info.type) >= 0)
+            {
                 valid_sounds.push_back(cur_sound.sound);
+                DEBUG(gui).print("Sound #%d valid.\n", cur_sound.sound);
+            }
         }
 
         int32_t samp_index;
@@ -2596,7 +2598,7 @@ void Gui::resetDwarfmodeView(bool pause)
         selection_rect->end_z = -30000;
     }
     // NOTE: There's an unidentified global coord after selection_rect that is reset to -30000 here.
-    //   This coord goes into game->main_interface.keyboard_last_track_s if the x value is not -30000. Probably okay to ignore?
+    // This coord goes into game->main_interface.keyboard_last_track_s if the x value is not -30000. Probably okay to ignore?
 
     if (cursor)
         cursor->x = cursor->y = cursor->z = -30000;

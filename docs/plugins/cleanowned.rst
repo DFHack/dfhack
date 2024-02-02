@@ -31,7 +31,7 @@ You can confiscate additional types of items by adding them to the commandline:
 ``X``
     Confiscate/dump items with wear level 'X' (heavily worn) and more.
 ``nodump``
-    Don't dump items only confiscate
+    Cause dwarves to drop confiscated items, but don't mark them for dumping.
 
 Or you can confiscate all owned items by specifying ``all``.
 

@@ -296,15 +296,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 else
                     newFocusString += "/CITIZEN";
             } else if (tab->name == "Pets/Livestock") {
-                // TODO: rewrite for 50.12
-                // if (game->main_interface.info.creatures.showing_overall_training)
-                //     newFocusString += "/OverallTraining";
-                // else if (game->main_interface.info.creatures.adding_trainer)
-                //     newFocusString += "/AddingTrainer";
-                // else if (game->main_interface.info.creatures.assign_work_animal)
-                //     newFocusString += "/AssignWorkAnimal";
-                // else
-                newFocusString += "/PET";
+                if (Gui::getWidget(tab, "Overall training"))
+                    newFocusString += "/OverallTraining";
+                else if (Gui::getWidget(tab, "Adding trainer"))
+                    newFocusString += "/AddingTrainer";
+                else if (Gui::getWidget(tab, "Hunting assignnent"))
+                    newFocusString += "/AssignWorkAnimal";
+                else
+                    newFocusString += "/PET";
             } else if (tab->name == "Other") {
                 newFocusString += "/OTHER";
             } else if (tab->name == "Dead/Missing") {
@@ -346,13 +345,17 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             if (!tab) {
                 WARN(gui).print("Justice tab widget not found\n");
             } else if (tab->name == "Open cases") {
-                // TODO: rewrite for 50.12
-                // if (game->main_interface.info.justice.interrogating)
-                //     newFocusString += "/Interrogating";
-                // else if (game->main_interface.info.justice.convicting)
-                //     newFocusString += "/Convicting";
-                // else
-                newFocusString += "/OPEN_CASES";
+                auto * container_tab = virtual_cast<df::widget_container>(tab);
+                auto * right_panel = container_tab ?
+                    virtual_cast<df::widget_container>(Gui::getWidget(container_tab, "Right panel")) :
+                    NULL;
+                bool is_valid = right_panel && right_panel->children.size();
+                if (is_valid && right_panel->children[0]->name == "Interrogate")
+                    newFocusString += "/Interrogating";
+                else if (is_valid && right_panel->children[0]->name == "Convict")
+                    newFocusString += "/Convicting";
+                else
+                    newFocusString += "/OPEN_CASES";
             } else if (tab->name == "Closed cases") {
                 newFocusString += "/CLOSED_CASES";
             } else if (tab->name == "Cold cases") {

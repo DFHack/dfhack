@@ -1960,16 +1960,11 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         {
             auto &cur_sound = **it;
             if (binsearch_index(cur_sound.announcement, info.type) >= 0)
-            {
                 valid_sounds.push_back(cur_sound.sound);
-            }
         }
 
-        int32_t samp_index;
-        if (valid_sounds.empty() && *gamemode == game_mode::DWARF && a_flags.bits.ALERT)
-            samp_index = 10; // Default to SOUND_ALERT
-        else
-            samp_index = random_index(valid_sounds);
+        // Default to SOUND_ALERT (10) when vector empty if is ALERT, else no sound
+        int32_t samp_index = vector_get_random(valid_sounds, (*gamemode == game_mode::DWARF && a_flags.bits.ALERT) ? 10 : -1);
 
         if (samp_index >= 0)
         {

@@ -2033,8 +2033,8 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
-            add_proper_report(info.unit_a, !info.flags.bits.hostile_combat, new_report, true);
-            add_proper_report(info.unit_d, !info.flags.bits.hostile_combat, new_report, true);
+            add_proper_report(info.unit_a, info.flags.bits.SPARRING_EVENT, new_report, true);
+            add_proper_report(info.unit_d, info.flags.bits.SPARRING_EVENT, new_report, true);
         }
 
         if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
@@ -2109,7 +2109,7 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     info.display_timer = ANNOUNCE_DISPLAY_TIME;
     info.unit_a = unit_a;
     info.unit_d = unit_d;
-    info.flags.bits.hostile_combat = !is_sparring;
+    info.flags.bits.SPARRING_EVENT = is_sparring;
 
     return autoDFAnnouncement(info, message);
 }

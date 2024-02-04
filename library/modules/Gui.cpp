@@ -1711,8 +1711,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     if (*gamemode == game_mode::DWARF)
     {
         if (flags.bits.D_DISPLAY)
-        {
-            // Find existing alert of same type, else create new
+        {   // Find existing alert of same type, else create new
             auto alert_type = ENUM_ATTR(announcement_type, alert_type, type);
             df::announcement_alertst* alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
 
@@ -1960,11 +1959,9 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         for(vector<df::soundst *>::iterator it = world->raws.sound.sound.begin(); it < world->raws.sound.sound.end(); it++)
         {
             auto &cur_sound = **it;
-            DEBUG(gui).print("Testing sound #%d\n", cur_sound.sound);
             if (binsearch_index(cur_sound.announcement, info.type) >= 0)
             {
                 valid_sounds.push_back(cur_sound.sound);
-                DEBUG(gui).print("Sound #%d valid.\n", cur_sound.sound);
             }
         }
 
@@ -2033,8 +2030,8 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
-            add_proper_report(info.unit_a, info.flags.bits.SPARRING_EVENT, new_report, true);
-            add_proper_report(info.unit_d, info.flags.bits.SPARRING_EVENT, new_report, true);
+            add_proper_report(info.unit_a, info.flags.bits.hostile_combat, new_report, true); // TODO: SPARRING_EVENT
+            add_proper_report(info.unit_d, info.flags.bits.hostile_combat, new_report, true); // TODO: SPARRING_EVENT
         }
 
         if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
@@ -2044,8 +2041,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         }
 
         if (a_flags.bits.D_DISPLAY)
-        {
-            // Find existing alert of same type, else create new
+        {   // Find existing alert of same type, else create new
             auto alert_type = ENUM_ATTR(announcement_type, alert_type, info.type);
             df::announcement_alertst *alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
 
@@ -2109,7 +2105,7 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     info.display_timer = ANNOUNCE_DISPLAY_TIME;
     info.unit_a = unit_a;
     info.unit_d = unit_d;
-    info.flags.bits.SPARRING_EVENT = is_sparring;
+    info.flags.bits.hostile_combat = is_sparring; // TODO: SPARRING_EVENT
 
     return autoDFAnnouncement(info, message);
 }

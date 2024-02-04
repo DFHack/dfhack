@@ -58,7 +58,7 @@ jobs:
       - name: Clone DFHack
         uses: actions/checkout@v3
         with:
-          repository: ${{ inputs.dfhack_ref && github.repository || 'DFHack/dfhack' }}
+          repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
           ref: ${{ inputs.dfhack_ref }}
           submodules: true
           fetch-depth: 0

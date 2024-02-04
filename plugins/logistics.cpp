@@ -14,7 +14,6 @@
 #include "df/caravan_state.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/plotinfost.h"
-#include "df/training_assignment.h"
 #include "df/world.h"
 
 using std::string;
@@ -359,8 +358,9 @@ public:
 
     bool can_designate(color_ostream& out, df::item* item) override {
         auto unit = get_caged_unit(item);
-        return unit && !Units::isInvader(unit) &&
-            Units::isTamable(unit) && !Units::isTame(unit) &&
+        return unit &&
+            Units::isTamable(unit) &&
+            !Units::isDomesticated(unit) &&
             !Units::isMarkedForTraining(unit);
     }
 
@@ -368,13 +368,7 @@ public:
         auto unit = get_caged_unit(item);
         if (!unit)
             return false;
-        df::training_assignment *assignment = new df::training_assignment();
-        assignment->animal_id = unit->id;
-        assignment->trainer_id = -1;
-        assignment->flags.bits.any_trainer = true;
-        insert_into_vector(df::global::plotinfo->equipment.training_assignments,
-            &df::training_assignment::animal_id, assignment);
-        return true;
+        return Units::assignTrainer(unit);
     }
 
 private:

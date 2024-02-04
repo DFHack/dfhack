@@ -54,6 +54,57 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r6
+
+## New Features
+- `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
+
+## Fixes
+- `dig-now`: remove diagonal ramps rendered unusable by digging
+- `dig-now`: fix error propagating "light" and "outside" properties to newly exposed tiles when piercing the surface
+- `sort`: fix potential crash when switching between certain info tabs
+- `suspendmanager`: overlays for suspended building info panels no longer disappear when another window has focus
+
+## Misc Improvements
+- `reveal`: automatically reset saved map state when a new save is loaded
+- `autonestbox`: don't automatically assign partially trained egg-layers to nestboxes if they don't have an ongoing trainer assigned since they might revert to wild
+- `buildingplan`: replace ``[edit filters]`` button in planner overlay with abbreviated filter information
+
+## API
+- ``Units::assignTrainer``: assign a trainer to a trainable animal
+- ``Units::unassignTrainer``: unassign a trainer from an animal
+- ``Gui::getAnyWorkshopJob``: get the first job associated with the selected workshop
+- ``Gui::getAnyJob``: get the job associated with the selected game element (item, unit, workshop, etc.)
+
+## Lua
+- ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
+- ``dfhack.units.assignTrainer``: expose API to Lua
+- ``dfhack.units.unassignTrainer``: expose API to Lua
+- ``dfhack.gui.getAnyWorkshopJob``: expose API to Lua
+- ``dfhack.gui.getAnyJob``: expose API to Lua
+
+## Removed
+- ``nopause``: functionality has moved to `spectate`
+
+# 50.11-r5
+
+## New Tools
+- `gui/embark-anywhere`: new keybinding (active when choosing an embark site): Ctrl-A
+
+## New Features
 - `sort`: search and sort for the "choose unit to elevate to the barony" screen. units are sorted by the number of item preferences they have and the units are annotated with the items that they have preferences for
 - `zone`: add button to location details page for retiring unused locations
 - `gui/mass-remove`: new global keybinding: Ctrl-M while on the fort map
@@ -66,33 +117,37 @@ Template for new versions:
 - When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
 - `getplants`: fix crash when processing mod-added plants with invalid materials
 - Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
-- ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix logic (for tropical oceans, etc.)
+- ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix identification of tropical oceans
 - DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there are certain vanilla screen elements behind them
 - `buildingplan`: when you save a game and load it again, newly planned buildings are now correctly placed in line after existing planned buildings of the same type
-- `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so items aren't permanently unavailable!
+- `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so those items aren't permanently unavailable!
 - `buildingplan`: show correct number of materials required when laying down areas of constructions and some of those constructions are on invalid tiles
+- `stonesense`: fix crash in cleanup code after mega screenshot (Ctrl-F5) completes; however, the mega screenshot will still make stonesense unresponsive. close and open the stonesense window to continue using it.
+- `gui/design`: fix incorrect highlight when box selecting area in ASCII mode
+- `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
+- `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
 
 ## Misc Improvements
 - `autochop`: better error output when target burrows are not specified on the commandline
-- `autoclothing` : now does not consider worn (x) clothing as usable/available, should help with using with `tailor` at same time
-- `buildingplan`: add option for preventing constructions from being planned on top of existing constructions
+- `autoclothing` : now does not consider worn (x) clothing as usable/available; reduces overproduction when using `tailor` at same time
+- `buildingplan`: add option for preventing constructions from being planned on top of existing constructions (e.g. don't build floors on top of floors)
 - `burrow`: flood fill now requires an explicit toggle before it is enabled to help prevent accidental flood fills
 - wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
 - `work-now`: now saves its enabled status with the fort
 - `fastdwarf`: now saves its state with the fort
-- `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
-- `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
 - `zone`: add include/only/exclude filter for juveniles to the pasture/pit/cage/restraint assignment screen
 - The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
 - `sort`: add "Toggle all filters" hotkey button to the squad assignment panel
 - `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
 - Dreamfort: put more chairs adjacent to each other to make the tavern more "social"
-- `zone`: show geld status and custom profession (2nd editable line in creature description) in pasture/pit/cage/restraint assignment screen
+- `zone`: show geld status and custom profession (if set, it's the lower editable line in creature description) in pasture/pit/cage/restraint assignment screen
+- `orders`: reduce prepared meal target and raise booze target in ``basic`` importable orders in the orders library
 
 ## Documentation
 - `installing`: Add installation instructions for wineskin on Mac
 - UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
 - `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
+- DFHack developer's guide updated, with refreshed `architectural-diagrams`
 
 ## API
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
@@ -109,6 +164,7 @@ Template for new versions:
 - ``Persistence``: persistent keys are now namespaced by an entity_id (e.g. a player fort site ID)
 - ``Persistence``: data is now stored one file per entity ID (plus one for the global world) in the DF savegame directory
 - ``Units.isDanger``: now returns true for agitated wildlife
+- ``Constructions::designateRemove``: no longer designates the non-removable "pseudo" construtions that represent the top of walls
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized

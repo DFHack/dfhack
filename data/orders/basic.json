@@ -34,7 +34,7 @@
 					"unrotten"
 				],
 				"item_type" : "FOOD",
-				"value" : 3500
+				"value" : 2000
 			}
 		],
 		"job" : "PrepareMeal",
@@ -71,7 +71,7 @@
 			{
 				"condition" : "AtMost",
 				"item_type" : "DRINK",
-				"value" : 800
+				"value" : 3000
 			}
 		],
 		"job" : "CustomReaction",
@@ -108,7 +108,7 @@
 			{
 				"condition" : "AtMost",
 				"item_type" : "DRINK",
-				"value" : 800
+				"value" : 3000
 			}
 		],
 		"job" : "CustomReaction",

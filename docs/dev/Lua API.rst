@@ -1048,6 +1048,8 @@ General-purpose selections
   ommitted or set to ``false`` and a selected object cannot be found, then an
   error is printed to the console.
 
+* ``dfhack.gui.getAnyWorkshopJob(screen)``
+* ``dfhack.gui.getAnyJob(screen)``
 * ``dfhack.gui.getAnyUnit(screen)``
 * ``dfhack.gui.getAnyItem(screen)``
 * ``dfhack.gui.getAnyBuilding(screen)``
@@ -1056,7 +1058,7 @@ General-purpose selections
 * ``dfhack.gui.getAnyPlant(screen)``
 
   Similar to the corresponding ``getSelected`` functions, but operate on the
-  screen given instead of the current screen and always return ``nil`` silently
+  given screen instead of the current screen and always return ``nil`` silently
   on failure.
 
 Fortress mode
@@ -1501,6 +1503,13 @@ Units module
 
   Moves the specified unit and any riders to the target coordinates, setting
   tile occupancy flags appropriately. Returns true if successful.
+
+* ``dfhack.units.assignTrainer(unit[, trainer_id])``
+* ``dfhack.units.unassignTrainer(unit)``
+
+  Assignes (or unassigns) a trainer for the specified trainable unit. The
+  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
+  indicating whether the operation was successful.
 
 * ``dfhack.units.getGeneralRef(unit, type)``
 
@@ -2651,8 +2660,11 @@ Supported callbacks and fields are:
 * ``function screen:onGetSelectedItem()``
 * ``function screen:onGetSelectedJob()``
 * ``function screen:onGetSelectedBuilding()``
+* ``function screen:onGetSelectedStockpile()``
+* ``function screen:onGetSelectedCivZone()``
+* ``function screen:onGetSelectedPlant()``
 
-  Implement these to provide a return value for the matching
+  Override these if you want to provide a custom return value for the matching
   ``dfhack.gui.getSelected...`` function.
 
 
@@ -4029,6 +4041,8 @@ Examples:
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
+
+.. _lua-ui-library:
 
 ==================
 In-game UI Library

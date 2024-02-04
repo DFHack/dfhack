@@ -88,6 +88,8 @@ Template for new versions:
 - ``Units::unassignTrainer``: unassign a trainer from an animal
 - ``Gui::getAnyWorkshopJob``: get the first job associated with the selected workshop
 - ``Gui::getAnyJob``: get the job associated with the selected game element (item, unit, workshop, etc.)
+- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 
 ## Lua
 - ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
@@ -95,6 +97,7 @@ Template for new versions:
 - ``dfhack.units.unassignTrainer``: expose API to Lua
 - ``dfhack.gui.getAnyWorkshopJob``: expose API to Lua
 - ``dfhack.gui.getAnyJob``: expose API to Lua
+- ``dfhack.cp437Upper(string)``, ``dfhack.cp437Lower(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 - ``nopause``: functionality has moved to `spectate`
@@ -153,8 +156,6 @@ Template for new versions:
 - ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
 - ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
 - ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
-- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
-- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 - ``Items``: add item melting logic ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)``
 - ``World``: ``GetCurrentSiteId()`` returns the loaded fort site ID (or -1 if no site is loaded)
 - ``World``: ``IsSiteLoaded()`` check to detect if a site (e.g. a player fort) is active (as opposed to the world or a map)
@@ -168,7 +169,6 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
-- ``dfhack.cp437Upper(string)``, ``dfhack.cp437Lower(string)``: new functions, return string with all chars changed, respecting CP437
 - ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
 - ``dfhack.persistent``: new, table-driven API for easier world- and site-associated persistent storage. See the Lua API docs for details.
 - ``dfhack.isSiteLoaded``: returns whether a site (e.g. a player fort) is loaded

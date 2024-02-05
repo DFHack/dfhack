@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
 
 ## Fixes
 
@@ -71,7 +72,6 @@ Template for new versions:
 
 ## New Features
 - `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
-- `cleanowned`: Add a "nodump" option to allow for confiscating of items without dumping
 
 ## Fixes
 - `dig-now`: remove diagonal ramps rendered unusable by digging

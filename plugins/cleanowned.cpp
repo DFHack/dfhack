@@ -48,6 +48,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
     bool confiscate_all = false;
     bool dry_run = false;
     int wear_dump_level = 65536;
+    bool nodump = false;
 
     for(std::size_t i = 0; i < parameters.size(); i++)
     {
@@ -62,6 +63,8 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             wear_dump_level = 1;
         else if(param == "X")
             wear_dump_level = 2;
+        else if(param == "nodump")
+            nodump = true;
         else
             return CR_WRONG_USAGE;
     }
@@ -111,7 +114,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             )
             {
                 confiscate = true;
-                if(dump_scattered)
+                if(dump_scattered && !nodump)
                 {
                     out.print("Dumping a dropped item: \t");
                     dump = true;
@@ -123,16 +126,26 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             }
             else if(dump_scattered)
             {
-                out.print("Confiscating and dumping litter: \t");
+                if (nodump)
+                    out.print("Confiscating litter: \t");
+                else
+                {
+                    out.print("Confiscating and dumping litter: \t");
+                    dump = true;
+                }
                 confiscate = true;
-                dump = true;
             }
         }
         else if (item->getWear() >= wear_dump_level)
         {
-            out.print("Confiscating and dumping a worn item: \t");
+            if (nodump)
+                out.print("Confiscating a worn item: \t");
+            else
+            {
+                out.print("Confiscating and dumping a worn item: \t");
+                dump = true;
+            }
             confiscate = true;
-            dump = true;
         }
         else if (confiscate_all)
         {

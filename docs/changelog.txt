@@ -66,7 +66,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
-- `burrows`: removed overlay 3D box select since it is now provided by the vanilla UI
+- `burrow`: removed overlay 3D box select since it is now provided by the vanilla UI
 
 # 50.11-r6
 

@@ -76,8 +76,10 @@ end
 local function get_sp_id(opts)
     if opts.id then return opts.id end
     local sp = dfhack.gui.getSelectedStockpile(true)
-    if sp then return sp.id end
-    return nil
+    if not sp then
+        qerror('Please select a stockpile or specify the stockpile ID')
+    end
+    return sp.id
 end
 
 local included_elements = {containers=1, general=2, categories=4, types=8}

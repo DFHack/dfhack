@@ -29,7 +29,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `dig-now`: now properly changes newly exposed areas to light/outside when digging around the surface.
+
 ## Misc Improvements
 
 ## Documentation
@@ -54,19 +54,35 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r6
+
+## New Features
 - `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
 - `cleanowned`: Add a "nodump" option to allow for confiscating of items without dumping
 
 ## Fixes
-- `sort`: fix potential crash when switching between info tabs
+- `dig-now`: remove diagonal ramps rendered unusable by digging
+- `dig-now`: fix error propagating "light" and "outside" properties to newly exposed tiles when piercing the surface
+- `sort`: fix potential crash when switching between certain info tabs
 - `suspendmanager`: overlays for suspended building info panels no longer disappear when another window has focus
 
 ## Misc Improvements
 - `reveal`: automatically reset saved map state when a new save is loaded
 - `autonestbox`: don't automatically assign partially trained egg-layers to nestboxes if they don't have an ongoing trainer assigned since they might revert to wild
 - `buildingplan`: replace ``[edit filters]`` button in planner overlay with abbreviated filter information
-
-## Documentation
 
 ## API
 - ``Units::assignTrainer``: assign a trainer to a trainable animal

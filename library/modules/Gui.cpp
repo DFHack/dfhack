@@ -349,10 +349,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 auto * right_panel = container_tab ?
                     virtual_cast<df::widget_container>(Gui::getWidget(container_tab, "Right panel")) :
                     NULL;
-                bool is_valid = right_panel && right_panel->children.size();
-                if (is_valid && right_panel->children[0]->name == "Interrogate")
+                bool is_valid = right_panel && right_panel->children.size() > 1;
+                if (is_valid && right_panel->children[1]->name == "Interrogate")
                     newFocusString += "/Interrogating";
-                else if (is_valid && right_panel->children[0]->name == "Convict")
+                else if (is_valid && right_panel->children[1]->name == "Convict")
                     newFocusString += "/Convicting";
                 else
                     newFocusString += "/OPEN_CASES";

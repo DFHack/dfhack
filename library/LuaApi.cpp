@@ -3172,6 +3172,10 @@ static int internal_getMemRanges(lua_State *L)
     for(size_t i = 0; i < ranges.size(); i++)
     {
         lua_newtable(L);
+        if (ranges[i].base) {
+            lua_pushinteger(L, (uintptr_t)ranges[i].base);
+            lua_setfield(L, -2, "base_addr");
+        }
         lua_pushinteger(L, (uintptr_t)ranges[i].start);
         lua_setfield(L, -2, "start_addr");
         lua_pushinteger(L, (uintptr_t)ranges[i].end);

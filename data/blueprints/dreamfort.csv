@@ -132,10 +132,10 @@ You can save some time by setting up your settings in gui/control-panel before y
 - seedwatch
 - suspendmanager
 - tailor
-- work-now
 """Gameplay"" subtab:"
 - dwarfvet
 - warn-stranded
+- work-now
 "Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""
 "Now, after you've arrived at your embark site, open the nobles screen and:"
@@ -1790,7 +1790,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
-,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
+,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all-cat_animals",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
 ,,"c{name=""Lye"" barrels=0}:+miscliquid",`,`,`,`,`,`,~,~,"u2{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
@@ -2137,12 +2137,12 @@ If you'd like to fill your wells via bucket brigade, activate the inactive pond 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 "h{location=tavern/bigpub allow=residents name=""Grand hall tavern""}(13x31)",,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`,"o{name=""Interrogation room"" assigned_unit=sheriff}(7x7)"
-,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,"j{name=""Drunk tank""}",j,j,j,j
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,"o{name=""Interrogation room"" assigned_unit=sheriff}(3x3)",`,`,j
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,`,`,`,j
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,`,j,`,`,`,j
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,j,j,j,j
 ,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba
 ,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,m{location=hospital name=Hospital allow=residents},,m,,m,,m
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,m,,m,,m,,m
@@ -2202,7 +2202,7 @@ If you'd like to fill your wells via bucket brigade, activate the inactive pond 
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,"z{name=""Training quantum"" quantum=true}",`,`,`,`,`,,`,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,"z{name=""Training bolts feeder"" containers=0 take_from=""Metalworker quantum""}:-cat_ammo/type/,mats/,other/+bolts+woodammo+boneammo(9x1)",,,,,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,"z{name=""Bolts feeder"" containers=0 take_from=""Metalworker quantum""}:-cat_ammo/type/,other/+bolts(9x1)",,,,,,,,`,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2265,7 +2265,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,`,`,`,,`,`,`
 ,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
@@ -2337,7 +2337,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,~,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)"
-,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,~,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`
+,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,~,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`
 ,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
@@ -2377,11 +2377,11 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,,d,,,,d,,,,d,,,,d,,,,d,,,,~,,,,d,,,,d
 ,`,`,`,s,`,`,`,s,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
-,s,`,`,`,`,`,`,`,`,`,s,,~,~,~,~,~,~,~,~,~,~,,`,,j,`,`,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,,`,`,~,`,`
-,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,`,,`,,j,`,~,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,d,`,d,`,`,~,`,`
-,s,`,`,`,`,`,`,`,`,`,s,,~,h,h,`,`,`,h,h,~,`,,`,,j,`,`,`,j
+,s,`,`,`,`,`,`,`,`,`,s,,~,~,~,~,~,~,~,~,~,~,,`,,v,v,v,v,v
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,,v,`,~,`,v
+,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,`,,`,,v,`,~,`,v
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,d,`,d,v,`,~,`,v
+,s,`,`,`,`,`,`,`,`,`,s,,~,h,h,`,`,`,h,h,~,`,,`,,v,v,v,v,v
 ,`,`,`,`,`,`,`,`,`,`,`,,~,b,b,`,~,`,b,b,~
 ,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,,~,,~,,~,,~
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,~,,~,,~,,~
@@ -2683,7 +2683,7 @@ build_suites/suites_build
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
@@ -2692,15 +2692,15 @@ build_suites/suites_build
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
+,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`,~,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
@@ -2709,7 +2709,7 @@ build_suites/suites_build
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`

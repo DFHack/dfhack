@@ -1131,7 +1131,8 @@ end
 local mi = df.global.game.main_interface
 
 local function location_details_is_on_top()
-    return not mi.name_creator.open and not mi.unit_selector.open
+    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator') and
+        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector')
 end
 
 RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)

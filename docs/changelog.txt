@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
 
 ## Fixes
 

@@ -59,6 +59,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
 
 ## Documentation
 

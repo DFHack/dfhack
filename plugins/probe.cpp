@@ -1,3 +1,4 @@
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
@@ -41,7 +42,7 @@ static command_result df_cprobe(color_ostream &out, vector<string> & parameters)
     if (!unit)
         return CR_FAILURE;
 
-    out.print("Creature %d, race %d (%x), civ %d (%x)\n",
+    out.print("Creature %d, race %d (0x%x), civ %d (0x%x)\n",
         unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
 
     for (auto inv_item : unit->inventory) {
@@ -85,7 +86,25 @@ static void describeTile(color_ostream &out, df::tiletype tiletype) {
     out.print("\n");
 }
 
-static command_result df_probe(color_ostream &out, vector <string> & parameters) {
+static bool call_probe_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.probe", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static command_result df_probe(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
 
     DFHack::Materials *Materials = Core::getInstance().getMaterials();
@@ -104,9 +123,17 @@ static command_result df_probe(color_ostream &out, vector <string> & parameters)
     Maps::getPosition(regionX,regionY,regionZ);
 
     df::coord cursor;
-    if (!Gui::getCursorCoords(cursor)) {
-        out.printerr("No cursor; place cursor over tile to probe.\n");
-        return CR_FAILURE;
+
+    if (parameters.size())
+        call_probe_lua(&out, "parse_commandline", parameters.size(), 1,
+            [&](lua_State *L){ for (auto & param : parameters) Lua::Push(L, param); },
+            [&](lua_State *L){ if (!lua_isnil(L, -1)) Lua::CheckDFAssign(L, &cursor, -1); });
+
+    if (!Maps::isValidTilePos(cursor)) {
+        if (!Gui::getCursorCoords(cursor)) {
+            out.printerr("No cursor; place cursor over tile to probe.\n");
+            return CR_FAILURE;
+        }
     }
 
     uint32_t blockX = cursor.x / 16;
@@ -325,7 +352,7 @@ static command_result df_bprobe(color_ostream &out, vector<string> & parameters)
     Subtype subtype{bld->getSubtype()};
     int32_t custom = bld->getCustomType();
 
-    out.print("Building %i - \"%s\" - type %s (%i)",
+    out.print("Building %i, \"%s\", type %s (%i)",
                 bld->id,
                 name.c_str(),
                 ENUM_KEY_STR(building_type, bld_type).c_str(),

@@ -2137,13 +2137,13 @@ If you'd like to fill your wells via bucket brigade, activate the inactive pond 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 "h{location=tavern/bigpub allow=residents name=""Grand hall tavern""}(13x31)",,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
-,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,"j{name=""Drunk tank""}",j,j,j,j
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,"o{name=""Interrogation room"" assigned_unit=sheriff}(3x3)",`,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,`,`,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,`,j,`,`,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,j,j,j,j,j
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,"j{name=""Drunk tank""}",j,j,j,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,"o/interrogation{name=""Interrogation room"" assigned_unit=sheriff}(3x3)",`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,`,`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,o/interrogation,j,`,`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,j,j,j,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,,,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation
 ,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,m{location=hospital name=Hospital allow=residents},,m,,m,,m
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,m,,m,,m,,m
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,m,,m,,m,,m

@@ -16,6 +16,7 @@ using namespace DFHack;
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
+#include "tweaks/flask-contents.h"
 #include "tweaks/partial-items.h"
 #include "tweaks/reaction-gloves.h"
 
@@ -56,6 +57,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("fast-heat", fast_heat_hook, updateTempFromMap);
     TWEAK_HOOK("fast-heat", fast_heat_hook, updateTemperature);
     TWEAK_HOOK("fast-heat", fast_heat_hook, adjustTemperature);
+
+    TWEAK_HOOK("flask-contents", flask_contents_hook, getItemDescription);
 
     TWEAK_HOOK("partial-items", partial_items_hook_bar, getItemDescription);
     TWEAK_HOOK("partial-items", partial_items_hook_drink, getItemDescription);

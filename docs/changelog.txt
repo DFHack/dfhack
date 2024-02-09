@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
 
 ## New Features
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
@@ -59,6 +60,8 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `regrass`: also regrow depleted cavern moss
+- `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
 
 ## Documentation
 

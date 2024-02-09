@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
 
 ## New Features
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping

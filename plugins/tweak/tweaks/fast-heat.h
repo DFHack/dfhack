@@ -1,7 +1,7 @@
 #include "df/item_actual.h"
 
 static int map_temp_mult = -1;
-static int max_heat_ticks = 0;
+static int max_heat_ticks = 100;
 
 struct fast_heat_hook : df::item_actual {
     typedef df::item_actual interpose_base;

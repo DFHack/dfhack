@@ -1,6 +1,7 @@
 // A container for random minor tweaks that don't fit anywhere else,
 // in order to avoid creating lots of plugins and polluting the namespace.
 
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
@@ -121,18 +122,22 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector<stri
     return CR_OK;
 }
 
+static std::map<string, bool> get_status() {
+    std::map<string, bool> list;
+    for (auto & entry : tweak_hooks)
+        list[entry.first] = entry.second.is_applied();
+    for (auto & entry : tweak_onupdate_hooks)
+        list[entry.first] = entry.second.enabled;
+
+    return list;
+}
+
 static command_result tweak(color_ostream &out, vector <string> &parameters) {
     CoreSuspender suspend;
 
     if (parameters.empty() || parameters[0] == "list") {
-        std::map<string, bool> list;
-        for (auto & entry : tweak_hooks)
-            list[entry.first] = entry.second.is_applied();
-        for (auto & entry : tweak_onupdate_hooks)
-            list[entry.first] = entry.second.enabled;
-
         out.print("tweaks:\n");
-        for (auto & entry : list)
+        for (auto & entry : get_status())
             out.print("  %25s: %s\n", entry.first.c_str(), entry.second ? "enabled" : "disabled");
         return CR_OK;
     }
@@ -140,3 +145,13 @@ static command_result tweak(color_ostream &out, vector <string> &parameters) {
     string cmd = parameters[0];
     return enable_tweak(cmd, out, parameters);
 }
+
+static int tweak_get_status(lua_State *L) {
+    Lua::Push(L, get_status());
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(tweak_get_status),
+    DFHACK_LUA_END
+};

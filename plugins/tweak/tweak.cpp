@@ -15,10 +15,8 @@ using namespace DFHack;
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
-// #include "tweaks/hide-priority.h"
 #include "tweaks/partial-items.h"
-// #include "tweaks/pausing-fps-counter.h"
-// #include "tweaks/reaction-gloves.h"
+#include "tweaks/reaction-gloves.h"
 
 class tweak_onupdate_hookst {
 public:
@@ -58,9 +56,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("fast-heat", fast_heat_hook, updateTemperature);
     TWEAK_HOOK("fast-heat", fast_heat_hook, adjustTemperature);
 
-    // TWEAK_HOOK("hide-priority", hide_priority_hook, feed);
-    // TWEAK_HOOK("hide-priority", hide_priority_hook, render);
-
     TWEAK_HOOK("partial-items", partial_items_hook_bar, getItemDescription);
     TWEAK_HOOK("partial-items", partial_items_hook_drink, getItemDescription);
     TWEAK_HOOK("partial-items", partial_items_hook_glob, getItemDescription);
@@ -70,10 +65,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("partial-items", partial_items_hook_sheet, getItemDescription);
     TWEAK_HOOK("partial-items", partial_items_hook_thread, getItemDescription);
 
-    // TWEAK_HOOK("pausing-fps-counter", dwarfmode_pausing_fps_counter_hook, render);
-    // TWEAK_HOOK("pausing-fps-counter", title_pausing_fps_counter_hook, render);
-
-    // TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
+    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     return CR_OK;
 }

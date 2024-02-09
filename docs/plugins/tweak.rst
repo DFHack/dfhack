@@ -29,7 +29,7 @@ Commands
     tweak, items made from cloth and leather will gain a level of wear every 20
     in-game years.
 ``eggs-fertile``
-    Displays an indicator on fetile eggs.
+    Displays an indicator on fertile eggs.
 ``fast-heat``
     Improves temperature update performance by ensuring that 1 degree of item
     temperature is crossed in no more than 100 ticks when updating from the

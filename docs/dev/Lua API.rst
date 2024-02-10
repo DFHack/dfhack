@@ -1875,6 +1875,12 @@ Items module
 
   Checks whether the item is assigned to a squad.
 
+* ``dfhack.items.getCapacity(item)``
+
+  Returns the capacity volume of an item that can serve as a container for
+  other items. Return value will be ``0`` for items that cannot serve as a
+  container.
+
 .. _lua-world:
 
 World module

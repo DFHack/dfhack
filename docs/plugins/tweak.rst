@@ -29,12 +29,16 @@ Commands
     tweak, items made from cloth and leather will gain a level of wear every 20
     in-game years.
 ``eggs-fertile``
-    Displays an indicator on fetile eggs.
+    Displays an indicator on fertile eggs.
 ``fast-heat``
     Improves temperature update performance by ensuring that 1 degree of item
     temperature is crossed in no more than 100 ticks when updating from the
     environment temperature. This reduces the time it takes for temperature to
     reach equilibrium and improves FPS when there are many items.
+``flask-contents``
+    Names filled waterskins, flasks, and vials according to their contents,
+    the same way other containers such as barrels, bins, and cages are named.
+    (:bug:`4914`)
 ``partial-items``
     Displays percentages on partially-consumed items such as hospital cloth.
 ``reaction-gloves``

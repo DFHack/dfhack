@@ -948,6 +948,12 @@ can be omitted.
 
   Return a version of the string with each word capitalized.
 
+* ``dfhack.matchPrefix(prefix, key)``
+
+  Returns ``true`` if ``prefix`` is found in the given ``key``. Matching is
+  case sensitive, and a ``/`` character must follow the matched prefix in the
+  key for a match to be made.
+
 * ``dfhack.run_command(command[, ...])``
 
   Run an arbitrary DFHack command, with the core suspended, and send output to

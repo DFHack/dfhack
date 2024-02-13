@@ -59,6 +59,7 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- ``Units::getVisibleName``: Use ``impersonated_hf`` field of identity
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss

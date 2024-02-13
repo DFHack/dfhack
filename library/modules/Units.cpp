@@ -1087,7 +1087,7 @@ df::language_name *Units::getVisibleName(df::unit *unit)
     if (identity)
     {
         auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
-        return (imp_hf != NULL && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
     }
 
     return &hf->name;

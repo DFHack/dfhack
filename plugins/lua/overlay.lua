@@ -38,6 +38,9 @@ function print_timers()
     print(('elapsed time: %d ms (%dm %ds)'):format(
         elapsed, elapsed // 60000, (elapsed % 60000) // 1000
     ))
+    print (('total widget processing time: %d ms (%.2f%% of elapsed time)'):format(
+        sum, (sum * 100) / elapsed
+    ))
 end
 
 -- ---------------- --

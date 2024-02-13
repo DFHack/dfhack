@@ -70,7 +70,7 @@ namespace DFHack
     {
         DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
         DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
-
+        void clearFocusStringCache();
 
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);

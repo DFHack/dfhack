@@ -24,6 +24,8 @@ function print_timers()
     for _,timer in pairs(timers) do
         sum = sum + timer
     end
+    if elapsed <= 0 then elapsed = 1 end
+    if sum <= 0 then sum = 1 end
     local sorted = {}
     for name,timer in pairs(timers) do
         table.insert(sorted, {name=name, ms=timer})
@@ -35,10 +37,10 @@ function print_timers()
         ))
     end
     print()
-    print(('elapsed time: %d ms (%dm %ds)'):format(
+    print(('elapsed time: %8d ms (%dm %ds)'):format(
         elapsed, elapsed // 60000, (elapsed % 60000) // 1000
     ))
-    print (('total widget processing time: %d ms (%.2f%% of elapsed time)'):format(
+    print(('widget time:  %8d ms (%.2f%% of elapsed time)'):format(
         sum, (sum * 100) / elapsed
     ))
 end

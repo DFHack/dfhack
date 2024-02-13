@@ -12,6 +12,8 @@ local GLOBAL_KEY = 'OVERLAY'
 
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
+timers = {}
+
 -- ---------------- --
 -- state and config --
 -- ---------------- --
@@ -413,7 +415,9 @@ end
 local function detect_frame_change(widget, fn)
     local frame = widget.frame
     local w, h = frame.w, frame.h
+    local now_ms = dfhack.getTickCount()
     local ret = fn()
+    timers[widget.name] = (timers[widget.name] or 0) + (dfhack.getTickCount() - now_ms)
     if w ~= frame.w or h ~= frame.h then
         widget:updateLayout()
     end

@@ -13,6 +13,9 @@ local GLOBAL_KEY = 'OVERLAY'
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
 timers = {}
+function reset_timers()
+    timers = {}
+end
 
 -- ---------------- --
 -- state and config --

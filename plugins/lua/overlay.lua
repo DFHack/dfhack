@@ -455,17 +455,15 @@ function update_hotspot_widgets()
     end
 end
 
-local function matches_focus_strings(db_entry, vs_name, cur_focus_strings)
+local function matches_focus_strings(db_entry, vs_name, vs)
     if not db_entry.focus_strings then return true end
     local matched = true
     local simple_vs_name = simplify_viewscreen_name(vs_name)
     for _,fs in ipairs(db_entry.focus_strings) do
         if fs:startswith(simple_vs_name) then
             matched = false
-            for _, cfs in ipairs(cur_focus_strings) do
-                if dfhack.matchPrefix(fs, cfs) then
-                    return true
-                end
+            if dfhack.gui.matchFocusString(fs, vs) then
+                return true
             end
         end
     end
@@ -476,10 +474,9 @@ local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
     local is_all = vs_name == 'all'
-    local cur_focus_strings = is_all and {} or dfhack.gui.getFocusStrings(vs)
     now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
-        if (is_all or matches_focus_strings(db_entry, vs_name, cur_focus_strings)) and
+        if (is_all or matches_focus_strings(db_entry, vs_name, vs)) and
                 do_update(name, db_entry, now_ms, vs) then
             return
         end
@@ -498,10 +495,9 @@ end
 local function _feed_viewscreen_widgets(vs_name, vs, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
-    local cur_focus_strings = not vs and {} or dfhack.gui.getFocusStrings(vs)
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if (not vs or matches_focus_strings(db_entry, vs_name, cur_focus_strings)) and
+        if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
@@ -520,11 +516,10 @@ end
 local function _render_viewscreen_widgets(vs_name, vs, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
-    local cur_focus_strings = not vs and {} or dfhack.gui.getFocusStrings(vs)
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if not vs or matches_focus_strings(db_entry, vs_name, cur_focus_strings) then
+        if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
     end

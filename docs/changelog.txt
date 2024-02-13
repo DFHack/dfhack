@@ -63,14 +63,12 @@ Template for new versions:
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
-- `overlay`: improve performance of UI context detection
 
 ## Documentation
 
 ## API
 
 ## Lua
-- ``dfhack.matchPrefix``: exposes focus string prefix matching to Lua so ``dfhack.gui.matchFocusString`` doesn't need to be called so often. Instead, you can call ``dfhack.matchPrefix`` with a cached return value from ``dfhack.gui.getFocusStrings``
 
 ## Removed
 

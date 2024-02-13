@@ -37,10 +37,10 @@ function print_timers()
         ))
     end
     print()
-    print(('elapsed time: %8d ms (%dm %ds)'):format(
+    print(('elapsed time: %10d ms (%dm %ds)'):format(
         elapsed, elapsed // 60000, (elapsed % 60000) // 1000
     ))
-    print(('widget time:  %8d ms (%.2f%% of elapsed time)'):format(
+    print(('widget time:  %10d ms (%.2f%% of elapsed time)'):format(
         sum, (sum * 100) / elapsed
     ))
 end

@@ -12,9 +12,32 @@ local GLOBAL_KEY = 'OVERLAY'
 
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
-timers = {}
+local timers = {}
+local timers_start_ms = dfhack.getTickCount()
 function reset_timers()
     timers = {}
+    timers_start_ms = dfhack.getTickCount()
+end
+function print_timers()
+    local elapsed = dfhack.getTickCount() - timers_start_ms
+    local sum = 0
+    for _,timer in pairs(timers) do
+        sum = sum + timer
+    end
+    local sorted = {}
+    for name,timer in pairs(timers) do
+        table.insert(sorted, {name=name, ms=timer})
+    end
+    table.sort(sorted, function(a, b) return a.ms > b.ms end)
+    for _, elem in ipairs(sorted) do
+        print(('%45s %8d ms  %6.2f%% overlay  %6.2f%% overall'):format(
+            elem.name, elem.ms, (elem.ms * 100) / sum, (elem.ms * 100) / elapsed
+        ))
+    end
+    print()
+    print(('elapsed time: %d ms (%dm %ds)'):format(
+        elapsed, elapsed // 60000, (elapsed % 60000) // 1000
+    ))
 end
 
 -- ---------------- --

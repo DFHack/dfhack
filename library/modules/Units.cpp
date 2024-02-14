@@ -1079,11 +1079,18 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    // as of 0.44.11, identity names take precedence over associated histfig names
-    if (auto identity = getIdentity(unit))
-        return &identity->name;
+    auto hf = df::historical_figure::find(unit->hist_figure_id);
+    if (!hf)
+        return &unit->name;
 
-    return &unit->name;
+    auto identity = getFigureIdentity(hf);
+    if (identity)
+    {
+        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+    }
+
+    return &hf->name;
 }
 
 df::nemesis_record *Units::getNemesis(df::unit *unit)

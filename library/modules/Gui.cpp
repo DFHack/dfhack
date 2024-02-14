@@ -279,6 +279,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
         focusStrings.push_back(newFocusString);
     }
+    if (get_visible_child(Gui::getWidget(&game->main_interface.announcements.stack, "Widgets"))) {
+        focusStrings.push_back(baseFocus + "/Announcements");
+    }
     if (game->main_interface.info.open) {
         newFocusString = baseFocus;
         newFocusString += "/Info";
@@ -791,7 +794,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         focusStrings.push_back(newFocusString);
     }
 
-    if (!newFocusString.size()) {
+    if (!focusStrings.size()) {
         focusStrings.push_back(baseFocus + "/Default");
     }
 }

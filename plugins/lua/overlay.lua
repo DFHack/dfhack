@@ -439,6 +439,7 @@ local function do_update(name, db_entry, now_ms, vs)
     then
         return
     end
+    if not utils.getval(w.active) then return end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then
@@ -497,10 +498,14 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.active) or not utils.getval(w.visible) then
+            goto skip
+        end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
+        ::skip::
     end
     return false
 end
@@ -519,9 +524,11 @@ local function _render_viewscreen_widgets(vs_name, vs, dc)
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.visible) then goto skip end
         if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
+        ::skip::
     end
     return dc
 end

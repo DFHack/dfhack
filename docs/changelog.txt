@@ -71,6 +71,7 @@ Template for new versions:
 
 ## Lua
 - Overlay framework now respects ``active`` and ``visible`` widget attributes
+- ``dfhack.units.getCitizens`` now only returns units that are on the map
 
 ## Removed
 

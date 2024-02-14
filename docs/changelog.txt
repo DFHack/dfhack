@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - ``Units::getVisibleName``: Use ``impersonated_hf`` field of identity
+- `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss

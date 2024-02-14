@@ -1480,7 +1480,7 @@ Units module
 
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a list of all living citizens.
+  Returns a list of all living citizens that are currently on the map.
 
 * ``dfhack.units.teleport(unit, pos)``
 

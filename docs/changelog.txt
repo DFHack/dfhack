@@ -69,6 +69,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- Overlay framework now respects ``active`` and ``visible`` widget attributes
 
 ## Removed
 

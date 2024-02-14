@@ -143,6 +143,8 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     previous timeout expires. However, if you need a burst of high-frequency
     updates, set it to ``0`` and it will be noticed immediately.
 
+Common widget attributes such as ``active`` and ``visible`` are also respected.
+
 Registering a widget with the overlay framework
 ***********************************************
 

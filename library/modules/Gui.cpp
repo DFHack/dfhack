@@ -2206,8 +2206,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
         new_win_z = z;
     }
 
-    *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
-    *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
+    *window_x = new_win_x;
+    *window_y = new_win_y;
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;

@@ -59,7 +59,8 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
-- ``Units::getVisibleName``: Use ``impersonated_hf`` field of identity
+- ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
+- ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
 - `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
 
 ## Misc Improvements

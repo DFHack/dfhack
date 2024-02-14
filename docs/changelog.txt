@@ -59,6 +59,8 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- ``Units::getVisibleName``: Use ``impersonated_hf`` field of identity
+- `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss
@@ -69,6 +71,8 @@ Template for new versions:
 ## API
 
 ## Lua
+- Overlay framework now respects ``active`` and ``visible`` widget attributes
+- ``dfhack.units.getCitizens`` now only returns units that are on the map
 
 ## Removed
 - `burrow`: removed overlay 3D box select since it is now provided by the vanilla UI

@@ -740,15 +740,26 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 }
 */
 
+static vector<string> cached_focus_strings;
+
+void Gui::clearFocusStringCache() {
+    cached_focus_strings.clear();
+}
+
 bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
     focus_string = toLower_cp437(focus_string);
     if (!top)
         top = getCurViewscreen(true);
-    std::vector<std::string> currentFocusStrings = getFocusStrings(top);
 
-    return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focus_string](std::string item) {
-        return prefix_matches(focus_string, toLower_cp437(item));
-    }) != currentFocusStrings.end();
+    if (cached_focus_strings.empty()) {
+        cached_focus_strings = getFocusStrings(top);
+        for (size_t i = 0; i < cached_focus_strings.size(); ++i)
+            cached_focus_strings[i] = toLower_cp437(cached_focus_strings[i]);
+    }
+
+    return std::find_if(cached_focus_strings.begin(), cached_focus_strings.end(), [&focus_string](std::string item) {
+        return prefix_matches(focus_string, item);
+    }) != cached_focus_strings.end();
 }
 
 static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)
@@ -2195,8 +2206,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
         new_win_z = z;
     }
 
-    *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
-    *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
+    *window_x = new_win_x;
+    *window_y = new_win_y;
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;

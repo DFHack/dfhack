@@ -269,6 +269,18 @@ title-version
 =============
 Replaced with an `overlay`.
 
+.. _warn-starving:
+
+warn-starving
+=============
+Functionality was merged into `gui/notify`.
+
+.. _warn-stealers:
+
+warn-stealers
+=============
+Functionality was merged into `gui/notify`.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees

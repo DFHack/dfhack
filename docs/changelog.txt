@@ -52,18 +52,29 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
 
 ## New Features
+- `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
+- `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
+- ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
+- `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
+- `autoclothing`: Fix enabled behavior
 
 ## Misc Improvements
+- `regrass`: also regrow depleted cavern moss
+- `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
 
 ## Documentation
 
 ## API
 
 ## Lua
+- Overlay framework now respects ``active`` and ``visible`` widget attributes
+- ``dfhack.units.getCitizens`` now only returns units that are on the map
 
 ## Removed
 

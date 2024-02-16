@@ -1497,7 +1497,7 @@ Units module
 
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a list of all living citizens.
+  Returns a list of all living citizens that are currently on the map.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1891,6 +1891,12 @@ Items module
 * ``dfhack.items.isSquadEquipment(item)``
 
   Checks whether the item is assigned to a squad.
+
+* ``dfhack.items.getCapacity(item)``
+
+  Returns the capacity volume of an item that can serve as a container for
+  other items. Return value will be ``0`` for items that cannot serve as a
+  container.
 
 .. _lua-world:
 
@@ -4646,8 +4652,9 @@ Here is an example skeleton for a ZScreen tool window::
         }
     end
 
+    -- implement if you need to handle custom input
     function MyWindow:onInput(keys)
-        -- if required
+        return MyWindow.super.onInput(self, keys)
     end
 
     MyScreen = defclass(MyScreen, gui.ZScreen)

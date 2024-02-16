@@ -71,10 +71,13 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 
 ## Lua
 - Overlay framework now respects ``active`` and ``visible`` widget attributes
 - ``dfhack.units.getCitizens`` now only returns units that are on the map
+- ``dfhack.cp437Upper(string)``, ``dfhack.cp437Lower(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 
@@ -99,8 +102,6 @@ Template for new versions:
 - ``Units::unassignTrainer``: unassign a trainer from an animal
 - ``Gui::getAnyWorkshopJob``: get the first job associated with the selected workshop
 - ``Gui::getAnyJob``: get the job associated with the selected game element (item, unit, workshop, etc.)
-- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
-- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 
 ## Lua
 - ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
@@ -108,7 +109,6 @@ Template for new versions:
 - ``dfhack.units.unassignTrainer``: expose API to Lua
 - ``dfhack.gui.getAnyWorkshopJob``: expose API to Lua
 - ``dfhack.gui.getAnyJob``: expose API to Lua
-- ``dfhack.cp437Upper(string)``, ``dfhack.cp437Lower(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 - ``nopause``: functionality has moved to `spectate`

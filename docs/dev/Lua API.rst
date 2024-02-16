@@ -1148,11 +1148,11 @@ Announcements
 
   ``[R]``: (NEW_LINE) Ends the current line and begins on the next.
 
-  ``[B]``: (BLANK_LINE) Ends the current line and adds an additional blank line, begining on the line after that.
+  ``[B]``: (BLANK_LINE) Ends the current line and adds an additional blank line, beginning on the line after that.
 
   ``[P]``: (INDENT) Ends the current line and begins four spaces indented on the next.
 
-  ``[CHAR:`` n ``]``, ``[CHAR:~`` ch ``]``: Add a single character. First version takes a base-10 integer ``n`` representing a CP-437 character.
+  ``[CHAR:`` n ``]``, ``[CHAR:~`` ch ``]``: Add a single character. First version takes a base-10 integer ``n`` representing a CP437 character.
   Second version accepts a character ``ch`` instead. ``"[CHAR:154]"`` and ``"[CHAR:~"..string.char(154).."]"`` both result in ``Ü``.
   Use ``[CHAR:32]`` or ``[CHAR:~ ]`` to add extra spaces, which would normally be trimmed by the parser.
 

@@ -1097,10 +1097,9 @@ Announcements
 
   Writes a string to :file:`gamelog.txt` without doing an announcement.
 
-* ``dfhack.gui.makeAnnouncement(type,flags,pos,text,color[,is_bright])``
+* ``dfhack.gui.makeAnnouncement(type,flags,pos,text[,color,is_bright])``
 
   Adds an announcement with given announcement_type, text, color, and brightness.
-  The is_bright boolean actually seems to invert the brightness.
 
   The announcement is written to :file:`gamelog.txt`. The announcement_flags
   argument provides a custom set of :file:`announcements.txt` options,
@@ -1109,46 +1108,83 @@ Announcements
 
   Returns the index of the new announcement in ``df.global.world.status.reports``, or -1.
 
-* ``dfhack.gui.addCombatReport(unit,slot,report_index)``
+* ``dfhack.gui.addCombatReport(unit,slot,report_index[,update_alert])``
 
   Adds the report with the given index (returned by makeAnnouncement)
-  to the specified group of the given unit. Returns *true* on success.
+  to the specified group of the given unit. If ``update_alert`` is ``true``,
+  an alert badge will appear on the left side of the screen if not already visible.
+  Returns ``true`` on success.
 
 * ``dfhack.gui.addCombatReportAuto(unit,flags,report_index)``
 
-  Adds the report with the given index to the appropriate group(s)
-  of the given unit, as requested by the flags.
+  Adds the report with the given index to the appropriate group(s) of the given unit
+  based on the unit's current job and as requested by the flags.
+  Always updates alert badges. Returns ``true`` on any success.
 
-* ``dfhack.gui.showAnnouncement(text,color[,is_bright])``
+* ``dfhack.gui.showAnnouncement(text[,color,is_bright])``
 
   Adds a regular announcement with given text, color, and brightness.
-  The is_bright boolean actually seems to invert the brightness.
+  The announcement type is always ``df.announcement_type.REACHED_PEAK``,
+  which uses the alert badge for ``df.announcement_alert_type.GENERAL``.
 
-* ``dfhack.gui.showZoomAnnouncement(type,pos,text,color[,is_bright])``
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text[,color,is_bright])``
 
-  Like above, but also specifies a position you can zoom to from the announcement menu.
+  Like above, but also specifies a position you can zoom to from the announcement menu,
+  as well as being able to set the announcement type.
 
-* ``dfhack.gui.showPopupAnnouncement(text,color[,is_bright])``
+* ``dfhack.gui.showPopupAnnouncement(text[,color,is_bright])``
 
-  Pops up a titan-style modal announcement window.
+  Displays a megabeast-style modal announcement window.
+  DF is currently ignoring the color and brightness settings
+  (see: `bug report <https://dwarffortressbugtracker.com/view.php?id=12672>`_.)
+  Add ``[C:`` color ``:0:`` bright ``]`` (where color is 0-7 and bright is 0-1)
+  in front of your text string to force the popup text to be colored.
 
-* ``dfhack.gui.showAutoAnnouncement(type,pos,text,color[,is_bright,unit1,unit2])``
+  Text is run through a parser as it is converted into a markup text box.
+  The parser accepts tokens in square brackets (``[`` ``]``.)
+  Use ``[[`` and ``]]`` to include actual square brackets in text.
+
+  The following tokens are accepted:
+
+  ``[R]``: (NEW_LINE) Ends the current line and begins on the next.
+
+  ``[B]``: (BLANK_LINE) Ends the current line and adds an additional blank line, begining on the line after that.
+
+  ``[P]``: (INDENT) Ends the current line and begins four spaces indented on the next.
+
+  ``[CHAR:`` n ``]``, ``[CHAR:~`` ch ``]``: Add a single character. First version takes a base-10 integer ``n`` representing a CP-437 character.
+  Second version accepts a character ``ch`` instead. ``"[CHAR:154]"`` and ``"[CHAR:~"..string.char(154).."]"`` both result in ``Ü``.
+  Use ``[CHAR:32]`` or ``[CHAR:~ ]`` to add extra spaces, which would normally be trimmed by the parser.
+
+  ``[LPAGE:`` link_type ``:`` id ``]``, ``[LPAGE:`` link_type ``:`` id`` :`` subid ``]``: Start a ``markup_text_linkst``.
+  These are intended for Legends mode page links and don't work in popups. The text will just be colored based on ``link_type``.
+  Valid link types are: ``HF`` (``HIST_FIG``,) ``SITE``, ``ARTIFACT``, ``BOOK``, ``SR`` (``SUBREGION``,) ``FL`` (``FEATURE_LAYER``,)
+  ``ENT`` (``ENTITY``,) ``AB`` (``ABSTRACT_BUILDING``,) ``EPOP`` (``ENTITY_POPULATION``,) ``ART_IMAGE``, ``ERA``, ``HEC``.
+  ``subid`` is only used for ``AB`` and ``ART_IMAGE``. ``[/LPAGE]`` ends the link text.
+
+  ``[C:`` screenf ``:`` screenb ``:`` screenbright ``]``: Color text. Sets the repective values in ``df.global.gps`` and then sets text color.
+  ``color`` = ``screenf``, ``bright`` = ``screenbright``, ``screenb`` does nothing since popup backgrounds are always black.
+  Example: ``"Light gray, [C:4:0:0]red, [C:4:0:1]orange, [C:7:0:0]light gray."``
+
+  ``[KEY:`` n ``]``: Keybinding. Shows the (first) keybinding for the ``df.interface_key`` ``n``.
+  The keybinding will be displayed in light green, but the previous text color will be restored afterwards.
+
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text[,color,is_bright,unit1,unit2])``
 
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
 * ``dfhack.gui.autoDFAnnouncement(report,text)``
-  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring])``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text[,color,is_bright,unit_a,unit_d,is_sparring])``
 
-  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
-  and a string and processes them just like DF does. Can also be built from parameters instead of a ``report_init``.
-  Setting ``is_sparring`` to *true* means the report will be added to sparring logs (if applicable) rather than hunting or combat.
+  Takes a ``df.announcement_infost`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
+  and a string and processes them just like DF does. Can also be built from parameters instead of an ``announcement_infost``.
+  Setting ``is_sparring`` to ``true`` means the report will be added to sparring logs (if applicable) rather than hunting or combat.
 
   The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
-  Text is parsed using ``&`` as an escape character, with ``&r`` adding a blank line (equivalent to ``\n \n``,)
-  ``&&`` being just ``&``, and any other combination causing neither character to display.
-
-  If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
+  Returns ``true`` if a report was created or repeated.
+  For detailed info on why an announcement failed to display, enable ``debugfilter set Debug core gui`` in the DFHack console.
+  If you want a guaranteed announcement, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 * ``dfhack.gui.getMousePos([allow_out_of_bounds])``
 
@@ -1480,7 +1516,7 @@ Units module
 
 * ``dfhack.units.getCitizens([ignore_sanity])``
 
-  Returns a list of all living citizens.
+  Returns a list of all living citizens that are currently on the map.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1874,6 +1910,12 @@ Items module
 * ``dfhack.items.isSquadEquipment(item)``
 
   Checks whether the item is assigned to a squad.
+
+* ``dfhack.items.getCapacity(item)``
+
+  Returns the capacity volume of an item that can serve as a container for
+  other items. Return value will be ``0`` for items that cannot serve as a
+  container.
 
 .. _lua-world:
 
@@ -4629,8 +4671,9 @@ Here is an example skeleton for a ZScreen tool window::
         }
     end
 
+    -- implement if you need to handle custom input
     function MyWindow:onInput(keys)
-        -- if required
+        return MyWindow.super.onInput(self, keys)
     end
 
     MyScreen = defclass(MyScreen, gui.ZScreen)

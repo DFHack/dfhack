@@ -71,7 +71,7 @@ namespace DFHack
     {
         DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
         DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
-
+        void clearFocusStringCache();
 
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
@@ -164,11 +164,11 @@ namespace DFHack
          * Markup Text Box functions
          */
         // Clear MTB before use
-        DFHACK_EXPORT void MTB_Clear(df::markup_text_boxst *mtb);
+        DFHACK_EXPORT void MTB_clean(df::markup_text_boxst *mtb);
         // Build MTB's word vector from string
-        DFHACK_EXPORT void MTB_Parse(df::markup_text_boxst *mtb, std::string parse_text);
+        DFHACK_EXPORT void MTB_parse(df::markup_text_boxst *mtb, std::string parse_text);
         // Size MTB appropriately and place words at proper positions
-        DFHACK_EXPORT void MTB_Prepare(df::markup_text_boxst *mtb, int32_t width = 50);
+        DFHACK_EXPORT void MTB_set_width(df::markup_text_boxst *mtb, int32_t width = 50);
 
         /*
          * Cursor and window map coords

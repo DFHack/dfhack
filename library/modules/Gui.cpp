@@ -746,15 +746,26 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 }
 */
 
+static vector<string> cached_focus_strings;
+
+void Gui::clearFocusStringCache() {
+    cached_focus_strings.clear();
+}
+
 bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
     focus_string = toLower(focus_string);
     if (!top)
         top = getCurViewscreen(true);
-    std::vector<std::string> currentFocusStrings = getFocusStrings(top);
 
-    return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focus_string](std::string item) {
-        return prefix_matches(focus_string, toLower(item));
-    }) != currentFocusStrings.end();
+    if (cached_focus_strings.empty()) {
+        cached_focus_strings = getFocusStrings(top);
+        for (size_t i = 0; i < cached_focus_strings.size(); ++i)
+            cached_focus_strings[i] = toLower(cached_focus_strings[i]);
+    }
+
+    return std::find_if(cached_focus_strings.begin(), cached_focus_strings.end(), [&focus_string](std::string item) {
+        return prefix_matches(focus_string, item);
+    }) != cached_focus_strings.end();
 }
 
 static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)
@@ -1826,7 +1837,7 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
     df::popup_message *popup = new df::popup_message();
     popup->text = message;
     popup->color = color; // Doesn't do anything anymore? Popups are always [C:7:0:0] gray text
-    popup->bright = bright; // To color popup use: "[C:" + to_string(color) + ":0:" + (bright ? '1' : '0') + ']' + message
+    popup->bright = bright; // See: https://dwarffortressbugtracker.com/view.php?id=12672
 
     auto &popups = world->status.popups;
     popups.push_back(popup);
@@ -1839,9 +1850,9 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
         popups.erase(popups.begin());
     }
 
-    Gui::MTB_Clear(&world->status.mega_text);
-    Gui::MTB_Parse(&world->status.mega_text, popups[0]->text);
-    Gui::MTB_Prepare(&world->status.mega_text);
+    Gui::MTB_clean(&world->status.mega_text);
+    Gui::MTB_parse(&world->status.mega_text, popups[0]->text);
+    Gui::MTB_set_width(&world->status.mega_text);
 
     if (gps->force_full_display_count < 2)
         gps->force_full_display_count = 2;
@@ -1866,7 +1877,7 @@ void Gui::showAutoAnnouncement(
 }
 
 bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
-{   // Based on reverse-engineering of DF announcement function "make_annoucement" FUN_1400574e0 (v50.11 win64 Steam)
+{   // Based on reverse-engineering of "make_announcement" FUN_1400574e0 (v50.11 win64 Steam)
     if (!world->allow_announcements)
     {
         DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
@@ -2105,8 +2116,8 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     return autoDFAnnouncement(info, message);
 }
 
-void Gui::MTB_Clear(df::markup_text_boxst *mtb)
-{   // Reverse-engineered from FUN_140056f60 (v50.11 win64 Steam)
+void Gui::MTB_clean(df::markup_text_boxst *mtb)
+{   // Reverse-engineered from "markup_text_boxst::clean" FUN_140056f60 (v50.11 win64 Steam)
     mtb->word.clear();
     mtb->link.clear();
     mtb->current_width = -1;
@@ -2133,8 +2144,8 @@ static bool insert_markup_text_wordst(vector<df::markup_text_wordst *> &vec, str
     return true;
 }
 
-void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text)
-{   // Reverse-engineered from FUN_1409f70b0 (v50.11 win64 Steam)
+void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
+{   // Reverse-engineered from "markup_text_boxst::process_string_to_lines" FUN_1409f70b0 (v50.11 win64 Steam)
     CHECK_NULL_POINTER(mtb);
     auto &word_vec = mtb->word;
 
@@ -2290,9 +2301,9 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text)
 
                     if (buff1 == "VAR") // Color from dipscript var
                     {
-                        DEBUG(gui).print("MTB_Parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
+                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
                             buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
-                        //meeting_context_setColor(mtb, buff2, buff3);
+                        //MTB_set_color_on_var(mtb, buff2, buff3);
                     }
                     else
                     {
@@ -2345,9 +2356,9 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text)
                     string buff_var_name = grab_token_string_pos(parse_text, i, ':');
                     i += buff_var_name.size();
 
-                    DEBUG(gui).print("MTB_Parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
+                    DEBUG(gui).print("MTB_parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
                         buff_format.c_str(), buff_var_type.c_str(), buff_var_name.c_str(), mtb->environment ? "Active" : "NULL");
-                    //meeting_context_formatString(mtb, str, buff_format, buff_var_type, buff_var_name);
+                    //MTB_append_variable(mtb, str, buff_format, buff_var_type, buff_var_name);
                 }
                 else if (token_buffer == "R" || token_buffer == "B" || token_buffer == "P")
                 {
@@ -2402,8 +2413,8 @@ void Gui::MTB_Parse(df::markup_text_boxst *mtb, string parse_text)
     return;
 }
 
-void Gui::MTB_Prepare(df::markup_text_boxst* mtb, int32_t width)
-{   // Reverse-engineered from FUN_1409f6e80 (v50.11 win64 Steam)
+void Gui::MTB_set_width(df::markup_text_boxst* mtb, int32_t width)
+{   // Reverse-engineered from "markup_text_boxst::set_width" FUN_1409f6e80 (v50.11 win64 Steam)
     if (mtb->current_width == width)
         return;
 
@@ -2635,8 +2646,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
         new_win_z = z;
     }
 
-    *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
-    *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
+    *window_x = new_win_x;
+    *window_y = new_win_y;
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;

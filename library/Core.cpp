@@ -2015,6 +2015,8 @@ static int buildings_timer = 0;
 
 void Core::onUpdate(color_ostream &out)
 {
+    Gui::clearFocusStringCache();
+
     EventManager::manageEvents(out);
 
     // convert building reagents

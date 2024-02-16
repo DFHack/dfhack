@@ -237,16 +237,16 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    auto enabled = World::GetPersistentSiteData("autoclothing/enabled");
-    if (enabled.get_bool(0))
-    {
-        out << "autoclothing enabled" << endl;
-        is_enabled = true;
+    auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
+    if (!enabled.isValid()) {
+        DEBUG(control, out).print("no config found in this save; initializing\n");
+        enabled = World::AddPersistentSiteData(CONFIG_KEY);
+        enabled.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
-    else
-    {
-        is_enabled = false;
-    }
+
+    is_enabled = enabled.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control, out).print("loading persisted enabled state: %s\n",
+        is_enabled ? "true" : "false");
 
     // Parse constraints
     vector<PersistentDataItem> items;
@@ -303,7 +303,7 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     }
 
     if (enable != is_enabled) {
-        auto enabled = World::GetPersistentSiteData("autoclothing/enabled");
+        auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
         is_enabled = enable;
         DEBUG(control, out).print("%s from the API; persisting\n",
             is_enabled ? "enabled" : "disabled");

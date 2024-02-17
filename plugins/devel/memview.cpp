@@ -162,7 +162,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
     {
         memdata.addr = 0;
     }
-    else if (toLower(parameters[0].substr(0, 2)) == "0x")
+    else if (toLower_cp437(parameters[0].substr(0, 2)) == "0x")
     {
         memdata.addr = (void *)convert(parameters[0],true);
     }

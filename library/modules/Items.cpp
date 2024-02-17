@@ -213,7 +213,7 @@ ITEMDEF_VECTORS
     if (name)
         return name;
 
-    return toLower(ENUM_KEY_STR(item_type, type));
+    return toLower_cp437(ENUM_KEY_STR(item_type, type));
 }
 
 bool ItemTypeInfo::find(const std::string &token)

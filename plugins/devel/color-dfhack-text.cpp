@@ -78,10 +78,10 @@ command_result color(color_ostream &out, std::vector<std::string> &params)
         return plugin_enable(out, true);
     for (auto it = params.begin(); it != params.end(); ++it)
     {
-        std::string p = toLower(*it);
+        std::string p = toLower_cp437(*it);
         if (!p.size())
             continue;
-        #define CHECK_COLOR(color_name) else if (p == toLower(std::string(#color_name))) \
+        #define CHECK_COLOR(color_name) else if (p == toLower_cp437(std::string(#color_name))) \
             { config.flicker = false; config.color = COLOR_##color_name % 8; plugin_enable(out, true); }
         CHECK_COLOR(RED)
         CHECK_COLOR(GREEN)

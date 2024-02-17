@@ -722,15 +722,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
-    // squads should be last because it's the only one not exclusive with the others? or something?
+
+    if (!focusStrings.size()) {
+        focusStrings.push_back(baseFocus + "/Default");
+    }
+
+    // squads panel is not exclusive with the others
     if (game->main_interface.squads.open) {
         newFocusString = baseFocus;
         newFocusString += "/Squads";
         focusStrings.push_back(newFocusString);
-    }
-
-    if (!newFocusString.size()) {
-        focusStrings.push_back(baseFocus + "/Default");
     }
 }
 

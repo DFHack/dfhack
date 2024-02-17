@@ -68,6 +68,7 @@ Template for new versions:
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
+- `buildingplan`: use closest matching item rather than newest matching item
 
 ## Documentation
 

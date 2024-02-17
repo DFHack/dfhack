@@ -846,7 +846,7 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
 }
 
 static int32_t get_noble_position_id(const df::historical_entity::T_positions &positions, const string &noble) {
-    string target_id = toUpper(noble);
+    string target_id = toUpper_cp437(noble);
     for (auto &position : positions.own) {
         if (position->code == target_id)
             return position->id;

@@ -75,11 +75,14 @@ Template for new versions:
 - Gui module Announcement functions now use DF's new announcement alert system, popups parsed into ``markup_text_boxst``
 - ``Gui::addCombatReport``, ``Gui::addCombatReportAuto``: add versions that take ``report *`` instead of report vector index
 - ``Gui::MTB_clean``, ``Gui::MTB_parse``, ``Gui::MTB_set_width``: new functions for manipulating ``markup_text_boxst``
+- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 
 ## Lua
 - Overlay framework now respects ``active`` and ``visible`` widget attributes
 - ``dfhack.gui`` announcement functions use default arguments when omitted
 - ``dfhack.units.getCitizens`` now only returns units that are on the map
+- ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 

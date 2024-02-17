@@ -753,14 +753,14 @@ void Gui::clearFocusStringCache() {
 }
 
 bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
-    focus_string = toLower(focus_string);
+    focus_string = toLower_cp437(focus_string);
     if (!top)
         top = getCurViewscreen(true);
 
     if (cached_focus_strings.empty()) {
         cached_focus_strings = getFocusStrings(top);
         for (size_t i = 0; i < cached_focus_strings.size(); ++i)
-            cached_focus_strings[i] = toLower(cached_focus_strings[i]);
+            cached_focus_strings[i] = toLower_cp437(cached_focus_strings[i]);
     }
 
     return std::find_if(cached_focus_strings.begin(), cached_focus_strings.end(), [&focus_string](std::string item) {

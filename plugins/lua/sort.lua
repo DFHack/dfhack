@@ -23,12 +23,7 @@ local function get_name(unit)
     return unit and dfhack.toSearchNormalized(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 end
 
-local function sort_by_name_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_name_desc(unit1, unit2)
     local name1 = get_name(unit1)
     local name2 = get_name(unit2)
     return utils.compare_name(name1, name2)
@@ -86,20 +81,18 @@ local function get_arrival_rating(unit)
     return rating, COLOR_YELLOW
 end
 
-local function sort_by_arrival_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
+local function sort_by_arrival_desc(unit1, unit2)
     local cache = get_active_idx_cache()
-    if not cache[unit_id_1] then return -1 end
-    if not cache[unit_id_2] then return 1 end
-    return utils.compare(cache[unit_id_2], cache[unit_id_1])
+    if not cache[unit1.id] then return -1 end
+    if not cache[unit2.id] then return 1 end
+    return utils.compare(cache[unit2.id], cache[unit1.id])
 end
 
-local function sort_by_arrival_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
+local function sort_by_arrival_asc(unit1, unit2)
     local cache = get_active_idx_cache()
-    if not cache[unit_id_1] then return -1 end
-    if not cache[unit_id_2] then return 1 end
-    return utils.compare(cache[unit_id_1], cache[unit_id_2])
+    if not cache[unit1.id] then return -1 end
+    if not cache[unit2.id] then return 1 end
+    return utils.compare(cache[unit1.id], cache[unit2.id])
 end
 
 local function get_stress(unit)
@@ -112,32 +105,22 @@ local function get_stress_rating(unit)
     return get_rating(dfhack.units.getStressCategory(unit), 0, 100, 4, 3, 2, 1)
 end
 
-local function sort_by_stress_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_stress_desc(unit1, unit2)
     local happiness1 = get_stress(unit1)
     local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
     if not happiness2 then return -1 end
     if not happiness1 then return 1 end
     return utils.compare(happiness2, happiness1)
 end
 
-local function sort_by_stress_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_stress_asc(unit1, unit2)
     local happiness1 = get_stress(unit1)
     local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
     if not happiness2 then return 1 end
     if not happiness1 then return -1 end
@@ -197,29 +180,19 @@ local function get_melee_skill_effectiveness_rating(unit)
 end
 
 local function make_sort_by_melee_skill_effectiveness_desc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = melee_skill_effectiveness(unit1)
         local rating2 = melee_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_melee_skill_effectiveness_asc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = melee_skill_effectiveness(unit1)
         local rating2 = melee_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating1, rating2)
     end
 end
@@ -257,41 +230,28 @@ local function get_ranged_skill_effectiveness_rating(unit)
 end
 
 local function make_sort_by_ranged_skill_effectiveness_desc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = ranged_skill_effectiveness(unit1)
         local rating2 = ranged_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_ranged_skill_effectiveness_asc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = ranged_skill_effectiveness(unit1)
         local rating2 = ranged_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating1, rating2)
     end
 end
 
 local function make_sort_by_skill_desc(sort_skill)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
-        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+    return function(unit1, unit2)
+        local s1 = get_skill(sort_skill, unit1)
+        local s2 = get_skill(sort_skill, unit2)
+        if s1 == s2 then return sort_by_name_desc(unit1, unit2) end
         if not s2 then return -1 end
         if not s1 then return 1 end
         if s1.rating ~= s2.rating then
@@ -300,18 +260,15 @@ local function make_sort_by_skill_desc(sort_skill)
         if s1.experience ~= s2.experience then
             return utils.compare(s2.experience, s1.experience)
         end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
 end
 
 local function make_sort_by_skill_asc(sort_skill)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
-        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+    return function(unit1, unit2)
+        local s1 = get_skill(sort_skill, unit1)
+        local s2 = get_skill(sort_skill, unit2)
+        if s1 == s2 then return sort_by_name_desc(unit1, unit2) end
         if not s2 then return 1 end
         if not s1 then return -1 end
         if s1.rating ~= s2.rating then
@@ -320,7 +277,7 @@ local function make_sort_by_skill_asc(sort_skill)
         if s1.experience ~= s2.experience then
             return utils.compare(s1.experience, s2.experience)
         end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
 end
 
@@ -365,32 +322,22 @@ local function get_mental_stability(unit)
     return rating
 end
 
-local function sort_by_mental_stability_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_mental_stability_desc(unit1, unit2)
     local rating1 = get_mental_stability(unit1)
     local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
         -- sorting by stress is opposite
         -- more mental stable dwarves should have less stress
-        return sort_by_stress_asc(unit_id_1, unit_id_2)
+        return sort_by_stress_asc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_mental_stability_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_mental_stability_asc(unit1, unit2)
     local rating1 = get_mental_stability(unit1)
     local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_desc(unit_id_1, unit_id_2)
+        return sort_by_stress_desc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -426,30 +373,20 @@ local function get_melee_combat_potential_rating(unit)
     return get_rating(get_melee_combat_potential(unit), 350000, 2750000, 64, 52, 40, 28)
 end
 
-local function sort_by_melee_combat_potential_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_melee_combat_potential_desc(unit1, unit2)
     local rating1 = get_melee_combat_potential(unit1)
     local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_desc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_melee_combat_potential_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_melee_combat_potential_asc(unit1, unit2)
     local rating1 = get_melee_combat_potential(unit1)
     local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_asc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -479,30 +416,20 @@ local function get_ranged_combat_potential_rating(unit)
     return get_rating(get_ranged_combat_potential(unit), 0, 800000, 72, 52, 31, 11)
 end
 
-local function sort_by_ranged_combat_potential_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_ranged_combat_potential_desc(unit1, unit2)
     local rating1 = get_ranged_combat_potential(unit1)
     local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_desc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_ranged_combat_potential_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_ranged_combat_potential_asc(unit1, unit2)
     local rating1 = get_ranged_combat_potential(unit1)
     local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_asc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -527,32 +454,22 @@ local function get_need_rating(unit)
     return 6
 end
 
-local function sort_by_need_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_need_desc(unit1, unit2)
     local rating1 = get_need(unit1)
     local rating2 = get_need(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_desc(unit_id_1, unit_id_2)
+        return sort_by_stress_desc(unit1, unit2)
     end
     if not rating2 then return -1 end
     if not rating1 then return 1 end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_need_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_need_asc(unit1, unit2)
     local rating1 = get_need(unit1)
     local rating2 = get_need(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_asc(unit_id_1, unit_id_2)
+        return sort_by_stress_asc(unit1, unit2)
     end
     if not rating2 then return 1 end
     if not rating1 then return -1 end
@@ -933,7 +850,15 @@ function SquadAnnotationOverlay:sync_widgets(sort_widget, sort_id)
     for _,opt in ipairs(SORT_LIBRARY) do
         self.subviews[opt.widget]:setOption(sort_id)
     end
+    sort_set_sort_fn()
     self.dirty = true
+end
+
+function do_sort(a, b)
+    local self = annotation_instance
+    local opt = SORT_LIBRARY[self.subviews.sort:getOptionValue()]
+    local fn = opt.desc_fn
+    return fn(a, b) < 0
 end
 
 function SquadAnnotationOverlay:mouse_over_ours()
@@ -1103,6 +1028,7 @@ function SquadFilterOverlay:init()
                         self.subviews.infant:setOption(target)
                         self.subviews.unstable:setOption(target)
                         self.subviews.maimed:setOption(target)
+                        poke_list()
                     end,
                 },
             },

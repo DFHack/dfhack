@@ -291,8 +291,6 @@ namespace DFHack
         assert(is_valid_enum_item(sourceTileType));
         #endif
 
-
-
         // Special case for smooth pillars.
         // When you want a smooth wall, no need to search for best match.  Just use a pillar instead.
         // Choosing the right direction would require knowing neighbors.

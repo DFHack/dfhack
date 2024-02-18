@@ -136,6 +136,15 @@ static sort_entry do_sort{
     DFHACK_SORT_IDENT
 };
 
+int32_t our_sort_idx(const std::vector<sort_entry> &sorting_by) {
+    for (size_t i = 0; i < sorting_by.size(); ++i) {
+        if (sorting_by[i].ident == DFHACK_SORT_IDENT) {
+            return (int32_t)i;
+        }
+    }
+    return -1;
+}
+
 //
 // plugin logic
 //
@@ -155,12 +164,10 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
         }
 
         std::vector<sort_entry> *sorting_by = reinterpret_cast<std::vector<sort_entry> *>(&unitlist->sorting_by);
-        for (size_t i = 0; i < sorting_by->size(); ++i) {
-            if ((*sorting_by)[i].ident == DFHACK_SORT_IDENT) {
-                DEBUG(log).print("removing our sort function\n");
-                vector_erase_at(*sorting_by, i);
-                break;
-            }
+        idx = our_sort_idx(*sorting_by);
+        if (idx >= 0) {
+            DEBUG(log).print("removing our sort function\n");
+            vector_erase_at(*sorting_by, idx);
         }
     }
     return CR_OK;
@@ -190,8 +197,17 @@ static void sort_set_sort_fn(color_ostream &out) {
     unitlist->sort_flags.bits.NEEDS_RESORTED = true;
 }
 
+static bool sort_get_sort_active(color_ostream &out) {
+    auto unitlist = get_unit_list();
+    if (!unitlist)
+        return false;
+    std::vector<sort_entry> *sorting_by = reinterpret_cast<std::vector<sort_entry> *>(&unitlist->sorting_by);
+    return our_sort_idx(*sorting_by) >= 0;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(sort_set_filter_fn),
     DFHACK_LUA_FUNCTION(sort_set_sort_fn),
+    DFHACK_LUA_FUNCTION(sort_get_sort_active),
     DFHACK_LUA_END
 };

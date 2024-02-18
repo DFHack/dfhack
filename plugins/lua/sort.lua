@@ -569,6 +569,69 @@ local function annotate_visible_units(sort_id)
 end
 
 -- ----------------------
+-- SortButton
+--
+
+SortButton = defclass(SortButton, widgets.Panel)
+SortButton.ATTRS{
+    on_click=DEFAULT_NIL,
+}
+
+local function make_sort_pens(ascending, selected)
+    local to_pen = dfhack.pen.parse
+    local init = df.global.init
+    local name = ('texpos_sort_%s_%s'):format(
+        ascending and 'ascending' or 'descending',
+        selected and 'active' or 'inactive'
+    )
+    -- this is backwards, but it matches vanilla
+    local ch = ascending and 31 or 30
+    local fg = selected and COLOR_WHITE or COLOR_BLACK
+    return {
+        to_pen{tile=init[name][0], ch=32, fg=COLOR_BLACK, bg=COLOR_GRAY},
+        to_pen{tile=init[name][1], ch=ch, fg=fg, bg=COLOR_GRAY},
+        to_pen{tile=init[name][2], ch=ch, fg=fg, bg=COLOR_GRAY},
+        to_pen{tile=init[name][3], ch=32, fg=COLOR_BLACK, bg=COLOR_GRAY},
+    }
+end
+
+local SORT_PENS = {
+    [true]={[true]=make_sort_pens(true, true), [false]=make_sort_pens(true, false)},
+    [false]={[true]=make_sort_pens(false, true), [false]=make_sort_pens(false, false)},
+}
+
+local function sort_button_get_tile(self, idx)
+    return SORT_PENS[self.ascending][self.selected][idx]
+end
+
+function SortButton:init()
+    self.frame = self.frame or {}
+    self.frame.w, self.frame.h = 4, 1
+
+    self.ascending = false
+    self.selected = false
+
+    self:addviews{
+        widgets.Label{
+            text={
+                {width=1, tile=curry(sort_button_get_tile, self, 1)},
+                {width=1, tile=curry(sort_button_get_tile, self, 2)},
+                {width=1, tile=curry(sort_button_get_tile, self, 3)},
+                {width=1, tile=curry(sort_button_get_tile, self, 4)},
+            },
+            on_click=function()
+                if not self.selected then
+                    self.selected = true
+                else
+                    self.ascending = not self.ascending
+                end
+                self.on_click()
+            end,
+        }
+    }
+end
+
+-- ----------------------
 -- SquadAnnotationOverlay
 --
 
@@ -577,16 +640,16 @@ annotation_instance = nil
 SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
 SquadAnnotationOverlay.ATTRS{
     desc='Adds sort and annotation capabilities to the squad assignment panel.',
-    default_pos={x=16, y=5},
+    default_pos={x=15, y=5},
     version='2',
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=81, h=35},
+    frame={w=82, h=35},
 }
 
 function get_annotation_text(idx)
     local elem = rating_annotations[idx]
-    if not elem or not tonumber(elem.val) then return ' - ' end
+    if not elem or not tonumber(elem.val) then return ' -- ' end
     return tostring(math.tointeger(elem.val))
 end
 
@@ -613,10 +676,10 @@ local function init_face_tiles()
 
     for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
         local face = {}
-        ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color}
-        ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color}
-        ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color}
-        ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color}
+        ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color, keep_lower=true}
+        ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color, keep_lower=true}
+        ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color, keep_lower=true}
+        ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color, keep_lower=true}
         FACE_TILES[idx-1] = face
     end
 end
@@ -625,7 +688,7 @@ init_face_tiles()
 function get_stress_face_tile(idx, x, y)
     local elem = rating_annotations[idx]
     if not elem or not elem.val or elem.val < 0 then
-        return x == 0 and y == 1 and DASH_PEN or gui.CLEAR_PEN
+        return y == 1 and DASH_PEN or gui.CLEAR_PEN
     end
     local val = math.min(6, elem.val)
     return safe_index(FACE_TILES, val, y, x)
@@ -679,10 +742,15 @@ function SquadAnnotationOverlay:init()
     self:addviews{
         widgets.Panel{
             view_id='annotation_panel',
-            frame={l=0, w=5, t=0, b=0},
+            frame={l=0, w=6, t=0, b=0},
             frame_style=gui.FRAME_INTERIOR_MEDIUM,
             frame_background=gui.CLEAR_PEN,
             subviews={
+                SortButton{
+                    view_id='sort_button',
+                    frame={t=0, l=0},
+                    on_click=self:callback('sync_widgets'),
+                },
                 widgets.Label{
                     view_id='label',
                     frame={t=5, l=0, r=0, b=0},
@@ -842,13 +910,15 @@ function SquadAnnotationOverlay:init()
 end
 
 function SquadAnnotationOverlay:sync_widgets(sort_widget, sort_id)
-    if sort_id == 'noop' then
-        self.subviews[sort_widget]:cycle()
-        return
-    end
-    self.subviews.sort:setOption(sort_id)
-    for _,opt in ipairs(SORT_LIBRARY) do
-        self.subviews[opt.widget]:setOption(sort_id)
+    if sort_widget then
+        if sort_id == 'noop' then
+            self.subviews[sort_widget]:cycle()
+            return
+        end
+        self.subviews.sort:setOption(sort_id)
+        for _,opt in ipairs(SORT_LIBRARY) do
+            self.subviews[opt.widget]:setOption(sort_id)
+        end
     end
     sort_set_sort_fn()
     self.dirty = true
@@ -857,7 +927,7 @@ end
 function do_sort(a, b)
     local self = annotation_instance
     local opt = SORT_LIBRARY[self.subviews.sort:getOptionValue()]
-    local fn = opt.desc_fn
+    local fn = self.subviews.sort_button.ascending and opt.asc_fn or opt.desc_fn
     return fn(a, b) < 0
 end
 
@@ -883,6 +953,7 @@ function SquadAnnotationOverlay:onRenderFrame(dc, rect)
         self.saved_scroll_position ~= get_scroll_pos() or
         self.saved_num_visible ~= get_scroll_rows().num_visible
     then
+        self.subviews.sort_button.selected = sort_get_sort_active()
         annotate_visible_units(self.subviews.sort:getOptionValue())
         self.saved_scroll_position = get_scroll_pos()
         self.dirty = false

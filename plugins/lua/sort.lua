@@ -603,7 +603,6 @@ local sort_by_crossbow_asc=make_sort_by_skill_asc(df.job_skill.CROSSBOW)
 local SORT_LIBRARY = {
     {label='melee effectiveness', desc_fn=sort_by_any_melee_desc, asc_fn=sort_by_any_melee_asc, rating_fn=get_melee_skill_effectiveness_rating},
     {label='ranged effectiveness', desc_fn=sort_by_any_ranged_desc, asc_fn=sort_by_any_ranged_asc, rating_fn=get_ranged_skill_effectiveness_rating},
-    {label='name', desc_fn=sort_by_name_desc, asc_fn=sort_by_name_asc},
     {label='teacher skill', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
     {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
     {label='arrival order', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
@@ -636,7 +635,7 @@ end
 
 SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
 SquadAssignmentOverlay.ATTRS{
-    desc='Adds search, sort, and filter capabilities to the squad assignment screen.',
+    desc='Adds annotation, sort, and filter capabilities to the squad assignment panel.',
     default_pos={x=18, y=5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
@@ -1124,16 +1123,35 @@ end
 local use_stress_faces = false
 local rating_annotations = {}
 
+local function get_scroll_rows()
+    return dfhack.gui.getWidget(unit_selector, 'Unit selector', 'Unit List', 1)
+end
+
+local function get_scroll_pos(scroll_rows)
+    return (scroll_rows or get_scroll_rows()).scroll
+end
+
+local function get_num_slots(screen_height)
+    if not screen_height then
+        _, screen_height = dfhack.screen.getWindowSize()
+    end
+    return (screen_height - 20) // 3
+end
+
 local function annotate_visible_units(sort_fn)
     use_stress_faces = STRESS_FACE_FNS[sort_fn]
     rating_annotations = {}
     rating_fn = RATING_FNS[sort_fn]
-    local max_idx = math.min(#unit_selector.unid-1, unit_selector.scroll_position+9)
-    for idx = unit_selector.scroll_position, max_idx do
-        local annotation_idx = idx - unit_selector.scroll_position + 1
-        local unit = df.unit.find(unit_selector.unid[idx])
+    local scroll_rows = get_scroll_rows()
+    local rows = dfhack.gui.getWidgetChildren(scroll_rows)
+    local scroll_pos = get_scroll_pos(scroll_rows)
+    local max_idx = math.min(#rows, scroll_pos+scroll_rows.num_visible)
+    for idx = scroll_pos+1, max_idx do
+        local annotation_idx = idx - scroll_pos - 1
         rating_annotations[annotation_idx] = nil
-        if unit and rating_fn then
+        local row = rows[idx]
+        if rating_fn and df.widget_container:is_instance(row) then
+            local unit = dfhack.gui.getWidget(row, 0).u
             local val, color = rating_fn(unit)
             if val then
                 rating_annotations[annotation_idx] = {val=val, color=color}
@@ -1146,7 +1164,6 @@ local SORT_WIDGET_NAMES = {
     'sort',
     'sort_any_melee',
     'sort_any_ranged',
-    'sort_name',
     'sort_teacher',
     'sort_tactics',
     'sort_arrival',
@@ -1189,12 +1206,15 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
 end
 
 function SquadAssignmentOverlay:onInput(keys)
-    if keys._MOUSE_R or (keys._MOUSE_L and not self:getMouseFramePos()) then
-        -- if any click is made outside of our window, we may need to refresh our list
+    if keys._MOUSE_R or keys._MOUSE_L then
+        -- if any click is made, we may need to refresh our list
         self.dirty = true
     end
-    return SquadAssignmentOverlay.super.onInput(self, keys) or
-        (keys._MOUSE_L and self:getMouseFramePos())
+    return SquadAssignmentOverlay.super.onInput(self, keys) or clicked_on_us
+end
+
+function SquadAssignmentOverlay:preUpdateLayout(parent_rect)
+    self.frame.h = parent_rect.height - 7
 end
 
 function SquadAssignmentOverlay:onRenderFrame(dc, frame_rect)
@@ -1202,7 +1222,7 @@ function SquadAssignmentOverlay:onRenderFrame(dc, frame_rect)
     if self.dirty then
         self:refresh_list()
         self.dirty = false
-    elseif self.saved_scroll_position ~= unit_selector.scroll_position then
+    elseif self.saved_scroll_position ~= get_scroll_pos() then
         annotate_visible_units(self.subviews.sort:getOptionValue())
         self.saved_scroll_position = unit_selector.scroll_position
     end
@@ -1214,19 +1234,17 @@ end
 
 SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
 SquadAnnotationOverlay.ATTRS{
-    desc='Annotates squad selection candidates with the values of the current sort.',
-    default_pos={x=56, y=5},
+    desc='Annotates squad selection candidates with the values of the selected attribute.',
+    default_pos={x=16, y=5},
+    version='2',
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=5, h=35},
-    frame_style=gui.FRAME_INTERIOR_MEDIUM,
-    frame_background=gui.CLEAR_PEN,
+    frame={w=81, h=35},
 }
 
 function get_annotation_text(idx)
     local elem = rating_annotations[idx]
     if not elem or not tonumber(elem.val) then return ' - ' end
-
     return tostring(math.tointeger(elem.val))
 end
 
@@ -1271,46 +1289,312 @@ function get_stress_face_tile(idx, x, y)
     return safe_index(FACE_TILES, val, y, x)
 end
 
+local function get_label_text(screen_height)
+    local text = {}
+    for idx=1, get_num_slots(screen_height) do
+        table.insert(text, NEWLINE)
+        if use_stress_faces then
+            table.insert(text, {gap=1, width=1, tile=curry(get_stress_face_tile, idx, 0, 0)})
+            table.insert(text, {width=1, tile=curry(get_stress_face_tile, idx, 1, 0)})
+            table.insert(text, NEWLINE)
+            table.insert(text, {gap=1, width=1, tile=curry(get_stress_face_tile, idx, 0, 1)})
+            table.insert(text, {width=1, tile=curry(get_stress_face_tile, idx, 1, 1)})
+            table.insert(text, NEWLINE)
+        else
+            table.insert(text, {
+                text=curry(get_annotation_text, idx),
+                pen=curry(get_annotation_color, idx),
+                width=3,
+                rjustify=true,
+            })
+            table.insert(text, NEWLINE)
+            table.insert(text, NEWLINE)
+        end
+    end
+    return text
+end
+
 function SquadAnnotationOverlay:init()
-    for idx = 1, 10 do
-        self:addviews{
-            widgets.Label{
-                frame={t=idx*3+1, h=1, w=3},
-                text={
-                    {
-                        text=curry(get_annotation_text, idx),
-                        pen=curry(get_annotation_color, idx),
-                        width=3,
-                        rjustify=true,
+    self.dirty = true
+
+    local sort_options = {}
+    for _, opt in ipairs(SORT_LIBRARY) do
+        table.insert(sort_options, {
+            label=opt.label..CH_DN,
+            value=opt.desc_fn,
+            pen=COLOR_GREEN,
+        })
+        table.insert(sort_options, {
+            label=opt.label..CH_UP,
+            value=opt.asc_fn,
+            pen=COLOR_YELLOW,
+        })
+    end
+
+    self:addviews{
+        widgets.Panel{
+            view_id='annotation_panel',
+            frame={l=0, w=5, t=0, b=0},
+            frame_style=gui.FRAME_INTERIOR_MEDIUM,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.Label{
+                    view_id='label',
+                    frame={t=5, l=0, r=0, b=0},
+                    auto_width=false,
+                    auto_height=false,
+                },
+            }
+        },
+        widgets.BannerPanel{
+            frame={t=1, r=0, w=32, h=1},
+            frame_background=gui.CLEAR_PEN,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='sort',
+            frame={t=1, r=1, w=31},
+            label='Show:',
+            key='CUSTOM_SHIFT_S',
+            options=sort_options,
+            initial_option=sort_by_any_melee_desc,
+            on_change=self:callback('sync_widgets', 'sort'),
+        },
+        widgets.Panel{
+            view_id='hover_panel',
+            frame={t=0, r=0, w=33, h=16},
+            frame_style=gui.FRAME_MEDIUM,
+            visible=false,
+            subviews={
+                widgets.Panel{
+                    frame={t=1, l=0, r=0, b=0},
+                    frame_background=gui.CLEAR_PEN,
+                    subviews={
+                        widgets.Divider{
+                            frame={t=0, l=0, r=0, h=1},
+                            frame_style=gui.FRAME_THIN,
+                            frame_style_l=false,
+                            frame_style_r=false,
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_any_melee',
+                            frame={t=1, l=0, w=10},
+                            options={
+                                {label='melee eff.', value=sort_noop},
+                                {label='melee eff.'..CH_DN, value=sort_by_any_melee_desc, pen=COLOR_GREEN},
+                                {label='melee eff.'..CH_UP, value=sort_by_any_melee_asc, pen=COLOR_YELLOW},
+                            },
+                            initial_option=sort_by_any_melee_desc,
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_any_melee'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_any_ranged',
+                            frame={t=1, r=0, w=12},
+                            options={
+                                {label='ranged eff.', value=sort_noop},
+                                {label='ranged eff.'..CH_DN, value=sort_by_any_ranged_desc, pen=COLOR_GREEN},
+                                {label='ranged eff.'..CH_UP, value=sort_by_any_ranged_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_any_ranged'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_teacher',
+                            frame={t=3, l=0, w=8},
+                            options={
+                                {label='teacher', value=sort_noop},
+                                {label='teacher'..CH_DN, value=sort_by_teacher_desc, pen=COLOR_GREEN},
+                                {label='teacher'..CH_UP, value=sort_by_teacher_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_teacher'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_stress',
+                            frame={t=3, l=9, w=7},
+                            options={
+                                {label='stress', value=sort_noop},
+                                {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
+                                {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_stress'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_arrival',
+                            frame={t=3, r=0, w=14},
+                            options={
+                                {label='arrival order', value=sort_noop},
+                                {label='arrival order'..CH_DN, value=sort_by_arrival_desc, pen=COLOR_GREEN},
+                                {label='arrival order'..CH_UP, value=sort_by_arrival_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_arrival'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_tactics',
+                            frame={t=5, l=0, w=8},
+                            options={
+                                {label='tactics', value=sort_noop},
+                                {label='tactics'..CH_DN, value=sort_by_tactics_desc, pen=COLOR_GREEN},
+                                {label='tactics'..CH_UP, value=sort_by_tactics_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_tactics'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_need',
+                            frame={t=5, r=0, w=18},
+                            options={
+                                {label='need for training', value=sort_noop},
+                                {label='need for training'..CH_DN, value=sort_by_need_desc, pen=COLOR_GREEN},
+                                {label='need for training'..CH_UP, value=sort_by_need_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_need'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_axe',
+                            frame={t=7, l=0, w=4},
+                            options={
+                                {label='axe', value=sort_noop},
+                                {label='axe'..CH_DN, value=sort_by_axe_desc, pen=COLOR_GREEN},
+                                {label='axe'..CH_UP, value=sort_by_axe_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_axe'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_sword',
+                            frame={t=7, w=6},
+                            options={
+                                {label='sword', value=sort_noop},
+                                {label='sword'..CH_DN, value=sort_by_sword_desc, pen=COLOR_GREEN},
+                                {label='sword'..CH_UP, value=sort_by_sword_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_sword'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_mace',
+                            frame={t=7, r=0, w=5},
+                            options={
+                                {label='mace', value=sort_noop},
+                                {label='mace'..CH_DN, value=sort_by_mace_desc, pen=COLOR_GREEN},
+                                {label='mace'..CH_UP, value=sort_by_mace_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_mace'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_hammer',
+                            frame={t=9, l=0, w=7},
+                            options={
+                                {label='hammer', value=sort_noop},
+                                {label='hammer'..CH_DN, value=sort_by_hammer_desc, pen=COLOR_GREEN},
+                                {label='hammer'..CH_UP, value=sort_by_hammer_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_hammer'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_spear',
+                            frame={t=9, w=6},
+                            options={
+                                {label='spear', value=sort_noop},
+                                {label='spear'..CH_DN, value=sort_by_spear_desc, pen=COLOR_GREEN},
+                                {label='spear'..CH_UP, value=sort_by_spear_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_spear'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_crossbow',
+                            frame={t=9, r=0, w=9},
+                            options={
+                                {label='crossbow', value=sort_noop},
+                                {label='crossbow'..CH_DN, value=sort_by_crossbow_desc, pen=COLOR_GREEN},
+                                {label='crossbow'..CH_UP, value=sort_by_crossbow_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_crossbow'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_melee_combat_potential',
+                            frame={t=11, l=0, w=12},
+                            options={
+                                {label='melee potl.', value=sort_noop},
+                                {label='melee potl.'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
+                                {label='melee potl.'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_melee_combat_potential'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_ranged_combat_potential',
+                            frame={t=11, r=0, w=13},
+                            options={
+                                {label='ranged potl.', value=sort_noop},
+                                {label='ranged potl.'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
+                                {label='ranged potl.'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
+                            },
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_ranged_combat_potential'),
+                        },
                     },
                 },
-                visible=function() return not use_stress_faces end,
             },
-            widgets.Label{
-                frame={t=idx*3, r=0, h=2, w=2},
-                auto_height=false,
-                text={
-                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 0)},
-                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 0)},
-                    NEWLINE,
-                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 1)},
-                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 1)},
-                },
-                visible=function() return use_stress_faces end,
-            },
-        }
-    end
+        },
+    }
 end
 
 function SquadAnnotationOverlay:onInput(keys)
+    if keys._MOUSE_R or keys._MOUSE_L then
+        -- if any click is made, we may need to refresh our annotations
+        self.dirty = true
+    end
     return SquadAnnotationOverlay.super.onInput(self, keys) or
-        (keys._MOUSE_L and self:getMouseFramePos())
+        (keys._MOUSE_L and self.subviews.annotation_panel:getMouseFramePos())
+end
+
+function SquadAnnotationOverlay:onRenderFrame(dc, rect)
+    if self.dirty or self.saved_scroll_position ~= get_scroll_pos() then
+        annotate_visible_units(self.subviews.sort:getOptionValue())
+        self.saved_scroll_position = get_scroll_pos()
+        self.dirty = false
+    end
+    self.subviews.label:setText(get_label_text(self.frame_parent_rect.height))
+    if self.subviews.sort:getMousePos() then
+        self.subviews.hover_panel.visible = true
+    elseif self.subviews.hover_panel.visible and
+        not self.subviews.hover_panel:getMouseFramePos()
+    then
+        self.subviews.hover_panel.visible = false
+    end
+    SquadAnnotationOverlay.super.onRenderFrame(self, dc, rect)
+end
+
+function SquadAnnotationOverlay:preUpdateLayout(parent_rect)
+    self.frame.h = get_num_slots(parent_rect.height) * 3 + 7
+end
+
+function SquadAnnotationOverlay:sync_widgets(sort_widget, sort_fn)
+    sort_widget = sort_widget or 'sort'
+    sort_fn = sort_fn or self.subviews.sort:getOptionValue()
+    if sort_fn == sort_noop then
+        self.subviews[sort_widget]:cycle()
+        return
+    end
+    for _,widget_name in ipairs(SORT_WIDGET_NAMES) do
+        self.subviews[widget_name]:setOption(sort_fn)
+    end
+    self.dirty = true
 end
 
 OVERLAY_WIDGETS = {
     -- TODO: rewrite for 50.12
     -- squad_assignment=SquadAssignmentOverlay,
-    -- squad_annotation=SquadAnnotationOverlay,
+    squad_annotation=SquadAnnotationOverlay,
     -- info=require('plugins.sort.info').InfoOverlay,
     -- workanimals=require('plugins.sort.info').WorkAnimalOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,
@@ -1333,59 +1617,5 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
 
     init_face_tiles()
 end
-
---[[
-local utils = require('utils')
-local units = require('plugins.sort.units')
-local items = require('plugins.sort.items')
-
-orders = orders or {}
-orders.units = units.orders
-orders.items = items.orders
-
-function parse_ordering_spec(type,...)
-    local group = orders[type]
-    if group == nil then
-        dfhack.printerr('Invalid ordering class: '..tostring(type))
-        return nil
-    end
-
-    local specs = table.pack(...)
-    local rv = { }
-
-    for _,spec in ipairs(specs) do
-        local nil_first = false
-        if string.sub(spec,1,1) == '<' then
-            nil_first = true
-            spec = string.sub(spec,2)
-        end
-
-        local reverse = false
-        if string.sub(spec,1,1) == '>' then
-            reverse = true
-            spec = string.sub(spec,2)
-        end
-
-        local cm = group[spec]
-
-        if cm == nil then
-            dfhack.printerr('Unknown order for '..type..': '..tostring(spec))
-            return nil
-        end
-
-        if nil_first or reverse then
-            cm = copyall(cm)
-            cm.nil_first = nil_first
-            cm.reverse = reverse
-        end
-
-        rv[#rv+1] = cm
-    end
-
-    return rv
-end
-
-make_sort_order = utils.make_sort_order
-]]
 
 return _ENV

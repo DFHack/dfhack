@@ -536,7 +536,6 @@ function Panel:postUpdateLayout()
         end
         ::continue::
     end
-    self.frame_rect.height = y
 
     -- let widgets adjust to their new positions
     self:updateSubviewLayout()

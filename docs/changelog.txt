@@ -64,6 +64,7 @@ Template for new versions:
 - `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
 - `autoclothing`: Fix enabled behavior
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: don't display popup for all announcement types
+- ``gui.View:getMouseFramePos``: function now detects the correct coordinates even when the widget is nested within other frames
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss

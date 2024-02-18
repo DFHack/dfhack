@@ -604,209 +604,14 @@ for _, v in ipairs(SORT_LIBRARY) do
     SORT_LIBRARY[v.widget] = v
 end
 
--- ----------------------
--- SquadAssignmentOverlay
---
-
-SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
-SquadAssignmentOverlay.ATTRS{
-    desc='Adds annotation, sort, and filter capabilities to the squad assignment panel.',
-    default_pos={x=18, y=5},
-    default_enabled=true,
-    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    version='2',
-    frame={w=38, h=33},
-}
-
-function SquadAssignmentOverlay:init()
-
-    local main_panel = widgets.Panel{
-        frame={l=0, r=0, t=0, b=0},
-        frame_style=gui.FRAME_PANEL,
-        frame_background=gui.CLEAR_PEN,
-        autoarrange_subviews=true,
-        autoarrange_gap=1,
-    }
-    main_panel:addviews{
-        widgets.CycleHotkeyLabel{
-            view_id='military',
-            frame={l=0},
-            key='CUSTOM_SHIFT_Q',
-            label='Units in other squads:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='officials',
-            frame={l=0},
-            key='CUSTOM_SHIFT_O',
-            label='  Appointed officials:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='nobles',
-            frame={l=0},
-            key='CUSTOM_SHIFT_N',
-            label='             Nobility:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='infant',
-            frame={l=0},
-            key='CUSTOM_SHIFT_M',
-            label=' Mothers with infants:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='unstable',
-            frame={l=0},
-            key='CUSTOM_SHIFT_D',
-            label='      Dislikes combat:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='maimed',
-            frame={l=0},
-            key='CUSTOM_SHIFT_I',
-            label='   Critically injured:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.HotkeyLabel{
-            key='CUSTOM_SHIFT_A',
-            label='Toggle all filters',
-            on_activate=function()
-                local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
-                self.subviews.military:setOption(target)
-                self.subviews.officials:setOption(target)
-                self.subviews.nobles:setOption(target)
-                self.subviews.infant:setOption(target)
-                self.subviews.unstable:setOption(target)
-                self.subviews.maimed:setOption(target)
-                self:refresh_list()
-            end,
-        },
-    }
-
-    self:addviews{
-        main_panel,
-        widgets.HelpButton{
-            frame={t=0, r=1},
-            command='sort',
-        },
-    }
-end
-
-local function is_in_military(unit)
-    return unit.military.squad_id > -1
-end
-
-local function is_elected_or_appointed_official(unit)
-    for _,occupation in ipairs(unit.occupations) do
-        if occupation.type ~= df.occupation_type.MERCENARY then
-            return true
-        end
-    end
-    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
-        if noble_pos.position.flags.ELECTED or
-            (noble_pos.position.mandate_max == 0 and noble_pos.position.demand_max == 0)
-        then
-            return true
-        end
-    end
-    return false
-end
-
-local function is_nobility(unit)
-    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
-        if not noble_pos.position.flags.ELECTED and
-            (noble_pos.position.mandate_max > 0 or noble_pos.position.demand_max > 0)
-        then
-            return true
-        end
-    end
-    return false
-end
-
-local function has_infant(unit)
-    for _, baby in ipairs(df.global.world.units.other.ANY_BABY2) do
-        if baby.relationship_ids.Mother == unit.id then
-            return true
-        end
-    end
-    return false
-end
-
-local function is_unstable(unit)
-    -- stddev percentiles are 61, 48, 35, 23
-    -- let's go with one stddev below the mean (35) as the cutoff
-    local _, color = get_rating(get_mental_stability(unit), -40, 80, 35, 0, 0, 0)
-    return color ~= COLOR_LIGHTGREEN
-end
-
-local function is_maimed(unit)
-    return not unit.flags2.vision_good or
-        unit.status2.limbs_grasp_count < 2 or
-        unit.status2.limbs_stand_count == 0
-end
-
-local function filter_matches(unit_id, filter)
-    if unit_id == -1 then return true end
-    local unit = df.unit.find(unit_id)
-    if not unit then return false end
-    if filter.military == 'only' and not is_in_military(unit) then return false end
-    if filter.military == 'exclude' and is_in_military(unit) then return false end
-    if filter.officials == 'only' and not is_elected_or_appointed_official(unit) then return false end
-    if filter.officials == 'exclude' and is_elected_or_appointed_official(unit) then return false end
-    if filter.nobles == 'only' and not is_nobility(unit) then return false end
-    if filter.nobles == 'exclude' and is_nobility(unit) then return false end
-    if filter.infant == 'only' and not has_infant(unit) then return false end
-    if filter.infant == 'exclude' and has_infant(unit) then return false end
-    if filter.unstable == 'only' and not is_unstable(unit) then return false end
-    if filter.unstable == 'exclude' and is_unstable(unit) then return false end
-    if filter.maimed == 'only' and not is_maimed(unit) then return false end
-    if filter.maimed == 'exclude' and is_maimed(unit) then return false end
-    return true
-end
-
 local unit_selector = df.global.game.main_interface.unit_selector
 
 local use_stress_faces = false
 local rating_annotations = {}
+
+local function get_unit_selector()
+    return dfhack.gui.getWidget(unit_selector, 'Unit selector')
+end
 
 local function get_scroll_rows()
     return dfhack.gui.getWidget(unit_selector, 'Unit selector', 'Unit List', 1)
@@ -846,30 +651,15 @@ local function annotate_visible_units(sort_id)
     end
 end
 
-function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
-    local filter = {
-        search=self.subviews.search.text,
-        military=self.subviews.military:getOptionValue(),
-        officials=self.subviews.officials:getOptionValue(),
-        nobles=self.subviews.nobles:getOptionValue(),
-        infant=self.subviews.infant:getOptionValue(),
-        unstable=self.subviews.unstable:getOptionValue(),
-        maimed=self.subviews.maimed:getOptionValue(),
-    }
-    filter_vector(filter, self.prev_filter or {})
-    self.prev_filter = filter
-    utils.sort_vector(unit_selector.unid, nil, sort_fn)
-    annotate_visible_units(sort_fn)
-    self.saved_scroll_position = unit_selector.scroll_position
-end
-
 -- ----------------------
 -- SquadAnnotationOverlay
 --
 
+annotation_instance = nil
+
 SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
 SquadAnnotationOverlay.ATTRS{
-    desc='Annotates squad selection candidates with attribute values.',
+    desc='Adds sort and annotation capabilities to the squad assignment panel.',
     default_pos={x=16, y=5},
     version='2',
     default_enabled=true,
@@ -957,6 +747,7 @@ local function make_options(label, view_id)
 end
 
 function SquadAnnotationOverlay:init()
+    annotation_instance = self
     self.dirty = true
 
     local sort_options = {}
@@ -1163,7 +954,10 @@ function SquadAnnotationOverlay:onInput(keys)
 end
 
 function SquadAnnotationOverlay:onRenderFrame(dc, rect)
-    if self.dirty or self.saved_scroll_position ~= get_scroll_pos() then
+    if self.dirty or
+        self.saved_scroll_position ~= get_scroll_pos() or
+        self.saved_num_visible ~= get_scroll_rows().num_visible
+    then
         annotate_visible_units(self.subviews.sort:getOptionValue())
         self.saved_scroll_position = get_scroll_pos()
         self.dirty = false
@@ -1183,10 +977,234 @@ function SquadAnnotationOverlay:preUpdateLayout(parent_rect)
     self.frame.h = get_num_slots(parent_rect.height) * 3 + 7
 end
 
+-- ----------------------
+-- SquadFilterOverlay
+--
+
+local function poke_list()
+    get_unit_selector().sort_flags.NEEDS_RESORTED = true
+end
+
+filter_instance = nil
+
+SquadFilterOverlay = defclass(SquadFilterOverlay, overlay.OverlayWidget)
+SquadFilterOverlay.ATTRS{
+    desc='Adds filter capabilities to the squad assignment panel.',
+    default_pos={x=36, y=-5},
+    default_enabled=true,
+    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
+    frame={w=57, h=6},
+}
+
+function SquadFilterOverlay:init()
+    filter_instance = self
+
+    local main_panel = widgets.BannerPanel{
+        frame={t=0, b=0, r=0, w=29},
+        subviews={
+            widgets.CycleHotkeyLabel{
+                view_id='military',
+                frame={t=0, l=1},
+                key='CUSTOM_SHIFT_Q',
+                label='   Other squads:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='officials',
+                frame={t=1, l=1},
+                key='CUSTOM_SHIFT_O',
+                label='      Officials:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='nobles',
+                frame={t=2, l=1},
+                key='CUSTOM_SHIFT_N',
+                label='       Nobility:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='infant',
+                frame={t=3, l=1},
+                key='CUSTOM_SHIFT_M',
+                label='Infant carriers:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='unstable',
+                frame={t=4, l=1},
+                key='CUSTOM_SHIFT_D',
+                label='   Hates combat:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='maimed',
+                frame={t=5, l=1},
+                key='CUSTOM_SHIFT_I',
+                label='         Maimed:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+        },
+    }
+
+    self:addviews{
+        widgets.BannerPanel{
+            frame={t=1, l=0, w=27, h=1},
+            subviews={
+                widgets.HelpButton{
+                    frame={t=0, l=1},
+                    command='sort',
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=5},
+                    key='CUSTOM_SHIFT_A',
+                    label='Toggle all filters',
+                    on_activate=function()
+                        local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
+                        self.subviews.military:setOption(target)
+                        self.subviews.officials:setOption(target)
+                        self.subviews.nobles:setOption(target)
+                        self.subviews.infant:setOption(target)
+                        self.subviews.unstable:setOption(target)
+                        self.subviews.maimed:setOption(target)
+                    end,
+                },
+            },
+        },
+        main_panel,
+    }
+end
+
+function SquadFilterOverlay:render(dc)
+    sort_set_filter_fn()
+    SquadFilterOverlay.super.render(self, dc)
+end
+
+local function is_in_military(unit)
+    return unit.military.squad_id > -1
+end
+
+local function is_elected_or_appointed_official(unit)
+    for _,occupation in ipairs(unit.occupations) do
+        if occupation.type ~= df.occupation_type.MERCENARY then
+            return true
+        end
+    end
+    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
+        if noble_pos.position.flags.ELECTED or
+            (noble_pos.position.mandate_max == 0 and noble_pos.position.demand_max == 0)
+        then
+            return true
+        end
+    end
+    return false
+end
+
+local function is_nobility(unit)
+    for _, noble_pos in ipairs(dfhack.units.getNoblePositions(unit) or {}) do
+        if not noble_pos.position.flags.ELECTED and
+            (noble_pos.position.mandate_max > 0 or noble_pos.position.demand_max > 0)
+        then
+            return true
+        end
+    end
+    return false
+end
+
+local function has_infant(unit)
+    for _, baby in ipairs(df.global.world.units.other.ANY_BABY2) do
+        if baby.relationship_ids.Mother == unit.id then
+            return true
+        end
+    end
+    return false
+end
+
+local function is_unstable(unit)
+    -- stddev percentiles are 61, 48, 35, 23
+    -- let's go with one stddev below the mean (35) as the cutoff
+    local _, color = get_rating(get_mental_stability(unit), -40, 80, 35, 0, 0, 0)
+    return color ~= COLOR_LIGHTGREEN
+end
+
+local function is_maimed(unit)
+    return not unit.flags2.vision_good or
+        unit.status2.limbs_grasp_count < 2 or
+        unit.status2.limbs_stand_count == 0
+end
+
+local function filter_matches(unit, filter)
+    if filter.military == 'only' and not is_in_military(unit) then return false end
+    if filter.military == 'exclude' and is_in_military(unit) then return false end
+    if filter.officials == 'only' and not is_elected_or_appointed_official(unit) then return false end
+    if filter.officials == 'exclude' and is_elected_or_appointed_official(unit) then return false end
+    if filter.nobles == 'only' and not is_nobility(unit) then return false end
+    if filter.nobles == 'exclude' and is_nobility(unit) then return false end
+    if filter.infant == 'only' and not has_infant(unit) then return false end
+    if filter.infant == 'exclude' and has_infant(unit) then return false end
+    if filter.unstable == 'only' and not is_unstable(unit) then return false end
+    if filter.unstable == 'exclude' and is_unstable(unit) then return false end
+    if filter.maimed == 'only' and not is_maimed(unit) then return false end
+    if filter.maimed == 'exclude' and is_maimed(unit) then return false end
+    return true
+end
+
+function do_filter(unit)
+    if annotation_instance then
+        annotation_instance.dirty = true
+    end
+    local self = filter_instance
+    local filter = {
+        military=self.subviews.military:getOptionValue(),
+        officials=self.subviews.officials:getOptionValue(),
+        nobles=self.subviews.nobles:getOptionValue(),
+        infant=self.subviews.infant:getOptionValue(),
+        unstable=self.subviews.unstable:getOptionValue(),
+        maimed=self.subviews.maimed:getOptionValue(),
+    }
+    return filter_matches(unit, filter)
+end
+
 OVERLAY_WIDGETS = {
     -- TODO: rewrite for 50.12
-    -- squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
+    squad_filter=SquadFilterOverlay,
     -- info=require('plugins.sort.info').InfoOverlay,
     -- workanimals=require('plugins.sort.info').WorkAnimalOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,

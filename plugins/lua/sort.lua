@@ -3,14 +3,10 @@ local _ENV = mkmodule('plugins.sort')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
-local sortoverlay = require('plugins.sort.sortoverlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local GLOBAL_KEY = 'sort'
-
-local CH_UP = string.char(30)
-local CH_DN = string.char(31)
 
 local function get_rating(val, baseline, range, highest, high, med, low)
     val = val - (baseline or 0)
@@ -21,11 +17,6 @@ local function get_rating(val, baseline, range, highest, high, med, low)
     if percentile < (high or 75) then return percentile, COLOR_YELLOW end
     if percentile < (highest or 90) then return percentile, COLOR_GREEN end
     return percentile, COLOR_LIGHTGREEN
-end
-
-local function sort_noop(a, b)
-    -- this function is used as a marker and never actually gets called
-    error('sort_noop should not be called')
 end
 
 local function get_name(unit)
@@ -41,17 +32,6 @@ local function sort_by_name_desc(unit_id_1, unit_id_2)
     local name1 = get_name(unit1)
     local name2 = get_name(unit2)
     return utils.compare_name(name1, name2)
-end
-
-local function sort_by_name_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
-    local name1 = get_name(unit1)
-    local name2 = get_name(unit2)
-    return utils.compare_name(name2, name1)
 end
 
 local active_units = df.global.world.units.active
@@ -606,9 +586,9 @@ local SORT_LIBRARY = {
     {label='melee effectiveness', widget='sort_any_melee', desc_fn=sort_by_any_melee_desc, asc_fn=sort_by_any_melee_asc, rating_fn=get_melee_skill_effectiveness_rating},
     {label='ranged effectiveness', widget='sort_any_ranged', desc_fn=sort_by_any_ranged_desc, asc_fn=sort_by_any_ranged_asc, rating_fn=get_ranged_skill_effectiveness_rating},
     {label='teacher skill', widget='sort_teacher', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
-    {label='tactics skill', widget='sort_tactics', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
-    {label='arrival order', widget='sort_arrival', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
     {label='stress level', widget='sort_stress', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
+    {label='arrival order', widget='sort_arrival', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
+    {label='tactics skill', widget='sort_tactics', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
     {label='need for training', widget='sort_need', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
     {label='pick (mining) skill', widget='sort_pick', desc_fn=sort_by_pick_desc, asc_fn=sort_by_pick_asc, rating_fn=curry(get_skill_rating, df.job_skill.MINING)},
     {label='axe skill', widget='sort_axe', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
@@ -620,7 +600,7 @@ local SORT_LIBRARY = {
     {label='melee potential', widget='sort_melee_combat_potential', desc_fn=sort_by_melee_combat_potential_desc, asc_fn=sort_by_melee_combat_potential_asc, rating_fn=get_melee_combat_potential_rating},
     {label='ranged potential', widget='sort_ranged_combat_potential', desc_fn=sort_by_ranged_combat_potential_desc, asc_fn=sort_by_ranged_combat_potential_asc, rating_fn=get_ranged_combat_potential_rating},
 }
-for i, v in ipairs(SORT_LIBRARY) do
+for _, v in ipairs(SORT_LIBRARY) do
     SORT_LIBRARY[v.widget] = v
 end
 

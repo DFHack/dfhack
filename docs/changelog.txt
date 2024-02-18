@@ -65,6 +65,7 @@ Template for new versions:
 - `autoclothing`: Fix enabled behavior
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: don't display popup for all announcement types
 - ``gui.View:getMouseFramePos``: function now detects the correct coordinates even when the widget is nested within other frames
+- `strangemood`: correctly recognize Stonecutter and Stone Carver as moodable skills, move the Mason's boosted mood chance to the Stone Carver, and select Fell/Macabre based on long-term stress
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss

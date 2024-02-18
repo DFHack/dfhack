@@ -98,6 +98,8 @@ df::job_skill getMoodSkill (df::unit *unit)
         case job_skill::BONECARVE:
         case job_skill::BOWYER:
         case job_skill::MECHANICS:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             if (skill->rating > level)
             {
                 skills.clear();
@@ -500,7 +502,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             case profession::CARPENTER:
             case profession::BOWYER:
             case profession::STONEWORKER:
-            case profession::MASON:
+            case profession::STONE_CARVER:
                 for (int j = 0; j < 5; j++)
                     tickets.push_back(i);
                 break;
@@ -549,9 +551,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (type == mood_type::None)
     {
         if (soul && (
-            (soul->personality.stress >= 500000) ||
-            (soul->personality.stress >= 250000 && !rng.df_trandom(2)) ||
-            (soul->personality.stress >= 100000 && !rng.df_trandom(10))
+            (soul->personality.longterm_stress >= 100000) ||
+            (soul->personality.longterm_stress >= 50000 && !rng.df_trandom(2)) ||
+            (soul->personality.longterm_stress >= 20000 && !rng.df_trandom(10))
             ))
         {
             switch (rng.df_trandom(2))
@@ -634,6 +636,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         {
         case job_skill::MINING:
         case job_skill::MASONRY:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             job->job_type = job_type::StrangeMoodMason;
             break;
         case job_skill::CARPENTRY:
@@ -753,6 +757,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
         case job_skill::MECHANICS:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             job->job_items.push_back(item = new df::job_item());
             item->item_type = item_type::BOULDER;
             item->quantity = base_item_count;
@@ -1043,6 +1049,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             avoid_type = item_type::BLOCKS;
             break;
         case job_skill::CARPENTRY:

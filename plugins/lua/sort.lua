@@ -63,7 +63,7 @@ local function get_most_recent_wave_oldest_active_idx(cache)
 end
 
 -- return green for most recent wave, red for the first wave, yellow for all others
--- rating is a three digit number that indicates the (potentially approximate) order
+-- rating is an up to three digit number that indicates the (approximate) order
 local function get_arrival_rating(unit)
     local cache = get_active_idx_cache()
     local unit_active_idx = cache[unit.id]

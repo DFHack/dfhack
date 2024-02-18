@@ -1779,6 +1779,16 @@ static int gui_getWidget(lua_State *L) {
     return 1;
 }
 
+static int gui_getWidgetChildren(lua_State *L) {
+    df::widget_container *container = Lua::CheckDFObject<df::widget_container>(L, 1);
+    std::vector<df::widget *> vec;
+    for (auto & contained : container->children) {
+        vec.emplace_back(contained.get());
+    }
+    Lua::PushVector(L, vec);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "makeAnnouncement", gui_makeAnnouncement },
     { "showAnnouncement", gui_showAnnouncement },
@@ -1793,6 +1803,7 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "getFocusStrings", gui_getFocusStrings },
     { "getCurFocus", gui_getCurFocus },
     { "getWidget", gui_getWidget },
+    { "getWidgetChildren", gui_getWidgetChildren },
     { NULL, NULL }
 };
 

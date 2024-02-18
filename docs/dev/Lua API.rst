@@ -1036,6 +1036,10 @@ Screens
   passing additional names or indices. For example:
   ``:lua ~dfhack.gui.getWidget(game.main_interface.info.labor, "Tabs", 0)``
 
+* ``dfhack.gui.getWidgetChildren(container)``
+
+  Returns all the DF widgets in the given widget container.
+
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

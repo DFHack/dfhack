@@ -846,7 +846,7 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
 }
 
 static int32_t get_noble_position_id(const df::historical_entity::T_positions &positions, const string &noble) {
-    string target_id = toUpper(noble);
+    string target_id = toUpper_cp437(noble);
     for (auto &position : positions.own) {
         if (position->code == target_id)
             return position->id;
@@ -902,7 +902,7 @@ df::unit *Units::getUnitByNobleRole(string noble) {
 
 bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
     for (auto &unit : world->units.active) {
-        if (isCitizen(unit, ignore_sanity) && isAlive(unit))
+        if (isCitizen(unit, ignore_sanity) && isAlive(unit) && isActive(unit))
             citizens.emplace_back(unit);
     }
     return true;
@@ -1079,11 +1079,18 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    // as of 0.44.11, identity names take precedence over associated histfig names
-    if (auto identity = getIdentity(unit))
-        return &identity->name;
+    auto hf = df::historical_figure::find(unit->hist_figure_id);
+    if (!hf)
+        return &unit->name;
 
-    return &unit->name;
+    auto identity = getFigureIdentity(hf);
+    if (identity)
+    {
+        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+    }
+
+    return &hf->name;
 }
 
 df::nemesis_record *Units::getNemesis(df::unit *unit)

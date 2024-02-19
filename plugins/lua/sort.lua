@@ -542,7 +542,7 @@ local function get_num_slots(screen_height)
     if not screen_height then
         _, screen_height = dfhack.screen.getWindowSize()
     end
-    return (screen_height - 20) // 3
+    return (screen_height - 17) // 3
 end
 
 local function annotate_visible_units(sort_id)
@@ -553,9 +553,9 @@ local function annotate_visible_units(sort_id)
     local scroll_rows = get_scroll_rows()
     local rows = dfhack.gui.getWidgetChildren(scroll_rows)
     local scroll_pos = get_scroll_pos(scroll_rows)
-    local max_idx = math.min(#rows, scroll_pos+scroll_rows.num_visible)
+    local max_idx = math.min(#rows, scroll_pos+scroll_rows.num_visible+1)
     for idx = scroll_pos+1, max_idx do
-        local annotation_idx = idx - scroll_pos - 1
+        local annotation_idx = idx - scroll_pos
         rating_annotations[annotation_idx] = nil
         local row = rows[idx]
         if rating_fn and df.widget_container:is_instance(row) then
@@ -753,7 +753,7 @@ function SquadAnnotationOverlay:init()
                 },
                 widgets.Label{
                     view_id='label',
-                    frame={t=5, l=0, r=0, b=0},
+                    frame={t=2, l=0, r=0, b=0},
                     auto_width=false,
                     auto_height=false,
                 },
@@ -970,7 +970,7 @@ function SquadAnnotationOverlay:onRenderFrame(dc, rect)
 end
 
 function SquadAnnotationOverlay:preUpdateLayout(parent_rect)
-    self.frame.h = get_num_slots(parent_rect.height) * 3 + 7
+    self.frame.h = get_num_slots(parent_rect.height) * 3 + 4
 end
 
 -- ----------------------

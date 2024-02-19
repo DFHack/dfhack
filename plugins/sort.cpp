@@ -183,6 +183,9 @@ static void sort_set_filter_fn(color_ostream &out) {
         DEBUG(log).print("adding our filter function\n");
         auto filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
         filter_vec->emplace_back(do_filter);
+        DEBUG(log).print("clearing partitions\n"); // removes sorting other squads to end
+        auto partitions_vec = reinterpret_cast<filter_vec_type *>(&unitlist->partitions);
+        partitions_vec->clear();
         unitlist->sort_flags.bits.NEEDS_RESORTED = true;
     }
 }

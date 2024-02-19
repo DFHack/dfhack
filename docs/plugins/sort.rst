@@ -21,10 +21,7 @@ capabilities to the squad assignment list. The currently selected annotation is
 shown in the panel to the left of the unit list. Clicking on the arrow icon
 above the annotations will sort the unit list by that annotation value, or, if
 the list is already sorted by the annotation value, will switch between
-descending and ascending sort. Remember, vanilla forces units in other squads
-to appear at the end of the list, so the bottom of the list will be slightly
-out of order unless you have units from other squads filtered out (more
-information on the filters below).
+descending and ascending sort.
 
 Annotations and sort orders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -59,6 +59,7 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
 - ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
 - ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
 - `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
@@ -70,6 +71,7 @@ Template for new versions:
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
+- `buildingplan`: use closest matching item rather than newest matching item
 
 ## Documentation
 

@@ -341,6 +341,11 @@ namespace DFHack
                 if (cur_direction == tileDirection(tt))
                     value |= 4;
 
+                // If the material is a plant, consider soil an acceptable alternative
+                if (cur_material == tiletype_material::PLANT && tileMaterial(tt) == tiletype_material::SOIL) {
+                    value |= 2;
+                }
+
                 // Variant is low-value match
                 if (cur_variant == tileVariant(tt))
                     value |= 1;

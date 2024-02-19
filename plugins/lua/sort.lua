@@ -580,8 +580,9 @@ SortButton.ATTRS{
     on_click=DEFAULT_NIL,
 }
 
+local to_pen = dfhack.pen.parse
+
 local function make_sort_pens(ascending, selected)
-    local to_pen = dfhack.pen.parse
     local init = df.global.init
     local name = ('texpos_sort_%s_%s'):format(
         ascending and 'ascending' or 'descending',
@@ -729,6 +730,9 @@ local function make_options(label, view_id)
     }
 end
 
+local REGULAR_PEN = to_pen{fg=COLOR_GREEN}
+local HOVER_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREEN}
+
 function SquadAnnotationOverlay:init()
     annotation_instance = self
     self.dirty = true
@@ -738,7 +742,10 @@ function SquadAnnotationOverlay:init()
         table.insert(sort_options, {
             label=opt.label,
             value=opt.widget,
-            pen=COLOR_GREEN,
+            pen=function()
+                return self.subviews.annotation_panel:getMouseFramePos() and
+                    HOVER_PEN or REGULAR_PEN
+            end,
         })
     end
 

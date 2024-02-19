@@ -764,12 +764,12 @@ function SquadAnnotationOverlay:init()
         },
         widgets.BannerPanel{
             view_id='banner_panel',
-            frame={t=1, r=0, w=32, h=1},
+            frame={t=1, r=0, w=33, h=1},
             frame_background=gui.CLEAR_PEN,
         },
         widgets.CycleHotkeyLabel{
             view_id='sort',
-            frame={t=1, r=1, w=30},
+            frame={t=1, r=1, w=31},
             label='Show:',
             key='CUSTOM_SHIFT_S',
             options=sort_options,

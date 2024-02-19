@@ -484,6 +484,8 @@ local sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING)
 local sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING)
 local sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS)
 local sort_by_tactics_asc=make_sort_by_skill_asc(df.job_skill.MILITARY_TACTICS)
+local sort_by_ambusher_desc=make_sort_by_skill_desc(df.job_skill.SNEAK)
+local sort_by_ambusher_asc=make_sort_by_skill_asc(df.job_skill.SNEAK)
 local sort_by_pick_desc=make_sort_by_skill_desc(df.job_skill.MINING)
 local sort_by_pick_asc=make_sort_by_skill_asc(df.job_skill.MINING)
 local sort_by_axe_desc=make_sort_by_skill_desc(df.job_skill.AXE)
@@ -506,6 +508,7 @@ local SORT_LIBRARY = {
     {label='stress level', widget='sort_stress', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
     {label='arrival order', widget='sort_arrival', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
     {label='tactics skill', widget='sort_tactics', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
+    {label='ambusher skill', widget='sort_ambusher', desc_fn=sort_by_ambusher_desc, asc_fn=sort_by_ambusher_asc, rating_fn=curry(get_skill_rating, df.job_skill.SNEAK)},
     {label='need for training', widget='sort_need', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
     {label='pick (mining) skill', widget='sort_pick', desc_fn=sort_by_pick_desc, asc_fn=sort_by_pick_asc, rating_fn=curry(get_skill_rating, df.job_skill.MINING)},
     {label='axe skill', widget='sort_axe', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
@@ -833,9 +836,16 @@ function SquadAnnotationOverlay:init()
                             on_change=self:callback('sync_widgets', 'sort_tactics'),
                         },
                         widgets.CycleHotkeyLabel{
+                            view_id='sort_ambusher',
+                            frame={t=5, l=9, w=8},
+                            options=make_options('ambusher', 'sort_ambusher'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_ambusher'),
+                        },
+                        widgets.CycleHotkeyLabel{
                             view_id='sort_need',
-                            frame={t=5, r=0, w=17},
-                            options=make_options('need for training', 'sort_need'),
+                            frame={t=5, r=0, w=11},
+                            options=make_options('train. need', 'sort_need'),
                             option_gap=0,
                             on_change=self:callback('sync_widgets', 'sort_need'),
                         },

@@ -230,7 +230,7 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
 
 
 static int distance(df::coord pos1, df::coord pos2) {
-    return std::max(abs(pos1.x - pos2.x), abs(pos1.y - pos2.y) + abs(pos1.z - pos2.z));
+    return std::max(abs(pos1.x - pos2.x), abs(pos1.y - pos2.y)) + abs(pos1.z - pos2.z);
 }
 
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
@@ -285,7 +285,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                                        pb.heat_safety,
                                        pb.item_filters[rev_filter_idx],
                                        pb.specials))
-                        matching.emplace_back(item->pos,item);
+                        matching.emplace_back(Items::getPosition(item),item);
 
                 num_matching = matching.size();
                 first_task = false;
@@ -324,7 +324,8 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 // items so if buildingplan is turned off, the building will
                 // be completed with the correct number of items.
                 --jitems[filter_idx]->quantity;
-                // invaldate attached item
+                // null the item* component in vector of matching items
+                // ensures we don't try to attach this item to another job
                 closest->second = nullptr;
                 --num_matching;
                 // try to finalize building

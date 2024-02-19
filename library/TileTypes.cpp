@@ -342,7 +342,7 @@ namespace DFHack
                     value |= 4;
 
                 // If the material is a plant, consider soil an acceptable alternative
-                if (cur_material == tiletype_material::PLANT and tileMaterial(tt) == tiletype_material::SOIL) {
+                if (cur_material == tiletype_material::PLANT && tileMaterial(tt) == tiletype_material::SOIL) {
                     value |= 2;
                 }
 

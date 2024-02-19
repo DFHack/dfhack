@@ -57,6 +57,7 @@ Template for new versions:
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
 
 ## Fixes
+- `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
 
 ## Misc Improvements
 - `regrass`: also regrow depleted cavern moss

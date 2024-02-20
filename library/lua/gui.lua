@@ -509,6 +509,7 @@ function View:getMousePos(view_rect)
 end
 
 function View:getMouseFramePos()
+    if not self.frame_rect or not self.frame_parent_rect then return end
     return self:getMousePos(ViewRect{
         rect=mkdims_wh(
             self.frame_rect.x1+self.frame_parent_rect.x1,

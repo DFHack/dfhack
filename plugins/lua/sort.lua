@@ -1141,16 +1141,16 @@ function SquadFilterOverlay:init()
             widgets.Label{
                 view_id='shifter',
                 frame={r=0, w=1},
-                text=get_shifter_text('>'),
+                text=get_shifter_text(string.char(16)),
                 on_click=function()
                     if self.subviews.right_panel.visible then
                         self.subviews.left_panel.visible = true
                         self.subviews.right_panel.visible = false
-                        self.subviews.shifter:setText(get_shifter_text('>'))
+                        self.subviews.shifter:setText(get_shifter_text(string.char(16)))
                     else
                         self.subviews.left_panel.visible = false
                         self.subviews.right_panel.visible = true
-                        self.subviews.shifter:setText(get_shifter_text('<'))
+                        self.subviews.shifter:setText(get_shifter_text(string.char(17)))
                     end
                     self:updateLayout()
                 end,
@@ -1191,7 +1191,7 @@ function SquadFilterOverlay:preUpdateLayout(parent_rect)
     elseif parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
         self.frame.w = NARROW_WIDTH
         self.subviews.shifter.visible = true
-        self.subviews.shifter:setText(get_shifter_text('>'))
+        self.subviews.shifter:setText(get_shifter_text(string.char(16)))
         self.subviews.divider.visible = false
         self.subviews.left_panel.visible = true
         self.subviews.right_panel.visible = false

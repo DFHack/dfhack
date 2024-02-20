@@ -1177,24 +1177,25 @@ function SquadFilterOverlay:init()
 end
 
 function SquadFilterOverlay:render(dc)
-    sort_set_filter_fn()
-    if self.frame_parent_rect.width >= 153 and self.frame.w == NARROW_WIDTH then
+    sort_set_squad_filter_fn()
+    SquadFilterOverlay.super.render(self, dc)
+end
+
+function SquadFilterOverlay:preUpdateLayout(parent_rect)
+    if parent_rect.width >= 153 and self.frame.w == NARROW_WIDTH then
         self.frame.w = WIDE_WIDTH
         self.subviews.shifter.visible = false
         self.subviews.divider.visible = true
         self.subviews.left_panel.visible = true
         self.subviews.right_panel.visible = true
-        self:updateLayout()
-    elseif self.frame_parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
+    elseif parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
         self.frame.w = NARROW_WIDTH
         self.subviews.shifter.visible = true
         self.subviews.shifter:setText(get_shifter_text('>'))
         self.subviews.divider.visible = false
         self.subviews.left_panel.visible = true
         self.subviews.right_panel.visible = false
-        self:updateLayout()
     end
-    SquadFilterOverlay.super.render(self, dc)
 end
 
 local function is_in_military(unit)
@@ -1266,7 +1267,7 @@ local function filter_matches(unit, filter)
     return true
 end
 
-function do_filter(unit)
+function do_squad_filter(unit)
     if annotation_instance then
         annotation_instance.dirty = true
     end
@@ -1289,7 +1290,8 @@ OVERLAY_WIDGETS = {
     info=require('plugins.sort.info').InfoOverlay,
     workanimals=require('plugins.sort.info').WorkAnimalOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,
-    -- interrogation=require('plugins.sort.info').InterrogationOverlay,
+    interrogation=require('plugins.sort.info').InterrogationOverlay,
+    conviction=require('plugins.sort.info').ConvictionOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     -- unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
     -- worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,

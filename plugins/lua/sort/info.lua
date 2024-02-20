@@ -506,95 +506,126 @@ function WorkAnimalOverlay:onRenderFrame(dc, rect)
 end
 
 -- ----------------------
--- InterrogationOverlay
+-- JusticeOverlay
 --
 
-InterrogationOverlay = defclass(InterrogationOverlay, sortoverlay.SortOverlay)
-InterrogationOverlay.ATTRS{
-    desc='Adds search and filter capabilities to the justice screens.',
-    default_pos={x=47, y=10},
-    viewscreens='dwarfmode/Info/JUSTICE',
-    frame={w=27, h=9},
+local function get_unit_list(which)
+    return dfhack.gui.getWidget(df.global.game.main_interface.info.justice,
+        'Tabs', 'Open cases', 'Right panel', which)
+end
+
+local function poke_list(which)
+    get_unit_list(which).sort_flags.NEEDS_RESORTED = true
+end
+
+JusticeOverlay = defclass(JusticeOverlay, overlay.OverlayWidget)
+JusticeOverlay.ATTRS{
+    which=DEFAULT_NIL,
 }
 
-function InterrogationOverlay:init()
-    self:addviews{
-        widgets.Panel{
-            view_id='panel',
-            frame={l=0, t=4, h=5, r=0},
-            frame_background=gui.CLEAR_PEN,
-            frame_style=gui.FRAME_MEDIUM,
-            visible=self:callback('get_key'),
-            subviews={
-                widgets.EditField{
-                    view_id='search',
-                    frame={l=0, t=0, r=0},
-                    label_text="Search: ",
-                    key='CUSTOM_ALT_S',
-                    on_change=function(text) self:do_search(text) end,
+function JusticeOverlay:init()
+    local panel = widgets.Panel{
+        frame={t=0, b=0, r=0, w=30},
+        frame_background=gui.CLEAR_PEN,
+        frame_style=gui.FRAME_MEDIUM,
+        autoarrange_subviews=true,
+        subviews={
+            widgets.CycleHotkeyLabel{
+                view_id='subset',
+                frame={l=0},
+                key='CUSTOM_SHIFT_F',
+                label='Show:',
+                options={
+                    {label='All', value='all', pen=COLOR_GREEN},
+                    {label='Risky visitors', value='risky', pen=COLOR_RED},
+                    {label='Other visitors', value='visitors', pen=COLOR_LIGHTRED},
+                    {label='Residents', value='residents', pen=COLOR_YELLOW},
+                    {label='Citizens', value='citizens', pen=COLOR_CYAN},
+                    {label='Animals', value='animals', pen=COLOR_BLUE},
+                    {label='Deceased or missing', value='deceased', pen=COLOR_LIGHTMAGENTA},
+                    {label='Others', value='others', pen=COLOR_GRAY},
                 },
-                widgets.ToggleHotkeyLabel{
-                    view_id='include_interviewed',
-                    frame={l=0, t=1, w=23},
-                    key='CUSTOM_SHIFT_I',
-                    label='Interviewed:',
-                    options={
-                        {label='Include', value=true, pen=COLOR_GREEN},
-                        {label='Exclude', value=false, pen=COLOR_RED},
-                    },
-                    visible=function() return justice.interrogating end,
-                    on_change=function() self:do_search(self.subviews.search.text, true) end,
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='subset',
-                    frame={l=0, t=2, w=28},
-                    key='CUSTOM_SHIFT_F',
-                    label='Show:',
-                    options={
-                        {label='All', value='all', pen=COLOR_GREEN},
-                        {label='Risky visitors', value='risky', pen=COLOR_RED},
-                        {label='Other visitors', value='visitors', pen=COLOR_LIGHTRED},
-                        {label='Residents', value='residents', pen=COLOR_YELLOW},
-                        {label='Citizens', value='citizens', pen=COLOR_CYAN},
-                        {label='Animals', value='animals', pen=COLOR_BLUE},
-                        {label='Deceased or missing', value='deceased', pen=COLOR_MAGENTA},
-                        {label='Others', value='others', pen=COLOR_GRAY},
-                    },
-                    on_change=function() self:do_search(self.subviews.search.text, true) end,
-                },
+                on_change=curry(poke_list, self.which),
             },
         },
     }
+    self:add_widgets(panel)
 
-    self:register_handler('INTERROGATING', justice.interrogation_list,
-        curry(sortoverlay.flags_vector_search,
-            {
-                get_search_key_fn=sortoverlay.get_unit_search_key,
-                get_elem_id_fn=function(unit) return unit.id end,
-                matches_filters_fn=self:callback('matches_filters'),
+    self:addviews{panel}
+end
+
+function JusticeOverlay:add_widgets(panel)
+end
+
+function JusticeOverlay:render(dc)
+    require('plugins.sort').sort_set_justice_filter_fn(get_unit_list(self.which))
+    JusticeOverlay.super.render(self, dc)
+end
+
+function JusticeOverlay:preUpdateLayout(parent_rect)
+    self.frame.w = (parent_rect.width+1) // 2 + 60
+end
+
+-- ----------------------
+-- InterrogationOverlay
+--
+
+interrogate_instance = nil
+
+InterrogationOverlay = defclass(InterrogationOverlay, JusticeOverlay)
+InterrogationOverlay.ATTRS{
+    desc='Adds filter capabilities to the interrogation screen.',
+    default_pos={x=1, y=-5},
+    default_enabled=true,
+    version=2,
+    viewscreens='dwarfmode/Info/JUSTICE/Interrogating',
+    frame={w=30, h=4},
+    which='Interrogate'
+}
+
+function InterrogationOverlay:init()
+    interrogate_instance = self
+end
+
+function InterrogationOverlay:add_widgets(panel)
+    panel:addviews{
+        widgets.ToggleHotkeyLabel{
+            view_id='include_interviewed',
+            frame={l=0},
+            key='CUSTOM_SHIFT_I',
+            label='Interviewed:',
+            options={
+                {label='Include', value=true, pen=COLOR_GREEN},
+                {label='Exclude', value=false, pen=COLOR_LIGHTRED},
             },
-        justice.interrogation_list_flag))
-    self:register_handler('CONVICTING', justice.conviction_list,
-        curry(sortoverlay.single_vector_search,
-            {
-                get_search_key_fn=sortoverlay.get_unit_search_key,
-                matches_filters_fn=self:callback('matches_filters'),
-            }))
+            on_change=curry(poke_list, self.which),
+        },
+    }
 end
 
-function InterrogationOverlay:reset()
-    InterrogationOverlay.super.reset(self)
-    self.subviews.include_interviewed:setOption(true, false)
-    self.subviews.subset:setOption('all')
+-- ----------------------
+-- ConvictionOverlay
+--
+
+convict_instance = nil
+
+ConvictionOverlay = defclass(ConvictionOverlay, JusticeOverlay)
+ConvictionOverlay.ATTRS{
+    desc='Adds filter capabilities to the conviction screen.',
+    default_pos={x=1, y=-6},
+    default_enabled=true,
+    viewscreens='dwarfmode/Info/JUSTICE/Convicting',
+    frame={w=30, h=3},
+    which='Convict'
+}
+
+function ConvictionOverlay:init()
+    convict_instance = self
 end
 
-function InterrogationOverlay:get_key()
-    if justice.interrogating then
-        return 'INTERROGATING'
-    elseif justice.convicting then
-        return 'CONVICTING'
-    end
-end
+-- ----------------------
+-- filtering logic
+--
 
 local RISKY_PROFESSIONS = utils.invert{
     df.profession.THIEF,
@@ -610,12 +641,7 @@ local function is_risky(unit)
     return not dfhack.units.isAlive(unit)  -- detect intelligent undead
 end
 
-function InterrogationOverlay:matches_filters(unit, flag)
-    if justice.interrogating then
-        local include_interviewed = self.subviews.include_interviewed:getOptionValue()
-        if not include_interviewed and flag == 2 then return false end
-    end
-    local subset = self.subviews.subset:getOptionValue()
+local function filter_matches(unit, subset)
     if subset == 'all' then
         return true
     elseif dfhack.units.isDead(unit) or not dfhack.units.isActive(unit) then
@@ -637,27 +663,19 @@ function InterrogationOverlay:matches_filters(unit, flag)
     return subset == 'residents'
 end
 
-function InterrogationOverlay:render(dc)
-    local sw = dfhack.screen.getWindowSize()
-    local info_panel_border = 31 -- from edges of panel to screen edges
-    local info_panel_width = sw - info_panel_border
-    local info_panel_center = info_panel_width // 2
-    local panel_x_offset = (info_panel_center + 5) - self.frame_rect.x1
-    local frame_w = math.min(panel_x_offset + 37, info_panel_width - 56)
-    local panel_l = panel_x_offset
-    local panel_t = is_tabs_in_two_rows() and 4 or 0
-
-    if self.frame.w ~= frame_w or
-        self.subviews.panel.frame.l ~= panel_l or
-        self.subviews.panel.frame.t ~= panel_t
-    then
-        self.frame.w = frame_w
-        self.subviews.panel.frame.l = panel_l
-        self.subviews.panel.frame.t = panel_t
-        self:updateLayout()
+function do_justice_filter(unit)
+    local self
+    if dfhack.gui.matchFocusString('dwarfmode/Info/JUSTICE/Interrogating') then
+        self = interrogate_instance
+        if not self.subviews.include_interviewed:getOptionValue() and
+            require('plugins.sort').sort_is_interviewed(unit)
+        then
+            return false
+        end
+    else
+        self = convict_instance
     end
-
-    InterrogationOverlay.super.render(self, dc)
+    return filter_matches(unit, self.subviews.subset:getOptionValue())
 end
 
 return _ENV

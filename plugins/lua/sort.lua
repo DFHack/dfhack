@@ -998,28 +998,42 @@ local function poke_list()
     get_unit_selector().sort_flags.NEEDS_RESORTED = true
 end
 
+local function get_shifter_text(ch)
+    return {
+        ' ', NEWLINE,
+        ch, NEWLINE,
+        ch, NEWLINE,
+        ' ', NEWLINE,
+    }
+end
+
 filter_instance = nil
+
+local NARROW_WIDTH = 28
+local WIDE_WIDTH = 56
 
 SquadFilterOverlay = defclass(SquadFilterOverlay, overlay.OverlayWidget)
 SquadFilterOverlay.ATTRS{
     desc='Adds filter capabilities to the squad assignment panel.',
-    default_pos={x=36, y=-5},
+    default_pos={x=64, y=-5},
     default_enabled=true,
     viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=57, h=6},
+    frame={w=NARROW_WIDTH, h=6},
 }
 
 function SquadFilterOverlay:init()
     filter_instance = self
 
-    local main_panel = widgets.BannerPanel{
-        frame={t=0, b=0, r=0, w=29},
+    local left_panel = widgets.Panel{
+        view_id='left_panel',
+        frame={t=1, b=0, l=0, w=NARROW_WIDTH-4},
+        visible=true,
         subviews={
             widgets.CycleHotkeyLabel{
                 view_id='military',
-                frame={t=0, l=1},
+                frame={t=0, l=0},
                 key='CUSTOM_SHIFT_Q',
-                label='   Other squads:',
+                label='Other squads:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1030,9 +1044,9 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='officials',
-                frame={t=1, l=1},
+                frame={t=1, l=0},
                 key='CUSTOM_SHIFT_O',
-                label='      Officials:',
+                label='   Officials:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1043,9 +1057,9 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='nobles',
-                frame={t=2, l=1},
+                frame={t=2, l=0},
                 key='CUSTOM_SHIFT_N',
-                label='       Nobility:',
+                label='    Nobility:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1054,11 +1068,19 @@ function SquadFilterOverlay:init()
                 initial_option='include',
                 on_change=poke_list,
             },
+        },
+    }
+
+    local right_panel = widgets.Panel{
+        view_id='right_panel',
+        frame={t=1, b=0, r=2, w=NARROW_WIDTH-4},
+        visible=false,
+        subviews={
             widgets.CycleHotkeyLabel{
                 view_id='infant',
-                frame={t=3, l=1},
+                frame={t=0, l=0},
                 key='CUSTOM_SHIFT_M',
-                label='Infant carriers:',
+                label='With infants:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1069,9 +1091,9 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='unstable',
-                frame={t=4, l=1},
+                frame={t=1, l=0},
                 key='CUSTOM_SHIFT_D',
-                label='   Hates combat:',
+                label='Hates combat:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1082,9 +1104,9 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='maimed',
-                frame={t=5, l=1},
+                frame={t=2, l=0},
                 key='CUSTOM_SHIFT_I',
-                label='         Maimed:',
+                label='      Maimed:',
                 options={
                     {label='Include', value='include', pen=COLOR_GREEN},
                     {label='Only', value='only', pen=COLOR_YELLOW},
@@ -1096,37 +1118,82 @@ function SquadFilterOverlay:init()
         },
     }
 
-    self:addviews{
-        widgets.BannerPanel{
-            frame={t=1, l=0, w=27, h=1},
-            subviews={
-                widgets.HelpButton{
-                    frame={t=0, l=1},
-                    command='sort',
-                },
-                widgets.HotkeyLabel{
-                    frame={t=0, l=5},
-                    key='CUSTOM_SHIFT_A',
-                    label='Toggle all filters',
-                    on_activate=function()
-                        local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
-                        self.subviews.military:setOption(target)
-                        self.subviews.officials:setOption(target)
-                        self.subviews.nobles:setOption(target)
-                        self.subviews.infant:setOption(target)
-                        self.subviews.unstable:setOption(target)
-                        self.subviews.maimed:setOption(target)
-                        poke_list()
-                    end,
-                },
+    local main_panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        subviews={
+            widgets.HotkeyLabel{
+                frame={t=0, w=NARROW_WIDTH-3},
+                key='CUSTOM_SHIFT_A',
+                label='Toggle all filters',
+                on_activate=function()
+                    local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
+                    self.subviews.military:setOption(target)
+                    self.subviews.officials:setOption(target)
+                    self.subviews.nobles:setOption(target)
+                    self.subviews.infant:setOption(target)
+                    self.subviews.unstable:setOption(target)
+                    self.subviews.maimed:setOption(target)
+                    poke_list()
+                end,
             },
+            left_panel,
+            widgets.Label{
+                view_id='shifter',
+                frame={r=0, w=1},
+                text=get_shifter_text('>'),
+                on_click=function()
+                    if self.subviews.right_panel.visible then
+                        self.subviews.left_panel.visible = true
+                        self.subviews.right_panel.visible = false
+                        self.subviews.shifter:setText(get_shifter_text('>'))
+                    else
+                        self.subviews.left_panel.visible = false
+                        self.subviews.right_panel.visible = true
+                        self.subviews.shifter:setText(get_shifter_text('<'))
+                    end
+                    self:updateLayout()
+                end,
+                visible=true,
+            },
+            right_panel,
         },
+    }
+
+    self:addviews{
         main_panel,
+        widgets.Divider{
+            view_id='divider',
+            frame={l=NARROW_WIDTH-1, w=1, t=2},
+            frame_style=gui.FRAME_MEDIUM,
+            frame_style_t=false,
+            visible=false,
+        },
+        widgets.HelpButton{
+            frame={t=0, r=1},
+            command='sort',
+        },
     }
 end
 
 function SquadFilterOverlay:render(dc)
     sort_set_filter_fn()
+    if self.frame_parent_rect.width >= 153 and self.frame.w == NARROW_WIDTH then
+        self.frame.w = WIDE_WIDTH
+        self.subviews.shifter.visible = false
+        self.subviews.divider.visible = true
+        self.subviews.left_panel.visible = true
+        self.subviews.right_panel.visible = true
+        self:updateLayout()
+    elseif self.frame_parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
+        self.frame.w = NARROW_WIDTH
+        self.subviews.shifter.visible = true
+        self.subviews.shifter:setText(get_shifter_text('>'))
+        self.subviews.divider.visible = false
+        self.subviews.left_panel.visible = true
+        self.subviews.right_panel.visible = false
+        self:updateLayout()
+    end
     SquadFilterOverlay.super.render(self, dc)
 end
 

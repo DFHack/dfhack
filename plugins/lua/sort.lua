@@ -1284,7 +1284,6 @@ function do_squad_filter(unit)
 end
 
 OVERLAY_WIDGETS = {
-    -- TODO: rewrite for 50.12
     squad_annotation=SquadAnnotationOverlay,
     squad_filter=SquadFilterOverlay,
     info=require('plugins.sort.info').InfoOverlay,
@@ -1293,8 +1292,7 @@ OVERLAY_WIDGETS = {
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     conviction=require('plugins.sort.info').ConvictionOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
-    -- unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
-    -- worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
+    -- TODO: maybe rewrite for 50.12
     -- burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,
     slab=require('plugins.sort.slab').SlabOverlay,
     world=require('plugins.sort.world').WorldOverlay,

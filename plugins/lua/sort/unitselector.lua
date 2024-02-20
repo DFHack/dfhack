@@ -93,18 +93,6 @@ function UnitSelectorOverlay:onInput(keys)
 end
 
 -- -----------------------
--- WorkerAssignmentOverlay
---
-
-WorkerAssignmentOverlay = defclass(WorkerAssignmentOverlay, UnitSelectorOverlay)
-WorkerAssignmentOverlay.ATTRS{
-    default_pos={x=6, y=6},
-    viewscreens='dwarfmode/UnitSelector',
-    frame={w=31, h=1},
-    handled_screens={WORKER_ASSIGNMENT='selected'},
-}
-
--- -----------------------
 -- BurrowAssignmentOverlay
 --
 

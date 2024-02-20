@@ -307,7 +307,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             } else if (tab->name == "Pets/Livestock") {
                 if (Gui::getWidget(tab, "Overall training"))
                     newFocusString += "/OverallTraining";
-                else if (Gui::getWidget(tab, "Adding trainer"))
+                else if (Gui::getWidget(tab, "Trainer"))
                     newFocusString += "/AddingTrainer";
                 else if (Gui::getWidget(tab, "Hunting assignment"))
                     newFocusString += "/AssignWorkAnimal";

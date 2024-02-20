@@ -1286,8 +1286,8 @@ OVERLAY_WIDGETS = {
     -- TODO: rewrite for 50.12
     squad_annotation=SquadAnnotationOverlay,
     squad_filter=SquadFilterOverlay,
-    -- info=require('plugins.sort.info').InfoOverlay,
-    -- workanimals=require('plugins.sort.info').WorkAnimalOverlay,
+    info=require('plugins.sort.info').InfoOverlay,
+    workanimals=require('plugins.sort.info').WorkAnimalOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,
     -- interrogation=require('plugins.sort.info').InterrogationOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,

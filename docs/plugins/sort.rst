@@ -108,7 +108,7 @@ The following filters are provided:
 - Officials: Elected and appointed officials, like you mayor, priests, tavern
   keepers, etc.
 - Nobility: Your monarch, barons, counts, etc.
-- Infant carriers: Mothers with infants (you may not want mothers using their
+- With infants: Mothers with infants (you may not want mothers using their
   babies as shields)
 - Hates combat: Units that have facets and values that indicate that they will
   react poorly to the stresses of battle

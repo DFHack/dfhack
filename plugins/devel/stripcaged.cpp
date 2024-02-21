@@ -27,6 +27,9 @@ using namespace std;
 #include "df/unit_inventory_item.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/general_ref.h"
+#include "df/item.h"
+#include "df/unit.h"
 
 using std::vector;
 using std::string;

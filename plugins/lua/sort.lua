@@ -1012,6 +1012,9 @@ filter_instance = nil
 local NARROW_WIDTH = 28
 local WIDE_WIDTH = 56
 
+local TO_THE_RIGHT = string.char(16)
+local TO_THE_LEFT = string.char(17)
+
 SquadFilterOverlay = defclass(SquadFilterOverlay, overlay.OverlayWidget)
 SquadFilterOverlay.ATTRS{
     desc='Adds filter capabilities to the squad assignment panel.',
@@ -1141,16 +1144,16 @@ function SquadFilterOverlay:init()
             widgets.Label{
                 view_id='shifter',
                 frame={r=0, w=1},
-                text=get_shifter_text(string.char(16)),
+                text=get_shifter_text(TO_THE_RIGHT),
                 on_click=function()
                     if self.subviews.right_panel.visible then
                         self.subviews.left_panel.visible = true
                         self.subviews.right_panel.visible = false
-                        self.subviews.shifter:setText(get_shifter_text(string.char(16)))
+                        self.subviews.shifter:setText(get_shifter_text(TO_THE_RIGHT))
                     else
                         self.subviews.left_panel.visible = false
                         self.subviews.right_panel.visible = true
-                        self.subviews.shifter:setText(get_shifter_text(string.char(17)))
+                        self.subviews.shifter:setText(get_shifter_text(TO_THE_LEFT))
                     end
                     self:updateLayout()
                 end,
@@ -1191,7 +1194,7 @@ function SquadFilterOverlay:preUpdateLayout(parent_rect)
     elseif parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
         self.frame.w = NARROW_WIDTH
         self.subviews.shifter.visible = true
-        self.subviews.shifter:setText(get_shifter_text(string.char(16)))
+        self.subviews.shifter:setText(get_shifter_text(TO_THE_RIGHT))
         self.subviews.divider.visible = false
         self.subviews.left_panel.visible = true
         self.subviews.right_panel.visible = false

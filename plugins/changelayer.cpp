@@ -13,7 +13,7 @@
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 
-// DF data structure definition headers
+#include "df/inorganic_raw.h"
 #include "df/region_map_entry.h"
 #include "df/world.h"
 #include "df/world_data.h"

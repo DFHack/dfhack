@@ -24,11 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <cstring>
-#include <string>
-#include <vector>
-#include <map>
-
 #include "MemAccess.h"
 #include "Core.h"
 #include "Error.h"
@@ -40,6 +35,9 @@ distribution.
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 #include "md5wrapper.h"
+#include "LuaWrapper.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
 
 #include "modules/Buildings.h"
 #include "modules/Burrows.h"
@@ -61,23 +59,24 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "LuaWrapper.h"
-#include "LuaTools.h"
-
-#include "MiscUtils.h"
-
 #include "df/activity_entry.h"
 #include "df/activity_event.h"
+#include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
 #include "df/building.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
+#include "df/building_tradedepotst.h"
 #include "df/burrow.h"
+#include "df/caravan_state.h"
+#include "df/construction.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/general_ref.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/historical_figure.h"
 #include "df/identity.h"
@@ -88,6 +87,7 @@ distribution.
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/material.h"
+#include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
@@ -96,6 +96,7 @@ distribution.
 #include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
 #include "df/vermin.h"
@@ -104,6 +105,11 @@ distribution.
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+
+#include <cstring>
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;

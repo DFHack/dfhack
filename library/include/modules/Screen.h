@@ -23,27 +23,25 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
-
-#include <string>
-#include <set>
-#include <memory>
-
 #include "DataDefs.h"
-#include "df/graphic.h"
-#include "df/viewscreen.h"
-#include "df/building_civzonest.h"
-#include "df/building_stockpilest.h"
-#include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
 
+#include "df/viewscreen.h"
+
+#include <set>
+#include <memory>
+
 namespace df
 {
+    struct building_civzonest;
+    struct building_stockpilest;
     struct job;
     struct item;
     struct unit;

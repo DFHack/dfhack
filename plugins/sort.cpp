@@ -8,6 +8,7 @@
 #include "df/gamest.h"
 #include "df/unit.h"
 #include "df/widget_unit_list.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;

@@ -2,24 +2,27 @@
  * Confiscates and dumps garbage owned by dwarfs.
  */
 
-#include <sstream>
-#include <climits>
-#include <vector>
-#include <set>
-using namespace std;
-
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include <vector>
-#include <string>
+#include "DataDefs.h"
+
 #include "modules/Items.h"
 #include "modules/Units.h"
 #include "modules/Translation.h"
-#include "DataDefs.h"
+
+#include "df/item.h"
+#include "df/unit.h"
 #include "df/world.h"
 
+#include <sstream>
+#include <climits>
+#include <vector>
+#include <set>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 

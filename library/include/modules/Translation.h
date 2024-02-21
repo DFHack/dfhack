@@ -33,11 +33,12 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
-
 #include "DataDefs.h"
-#include "df/language_word.h"
-#include "df/language_translation.h"
-#include "df/language_name.h"
+
+namespace df {
+    struct language_name;
+    struct language_translation;
+}
 
 namespace DFHack
 {

@@ -8,7 +8,9 @@
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 
+#include "df/building_actual.h"
 #include "df/building_design.h"
+#include "df/general_ref.h"
 #include "df/item.h"
 #include "df/item_slabst.h"
 #include "df/job.h"

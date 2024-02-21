@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "VTableInterpose.h"
+
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
@@ -224,6 +225,15 @@ static int32_t nextItem;
 //building
 static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
+
+namespace std {
+    template <>
+    struct hash<df::construction> {
+        std::size_t operator()(const df::construction& construct) const {
+            return construct();
+        }
+    };
+}
 
 //construction
 static unordered_set<df::construction> constructions;

@@ -6,6 +6,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/unit.h"
 #include "df/unit_relationship_type.h"
 
 using std::string;

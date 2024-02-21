@@ -1,5 +1,6 @@
 #include "modules/Materials.h"
 
+#include "df/inorganic_raw.h"
 #include "df/item_armorst.h"
 #include "df/item_constructed.h"
 #include "df/item_glovesst.h"

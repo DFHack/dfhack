@@ -25,6 +25,7 @@
 #include "df/itemdef_helmst.h"
 #include "df/itemdef_pantsst.h"
 #include "df/manager_order.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::endl;

@@ -24,18 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <cstdio>
-#include <cstring>
-#include <iterator>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
-#include <cstdarg>
-
 #include "Error.h"
 #include "MemAccess.h"
 #include "Core.h"
@@ -48,6 +36,12 @@ distribution.
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "RemoteServer.h"
+#include "RemoteTools.h"
+#include "LuaTools.h"
+#include "DFHackVersion.h"
+#include "md5wrapper.h"
+
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
@@ -56,24 +50,19 @@ distribution.
 #include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
-#include "RemoteServer.h"
-#include "RemoteTools.h"
-#include "LuaTools.h"
-#include "DFHackVersion.h"
 
-using namespace DFHack;
-
-#include "df/plotinfost.h"
+#include "df/init.h"
 #include "df/gamest.h"
-#include "df/world.h"
-#include "df/world_data.h"
+#include "df/graphic.h"
 #include "df/interfacest.h"
+#include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include <df/graphic.h>
+#include "df/world.h"
+#include "df/world_data.h"
 
 #include <stdio.h>
 #include <iomanip>
@@ -82,14 +71,24 @@ using namespace DFHack;
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "md5wrapper.h"
-
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cstdio>
+#include <cstring>
+#include <iterator>
+#include <sstream>
+#include <forward_list>
+#include <type_traits>
+#include <cstdarg>
 #include <SDL_events.h>
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
 #endif
 
+using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;

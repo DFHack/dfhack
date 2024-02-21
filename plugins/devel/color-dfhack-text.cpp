@@ -7,6 +7,8 @@
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 
+#include "df/graphic.h"
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("color-dfhack-text");

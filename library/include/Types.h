@@ -31,8 +31,15 @@ distribution.
 #include "Export.h"
 
 #include "DataDefs.h"
-#include "df/general_ref.h"
-#include "df/specific_ref.h"
+
+#include "df/general_ref_type.h"
+#include "df/specific_ref_type.h"
+
+namespace df {
+    struct building;
+    struct general_ref;
+    struct specific_ref;
+}
 
 namespace DFHack
 {

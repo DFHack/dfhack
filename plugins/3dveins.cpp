@@ -1,10 +1,3 @@
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
-#include <vector>
-#include <math.h>
-
 #include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
@@ -17,6 +10,8 @@
 #include "modules/Random.h"
 #include "modules/World.h"
 
+#include "df/inorganic_raw.h"
+#include "df/map_block.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_region_details.h"
@@ -29,6 +24,13 @@
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
+
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <algorithm>
+#include <vector>
+#include <math.h>
 
 #ifdef LINUX_BUILD
 #include <tr1/memory>

@@ -20,19 +20,6 @@
 // - grab the code from digcircle to get a circle brush - could be nice when painting with obsidian
 // - maybe store the last parameters in a file to make them persistent after dfhack is closed?
 
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <stack>
-#include <vector>
-using std::vector;
-using std::string;
-using std::endl;
-using std::set;
-
 #include "Console.h"
 #include "Core.h"
 #include "Export.h"
@@ -44,7 +31,23 @@ using std::set;
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 
+#include "df/map_block.h"
+#include "df/tile_liquid_flow_dir.h"
 #include "df/world.h"
+
+#include <cstdlib>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <vector>
+
+using std::vector;
+using std::string;
+using std::endl;
+using std::set;
 
 #include "Brushes.h"
 

@@ -1,17 +1,21 @@
-#include <stdint.h>
-#include <iostream>
-#include <map>
-#include <vector>
+
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+
 #include "modules/Maps.h"
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
 
+#include "df/map_block.h"
 #include "df/world.h"
+
+#include <stdint.h>
+#include <iostream>
+#include <map>
+#include <vector>
 
 using namespace DFHack;
 using namespace df::enums;

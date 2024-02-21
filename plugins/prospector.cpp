@@ -1,30 +1,17 @@
 // Produces a list of materials available on the map.
-// Options:
-//  -a : show unrevealed tiles
-//  -p : don't show plants
-//  -s : don't show slade
-//  -t : don't show demon temple
 
-//#include <cstdlib>
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
-#include <functional>
-#include <vector>
-
-using namespace std;
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
+#include "DataDefs.h"
+
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 
-#include "MiscUtils.h"
-
-#include "DataDefs.h"
+#include "df/inorganic_raw.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_region_details.h"
@@ -35,9 +22,21 @@ using namespace std;
 #include "df/feature_init.h"
 #include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
+#include "df/map_block.h"
+#include "df/map_block_column.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
 
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::coord2d;
@@ -143,7 +142,7 @@ struct shallower
 
 
 typedef std::map<int16_t, matdata> MatMap;
-typedef std::vector< pair<int16_t, matdata> > MatSorter;
+typedef std::vector< std::pair<int16_t, matdata> > MatSorter;
 
 typedef std::vector<df::plant *> PlantList;
 
@@ -202,7 +201,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, cons
         if(size_t(it->first) >= materials.size())
         {
             con << "Bad index: " << it->first << " out of "
-                <<  materials.size() << endl;
+                <<  materials.size() << std::endl;
             continue;
         }
         T* mat = materials[it->first];

@@ -33,21 +33,17 @@ distribution.
 #include "Module.h"
 #include "Types.h"
 #include "BitArray.h"
-
 #include "DataDefs.h"
-#include "df/material.h"
-#include "df/inorganic_raw.h"
-#include "df/plant_raw.h"
 
-#include <vector>
-#include <string>
+#include "df/craft_material_class.h"
 
-namespace df
-{
+namespace df {
     struct item;
     struct plant_raw;
     struct creature_raw;
     struct historical_figure;
+    struct inorganic_raw;
+    struct material;
     struct material_vec_ref;
     struct job_item;
 

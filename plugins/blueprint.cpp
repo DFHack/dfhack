@@ -29,6 +29,7 @@
 #include "df/building_rollersst.h"
 #include "df/building_screw_pumpst.h"
 #include "df/building_siegeenginest.h"
+#include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"

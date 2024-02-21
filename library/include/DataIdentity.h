@@ -37,12 +37,14 @@ distribution.
 
 #include "DataDefs.h"
 
-#include <df/widget_container.h>
-
 namespace std {
     class condition_variable;
     class mutex;
 };
+
+namespace df {
+  struct widget_container;
+}
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.

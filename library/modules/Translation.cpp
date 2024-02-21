@@ -24,24 +24,28 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-
-#include "modules/Translation.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "Error.h"
+#include "DataDefs.h"
+
+#include "modules/Translation.h"
+
+#include "df/d_init.h"
+#include "df/language_name.h"
+#include "df/language_translation.h"
+#include "df/language_word.h"
+#include "df/world.h"
+
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace DFHack;
 using namespace df::enums;
-
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/d_init.h"
 
 using std::vector, std::string;
 

@@ -1,24 +1,25 @@
 #include "pause.h"
 
-#include <Debug.h>
-#include <Core.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Debug.h"
+#include "Core.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <modules/EventManager.h>
-#include <modules/World.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <modules/Job.h>
-#include <modules/Units.h>
+#include "modules/EventManager.h"
+#include "modules/World.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Job.h"
+#include "modules/Units.h"
 
-#include <df/job.h>
-#include <df/unit.h>
-#include <df/historical_figure.h>
-#include <df/global_objects.h>
-#include <df/world.h>
-#include <df/viewscreen.h>
-#include <df/creature_raw.h>
+#include "df/job.h"
+#include "df/unit.h"
+#include "df/historical_figure.h"
+#include "df/global_objects.h"
+#include "df/plotinfost.h"
+#include "df/world.h"
+#include "df/viewscreen.h"
+#include "df/creature_raw.h"
 
 #include <array>
 #include <random>

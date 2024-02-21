@@ -32,18 +32,15 @@ distribution.
 
 #include "Export.h"
 #include "Module.h"
-#include <vector>
 #include "BitArray.h"
+
 #include "modules/Materials.h"
 
 #include "df/biome_type.h"
 #include "df/block_flags.h"
 #include "df/feature_type.h"
 #include "df/flow_type.h"
-#include "df/plant.h"
 #include "df/tile_dig_designation.h"
-#include "df/tile_liquid.h"
-#include "df/tile_traffic.h"
 #include "df/tiletype.h"
 
 namespace df {
@@ -60,6 +57,7 @@ namespace df {
     struct map_block;
     struct map_block_column;
     struct region_map_entry;
+    struct plant;
     struct world;
     struct world_data;
     struct world_geo_biome;

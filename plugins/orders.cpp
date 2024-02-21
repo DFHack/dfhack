@@ -13,6 +13,7 @@
 #include "df/building.h"
 #include "df/gamest.h"
 #include "df/historical_figure.h"
+#include "df/inorganic_raw.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_foodst.h"

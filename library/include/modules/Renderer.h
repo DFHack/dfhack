@@ -1,8 +1,8 @@
-#include "Export.h"
-#include "df/enabler.h"
-#include "df/graphic.h"
-#include "df/renderer.h"
 #pragma once
+
+#include "Export.h"
+
+#include "df/renderer.h"
 
 namespace DFHack { namespace Renderer {
     struct DFHACK_EXPORT renderer_wrap : public df::renderer {

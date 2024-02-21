@@ -25,11 +25,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-using namespace std;
-
 #include "modules/Gui.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
@@ -40,7 +35,7 @@ using namespace std;
 #include "Debug.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
-using namespace DFHack;
+#include "DataDefs.h"
 
 #include "modules/Job.h"
 #include "modules/Screen.h"
@@ -48,11 +43,10 @@ using namespace DFHack;
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "DataDefs.h"
-
 #include "df/adventurest.h"
 #include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
+#include "df/announcement_infost.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
@@ -70,6 +64,7 @@ using namespace DFHack;
 #include "df/graphic.h"
 #include "df/graphic_viewportst.h"
 #include "df/historical_figure.h"
+#include "df/init.h"
 #include "df/interfacest.h"
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
@@ -80,6 +75,7 @@ using namespace DFHack;
 #include "df/markup_text_wordst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
+#include "df/plotinfost.h"
 #include "df/popup_message.h"
 #include "df/report.h"
 #include "df/report_zoom_type.h"
@@ -98,6 +94,14 @@ using namespace DFHack;
 #include "df/viewscreen_titlest.h"
 #include "df/viewscreen_worldst.h"
 #include "df/world.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+using std::string;
+using std::vector;
+using namespace DFHack;
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
 const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
@@ -1872,6 +1876,11 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
     return true;
 }
 
+
+bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert) {
+    return addCombatReport(unit, slot, vector_get(df::global::world->status.reports, report_index), update_alert);
+}
+
 bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::report *report)
 {
     if (!unit || !report)
@@ -1886,6 +1895,10 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::r
         ok |= add_recent_reports(unit, report, true);
 
     return ok;
+}
+
+bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index) {
+    return addCombatReportAuto(unit, mode, vector_get(df::global::world->status.reports, report_index));
 }
 
 void Gui::showAnnouncement(std::string message, int color, bool bright)

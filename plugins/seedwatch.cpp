@@ -16,6 +16,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/item.h"
 #include "df/item_flags.h"
 #include "df/items_other_id.h"
 #include "df/plant_raw.h"

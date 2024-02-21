@@ -23,37 +23,35 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
-#include <string>
-
 #include "Types.h"
-
 #include "DataDefs.h"
-#include "df/announcement_flags.h"
-#include "df/announcement_infost.h"
-#include "df/announcement_type.h"
-#include "df/building_stockpilest.h"
-#include "df/init.h"
-#include "df/markup_text_boxst.h"
-#include "df/plotinfost.h"
-#include "df/report.h"
-#include "df/report_zoom_type.h"
-#include "df/unit_report_type.h"
-#include "df/widget.h"
-#include "df/widget_container.h"
-#include "df/world.h"
 
 #include "modules/GuiHooks.h"
 
+#include "df/announcement_type.h"
+#include "df/report_zoom_type.h"
+#include "df/unit_report_type.h"
+
 namespace df {
-    struct viewscreen;
+    struct announcement_infost;
+    struct building_civzonest;
+    struct building_stockpilest;
     struct job;
-    struct unit;
     struct item;
+    struct markup_text_boxst;
     struct plant;
+    struct report;
+    struct unit;
+    struct widget;
+    struct widget_container;
+    struct viewscreen;
+
+    union announcement_flags;
 };
 
 /**
@@ -138,16 +136,10 @@ namespace DFHack
         DFHACK_EXPORT int makeAnnouncement(df::announcement_type type, df::announcement_flags mode, df::coord pos, std::string message, int color = 7, bool bright = true);
 
         DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, df::report *report, bool update_alert = false);
-        DFHACK_EXPORT inline bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert = false)
-        {
-            return addCombatReport(unit, slot, vector_get(df::global::world->status.reports, report_index), update_alert);
-        }
+        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert = false);
 
         DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::report *report);
-        DFHACK_EXPORT inline bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
-        {
-            return addCombatReportAuto(unit, mode, vector_get(df::global::world->status.reports, report_index));
-        }
+        DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index);
 
         // Show a plain announcement, or a titan-style popup message
         DFHACK_EXPORT void showAnnouncement(std::string message, int color = 7, bool bright = true);

@@ -45,6 +45,8 @@
 #include "df/itemimprovement_threadst.h"
 #include "df/itemdef.h"
 #include "df/map_block.h"
+#include "df/material.h"
+#include "df/plant_raw.h"
 #include "df/vehicle.h"
 #include "df/world.h"
 

@@ -16,6 +16,7 @@
 #include "df/construction_type.h"
 #include "df/furnace_type.h"
 #include "df/item.h"
+#include "df/map_block.h"
 #include "df/region_map_entry.h"
 #include "df/shop_type.h"
 #include "df/siegeengine_type.h"

@@ -23,29 +23,29 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "DataDefs.h"
 #include "Types.h"
+
 #include "modules/Items.h"
 #include "modules/Maps.h"
 
-#include "df/building.h"
-#include "df/building_stockpilest.h"
 #include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/construction_type.h"
 #include "df/furnace_type.h"
-#include "df/item.h"
 #include "df/shop_type.h"
 #include "df/siegeengine_type.h"
 #include "df/trap_type.h"
 #include "df/workshop_type.h"
 
-namespace df
-{
+namespace df {
+    struct building;
     struct building_cagest;
     struct building_civzonest;
     struct building_extents;
+    struct building_stockpilest;
     struct item;
     struct job_item;
     struct unit;

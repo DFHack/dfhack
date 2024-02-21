@@ -5,6 +5,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "DataDefs.h"
 
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -13,7 +14,7 @@
 #include "modules/Materials.h"
 #include "modules/World.h"
 
-#include "DataDefs.h"
+#include "df/building.h"
 #include "df/game_type.h"
 #include "df/world.h"
 #include "df/plotinfost.h"
@@ -29,6 +30,7 @@
 #include "df/item_plant_growthst.h"
 #include "df/plant_growth.h"
 #include "df/plant_growth_print.h"
+#include "df/plant_raw.h"
 
 using std::string;
 using std::vector;

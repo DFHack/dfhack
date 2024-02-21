@@ -122,32 +122,32 @@ Info tabs overlay
 -----------------
 
 The Info overlay adds search support to many of the fort-wide "Info" panels
-(e.g. "Creatures", "Tasks", etc.). When searching for units, you can search by
-name (with either English or native language last names), profession, or
-special status (like "necromancer"). If there is text in the second column, you
-can search for that text as well. This is often a job name or a status, like
-"caged". The work animal assignment page can also filter by squad or burrow
-membership.
+that don't already have search widgets (e.g. "Tasks", "Artifacts", etc.). When
+searching for units, you can search by name (with either English or native
+language last names), profession, or special status (like "necromancer"). If
+there is text in the second column, you can search for that text as well. This
+is often a job name or a status, like "caged". The work animal assignment page
+can also filter by squad or burrow membership.
 
 Work animals overlay
 --------------------
 
-In addition to the search and filter widgets provided by the Info tabs overlay,
-the work animal assignment screen has an additional overlay that annotates each
-visible unit with the number of work animals that unit already has.
+The work animal assignment screen has an overlay that annotates each visible
+unit with the number of work animals that unit already has assigned.
 
 Interrogation overlay
 ---------------------
 
 In the interrogation and conviction screens under the "Justice" tab, you can
-search for units by name. You can also filter by the classification of the
-unit. The classification groups are ordered by how likely a member of that
-group is to be involved in a plot. The groups are: All, Risky visitors, Other
-visitors, Residents, Citizens, Animals, Deceased, and Others. "Risky" visitors are those who are especially likely to be involved in plots, such as criminals,
-necromancers, necromancer experiments, and intelligent undead.
+filter by the classification of the unit. The classification groups are ordered
+by how likely a member of that group is to be involved in a plot. The groups
+are: All, Risky visitors, Other visitors, Residents, Citizens, Animals,
+Deceased, and Others. "Risky" visitors are those who are especially likely to
+be involved in plots, such as criminals, necromancers, necromancer experiments,
+and intelligent undead.
 
 On the interrogations screen, you can also filter units by whether they have
-already been interrogated.
+already been interviewed in realation to the current crime.
 
 Candidates overlay
 ------------------

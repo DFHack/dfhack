@@ -31,6 +31,7 @@ end
 --
 
 local STATUS_COL_WIDTH = 18
+local DIST_COL_WIDTH = 5
 local DISPOSITION_COL_WIDTH = 18
 local GENDER_COL_WIDTH = 6
 local SLIDER_LABEL_WIDTH = math.max(STATUS_COL_WIDTH, DISPOSITION_COL_WIDTH) + 4
@@ -46,6 +47,7 @@ AssignAnimal.ATTRS {
     status=DEFAULT_NIL,
     status_revmap=DEFAULT_NIL,
     get_status=DEFAULT_NIL,
+    get_distance=DEFAULT_NIL,
     get_allow_vermin=DEFAULT_NIL,
     get_multi_select=DEFAULT_NIL,
     attach=DEFAULT_NIL,
@@ -69,6 +71,20 @@ local function sort_by_race_asc(a, b)
         return a.data.gender < b.data.gender
     end
     return a.data.race > b.data.race
+end
+
+local function sort_by_dist_desc(a, b)
+    if a.data.dist == b.data.dist then
+        return sort_by_race_desc(a, b)
+    end
+    return a.data.dist < b.data.dist
+end
+
+local function sort_by_dist_asc(a, b)
+    if a.data.dist == b.data.dist then
+        return sort_by_race_desc(a, b)
+    end
+    return a.data.dist > b.data.dist
 end
 
 local function sort_by_name_desc(a, b)
@@ -159,14 +175,16 @@ function AssignAnimal:init()
             options={
                 {label='status'..CH_DN, value=sort_by_status_desc},
                 {label='status'..CH_UP, value=sort_by_status_asc},
+                {label='dist'..CH_DN, value=sort_by_dist_desc},
+                {label='dist'..CH_UP, value=sort_by_dist_asc},
                 {label='disposition'..CH_DN, value=sort_by_disposition_desc},
                 {label='disposition'..CH_UP, value=sort_by_disposition_asc},
                 {label='gender'..CH_DN, value=sort_by_gender_desc},
                 {label='gender'..CH_UP, value=sort_by_gender_asc},
-                {label='race'..CH_DN, value=sort_by_race_desc},
-                {label='race'..CH_UP, value=sort_by_race_asc},
                 {label='name'..CH_DN, value=sort_by_name_desc},
                 {label='name'..CH_UP, value=sort_by_name_asc},
+                {label='race'..CH_DN, value=sort_by_race_desc},
+                {label='race'..CH_UP, value=sort_by_race_asc},
             },
             initial_option=sort_by_status_desc,
             on_change=self:callback('refresh_list', 'sort'),
@@ -339,8 +357,19 @@ function AssignAnimal:init()
                     on_change=self:callback('refresh_list', 'sort_status'),
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='sort_dist',
+                    frame={t=0, l=STATUS_COL_WIDTH+2, w=5},
+                    options={
+                        {label='dist', value=sort_noop},
+                        {label='dist'..CH_DN, value=sort_by_dist_desc},
+                        {label='dist'..CH_UP, value=sort_by_dist_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_dist'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_disposition',
-                    frame={t=0, l=STATUS_COL_WIDTH+2, w=12},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2, w=12},
                     options={
                         {label='disposition', value=sort_noop},
                         {label='disposition'..CH_DN, value=sort_by_disposition_desc},
@@ -351,7 +380,7 @@ function AssignAnimal:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_gender',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2, w=7},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2, w=7},
                     options={
                         {label='gender', value=sort_noop},
                         {label='gender'..CH_DN, value=sort_by_gender_desc},
@@ -361,19 +390,8 @@ function AssignAnimal:init()
                     on_change=self:callback('refresh_list', 'sort_gender'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_race',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2, w=5},
-                    options={
-                        {label='race', value=sort_noop},
-                        {label='race'..CH_DN, value=sort_by_race_desc},
-                        {label='race'..CH_UP, value=sort_by_race_asc},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_race'),
-                },
-                widgets.CycleHotkeyLabel{
                     view_id='sort_name',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2+7, w=5},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..CH_DN, value=sort_by_name_desc},
@@ -381,6 +399,17 @@ function AssignAnimal:init()
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_name'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_race',
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2+7, w=5},
+                    options={
+                        {label='race', value=sort_noop},
+                        {label='race'..CH_DN, value=sort_by_race_desc},
+                        {label='race'..CH_UP, value=sort_by_race_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_race'),
                 },
                 widgets.FilteredList{
                     view_id='list',
@@ -425,7 +454,7 @@ function AssignAnimal:refresh_list(sort_widget, sort_fn)
         self.subviews[sort_widget]:cycle()
         return
     end
-    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_disposition', 'sort_gender', 'sort_race', 'sort_name'} do
+    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_dist', 'sort_disposition', 'sort_gender', 'sort_race', 'sort_name'} do
         self.subviews[widget_name]:setOption(sort_fn)
     end
     local list = self.subviews.list
@@ -460,6 +489,7 @@ function AssignAnimal:make_choice_text(data)
     gender_ch = string.format(data.gelded and 'x%sx' or ' %s ', gender_ch)
     return {
         {width=STATUS_COL_WIDTH, text=function() return self.status[self.status_revmap[data.status]].label end},
+        {gap=2, width=DIST_COL_WIDTH, text=data.dist},
         {gap=2, width=DISPOSITION_COL_WIDTH, text=function() return DISPOSITION[DISPOSITION_REVMAP[data.disposition]].label end},
         {gap=2, width=GENDER_COL_WIDTH, text=gender_ch},
         {gap=2, text=data.desc},
@@ -580,6 +610,7 @@ function AssignAnimal:cache_choices()
         local data = {
             unit=unit,
             desc=desc,
+            dist=self.get_distance(xyz2pos(dfhack.units.getPosition(unit))),
             gender=unit.sex,
             race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
@@ -603,6 +634,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=vermin,
             desc=get_vermin_desc(vermin, raw),
+            dist=self.get_distance(xyz2pos(dfhack.items.getPosition(vermin))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(vermin, bld_assignments),
@@ -814,6 +846,7 @@ AssignAnimalScreen.ATTRS {
     status=DEFAULT_NIL,
     status_revmap=DEFAULT_NIL,
     get_status=DEFAULT_NIL,
+    get_distance=DEFAULT_NIL,
     get_allow_vermin=DEFAULT_NIL,
     get_multi_select=DEFAULT_NIL,
     attach=DEFAULT_NIL,
@@ -827,6 +860,7 @@ function AssignAnimalScreen:init()
             status=self.status,
             status_revmap=self.status_revmap,
             get_status=self.get_status,
+            get_distance=self.get_distance,
             get_allow_vermin=self.get_allow_vermin,
             get_multi_select=self.get_multi_select,
             attach=self.attach,
@@ -910,7 +944,7 @@ local PASTURE_STATUS = {
     PITTED={label='In other pit/pond', value=3},
     RESTRAINED={label='On restraint', value=4},
     BUILT_CAGE={label='In built cage', value=5},
-    ITEM_CAGE={label='In stockpiled cage', value=6},
+    ITEM_CAGE={label='In loose cage', value=6},
     ROAMING={label='Roaming', value=7},
 }
 local PASTURE_STATUS_REVMAP = {}
@@ -955,12 +989,20 @@ local function get_zone_status(unit_or_vermin, bld_assignments)
     return PASTURE_STATUS.ROAMING.value
 end
 
+local function get_zone_distance(pos)
+    local zone = df.global.game.main_interface.civzone.cur_bld
+    if not zone then return 0 end
+    if zone.z == pos.z and dfhack.buildings.containsTile(zone, pos.x, pos.y) then return 0 end
+    return math.max(math.abs(zone.centerx - pos.x), math.abs(zone.centery - pos.y)) + math.abs(zone.z - pos.z)
+end
+
 local function show_pasture_pond_screen()
     return AssignAnimalScreen{
         is_valid_ui_state=is_valid_zone,
         status=PASTURE_STATUS,
         status_revmap=PASTURE_STATUS_REVMAP,
         get_status=get_zone_status,
+        get_distance=get_zone_distance,
         get_allow_vermin=is_pit_selected,
         get_multi_select=function() return true end,
         attach=attach_to_zone,
@@ -1098,12 +1140,19 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     return CAGE_STATUS.ROAMING.value
 end
 
+local function get_cage_distance(pos)
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld then return 0 end
+    return math.max(math.abs(bld.centerx - pos.x), math.abs(bld.centery - pos.y)) + math.abs(bld.z - pos.z)
+end
+
 local function show_cage_chain_screen()
     return AssignAnimalScreen{
         is_valid_ui_state=is_valid_building,
         status=CAGE_STATUS,
         status_revmap=CAGE_STATUS_REVMAP,
         get_status=get_cage_status,
+        get_distance=get_cage_distance,
         get_allow_vermin=is_cage_selected,
         get_multi_select=is_cage_selected,
         attach=attach_to_building,

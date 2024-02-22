@@ -610,7 +610,7 @@ function AssignAnimal:cache_choices()
         local data = {
             unit=unit,
             desc=desc,
-            dist=self.get_distance(unit),
+            dist=self.get_distance(xyz2pos(dfhack.units.getPosition(unit))),
             gender=unit.sex,
             race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
@@ -634,6 +634,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=vermin,
             desc=get_vermin_desc(vermin, raw),
+            dist=self.get_distance(xyz2pos(dfhack.items.getPosition(vermin))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(vermin, bld_assignments),
@@ -988,12 +989,11 @@ local function get_zone_status(unit_or_vermin, bld_assignments)
     return PASTURE_STATUS.ROAMING.value
 end
 
-local function get_zone_distance(unit)
+local function get_zone_distance(pos)
     local zone = df.global.game.main_interface.civzone.cur_bld
     if not zone then return 0 end
-    local x, y, z = dfhack.units.getPosition(unit)
-    if zone.z == z and dfhack.buildings.containsTile(zone, x, y) then return 0 end
-    return math.max(math.abs(zone.centerx - x), math.abs(zone.centery - y)) + math.abs(zone.z - z)
+    if zone.z == pos.z and dfhack.buildings.containsTile(zone, pos.x, pos.y) then return 0 end
+    return math.max(math.abs(zone.centerx - pos.x), math.abs(zone.centery - pos.y)) + math.abs(zone.z - pos.z)
 end
 
 local function show_pasture_pond_screen()
@@ -1140,11 +1140,10 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     return CAGE_STATUS.ROAMING.value
 end
 
-local function get_cage_distance(unit)
+local function get_cage_distance(pos)
     local bld = dfhack.gui.getSelectedBuilding(true)
     if not bld then return 0 end
-    local x, y, z = dfhack.units.getPosition(unit)
-    return math.max(math.abs(bld.centerx - x), math.abs(bld.centery - y)) + math.abs(bld.z - z)
+    return math.max(math.abs(bld.centerx - pos.x), math.abs(bld.centery - pos.y)) + math.abs(bld.z - pos.z)
 end
 
 local function show_cage_chain_screen()

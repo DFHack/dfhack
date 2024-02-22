@@ -62,9 +62,9 @@ endif()
 
 if(WIN32)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1938 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1938))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1938 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1939 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1939))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1939 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 

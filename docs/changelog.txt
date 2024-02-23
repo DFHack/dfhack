@@ -73,6 +73,7 @@ Template for new versions:
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
 - `buildingplan`: use closest matching item rather than newest matching item
 - `zone`: animal assignment dialog now shows distance to pasture/cage and allows sorting by distance
+- `zone`: animal assignment dialog shows number of creatures assigned to this pasture/cage/etc.
 
 ## Documentation
 

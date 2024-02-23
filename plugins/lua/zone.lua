@@ -193,7 +193,7 @@ function AssignAnimal:init()
             view_id='search',
             frame={l=35, t=0},
             label_text='Search: ',
-            on_char=function(ch) return ch:match('[%l -]') end,
+            on_char=function(ch, text) return ch == ' ' and text:match('%S$') or ch:match('[%l-]') end,
         },
         widgets.Panel{
             frame={t=2, l=0, w=SLIDER_WIDTH, h=4},
@@ -428,6 +428,13 @@ function AssignAnimal:init()
             visible=self.get_multi_select,
             auto_width=true,
         },
+        widgets.Label{
+            frame={l=30, b=2+(can_assign_pets and 0 or 1)},
+            text={
+                {text=self:callback('get_num_assigned_here'), pen=COLOR_YELLOW},
+                ' creature(s) assigned here.'
+            },
+        },
         widgets.WrappedLabel{
             frame={b=0, l=0, r=0},
             text_to_wrap=function()
@@ -445,6 +452,16 @@ function AssignAnimal:init()
     self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
 
     self.subviews.list:setChoices(self:get_choices())
+end
+
+function AssignAnimal:get_num_assigned_here()
+    local count = 0
+    for _,choice in ipairs(self.subviews.list:getChoices()) do
+        if choice.data.status == 1 then
+            count = count + 1
+        end
+    end
+    return count
 end
 
 function AssignAnimal:refresh_list(sort_widget, sort_fn)

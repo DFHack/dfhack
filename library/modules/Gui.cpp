@@ -2580,16 +2580,22 @@ Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
     return GUI_HOOK_TOP(Gui::Hooks::dwarfmode_view_dims)();
 }
 
+static void unfollow() {
+    if (!plotinfo)
+        return;
+
+    plotinfo->follow_unit = -1;
+    plotinfo->follow_item = -1;
+}
+
 void Gui::resetDwarfmodeView(bool pause)
 {
     using df::global::cursor;
 
+    unfollow();
+
     if (plotinfo)
-    {
-        plotinfo->follow_unit = -1;
-        plotinfo->follow_item = -1;
         plotinfo->main.mode = ui_sidebar_mode::Default;
-    }
 
     if (selection_rect)
     {
@@ -2618,6 +2624,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
 
     if (!window_x || !window_y || !window_z || !world || !game)
         return false;
+
+    unfollow();
 
     auto dims = getDwarfmodeViewDims();
     int32_t w = dims.map_x2 - dims.map_x1 + 1;

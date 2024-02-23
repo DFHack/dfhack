@@ -83,6 +83,7 @@ Template for new versions:
 - ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
 - ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
 - Gui focus strings will now include ``dwarfmode/Default`` if the only other panel open is the Squads panel
+- ``Gui::revealInDwarfmodeMap``: unfollow any currently followed units/items so the viewport doesn't just jump back to where it was
 
 ## Lua
 - Overlay framework now respects ``active`` and ``visible`` widget attributes

@@ -372,7 +372,17 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             } else if (tab->name == "Closed cases") {
                 newFocusString += "/CLOSED_CASES";
             } else if (tab->name == "Cold cases") {
-                newFocusString += "/COLD_CASES";
+                auto * container_tab = virtual_cast<df::widget_container>(tab);
+                auto * right_panel = container_tab ?
+                    virtual_cast<df::widget_container>(Gui::getWidget(container_tab, "Right panel")) :
+                    NULL;
+                bool is_valid = right_panel && right_panel->children.size() > 1;
+                if (is_valid && right_panel->children[1]->name == "Interrogate")
+                    newFocusString += "/Interrogating";
+                else if (is_valid && right_panel->children[1]->name == "Convict")
+                    newFocusString += "/Convicting";
+                else
+                    newFocusString += "/COLD_CASES";
             } else if (tab->name == "Fortress guard") {
                 newFocusString += "/FORTRESS_GUARD";
             } else if (tab->name == "Convicts") {

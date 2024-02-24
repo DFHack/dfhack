@@ -510,8 +510,9 @@ end
 --
 
 local function get_unit_list(which)
-    return dfhack.gui.getWidget(df.global.game.main_interface.info.justice,
-        'Tabs', 'Open cases', 'Right panel', which)
+    local tabs = dfhack.gui.getWidget(df.global.game.main_interface.info.justice, 'Tabs')
+    return dfhack.gui.getWidget(tabs, 'Open cases', 'Right panel', which) or
+        dfhack.gui.getWidget(tabs, 'Cold cases', 'Right panel', which)
 end
 
 local function poke_list(which)

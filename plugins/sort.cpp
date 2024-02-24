@@ -121,23 +121,23 @@ static df::widget_unit_list * get_squad_unit_list() {
         Gui::getWidget(&game->main_interface.unit_selector, "Unit selector"));
 }
 
-static df::widget_container * get_justice_panel() {
+static df::widget_container * get_justice_panel(const char *which) {
     auto tabs = virtual_cast<df::widget_container>(
         Gui::getWidget(&game->main_interface.info.justice, "Tabs"));
     if (!tabs) return NULL;
-    auto open_cases = virtual_cast<df::widget_container>(Gui::getWidget(tabs, "Open cases"));
+    auto open_cases = virtual_cast<df::widget_container>(Gui::getWidget(tabs, which));
     if (!open_cases) return NULL;
     return virtual_cast<df::widget_container>(Gui::getWidget(open_cases, "Right panel"));
 }
 
-static df::widget_unit_list * get_interrogate_unit_list() {
-    auto right_panel = get_justice_panel();
+static df::widget_unit_list * get_interrogate_unit_list(const char *which) {
+    auto right_panel = get_justice_panel(which);
     if (!right_panel) return NULL;
     return virtual_cast<df::widget_unit_list>(Gui::getWidget(right_panel, "Interrogate"));
 }
 
-static df::widget_unit_list * get_convict_unit_list() {
-    auto right_panel = get_justice_panel();
+static df::widget_unit_list * get_convict_unit_list(const char *which) {
+    auto right_panel = get_justice_panel(which);
     if (!right_panel) return NULL;
     return virtual_cast<df::widget_unit_list>(Gui::getWidget(right_panel, "Convict"));
 }
@@ -183,40 +183,39 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     return CR_OK;
 }
 
+static void remove_filter_function(color_ostream &out, const char *which, df::widget_unit_list *unitlist) {
+    int32_t idx = our_filter_idx(unitlist);
+    if (idx >= 0) {
+        DEBUG(log,out).print("removing %s filter function\n", which);
+        filter_vec_type *filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
+        vector_erase_at(*filter_vec, idx);
+    }
+}
+
+static void remove_sort_function(color_ostream &out, const char *which, df::widget_unit_list *unitlist) {
+    std::vector<sort_entry> *sorting_by = reinterpret_cast<std::vector<sort_entry> *>(&unitlist->sorting_by);
+    int32_t idx = our_sort_idx(*sorting_by);
+    if (idx >= 0) {
+        DEBUG(log).print("removing %s sort function\n", which);
+        vector_erase_at(*sorting_by, idx);
+    }
+}
+
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     if (auto unitlist = get_squad_unit_list()) {
-        int32_t idx = our_filter_idx(unitlist);
-        if (idx >= 0) {
-            DEBUG(log).print("removing squad filter function\n");
-            filter_vec_type *filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
-            vector_erase_at(*filter_vec, idx);
-        }
-
-        std::vector<sort_entry> *sorting_by = reinterpret_cast<std::vector<sort_entry> *>(&unitlist->sorting_by);
-        idx = our_sort_idx(*sorting_by);
-        if (idx >= 0) {
-            DEBUG(log).print("removing squad sort function\n");
-            vector_erase_at(*sorting_by, idx);
-        }
+        remove_filter_function(out, "squad", unitlist);
+        remove_sort_function(out, "squad", unitlist);
     }
 
-    if (auto unitlist = get_interrogate_unit_list()) {
-        int32_t idx = our_filter_idx(unitlist);
-        if (idx >= 0) {
-            DEBUG(log).print("removing justice interrogate filter function\n");
-            filter_vec_type *filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
-            vector_erase_at(*filter_vec, idx);
-        }
-    }
+    if (auto unitlist = get_interrogate_unit_list("Open cases"))
+        remove_filter_function(out, "open cases interrogate", unitlist);
+    if (auto unitlist = get_interrogate_unit_list("Cold cases"))
+        remove_filter_function(out, "cold cases interrogate", unitlist);
 
-    if (auto unitlist = get_convict_unit_list()) {
-        int32_t idx = our_filter_idx(unitlist);
-        if (idx >= 0) {
-            DEBUG(log).print("removing justice convict filter function\n");
-            filter_vec_type *filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
-            vector_erase_at(*filter_vec, idx);
-        }
-    }
+    if (auto unitlist = get_convict_unit_list("Open cases"))
+        remove_filter_function(out, "open cases convict", unitlist);
+    if (auto unitlist = get_convict_unit_list("Cold cases"))
+        remove_filter_function(out, "cold cases convict", unitlist);
 
     return CR_OK;
 }

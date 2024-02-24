@@ -69,10 +69,12 @@ Template for new versions:
 - `strangemood`: correctly recognize Stonecutter and Stone Carver as moodable skills, move the Mason's boosted mood chance to the Stone Carver, and select Fell/Macabre based on long-term stress
 
 ## Misc Improvements
+- `autonestbox`: assign egg layers to the nestbox they have chosen if they have already chosen a nestbox
 - `regrass`: also regrow depleted cavern moss
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
 - `buildingplan`: use closest matching item rather than newest matching item
 - `zone`: animal assignment dialog now shows distance to pasture/cage and allows sorting by distance
+- `zone`: animal assignment dialog shows number of creatures assigned to this pasture/cage/etc.
 
 ## Documentation
 

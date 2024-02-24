@@ -187,8 +187,7 @@ void onUnitDeath(color_ostream& out, void* ptr) {
 static void update_tomb_assignments(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
     // check tomb civzones for assigned units
-    for (auto* bld : world->buildings.other.ZONE_TOMB) {
-        auto* tomb = virtual_cast<df::building_civzonest>(bld);
+    for (auto* tomb : world->buildings.other.ZONE_TOMB) {
         if (!tomb || !tomb->flags.bits.exists) continue;
         if (!tomb->assigned_unit) continue;
         if (Units::isDead(tomb->assigned_unit)) continue; // we only care about living units
@@ -210,12 +209,13 @@ static void update_tomb_assignments(color_ostream &out) {
     std::erase_if(tomb_assignments,[&](const auto& p){
         auto &[unit_id, building_id] = p;
 
-        const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
-        if (tomb_idx == -1) {
+        auto bld = df::building::find(building_id);
+        if (!bld) {
             DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
             return true;
         }
-        const auto tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);
+
+        auto tomb = virtual_cast<df::building_civzonest>(bld);
         if (!tomb || !tomb->flags.bits.exists) {
             DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
             return true;
@@ -237,10 +237,10 @@ static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
 
     if (!unit || !Units::isDead(unit)) return false;
 
-    const int tomb_idx = binsearch_index(world->buildings.other.ZONE_TOMB, building_id);
-    if (tomb_idx == -1) return false;
+    auto bld = df::building::find(building_id);
+    if (!bld) return false;
 
-    df::building_civzonest* tomb = virtual_cast<df::building_civzonest>(world->buildings.other.ZONE_TOMB[tomb_idx]);
+    auto tomb = virtual_cast<df::building_civzonest>(bld);
     if (!tomb || tomb->assigned_unit) return false;
 
     Buildings::setOwner(tomb, unit);

@@ -28,6 +28,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("autonestbox");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+REQUIRE_GLOBAL(cur_season);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
@@ -171,6 +172,7 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
         return CR_WRONG_USAGE;
 
     if (opts.now) {
+        did_complain = false;
         autonestbox_cycle(out);
     }
     else {
@@ -183,37 +185,10 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
 // cycle logic
 //
 
-static bool isEmptyPasture(df::building *building) {
-    if (!Buildings::isPenPasture(building))
+static bool isEmptyPasture(df::building_civzonest *zone) {
+    if (!Buildings::isPenPasture(zone))
         return false;
-    df::building_civzonest *civ = (df::building_civzonest *)building;
-    return (civ->assigned_units.size() == 0);
-}
-
-static bool isFreeNestboxAtPos(int32_t x, int32_t y, int32_t z) {
-    for (auto building : world->buildings.all) {
-        if (building->getType() == df::building_type::NestBox
-                && building->x1 == x
-                && building->y1 == y
-                && building->z  == z) {
-            df::building_nest_boxst *nestbox = (df::building_nest_boxst *)building;
-            if (nestbox->claimed_by == -1 && nestbox->contained_items.size() == 1) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-static df::building* findFreeNestboxZone() {
-    for (auto building : world->buildings.all) {
-        if (isEmptyPasture(building) &&
-                Buildings::isActive(building) &&
-                isFreeNestboxAtPos(building->x1, building->y1, building->z)) {
-            return building;
-        }
-    }
-    return NULL;
+    return (zone->assigned_units.size() == 0);
 }
 
 static bool isInBuiltCage(df::unit *unit) {
@@ -253,9 +228,9 @@ static bool unlikely_to_revert_to_wild(df::unit *unit) {
     return Units::isTame(unit) && Units::isMarkedForTraining(unit);
 }
 
-static bool isFreeEgglayer(df::unit *unit)
-{
-    return Units::isActive(unit) && !Units::isUndead(unit)
+static bool isFreeEgglayer(df::unit *unit) {
+    return Units::isActive(unit)
+        && !Units::isUndead(unit)
         && Units::isFemale(unit)
         && unlikely_to_revert_to_wild(unit)
         && Units::isOwnCiv(unit)
@@ -266,106 +241,112 @@ static bool isFreeEgglayer(df::unit *unit)
         && !Units::isForest(unit);  // don't steal birds from traders, they hate that
 }
 
-static df::unit * findFreeEgglayer() {
-    for (auto unit : world->units.all) {
-        if (isFreeEgglayer(unit))
-            return unit;
-    }
-    return NULL;
-}
-
 static df::general_ref_building_civzone_assignedst * createCivzoneRef() {
-    static bool vt_initialized = false;
-
-    // after having run successfully for the first time it's safe to simply create the object
-    if (vt_initialized) {
-        return (df::general_ref_building_civzone_assignedst *)
-            df::general_ref_building_civzone_assignedst::_identity.instantiate();
-    }
-
-    // being called for the first time, need to initialize the vtable
-    for (auto creature : world->units.all) {
-        for (auto ref : creature->general_refs) {
-            if (ref->getType() == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED) {
-                if (strict_virtual_cast<df::general_ref_building_civzone_assignedst>(ref)) {
-                    vt_initialized = true;
-                    // !! calling new() doesn't work, need _identity.instantiate() instead !!
-                    return (df::general_ref_building_civzone_assignedst *)
-                        df::general_ref_building_civzone_assignedst::_identity.instantiate();
-                }
-            }
-        }
-    }
-    return NULL;
+    return (df::general_ref_building_civzone_assignedst *)
+        df::general_ref_building_civzone_assignedst::_identity.instantiate();
 }
 
-static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building *building) {
-    // try to get a fresh civzone ref
-    df::general_ref_building_civzone_assignedst *ref = createCivzoneRef();
+static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building_civzonest *zone) {
+    auto ref = createCivzoneRef();
     if (!ref) {
-        ERR(cycle,out).print("Could not find a clonable activity zone reference!"
-            " You need to manually pen/pasture/pit at least one creature"
-            " before autonestbox can function.\n");
+        ERR(cycle,out).print("Could not create activity zone reference!\n");
         return false;
     }
 
-    ref->building_id = building->id;
+    ref->building_id = zone->id;
     unit->general_refs.push_back(ref);
-
-    df::building_civzonest *civz = (df::building_civzonest *)building;
-    civz->assigned_units.push_back(unit->id);
+    zone->assigned_units.push_back(unit->id);
 
     INFO(cycle,out).print("Unit %d (%s) assigned to nestbox zone %d (%s)\n",
         unit->id, Units::getRaceName(unit).c_str(),
-        building->id, building->name.c_str());
+        zone->id, zone->name.c_str());
 
     return true;
 }
 
-static size_t countFreeEgglayers() {
-    size_t count = 0;
-    for (auto unit : world->units.all) {
-        if (isFreeEgglayer(unit))
-            ++count;
+// also assigns units to zone if they have already claimed the nestbox
+// and are not assigned elsewhere; returns number assigned
+static size_t getFreeNestboxZones(color_ostream &out, vector<df::building_civzonest *> &free_zones) {
+    size_t assigned = 0;
+    for (auto zone : world->buildings.other.ZONE_PEN) {
+        if (!isEmptyPasture(zone) || !Buildings::isActive(zone))
+            continue;
+
+        // nestbox must be in upper left corner
+        // this could be made more flexible
+        df::coord pos(zone->x1, zone->y1, zone->z);
+        auto bld = Buildings::findAtTile(pos);
+        if (!bld || bld->getType() != df::building_type::NestBox)
+            continue;
+
+        df::building_nest_boxst *nestbox = virtual_cast<df::building_nest_boxst>(bld);
+        if (!nestbox)
+            continue;
+
+        if (nestbox->claimed_by >= 0) {
+            auto unit = df::unit::find(nestbox->claimed_by);
+            if (isFreeEgglayer(unit)) {
+                // if the nestbox is claimed by a free egg layer, attempt to assign that unit to the zone
+                if (assignUnitToZone(out, unit, zone))
+                    ++assigned;
+            }
+        } else if (nestbox->contained_items.size() == 1) {
+            free_zones.push_back(zone);
+        }
     }
-    return count;
+    return assigned;
+}
+
+static vector<df::unit *> getFreeEggLayers(color_ostream &out) {
+    vector<df::unit *> ret;
+    for (auto unit : world->units.active) {
+        if (isFreeEgglayer(unit))
+            ret.push_back(unit);
+    }
+    return ret;
+}
+
+// rate limit to one message per season
+// assumes this gets run at least once a season, which is true when enabled
+// running manually with the "now" param also resets did_complain, so we
+// won't miss the case where the player happens to run "autonestbox now"
+// once a year in Spring
+static void rate_limit_complaining() {
+    static df::season old_season = df::season::None;
+    df::season this_season = *cur_season;
+    if (old_season != this_season)
+        did_complain = false;
+    old_season = this_season;
 }
 
 static size_t assign_nestboxes(color_ostream &out) {
-    size_t processed = 0;
-    df::building *free_building = NULL;
-    df::unit *free_unit = NULL;
-    do {
-        free_building = findFreeNestboxZone();
-        free_unit = findFreeEgglayer();
-        if (free_building && free_unit) {
-            if (!assignUnitToZone(out, free_unit, free_building)) {
-                DEBUG(cycle,out).print("Failed to assign unit to building.\n");
-                return processed;
-            }
-            DEBUG(cycle,out).print("assigned unit %d to zone %d\n",
-                                   free_unit->id, free_building->id);
-            ++processed;
-        }
-    } while (free_unit && free_building);
+    rate_limit_complaining();
 
-    if (free_unit && !free_building) {
-        static size_t old_count = 0;
-        size_t freeEgglayers = countFreeEgglayers();
-        // avoid spamming the same message
-        if (old_count != freeEgglayers)
-            did_complain = false;
-        old_count = freeEgglayers;
-        if (!did_complain) {
-            std::stringstream ss;
-            ss << freeEgglayers;
-            string announce = "Not enough free nestbox zones found! You need " + ss.str() + " more.";
-            Gui::showAnnouncement(announce, 6, true);
-            out << announce << std::endl;
-            did_complain = true;
+    vector<df::building_civzonest *> free_zones;
+    size_t assigned = getFreeNestboxZones(out, free_zones);
+    vector<df::unit *> free_units = getFreeEggLayers(out);
+
+    const size_t max_idx = std::min(free_zones.size(), free_units.size());
+    for (size_t idx = 0; idx < max_idx; ++idx) {
+        if (!assignUnitToZone(out, free_units[idx], free_zones[idx])) {
+            DEBUG(cycle,out).print("Failed to assign unit to building.\n");
+            return assigned;
         }
+        DEBUG(cycle,out).print("assigned unit %d to zone %d\n",
+                                free_units[idx]->id, free_zones[idx]->id);
+        ++assigned;
     }
-    return processed;
+
+    if (free_zones.size() < free_units.size() && !did_complain) {
+        size_t num_needed = free_units.size() - free_zones.size();
+        std::stringstream ss;
+        ss << "Not enough free nestbox zones! You need to make " << num_needed << " more 1x1 pastures and build nestboxes in them.";
+        string announce = ss.str();
+        out << announce << std::endl;
+        Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_BROWN, true);
+        did_complain = true;
+    }
+    return assigned;
 }
 
 static void autonestbox_cycle(color_ostream &out) {
@@ -374,17 +355,14 @@ static void autonestbox_cycle(color_ostream &out) {
 
     DEBUG(cycle,out).print("running autonestbox cycle\n");
 
-    size_t processed = assign_nestboxes(out);
-    if (processed > 0) {
+    size_t assigned = assign_nestboxes(out);
+    if (assigned > 0) {
         std::stringstream ss;
-        ss << processed << " nestboxes were assigned.";
+        ss << assigned << " nestboxes " << (assigned == 1 ? "was" : "were") << " assigned to roaming egg layers.";
         string announce = ss.str();
-        DEBUG(cycle,out).print("%s\n", announce.c_str());
-        Gui::showAnnouncement(announce, 2, false);
         out << announce << std::endl;
+        Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_GREEN, false);
         // can complain again
-        // (might lead to spamming the same message twice, but catches the case
-        // where for example 2 new egglayers hatched right after 2 zones were created and assigned)
         did_complain = false;
     }
 }

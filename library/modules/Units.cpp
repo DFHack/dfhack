@@ -220,6 +220,29 @@ bool Units::isOwnRace(df::unit* unit)
     return unit->race == plotinfo->race_id;
 }
 
+bool Units::isNobleFromOtherSite(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    std::vector<NoblePosition> np;
+    if (!getNoblePositions(&np, unit))
+        return false;
+    
+    bool result = false;
+    for (auto const &pos : np)
+    {
+        if (!pos.position->flags.is_set(entity_position_flags::IS_LAW_MAKER))
+            continue;
+
+        if (pos.entity->id != plotinfo->group_id)
+            result = true; // is landholder and of a site not of the fort
+        
+        break; // is landholder but of the site, i.e. not of another site
+        // TODO: handle monarchy
+    }
+
+    return result;
+}
 
 bool Units::isAlive(df::unit *unit)
 {

@@ -220,7 +220,8 @@ bool Units::isOwnRace(df::unit* unit)
     return unit->race == plotinfo->race_id;
 }
 
-bool Units::isNobleFromOtherSite(df::unit* unit)
+// check if creature holds a landholder appointment from site that is not the player's fort
+bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -234,11 +235,21 @@ bool Units::isNobleFromOtherSite(df::unit* unit)
         if (!pos.position->flags.is_set(entity_position_flags::IS_LAW_MAKER))
             continue;
 
-        if (pos.entity->id != plotinfo->group_id)
-            result = true; // is landholder and of a site not of the fort
+        // (landholder rules this site) or (site is capital and landholder is monarch)
+        bool is_this_site = (pos.entity->id == plotinfo->group_id) ||
+                            (pos.entity->id == plotinfo->civ_id && plotinfo->king_arrived);
         
-        break; // is landholder but of the site, i.e. not of another site
-        // TODO: handle monarchy
+        if (ignore_own && is_this_site)
+        {
+            result = false;
+            break;
+        }
+
+        if (!is_this_site) 
+        {
+            result = true;
+            break;
+        }
     }
 
     return result;

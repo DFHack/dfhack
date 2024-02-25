@@ -228,7 +228,7 @@ bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
     std::vector<NoblePosition> np;
     if (!getNoblePositions(&np, unit))
         return false;
-    
+
     bool result = false;
     for (auto const &pos : np)
     {
@@ -238,7 +238,7 @@ bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
         // (landholder rules this site) or (site is capital and landholder is monarch)
         bool rules_this_site = (pos.entity->id == plotinfo->group_id) ||
                                (pos.entity->id == plotinfo->civ_id && plotinfo->king_arrived);
-        
+
         if (ignore_own && rules_this_site)
             return false;
 

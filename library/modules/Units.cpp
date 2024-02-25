@@ -236,20 +236,14 @@ bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
             continue;
 
         // (landholder rules this site) or (site is capital and landholder is monarch)
-        bool is_this_site = (pos.entity->id == plotinfo->group_id) ||
-                            (pos.entity->id == plotinfo->civ_id && plotinfo->king_arrived);
+        bool rules_this_site = (pos.entity->id == plotinfo->group_id) ||
+                               (pos.entity->id == plotinfo->civ_id && plotinfo->king_arrived);
         
-        if (ignore_own && is_this_site)
-        {
-            result = false;
-            break;
-        }
+        if (ignore_own && rules_this_site)
+            return false;
 
-        if (!is_this_site) 
-        {
+        if (!rules_this_site)
             result = true;
-            break;
-        }
     }
 
     return result;

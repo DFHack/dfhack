@@ -19,6 +19,7 @@
 
 #include "Debug.h"
 #include "LuaTools.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
@@ -40,6 +41,11 @@ namespace DFHack {
 
 static df::coord2d screenSize;
 
+// instrumentation
+uint32_t total_overlay_ms = 0;
+static uint32_t get_framework_timer()   { return total_overlay_ms; }
+static void     reset_framework_timer() { total_overlay_ms = 0;    }
+
 static void call_overlay_lua(color_ostream *out, const char *fn_name,
         int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
@@ -47,6 +53,8 @@ static void call_overlay_lua(color_ostream *out, const char *fn_name,
     DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
+
+    uint32_t start_ms = Core::getInstance().p->getTickCount();
 
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
@@ -57,6 +65,8 @@ static void call_overlay_lua(color_ostream *out, const char *fn_name,
     Lua::CallLuaModuleFunction(*out, L, "plugins.overlay", fn_name, nargs, nres,
                                std::forward<Lua::LuaLambda&&>(args_lambda),
                                std::forward<Lua::LuaLambda&&>(res_lambda));
+
+    total_overlay_ms += Core::getInstance().p->getTickCount() - start_ms;
 }
 
 template<class T>
@@ -198,3 +208,9 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     call_overlay_lua(&out, "update_hotspot_widgets");
     return CR_OK;
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(get_framework_timer),
+    DFHACK_LUA_FUNCTION(reset_framework_timer),
+    DFHACK_LUA_END
+};

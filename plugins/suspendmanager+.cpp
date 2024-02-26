@@ -1,0 +1,591 @@
+#include "Core.h"
+#include "Debug.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+
+#include "modules/World.h"
+#include "modules/Job.h"
+#include "modules/Maps.h"
+#include "modules/Buildings.h"
+
+#include "df/world.h"
+#include "df/construction_type.h"
+#include "df/coord.h"
+#include "df/job.h"
+#include "df/building.h"
+#include "df/tile_designation.h"
+
+
+#include <string>
+#include <vector>
+#include <bitset>
+#include <ranges>
+#include <functional>
+
+using std::string;
+using std::vector;
+using std::views::transform;
+
+using namespace DFHack;
+
+DFHACK_PLUGIN("suspendmanager+");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(world);
+
+namespace DFHack {
+    DBG_DECLARE(suspendmanagerp, control, DebugCategory::LINFO);
+    DBG_DECLARE(suspendmanagerp, cycle, DebugCategory::LINFO);
+}
+
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
+
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+    CONFIG_PREVENT_BLOCKING = 1,
+};
+
+
+static const int32_t CYCLE_TICKS = 1213; // about one day
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+///                          Main Logic                                     /////
+/////////////////////////////////////////////////////////////////////////////////
+
+enum Reason {
+    //The job is under water and dwarves will suspend the job when starting it
+    UNDER_WATER = 1,
+    // The job is planned by buildingplan, but not yet ready to start
+    BUILDINGPLAN = 2,
+    // Fuzzy risk detection of jobs blocking each other in shapes like corners
+    RISK_BLOCKING = 3,
+    // Building job on top of an erasable designation (smoothing, carving, ...)
+    ERASE_DESIGNATION = 4,
+    // Blocks a dead end (either a corridor or on top of a wall)
+    DEADEND = 5,
+    // Would cave in immediately on completion
+    UNSUPPORTED = 6
+};
+
+// Why do these cause problems when including "TileTypes.h"?
+// using namespace df::enums::construction_type;
+// using namespace df::enums::tiletype_shape;
+// using namespace df::enums::building_type;
+// using namespace df::enums::job_type;
+
+using df::coord;
+
+// set() is constexpr starting with C++23
+
+// impassible constructions
+static const std::bitset<64> construction_impassible = std::bitset<64>()
+    .set(construction_type::Wall)
+    .set(construction_type::Fortification);
+
+// constructions requiring same support as walls
+static const std::bitset<64> construction_wall_support = std::bitset<64>()
+    .set(construction_type::Wall)
+    .set(construction_type::Fortification)
+    .set(construction_type::UpStair)
+    .set(construction_type::UpDownStair);
+
+// constructions requiring same support as floors
+static const std::bitset<64> construction_floor_support = std::bitset<64>()
+    .set(construction_type::Floor)
+    .set(construction_type::DownStair)
+    .set(construction_type::Ramp)
+    .set(construction_type::TrackN)
+    .set(construction_type::TrackS)
+    .set(construction_type::TrackE)
+    .set(construction_type::TrackW)
+    .set(construction_type::TrackNS)
+    .set(construction_type::TrackNE)
+    .set(construction_type::TrackSE)
+    .set(construction_type::TrackSW)
+    .set(construction_type::TrackEW)
+    .set(construction_type::TrackNSE)
+    .set(construction_type::TrackNSW)
+    .set(construction_type::TrackNEW)
+    .set(construction_type::TrackSEW)
+    .set(construction_type::TrackNSEW)
+    .set(construction_type::TrackRampN)
+    .set(construction_type::TrackRampS)
+    .set(construction_type::TrackRampE)
+    .set(construction_type::TrackRampW)
+    .set(construction_type::TrackRampNS)
+    .set(construction_type::TrackRampNE)
+    .set(construction_type::TrackRampNW)
+    .set(construction_type::TrackRampSE)
+    .set(construction_type::TrackRampSW)
+    .set(construction_type::TrackRampEW)
+    .set(construction_type::TrackRampNSE)
+    .set(construction_type::TrackRampNSW)
+    .set(construction_type::TrackRampNEW)
+    .set(construction_type::TrackRampSEW)
+    .set(construction_type::TrackRampNSEW);
+
+
+static const std::bitset<64> shape_wall_support = std::bitset<64>()
+    .set(tiletype_shape::WALL)
+    .set(tiletype_shape::FORTIFICATION)
+    .set(tiletype_shape::STAIR_UP)
+    .set(tiletype_shape::STAIR_UPDOWN);
+
+static const std::bitset<64> shape_floor_support = std::bitset<64>()
+    .set(tiletype_shape::FLOOR)
+    .set(tiletype_shape::STAIR_DOWN)
+    .set(tiletype_shape::RAMP)
+    .set(tiletype_shape::BOULDER)
+    .set(tiletype_shape::PEBBLES)
+    .set(tiletype_shape::SAPLING)
+    .set(tiletype_shape::BROOK_BED)
+    .set(tiletype_shape::BROOK_TOP)
+    .set(tiletype_shape::SHRUB)
+    .set(tiletype_shape::TWIG)
+    .set(tiletype_shape::BRANCH)
+    .set(tiletype_shape::TRUNK_BRANCH);
+
+static const std::bitset<64> building_impassible = std::bitset<64>()
+    .set(building_type::Floodgate)
+    .set(building_type::Statue)
+    .set(building_type::WindowGlass)
+    .set(building_type::WindowGem)
+    .set(building_type::GrateWall)
+    .set(building_type::BarsVertical);
+
+/*
+static const std::bitset<64> erasable_designation = std::bitset<64>()
+    .set(job_type::CarveTrack)
+    .set(job_type::SmoothFloor)
+    .set(job_type::DetailFloor);
+*/
+
+
+// using offset = std::tuple<int,int,int> woud be preferable
+// However, tuple has non-public members and therefore tuples cannot be template arguments.
+struct offset {
+    int x,y,z;
+    constexpr offset(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {};
+};
+
+inline coord operator+(coord pos, offset off) {
+    return coord(pos.x + off.x, pos.y + off.y, pos.z + off.z);
+}
+
+// allows the idiom:
+// "for (auto npos : neighbors | transform(around(pos)))"
+static std::function<coord(offset)> around (coord pos) {
+    return [pos](offset o){ return pos + o; };
+}
+
+/* offsets for various neighborhoods
+ * using constexpr would be preferable,
+ * but using errors makes the length of the neighborhood part of its type
+*/
+static const vector<offset> neighbors {
+    offset{ -1,  0,  0 },
+    offset{ +1,  0,  0 },
+    offset{  0, -1,  0 },
+    offset{  0, +1,  0 }
+};
+
+static const vector<offset> neighboursWallSupportsWall {
+    offset{-1, 0, 0}, // orthogonal same level
+    offset{+1, 0, 0},
+    offset{0, -1, 0},
+    offset{0, +1, 0},
+    offset{-1, 0, -1}, // orthogonal level below
+    offset{+1, 0, -1},
+    offset{0, -1, -1},
+    offset{0, +1, -1},
+    offset{-1, 0, +1}, // orthogonal level above
+    offset{+1, 0, +1},
+    offset{0, -1, +1},
+    offset{0, +1, +1},
+    offset{0, 0, -1}, // directly below
+    offset{0, 0, +1}  // directly above
+};
+
+static const vector<offset> neighboursFloorSupportsWall {
+    offset{-1, 0, 0},  // orthogonal same level
+    offset{+1, 0, 0},
+    offset{0, -1, 0},
+    offset{0, +1, 0},
+    offset{0, 0, +1},  // directly above
+    offset{-1, 0, +1}, // orthogonal level above
+    offset{+1, 0, +1},
+    offset{0, -1, +1},
+    offset{0, +1, +1}
+};
+
+static const vector<offset> neighboursWallSupportsFloor {
+    offset{-1, 0, 0}, // orthogonal same level
+    offset{+1, 0, 0},
+    offset{0, -1, 0},
+    offset{0, +1, 0},
+    offset{-1, 0, -1}, // orthogonal level below
+    offset{+1, 0, -1},
+    offset{0, -1, -1},
+    offset{0, +1, -1},
+    offset{0, 0, -1}, // directly below
+};
+
+
+static const vector<offset> neighboursFloorSupportsFloor {
+    offset{ -1,  0,  0 },
+    offset{ +1,  0,  0 },
+    offset{  0, -1,  0 },
+    offset{  0, +1,  0 }
+};
+
+class SuspendManager {
+private:
+    static void suspend(df::job* job) {
+        job->flags.bits.suspend = true;
+        job->flags.bits.working = false;
+        Job::removeWorker(job, 0);
+    }
+
+    static void unsuspend(df::job* job) {
+        job->flags.bits.suspend = false;
+    }
+
+    static bool isConstructionJob(df::job *job) {
+        return job->job_type == job_type::ConstructBuilding;
+    }
+
+    static bool walkable (coord pos) { return Maps::getWalkableGroup(pos) > 0; }
+
+    // check if the tile is suitable tile to stand on for construction (walkable & not a tree branch)
+    static bool isSuitableAccess (coord pos) {
+        auto tile_type = Maps::getTileType(pos);
+        if (!tile_type)
+            return false; // no tiletype, likely out of bound
+        auto shape = tileShape(*tile_type);
+        if (shape == df::enums::tiletype_shape::BRANCH ||
+            shape == df::enums::tiletype_shape::TRUNK_BRANCH)
+            return false;
+
+        return walkable(pos);
+    }
+
+    static bool tileHasSupportWall(coord pos) {
+        auto tile_type = Maps::getTileType(pos);
+        if (tile_type) {
+            auto shape = tileShape(*tile_type);
+            return shape == df::enums::tiletype_shape::NONE ? false : shape_wall_support[shape];
+        }
+        return false;
+    }
+
+    static bool tileHasSupportFloor(coord pos) {
+        auto tile_type = Maps::getTileType(pos);
+        if (tile_type) {
+            auto shape = tileShape(*tile_type);
+            return shape == df::enums::tiletype_shape::NONE ? false : shape_floor_support[shape];
+        }
+        return false;
+    }
+
+    static bool tileHasSupportBuilding(coord pos) {
+        auto building = Buildings::findAtTile(pos);
+        if (building)
+            return building->getType() == df::building_type::Support && building->flags.bits.exists;
+        return false;
+    }
+
+
+    static bool isImpassable(df::building* building) {
+        auto type = building->getType();
+        if (type == building_type::Construction) {
+            return construction_impassible[building->getSubtype()];
+        }
+        else return building_impassible[type];
+    }
+
+    static bool hasWalkableNeighbor(coord pos) {
+        return std::ranges::any_of(neighbors | transform(around(pos)), walkable);
+    }
+
+
+    static df::building* plannedImpassibleAt(coord pos) {
+        auto building = Buildings::findAtTile(pos);
+        if (!building)
+            return nullptr;
+        if (!building->flags.bits.exists && isImpassable(building))
+            return building;
+        return nullptr;
+    }
+
+    static bool isBuildingPlanJob (df::job* job) {
+        // TODO check that this it correct
+        auto building = Job::getHolder(job);
+        return building && building->mat_type == -1;
+    }
+
+    static int riskOfStuckConstructionAt(coord pos) {
+        auto risk = 0;
+        for (auto npos : neighbors | transform(around(pos))) {
+            if (!isSuitableAccess(npos)) // original used walkable
+                // one access blocked, increase danger
+                ++risk;
+            else if (!plannedImpassibleAt(pos))
+                // walkable neighbour with no plan to build a wall, no danger
+                return -1;
+        }
+        return risk;
+    }
+
+
+
+    // return true if this job is at risk of blocking another one
+    static bool riskBlocking(color_ostream &out, df::job* job) {
+        if (job->job_type != job_type::ConstructBuilding)
+            return false;
+        TRACE(cycle,out).print("risk blocking: check construction job %d\n", job->id);
+
+        auto building = Job::getHolder(job);
+        if (!building || !isImpassable(building))
+            return false; // not building a blocking construction, no risk
+
+        coord pos(building->centerx,building->centery,building->z);
+        if (!isSuitableAccess(pos))
+            return false; // construction is on a non-walkable tile, can't block
+
+        auto risk = riskOfStuckConstructionAt(pos);
+        TRACE(cycle,out).print("  risk is %d\n", risk);
+
+        // TOTHINK: on a large grid, this will compute the same risk up to 5 times
+        for (auto npos : neighbors | transform(around(pos))) {
+            if (plannedImpassibleAt(npos) && riskOfStuckConstructionAt(npos) > risk)
+                return true; // neighbour job is at greater risk of getting stuck
+        }
+
+        return false;
+    }
+
+    static bool constructionIsUnsupported(color_ostream &out, df::job* job)
+    {
+        if (!isConstructionJob(job))
+            return false;
+
+        auto building = Job::getHolder(job);
+        if (!building || building->getType() != df::building_type::Construction)
+            return false;
+
+        TRACE(cycle,out).print("check (construction) construction job %d for support\n", job->id);
+
+        coord pos(building->centerx,building->centery,building->z);
+
+        // if no neighbour is walkable, it can't be constructed now anyways
+        if (!hasWalkableNeighbor(pos))
+            return false;
+
+
+
+        auto constr_type = building->getSubtype();
+
+        const vector<offset> *wall_would_support, *floor_would_support;
+        vector<offset> supportbld_would_support;
+
+        if (construction_floor_support[constr_type]){
+            wall_would_support = &neighboursWallSupportsFloor;
+            floor_would_support = &neighboursFloorSupportsFloor;
+            supportbld_would_support = vector<offset>{offset(0,0,-1)};
+        } else if (construction_wall_support[constr_type]){
+            wall_would_support = &neighboursWallSupportsWall;
+            floor_would_support = &neighboursFloorSupportsWall;
+            supportbld_would_support = vector<offset>{offset(0,0,-1), offset(0,0,+1)};
+        } else {
+            return false; // some unknown construction - don't suspend
+        }
+
+        for (auto npos : *wall_would_support | transform(around(pos)))
+            if (tileHasSupportWall(npos)) return false;
+        for (auto npos : *floor_would_support | transform(around(pos)))
+            if (tileHasSupportFloor(npos)) return false;
+        for (auto npos : supportbld_would_support | transform(around(pos)))
+            if (tileHasSupportBuilding(npos)) return false;
+
+        return true;
+    }
+
+
+
+    std::map<int,Reason> suspensions;
+    std::set<int> leadsToDeadend;
+    bool prevent_blocking = true;
+
+public:
+    void refresh(color_ostream &out)
+    {
+        DEBUG(cycle,out).print("starting refresh, prevent blocking is %s\n",
+                               prevent_blocking ? "true" : "false");
+        suspensions.clear();
+        leadsToDeadend.clear();
+
+        for (auto job : df::global::world->jobs.list) {
+            if (!isConstructionJob(job)) continue;
+
+            // external reasons
+            if (Maps::getTileDesignation(job->pos)->bits.flow_size > 1)
+                    suspensions[job->id]=Reason::UNDER_WATER;
+            else if (isBuildingPlanJob(job))
+                    suspensions[job->id]=Reason::BUILDINGPLAN;
+
+            if (!prevent_blocking) continue;
+
+            if (riskBlocking(out, job))
+                suspensions[job->id]=Reason::RISK_BLOCKING;
+
+            if (constructionIsUnsupported(out, job))
+                suspensions[job->id]=Reason::UNSUPPORTED;
+
+            // TODO: deadends
+
+            // TODO: protect designations
+        }
+        DEBUG(cycle,out).print("finished refresh: found %zu reasons for suspension\n",suspensions.size());
+    }
+
+    void do_cycle (color_ostream &out) {
+        refresh(out);
+        size_t num_suspend = 0, num_unsuspend = 0;
+
+        for (auto job : df::global::world->jobs.list) {
+            if (!isConstructionJob(job)) continue;
+
+            if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
+                unsuspend(job); // suspended for no reason
+                ++num_unsuspend;
+            } else if (!job->flags.bits.suspend && suspensions.contains(job->id)) {
+                suspend(job); // has reason to be suspended
+                ++num_suspend;
+            }
+        }
+        DEBUG(cycle,out).print("suspend %zu costructions and unsuspend %zu constructions\n",
+                              num_suspend, num_unsuspend);
+    }
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+///                      Interface for Plugin Manager                       /////
+/////////////////////////////////////////////////////////////////////////////////
+
+
+std::unique_ptr<SuspendManager> suspendmanager_instance;
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static void do_cycle(color_ostream &out);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
+
+    suspendmanager_instance = std::make_unique<SuspendManager>();
+
+    // provide a configuration interface for the plugin
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Automatically suspend and unsuspend constructions",
+        do_command));
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(control,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out);
+    } else {
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    suspendmanager_instance.release();
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentSiteData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+    }
+
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
+    return CR_OK;
+}
+
+
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    // be sure to suspend the core if any DF state is read or modified
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (parameters[0] == "now") {
+        do_cycle(out);
+    } else {
+        return CR_WRONG_USAGE;
+    }
+
+    return CR_OK;
+}
+
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static void do_cycle(color_ostream &out) {
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+
+    suspendmanager_instance->do_cycle(out);
+}

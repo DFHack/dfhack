@@ -221,7 +221,7 @@ bool Units::isOwnRace(df::unit* unit)
 }
 
 // check if creature holds a landholder appointment from site that is not the player's fort
-bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
+bool Units::isNobleFromOtherSite(df::unit* unit, bool include_own)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -239,7 +239,7 @@ bool Units::isNobleFromOtherSite(df::unit* unit, bool ignore_own)
         bool rules_this_site = (pos.entity->id == plotinfo->group_id) ||
                                (pos.entity->id == plotinfo->civ_id && plotinfo->king_arrived);
 
-        if (ignore_own && rules_this_site)
+        if (include_own && rules_this_site)
             return false;
 
         if (!rules_this_site)

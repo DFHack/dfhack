@@ -1304,6 +1304,14 @@ Units module
 
   The unit belongs to the player's race.
 
+* ``dfhack.units.isNobleFromOtherSite(unit[, include_own])``
+
+  The unit is a noble (landholder) ruling a site that is not the
+  player's fortress. This includes monarchs if your fortress is not
+  a capital yet. You can include your local rulers if they somehow
+  hold a concurrent position as ruler of another site by passing
+  ``true`` as the optional second parameter. 
+
 * ``dfhack.units.isAlive(unit)``
 
   The unit isn't dead or undead.

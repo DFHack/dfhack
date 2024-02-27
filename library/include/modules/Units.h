@@ -81,7 +81,7 @@ DFHACK_EXPORT bool isFortControlled(df::unit *unit);
 DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
 DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
 DFHACK_EXPORT bool isOwnRace(df::unit* unit);
-DFHACK_EXPORT bool isNobleFromOtherSite(df::unit* unit, bool ignore_own = true);
+DFHACK_EXPORT bool isNobleFromOtherSite(df::unit* unit, bool include_own = false);
 
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isDead(df::unit *unit);

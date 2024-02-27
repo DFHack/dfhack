@@ -368,7 +368,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             }
         }
         else
-            plantNames.insert(toUpper(parameters[i]));
+            plantNames.insert(toUpper_cp437(parameters[i]));
     }
     if (treesonly && shrubsonly) {
         out.printerr("Cannot specify both -t and -s at the same time!\n");

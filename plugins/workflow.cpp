@@ -711,7 +711,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 
         for (size_t i = 0; i < qtokens.size(); i++)
         {
-            auto token = toLower(qtokens[i]);
+            auto token = toLower_cp437(qtokens[i]);
 
             if (token == "local")
                 is_local = true;
@@ -720,7 +720,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
                 bool found = false;
                 FOR_ENUM_ITEMS(item_quality, qv)
                 {
-                    if (toLower(ENUM_KEY_STR(item_quality, qv)) != token)
+                    if (toLower_cp437(ENUM_KEY_STR(item_quality, qv)) != token)
                         continue;
                     minqual = qv;
                     found = true;

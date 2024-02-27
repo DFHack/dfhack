@@ -12,6 +12,44 @@ local GLOBAL_KEY = 'OVERLAY'
 
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
+local timers = {}
+local timers_start_ms = dfhack.getTickCount()
+function reset_timers()
+    timers = {}
+    timers_start_ms = dfhack.getTickCount()
+    reset_framework_timer()
+end
+function print_timers()
+    local elapsed = dfhack.getTickCount() - timers_start_ms
+    local sum = 0
+    for _,timer in pairs(timers) do
+        sum = sum + timer
+    end
+    if elapsed <= 0 then elapsed = 1 end
+    if sum <= 0 then sum = 1 end
+    local sorted = {}
+    for name,timer in pairs(timers) do
+        table.insert(sorted, {name=name, ms=timer})
+    end
+    table.sort(sorted, function(a, b) return a.ms > b.ms end)
+    for _, elem in ipairs(sorted) do
+        print(('%45s %8d ms  %6.2f%% overlay  %6.2f%% overall'):format(
+            elem.name, elem.ms, (elem.ms * 100) / sum, (elem.ms * 100) / elapsed
+        ))
+    end
+    print()
+    print(('elapsed time:   %10d ms (%dm %ds)'):format(
+        elapsed, elapsed // 60000, (elapsed % 60000) // 1000
+    ))
+    local framework_time = get_framework_timer() - sum
+    print(('framework time: %10d ms (%.2f%% of elapsed time)'):format(
+        framework_time, (framework_time * 100) / elapsed
+    ))
+    print(('widget time:    %10d ms (%.2f%% of elapsed time)'):format(
+        sum, (sum * 100) / elapsed
+    ))
+end
+
 -- ---------------- --
 -- state and config --
 -- ---------------- --
@@ -413,7 +451,9 @@ end
 local function detect_frame_change(widget, fn)
     local frame = widget.frame
     local w, h = frame.w, frame.h
+    local now_ms = dfhack.getTickCount()
     local ret = fn()
+    timers[widget.name] = (timers[widget.name] or 0) + (dfhack.getTickCount() - now_ms)
     if w ~= frame.w or h ~= frame.h then
         widget:updateLayout()
     end
@@ -439,6 +479,7 @@ local function do_update(name, db_entry, now_ms, vs)
     then
         return
     end
+    if not utils.getval(w.active) then return end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then
@@ -497,10 +538,14 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.active) or not utils.getval(w.visible) then
+            goto skip
+        end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
+        ::skip::
     end
     return false
 end
@@ -519,9 +564,11 @@ local function _render_viewscreen_widgets(vs_name, vs, dc)
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.visible) then goto skip end
         if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
+        ::skip::
     end
     return dc
 end

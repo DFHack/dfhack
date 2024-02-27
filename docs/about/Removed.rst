@@ -179,6 +179,12 @@ gui/automelt
 ============
 Replaced by the `stockpiles` overlay and the gui for `logistics`.
 
+.. _gui/create-tree:
+
+gui/create-tree
+===============
+Replaced by `gui/sandbox`.
+
 .. _gui/dig:
 
 gui/dig
@@ -190,6 +196,12 @@ Renamed to gui/design
 gui/hack-wish
 =============
 Replaced by `gui/create-item`.
+
+.. _gui/manager-quantity:
+
+gui/manager-quantity
+====================
+Ability to modify manager order quantities has been added to the vanilla UI.
 
 .. _gui/mechanisms:
 
@@ -256,6 +268,18 @@ Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
 title-version
 =============
 Replaced with an `overlay`.
+
+.. _warn-starving:
+
+warn-starving
+=============
+Functionality was merged into `gui/notify`.
+
+.. _warn-stealers:
+
+warn-stealers
+=============
+Functionality was merged into `gui/notify`.
 
 .. _warn-stuck-trees:
 

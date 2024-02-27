@@ -551,7 +551,7 @@ class StockListColumn : public ListColumn<T>
             raw_search.erase(0, 1);
         if (raw_search.size() && raw_search[raw_search.size() - 1] == '$')
             raw_search.erase(raw_search.size() - 1, 1);
-        return toLower(raw_search);
+        return toLower_cp437(raw_search);
     }
 
     virtual void tokenizeSearch (vector<string> *dest, const string search)
@@ -576,10 +576,10 @@ class StockListColumn : public ListColumn<T>
         if (!ListColumn<T>::showEntry(entry, search_tokens))
             return false;
 
-        string item_name = toLower(Items::getBookTitle(entry->elem->entries[0]));
+        string item_name = toLower_cp437(Items::getBookTitle(entry->elem->entries[0]));
         if (item_name == "")
         {
-            item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+            item_name = toLower_cp437(Items::getDescription(entry->elem->entries[0], 0, false));
         }
 
         if ((match_start || match_end) && raw_search.size() > item_name.size())
@@ -1462,12 +1462,12 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
 {
     if (!parameters.empty())
     {
-        if (toLower(parameters[0])[0] == 'v')
+        if (toLower_cp437(parameters[0])[0] == 'v')
         {
             out << "Stocks plugin" << endl << "Version: " << PLUGIN_VERSION << endl;
             return CR_OK;
         }
-        else if (toLower(parameters[0])[0] == 's')
+        else if (toLower_cp437(parameters[0])[0] == 's')
         {
             Screen::show(std::make_unique<ViewscreenStocks>(), plugin_self);
             return CR_OK;

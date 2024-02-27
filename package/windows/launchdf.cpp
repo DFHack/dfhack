@@ -123,7 +123,7 @@ bool waitForDF() {
 
     // in the future open an IPC connection so that we can proxy SteamAPI calls for the DFSteam module
 
-    // this will eventuallyh need to become a loop with a WaitForMultipleObjects call
+    // this will eventually need to become a loop with a WaitForMultipleObjects call
     WaitForSingleObject(hDF, INFINITE);
 
     CloseHandle(hDF);

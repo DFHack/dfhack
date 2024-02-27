@@ -56,18 +56,42 @@ Template for new versions:
 
 ## New Features
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
+- `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
+- ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
+- ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
+- `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
+- `autoclothing`: Fix enabled behavior
+- ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: don't display popup for all announcement types
+- ``gui.View:getMouseFramePos``: function now detects the correct coordinates even when the widget is nested within other frames
+- `strangemood`: correctly recognize Stonecutter and Stone Carver as moodable skills, move the Mason's boosted mood chance to the Stone Carver, and select Fell/Macabre based on long-term stress
 
 ## Misc Improvements
+- `autonestbox`: assign egg layers to the nestbox they have chosen if they have already chosen a nestbox
 - `regrass`: also regrow depleted cavern moss
 - `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
+- `buildingplan`: use closest matching item rather than newest matching item
+- `zone`: animal assignment dialog now shows distance to pasture/cage and allows sorting by distance
+- `zone`: animal assignment dialog shows number of creatures assigned to this pasture/cage/etc.
 
 ## Documentation
 
 ## API
+- Gui module Announcement functions now use DF's new announcement alert system, popups parsed into ``markup_text_boxst``
+- ``Gui::addCombatReport``, ``Gui::addCombatReportAuto``: add versions that take ``report *`` instead of report vector index
+- ``Gui::MTB_clean``, ``Gui::MTB_parse``, ``Gui::MTB_set_width``: new functions for manipulating ``markup_text_boxst``
+- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
+- Gui focus strings will now include ``dwarfmode/Default`` if the only other panel open is the Squads panel
+- ``Gui::revealInDwarfmodeMap``: unfollow any currently followed units/items so the viewport doesn't just jump back to where it was
 
 ## Lua
+- Overlay framework now respects ``active`` and ``visible`` widget attributes
+- ``dfhack.gui`` announcement functions use default arguments when omitted
+- ``dfhack.units.getCitizens`` now only returns units that are on the map
+- ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437
 
 ## Removed
 

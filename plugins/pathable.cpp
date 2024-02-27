@@ -158,8 +158,8 @@ static bool is_damp(const df::coord &pos) {
         will_leak(pos.x+1, pos.y, pos.z) ||
         will_leak(pos.x-1, pos.y+1, pos.z) ||
         will_leak(pos.x, pos.y+1, pos.z) ||
-        will_leak(pos.x+1, pos.y+1, pos.z);
-        will_leak(pos.x, pos.y+1, pos.z+1);
+        will_leak(pos.x+1, pos.y+1, pos.z) ||
+        will_leak(pos.x, pos.y, pos.z+1);
 }
 
 static void paintScreenWarmDamp(bool show_hidden = false) {

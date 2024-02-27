@@ -59,6 +59,7 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
+- `dig`: overlay that shows damp designations in ASCII mode now propertly highlights tiles that are damp because of an aquifer in the layer above
 - `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
 - ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
 - ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map

@@ -1363,7 +1363,7 @@ Units module
   player's fortress. This includes monarchs if your fortress is not
   a capital yet. You can include your local rulers if they somehow
   hold a concurrent position as ruler of another site by passing
-  ``true`` as the optional second parameter. 
+  ``true`` as the optional second parameter.
 
 * ``dfhack.units.isAlive(unit)``
 

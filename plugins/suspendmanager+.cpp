@@ -7,6 +7,7 @@
 #include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Buildings.h"
+#include "modules/EventManager.h"
 
 #include "df/world.h"
 #include "df/construction_type.h"
@@ -253,10 +254,6 @@ private:
 
     static void unsuspend(df::job* job) {
         job->flags.bits.suspend = false;
-    }
-
-    static bool isConstructionJob(df::job *job) {
-        return job->job_type == job_type::ConstructBuilding;
     }
 
     static bool walkable (coord pos) { return Maps::getWalkableGroup(pos) > 0; }
@@ -569,6 +566,10 @@ public:
         DEBUG(cycle,out).print("suspend %zu costructions and unsuspend %zu constructions\n",
                               num_suspend, num_unsuspend);
     }
+
+    static bool isConstructionJob(df::job *job) {
+        return job->job_type == job_type::ConstructBuilding;
+    }
 };
 
 
@@ -578,14 +579,18 @@ public:
 
 
 std::unique_ptr<SuspendManager> suspendmanager_instance;
+std::unique_ptr<EventManager::EventHandler> eventhandler_instance;
+
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void do_cycle(color_ostream &out);
+static void jobCompletedHandler(color_ostream& out, void* ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     suspendmanager_instance = std::make_unique<SuspendManager>();
+    eventhandler_instance = std::make_unique<EventManager::EventHandler>(jobCompletedHandler,1);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -607,8 +612,13 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
-        if (enable)
-            do_cycle(out);
+        if (enable) {
+             EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+             do_cycle(out);
+        } else {
+             EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+        }
+
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
@@ -620,6 +630,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(control,out).print("shutting down %s\n", plugin_name);
     suspendmanager_instance.release();
+    eventhandler_instance.release();
     return CR_OK;
 }
 
@@ -675,6 +686,12 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     return CR_OK;
 }
 
+static void jobCompletedHandler(color_ostream& out, void* ptr) {
+    DEBUG(cycle,out).print("job completed; updating suspensions\n");
+    df::job* job = static_cast<df::job*>(ptr);
+    if (SuspendManager::isConstructionJob(job))
+        do_cycle(out);
+}
 
 /////////////////////////////////////////////////////
 // cycle logic

@@ -14,6 +14,7 @@
 #include "df/job.h"
 #include "df/building.h"
 #include "df/tile_designation.h"
+#include "df/tile_occupancy.h"
 
 
 #include <string>
@@ -260,6 +261,28 @@ private:
 
     static bool walkable (coord pos) { return Maps::getWalkableGroup(pos) > 0; }
 
+    static bool buildingOnDesignation(df::building *building){
+        CHECK_NULL_POINTER(building);
+        auto z = building->z;
+        for (auto x = building->x1; x <= building->x2; ++x){
+            for (auto y = building->y1; x <= building->y2; ++x){
+                auto flags = Maps::getTileDesignation(x,y,z);
+                if (flags && (
+                    flags->bits.dig != df::tile_dig_designation::No ||
+                    flags->bits.smooth > 0))
+                    return true;
+                auto occupancy = Maps::getTileOccupancy(x,y,z);
+                if (occupancy && (
+                    occupancy->bits.carve_track_north ||
+                    occupancy->bits.carve_track_east ||
+                    occupancy->bits.carve_track_south ||
+                    occupancy->bits.carve_track_west))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     // check if the tile is suitable tile to stand on for construction (walkable & not a tree branch)
     static bool isSuitableAccess (coord pos) {
         auto tile_type = Maps::getTileType(pos);
@@ -330,12 +353,12 @@ private:
     static int riskOfStuckConstructionAt(coord pos) {
         auto risk = 0;
         for (auto npos : neighbors | transform(around(pos))) {
-            if (!isSuitableAccess(npos)) // original used walkable
-                // one access blocked, increase danger
-                ++risk;
-            else if (!plannedImpassibleAt(pos))
+            if (!isSuitableAccess(npos)) { // original used walkable
+                ++risk; // one access blocked, increase danger
+            } else if (!plannedImpassibleAt(npos)) {
                 // walkable neighbour with no plan to build a wall, no danger
                 return -1;
+            }
         }
         return risk;
     }
@@ -414,6 +437,65 @@ private:
         return true;
     }
 
+    void suspendDeadend (color_ostream &out, df::job* job) {
+        auto building = Job::getHolder(job);
+        if (!building) return;
+        coord pos(building->centerx,building->centery,building->z);
+
+        for (size_t count = 0; count < 1000; ++count){
+
+            df::building* exit = nullptr;
+            for (auto npos : neighbors | transform(around(pos))) {
+                if (!isSuitableAccess(npos))
+                    continue; // non walkable neighbour, not an exit
+
+                auto impassiblePlan = plannedImpassibleAt(npos);
+                if (!impassiblePlan)
+                    // walkable neighbour with no building scheduled, not in a dead end
+                    return;
+
+                if (leadsToDeadend.contains(impassiblePlan->id))
+                    continue; // already visited, not an exit
+
+                if (exit)
+                    return; // more than one exit, not in a dead end
+
+                exit = impassiblePlan;
+            }
+
+            if (!exit) return;
+
+            // exit is the single exit point of this corridor, suspend its construction job...
+            for (auto exit_job : exit->jobs) {
+                if (exit_job->job_type == df::job_type::ConstructBuilding) {
+                    suspensions[exit_job->id] = Reason::DEADEND;
+                }
+            }
+            // ...mark the current tile of the corridor as leading to a dead-end...
+            leadsToDeadend.insert(building->id);
+
+            // ...and continue the exploration from its position
+            building = exit;
+            pos = coord(building->centerx,building->centery,building->z);
+        }
+    }
+
+    void preserveDesigations (df::job* job){
+        CHECK_NULL_POINTER(job)
+        if (job->job_type == df::job_type::CarveTrack ||
+            job->job_type == df::job_type::SmoothFloor ||
+            job->job_type == df::job_type::DetailFloor)
+        {
+            auto building = Buildings::findAtTile(job->pos);
+            if (building) {
+                for (auto building_job : building->jobs) {
+                    if (building_job->job_type == df::job_type::ConstructBuilding) {
+                        suspensions[building_job->id] = Reason::ERASE_DESIGNATION;
+                    }
+                }
+            }
+        }
+    }
 
 
     std::map<int,Reason> suspensions;
@@ -429,25 +511,42 @@ public:
         leadsToDeadend.clear();
 
         for (auto job : df::global::world->jobs.list) {
+
+            // check carving/detailing jobs and suspend buildings over them
+            preserveDesigations(job);
+
+            // remaining checks only applied to construction jobs
             if (!isConstructionJob(job)) continue;
 
+            // may suspend other jobs, must always be called
+            if (prevent_blocking) suspendDeadend(out, job);
+
+            if (suspensions.contains(job->id))
+                continue; // we already have a reason to suspend this job
+
             // external reasons
-            if (Maps::getTileDesignation(job->pos)->bits.flow_size > 1)
-                    suspensions[job->id]=Reason::UNDER_WATER;
-            else if (isBuildingPlanJob(job))
-                    suspensions[job->id]=Reason::BUILDINGPLAN;
-
-            if (!prevent_blocking) continue;
-
-            if (riskBlocking(out, job))
-                suspensions[job->id]=Reason::RISK_BLOCKING;
+            if (Maps::getTileDesignation(job->pos)->bits.flow_size > 1) {
+                suspensions[job->id]=Reason::UNDER_WATER;
+                continue;
+            } else if (isBuildingPlanJob(job)) {
+                suspensions[job->id]=Reason::BUILDINGPLAN;
+                continue;
+            }
 
             if (constructionIsUnsupported(out, job))
                 suspensions[job->id]=Reason::UNSUPPORTED;
 
-            // TODO: deadends
+            if (!prevent_blocking) continue;
 
-            // TODO: protect designations
+            if (riskBlocking(out, job)) {
+                suspensions[job->id]=Reason::RISK_BLOCKING;
+                continue;
+            }
+
+            // protect (unprocessed) designations
+            auto building = Job::getHolder(job);
+            if (building && buildingOnDesignation(building))
+                suspensions[job->id]=Reason::ERASE_DESIGNATION;
         }
         DEBUG(cycle,out).print("finished refresh: found %zu reasons for suspension\n",suspensions.size());
     }

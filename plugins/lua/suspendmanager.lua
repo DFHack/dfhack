@@ -19,12 +19,11 @@ function isKeptSuspended(job)
     return suspendmanager_isKeptSuspended(job)
 end
 
--- function isEnabled()
---     return suspendmanager_isEnabled()
--- end
-
+-- TODO: check that this is appropriate
 function isBuildingPlanJob(job)
-    return false -- TODO
+    --- @type building
+    local building = dfhack.job.getHolder(job)
+    return building and building.mat_type == -1
 end
 
 function runOnce(prevent_blocking)

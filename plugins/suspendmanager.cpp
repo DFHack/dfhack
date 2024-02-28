@@ -76,12 +76,6 @@ inline bool isExternalReason(Reason reason) {
     return reason == Reason::BUILDINGPLAN || reason == Reason::UNDER_WATER;
 }
 
-// Why do these cause problems when including "TileTypes.h"?
-// using namespace df::enums::construction_type;
-// using namespace df::enums::tiletype_shape;
-// using namespace df::enums::building_type;
-// using namespace df::enums::job_type;
-
 using df::coord;
 
 // set() is constexpr starting with C++23
@@ -161,13 +155,6 @@ static const std::bitset<64> building_impassible = std::bitset<64>()
     .set(building_type::WindowGem)
     .set(building_type::GrateWall)
     .set(building_type::BarsVertical);
-
-/*
-static const std::bitset<64> erasable_designation = std::bitset<64>()
-    .set(job_type::CarveTrack)
-    .set(job_type::SmoothFloor)
-    .set(job_type::DetailFloor);
-*/
 
 
 // using offset = std::tuple<int,int,int> woud be preferable

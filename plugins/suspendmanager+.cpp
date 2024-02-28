@@ -186,7 +186,7 @@ static std::function<coord(offset)> around (coord pos) {
 
 /* offsets for various neighborhoods
  * using constexpr would be preferable,
- * but using errors makes the length of the neighborhood part of its type
+ * but using arrays makes the length of the neighborhood part of its type
 */
 static const vector<offset> neighbors {
     offset{ -1,  0,  0 },
@@ -512,7 +512,7 @@ public:
             // check carving/detailing jobs and suspend buildings over them
             preserveDesigations(job);
 
-            // remaining checks only applied to construction jobs
+            // remaining checks only apply to construction jobs
             if (!isConstructionJob(job)) continue;
 
             // may suspend other jobs, must always be called
@@ -552,15 +552,23 @@ public:
         refresh(out);
         size_t num_suspend = 0, num_unsuspend = 0;
 
+        auto reason = suspensions.end();
+        auto getReason = [&reason, this](df::job* job) {
+            reason = suspensions.find(job->id);
+            return reason != suspensions.end();
+        };
+
         for (auto job : df::global::world->jobs.list) {
             if (!isConstructionJob(job)) continue;
 
             if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
                 unsuspend(job); // suspended for no reason
                 ++num_unsuspend;
-            } else if (!job->flags.bits.suspend && suspensions.contains(job->id)) {
-                suspend(job); // has reason to be suspended
-                ++num_suspend;
+            } else if (!job->flags.bits.suspend && getReason(job)) {
+                if (reason->second != Reason::UNDER_WATER && reason->second != Reason::BUILDINGPLAN) {
+                    suspend(job); // has internal reason to be suspended
+                    ++num_suspend;
+                }
             }
         }
         DEBUG(cycle,out).print("suspend %zu costructions and unsuspend %zu constructions\n",

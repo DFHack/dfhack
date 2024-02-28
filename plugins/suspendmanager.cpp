@@ -3,26 +3,25 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
-#include "modules/World.h"
-#include "modules/Job.h"
-#include "modules/Maps.h"
 #include "modules/Buildings.h"
 #include "modules/EventManager.h"
+#include "modules/Job.h"
+#include "modules/Maps.h"
+#include "modules/World.h"
 
-#include "df/world.h"
+#include "df/building.h"
 #include "df/construction_type.h"
 #include "df/coord.h"
 #include "df/job.h"
-#include "df/building.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
+#include "df/world.h"
 
-
+#include <bitset>
+#include <functional>
+#include <ranges>
 #include <string>
 #include <vector>
-#include <bitset>
-#include <ranges>
-#include <functional>
 
 using std::string;
 using std::vector;
@@ -30,14 +29,14 @@ using std::views::transform;
 
 using namespace DFHack;
 
-DFHACK_PLUGIN("suspendmanager+");
+DFHACK_PLUGIN("suspendmanager");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
-    DBG_DECLARE(suspendmanagerp, control, DebugCategory::LINFO);
-    DBG_DECLARE(suspendmanagerp, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(suspendmanager, control, DebugCategory::LINFO);
+    DBG_DECLARE(suspendmanager, cycle, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -72,6 +71,10 @@ enum Reason {
     // Would cave in immediately on completion
     UNSUPPORTED = 6
 };
+
+inline bool isExternalReason(Reason reason) {
+    return reason == Reason::BUILDINGPLAN || reason == Reason::UNDER_WATER;
+}
 
 // Why do these cause problems when including "TileTypes.h"?
 // using namespace df::enums::construction_type;
@@ -494,12 +497,23 @@ private:
         }
     }
 
+    // try to fetch suspension reason for a job without modifying the map
+    // (std::map::operator[] inserts the key if it isn't found)
+    bool tryGetReason (df::job* job, Reason &reason) {
+        auto reason_it = suspensions.find(job->id);
+        if (reason_it != suspensions.end()) {
+                reason = reason_it->second;
+                return true;
+        }
+        return false;
+    }
 
     std::map<int,Reason> suspensions;
     std::set<int> leadsToDeadend;
-    bool prevent_blocking = true;
 
 public:
+    bool prevent_blocking = true;
+
     void refresh(color_ostream &out)
     {
         DEBUG(cycle,out).print("starting refresh, prevent blocking is %s\n",
@@ -552,11 +566,8 @@ public:
         refresh(out);
         size_t num_suspend = 0, num_unsuspend = 0;
 
-        auto reason = suspensions.end();
-        auto getReason = [&reason, this](df::job* job) {
-            reason = suspensions.find(job->id);
-            return reason != suspensions.end();
-        };
+        Reason reason;
+
 
         for (auto job : df::global::world->jobs.list) {
             if (!isConstructionJob(job)) continue;
@@ -564,8 +575,8 @@ public:
             if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
                 unsuspend(job); // suspended for no reason
                 ++num_unsuspend;
-            } else if (!job->flags.bits.suspend && getReason(job)) {
-                if (reason->second != Reason::UNDER_WATER && reason->second != Reason::BUILDINGPLAN) {
+            } else if (!job->flags.bits.suspend && tryGetReason(job,reason)) {
+                if (!isExternalReason(reason)) {
                     suspend(job); // has internal reason to be suspended
                     ++num_suspend;
                 }
@@ -578,8 +589,34 @@ public:
     static bool isConstructionJob(df::job *job) {
         return job->job_type == job_type::ConstructBuilding;
     }
-};
 
+    bool keptSuspended(df::job *job) {
+        Reason reason;
+        if (tryGetReason(job,reason) && !isExternalReason(reason))
+            return true;
+        else
+            return false;
+    }
+
+    std::string suspensionDescription (df::job *job) {
+        Reason reason;
+        if (tryGetReason(job,reason)) {
+            switch (reason) {
+                case Reason::DEADEND:
+                    return "Blocks another build job";
+                case Reason::RISK_BLOCKING:
+                    return "May block another build job";
+                case Reason::UNSUPPORTED:
+                    return "Would collapse immediately";
+                case Reason::ERASE_DESIGNATION:
+                    return "Waiting for carve/smooth/engrave";
+                default:
+                    return "External reason";
+            }
+        }
+        return "not suspended by suspendmanager";
+    }
+};
 
 /////////////////////////////////////////////////////////////////////////////////
 ///                      Interface for Plugin Manager                       /////
@@ -713,3 +750,41 @@ static void do_cycle(color_ostream &out) {
 
     suspendmanager_instance->do_cycle(out);
 }
+
+/////////////////////////////////////////////////////
+// Lua exports
+//
+
+// Return a human readable description of why suspendmanager keeps a job suspended
+static std::string suspendmanager_suspensionDescription(df::job *job) {
+    if (is_enabled) {
+        CHECK_NULL_POINTER(suspendmanager_instance);
+        return suspendmanager_instance->suspensionDescription(job);
+    } else {
+        return "suspendmanager disabled";
+    }
+}
+
+// check whether suspendmanager keeps a job suspended
+static bool suspendmanager_isKeptSuspended(df::job *job) {
+    if (is_enabled) {
+        CHECK_NULL_POINTER(suspendmanager_instance);
+        return suspendmanager_instance->keptSuspended(job);
+    } else {
+        return false;
+    }
+}
+
+static void suspendmanager_runOnce(color_ostream &out, bool blocking) {
+    suspendmanager_instance->prevent_blocking = blocking;
+    do_cycle(out);
+    suspendmanager_instance->prevent_blocking = true;
+}
+
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(suspendmanager_suspensionDescription),
+    DFHACK_LUA_FUNCTION(suspendmanager_isKeptSuspended),
+    DFHACK_LUA_FUNCTION(suspendmanager_runOnce),
+    DFHACK_LUA_END
+};

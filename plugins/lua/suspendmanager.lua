@@ -45,7 +45,6 @@ StatusOverlay.ATTRS{
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
     default_enabled=true,
-    overlay_only=true,
 }
 
 function StatusOverlay:init()
@@ -84,7 +83,6 @@ ToggleOverlay.ATTRS{
     frame={w=40, h=1},
     frame_background=gui.CLEAR_PEN,
     default_enabled=true,
-    overlay_only=true,
 }
 
 function ToggleOverlay:init()

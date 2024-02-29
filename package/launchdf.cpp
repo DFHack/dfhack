@@ -1,12 +1,20 @@
-#include <process.h>
-#include <windows.h>
-#include <TlHelp32.h>
+#ifdef WIN32
+#  include <process.h>
+#  include <windows.h>
+#  include <TlHelp32.h>
+#else
+#  include <unistd.h>
+#  include <sys/wait.h>
+#endif
+
 #include "steam_api.h"
 
 #include <string>
 
 const uint32 DFHACK_STEAM_APPID = 2346660;
 const uint32 DF_STEAM_APPID = 975370;
+
+#ifdef WIN32
 
 static BOOL is_running_on_wine() {
     typedef const char* (CDECL wine_get_version)(void);
@@ -28,7 +36,7 @@ static LPCWSTR launch_via_steam_posix() {
     return L"Could not launch Dwarf Fortress";
 }
 
-static LPCWSTR launch_via_steam_windows() {
+static LPCWSTR launch_via_steam() {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
 
@@ -50,19 +58,29 @@ static LPCWSTR launch_via_steam_windows() {
     BOOL res = CreateProcessW(steamPath, commandLine,
         NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 
-    if (res)
-    {
+    if (res) {
         WaitForSingleObject(pi.hProcess, INFINITE);
 
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         return NULL;
-    }
-    else
-    {
+    } else {
         return L"Could not launch Dwarf Fortress";
     }
 }
+
+#else
+
+static const char * launch_via_steam() {
+    static const char * command = "steam -applaunch 975370";
+    if (system(command) != 0)
+        return "failed to launch DF via steam";
+    return NULL;
+}
+
+#endif
+
+#ifdef WIN32
 
 static LPCWSTR launch_direct() {
     STARTUPINFOW si;
@@ -87,8 +105,20 @@ static LPCWSTR launch_direct() {
     return L"Could not launch via non-steam fallback method";
 }
 
-DWORD findDwarfFortressProcess()
-{
+#else
+
+static const char * launch_direct() {
+    static const char * command = "./dfhack";
+    if (system(command) != 0)
+        return "failed to launch DF via ./dfhack launcher";
+    return NULL;
+}
+
+#endif
+
+#ifdef WIN32
+
+DWORD findDwarfFortressProcess() {
     PROCESSENTRY32W entry;
     entry.dwSize = sizeof(PROCESSENTRY32W);
 
@@ -131,33 +161,92 @@ bool waitForDF() {
     return true;
 }
 
+#else
+
+static pid_t findDwarfFortressProcess() {
+    char buf[512];
+    static const char * command = "pidof -s dwarfort";
+    FILE *cmd_pipe = popen(command, "r");
+    if (!cmd_pipe)
+        return -1;
+
+    bool success = fgets(buf, 512, cmd_pipe) != NULL;
+    pclose(cmd_pipe);
+
+    if (!success)
+        return -1;
+
+    return strtoul(buf, NULL, 10);
+}
+
+bool waitForDF() {
+    pid_t df_pid = findDwarfFortressProcess();
+
+    if (df_pid <= 0)
+        return false;
+
+    waitpid(df_pid, NULL, 0);
+
+    return true;
+}
+
+#endif
+
+#ifdef WIN32
+
+bool wrap_launch(LPCWSTR (*launch_fn)()) {
+    LPCWSTR err = launch_fn();
+    if (err != NULL) {
+        MessageBoxW(NULL, err, NULL, 0);
+        return false;
+    }
+    return true;
+}
+
+#else
+
+void notify(const char * msg) {
+    std::string command = "notify-send --app-name=DFHack \"";
+    command += msg;
+    command += "\"";
+    printf("%s\n", msg);
+    int result = system(command.c_str());
+    // if this fails; it's ok
+    (void)result;
+}
+
+bool wrap_launch(const char * (*launch_fn)()) {
+    const char * err = launch_fn();
+    if (err != NULL) {
+        notify(err);
+        return false;
+    }
+    return true;
+}
+
+#endif
+
+#ifdef WIN32
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nShowCmd) {
+#else
+int main(int argc, char* argv[]) {
+#endif
 
     // initialize steam context
-    if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID))
-    {
+    if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID)) {
         exit(0);
     }
 
     if (waitForDF())
         exit(0);
 
-    if (!SteamAPI_Init())
-    {
+    if (!SteamAPI_Init()) {
         // could not initialize steam context, attempt fallback launch
-        LPCWSTR err = launch_direct();
-        if (err != NULL)
-        {
-            MessageBoxW(NULL, err, NULL, 0);
-            exit(1);
-        }
-        exit(0);
+        exit(wrap_launch(launch_direct) ? 0 : 1);
     }
 
-    bool wine = is_running_on_wine();
-
-    if (wine)
-    {
+#ifdef WIN32
+    if (is_running_on_wine()) {
         // attempt launch via steam client
         LPCWSTR err = launch_via_steam_posix();
 
@@ -172,22 +261,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
         exit(0);
     }
+#endif
 
     // steam detected and not running in wine
 
-    bool df_installed = SteamApps()->BIsAppInstalled(DF_STEAM_APPID);
-
-    if (!df_installed)
-    {
+    if (!SteamApps()->BIsAppInstalled(DF_STEAM_APPID)) {
         // Steam DF is not installed. Assume DF is installed in same directory as DFHack and do a fallback launch
-        LPCWSTR err = launch_direct();
-
-        if (err != NULL)
-        {
-            MessageBoxW(NULL, err, NULL, 0);
-            exit(1);
-        }
-        exit(0);
+        exit(wrap_launch(launch_direct) ? 0 : 1);
     }
 
     // obtain DF app path
@@ -201,31 +281,37 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     std::string df_install_folder = (b2 != -1) ? std::string(buf) : "";
 
 
-    if (df_install_folder != dfhack_install_folder)
-    {
+    if (df_install_folder != dfhack_install_folder) {
         // DF and DFHack are not installed in the same library
+#ifdef WIN32
         MessageBoxW(NULL, L"DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.", NULL, 0);
+#else
+        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.\n");
+#endif
         exit(1);
     }
 
     if (waitForDF())
         exit(0);
 
-    LPCWSTR err = launch_via_steam_windows();
-    if (err != NULL)
-    {
-        MessageBoxW(NULL, err, NULL, 0);
+    if (!wrap_launch(launch_via_steam))
         exit(1);
-    }
 
     int counter = 0;
     while (!waitForDF()) {
-        if (counter++ > 60)
-        {
+        if (counter++ > 60) {
+#ifdef WIN32
             MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);
+#else
+            notify("Dwarf Fortress took too long to launch, aborting\n");
+#endif
             exit(1);
         }
+#ifdef WIN32
         Sleep(1000);
+#else
+        usleep(1000000);
+#endif
     }
 
     exit(0);

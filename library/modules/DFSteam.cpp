@@ -7,7 +7,7 @@
 
 namespace DFHack
 {
-DBG_DECLARE(core, dfsteam, DebugCategory::LINFO);
+    DBG_DECLARE(core, dfsteam, DebugCategory::LINFO);
 }
 
 using namespace DFHack;
@@ -18,8 +18,8 @@ static bool g_steam_initialized = false;
 static DFLibrary* g_steam_handle = nullptr;
 static const std::vector<std::string> STEAM_LIBS {
     "steam_api64.dll",
-        "steam_api", // TODO: validate this on OSX
-        "libsteam_api.so" // TODO: validate this on Linux
+    "libsteam_api.so",
+    "steam_api"  // TODO: validate this on OSX
 };
 
 bool (*g_SteamAPI_Init)() = nullptr;
@@ -28,7 +28,6 @@ int (*g_SteamAPI_GetHSteamUser)() = nullptr;
 bool (*g_SteamAPI_RestartAppIfNecessary)(uint32_t unOwnAppID) = nullptr;
 void* (*g_SteamInternal_FindOrCreateUserInterface)(int, const char*) = nullptr;
 bool (*g_SteamAPI_ISteamApps_BIsAppInstalled)(void *iSteamApps, uint32_t appID) = nullptr;
-
 
 static void bind_all(color_ostream& out, DFLibrary* handle) {
 #define bind(name) \
@@ -162,9 +161,55 @@ static bool launchDFHack(color_ostream& out) {
     return !!res;
 }
 #else
+static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
+    char buf[512];
+    std::string command = "pidof -s ";
+    command += name;
+    FILE *cmd_pipe = popen(command.c_str(), "r");
+    if (!cmd_pipe) {
+        WARN(dfsteam, out).print("failed to exec '%s' (error: %d)\n",
+            command.c_str(), errno);
+        return false;
+    }
+
+    bool success = fgets(buf, 512, cmd_pipe) != NULL;
+    pclose(cmd_pipe);
+
+    if (!success) {
+        WARN(dfsteam, out).print("failed to read output from '%s' (error: %d)\n",
+            command.c_str(), errno);
+        return false;
+    }
+
+    pid = strtoul(buf, NULL, 10);
+    return true;
+}
+
 static bool launchDFHack(color_ostream& out) {
-    // TODO once we have a non-Windows build to work with
-    return false;
+    pid_t pid;
+    if (!findProcess(out, "launchdf", pid))
+        return false;
+    if (pid != 0) {
+        DEBUG(dfsteam, out).print("launchdf already running\n");
+        return true;
+    }
+
+    pid = fork();
+    if (pid == -1) {
+        WARN(dfsteam, out).print("failed to fork (error: %d)\n", errno);
+        return false;
+    } else if (pid == 0) {
+        // child process
+        static const char * command = "hack/launchdf";
+        static char * const argv[] = { (char * const)command, NULL };
+        static char * const environ[] = { NULL };
+
+        execve(argv[0], argv, environ);
+        _exit(EXIT_FAILURE);
+    }
+
+    // parent process
+    return true;
 }
 #endif
 

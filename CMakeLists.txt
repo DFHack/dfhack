@@ -602,4 +602,4 @@ if(BUILD_LIBRARY AND BUILD_SIZECHECK)
     add_dependencies(dfhack sizecheck)
 endif()
 
-add_subdirectory(package/windows)
+add_subdirectory(package)

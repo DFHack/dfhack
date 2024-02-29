@@ -188,13 +188,13 @@ bool waitForDF() {
 
     char path[32];
     int in_fd = inotify_init();
-    sprintf(path, "/proc/%i/exe", df_pid);
+    snprintf(path, 32, "/proc/%i/exe", df_pid);
     if (inotify_add_watch(in_fd, path, IN_CLOSE_NOWRITE) < 0) {
         close(in_fd);
         return false;
     }
 
-    sprintf(path, "/proc/%i", df_pid);
+    snprintf(path, 32, "/proc/%i", df_pid);
     int dir_fd = open(path, 0);
     if (dir_fd < 0) {
         close(in_fd);

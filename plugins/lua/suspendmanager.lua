@@ -26,10 +26,13 @@ function isBuildingPlanJob(job)
     return building and building.mat_type == -1
 end
 
-function runOnce(prevent_blocking)
+function runOnce(prevent_blocking, quiet)
     suspendmanager_runOnce(prevent_blocking)
+    local stats = suspendmanager_getStatus()
+    if (not quiet) then
+        print(stats)
+    end
 end
-
 
 -- Overlay Widgets
 StatusOverlay = defclass(StatusOverlay, overlay.OverlayWidget)

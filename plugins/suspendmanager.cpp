@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
@@ -18,6 +19,7 @@
 #include "df/world.h"
 
 #include <bitset>
+#include <format>
 #include <functional>
 #include <ranges>
 #include <string>
@@ -74,6 +76,21 @@ enum Reason {
 
 inline bool isExternalReason(Reason reason) {
     return reason == Reason::BUILDINGPLAN || reason == Reason::UNDER_WATER;
+}
+
+static string reasonToString(Reason reason) {
+  switch (reason) {
+    case Reason::DEADEND:
+        return "Blocks another build job";
+    case Reason::RISK_BLOCKING:
+        return "May block another build job";
+    case Reason::UNSUPPORTED:
+        return "Would collapse immediately";
+    case Reason::ERASE_DESIGNATION:
+        return "Waiting for carve/smooth/engrave";
+    default:
+        return "External reason";
+    }
 }
 
 using df::coord;
@@ -497,9 +514,29 @@ private:
 
     std::map<int,Reason> suspensions;
     std::set<int> leadsToDeadend;
+    size_t num_suspend = 0, num_unsuspend = 0;
 
 public:
     bool prevent_blocking = true;
+
+    // gather some statistics about the last call to do_cycle()
+    string getStatus (color_ostream &out) {
+        std::map<Reason,int> stats;
+
+        for (auto [_ , reason] : suspensions) {
+            stats[reason == Reason::DEADEND ? Reason::RISK_BLOCKING : reason]++;
+        }
+
+        string res;
+        res += std::format("suspended {} and unsuspend {} jobs\n", num_suspend, num_unsuspend);
+        res += std::format("maintaining {} suspension reasons\n", suspensions.size());
+        for (auto stat : stats) {
+            res += std::format(" {:5}  {}\n", stat.second, reasonToString(stat.first));
+        }
+
+        DEBUG(control,out).print("res: %s", res.c_str());
+        return res;
+    }
 
     void refresh(color_ostream &out)
     {
@@ -551,7 +588,7 @@ public:
 
     void do_cycle (color_ostream &out) {
         refresh(out);
-        size_t num_suspend = 0, num_unsuspend = 0;
+        num_suspend = 0, num_unsuspend = 0;
 
         Reason reason;
 
@@ -588,18 +625,7 @@ public:
     std::string suspensionDescription (df::job *job) {
         Reason reason;
         if (tryGetReason(job,reason)) {
-            switch (reason) {
-                case Reason::DEADEND:
-                    return "Blocks another build job";
-                case Reason::RISK_BLOCKING:
-                    return "May block another build job";
-                case Reason::UNSUPPORTED:
-                    return "Would collapse immediately";
-                case Reason::ERASE_DESIGNATION:
-                    return "Waiting for carve/smooth/engrave";
-                default:
-                    return "External reason";
-            }
+            return reasonToString(reason);
         }
         return "not suspended by suspendmanager";
     }
@@ -699,7 +725,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     // be sure to suspend the core if any DF state is read or modified
     CoreSuspender suspend;
@@ -711,11 +736,26 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
     if (parameters[0] == "now") {
         do_cycle(out);
+        return CR_OK;
+    } else if (parameters[0] == "enable") {
+        return plugin_enable(out,true);
+    } else if (parameters[0] == "disable") {
+        return plugin_enable(out,false);
+    } else if (parameters[0] == "set" && parameters[1] == "preventblocking") {
+        if (parameters[3] == "true") {
+            suspendmanager_instance->prevent_blocking = true;
+            if (is_enabled) do_cycle(out);
+            return CR_OK;
+        } else if (parameters[3] == "false") {
+            suspendmanager_instance->prevent_blocking = false;
+            if (is_enabled) do_cycle(out);
+            return CR_OK;
+        } else
+            return CR_WRONG_USAGE;
     } else {
         return CR_WRONG_USAGE;
     }
 
-    return CR_OK;
 }
 
 static void jobCompletedHandler(color_ostream& out, void* ptr) {
@@ -737,6 +777,7 @@ static void do_cycle(color_ostream &out) {
 
     suspendmanager_instance->do_cycle(out);
 }
+
 
 /////////////////////////////////////////////////////
 // Lua exports
@@ -763,9 +804,14 @@ static bool suspendmanager_isKeptSuspended(df::job *job) {
 }
 
 static void suspendmanager_runOnce(color_ostream &out, bool blocking) {
+    auto save = suspendmanager_instance->prevent_blocking;
     suspendmanager_instance->prevent_blocking = blocking;
     do_cycle(out);
-    suspendmanager_instance->prevent_blocking = true;
+    suspendmanager_instance->prevent_blocking = save;
+}
+
+static string suspendmanager_getStatus(color_ostream &out) {
+    return suspendmanager_instance->getStatus(out);
 }
 
 
@@ -773,5 +819,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(suspendmanager_suspensionDescription),
     DFHACK_LUA_FUNCTION(suspendmanager_isKeptSuspended),
     DFHACK_LUA_FUNCTION(suspendmanager_runOnce),
+    DFHACK_LUA_FUNCTION(suspendmanager_getStatus),
     DFHACK_LUA_END
 };

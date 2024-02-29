@@ -3,8 +3,9 @@
 #  include <windows.h>
 #  include <TlHelp32.h>
 #else
+#  include <fcntl.h>
 #  include <unistd.h>
-#  include <sys/wait.h>
+#  include <sys/inotify.h>
 #endif
 
 #include "steam_api.h"
@@ -185,8 +186,32 @@ bool waitForDF() {
     if (df_pid <= 0)
         return false;
 
-    waitpid(df_pid, NULL, 0);
+    char path[32];
+    int in_fd = inotify_init();
+    sprintf(path, "/proc/%i/exe", df_pid);
+    if (inotify_add_watch(in_fd, path, IN_CLOSE_NOWRITE) < 0) {
+        close(in_fd);
+        return false;
+    }
 
+    sprintf(path, "/proc/%i", df_pid);
+    int dir_fd = open(path, 0);
+    if (dir_fd < 0) {
+        close(in_fd);
+        return false;
+    }
+
+    while (true) {
+        struct inotify_event event;
+        if (read(in_fd, &event, sizeof(event)) < 0)
+            break;
+        int f = openat(dir_fd, "fd", 0);
+        if (f < 0) break;
+        close(f);
+    }
+
+    close(dir_fd);
+    close(in_fd);
     return true;
 }
 
@@ -231,7 +256,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 #else
 int main(int argc, char* argv[]) {
 #endif
-
     // initialize steam context
     if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID)) {
         exit(0);

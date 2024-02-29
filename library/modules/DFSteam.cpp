@@ -178,16 +178,12 @@ static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
         return false;
     }
 
-    bool success = fgets(buf, 512, cmd_pipe) != NULL;
+    bool found = fgets(buf, 512, cmd_pipe) != NULL;
     pclose(cmd_pipe);
 
-    if (!success) {
-        WARN(dfsteam, out).print("failed to read output from '%s' (error: %d)\n",
-            command.c_str(), errno);
-        return false;
-    }
-
-    pid = strtoul(buf, NULL, 10);
+    pid = 0;
+    if (found)
+        pid = strtoul(buf, NULL, 10);
     return true;
 }
 
@@ -207,10 +203,8 @@ static bool launchDFHack(color_ostream& out) {
     } else if (pid == 0) {
         // child process
         static const char * command = "hack/launchdf";
-        static char * const argv[] = { (char * const)command, NULL };
-        static char * const environ[] = { NULL };
-
-        execve(argv[0], argv, environ);
+        unsetenv("SteamAppId");
+        execl(command, command, NULL);
         _exit(EXIT_FAILURE);
     }
 

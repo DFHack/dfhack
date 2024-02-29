@@ -19,7 +19,7 @@
 #include "df/world.h"
 
 #include <bitset>
-#include <format>
+#include <sstream>
 #include <functional>
 #include <ranges>
 #include <string>
@@ -527,15 +527,13 @@ public:
             stats[reason == Reason::DEADEND ? Reason::RISK_BLOCKING : reason]++;
         }
 
-        string res;
-        res += std::format("suspended {} and unsuspend {} jobs\n", num_suspend, num_unsuspend);
-        res += std::format("maintaining {} suspension reasons\n", suspensions.size());
+        std::stringstream res;
+        res << "maintaining " << suspensions.size() << " suspension reasons\n";
         for (auto stat : stats) {
-            res += std::format(" {:5}  {}\n", stat.second, reasonToString(stat.first));
+            res << std::setw(5) << stat.second << " " << reasonToString(stat.first) << std::endl;
         }
 
-        DEBUG(control,out).print("res: %s", res.c_str());
-        return res;
+        return res.str();
     }
 
     void refresh(color_ostream &out)

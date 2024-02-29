@@ -93,9 +93,11 @@ void DFSteam::cleanup(color_ostream& out) {
 }
 
 #ifdef WIN32
+
 #include <process.h>
 #include <windows.h>
 #include <TlHelp32.h>
+
 static bool is_running_on_wine() {
     typedef const char* (CDECL wine_get_version)(void);
     static wine_get_version* pwine_get_version;
@@ -160,7 +162,11 @@ static bool launchDFHack(color_ostream& out) {
 
     return !!res;
 }
+
 #else
+
+#include <unistd.h>
+
 static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
     char buf[512];
     std::string command = "pidof -s ";
@@ -211,6 +217,7 @@ static bool launchDFHack(color_ostream& out) {
     // parent process
     return true;
 }
+
 #endif
 
 void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {

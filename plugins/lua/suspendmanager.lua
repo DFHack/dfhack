@@ -28,9 +28,8 @@ end
 
 function runOnce(prevent_blocking, quiet)
     suspendmanager_runOnce(prevent_blocking)
-    local stats = suspendmanager_getStatus()
     if (not quiet) then
-        print(stats)
+        print(suspendmanager_getStatus())
     end
 end
 

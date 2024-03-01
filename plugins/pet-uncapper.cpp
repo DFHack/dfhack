@@ -53,7 +53,7 @@ bool impregnate(df::unit* female, df::unit* male) {
     return true;
 }
 
-void impregnateMany(color_ostream &out) {
+void impregnateMany(color_ostream &out, bool verbose = false) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
@@ -73,7 +73,9 @@ void impregnateMany(color_ostream &out) {
             continue;
         popcount[unit->race]++;
         if (unit->pregnancy_genes) {
-            // already pregnant
+            // already pregnant -- if remaining time is less than the current setting, speed it up
+            if ((int)unit->pregnancy_timer > config.get_int(CONFIG_PREG_TIME))
+                unit->pregnancy_timer = config.get_int(CONFIG_PREG_TIME);
             // for player convenience and population stability, count the fetus toward the population cap
             popcount[unit->race]++;
             continue;
@@ -116,8 +118,8 @@ void impregnateMany(color_ostream &out) {
         }
     }
 
-    if (pregnancies) {
-        INFO(cycle, out).print("%d pet pregnanc%s initiated",
+    if (pregnancies || verbose) {
+        INFO(cycle, out).print("%d pet pregnanc%s initiated\n",
             pregnancies, pregnancies == 1 ? "y" : "ies");
     }
 }
@@ -136,7 +138,7 @@ command_result do_command(color_ostream &out, vector<string> & parameters) {
         out.print("updating pregnancies every %d ticks\n", config.get_int(CONFIG_FREQ));
         out.print("pregancies last %d ticks\n", config.get_int(CONFIG_PREG_TIME));
     } else if (parameters[0] == "now") {
-        impregnateMany(out);
+        impregnateMany(out, true);
     } else {
         if (parameters.size() < 2)
             return CR_WRONG_USAGE;

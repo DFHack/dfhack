@@ -5,6 +5,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/unit.h"
 #include "df/world.h"
 
 #include <random>

@@ -497,7 +497,7 @@ namespace DFHack {namespace Lua {
      * an argument tuple (i.e. fixed number of arguments of various types)
      */
     template<typename... aT>
-    DFHACK_EXPORT bool CallLuaModuleFunction(
+    bool CallLuaModuleFunction(
         color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args,
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {
@@ -515,7 +515,7 @@ namespace DFHack {namespace Lua {
     }
 
     template<typename aT>
-    DFHACK_EXPORT bool CallLuaModuleFunction(
+    bool CallLuaModuleFunction(
         color_ostream &out, const char* module_name, const char* fn_name, const std::vector<aT> &args,
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {

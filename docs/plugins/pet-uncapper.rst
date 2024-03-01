@@ -3,7 +3,7 @@ pet-uncapper
 
 .. dfhack-tool::
     :summary: Modify the pet population cap.
-    :tags: unavailable
+    :tags: fort gameplay animals
 
 In vanilla DF, pets will not reproduce unless the population is below 50 and the
 number of children of that species is below a certain percentage. This plugin

@@ -525,10 +525,10 @@ public:
         }
 
         std::stringstream res;
-        res << "suspended " << num_suspend << " and unsuspend " << num_unsuspend <<  " jobs\n";
+        res << "suspended " << num_suspend << " and unsuspended " << num_unsuspend <<  " jobs\n";
         res << "maintaining " << suspensions.size() << " suspension reasons\n";
         for (auto stat : stats) {
-            res << std::setw(5) << stat.second << " " << reasonToString(stat.first) << std::endl;
+            res << std::setw(5) << stat.second << "x " << reasonToString(stat.first) << std::endl;
         }
 
         return res.str();
@@ -602,7 +602,7 @@ public:
                 }
             }
         }
-        DEBUG(cycle,out).print("suspended %zu constructions and unsuspend %zu constructions\n",
+        DEBUG(cycle,out).print("suspended %zu constructions and unsuspended %zu constructions\n",
                               num_suspend, num_unsuspend);
     }
 
@@ -714,11 +714,14 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_PREVENT_BLOCKING, suspendmanager_instance->prevent_blocking);
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
-                            is_enabled ? "true" : "false");
+    suspendmanager_instance->prevent_blocking = config.get_bool(CONFIG_PREVENT_BLOCKING);
+    DEBUG(control,out).print("loading persisted state: enabled is %s / prevent_blocking is %s\n",
+                            is_enabled ? "true" : "false",
+                            suspendmanager_instance->prevent_blocking ? "true" : "false");
     return CR_OK;
 }
 
@@ -748,7 +751,16 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return CR_FAILURE;
     }
 
-    if (parameters[0] == "now") {
+    if (parameters.size() == 0) {
+        if (!is_enabled) {
+            out.print("%s is disabled", plugin_name);
+        } else {
+            out.print(
+                "%s is enabled %s supending blocking jobs\n", plugin_name,
+                suspendmanager_instance->prevent_blocking ? "and" : "but not");
+        }
+        return CR_OK;
+    } else if (parameters[0] == "now") {
         do_cycle(out);
         return CR_OK;
     } else if (parameters[0] == "enable") {
@@ -756,20 +768,27 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     } else if (parameters[0] == "disable") {
         return plugin_enable(out,false);
     } else if (parameters[0] == "set" && parameters[1] == "preventblocking") {
-        if (parameters[3] == "true") {
+        if (parameters[2] == "true") {
             suspendmanager_instance->prevent_blocking = true;
-            if (is_enabled) do_cycle(out);
+            config.set_bool(CONFIG_PREVENT_BLOCKING, true);
+            if (is_enabled) {
+                do_cycle(out);
+                out.print("%s", suspendmanager_instance->getStatus(out).c_str());
+            }
             return CR_OK;
-        } else if (parameters[3] == "false") {
+        } else if (parameters[2] == "false") {
             suspendmanager_instance->prevent_blocking = false;
-            if (is_enabled) do_cycle(out);
+            config.set_bool(CONFIG_PREVENT_BLOCKING, false);
+            if (is_enabled) {
+                do_cycle(out);
+                out.print("%s", suspendmanager_instance->getStatus(out).c_str());
+            }
             return CR_OK;
         } else
             return CR_WRONG_USAGE;
     } else {
         return CR_WRONG_USAGE;
     }
-
 }
 
 static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters) {

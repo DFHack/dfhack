@@ -649,6 +649,7 @@ std::unique_ptr<EventManager::EventHandler> eventhandler_instance;
 
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
+static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters);
 static void do_cycle(color_ostream &out);
 static void jobCompletedHandler(color_ostream& out, void* ptr);
 
@@ -663,6 +664,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         plugin_name,
          "Intelligently suspend and unsuspend jobs.",
         do_command));
+
+    commands.push_back(PluginCommand(
+        "unsuspend",
+        "Unsuspends building construction jobs.",
+        do_unsuspend_command));
 
     return CR_OK;
 }
@@ -764,6 +770,11 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return CR_WRONG_USAGE;
     }
 
+}
+
+static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters) {
+    auto ok = Lua::CallLuaModuleFunction(out, "plugins.suspendmanager", "unsuspend_command", parameters);
+    return ok ? CR_OK : CR_FAILURE;
 }
 
 static void jobCompletedHandler(color_ostream& out, void* ptr) {

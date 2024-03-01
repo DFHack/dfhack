@@ -53,6 +53,7 @@ Template for new versions:
 
 ## New Tools
 - `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
+- `pet-uncapper`: (reinstated, renamed from ``petcapRemover``) allow pets to breed beyond the default population cap of 50
 
 ## New Features
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping

@@ -19,10 +19,11 @@
 #include "df/world.h"
 
 #include <bitset>
-#include <sstream>
 #include <functional>
 #include <ranges>
+#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using std::string;
@@ -253,6 +254,8 @@ static const vector<offset> neighboursFloorSupportsFloor {
 
 class SuspendManager {
 private:
+    static constexpr size_t max_deadend_depth = 1000;
+
     static void suspend(df::job* job) {
         job->flags.bits.suspend = true;
         job->flags.bits.working = false;
@@ -348,12 +351,6 @@ private:
         return nullptr;
     }
 
-    static bool isBuildingPlanJob (df::job* job) {
-        // TODO check that this it correct
-        auto building = Job::getHolder(job);
-        return building && building->mat_type == -1;
-    }
-
     static int riskOfStuckConstructionAt(coord pos) {
         auto risk = 0;
         for (auto npos : neighbors | transform(around(pos))) {
@@ -446,7 +443,7 @@ private:
         if (!building) return;
         coord pos(building->centerx,building->centery,building->z);
 
-        for (size_t count = 0; count < 1000; ++count){
+        for (size_t count = 0; count < max_deadend_depth; ++count){
 
             df::building* exit = nullptr;
             for (auto npos : neighbors | transform(around(pos))) {
@@ -512,8 +509,8 @@ private:
         return false;
     }
 
-    std::map<int,Reason> suspensions;
-    std::set<int> leadsToDeadend;
+    std::unordered_map<int,Reason> suspensions;
+    std::unordered_set<int> leadsToDeadend;
     size_t num_suspend = 0, num_unsuspend = 0;
 
 public:
@@ -528,6 +525,7 @@ public:
         }
 
         std::stringstream res;
+        res << "suspended " << num_suspend << " and unsuspend " << num_unsuspend <<  " jobs\n";
         res << "maintaining " << suspensions.size() << " suspension reasons\n";
         for (auto stat : stats) {
             res << std::setw(5) << stat.second << " " << reasonToString(stat.first) << std::endl;
@@ -604,7 +602,7 @@ public:
                 }
             }
         }
-        DEBUG(cycle,out).print("suspend %zu costructions and unsuspend %zu constructions\n",
+        DEBUG(cycle,out).print("suspended %zu constructions and unsuspend %zu constructions\n",
                               num_suspend, num_unsuspend);
     }
 
@@ -626,6 +624,18 @@ public:
             return reasonToString(reason);
         }
         return "not suspended by suspendmanager";
+    }
+
+    /**
+     * This is a proxy, since there is currently no (easy) way for C++ plugins
+     * to communicate with each other.
+     * NOTE: If buidingplan is changed to set the material early
+     * (e.g., to solve the issue of some planned buildings not rendering)
+     * this will need to be adapted.
+     */
+    static bool isBuildingPlanJob (df::job* job) {
+        auto building = Job::getHolder(job);
+        return building && building->mat_type == -1;
     }
 };
 
@@ -651,7 +661,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
         plugin_name,
-        "Automatically suspend and unsuspend constructions",
+         "Intelligently suspend and unsuspend jobs.",
         do_command));
 
     return CR_OK;
@@ -812,11 +822,16 @@ static string suspendmanager_getStatus(color_ostream &out) {
     return suspendmanager_instance->getStatus(out);
 }
 
+static bool suspendmanager_isBuildingPlanJob(df::job *job) {
+    return suspendmanager_instance->isBuildingPlanJob(job);
+}
+
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(suspendmanager_suspensionDescription),
     DFHACK_LUA_FUNCTION(suspendmanager_isKeptSuspended),
     DFHACK_LUA_FUNCTION(suspendmanager_runOnce),
     DFHACK_LUA_FUNCTION(suspendmanager_getStatus),
+    DFHACK_LUA_FUNCTION(suspendmanager_isBuildingPlanJob),
     DFHACK_LUA_END
 };

@@ -69,7 +69,7 @@ Template for new versions:
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: don't display popup for all announcement types
 - ``gui.View:getMouseFramePos``: function now detects the correct coordinates even when the widget is nested within other frames
 - `strangemood`: correctly recognize Stonecutter and Stone Carver as moodable skills, move the Mason's boosted mood chance to the Stone Carver, and select Fell/Macabre based on long-term stress
-- Items module fn ``detach_item`` can now detach items losely stored in buildings. Impacts ``autodump``, ``Items::moveToGround``, etc.
+- Items module fn ``detach_item`` can now detach items loosely stored in buildings. Impacts ``autodump``, ``Items::moveToGround``, etc.
 
 ## Misc Improvements
 - `autonestbox`: assign egg layers to the nestbox they have chosen if they have already chosen a nestbox

@@ -64,6 +64,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``widgets.Label``: ``text_pen``, ``text_dpen``, and ``text_hpen`` can either be a pen or a function that dynamically returns a pen
 
 ## Removed
 

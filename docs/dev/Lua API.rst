@@ -2199,6 +2199,11 @@ General
   then the extents are checked. Otherwise, returns whether the x and y map coordinates
   are within the building's bounding box.
 
+* ``dfhack.buildings.getName(building)``
+
+  Wrapper for ``df::building::getName(std::string *)`` method that returns a Lua string
+  instead of requiring a ``std::string`` to be allocated.
+
 * ``dfhack.buildings.hasSupport(pos,size)``
 
   Checks if a bridge constructed at specified position would have

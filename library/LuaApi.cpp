@@ -2504,6 +2504,14 @@ static bool buildings_containsTile(df::building *bld, int x, int y) {
     return Buildings::containsTile(bld, df::coord2d(x,y));
 }
 
+static std::string buildings_getName(df::building *b)
+{
+    CHECK_NULL_POINTER(b);
+    std::string s;
+    b->getName(&s);
+    return s;
+}
+
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, getGeneralRef),
     WRAPM(Buildings, getSpecificRef),
@@ -2512,6 +2520,7 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, checkFreeTiles),
     WRAPM(Buildings, countExtentTiles),
     WRAPN(containsTile, buildings_containsTile),
+    WRAPN(getName, buildings_getName),
     WRAPM(Buildings, hasSupport),
     WRAPM(Buildings, constructAbstract),
     WRAPM(Buildings, constructWithItems),

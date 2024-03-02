@@ -714,7 +714,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
-        config.set_bool(CONFIG_PREVENT_BLOCKING, suspendmanager_instance->prevent_blocking);
+        config.set_bool(CONFIG_PREVENT_BLOCKING, true);
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);

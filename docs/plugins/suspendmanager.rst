@@ -5,6 +5,10 @@ suspendmanager
     :summary: Intelligently suspend and unsuspend jobs.
     :tags: fort auto jobs
 
+.. dfhack-command:: unsuspend
+   Unsuspends building construction jobs.
+
+
 This tool will watch your active jobs and:
 
 - unsuspend jobs that have become suspended due to inaccessible materials,
@@ -32,6 +36,24 @@ Usage
 ``suspendmanager set preventblocking (true|false)``
     Prevent construction jobs from blocking each others (enabled by default). See `suspend`.
 
+``unsuspend [-s|--skipblocking] [-q|--quiet]``
+    Perform a single cycle, suspending and unsuspending jobs as described above,
+    regardless of whether `suspendmanager` is enabled or not. Passing ``-s`` or
+    ``--skipblocking`` also unsuspends jobs that may block other jobs. Passing
+    ``-q`` or ``--quiet`` suppresses summary output.
+
+    This allows you to quickly recover if a bunch of jobs were suspended due to
+    the workers getting scared off by wildlife or items temporarily blocking
+    building sites.
+
+Options
+-------
+
+``-q``, ``--quiet``
+    Disable text output
+
+``-s``, ``--skipblocking``
+    Don't unsuspend construction jobs that risk blocking other jobs
 
 Overlay
 -------

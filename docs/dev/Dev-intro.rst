@@ -24,7 +24,7 @@ Architecture diagrams
 These two diagrams give a very high level overview of where DFHack fits into
 the DF call structure and how the pieces of DFHack itself fit together:
 
-.. image:: https://lh3.googleusercontent.com/drive-viewer/AEYmBYQ7U-jtkzHwpI6qNFKoUqbuaFMMQ46f_YlxEN_yVn0iDFiawzWhmnH2-gL1mrVet2bp5rWMIoL0VepCnnMuMCZm348f=s1600
+.. image:: https://lh3.googleusercontent.com/d/1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
   :alt: DFHack logic injection diagram
   :target: https://drive.google.com/file/d/1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
   :align: center
@@ -41,7 +41,7 @@ viewscreen class to provide `overlay` functionality.
 The dfhooks API is defined in DF's open source component ``g_src``:
 https://github.com/Putnam3145/Dwarf-Fortress--libgraphics--/blob/master/g_src/dfhooks.h
 
-.. image:: https://lh3.googleusercontent.com/drive-viewer/AEYmBYRKXT53brrF21gpccZXqFyMiL___ReKKsl0LTADX2C-A_0sJi1jo7y_gksqNRoXV9SueJcLv6_Memm3LF4RDgbUD185=s1600
+.. image:: https://lh3.googleusercontent.com/d/1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
   :alt: DFHack tool call graph
   :target: https://drive.google.com/file/d/1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
   :align: center

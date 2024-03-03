@@ -17,6 +17,7 @@ local timers_start_ms = dfhack.getTickCount()
 function reset_timers()
     timers = {}
     timers_start_ms = dfhack.getTickCount()
+    reset_framework_timer()
 end
 function print_timers()
     local elapsed = dfhack.getTickCount() - timers_start_ms
@@ -37,10 +38,14 @@ function print_timers()
         ))
     end
     print()
-    print(('elapsed time: %10d ms (%dm %ds)'):format(
+    print(('elapsed time:   %10d ms (%dm %ds)'):format(
         elapsed, elapsed // 60000, (elapsed % 60000) // 1000
     ))
-    print(('widget time:  %10d ms (%.2f%% of elapsed time)'):format(
+    local framework_time = get_framework_timer() - sum
+    print(('framework time: %10d ms (%.2f%% of elapsed time)'):format(
+        framework_time, (framework_time * 100) / elapsed
+    ))
+    print(('widget time:    %10d ms (%.2f%% of elapsed time)'):format(
         sum, (sum * 100) / elapsed
     ))
 end

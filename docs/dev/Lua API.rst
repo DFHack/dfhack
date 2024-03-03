@@ -5176,8 +5176,8 @@ It has the following attributes:
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
 :text_hpen: Specifies the pen for text hovered over by the mouse, if a click
-            handler is registered. By default, this will invert the foreground
-            and background colors.
+    handler is registered. By default, this will invert the foreground and
+    background colors.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
@@ -5188,6 +5188,9 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
+
+``text_pen``, ``text_dpen``, and ``text_hpen`` can either be a pen or a
+function that dynamically returns a pen.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via

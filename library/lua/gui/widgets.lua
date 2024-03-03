@@ -1192,6 +1192,7 @@ local function make_hpen(pen, hpen)
 end
 
 function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
+    pen, dpen, hpen = getval(pen), getval(dpen), getval(hpen)
     local width = 0
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]

@@ -8,7 +8,7 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.11")
-set(DFHACK_RELEASE "r6")
+set(DFHACK_RELEASE "r7")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -62,9 +62,9 @@ endif()
 
 if(WIN32)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1938 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1938))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1938 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1939 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1939))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1939 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
@@ -602,4 +602,4 @@ if(BUILD_LIBRARY AND BUILD_SIZECHECK)
     add_dependencies(dfhack sizecheck)
 endif()
 
-add_subdirectory(package/windows)
+add_subdirectory(package)

@@ -47,7 +47,7 @@ interactively."
 ""
 -- Preparation (before you embark!) --
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the prefs/embark_profiles.txt file.
-Run gui/control-panel and enable settings on the Autostart tab. See the /setup_help notes for details.
+Run gui/control-panel and enable settings on the Autostart tabs. See the /setup_help notes for details.
 ""
 -- Set settings and preload initial orders --
 DFHack command,Blueprint,Generate orders,Notes
@@ -110,8 +110,8 @@ These are Dreamfort's suggestions for adjustments to settings and initial setup.
 You can save some time by setting up your settings in gui/control-panel before you embark.
 "Beyond the bugfix tools that are enabled by default, we recommend enabling the following DFHack tools in gui/control-panel (but they are not required if you prefer to do these things manually):"
 ""
-"On the gui/control-panel ""Autostart"" tab, enable:"
-"""Automation"" subtab:"
+"On the gui/control-panel ""Autostart"" tabs, enable:"
+"""Automation"":"
 - autobutcher
 - autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
@@ -133,10 +133,10 @@ You can save some time by setting up your settings in gui/control-panel before y
 - suspendmanager
 - tailor
 """Gameplay"" subtab:"
+- combine
 - dwarfvet
-- warn-stranded
 - work-now
-"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
+"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tabs instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""
 "Now, after you've arrived at your embark site, open the nobles screen and:"
 "- Assign dwarves to at least manager, chief medical dwarf, broker, and bookkeeper noble roles (they can all be the same dwarf)"
@@ -474,12 +474,12 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,`,,,,,,,,,n/guarddogs(5x1),~,~,~,~,,,,,,,,,,,`,,`
 ,,,`,,`,,`,"n{name=""Nestbox 8""}(1x1)","n{name=""Nestbox 9""}(1x1)","n{name=""Nestbox 10""}(1x1)","n{name=""Nestbox 11""}(1x1)","n{name=""Nestbox 12""}(1x1)","n{name=""Nestbox 13""}(1x1)","n{name=""Nestbox 14""}(1x1)",`,,,,,,`,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
-,,,`,,`,"B{name=""Surface barracks""}(8x5)",,,,,,,,`,,,,,,,,`,"m{name=""Welcome area/wagon parking lot""}(8x5)",,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,"n{name=""Siege bait pasture""}",,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,"t{name=""Caged wildlife taming area""}(1x1)",,`,,,,,,,,`,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,`,"n{name=""Prisoner processing pen""}(1x-2)",`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,"B{name=""Surface barracks""}",B,B,B,B,B,B,B,`,,,,,,,,`,"m{name=""Welcome area/wagon parking lot""}(8x5)",,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,"n{name=""Siege bait pasture""}",,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,"n{name=""Prisoner processing pen""}(1x2)",B,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
@@ -1495,7 +1495,7 @@ doors/farming_doors
 ,,,,,,`,`,`,~,,`,,"c{name=""Seeds feeder"" give_to=""Seeds"" take_from=""Starting food""}:+seeds(4x3)",,,,`,,`,,`,`,`
 ,,,"u{name=""Bags"" take_from=""Starting misc""}:-cat_furniture/type+bags(2x2)",~,,`,`,`,~,,`,,`,`,`,`,`,,`
 ,,`,~,~,,`,`,`,~,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
-,,`,"c{name=""Jugs"" take_from=""Starting misc""}:+cat_finished_goods/core,total+woodtools(2x2)",~,`,`,`,`,"u{name=""Barrels"" take_from=""Starting misc,Starting food""}:-cat_furniture/type+barrels(1x2)",`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,`,"c{name=""Jugs"" take_from=""Starting misc"" give_to=""Cookable food""}:+cat_finished_goods/core,total+woodtools(2x2)",~,`,`,`,`,"u{name=""Barrels"" take_from=""Starting misc,Starting food""}:-cat_furniture/type+barrels(1x2)",`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
 ,,,~,~,,`,`,`,~,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
 ,,,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
 ,,"c{name=""Plants"" barrels=-1 take_from=""Starting food""}:+plants",c,c,c,c,c,c,c,c,c,,`,`,~,`,`,,"c{name=""Cookable food"" barrels=-1 take_from=""Starting food""}:+cat_food/meat/,fish/prepared/,egg/,cheese/,leaves/,powder/,glob/,liquid/plant/,paste/,pressed/,milk,royal_jelly-dye-cat_food/tallow,thread,liquid/misc/",c,c,c,c,c,c,c,c,c

@@ -57,6 +57,7 @@ jobs:
       cache-readonly: true
       common-files: false
       stonesense: true
+      launchdf: true
     secrets: inherit
 
   deploy-to-steam:

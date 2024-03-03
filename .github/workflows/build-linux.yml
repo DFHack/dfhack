@@ -35,6 +35,9 @@ on:
       stonesense:
         type: boolean
         default: false
+      launchdf:
+        type: boolean
+        default: false
       extras:
         type: boolean
         default: false
@@ -92,6 +95,14 @@ jobs:
           repository: ${{ inputs.structures_ref && github.repository || 'DFHack/df-structures' }}
           ref: ${{ inputs.structures_ref }}
           path: library/xml
+      - name: Get 3rd party SDKs
+        if: inputs.launchdf
+        uses: actions/checkout@v3
+        with:
+          repository: DFHack/3rdparty
+          ref: main
+          ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
+          path: depends/steam
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v3
@@ -117,6 +128,7 @@ jobs:
             -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} \
             -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files }} \
             -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} \
+            -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} \
             -DBUILD_DEV_PLUGINS:BOOL=${{ inputs.extras }} \
             -DBUILD_SIZECHECK:BOOL=${{ inputs.extras }} \
             -DBUILD_SKELETON:BOOL=${{ inputs.extras }} \

@@ -1,8 +1,8 @@
-project(package_windows)
+project(package)
 
-option(BUILD_DFLAUNCH "Whether to build the Steam launcher exectuable (requires Steam SDK)." OFF)
+option(BUILD_DFLAUNCH "Whether to build the Steam launcher executable (requires Steam SDK)." OFF)
 
-if(WIN32 AND BUILD_DFLAUNCH)
+if(BUILD_DFLAUNCH)
     # builder must manually download Steam SDK
     set (STEAMAPI_DIR ${dfhack_SOURCE_DIR}/depends/steam)
     set (STEAMAPI_VER 156)
@@ -20,13 +20,23 @@ if(WIN32 AND BUILD_DFLAUNCH)
             DESTINATION ${STEAMAPI_DIR})
     endif()
 
-    set(STEAMAPI_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.lib")
     set(STEAMAPI_SOURCE_DIR "${STEAMAPI_DIR}/sdk/public/steam")
-    set(STEAMAPI_SHARED_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.dll")
+
+    if(WIN32)
+        set(STEAMAPI_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.lib")
+        set(STEAMAPI_SHARED_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/win64/steam_api64.dll")
+    else()
+        set(STEAMAPI_LIBRARY "${STEAMAPI_DIR}/sdk/redistributable_bin/linux64/libsteam_api.so")
+        set(STEAMAPI_SHARED_LIBRARY "${STEAMAPI_LIBRARY}")
+    endif()
 
     include_directories(${STEAMAPI_SOURCE_DIR})
     link_libraries(${STEAMAPI_LIBRARY})
-    add_executable(launchdf WIN32 launchdf.cpp)
+    if(WIN32)
+        add_executable(launchdf WIN32 launchdf.cpp)
+    else()
+        add_executable(launchdf launchdf.cpp)
+    endif()
     install(TARGETS launchdf DESTINATION ${DFHACK_DATA_DESTINATION})
     install(FILES ${STEAMAPI_SHARED_LIBRARY} DESTINATION ${DFHACK_DATA_DESTINATION})
 endif()

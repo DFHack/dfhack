@@ -229,6 +229,12 @@ mousequery
 ==========
 Functionality superseded by vanilla v50 interface.
 
+.. _petcapRemover:
+
+petcapRemover
+=============
+Renamed to `pet-uncapper`.
+
 .. _resume:
 
 resume

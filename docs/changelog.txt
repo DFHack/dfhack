@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Misc Improvements
 - When launched from the Steam client on Linux, both Dwarf Fortress and DFHack will be shown as "Running". This ensures that DF has proper accounting for Linux player usage.
+- `suspendmanager`: port to C++ to decrease impact on framerate
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

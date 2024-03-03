@@ -685,10 +685,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
-             EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-             do_cycle(out);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
+            do_cycle(out);
         } else {
-             EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
         }
 
     } else {

@@ -632,13 +632,13 @@ local function matches(entry_name, filter)
     return true
 end
 
-local function matches_any(entry_name, filters)
+local function matches_all(entry_name, filters)
     for _,filter in ipairs(filters) do
-        if matches(entry_name, filter) then
-            return true
+        if not matches(entry_name, filter) then
+            return false
         end
     end
-    return false
+    return true
 end
 
 -- normalizes the lists in the filter and returns nil if no filter elements are
@@ -689,8 +689,8 @@ function search_entries(include, exclude)
     exclude = normalize_filter_list(exclude)
     local entries = {}
     for entry in pairs(entrydb) do
-        if (not include or matches_any(entry, include)) and
-                (not exclude or not matches_any(entry, exclude)) then
+        if (not include or matches_all(entry, include)) and
+                (not exclude or not matches_all(entry, exclude)) then
             table.insert(entries, entry)
         end
     end

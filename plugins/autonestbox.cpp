@@ -358,7 +358,7 @@ static void autonestbox_cycle(color_ostream &out) {
     size_t assigned = assign_nestboxes(out);
     if (assigned > 0) {
         std::stringstream ss;
-        ss << assigned << " nestboxes " << (assigned == 1 ? "was" : "were") << " assigned to roaming egg layers.";
+        ss << assigned << " nestbox" << (assigned == 1 ? " was" : "es were") << " assigned to roaming egg layers.";
         string announce = ss.str();
         out << announce << std::endl;
         Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_GREEN, false);

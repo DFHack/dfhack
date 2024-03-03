@@ -667,7 +667,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
     commands.push_back(PluginCommand(
         "unsuspend",
-        "Unsuspends building construction jobs.",
+        "Resume suspended building construction jobs.",
         do_unsuspend_command));
 
     return CR_OK;

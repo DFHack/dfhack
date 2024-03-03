@@ -95,7 +95,6 @@ Template for new versions:
 - ``dfhack.gui`` announcement functions use default arguments when omitted
 - ``dfhack.units.getCitizens`` now only returns units that are on the map
 - ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437
-- ``dfhack.buildings.getName``: new function that wraps ``df::building::getName`` for convenience
 
 ## Removed
 

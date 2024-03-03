@@ -8,6 +8,7 @@
 #include "modules/World.h"
 
 #include "df/emotion_type.h"
+#include "df/personality_moodst.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_personality.h"
@@ -170,7 +171,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 const int FAKE_EMOTION_FLAG = (1 << 30);
 const int STRENGTH_MULTIPLIER = 100;
 
-typedef df::unit_personality::T_emotions Emotion;
+typedef df::personality_moodst Emotion;
 
 static bool is_fake_emotion(Emotion *e) {
     return e->flags.whole & FAKE_EMOTION_FLAG;

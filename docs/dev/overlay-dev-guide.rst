@@ -31,8 +31,8 @@ In general, if you are writing a plugin or script and have anything you'd like
 to add to an existing screen (including live updates of map tiles while the game
 is unpaused), an overlay widget is probably your easiest path to get it done. If
 your plugin or script doesn't otherwise need to be enabled to function, using
-the overlay allows you to avoid writing any of the enable management code that
-would normally be required for you to show info in the UI.
+the overlay allows you to avoid writing any of the enable or lifecycle
+management code that would normally be required for you to show info in the UI.
 
 Overlay widget API
 ------------------
@@ -49,7 +49,7 @@ Overlay widgets can contain other Widgets and be as simple or complex as you
 need them to be, just like you're building a regular UI element.
 
 There are a few extra capabilities that overlay widgets have that take them
-beyond your everyday ``Widget``:
+beyond your everyday `widgets.Widget <widget>`:
 
 - If an ``overlay_onupdate(viewscreen)`` function is defined, it will be called
     just after the associated viewscreen's ``logic()`` function is called (i.e.
@@ -70,7 +70,7 @@ beyond your everyday ``Widget``:
     function if they want to react to the ``onInput()`` feed or be rendered. The
     widgets owned by the overlay framework must not be attached to that new
     screen, but the returned screen can instantiate and configure any new views
-    that it wants to.
+    that it wants to. See the `hotkeys` DFHack logo widget for an example.
 
 If the widget can take up a variable amount of space on the screen, and you want
 the widget to adjust its position according to the size of its contents, you can
@@ -79,7 +79,7 @@ any of the callbacks -- to indicate a new size. The overlay framework will
 detect the size change and adjust the widget position and layout.
 
 If you don't need to dynamically resize, just set ``self.frame.w`` and
-``self.frame.h`` once in ``init()``.
+``self.frame.h`` once in ``init()`` (or just leave them at the defaults).
 
 Widget attributes
 *****************
@@ -165,9 +165,8 @@ this table and registers the widgets on your behalf. Plugin lua code is loaded
 with ``require()`` and script lua code is loaded with ``reqscript()``.
 If your widget is in a script, ensure your script can be
 `loaded as a module <reqscript>`, or else the widget will not be discoverable.
-The widget is enabled on load if it was enabled the last time the `overlay`
-plugin was loaded, and the widget's position is restored according to the state
-saved in the :file:`dfhack-config/overlay.json` file.
+Whether the widget is enabled and the widget's position is restored according
+to the state saved in the :file:`dfhack-config/overlay.json` file.
 
 The overlay framework will instantiate widgets from the named classes and own
 the resulting objects. The instantiated widgets must not be added as subviews to
@@ -212,11 +211,14 @@ Plugins
 Troubleshooting
 ---------------
 
-**If your widget is not getting discovered by the overlay framework, double
-check that:**
+You can check that your widget is getting discovered by the overlay framework
+by running ``overlay list`` or by launching `gui/control-panel` and checking
+the ``Overlays`` tab.
 
-#. ``OVERLAY_WIDGETS`` is declared, is global (not ``local``), and contains your
-   widget class
+**If your widget is not listed, double check that:**
+
+#. ``OVERLAY_WIDGETS`` is declared, is global (not ``local``), and references
+   your widget class
 #. (if a script) your script is `declared as a module <reqscript>`
    (``--@ module = true``) and it does not have side effects when loaded as a
    module (i.e. you check ``dfhack_flags.module`` and return before executing
@@ -230,7 +232,7 @@ check that:**
 `gui/overlay` when on the target screen and check to see if your widget is
 listed when showing overlays for the current screen. If it's not there, verify
 that this screen is included in the ``viewscreens`` list in the widget class
-attributes.
+attributes. Also, load `gui/control-panel` and make sure your widget is enabled.
 
 Widget example 1: adding text to a DF screen
 --------------------------------------------
@@ -244,7 +246,9 @@ the :kbd:`Alt`:kbd:`Z` hotkey is hit::
 
     MessageWidget = defclass(MessageWidget, overlay.OverlayWidget)
     MessageWidget.ATTRS{
+        desc='Sample widget that displays a message on the screen.',
         default_pos={x=5,y=-2},
+        default_enabled=true,
         viewscreens={'dwarfmode', 'dungeonmode'},
         overlay_onupdate_max_freq_seconds=20,
     }
@@ -269,6 +273,7 @@ the :kbd:`Alt`:kbd:`Z` hotkey is hit::
             self:overlay_onupdate()
             return true
         end
+        return MessageWidget.super.onInput(self, keys)
     end
 
     OVERLAY_WIDGETS = {message=MessageWidget}
@@ -288,6 +293,8 @@ seconds to avoid slowing down the entire game on every frame.
 
     ArtifactRadarWidget = defclass(ArtifactRadarWidget, overlay.OverlayWidget)
     ArtifactRadarWidget.ATTRS{
+        desc='Sample widget that highlights artifacts on the game map.',
+        default_enabled=true,
         viewscreens={'dwarfmode', 'dungeonmode'},
         overlay_onupdate_max_freq_seconds=10,
     }
@@ -318,7 +325,9 @@ screen (by default, but the player can move it wherever).
 
     HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
     HotspotMenuWidget.ATTRS{
+        desc='Sample widget that reacts to mouse hover.',
         default_pos={x=-3,y=-3},
+        default_enabled=true,
         frame={w=2, h=2},
         hotspot=true,
         viewscreens='dwarfmode',

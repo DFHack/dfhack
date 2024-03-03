@@ -62,6 +62,7 @@ Template for new versions:
 - When launched from the Steam client on Linux, both Dwarf Fortress and DFHack will be shown as "Running". This ensures that DF has proper accounting for Linux player usage.
 
 ## Documentation
+- `overlay-dev-guide`: updated examples and troubleshooting steps
 
 ## API
 

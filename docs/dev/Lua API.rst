@@ -3843,8 +3843,8 @@ Each entry has several properties associated with it:
   specified, the match is on any of the ``str`` elements AND any of the ``tag``
   elements).
 
-  If lists of filters are passed instead of a single map, the maps are ORed
-  (that is, the match succeeds if any of the filters match).
+  If lists of filters are passed instead of a single map, the match succeeds if
+  all of the filters match.
 
   If ``include`` is ``nil`` or empty, then all entries are included. If
   ``exclude`` is ``nil`` or empty, then no entries are filtered out.

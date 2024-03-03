@@ -275,6 +275,12 @@ title-version
 =============
 Replaced with an `overlay`.
 
+.. _unsuspend:
+
+unsuspend
+=========
+Merged into `suspendmanager`.
+
 .. _warn-starving:
 
 warn-starving

@@ -35,6 +35,7 @@ distribution.
 
 #include "df/interfacest.h"
 
+#include "Core.h"
 #include "ColorText.h"
 #include "DataDefs.h"
 
@@ -489,6 +490,46 @@ namespace DFHack {namespace Lua {
         inline bool PushModulePublic(color_ostream &out, const char *module, const char *name) {
             return Lua::PushModulePublic(out, State, module, name);
         }
+    }
+    /**
+     * High-level wrappers for CallLuaModuleFunction that automatically suspends the
+     * core and pushes either an argument vector (i.e. single type variable number) or
+     * an argument tuple (i.e. fixed number of arguments of various types)
+     */
+    template<typename... aT>
+    bool CallLuaModuleFunction(
+        color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args,
+        size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
+    {
+        CoreSuspender guard;
+
+        auto L = Lua::Core::State;
+        bool ok;
+
+        ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, sizeof...(aT), nres,
+            [&args](lua_State *L) {
+                std::apply([&L](auto&&... param){ ((Lua::Push(L, param)), ...); }, args);
+            },
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+        return ok;
+    }
+
+    template<typename aT>
+    bool CallLuaModuleFunction(
+        color_ostream &out, const char* module_name, const char* fn_name, const std::vector<aT> &args,
+        size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
+    {
+        CoreSuspender guard;
+
+        auto L = Lua::Core::State;
+        bool ok;
+
+        ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, args.size(), nres,
+            [&args](lua_State *L) {
+                for (auto&& param : args) Lua::Push(L,param);
+            },
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+        return ok;
     }
 
     class DFHACK_EXPORT Notification : public Event::Owner {

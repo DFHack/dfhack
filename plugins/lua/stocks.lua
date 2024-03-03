@@ -14,17 +14,32 @@ local function collapse_all()
     stocks.i_height = num_sections * 3
 end
 
+local function remove_empty()
+    local empties = {}
+    for itype,v in ipairs(stocks.storeamount) do
+        if v == 0 and stocks.badamount[itype] == 0 then
+            empties[itype] = true
+        end
+    end
+    for idx=#stocks.type_list-1,0,-1 do
+        if empties[stocks.type_list[idx]] then stocks.type_list:erase(idx) end
+    end
+    for idx=#stocks.filtered_type_list-1,0,-1 do
+        if empties[stocks.filtered_type_list[idx]] then stocks.filtered_type_list:erase(idx) end
+    end
+end
+
 -- -------------------
 -- StocksOverlay
 --
 
 StocksOverlay = defclass(StocksOverlay, overlay.OverlayWidget)
 StocksOverlay.ATTRS{
-    desc='Adds a hotkey for collapse all to the stocks page.',
+    desc='Adds productivity actions to the stocks page.',
     default_pos={x=-3,y=-20},
     default_enabled=true,
     viewscreens='dwarfmode/Stocks',
-    frame={w=27, h=5},
+    frame={w=27, h=7},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
@@ -37,13 +52,19 @@ function StocksOverlay:init()
             key='CUSTOM_CTRL_X',
             on_activate=collapse_all,
         },
-        widgets.Label{
+        widgets.HotkeyLabel{
             frame={t=2, l=0},
+            label='remove empties',
+            key='CUSTOM_CTRL_E',
+            on_activate=remove_empty,
+        },
+        widgets.Label{
+            frame={b=0, l=0},
             text = 'Shift+Scroll',
             text_pen=COLOR_LIGHTGREEN,
         },
         widgets.Label{
-            frame={t=2, l=12},
+            frame={b=0, l=12},
             text = ': fast scroll',
         },
     }

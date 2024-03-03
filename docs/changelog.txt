@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stocks`: add button/hotkey for removing empty categories from the stocks list
 
 ## Fixes
 

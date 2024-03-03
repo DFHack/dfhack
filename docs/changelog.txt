@@ -52,6 +52,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.11-r7
+
+## New Tools
 - `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
 - `pet-uncapper`: (reinstated, renamed from ``petcapRemover``) allow pets to breed beyond the default population cap of 50
 
@@ -78,10 +96,8 @@ Template for new versions:
 - `zone`: animal assignment dialog now shows distance to pasture/cage and allows sorting by distance
 - `zone`: animal assignment dialog shows number of creatures assigned to this pasture/cage/etc.
 
-## Documentation
-
 ## API
-- Gui module Announcement functions now use DF's new announcement alert system, popups parsed into ``markup_text_boxst``
+- Gui module Announcement functions now use DF's new announcement alert system
 - ``Gui::addCombatReport``, ``Gui::addCombatReportAuto``: add versions that take ``report *`` instead of report vector index
 - ``Gui::MTB_clean``, ``Gui::MTB_parse``, ``Gui::MTB_set_width``: new functions for manipulating ``markup_text_boxst``
 - ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
@@ -93,9 +109,7 @@ Template for new versions:
 - Overlay framework now respects ``active`` and ``visible`` widget attributes
 - ``dfhack.gui`` announcement functions use default arguments when omitted
 - ``dfhack.units.getCitizens`` now only returns units that are on the map
-- ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437
-
-## Removed
+- ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437 code page
 
 # 50.11-r6
 

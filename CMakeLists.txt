@@ -8,7 +8,7 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.11")
-set(DFHACK_RELEASE "r6")
+set(DFHACK_RELEASE "r7")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

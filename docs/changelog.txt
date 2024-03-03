@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stocks`: add button/hotkey for removing empty categories from the stocks list
 
 ## Fixes
 
@@ -74,7 +75,6 @@ Template for new versions:
 - `pet-uncapper`: (reinstated, renamed from ``petcapRemover``) allow pets to breed beyond the default population cap of 50
 
 ## New Features
-- `stocks`: add button/hotkey for removing empty categories from the stocks list
 - `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 

@@ -341,7 +341,7 @@ static size_t assign_nestboxes(color_ostream &out) {
         size_t num_needed = free_units.size() - free_zones.size();
         std::stringstream ss;
         ss << "Not enough free nestbox zones! You need to make " << num_needed <<
-            " more 1x1 pasture" << (num_needed == 1 ? "and build nestboxes in it." : "s and build nestboxes in them.");
+            " more 1x1 pasture" << (num_needed == 1 ? " and build a nestbox in it." : "s and build nestboxes in them.");
         string announce = ss.str();
         out << announce << std::endl;
         Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_BROWN, true);

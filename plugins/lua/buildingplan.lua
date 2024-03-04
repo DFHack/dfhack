@@ -53,8 +53,7 @@ function parse_commandline(...)
 end
 
 function is_suspendmanager_enabled()
-    local ok, sm = pcall(reqscript, 'suspendmanager')
-    return ok and sm.isEnabled()
+    return require('plugins.suspendmanager').isEnabled()
 end
 
 function get_num_filters(btype, subtype, custom)

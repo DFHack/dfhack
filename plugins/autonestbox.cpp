@@ -340,7 +340,8 @@ static size_t assign_nestboxes(color_ostream &out) {
     if (free_zones.size() < free_units.size() && !did_complain) {
         size_t num_needed = free_units.size() - free_zones.size();
         std::stringstream ss;
-        ss << "Not enough free nestbox zones! You need to make " << num_needed << " more 1x1 pastures and build nestboxes in them.";
+        ss << "Not enough free nestbox zones! You need to make " << num_needed <<
+            " more 1x1 pasture" << (num_needed == 1 ? " and build a nestbox in it." : "s and build nestboxes in them.");
         string announce = ss.str();
         out << announce << std::endl;
         Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_BROWN, true);
@@ -358,7 +359,7 @@ static void autonestbox_cycle(color_ostream &out) {
     size_t assigned = assign_nestboxes(out);
     if (assigned > 0) {
         std::stringstream ss;
-        ss << assigned << " nestboxes " << (assigned == 1 ? "was" : "were") << " assigned to roaming egg layers.";
+        ss << assigned << " nestbox" << (assigned == 1 ? " was" : "es were") << " assigned to roaming egg layers.";
         string announce = ss.str();
         out << announce << std::endl;
         Gui::showAnnouncement("[DFHack autonestbox] " + announce, COLOR_GREEN, false);

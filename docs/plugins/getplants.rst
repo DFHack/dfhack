@@ -46,12 +46,3 @@ Options
     Verbose: Lists the number of (un)designations per plant.
 ``-n <num>``
     Number: Designate up to the specified number of plants of each species.
-
-.. note::
-
-    DF is capable of determining that a shrub has already been picked, leaving
-    an unusable structure part behind. This plugin does not perform such a check
-    (as the location of the required information has not yet been identified).
-    This leads to some shrubs being designated when they shouldn't be, causing a
-    plant gatherer to walk there and do nothing (except clearing the
-    designation). See :issue:`1479` for details.

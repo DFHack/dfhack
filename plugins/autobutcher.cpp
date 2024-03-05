@@ -18,10 +18,10 @@
 #include "df/creature_raw.h"
 #include "df/world.h"
 
+#include <queue>
+
 using std::endl;
 using std::string;
-using std::unordered_map;
-using std::unordered_set;
 using std::vector;
 
 using namespace DFHack;
@@ -57,8 +57,8 @@ struct WatchedRace;
 // vector of races handled by autobutcher
 // the name is a bit misleading since entries can be set to 'unwatched'
 // to ignore them for a while but still keep the target count settings
-static unordered_map<int, WatchedRace*> watched_races;
-static unordered_map<string, int> race_to_id;
+static std::unordered_map<int, WatchedRace*> watched_races;
+static std::unordered_map<string, int> race_to_id;
 
 static const int32_t CYCLE_TICKS = 5987;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
@@ -68,7 +68,7 @@ static void cleanup_autobutcher(color_ostream &out);
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters);
 static void autobutcher_cycle(color_ostream &out);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         plugin_name,
         "Automatically butcher excess livestock.",
@@ -222,38 +222,36 @@ static bool get_options(color_ostream &out,
     return true;
 }
 
+static bool isHighPriority(df::unit *unit) {
+    return Units::isGay(unit) || Units::isGelded(unit);
+}
+
 static void doMarkForSlaughter(df::unit *unit) {
+    DEBUG(cycle).print("marking unit %d for slaughter: %s, %s, high priority: %s, age: %.2f\n",
+        unit->id, Units::getReadableName(unit).c_str(),
+        Units::isFemale(unit) ? "female" : "male",
+        isHighPriority(unit) ? "yes" : "no",
+        Units::getAge(unit));
     unit->flags2.bits.slaughter = 1;
 }
 
-// getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
-// (assuming that the value from there indicates in which tick of the current year the unit was born)
-static bool compareUnitAgesYounger(df::unit *i, df::unit *j) {
-    int32_t age_i = (int32_t)Units::getAge(i, true);
-    int32_t age_j = (int32_t)Units::getAge(j, true);
-    if (age_i == 0 && age_j == 0) {
-        age_i = i->birth_time;
-        age_j = j->birth_time;
-    }
-    return age_i < age_j;
+// returns true if a should be butchered before b
+static bool compareKids(df::unit *a, df::unit *b) {
+    if (isHighPriority(a) != isHighPriority(b))
+        return isHighPriority(a);
+    if (Units::isDomesticated(a) != Units::isDomesticated(b))
+        return Units::isDomesticated(b);
+    return Units::getAge(a, true) < Units::getAge(b, true);
 }
 
-static bool compareUnitAgesOlder(df::unit* i, df::unit* j) {
-    int32_t age_i = (int32_t)Units::getAge(i, true);
-    int32_t age_j = (int32_t)Units::getAge(j, true);
-    if(age_i == 0 && age_j == 0) {
-        age_i = i->birth_time;
-        age_j = j->birth_time;
-    }
-    return age_i > age_j;
+// returns true if a should be butchered before b
+static bool compareAdults(df::unit* a, df::unit* b) {
+    if (isHighPriority(a) != isHighPriority(b))
+        return isHighPriority(a);
+    if (Units::isDomesticated(a) != Units::isDomesticated(b))
+        return Units::isDomesticated(b);
+    return Units::getAge(a, true) > Units::getAge(b, true);
 }
-
-enum unit_ptr_index {
- fk_index = 0,
- mk_index = 1,
- fa_index = 2,
- ma_index = 3
-};
 
 struct WatchedRace {
 public:
@@ -275,21 +273,18 @@ public:
     unsigned ma_prot;
 
     // butcherable units
-    vector<df::unit*> unit_ptr[4];
+    typedef std::priority_queue<df::unit*, vector<df::unit*>, std::function<bool(df::unit*, df::unit*)>> UnitsPQ;
+    UnitsPQ fk_units;
+    UnitsPQ mk_units;
+    UnitsPQ fa_units;
+    UnitsPQ ma_units;
 
-    // priority butcherable units
-    vector<df::unit*> prot_ptr[4];
-
-    WatchedRace(color_ostream &out, int id, bool watch, unsigned _fk, unsigned _mk, unsigned _fa, unsigned _ma) {
-        raceId = id;
-        isWatched = watch;
-        fk = _fk;
-        mk = _mk;
-        fa = _fa;
-        ma = _ma;
-        fk_prot = fa_prot = mk_prot = ma_prot = 0;
-
-        DEBUG(control,out).print("creating new WatchedRace: id=%d, watched=%s, fk=%u, mk=%u, fa=%u, ma=%u\n",
+    WatchedRace(color_ostream &out, int id, bool watch, unsigned _fk, unsigned _mk, unsigned _fa, unsigned _ma)
+        : raceId(id), isWatched(watch), fk(_fk), mk(_mk), fa(_fa), ma(_ma),
+        fk_prot(0), fa_prot(0), mk_prot(0), ma_prot(0),
+        fk_units(compareKids), mk_units(compareKids), fa_units(compareAdults), ma_units(compareAdults)
+    {
+        TRACE(control,out).print("creating new WatchedRace: id=%d, watched=%s, fk=%u, mk=%u, fa=%u, ma=%u\n",
                 id, watch ? "true" : "false", fk, mk, fa, ma);
     }
 
@@ -327,45 +322,19 @@ public:
         World::DeletePersistentData(rconfig);
     }
 
-    void SortUnitsByAge() {
-        sort(unit_ptr[fk_index].begin(), unit_ptr[fk_index].end(), compareUnitAgesOlder);
-        sort(unit_ptr[mk_index].begin(), unit_ptr[mk_index].end(), compareUnitAgesOlder);
-        sort(unit_ptr[fa_index].begin(), unit_ptr[fa_index].end(), compareUnitAgesYounger);
-        sort(unit_ptr[ma_index].begin(), unit_ptr[ma_index].end(), compareUnitAgesYounger);
-        sort(prot_ptr[fk_index].begin(), prot_ptr[fk_index].end(), compareUnitAgesOlder);
-        sort(prot_ptr[mk_index].begin(), prot_ptr[mk_index].end(), compareUnitAgesOlder);
-        sort(prot_ptr[fa_index].begin(), prot_ptr[fa_index].end(), compareUnitAgesYounger);
-        sort(prot_ptr[ma_index].begin(), prot_ptr[ma_index].end(), compareUnitAgesYounger);
-    }
-
-    void PushUnit(df::unit *unit) {
+    void PushButcherableUnit(df::unit *unit) {
         if(Units::isFemale(unit)) {
             if(Units::isBaby(unit) || Units::isChild(unit))
-                unit_ptr[fk_index].push_back(unit);
+                fk_units.emplace(unit);
             else
-                unit_ptr[fa_index].push_back(unit);
+                fa_units.emplace(unit);
         }
         else //treat sex n/a like it was male
         {
             if(Units::isBaby(unit) || Units::isChild(unit))
-                unit_ptr[mk_index].push_back(unit);
+                mk_units.emplace(unit);
             else
-                unit_ptr[ma_index].push_back(unit);
-        }
-    }
-
-    void PushPriorityUnit(df::unit *unit) {
-        if(Units::isFemale(unit)) {
-            if(Units::isBaby(unit) || Units::isChild(unit))
-                prot_ptr[fk_index].push_back(unit);
-            else
-                prot_ptr[fa_index].push_back(unit);
-        }
-        else {
-            if(Units::isBaby(unit) || Units::isChild(unit))
-                prot_ptr[mk_index].push_back(unit);
-            else
-                prot_ptr[ma_index].push_back(unit);
+                ma_units.emplace(unit);
         }
     }
 
@@ -386,36 +355,29 @@ public:
 
     void ClearUnits() {
         fk_prot = fa_prot = mk_prot = ma_prot = 0;
-        for (size_t i = 0; i < 4; i++) {
-            unit_ptr[i].clear();
-            prot_ptr[i].clear();
-        }
+        fk_units = UnitsPQ();
+        fa_units = UnitsPQ();
+        mk_units = UnitsPQ();
+        ma_units = UnitsPQ();
     }
 
-    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, unsigned prot, unsigned goal) {
-        int subcount = 0;
-        while (unit_pri_ptr.size() && (unit_ptr.size() + unit_pri_ptr.size() + prot > goal)) {
-            df::unit *unit = unit_pri_ptr.back();
-            doMarkForSlaughter(unit);
-            unit_pri_ptr.pop_back();
-            subcount++;
+    static int ProcessUnits(UnitsPQ& units, int limit) {
+        limit = std::max(limit, 0);
+        int count = 0;
+        while (units.size() > (size_t)limit) {
+            doMarkForSlaughter(units.top());
+            units.pop();
+            ++count;
         }
-        while (unit_ptr.size() && (unit_ptr.size() + prot > goal)) {
-            df::unit *unit = unit_ptr.back();
-            doMarkForSlaughter(unit);
-            unit_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
+        return count;
     }
 
     int ProcessUnits() {
-        SortUnitsByAge();
         int slaughter_count = 0;
-        slaughter_count += ProcessUnits(unit_ptr[fk_index], prot_ptr[fk_index], fk_prot, fk);
-        slaughter_count += ProcessUnits(unit_ptr[mk_index], prot_ptr[mk_index], mk_prot, mk);
-        slaughter_count += ProcessUnits(unit_ptr[fa_index], prot_ptr[fa_index], fa_prot, fa);
-        slaughter_count += ProcessUnits(unit_ptr[ma_index], prot_ptr[ma_index], ma_prot, ma);
+        slaughter_count += ProcessUnits(fk_units, fk - fk_prot);
+        slaughter_count += ProcessUnits(mk_units, mk - mk_prot);
+        slaughter_count += ProcessUnits(fa_units, fa - fa_prot);
+        slaughter_count += ProcessUnits(ma_units, ma - ma_prot);
         ClearUnits();
         return slaughter_count;
     }
@@ -428,7 +390,7 @@ static void init_autobutcher(color_ostream &out) {
             race_to_id.emplace(Units::getRaceNameById(i), i);
     }
 
-    std::vector<PersistentDataItem> watchlist;
+    vector<PersistentDataItem> watchlist;
     World::GetPersistentSiteData(&watchlist, WATCHLIST_CONFIG_KEY_PREFIX, true);
     for (auto & p : watchlist) {
         DEBUG(control,out).print("Reading from save: %s\n", p.key().c_str());
@@ -607,7 +569,7 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
 }
 
 static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_options &opts) {
-    unordered_set<int> ids;
+    std::unordered_set<int> ids;
 
     if (opts.races_all) {
         for (auto w : watched_races)
@@ -711,7 +673,8 @@ static bool isInappropriateUnit(df::unit *unit) {
         || Units::isUndead(unit)
         || Units::isMerchant(unit) // ignore merchants' draft animals
         || Units::isForest(unit) // ignore merchants' caged animals
-        || !Units::isOwnCiv(unit);
+        || !Units::isOwnCiv(unit)
+        || (!isContainedInItem(unit) && !hasValidMapPos(unit));
 }
 
 // This can be used to identify protected units that should be counted towards fort totals, but not scheduled
@@ -729,8 +692,6 @@ static bool isProtectedUnit(df::unit *unit) {
         || unit->name.has_name
         || !unit->name.nickname.empty();
 }
-
-
 
 static void autobutcher_cycle(color_ostream &out) {
     // mark that we have recently run
@@ -751,7 +712,7 @@ static void autobutcher_cycle(color_ostream &out) {
             return;
     }
 
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         // this check is now divided into two steps, squeezed autowatch into the middle
         // first one ignores completely inappropriate units (dead, undead, not belonging to the fort, ...)
         // then let autowatch add units to the watchlist which will probably start breeding (owned pets, war animals, ...)
@@ -760,11 +721,6 @@ static void autobutcher_cycle(color_ostream &out) {
         if (isInappropriateUnit(unit)
             || Units::isMarkedForSlaughter(unit)
             || !Units::isTame(unit))
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
         WatchedRace *w;
@@ -791,11 +747,8 @@ static void autobutcher_cycle(color_ostream &out) {
             // and have 2 cats, one of them being a pet, the other gets butchered
             if(isProtectedUnit(unit))
                 w->PushProtectedUnit(unit);
-            else if (   Units::isGay(unit)
-                     || Units::isGelded(unit))
-                w->PushPriorityUnit(unit);
             else
-                w->PushUnit(unit);
+                w->PushButcherableUnit(unit);
         }
     }
 
@@ -817,45 +770,36 @@ static void autobutcher_cycle(color_ostream &out) {
 // calling method must delete pointer!
 static WatchedRace * checkRaceStocksTotal(color_ostream &out, int race) {
     WatchedRace * w = new WatchedRace(out, race, true, 0, 0, 0, 0);
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if (unit->race != race)
             continue;
 
         if (isInappropriateUnit(unit))
             continue;
 
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        w->PushUnit(unit);
+        w->PushButcherableUnit(unit);
     }
     return w;
 }
 
 WatchedRace * checkRaceStocksProtected(color_ostream &out, int race) {
     WatchedRace * w = new WatchedRace(out, race, true, 0, 0, 0, 0);
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if (unit->race != race)
             continue;
 
         if (isInappropriateUnit(unit))
             continue;
 
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if (!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        if (   !Units::isTame(unit)
-            || isProtectedUnit(unit))
-            w->PushUnit(unit);
+        if (!Units::isTame(unit) || isProtectedUnit(unit))
+            w->PushButcherableUnit(unit);
     }
     return w;
 }
 
 WatchedRace * checkRaceStocksButcherable(color_ostream &out, int race) {
     WatchedRace * w = new WatchedRace(out, race, true, 0, 0, 0, 0);
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if (unit->race != race)
             continue;
 
@@ -865,28 +809,22 @@ WatchedRace * checkRaceStocksButcherable(color_ostream &out, int race) {
             )
             continue;
 
-        if (!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        w->PushUnit(unit);
+        w->PushButcherableUnit(unit);
     }
     return w;
 }
 
 WatchedRace * checkRaceStocksButcherFlag(color_ostream &out, int race) {
     WatchedRace * w = new WatchedRace(out, race, true, 0, 0, 0, 0);
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if(unit->race != race)
             continue;
 
         if (isInappropriateUnit(unit))
             continue;
 
-        if (!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
         if (Units::isMarkedForSlaughter(unit))
-            w->PushUnit(unit);
+            w->PushButcherableUnit(unit);
     }
     return w;
 }
@@ -957,7 +895,7 @@ static void autobutcher_setDefaultTargetAll(color_ostream &out, unsigned fk, uns
 }
 
 static void autobutcher_butcherRace(color_ostream &out, int id) {
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if(unit->race != id)
             continue;
 
@@ -967,28 +905,17 @@ static void autobutcher_butcherRace(color_ostream &out, int id) {
             )
             continue;
 
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
         doMarkForSlaughter(unit);
     }
 }
 
 // remove butcher flag for all units of a given race
 static void autobutcher_unbutcherRace(color_ostream &out, int id) {
-    for (auto unit : world->units.all) {
+    for (auto unit : world->units.active) {
         if(unit->race != id)
             continue;
 
-        if(    !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || !Units::isMarkedForSlaughter(unit)
-            )
-            continue;
-
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+        if(isInappropriateUnit(unit) || !Units::isMarkedForSlaughter(unit))
             continue;
 
         unit->flags2.bits.slaughter = 0;
@@ -1031,31 +958,31 @@ static int autobutcher_getWatchList(lua_State *L) {
         Lua::SetField(L, w->ma, ctable, "ma");
 
         WatchedRace *tally = checkRaceStocksTotal(*out, id);
-        Lua::SetField(L, tally->unit_ptr[fk_index].size(), ctable, "fk_total");
-        Lua::SetField(L, tally->unit_ptr[mk_index].size(), ctable, "mk_total");
-        Lua::SetField(L, tally->unit_ptr[fa_index].size(), ctable, "fa_total");
-        Lua::SetField(L, tally->unit_ptr[ma_index].size(), ctable, "ma_total");
+        Lua::SetField(L, tally->fk_units.size(), ctable, "fk_total");
+        Lua::SetField(L, tally->mk_units.size(), ctable, "mk_total");
+        Lua::SetField(L, tally->fa_units.size(), ctable, "fa_total");
+        Lua::SetField(L, tally->ma_units.size(), ctable, "ma_total");
         delete tally;
 
         tally = checkRaceStocksProtected(*out, id);
-        Lua::SetField(L, tally->unit_ptr[fk_index].size(), ctable, "fk_protected");
-        Lua::SetField(L, tally->unit_ptr[mk_index].size(), ctable, "mk_protected");
-        Lua::SetField(L, tally->unit_ptr[fa_index].size(), ctable, "fa_protected");
-        Lua::SetField(L, tally->unit_ptr[ma_index].size(), ctable, "ma_protected");
+        Lua::SetField(L, tally->fk_units.size(), ctable, "fk_protected");
+        Lua::SetField(L, tally->mk_units.size(), ctable, "mk_protected");
+        Lua::SetField(L, tally->fa_units.size(), ctable, "fa_protected");
+        Lua::SetField(L, tally->ma_units.size(), ctable, "ma_protected");
         delete tally;
 
         tally = checkRaceStocksButcherable(*out, id);
-        Lua::SetField(L, tally->unit_ptr[fk_index].size(), ctable, "fk_butcherable");
-        Lua::SetField(L, tally->unit_ptr[mk_index].size(), ctable, "mk_butcherable");
-        Lua::SetField(L, tally->unit_ptr[fa_index].size(), ctable, "fa_butcherable");
-        Lua::SetField(L, tally->unit_ptr[ma_index].size(), ctable, "ma_butcherable");
+        Lua::SetField(L, tally->fk_units.size(), ctable, "fk_butcherable");
+        Lua::SetField(L, tally->mk_units.size(), ctable, "mk_butcherable");
+        Lua::SetField(L, tally->fa_units.size(), ctable, "fa_butcherable");
+        Lua::SetField(L, tally->ma_units.size(), ctable, "ma_butcherable");
         delete tally;
 
         tally = checkRaceStocksButcherFlag(*out, id);
-        Lua::SetField(L, tally->unit_ptr[fk_index].size(), ctable, "fk_butcherflag");
-        Lua::SetField(L, tally->unit_ptr[mk_index].size(), ctable, "mk_butcherflag");
-        Lua::SetField(L, tally->unit_ptr[fa_index].size(), ctable, "fa_butcherflag");
-        Lua::SetField(L, tally->unit_ptr[ma_index].size(), ctable, "ma_butcherflag");
+        Lua::SetField(L, tally->fk_units.size(), ctable, "fk_butcherflag");
+        Lua::SetField(L, tally->mk_units.size(), ctable, "mk_butcherflag");
+        Lua::SetField(L, tally->fa_units.size(), ctable, "fa_butcherflag");
+        Lua::SetField(L, tally->ma_units.size(), ctable, "ma_butcherflag");
         delete tally;
 
         lua_rawseti(L, -2, ++entry_index);

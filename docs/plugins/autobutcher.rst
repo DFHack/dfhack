@@ -9,15 +9,23 @@ This plugin monitors how many pets you have of each gender and age and assigns
 excess livestock for slaughter. Units will be ignored if they are:
 
 * Untamed
-* Nicknamed
+* Named or nicknamed
 * Caged, if and only if the cage is in a zone (to protect zoos)
 * Trained for war or hunting
 
-Creatures who will not reproduce (because they're not interested in the
-opposite sex or have been gelded) will be butchered before those who will.
-Older adults and younger children will be butchered first if the population
-is above the target (defaults are: 2 male kids, 4 female kids, 2 male adults,
-4 female adults). Note that you may need to set a target above 1 to have a
+Creatures that are least useful for animal breeding programs are marked for
+slaughter first. That is:
+
+- Creatures who will not reproduce (because they're not interested in the
+  opposite sex or have been gelded) will be butchered before those who will
+- Creatures that are only partially trained will be butchered before those who
+  are fully domesticated.
+- Older adults will be butchered before younger adults.
+- Younger juveniles will be butchered before juveniles that are closer to
+  becoming adults.
+
+The default targets are: 2 male kids, 4 female kids, 2 male adults, and
+4 female adults. Note that you may need to set a target above 1 to have a
 reliable breeding population due to asexuality etc.
 
 Usage

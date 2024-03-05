@@ -872,31 +872,52 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     if (item->world_data_id != -1)
         return false;
 
+    bool building_clutter = false;
     for (size_t i = 0; i < item->general_refs.size(); i++)
     {
         df::general_ref *ref = item->general_refs[i];
 
         switch (ref->getType())
         {
-        case general_ref_type::BUILDING_HOLDER:
-        case general_ref_type::BUILDING_CAGED:
-        case general_ref_type::BUILDING_TRIGGER:
-        case general_ref_type::BUILDING_TRIGGERTARGET:
-        case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
-            return false;
+            case general_ref_type::BUILDING_HOLDER:
+                if (item->flags.bits.in_building)
+                    return false;
+                building_clutter = true;
+                break;
+            case general_ref_type::BUILDING_CAGED:
+            case general_ref_type::BUILDING_TRIGGER:
+            case general_ref_type::BUILDING_TRIGGERTARGET:
+            case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
+                return false;
 
-        default:
-            continue;
+            default:
+                continue;
         }
     }
 
-    if (auto *ref =
-            virtual_cast<df::general_ref_projectile>(
-                Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
+    if (building_clutter)
+    {
+        auto building = virtual_cast<df::building_actual>(Items::getHolderBuilding(item));
+        if (building)
+        {
+            for (size_t i = 0; i < building->contained_items.size(); i++)
+            {
+                auto ci = building->contained_items[i];
+                if (ci->item == item)
+                {
+                    DFHack::removeRef(item->general_refs, general_ref_type::BUILDING_HOLDER, building->id);
+                    vector_erase_at(building->contained_items, i);
+                    delete ci;
+                    return true;
+                }
+            }
+        }
+    }
+
+    if (auto *ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
     {
         return linked_list_remove(&world->proj_list, ref->projectile_id) &&
-            DFHack::removeRef(item->general_refs,
-                              general_ref_type::PROJECTILE, ref->getID());
+            DFHack::removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
     }
 
     if (item->flags.bits.on_ground)

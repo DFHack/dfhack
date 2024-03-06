@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - Items module fn ``detach_item`` can now detach items loosely stored in buildings. Impacts ``autodump``, ``Items::moveToGround``, etc.
+- `gui/design`: no longer comes up when Ctrl-D is pressed but other DFHack windows have focus
 
 ## Misc Improvements
 - `autobutcher`: prefer butchering partially trained animals and saving fully domesticated animals to assist in wildlife domestication programs

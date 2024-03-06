@@ -2098,7 +2098,7 @@ function List:onInput(keys)
     end
     if keys.SELECT then
         return self:submit()
-    elseif keys.CUSTOM_SHIFT_ENTER then
+    elseif keys.SELECT_ALL then
         return self:submit2()
     elseif keys._MOUSE_L then
         local idx = self:getIdxUnderMouse()

@@ -747,7 +747,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 }
 */
 
-static vector<string> cached_focus_strings;
+static std::unordered_map<df::viewscreen *, vector<string>> cached_focus_strings;
 
 void Gui::clearFocusStringCache() {
     cached_focus_strings.clear();
@@ -758,15 +758,17 @@ bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
     if (!top)
         top = getCurViewscreen(true);
 
-    if (cached_focus_strings.empty()) {
-        cached_focus_strings = getFocusStrings(top);
-        for (size_t i = 0; i < cached_focus_strings.size(); ++i)
-            cached_focus_strings[i] = toLower_cp437(cached_focus_strings[i]);
+    if (!cached_focus_strings.contains(top)) {
+        vector<string> focus_strings = getFocusStrings(top);
+        for (size_t i = 0; i < focus_strings.size(); ++i)
+            focus_strings[i] = toLower_cp437(focus_strings[i]);
+        cached_focus_strings[top] = focus_strings;
     }
+    vector<string> &cached = cached_focus_strings[top];
 
-    return std::find_if(cached_focus_strings.begin(), cached_focus_strings.end(), [&focus_string](std::string item) {
+    return std::find_if(cached.begin(), cached.end(), [&focus_string](std::string item) {
         return prefix_matches(focus_string, item);
-    }) != cached_focus_strings.end();
+    }) != cached.end();
 }
 
 static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)

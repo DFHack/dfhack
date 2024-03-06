@@ -18,16 +18,18 @@
 #include "modules/EventManager.h"
 #include "modules/Job.h"
 
-#include <df/historical_entity.h>
-#include <df/map_block.h>
-#include <df/reaction_product_itemst.h>
-#include <df/tile_designation.h>
-#include <df/tile_occupancy.h>
-#include <df/plotinfost.h>
-#include <df/unit.h>
-#include <df/vermin.h>
-#include <df/world.h>
-#include <df/world_site.h>
+#include "df/building.h"
+#include "df/historical_entity.h"
+#include "df/item.h"
+#include "df/map_block.h"
+#include "df/reaction_product_itemst.h"
+#include "df/tile_designation.h"
+#include "df/tile_occupancy.h"
+#include "df/plotinfost.h"
+#include "df/unit.h"
+#include "df/vermin.h"
+#include "df/world.h"
+#include "df/world_site.h"
 
 #include <cinttypes>
 #include <unordered_set>
@@ -65,7 +67,7 @@ struct designation{
 };
 
 namespace std {
-    template<>
+    template <>
     struct hash<designation> {
         std::size_t operator()(const designation &c) const {
             std::hash<df::coord> hash_coord;

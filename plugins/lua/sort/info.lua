@@ -14,90 +14,6 @@ local objects = info.artifacts
 local tasks = info.jobs
 local work_details = info.labor.work_details
 
--- these sort functions attempt to match the vanilla info panel sort behavior, which
--- is not quite the same as the rest of DFHack. For example, in other DFHack sorts,
--- we'd always sort by name descending as a secondary sort. To match vanilla sorting,
--- if the primary sort is ascending, the secondary name sort will also be ascending.
---
--- also note that vanilla sorts are not stable, so there might still be some jitter
--- if the player clicks one of the vanilla sort widgets after searching
-local function sort_by_name_desc(a, b)
-    return a.sort_name < b.sort_name
-end
-
-local function sort_by_name_asc(a, b)
-    return a.sort_name > b.sort_name
-end
-
-local function sort_by_prof_desc(a, b)
-    if a.profession_list_order1 == b.profession_list_order1 then
-        return sort_by_name_desc(a, b)
-    end
-    return a.profession_list_order1 < b.profession_list_order1
-end
-
-local function sort_by_prof_asc(a, b)
-    if a.profession_list_order1 == b.profession_list_order1 then
-        return sort_by_name_asc(a, b)
-    end
-    return a.profession_list_order1 > b.profession_list_order1
-end
-
-local function sort_by_job_name_desc(a, b)
-    if a.job_sort_name == b.job_sort_name then
-        return sort_by_name_desc(a, b)
-    end
-    return a.job_sort_name < b.job_sort_name
-end
-
-local function sort_by_job_name_asc(a, b)
-    if a.job_sort_name == b.job_sort_name then
-        -- use descending tertiary sort for visual stability
-        return sort_by_name_desc(a, b)
-    end
-    return a.job_sort_name > b.job_sort_name
-end
-
-local function sort_by_job_desc(a, b)
-    if not not a.jb == not not b.jb then
-        return sort_by_job_name_desc(a, b)
-    end
-    return not not a.jb
-end
-
-local function sort_by_job_asc(a, b)
-    if not not a.jb == not not b.jb then
-        return sort_by_job_name_asc(a, b)
-    end
-    return not not b.jb
-end
-
-local function sort_by_stress_desc(a, b)
-    if a.stress == b.stress then
-        return sort_by_name_desc(a, b)
-    end
-    return a.stress > b.stress
-end
-
-local function sort_by_stress_asc(a, b)
-    if a.stress == b.stress then
-        return sort_by_name_asc(a, b)
-    end
-    return a.stress < b.stress
-end
-
-local function get_sort()
-    if creatures.sorting_cit_job then
-        return creatures.sorting_cit_job_is_ascending and sort_by_job_asc or sort_by_job_desc
-    elseif creatures.sorting_cit_stress then
-        return creatures.sorting_cit_stress_is_ascending and sort_by_stress_asc or sort_by_stress_desc
-    elseif creatures.sorting_cit_nameprof_doing_prof then
-        return creatures.sorting_cit_nameprof_is_ascending and sort_by_prof_asc or sort_by_prof_desc
-    else
-        return creatures.sorting_cit_nameprof_is_ascending and sort_by_name_asc or sort_by_name_desc
-    end
-end
-
 local function get_cri_unit_search_key(cri_unit)
     return ('%s %s'):format(
         cri_unit.un and sortoverlay.get_unit_search_key(cri_unit.un) or '',
@@ -190,18 +106,10 @@ end
 
 InfoOverlay = defclass(InfoOverlay, sortoverlay.SortOverlay)
 InfoOverlay.ATTRS{
-    desc='Adds search and filter functionality to most info panels.',
+    desc='Adds search and filter functionality to info screens.',
     default_pos={x=64, y=8},
     viewscreens={
-        'dwarfmode/Info/CREATURES/CITIZEN',
-        'dwarfmode/Info/CREATURES/PET',
-        'dwarfmode/Info/CREATURES/AddingTrainer',
-        'dwarfmode/Info/CREATURES/AssignWorkAnimal',
-        'dwarfmode/Info/CREATURES/OverallTraining',
-        'dwarfmode/Info/CREATURES/OTHER',
-        'dwarfmode/Info/CREATURES/DECEASED',
         'dwarfmode/Info/JOBS',
-        'dwarfmode/Info/Labor/WORK_DETAILS',
         'dwarfmode/Info/ARTIFACTS/ARTIFACTS',
         'dwarfmode/Info/ARTIFACTS/SYMBOLS',
         'dwarfmode/Info/ARTIFACTS/NAMED_OBJECTS',
@@ -343,35 +251,9 @@ function InfoOverlay:init()
         },
     }
 
-    local CRI_UNIT_VECS = {
-        CITIZEN=creatures.cri_unit.CITIZEN,
-        PET=creatures.cri_unit.PET,
-        OTHER=creatures.cri_unit.OTHER,
-        DECEASED=creatures.cri_unit.DECEASED,
-    }
-    for key,vec in pairs(CRI_UNIT_VECS) do
-        self:register_handler(key, vec,
-            curry(sortoverlay.single_vector_search,
-                {
-                    get_search_key_fn=get_cri_unit_search_key,
-                    get_sort_fn=get_sort
-                }),
-            free_allocated_data)
-    end
-
     self:register_handler('JOBS', tasks.cri_job,
         curry(sortoverlay.single_vector_search, {get_search_key_fn=get_task_search_key}),
         free_allocated_data)
-    self:register_handler('PET_OT', creatures.atk_index,
-        curry(sortoverlay.single_vector_search, {get_search_key_fn=get_race_name}))
-    self:register_handler('PET_AT', creatures.trainer,
-        curry(sortoverlay.single_vector_search, {get_search_key_fn=sortoverlay.get_unit_search_key}))
-    self:register_handler('PET_WA', creatures.work_animal_recipient,
-        curry(sortoverlay.single_vector_search, {
-            get_search_key_fn=sortoverlay.get_unit_search_key,
-            matches_filters_fn=self:callback('matches_filters'),
-        }))
-    self:register_handler('WORK_DETAILS', work_details.assignable_unit, work_details_search)
 
     for idx,name in ipairs(df.artifacts_mode_type) do
         if idx < 0 then goto continue end
@@ -387,25 +269,10 @@ function InfoOverlay:reset()
 end
 
 function InfoOverlay:get_key()
-    if info.current_mode == df.info_interface_mode_type.CREATURES then
-        if creatures.current_mode == df.unit_list_mode_type.PET then
-            if creatures.showing_overall_training then
-                return 'PET_OT', 'cre'
-            elseif creatures.adding_trainer then
-                return 'PET_AT', 'cre'
-            elseif creatures.assign_work_animal then
-                return 'PET_WA', 'cre'
-            end
-        end
-        return df.unit_list_mode_type[creatures.current_mode], 'cre'
-    elseif info.current_mode == df.info_interface_mode_type.JOBS then
+    if info.current_mode == df.info_interface_mode_type.JOBS then
         return 'JOBS'
     elseif info.current_mode == df.info_interface_mode_type.ARTIFACTS then
         return df.artifacts_mode_type[objects.mode]
-    elseif info.current_mode == df.info_interface_mode_type.LABOR then
-        if info.labor.mode == df.labor_mode_type.WORK_DETAILS then
-            return 'WORK_DETAILS'
-        end
     end
 end
 
@@ -564,9 +431,10 @@ end
 WorkAnimalOverlay = defclass(WorkAnimalOverlay, overlay.OverlayWidget)
 WorkAnimalOverlay.ATTRS{
     desc='Annotates units with how many work animals they have assigned on the assign work animal screen.',
-    default_pos={x=-33, y=12},
+    default_pos={x=79, y=11},
     viewscreens='dwarfmode/Info/CREATURES/AssignWorkAnimal',
     default_enabled=true,
+    version=2,
     frame={w=29, h=1},
 }
 
@@ -596,6 +464,14 @@ local function get_work_animal_counts()
     return counts
 end
 
+local function get_scroll_rows()
+    return dfhack.gui.getWidget(creatures, 'Tabs', 'Pets/Livestock', 'Hunting assignment', 'Unit List', 1)
+end
+
+local function get_scroll_pos(scroll_rows)
+    return (scroll_rows or get_scroll_rows()).scroll
+end
+
 function WorkAnimalOverlay:preUpdateLayout(parent_rect)
     local _, t = get_panel_offsets()
     local list_height = parent_rect.height - (17 + t)
@@ -604,17 +480,18 @@ function WorkAnimalOverlay:preUpdateLayout(parent_rect)
 end
 
 function WorkAnimalOverlay:onRenderFrame(dc, rect)
-    local t = self.subviews.annotations.frame.t
-    local num_elems = (self.frame.h - t) // 3
-    local max_elem = math.min(#creatures.work_animal_recipient-1,
-        creatures.scroll_position_work_animal+num_elems-1)
+    local scroll_rows = get_scroll_rows()
+    local rows = dfhack.gui.getWidgetChildren(scroll_rows)
+    local scroll_pos = get_scroll_pos(scroll_rows)
+    local max_elem = math.min(#rows, scroll_pos+scroll_rows.num_visible)
 
     local annotations = {}
     local counts = get_work_animal_counts()
-    for idx=creatures.scroll_position_work_animal,max_elem do
+    for idx=scroll_pos+1,max_elem do
         table.insert(annotations, NEWLINE)
         table.insert(annotations, NEWLINE)
-        local animal_count = counts[creatures.work_animal_recipient[idx].id]
+        local unit = dfhack.gui.getWidget(rows[idx], 0).u
+        local animal_count = counts[unit.id]
         if animal_count and animal_count > 0 then
             table.insert(annotations, {text='[', pen=COLOR_RED})
             table.insert(annotations, ('Assigned work animals: %d'):format(animal_count))
@@ -629,95 +506,127 @@ function WorkAnimalOverlay:onRenderFrame(dc, rect)
 end
 
 -- ----------------------
--- InterrogationOverlay
+-- JusticeOverlay
 --
 
-InterrogationOverlay = defclass(InterrogationOverlay, sortoverlay.SortOverlay)
-InterrogationOverlay.ATTRS{
-    desc='Adds search and filter capabilities to the justice screens.',
-    default_pos={x=47, y=10},
-    viewscreens='dwarfmode/Info/JUSTICE',
-    frame={w=27, h=9},
+local function get_unit_list(which)
+    local tabs = dfhack.gui.getWidget(df.global.game.main_interface.info.justice, 'Tabs')
+    return dfhack.gui.getWidget(tabs, 'Open cases', 'Right panel', which) or
+        dfhack.gui.getWidget(tabs, 'Cold cases', 'Right panel', which)
+end
+
+local function poke_list(which)
+    get_unit_list(which).sort_flags.NEEDS_RESORTED = true
+end
+
+JusticeOverlay = defclass(JusticeOverlay, overlay.OverlayWidget)
+JusticeOverlay.ATTRS{
+    which=DEFAULT_NIL,
 }
 
-function InterrogationOverlay:init()
-    self:addviews{
-        widgets.Panel{
-            view_id='panel',
-            frame={l=0, t=4, h=5, r=0},
-            frame_background=gui.CLEAR_PEN,
-            frame_style=gui.FRAME_MEDIUM,
-            visible=self:callback('get_key'),
-            subviews={
-                widgets.EditField{
-                    view_id='search',
-                    frame={l=0, t=0, r=0},
-                    label_text="Search: ",
-                    key='CUSTOM_ALT_S',
-                    on_change=function(text) self:do_search(text) end,
+function JusticeOverlay:init()
+    local panel = widgets.Panel{
+        frame={t=0, b=0, r=0, w=30},
+        frame_background=gui.CLEAR_PEN,
+        frame_style=gui.FRAME_MEDIUM,
+        autoarrange_subviews=true,
+        subviews={
+            widgets.CycleHotkeyLabel{
+                view_id='subset',
+                frame={l=0},
+                key='CUSTOM_SHIFT_F',
+                label='Show:',
+                options={
+                    {label='All', value='all', pen=COLOR_GREEN},
+                    {label='Risky visitors', value='risky', pen=COLOR_RED},
+                    {label='Other visitors', value='visitors', pen=COLOR_LIGHTRED},
+                    {label='Residents', value='residents', pen=COLOR_YELLOW},
+                    {label='Citizens', value='citizens', pen=COLOR_CYAN},
+                    {label='Animals', value='animals', pen=COLOR_BLUE},
+                    {label='Deceased or missing', value='deceased', pen=COLOR_LIGHTMAGENTA},
+                    {label='Others', value='others', pen=COLOR_GRAY},
                 },
-                widgets.ToggleHotkeyLabel{
-                    view_id='include_interviewed',
-                    frame={l=0, t=1, w=23},
-                    key='CUSTOM_SHIFT_I',
-                    label='Interviewed:',
-                    options={
-                        {label='Include', value=true, pen=COLOR_GREEN},
-                        {label='Exclude', value=false, pen=COLOR_RED},
-                    },
-                    visible=function() return justice.interrogating end,
-                    on_change=function() self:do_search(self.subviews.search.text, true) end,
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='subset',
-                    frame={l=0, t=2, w=28},
-                    key='CUSTOM_SHIFT_F',
-                    label='Show:',
-                    options={
-                        {label='All', value='all', pen=COLOR_GREEN},
-                        {label='Risky visitors', value='risky', pen=COLOR_RED},
-                        {label='Other visitors', value='visitors', pen=COLOR_LIGHTRED},
-                        {label='Residents', value='residents', pen=COLOR_YELLOW},
-                        {label='Citizens', value='citizens', pen=COLOR_CYAN},
-                        {label='Animals', value='animals', pen=COLOR_BLUE},
-                        {label='Deceased or missing', value='deceased', pen=COLOR_MAGENTA},
-                        {label='Others', value='others', pen=COLOR_GRAY},
-                    },
-                    on_change=function() self:do_search(self.subviews.search.text, true) end,
-                },
+                on_change=curry(poke_list, self.which),
             },
         },
     }
+    self:add_widgets(panel)
 
-    self:register_handler('INTERROGATING', justice.interrogation_list,
-        curry(sortoverlay.flags_vector_search,
-            {
-                get_search_key_fn=sortoverlay.get_unit_search_key,
-                get_elem_id_fn=function(unit) return unit.id end,
-                matches_filters_fn=self:callback('matches_filters'),
+    self:addviews{panel}
+end
+
+function JusticeOverlay:add_widgets(panel)
+end
+
+function JusticeOverlay:render(dc)
+    require('plugins.sort').sort_set_justice_filter_fn(get_unit_list(self.which))
+    JusticeOverlay.super.render(self, dc)
+end
+
+function JusticeOverlay:preUpdateLayout(parent_rect)
+    self.frame.w = (parent_rect.width+1) // 2 + 60
+end
+
+-- ----------------------
+-- InterrogationOverlay
+--
+
+interrogate_instance = nil
+
+InterrogationOverlay = defclass(InterrogationOverlay, JusticeOverlay)
+InterrogationOverlay.ATTRS{
+    desc='Adds filter capabilities to the interrogation screen.',
+    default_pos={x=1, y=-5},
+    default_enabled=true,
+    version=2,
+    viewscreens='dwarfmode/Info/JUSTICE/Interrogating',
+    frame={w=30, h=4},
+    which='Interrogate'
+}
+
+function InterrogationOverlay:init()
+    interrogate_instance = self
+end
+
+function InterrogationOverlay:add_widgets(panel)
+    panel:addviews{
+        widgets.ToggleHotkeyLabel{
+            view_id='include_interviewed',
+            frame={l=0},
+            key='CUSTOM_SHIFT_I',
+            label='Interviewed:',
+            options={
+                {label='Include', value=true, pen=COLOR_GREEN},
+                {label='Exclude', value=false, pen=COLOR_LIGHTRED},
             },
-        justice.interrogation_list_flag))
-    self:register_handler('CONVICTING', justice.conviction_list,
-        curry(sortoverlay.single_vector_search,
-            {
-                get_search_key_fn=sortoverlay.get_unit_search_key,
-                matches_filters_fn=self:callback('matches_filters'),
-            }))
+            on_change=curry(poke_list, self.which),
+        },
+    }
 end
 
-function InterrogationOverlay:reset()
-    InterrogationOverlay.super.reset(self)
-    self.subviews.include_interviewed:setOption(true, false)
-    self.subviews.subset:setOption('all')
+-- ----------------------
+-- ConvictionOverlay
+--
+
+convict_instance = nil
+
+ConvictionOverlay = defclass(ConvictionOverlay, JusticeOverlay)
+ConvictionOverlay.ATTRS{
+    desc='Adds filter capabilities to the conviction screen.',
+    default_pos={x=1, y=-6},
+    default_enabled=true,
+    viewscreens='dwarfmode/Info/JUSTICE/Convicting',
+    frame={w=30, h=3},
+    which='Convict'
+}
+
+function ConvictionOverlay:init()
+    convict_instance = self
 end
 
-function InterrogationOverlay:get_key()
-    if justice.interrogating then
-        return 'INTERROGATING'
-    elseif justice.convicting then
-        return 'CONVICTING'
-    end
-end
+-- ----------------------
+-- filtering logic
+--
 
 local RISKY_PROFESSIONS = utils.invert{
     df.profession.THIEF,
@@ -733,12 +642,7 @@ local function is_risky(unit)
     return not dfhack.units.isAlive(unit)  -- detect intelligent undead
 end
 
-function InterrogationOverlay:matches_filters(unit, flag)
-    if justice.interrogating then
-        local include_interviewed = self.subviews.include_interviewed:getOptionValue()
-        if not include_interviewed and flag == 2 then return false end
-    end
-    local subset = self.subviews.subset:getOptionValue()
+local function filter_matches(unit, subset)
     if subset == 'all' then
         return true
     elseif dfhack.units.isDead(unit) or not dfhack.units.isActive(unit) then
@@ -760,27 +664,19 @@ function InterrogationOverlay:matches_filters(unit, flag)
     return subset == 'residents'
 end
 
-function InterrogationOverlay:render(dc)
-    local sw = dfhack.screen.getWindowSize()
-    local info_panel_border = 31 -- from edges of panel to screen edges
-    local info_panel_width = sw - info_panel_border
-    local info_panel_center = info_panel_width // 2
-    local panel_x_offset = (info_panel_center + 5) - self.frame_rect.x1
-    local frame_w = math.min(panel_x_offset + 37, info_panel_width - 56)
-    local panel_l = panel_x_offset
-    local panel_t = is_tabs_in_two_rows() and 4 or 0
-
-    if self.frame.w ~= frame_w or
-        self.subviews.panel.frame.l ~= panel_l or
-        self.subviews.panel.frame.t ~= panel_t
-    then
-        self.frame.w = frame_w
-        self.subviews.panel.frame.l = panel_l
-        self.subviews.panel.frame.t = panel_t
-        self:updateLayout()
+function do_justice_filter(unit)
+    local self
+    if dfhack.gui.matchFocusString('dwarfmode/Info/JUSTICE/Interrogating') then
+        self = interrogate_instance
+        if not self.subviews.include_interviewed:getOptionValue() and
+            require('plugins.sort').sort_is_interviewed(unit)
+        then
+            return false
+        end
+    else
+        self = convict_instance
     end
-
-    InterrogationOverlay.super.render(self, dc)
+    return filter_matches(unit, self.subviews.subset:getOptionValue())
 end
 
 return _ENV

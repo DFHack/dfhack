@@ -18,6 +18,7 @@
 #include "df/building_civzonest.h"
 #include "df/building_nest_boxst.h"
 #include "df/general_ref_building_civzone_assignedst.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::string;

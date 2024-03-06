@@ -1,11 +1,3 @@
-#include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <stack>
-#include <string>
-#include <cmath>
-#include <memory>
-
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
@@ -17,6 +9,15 @@
 #include "modules/Materials.h"
 
 #include "df/gamest.h"
+#include "df/map_block.h"
+
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <stack>
+#include <string>
+#include <cmath>
+#include <memory>
 
 using std::vector;
 using std::string;

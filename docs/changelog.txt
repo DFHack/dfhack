@@ -76,6 +76,27 @@ Template for new versions:
 
 ## Removed
 
+# 50.12-r1
+
+## Misc Improvements
+- `sort`: squad assignment overlay rewritten for compatiblity with new vanilla data structures and screen layouts
+
+## Fixes
+- `gui/design`: no longer comes up when Ctrl-D is pressed but other DFHack windows have focus
+
+## API
+
+- ``Gui::getWidget``: retrieve a vanilla DF widget by name or index
+
+## Lua
+
+- ``dfhack.gui.getWidget``: retrieve a vanilla DF widget by hierarchy path, with each step specified by a widget name or index
+- ``dfhack.gui.getWidgetChildren``: retrieve a list of child widgets for a given widget container
+
+## Removed
+- `burrow`: removed overlay 3D box select since it is now provided by the vanilla UI
+- `sort`: removed Search widgets for screens that now have vanilla search
+
 # 50.11-r7
 
 ## New Tools

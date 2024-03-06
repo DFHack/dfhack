@@ -25,10 +25,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <vector>
-#include <cstdlib>
-using namespace std;
-
 #include "Core.h"
 #include "DataDefs.h"
 #include "Error.h"
@@ -41,9 +37,14 @@ using namespace std;
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
 #include "df/burrow.h"
+#include "df/language_name.h"
 #include "df/map_block.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
+
+#include <vector>
+#include <cstdlib>
 
 using namespace DFHack;
 using namespace df::enums;

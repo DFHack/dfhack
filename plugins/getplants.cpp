@@ -2,8 +2,14 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "modules/Designations.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+
 #include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/material.h"
+#include "df/material_flags.h"
 #include "df/plant.h"
 #include "df/plant_growth.h"
 #include "df/plant_raw.h"
@@ -13,10 +19,6 @@
 #include "df/world_data.h"
 #include "df/world_object_data.h"
 #include "df/world_site.h"
-
-#include "modules/Designations.h"
-#include "modules/Maps.h"
-#include "modules/Materials.h"
 
 using std::string;
 using std::vector;

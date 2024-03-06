@@ -33,11 +33,12 @@ distribution.
 #include <unordered_map>
 #include <unordered_set>
 
-#include "df/interfacest.h"
-
 #include "Core.h"
 #include "ColorText.h"
 #include "DataDefs.h"
+
+#include "df/interface_key.h"
+#include "df/interfacest.h"
 
 #include <lua.h>
 #include <lauxlib.h>

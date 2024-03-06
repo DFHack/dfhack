@@ -16,6 +16,8 @@
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/creature_raw.h"
+#include "df/general_ref.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 #include <queue>

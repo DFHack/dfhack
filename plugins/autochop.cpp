@@ -14,12 +14,16 @@
 #include "modules/World.h"
 
 #include "df/burrow.h"
+#include "df/general_ref.h"
 #include "df/item.h"
 #include "df/map_block.h"
+#include "df/material.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 #include <map>

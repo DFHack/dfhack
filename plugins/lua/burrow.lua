@@ -74,16 +74,6 @@ function BurrowDesignationOverlay:init()
                         {label='2D fill enabled', value='2d', pen=COLOR_GREEN},
                         {label='3D fill enabled', value='3d', pen=COLOR_LIGHTGREEN},
                     },
-                    visible=function() return not is_choosing_area() end,
-                },
-                widgets.Label{
-                    frame={t=0, l=1},
-                    text_pen=COLOR_DARKGREY,
-                    text={
-                        '3D box select enabled: ',
-                        {text=function() return ('%dx%dx%d'):format(get_cur_area_dims()) end},
-                    },
-                    visible=is_choosing_area,
                 },
             },
         },
@@ -98,15 +88,6 @@ local function flood_fill(pos, erasing, do_3d, painting_burrow)
         burrow_tiles_flood_add(painting_burrow, pos, opts)
     end
     reset_selection_rect()
-end
-
-local function box_fill(bounds, erasing, painting_burrow)
-    if bounds.z1 == bounds.z2 then return end
-    if erasing then
-        burrow_tiles_box_remove(painting_burrow, bounds)
-    else
-        burrow_tiles_box_add(painting_burrow, bounds)
-    end
 end
 
 function BurrowDesignationOverlay:onInput(keys)
@@ -135,7 +116,6 @@ function BurrowDesignationOverlay:onInput(keys)
             end
             if is_choosing_area(pos) then
                 self.last_click_ms = 0
-                self.pending_fn = curry(box_fill, get_bounds(pos), if_burrow.erasing)
                 return
             end
         end

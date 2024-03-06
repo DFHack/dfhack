@@ -28,8 +28,9 @@ distribution.
  * Units
  */
 #include "Export.h"
-#include "modules/Items.h"
 #include "DataDefs.h"
+
+#include "modules/Items.h"
 
 #include "df/caste_raw_flags.h"
 #include "df/goal_type.h"
@@ -37,7 +38,6 @@ distribution.
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
 #include "df/physical_attribute_type.h"
-#include "df/unit.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
 
@@ -45,12 +45,14 @@ namespace df
 {
     struct activity_entry;
     struct activity_event;
-    struct nemesis_record;
     struct burrow;
-    struct identity;
-    struct historical_entity;
     struct entity_position_assignment;
     struct entity_position;
+    struct historical_entity;
+    struct identity;
+    struct language_name;
+    struct nemesis_record;
+    struct unit;
     struct unit_misc_trait;
 }
 

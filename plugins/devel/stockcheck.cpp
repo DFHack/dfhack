@@ -2,20 +2,22 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-
 #include "DataDefs.h"
+
+#include "modules/MapCache.h"
+#include "modules/Items.h"
+
 #include "df/world.h"
 #include "df/plotinfost.h"
 #include "df/building_stockpilest.h"
+#include "df/general_ref.h"
 #include "df/global_objects.h"
 #include "df/item.h"
+#include "df/map_block.h"
 #include "df/unit.h"
 #include "df/building.h"
 #include "df/items_other_id.h"
 #include "df/item_stockpile_ref.h"
-#include "modules/MapCache.h"
-#include "modules/Items.h"
-
 
 using std::vector;
 using std::string;

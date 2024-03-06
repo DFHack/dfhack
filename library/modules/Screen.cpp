@@ -22,18 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-using namespace std;
-
-#include "modules/Renderer.h"
-#include "modules/Screen.h"
-#include "modules/GuiHooks.h"
 #include "Debug.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
@@ -43,17 +32,21 @@ using namespace std;
 #include "Core.h"
 #include "PluginManager.h"
 #include "LuaTools.h"
-
 #include "MiscUtils.h"
-
-using namespace DFHack;
-
 #include "DataDefs.h"
+
+#include "modules/Renderer.h"
+#include "modules/Screen.h"
+#include "modules/GuiHooks.h"
+
+#include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
 #include "df/init.h"
 #include "df/texture_handlerst.h"
 #include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic.h"
 #include "df/graphic_viewportst.h"
 #include "df/unit.h"
 #include "df/item.h"
@@ -62,6 +55,12 @@ using namespace DFHack;
 #include "df/renderer.h"
 #include "df/plant.h"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+
+using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::gps;
@@ -781,9 +780,17 @@ void dfhack_viewscreen::logic()
     }
 }
 
-void dfhack_viewscreen::render()
+void dfhack_viewscreen::render(uint32_t curtick)
 {
     check_resize();
+}
+
+// always pass calls directly through to the DF screen below since this is called on
+// the top viewscreen, but used to arrange the widgets on the underlying DF viewscreen
+df::extentst dfhack_viewscreen::get_rect() {
+    if (parent)
+        return parent->get_rect();
+    return df::extentst();
 }
 
 bool dfhack_viewscreen::key_conflict(df::interface_key key)
@@ -1019,14 +1026,14 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
     safe_call_lua(do_destroy, 0, 0);
 }
 
-void dfhack_lua_viewscreen::render()
+void dfhack_lua_viewscreen::render(uint32_t curtick)
 {
     using df::global::enabler;
 
     if (Screen::isDismissed(this))
     {
         if (parent)
-            parent->render();
+            parent->render(curtick);
         return;
     }
 
@@ -1038,7 +1045,7 @@ void dfhack_lua_viewscreen::render()
         feed(&keys);
     }
 
-    dfhack_viewscreen::render();
+    dfhack_viewscreen::render(curtick);
 
     safe_call_lua(do_render, 0, 0);
 }

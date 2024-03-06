@@ -30,9 +30,13 @@ distribution.
  */
 #include "Export.h"
 #include "DataDefs.h"
-#include "df/construction.h"
+
 #include "df/construction_type.h"
 #include "df/item_type.h"
+
+namespace df {
+    struct construction;
+}
 
 /**
  * \defgroup grp_constructions Construction module parts

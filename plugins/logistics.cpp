@@ -13,6 +13,7 @@
 #include "df/building_tradedepotst.h"
 #include "df/caravan_state.h"
 #include "df/general_ref_building_holderst.h"
+#include "df/item.h"
 #include "df/plotinfost.h"
 #include "df/world.h"
 

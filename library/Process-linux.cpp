@@ -134,6 +134,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
     size_t start, end, offset, device1, device2, node;
 
+    string cur_name;
+    void * cur_base = nullptr;
+
     while (fgets(buffer, 1024, mapFile))
     {
         t_memrange temp;
@@ -144,6 +147,11 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                (char*)&permissions,
                &offset, &device1, &device2, &node,
                (char*)temp.name);
+        if (cur_name != temp.name) {
+            cur_name = temp.name;
+            cur_base = (void *) start;
+        }
+        temp.base = cur_base;
         temp.start = (void *) start;
         temp.end = (void *) end;
         temp.read = permissions[0] == 'r';

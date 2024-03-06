@@ -509,6 +509,7 @@ function View:getMousePos(view_rect)
 end
 
 function View:getMouseFramePos()
+    if not self.frame_rect or not self.frame_parent_rect then return end
     return self:getMousePos(ViewRect{
         rect=mkdims_wh(
             self.frame_rect.x1+self.frame_parent_rect.x1,
@@ -656,7 +657,7 @@ end
 
 function Screen:renderParent()
     if self._native and self._native.parent then
-        self._native.parent:render()
+        self._native.parent:render(dfhack.getTickCount())
     else
         dscreen.clear()
     end

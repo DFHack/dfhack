@@ -24,7 +24,9 @@
 #include "df/itemdef_shoesst.h"
 #include "df/items_other_id.h"
 #include "df/manager_order.h"
+#include "df/material.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::string;

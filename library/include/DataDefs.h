@@ -898,3 +898,12 @@ namespace DFHack {
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"
 #include "df/coord.h"
+
+namespace std {
+    template <>
+    struct hash<df::coord> {
+        std::size_t operator()(const df::coord& c) const {
+            return c();
+        }
+    };
+}

@@ -29,16 +29,8 @@ distribution.
 #include "MiscUtils.h"
 #include "Types.h"
 #include "VersionInfo.h"
-
-#include <cstdio>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <set>
-using namespace std;
-
 #include "ModuleFactory.h"
+
 #include "modules/Job.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
@@ -92,6 +84,7 @@ using namespace std;
 #include "df/job_item.h"
 #include "df/mandate.h"
 #include "df/map_block.h"
+#include "df/material.h"
 #include "df/proj_itemst.h"
 #include "df/proj_list_link.h"
 #include "df/reaction_product_itemst.h"
@@ -107,6 +100,15 @@ using namespace std;
 #include "df/world_site.h"
 #include "df/written_content.h"
 
+#include <cstdio>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <set>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
@@ -508,28 +510,6 @@ df::item * Items::findItemByID(int32_t id)
     if (id < 0)
         return 0;
     return df::item::find(id);
-}
-
-bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
-{
-    if(!itembase)
-        return false;
-    df::item * itreal = (df::item *) itembase;
-    item.origin = itembase;
-    item.x = itreal->pos.x;
-    item.y = itreal->pos.y;
-    item.z = itreal->pos.z;
-    item.id = itreal->id;
-    item.age = itreal->age;
-    item.flags = itreal->flags;
-    item.matdesc.item_type = itreal->getType();
-    item.matdesc.item_subtype = itreal->getSubtype();
-    item.matdesc.mat_type = itreal->getMaterial();
-    item.matdesc.mat_index = itreal->getMaterialIndex();
-    item.wear_level = itreal->getWear();
-    item.quality = itreal->getQuality();
-    item.quantity = itreal->getStackSize();
-    return true;
 }
 
 df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type)

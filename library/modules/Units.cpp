@@ -22,34 +22,22 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <stddef.h>
-#include <string>
-#include <vector>
-#include <map>
-#include <cstring>
-#include <algorithm>
-#include <numeric>
-#include <functional>
-using namespace std;
 
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Error.h"
 #include "Types.h"
+#include "ModuleFactory.h"
+#include "Core.h"
+#include "MiscUtils.h"
 
-// we connect to those
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/World.h"
-#include "ModuleFactory.h"
-#include "Core.h"
-#include "MiscUtils.h"
 
 #include "df/activity_entry.h"
 #include "df/burrow.h"
@@ -64,6 +52,7 @@ using namespace std;
 #include "df/entity_site_link.h"
 #include "df/identity_type.h"
 #include "df/game_mode.h"
+#include "df/general_ref.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/histfig_relationship_type.h"
 #include "df/historical_entity.h"
@@ -72,12 +61,14 @@ using namespace std;
 #include "df/historical_kills.h"
 #include "df/history_event_hist_figure_diedst.h"
 #include "df/identity.h"
+#include "df/item.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
 #include "df/syndrome.h"
 #include "df/training_assignment.h"
+#include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_relationship_type.h"
@@ -90,6 +81,17 @@ using namespace std;
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
 
+#include <stddef.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+#include <algorithm>
+#include <numeric>
+#include <functional>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
@@ -101,9 +103,9 @@ bool Units::isUnitInBox(df::unit* u,
                         int16_t x1, int16_t y1, int16_t z1,
                         int16_t x2, int16_t y2, int16_t z2) {
 
-    if (x1 > x2) swap(x1, x2);
-    if (y1 > y2) swap(y1, y2);
-    if (z1 > z2) swap(z1, z2);
+    if (x1 > x2) std::swap(x1, x2);
+    if (y1 > y2) std::swap(y1, y2);
+    if (z1 > z2) std::swap(z1, z2);
     if (u->pos.x >= x1 && u->pos.x <= x2) {
         if (u->pos.y >= y1 && u->pos.y <= y2) {
             if (u->pos.z >= z1 && u->pos.z <= z2) {
@@ -2290,7 +2292,7 @@ void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+        mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue - amount, 1.0);});
     }
 }
 
@@ -2301,7 +2303,7 @@ void Units::subtractGroupActionTimers(color_ostream &out, df::unit *unit, int32_
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypeGroup) {
-                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+                mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue - amount, 1.0);});
                 break;
             }
         }
@@ -2323,7 +2325,7 @@ void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amoun
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+        mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue * amount, 1.0);});
     }
 }
 
@@ -2336,7 +2338,7 @@ void Units::multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float 
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypeGroup) {
-                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+                mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue * amount, 1.0);});
                 break;
             }
         }

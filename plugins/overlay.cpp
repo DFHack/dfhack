@@ -98,8 +98,8 @@ struct viewscreen_overlay : T {
         else
             dfhack_lua_viewscreen::markInputAsHandled();
     }
-    DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
-        INTERPOSE_NEXT(render)();
+    DEFINE_VMETHOD_INTERPOSE(void, render, (uint32_t curtick)) {
+        INTERPOSE_NEXT(render)(curtick);
         call_overlay_lua(NULL, "render_viewscreen_widgets", 2, 0,
                 [&](lua_State *L) {
                     Lua::Push(L, T::_identity.getName());

@@ -24,11 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <cstring>
-#include <string>
-#include <vector>
-#include <map>
-
 #include "MemAccess.h"
 #include "Core.h"
 #include "Error.h"
@@ -40,6 +35,9 @@ distribution.
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 #include "md5wrapper.h"
+#include "LuaWrapper.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
 
 #include "modules/Buildings.h"
 #include "modules/Burrows.h"
@@ -61,23 +59,24 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "LuaWrapper.h"
-#include "LuaTools.h"
-
-#include "MiscUtils.h"
-
 #include "df/activity_entry.h"
 #include "df/activity_event.h"
+#include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
 #include "df/building.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
+#include "df/building_stockpilest.h"
+#include "df/building_tradedepotst.h"
 #include "df/burrow.h"
+#include "df/caravan_state.h"
+#include "df/construction.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/general_ref.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/historical_figure.h"
 #include "df/identity.h"
@@ -88,6 +87,7 @@ distribution.
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/material.h"
+#include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
@@ -96,6 +96,7 @@ distribution.
 #include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
 #include "df/vermin.h"
@@ -104,6 +105,11 @@ distribution.
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+
+#include <cstring>
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -1752,6 +1758,43 @@ static int gui_revealInDwarfmodeMap(lua_State *state)
     return 1;
 }
 
+static df::widget * get_one_widget(lua_State *L, int32_t idx, df::widget_container *container) {
+    if (lua_isinteger(L, idx))
+        return Gui::getWidget(container, lua_tointeger(L, idx));
+    else if (lua_isstring(L, idx))
+        return Gui::getWidget(container, luaL_checkstring(L, idx));
+    return NULL;
+}
+
+static int gui_getWidget(lua_State *L) {
+    df::widget_container *container = Lua::CheckDFObject<df::widget_container>(L, 1);
+
+    df::widget *w = NULL;
+    int max_arg_idx = lua_gettop(L);
+    for (int32_t idx = 2; idx <= max_arg_idx; ++idx) {
+        if (!container)
+            return 0;
+        w = get_one_widget(L, idx, container);
+        if (!w)
+            return 0;
+        if (idx < max_arg_idx)
+            container = virtual_cast<df::widget_container>(w);
+    }
+
+    Lua::PushDFObject(L, w);
+    return 1;
+}
+
+static int gui_getWidgetChildren(lua_State *L) {
+    df::widget_container *container = Lua::CheckDFObject<df::widget_container>(L, 1);
+    std::vector<df::widget *> vec;
+    for (auto & contained : container->children) {
+        vec.emplace_back(contained.get());
+    }
+    Lua::PushVector(L, vec);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "makeAnnouncement", gui_makeAnnouncement },
     { "showAnnouncement", gui_showAnnouncement },
@@ -1765,6 +1808,8 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "getMousePos", gui_getMousePos },
     { "getFocusStrings", gui_getFocusStrings },
     { "getCurFocus", gui_getCurFocus },
+    { "getWidget", gui_getWidget },
+    { "getWidgetChildren", gui_getWidgetChildren },
     { NULL, NULL }
 };
 
@@ -3341,6 +3386,10 @@ static int internal_getMemRanges(lua_State *L)
     for(size_t i = 0; i < ranges.size(); i++)
     {
         lua_newtable(L);
+        if (ranges[i].base) {
+            lua_pushinteger(L, (uintptr_t)ranges[i].base);
+            lua_setfield(L, -2, "base_addr");
+        }
         lua_pushinteger(L, (uintptr_t)ranges[i].start);
         lua_setfield(L, -2, "start_addr");
         lua_pushinteger(L, (uintptr_t)ranges[i].end);

@@ -25,14 +25,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <cstdlib>
-#include <iostream>
-using namespace std;
-
 #include "ColorText.h"
 #include "Core.h"
 #include "DataDefs.h"
@@ -50,11 +42,13 @@ using namespace std;
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
 #include "df/block_square_event_grassst.h"
+#include "df/building.h"
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/map_block.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
 #include "df/plant_root_tile.h"
@@ -69,6 +63,15 @@ using namespace std;
 #include "df/world_underground_region.h"
 #include "df/z_level_flags.h"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cstdlib>
+#include <iostream>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;

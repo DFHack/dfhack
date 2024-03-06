@@ -69,6 +69,9 @@ Template for new versions:
 
 # 50.12-r1
 
+## Fixes
+- `gui/design`: no longer comes up when Ctrl-D is pressed but other DFHack windows have focus
+
 ## Removed
 - `burrow`: removed overlay 3D box select since it is now provided by the vanilla UI
 

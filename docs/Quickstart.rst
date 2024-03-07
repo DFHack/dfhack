@@ -13,11 +13,11 @@ What is DFHack?
 
 DFHack is an add-on for Dwarf Fortress that enables mods and tools to
 significantly extend the game. The default DFHack distribution contains a wide
-variety of tools, including bugfixes, interface improvements, automation agents,
-design blueprints, modding building blocks, and more. Third-party tools (e.g.
-mods downloaded from Steam Workshop or the forums) can also seamlessly integrate
-with the DFHack framework and extend the game far beyond what can be done by
-just modding the raws.
+variety of these mods and tools, including bugfixes, interface improvements,
+automation agents, design blueprints, modding building blocks, and more.
+Third-party tools (e.g. mods downloaded from Steam Workshop or the forums) can
+also seamlessly integrate with the DFHack framework and extend the game far
+beyond what can be done by just modding the raws.
 
 DFHack's mission is to provide tools and interfaces for players and modders to:
 
@@ -35,7 +35,8 @@ itself. Many of the game's rough edges have been smoothed with DFHack tools.
 Here are some common tasks people use DFHack tools to accomplish:
 
 - Automatically chop trees when log stocks are low
-- Record blueprint files that allow copy and paste of fort designs
+- Mark all damaged items for trade in a single click
+- Copy and paste fort layouts
 - Import and export lists of manager orders
 - Clean contaminants from map squares that dwarves can't reach
 - Automatically butcher excess livestock so you don't become overrun with
@@ -54,14 +55,15 @@ background. For example, once enabled, `seedwatch` will start monitoring your
 stocks of seeds and prevent your chefs from cooking seeds that you need for
 planting. Tools that are enabled in the context of a fort will save their state
 with that fort, and they will remember that they are enabled the next time you
-load your save.
+load your save. You can see which tools you have enabled and toggle their states
+in `gui/control-panel`.
 
 A third class of tools adds information to the screen or provides new integrated
 functionality via the DFHack `overlay` framework. For example, the `sort` tool
-adds widgets to the squad member selection screen that allow you to search,
-sort, and filter the list of military candidates. You don't have to run any
-command to get the benefits of the tool, it appears automatically when you're
-on the relevant screen.
+adds widgets to the squad member selection screen that allow you to sort and
+filter the list of military candidates. You don't have to run any command to get
+the benefits of the tool, it appears automatically when you're on the relevant
+screen.
 
 How can I figure out which commands to run?
 -------------------------------------------
@@ -83,37 +85,54 @@ time without even opening the logo menu.
 
 The second place to check is the DFHack control panel: `gui/control-panel`. It
 will give you an overview of which tools are currently enabled, and will allow
-you to toggle them on or off, see help text for them, or launch their dedicated
-configuration UIs. You can open the control panel from anywhere with the
-Ctrl-Shift-E hotkey or by selecting it from the logo menu list.
+you to toggle tools on or off, see help text for them, or launch their
+dedicated configuration UIs. You can open the control panel from anywhere with
+the Ctrl-Shift-E hotkey or by selecting it from the logo menu list.
 
 In the control panel, you can also select which tools you'd like to be
 automatically enabled and popular commands you'd like to run when you start a
 new fort. On the "Preferences" tab, there are settings you can change, like
-whether you want to limit DFHack functionality to interface improvements,
-bugfixes, and productivity tools, hiding the god-mode tools ("mortal mode") or
-whether you want DFHack windows to pause the game when they come up.
+the aforementioned "mortal mode" or whether you want DFHack windows to pause
+the game when they come up.
 
 Finally, you can explore the full extent of the DFHack catalog in
 `gui/launcher`, which is always listed first in the DFHack logo menu list. You
-can also bring up the launcher by tapping the backtick key (\`) or hitting
+can bring up the launcher by tapping the backtick key (\`) or hitting
 Ctrl-Shift-D. In the launcher, you can quickly autocomplete any command name by
-selecting it in the list on the right side of the window. Commands are ordered
-by how often you run them, so your favorite commands will always be on top. You
-can also pull full commandlines out of your history with Alt-S or by clicking
-on the "history search" hotkey hint.
+selecting it in the list on the right side of the window. You can filter the list
+by command tag, for example, you can see only productivity tools by setting the
+"productivity" tag to "include" in the filter panel. Commands are ordered by how
+often you run them, so your favorite commands will always be on top. You can
+also pull full commandlines out of your history with Alt-S or by clicking on the
+"history search" button.
 
 Once you have typed (or autocompleted, or searched for) a command, other
 commands related to the one you have selected will appear in the right-hand
 panel. Scanning through that list is a great way to learn about new tools that
-you might find useful. You can also see how commands are grouped by running the
-`tags` command.
+you might find useful.
 
 The bottom panel will show the full help text for the command you are running,
 allowing you to refer to the usage documentation and examples when you are
 typing your command. After you run a command, the bottom panel switches to
 command output mode, but you can get back to the help text by hitting Ctrl-T or
 clicking on the ``Help`` tab.
+
+What if I don't want to be tempted by god-mode tools?
+-----------------------------------------------------
+
+DFHack can give you god-like powers over the game. Sometimes, this is necessary
+to recover from game-breaking bugs. Sometimes, this is desirable so players can
+create specific role playing environments and situations. Sometimes, this is just
+fun : )
+
+But sometimes the knowledge that you can just "Armok" your way out of trouble
+detracts from the game experience. If this is the way you feel, you can hide
+DFHack's god-mode tools -- they all have the tag "armok" -- from the game. Open
+`gui/control-panel` and go to the "Preferences" tab. Enable "Mortal mode" to
+hide all "armok" tools. You can still access them in `gui/launcher` if you type
+their names in full, but they won't show up in autocomplete lists, in the output
+of `ls`, or anywhere else. Any global hotkeys that run "armok" tools will be
+disabled.
 
 How do DFHack in-game windows work?
 -----------------------------------
@@ -142,12 +161,13 @@ the game is unpaused, it can continue to run while a DFHack window is open. If
 configured to do so in `gui/control-panel`, tools will initially pause the game
 to let you focus on the task at hand, but you can unpause like normal if you
 want. You can also interact with the map, scrolling it with the keyboard or
-mouse and selecting units, buildings, and items. Some tools will intercept all
-mouse clicks to allow you to select regions of the map. When these tools have
-focus, you will not be able to use the mouse to interact with map elements or
-pause/unpause the game. Therefore, these tools will pause the game when they
-open, regardless of your settings in `gui/control-panel`. You can still unpause
-with the keyboard (spacebar by default), though.
+mouse and selecting units, buildings, and items. Some tools, like
+`gui/blueprint`, will intercept all mouse clicks to allow you to select regions
+of the map. When these tools have focus, you will not be able to use the mouse
+to interact with map elements or pause/unpause the game. Therefore, these tools
+will pause the game when they open, regardless of your settings in
+`gui/control-panel`. You can still unpause with the keyboard (spacebar by
+default), though.
 
 Where do I go next?
 -------------------
@@ -176,42 +196,44 @@ well, using the DFHack `overlay` widget at the bottom of the manager orders
 panel.
 
 Next, try setting up `autochop` to automatically designate trees for chopping
-when you get low on usable logs. Run `gui/control-panel` and select
-``autochop`` in the ``Enabled`` tab. Click on the button to the left of the name
-or hit Enter to enable it. You can then click on the configure button (the gear
-icon) to launch `gui/autochop` if you'd like to customize its settings. If you
-have the extra screen space, you can go ahead and set the `gui/autochop` window
-to minimal mode (click on the hint near the upper right corner of the window or
-hit Alt-M) and click on the map so the window loses keyboard focus. As you play
+when you get low on usable logs. Run `gui/control-panel` and enable
+``autochop`` in the ``Automation`` -> ``Enabled`` tab. Click on the button to
+the left of the name or hit Enter to enable it. You can then click on the
+configure button (the gear icon) to launch `gui/autochop` if you'd like to
+customize its settings (the defaults are usually fine). If you have the extra
+screen space, you can go ahead and set the `gui/autochop` window to minimal
+mode (click on the button near the upper right corner of the window or hit
+Alt-M) and click on the map so the window loses keyboard focus. As you play
 the game, you can glance at the live status panel to check on your stocks of
 wood.
 
 Finally, let's do some fort design copy-pasting. Go to some bedrooms that you
 have set up in your fort. Run `gui/blueprint`, set a name for your blueprint by
-clicking on the name field (or hitting the 'n' hotkey), typing "rooms" (or
-whatever) and hitting Enter to set. Then draw a box around the target area by
+clicking on the name field (or hitting the 'n' hotkey). Type "rooms" (or
+whatever) and hit Enter to set. Then draw a box around the target area by
 clicking with the mouse. When you select the second corner, the blueprint will
 be saved to your ``dfhack-config/blueprints`` subfolder.
 
-Now open up `gui/quickfort`. You can search for the blueprint you just created
-by typing its name, but it should be up near the top already. If you copied a
-dug-out area with furniture in it, your blueprint will have two labels: "/dig"
-and "/build". Click on the "/dig" blueprint or select it with the keyboard
-arrow keys and hit Enter. You can rotate or flip the blueprint around if you
-need to with the transform hotkeys. You'll see a preview of where the blueprint
-will be applied as you move the mouse cursor around the map. Red outlines mean
-that the blueprint may fail to fully apply at that location, so be sure to
-choose a spot where all the preview tiles are shown with green diamonds. Click
-the mouse or hit Enter to apply the blueprint and designate the tiles for
-digging. Your dwarves will come and dig it out as if you had designated the
-tiles yourself.
+Now open up `gui/quickfort` (the hotkey is Ctrl-Shift-Q). You can search for the
+blueprint you just created by typing its name, but it should be up near the top
+already. If you copied a dug-out area with furniture in it, you will see two
+blueprints with the labels "/dig" and "/build". Click on the "/dig" blueprint or
+select it with the keyboard arrow keys and hit Enter. You can rotate or flip the
+blueprint around if you need to with the transform hotkeys. You'll see a preview
+of where the blueprint will be applied as you move the mouse cursor around the
+map. Red outlines mean that the blueprint may fail to fully apply at that
+location, so be sure to choose a spot where all the preview tiles are shown with
+green diamonds. Click the mouse or hit Enter to apply the blueprint and
+designate the tiles for digging. Your dwarves will come and dig it out as if you
+had designated the tiles yourself.
 
-Once the area is dug out, run `gui/quickfort` again and select your "/build"
+Once the area is dug out, run `gui/quickfort` again and select the "/build"
 blueprint this time. Hit ``o`` to generate manager orders for the required
-furniture. Apply the blueprint in the dug-out area, and your furniture will be
-designated. It's just that easy! Note that `quickfort` uses `buildingplan` to
-place buildings, so you don't even need to have the relevant furniture or
-building materials in stock yet. The planned furniture/buildings will get built
-whenever you are able to produce the building materials.
+furniture. Click to apply the blueprint in the dug-out area, and your furniture
+will be designated. It's just that easy! Note that `quickfort` uses
+`buildingplan` to place buildings, so you don't even need to have the relevant
+furniture or building materials in stock yet. The planned furniture/buildings
+will get built whenever you are able to produce the building materials.
 
-There are many, many more tools to explore. Have fun!
+There are many, many more tools to explore. Poke around or ask other player for
+advice. Have fun, and dig deep!

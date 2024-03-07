@@ -289,7 +289,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
         focusStrings.push_back(newFocusString);
     }
-    if (get_visible_child(Gui::getWidget(&game->main_interface.announcements.stack, "Widgets"))) {
+    if (get_visible_child(&game->main_interface.announcements.stack)) {
         focusStrings.push_back(baseFocus + "/Announcements");
     }
     if (game->main_interface.info.open) {

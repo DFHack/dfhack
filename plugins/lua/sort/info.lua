@@ -465,8 +465,12 @@ local function get_work_animal_counts()
     return counts
 end
 
+local function get_hunting_assignment()
+    return dfhack.gui.getWidget(creatures, 'Tabs', 'Pets/Livestock', 'Hunting assignment')
+end
+
 local function get_scroll_rows()
-    return dfhack.gui.getWidget(creatures, 'Tabs', 'Pets/Livestock', 'Hunting assignment', 'Unit List', 1)
+    return dfhack.gui.getWidget(get_hunting_assignment(), 'Unit List', 1)
 end
 
 local function get_scroll_pos(scroll_rows)
@@ -508,12 +512,107 @@ function WorkAnimalOverlay:onRenderFrame(dc, rect)
     WorkAnimalOverlay.super.onRenderFrame(self, dc, rect)
 end
 
+-- ------------------------
+-- WorkAnimalFilterOverlay
+--
+
+WorkAnimalFilterOverlay = defclass(WorkAnimalFilterOverlay, overlay.OverlayWidget)
+WorkAnimalFilterOverlay.ATTRS{
+    desc='Adds filter capabilities to the work animal assignment screen.',
+    default_pos={x=49, y=-6},
+    default_enabled=true,
+    viewscreens='dwarfmode/Info/CREATURES/AssignWorkAnimal',
+    frame={w=35, h=5},
+    frame_background=gui.CLEAR_PEN,
+    frame_style=gui.FRAME_MEDIUM,
+}
+
+local function poke_list()
+    get_hunting_assignment().sort_flags.NEEDS_RESORTED = true
+end
+
+filter_instance = nil
+
+function WorkAnimalFilterOverlay:init()
+    filter_instance = self
+
+    self:addviews{
+        widgets.CycleHotkeyLabel{
+            view_id='subset',
+            frame={l=0, t=0, r=0},
+            key='CUSTOM_SHIFT_F',
+            label='  Show:',
+            options={
+                {label='All', value='all', pen=COLOR_GREEN},
+                {label='Military', value='military', pen=COLOR_YELLOW},
+                {label='Civilians', value='civilian', pen=COLOR_CYAN},
+                {label='Burrowed', value='burrow', pen=COLOR_MAGENTA},
+            },
+            on_change=function(value)
+                local squad = self.subviews.squad
+                local burrow = self.subviews.burrow
+                squad.enabled = false
+                burrow.enabled = false
+                if value == 'military' then
+                    squad.options = get_squad_options()
+                    squad.enabled = true
+                else
+                    squad:setOption('all')
+                end
+                if value == 'burrow' then
+                    burrow.options = get_burrow_options()
+                    burrow.enabled = true
+                else
+                    burrow:setOption('all')
+                end
+                poke_list()
+            end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='squad',
+            frame={l=0, t=1, r=0},
+            key='CUSTOM_SHIFT_S',
+            label=' Squad:',
+            options={
+                {label='Any', value='all', pen=COLOR_GREEN},
+            },
+            enabled=false,
+            on_change=poke_list,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='burrow',
+            frame={l=0, t=2, r=0},
+            key='CUSTOM_SHIFT_B',
+            label='Burrow:',
+            options={
+                {label='Any', value='all', pen=COLOR_GREEN},
+            },
+            enabled=false,
+            on_change=poke_list,
+        },
+    }
+end
+
+function WorkAnimalFilterOverlay:render(dc)
+    local unitlist = get_hunting_assignment()
+    require('plugins.sort').sort_set_work_animal_assignment_filter_fn(unitlist)
+    WorkAnimalFilterOverlay.super.render(self, dc)
+end
+
+function do_work_animal_assignment_filter(unit)
+    local self = filter_instance
+    return matches_squad_burrow_filters(unit,
+        self.subviews.subset:getOptionValue(),
+        self.subviews.squad:getOptionValue(),
+        self.subviews.burrow:getOptionValue())
+end
+
 -- ----------------------
 -- JusticeOverlay
 --
 
 local function get_unit_list(which)
-    local tabs = dfhack.gui.getWidget(df.global.game.main_interface.info.justice, 'Tabs')
+    local tabs = dfhack.gui.getWidget(justice, 'Tabs')
     return dfhack.gui.getWidget(tabs, 'Open cases', 'Right panel', which) or
         dfhack.gui.getWidget(tabs, 'Cold cases', 'Right panel', which)
 end

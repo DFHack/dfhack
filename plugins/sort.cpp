@@ -88,6 +88,10 @@ static bool do_justice_filter(item_or_unit elem) {
     return do_filter("plugins.sort.info", "do_justice_filter", elem);
 }
 
+static bool do_work_animal_assignment_filter(item_or_unit elem) {
+    return do_filter("plugins.sort.info", "do_work_animal_assignment_filter", elem);
+}
+
 static int32_t our_filter_idx(df::widget_unit_list *unitlist) {
     if (world->units.active.empty())
         return true;
@@ -140,6 +144,15 @@ static df::widget_unit_list * get_convict_unit_list(const char *which) {
     auto right_panel = get_justice_panel(which);
     if (!right_panel) return NULL;
     return virtual_cast<df::widget_unit_list>(Gui::getWidget(right_panel, "Convict"));
+}
+
+static df::widget_unit_list * get_work_animal_assignment_unit_list() {
+    auto tabs = virtual_cast<df::widget_container>(
+        Gui::getWidget(&game->main_interface.info.creatures, "Tabs"));
+    if (!tabs) return NULL;
+    auto pets = virtual_cast<df::widget_container>(Gui::getWidget(tabs, "Pets/Livestock"));
+    if (!pets) return NULL;
+    return virtual_cast<df::widget_unit_list>(Gui::getWidget(pets, "Hunting assignment"));
 }
 
 //
@@ -217,6 +230,9 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     if (auto unitlist = get_convict_unit_list("Cold cases"))
         remove_filter_function(out, "cold cases convict", unitlist);
 
+    if (auto unitlist = get_work_animal_assignment_unit_list())
+        remove_filter_function(out, "work animal assignment", unitlist);
+
     return CR_OK;
 }
 
@@ -242,6 +258,15 @@ static void sort_set_justice_filter_fn(color_ostream &out, df::widget_unit_list 
         DEBUG(log).print("adding justice filter function\n");
         auto filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
         filter_vec->emplace_back(do_justice_filter);
+        unitlist->sort_flags.bits.NEEDS_RESORTED = true;
+    }
+}
+
+static void sort_set_work_animal_assignment_filter_fn(color_ostream &out, df::widget_unit_list *unitlist) {
+    if (unitlist && our_filter_idx(unitlist) == -1) {
+        DEBUG(log).print("adding work animal assignment filter function\n");
+        auto filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
+        filter_vec->emplace_back(do_work_animal_assignment_filter);
         unitlist->sort_flags.bits.NEEDS_RESORTED = true;
     }
 }
@@ -275,6 +300,7 @@ static bool sort_is_interviewed(color_ostream &out, df::unit *unit) {
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(sort_set_squad_filter_fn),
     DFHACK_LUA_FUNCTION(sort_set_justice_filter_fn),
+    DFHACK_LUA_FUNCTION(sort_set_work_animal_assignment_filter_fn),
     DFHACK_LUA_FUNCTION(sort_set_sort_fn),
     DFHACK_LUA_FUNCTION(sort_get_sort_active),
     DFHACK_LUA_FUNCTION(sort_is_interviewed),

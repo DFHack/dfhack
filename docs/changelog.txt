@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `stocks`: add button/hotkey for removing empty categories from the stocks list
+- `sort`: updated and reinstated military status/squad membership/burrow membership filter for work animal assignment screen
 
 ## Fixes
 

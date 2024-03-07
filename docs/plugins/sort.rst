@@ -135,6 +135,9 @@ Work animals overlay
 The work animal assignment screen has an overlay that annotates each visible
 unit with the number of work animals that unit already has assigned.
 
+There is also a filter panel at the bottom that allows you to filter by
+military status, squad membership, or burrow membership (or lack thereof).
+
 Interrogation overlay
 ---------------------
 

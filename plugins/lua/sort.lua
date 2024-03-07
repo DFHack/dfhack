@@ -1291,6 +1291,7 @@ OVERLAY_WIDGETS = {
     squad_filter=SquadFilterOverlay,
     info=require('plugins.sort.info').InfoOverlay,
     workanimals=require('plugins.sort.info').WorkAnimalOverlay,
+    workanimals_filter=require('plugins.sort.info').WorkAnimalFilterOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     conviction=require('plugins.sort.info').ConvictionOverlay,

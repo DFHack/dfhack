@@ -67,6 +67,8 @@ Template for new versions:
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps
+- `introduction`: refresh getting started content
+- `quickstart`: refresh quickstart guide
 
 ## API
 

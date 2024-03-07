@@ -67,6 +67,11 @@ Template for new versions:
 
 ## Removed
 
+# 50.12-r1.1
+
+## Fixes
+- `sort`: fix crash when assigning work animals to units
+
 # 50.12-r1
 
 ## Misc Improvements

@@ -1788,8 +1788,9 @@ static int gui_getWidget(lua_State *L) {
 static int gui_getWidgetChildren(lua_State *L) {
     df::widget_container *container = Lua::CheckDFObject<df::widget_container>(L, 1);
     std::vector<df::widget *> vec;
-    for (auto & contained : container->children) {
-        vec.emplace_back(contained.get());
+    if (container) {
+        for (auto & contained : container->children)
+            vec.emplace_back(contained.get());
     }
     Lua::PushVector(L, vec);
     return 1;

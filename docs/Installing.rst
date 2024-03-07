@@ -1,8 +1,8 @@
 .. _installing:
 
-=================
-Installing DFHack
-=================
+==========
+Installing
+==========
 
 .. contents::
     :local:
@@ -11,8 +11,9 @@ Requirements
 ============
 
 DFHack supports all operating systems and platforms that Dwarf Fortress itself
-supports, which at the moment is the 64-bit version of Windows and Linux. However, the Windows
-build of DFHack works well under ``wine`` for other platforms.
+supports, which at the moment is the 64-bit version of Windows and Linux.
+However, the Windows build of DFHack works well under ``wine`` for other
+platforms.
 
 .. _installing-df-version:
 
@@ -79,7 +80,8 @@ To download a development build from GitHub:
 - Click the number under "Artifacts" (or scroll down)
 - Click on the "dfhack-*-build-*" artifact for your platform to download
 
-You can extract this package the same as if you are doing a manual install (see the next section).
+You can extract this package the same as if you are doing a manual install (see
+the next section).
 
 Installing DFHack
 =================
@@ -140,11 +142,12 @@ all your settings will be restored when you reinstall DFHack later.
 Upgrading DFHack
 ================
 
-Again, if you have installed from Steam, your copy of DFHack will automatically be kept up to date. This section is for manual installers.
+Again, if you have installed from Steam, your copy of DFHack will automatically
+be kept up to date. This section is for manual installers.
 
 First, remove the ``hack`` and ``stonesense`` folders in their entirety. This
 ensures that files that don't exist in the latest version are properly removed
 and don't affect your new installation.
 
-Then, extract the DFHack release archive into your Dwarf Fortress folder,
-overwriting any remaining top-level files.
+Then, follow the instructions in the `Installing DFHack`_ section above, making
+sure to choose to overwrite any remaining top-level files when extracting.

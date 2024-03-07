@@ -357,10 +357,10 @@ public:
 
     void ClearUnits() {
         fk_prot = fa_prot = mk_prot = ma_prot = 0;
-        fk_units = UnitsPQ();
-        fa_units = UnitsPQ();
-        mk_units = UnitsPQ();
-        ma_units = UnitsPQ();
+        fk_units = UnitsPQ(compareKids);
+        fa_units = UnitsPQ(compareKids);
+        mk_units = UnitsPQ(compareAdults);
+        ma_units = UnitsPQ(compareAdults);
     }
 
     static int ProcessUnits(UnitsPQ& units, int limit) {

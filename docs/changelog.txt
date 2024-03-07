@@ -77,6 +77,14 @@ Template for new versions:
 
 ## Removed
 
+# 50.12-r1.1
+
+## Fixes
+- `sort`: fix crash when assigning work animals to units
+
+## Removed
+- offline HTML rendered docs are no longer distributed with DFHack since they are randomly triggering Windows Defender antivirus heuristics. If you want to download DFHack docs for offline browsing, you can still get them from the Downloads link at https://dfhack.org/docs
+
 # 50.12-r1
 
 ## Misc Improvements

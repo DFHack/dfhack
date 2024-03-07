@@ -286,7 +286,8 @@ function resize_overlay(self)
 end
 
 local function is_tabs_in_two_rows()
-    return dfhack.screen.readTile(64, 6, false).ch == 0
+    local sw = dfhack.screen.getWindowSize()
+    return sw < 155
 end
 
 function get_panel_offsets()
@@ -469,7 +470,8 @@ local function get_scroll_rows()
 end
 
 local function get_scroll_pos(scroll_rows)
-    return (scroll_rows or get_scroll_rows()).scroll
+    scroll_rows = scroll_rows or get_scroll_rows()
+    return scroll_rows and scroll_rows.scroll or 0
 end
 
 function WorkAnimalOverlay:preUpdateLayout(parent_rect)
@@ -481,6 +483,7 @@ end
 
 function WorkAnimalOverlay:onRenderFrame(dc, rect)
     local scroll_rows = get_scroll_rows()
+    if not scroll_rows then return end
     local rows = dfhack.gui.getWidgetChildren(scroll_rows)
     local scroll_pos = get_scroll_pos(scroll_rows)
     local max_elem = math.min(#rows, scroll_pos+scroll_rows.num_visible)

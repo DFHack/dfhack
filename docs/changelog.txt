@@ -57,12 +57,12 @@ Template for new versions:
 - `stocks`: add button/hotkey for removing empty categories from the stocks list
 
 ## Fixes
-- Items module fn ``detach_item`` can now detach items loosely stored in buildings. Impacts ``autodump``, ``Items::moveToGround``, etc.
 
 ## Misc Improvements
-- `autobutcher`: prefer butchering partially trained animals and saving fully domesticated animals to assist in wildlife domestication programs
+- `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs
+- `autodump`: can now teleport items loosely stored in buildings (clutter)
 - When launched from the Steam client on Linux, both Dwarf Fortress and DFHack will be shown as "Running". This ensures that DF has proper accounting for Linux player usage.
-- `suspendmanager`: port to C++ to decrease impact on framerate
+- `suspendmanager`: improve performance when there are many active jobs
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps
@@ -72,7 +72,7 @@ Template for new versions:
 ## API
 
 ## Lua
-- ``widgets.Label``: ``text_pen``, ``text_dpen``, and ``text_hpen`` can either be a pen or a function that dynamically returns a pen
+- ``widgets.Label``: ``*pen`` attributes can now either be a pen or a function that dynamically returns a pen
 - `helpdb`: ``search_entries`` now returns a match if *all* filters in the ``include`` list are matched. previous behavior was to match if *any* ``include`` filter matched.
 
 ## Removed

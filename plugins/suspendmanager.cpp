@@ -272,7 +272,7 @@ private:
         CHECK_NULL_POINTER(building);
         auto z = building->z;
         for (auto x = building->x1; x <= building->x2; ++x){
-            for (auto y = building->y1; x <= building->y2; ++x){
+            for (auto y = building->y1; y <= building->y2; ++y){
                 auto flags = Maps::getTileDesignation(x,y,z);
                 if (flags && (
                     flags->bits.dig != df::tile_dig_designation::No ||
@@ -724,6 +724,8 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     DEBUG(control,out).print("loading persisted state: enabled is %s / prevent_blocking is %s\n",
                             is_enabled ? "true" : "false",
                             suspendmanager_instance->prevent_blocking ? "true" : "false");
+    if(is_enabled)
+        do_cycle(out);
     return CR_OK;
 }
 

@@ -504,6 +504,10 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                     df::building_trapst* trap = strict_virtual_cast<df::building_trapst>(bld);
                     newFocusString += '/' + enum_item_key(trap->trap_type);
                 }
+                if (game->main_interface.view_sheets.show_linked_buildings)
+                    newFocusString += "/LinkedBuildings";
+                else
+                    newFocusString += "/Items";
             }
             break;
         default:

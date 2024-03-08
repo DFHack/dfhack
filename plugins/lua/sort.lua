@@ -1173,7 +1173,6 @@ function SquadFilterOverlay:init()
             visible=false,
         },
         widgets.HelpButton{
-            frame={t=0, r=1},
             command='sort',
         },
     }

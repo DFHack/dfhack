@@ -1579,6 +1579,7 @@ end
 HelpButton = defclass(HelpButton, Panel)
 
 HelpButton.ATTRS{
+    frame={t=0, r=1, w=3, h=1},
     command=DEFAULT_NIL,
 }
 
@@ -1591,13 +1592,10 @@ local help_pen_center = to_pen{
 local configure_pen_center = dfhack.pen.parse{
     tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
 
-function HelpButton:preinit(init_table)
-    init_table.frame = init_table.frame or {}
-    init_table.frame.h = init_table.frame.h or 1
-    init_table.frame.w = init_table.frame.w or 3
-end
-
 function HelpButton:init()
+    self.frame.w = self.frame.w or 3
+    self.frame.h = self.frame.h or 1
+
     local command = self.command .. ' '
 
     self:addviews{

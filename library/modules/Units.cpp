@@ -421,7 +421,7 @@ bool Units::isTrained(df::unit* unit)
         return true;
 
     // case b: tamed and trained wild creature, gets a training level
-    bool trained = false;
+    // does not include domesticated creatures
     switch (unit->training_level)
     {
         case df::animal_training_level::Trained:
@@ -430,13 +430,11 @@ bool Units::isTrained(df::unit* unit)
         case df::animal_training_level::ExpertlyTrained:
         case df::animal_training_level::ExceptionallyTrained:
         case df::animal_training_level::MasterfullyTrained:
-            //case df::animal_training_level::Domesticated:
-            trained = true;
-            break;
+            return true;
         default:
             break;
     }
-    return trained;
+    return false;
 }
 
 // check for profession "hunting creature"

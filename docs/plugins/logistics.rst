@@ -20,6 +20,12 @@ items) of which a noble has forbidden export will not be marked for trade.
 Stockpiles can be registered for ``logistics`` features by toggling the options
 in the `stockpiles` overlay that comes up when you select a stockpile in the UI.
 
+You can also use this tool to automatically assign trainers to animals that are
+partially trained but not yet fully domesticated. This is most useful when
+partially trained parents produce offspring. The offspring will inherit the
+training level of their parents. If a trainer is not assigned, the juveniles
+will eventually snap and revert to wild.
+
 Usage
 -----
 
@@ -30,6 +36,7 @@ Usage
     logistics now
     logistics add [melt] [trade] [dump] [train] [<options>]
     logistics clear [all] [<options>]
+    logistics (enable|disable) autoretrain
 
 Examples
 --------
@@ -64,6 +71,10 @@ Examples
 
 ``logistics clear all``
     Unregister all stockpiles from any monitoring.
+
+``logistics enable autoretrain``
+    Monitor animal births and automatically assign trainers to any partially
+    trained animals.
 
 Options
 -------

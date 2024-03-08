@@ -36,6 +36,14 @@ DBG_DECLARE(logistics, cycle, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY_PREFIX = string(plugin_name) + "/";
+static const string CONFIG_KEY = CONFIG_KEY_PREFIX + "config";
+static PersistentDataItem config;
+
+// as a "system" plugin, we do not persist plugin enabled state
+enum ConfigValues {
+    CONFIG_TRAIN_PARTIAL = 0,
+};
+
 static unordered_map<int32_t, PersistentDataItem> watched_stockpiles;
 
 enum StockpileConfigValues {
@@ -145,6 +153,13 @@ static void migrate_old_keys(color_ostream &out) {
 
 DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     cycle_timestamp = 0;
+    config = World::GetPersistentSiteData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_TRAIN_PARTIAL, false);
+    }
 
     vector<PersistentDataItem> loaded_persist_data;
     World::GetPersistentSiteData(&loaded_persist_data, CONFIG_KEY_PREFIX, true);
@@ -152,6 +167,8 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     const size_t num_watched_stockpiles = loaded_persist_data.size();
     for (size_t idx = 0; idx < num_watched_stockpiles; ++idx) {
         auto& c = loaded_persist_data[idx];
+        if (c.key() == CONFIG_KEY)
+            continue;
         watched_stockpiles.emplace(c.get_int(STOCKPILE_CONFIG_STOCKPILE_NUMBER), c);
     }
     migrate_old_keys(out);
@@ -462,6 +479,25 @@ static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
     }
 }
 
+#include <df/unit.h>
+static void train_partials(color_ostream& out, int32_t& train_count) {
+    for (auto unit : world->units.active) {
+        if (!Units::isActive(unit) ||
+            !Units::isTamable(unit) ||
+            Units::isDomesticated(unit) ||
+            Units::isWar(unit) ||
+            Units::isHunter(unit) ||
+            Units::isMarkedForTraining(unit) ||
+            !Units::isTrained(unit))
+            continue;
+
+        if (Units::assignTrainer(unit)) {
+            DEBUG(cycle,out).print("assigned trainer to unit %d\n", unit->id);
+            ++train_count;
+        }
+    }
+}
+
 static void do_cycle(color_ostream& out, int32_t& melt_count, int32_t& trade_count, int32_t& dump_count, int32_t& train_count) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
     cycle_timestamp = world->frame_counter;
@@ -493,6 +529,12 @@ static void do_cycle(color_ostream& out, int32_t& melt_count, int32_t& trade_cou
     melt_count = melt_stats.newly_designated;
     trade_count = trade_stats.newly_designated;
     dump_count = dump_stats.newly_designated;
+    train_count = train_stats.newly_designated;
+
+    if (config.get_bool(CONFIG_TRAIN_PARTIAL)) {
+        train_partials(out, train_count);
+    }
+
     TRACE(cycle,out).print("exit %s do_cycle\n", plugin_name);
 }
 
@@ -544,14 +586,14 @@ static int logistics_getStockpileData(lua_State *L) {
         bool dump = c.get_bool(STOCKPILE_CONFIG_DUMP);
         bool train = c.get_bool(STOCKPILE_CONFIG_TRAIN);
 
-        unordered_map<string, string> config;
-        config.emplace("melt", melt ? "true" : "false");
-        config.emplace("melt_masterworks", melt_masterworks ? "true" : "false");
-        config.emplace("trade", trade ? "true" : "false");
-        config.emplace("dump", dump ? "true" : "false");
-        config.emplace("train", train ? "true" : "false");
+        unordered_map<string, string> sconfig;
+        sconfig.emplace("melt", melt ? "true" : "false");
+        sconfig.emplace("melt_masterworks", melt_masterworks ? "true" : "false");
+        sconfig.emplace("trade", trade ? "true" : "false");
+        sconfig.emplace("dump", dump ? "true" : "false");
+        sconfig.emplace("train", train ? "true" : "false");
 
-        configs.emplace(bld->stockpile_number, config);
+        configs.emplace(bld->stockpile_number, sconfig);
     }
     Lua::Push(L, configs);
 
@@ -704,10 +746,30 @@ static int logistics_getGlobalCounts(lua_State *L) {
     return 1;
 }
 
+static bool logistics_setFeature(color_ostream &out, bool enabled, string feature) {
+    DEBUG(control, out).print("entering logistics_setFeature (enabled=%d, feature=%s)\n",
+        enabled, feature.c_str());
+    if (feature != "autoretrain")
+        return false;
+    config.set_bool(CONFIG_TRAIN_PARTIAL, enabled);
+    if (is_enabled && enabled)
+        logistics_cycle(out);
+    return true;
+}
+
+static bool logistics_getFeature(color_ostream &out, string feature) {
+    DEBUG(control, out).print("entering logistics_getFeature (feature=%s)\n", feature.c_str());
+    if (feature != "autoretrain")
+        return false;
+    return config.get_bool(CONFIG_TRAIN_PARTIAL);
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(logistics_cycle),
     DFHACK_LUA_FUNCTION(logistics_setStockpileConfig),
     DFHACK_LUA_FUNCTION(logistics_clearAllStockpileConfigs),
+    DFHACK_LUA_FUNCTION(logistics_setFeature),
+    DFHACK_LUA_FUNCTION(logistics_getFeature),
     DFHACK_LUA_END};
 
 DFHACK_PLUGIN_LUA_COMMANDS{

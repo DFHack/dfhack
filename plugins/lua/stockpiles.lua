@@ -496,7 +496,6 @@ function StockpilesOverlay:init()
             visible=is_expanded,
         },
         widgets.HelpButton{
-            frame={t=0, r=1},
             command='stockpiles',
             visible=is_expanded,
         },

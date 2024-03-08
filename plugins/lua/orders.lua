@@ -151,7 +151,6 @@ function OrdersOverlay:init()
         main_panel,
         minimized_panel,
         widgets.HelpButton{
-            frame={t=0, r=1},
             command='orders',
             visible=function() return not self.minimized end,
         },

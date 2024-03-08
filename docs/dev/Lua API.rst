@@ -5455,6 +5455,10 @@ It has the following attributes:
 
 :command: The command to load in `gui/launcher`.
 
+It also sets the ``frame`` attribute so the button appears in the upper right
+corner of the parent, but you can override this to your liking if you want a
+different position.
+
 ConfigureButton class
 ---------------------
 

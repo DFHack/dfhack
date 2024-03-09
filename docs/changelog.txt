@@ -59,6 +59,7 @@ Template for new versions:
 - `logistics`: ``autoretrain`` will automatically assign trainers to your partially-trained (but not yet domesticated) livestock. this prevents children of partially-trained parents from reverting to wild if you don't notice they were born
 
 ## Fixes
+- `autochop`: fix underestimation of log yield for cavern mushrooms
 
 ## Misc Improvements
 - `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs

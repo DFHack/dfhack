@@ -320,23 +320,28 @@ static int32_t estimate_logs(const df::plant *plant) {
     if (!plant->tree_info)
         return 0;
 
-    //adapted from code by aljohnston112 @ github
     df::plant_tree_tile** tiles = plant->tree_info->body;
 
     if (!tiles)
         return 0;
 
-    int32_t trunks = 0;
+    MaterialInfo mi;
+    mi.decode(MaterialInfo::PLANT_BASE, plant->material);
+    bool is_shroom = mi.plant->flags.is_set(df::plant_raw_flags::TREE_HAS_MUSHROOM_CAP);
+
+    int32_t trunks = 0, parent_dir = 0;
     const int32_t area = plant->tree_info->dim_y * plant->tree_info->dim_x;
-    for (int i = 0; i < plant->tree_info->body_height; i++) {
-        df::plant_tree_tile* tilesRow = tiles[i];
+    for (int z = 0; z < plant->tree_info->body_height; z++) {
+        df::plant_tree_tile* tilesRow = tiles[z];
         if (!tilesRow)
             return 0; // tree data is corrupt; let's not touch it
-        for (int j = 0; j < area; j++)
-            trunks += tilesRow[j].bits.trunk;
+        for (int i = 0; i < area; i++) {
+            auto & tile = tilesRow[i];
+            trunks += tile.bits.trunk;
+            parent_dir += (tile.bits.parent_dir == 0) ? 0 : 1;
+        }
     }
-
-    return trunks;
+    return is_shroom ? parent_dir : trunks;
 }
 
 static void bucket_tree(df::plant *plant, bool designate_clearcut, bool *designated, bool *can_chop,

@@ -1608,17 +1608,12 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedPlant();
 
-    if (Gui::dwarfmode_hotkey(top))
+    if (Gui::dwarfmode_hotkey(top) && has_cursor())
     {
         if (!cursor || !plotinfo || !world)
             return nullptr;
 
-/* TODO: understand how this changes for v50
-        if (plotinfo->main.mode == ui_sidebar_mode::LookAround)
-        {
-            return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
-        }
-*/
+        return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
     }
 
     return nullptr;

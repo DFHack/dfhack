@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 - `autochop`: fix underestimation of log yield for cavern mushrooms
 - `gui/notify`: prevent notification overlay from showing up in arena mode
+- `logistics`: don't melt/trade/dump empty containers that happen to be sitting on the stockpile unless the stockpile accepts those item types
 
 ## Misc Improvements
 - `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs

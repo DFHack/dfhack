@@ -52,7 +52,8 @@ enum ConfigValues {
 
 
 static const int32_t CYCLE_TICKS = 1213; // about one day
-static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+static int32_t cycle_timestamp = 0;      // world->frame_counter at last cycle
+static bool cycle_needed = false;          // run requested for next cycle
 
 
 
@@ -724,8 +725,13 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     DEBUG(control,out).print("loading persisted state: enabled is %s / prevent_blocking is %s\n",
                             is_enabled ? "true" : "false",
                             suspendmanager_instance->prevent_blocking ? "true" : "false");
-    if(is_enabled)
+    if(is_enabled) {
+        DEBUG(control,out).print("registering job event handlers\n");
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+        EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
         do_cycle(out);
+    }
+
     return CR_OK;
 }
 
@@ -741,7 +747,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (is_enabled &&
+       (cycle_needed || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
         do_cycle(out);
     return CR_OK;
 }
@@ -801,10 +808,13 @@ static command_result do_unsuspend_command(color_ostream &out, vector<string> &p
 }
 
 static void jobCompletedHandler(color_ostream& out, void* ptr) {
-    DEBUG(cycle,out).print("job completed; updating suspensions\n");
+    TRACE(cycle,out).print("job completed/initiated handler called\n");
     df::job* job = static_cast<df::job*>(ptr);
-    if (SuspendManager::isConstructionJob(job))
-        do_cycle(out);
+    if (SuspendManager::isConstructionJob(job)) {
+        DEBUG(cycle,out).print("construction job initiated/completed (tick: %d)\n", world->frame_counter);
+        cycle_needed = true;
+    }
+
 }
 
 /////////////////////////////////////////////////////
@@ -814,6 +824,7 @@ static void jobCompletedHandler(color_ostream& out, void* ptr) {
 static void do_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
+    cycle_needed = false;
 
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 

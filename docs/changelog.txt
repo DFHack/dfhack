@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - `autochop`: fix underestimation of log yield for cavern mushrooms
+- `gui/notify`: prevent notification overlay from showing up in arena mode
 
 ## Misc Improvements
 - `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs

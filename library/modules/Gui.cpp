@@ -284,7 +284,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
 
-    if(game->main_interface.main_designation_selected != -1) {
+    if (df::global::gametype && !World::isFortressMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.main_designation_selected != -1) {
         newFocusString = baseFocus;
         newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
         focusStrings.push_back(newFocusString);

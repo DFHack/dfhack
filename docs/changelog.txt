@@ -78,6 +78,7 @@ Template for new versions:
 ## Lua
 - ``widgets.Label``: ``*pen`` attributes can now either be a pen or a function that dynamically returns a pen
 - `helpdb`: ``search_entries`` now returns a match if *all* filters in the ``include`` list are matched. previous behavior was to match if *any* ``include`` filter matched.
+- ``matinfo.decode``: now directly handles plant objects
 
 ## Removed
 

@@ -466,6 +466,8 @@ static bool decode_matinfo(lua_State *state, MaterialInfo *info, bool numpair = 
         {
             if (auto item = Lua::GetDFObject<df::item>(state, 1))
                 return info->decode(item);
+            if (auto plant = Lua::GetDFObject<df::plant>(state, 1))
+                return info->decode(MaterialInfo::PLANT_BASE, plant->material);
             if (auto mvec = Lua::GetDFObject<df::material_vec_ref>(state, 1))
                 return info->decode(*mvec, luaL_checkint(state, 2));
         }

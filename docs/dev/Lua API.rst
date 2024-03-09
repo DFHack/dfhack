@@ -765,10 +765,9 @@ Functions:
 
   Looks up material info for the given number pair; if not found, returns *nil*.
 
-* ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
+* ``....decode(matinfo|item|plant|obj)``
 
-  Uses ``matinfo.type``/``matinfo.index``, item getter vmethods,
-  or ``obj.mat_type``/``obj.mat_index`` to get the code pair.
+  Uses type-specific methods for retrieving the code pair.
 
 * ``dfhack.matinfo.find(token[,token...])``
 

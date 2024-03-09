@@ -426,11 +426,6 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
         TRACE(cycle,out).print("item: %s\n", name.c_str());
     }
 
-    if (item->flags.whole & bad_flags.whole) {
-        TRACE(cycle,out).print("rejected flag check\n");
-        return;
-    }
-
     if (processor.is_designated(out, item)) {
         TRACE(cycle,out).print("already designated\n");
         ++processor.stats.designated_counts[processor.stockpile_number];
@@ -452,6 +447,19 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
     ++processor.stats.designated_counts[processor.stockpile_number];
 }
 
+// quick check for type. this is intended to catch the case of newly empty storage item
+// that happens to still be on the stockpile. we can do a more careful check if this isn't sufficient
+static bool non_accepted_storage_item(df::building_stockpilest *bld, df::item *item) {
+    auto & flags = bld->settings.flags;
+    if (item->getType() == df::item_type::BIN || item->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING))
+        return !flags.bits.finished_goods;
+
+    if (item->isFoodStorage())
+        return !flags.bits.furniture;
+
+    return false;
+}
+
 static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
         MeltStockProcessor &melt_stock_processor,
         TradeStockProcessor &trade_stock_processor,
@@ -461,9 +469,14 @@ static void scan_stockpile(color_ostream &out, df::building_stockpilest *bld,
     Buildings::StockpileIterator items;
     for (items.begin(bld); !items.done(); ++items) {
         df::item *item = *items;
+        if (item->flags.whole & bad_flags.whole) {
+            TRACE(cycle,out).print("rejected flag check\n");
+            continue;
+        }
+        if (!item->isAssignedToThisStockpile(id) && non_accepted_storage_item(bld, item))
+            continue;
         scan_item(out, item, trade_stock_processor);
-        if (0 == (item->flags.whole & bad_flags.whole) &&
-                item->isAssignedToThisStockpile(id)) {
+        if (item->isAssignedToThisStockpile(id)) {
             TRACE(cycle,out).print("assignedToStockpile\n");
             vector<df::item *> contents;
             Items::getContainedItems(item, &contents);

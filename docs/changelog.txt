@@ -68,6 +68,7 @@ Template for new versions:
 - When launched from the Steam client on Linux, both Dwarf Fortress and DFHack will be shown as "Running". This ensures that DF has proper accounting for Linux player usage.
 - `suspendmanager`: improve performance when there are many active jobs
 - `clean`: protect farm plots when cleaning mud
+- `tweak`: add ``quiet`` option for silent enablement and disablement of tweaks
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

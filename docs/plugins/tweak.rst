@@ -11,10 +11,24 @@ Usage
 ::
 
     tweak [list]
-    tweak <command> [disable]
+    tweak <command> [disable] [quiet]
 
 Run the ``tweak`` command with the tweak name to enable its effects. Add a
-``disable`` keyword to disable them.
+``disable`` keyword to disable them, and a ``quiet`` keyword to prevent
+printing of non-error output.
+
+Examples
+--------
+
+``tweak eggs-fertile``
+    Enable the ``eggs-fertile`` tweak.
+
+``tweak fast-heat quiet``
+    Enable the ``fast-heat`` tweak, but don't print anything to the console to
+    say that it has been enabled.
+
+``tweak fast-heat disable quiet``
+    Disable the ``fast-heat`` tweak, and be quiet about it.
 
 Commands
 --------

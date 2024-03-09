@@ -85,12 +85,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 }
 
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector<string> &parameters) {
-    if (vector_get(parameters, 1) == "disable") {
+    bool disable = vector_get(parameters, 1) == "disable" || vector_get(parameters, 2) == "disable";
+    bool quiet = vector_get(parameters, 1) == "quiet" || vector_get(parameters, 2) == "quiet";
+    if (disable) {
         hook.remove();
-        out.print("Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        if (!quiet)
+            out.print("Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
     } else {
-        if (hook.apply())
-            out.print("Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        if (hook.apply()) {
+            if (!quiet)
+                out.print("Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        }
         else
             out.printerr("Could not activate tweak %s (%s)\n", parameters[0].c_str(), hook.name());
     }

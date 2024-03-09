@@ -790,11 +790,11 @@ function EditField:onInput(keys)
         return true
     end
 
-    if keys.SELECT or keys.CUSTOM_SHIFT_ENTER then
+    if keys.SELECT or keys.SELECT_ALL then
         if self.key then
             self:setFocus(false)
         end
-        if keys.CUSTOM_SHIFT_ENTER then
+        if keys.SELECT_ALL then
             if self.on_submit2 then
                 self.on_submit2(self.text)
                 return true

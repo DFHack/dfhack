@@ -12,6 +12,7 @@
 #include "df/building_stockpilest.h"
 #include "df/building_tradedepotst.h"
 #include "df/caravan_state.h"
+#include "df/furniture_type.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/item.h"
 #include "df/plotinfost.h"
@@ -448,18 +449,18 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
 }
 
 // quick check for type. this is intended to catch the case of newly empty storage item
-// that happens to still be on the stockpile. we can do a more careful check if this isn't sufficient
+// that happens to still be on the stockpile. we can do a more careful check (e.g. including
+// item quality) if this isn't sufficient
 static bool non_accepted_storage_item(df::building_stockpilest *bld, df::item *item) {
     auto & flags = bld->settings.flags;
+    if (!flags.bits.furniture)
+        return false;
     if (item->getType() == df::item_type::BIN)
-        return !flags.bits.furniture;
-
+        return !bld->settings.furniture.type[df::furniture_type::BIN];
     if (item->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING))
-        return !flags.bits.furniture;
-
+        return !bld->settings.furniture.type[df::furniture_type::WHEELBARROW];
     if (item->isFoodStorage())
-        return !flags.bits.furniture;
-
+        return !bld->settings.furniture.type[df::furniture_type::FOOD_STORAGE];
     return false;
 }
 

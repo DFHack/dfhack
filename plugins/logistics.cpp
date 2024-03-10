@@ -451,8 +451,11 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
 // that happens to still be on the stockpile. we can do a more careful check if this isn't sufficient
 static bool non_accepted_storage_item(df::building_stockpilest *bld, df::item *item) {
     auto & flags = bld->settings.flags;
-    if (item->getType() == df::item_type::BIN || item->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING))
-        return !flags.bits.finished_goods;
+    if (item->getType() == df::item_type::BIN)
+        return !flags.bits.furniture;
+
+    if (item->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING))
+        return !flags.bits.furniture;
 
     if (item->isFoodStorage())
         return !flags.bits.furniture;

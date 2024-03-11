@@ -77,7 +77,9 @@ only receive orders for appropriate products.
 Simiarly, you can set up Craftsdwarf's workshops to specialize in stone, wood,
 or bone.
 
-:kbd:`Ctrl`:kbd:`A` will toggle all labors on or off.
+Regardless of these settings, you can manually assign any task to the workshop
+and it will still be completed. The labor restrictions only apply to general
+manager work orders scheduled from the fort-wide work orders screen.
 
 Veteran players may remember this as a vanilla feature in pre-v50 Dwarf
 Fortress. This is actually still the case. The DFHack overlay simply provides a

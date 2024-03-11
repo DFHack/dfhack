@@ -292,8 +292,8 @@ local WORKSHOP_LABORS = {
         'SHEARER', 'SPINNER', 'PAPERMAKING'},
     [df.workshop_type.Masons]={'STONECUTTER', 'STONE_CARVER',},
     [df.workshop_type.Craftsdwarfs]={'STONE_CRAFT', 'WOOD_CRAFT', 'BONE_CARVE',
-        'EXTRACT_STRAND', 'WAX_WORKING', 'BOOKBINDING', 'METAL_CRAFT',
-        'LEATHER', 'WEAVER', 'CLOTHESMAKER', 'GLASSMAKER'},
+        'WAX_WORKING', 'BOOKBINDING', 'EXTRACT_STRAND',
+        'LEATHER', 'CLOTHESMAKER', 'METAL_CRAFT', 'GLASSMAKER'},
     [df.workshop_type.Jewelers]={'CUT_GEM', 'ENCRUST_GEM'},
     [df.workshop_type.MetalsmithsForge]={'FORGE_WEAPON', 'FORGE_ARMOR',
         'FORGE_FURNITURE', 'METAL_CRAFT', 'TRAPPER'},
@@ -353,7 +353,9 @@ function make_labor_panel(bld_type, bld_subtype, labors)
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
-        frame={l=0, r=0, t=0, h=#labors+6},
+        -- will get clamped to parent frame and a scrollbar will appear if the list
+        -- is too long
+        frame={l=0, r=0, t=0, h=#labors+7},
         visible=function()
             local bld = dfhack.gui.getSelectedBuilding(true)
             return bld and bld:getType() == bld_type and bld.type == bld_subtype
@@ -365,9 +367,10 @@ function make_labor_panel(bld_type, bld_subtype, labors)
             },
             list,
             widgets.HotkeyLabel{
-                frame={l=0, b=0}, -- no room to show; hide behind other label
+                frame={l=0, b=1},
                 key='CUSTOM_CTRL_A',
                 label='Toggle all',
+                auto_width=true,
                 on_activate=function()
                     local bld = dfhack.gui.getSelectedBuilding(true)
                     if not bld then return end
@@ -382,6 +385,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
                 frame={l=0, b=0},
                 key='SELECT',
                 label='Or double click to toggle',
+                auto_width=true,
                 on_activate=function() toggle_labor(list:getSelected()) end,
             },
         },

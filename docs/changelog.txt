@@ -71,6 +71,7 @@ Template for new versions:
 - `suspendmanager`: improve performance when there are many active jobs
 - `clean`: protect farm plots when cleaning mud
 - `tweak`: add ``quiet`` option for silent enablement and disablement of tweaks
+- `gui/teleport`: add global Ctrl-Shift-T keybinding (only avaiable when DFHack mortal mode is disabled)
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

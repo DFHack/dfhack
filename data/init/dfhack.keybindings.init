@@ -53,6 +53,9 @@ keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 # bring up the autodump UI
 keybinding add Ctrl-H@dwarfmode gui/autodump
 
+# bring up the teleport UI
+keybinding add Ctrl-Shift-T@dwarfmode gui/teleport
+
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 

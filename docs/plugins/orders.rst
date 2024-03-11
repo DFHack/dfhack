@@ -51,10 +51,13 @@ Examples
 Overlay
 -------
 
+Fort-wide work orders screen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Orders plugin functionality is directly available via an `overlay` widget when
-the manager orders screen is open. There are hotkeys assigned to export, import,
-sort, clear, and recheck conditions. You can also click on the hotkey hints as
-if they were buttons. Clearing will ask for confirmation before acting.
+the fort-wide work orders screen is open. There are hotkeys assigned to export,
+import, sort, clear, and recheck conditions. You can also click on the hotkey
+hints as if they were buttons. Clearing will ask for confirmation before acting.
 
 When you open the conditions screen for a manager order, there is also a small
 overlay that allows you to recheck conditions for just that order. This is
@@ -62,26 +65,44 @@ useful for when the conditions were true when the order started, but they have
 become false and now you're just getting repeated cancellation spam as the
 order cannot be fulfilled.
 
-Finally, an overlay is added to the "Workers" tab for workshop and furnace
-buildings that support orders that can be categorized by labor type. On the
-overlay, you can configure the workshop to only accept general work orders that
-pertain to specific labors (the list of allowed labors is different for every
-workshop).
+Workshop Workers tab
+~~~~~~~~~~~~~~~~~~~~
+
+For workshops that do *not* have a workshop master assigned, there is a slider
+you can use to restrict the units that perform jobs at that workshop by their
+skill level.
+
+Due to space constraints, some skill levels are combined with the adjacent
+higher rank on the slider:
+
+- "Competent" includes "Adequate" workers
+- "Proficient" includes "Skilled" workers
+- "Expert" includes "Adept" workers
+- "Accomplished" includes "Professional" workers
+- "Master" includes "Great" workers
+- "Grand Master" includes "High Master" workers
+
+Finally, a list is shown for workshops that service manager orders of multiple
+labor types. You can toggle the listed labors so the workshop only accepts
+general work orders that match the enabled labors (the list of allowed labors
+is different for every workshop).
 
 For example, by default, all weapon, armor, and blacksmithing general manager
-orders get sent to all forges. With labor restrictions, you can designate
-specific forges to handle just weapons, just armor, or just metalsmithing.
-Then, you can assign appropriate legendary masters to each forge, and they will
-only receive orders for appropriate products.
+orders get sent to all forges that can take general work orders. With labor
+restrictions, you can designate specific forges to handle just weapons, just
+armor, or just metalsmithing. Then, you can assign appropriate legendary
+masters to each forge, and they will only receive orders for appropriate
+products.
 
 Simiarly, you can set up Craftsdwarf's workshops to specialize in stone, wood,
 or bone.
 
-Regardless of these settings, you can manually assign any task to the workshop
-and it will still be completed. The labor restrictions only apply to general
-manager work orders scheduled from the fort-wide work orders screen.
+Regardless of the labor restriction settings, you can manually assign any task
+to the workshop and it will still be completed. The labor restrictions only
+apply to general manager work orders scheduled from the fort-wide work orders
+screen.
 
-Veteran players may remember this as a vanilla feature in pre-v50 Dwarf
+Veteran players may remember these overlays as vanilla features in pre-v50 Dwarf
 Fortress. This is actually still the case. The DFHack overlay simply provides a
 UI for the vanilla feature hiding beneath the surface.
 

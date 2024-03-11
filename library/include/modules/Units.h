@@ -143,6 +143,7 @@ DFHACK_EXPORT bool isNightCreature(df::unit* unit);
 DFHACK_EXPORT bool isSemiMegabeast(df::unit* unit);
 DFHACK_EXPORT bool isMegabeast(df::unit* unit);
 DFHACK_EXPORT bool isTitan(df::unit* unit);
+DFHACK_EXPORT bool isForgottenBeast(df::unit* unit);
 DFHACK_EXPORT bool isDemon(df::unit* unit);
 DFHACK_EXPORT bool isDanger(df::unit* unit);
 DFHACK_EXPORT bool isGreatDanger(df::unit* unit);

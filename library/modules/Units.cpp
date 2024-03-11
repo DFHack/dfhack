@@ -789,6 +789,12 @@ bool Units::isTitan(df::unit* unit)
     return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::TITAN);
 }
 
+bool Units::isForgottenBeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::FEATURE_BEAST);
+}
+
 bool Units::isDemon(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -811,7 +817,8 @@ bool Units::isDanger(df::unit* unit) {
 bool Units::isGreatDanger(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
+    return isDemon(unit) || isTitan(unit) ||
+        isMegabeast(unit) || isForgottenBeast(unit);
 }
 
 

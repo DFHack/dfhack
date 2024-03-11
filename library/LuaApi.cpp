@@ -2019,6 +2019,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isSemiMegabeast),
     WRAPM(Units, isMegabeast),
     WRAPM(Units, isTitan),
+    WRAPM(Units, isForgottenBeast),
     WRAPM(Units, isDemon),
     WRAPM(Units, isDanger),
     WRAPM(Units, isGreatDanger),

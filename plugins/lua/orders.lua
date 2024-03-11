@@ -3,6 +3,7 @@ local _ENV = mkmodule('plugins.orders')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local textures = require('gui.textures')
 local widgets = require('gui.widgets')
 
 --
@@ -255,11 +256,178 @@ function RecheckOverlay:onRenderBody(dc)
     RecheckOverlay.super.onRenderBody(self, dc)
 end
 
+--
+-- LaborRestrictionsOverlay
+--
+
+LaborRestrictionsOverlay = defclass(LaborRestrictionsOverlay, overlay.OverlayWidget)
+LaborRestrictionsOverlay.ATTRS{
+    desc='Adds a UI to the Workers tab for vanilla workshop labor restrictions.',
+    default_pos={x=-40,y=24},
+    default_enabled=true,
+    viewscreens={
+        'dwarfmode/ViewSheets/BUILDING/Furnace/Kiln/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Furnace/MagmaKiln/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Ashery/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Butchers/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Carpenters/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Craftsdwarfs/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Custom/SCREW_PRESS/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Farmers/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Fishery/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Jewelers/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/MagmaForge/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Masons/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/MetalsmithsForge/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Millstone/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Quern/Workers',
+        'dwarfmode/ViewSheets/BUILDING/Workshop/Still/Workers',
+    },
+    frame={w=37, h=17},
+}
+
+local WORKSHOP_LABORS = {
+    [df.workshop_type.Carpenters]={'CARPENTER', 'TRAPPER'},
+    [df.workshop_type.Farmers]={'PROCESS_PLANT', 'MAKE_CHEESE', 'MILK',
+        'SHEARER', 'SPINNER', 'PAPERMAKING'},
+    [df.workshop_type.Masons]={'STONECUTTER', 'STONE_CARVER',},
+    [df.workshop_type.Craftsdwarfs]={'STONE_CRAFT', 'WOOD_CRAFT', 'BONE_CARVE',
+        'EXTRACT_STRAND', 'WAX_WORKING', 'BOOKBINDING', 'METAL_CRAFT',
+        'LEATHER', 'WEAVER', 'CLOTHESMAKER', 'GLASSMAKER'},
+    [df.workshop_type.Jewelers]={'CUT_GEM', 'ENCRUST_GEM'},
+    [df.workshop_type.MetalsmithsForge]={'FORGE_WEAPON', 'FORGE_ARMOR',
+        'FORGE_FURNITURE', 'METAL_CRAFT', 'TRAPPER'},
+    [df.workshop_type.MagmaForge]={'FORGE_WEAPON', 'FORGE_ARMOR',
+        'FORGE_FURNITURE', 'METAL_CRAFT', 'TRAPPER'},
+    [df.workshop_type.Butchers]={'BUTCHER', 'DISSECT_VERMIN'},
+    [df.workshop_type.Fishery]={'FISH', 'CLEAN_FISH', 'DISSECT_FISH'},
+    [df.workshop_type.Still]={'BREWER', 'HERBALIST'},
+    [df.workshop_type.Quern]={'MILLER', 'PAPERMAKING'},
+    [df.workshop_type.Ashery]={'POTASH_MAKING', 'LYE_MAKING'},
+    [df.workshop_type.Millstone]={'MILLER', 'PAPERMAKING'},
+    -- this is specifically for the Screw Press, but we don't need to differentiate (yet)
+    -- since we only support one kind of custom workshop
+    [df.workshop_type.Custom]={'PRESSING', 'PAPERMAKING'},
+}
+
+local FURNACE_LABORS = {
+    [df.furnace_type.Kiln]={'SMELT', 'POTTERY', 'GLAZING'},
+    [df.furnace_type.MagmaKiln]={'SMELT', 'POTTERY', 'GLAZING'},
+}
+
+local ENABLED_PEN_LEFT = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 1), ch=string.byte('[')}
+local ENABLED_PEN_CENTER = dfhack.pen.parse{fg=COLOR_LIGHTGREEN,
+        tile=curry(textures.tp_control_panel, 2) or nil, ch=251} -- check
+local ENABLED_PEN_RIGHT = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 3) or nil, ch=string.byte(']')}
+local DISABLED_PEN_LEFT = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 4) or nil, ch=string.byte('[')}
+local DISABLED_PEN_CENTER = dfhack.pen.parse{fg=COLOR_RED,
+        tile=curry(textures.tp_control_panel, 5) or nil, ch=string.byte('x')}
+local DISABLED_PEN_RIGHT = dfhack.pen.parse{fg=COLOR_CYAN,
+        tile=curry(textures.tp_control_panel, 6) or nil, ch=string.byte(']')}
+
+local function set_labor(bld, labor, val)
+    bld.profile.blocked_labors[labor] = val
+end
+
+local function toggle_labor(_, choice)
+    if not choice then return end
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld then return end
+    set_labor(bld, choice.labor, not bld.profile.blocked_labors[choice.labor])
+end
+
+local function is_labor_blocked(labor, bld)
+    bld = bld or dfhack.gui.getSelectedBuilding(true)
+    return bld and bld.profile.blocked_labors[labor]
+end
+
+function make_labor_panel(bld_type, bld_subtype, labors)
+    local list = widgets.List{
+        frame={t=2, l=0, r=0, b=2},
+        on_double_click=toggle_labor,
+    }
+
+    local panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        frame={l=0, r=0, t=0, h=#labors+6},
+        visible=function()
+            local bld = dfhack.gui.getSelectedBuilding(true)
+            return bld and bld:getType() == bld_type and bld.type == bld_subtype
+        end,
+        subviews={
+            widgets.Label{
+                frame={t=0, l=0},
+                text='Permitted General Work Order Labors',
+            },
+            list,
+            widgets.HotkeyLabel{
+                frame={l=0, b=0}, -- no room to show; hide behind other label
+                key='CUSTOM_CTRL_A',
+                label='Toggle all',
+                on_activate=function()
+                    local bld = dfhack.gui.getSelectedBuilding(true)
+                    if not bld then return end
+                    local choices = list:getChoices()
+                    local target = not is_labor_blocked(choices[1].labor, bld)
+                    for _, choice in ipairs(choices) do
+                        set_labor(bld, choice.labor, target)
+                    end
+                end,
+            },
+            widgets.HotkeyLabel{
+                frame={l=0, b=0},
+                key='SELECT',
+                label='Or double click to toggle',
+                on_activate=function() toggle_labor(list:getSelected()) end,
+            },
+        },
+    }
+
+    local choices = {}
+    for _,labor_name in ipairs(labors) do
+        local labor = df.unit_labor[labor_name]
+        local function get_enabled_button_token(e_tile, d_tile)
+            return {
+                tile=function()
+                    return is_labor_blocked(labor) and d_tile or e_tile
+                end,
+            }
+        end
+        table.insert(choices, {
+            labor=labor,
+            text={
+                    get_enabled_button_token(ENABLED_PEN_LEFT, DISABLED_PEN_LEFT),
+                    get_enabled_button_token(ENABLED_PEN_CENTER, DISABLED_PEN_CENTER),
+                    get_enabled_button_token(ENABLED_PEN_RIGHT, DISABLED_PEN_RIGHT),
+                    {gap=1, text=df.unit_labor.attrs[labor].caption},
+            },
+        })
+    end
+    list:setChoices(choices)
+
+    return panel
+end
+
+function LaborRestrictionsOverlay:init()
+    for ws_type, labors in pairs(WORKSHOP_LABORS) do
+        self:addviews{make_labor_panel(df.building_type.Workshop, ws_type, labors)}
+    end
+    for f_type, labors in pairs(FURNACE_LABORS) do
+        self:addviews{make_labor_panel(df.building_type.Furnace, f_type, labors)}
+    end
+    self:addviews{widgets.HelpButton{command='orders'}}
+end
+
 -- -------------------
 
 OVERLAY_WIDGETS = {
     recheck=RecheckOverlay,
-    overlay=OrdersOverlay,
+    importexport=OrdersOverlay,
+    laborrestrictions=LaborRestrictionsOverlay,
 }
 
 return _ENV

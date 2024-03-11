@@ -49,6 +49,8 @@ distribution.
 #include "df/announcement_infost.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
+#include "df/building_def_workshopst.h"
+#include "df/building_def_furnacest.h"
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
 #include "df/building_type.h"
@@ -280,6 +282,41 @@ static df::widget_container * get_visible_child_container(df::widget *parent) {
     return NULL;
 }
 
+static string get_building_custom_name(df::building_workshopst * bld) {
+    if (bld->type != df::workshop_type::Custom)
+        return "";
+    if (auto bld_def = vector_get(world->raws.buildings.workshops, bld->custom_type))
+        return bld_def->code + '/';
+    return "";
+}
+
+static string get_building_custom_name(df::building_furnacest * bld) {
+    if (bld->type != df::furnace_type::Custom)
+        return "";
+    if (auto bld_def = vector_get(world->raws.buildings.furnaces, bld->custom_type))
+        return bld_def->code + '/';
+    return "";
+}
+
+static string get_building_custom_name(df::building_trapst * bld) {
+    return "";
+}
+
+template<typename T>
+static void add_profile_tab_focus_string(
+    vector<string> & focusStrings, const string & base, T * bld)
+{
+    string fs = base + '/' + get_building_custom_name(bld);
+    switch (game->main_interface.view_sheets.active_sub_tab) {
+    case 0: fs += "Tasks"; break;
+    case 1: fs += "Workers"; break;
+    case 2: fs += "WorkOrders"; break;
+    default:
+        return;
+    }
+    focusStrings.push_back(fs);
+}
+
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
@@ -505,9 +542,23 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 newFocusString = baseFocus + "/LinkingLever";
             else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
                 newFocusString += '/' + enum_item_key(bld->getType());
-                if (bld->getType() == df::enums::building_type::Trap) {
-                    df::building_trapst* trap = strict_virtual_cast<df::building_trapst>(bld);
-                    newFocusString += '/' + enum_item_key(trap->trap_type);
+                auto bld_type = bld->getType();
+                if (bld_type == df::enums::building_type::Trap) {
+                    if (auto trap = strict_virtual_cast<df::building_trapst>(bld)) {
+                        newFocusString += '/' + enum_item_key(trap->trap_type);
+                        if (trap->trap_type == df::trap_type::Lever)
+                            add_profile_tab_focus_string(focusStrings, newFocusString, trap);
+                    }
+                } else if (bld_type == df::enums::building_type::Workshop) {
+                    if (auto ws = strict_virtual_cast<df::building_workshopst>(bld)) {
+                        newFocusString += '/' + enum_item_key(ws->type);
+                        add_profile_tab_focus_string(focusStrings, newFocusString, ws);
+                    }
+                } else if (bld_type == df::enums::building_type::Furnace) {
+                    if (auto furn = strict_virtual_cast<df::building_furnacest>(bld)) {
+                        newFocusString += '/' + enum_item_key(furn->type);
+                        add_profile_tab_focus_string(focusStrings, newFocusString, furn);
+                    }
                 }
                 if (game->main_interface.view_sheets.show_linked_buildings)
                     newFocusString += "/LinkedBuildings";

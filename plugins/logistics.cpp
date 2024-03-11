@@ -453,14 +453,12 @@ static void scan_item(color_ostream &out, df::item *item, StockProcessor &proces
 // item quality) if this isn't sufficient
 static bool non_accepted_storage_item(df::building_stockpilest *bld, df::item *item) {
     auto & flags = bld->settings.flags;
-    if (!flags.bits.furniture)
-        return false;
     if (item->getType() == df::item_type::BIN)
-        return !bld->settings.furniture.type[df::furniture_type::BIN];
+        return !flags.bits.furniture || !bld->settings.furniture.type[df::furniture_type::BIN];
     if (item->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING))
-        return !bld->settings.furniture.type[df::furniture_type::WHEELBARROW];
+        return !flags.bits.furniture || !bld->settings.furniture.type[df::furniture_type::WHEELBARROW];
     if (item->isFoodStorage())
-        return !bld->settings.furniture.type[df::furniture_type::FOOD_STORAGE];
+        return !flags.bits.furniture || !bld->settings.furniture.type[df::furniture_type::FOOD_STORAGE];
     return false;
 }
 

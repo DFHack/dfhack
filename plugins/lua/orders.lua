@@ -4,6 +4,7 @@ local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local textures = require('gui.textures')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 --
@@ -257,13 +258,148 @@ function RecheckOverlay:onRenderBody(dc)
 end
 
 --
+-- SkillRestrictionOverlay
+--
+
+SkillRestrictionOverlay = defclass(SkillRestrictionOverlay, overlay.OverlayWidget)
+SkillRestrictionOverlay.ATTRS{
+    desc='Adds a UI to the Workers tab for vanilla workshop labor restrictions.',
+    default_pos={x=-40, y=16},
+    default_enabled=true,
+    viewscreens={
+        'dwarfmode/ViewSheets/BUILDING/Furnace',
+        'dwarfmode/ViewSheets/BUILDING/Workshop',
+    },
+    frame={w=54, h=7},
+}
+
+local function can_set_skill_level()
+    for _,fs in ipairs(dfhack.gui.getFocusStrings(dfhack.gui.getDFViewscreen(true))) do
+        if fs:endswith('/Workers') then
+            local bld = dfhack.gui.getSelectedBuilding(true)
+            if not bld then return false end
+            return #bld.profile.permitted_workers == 0
+        end
+    end
+    return false
+end
+
+local function set_skill_level(which, val, bld)
+    bld = bld or dfhack.gui.getSelectedBuilding(true)
+    if not bld then return end
+    bld.profile[which] = val
+end
+
+-- the UI isn't wide enough to accomodate all the skills. select a few to combine
+-- into the adjacent tier.
+local SKIP_RATINGS = utils.invert{
+    df.skill_rating.Adequate,
+    df.skill_rating.Skilled,
+    df.skill_rating.Adept,
+    df.skill_rating.Professional,
+    df.skill_rating.Great,
+    df.skill_rating.HighMaster,
+    df.skill_rating.Legendary1,
+    df.skill_rating.Legendary2,
+    df.skill_rating.Legendary3,
+    df.skill_rating.Legendary4,
+    df.skill_rating.Legendary5,
+}
+
+function SkillRestrictionOverlay:init()
+    local options = {}
+    local min_rating, max_rating = {}, {}
+    for ridx in ipairs(df.skill_rating) do
+        if SKIP_RATINGS[ridx] then goto continue end
+        local idx = #options + 1
+        table.insert(options, {label=df.skill_rating.attrs[ridx].caption, value=idx})
+        min_rating[idx] = max_rating[idx-1] and (max_rating[idx-1]+1) or 0
+        max_rating[idx] = ridx
+        ::continue::
+    end
+    max_rating[#max_rating] = 3000 -- DF value for upper cap
+
+    local panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+    }
+    panel:addviews{
+        widgets.CycleHotkeyLabel{
+            view_id='min_skill',
+            frame={l=0, t=0, w=16},
+            label='Min skill:',
+            label_below=true,
+            key_back='CUSTOM_SHIFT_C',
+            key='CUSTOM_SHIFT_V',
+            options=options,
+            initial_option=options[1].value,
+            on_change=function(val)
+                local bld = dfhack.gui.getSelectedBuilding(true)
+                if self.subviews.max_skill:getOptionValue() < val then
+                    self.subviews.max_skill:setOption(val)
+                    set_skill_level('max_level', max_rating[val], bld)
+                end
+                set_skill_level('min_level', min_rating[val], bld)
+            end,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='max_skill',
+            frame={r=1, t=0, w=16},
+            label='Max skill:',
+            label_below=true,
+            key_back='CUSTOM_SHIFT_E',
+            key='CUSTOM_SHIFT_R',
+            options=options,
+            initial_option=options[#options].value,
+            on_change=function(val)
+                local bld = dfhack.gui.getSelectedBuilding(true)
+                if self.subviews.min_skill:getOptionValue() > val then
+                    self.subviews.min_skill:setOption(val)
+                    set_skill_level('min_level', min_rating[val], bld)
+                end
+                set_skill_level('max_level', max_rating[val], bld)
+            end,
+        },
+        widgets.RangeSlider{
+            frame={l=0, t=3},
+            num_stops=#options,
+            get_left_idx_fn=function()
+                return self.subviews.min_skill:getOptionValue()
+            end,
+            get_right_idx_fn=function()
+                return self.subviews.max_skill:getOptionValue()
+            end,
+            on_left_change=function(idx) self.subviews.min_skill:setOption(idx, true) end,
+            on_right_change=function(idx) self.subviews.max_skill:setOption(idx, true) end,
+        },
+    }
+
+    self:addviews{
+        panel,
+        widgets.HelpButton{command='orders'},
+    }
+end
+
+function SkillRestrictionOverlay:render(dc)
+    if can_set_skill_level() then
+        SkillRestrictionOverlay.super.render(self, dc)
+    end
+end
+
+function SkillRestrictionOverlay:onInput(keys)
+    if can_set_skill_level() then
+        return SkillRestrictionOverlay.super.onInput(self, keys)
+    end
+end
+
+--
 -- LaborRestrictionsOverlay
 --
 
 LaborRestrictionsOverlay = defclass(LaborRestrictionsOverlay, overlay.OverlayWidget)
 LaborRestrictionsOverlay.ATTRS{
     desc='Adds a UI to the Workers tab for vanilla workshop labor restrictions.',
-    default_pos={x=-40,y=24},
+    default_pos={x=-40, y=24},
     default_enabled=true,
     viewscreens={
         'dwarfmode/ViewSheets/BUILDING/Furnace/Kiln/Workers',
@@ -431,6 +567,7 @@ end
 OVERLAY_WIDGETS = {
     recheck=RecheckOverlay,
     importexport=OrdersOverlay,
+    skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,
 }
 

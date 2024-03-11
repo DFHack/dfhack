@@ -336,6 +336,10 @@ private:
             if (bld->getBuildStage() < bld->getMaxBuildStage())
                 continue;
 
+            if (bld->contained_items.empty() || !bld->contained_items[0] ||
+                    !bld->contained_items[0]->item || bld->contained_items[0]->item->flags.bits.forbid)
+                continue;
+
             if (bld->jobs.size() == 1 &&
                     bld->jobs[0]->job_type == df::job_type::DestroyBuilding)
                 continue;

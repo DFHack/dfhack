@@ -1500,6 +1500,7 @@ Units module
 
 * ``dfhack.units.isNightCreature(unit)``
 * ``dfhack.units.isSemiMegabeast(unit)``
+* ``dfhack.units.isForgottenBeast(unit)``
 * ``dfhack.units.isMegabeast(unit)``
 * ``dfhack.units.isTitan(unit)``
 * ``dfhack.units.isDemon(unit)``
@@ -1514,8 +1515,8 @@ Units module
 
 * ``dfhack.units.isGreatDanger(unit)``
 
-  The unit is of Great Danger. This include demons, titans, and megabeasts.
-
+  The unit is of Great Danger. This include demons, titans, forgotten
+  beasts, and megabeasts.
 
 * ``dfhack.units.getPosition(unit)``
 

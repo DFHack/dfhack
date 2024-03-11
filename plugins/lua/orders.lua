@@ -306,19 +306,24 @@ local SKIP_RATINGS = utils.invert{
     df.skill_rating.Legendary5,
 }
 
-function SkillRestrictionOverlay:init()
-    local options = {}
-    local min_rating, max_rating = {}, {}
-    for ridx in ipairs(df.skill_rating) do
-        if SKIP_RATINGS[ridx] then goto continue end
-        local idx = #options + 1
-        table.insert(options, {label=df.skill_rating.attrs[ridx].caption, value=idx})
-        min_rating[idx] = max_rating[idx-1] and (max_rating[idx-1]+1) or 0
-        max_rating[idx] = ridx
-        ::continue::
-    end
-    max_rating[#max_rating] = 3000 -- DF value for upper cap
+local SKILL_OPTIONS = {}
+local MIN_SKILL_RATINGS, MAX_SKILL_RATINGS = {}, {}
+for ridx in ipairs(df.skill_rating) do
+    if SKIP_RATINGS[ridx] then goto continue end
+    local idx = #SKILL_OPTIONS + 1
+    table.insert(SKILL_OPTIONS, {
+        label=df.skill_rating.attrs[ridx].caption,
+        value=idx,
+    })
+    local prev_max = MAX_SKILL_RATINGS[idx-1]
+    MIN_SKILL_RATINGS[idx] = prev_max and (prev_max+1) or 0
+    MAX_SKILL_RATINGS[idx] = ridx
+    ::continue::
+end
+MAX_SKILL_RATINGS[#MAX_SKILL_RATINGS] = 3000 -- DF value for upper cap
 
+
+function SkillRestrictionOverlay:init()
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
@@ -331,15 +336,15 @@ function SkillRestrictionOverlay:init()
             label_below=true,
             key_back='CUSTOM_SHIFT_C',
             key='CUSTOM_SHIFT_V',
-            options=options,
-            initial_option=options[1].value,
+            options=SKILL_OPTIONS,
+            initial_option=SKILL_OPTIONS[1].value,
             on_change=function(val)
                 local bld = dfhack.gui.getSelectedBuilding(true)
                 if self.subviews.max_skill:getOptionValue() < val then
                     self.subviews.max_skill:setOption(val)
-                    set_skill_level('max_level', max_rating[val], bld)
+                    set_skill_level('max_level', MAX_SKILL_RATINGS[val], bld)
                 end
-                set_skill_level('min_level', min_rating[val], bld)
+                set_skill_level('min_level', MIN_SKILL_RATINGS[val], bld)
             end,
         },
         widgets.CycleHotkeyLabel{
@@ -349,20 +354,20 @@ function SkillRestrictionOverlay:init()
             label_below=true,
             key_back='CUSTOM_SHIFT_E',
             key='CUSTOM_SHIFT_R',
-            options=options,
-            initial_option=options[#options].value,
+            options=SKILL_OPTIONS,
+            initial_option=SKILL_OPTIONS[#SKILL_OPTIONS].value,
             on_change=function(val)
                 local bld = dfhack.gui.getSelectedBuilding(true)
                 if self.subviews.min_skill:getOptionValue() > val then
                     self.subviews.min_skill:setOption(val)
-                    set_skill_level('min_level', min_rating[val], bld)
+                    set_skill_level('min_level', MIN_SKILL_RATINGS[val], bld)
                 end
-                set_skill_level('max_level', max_rating[val], bld)
+                set_skill_level('max_level', MAX_SKILL_RATINGS[val], bld)
             end,
         },
         widgets.RangeSlider{
             frame={l=0, t=3},
-            num_stops=#options,
+            num_stops=#SKILL_OPTIONS,
             get_left_idx_fn=function()
                 return self.subviews.min_skill:getOptionValue()
             end,
@@ -380,8 +385,28 @@ function SkillRestrictionOverlay:init()
     }
 end
 
+function SkillRestrictionOverlay:refresh_slider()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld then return end
+    self.subviews.min_skill:setOption(#SKILL_OPTIONS)
+    for min_idx=1,#SKILL_OPTIONS do
+        if bld.profile.min_level > MAX_SKILL_RATINGS[min_idx] then goto continue end
+        self.subviews.min_skill:setOption(min_idx)
+        self.subviews.max_skill:setOption(min_idx)
+        for max_idx=min_idx,#SKILL_OPTIONS do
+            if bld.profile.max_level <= MAX_SKILL_RATINGS[max_idx] then
+                self.subviews.max_skill:setOption(max_idx)
+                break
+            end
+        end
+        break
+        ::continue::
+    end
+end
+
 function SkillRestrictionOverlay:render(dc)
     if can_set_skill_level() then
+        self:refresh_slider()
         SkillRestrictionOverlay.super.render(self, dc)
     end
 end

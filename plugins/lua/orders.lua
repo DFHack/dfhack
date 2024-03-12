@@ -274,14 +274,17 @@ SkillRestrictionOverlay.ATTRS{
 }
 
 local function can_set_skill_level()
+    local ret = false
     for _,fs in ipairs(dfhack.gui.getFocusStrings(dfhack.gui.getDFViewscreen(true))) do
         if fs:endswith('/Workers') then
             local bld = dfhack.gui.getSelectedBuilding(true)
             if not bld then return false end
-            return #bld.profile.permitted_workers == 0
+            ret = #bld.profile.permitted_workers == 0
+        elseif fs:endswith('WORKER_ASSIGNMENT') then
+            return false
         end
     end
-    return false
+    return ret
 end
 
 local function set_skill_level(which, val, bld)
@@ -447,6 +450,15 @@ LaborRestrictionsOverlay.ATTRS{
     frame={w=37, h=17},
 }
 
+local function can_set_labors()
+    for _,fs in ipairs(dfhack.gui.getFocusStrings(dfhack.gui.getDFViewscreen(true))) do
+        if fs:endswith('WORKER_ASSIGNMENT') then
+            return false
+        end
+    end
+    return true
+end
+
 local WORKSHOP_LABORS = {
     [df.workshop_type.Carpenters]={'CARPENTER', 'TRAPPER'},
     [df.workshop_type.Farmers]={'PROCESS_PLANT', 'MAKE_CHEESE', 'MILK',
@@ -585,6 +597,18 @@ function LaborRestrictionsOverlay:init()
         self:addviews{make_labor_panel(df.building_type.Furnace, f_type, labors)}
     end
     self:addviews{widgets.HelpButton{command='orders'}}
+end
+
+function LaborRestrictionsOverlay:render(dc)
+    if can_set_labors() then
+        LaborRestrictionsOverlay.super.render(self, dc)
+    end
+end
+
+function LaborRestrictionsOverlay:onInput(keys)
+    if can_set_labors() then
+        return LaborRestrictionsOverlay.super.onInput(self, keys)
+    end
 end
 
 -- -------------------

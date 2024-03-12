@@ -501,6 +501,7 @@ bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
     df::training_assignment *assignment = new df::training_assignment();
     assignment->animal_id = unit->id;
     assignment->trainer_id = trainer_id;
+    assignment->flags.whole = 0;
     assignment->flags.bits.any_trainer = trainer_id == -1;
     insert_into_vector(plotinfo->equipment.training_assignments,
         &df::training_assignment::animal_id, assignment);

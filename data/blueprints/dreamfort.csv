@@ -30,7 +30,7 @@
 ""
 "Other DFHack tools also work very well with Dreamfort, such as autofarm. See the /setup_help blueprint for a suggested list to turn on in the DFHack gui/control-panel."
 ""
-"Once you have your starting surface workshops up and running, you might want to configure buildingplan to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can set this to be your default in the Autostart tab of gui/control-panel."
+"Once you have your starting surface workshops up and running, you might want to configure buildingplan to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can set this to be your default in the Automation -> Autostart tab of gui/control-panel."
 ""
 "Directly after embark, run ""gui/quickfort dreamfort /setup_help"" to get some advice on initial settings, and get started building your fort with ""gui/quickfort dreamfort /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
 ""
@@ -39,7 +39,7 @@ You are welcome to copy the Dreamfort spreadsheets and make your own modificatio
 ""
 "If you like, you can download a fully built Dreamfort-based fort from https://dffd.bay12games.com/file.php?id=15434 and explore it
 interactively."
-"# The dreamfort.csv distributed with DFHack is generated with the following command:
+"# The dreamfort.csv distributed with DFHack is generated from the online spreadsheets with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
 "Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details. You can also copy text from this spreadsheet online and paste it in gui/launcher with Ctrl-V."
@@ -1652,7 +1652,7 @@ with separate stockpiles for:
 ""
 Workshops:
 - 2x Stonecutter
-- 4x Craftsdwarf
+- 4x Craftsdwarf (labor restrictions set to specialize for materials in adjacent stockpiles)
 - 1x Jeweler
 - 1x Mechanic
 - 4x Smelter
@@ -1816,7 +1816,7 @@ build2/industry_build2
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf""}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf"" labor=Stonecrafting}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopN{name=""Stone/gem dumper"" take_from=""Stone feeder,Gem feeder"" route=""Stone/gem quantum""}",`,`,`,`,`,`,`,`,~,`,`,`,`
 ,,,,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm{max_general_orders=2},`,`,`,`,`,`,`,wm{max_general_orders=10},`,`,`,`,`,`,`,`,`
@@ -1866,7 +1866,7 @@ build2/industry_build2
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,"wr{name=""Wood craftsdwarf""}",`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,"wr{name=""Misc craftsdwarf""}",`,`,"wr{name=""Bone craftsdwarf""}",`,`,`,`,`
+,,`,`,"wr{name=""Wood craftsdwarf"" labor=Woodcrafting}",`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,"wr{name=""Misc craftsdwarf"" labor_mask=""Stonecrafting,Woodcrafting,Bone Carving""}",`,`,"wr{name=""Bone craftsdwarf"" labor=""Bone Carving""}",`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
@@ -2131,7 +2131,7 @@ build3/services_build3
 
 "#zone label(services_zones) start(18; 18) hidden() message(Don't forget to assign a doctor to the hospital!
 If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
-,,,,,,,,,,,,"j{name=""Jail 1""}(5x5)",,,,"j{name=""Jail 2""}(5x5)",,,,"j{name=""Jail 3""}(5x5)",,,,"j{name=""Jail 4""}(5x5)",,,,"j{name=""Jail 5""}(5x5)"
+,,,,,,,,,,,,,"j{name=""Jail 1""}(4x5)",,,,"j{name=""Jail 2""}(4x5)",,,,"j{name=""Jail 3""}(4x5)",,,,"j{name=""Jail 4""}(4x5)",,,,"j{name=""Jail 5""}(4x5)"
 ,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2831,9 +2831,9 @@ Screenshot: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
 ""
 Features:
 "- Staged crypt expansion that grows with your, um, need"
-- 52 tombs in stage 1
-- 160 additional tombs in stage 2 (212 tombs total)
-- Extendable in any direction by applying the blueprints multiple times
+- 20 tombs in stage 1
+- 192 additional tombs in stage 2 (212 tombs total)
+"- Extendable in any direction by reapplying the blueprints to the North, South, East, or West, overlapping by one tile"
 ""
 Crypt Walkthrough:
 1) Dig out the layer with /crypt1.

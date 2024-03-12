@@ -488,6 +488,16 @@ local FURNACE_LABORS = {
     [df.furnace_type.MagmaKiln]={'SMELT', 'POTTERY', 'GLAZING'},
 }
 
+-- used by quickfort
+function get_profile_labors(bld_type, bld_subtype)
+    if bld_type == df.building_type.Workshop then
+        return WORKSHOP_LABORS[bld_subtype] or {}
+    elseif bld_type == df.building_type.Furnace then
+        return FURNACE_LABORS[bld_subtype] or {}
+    end
+    return {}
+end
+
 local ENABLED_PEN_LEFT = dfhack.pen.parse{fg=COLOR_CYAN,
         tile=curry(textures.tp_control_panel, 1), ch=string.byte('[')}
 local ENABLED_PEN_CENTER = dfhack.pen.parse{fg=COLOR_LIGHTGREEN,

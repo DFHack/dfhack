@@ -793,13 +793,13 @@ routes.
 Building designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Other than names, most buildings do not have any extra properties. See the
-`#build mode reference`_ for those that do.
-
-The syntax otherwise looks just like stockpiles, except that it only makes
-sense to have a single symbol to indicate what to build on that tile::
+The syntax is very similar to the syntax for stockpiles, except that it only
+makes sense to have a single symbol to indicate what to build on that tile::
 
     symbol{properties}:configuration(expansion)
+
+See the `#build mode reference`_ for properties that you can specify for each
+building type.
 
 Here's an example of a simple 5x5 square of flooring::
 
@@ -810,6 +810,11 @@ or a named Jeweler's workshop that takes from specific stockpiles::
 
     #build
     wj{name="Encrusting center" take_from="Furniture,Gem storage"}
+
+or a forge that specializes in high-quality armor::
+
+    #build
+    wf{name=Armorer labors=Armoring min_skill=Master}
 
 The ``:configuration`` part is only relevant for hauling routes, which we'll go
 over in the next section.
@@ -2057,14 +2062,49 @@ apply in a different fort.
 #build mode reference
 ~~~~~~~~~~~~~~~~~~~~~
 
-In addition to the type-specific properties listed below, all building types
-accept the ``name`` property.
+In addition to the type-specific properties listed in the symbol table below,
+all building types accept the ``name`` property.
 
-Moreover, all workshops and furnaces accept the ``max_general_orders``
-property, which sets the maximum number of general workorders that the building
-can accept, and the ``take_from`` and ``give_to`` properties, which are
-comma-separated lists of names or building ids (the same as the correponding
-stockpile properties above).
+Moreover, all workshops and furnaces (both called "workshops" below) accept the
+following "profile" properties:
+
+======================  ===========
+Property                Description
+======================  ===========
+``max_general_orders``  the maximum number of general workorders that the
+                        workshop will accept
+``take_from``           comma-separated list of names or building ids of
+                        stockpiles that the workshop takes from
+``give_to``             comma-separated list of names or building ids of
+                        stockpiles that the workshop gives to
+``labor``               comma-separated list of labors that should be enabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be disabled.
+``labor_mask``          comma-separated list of labors that should be disabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be left enabled. if both the ``labor`` and
+                        ``labor_mask`` properties are specified, the ``labor``
+                        property takes precedence.
+``min_skill``           the minimum skill rating for units that perform jobs at
+                        the workshop
+``max_skill``           the maximum skill rating for units that perform jobs at
+                        the workshop
+======================  ===========
+
+For the ``labor`` and ``labor_mask`` properties, you can use either the labor
+ID or the readable caption string. You can see both options by running::
+
+    :lua for idx,name in ipairs(df.unit_labor) do cap=df.unit_labor.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
+
+For example, you can specify either ``BONE_CARVE`` or ``"Bone Carving"`` (it
+contains a space -- don't forget the surrounding quotes!) to indicate the bone
+carving labor.
+
+Likewise, for the ``min_skill`` and ``max_skill`` properties, you can specify
+either the skill rating ID or the readable caption string. You can see both
+options by running::
+
+    :lua for idx,name in ipairs(df.skill_rating) do cap=df.skill_rating.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
 
 ================= ============================= ==========
 Symbol            Type                          Properties

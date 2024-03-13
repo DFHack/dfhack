@@ -42,7 +42,7 @@ def check_file(fname):
             return 1
         for i, l in enumerate(lines):
             l = l.strip()
-            if l and not doc_start_line and doc_start_line != 0:
+            if l and not doc_start_line and doc_start_line != 0 and not l.startswith('..'):
                 doc_start_line = i
             doc_end_line = i
             lines[i] = l

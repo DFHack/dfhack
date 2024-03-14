@@ -3,13 +3,18 @@ local _ENV = mkmodule('plugins.dwarfvet')
 local argparse = require('argparse')
 local utils = require('utils')
 
+-- used for reassigning animals to pastures after treatment
+tracked_patients = tracked_patients or {}
+
 local function is_valid_animal(unit)
     return unit and
         dfhack.units.isActive(unit) and
         dfhack.units.isAnimal(unit) and
         dfhack.units.isFortControlled(unit) and
         dfhack.units.isTame(unit) and
-        not dfhack.units.isDead(unit)
+        not dfhack.units.isDead(unit) and
+        not dfhack.units.getGeneralRef(unit, df.general_ref_type.BUILDING_CHAIN) and
+        not dfhack.units.getGeneralRef(unit, df.general_ref_type.CONTAINED_IN_ITEM)
 end
 
 local function get_cur_patients()
@@ -18,7 +23,7 @@ local function get_cur_patients()
         if job.job_type ~= df.job_type.Rest then goto continue end
         local unit = dfhack.job.getWorker(job)
         if is_valid_animal(unit) then
-            cur_patients[unit] = true
+            cur_patients[unit.id] = unit
         end
         ::continue::
     end
@@ -26,13 +31,12 @@ local function get_cur_patients()
 end
 
 local function get_new_patients(cur_patients)
-    cur_patients = cur_patients or get_cur_patients()
     local new_patients = {}
     for _,unit in ipairs(df.global.world.units.active) do
         if unit.job.current_job then goto continue end
-        if cur_patients[unit] or not is_valid_animal(unit) then goto continue end
+        if cur_patients[unit.id] or not is_valid_animal(unit) then goto continue end
         if not unit.health or not unit.health.flags.needs_healthcare then goto continue end
-        table.insert(new_patients, unit)
+        new_patients[unit.id] = unit
         ::continue::
     end
     return new_patients
@@ -46,17 +50,17 @@ local function print_status()
     if not next(cur_patients) then
         print('  None')
     else
-        for unit in pairs(cur_patients) do
+        for _, unit in pairs(cur_patients) do
             print(('  %s (%d)'):format(dfhack.units.getReadableName(unit), unit.id))
         end
     end
     print()
     print('The following animals are injured and need treatment:')
     local new_patients = get_new_patients(cur_patients)
-    if #new_patients == 0 then
+    if not next(new_patients) then
         print('  None')
     else
-        for _,unit in ipairs(new_patients) do
+        for _, unit in pairs(new_patients) do
             print(('  %s (%d)'):format(dfhack.units.getReadableName(unit), unit.id))
         end
     end
@@ -86,6 +90,36 @@ function HospitalZone:find_spot(unit_pos)
     end
 end
 
+local function detach_unit_from_pasture(bld, unit)
+    if not bld or not df.building_civzonest:is_instance(bld) then return end
+    for idx, id in ipairs(bld.assigned_units) do
+        if id == unit.id then
+            bld.assigned_units:erase(idx)
+            break
+        end
+    end
+end
+
+local function unassign_and_remember_pasture(unit)
+    for idx = #unit.general_refs-1, 0, -1 do
+        local ref = unit.general_refs[idx]
+        if df.general_ref_building_civzone_assignedst:is_instance(ref) then
+            detach_unit_from_pasture(df.building.find(ref.building_id), unit)
+            tracked_patients[unit.id] = ref.building_id
+            unit.general_refs:erase(idx)
+            ref:delete()
+        end
+    end
+end
+
+local function attach_to_pasture(unit, zone)
+    if not unit or not zone then return end
+    local ref = df.new(df.general_ref_building_civzone_assignedst)
+    ref.building_id = zone.id;
+    unit.general_refs:insert('#', ref)
+    utils.insert_sorted(zone.assigned_units, unit.id)
+end
+
 -- TODO: If health.requires_recovery is set, the creature can't move under its own power
 --   and a Recover Wounded or Pen/Pasture job must be created by hand
 function HospitalZone:assign_spot(unit, unit_pos)
@@ -102,6 +136,7 @@ function HospitalZone:assign_spot(unit, unit_pos)
     gref.unit_id = unit.id
     job.general_refs:insert('#', gref)
     unit.job.current_job = job
+    unassign_and_remember_pasture(unit)
     return true
 end
 
@@ -125,12 +160,29 @@ local function distance(zone, pos)
     return math.abs(zone.x1 - pos.x) + math.abs(zone.y1 - pos.y) + 50*math.abs(zone.z - pos.z)
 end
 
+local function reassign_healed_animals_to_pastures(cur_patients)
+    for unit_id, zone_id in pairs(tracked_patients) do
+        if cur_patients[unit_id] then goto continue end
+        tracked_patients[unit_id] = nil
+        local unit = df.unit.find(unit_id)
+        if is_valid_animal(unit) and not
+            dfhack.units.getGeneralRef(unit, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
+        then
+            attach_to_pasture(unit, df.building.find(zone_id))
+        end
+        ::continue::
+    end
+end
+
 function checkup()
-    local new_patients = get_new_patients()
-    if #new_patients == 0 then return end
+    local cur_patients = get_cur_patients()
+    reassign_healed_animals_to_pastures(cur_patients)
+    local new_patients = get_new_patients(cur_patients)
+    if not next(new_patients) then return end
     local hospital_zones = get_hospital_zones()
-    local assigned = 0
-    for _,unit in ipairs(new_patients) do
+    local count, assigned = 0, 0
+    for _, unit in pairs(new_patients) do
+        count = count + 1
         local unit_pos = xyz2pos(dfhack.units.getPosition(unit))
         table.sort(hospital_zones,
             function(a, b) return distance(a.zone, unit_pos) < distance(b.zone, unit_pos) end)
@@ -141,7 +193,7 @@ function checkup()
             end
         end
     end
-    print(('dwarfvet scheduled treatment for %d of %d injured animals'):format(assigned, #new_patients))
+    print(('dwarfvet scheduled treatment for %d of %d injured animals'):format(assigned, count))
 end
 
 local function process_args(opts, args)

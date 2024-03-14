@@ -3,8 +3,33 @@ local _ENV = mkmodule('plugins.dwarfvet')
 local argparse = require('argparse')
 local utils = require('utils')
 
+local GLOBAL_KEY = 'dwarfvet'
+
 -- used for reassigning animals to pastures after treatment
 tracked_patients = tracked_patients or {}
+
+local function persist_state()
+    local state = {}
+    for unit_id, zone_id in pairs(tracked_patients) do
+        table.insert(state, {unit=unit_id, zone=zone_id})
+    end
+    dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc == SC_MAP_UNLOADED then
+        tracked_patients = {}
+        return
+    end
+    if sc ~= SC_MAP_LOADED or not dfhack.world.isFortressMode() then
+        return
+    end
+    local state = dfhack.persistent.getSiteData(GLOBAL_KEY, {})
+    tracked_patients = {}
+    for _,elem in ipairs(state) do
+        tracked_patients[elem.unit] = elem.zone
+    end
+end
 
 local function is_valid_animal(unit)
     return unit and
@@ -110,6 +135,7 @@ local function unassign_and_remember_pasture(unit)
             ref:delete()
         end
     end
+    persist_state()
 end
 
 local function attach_to_pasture(unit, zone)
@@ -172,6 +198,7 @@ local function reassign_healed_animals_to_pastures(cur_patients)
         end
         ::continue::
     end
+    persist_state()
 end
 
 function checkup()

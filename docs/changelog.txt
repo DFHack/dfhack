@@ -75,6 +75,8 @@ Template for new versions:
 - `tweak`: add ``quiet`` option for silent enablement and disablement of tweaks
 - `gui/teleport`: add global Ctrl-Shift-T keybinding (only avaiable when DFHack mortal mode is disabled)
 - Dreamfort: the four Craftsdwarf's workshops on the industry level are now specialized for Stonecrafting, Woodcrafting, Bone Carving, and miscellaneous tasks, respectively
+- `dwarfvet`: automatically unassign animals from pastures when they need treatment so they can make their way to the hospital. reassign them to their original pasture when treatment is complete.
+- `dwarfvet`: ignore animals assigned to cages or restraints
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

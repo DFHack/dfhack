@@ -190,7 +190,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         if (0 < dump_count)
             out.print("logistics: marked %d item(s) for dumping\n", dump_count);
         if (0 < train_count)
-            out.print("logistics: marked %d animal(s) for training\n", dump_count);
+            out.print("logistics: marked %d animal(s) for training\n", train_count);
     }
     return CR_OK;
 }

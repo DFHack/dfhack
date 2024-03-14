@@ -117,7 +117,7 @@ string Process::doReadClassName (void * vptr)
     char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
     char * typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
-    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
+    size_t start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
     return raw.substr(start,end-start);
 }

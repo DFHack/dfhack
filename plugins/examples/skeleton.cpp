@@ -15,9 +15,12 @@
 
 #include "Core.h"
 #include "Debug.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 
+#include "modules/Gui.h"
 #include "modules/Persistence.h"
+#include "modules/Screen.h"
 #include "modules/World.h"
 
 using std::string;
@@ -115,8 +118,21 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             DEBUG(status,out).print("game state changed: SC_MAP_UNLOADED\n");
             break;
         case SC_VIEWSCREEN_CHANGED:
-            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED\n");
+        {
+            auto vs = Gui::getCurViewscreen(true);
+            string name = Core::getInstance().p->readClassName(*(void**)vs);
+            if (name.starts_with("viewscreen_"))
+                name = name.substr(11, name.size()-11-2);
+            else if (dfhack_viewscreen::is_instance(vs)) {
+                auto fs = Gui::getFocusStrings(vs);
+                if (fs.size())
+                    name = fs[0];
+            }
+
+            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED (%s)\n",
+                name.c_str());
             break;
+        }
         case SC_CORE_INITIALIZED:
             DEBUG(status,out).print("game state changed: SC_CORE_INITIALIZED\n");
             break;

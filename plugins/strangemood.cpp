@@ -28,6 +28,7 @@
 #include "df/language_word.h"
 #include "df/map_block.h"
 #include "df/material.h"
+#include "df/mood_stage_type.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_preference.h"
@@ -1240,7 +1241,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }
-    unit->unk_18e = 0;
+    unit->moodstage = df::mood_stage_type::INITIAL;
     return CR_OK;
 }
 

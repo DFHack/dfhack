@@ -101,7 +101,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         else if (building)
         {
             out_items[i]->flags.bits.removed = 1;
-            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, 0))
+            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, df::building_item_role_type::TEMP))
                 out_items[i]->moveToGround(building->centerx, building->centery, building->z);
         }
         else if (move_to_cursor)

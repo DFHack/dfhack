@@ -1057,7 +1057,7 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
 }
 
 bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
-    int16_t use_mode, bool force_in_building)
+    df::building_item_role_type use_mode, bool force_in_building)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);

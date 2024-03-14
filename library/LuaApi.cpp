@@ -2335,7 +2335,7 @@ static int items_moveToBuilding(lua_State *state)
     MapExtras::MapCache mc;
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto building = Lua::CheckDFObject<df::building_actual>(state, 2);
-    int use_mode = luaL_optint(state, 3, 0);
+    df::building_item_role_type use_mode = (df::building_item_role_type)luaL_optint(state, 3, 0);
     bool force_in_building = lua_toboolean(state, 4);
     lua_pushboolean(state, Items::moveToBuilding(mc, item, building, use_mode, force_in_building));
     return 1;

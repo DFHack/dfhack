@@ -34,6 +34,7 @@ distribution.
 
 #include "modules/Materials.h"
 
+#include "df/building_item_role_type.h"
 #include "df/item_type.h"
 #include "df/job_item_vector_id.h"
 #include "df/specific_ref.h"
@@ -155,7 +156,7 @@ DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool deco
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
-    int16_t use_mode = 0, bool force_in_building = false);
+    df::building_item_role_type use_mode = df::building_item_role_type::TEMP, bool force_in_building = false);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 

@@ -4,7 +4,8 @@
 Building DFHack
 ===============
 
-Those seeking to compile the source code for DFHack, and or plugins, can refer to the following help pages.
+Those seeking to compile the source code for DFHack, including core and plugins,
+can refer to the following help pages.
 
 .. toctree::
    :maxdepth: 2

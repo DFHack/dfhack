@@ -242,12 +242,11 @@ public:
 
     void scan_replacements()
     {
-        for (auto u : world->units.active)
+        vector<df::unit *> citizens;
+        Units::getCitizens(citizens);
+        for (auto u : citizens)
         {
-            if (!Units::isOwnCiv(u) ||
-                !Units::isOwnGroup(u) ||
-                !Units::isActive(u) ||
-                Units::isBaby(u) ||
+            if (Units::isBaby(u) ||
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
                 continue; // skip units we don't control or that can't wear clothes
 

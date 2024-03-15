@@ -409,10 +409,11 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
 
     // Also, make sure there isn't a mood already running
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens, true);
+    for (auto cur : citizens)
     {
-        df::unit *cur = world->units.active[i];
-        if (Units::isCitizen(cur) && cur->flags1.bits.has_mood)
+        if (cur->flags1.bits.has_mood)
         {
             plotinfo->mood_cooldown = 1000;
             out.printerr("A strange mood is already in progress!\n");
@@ -423,9 +424,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // See which units are eligible to enter moods
     vector<df::unit *> moodable_units;
     bool mood_available = false;
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    for (auto cur : citizens)
     {
-        df::unit *cur = world->units.active[i];
         if (!isUnitMoodable(cur))
             continue;
         if (!cur->flags1.bits.had_mood)

@@ -65,6 +65,7 @@ Template for new versions:
 - `logistics`: don't melt/trade/dump empty containers that happen to be sitting on the stockpile unless the stockpile accepts those item types
 - `gui/launcher`: fix detection on Shift-Enter for running commands and autoclosing the launcher
 - `logistics`: don't send autotrade items to forbidden depots
+- `autoclothing`: don't produce clothes for dead units
 
 ## Misc Improvements
 - `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs
@@ -77,6 +78,7 @@ Template for new versions:
 - Dreamfort: the four Craftsdwarf's workshops on the industry level are now specialized for Stonecrafting, Woodcrafting, Bone Carving, and miscellaneous tasks, respectively
 - `dwarfvet`: automatically unassign animals from pastures when they need treatment so they can make their way to the hospital. reassign them to their original pasture when treatment is complete.
 - `dwarfvet`: ignore animals assigned to cages or restraints
+- Many tools that previously only worked for citizens or only for dwarves now work for all citizens and residents
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

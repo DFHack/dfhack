@@ -564,12 +564,10 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
 
 static void find_needed_clothing_items()
 {
-    for (auto& unit : world->units.active)
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    for (auto& unit : citizens)
     {
-        //obviously we don't care about illegal aliens.
-        if (!isCitizen(unit))
-            continue;
-
         //now check each clothing order to see what the unit might be missing.
         for (auto& clothingOrder : clothingOrders)
         {
@@ -762,10 +760,10 @@ static void generate_control(color_ostream& out)
     map<int, int> missingHelms;
     map<int, int> missingGloves;
     map<int, int> missingPants;
-    for (df::unit* unit : world->units.active)
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    for (df::unit* unit : citizens)
     {
-        if (!Units::isCitizen(unit))
-            continue;
         fullUnitList[unit->race]++;
         int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
         for (auto itemId : unit->owned_items)

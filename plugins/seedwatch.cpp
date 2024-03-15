@@ -309,7 +309,7 @@ static void scan_seeds(color_ostream &out, unordered_map<int32_t, int32_t> *acce
     static const BadFlags bad_flags;
 
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
 
     for (auto &item : world->items.other[items_other_id::SEEDS]) {
         MaterialInfo mat(item);

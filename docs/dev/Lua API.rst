@@ -1341,13 +1341,18 @@ Units module
 
   The unit is visible on the map.
 
-* ``dfhack.units.isCitizen(unit[,ignore_sanity])``
+* ``dfhack.units.isCitizen(unit[,include_insane])``
 
   The unit is an alive sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction,
   with an additional sanity check. You can identify citizens,
   regardless of their sanity, by passing ``true`` as the optional
   second parameter.
+
+* ``dfhack.units.isResident(unit[,include_insane])``
+
+  The unit is a resident of the fortress. Same ``include_insane`` semantics as
+  ``isCitizen``.
 
 * ``dfhack.units.isFortControlled(unit)``
 
@@ -1542,9 +1547,11 @@ Units module
 
   Returns a list of units (possibly empty) assigned to the given noble role.
 
-* ``dfhack.units.getCitizens([ignore_sanity])``
+* ``dfhack.units.getCitizens([exclude_residents, [include_insane]])``
 
-  Returns a list of all living citizens that are currently on the map.
+  Returns a list of all living, sane, citizens and residents that are currently
+  on the  map. Pass ``exclude_residents`` and ``include_insane`` both default
+  to ``false`` but can be overridden.
 
 * ``dfhack.units.teleport(unit, pos)``
 

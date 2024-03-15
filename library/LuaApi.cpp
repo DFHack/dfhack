@@ -2150,10 +2150,11 @@ static int units_getUnitsInBox(lua_State *state)
 }
 
 static int units_getCitizens(lua_State *L) {
-    bool ignore_sanity = lua_toboolean(L, -1); // defaults to false
+    bool exclude_residents = lua_toboolean(L, 1); // defaults to false
+    bool include_insane = lua_toboolean(L, 2); // defaults to false
 
     std::vector<df::unit *> citizens;
-    if (Units::getCitizens(citizens, ignore_sanity)) {
+    if (Units::getCitizens(citizens, exclude_residents, include_insane)) {
         Lua::PushVector(L, citizens);
         return 1;
     }

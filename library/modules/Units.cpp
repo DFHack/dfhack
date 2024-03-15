@@ -129,7 +129,7 @@ bool Units::isVisible(df::unit* unit)
     return Maps::isTileVisible(unit->pos);
 }
 
-bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
+bool Units::isCitizen(df::unit *unit, bool include_insane)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -149,10 +149,22 @@ bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
         unit->flags2.bits.resident)
         return false;
 
-    if (!ignore_sanity && !isSane(unit))
+    if (!include_insane && !isSane(unit))
         return false;
 
     return isOwnGroup(unit);
+}
+
+bool Units::isResident(df::unit *unit, bool include_insane){
+    CHECK_NULL_POINTER(unit);
+
+    if (!include_insane && !isSane(unit))
+        return false;
+
+    return isOwnCiv(unit) &&
+        !isAnimal(unit) &&
+        !isVisitor(unit) &&
+        !isCitizen(unit, true);
 }
 
 bool Units::isFortControlled(df::unit *unit)
@@ -908,9 +920,14 @@ df::unit *Units::getUnitByNobleRole(string noble) {
     return units[0];
 }
 
-bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
+bool Units::getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents, bool include_insane) {
     for (auto &unit : world->units.active) {
-        if (isCitizen(unit, ignore_sanity) && isAlive(unit) && isActive(unit))
+        if (!isAlive(unit) || !isActive(unit))
+            continue;
+
+        if (isCitizen(unit, include_insane))
+            citizens.emplace_back(unit);
+        else if (!exclude_residents && isResident(unit, include_insane))
             citizens.emplace_back(unit);
     }
     return true;

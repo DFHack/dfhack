@@ -1542,9 +1542,11 @@ Units module
 
   Returns a list of units (possibly empty) assigned to the given noble role.
 
-* ``dfhack.units.getCitizens([ignore_sanity])``
+* ``dfhack.units.getCitizens([exclude_residents, [include_insane]])``
 
-  Returns a list of all living citizens that are currently on the map.
+  Returns a list of all living, sane, citizens and residents that are currently
+  on the  map. Pass ``exclude_residents`` and ``include_insane`` both default
+  to ``false`` but can be overridden.
 
 * ``dfhack.units.teleport(unit, pos)``
 

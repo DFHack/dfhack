@@ -78,7 +78,8 @@ DFHACK_EXPORT bool isUnitInBox(df::unit* u,
 
 DFHACK_EXPORT bool isActive(df::unit *unit);
 DFHACK_EXPORT bool isVisible(df::unit* unit);
-DFHACK_EXPORT bool isCitizen(df::unit *unit, bool ignore_sanity = false);
+DFHACK_EXPORT bool isCitizen(df::unit *unit, bool include_insane = false);
+DFHACK_EXPORT bool isResident(df::unit *unit, bool include_insane = false);
 DFHACK_EXPORT bool isFortControlled(df::unit *unit);
 DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
 DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
@@ -158,7 +159,7 @@ DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x2, int16_t y2, int16_t z2);
 DFHACK_EXPORT bool getUnitsByNobleRole(std::vector<df::unit *> &units, std::string noble);
 DFHACK_EXPORT df::unit *getUnitByNobleRole(std::string noble);
-DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity = false);
+DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents = false, bool include_insane = false);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);
 

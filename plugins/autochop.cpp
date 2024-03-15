@@ -574,7 +574,7 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
     int32_t expected_yield;
     TreesBySize designatable_trees_by_size;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     int32_t newly_marked = scan_trees(out, &expected_yield,
             &designatable_trees_by_size, true, citizens);
 
@@ -662,7 +662,7 @@ static void autochop_printStatus(color_ostream &out) {
     int32_t designated_trees, expected_yield, accessible_yield;
     map<int32_t, int32_t> tree_counts, designated_tree_counts;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_logs(out, &usable_logs, citizens, &inaccessible_logs);
     scan_trees(out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
@@ -767,7 +767,7 @@ static int autochop_getLogCounts(lua_State *L) {
     DEBUG(control,*out).print("entering autochop_getNumLogs\n");
     int32_t usable_logs, inaccessible_logs;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_logs(*out, &usable_logs, citizens, &inaccessible_logs);
     Lua::Push(L, usable_logs);
     Lua::Push(L, inaccessible_logs);
@@ -830,7 +830,7 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
     int32_t designated_trees, expected_yield, accessible_yield;
     map<int32_t, int32_t> tree_counts, designated_tree_counts;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_trees(*out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
 

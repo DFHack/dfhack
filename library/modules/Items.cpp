@@ -2022,10 +2022,14 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
 
     // modify buy/sell prices
     if (caravan) {
-        value *= get_buy_request_multiplier(item, caravan->buy_prices);
-        value >>= 7;
-        value *= get_sell_request_multiplier(item, caravan);
-        value >>= 7;
+        int32_t buy_multiplier = get_buy_request_multiplier(item, caravan->buy_prices);
+        if (buy_multiplier == DEFAULT_AGREEMENT_MULTIPLIER) {
+            value *= get_sell_request_multiplier(item, caravan);;
+            value >>= 7;
+        } else {
+            value *= buy_multiplier;
+            value >>= 7;
+        }
     }
 
     // Boost value from stack size

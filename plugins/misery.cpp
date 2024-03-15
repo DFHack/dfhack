@@ -193,8 +193,10 @@ static void clear_misery(df::unit *unit) {
 // clears fake negative thoughts then runs the given lambda
 static void affect_units(
         std::function<void(df::unit *)> &&process_unit = [](df::unit *){}) {
-    for (auto unit : world->units.active) {
-        if (!Units::isCitizen(unit) || !unit->status.current_soul)
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    for (auto unit : citizens) {
+        if (!unit->status.current_soul)
             continue;
 
         clear_misery(unit);

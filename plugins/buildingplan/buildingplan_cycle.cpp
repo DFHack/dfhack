@@ -37,8 +37,7 @@ struct BadFlags {
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction); F(in_job);
-        F(owned); F(in_chest); F(removed); F(encased);
-        F(spider_web);
+        F(owned); F(removed); F(encased); F(spider_web);
         #undef F
         whole = flags.whole;
     }

@@ -736,7 +736,7 @@ static bool isAvailableItem(df::item* item)
             F(dump); F(on_fire); F(melt); F(hidden);
 
             F(garbage_collect); F(rotten); F(construction);
-            F(in_chest); F(removed); F(spider_web);
+            F(removed); F(spider_web);
 
             // F(artifact); -- TODO: should this be included?
 #undef F

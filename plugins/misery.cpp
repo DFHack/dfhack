@@ -193,15 +193,12 @@ static void clear_misery(df::unit *unit) {
 // clears fake negative thoughts then runs the given lambda
 static void affect_units(
         std::function<void(df::unit *)> &&process_unit = [](df::unit *){}) {
-    vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
-    for (auto unit : citizens) {
+    Units::forCitizens([&](auto unit){
         if (!unit->status.current_soul)
-            continue;
-
+            return;
         clear_misery(unit);
         std::forward<std::function<void(df::unit *)> &&>(process_unit)(unit);
-    }
+    });
 }
 
 static void do_cycle(color_ostream &out) {

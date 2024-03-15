@@ -159,6 +159,7 @@ DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x2, int16_t y2, int16_t z2);
 DFHACK_EXPORT bool getUnitsByNobleRole(std::vector<df::unit *> &units, std::string noble);
 DFHACK_EXPORT df::unit *getUnitByNobleRole(std::string noble);
+DFHACK_EXPORT void forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents = false, bool include_insane = false);
 DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents = false, bool include_insane = false);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);

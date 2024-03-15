@@ -445,10 +445,9 @@ command_result revflood(color_ostream &out, vector<string> & params) {
             pos = Units::getPosition(unit);
     }
     if (!pos.isValid()) {
-        vector<df::unit *> citizens;
-        Units::getCitizens(citizens);
-        if (citizens.size())
-            pos = Units::getPosition(citizens[0]);
+        Units::forCitizens([&](auto unit) {
+            pos = Units::getPosition(unit);
+        });
     }
     if (!pos.isValid()) {
         out.printerr("Please select a unit or place the keyboard cursor at some empty space you want to be unhidden.\n");

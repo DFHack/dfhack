@@ -156,9 +156,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     bool is_fast = config.get_int(CONFIG_FAST) == 1;
     bool is_tele = config.get_int(CONFIG_TELE) == 1;
 
-    std::vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
-    for (auto & unit : citizens) {
+    Units::forCitizens([&](auto unit) {
         if (is_tele)
             do_tele(out, unit);
 
@@ -166,7 +164,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
             DEBUG(cycle,out).print("fastifying unit %d\n", unit->id);
             Units::setGroupActionTimers(out, unit, 1, df::unit_action_type_group::All);
         }
-    }
+    });
 
     return CR_OK;
 }

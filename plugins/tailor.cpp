@@ -242,13 +242,10 @@ public:
 
     void scan_replacements()
     {
-        vector<df::unit *> citizens;
-        Units::getCitizens(citizens);
-        for (auto u : citizens)
-        {
+        Units::forCitizens([&](auto u) {
             if (Units::isBaby(u) ||
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
-                continue; // skip units we don't control or that can't wear clothes
+                return; // skip units we don't control or that can't wear clothes
 
             std::set <df::item_type> wearing;
             std::set <df::item_type> ordered;
@@ -329,7 +326,7 @@ public:
                     needed[std::make_pair(ty, usize)] += 1;
                 }
             }
-        }
+        });
     }
 
     void create_orders()

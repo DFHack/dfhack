@@ -89,6 +89,7 @@ distribution.
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <ranges>
 
 using std::string;
 using std::vector;
@@ -920,16 +921,24 @@ df::unit *Units::getUnitByNobleRole(string noble) {
     return units[0];
 }
 
-bool Units::getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents, bool include_insane) {
-    for (auto &unit : world->units.active) {
-        if (isDead(unit) || !isActive(unit))
-            continue;
+static auto citizensRange(bool exclude_residents, bool include_insane) {
+    return world->units.active |
+        std::views::filter([=](df::unit * unit) {
+            if (Units::isDead(unit) || !Units::isActive(unit))
+                return false;
+            return Units::isCitizen(unit, include_insane) ||
+                (!exclude_residents && Units::isResident(unit, include_insane));
+        });
+}
 
-        if (isCitizen(unit, include_insane))
-            citizens.emplace_back(unit);
-        else if (!exclude_residents && isResident(unit, include_insane))
-            citizens.emplace_back(unit);
-    }
+void Units::forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(exclude_residents, include_insane))
+        fn(unit);
+}
+
+bool Units::getCitizens(std::vector<df::unit *> & citizens, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(exclude_residents, include_insane))
+        citizens.emplace_back(unit);
     return true;
 }
 

@@ -270,26 +270,43 @@ static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building_ci
 static size_t getFreeNestboxZones(color_ostream &out, vector<df::building_civzonest *> &free_zones) {
     size_t assigned = 0;
     for (auto zone : world->buildings.other.ZONE_PEN) {
-        if (!isEmptyPasture(zone) || !Buildings::isActive(zone))
+        TRACE(cycle,out).print("scanning pasture %d (%s)\n", zone->id, zone->name.c_str());
+        if (!Buildings::isActive(zone)) {
+            TRACE(cycle,out).print("pasture %d is inactive\n", zone->id);
             continue;
+        }
+        if (!isEmptyPasture(zone)) {
+            TRACE(cycle,out).print("pasture %d is not empty\n", zone->id);
+            continue;
+        }
 
         // nestbox must be in upper left corner
         // this could be made more flexible
         df::coord pos(zone->x1, zone->y1, zone->z);
         auto bld = Buildings::findAtTile(pos);
-        if (!bld || bld->getType() != df::building_type::NestBox)
+        if (!bld || bld->getType() != df::building_type::NestBox) {
+            TRACE(cycle,out).print("pasture %d does not have nestbox in upper left corner\n", zone->id);
             continue;
+        }
+        TRACE(cycle,out).print("found nestbox %d in pasture %d\n", bld->id, zone->id);
 
         df::building_nest_boxst *nestbox = virtual_cast<df::building_nest_boxst>(bld);
-        if (!nestbox)
+        if (!nestbox) {
+            TRACE(cycle,out).print("nestbox %d is somehow not a nestbox\n", bld->id);
             continue;
+        }
 
         if (nestbox->claimed_by >= 0) {
-            auto unit = df::unit::find(nestbox->claimed_by);
-            if (isFreeEgglayer(unit)) {
-                // if the nestbox is claimed by a free egg layer, attempt to assign that unit to the zone
-                if (assignUnitToZone(out, unit, zone))
-                    ++assigned;
+            if (auto unit = df::unit::find(nestbox->claimed_by)) {
+                TRACE(cycle,out).print("nestbox %d is claimed by unit %d (%s)\n", bld->id,
+                    nestbox->claimed_by, Units::getReadableName(unit).c_str());
+                if (!isFreeEgglayer(unit)) {
+                    DEBUG(cycle,out).print("cannot assign unit %d to nestbox %d: not a free egg layer\n", unit->id, bld->id);
+                } else {
+                    // if the nestbox is claimed by a free egg layer, attempt to assign that unit to the zone
+                    if (assignUnitToZone(out, unit, zone))
+                        ++assigned;
+                }
             }
         } else if (nestbox->contained_items.size() == 1) {
             free_zones.push_back(zone);

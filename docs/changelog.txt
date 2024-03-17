@@ -80,6 +80,7 @@ Template for new versions:
 - `dwarfvet`: automatically unassign animals from pastures when they need treatment so they can make their way to the hospital. reassign them to their original pasture when treatment is complete.
 - `dwarfvet`: ignore animals assigned to cages or restraints
 - Many tools that previously only worked for citizens or only for dwarves now work for all citizens and residents, e.g. `fastdwarf`, `rejuvenate`, etc.
+- `buildingplan`: persist hiding of unavailable materials between filterselection invocations
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

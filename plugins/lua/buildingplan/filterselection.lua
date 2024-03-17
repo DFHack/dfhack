@@ -7,6 +7,9 @@ local widgets = require('gui.widgets')
 local uibs = df.global.buildreq
 local to_pen = dfhack.pen.parse
 
+-- persist hiding of unavailable materials between invocations
+hide_unavailable = hide_unavailable or false
+
 local function get_cur_filters()
     return dfhack.buildings.getFiltersByType({}, uibs.building_type,
             uibs.building_subtype, uibs.custom_type)
@@ -88,8 +91,11 @@ function QualityAndMaterialsPage:init()
                     frame={l=0, t=4, w=24},
                     label='Hide unavailable:',
                     key='CUSTOM_SHIFT_H',
-                    initial_option=false,
-                    on_change=function() self.dirty = true end,
+                    initial_option=hide_unavailabe,
+                    on_change=function(new,old)
+                        hide_unavailabe = new
+                        self.dirty = true
+                    end,
                 },
                 widgets.EditField{
                     view_id='search',

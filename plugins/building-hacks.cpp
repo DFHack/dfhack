@@ -35,6 +35,9 @@ struct graphic_tile //could do just 31x31 and be done, but it's nicer to have fl
     int8_t fore;
     int8_t back;
     int8_t bright;
+    uint32_t graphics_tile;
+    uint32_t overlay_tile;
+    uint32_t unk_tile;//???
 };
 struct workshop_hack_data
 {
@@ -258,9 +261,9 @@ struct work_hook : df::building_workshopst{
         }
         INTERPOSE_NEXT(updateAction)();
     }
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (int32_t unk1,df::building_drawbuffer *db, int16_t unk2))
     {
-        INTERPOSE_NEXT(drawBuilding)(db, unk);
+        INTERPOSE_NEXT(drawBuilding)(unk1,db, unk2);
 
         if (auto def = find_def())
         {
@@ -287,15 +290,22 @@ struct work_hook : df::building_workshopst{
             std::vector<graphic_tile> &cur_frame=def->frames[frame];
             for(size_t i=0;i<cur_frame.size();i++)
             {
-                if(cur_frame[i].tile>=0)
+                int tx = i % w;
+                int ty = i / w;
+                const auto& cf = cur_frame[i];
+                if(cf.tile>=0)
                 {
-                    int tx=i % w;
-                    int ty=i / w;
-                    db->tile[tx][ty]=cur_frame[i].tile;
-                    db->back[tx][ty]=cur_frame[i].back;
-                    db->bright[tx][ty]=cur_frame[i].bright;
-                    db->fore[tx][ty]=cur_frame[i].fore;
+                    db->tile[tx][ty]= cf.tile;
+                    db->back[tx][ty]= cf.back;
+                    db->bright[tx][ty]= cf.bright;
+                    db->fore[tx][ty]= cf.fore;
                 }
+                if (cf.graphics_tile >= 0)
+                    db->texpos1[tx][ty] = cf.graphics_tile;
+                if (cf.overlay_tile >= 0)
+                    db->texpos2[tx][ty] = cf.overlay_tile;
+                if (cf.unk_tile >= 0)
+                    db->texpos3[tx][ty] = cf.unk_tile;
             }
         }
     }
@@ -330,8 +340,8 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
         std::vector<graphic_tile> frame;
         while (lua_next(L, -2) != 0) {
             graphic_tile t;
-            lua_pushnumber(L,1);
-            lua_gettable(L,-2);
+
+            lua_geti(L, -1, 1);
             if(lua_isnil(L,-1))
             {
                 t.tile=-1;
@@ -342,21 +352,29 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
                 t.tile=lua_tonumber(L,-1);
                 lua_pop(L,1);
 
-                lua_pushnumber(L,2);
-                lua_gettable(L,-2);
+                lua_geti(L, -1, 2);
                 t.fore=lua_tonumber(L,-1);
                 lua_pop(L,1);
 
-                lua_pushnumber(L,3);
-                lua_gettable(L,-2);
+                lua_geti(L, -1, 3);
                 t.back=lua_tonumber(L,-1);
                 lua_pop(L,1);
 
-                lua_pushnumber(L,4);
-                lua_gettable(L,-2);
+                lua_geti(L, -1, 4);
                 t.bright=lua_tonumber(L,-1);
                 lua_pop(L,1);
 
+                lua_geti(L, -1, 5);
+                t.graphics_tile = luaL_optinteger(L, -1,-1);
+                lua_pop(L, 1);
+
+                lua_geti(L, -1, 6);
+                t.overlay_tile = luaL_optinteger(L, -1, -1);
+                lua_pop(L, 1);
+
+                lua_geti(L, -1, 7);
+                t.unk_tile = luaL_optinteger(L, -1, -1);
+                lua_pop(L, 1);
             }
             frame.push_back(t);
             lua_pop(L,1);

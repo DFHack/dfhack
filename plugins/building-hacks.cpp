@@ -264,9 +264,9 @@ struct work_hook : df::building_workshopst{
         }
         INTERPOSE_NEXT(updateAction)();
     }
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (int32_t unk1,df::building_drawbuffer *db, int16_t unk2))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (uint32_t curtick,df::building_drawbuffer *db, int16_t z_offset))
     {
-        INTERPOSE_NEXT(drawBuilding)(unk1,db, unk2);
+        INTERPOSE_NEXT(drawBuilding)(curtick,db, z_offset);
 
         if (auto def = find_def())
         {
@@ -289,12 +289,11 @@ struct work_hook : df::building_workshopst{
                     }
                 }
             }
-            int w=db->x2-db->x1+1;
             std::vector<graphic_tile> &cur_frame=def->frames[frame];
             for(size_t i=0;i<cur_frame.size();i++)
             {
-                int tx = i % w;
-                int ty = i / w;
+                int tx = i % 31;
+                int ty = i / 31;
                 const auto& cf = cur_frame[i];
                 if(cf.tile>=0)
                 {
@@ -303,14 +302,14 @@ struct work_hook : df::building_workshopst{
                     db->bright[tx][ty]= cf.bright;
                     db->fore[tx][ty]= cf.fore;
                 }
-                if (cf.graphics_tile >= 0)
+                if (cf.graphics_tile != -1)
                     db->building_one_texpos[tx][ty] = cf.graphics_tile;
-                if (cf.overlay_tile >= 0)
+                if (cf.overlay_tile != -1)
                     db->building_two_texpos[tx][ty] = cf.overlay_tile;
-                if (cf.item_tile >= 0)
+                if (cf.item_tile != -1)
                     db->item_texpos[tx][ty] = cf.item_tile;
                 //only first line has signpost graphics
-                if (cf.item_tile >= 0 && ty==0)
+                if (cf.item_tile != -1 && ty==0)
                     db->signpost_texpos[tx] = cf.signpost_tile;
             }
         }
@@ -340,24 +339,26 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     const int max_idx = 31 * 31;
 
     luaL_checktype(L,stack_pos,LUA_TTABLE);
-    lua_pushvalue(L,stack_pos);
-    lua_pushnil(L);
-    while (lua_next(L, -2) != 0) {
-        luaL_checktype(L,-1,LUA_TTABLE);
+
+    int frame_index = 1;
+    
+    while (lua_geti(L,stack_pos,frame_index) != LUA_TNIL) { //get frame[i]
+        luaL_checktype(L,-1,LUA_TTABLE); //ensure that it's a table
         std::vector<graphic_tile> frame(max_idx);
         
         for (int idx = 0; idx < max_idx; idx++)
         {
             auto& t = frame[idx];
-            lua_geti(L, -1, idx);
-            //allow sparse indexing
-            if (lua_isnil(L, -1))
+            lua_geti(L, -1, idx); //get tile at idx i.e. frame[i][idx] where idx=x+y*31
+            
+            if (lua_isnil(L, -1))//allow sparse indexing
             {
-                lua_pop(L, 1);
+                lua_pop(L, 1); //pop current tile (nil in this case)
                 continue;
             }
             else
             {
+                //load up tile, color, optionally graphics stuff
                 lua_geti(L, -1, 1);
                 //not sure why would anyone do nil tile, but for api consitency lets allow it
                 t.tile= luaL_optinteger(L,-1,-1);
@@ -390,13 +391,16 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
                 lua_geti(L, -1, 8);
                 t.item_tile = luaL_optinteger(L, -1, -1);
                 lua_pop(L, 1);
+
+                lua_pop(L, 1); //pop current tile
             }
             frame.push_back(t);
-            lua_pop(L,1);
         }
         def.frames.push_back(frame);
+        frame_index++;
+        lua_pop(L, 1); //pop current frame
     }
-    lua_pop(L,1);
+
     return ;
 }
 //arguments: custom type,impassible fix (bool), consumed power, produced power, list of connection points, update skip(0/nil to disable)

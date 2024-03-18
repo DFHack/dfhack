@@ -574,6 +574,21 @@ function make_labor_panel(bld_type, bld_subtype, labors)
         },
     }
 
+    panel.onInput = function(self, keys)
+        local handled = widgets.Panel.onInput(self, keys)
+        if keys._MOUSE_L then
+            local idx = list:getIdxUnderMouse()
+            if idx then
+                local x = list:getMousePos()
+                if x <= 2 then
+                    toggle_labor(list:getSelected())
+                    list.last_select_click_ms = 0
+                end
+            end
+        end
+        return handled
+    end
+
     local choices = {}
     for _,labor_name in ipairs(labors) do
         local labor = df.unit_labor[labor_name]

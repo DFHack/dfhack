@@ -15,19 +15,30 @@ local _ENV = mkmodule('plugins.building-hacks')
             action -- a table of number (how much ticks to skip) and a function which gets called on shop update
             canBeRoomSubset -- room is considered in to be part of the building defined by chairs etc...
             auto_gears -- find the gears automatically and animate them
+            auto_graphics -- insert gear graphics tiles for gear tiles
             gears -- a table or {x=?,y=?} of connection points for machines
             animate -- a table of
                 frames -- a table of
-                    tables of 4 numbers (tile,fore,back,bright) OR
-                    empty table (tile not modified) OR
-                    {x=<number> y=<number> + 4 numbers like in first case} -- this generates full frame even, usefull for animations that change little (1-2 tiles)
-                frameLenght -- how many ticks does one frame take OR
-                isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
+                    --NB: following table is 0 indexed
+                    tables of 4 numbers (tile,fore,back,bright,graphics tile, overlay tile, sign tile, item tile) OR
+                    {x=<number> y=<number> + 4 to 8 numbers like in first case} -- this generates full frame even, useful for animations that change little (1-2 tiles)
+                frameLength -- how many ticks does one frame take OR
+                isMechanical -- a bool that says to try to match to mechanical system (i.e. animate only when powered)
             }
 ]]
 _registeredStuff={}
+--cache graphics tiles for mechanical gears
+local graphics_cache
+function reload_graphics_cache(  )
+    graphics_cache={}
+    graphics_cache[1]=dfhack.screen.findGraphicsTile('AXLES_GEARS',0,2)
+    graphics_cache[2]=dfhack.screen.findGraphicsTile('AXLES_GEARS',1,2)
+end
+
+
 local function unregall(state)
     if state==SC_WORLD_UNLOADED then
+        graphics_cache=nil
         onUpdateAction._library=nil
         dfhack.onStateChange.building_hacks= nil
         _registeredStuff={}
@@ -52,21 +63,12 @@ local function registerUpdateAction(shopId,callback)
     onUpdateAction._library=onUpdateLocal
     dfhack.onStateChange.building_hacks=unregall
 end
+--take in tiles with {x=?, y=? ,...} and output a table flat sparse 31x31 table
 local function generateFrame(tiles,w,h)
     local mTiles={}
-    for k,v in ipairs(tiles) do
-        mTiles[v.x]=mTiles[v.x] or {}
-        mTiles[v.x][v.y]=v
-    end
     local ret={}
-    for ty=0,h-1 do
-    for tx=0,w-1 do
-        if mTiles[tx] and mTiles[tx][ty] then
-            table.insert(ret,mTiles[tx][ty]) -- leaves x and y in but who cares
-        else
-            table.insert(ret,{})
-        end
-    end
+    for k,v in ipairs(tiles) do
+        ret[v.x+v.y*31]=v
     end
     return ret
 end
@@ -98,7 +100,8 @@ end
 local function lookup_color( shop_def,x,y,stage )
     return shop_def.tile_color[0][stage][x][y],shop_def.tile_color[1][stage][x][y],shop_def.tile_color[2][stage][x][y]
 end
-local function processFramesAuto( shop_def ,gears) --adds frames for all gear icons and inverted gear icons
+--adds frames for all gear icons and inverted gear icons
+local function processFramesAuto( shop_def ,gears,auto_graphics)
     local w,h=shop_def.dim_x,shop_def.dim_y
     local frames={{},{}} --two frames only
     local stage=shop_def.build_stages
@@ -116,6 +119,12 @@ local function processFramesAuto( shop_def ,gears) --adds frames for all gear ic
 
         table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y,stage)})
         table.insert(frames[2],{x=v.x,y=v.y,tile_inv,lookup_color(shop_def,v.x,v.y,stage)})
+
+        --insert default gear graphics if auto graphics is on
+        if auto_graphics then
+            frames[1][#frames[1]][5]=graphics_cache[1]
+            frames[2][#frames[2]][5]=graphics_cache[2]
+        end
     end
 
     for frame_id,frame in ipairs(frames) do
@@ -124,6 +133,11 @@ local function processFramesAuto( shop_def ,gears) --adds frames for all gear ic
     return frames
 end
 function registerBuilding(args)
+
+    if graphics_cache==nil then
+        reload_graphics_cache()
+    end
+
     local shop_def=findCustomWorkshop(args.name)
     local shop_id=shop_def.id
     --misc
@@ -170,10 +184,11 @@ function registerBuilding(args)
             end
         end
         gears=findGears(shop_def)
-        frames=processFramesAuto(shop_def,gears)
+        frames=processFramesAuto(shop_def,gears,args.auto_graphics)
     end
-
+    --finally call the c++ api
     addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset)
+
 end
 
 return _ENV

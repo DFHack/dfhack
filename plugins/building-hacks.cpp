@@ -31,13 +31,16 @@ REQUIRE_GLOBAL(world);
 
 struct graphic_tile //could do just 31x31 and be done, but it's nicer to have flexible imho.
 {
-    int16_t tile; //originally uint8_t but we need to indicate non-animated tiles
+    int16_t tile=-1; //originally uint8_t but we need to indicate non-animated tiles
     int8_t fore;
     int8_t back;
     int8_t bright;
-    uint32_t graphics_tile;
-    uint32_t overlay_tile;
-    uint32_t unk_tile;//???
+    //index of texpos
+    uint32_t graphics_tile = -1;
+    uint32_t overlay_tile = -1;
+    uint32_t item_tile = -1;
+    //only for first line
+    uint32_t signpost_tile = -1;
 };
 struct workshop_hack_data
 {
@@ -301,11 +304,14 @@ struct work_hook : df::building_workshopst{
                     db->fore[tx][ty]= cf.fore;
                 }
                 if (cf.graphics_tile >= 0)
-                    db->texpos1[tx][ty] = cf.graphics_tile;
+                    db->building_one_texpos[tx][ty] = cf.graphics_tile;
                 if (cf.overlay_tile >= 0)
-                    db->texpos2[tx][ty] = cf.overlay_tile;
-                if (cf.unk_tile >= 0)
-                    db->texpos3[tx][ty] = cf.unk_tile;
+                    db->building_two_texpos[tx][ty] = cf.overlay_tile;
+                if (cf.item_tile >= 0)
+                    db->item_texpos[tx][ty] = cf.item_tile;
+                //only first line has signpost graphics
+                if (cf.item_tile >= 0 && ty==0)
+                    db->signpost_texpos[tx] = cf.signpost_tile;
             }
         }
     }
@@ -331,37 +337,42 @@ void clear_mapping()
 }
 static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
 {
+    const int max_idx = 31 * 31;
+
     luaL_checktype(L,stack_pos,LUA_TTABLE);
     lua_pushvalue(L,stack_pos);
     lua_pushnil(L);
     while (lua_next(L, -2) != 0) {
         luaL_checktype(L,-1,LUA_TTABLE);
-        lua_pushnil(L);
-        std::vector<graphic_tile> frame;
-        while (lua_next(L, -2) != 0) {
-            graphic_tile t;
-
-            lua_geti(L, -1, 1);
-            if(lua_isnil(L,-1))
+        std::vector<graphic_tile> frame(max_idx);
+        
+        for (int idx = 0; idx < max_idx; idx++)
+        {
+            auto& t = frame[idx];
+            lua_geti(L, -1, idx);
+            //allow sparse indexing
+            if (lua_isnil(L, -1))
             {
-                t.tile=-1;
-                lua_pop(L,1);
+                lua_pop(L, 1);
+                continue;
             }
             else
             {
-                t.tile=lua_tonumber(L,-1);
+                lua_geti(L, -1, 1);
+                //not sure why would anyone do nil tile, but for api consitency lets allow it
+                t.tile= luaL_optinteger(L,-1,-1);
                 lua_pop(L,1);
 
                 lua_geti(L, -1, 2);
-                t.fore=lua_tonumber(L,-1);
+                t.fore= luaL_optinteger(L,-1,0);
                 lua_pop(L,1);
 
                 lua_geti(L, -1, 3);
-                t.back=lua_tonumber(L,-1);
+                t.back= luaL_optinteger(L,-1,0);
                 lua_pop(L,1);
 
                 lua_geti(L, -1, 4);
-                t.bright=lua_tonumber(L,-1);
+                t.bright=luaL_optinteger(L,-1,0);
                 lua_pop(L,1);
 
                 lua_geti(L, -1, 5);
@@ -373,13 +384,16 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
                 lua_pop(L, 1);
 
                 lua_geti(L, -1, 7);
-                t.unk_tile = luaL_optinteger(L, -1, -1);
+                t.signpost_tile = luaL_optinteger(L, -1, -1);
+                lua_pop(L, 1);
+
+                lua_geti(L, -1, 8);
+                t.item_tile = luaL_optinteger(L, -1, -1);
                 lua_pop(L, 1);
             }
             frame.push_back(t);
             lua_pop(L,1);
         }
-        lua_pop(L,1);
         def.frames.push_back(frame);
     }
     lua_pop(L,1);

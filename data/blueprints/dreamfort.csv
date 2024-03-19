@@ -165,47 +165,45 @@ In standing orders (Labor -> Standing orders):
 #ignore
 "Here are the most important skills for getting Dreamfort up and running, along with suggestions for how to distribute them."
 ""
-Manager / Bookkeeper / Broker,Miner,Miner,Mason,Smith,Outdoorsdwarf,Farmer
-Mechanic,Miner,Miner,Stonecutter,Weaponsmith,Carpenter,Stonecutter
-Stonecrafting,Engraver,Engraver,Mason,Armorsmith,Wood Cutter,Planter
+Hauler / Manager / Bookkeeper / Broker,Miner,Miner,Stoneworker,Craftsdwarf,Outdoorsdwarf,Farmer
+Noble role skills,Miner,Miner,Stonecutter,Stonecrafting,Carpenter,Planter
+,,,Stone Carver,Mechanic,Wood Cutter,Stonecutter
 ""
 "The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two stonecutters helps keep the fort from stalling. If you have to smooth walls to prevent a light aquifer from flooding your fort, starting with a few engravers saves a ton of time."
 ""
 We suggest bringing at least:
 2 picks,for the two miners
-2 battleaxes,for two active woodcutters
+2 battleaxes,for one woodcutters and either a second woodcutter or an emergency weapon
 1 anvil,for the forge
 food and seeds,as per usual
-4 ropes,"for the hospital well and traction benches. you could build the ropes out of raw materials, but dwarves are usually too busy to do textile work at the start of the game."
-7 blocks,for starting workshops and the temporary trade depot. necessary if you have buildingplan configured for blocks only.
+3 ropes,"for the hospital well and traction benches. you could make the ropes out of raw materials, but dwarves are usually too busy to do textile work at the start of the game."
+20 blocks,"for starting workshops, the temporary trade depot, and a few spares in case you need to shore up a light aquifer in a soil layer. necessary if you have buildingplan configured for blocks only."
 many boulders,for quickly turning into more blocks while your miners are digging in dirt or dealing with aquifers. blocks are the limiting factor in the early stages.
 dogs and cats,for protection and vermin control
 geese,for bones and leather. bring at least 1 male and 2 females for the 2 early nestboxes.
 ""
 Also bring logs for beds if embarking in an area without many trees.
 ""
-See ldog's Dreamfort embark profile for a more advanced (and more thoroughly explained!) approach:
+See ldog's Dreamfort embark profile for a more advanced approach:
 https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=sharing
 "#ignore Add these lines to the bottom of your ""prefs/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's dreamfort embark profile for a more advanced, dwarfy approach."
 [PROFILE]
 [TITLE:Dreamfort]
-[SKILL:1:STONECRAFT:1]
-[SKILL:1:MECHANICS:5]
 [SKILL:1:JUDGING_INTENT:1]
-[SKILL:1:APPRAISAL:1]
+[SKILL:1:APPRAISAL:2]
 [SKILL:1:ORGANIZATION:1]
 [SKILL:1:RECORD_KEEPING:1]
+[SKILL:1:MILITARY_TACTICS:5]
 [SKILL:2:MINING:5]
 [SKILL:2:ENGRAVE_STONE:4]
 [SKILL:2:SWIMMING:1]
 [SKILL:3:MINING:5]
 [SKILL:3:ENGRAVE_STONE:4]
 [SKILL:3:SWIMMING:1]
-[SKILL:4:MASONRY:2]
-[SKILL:4:MILITARY_TACTICS:5]
-[SKILL:4:CUT_STONE:3]
-[SKILL:5:FORGE_WEAPON:5]
-[SKILL:5:FORGE_ARMOR:5]
+[SKILL:4:CUT_STONE:5]
+[SKILL:4:CARVE_STONE:5]
+[SKILL:5:STONECRAFT:5]
+[SKILL:5:MECHANICS:5]
 [SKILL:6:WOODCUTTING:5]
 [SKILL:6:CARPENTRY:5]
 [SKILL:7:PLANT:5]
@@ -217,19 +215,19 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [ITEM:21:SEEDS:NONE:PLANT_MAT:GRASS_TAIL_PIG:SEED]
 [ITEM:21:SEEDS:NONE:PLANT_MAT:GRASS_WHEAT_CAVE:SEED]
 [ITEM:21:SEEDS:NONE:PLANT_MAT:POD_SWEET:SEED]
-[ITEM:20:SEEDS:NONE:PLANT_MAT:BUSH_QUARRY:SEED]
-[ITEM:20:SEEDS:NONE:PLANT_MAT:MUSHROOM_CUP_DIMPLE:SEED]
+[ITEM:21:SEEDS:NONE:PLANT_MAT:BUSH_QUARRY:SEED]
+[ITEM:21:SEEDS:NONE:PLANT_MAT:MUSHROOM_CUP_DIMPLE:SEED]
 [ITEM:1:ANVIL:NONE:INORGANIC:IRON]
 [ITEM:2:WEAPON:ITEM_WEAPON_AXE_BATTLE:INORGANIC:COPPER]
 [ITEM:2:WEAPON:ITEM_WEAPON_PICK:INORGANIC:COPPER]
-[ITEM:20:DRINK:NONE:PLANT_MAT:GRASS_TAIL_PIG:DRINK]
+[ITEM:21:DRINK:NONE:PLANT_MAT:GRASS_TAIL_PIG:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:POD_SWEET:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:GRASS_WHEAT_CAVE:DRINK]
 [ITEM:30:PLANT:NONE:PLANT_MAT:MUSHROOM_HELMET_PLUMP:STRUCTURAL]
 [ITEM:45:BOULDER:NONE:INORGANIC:QUARTZITE]
-[ITEM:20:THREAD:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
-[ITEM:4:CHAIN:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
+[ITEM:21:THREAD:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
+[ITEM:3:CHAIN:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
 [PET:2:DOG:FEMALE:STANDARD]
 [PET:1:DOG:MALE:STANDARD]
 [PET:2:CAT:FEMALE:STANDARD]

@@ -81,6 +81,7 @@ Template for new versions:
 - `dwarfvet`: ignore animals assigned to cages or restraints
 - Many tools that previously only worked for citizens or only for dwarves now work for all citizens and residents, e.g. `fastdwarf`, `rejuvenate`, etc.
 - `buildingplan`: persist hiding of unavailable materials between filterselection invocations
+- Dreamfort: update embark profile recommendations and example embark profile
 
 ## Documentation
 - `overlay-dev-guide`: updated examples and troubleshooting steps

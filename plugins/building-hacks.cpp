@@ -22,13 +22,14 @@
 #include "modules/Buildings.h"
 
 #include <map>
-
+#include <limits>
 using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("building-hacks");
 REQUIRE_GLOBAL(world);
 
+constexpr uint32_t invalid_tile = std::numeric_limits<uint32_t>::max();
 struct graphic_tile //could do just 31x31 and be done, but it's nicer to have flexible imho.
 {
     int16_t tile=-1; //originally uint8_t but we need to indicate non-animated tiles
@@ -36,11 +37,11 @@ struct graphic_tile //could do just 31x31 and be done, but it's nicer to have fl
     int8_t back;
     int8_t bright;
     //index of texpos
-    uint32_t graphics_tile = -1;
-    uint32_t overlay_tile = -1;
-    uint32_t item_tile = -1;
+    uint32_t graphics_tile = invalid_tile;
+    uint32_t overlay_tile = invalid_tile;
+    uint32_t item_tile = invalid_tile;
     //only for first line
-    uint32_t signpost_tile = -1;
+    uint32_t signpost_tile = invalid_tile;
 };
 struct workshop_hack_data
 {
@@ -302,14 +303,14 @@ struct work_hook : df::building_workshopst{
                     db->bright[tx][ty]= cf.bright;
                     db->fore[tx][ty]= cf.fore;
                 }
-                if (cf.graphics_tile != -1)
+                if (cf.graphics_tile != invalid_tile)
                     db->building_one_texpos[tx][ty] = cf.graphics_tile;
-                if (cf.overlay_tile != -1)
+                if (cf.overlay_tile != invalid_tile)
                     db->building_two_texpos[tx][ty] = cf.overlay_tile;
-                if (cf.item_tile != -1)
+                if (cf.item_tile != invalid_tile)
                     db->item_texpos[tx][ty] = cf.item_tile;
                 //only first line has signpost graphics
-                if (cf.item_tile != -1 && ty==0)
+                if (cf.item_tile != invalid_tile && ty==0)
                     db->signpost_texpos[tx] = cf.signpost_tile;
             }
         }

@@ -341,16 +341,16 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     luaL_checktype(L,stack_pos,LUA_TTABLE);
 
     int frame_index = 1;
-    
+
     while (lua_geti(L,stack_pos,frame_index) != LUA_TNIL) { //get frame[i]
         luaL_checktype(L,-1,LUA_TTABLE); //ensure that it's a table
         std::vector<graphic_tile> frame(max_idx);
-        
+
         for (int idx = 0; idx < max_idx; idx++)
         {
             auto& t = frame[idx];
             lua_geti(L, -1, idx); //get tile at idx i.e. frame[i][idx] where idx=x+y*31
-            
+
             if (lua_isnil(L, -1))//allow sparse indexing
             {
                 lua_pop(L, 1); //pop current tile (nil in this case)

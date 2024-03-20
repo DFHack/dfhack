@@ -62,11 +62,12 @@ struct workshop_hack_data
 typedef std::map<int32_t,workshop_hack_data> workshops_data_t;
 workshops_data_t hacked_workshops;
 
-static void handle_update_action(color_ostream &out,df::building_workshopst*){};
+DEFINE_LUA_EVENT_NH_1(onUpdateAction,df::building_workshopst*);
+DEFINE_LUA_EVENT_NH_2(onSetTriggerState,df::building_workshopst*,int32_t);
 
-DEFINE_LUA_EVENT_1(onUpdateAction,handle_update_action,df::building_workshopst*);
-DFHACK_PLUGIN_LUA_EVENTS {
+DFHACK_PLUGIN_LUA_EVENTS{
     DFHACK_LUA_EVENT(onUpdateAction),
+    DFHACK_LUA_EVENT(onSetTriggerState),
     DFHACK_LUA_END
 };
 
@@ -265,6 +266,13 @@ struct work_hook : df::building_workshopst{
         }
         INTERPOSE_NEXT(updateAction)();
     }
+    DEFINE_VMETHOD_INTERPOSE(void, setTriggerState,(int32_t state))
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        onSetTriggerState(out, this,state);
+        INTERPOSE_NEXT(setTriggerState)(state); //pretty sure default workshop has nothing related to this, but to be future proof lets do it like this
+    }
     DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (uint32_t curtick,df::building_drawbuffer *db, int16_t z_offset))
     {
         INTERPOSE_NEXT(drawBuilding)(curtick,db, z_offset);
@@ -327,6 +335,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(work_hook, canConnectToMachine);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, isUnpowered);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, canBeRoomSubset);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, updateAction);
+IMPLEMENT_VMETHOD_INTERPOSE(work_hook, setTriggerState);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, drawBuilding);
 
 
@@ -499,6 +508,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(work_hook,canBeRoomSubset).apply(enable);
     //update n render
     INTERPOSE_HOOK(work_hook,updateAction).apply(enable);
+    INTERPOSE_HOOK(work_hook,setTriggerState).apply(enable);
     INTERPOSE_HOOK(work_hook,drawBuilding).apply(enable);
 }
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)

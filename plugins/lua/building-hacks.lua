@@ -72,6 +72,7 @@ local function generateFrame(tiles,w,h)
     end
     return ret
 end
+--convert frames to flat arrays if needed
 local function processFrames(shop_def,frames)
     local w,h=shop_def.dim_x,shop_def.dim_y
     for frame_id,frame in ipairs(frames) do
@@ -81,6 +82,7 @@ local function processFrames(shop_def,frames)
     end
     return frames
 end
+--locate gears on the workshop from the raws definition
 local function findGears( shop_def ) --finds positions of all gears and inverted gears
     local w,h=shop_def.dim_x,shop_def.dim_y
     local stage=shop_def.build_stages
@@ -97,6 +99,7 @@ local function findGears( shop_def ) --finds positions of all gears and inverted
     end
     return ret
 end
+--helper for reading tile color info from raws
 local function lookup_color( shop_def,x,y,stage )
     return shop_def.tile_color[0][stage][x][y],shop_def.tile_color[1][stage][x][y],shop_def.tile_color[2][stage][x][y]
 end

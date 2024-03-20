@@ -81,8 +81,8 @@ function QualityAndMaterialsPage:init()
                     label='Sort by:',
                     key='CUSTOM_SHIFT_R',
                     options={
+                        {label='available', value=mat_sort_by_quantity},
                         {label='name', value=mat_sort_by_name},
-                        {label='available', value=mat_sort_by_quantity}
                     },
                     on_change=function() self.dirty = true end,
                 },
@@ -91,9 +91,9 @@ function QualityAndMaterialsPage:init()
                     frame={l=0, t=4, w=24},
                     label='Hide unavailable:',
                     key='CUSTOM_SHIFT_H',
-                    initial_option=hide_unavailabe,
-                    on_change=function(new,old)
-                        hide_unavailabe = new
+                    initial_option=hide_unavailable,
+                    on_change=function(val)
+                        hide_unavailable = val
                         self.dirty = true
                     end,
                 },

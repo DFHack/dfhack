@@ -56,6 +56,7 @@ enum ConfigValues {
     CONFIG_YARN_IDX = 3,
     CONFIG_LEATHER_IDX = 4,
     CONFIG_ADAMANTINE_IDX = 5,
+    CONFIG_CONFISCATE = 6
 };
 
 static const int32_t CYCLE_TICKS = 1231; // one day
@@ -142,12 +143,17 @@ private:
     int default_reserve = 10;
 
     bool inventory_sanity_checking = false;
+    bool confiscate = true;
 
 public:
     void set_debug_flag(bool f)
     {
         inventory_sanity_checking = f;
     }
+
+    void set_confiscate(bool f){ confiscate = f; }
+
+    bool get_confiscate() { return confiscate; }
 
     void reset()
     {
@@ -250,9 +256,9 @@ public:
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
                 continue; // skip units we don't control or that can't wear clothes
 
-            std::set <df::item_type> wearing;
+            std::set <df::item_type> equipped;
             std::set <df::item_type> ordered;
-            std::deque<df::item*> worn;
+            std::deque<df::item*> damaged;
 
             for (auto inv : u->inventory)
             {
@@ -262,15 +268,15 @@ public:
                 if (!inv->item->isClothing())
                     continue;
                 if (inv->item->getWear() > 0)
-                    worn.push_back(inv->item);
+                    damaged.push_back(inv->item);
                 else
-                    wearing.insert(inv->item->getType());
+                    equipped.insert(inv->item->getType());
             }
 
             int usize = world->raws.creatures.all[u->race]->adultsize;
             sizes[usize] = u->race;
 
-            for (auto w : worn)
+            for (auto w : damaged)
             {
                 // skip armor
                 if (w->getEffectiveArmorLevel() > 0)
@@ -286,7 +292,7 @@ public:
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (wearing.count(ty) == 0)
+                if (equipped.count(ty) == 0)
                 {
                     if (ordered.count(ty) == 0)
                     {
@@ -298,7 +304,7 @@ public:
                     }
                 }
 
-                if (wearing.count(ty) > 0)
+                if (confiscate && equipped.count(ty) > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -320,7 +326,7 @@ public:
 
             for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
             {
-                if (wearing.count(ty) == 0 && ordered.count(ty) == 0)
+                if (equipped.count(ty) == 0 && ordered.count(ty) == 0)
                 {
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
@@ -666,11 +672,19 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_CONFISCATE, true);
     }
-
+    // transition existing saves to CONFIG_CONFISCATE=true
+    if (config.get_int(CONFIG_CONFISCATE) < 0) {
+        INFO(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
+        config.set_bool(CONFIG_CONFISCATE, true);
+    }
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
+    tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
+    DEBUG(control,out).print("loading persisted confiscation state: %s\n",
+                            tailor_instance->get_confiscate() ? "true" : "false");
     set_material_order();
 
     return CR_OK;
@@ -778,6 +792,18 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
     set_material_order();
 }
 
+static void tailor_setConfiscate(color_ostream& out, bool enable)
+{
+    DEBUG(control,out).print("%s confiscation of tattered clothing \n", enable ? "enabling" : "disabling");
+    config.set_bool(CONFIG_CONFISCATE, enable);
+    tailor_instance->set_confiscate(enable);
+}
+
+static bool tailor_getConfiscate(color_ostream& out)
+{
+    return tailor_instance->get_confiscate();
+}
+
 static int tailor_getMaterialPreferences(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
@@ -802,6 +828,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_doCycle),
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
     DFHACK_LUA_FUNCTION(tailor_setDebugFlag),
+    DFHACK_LUA_FUNCTION(tailor_setConfiscate),
+    DFHACK_LUA_FUNCTION(tailor_getConfiscate),
     DFHACK_LUA_END
 };
 

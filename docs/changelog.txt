@@ -59,6 +59,7 @@ Template for new versions:
 - `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
 
 ## Misc Improvements
+- `tailor`: allow turning off automatic confiscation of tattered clothing
 
 ## Documentation
 

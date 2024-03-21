@@ -922,7 +922,7 @@ df::unit *Units::getUnitByNobleRole(string noble) {
 
 bool Units::getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents, bool include_insane) {
     for (auto &unit : world->units.active) {
-        if (!isAlive(unit) || !isActive(unit))
+        if (isDead(unit) || !isActive(unit))
             continue;
 
         if (isCitizen(unit, include_insane))

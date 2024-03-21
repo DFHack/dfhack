@@ -54,6 +54,22 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.12-r2
+
+## New Features
 - `stocks`: add button/hotkey for removing empty categories from the stocks list
 - `sort`: updated and reinstated military status/squad membership/burrow membership filter for work animal assignment screen
 - `logistics`: ``autoretrain`` will automatically assign trainers to your partially-trained (but not yet domesticated) livestock. this prevents children of partially-trained parents from reverting to wild if you don't notice they were born
@@ -102,8 +118,6 @@ Template for new versions:
 - ``matinfo.decode``: now directly handles plant objects
 - ``dfhack.units.isForgottenBeast``: make new units method available to Lua
 - ``dfhack.units.getCitizens``: now includes residents by default
-
-## Removed
 
 # 50.12-r1.1
 

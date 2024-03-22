@@ -56,7 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
 
 ## Misc Improvements
 
@@ -67,6 +66,11 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 50.12-r2.1
+
+## Fixes
+- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
 
 # 50.12-r2
 

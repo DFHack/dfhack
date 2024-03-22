@@ -54,7 +54,6 @@ StatusOverlay.ATTRS{
     frame={w=59, h=3},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
-    default_enabled=true,
 }
 
 function StatusOverlay:init()
@@ -92,7 +91,6 @@ ToggleOverlay.ATTRS{
     viewscreens='dwarfmode/ViewSheets/BUILDING',
     frame={w=40, h=1},
     frame_background=gui.CLEAR_PEN,
-    default_enabled=true,
 }
 
 function ToggleOverlay:init()

@@ -764,7 +764,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
     if (parameters.size() == 0) {
         if (!is_enabled) {
-            out.print("%s is disabled", plugin_name);
+            out.print("%s is disabled\n", plugin_name);
         } else {
             out.print(
                 "%s is enabled %s supending blocking jobs\n", plugin_name,
@@ -871,6 +871,9 @@ static bool suspendmanager_isBuildingPlanJob(df::job *job) {
     return suspendmanager_instance->isBuildingPlanJob(job);
 }
 
+static bool suspendmanager_preventBlockingEnabled() {
+    return config.get_bool(CONFIG_PREVENT_BLOCKING);
+}
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(suspendmanager_suspensionDescription),
@@ -878,5 +881,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(suspendmanager_runOnce),
     DFHACK_LUA_FUNCTION(suspendmanager_getStatus),
     DFHACK_LUA_FUNCTION(suspendmanager_isBuildingPlanJob),
+    DFHACK_LUA_FUNCTION(suspendmanager_preventBlockingEnabled),
     DFHACK_LUA_END
 };

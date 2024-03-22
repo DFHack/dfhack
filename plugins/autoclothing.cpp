@@ -564,10 +564,7 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
 
 static void find_needed_clothing_items()
 {
-    vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
-    for (auto& unit : citizens)
-    {
+    Units::forCitizens([&](auto unit) {
         //now check each clothing order to see what the unit might be missing.
         for (auto& clothingOrder : clothingOrders)
         {
@@ -607,7 +604,7 @@ static void find_needed_clothing_items()
             //technically, there's some leeway in sizes, but only caring about exact sizes is simpler.
             clothingOrder.total_needed_per_race[unit->race] += neededAmount;
         }
-    }
+    });
 }
 
 static void remove_available_clothing()
@@ -760,10 +757,8 @@ static void generate_control(color_ostream& out)
     map<int, int> missingHelms;
     map<int, int> missingGloves;
     map<int, int> missingPants;
-    vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
-    for (df::unit* unit : citizens)
-    {
+
+    Units::forCitizens([&](auto unit) {
         fullUnitList[unit->race]++;
         int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
         for (auto itemId : unit->owned_items)
@@ -808,7 +803,8 @@ static void generate_control(color_ostream& out)
         if (numPants == 0)
             missingPants[unit->race]++;
         DEBUG(control,out) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
-    }
+    });
+
     if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
     {
         out << "Everybody has a full set of clothes to wear, congrats!" << endl;

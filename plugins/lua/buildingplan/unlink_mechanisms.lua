@@ -216,7 +216,7 @@ MechLinkOverlay.ATTRS
     desc = "Allows unlinking mechanisms from buildings.",
     default_enabled = true,
     overlay_only = true,
-    frame = {b=4, r=40, w=56, h=26},
+    frame = {b=3, r=40, w=56, h=27},
     viewscreens = {},
 }
 
@@ -232,7 +232,8 @@ function MechLinkOverlay:init()
     {
         widgets.CycleHotkeyLabel
         {
-            frame = {b=0, l=0, w=36},
+            view_id = "unlink_mode",
+            frame = {b=1, l=0, w=36},
             label = "Unlink mode",
             key = "CUSTOM_M",
             options =
@@ -247,7 +248,8 @@ function MechLinkOverlay:init()
         },
         widgets.HotkeyLabel
         {
-            frame = {b=0, r=3},
+            view_id = "unlink_all",
+            frame = {b=1, r=3},
             key = "CUSTOM_SHIFT_U",
             label = "Unlink all",
             auto_width = true,
@@ -446,6 +448,12 @@ function MechLinkOverlay:update_buttons()
         end
         button:updateLayout()
     end
+
+    local b = (self.frame.h % 3) == 1 and #self.links >= self.num_buttons and 0 or 1
+    self.subviews.unlink_mode.frame.b = b --avoid overlapping list
+    self.subviews.unlink_all.frame.b = b
+    self.subviews.unlink_mode:updateLayout()
+    self.subviews.unlink_all:updateLayout()
 end
 
 function MechLinkOverlay:preUpdateLayout(parent_rect)
@@ -456,15 +464,11 @@ function MechLinkOverlay:preUpdateLayout(parent_rect)
         end
     end
 
-    self.num_buttons = (parent_rect.height - 50) // 3
-    self.frame.h = self.num_buttons*3 + 2
-    self.subviews.scroll.frame.h = self.frame.h - 2
+    local h = parent_rect.height - 49
+    self.frame.h = h + 1 --includes lower border
+    self.num_buttons = h // 3
 
-    if self.frame.h < 11 then --space between list and "unlink all" is removed
-        self.frame.h = self.frame.h - 1
-    end
-
-    self.frame.b = 4
+    self.frame.b = 3
     self.frame.r = 40
 end
 
@@ -489,7 +493,7 @@ MechItemOverlay.ATTRS
     desc = "Allows freeing unlinked mechanisms from buildings.",
     default_enabled = true,
     overlay_only = true,
-    frame = {b=4, r=40, w=56, h=26},
+    frame = {b=3, r=40, w=56, h=27},
     viewscreens = {},
 }
 
@@ -506,7 +510,7 @@ function MechItemOverlay:init()
         widgets.HotkeyLabel
         {
             view_id = "free_all",
-            frame = {b=0, r=3},
+            frame = {b=1, r=3},
             key = "CUSTOM_SHIFT_F",
             label = "Free all",
             auto_width = true,
@@ -602,9 +606,7 @@ end
 
 function MechItemOverlay:do_free_all()
     for item in mech_iter(self.building) do
-        local target = get_mech_target(item)
-
-        if not target then
+        if not get_mech_target(item) then
             item.flags.in_building = false
             dfhack.items.moveToGround(item, xyz2pos(dfhack.items.getPosition(item)))
         end
@@ -612,8 +614,6 @@ function MechItemOverlay:do_free_all()
 end
 
 function MechItemOverlay:update_buttons()
-    self.subviews.free_all.visible = false
-
     local scroll_pos = sheet.scroll_position_item
     local bci_len = #self.building.contained_items
     for i=1, self.num_buttons do
@@ -628,10 +628,21 @@ function MechItemOverlay:update_buttons()
                 not item.flags.in_job and not get_trigger_index(item) then
                     button.frame.t = offset
                     button.visible = true
-                    self.subviews.free_all.visible = true
             end
         end
         button:updateLayout()
+    end
+
+    self.subviews.free_all.visible = false
+    for item in mech_iter(self.building) do
+        if not get_mech_target(item) then
+            self.subviews.free_all.visible = true
+
+            local b = (self.frame.h % 3) == 1 and bci_len >= self.num_buttons and 0 or 1
+            self.subviews.free_all.frame.b = b --avoid overlapping list
+            self.subviews.free_all:updateLayout()
+            break
+        end
     end
 end
 
@@ -643,18 +654,11 @@ function MechItemOverlay:fix_layout()
         end
     end
 
-    self.num_buttons = (self.parent_height - 50) // 3
-    if not has_link_tab(self.building) then --space for extra button
-        self.num_buttons = self.num_buttons + 1
-    end
+    local h = self.parent_height - 46 - (has_link_tab(self.building) and 3 or 0)
+    self.frame.h = h + 1 --includes lower border
+    self.num_buttons = h // 3
 
-    self.frame.h = self.num_buttons*3 + 2
-
-    if self.frame.h < 11 then --space between list and "free all" is removed
-        self.frame.h = self.frame.h - 1
-    end
-
-    self.frame.b = 4
+    self.frame.b = 3
     self.frame.r = 40
 end
 

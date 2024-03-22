@@ -2155,11 +2155,9 @@ static int units_getCitizens(lua_State *L) {
     bool include_insane = lua_toboolean(L, 2); // defaults to false
 
     std::vector<df::unit *> citizens;
-    if (Units::getCitizens(citizens, exclude_residents, include_insane)) {
-        Lua::PushVector(L, citizens);
-        return 1;
-    }
-    return 0;
+    Units::getCitizens(citizens, exclude_residents, include_insane);
+    Lua::PushVector(L, citizens);
+    return 1;
 }
 
 static int units_getUnitsByNobleRole(lua_State *L) {

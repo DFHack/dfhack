@@ -920,16 +920,14 @@ df::unit *Units::getUnitByNobleRole(string noble) {
     return units[0];
 }
 
-bool Units::getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents, bool include_insane) {
-    for (auto &unit : world->units.active) {
-        if (isDead(unit) || !isActive(unit))
-            continue;
+void Units::forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(world->units.active, exclude_residents, include_insane))
+        fn(unit);
+}
 
-        if (isCitizen(unit, include_insane))
-            citizens.emplace_back(unit);
-        else if (!exclude_residents && isResident(unit, include_insane))
-            citizens.emplace_back(unit);
-    }
+bool Units::getCitizens(vector<df::unit *> & citizens, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(world->units.active, exclude_residents, include_insane))
+        citizens.emplace_back(unit);
     return true;
 }
 

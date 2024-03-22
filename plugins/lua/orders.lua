@@ -415,7 +415,9 @@ function SkillRestrictionOverlay:render(dc)
 end
 
 function SkillRestrictionOverlay:onInput(keys)
-    if can_set_skill_level() then
+    if can_set_skill_level() and
+        not df.global.game.main_interface.view_sheets.building_entering_nickname
+    then
         return SkillRestrictionOverlay.super.onInput(self, keys)
     end
 end
@@ -631,7 +633,9 @@ function LaborRestrictionsOverlay:render(dc)
 end
 
 function LaborRestrictionsOverlay:onInput(keys)
-    if can_set_labors() then
+    if can_set_labors() and
+        not df.global.game.main_interface.view_sheets.building_entering_nickname
+    then
         return LaborRestrictionsOverlay.super.onInput(self, keys)
     end
 end

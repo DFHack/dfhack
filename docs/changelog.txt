@@ -62,10 +62,17 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units::citizensRange``: c++-20 range for citizen units
+- ``Units::forCitizens``: iterator callback function for citizen units
 
 ## Lua
 
 ## Removed
+
+# 50.12-r2.1
+
+## Fixes
+- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
 
 # 50.12-r2
 

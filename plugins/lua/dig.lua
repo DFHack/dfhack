@@ -7,8 +7,13 @@ local widgets = require('gui.widgets')
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect
 
+-- --------------------------------
+-- WarmDampDigOverlay
+--
+
 WarmDampDigOverlay = defclass(WarmDampDigOverlay, overlay.OverlayWidget)
 WarmDampDigOverlay.ATTRS{
+    desc='Adds widgets to the dig interface to allow uninterrupted digging through warm and damp tiles.',
     default_pos={x=50,y=-7},
     default_enabled=true,
     viewscreens={
@@ -97,6 +102,10 @@ function WarmDampDigOverlay:onRenderFrame(dc, rect)
     end
 end
 
+-- --------------------------------
+-- WarmDampOverlay
+--
+
 WarmDampOverlay = defclass(WarmDampOverlay, overlay.OverlayWidget)
 WarmDampOverlay.ATTRS{
     viewscreens={
@@ -117,6 +126,10 @@ WarmDampOverlay.ATTRS{
 function WarmDampOverlay:onRenderFrame()
     paintScreenWarmDamp()
 end
+
+-- --------------------------------
+-- CarveOverlay
+--
 
 CarveOverlay = defclass(CarveOverlay, overlay.OverlayWidget)
 CarveOverlay.ATTRS{

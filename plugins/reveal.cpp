@@ -445,9 +445,10 @@ command_result revflood(color_ostream &out, vector<string> & params) {
             pos = Units::getPosition(unit);
     }
     if (!pos.isValid()) {
-        Units::forCitizens([&](auto unit) {
+        for (auto unit : Units::citizensRange(world->units.active)) {
             pos = Units::getPosition(unit);
-        });
+            break;
+        }
     }
     if (!pos.isValid()) {
         out.printerr("Please select a unit or place the keyboard cursor at some empty space you want to be unhidden.\n");

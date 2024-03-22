@@ -242,10 +242,10 @@ public:
 
     void scan_replacements()
     {
-        Units::forCitizens([&](auto u) {
+        for (auto u : Units::citizensRange(world->units.active)) {
             if (Units::isBaby(u) ||
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
-                return; // skip units we don't control or that can't wear clothes
+                continue; // skip units we don't control or that can't wear clothes
 
             std::set <df::item_type> wearing;
             std::set <df::item_type> ordered;
@@ -326,7 +326,7 @@ public:
                     needed[std::make_pair(ty, usize)] += 1;
                 }
             }
-        });
+        }
     }
 
     void create_orders()

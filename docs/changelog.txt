@@ -62,6 +62,8 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units::citizensRange``: c++-20 range for citizen units
+- ``Units::forCitizens``: iterator callback function for citizen units
 
 ## Lua
 

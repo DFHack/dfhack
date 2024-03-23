@@ -119,6 +119,40 @@ static const char * launch_direct() {
 
 #ifdef WIN32
 
+bool wrap_launch(LPCWSTR (*launch_fn)()) {
+    LPCWSTR err = launch_fn();
+    if (err != NULL) {
+        MessageBoxW(NULL, err, NULL, 0);
+        return false;
+    }
+    return true;
+}
+
+#else
+
+void notify(const char * msg) {
+    std::string command = "notify-send --app-name=DFHack \"";
+    command += msg;
+    command += "\"";
+    printf("%s\n", msg);
+    int result = system(command.c_str());
+    // if this fails; it's ok
+    (void)result;
+}
+
+bool wrap_launch(const char * (*launch_fn)()) {
+    const char * err = launch_fn();
+    if (err != NULL) {
+        notify(err);
+        return false;
+    }
+    return true;
+}
+
+#endif
+
+#ifdef WIN32
+
 DWORD findDwarfFortressProcess() {
     PROCESSENTRY32W entry;
     entry.dwSize = sizeof(PROCESSENTRY32W);
@@ -168,14 +202,18 @@ static pid_t findDwarfFortressProcess() {
     char buf[512];
     static const char * command = "pidof -s dwarfort";
     FILE *cmd_pipe = popen(command, "r");
-    if (!cmd_pipe)
+    if (!cmd_pipe) {
+        notify("command failed to execute: pidof -s dwarfort");
         return -1;
+    }
 
     bool success = fgets(buf, 512, cmd_pipe) != NULL;
     pclose(cmd_pipe);
 
-    if (!success)
+    if (!success) {
+        notify("failed to interpret response of pidof command");
         return -1;
+    }
 
     return strtoul(buf, NULL, 10);
 }
@@ -190,6 +228,7 @@ bool waitForDF() {
     int in_fd = inotify_init();
     snprintf(path, 32, "/proc/%i/exe", df_pid);
     if (inotify_add_watch(in_fd, path, IN_CLOSE_NOWRITE) < 0) {
+        notify("failed to set inotify watch on DF executable");
         close(in_fd);
         return false;
     }
@@ -197,6 +236,7 @@ bool waitForDF() {
     snprintf(path, 32, "/proc/%i", df_pid);
     int dir_fd = open(path, 0);
     if (dir_fd < 0) {
+        notify("failed to open DF proc directory");
         close(in_fd);
         return false;
     }
@@ -212,40 +252,6 @@ bool waitForDF() {
 
     close(dir_fd);
     close(in_fd);
-    return true;
-}
-
-#endif
-
-#ifdef WIN32
-
-bool wrap_launch(LPCWSTR (*launch_fn)()) {
-    LPCWSTR err = launch_fn();
-    if (err != NULL) {
-        MessageBoxW(NULL, err, NULL, 0);
-        return false;
-    }
-    return true;
-}
-
-#else
-
-void notify(const char * msg) {
-    std::string command = "notify-send --app-name=DFHack \"";
-    command += msg;
-    command += "\"";
-    printf("%s\n", msg);
-    int result = system(command.c_str());
-    // if this fails; it's ok
-    (void)result;
-}
-
-bool wrap_launch(const char * (*launch_fn)()) {
-    const char * err = launch_fn();
-    if (err != NULL) {
-        notify(err);
-        return false;
-    }
     return true;
 }
 

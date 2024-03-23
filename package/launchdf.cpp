@@ -5,7 +5,6 @@
 #else
 #  include <fcntl.h>
 #  include <unistd.h>
-#  include <sys/inotify.h>
 #endif
 
 #include "steam_api.h"
@@ -202,18 +201,14 @@ static pid_t findDwarfFortressProcess() {
     char buf[512];
     static const char * command = "pidof -s dwarfort";
     FILE *cmd_pipe = popen(command, "r");
-    if (!cmd_pipe) {
-        notify("command failed to execute: pidof -s dwarfort");
+    if (!cmd_pipe)
         return -1;
-    }
 
     bool success = fgets(buf, 512, cmd_pipe) != NULL;
     pclose(cmd_pipe);
 
-    if (!success) {
-        notify("failed to interpret response of pidof command");
+    if (!success)
         return -1;
-    }
 
     return strtoul(buf, NULL, 10);
 }
@@ -224,35 +219,9 @@ bool waitForDF() {
     if (df_pid <= 0)
         return false;
 
-    char path[32];
-    int in_fd = inotify_init();
-    snprintf(path, 32, "/proc/%i/exe", df_pid);
-    if (inotify_add_watch(in_fd, path, IN_CLOSE_NOWRITE) < 0) {
-        notify("failed to set inotify watch on DF executable");
-        close(in_fd);
-        return false;
-    }
-
-    snprintf(path, 32, "/proc/%i", df_pid);
-    int dir_fd = open(path, 0);
-    if (dir_fd < 0) {
-        notify("failed to open DF proc directory");
-        close(in_fd);
-        return false;
-    }
-
-    while (true) {
-        struct inotify_event event;
-        if (read(in_fd, &event, sizeof(event)) < 0)
-            break;
-        int f = openat(dir_fd, "fd", 0);
-        if (f < 0) break;
-        close(f);
-    }
-
-    close(dir_fd);
-    close(in_fd);
-    return true;
+    char path[64];
+    snprintf(path, 64, "tail --pid=%i -f /dev/null", df_pid);
+    return 0 == system(path);
 }
 
 #endif
@@ -316,7 +285,7 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
         MessageBoxW(NULL, L"DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.", NULL, 0);
 #else
-        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.\n");
+        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.");
 #endif
         exit(1);
     }
@@ -333,7 +302,7 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
             MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);
 #else
-            notify("Dwarf Fortress took too long to launch, aborting\n");
+            notify("Dwarf Fortress took too long to launch, aborting");
 #endif
             exit(1);
         }

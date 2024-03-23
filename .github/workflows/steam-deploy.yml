@@ -31,6 +31,7 @@ jobs:
       dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
       platform-files: false
       docs: true
+      html: false
       stonesense: true
     secrets: inherit
 
@@ -57,6 +58,7 @@ jobs:
       cache-readonly: true
       common-files: false
       stonesense: true
+      launchdf: true
     secrets: inherit
 
   deploy-to-steam:

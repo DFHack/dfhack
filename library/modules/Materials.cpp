@@ -22,15 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <string>
-#include <vector>
-#include <map>
-#include <cstring>
-using namespace std;
-
 #include "Types.h"
 #include "modules/Materials.h"
 #include "VersionInfo.h"
@@ -38,32 +30,38 @@ using namespace std;
 #include "Error.h"
 #include "ModuleFactory.h"
 #include "Core.h"
-
 #include "MiscUtils.h"
 
-#include "df/world.h"
 #include "df/plotinfost.h"
 #include "df/item.h"
+#include "df/builtin_mats.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/body_part_raw.h"
 #include "df/historical_figure.h"
-
+#include "df/inorganic_raw.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/dfhack_material_category.h"
 #include "df/matter_state.h"
+#include "df/material.h"
 #include "df/material_vec_ref.h"
-#include "df/builtin_mats.h"
-
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
 #include "df/descriptor_shape.h"
-
 #include "df/physical_attribute_type.h"
+#include "df/plant_raw.h"
 #include "df/mental_attribute_type.h"
-#include <df/color_modifier_raw.h>
+#include "df/color_modifier_raw.h"
+#include "df/world.h"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -558,7 +556,7 @@ bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std:
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -574,7 +572,7 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {

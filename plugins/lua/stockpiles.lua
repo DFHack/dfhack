@@ -76,8 +76,10 @@ end
 local function get_sp_id(opts)
     if opts.id then return opts.id end
     local sp = dfhack.gui.getSelectedStockpile(true)
-    if sp then return sp.id end
-    return nil
+    if not sp then
+        qerror('Please select a stockpile or specify the stockpile ID')
+    end
+    return sp.id
 end
 
 local included_elements = {containers=1, general=2, categories=4, types=8}
@@ -394,9 +396,10 @@ end
 
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
+    desc='Shows a panel when a stockpile is selected for stockpile automation.',
     default_pos={x=24, y=-6},
     default_enabled=true,
-    viewscreens='dwarfmode/Some/Stockpile',
+    viewscreens='dwarfmode/Stockpile/Some',
     frame={w=65, h=4},
 }
 
@@ -493,7 +496,6 @@ function StockpilesOverlay:init()
             visible=is_expanded,
         },
         widgets.HelpButton{
-            frame={t=0, r=1},
             command='stockpiles',
             visible=is_expanded,
         },

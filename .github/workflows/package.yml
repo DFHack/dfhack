@@ -33,6 +33,7 @@ jobs:
       cache-readonly: ${{ inputs.cache-readonly }}
       stonesense: true
       docs: true
+      html: false
       launchdf: ${{ inputs.launchdf }}
     secrets: inherit
 
@@ -49,4 +50,5 @@ jobs:
       cache-readonly: ${{ inputs.cache-readonly }}
       stonesense: true
       docs: true
+      html: false
     secrets: inherit

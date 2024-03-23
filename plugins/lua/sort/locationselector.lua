@@ -11,6 +11,7 @@ local location_selector = df.global.game.main_interface.location_selector
 
 LocationSelectorOverlay = defclass(LocationSelectorOverlay, sortoverlay.SortOverlay)
 LocationSelectorOverlay.ATTRS{
+    desc='Adds search and filter capabilities to the temple and guildhall establishment screens.',
     default_pos={x=48, y=6},
     viewscreens='dwarfmode/LocationSelector',
     frame={w=26, h=3},
@@ -31,14 +32,14 @@ local function stringify_spheres(spheres)
     return table.concat(strs, ' ')
 end
 
-local function get_religion_string(religion_id, religion_type)
+function get_religion_string(religion_id, religion_type)
     if religion_id == -1 then return end
     local entity
     local spheres = {}
-    if religion_type == 0 then
+    if religion_type == df.temple_deity_type.Deity then
         entity = df.historical_figure.find(religion_id)
         add_spheres(entity, spheres)
-    elseif religion_type == 1 then
+    elseif religion_type == df.temple_deity_type.Religion then
         entity = df.historical_entity.find(religion_id)
         if entity then
             for _, deity in ipairs(entity.relations.deities) do
@@ -50,8 +51,10 @@ local function get_religion_string(religion_id, religion_type)
     return ('%s %s'):format(dfhack.TranslateName(entity.name, true), stringify_spheres(spheres))
 end
 
-local function get_profession_string(profession)
-    return df.profession[profession]:gsub('_', ' ')
+function get_profession_string(profession)
+    local profession_string = df.profession[profession]:gsub('_', ' ')
+    local dwarfified_string = profession_string:gsub('[Mm][Aa][Nn]', 'dwarf')
+    return profession_string .. ' ' .. dwarfified_string
 end
 
 function LocationSelectorOverlay:init()
@@ -119,7 +122,8 @@ end
 function LocationSelectorOverlay:get_cache()
     if self.cache then return self.cache end
     local cache = {}
-    for _,location in ipairs(df.global.world.world_data.active_site[0].buildings) do
+    local site = dfhack.world.getCurrentSite() or {}
+    for _,location in ipairs(site.buildings or {}) do
         if df.abstract_building_templest:is_instance(location) then
             ensure_keys(cache, 'temple', location.deity_type)[location.deity_data.Religion] = true
         elseif df.abstract_building_guildhallst:is_instance(location) then

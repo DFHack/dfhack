@@ -793,13 +793,13 @@ routes.
 Building designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Other than names, most buildings do not have any extra properties. See the
-`#build mode reference`_ for those that do.
-
-The syntax otherwise looks just like stockpiles, except that it only makes
-sense to have a single symbol to indicate what to build on that tile::
+The syntax is very similar to the syntax for stockpiles, except that it only
+makes sense to have a single symbol to indicate what to build on that tile::
 
     symbol{properties}:configuration(expansion)
+
+See the `#build mode reference`_ for properties that you can specify for each
+building type.
 
 Here's an example of a simple 5x5 square of flooring::
 
@@ -810,6 +810,11 @@ or a named Jeweler's workshop that takes from specific stockpiles::
 
     #build
     wj{name="Encrusting center" take_from="Furniture,Gem storage"}
+
+or a forge that specializes in high-quality armor::
+
+    #build
+    wf{name=Armorer labors=Armoring min_skill=Master}
 
 The ``:configuration`` part is only relevant for hauling routes, which we'll go
 over in the next section.
@@ -1508,7 +1513,7 @@ The surface_ level: how to manage complexity
 
 .. _surface: https://docs.google.com/spreadsheets/d/17HfnCJY4WDPlLdiLuUNc0gwyf6BiSdayndjvFYXzS7c
 
-.. image:: https://drive.google.com/uc?export=download&id=1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
+.. image:: https://lh3.googleusercontent.com/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :alt: Annotated screenshot of the dreamfort surface level
   :target: https://drive.google.com/file/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :align: center
@@ -1606,7 +1611,7 @@ The farming_ level: fun with stockpiles
 
 .. _farming: https://docs.google.com/spreadsheets/d/1RZ67upSpQx7hX-AkqiFXVJl8o5GGdDX1WDOJNz-wOiA
 
-.. image:: https://drive.google.com/uc?export=download&id=1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
+.. image:: https://lh3.googleusercontent.com/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :alt: Annotated screenshot of the dreamfort farming level
   :target: https://drive.google.com/file/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :align: center
@@ -1649,7 +1654,7 @@ The industry_ level: advanced linking
 
 .. _industry: https://docs.google.com/spreadsheets/d/16nzXGrznQmtkrmQv7FeKsVYnv8SSA7eBl1M-97NmuQk
 
-.. image:: https://drive.google.com/uc?export=download&id=1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
+.. image:: https://lh3.googleusercontent.com/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :alt: Annotated screenshot of the dreamfort industry level
   :target: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :align: center
@@ -1688,7 +1693,7 @@ The services_ level: handling multi-level dig blueprints
 
 .. _services: https://docs.google.com/spreadsheets/d/1xu8vNKGlGDN9L3MVB4qp2Ytef9oAWvuET6RkuZXmCaE
 
-.. image:: https://drive.google.com/uc?export=download&id=1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
+.. image:: https://lh3.googleusercontent.com/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :alt: Annotated screenshot of the dreamfort services level
   :target: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :align: center
@@ -1725,7 +1730,7 @@ The guildhall_ level: avoiding smoothing issues
 
 .. _guildhall: https://docs.google.com/spreadsheets/d/1DltZIHkw7zpNiQdSvXLcHdbwdttPwl35pVpBUYy90TA
 
-.. image:: https://drive.google.com/uc?export=download&id=1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
+.. image:: https://lh3.googleusercontent.com/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :alt: Annotated screenshot of the dreamfort guildhall level
   :target: https://drive.google.com/file/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :align: center
@@ -1751,7 +1756,7 @@ The suites_ level: balance of flexibility
 
 .. _suites: https://docs.google.com/spreadsheets/d/1pZ5mnYzzYLSni-LA3rfHZ6dFX8n7rTW088iBwsCI7N4
 
-.. image:: https://drive.google.com/uc?export=download&id=16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
+.. image:: https://lh3.googleusercontent.com/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :alt: Annotated screenshot of the dreamfort noble suites
   :target: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :align: center
@@ -1791,12 +1796,12 @@ The beds_ and crypt_ levels: copy and paste and repeat
 
 .. _crypt: https://docs.google.com/spreadsheets/d/1yTr48EFgXIoswhzL2RXpzUBvY8Sa-XKEacf6zXriZvM
 
-.. image:: https://drive.google.com/uc?export=download&id=16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
+.. image:: https://lh3.googleusercontent.com/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :alt: Annotated screenshot of the dreamfort apartments
   :target: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :align: center
 
-.. image:: https://drive.google.com/uc?export=download&id=16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
+.. image:: https://lh3.googleusercontent.com/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :alt: Annotated screenshot of the dreamfort crypt
   :target: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :align: center
@@ -2057,14 +2062,49 @@ apply in a different fort.
 #build mode reference
 ~~~~~~~~~~~~~~~~~~~~~
 
-In addition to the type-specific properties listed below, all building types
-accept the ``name`` property.
+In addition to the type-specific properties listed in the symbol table below,
+all building types accept the ``name`` property.
 
-Moreover, all workshops and furnaces accept the ``max_general_orders``
-property, which sets the maximum number of general workorders that the building
-can accept, and the ``take_from`` and ``give_to`` properties, which are
-comma-separated lists of names or building ids (the same as the correponding
-stockpile properties above).
+Moreover, all workshops and furnaces (both called "workshops" below) accept the
+following "profile" properties:
+
+======================  ===========
+Property                Description
+======================  ===========
+``max_general_orders``  the maximum number of general workorders that the
+                        workshop will accept
+``take_from``           comma-separated list of names or building ids of
+                        stockpiles that the workshop takes from
+``give_to``             comma-separated list of names or building ids of
+                        stockpiles that the workshop gives to
+``labor``               comma-separated list of labors that should be enabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be disabled.
+``labor_mask``          comma-separated list of labors that should be disabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be left enabled. if both the ``labor`` and
+                        ``labor_mask`` properties are specified, the ``labor``
+                        property takes precedence.
+``min_skill``           the minimum skill rating for units that perform jobs at
+                        the workshop
+``max_skill``           the maximum skill rating for units that perform jobs at
+                        the workshop
+======================  ===========
+
+For the ``labor`` and ``labor_mask`` properties, you can use either the labor
+ID or the readable caption string. You can see both options by running::
+
+    :lua for idx,name in ipairs(df.unit_labor) do cap=df.unit_labor.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
+
+For example, you can specify either ``BONE_CARVE`` or ``"Bone Carving"`` (it
+contains a space -- don't forget the surrounding quotes!) to indicate the bone
+carving labor.
+
+Likewise, for the ``min_skill`` and ``max_skill`` properties, you can specify
+either the skill rating ID or the readable caption string. You can see both
+options by running::
+
+    :lua for idx,name in ipairs(df.skill_rating) do cap=df.skill_rating.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
 
 ================= ============================= ==========
 Symbol            Type                          Properties

@@ -30,7 +30,7 @@
 ""
 "Other DFHack tools also work very well with Dreamfort, such as autofarm. See the /setup_help blueprint for a suggested list to turn on in the DFHack gui/control-panel."
 ""
-"Once you have your starting surface workshops up and running, you might want to configure buildingplan to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can set this to be your default in the Autostart tab of gui/control-panel."
+"Once you have your starting surface workshops up and running, you might want to configure buildingplan to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can set this to be your default in the Automation -> Autostart tab of gui/control-panel."
 ""
 "Directly after embark, run ""gui/quickfort dreamfort /setup_help"" to get some advice on initial settings, and get started building your fort with ""gui/quickfort dreamfort /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
 ""
@@ -39,7 +39,7 @@ You are welcome to copy the Dreamfort spreadsheets and make your own modificatio
 ""
 "If you like, you can download a fully built Dreamfort-based fort from https://dffd.bay12games.com/file.php?id=15434 and explore it
 interactively."
-"# The dreamfort.csv distributed with DFHack is generated with the following command:
+"# The dreamfort.csv distributed with DFHack is generated from the online spreadsheets with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
 "Here is the recommended order for Dreamfort commands. Each line is a blueprint that you run with gui/quickfort (default keybinding: Ctrl-Shift-Q), except where we use other tools as noted. If you set ""dreamfort"" as the filter when you open gui/quickfort, you'll conveniently only see Dreamfort blueprints to choose from. See the walkthroughs (the ""help"" blueprints) for context and details. You can also copy text from this spreadsheet online and paste it in gui/launcher with Ctrl-V."
@@ -47,7 +47,7 @@ interactively."
 ""
 -- Preparation (before you embark!) --
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the prefs/embark_profiles.txt file.
-Run gui/control-panel and enable settings on the Autostart tab. See the /setup_help notes for details.
+Run gui/control-panel and enable settings on the Autostart tabs. See the /setup_help notes for details.
 ""
 -- Set settings and preload initial orders --
 DFHack command,Blueprint,Generate orders,Notes
@@ -110,30 +110,33 @@ These are Dreamfort's suggestions for adjustments to settings and initial setup.
 You can save some time by setting up your settings in gui/control-panel before you embark.
 "Beyond the bugfix tools that are enabled by default, we recommend enabling the following DFHack tools in gui/control-panel (but they are not required if you prefer to do these things manually):"
 ""
-"On the gui/control-panel ""Autostart"" tab, additionally enable:"
+"On the gui/control-panel ""Autostart"" tabs, enable:"
+"""Automation"":"
 - autobutcher
 - autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
 - autofarm
+- autofarm threshold 150 grass_tail_pig
 - autofish
+- automilk
 - autonestbox
+- autoshear
 - autoslab
 - ban-cooking all
 - buildingplan set boulders false
 - buildingplan set logs false
-- dwarfvet
+- cleanowned
 - nestboxes
+- orders-sort
 - prioritize
 - seedwatch
 - suspendmanager
 - tailor
-"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Fort"" tab instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
-""
-"On the gui/control-panel ""Maintenance"" tab, enable:"
-- everything
-""
-"On the gui/control-panel ""System"" tab, additionally enable:"
+"""Gameplay"" subtab:"
+- combine
+- dwarfvet
 - work-now
+"Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tabs instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""
 "Now, after you've arrived at your embark site, open the nobles screen and:"
 "- Assign dwarves to at least manager, chief medical dwarf, broker, and bookkeeper noble roles (they can all be the same dwarf)"
@@ -162,47 +165,45 @@ In standing orders (Labor -> Standing orders):
 #ignore
 "Here are the most important skills for getting Dreamfort up and running, along with suggestions for how to distribute them."
 ""
-Manager / Bookkeeper / Broker,Miner,Miner,Mason,Smith,Outdoorsdwarf,Farmer
-Mechanic,Miner,Miner,Stonecutter,Weaponsmith,Carpenter,Stonecutter
-Stonecrafting,Engraver,Engraver,Mason,Armorsmith,Wood Cutter,Planter
+Hauler / Manager / Bookkeeper / Broker,Miner,Miner,Stoneworker,Craftsdwarf,Outdoorsdwarf,Farmer
+Noble role skills,Miner,Miner,Stonecutter,Stonecrafting,Carpenter,Planter
+,,,Stone Carver,Mechanic,Wood Cutter,Stonecutter
 ""
 "The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two stonecutters helps keep the fort from stalling. If you have to smooth walls to prevent a light aquifer from flooding your fort, starting with a few engravers saves a ton of time."
 ""
 We suggest bringing at least:
 2 picks,for the two miners
-2 battleaxes,for two active woodcutters
+2 battleaxes,for one woodcutters and either a second woodcutter or an emergency weapon
 1 anvil,for the forge
 food and seeds,as per usual
-4 ropes,"for the hospital well and traction benches. you could build the ropes out of raw materials, but dwarves are usually too busy to do textile work at the start of the game."
-7 blocks,for starting workshops and the temporary trade depot. necessary if you have buildingplan configured for blocks only.
+3 ropes,"for the hospital well and traction benches. you could make the ropes out of raw materials, but dwarves are usually too busy to do textile work at the start of the game."
+20 blocks,"for starting workshops, the temporary trade depot, and a few spares in case you need to shore up a light aquifer in a soil layer. necessary if you have buildingplan configured for blocks only."
 many boulders,for quickly turning into more blocks while your miners are digging in dirt or dealing with aquifers. blocks are the limiting factor in the early stages.
 dogs and cats,for protection and vermin control
 geese,for bones and leather. bring at least 1 male and 2 females for the 2 early nestboxes.
 ""
 Also bring logs for beds if embarking in an area without many trees.
 ""
-See ldog's Dreamfort embark profile for a more advanced (and more thoroughly explained!) approach:
+See ldog's Dreamfort embark profile for a more advanced approach:
 https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=sharing
 "#ignore Add these lines to the bottom of your ""prefs/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's dreamfort embark profile for a more advanced, dwarfy approach."
 [PROFILE]
 [TITLE:Dreamfort]
-[SKILL:1:STONECRAFT:1]
-[SKILL:1:MECHANICS:5]
 [SKILL:1:JUDGING_INTENT:1]
-[SKILL:1:APPRAISAL:1]
+[SKILL:1:APPRAISAL:2]
 [SKILL:1:ORGANIZATION:1]
 [SKILL:1:RECORD_KEEPING:1]
+[SKILL:1:MILITARY_TACTICS:5]
 [SKILL:2:MINING:5]
 [SKILL:2:ENGRAVE_STONE:4]
 [SKILL:2:SWIMMING:1]
 [SKILL:3:MINING:5]
 [SKILL:3:ENGRAVE_STONE:4]
 [SKILL:3:SWIMMING:1]
-[SKILL:4:MASONRY:2]
-[SKILL:4:MILITARY_TACTICS:5]
-[SKILL:4:CUT_STONE:3]
-[SKILL:5:FORGE_WEAPON:5]
-[SKILL:5:FORGE_ARMOR:5]
+[SKILL:4:CUT_STONE:5]
+[SKILL:4:CARVE_STONE:5]
+[SKILL:5:STONECRAFT:5]
+[SKILL:5:MECHANICS:5]
 [SKILL:6:WOODCUTTING:5]
 [SKILL:6:CARPENTRY:5]
 [SKILL:7:PLANT:5]
@@ -214,19 +215,19 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [ITEM:21:SEEDS:NONE:PLANT_MAT:GRASS_TAIL_PIG:SEED]
 [ITEM:21:SEEDS:NONE:PLANT_MAT:GRASS_WHEAT_CAVE:SEED]
 [ITEM:21:SEEDS:NONE:PLANT_MAT:POD_SWEET:SEED]
-[ITEM:20:SEEDS:NONE:PLANT_MAT:BUSH_QUARRY:SEED]
-[ITEM:20:SEEDS:NONE:PLANT_MAT:MUSHROOM_CUP_DIMPLE:SEED]
+[ITEM:21:SEEDS:NONE:PLANT_MAT:BUSH_QUARRY:SEED]
+[ITEM:21:SEEDS:NONE:PLANT_MAT:MUSHROOM_CUP_DIMPLE:SEED]
 [ITEM:1:ANVIL:NONE:INORGANIC:IRON]
 [ITEM:2:WEAPON:ITEM_WEAPON_AXE_BATTLE:INORGANIC:COPPER]
 [ITEM:2:WEAPON:ITEM_WEAPON_PICK:INORGANIC:COPPER]
-[ITEM:20:DRINK:NONE:PLANT_MAT:GRASS_TAIL_PIG:DRINK]
+[ITEM:21:DRINK:NONE:PLANT_MAT:GRASS_TAIL_PIG:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:POD_SWEET:DRINK]
 [ITEM:20:DRINK:NONE:PLANT_MAT:GRASS_WHEAT_CAVE:DRINK]
 [ITEM:30:PLANT:NONE:PLANT_MAT:MUSHROOM_HELMET_PLUMP:STRUCTURAL]
 [ITEM:45:BOULDER:NONE:INORGANIC:QUARTZITE]
-[ITEM:20:THREAD:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
-[ITEM:4:CHAIN:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
+[ITEM:21:THREAD:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
+[ITEM:3:CHAIN:NONE:CREATURE_MAT:SPIDER_CAVE:SILK]
 [PET:2:DOG:FEMALE:STANDARD]
 [PET:1:DOG:MALE:STANDARD]
 [PET:2:CAT:FEMALE:STANDARD]
@@ -471,12 +472,12 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,`,,,,,,,,,n/guarddogs(5x1),~,~,~,~,,,,,,,,,,,`,,`
 ,,,`,,`,,`,"n{name=""Nestbox 8""}(1x1)","n{name=""Nestbox 9""}(1x1)","n{name=""Nestbox 10""}(1x1)","n{name=""Nestbox 11""}(1x1)","n{name=""Nestbox 12""}(1x1)","n{name=""Nestbox 13""}(1x1)","n{name=""Nestbox 14""}(1x1)",`,,,,,,`,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
-,,,`,,`,"B{name=""Surface barracks""}(8x5)",,,,,,,,`,,,,,,,,`,"m{name=""Welcome area/wagon parking lot""}(8x5)",,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,"n{name=""Siege bait pasture""}",,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,"t{name=""Caged wildlife taming area""}(1x1)",,`,,,,,,,,`,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,`,"n{name=""Prisoner processing pen""}(1x-2)",`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,"B{name=""Surface barracks""}",B,B,B,B,B,B,B,`,,,,,,,,`,"m{name=""Welcome area/wagon parking lot""}(8x5)",,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,"n{name=""Siege bait pasture""}",,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,B,B,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,B,B,B,B,B,B,"n{name=""Prisoner processing pen""}(1x2)",B,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
@@ -911,14 +912,14 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,N,N,N,N,N,`,"Tl{name=""Barracks gate""}",,"Tl{name=""Inner main gate""}",,"Tl{name=""Trade depo gate""}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
+,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,N,N,N,N,N,`,"Tl{name=""Barracks gate""}",,"Tl{name=""Inner main gate""}",,"Tl{name=""Trade depot gate""}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,"~h{name=""reserved for splitting"" do_install=true}(1x1)",d,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),`,,`,`,`,,`,,,,~,~,D,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,N,N,N,N,N,N,N,`,"Tl{name=""Left outer gate""}(1x1)","Tl{name=""Left inner gate""}(1x1)","Tl{name=""Outer main gate""}(1x1)","Tl{name=""Right inner gate""}(1x1)","Tl{name=""Right outer gate""}(1x1)",`,"trackstopE{name=""Inorganic trade goods dumper"" take_from=""Trade goods,Organic trade goods quantum"" route=""Inorganic trade goods quantum""}:-organic",,,~,~,~,~,~,,`,,`
 ,,,`,,`,`,`,`,`,`,`,d,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
 ,,,`,,`,b,h,,a,r,,,,`,,"gw{name=""Inner main gate""}",gw,gw,gw,gw,,`,,,,,,,,,`,,`
-,,,`,,`,b,,,,,,,,"ga{name=""Barracks gate""}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depo gate""}",gd,,,,,,,,,`,,`
+,,,`,,`,b,,,,,,,,"ga{name=""Barracks gate""}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depot gate""}",gd,,,,,,,,,`,,`
 ,,,`,,`,b,,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,b,,,,,,"trackstopS{name=""Prisoner/cage dumper"" take_from=""Pets/Prisoner feeder"" route=""Prisoner/cage quantum""}:-cat_animals/tameable",,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,b,h,,,,,,,`,,,,,,,,`,s,,s,,,s,,s,`,,`
@@ -1067,8 +1068,8 @@ t1(37x33)
 #burrow label(surface_burrows) start(19; 19) hidden() extend safety burrow to newly safe surface areas and set up surrounding clearcutting area
 
 
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x-10)"
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x27)",`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x27)"
+,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x-10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(28x-10)",,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x-10)"
+,,,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x27)",`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x27)",`
 ,,,`,,`,a{name=Inside+}(25x17),,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -1086,8 +1087,8 @@ t1(37x33)
 ,,,`,,`,,,,,,,,,,`,,~,,~,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,`,a{name=Inside+},`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(7x6),,,,,,,`,,`
-,,,`,,`,a{name=Inside+}(7x5),,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,a{name=Inside+}(8x7),`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,a{name=Inside+}(8x7),,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -1095,7 +1096,7 @@ t1(37x33)
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-10x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(32x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(10x10)"
+,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(-12x10)","a{name=""Clearcutting area"" create=true autochop_clear=true}(28x10)",,,,,,,,,,,,,,,,,,,,,,,,,,,"a{name=""Clearcutting area"" create=true autochop_clear=true}(12x10)"
 
 
 #build label(surface_roof) start(19; 19) hidden() roof hatch and adjacent tiles
@@ -1442,6 +1443,7 @@ zone/farming_zone
 place/farming_place
 build/farming_build
 traffic/farming_traffic
+burrow/farming_burrow
 ""
 #meta label(farming3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build remaining doors
 doors/farming_doors
@@ -1491,7 +1493,7 @@ doors/farming_doors
 ,,,,,,`,`,`,~,,`,,"c{name=""Seeds feeder"" give_to=""Seeds"" take_from=""Starting food""}:+seeds(4x3)",,,,`,,`,,`,`,`
 ,,,"u{name=""Bags"" take_from=""Starting misc""}:-cat_furniture/type+bags(2x2)",~,,`,`,`,~,,`,,`,`,`,`,`,,`
 ,,`,~,~,,`,`,`,~,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
-,,`,"c{name=""Jugs"" take_from=""Starting misc""}:+cat_finished_goods/core,total+woodtools(2x2)",~,`,`,`,`,"u{name=""Barrels"" take_from=""Starting misc,Starting food""}:-cat_furniture/type+barrels(1x2)",`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,`,"c{name=""Jugs"" take_from=""Starting misc"" give_to=""Cookable food""}:+cat_finished_goods/core,total+woodtools(2x2)",~,`,`,`,`,"u{name=""Barrels"" take_from=""Starting misc,Starting food""}:-cat_furniture/type+barrels(1x2)",`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
 ,,,~,~,,`,`,`,~,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
 ,,,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
 ,,"c{name=""Plants"" barrels=-1 take_from=""Starting food""}:+plants",c,c,c,c,c,c,c,c,c,,`,`,~,`,`,,"c{name=""Cookable food"" barrels=-1 take_from=""Starting food""}:+cat_food/meat/,fish/prepared/,egg/,cheese/,leaves/,powder/,glob/,liquid/plant/,paste/,pressed/,milk,royal_jelly-dye-cat_food/tallow,thread,liquid/misc/",c,c,c,c,c,c,c,c,c
@@ -1569,6 +1571,37 @@ doors/farming_doors
 ,,,,,,,,,,,,,,,or
 
 
+#burrow label(farming_burrow) start(16; 18) hidden() fix up safety burrow after channel incursions
+
+,,,,,,,,a{name=Inside+}(16x4)
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,a{name=Inside+}(18x3),,,,,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,a{name=Inside+}(19x1),`,`,`,,`,,`,`,`,`,`,,`
+,,,,,a{name=Inside+}(20x2),,,,,,`,,`,`,`,`,`,,`,,`,`,`
+,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,`,`
+,,a{name=Inside+}(23x1),,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`
+,a{name=Inside+}(28x4),,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
+,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,,`,`,,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
+,a{name=Inside+}(29x12),,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
+,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,,`,`,,,`,,,`,`,,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,a{name=Inside+}(3x1)
+
 #build label(farming_doors) start(16; 18) hidden() remaining doors
 
 
@@ -1617,7 +1650,7 @@ with separate stockpiles for:
 ""
 Workshops:
 - 2x Stonecutter
-- 4x Craftsdwarf
+- 4x Craftsdwarf (labor restrictions set to specialize for materials in adjacent stockpiles)
 - 1x Jeweler
 - 1x Mechanic
 - 4x Smelter
@@ -1755,7 +1788,7 @@ build2/industry_build2
 ,,w,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,"w{name=""Wood feeder""}(2x5)",,"g{name=""Goods feeder"" containers=0}:+cat_food/tallow+wax-crafts-goblets(3x3)",,`,,`,`,`,`,`,,"hlS{name=""Cloth/bones feeder"" containers=0}:+cat_refuse/skulls/,bones/,hair/,shells/,teeth/,horns/-adamantinethread(5x5)",,,~,~,`,`,`,`,`,`,c
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
-,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
+,,`,`,`,`,`,"c{name=""Goods/wood quantum"" quantum=true give_to=""Pots,Barrels,Jugs,Bags,Seeds feeder""}:+all-cat_animals",`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,"r{name=""Cloth/bones quantum"" quantum=true}:+all",`,`,`,`,c
 ,,"c{name=""Lye"" barrels=0}:+miscliquid",`,`,`,`,`,`,~,~,"u2{name=""Furniture feeder""}:-sand(3x2)",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,c
 ,,c,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,c
@@ -1781,7 +1814,7 @@ build2/industry_build2
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf""}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf"" labor=Stonecrafting}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopN{name=""Stone/gem dumper"" take_from=""Stone feeder,Gem feeder"" route=""Stone/gem quantum""}",`,`,`,`,`,`,`,`,~,`,`,`,`
 ,,,,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm{max_general_orders=2},`,`,`,`,`,`,`,wm{max_general_orders=10},`,`,`,`,`,`,`,`,`
@@ -1831,7 +1864,7 @@ build2/industry_build2
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,"wr{name=""Wood craftsdwarf""}",`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,"wr{name=""Misc craftsdwarf""}",`,`,"wr{name=""Bone craftsdwarf""}",`,`,`,`,`
+,,`,`,"wr{name=""Wood craftsdwarf"" labor=Woodcrafting}",`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,"wr{name=""Misc craftsdwarf"" labor_mask=""Stonecrafting,Woodcrafting,Bone Carving""}",`,`,"wr{name=""Bone craftsdwarf"" labor=""Bone Carving""}",`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
@@ -2009,16 +2042,16 @@ build3/services_build3
 ,`,`,`,`,`,`,`,`,`,`,`,,or,or,or,or,or,or,or,or,or,,or,,or,,or,,or
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,or,,or,,,,,or,,or,,or,,or
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
-,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,oh,oh,oh,oh,oh,ol,or
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,or,,,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,or,,or,,or,,or
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
+,`,ol,ol,ol,or,or,or,ol,ol,ol,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
+,`,or,or,ol,or,or,or,ol,or,or,`,,`,,`,`,`,`,`,,`,,oh,oh,oh,oh,oh,ol,or
+,`,or,or,ol,or,or,or,ol,or,or,`,`,`,`,`,`,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,ol,or,or,or,or
+,`,or,or,or,ol,ol,ol,or,or,or,`,,,,`,`,`,`,`,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`,,,,,,or,,,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`,,,,,,,,,,,,or,,or,,or,,or
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
+,`,or,or,or,or,`,or,or,or,or,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,,`,`
@@ -2096,19 +2129,19 @@ build3/services_build3
 
 "#zone label(services_zones) start(18; 18) hidden() message(Don't forget to assign a doctor to the hospital!
 If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
-,,,,,,,,,,,,"j{name=""Jail 1""}(5x5)",,,,"j{name=""Jail 2""}(5x5)",,,,"j{name=""Jail 3""}(5x5)",,,,"j{name=""Jail 4""}(5x5)",,,,"j{name=""Jail 5""}(5x5)"
+,,,,,,,,,,,,,"j{name=""Jail 1""}(4x5)",,,,"j{name=""Jail 2""}(4x5)",,,,"j{name=""Jail 3""}(4x5)",,,,"j{name=""Jail 4""}(4x5)",,,,"j{name=""Jail 5""}(4x5)"
 ,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 "h{location=tavern/bigpub allow=residents name=""Grand hall tavern""}(13x31)",,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`,"o{name=""Interrogation room"" assigned_unit=sheriff}(7x7)"
-,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,"j{name=""Drunk tank""}",j,j,j,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,"o/interrogation{name=""Interrogation room"" assigned_unit=sheriff}(3x3)",`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,`,`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,`,`,o/interrogation,j,`,`,`,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,j,j,j,j,j,o/interrogation
+,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,,,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation
 ,`,`,`,`,`,`,`,`,`,`,`,,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,m{location=hospital name=Hospital allow=residents},,m,,m,,m
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,m,,m,,m,,m
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,m,,m,,m,,m
@@ -2167,7 +2200,7 @@ If you'd like to fill your wells via bucket brigade, activate the inactive pond 
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,"z{name=""Training quantum"" quantum=true}",`,`,`,`,`,,`,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,"z{name=""Training bolts feeder"" containers=0 take_from=""Metalworker quantum""}:-cat_ammo/type/,mats/,other/+bolts+woodammo+boneammo(9x1)",,,,,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,"z{name=""Bolts feeder"" containers=0 take_from=""Metalworker quantum""}:-cat_ammo/type/,other/+bolts(9x1)",,,,,,,,`,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2213,10 +2246,10 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,`,,`,,`,,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
-,`,`,`,`,`,`,c,t,t,c,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
+,`,`,`,`,`,`,t,c,c,t,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,h,`,`,`,`,`
 ,,,,`,`,,`,`
@@ -2230,7 +2263,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,`,`,`,,`,`,`
 ,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
@@ -2285,10 +2318,10 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,`,,`,,`,,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
-,`,c,t,t,c,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
+,`,t,c,c,t,`,~,~,~,~,`
 ,`,`,`,`,`,`,`,`,`,`,`
 ,h,`,`,`,`,~,`,`,`,`,h
 ,,,,`,`,,`,`
@@ -2302,7 +2335,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,~,,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)",,`,`,"c{name=""Jail booze"" barrels=-1 take_from=""Booze""}:+booze(1x2)"
-,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,~,`,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" take_from=""Prepared food""}:+preparedmeals(2x1)",,`
+,`,`,`,,`,`,`,,`,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,~,`,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`,,"c{name=""Jail food"" barrels=-1 take_from=""Prepared food""}:+preparedmeals(2x1)",,`
 ,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
@@ -2342,21 +2375,21 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,,d,,,,d,,,,d,,,,d,,,,d,,,,~,,,,d,,,,d
 ,`,`,`,s,`,`,`,s,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,`
-,s,`,`,`,`,`,`,`,`,`,s,,~,~,~,~,~,~,~,~,~,~,,`,,j,`,`,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,,`,`,~,`,`
-,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,`,,`,,j,`,~,`,j
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,d,`,d,`,`,~,`,`
-,s,`,`,`,`,`,`,`,`,`,s,,~,h,h,`,`,`,h,h,~,`,,`,,j,`,`,`,j
+,s,`,`,`,`,`,`,`,`,`,s,,~,~,~,~,~,~,~,~,~,~,,`,,v,v,v,v,v
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,,v,`,~,`,v
+,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,`,,`,,v,`,~,`,v
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,d,`,d,v,`,~,`,v
+,s,`,`,`,`,`,`,`,`,`,s,,~,h,h,`,`,`,h,h,~,`,,`,,v,v,v,v,v
 ,`,`,`,`,`,`,`,`,`,`,`,,~,b,b,`,~,`,b,b,~
 ,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,,~,,~,,~,,~
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,~,,~,,~,,~
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,~,`,`,~,~
-,`,c,t,`,`,~,`,`,t,c,`,,s,,`,`,`,`,`,,s,,`,`,`,~,`,`,~
-,`,c,t,`,`,`,`,`,t,c,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,t,`,`,~,~
-,`,c,t,t,c,`,c,t,t,c,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
-,`,c,t,t,c,`,c,t,t,c,`,,,,,,`,,,,,,d,,d,,d,,d
-,`,c,t,t,c,`,c,t,t,c,`,,,,,,,,,,,,b,,b,,b,,b
+,`,t,c,`,`,~,`,`,c,t,`,,s,,`,`,`,`,`,,s,,`,`,`,~,`,`,~
+,`,t,c,`,`,`,`,`,c,t,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,t,`,`,~,~
+,`,t,c,c,t,`,t,c,c,t,`,,,,`,`,`,`,`,,,,`,,`,,`,,`
+,`,t,c,c,t,`,t,c,c,t,`,,,,,,`,,,,,,d,,d,,d,,d
+,`,t,c,c,t,`,t,c,c,t,`,,,,,,,,,,,,b,,b,,b,,b
 ,`,~,~,~,~,`,~,~,~,~,`
 ,`,~,~,~,~,`,~,~,~,~,`
 ,`,~,~,~,~,`,~,~,~,~,`
@@ -2380,7 +2413,7 @@ Features:
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
-"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for a full blank slate. Generate manager orders for your chosen variant."
+"2) Once the area is dug out, choose a /guildhall2 variant based on your needs. For your first copy of this level, you probably want /guildhall2_default, which includes temple and library zones. For later copies you probably want to create all locations yourself, so you should choose /guildhall2_no_locations if you want the default furnishings or /guildhall2_custom for just the zones and doors, leaving the furnishings up to you. Generate manager orders for your chosen variant."
 ""
 "Note that the default temple and library are created ""Citizens and Long-Term Residents only"", but you can change this in the location configuration screen if you want them to attract visitors. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
@@ -2648,7 +2681,7 @@ build_suites/suites_build
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
@@ -2657,15 +2690,15 @@ build_suites/suites_build
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
+,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`,~,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
@@ -2674,7 +2707,7 @@ build_suites/suites_build
 ,`,,t,`,s,`,n,,,n,`,s,`,t,,`,s,`,,t,`,s,`,n,,,n,`,s,`,t,,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
-,`,,`,`,`,`,h,,,h,`,`,`,`,,`,s,`,,`,`,`,`,h,,,h,`,`,`,`,,`
+,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2796,9 +2829,9 @@ Screenshot: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
 ""
 Features:
 "- Staged crypt expansion that grows with your, um, need"
-- 52 tombs in stage 1
-- 160 additional tombs in stage 2 (212 tombs total)
-- Extendable in any direction by applying the blueprints multiple times
+- 20 tombs in stage 1
+- 192 additional tombs in stage 2 (212 tombs total)
+"- Extendable in any direction by reapplying the blueprints to the North, South, East, or West, overlapping by one tile"
 ""
 Crypt Walkthrough:
 1) Dig out the layer with /crypt1.

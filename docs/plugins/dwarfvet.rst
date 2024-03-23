@@ -5,14 +5,21 @@ dwarfvet
     :summary: Allow animals to be treated at hospitals.
     :tags: fort gameplay animals
 
-Annoyed that your dragons become useless after a minor injury? Well, with
-dwarfvet, injured animals will be treated at a hospital. Dwarfs with the Animal
-Caretaker labor enabled will come to the hospital to treat the animals. Normal
-medical skills are used (and trained), but no experience is given to the Animal
-Caretaker skill itself.
+Annoyed that your carefully bred dragons become useless after a minor injury?
+Well, with dwarfvet, injured animals will be treated at a hospital. Dwarves
+with the Animal Caretaker labor enabled will come to the hospital to treat the
+animals. Normal medical skills are used (and trained), but no experience is
+given to the Animal Caretaker skill itself.
+
+If an injured animal is assigned to a pasture, it will be temporarily
+unassigned from the pasture while in treatment. The animal will be reassigned
+to its original pasture shortly after recovery.
+
+Animals that are on restraints or in cages will not be designated for treatment.
 
 You can enable ``dwarfvet`` in `gui/control-panel`, and you can choose to start
-``dwarfvet`` automatically in new forts in the ``Autostart`` tab.
+``dwarfvet`` automatically in new forts in the ``Gameplay`` -> ``Autostart``
+tab.
 
 Usage
 -----

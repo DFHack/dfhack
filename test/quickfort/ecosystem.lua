@@ -34,7 +34,7 @@ local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
 local blueprint = require('plugins.blueprint')
-local confirm = require('plugins.confirm')
+--local confirm = require('plugins.confirm')
 
 local assign_minecarts = reqscript('assign-minecarts')
 local quantum = reqscript('gui/quantum')
@@ -396,8 +396,8 @@ end
 
 function extra_fns.gui_quantum(pos)
     local vehicles = assign_minecarts.get_free_vehicles()
-    local confirm_state = confirm.isEnabled()
-    local confirm_conf = confirm.get_conf_data()
+    --local confirm_state = confirm.isEnabled()
+    --local confirm_conf = confirm.get_conf_data()
     local routes = df.global.plotinfo.hauling.routes
     local num_routes = #routes
     local next_order_id = df.global.world.manager_order_next_id
@@ -411,12 +411,14 @@ function extra_fns.gui_quantum(pos)
                 item.flags.forbid = false
             end
 
+            --[[
             if confirm_state then
                 dfhack.run_command('enable confirm')
                 for _,c in pairs(confirm_conf) do
                     confirm.set_conf_state(c.id, c.enabled)
                 end
             end
+            ]]
         end,
         function()
             -- forbid all available minecarts

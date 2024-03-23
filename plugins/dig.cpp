@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "Debug.h"
 #include "LuaTools.h"
 #include "MemAccess.h"
@@ -16,7 +14,16 @@
 #include "df/block_square_event_designation_priorityst.h"
 #include "df/gamest.h"
 #include "df/job_list_link.h"
+#include "df/map_block.h"
 #include "df/world.h"
+
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <stack>
+#include <string>
+#include <cmath>
+#include <memory>
 
 using std::vector;
 using std::string;

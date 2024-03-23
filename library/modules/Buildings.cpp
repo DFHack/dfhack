@@ -22,33 +22,22 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <string>
-#include <unordered_map>
-#include <vector>
-using namespace std;
 
 #include "ColorText.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
 #include "Error.h"
-#include "modules/Buildings.h"
-#include "modules/Maps.h"
-#include "modules/Job.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
-using namespace DFHack;
-
 #include "DataDefs.h"
+
+#include "modules/Buildings.h"
+#include "modules/Maps.h"
+#include "modules/Job.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bars_floorst.h"
@@ -82,6 +71,7 @@ using namespace DFHack;
 #include "df/job_item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
+#include "df/inorganic_raw.h"
 #include "df/plotinfost.h"
 #include "df/squad.h"
 #include "df/ui_look_list.h"
@@ -89,13 +79,28 @@ using namespace DFHack;
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
 
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+using namespace DFHack;
 using namespace df::enums;
+
 using df::global::plotinfo;
 using df::global::world;
 using df::global::d_init;
 using df::global::building_next_id;
 using df::global::process_jobs;
 using df::building_def;
+
+using std::map;
+using std::string;
+using std::unordered_map;
+using std::vector;
 
 struct CoordHash {
     size_t operator()(const df::coord pos) const {
@@ -357,17 +362,15 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
     if (bld->assigned_unit == unit)
         return true;
 
-    df::building * pbld = virtual_cast<df::building>(bld);
-
     if (bld->assigned_unit)
     {
         auto &blist = bld->assigned_unit->owned_buildings;
-        vector_erase_at(blist, linear_index(blist, pbld));
+        vector_erase_at(blist, linear_index(blist, bld));
 
         if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            vector_erase_at(blist, linear_index(blist, pbld));
+            vector_erase_at(blist, linear_index(blist, bld));
         }
     }
 
@@ -381,7 +384,7 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
-            if (bld->canUseSpouseRoom() && linear_index(blist, pbld) < 0)
+            if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
                 blist.push_back(bld);
         }
     }
@@ -444,8 +447,8 @@ static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
 static void cacheBuilding(df::building *building) {
     int32_t id = building->id;
-    df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-    df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+    df::coord p1(std::min(building->x1, building->x2), std::min(building->y1,building->y2), building->z);
+    df::coord p2(std::max(building->x1, building->x2), std::max(building->y1,building->y2), building->z);
 
     corner1[id] = p1;
     corner2[id] = p2;
@@ -1706,4 +1709,19 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
     }
 
     return true;
+}
+
+void Buildings::completeBuild(df::building* bld)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto fp = df::global::buildingst_completebuild;
+    CHECK_NULL_POINTER(fp);
+
+    // whether to add to the IN_PLAY vector, which we always want to do
+    char in_play = 1;
+
+    using FT = std::function<void(df::building* bld, char)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(bld, in_play);
 }

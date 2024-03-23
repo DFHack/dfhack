@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 Abel                    abstern
 acwatkins               acwatkins
+Aleksandr Glotov        glotov4
 Alex Blamey             Cubittus
 Alexander Collins       gearsix
 Alexander Gavrilov      angavrilov              ag
@@ -53,12 +54,15 @@ David                   Nilsolm
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm
+Dean Golden             LightHardt
 Deon
+dhthwy                  dhthwy
 dikbut                  Tjudge1
 Dmitrii Kurkin          Kurkin
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
+Droseran                Droseran
 DwarvenM                DwarvenM
 Eamon Bode              eamondo2                Baron Von Munchhausen
 EarthPulseAcademy       EarthPulseAcademy
@@ -198,6 +202,7 @@ rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
 Ryan Bennitt            ryanbennitt
+Ryan Dwyer              ToxicBananaParty        Jimdude2435
 Ryan Williams           Bumber64                Bumber
 sami
 scamtank                scamtank
@@ -220,6 +225,7 @@ sv-esk                  sv-esk
 Tachytaenius            wolfboyft
 Tacomagic
 TaxiService             TaxiService
+terribleperson          terribleperson
 thefriendlyhacker       thefriendlyhacker
 TheHologram             TheHologram
 Theo Kalfas             teolandon

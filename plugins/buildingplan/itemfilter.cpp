@@ -5,7 +5,7 @@
 #include "df/item.h"
 
 namespace DFHack {
-    DBG_EXTERN(buildingplan, status);
+    DBG_EXTERN(buildingplan, control);
     DBG_EXTERN(buildingplan, cycle);
 }
 
@@ -40,7 +40,7 @@ static bool deserializeMaterialMask(const string& ser, df::dfhack_material_categ
         return true;
 
     if (!parseJobMaterialCategory(&mat_mask, ser)) {
-        DEBUG(status).print("invalid job material category serialization: '%s'", ser.c_str());
+        DEBUG(control).print("invalid job material category serialization: '%s'", ser.c_str());
         return false;
     }
     return true;
@@ -55,7 +55,7 @@ static bool deserializeMaterials(const string& ser, set<DFHack::MaterialInfo> &m
     for (auto m = mat_names.begin(); m != mat_names.end(); m++) {
         DFHack::MaterialInfo material;
         if (!material.find(*m) || !material.isValid()) {
-            DEBUG(status).print("invalid material name serialization: '%s'", ser.c_str());
+            DEBUG(control).print("invalid material name serialization: '%s'", ser.c_str());
             return false;
         }
         materials.emplace(material);
@@ -67,7 +67,7 @@ ItemFilter::ItemFilter(color_ostream &out, const string& serialized) : ItemFilte
     vector<string> tokens;
     split_string(&tokens, serialized, "/");
     if (tokens.size() < 5) {
-        DEBUG(status,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
+        DEBUG(control,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
         return;
     }
 
@@ -99,11 +99,11 @@ string ItemFilter::serialize() const {
 
 static void clampItemQuality(df::item_quality *quality) {
     if (*quality > df::item_quality::Artifact) {
-        DEBUG(status).print("clamping quality to Artifact");
+        DEBUG(control).print("clamping quality to Artifact");
         *quality = df::item_quality::Artifact;
     }
     if (*quality < df::item_quality::Ordinary) {
-        DEBUG(status).print("clamping quality to Ordinary");
+        DEBUG(control).print("clamping quality to Ordinary");
         *quality = df::item_quality::Ordinary;
     }
 }

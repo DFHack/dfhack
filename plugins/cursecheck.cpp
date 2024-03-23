@@ -261,11 +261,6 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                     missing ? "-missing" : ""
                 );
 
-                if (missing)
-                {
-                    out.print("- You can use 'tweak clear-missing' to allow engraving a memorial easier.\n");
-                }
-
                 // dump all curse flags on demand
                 if (verbose)
                 {

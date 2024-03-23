@@ -5,6 +5,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "DataDefs.h"
 
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -13,7 +14,7 @@
 #include "modules/Materials.h"
 #include "modules/World.h"
 
-#include "DataDefs.h"
+#include "df/building.h"
 #include "df/game_type.h"
 #include "df/world.h"
 #include "df/plotinfost.h"
@@ -29,6 +30,7 @@
 #include "df/item_plant_growthst.h"
 #include "df/plant_growth.h"
 #include "df/plant_growth_print.h"
+#include "df/plant_raw.h"
 
 using std::string;
 using std::vector;
@@ -99,7 +101,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         else if (building)
         {
             out_items[i]->flags.bits.removed = 1;
-            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, 0))
+            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, df::building_item_role_type::TEMP))
                 out_items[i]->moveToGround(building->centerx, building->centery, building->z);
         }
         else if (move_to_cursor)

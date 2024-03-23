@@ -1858,7 +1858,7 @@ public:
             }
         }
 
-        string search_string_l = toLower(search_string);
+        string search_string_l = toLower_cp437(search_string);
         saved_indexes.clear();
         ui_building_assign_type->clear();
         ui_building_assign_is_marked->clear();
@@ -1900,7 +1900,7 @@ public:
                     Units::getVisibleName(curr_unit), false);
 
                 desc += Units::getProfessionName(curr_unit);
-                desc = toLower(desc);
+                desc = toLower_cp437(desc);
 
                 if (desc.find(search_string_l) == string::npos)
                     continue;

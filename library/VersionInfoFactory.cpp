@@ -35,6 +35,7 @@ using namespace std;
 #include "VersionInfo.h"
 #include "Error.h"
 #include "Memory.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 using namespace DFHack;
 
@@ -74,6 +75,30 @@ std::shared_ptr<const VersionInfo> VersionInfoFactory::getVersionInfoByPETimesta
             return version;
     }
     return nullptr;
+}
+
+static uintptr_t to_addr(const char * cstr) {
+    if (sizeof(uintptr_t) == sizeof(unsigned long))
+        return strtoul(cstr, 0, 0);
+    return strtoull(cstr, 0, 0);
+}
+
+static uintptr_t get_addr(const char * cstr_value, const char * cstr_base,
+    const std::vector<DFHack::t_memrange> & ranges)
+{
+    uintptr_t addr = to_addr(cstr_value);
+    if (cstr_base) {
+        string base_name = "/";
+        base_name += cstr_base;
+        for (auto & range : ranges) {
+            string range_name = range.name;
+            if (range_name.ends_with(base_name)) {
+                addr += (uintptr_t)range.base;
+                break;
+            }
+        }
+    }
+    return addr;
 }
 
 void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
@@ -116,6 +141,8 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         cerr << "Empty symbol table: " << entry->Attribute("name") << endl;
         return;
     }
+    std::vector<DFHack::t_memrange> ranges;
+    Core::getInstance().p->getMemRanges(ranges);
     pMemEntry = entry->FirstChildElement()->ToElement();
     for(;pMemEntry;pMemEntry=pMemEntry->NextSiblingElement())
     {
@@ -129,6 +156,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
             if(!cstr_key)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
+            const char *cstr_base = pMemEntry->Attribute("base");
             const char *cstr_mangled = pMemEntry->Attribute("mangled");
             if(!cstr_value && !cstr_mangled)
             {
@@ -139,10 +167,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 continue;
             uintptr_t addr;
             if (cstr_value) {
-                if (sizeof(addr) == sizeof(unsigned long))
-                    addr = strtoul(cstr_value, 0, 0);
-                else
-                    addr = strtoull(cstr_value, 0, 0);
+                addr = get_addr(cstr_value, cstr_base, ranges);
             } else {
                 addr = (uintptr_t)DFHack::LookupPlugin(DFHack::GLOBAL_NAMES, cstr_mangled);
                 if (!addr)

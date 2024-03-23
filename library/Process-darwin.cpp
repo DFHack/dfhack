@@ -161,6 +161,9 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     kr = KERN_SUCCESS;
     address = 0;
 
+    string cur_name;
+    void * cur_base = nullptr;
+
     do {
 #ifdef DFHACK64
         flavor = VM_REGION_BASIC_INFO_64;
@@ -189,6 +192,11 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             t_memrange temp;
             strncpy( temp.name, dlinfo.dli_fname, 1023 );
             temp.name[1023] = 0;
+            if (cur_name != temp.name) {
+                cur_name = temp.name;
+                cur_base = (void *) address;
+            }
+            temp.base = cur_base;
             temp.start = (void *) address;
             temp.end = (void *) (address+vmsize);
             temp.read = (info.protection & VM_PROT_READ);

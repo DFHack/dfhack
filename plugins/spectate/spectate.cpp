@@ -1,45 +1,41 @@
-//
-// Created by josh on 7/28/21.
-// Last updated: 11//10/22
-//
-
 #include "pause.h"
 
-#include <Debug.h>
-#include <Core.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Debug.h"
+#include "Core.h"
+#include "Export.h"
+#include "PluginManager.h"
 
-#include <modules/EventManager.h>
-#include <modules/World.h>
-#include <modules/Maps.h>
-#include <modules/Gui.h>
-#include <modules/Job.h>
-#include <modules/Units.h>
-#include <df/job.h>
-#include <df/unit.h>
-#include <df/historical_figure.h>
-#include <df/global_objects.h>
-#include <df/world.h>
-#include <df/viewscreen.h>
-#include <df/creature_raw.h>
+#include "modules/EventManager.h"
+#include "modules/World.h"
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Job.h"
+#include "modules/Units.h"
+
+#include "df/job.h"
+#include "df/unit.h"
+#include "df/historical_figure.h"
+#include "df/global_objects.h"
+#include "df/plotinfost.h"
+#include "df/world.h"
+#include "df/viewscreen.h"
+#include "df/creature_raw.h"
 
 #include <array>
 #include <random>
 #include <cinttypes>
-#include <functional>
 
 // Debugging
 namespace DFHack {
-    DBG_DECLARE(spectate, plugin, DebugCategory::LINFO);
+    DBG_DECLARE(log, plugin, DebugCategory::LINFO);
 }
 
 DFHACK_PLUGIN("spectate");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
+
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(plotinfo);
-REQUIRE_GLOBAL(pause_state);
-REQUIRE_GLOBAL(d_init);
+REQUIRE_GLOBAL(d_init); // used in pause.cpp
 
 using namespace DFHack;
 using namespace Pausing;
@@ -68,7 +64,6 @@ enum ConfigData {
     ANIMALS,
     HOSTILES,
     VISITORS
-
 };
 
 static PersistentDataItem pconfig;
@@ -106,7 +101,7 @@ namespace SP {
         out.print(" SETTINGS:\n");
         out.print("  %-20s\t%" PRIi32 "\n", "tick-threshold: ", config.tick_threshold);
         if (following_dwarf)
-            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", df::global::plotinfo->follow_unit);
+            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", plotinfo->follow_unit);
     }
 
     void SetUnpauseState(bool state) {
@@ -173,10 +168,10 @@ namespace SP {
     }
 
     void LoadSettings() {
-        pconfig = World::GetPersistentData(CONFIG_KEY);
+        pconfig = World::GetPersistentSiteData(CONFIG_KEY);
 
         if (!pconfig.isValid()) {
-            pconfig = World::AddPersistentData(CONFIG_KEY);
+            pconfig = World::AddPersistentSiteData(CONFIG_KEY);
             SaveSettings();
         } else {
             config.unpause = pconfig.ival(UNPAUSE);
@@ -311,8 +306,8 @@ namespace SP {
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
                 size_t idx = follow_any(RNG);
                 our_dorf = units[idx];
-                df::global::plotinfo->follow_unit = our_dorf->id;
-                timestamp = df::global::world->frame_counter;
+                plotinfo->follow_unit = our_dorf->id;
+                timestamp = world->frame_counter;
                 return true;
             } else {
                 WARN(plugin).print("units vector is empty!\n");
@@ -322,9 +317,6 @@ namespace SP {
     }
 
     void onUpdate(color_ostream &out) {
-        if (!World::isFortressMode() || !Maps::IsValid())
-            return;
-
         // keeps announcement pause settings locked
         World::Update(); // from pause.h
 
@@ -362,7 +354,7 @@ namespace SP {
         if (!World::ReadPauseState() && tick - last_tick >= 1) {
             last_tick = tick;
             // validate follow state
-            if (!following_dwarf || !our_dorf || df::global::plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
+            if (!following_dwarf || !our_dorf || plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
                 // we're not following anyone
                 following_dwarf = false;
                 if (!config.disengage) {
@@ -390,7 +382,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     SP::LoadSettings();
     if (enabled) {
         SP::following_dwarf = SP::FollowADwarf();
@@ -400,6 +392,11 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (enable && !enabled) {
         out.print("Spectate mode enabled!\n");
         enabled = true; // enable_auto_unpause won't do anything without this set now
@@ -419,11 +416,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (enabled) {
         switch (event) {
-            case SC_MAP_UNLOADED:
-            case SC_BEGIN_UNLOAD:
             case SC_WORLD_UNLOADED:
                 SP::our_dorf = nullptr;
                 SP::following_dwarf = false;
+                enabled = false;
             default:
                 break;
         }
@@ -437,6 +433,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     if (!parameters.empty()) {
         if (parameters.size() >= 2 && parameters.size() <= 3) {
             bool state =false;

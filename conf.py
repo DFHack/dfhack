@@ -114,7 +114,7 @@ extlinks = {
                get_caption_str('Bay12 forums thread ')),
     'dffd': ('https://dffd.bay12games.com/file.php?id=%s',
              get_caption_str('DFFD file ')),
-    'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
+    'bug': ('https://dwarffortressbugtracker.com/view.php?id=%s',
             get_caption_str('Bug ')),
     'source': ('https://github.com/DFHack/dfhack/tree/develop/%s',
                get_caption_str()),

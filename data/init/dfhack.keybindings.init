@@ -26,6 +26,13 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 keybinding add Ctrl-Shift-A gui/quickcmd
 
 
+###################
+# embark bindings #
+###################
+
+keybinding add Ctrl-A@choose_start_site gui/embark-anywhere
+
+
 ######################
 # dwarfmode bindings #
 ######################
@@ -45,6 +52,9 @@ keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
 # bring up the autodump UI
 keybinding add Ctrl-H@dwarfmode gui/autodump
+
+# bring up the teleport UI
+keybinding add Ctrl-Shift-T@dwarfmode gui/teleport
 
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
@@ -158,7 +168,7 @@ keybinding add Alt-K@dwarfmode toggle-kbd-cursor
 
 # gui/design
 keybinding add Ctrl-D@dwarfmode/Default gui/design
-
+keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
 
 
 #####################

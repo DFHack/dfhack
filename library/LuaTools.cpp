@@ -24,19 +24,18 @@ distribution.
 
 #include "Internal.h"
 
-#include <csignal>
-#include <string>
-#include <vector>
-#include <map>
-
 #include "MemAccess.h"
 #include "Core.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "LuaWrapper.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
+#include "DFHackVersion.h"
+#include "PluginManager.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"
@@ -45,29 +44,29 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Units.h"
 
-#include "LuaWrapper.h"
-#include "LuaTools.h"
-
-#include "MiscUtils.h"
-#include "DFHackVersion.h"
-#include "PluginManager.h"
-
 #include "df/building.h"
 #include "df/enabler.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
+#include "df/extentst.h"
 #include "df/historical_entity.h"
+#include "df/interface_key.h"
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/unit.h"
+#include "df/viewscreen.h"
 #include "df/world.h"
 
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-
 #include <lstate.h>
+
+#include <csignal>
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;

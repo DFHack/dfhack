@@ -2,10 +2,11 @@ regrass
 =======
 
 .. dfhack-tool::
-    :summary: Regrow all the grass.
+    :summary: Regrow surface grass and cavern moss.
     :tags: adventure fort armok animals map
 
-Use this command if your grazers have eaten everything down to the dirt.
+This command can refresh the grass (or subterranean moss) growing on your map.
+It will only regrow the grass and moss on tiles that had some to begin with.
 
 Usage
 -----
@@ -14,5 +15,5 @@ Usage
 
     regrass [max]
 
-Specify the 'max' keyword to pack more grass onto a tile than what the game
-normally allows to give your grazers extra chewing time.
+Specify the ``max`` keyword to pack more grass/moss onto a tile than what the
+game normally allows. This will give your grazers extra chewing time.

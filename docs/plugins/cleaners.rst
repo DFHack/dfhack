@@ -32,17 +32,21 @@ By default, cleaning the map leaves mud and snow alone. Note that cleaning units
 includes hostiles, and that cleaning items removes poisons from weapons.
 
 ``spotclean`` works like ``clean map snow mud``, removing all contaminants from
-the tile under the cursor. This is ideal if you just want to clean a specific
-tile but don't want the `clean` command to remove all the glorious blood from
-your entranceway.
+the tile under the keyboard cursor. This is ideal if you just want to clean a
+specific tile but don't want the `clean` command to remove all the glorious
+blood from your entranceway.
+
+Mud will not be cleaned out from under farm plots, since that would render the
+plot inoperable.
 
 Examples
 --------
 
 ``clean all``
     Clean everything that can be cleaned (except mud and snow).
-``clean all mud item snow``
-    Removes all spatter, including mud, leaves, and snow from map tiles.
+``clean map mud item snow``
+    Removes all spatter, including mud, leaves, and snow from map tiles. Farm
+    plots will retain their mud.
 
 Options
 -------

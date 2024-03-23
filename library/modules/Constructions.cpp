@@ -43,6 +43,7 @@ using namespace std;
 
 #include "df/building_constructionst.h"
 #include "df/building_type.h"
+#include "df/construction.h"
 #include "df/job_item.h"
 #include "df/map_block.h"
 #include "df/world.h"
@@ -142,6 +143,11 @@ bool Constructions::designateRemove(df::coord pos, bool *immediate)
 
     if (tileMaterial(ttype) == tiletype_material::CONSTRUCTION)
     {
+        // don't designate pseudo-constructions
+        auto constr = df::construction::find(pos);
+        if (!constr || constr->flags.bits.top_of_wall)
+            return false;
+
         auto &dsgn = block->designation[pos.x&15][pos.y&15];
         dsgn.bits.dig = tile_dig_designation::Default;
         block->flags.bits.designated = true;

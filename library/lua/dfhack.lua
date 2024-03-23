@@ -503,11 +503,6 @@ end
 
 -- String conversions
 
-function dfhack.persistent:__tostring()
-    return "<persistent "..self.entry_id..":"..self.key.."=\""
-           ..self.value.."\":"..table.concat(self.ints,",")..">"
-end
-
 function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
 end
@@ -558,6 +553,37 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
         end
         scr = scr.parent
     end
+end
+
+function dfhack.world.getCurrentSite()
+    return df.world_site.find(df.global.plotinfo.site_id)
+end
+
+local function persistent_getData(which, key, default)
+    local serialized = dfhack.persistent['get'..which..'DataString'](key)
+    if not serialized then return default end
+    return require('json').decode(serialized) or default
+end
+
+function persistent_saveData(which, key, data)
+    local serialized = require('json').encode(data)
+    dfhack.persistent['save'..which..'DataString'](key, serialized)
+end
+
+function dfhack.persistent.getSiteData(key, default)
+    return persistent_getData('Site', key, default)
+end
+
+function dfhack.persistent.saveSiteData(key, data)
+    persistent_saveData('Site', key, data)
+end
+
+function dfhack.persistent.getWorldData(key, default)
+    return persistent_getData('World', key, default)
+end
+
+function dfhack.persistent.saveWorldData(key, data)
+    persistent_saveData('World', key, data)
 end
 
 -- Interactive

@@ -24,18 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <cstdio>
-#include <cstring>
-#include <iterator>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
-#include <cstdarg>
-
 #include "Error.h"
 #include "MemAccess.h"
 #include "Core.h"
@@ -48,6 +36,12 @@ distribution.
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "RemoteServer.h"
+#include "RemoteTools.h"
+#include "LuaTools.h"
+#include "DFHackVersion.h"
+#include "md5wrapper.h"
+
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
@@ -56,24 +50,19 @@ distribution.
 #include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
-#include "RemoteServer.h"
-#include "RemoteTools.h"
-#include "LuaTools.h"
-#include "DFHackVersion.h"
 
-using namespace DFHack;
-
-#include "df/plotinfost.h"
+#include "df/init.h"
 #include "df/gamest.h"
-#include "df/world.h"
-#include "df/world_data.h"
+#include "df/graphic.h"
 #include "df/interfacest.h"
+#include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include <df/graphic.h>
+#include "df/world.h"
+#include "df/world_data.h"
 
 #include <stdio.h>
 #include <iomanip>
@@ -82,14 +71,24 @@ using namespace DFHack;
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "md5wrapper.h"
-
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cstdio>
+#include <cstring>
+#include <iterator>
+#include <sstream>
+#include <forward_list>
+#include <type_traits>
+#include <cstdarg>
 #include <SDL_events.h>
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
 #endif
 
+using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
@@ -1270,8 +1269,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 bool Core::loadScriptFile(color_ostream &out, std::string fname, bool silent)
 {
     if(!silent) {
-        INFO(script,out) << "Loading script: " << fname << std::endl;
-        std::cerr << "Loading script: " << fname << std::endl;
+        INFO(script,out) << "Running script: " << fname << std::endl;
+        std::cerr << "Running script: " << fname << std::endl;
     }
     std::ifstream script(fname.c_str());
     if ( !script.good() )
@@ -1909,7 +1908,8 @@ void Core::doUpdate(color_ostream &out)
         (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
-        doSaveData(out);
+        plug_mgr->doSaveData(out);
+        Persistence::Internal::save(out);
     }
 
     // detect if the game was loaded or unloaded in the meantime
@@ -2014,6 +2014,8 @@ static int buildings_timer = 0;
 
 void Core::onUpdate(color_ostream &out)
 {
+    Gui::clearFocusStringCache();
+
     EventManager::manageEvents(out);
 
     // convert building reagents
@@ -2184,6 +2186,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     case SC_WORLD_LOADED:
     {
+        Persistence::Internal::load(out);
+        plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
@@ -2191,11 +2195,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             [](lua_State* L) {
                 Lua::Push(L, true);
             });
-        // fallthrough
-    }
-    case SC_WORLD_UNLOADED:
-    case SC_MAP_LOADED:
-    case SC_MAP_UNLOADED:
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2225,20 +2224,19 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        if (Version::is_prerelease())
+        {
+            runCommand(out, "gui/prerelease-warning");
+            std::cerr << "loaded world in prerelease build" << std::endl;
+        }
+        break;
+    }
+    case SC_MAP_LOADED:
+        if (World::IsSiteLoaded())
+            plug_mgr->doLoadSiteData(out);
         break;
     default:
         break;
-    }
-
-    if (event == SC_WORLD_LOADED && Version::is_prerelease())
-    {
-        runCommand(out, "gui/prerelease-warning");
-        std::cerr << "loaded map in prerelease build" << std::endl;
-    }
-
-    if (event == SC_WORLD_LOADED)
-    {
-        doLoadData(out);
     }
 
     EventManager::onStateChange(out, event);
@@ -2253,24 +2251,12 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     if (event == SC_WORLD_UNLOADED)
     {
-        Persistence::Internal::clear();
+        Persistence::Internal::clear(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
         Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
     }
-}
-
-void Core::doSaveData(color_ostream &out)
-{
-    plug_mgr->doSaveData(out);
-    Persistence::Internal::save();
-}
-
-void Core::doLoadData(color_ostream &out)
-{
-    Persistence::Internal::load();
-    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )

@@ -158,8 +158,10 @@ cages you want to use. Then use ``zone set`` (like with ``assign``) and run
 ``zone tocages <filter>``. ``tocages`` can be used together with ``nick`` or
 ``remnick`` to adjust nicknames while assigning to cages.
 
-Overlay
--------
+Overlays
+--------
+
+Animal Assignment
 
 Advanced unit selection is available via an `overlay` widget that appears when
 you select a cage, restraint, pasture zone, or pit/pond zone.
@@ -186,3 +188,13 @@ without having to close and reopen the window.
 
 Just like all other overlays, you can disable this one in `gui/control-panel` on
 the Overlays tab if you don't want the option of using it.
+
+Location retirement
+
+When viewing location (temple, guildhall, tavern, etc.) details, there is now a
+"Retire location" button that you can use to remove the location from the list
+of available locations for your fort.
+
+Before you can retire the location, you have to remove all units assigned
+occupations for that location and you have to detach the location from any
+zones. Once you confirm retirement, the location will be removed from the list.

@@ -6,12 +6,14 @@
 
 #include "modules/Filesystem.h"
 #include "modules/Materials.h"
+#include "modules/World.h"
 
 #include "json/json.h"
 
 #include "df/building.h"
 #include "df/gamest.h"
 #include "df/historical_figure.h"
+#include "df/inorganic_raw.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_foodst.h"
@@ -91,8 +93,8 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_list_command(out);
     }
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

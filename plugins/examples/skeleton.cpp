@@ -15,9 +15,12 @@
 
 #include "Core.h"
 #include "Debug.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 
+#include "modules/Gui.h"
 #include "modules/Persistence.h"
+#include "modules/Screen.h"
 #include "modules/World.h"
 
 using std::string;
@@ -115,8 +118,21 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             DEBUG(status,out).print("game state changed: SC_MAP_UNLOADED\n");
             break;
         case SC_VIEWSCREEN_CHANGED:
-            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED\n");
+        {
+            auto vs = Gui::getCurViewscreen(true);
+            string name = Core::getInstance().p->readClassName(*(void**)vs);
+            if (name.starts_with("viewscreen_"))
+                name = name.substr(11, name.size()-11-2);
+            else if (dfhack_viewscreen::is_instance(vs)) {
+                auto fs = Gui::getFocusStrings(vs);
+                if (fs.size())
+                    name = fs[0];
+            }
+
+            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED (%s)\n",
+                name.c_str());
             break;
+        }
         case SC_CORE_INITIALIZED:
             DEBUG(status,out).print("game state changed: SC_CORE_INITIALIZED\n");
             break;
@@ -145,22 +161,42 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     return CR_OK;
 }
 
-// If you need to save or load world-specific data, define these functions.
-// plugin_save_data is called when the game might be about to save the world,
-// and plugin_load_data is called whenever a new world is loaded. If the plugin
-// is loaded or unloaded while a world is active, plugin_save_data or
-// plugin_load_data will be called immediately.
-DFhackCExport command_result plugin_save_data (color_ostream &out) {
-    DEBUG(status,out).print("save or unload is imminent; time to persist state\n");
+// If you need to save or load world- or site-specific data, define these functions.
+// plugin_save_world_data is called when the game might be about to save,
+// plugin_save_site_data is called when the game might be about to save and a site is loaded,
+// plugin_load_world_data is called whenever a new world is loaded, and
+// plugin_load_site_data is called whenever a new site is loaded.
+//
+// If the plugin is loaded or unloaded while a world is active, plugin_load_*_data or
+// plugin_save_*_data will be called immediately as appropriate.
+DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
+    DEBUG(status,out).print("save or unload is imminent; time to persist state for site\n");
 
     // Call functions in the Persistence module here. If your PersistantDataItem
     // objects are already up to date, then they will get persisted with the
-    // save automatically and there is nothing extra you need to do here.
+    // save automatically and you do not need to implement this function.
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    DEBUG(status,out).print("world is loading; time to load persisted state\n");
+DFhackCExport command_result plugin_save_world_data (color_ostream &out) {
+    DEBUG(status,out).print("save or unload is imminent; time to persist state for world\n");
+
+    // Call functions in the Persistence module here. If your PersistantDataItem
+    // objects are already up to date, then they will get persisted with the
+    // save automatically and you do not need to implement this function.
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
+    DEBUG(status,out).print("world is loading; time to load world-global persisted state\n");
+
+    // Call functions in the Persistence module here. See
+    // persistent_per_save_example.cpp for an example.
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    DEBUG(status,out).print("site is loading; time to load site-local persisted state\n");
 
     // Call functions in the Persistence module here. See
     // persistent_per_save_example.cpp for an example.

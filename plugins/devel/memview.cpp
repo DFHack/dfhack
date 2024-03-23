@@ -3,7 +3,7 @@
 #include "PluginManager.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include <tinythread.h> //not sure if correct
+#include <mutex>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -15,7 +15,7 @@ using std::string;
 using namespace DFHack;
 
 uint64_t timeLast=0;
-static tthread::mutex* mymutex=0;
+static std::mutex* mymutex=0;
 
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
@@ -40,7 +40,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     commands.push_back(PluginCommand("memview","Shows DF memory in real time.",memview,false,"Shows memory in real time.\nParams: adrr length refresh_rate. If addr==0 then stop viewing."));
     memdata.state=STATE_OFF;
-    mymutex=new tthread::mutex;
+    mymutex=new std::mutex;
     return CR_OK;
 }
 size_t convert(const std::string& p,bool ishex=false)
@@ -162,7 +162,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
     {
         memdata.addr = 0;
     }
-    else if (toLower(parameters[0].substr(0, 2)) == "0x")
+    else if (toLower_cp437(parameters[0].substr(0, 2)) == "0x")
     {
         memdata.addr = (void *)convert(parameters[0],true);
     }

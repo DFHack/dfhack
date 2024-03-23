@@ -6,6 +6,7 @@ local widgets = require('gui.widgets')
 
 AutolaborOverlay = defclass(AutolaborOverlay, overlay.OverlayWidget)
 AutolaborOverlay.ATTRS{
+    desc='Adds information to the work details screen about whether work details are enabled.',
     default_pos={x=7,y=-13},
     default_enabled=true,
     viewscreens='dwarfmode/Info/LABOR/WORK_DETAILS',

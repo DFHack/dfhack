@@ -12,6 +12,10 @@ using namespace DFHack;
 using namespace Pausing;
 using namespace df::enums;
 
+// marked by REQUIRE_GLOBAL in spectate.cpp
+using df::global::plotinfo;
+using df::global::d_init;
+
 std::unordered_set<Lock*> PlayerLock::locks;
 std::unordered_set<Lock*> AnnouncementLock::locks;
 
@@ -25,7 +29,6 @@ namespace pausing {
     bool locked_states[announcement_flag_arr_size]; // locked state (re-applied each frame)
     bool allow_player_pause = true; // toggles player pause ability
 
-    using df::global::plotinfo;
     using namespace df::enums;
     struct player_pause_hook : df::viewscreen_dwarfmodest {
         typedef df::viewscreen_dwarfmodest interpose_base;
@@ -84,7 +87,7 @@ inline bool reportLockedLocks(color_ostream &out, Locks locks) {
 bool AnnouncementLock::captureState() {
     if (only_or_none_locked(locks, this)) {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            locked_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
+            locked_states[i] = d_init->announcements.flags[i].bits.PAUSE;
         }
         return true;
     }
@@ -122,7 +125,7 @@ void PlayerLock::reportLocks(color_ostream &out) {
 
 bool World::DisableAnnouncementPausing() {
     if (!announcementLock.isAnyLocked()) {
-        for (auto& flag : df::global::d_init->announcements.flags) {
+        for (auto& flag : d_init->announcements.flags) {
             flag.bits.PAUSE = false;
             //out.print("pause: %d\n", flag.bits.PAUSE);
         }
@@ -134,7 +137,7 @@ bool World::DisableAnnouncementPausing() {
 bool World::SaveAnnouncementSettings() {
     if (!announcementLock.isAnyLocked()) {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            saved_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
+            saved_states[i] = d_init->announcements.flags[i].bits.PAUSE;
         }
         state_saved = true;
         return true;
@@ -145,7 +148,7 @@ bool World::SaveAnnouncementSettings() {
 bool World::RestoreAnnouncementSettings() {
     if (!announcementLock.isAnyLocked() && state_saved) {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            df::global::d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
+            d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
         }
         return true;
     }
@@ -178,7 +181,7 @@ void World::Update() {
     }
     if (announcementLock.isAnyLocked()) {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            df::global::d_init->announcements.flags[i].bits.PAUSE = locked_states[i];
+            d_init->announcements.flags[i].bits.PAUSE = locked_states[i];
         }
     }
 }

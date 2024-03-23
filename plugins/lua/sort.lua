@@ -3,14 +3,10 @@ local _ENV = mkmodule('plugins.sort')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local setbelief = reqscript('modtools/set-belief')
-local sortoverlay = require('plugins.sort.sortoverlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local GLOBAL_KEY = 'sort'
-
-local CH_UP = string.char(30)
-local CH_DN = string.char(31)
 
 local function get_rating(val, baseline, range, highest, high, med, low)
     val = val - (baseline or 0)
@@ -23,35 +19,14 @@ local function get_rating(val, baseline, range, highest, high, med, low)
     return percentile, COLOR_LIGHTGREEN
 end
 
-local function sort_noop(a, b)
-    -- this function is used as a marker and never actually gets called
-    error('sort_noop should not be called')
-end
-
 local function get_name(unit)
     return unit and dfhack.toSearchNormalized(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 end
 
-local function sort_by_name_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_name_desc(unit1, unit2)
     local name1 = get_name(unit1)
     local name2 = get_name(unit2)
     return utils.compare_name(name1, name2)
-end
-
-local function sort_by_name_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
-    local name1 = get_name(unit1)
-    local name2 = get_name(unit2)
-    return utils.compare_name(name2, name1)
 end
 
 local active_units = df.global.world.units.active
@@ -88,7 +63,7 @@ local function get_most_recent_wave_oldest_active_idx(cache)
 end
 
 -- return green for most recent wave, red for the first wave, yellow for all others
--- rating is a three digit number that indicates the (potentially approximate) order
+-- rating is an up to three digit number that indicates the (approximate) order
 local function get_arrival_rating(unit)
     local cache = get_active_idx_cache()
     local unit_active_idx = cache[unit.id]
@@ -106,20 +81,18 @@ local function get_arrival_rating(unit)
     return rating, COLOR_YELLOW
 end
 
-local function sort_by_arrival_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
+local function sort_by_arrival_desc(unit1, unit2)
     local cache = get_active_idx_cache()
-    if not cache[unit_id_1] then return -1 end
-    if not cache[unit_id_2] then return 1 end
-    return utils.compare(cache[unit_id_2], cache[unit_id_1])
+    if not cache[unit1.id] then return -1 end
+    if not cache[unit2.id] then return 1 end
+    return utils.compare(cache[unit2.id], cache[unit1.id])
 end
 
-local function sort_by_arrival_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
+local function sort_by_arrival_asc(unit1, unit2)
     local cache = get_active_idx_cache()
-    if not cache[unit_id_1] then return -1 end
-    if not cache[unit_id_2] then return 1 end
-    return utils.compare(cache[unit_id_1], cache[unit_id_2])
+    if not cache[unit1.id] then return -1 end
+    if not cache[unit2.id] then return 1 end
+    return utils.compare(cache[unit1.id], cache[unit2.id])
 end
 
 local function get_stress(unit)
@@ -132,32 +105,22 @@ local function get_stress_rating(unit)
     return get_rating(dfhack.units.getStressCategory(unit), 0, 100, 4, 3, 2, 1)
 end
 
-local function sort_by_stress_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_stress_desc(unit1, unit2)
     local happiness1 = get_stress(unit1)
     local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
     if not happiness2 then return -1 end
     if not happiness1 then return 1 end
     return utils.compare(happiness2, happiness1)
 end
 
-local function sort_by_stress_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_stress_asc(unit1, unit2)
     local happiness1 = get_stress(unit1)
     local happiness2 = get_stress(unit2)
     if happiness1 == happiness2 then
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
     if not happiness2 then return 1 end
     if not happiness1 then return -1 end
@@ -217,29 +180,19 @@ local function get_melee_skill_effectiveness_rating(unit)
 end
 
 local function make_sort_by_melee_skill_effectiveness_desc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = melee_skill_effectiveness(unit1)
         local rating2 = melee_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_melee_skill_effectiveness_asc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = melee_skill_effectiveness(unit1)
         local rating2 = melee_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating1, rating2)
     end
 end
@@ -277,41 +230,28 @@ local function get_ranged_skill_effectiveness_rating(unit)
 end
 
 local function make_sort_by_ranged_skill_effectiveness_desc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = ranged_skill_effectiveness(unit1)
         local rating2 = ranged_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating2, rating1)
     end
 end
 
 local function make_sort_by_ranged_skill_effectiveness_asc()
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        local unit1 = df.unit.find(unit_id_1)
-        local unit2 = df.unit.find(unit_id_2)
-        if not unit1 then return -1 end
-        if not unit2 then return 1 end
+    return function(unit1, unit2)
         local rating1 = ranged_skill_effectiveness(unit1)
         local rating2 = ranged_skill_effectiveness(unit2)
-        if rating1 == rating2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+        if rating1 == rating2 then return sort_by_name_desc(unit1, unit2) end
         return utils.compare(rating1, rating2)
     end
 end
 
 local function make_sort_by_skill_desc(sort_skill)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
-        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+    return function(unit1, unit2)
+        local s1 = get_skill(sort_skill, unit1)
+        local s2 = get_skill(sort_skill, unit2)
+        if s1 == s2 then return sort_by_name_desc(unit1, unit2) end
         if not s2 then return -1 end
         if not s1 then return 1 end
         if s1.rating ~= s2.rating then
@@ -320,18 +260,15 @@ local function make_sort_by_skill_desc(sort_skill)
         if s1.experience ~= s2.experience then
             return utils.compare(s2.experience, s1.experience)
         end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
 end
 
 local function make_sort_by_skill_asc(sort_skill)
-    return function(unit_id_1, unit_id_2)
-        if unit_id_1 == unit_id_2 then return 0 end
-        if unit_id_1 == -1 then return -1 end
-        if unit_id_2 == -1 then return 1 end
-        local s1 = get_skill(sort_skill, df.unit.find(unit_id_1))
-        local s2 = get_skill(sort_skill, df.unit.find(unit_id_2))
-        if s1 == s2 then return sort_by_name_desc(unit_id_1, unit_id_2) end
+    return function(unit1, unit2)
+        local s1 = get_skill(sort_skill, unit1)
+        local s2 = get_skill(sort_skill, unit2)
+        if s1 == s2 then return sort_by_name_desc(unit1, unit2) end
         if not s2 then return 1 end
         if not s1 then return -1 end
         if s1.rating ~= s2.rating then
@@ -340,7 +277,7 @@ local function make_sort_by_skill_asc(sort_skill)
         if s1.experience ~= s2.experience then
             return utils.compare(s1.experience, s2.experience)
         end
-        return sort_by_name_desc(unit_id_1, unit_id_2)
+        return sort_by_name_desc(unit1, unit2)
     end
 end
 
@@ -385,32 +322,22 @@ local function get_mental_stability(unit)
     return rating
 end
 
-local function sort_by_mental_stability_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_mental_stability_desc(unit1, unit2)
     local rating1 = get_mental_stability(unit1)
     local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
         -- sorting by stress is opposite
         -- more mental stable dwarves should have less stress
-        return sort_by_stress_asc(unit_id_1, unit_id_2)
+        return sort_by_stress_asc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_mental_stability_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_mental_stability_asc(unit1, unit2)
     local rating1 = get_mental_stability(unit1)
     local rating2 = get_mental_stability(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_desc(unit_id_1, unit_id_2)
+        return sort_by_stress_desc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -446,30 +373,20 @@ local function get_melee_combat_potential_rating(unit)
     return get_rating(get_melee_combat_potential(unit), 350000, 2750000, 64, 52, 40, 28)
 end
 
-local function sort_by_melee_combat_potential_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_melee_combat_potential_desc(unit1, unit2)
     local rating1 = get_melee_combat_potential(unit1)
     local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_desc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_melee_combat_potential_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_melee_combat_potential_asc(unit1, unit2)
     local rating1 = get_melee_combat_potential(unit1)
     local rating2 = get_melee_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_asc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -499,30 +416,20 @@ local function get_ranged_combat_potential_rating(unit)
     return get_rating(get_ranged_combat_potential(unit), 0, 800000, 72, 52, 31, 11)
 end
 
-local function sort_by_ranged_combat_potential_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_ranged_combat_potential_desc(unit1, unit2)
     local rating1 = get_ranged_combat_potential(unit1)
     local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_desc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_desc(unit1, unit2)
     end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_ranged_combat_potential_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_ranged_combat_potential_asc(unit1, unit2)
     local rating1 = get_ranged_combat_potential(unit1)
     local rating2 = get_ranged_combat_potential(unit2)
     if rating1 == rating2 then
-        return sort_by_mental_stability_asc(unit_id_1, unit_id_2)
+        return sort_by_mental_stability_asc(unit1, unit2)
     end
     return utils.compare(rating1, rating2)
 end
@@ -547,32 +454,22 @@ local function get_need_rating(unit)
     return 6
 end
 
-local function sort_by_need_desc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_need_desc(unit1, unit2)
     local rating1 = get_need(unit1)
     local rating2 = get_need(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_desc(unit_id_1, unit_id_2)
+        return sort_by_stress_desc(unit1, unit2)
     end
     if not rating2 then return -1 end
     if not rating1 then return 1 end
     return utils.compare(rating2, rating1)
 end
 
-local function sort_by_need_asc(unit_id_1, unit_id_2)
-    if unit_id_1 == unit_id_2 then return 0 end
-    local unit1 = df.unit.find(unit_id_1)
-    local unit2 = df.unit.find(unit_id_2)
-    if not unit1 then return -1 end
-    if not unit2 then return 1 end
+local function sort_by_need_asc(unit1, unit2)
     local rating1 = get_need(unit1)
     local rating2 = get_need(unit2)
     if rating1 == rating2 then
-        return sort_by_stress_asc(unit_id_1, unit_id_2)
+        return sort_by_stress_asc(unit1, unit2)
     end
     if not rating2 then return 1 end
     if not rating1 then return -1 end
@@ -587,6 +484,10 @@ local sort_by_teacher_desc=make_sort_by_skill_desc(df.job_skill.TEACHING)
 local sort_by_teacher_asc=make_sort_by_skill_asc(df.job_skill.TEACHING)
 local sort_by_tactics_desc=make_sort_by_skill_desc(df.job_skill.MILITARY_TACTICS)
 local sort_by_tactics_asc=make_sort_by_skill_asc(df.job_skill.MILITARY_TACTICS)
+local sort_by_ambusher_desc=make_sort_by_skill_desc(df.job_skill.SNEAK)
+local sort_by_ambusher_asc=make_sort_by_skill_asc(df.job_skill.SNEAK)
+local sort_by_pick_desc=make_sort_by_skill_desc(df.job_skill.MINING)
+local sort_by_pick_asc=make_sort_by_skill_asc(df.job_skill.MINING)
 local sort_by_axe_desc=make_sort_by_skill_desc(df.job_skill.AXE)
 local sort_by_axe_asc=make_sort_by_skill_asc(df.job_skill.AXE)
 local sort_by_sword_desc=make_sort_by_skill_desc(df.job_skill.SWORD)
@@ -601,374 +502,702 @@ local sort_by_crossbow_desc=make_sort_by_skill_desc(df.job_skill.CROSSBOW)
 local sort_by_crossbow_asc=make_sort_by_skill_asc(df.job_skill.CROSSBOW)
 
 local SORT_LIBRARY = {
-    {label='melee effectiveness', desc_fn=sort_by_any_melee_desc, asc_fn=sort_by_any_melee_asc, rating_fn=get_melee_skill_effectiveness_rating},
-    {label='ranged effectiveness', desc_fn=sort_by_any_ranged_desc, asc_fn=sort_by_any_ranged_asc, rating_fn=get_ranged_skill_effectiveness_rating},
-    {label='name', desc_fn=sort_by_name_desc, asc_fn=sort_by_name_asc},
-    {label='teacher skill', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
-    {label='tactics skill', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
-    {label='arrival order', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
-    {label='stress level', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
-    {label='need for training', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
-    {label='axe skill', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
-    {label='sword skill', desc_fn=sort_by_sword_desc, asc_fn=sort_by_sword_asc, rating_fn=curry(get_skill_rating, df.job_skill.SWORD)},
-    {label='mace skill', desc_fn=sort_by_mace_desc, asc_fn=sort_by_mace_asc, rating_fn=curry(get_skill_rating, df.job_skill.MACE)},
-    {label='hammer skill', desc_fn=sort_by_hammer_desc, asc_fn=sort_by_hammer_asc, rating_fn=curry(get_skill_rating, df.job_skill.HAMMER)},
-    {label='spear skill', desc_fn=sort_by_spear_desc, asc_fn=sort_by_spear_asc, rating_fn=curry(get_skill_rating, df.job_skill.SPEAR)},
-    {label='crossbow skill', desc_fn=sort_by_crossbow_desc, asc_fn=sort_by_crossbow_asc, rating_fn=curry(get_skill_rating, df.job_skill.CROSSBOW)},
-    {label='melee potential', desc_fn=sort_by_melee_combat_potential_desc, asc_fn=sort_by_melee_combat_potential_asc, rating_fn=get_melee_combat_potential_rating},
-    {label='ranged potential', desc_fn=sort_by_ranged_combat_potential_desc, asc_fn=sort_by_ranged_combat_potential_asc, rating_fn=get_ranged_combat_potential_rating},
+    {label='melee effectiveness', widget='sort_any_melee', desc_fn=sort_by_any_melee_desc, asc_fn=sort_by_any_melee_asc, rating_fn=get_melee_skill_effectiveness_rating},
+    {label='ranged effectiveness', widget='sort_any_ranged', desc_fn=sort_by_any_ranged_desc, asc_fn=sort_by_any_ranged_asc, rating_fn=get_ranged_skill_effectiveness_rating},
+    {label='teacher skill', widget='sort_teacher', desc_fn=sort_by_teacher_desc, asc_fn=sort_by_teacher_asc, rating_fn=curry(get_skill_rating, df.job_skill.TEACHING)},
+    {label='stress level', widget='sort_stress', desc_fn=sort_by_stress_desc, asc_fn=sort_by_stress_asc, rating_fn=get_stress_rating, use_stress_faces=true},
+    {label='arrival order', widget='sort_arrival', desc_fn=sort_by_arrival_desc, asc_fn=sort_by_arrival_asc, rating_fn=get_arrival_rating},
+    {label='tactics skill', widget='sort_tactics', desc_fn=sort_by_tactics_desc, asc_fn=sort_by_tactics_asc, rating_fn=curry(get_skill_rating, df.job_skill.MILITARY_TACTICS)},
+    {label='ambusher skill', widget='sort_ambusher', desc_fn=sort_by_ambusher_desc, asc_fn=sort_by_ambusher_asc, rating_fn=curry(get_skill_rating, df.job_skill.SNEAK)},
+    {label='need for training', widget='sort_need', desc_fn=sort_by_need_desc, asc_fn=sort_by_need_asc, rating_fn=get_need_rating, use_stress_faces=true},
+    {label='pick (mining) skill', widget='sort_pick', desc_fn=sort_by_pick_desc, asc_fn=sort_by_pick_asc, rating_fn=curry(get_skill_rating, df.job_skill.MINING)},
+    {label='axe skill', widget='sort_axe', desc_fn=sort_by_axe_desc, asc_fn=sort_by_axe_asc, rating_fn=curry(get_skill_rating, df.job_skill.AXE)},
+    {label='sword skill', widget='sort_sword', desc_fn=sort_by_sword_desc, asc_fn=sort_by_sword_asc, rating_fn=curry(get_skill_rating, df.job_skill.SWORD)},
+    {label='mace skill', widget='sort_mace', desc_fn=sort_by_mace_desc, asc_fn=sort_by_mace_asc, rating_fn=curry(get_skill_rating, df.job_skill.MACE)},
+    {label='hammer skill', widget='sort_hammer', desc_fn=sort_by_hammer_desc, asc_fn=sort_by_hammer_asc, rating_fn=curry(get_skill_rating, df.job_skill.HAMMER)},
+    {label='spear skill', widget='sort_spear', desc_fn=sort_by_spear_desc, asc_fn=sort_by_spear_asc, rating_fn=curry(get_skill_rating, df.job_skill.SPEAR)},
+    {label='crossbow skill', widget='sort_crossbow', desc_fn=sort_by_crossbow_desc, asc_fn=sort_by_crossbow_asc, rating_fn=curry(get_skill_rating, df.job_skill.CROSSBOW)},
+    {label='melee potential', widget='sort_melee_combat_potential', desc_fn=sort_by_melee_combat_potential_desc, asc_fn=sort_by_melee_combat_potential_asc, rating_fn=get_melee_combat_potential_rating},
+    {label='ranged potential', widget='sort_ranged_combat_potential', desc_fn=sort_by_ranged_combat_potential_desc, asc_fn=sort_by_ranged_combat_potential_asc, rating_fn=get_ranged_combat_potential_rating},
 }
+for _, v in ipairs(SORT_LIBRARY) do
+    SORT_LIBRARY[v.widget] = v
+end
 
-local RATING_FNS = {}
-local STRESS_FACE_FNS = {}
-for _, opt in ipairs(SORT_LIBRARY) do
-    RATING_FNS[opt.desc_fn] = opt.rating_fn
-    RATING_FNS[opt.asc_fn] = opt.rating_fn
-    if opt.use_stress_faces then
-        STRESS_FACE_FNS[opt.desc_fn] = true
-        STRESS_FACE_FNS[opt.asc_fn] = true
+local unit_selector = df.global.game.main_interface.unit_selector
+
+local use_stress_faces = false
+local rating_annotations = {}
+
+local function get_unit_selector()
+    return dfhack.gui.getWidget(unit_selector, 'Unit selector')
+end
+
+local function get_scroll_rows()
+    return dfhack.gui.getWidget(unit_selector, 'Unit selector', 'Unit List', 1)
+end
+
+local function get_scroll_pos(scroll_rows)
+    return (scroll_rows or get_scroll_rows()).scroll
+end
+
+local function get_num_slots(screen_height)
+    if not screen_height then
+        _, screen_height = dfhack.screen.getWindowSize()
+    end
+    return (screen_height - 17) // 3
+end
+
+local function annotate_visible_units(sort_id)
+    local opt = SORT_LIBRARY[sort_id]
+    use_stress_faces = opt.use_stress_faces
+    rating_annotations = {}
+    rating_fn = opt.rating_fn
+    local scroll_rows = get_scroll_rows()
+    local rows = dfhack.gui.getWidgetChildren(scroll_rows)
+    local scroll_pos = get_scroll_pos(scroll_rows)
+    local max_idx = math.min(#rows, scroll_pos+scroll_rows.num_visible+1)
+    for idx = scroll_pos+1, max_idx do
+        local annotation_idx = idx - scroll_pos
+        rating_annotations[annotation_idx] = nil
+        local row = rows[idx]
+        if rating_fn and df.widget_container:is_instance(row) then
+            local unit = dfhack.gui.getWidget(row, 0).u
+            local val, color = rating_fn(unit)
+            if val then
+                rating_annotations[annotation_idx] = {val=val, color=color}
+            end
+        end
     end
 end
 
 -- ----------------------
--- SquadAssignmentOverlay
+-- SortButton
 --
 
-SquadAssignmentOverlay = defclass(SquadAssignmentOverlay, overlay.OverlayWidget)
-SquadAssignmentOverlay.ATTRS{
-    default_pos={x=18, y=5},
-    default_enabled=true,
-    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    version='2',
-    frame={w=38, h=31},
+SortButton = defclass(SortButton, widgets.Panel)
+SortButton.ATTRS{
+    on_click=DEFAULT_NIL,
 }
 
--- allow initial spacebar or two successive spacebars to fall through and
--- pause/unpause the game
-local function search_on_char(ch, text)
-    if ch == ' ' then return text:match('%S$') end
-    return ch:match('[%l _-]')
+local to_pen = dfhack.pen.parse
+
+local function make_sort_pens(ascending, selected)
+    local init = df.global.init
+    local name = ('texpos_sort_%s_%s'):format(
+        ascending and 'ascending' or 'descending',
+        selected and 'active' or 'inactive'
+    )
+    -- this is backwards, but it matches vanilla
+    local ch = ascending and 31 or 30
+    local fg = selected and COLOR_WHITE or COLOR_BLACK
+    return {
+        to_pen{tile=init[name][0], ch=32, fg=COLOR_BLACK, bg=COLOR_GRAY},
+        to_pen{tile=init[name][1], ch=ch, fg=fg, bg=COLOR_GRAY},
+        to_pen{tile=init[name][2], ch=ch, fg=fg, bg=COLOR_GRAY},
+        to_pen{tile=init[name][3], ch=32, fg=COLOR_BLACK, bg=COLOR_GRAY},
+    }
 end
 
-function SquadAssignmentOverlay:init()
+local SORT_PENS = {
+    [true]={[true]=make_sort_pens(true, true), [false]=make_sort_pens(true, false)},
+    [false]={[true]=make_sort_pens(false, true), [false]=make_sort_pens(false, false)},
+}
+
+local function sort_button_get_tile(self, idx)
+    return SORT_PENS[self.ascending][self.selected][idx]
+end
+
+function SortButton:init()
+    self.frame = self.frame or {}
+    self.frame.w, self.frame.h = 4, 1
+
+    self.ascending = false
+    self.selected = false
+
+    self:addviews{
+        widgets.Label{
+            text={
+                {width=1, tile=curry(sort_button_get_tile, self, 1)},
+                {width=1, tile=curry(sort_button_get_tile, self, 2)},
+                {width=1, tile=curry(sort_button_get_tile, self, 3)},
+                {width=1, tile=curry(sort_button_get_tile, self, 4)},
+            },
+            on_click=function()
+                if not self.selected then
+                    self.selected = true
+                else
+                    self.ascending = not self.ascending
+                end
+                self.on_click()
+            end,
+        }
+    }
+end
+
+-- ----------------------
+-- SquadAnnotationOverlay
+--
+
+annotation_instance = nil
+
+SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
+SquadAnnotationOverlay.ATTRS{
+    desc='Adds sort and annotation capabilities to the squad assignment panel.',
+    default_pos={x=15, y=5},
+    version='2',
+    default_enabled=true,
+    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
+    frame={w=82, h=35},
+}
+
+function get_annotation_text(idx)
+    local elem = rating_annotations[idx]
+    if not elem or not tonumber(elem.val) then return ' -- ' end
+    return tostring(math.tointeger(elem.val))
+end
+
+function get_annotation_color(idx)
+    local elem = rating_annotations[idx]
+    return elem and elem.color or nil
+end
+
+local to_pen = dfhack.pen.parse
+local DASH_PEN = to_pen{ch='-', fg=COLOR_WHITE, keep_lower=true}
+
+local FACE_TILES = {}
+local function init_face_tiles()
+    for idx=0,6 do
+        FACE_TILES[idx] = {}
+        local face_off = (6 - idx) * 2
+        for y=0,1 do
+            for x=0,1 do
+                local tile = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 32 + face_off + x, 6 + y)
+                ensure_key(FACE_TILES[idx], y)[x] = tile
+            end
+        end
+    end
+
+    for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
+        local face = {}
+        ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color, keep_lower=true}
+        ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color, keep_lower=true}
+        ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color, keep_lower=true}
+        ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color, keep_lower=true}
+        FACE_TILES[idx-1] = face
+    end
+end
+init_face_tiles()
+
+function get_stress_face_tile(idx, x, y)
+    local elem = rating_annotations[idx]
+    if not elem or not elem.val or elem.val < 0 then
+        return y == 1 and DASH_PEN or gui.CLEAR_PEN
+    end
+    local val = math.min(6, elem.val)
+    return safe_index(FACE_TILES, val, y, x)
+end
+
+local function get_label_text(screen_height)
+    local text = {}
+    for idx=1, get_num_slots(screen_height) do
+        table.insert(text, NEWLINE)
+        if use_stress_faces then
+            table.insert(text, {gap=1, width=1, tile=curry(get_stress_face_tile, idx, 0, 0)})
+            table.insert(text, {width=1, tile=curry(get_stress_face_tile, idx, 1, 0)})
+            table.insert(text, NEWLINE)
+            table.insert(text, {gap=1, width=1, tile=curry(get_stress_face_tile, idx, 0, 1)})
+            table.insert(text, {width=1, tile=curry(get_stress_face_tile, idx, 1, 1)})
+            table.insert(text, NEWLINE)
+        else
+            table.insert(text, {
+                text=curry(get_annotation_text, idx),
+                pen=curry(get_annotation_color, idx),
+                width=3,
+                rjustify=true,
+            })
+            table.insert(text, NEWLINE)
+            table.insert(text, NEWLINE)
+        end
+    end
+    return text
+end
+
+local function make_options(label, view_id)
+    return {
+        {label=label, value='noop'},
+        {label=label, value=view_id, pen=COLOR_GREEN},
+    }
+end
+
+local REGULAR_PEN = to_pen{fg=COLOR_GREEN}
+local HOVER_PEN = to_pen{fg=COLOR_BLACK, bg=COLOR_GREEN}
+
+function SquadAnnotationOverlay:init()
+    annotation_instance = self
     self.dirty = true
 
     local sort_options = {}
     for _, opt in ipairs(SORT_LIBRARY) do
         table.insert(sort_options, {
-            label=opt.label..CH_DN,
-            value=opt.desc_fn,
-            pen=COLOR_GREEN,
-        })
-        table.insert(sort_options, {
-            label=opt.label..CH_UP,
-            value=opt.asc_fn,
-            pen=COLOR_YELLOW,
+            label=opt.label,
+            value=opt.widget,
+            pen=function()
+                return self.subviews.annotation_panel:getMouseFramePos() and
+                    HOVER_PEN or REGULAR_PEN
+            end,
         })
     end
 
-    local main_panel = widgets.Panel{
-        frame={l=0, r=0, t=0, b=0},
-        frame_style=gui.FRAME_PANEL,
-        frame_background=gui.CLEAR_PEN,
-        autoarrange_subviews=true,
-        autoarrange_gap=1,
-    }
-    main_panel:addviews{
-        widgets.EditField{
-            view_id='search',
-            frame={l=0},
-            label_text='Search: ',
-            on_char=search_on_char,
-            on_change=function() self:refresh_list() end,
+    self:addviews{
+        widgets.Panel{
+            view_id='annotation_panel',
+            frame={l=0, w=6, t=0, b=0},
+            frame_style=gui.FRAME_INTERIOR_MEDIUM,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                SortButton{
+                    view_id='sort_button',
+                    frame={t=0, l=0},
+                    on_click=self:callback('sync_widgets'),
+                },
+                widgets.Label{
+                    view_id='label',
+                    frame={t=2, l=0, r=0, b=0},
+                    auto_width=false,
+                    auto_height=false,
+                },
+            }
+        },
+        widgets.BannerPanel{
+            view_id='banner_panel',
+            frame={t=1, r=0, w=33, h=1},
+            frame_background=gui.CLEAR_PEN,
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='sort',
+            frame={t=1, r=1, w=31},
+            label='Show:',
+            key='CUSTOM_SHIFT_S',
+            options=sort_options,
+            initial_option='sort_any_melee',
+            on_change=self:callback('sync_widgets', 'sort'),
         },
         widgets.Panel{
-            frame={l=0, r=0, h=15},
-            frame_style=gui.FRAME_INTERIOR,
+            view_id='hover_panel',
+            frame={t=0, r=0, w=33, h=16},
+            frame_style=gui.FRAME_MEDIUM,
+            visible=false,
             subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='sort',
-                    frame={t=0, l=0},
-                    label='Sort by:',
-                    key='CUSTOM_SHIFT_S',
-                    options=sort_options,
-                    initial_option=sort_by_any_melee_desc,
-                    on_change=self:callback('refresh_list', 'sort'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_any_melee',
-                    frame={t=2, l=0, w=11},
-                    options={
-                        {label='melee eff.', value=sort_noop},
-                        {label='melee eff.'..CH_DN, value=sort_by_any_melee_desc, pen=COLOR_GREEN},
-                        {label='melee eff.'..CH_UP, value=sort_by_any_melee_asc, pen=COLOR_YELLOW},
+                widgets.Panel{
+                    frame={t=1, l=0, r=0, b=0},
+                    frame_background=gui.CLEAR_PEN,
+                    subviews={
+                        widgets.Divider{
+                            frame={t=0, l=0, r=0, h=1},
+                            frame_style=gui.FRAME_THIN,
+                            frame_style_l=false,
+                            frame_style_r=false,
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_any_melee',
+                            frame={t=1, l=0, w=13},
+                            options=make_options('melee effect.', 'sort_any_melee'),
+                            initial_option='sort_any_melee',
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_any_melee'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_any_ranged',
+                            frame={t=1, r=0, w=14},
+                            options=make_options('ranged effect.', 'sort_any_ranged'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_any_ranged'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_teacher',
+                            frame={t=3, l=0, w=7},
+                            options=make_options('teacher', 'sort_teacher'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_teacher'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_stress',
+                            frame={t=3, l=10, w=6},
+                            options=make_options('stress', 'sort_stress'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_stress'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_arrival',
+                            frame={t=3, r=0, w=13},
+                            options=make_options('arrival order', 'sort_arrival'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_arrival'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_tactics',
+                            frame={t=5, l=0, w=7},
+                            options=make_options('tactics', 'sort_tactics'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_tactics'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_ambusher',
+                            frame={t=5, l=9, w=8},
+                            options=make_options('ambusher', 'sort_ambusher'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_ambusher'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_need',
+                            frame={t=5, r=0, w=11},
+                            options=make_options('train. need', 'sort_need'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_need'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_pick',
+                            frame={t=7, l=0, w=4},
+                            options=make_options('pick', 'sort_pick'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_pick'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_axe',
+                            frame={t=7, l=8, w=3},
+                            options=make_options('axe', 'sort_axe'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_axe'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_sword',
+                            frame={t=7, l=16, w=5},
+                            options=make_options('sword', 'sort_sword'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_sword'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_mace',
+                            frame={t=7, r=0, w=4},
+                            options=make_options('mace', 'sort_mace'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_mace'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_hammer',
+                            frame={t=9, l=0, w=6},
+                            options=make_options('hammer', 'sort_hammer'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_hammer'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_spear',
+                            frame={t=9, l=12, w=5},
+                            options=make_options('spear', 'sort_spear'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_spear'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_crossbow',
+                            frame={t=9, r=0, w=8},
+                            options=make_options('crossbow', 'sort_crossbow'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_crossbow'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_melee_combat_potential',
+                            frame={t=11, l=0, w=12},
+                            options=make_options('melee poten.', 'sort_melee_combat_potential'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_melee_combat_potential'),
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='sort_ranged_combat_potential',
+                            frame={t=11, r=0, w=13},
+                            options=make_options('ranged poten.', 'sort_ranged_combat_potential'),
+                            option_gap=0,
+                            on_change=self:callback('sync_widgets', 'sort_ranged_combat_potential'),
+                        },
                     },
-                    initial_option=sort_by_any_melee_desc,
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_any_melee'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_any_ranged',
-                    frame={t=2, r=8, w=12},
-                    options={
-                        {label='ranged eff.', value=sort_noop},
-                        {label='ranged eff.'..CH_DN, value=sort_by_any_ranged_desc, pen=COLOR_GREEN},
-                        {label='ranged eff.'..CH_UP, value=sort_by_any_ranged_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_any_ranged'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_name',
-                    frame={t=2, r=0, w=5},
-                    options={
-                        {label='name', value=sort_noop},
-                        {label='name'..CH_DN, value=sort_by_name_desc, pen=COLOR_GREEN},
-                        {label='name'..CH_UP, value=sort_by_name_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_name'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_teacher',
-                    frame={t=4, l=0, w=8},
-                    options={
-                        {label='teacher', value=sort_noop},
-                        {label='teacher'..CH_DN, value=sort_by_teacher_desc, pen=COLOR_GREEN},
-                        {label='teacher'..CH_UP, value=sort_by_teacher_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_teacher'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_tactics',
-                    frame={t=4, l=10, w=8},
-                    options={
-                        {label='tactics', value=sort_noop},
-                        {label='tactics'..CH_DN, value=sort_by_tactics_desc, pen=COLOR_GREEN},
-                        {label='tactics'..CH_UP, value=sort_by_tactics_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_tactics'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_arrival',
-                    frame={t=4, r=0, w=14},
-                    options={
-                        {label='arrival order', value=sort_noop},
-                        {label='arrival order'..CH_DN, value=sort_by_arrival_desc, pen=COLOR_GREEN},
-                        {label='arrival order'..CH_UP, value=sort_by_arrival_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_arrival'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_stress',
-                    frame={t=6, l=0, w=7},
-                    options={
-                        {label='stress', value=sort_noop},
-                        {label='stress'..CH_DN, value=sort_by_stress_desc, pen=COLOR_GREEN},
-                        {label='stress'..CH_UP, value=sort_by_stress_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_stress'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_need',
-                    frame={t=6, r=0, w=18},
-                    options={
-                        {label='need for training', value=sort_noop},
-                        {label='need for training'..CH_DN, value=sort_by_need_desc, pen=COLOR_GREEN},
-                        {label='need for training'..CH_UP, value=sort_by_need_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_need'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_axe',
-                    frame={t=8, l=0, w=4},
-                    options={
-                        {label='axe', value=sort_noop},
-                        {label='axe'..CH_DN, value=sort_by_axe_desc, pen=COLOR_GREEN},
-                        {label='axe'..CH_UP, value=sort_by_axe_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_axe'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_sword',
-                    frame={t=8, w=6},
-                    options={
-                        {label='sword', value=sort_noop},
-                        {label='sword'..CH_DN, value=sort_by_sword_desc, pen=COLOR_GREEN},
-                        {label='sword'..CH_UP, value=sort_by_sword_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_sword'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_mace',
-                    frame={t=8, r=0, w=5},
-                    options={
-                        {label='mace', value=sort_noop},
-                        {label='mace'..CH_DN, value=sort_by_mace_desc, pen=COLOR_GREEN},
-                        {label='mace'..CH_UP, value=sort_by_mace_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_mace'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_hammer',
-                    frame={t=10, l=0, w=7},
-                    options={
-                        {label='hammer', value=sort_noop},
-                        {label='hammer'..CH_DN, value=sort_by_hammer_desc, pen=COLOR_GREEN},
-                        {label='hammer'..CH_UP, value=sort_by_hammer_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_hammer'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_spear',
-                    frame={t=10, w=6},
-                    options={
-                        {label='spear', value=sort_noop},
-                        {label='spear'..CH_DN, value=sort_by_spear_desc, pen=COLOR_GREEN},
-                        {label='spear'..CH_UP, value=sort_by_spear_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_spear'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_crossbow',
-                    frame={t=10, r=0, w=9},
-                    options={
-                        {label='crossbow', value=sort_noop},
-                        {label='crossbow'..CH_DN, value=sort_by_crossbow_desc, pen=COLOR_GREEN},
-                        {label='crossbow'..CH_UP, value=sort_by_crossbow_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_crossbow'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_melee_combat_potential',
-                    frame={t=12, l=0, w=16},
-                    options={
-                        {label='melee potential', value=sort_noop},
-                        {label='melee potential'..CH_DN, value=sort_by_melee_combat_potential_desc, pen=COLOR_GREEN},
-                        {label='melee potential'..CH_UP, value=sort_by_melee_combat_potential_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_melee_combat_potential'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_ranged_combat_potential',
-                    frame={t=12, r=0, w=17},
-                    options={
-                        {label='ranged potential', value=sort_noop},
-                        {label='ranged potential'..CH_DN, value=sort_by_ranged_combat_potential_desc, pen=COLOR_GREEN},
-                        {label='ranged potential'..CH_UP, value=sort_by_ranged_combat_potential_asc, pen=COLOR_YELLOW},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_ranged_combat_potential'),
                 },
             },
         },
-        widgets.CycleHotkeyLabel{
-            view_id='military',
-            frame={l=0},
-            key='CUSTOM_SHIFT_Q',
-            label='Units in other squads:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
+    }
+end
+
+function SquadAnnotationOverlay:sync_widgets(sort_widget, sort_id)
+    if sort_widget then
+        if sort_id == 'noop' then
+            self.subviews[sort_widget]:cycle()
+            return
+        end
+        self.subviews.sort:setOption(sort_id)
+        for _,opt in ipairs(SORT_LIBRARY) do
+            self.subviews[opt.widget]:setOption(sort_id)
+        end
+    end
+    sort_set_sort_fn()
+    self.dirty = true
+end
+
+function do_sort(a, b)
+    local self = annotation_instance
+    local opt = SORT_LIBRARY[self.subviews.sort:getOptionValue()]
+    local fn = self.subviews.sort_button.ascending and opt.asc_fn or opt.desc_fn
+    return fn(a, b) < 0
+end
+
+function SquadAnnotationOverlay:mouse_over_ours()
+    if self.subviews.annotation_panel:getMouseFramePos() then return true end
+    if self.subviews.hover_panel.visible and self.subviews.hover_panel:getMouseFramePos() then
+        return true
+    end
+    return self.subviews.banner_panel:getMouseFramePos()
+end
+
+function SquadAnnotationOverlay:onInput(keys)
+    local clicked_on_us = keys._MOUSE_L and self:mouse_over_ours()
+    if keys._MOUSE_R or (keys._MOUSE_L and not clicked_on_us) then
+        -- if any click is made, we may need to refresh our annotations
+        self.dirty = true
+    end
+    return SquadAnnotationOverlay.super.onInput(self, keys) or clicked_on_us
+end
+
+function SquadAnnotationOverlay:onRenderFrame(dc, rect)
+    if self.dirty or
+        self.saved_scroll_position ~= get_scroll_pos() or
+        self.saved_num_visible ~= get_scroll_rows().num_visible
+    then
+        self.subviews.sort_button.selected = sort_get_sort_active()
+        annotate_visible_units(self.subviews.sort:getOptionValue())
+        self.saved_scroll_position = get_scroll_pos()
+        self.dirty = false
+    end
+    self.subviews.label:setText(get_label_text(self.frame_parent_rect.height))
+    if self.subviews.sort:getMousePos() then
+        self.subviews.hover_panel.visible = true
+    elseif self.subviews.hover_panel.visible and
+        not self.subviews.hover_panel:getMouseFramePos()
+    then
+        self.subviews.hover_panel.visible = false
+    end
+    SquadAnnotationOverlay.super.onRenderFrame(self, dc, rect)
+end
+
+function SquadAnnotationOverlay:preUpdateLayout(parent_rect)
+    self.frame.h = get_num_slots(parent_rect.height) * 3 + 4
+end
+
+-- ----------------------
+-- SquadFilterOverlay
+--
+
+local function poke_list()
+    get_unit_selector().sort_flags.NEEDS_RESORTED = true
+end
+
+local function get_shifter_text(ch)
+    return {
+        ' ', NEWLINE,
+        ch, NEWLINE,
+        ch, NEWLINE,
+        ' ', NEWLINE,
+    }
+end
+
+filter_instance = nil
+
+local NARROW_WIDTH = 28
+local WIDE_WIDTH = 56
+
+local TO_THE_RIGHT = string.char(16)
+local TO_THE_LEFT = string.char(17)
+
+SquadFilterOverlay = defclass(SquadFilterOverlay, overlay.OverlayWidget)
+SquadFilterOverlay.ATTRS{
+    desc='Adds filter capabilities to the squad assignment panel.',
+    default_pos={x=64, y=-5},
+    default_enabled=true,
+    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
+    frame={w=NARROW_WIDTH, h=6},
+}
+
+function SquadFilterOverlay:init()
+    filter_instance = self
+
+    local left_panel = widgets.Panel{
+        view_id='left_panel',
+        frame={t=1, b=0, l=0, w=NARROW_WIDTH-4},
+        visible=true,
+        subviews={
+            widgets.CycleHotkeyLabel{
+                view_id='military',
+                frame={t=0, l=0},
+                key='CUSTOM_SHIFT_Q',
+                label='Other squads:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
             },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
+            widgets.CycleHotkeyLabel{
+                view_id='officials',
+                frame={t=1, l=0},
+                key='CUSTOM_SHIFT_O',
+                label='   Officials:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='nobles',
+                frame={t=2, l=0},
+                key='CUSTOM_SHIFT_N',
+                label='    Nobility:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
         },
-        widgets.CycleHotkeyLabel{
-            view_id='officials',
-            frame={l=0},
-            key='CUSTOM_SHIFT_O',
-            label='Appointed officials:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
+    }
+
+    local right_panel = widgets.Panel{
+        view_id='right_panel',
+        frame={t=1, b=0, r=2, w=NARROW_WIDTH-4},
+        visible=false,
+        subviews={
+            widgets.CycleHotkeyLabel{
+                view_id='infant',
+                frame={t=0, l=0},
+                key='CUSTOM_SHIFT_M',
+                label='With infants:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
             },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
+            widgets.CycleHotkeyLabel{
+                view_id='unstable',
+                frame={t=1, l=0},
+                key='CUSTOM_SHIFT_D',
+                label='Hates combat:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='maimed',
+                frame={t=2, l=0},
+                key='CUSTOM_SHIFT_I',
+                label='      Maimed:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
         },
-        widgets.CycleHotkeyLabel{
-            view_id='nobles',
-            frame={l=0, w=20},
-            key='CUSTOM_SHIFT_N',
-            label='Nobility:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
+    }
+
+    local main_panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        subviews={
+            widgets.HotkeyLabel{
+                frame={t=0, w=NARROW_WIDTH-3},
+                key='CUSTOM_SHIFT_A',
+                label='Toggle all filters',
+                on_activate=function()
+                    local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
+                    self.subviews.military:setOption(target)
+                    self.subviews.officials:setOption(target)
+                    self.subviews.nobles:setOption(target)
+                    self.subviews.infant:setOption(target)
+                    self.subviews.unstable:setOption(target)
+                    self.subviews.maimed:setOption(target)
+                    poke_list()
+                end,
             },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='infant',
-            frame={l=0},
-            key='CUSTOM_SHIFT_M',
-            label='Mothers with infants:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
+            left_panel,
+            widgets.Label{
+                view_id='shifter',
+                frame={r=0, w=1},
+                text=get_shifter_text(TO_THE_RIGHT),
+                on_click=function()
+                    if self.subviews.right_panel.visible then
+                        self.subviews.left_panel.visible = true
+                        self.subviews.right_panel.visible = false
+                        self.subviews.shifter:setText(get_shifter_text(TO_THE_RIGHT))
+                    else
+                        self.subviews.left_panel.visible = false
+                        self.subviews.right_panel.visible = true
+                        self.subviews.shifter:setText(get_shifter_text(TO_THE_LEFT))
+                    end
+                    self:updateLayout()
+                end,
+                visible=true,
             },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='unstable',
-            frame={l=0},
-            key='CUSTOM_SHIFT_F',
-            label='Weak mental fortitude:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='maimed',
-            frame={l=0},
-            key='CUSTOM_SHIFT_I',
-            label='Critically injured:',
-            options={
-                {label='Include', value='include', pen=COLOR_GREEN},
-                {label='Only', value='only', pen=COLOR_YELLOW},
-                {label='Exclude', value='exclude', pen=COLOR_RED},
-            },
-            initial_option='include',
-            on_change=function() self:refresh_list() end,
+            right_panel,
         },
     }
 
     self:addviews{
         main_panel,
+        widgets.Divider{
+            view_id='divider',
+            frame={l=NARROW_WIDTH-1, w=1, t=2},
+            frame_style=gui.FRAME_MEDIUM,
+            frame_style_t=false,
+            visible=false,
+        },
         widgets.HelpButton{
-            frame={t=0, r=1},
             command='sort',
         },
     }
 end
 
-local function normalize_search_key(search_key)
-    local out = ''
-    for c in dfhack.toSearchNormalized(search_key):gmatch("[%w%s]") do
-        out = out .. c:lower()
+function SquadFilterOverlay:render(dc)
+    sort_set_squad_filter_fn()
+    SquadFilterOverlay.super.render(self, dc)
+end
+
+function SquadFilterOverlay:preUpdateLayout(parent_rect)
+    if parent_rect.width >= 153 and self.frame.w == NARROW_WIDTH then
+        self.frame.w = WIDE_WIDTH
+        self.subviews.shifter.visible = false
+        self.subviews.divider.visible = true
+        self.subviews.left_panel.visible = true
+        self.subviews.right_panel.visible = true
+    elseif parent_rect.width < 153 and self.frame.w == WIDE_WIDTH then
+        self.frame.w = NARROW_WIDTH
+        self.subviews.shifter.visible = true
+        self.subviews.shifter:setText(get_shifter_text(TO_THE_RIGHT))
+        self.subviews.divider.visible = false
+        self.subviews.left_panel.visible = true
+        self.subviews.right_panel.visible = false
     end
-    return out
 end
 
 local function is_in_military(unit)
@@ -1024,10 +1253,7 @@ local function is_maimed(unit)
         unit.status2.limbs_stand_count == 0
 end
 
-local function filter_matches(unit_id, filter)
-    if unit_id == -1 then return true end
-    local unit = df.unit.find(unit_id)
-    if not unit then return false end
+local function filter_matches(unit, filter)
     if filter.military == 'only' and not is_in_military(unit) then return false end
     if filter.military == 'exclude' and is_in_military(unit) then return false end
     if filter.officials == 'only' and not is_elected_or_appointed_official(unit) then return false end
@@ -1040,125 +1266,15 @@ local function filter_matches(unit_id, filter)
     if filter.unstable == 'exclude' and is_unstable(unit) then return false end
     if filter.maimed == 'only' and not is_maimed(unit) then return false end
     if filter.maimed == 'exclude' and is_maimed(unit) then return false end
-    if #filter.search == 0 then return true end
-    local search_key = sortoverlay.get_unit_search_key(unit)
-    return normalize_search_key(search_key):find(dfhack.toSearchNormalized(filter.search))
+    return true
 end
 
-local function is_noop_filter(filter)
-    return #filter.search == 0 and
-        filter.military == 'include' and
-        filter.officials == 'include' and
-        filter.nobles == 'include' and
-        filter.infant == 'include' and
-        filter.unstable == 'include' and
-        filter.maimed == 'include'
-end
-
-local function is_filter_equal(a, b)
-    return a.search == b.search and
-        a.military == b.military and
-        a.officials == b.officials and
-        a.nobles == b.nobles and
-        a.infant == b.infant and
-        a.unstable == b.unstable and
-        a.maimed == b.maimed
-end
-
-local unit_selector = df.global.game.main_interface.unit_selector
-
--- this function uses the unused itemid and selected vectors to keep state,
--- taking advantage of the fact that they are reset by DF when the list of units changes
-local function filter_vector(filter, prev_filter)
-    local unid_is_filtered = #unit_selector.selected >= 0 and unit_selector.selected[0] ~= 0
-    if is_noop_filter(filter) or #unit_selector.selected == 0 then
-        if not unid_is_filtered then
-            -- we haven't modified the unid vector; nothing to do here
-            return
-        end
-        -- restore the unid vector
-        unit_selector.unid:assign(unit_selector.itemid)
-        -- clear our "we meddled" flag
-        unit_selector.selected[0] = 0
-        return
+function do_squad_filter(unit)
+    if annotation_instance then
+        annotation_instance.dirty = true
     end
-    if unid_is_filtered and is_filter_equal(filter, prev_filter) then
-        -- filter hasn't changed; we don't need to refilter
-        return
-    end
-    if unid_is_filtered then
-        -- restore the unid vector
-        unit_selector.unid:assign(unit_selector.itemid)
-    else
-        -- save the unid vector and set our meddle flag
-        unit_selector.itemid:assign(unit_selector.unid)
-        unit_selector.selected[0] = 1
-    end
-    -- do the actual filtering
-    for idx=#unit_selector.unid-1,0,-1 do
-        if not filter_matches(unit_selector.unid[idx], filter) then
-            unit_selector.unid:erase(idx)
-        end
-    end
-    -- fix up scroll position if it would be off the end of the list
-    if unit_selector.scroll_position + 10 > #unit_selector.unid then
-        unit_selector.scroll_position = math.max(0, #unit_selector.unid - 10)
-    end
-end
-
-local use_stress_faces = false
-local rating_annotations = {}
-
-local function annotate_visible_units(sort_fn)
-    use_stress_faces = STRESS_FACE_FNS[sort_fn]
-    rating_annotations = {}
-    rating_fn = RATING_FNS[sort_fn]
-    local max_idx = math.min(#unit_selector.unid-1, unit_selector.scroll_position+9)
-    for idx = unit_selector.scroll_position, max_idx do
-        local annotation_idx = idx - unit_selector.scroll_position + 1
-        local unit = df.unit.find(unit_selector.unid[idx])
-        rating_annotations[annotation_idx] = nil
-        if unit and rating_fn then
-            local val, color = rating_fn(unit)
-            if val then
-                rating_annotations[annotation_idx] = {val=val, color=color}
-            end
-        end
-    end
-end
-
-local SORT_WIDGET_NAMES = {
-    'sort',
-    'sort_any_melee',
-    'sort_any_ranged',
-    'sort_name',
-    'sort_teacher',
-    'sort_tactics',
-    'sort_arrival',
-    'sort_stress',
-    'sort_need',
-    'sort_axe',
-    'sort_sword',
-    'sort_mace',
-    'sort_hammer',
-    'sort_spear',
-    'sort_crossbow',
-    'sort_melee_combat_potential',
-    'sort_ranged_combat_potential',
-}
-
-function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
-    sort_widget = sort_widget or 'sort'
-    sort_fn = sort_fn or self.subviews.sort:getOptionValue()
-    if sort_fn == sort_noop then
-        self.subviews[sort_widget]:cycle()
-        return
-    end
-    for _,widget_name in ipairs(SORT_WIDGET_NAMES) do
-        self.subviews[widget_name]:setOption(sort_fn)
-    end
+    local self = filter_instance
     local filter = {
-        search=self.subviews.search.text,
         military=self.subviews.military:getOptionValue(),
         officials=self.subviews.officials:getOptionValue(),
         nobles=self.subviews.nobles:getOptionValue(),
@@ -1166,199 +1282,33 @@ function SquadAssignmentOverlay:refresh_list(sort_widget, sort_fn)
         unstable=self.subviews.unstable:getOptionValue(),
         maimed=self.subviews.maimed:getOptionValue(),
     }
-    filter_vector(filter, self.prev_filter or {})
-    self.prev_filter = filter
-    utils.sort_vector(unit_selector.unid, nil, sort_fn)
-    annotate_visible_units(sort_fn)
-    self.saved_scroll_position = unit_selector.scroll_position
-end
-
-function SquadAssignmentOverlay:onInput(keys)
-    if keys._MOUSE_R or (keys._MOUSE_L and not self:getMouseFramePos()) then
-        -- if any click is made outside of our window, we may need to refresh our list
-        self.dirty = true
-    end
-    return SquadAssignmentOverlay.super.onInput(self, keys)
-end
-
-function SquadAssignmentOverlay:onRenderFrame(dc, frame_rect)
-    SquadAssignmentOverlay.super.onRenderFrame(self, dc, frame_rect)
-    if self.dirty then
-        self:refresh_list()
-        self.dirty = false
-    elseif self.saved_scroll_position ~= unit_selector.scroll_position then
-        annotate_visible_units(self.subviews.sort:getOptionValue())
-        self.saved_scroll_position = unit_selector.scroll_position
-    end
-end
-
--- ----------------------
--- SquadAnnotationOverlay
---
-
-SquadAnnotationOverlay = defclass(SquadAnnotationOverlay, overlay.OverlayWidget)
-SquadAnnotationOverlay.ATTRS{
-    default_pos={x=56, y=5},
-    default_enabled=true,
-    viewscreens='dwarfmode/UnitSelector/SQUAD_FILL_POSITION',
-    frame={w=5, h=35},
-    frame_style=gui.FRAME_INTERIOR_MEDIUM,
-    frame_background=gui.CLEAR_PEN,
-}
-
-function get_annotation_text(idx)
-    local elem = rating_annotations[idx]
-    if not elem or not tonumber(elem.val) then return ' - ' end
-
-    return tostring(math.tointeger(elem.val))
-end
-
-function get_annotation_color(idx)
-    local elem = rating_annotations[idx]
-    return elem and elem.color or nil
-end
-
-local to_pen = dfhack.pen.parse
-local DASH_PEN = to_pen{ch='-', fg=COLOR_WHITE, keep_lower=true}
-
-local FACE_TILES = {}
-local function init_face_tiles()
-    for idx=0,6 do
-        FACE_TILES[idx] = {}
-        local face_off = (6 - idx) * 2
-        for y=0,1 do
-            for x=0,1 do
-                local tile = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 32 + face_off + x, 6 + y)
-                ensure_key(FACE_TILES[idx], y)[x] = tile
-            end
-        end
-    end
-
-    for idx,color in ipairs{COLOR_RED, COLOR_LIGHTRED, COLOR_YELLOW, COLOR_WHITE, COLOR_GREEN, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN} do
-        local face = {}
-        ensure_key(face, 0)[0] = to_pen{tile=FACE_TILES[idx-1][0][0], ch=1, fg=color}
-        ensure_key(face, 0)[1] = to_pen{tile=FACE_TILES[idx-1][0][1], ch='\\', fg=color}
-        ensure_key(face, 1)[0] = to_pen{tile=FACE_TILES[idx-1][1][0], ch='\\', fg=color}
-        ensure_key(face, 1)[1] = to_pen{tile=FACE_TILES[idx-1][1][1], ch='/', fg=color}
-        FACE_TILES[idx-1] = face
-    end
-end
-init_face_tiles()
-
-function get_stress_face_tile(idx, x, y)
-    local elem = rating_annotations[idx]
-    if not elem or not elem.val or elem.val < 0 then
-        return x == 0 and y == 1 and DASH_PEN or gui.CLEAR_PEN
-    end
-    local val = math.min(6, elem.val)
-    return safe_index(FACE_TILES, val, y, x)
-end
-
-function SquadAnnotationOverlay:init()
-    for idx = 1, 10 do
-        self:addviews{
-            widgets.Label{
-                frame={t=idx*3+1, h=1, w=3},
-                text={
-                    {
-                        text=curry(get_annotation_text, idx),
-                        pen=curry(get_annotation_color, idx),
-                        width=3,
-                        rjustify=true,
-                    },
-                },
-                visible=function() return not use_stress_faces end,
-            },
-            widgets.Label{
-                frame={t=idx*3, r=0, h=2, w=2},
-                auto_height=false,
-                text={
-                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 0)},
-                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 0)},
-                    NEWLINE,
-                    {width=1, tile=curry(get_stress_face_tile, idx, 0, 1)},
-                    {width=1, tile=curry(get_stress_face_tile, idx, 1, 1)},
-                },
-                visible=function() return use_stress_faces end,
-            },
-        }
-    end
+    return filter_matches(unit, filter)
 end
 
 OVERLAY_WIDGETS = {
-    squad_assignment=SquadAssignmentOverlay,
     squad_annotation=SquadAnnotationOverlay,
+    squad_filter=SquadFilterOverlay,
     info=require('plugins.sort.info').InfoOverlay,
     workanimals=require('plugins.sort.info').WorkAnimalOverlay,
+    workanimals_filter=require('plugins.sort.info').WorkAnimalFilterOverlay,
     candidates=require('plugins.sort.info').CandidatesOverlay,
     interrogation=require('plugins.sort.info').InterrogationOverlay,
+    conviction=require('plugins.sort.info').ConvictionOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
-    unit_selector=require('plugins.sort.unitselector').UnitSelectorOverlay,
-    worker_assignment=require('plugins.sort.unitselector').WorkerAssignmentOverlay,
+    -- TODO: maybe rewrite for 50.12
+    -- burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,
     slab=require('plugins.sort.slab').SlabOverlay,
     world=require('plugins.sort.world').WorldOverlay,
+    places=require('plugins.sort.places').PlacesOverlay,
+    elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
+    elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
-
     init_face_tiles()
 end
-
---[[
-local utils = require('utils')
-local units = require('plugins.sort.units')
-local items = require('plugins.sort.items')
-
-orders = orders or {}
-orders.units = units.orders
-orders.items = items.orders
-
-function parse_ordering_spec(type,...)
-    local group = orders[type]
-    if group == nil then
-        dfhack.printerr('Invalid ordering class: '..tostring(type))
-        return nil
-    end
-
-    local specs = table.pack(...)
-    local rv = { }
-
-    for _,spec in ipairs(specs) do
-        local nil_first = false
-        if string.sub(spec,1,1) == '<' then
-            nil_first = true
-            spec = string.sub(spec,2)
-        end
-
-        local reverse = false
-        if string.sub(spec,1,1) == '>' then
-            reverse = true
-            spec = string.sub(spec,2)
-        end
-
-        local cm = group[spec]
-
-        if cm == nil then
-            dfhack.printerr('Unknown order for '..type..': '..tostring(spec))
-            return nil
-        end
-
-        if nil_first or reverse then
-            cm = copyall(cm)
-            cm.nil_first = nil_first
-            cm.reverse = reverse
-        end
-
-        rv[#rv+1] = cm
-    end
-
-    return rv
-end
-
-make_sort_order = utils.make_sort_order
-]]
 
 return _ENV

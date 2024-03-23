@@ -3,7 +3,16 @@ coord(uint16_t _x, uint16_t _y, uint16_t _z) : x(_x), y(_y), z(_z) {}
 
 operator coord2d() const { return coord2d(x,y); }
 
-bool isValid() const { return z >= 0; }
+std::size_t operator()() const {
+    size_t r = 17;
+    const size_t m = 65537;
+    r = m*(r+x);
+    r = m*(r+y);
+    r = m*(r+z);
+    return r;
+}
+
+bool isValid() const { return x >= 0; }
 void clear() { x = y = z = -30000; }
 
 bool operator==(const coord &other) const

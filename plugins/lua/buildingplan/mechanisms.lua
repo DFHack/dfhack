@@ -2,6 +2,7 @@ local _ENV = mkmodule('plugins.buildingplan.mechanisms')
 
 local itemselection = require('plugins.buildingplan.itemselection')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local view_sheets = df.global.game.main_interface.view_sheets
@@ -12,11 +13,22 @@ local view_sheets = df.global.game.main_interface.view_sheets
 
 MechanismOverlay = defclass(MechanismOverlay, overlay.OverlayWidget)
 MechanismOverlay.ATTRS{
+    desc='Adds mechanism selection capabilities to the link lever/pressure plate screens.',
     default_pos={x=5,y=5},
     default_enabled=true,
     viewscreens='dwarfmode/LinkingLever',
     frame={w=57, h=13},
 }
+
+local function get_label()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if bld and bld:getType() == df.building_type.Trap and
+        bld:getSubtype() == df.trap_type.PressurePlate
+    then
+        return 'Plate:'
+    end
+    return 'Lever:'
+end
 
 function MechanismOverlay:init()
     self:addviews{
@@ -31,7 +43,7 @@ function MechanismOverlay:init()
                     view_id='safety_lever',
                     frame={t=0, l=20, w=15},
                     key='CUSTOM_G',
-                    label='Lever:',
+                    label=get_label,
                     options={
                         {label='Any', value=0},
                         {label='Magma', value=2, pen=COLOR_RED},
@@ -92,21 +104,59 @@ local function reset_dlg()
     end
 end
 
+local function is_reachable(bld_pos, item_id)
+    if not bld_pos then return false end
+    local item = df.item.find(item_id)
+    if not item then return false end
+    return dfhack.maps.canWalkBetween(xyz2pos(dfhack.items.getPosition(item)), bld_pos)
+end
+
+local function sort_by_safety(item_ids, safety)
+    if safety == 2 then return item_ids end
+    local safety_ids = {[safety]=utils.invert(item_ids)}
+    for sort_safety=safety+1,2 do
+        local safety_item_ids = require('plugins.buildingplan').getAvailableItemsByHeat(
+            df.building_type.Trap, df.trap_type.Lever, -1, 0, sort_safety)
+        safety_ids[sort_safety] = utils.invert(safety_item_ids)
+    end
+    local sorted_ids = {}
+    for _,item_id in ipairs(item_ids) do
+        for safety_idx=2,safety,-1 do
+            if safety_ids[safety_idx][item_id] then
+                table.insert(ensure_key(sorted_ids, safety_idx), item_id)
+                break
+            end
+        end
+    end
+    local ret = {}
+    for safety_id=safety,2 do
+        if sorted_ids[safety_id] then
+            table.move(sorted_ids[safety_id], 1, #sorted_ids[safety_id], #ret+1, ret)
+        end
+    end
+    return ret
+end
+
+-- returns mechanisms ordered by heat safety, so the least heat safe mechanisms are used first
+-- when heat safety isn't important
 local function get_available_items(safety, other_mechanism)
     local item_ids = require('plugins.buildingplan').getAvailableItemsByHeat(
         df.building_type.Trap, df.trap_type.Lever, -1, 0, safety)
-    for idx,item_id in ipairs(item_ids) do
-        if item_id == other_mechanism then
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    local bld_pos = bld and xyz2pos(bld.centerx, bld.centery, bld.z)
+    for idx=#item_ids,1,-1 do
+        local item_id = item_ids[idx]
+        if item_id == other_mechanism or not is_reachable(bld_pos, item_id) then
             table.remove(item_ids, idx)
-            break
         end
     end
-    return item_ids
+    return sort_by_safety(item_ids, safety)
 end
 
 function MechanismOverlay:save_id(which, item_id)
     local saved_id = ('saved_%s_id'):format(which)
     local ui_id = ('linking_lever_mech_%s_id'):format(which)
+    item_id = item_id or -1
     view_sheets[ui_id] = item_id
     self[saved_id] = item_id
 end
@@ -118,7 +168,7 @@ function MechanismOverlay:choose_mechanism(which, autoselect)
     local available_item_ids = get_available_items(safety, view_sheets[ui_other_id])
 
     if autoselect then
-        self:save_id(which, available_item_ids[1] or -1)
+        self:save_id(which, available_item_ids[1])
         return
     end
 
@@ -138,7 +188,7 @@ function MechanismOverlay:choose_mechanism(which, autoselect)
         autoselect=false,
         on_cancel=reset_dlg,
         on_submit=function(chosen_ids)
-            self:save_id(which, chosen_ids[1] or available_item_ids[1] -1)
+            self:save_id(which, chosen_ids[1] or available_item_ids[1])
             reset_dlg()
         end,
     }:show()

@@ -29,12 +29,12 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
+#include "DataDefs.h"
+
+#include "df/item_type.h"
+#include "df/job_item_ref.h"
 
 #include <ostream>
-
-#include "DataDefs.h"
-#include "df/job_item_ref.h"
-#include "df/item_type.h"
 
 namespace df
 {

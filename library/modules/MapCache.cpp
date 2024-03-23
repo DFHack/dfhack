@@ -24,15 +24,6 @@ distribution.
 
 
 #include "Internal.h"
-
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <cstdlib>
-#include <iostream>
-using namespace std;
-
 #include "ColorText.h"
 #include "Core.h"
 #include "DataDefs.h"
@@ -53,13 +44,20 @@ using namespace std;
 #include "df/block_square_event_designation_priorityst.h"
 #include "df/block_square_event_frozen_liquidst.h"
 #include "df/block_square_event_grassst.h"
+#include "df/building.h"
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
+#include "df/construction.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/inorganic_raw.h"
+#include "df/item.h"
 #include "df/job.h"
+#include "df/map_block.h"
+#include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
@@ -73,6 +71,15 @@ using namespace std;
 #include "df/world_underground_region.h"
 #include "df/z_level_flags.h"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cstdlib>
+#include <iostream>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace MapExtras;
 using namespace df::enums;
@@ -291,6 +298,27 @@ static df::block_square_event_designation_priorityst *getPriorityEvent(df::map_b
     return events[0];
 }
 
+bool MapExtras::Block::setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority)
+{
+    if(!valid) return false;
+    dirty_designations = true;
+    designated_tiles[(p.x&15) + (p.y&15)*16] = true;
+    //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
+    index_tile(designation,p) = des;
+    if((des.bits.dig || des.bits.smooth) && block) {
+        block->flags.bits.designated = true;
+        // if priority is not specified, keep the existing priority if it
+        // is set. otherwise default to 4000.
+        if (priority <= 0)
+            priority = priorityAt(p);
+        if (priority <= 0)
+            priority = 4000;
+        setPriorityAt(p, priority);
+    }
+    return true;
+}
+
+
 int32_t MapExtras::Block::priorityAt(df::coord2d pos)
 {
     if (!block)
@@ -439,6 +467,14 @@ bool MapExtras::Block::setSoilAt(df::coord2d pos, df::tiletype tile, bool kill_v
     basemats->set_base_mat(tiles, pos, 0, mat);
 
     return true;
+}
+
+df::tiletype MapExtras::Block::tiletypeAt(df::coord2d p)
+{
+    if (!block) return tiletype::Void;
+    if (tiles)
+        return index_tile(tiles->raw_tiles,p);
+    return index_tile(block->tiletype,p);
 }
 
 void MapExtras::Block::ParseTiles(TileInfo *tiles)
@@ -720,6 +756,11 @@ void MapExtras::Block::WriteVeins(TileInfo *tiles, BasematInfo *bmats)
     }
 
     bmats->vein_dirty.clear();
+}
+
+t_blockflags MapExtras::Block::BlockFlags()
+{
+    return block ? block->flags : t_blockflags();
 }
 
 bool MapExtras::Block::isDirty()
@@ -1254,6 +1295,15 @@ MapExtras::MapCache::MapCache()
         while (layer_mats[i].size() < 16)
             layer_mats[i].push_back(-1);
     }
+}
+
+bool MapExtras::MapCache::addItemOnGround(df::item *item) {
+    Block * b= BlockAtTile(item->pos);
+    return b ? b->addItemOnGround(item) : false;
+}
+bool MapExtras::MapCache::removeItemOnGround(df::item *item) {
+    Block * b= BlockAtTile(item->pos);
+    return b ? b->removeItemOnGround(item) : false;
 }
 
 bool MapExtras::MapCache::WriteAll()

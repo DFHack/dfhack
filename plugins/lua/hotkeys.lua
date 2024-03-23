@@ -27,6 +27,7 @@ end
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button.',
     default_pos={x=5,y=1},
     default_enabled=true,
     version=2,

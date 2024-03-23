@@ -29,25 +29,28 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
-#include "modules/Materials.h"
 #include "MemAccess.h"
-
 #include "DataDefs.h"
-#include "df/building_tradedepotst.h"
-#include "df/caravan_state.h"
-#include "df/item.h"
-#include "df/item_type.h"
-#include "df/general_ref.h"
-#include "df/specific_ref.h"
-#include "df/building_actual.h"
-#include "df/body_part_raw.h"
-#include "df/unit_inventory_item.h"
-#include "df/job_item_vector_id.h"
 
-namespace df
-{
+#include "modules/Materials.h"
+
+#include "df/building_item_role_type.h"
+#include "df/item_type.h"
+#include "df/job_item_vector_id.h"
+#include "df/specific_ref.h"
+#include "df/unit_inventory_item.h"
+
+namespace df {
+    struct body_part_raw;
+    struct building_actual;
+    struct building_tradedepotst;
+    struct caravan_state;
+    struct item;
     struct itemdef;
+    struct general_ref;
     struct proj_itemst;
+
+    union item_flags;
 }
 
 namespace MapExtras {
@@ -103,25 +106,6 @@ namespace DFHack
     }
 
 /**
- * Type for holding an item read from DF
- * \ingroup grp_items
- */
-struct dfh_item
-{
-    df::item *origin; // where this was read from
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    df::item_flags flags;
-    uint32_t age;
-    uint32_t id;
-    t_material matdesc;
-    int32_t quantity;
-    int32_t quality;
-    int16_t wear_level;
-};
-
-/**
  * The Items module
  * \ingroup grp_modules
  * \ingroup grp_items
@@ -135,11 +119,6 @@ DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
 
 /// Look for a particular item by ID
 DFHACK_EXPORT df::item * findItemByID(int32_t id);
-
-/// Make a partial copy of a DF item
-DFHACK_EXPORT bool copyItem(df::item * source, dfh_item & target);
-/// write copied item back to its origin
-DFHACK_EXPORT bool writeItem(const dfh_item & item);
 
 /// Retrieve refs
 DFHACK_EXPORT df::general_ref *getGeneralRef(df::item *item, df::general_ref_type type);
@@ -177,7 +156,7 @@ DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool deco
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
-    int16_t use_mode = 0, bool force_in_building = false);
+    df::building_item_role_type use_mode = df::building_item_role_type::TEMP, bool force_in_building = false);
 DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
@@ -207,6 +186,13 @@ DFHACK_EXPORT bool canTradeAnyWithContents(df::item *item);
 DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
 /// Returns true if an active caravan will pay extra for the given item
 DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
+
+/// Returns true if the item can be melted
+DFHACK_EXPORT bool canMelt(df::item *item, bool game_ui = false);
+/// Marks the item for melting
+DFHACK_EXPORT bool markForMelting(df::item *item);
+/// Cancels an existing melting designation
+DFHACK_EXPORT bool cancelMelting(df::item *item);
 
 /// Checks whether the item is an assigned hauling vehicle
 DFHACK_EXPORT bool isRouteVehicle(df::item *item);

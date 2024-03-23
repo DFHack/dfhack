@@ -55,9 +55,7 @@ currently trying to place, you can hit :kbd:`Alt`:kbd:`M` or click on the
 minimize toggle in the upper right corner of the panel. If you do not wish to
 ever use the ``buildingplan`` interface, you can turn off the
 ``buildingplan.planner`` overlay in `gui/control-panel` (on the "Overlays"
-tab). Be sure to keep the ``buildingplan`` "System service" itself enabled in
-`gui/control-panel` since if you turn it off, existing planned buildings in
-saved forts will stop functioning.
+tab).
 
 Usage
 -----
@@ -80,8 +78,8 @@ Examples
     select boulders. Use blocks or logs (if enabled) instead.
 
 ``buildingplan reset``
-    Reset all settings and filters to their defaults. This command does not affect
-    existing planned buildings.
+    Reset all settings and filters to their defaults. This command does not
+    affect existing planned buildings.
 
 .. _buildingplan-settings:
 
@@ -94,17 +92,29 @@ can be chosen when attaching items to planned buildings:
 ``blocks``, ``boulders``, ``logs``, ``bars`` (defaults: true, true, true, false)
     Allow blocks, boulders, logs, or bars to be matched for generic "building
     material" items.
+``reconstruct`` (default: true)
+    When you plan constructions, allow building on already-built constructions.
+    For example, if you're planning a wall, you will be able to place it on an
+    already-built floor. This matches vanilla behavior. However, it can be
+    annoying that floors can be planned on top of other constructed floors,
+    especially when you're trying to fill in "holes" in a large area of
+    constructed flooring. Turn off to treat existing constructions as "invalid"
+    locations for new constructions. This can help when extending existing
+    constructions and will prevent you from wasting materials by constructing
+    twice on a tile. Note that even if this option is disabled, you can still
+    choose to place a construction on top of an existing construction if you
+    just select a single 1x1 tile as your planning area.
 
 These settings are saved with your fort, so you only have to set them once and
 they will be persisted in your save.
 
 If you normally embark with some blocks on hand for early workshops, you might
-want to add this line to your ``dfhack-config/init/onMapLoad.init`` file to
-always configure `buildingplan` to just use blocks for buildings and
-constructions::
+want to enable the following two commands on the ``Autostart`` subtab of the
+``Automation`` tab to always configure `buildingplan` to just use blocks for
+buildings and constructions::
 
-    on-new-fortress buildingplan set boulders false
-    on-new-fortress buildingplan set logs false
+    buildingplan set boulders false
+    buildingplan set logs false
 
 Building placement
 ------------------
@@ -116,7 +126,8 @@ vanilla building placement panel.
 For basic usage, you don't need to change any settings. Just click to place
 buildings of the selected type and right click to exit building mode. Any
 buildings that require materials that you don't have on hand will be suspended
-and built when the items are available.
+and built when the items are available. The closest available material will be
+chosen for the building job.
 
 When building constructions, you'll get a few extra options, like whether the
 construction area should be hollow or what types of stairs you'd like at the
@@ -126,8 +137,8 @@ example, if you want to fill an area with flooring, you can select the entire
 area, and any tiles with existing buildings or walls will simply be skipped.
 
 Some building types will have other options available as well, such as a
-selector for how many weapons you want in weapon traps or whether you want your
-built cages to not have any occupants.
+selector for how many weapons you want in weapon traps or whether you want to
+only build engraved slabs.
 
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++

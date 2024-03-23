@@ -12,6 +12,7 @@ local building = df.global.game.main_interface.building
 
 SlabOverlay = defclass(SlabOverlay, sortoverlay.SortOverlay)
 SlabOverlay.ATTRS{
+    desc='Adds search and filter functionality to the slab engraving panel.',
     default_pos={x=-40, y=12},
     viewscreens='dwarfmode/ViewSheets/BUILDING/Workshop',
     frame={w=57, h=3},

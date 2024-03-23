@@ -22,6 +22,7 @@ enum ConfigValues {
     CONFIG_BOULDERS = 2,
     CONFIG_LOGS = 3,
     CONFIG_BARS = 4,
+    CONFIG_RECONSTRUCT = 5,
 };
 
 enum FilterConfigValues {
@@ -47,11 +48,6 @@ enum ItemSelectionChoice {
     ITEM_SELECTION_CHOICE_MANUAL = 1,
     ITEM_SELECTION_CHOICE_AUTOMATERIAL = 2,
 };
-
-int get_config_val(DFHack::PersistentDataItem &c, int index);
-bool get_config_bool(DFHack::PersistentDataItem &c, int index);
-void set_config_val(DFHack::PersistentDataItem &c, int index, int value);
-void set_config_bool(DFHack::PersistentDataItem &c, int index, bool value);
 
 std::vector<df::job_item_vector_id> getVectorIds(DFHack::color_ostream &out, const df::job_item *job_item, bool ignore_filters);
 bool itemPassesScreen(DFHack::color_ostream& out, df::item* item);

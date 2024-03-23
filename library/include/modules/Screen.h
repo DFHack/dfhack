@@ -23,27 +23,25 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
-
-#include <string>
-#include <set>
-#include <memory>
-
 #include "DataDefs.h"
-#include "df/graphic.h"
-#include "df/viewscreen.h"
-#include "df/building_civzonest.h"
-#include "df/building_stockpilest.h"
-#include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
 
+#include "df/viewscreen.h"
+
+#include <set>
+#include <memory>
+
 namespace df
 {
+    struct building_civzonest;
+    struct building_stockpilest;
     struct job;
     struct item;
     struct unit;
@@ -348,8 +346,9 @@ namespace DFHack
         static dfhack_viewscreen *try_cast(df::viewscreen *screen);
 
         virtual void logic();
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void resize(int w, int h) { return; }
+        virtual df::extentst get_rect();
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);
@@ -397,7 +396,7 @@ namespace DFHack
         virtual bool isFocused() { return !defocused; }
         virtual std::string getFocusString() { return focus; }
 
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void logic();
         virtual void help();
         virtual void resize(int w, int h);

@@ -3757,6 +3757,29 @@ parameters.
   ``true``/``false``. If ``arg_name`` is specified, it is used to make error
   messages more useful.
 
+enable-util
+===========
+
+The ``enable-util` module aims to reduce the boilerplate needed for persisting
+configuration and interfacing with the ``enable`` and ``disable`` commands for
+scripts that only want to run some function at regular intervals.
+
+Example usage::
+  --@enable = true
+  --@module = true
+
+  local function action() ...
+
+  GLOBAL_STORE = GLOBAL_STORE or { enabled = false }
+  GLOBAL_KEY = '<plugin name>'
+
+  function isEnabled () return GLOBAL_STORE['enabled'] end
+
+  local enableUtil = require('enable-util')
+  enableUtil.enableEvery(dfhack_flags, GLOBAL_STORE, GLOBAL_KEY, 1000, 'ticks', action)
+
+
+
 dumper
 ======
 

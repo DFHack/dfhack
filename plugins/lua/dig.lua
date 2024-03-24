@@ -23,11 +23,11 @@ end
 -- WarmDampDigConfig
 --
 
-WarmDampDigConfig = defclass(WarmDampDigConfig, widgets.Window)
+WarmDampDigConfig = defclass(WarmDampDigConfig, widgets.Panel)
 WarmDampDigConfig.ATTRS {
-    frame_title='Warm/Damp Dig',
     frame={w=25, h=20, b=7},
-    draggable=false,
+    frame_style=gui.FRAME_MEDIUM,
+    frame_background=gui.CLEAR_PEN,
     autoarrange_subviews=true,
     autoarrange_gap=1,
 }
@@ -41,16 +41,18 @@ function WarmDampDigConfig:init()
             },
         },
         widgets.ToggleHotkeyLabel{
+            view_id='damp',
             key='CUSTOM_CTRL_D',
             label='Damp dig:',
             initial_option=false,
-            on_change=function(val) end,
+            on_change=setDampPaintEnabled,
         },
         widgets.ToggleHotkeyLabel{
+            view_id='warm',
             key='CUSTOM_CTRL_W',
             label='Warm dig:',
             initial_option=false,
-            on_change=function(val) end,
+            on_change=setWarmPaintEnabled,
         },
         widgets.Divider{
             frame={h=1},
@@ -68,19 +70,20 @@ function WarmDampDigConfig:init()
         widgets.HotkeyLabel{
             key='CUSTOM_CTRL_N',
             label='Damp dig',
-            on_activate=function() end,
+            on_activate=markCurLevelDampDig,
         },
         widgets.HotkeyLabel{
             key='CUSTOM_CTRL_M',
             label='Warm dig',
-            on_activate=function() end,
+            on_activate=markCurLevelWarmDig,
         },
     }
 end
 
 function WarmDampDigConfig:render(dc)
     -- TODO: dismiss if icon no longer shown
-    -- TODO: set toggle states according to plugin config
+    self.subviews.damp:setOption(getDampPaintEnabled())
+    self.subviews.warm:setOption(getWarmPaintEnabled())
     WarmDampDigConfig.super.render(self, dc)
 end
 
@@ -130,7 +133,6 @@ WarmDampDigOverlay.ATTRS{
         'dwarfmode/Designate/DIG_CHANNEL',
         'dwarfmode/Designate/DIG_FROM_MARKER',
         'dwarfmode/Designate/DIG_TO_MARKER',
-        'dwarfmode/Designate/ERASE',
     },
     frame={w=4, h=3},
 }

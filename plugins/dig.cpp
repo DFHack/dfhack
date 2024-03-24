@@ -1943,7 +1943,7 @@ static int registerWarmDampBox(lua_State *L) {
 }
 
 static void paintScreenWarmDamp(bool show_hidden = false) {
-    //TRACE(log).print("entering paintScreenDampWarm\n");
+    TRACE(log).print("entering paintScreenDampWarm\n");
 
     if (Screen::inGraphicsMode())
         return;
@@ -1977,7 +1977,10 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
             }
 
             // this will also change the color of the cursor or any selection box that overlaps
-            // the tile. this is intentional since it makes the UI more readable
+            // the tile. this is intentional since it makes the UI more readable. it will also change
+            // the color of any UI elements (e.g. info sheets) that happen to overlap the map
+            // on that tile. this is undesirable, but unavoidable, since we can't know which tiles
+            // the UI is overwriting.
             if (cur_tile.fg && cur_tile.ch != ' ') {
                 cur_tile.fg = color;
                 cur_tile.bg = 0;

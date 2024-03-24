@@ -25,66 +25,80 @@ end
 
 WarmDampDigConfig = defclass(WarmDampDigConfig, widgets.Panel)
 WarmDampDigConfig.ATTRS {
-    frame={w=25, h=20, b=7},
-    frame_style=gui.FRAME_MEDIUM,
-    frame_background=gui.CLEAR_PEN,
-    autoarrange_subviews=true,
-    autoarrange_gap=1,
+    frame={w=25, h=18, b=7},
 }
 
 function WarmDampDigConfig:init()
+    local panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        autoarrange_subviews=true,
+        autoarrange_gap=1,
+        subviews={
+            widgets.Label{
+                text={
+                    'Mark newly designated', NEWLINE,
+                    'tiles for:'
+                },
+            },
+            widgets.ToggleHotkeyLabel{
+                view_id='damp',
+                key='CUSTOM_CTRL_D',
+                label='Damp dig:',
+                initial_option=false,
+                on_change=setDampPaintEnabled,
+            },
+            widgets.ToggleHotkeyLabel{
+                view_id='warm',
+                key='CUSTOM_CTRL_W',
+                label='Warm dig:',
+                initial_option=false,
+                on_change=setWarmPaintEnabled,
+            },
+            widgets.Divider{
+                frame={h=1},
+                frame_style=gui.FRAME_INTERIOR,
+                frame_style_l=false,
+                frame_style_r=false,
+            },
+            widgets.Label{
+                text={
+                    'Mark/unmark currently', NEWLINE,
+                    'designated tiles on', NEWLINE,
+                    'this level for:'
+                },
+            },
+            widgets.HotkeyLabel{
+                key='CUSTOM_CTRL_N',
+                label='Damp dig',
+                on_activate=markCurLevelDampDig,
+            },
+            widgets.HotkeyLabel{
+                key='CUSTOM_CTRL_M',
+                label='Warm dig',
+                on_activate=markCurLevelWarmDig,
+            },
+        },
+    }
     self:addviews{
-        widgets.Label{
-            text={
-                'Mark newly designated', NEWLINE,
-                'tiles for:'
-            },
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='damp',
-            key='CUSTOM_CTRL_D',
-            label='Damp dig:',
-            initial_option=false,
-            on_change=setDampPaintEnabled,
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='warm',
-            key='CUSTOM_CTRL_W',
-            label='Warm dig:',
-            initial_option=false,
-            on_change=setWarmPaintEnabled,
-        },
-        widgets.Divider{
-            frame={h=1},
-            frame_style=gui.FRAME_INTERIOR,
-            frame_style_l=false,
-            frame_style_r=false,
-        },
-        widgets.Label{
-            text={
-                'Mark/unmark currently', NEWLINE,
-                'designated tiles on', NEWLINE,
-                'this level for:'
-            },
-        },
-        widgets.HotkeyLabel{
-            key='CUSTOM_CTRL_N',
-            label='Damp dig',
-            on_activate=markCurLevelDampDig,
-        },
-        widgets.HotkeyLabel{
-            key='CUSTOM_CTRL_M',
-            label='Warm dig',
-            on_activate=markCurLevelWarmDig,
-        },
+        panel,
+        widgets.HelpButton{command='dig'},
     }
 end
 
 function WarmDampDigConfig:render(dc)
-    -- TODO: dismiss if icon no longer shown
     self.subviews.damp:setOption(getDampPaintEnabled())
     self.subviews.warm:setOption(getWarmPaintEnabled())
     WarmDampDigConfig.super.render(self, dc)
+end
+
+function WarmDampDigConfig:onInput(keys)
+    if keys._MOUSE_L and not self:getMouseFramePos() then
+        self.parent_view:dismiss()
+        return
+    end
+    return WarmDampDigConfig.super.onInput(self, keys) or
+        keys._MOUSE_L and self:getMouseFramePos()
 end
 
 function WarmDampDigConfig:preUpdateLayout(parent_rect)
@@ -155,8 +169,8 @@ function WarmDampDigOverlay:init()
             {tile=tp(4+offset, 191, border_color)},
             NEWLINE,
             {tile=tp(9+offset, 179, border_color)},
-            {tile=tp(10+offset, '~', heat_color)},
-            {tile=tp(11+offset, '~', damp_color)},
+            {tile=tp(10+offset, '~', damp_color)},
+            {tile=tp(11+offset, '~', heat_color)},
             {tile=tp(12+offset, 179, border_color)},
             NEWLINE,
             {tile=tp(17+offset, 192, border_color)},
@@ -173,22 +187,22 @@ function WarmDampDigOverlay:init()
                 widgets.Label{
                     text=get_tile_tokens(24, COLOR_GREY, COLOR_GREY, COLOR_GREY),
                     on_click=launch_warm_damp_dig_config,
-                    visible=true,
+                    visible=function() return not getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
                     text=get_tile_tokens(28, COLOR_RED, COLOR_GREY, COLOR_WHITE),
                     on_click=launch_warm_damp_dig_config,
-                    visible=false,
+                    visible=function() return getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
                     text=get_tile_tokens(28, COLOR_GREY, COLOR_BLUE, COLOR_WHITE),
                     on_click=launch_warm_damp_dig_config,
-                    visible=false,
+                    visible=function() return not getWarmPaintEnabled() and getDampPaintEnabled() end,
                 },
                 widgets.Label{
                     text=get_tile_tokens(28, COLOR_RED, COLOR_BLUE, COLOR_WHITE),
                     on_click=launch_warm_damp_dig_config,
-                    visible=false,
+                    visible=function() return getWarmPaintEnabled() and getDampPaintEnabled() end,
                 },
             },
         },

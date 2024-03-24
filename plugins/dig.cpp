@@ -2006,7 +2006,7 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
     int damp_texpos = 0;
     Screen::findGraphicsTile("MINING_INDICATORS", 0, 0, &damp_texpos);
 
-    long warm_dig_texpos = Textures::getTexposByHandle(textures[0]);
+    long warm_dig_texpos = Textures::getTexposByHandle(textures[2]);
     long damp_dig_texpos = Textures::getTexposByHandle(textures[0]);
     long light_aq_texpos = Textures::getTexposByHandle(textures[7]);
     long heavy_aq_texpos = Textures::getTexposByHandle(textures[8]);

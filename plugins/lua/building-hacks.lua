@@ -1,31 +1,19 @@
 local _ENV = mkmodule('plugins.building-hacks')
 --[[
     from native:
-        addBuilding(custom type,impassible fix (bool), consumed power, produced power, list of connection points,
-        update skip(0/nil to disable),table of frames,frame to tick ratio (-1 for machine control))
-        getPower(bld) -- 2 or 0 returns, produced and consumed
-        setPower(bld,produced, consumed)
+        setOwnableBuilding(workshop_type,bool)
+        setAnimationInfo(workshop_type,table frames,int frameskip=-1)
+        setUpdateSkip(workshop_type,int=0)
+        setMachineInfo(workshop_type,bool need_power,int consume=0,int produce=0,table connection_points)
+        fixImpassible(workshop_type,bool)
+        getPower(building) -- 2 or 0 returns, produced and consumed
+        setPower(building,produced, consumed)
     from here:
-        registerBuilding{
-            name -- custom workshop id e.g. SOAPMAKER << required!
-            fix_impassible -- make impassible tiles impassible to liquids too
-            consume -- how much machine power is needed to work
-            produce -- how much machine power is produced
-            needs_power -- needs power to be able to add jobs
-            action -- a table of number (how much ticks to skip) and a function which gets called on shop update
-            canBeRoomSubset -- room is considered in to be part of the building defined by chairs etc...
-            auto_gears -- find the gears automatically and animate them
-            auto_graphics -- insert gear graphics tiles for gear tiles
-            gears -- a table or {x=?,y=?} of connection points for machines
-            animate -- a table of
-                frames -- a table of
-                    --NB: following table is 0 indexed
-                    tables of 4 numbers (tile,fore,back,bright,graphics tile, overlay tile, sign tile, item tile) OR
-                    {x=<number> y=<number> + 4 to 8 numbers like in first case} -- this generates full frame even, useful for animations that change little (1-2 tiles)
-                frameLength -- how many ticks does one frame take OR
-                isMechanical -- a bool that says to try to match to mechanical system (i.e. animate only when powered)
-            }
+        setMachineInfoAuto(name,int consume,int produce,bool need_power)
+        setAnimationInfoAuto(name,bool make_graphics_too)
+        setOnUpdate(name,int interval,callback)
 ]]
+
 _registeredStuff={}
 --cache graphics tiles for mechanical gears
 local graphics_cache
@@ -35,7 +23,7 @@ function reload_graphics_cache(  )
     graphics_cache[2]=dfhack.screen.findGraphicsTile('AXLES_GEARS',1,2)
 end
 
-
+--on world unload unreg callbacks and invalidate cache
 local function unregall(state)
     if state==SC_WORLD_UNLOADED then
         graphics_cache=nil
@@ -44,6 +32,7 @@ local function unregall(state)
         _registeredStuff={}
     end
 end
+
 local function onUpdateLocal(workshop)
     local f=_registeredStuff[workshop:getCustomType()]
     if f then
@@ -135,63 +124,25 @@ local function processFramesAuto( shop_def ,gears,auto_graphics)
     end
     return frames
 end
-function registerBuilding(args)
-
+function setMachineInfoAuto( name,need_power,consume,produce)
+    local shop_def=findCustomWorkshop(name)
+    local gears=findGears(shop_def)
+    setMachineInfo(name,need_power,consume,produce,gears)
+end
+function setAnimationInfoAuto( name,make_graphics_too,frame_length )
     if graphics_cache==nil then
         reload_graphics_cache()
     end
-
-    local shop_def=findCustomWorkshop(args.name)
+    local shop_def=findCustomWorkshop(name)
+    local gears=findGears(shop_def)
+    local frames=processFramesAuto(shop_def,gears,make_graphics_too)
+    setAnimationInfo(shop_def,frames,frame_length)
+end
+function setOnUpdate(name,interval,callback)
+    local shop_def=findCustomWorkshop(name)
     local shop_id=shop_def.id
-    --misc
-    local fix_impassible
-    if args.fix_impassible then
-        fix_impassible=1
-    else
-        fix_impassible=0
-    end
-    local roomSubset=args.canBeRoomSubset or -1
-    --power
-    local consume=args.consume or 0
-    local produce=args.produce or 0
-    local needs_power=args.needs_power or 1
-    local auto_gears=args.auto_gears or false
-    local updateSkip=0
-    local action=args.action --could be nil
-    if action~=nil then
-        updateSkip=action[1]
-        registerUpdateAction(shop_id,action[2])
-    end
-    --animations and connections next:
-    local gears
-    local frames
-
-    local frameLength
-    local animate=args.animate
-    if not auto_gears then
-        gears=args.gears or {}
-        frameLength=1
-        if animate~=nil then
-            frameLength=animate.frameLength
-            if animate.isMechanical then
-                frameLength=-1
-            end
-            frames=processFrames(shop_def,animate.frames)
-        end
-    else
-        frameLength=-1
-        if animate~=nil then
-            frameLength=animate.frameLength or frameLength
-            if animate.isMechanical then
-                frameLength=-1
-            end
-        end
-        gears=findGears(shop_def)
-        frames=processFramesAuto(shop_def,gears,args.auto_graphics)
-    end
-    --finally call the c++ api
-    addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset)
-
+    setUpdateSkip(name,interval)
+    registerUpdateAction(shop_id,callback)
 end
 
 return _ENV

@@ -136,7 +136,7 @@ function setAnimationInfoAuto( name,make_graphics_too,frame_length )
     local shop_def=findCustomWorkshop(name)
     local gears=findGears(shop_def)
     local frames=processFramesAuto(shop_def,gears,make_graphics_too)
-    setAnimationInfo(shop_def,frames,frame_length)
+    setAnimationInfo(name,frames,frame_length)
 end
 function setOnUpdate(name,interval,callback)
     local shop_def=findCustomWorkshop(name)

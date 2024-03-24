@@ -358,11 +358,15 @@ int get_workshop_type(lua_State* L,int arg)
         return type;
     }
     auto str = lua_tolstring(L, arg, &len);
-    const auto& raws = world->raws.buildings.workshops;
-    for(size_t i=0;i<raws.size();i++)
+    if (len)
     {
-        if (raws[i]->code == str)
-            return raws[i]->id;
+        std::string lua_name(str, len);
+        const auto& raws = world->raws.buildings.workshops;
+        for (size_t i = 0; i < raws.size(); i++)
+        {
+            if (raws[i]->code == lua_name)
+                return raws[i]->id;
+        }
     }
     luaL_argerror(L, arg, "expected int or string workshop id");
     return 0;

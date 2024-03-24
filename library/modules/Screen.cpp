@@ -115,8 +115,10 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static bool doSetTile_map(const Pen &pen, int x, int y) {
+static bool doSetTile_map(const Pen &pen, int x, int y, int32_t * df::graphic_viewportst::*texpos_field) {
     auto &vp = gps->main_viewport;
+    if (!texpos_field)
+        texpos_field = &df::graphic_viewportst::screentexpos_interface;
 
     if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
         return false;
@@ -130,16 +132,16 @@ static bool doSetTile_map(const Pen &pen, int x, int y) {
     long texpos = pen.tile;
     if (!texpos && pen.ch)
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
-    vp->screentexpos_interface[index] = texpos;
+    (vp->*texpos_field)[index] = texpos;
     return true;
 }
 
-static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field)
 {
     bool use_graphics = Screen::inGraphicsMode();
 
     if (map && use_graphics)
-        return doSetTile_map(pen, x, y);
+        return doSetTile_map(pen, x, y, texpos_field);
 
     if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
         return false;
@@ -226,20 +228,20 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
-static bool doSetTile(const Pen &pen, int x, int y, bool map)
+static bool doSetTile(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
-    return GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
+    return GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map, texpos_field);
 }
 
-bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
+bool Screen::paintTile(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field)
 {
     if (!gps || !pen.valid()) return false;
 
-    doSetTile(pen, x, y, map);
+    doSetTile(pen, x, y, map, texpos_field);
     return true;
 }
 
-static Pen doGetTile_map(int x, int y) {
+static Pen doGetTile_map(int x, int y, int32_t * df::graphic_viewportst::*texpos_field) {
     auto &vp = gps->main_viewport;
 
     if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
@@ -251,15 +253,22 @@ static Pen doGetTile_map(int x, int y) {
     if (index < 0 || index > max_index)
         return Pen(0, 0, 0, -1);
 
-    int tile = vp->screentexpos[index];
-    if (tile == 0)
-        tile = vp->screentexpos_item[index];
-    if (tile == 0)
-        tile = vp->screentexpos_building_one[index];
-    if (tile == 0)
-        tile = vp->screentexpos_background_two[index];
-    if (tile == 0)
-        tile = vp->screentexpos_background[index];
+    int tile = 0;
+    if (!texpos_field) {
+        tile = vp->screentexpos_interface[index];
+        if (tile == 0)
+            tile = vp->screentexpos[index];
+        if (tile == 0)
+            tile = vp->screentexpos_item[index];
+        if (tile == 0)
+            tile = vp->screentexpos_building_one[index];
+        if (tile == 0)
+            tile = vp->screentexpos_background_two[index];
+        if (tile == 0)
+            tile = vp->screentexpos_background[index];
+    } else {
+        tile = (vp->*texpos_field)[index];
+    }
 
     char ch = 0;
     uint8_t fg = 0;
@@ -278,11 +287,11 @@ static uint8_t to_16_bit_color(uint8_t  *rgb) {
     return 0;
 }
 
-static Pen doGetTile_default(int x, int y, bool map) {
+static Pen doGetTile_default(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL) {
     bool use_graphics = Screen::inGraphicsMode();
 
     if (map && use_graphics)
-        return doGetTile_map(x, y);
+        return doGetTile_map(x, y, texpos_field);
 
     if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
         return Pen(0, 0, 0, -1);
@@ -344,16 +353,16 @@ static Pen doGetTile_default(int x, int y, bool map) {
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
-static Pen doGetTile(int x, int y, bool map)
+static Pen doGetTile(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
-    return GUI_HOOK_TOP(Screen::Hooks::get_tile)(x, y, map);
+    return GUI_HOOK_TOP(Screen::Hooks::get_tile)(x, y, map, texpos_field);
 }
 
-Pen Screen::readTile(int x, int y, bool map)
+Pen Screen::readTile(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field)
 {
     if (!gps) return Pen(0,0,0,-1);
 
-    return doGetTile(x, y, map);
+    return doGetTile(x, y, map, texpos_field);
 }
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)

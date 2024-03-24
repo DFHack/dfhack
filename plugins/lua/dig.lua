@@ -213,66 +213,6 @@ function WarmDampDigOverlay:preUpdateLayout(parent_rect)
     self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 4
 end
 
-local function get_bounds()
-    local pos1 = dfhack.gui.getMousePos(true)
-    if not pos1 then return end
-    pos1 = xyz2pos(
-        math.max(0, math.min(df.global.world.map.x_count-1, pos1.x)),
-        math.max(0, math.min(df.global.world.map.y_count-1, pos1.y)),
-        math.max(0, math.min(df.global.world.map.z_count-1, pos1.z)))
-    local pos2 = xyz2pos(
-        math.max(0, math.min(df.global.world.map.x_count-1, selection_rect.start_x)),
-        math.max(0, math.min(df.global.world.map.y_count-1, selection_rect.start_y)),
-        math.max(0, math.min(df.global.world.map.z_count-1, selection_rect.start_z)))
-    local bounds = {
-        x1=math.min(pos1.x, pos2.x),
-        x2=math.max(pos1.x, pos2.x),
-        y1=math.min(pos1.y, pos2.y),
-        y2=math.max(pos1.y, pos2.y),
-        z1=math.min(pos1.z, pos2.z),
-        z2=math.max(pos1.z, pos2.z),
-    }
-
-    return bounds
-end
-
-function WarmDampDigOverlay:onInput(keys)
-    if WarmDampDigOverlay.super.onInput(self, keys) then
-        return true
-    end
-    if --not self.subviews.toggle:getOptionValue() and
-        main_if.main_designation_selected ~= df.main_designation_type.ERASE
-    then
-        return
-    end
-    if main_if.main_designation_doing_rectangles then
-        if keys._MOUSE_L and selection_rect.start_z >= 0 then
-            local bounds = get_bounds()
-            if bounds then
-                if self.pending_fn then
-                    self.pending_fn()
-                end
-                self.pending_fn = function() registerWarmDampBox(bounds) end
-            end
-        end
-    else
-        if keys._MOUSE_L_DOWN then
-            local pos = dfhack.gui.getMousePos()
-            if pos then
-                registerWarmDampTile(pos)
-            end
-        end
-    end
-end
-
-function WarmDampDigOverlay:onRenderFrame(dc, rect)
-    WarmDampDigOverlay.super.onRenderFrame(self, dc, rect)
-    if self.pending_fn then
-        self.pending_fn()
-        self.pending_fn = nil
-    end
-end
-
 -- --------------------------------
 -- WarmDampOverlay
 --
@@ -296,7 +236,59 @@ WarmDampOverlay.ATTRS{
     overlay_only=true,
 }
 
-function WarmDampOverlay:onRenderFrame()
+local function get_bounds()
+    local pos1 = dfhack.gui.getMousePos(true)
+    if not pos1 then return end
+    pos1 = xyz2pos(
+        math.max(0, math.min(df.global.world.map.x_count-1, pos1.x)),
+        math.max(0, math.min(df.global.world.map.y_count-1, pos1.y)),
+        math.max(0, math.min(df.global.world.map.z_count-1, pos1.z)))
+    local pos2 = xyz2pos(
+        math.max(0, math.min(df.global.world.map.x_count-1, selection_rect.start_x)),
+        math.max(0, math.min(df.global.world.map.y_count-1, selection_rect.start_y)),
+        math.max(0, math.min(df.global.world.map.z_count-1, selection_rect.start_z)))
+    local bounds = {
+        x1=math.min(pos1.x, pos2.x),
+        x2=math.max(pos1.x, pos2.x),
+        y1=math.min(pos1.y, pos2.y),
+        y2=math.max(pos1.y, pos2.y),
+        z1=math.min(pos1.z, pos2.z),
+        z2=math.max(pos1.z, pos2.z),
+    }
+
+    return bounds
+end
+
+function WarmDampOverlay:onInput(keys)
+    if WarmDampOverlay.super.onInput(self, keys) then
+        return true
+    end
+    if main_if.main_designation_doing_rectangles then
+        if keys._MOUSE_L and selection_rect.start_z >= 0 then
+            local bounds = get_bounds()
+            if bounds then
+                if self.pending_fn then
+                    self.pending_fn()
+                end
+                self.pending_fn = function() registerWarmDampBox(bounds) end
+            end
+        end
+    else
+        if keys._MOUSE_L_DOWN then
+            local pos = dfhack.gui.getMousePos()
+            if pos then
+                registerWarmDampTile(pos)
+            end
+        end
+    end
+end
+
+function WarmDampOverlay:onRenderFrame(dc, rect)
+    WarmDampOverlay.super.onRenderFrame(self, dc, rect)
+    if self.pending_fn then
+        self.pending_fn()
+        self.pending_fn = nil
+    end
     paintScreenWarmDamp()
 end
 

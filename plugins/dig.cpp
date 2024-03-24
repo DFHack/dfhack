@@ -9,6 +9,7 @@
 #include "modules/Job.h"
 #include "modules/Persistence.h"
 #include "modules/Screen.h"
+#include "modules/Textures.h"
 #include "modules/World.h"
 
 #include "df/block_square_event_designation_priorityst.h"
@@ -56,15 +57,19 @@ static const string WARM_CONFIG_KEY = string(plugin_name) + "/warmdig";
 static const string DAMP_CONFIG_KEY = string(plugin_name) + "/dampdig";
 static PersistentDataItem warm_config, damp_config;
 
-static void jobInitiatedHandler(color_ostream& out, void* ptr);
+static void unhide_surrounding_tagged_tiles(color_ostream& out, void* ptr);
 
 static const int32_t CYCLE_TICKS = 1223; // a prime number that's about a day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static vector<TexposHandle> textures;
 
 static bool is_painting_warm = false;
 static bool is_painting_damp = false;
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands) {
+    textures = Textures::loadTileset("hack/data/art/damp_dig_map.png", 32, 32, true);
+
     commands.push_back(PluginCommand(
         "digv",
         "Dig a whole vein.",
@@ -105,13 +110,15 @@ static void do_enable(color_ostream &out, bool enable) {
         is_enabled = enable;
         DEBUG(log, out).print("%s\n", is_enabled ? "enabled" : "disabled");
         if (enable) {
-            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, EventManager::EventHandler(jobInitiatedHandler, 0), plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_STARTED,
+                EventManager::EventHandler(unhide_surrounding_tagged_tiles, 0), plugin_self);
         } else {
             EventManager::unregisterAll(plugin_self);
         }
     }
     else {
-        DEBUG(log, out).print("%s, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
+        DEBUG(log, out).print("%s, but already %s; no action\n",
+            is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
     }
 }
 
@@ -223,6 +230,11 @@ static bool is_warm(const df::coord &pos) {
     return block->temperature_1[pos.x&15][pos.y&15] >= 10075;
 }
 
+static bool is_wall(const df::coord &pos) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    return tt && tileShape(*tt) == df::tiletype_shape::WALL;
+}
+
 static bool is_rough_wall(int16_t x, int16_t y, int16_t z) {
     df::tiletype *tt = Maps::getTileType(x, y, z);
     if (!tt)
@@ -232,13 +244,42 @@ static bool is_rough_wall(int16_t x, int16_t y, int16_t z) {
         tileSpecial(*tt) != df::tiletype_special::SMOOTH;
 }
 
+static bool is_aquifer(int16_t x, int16_t y, int16_t z, df::tile_designation *des = NULL) {
+    if (!des)
+        des = Maps::getTileDesignation(x, y, z);
+    if (!des)
+        return false;
+    return des->bits.water_table && is_rough_wall(x, y, z);
+}
+
+static bool is_aquifer(const df::coord &pos, df::tile_designation *des = NULL) {
+    return is_aquifer(pos.x, pos.y, pos.z, des);
+}
+
+static bool is_heavy_aquifer(int16_t x, int16_t y, int16_t z, df::map_block *block = NULL) {
+    if (!block)
+        block = Maps::getTileBlock(x, y, z);
+    if (!block || !block->flags.bits.has_aquifer)
+        return false;
+
+    auto occ = Maps::getTileOccupancy(x, y, z);
+    if (!occ)
+        return false;
+
+    return occ->bits.heavy_aquifer;
+}
+
+static bool is_heavy_aquifer(const df::coord &pos, df::map_block *block = NULL) {
+    return is_heavy_aquifer(pos.x, pos.y, pos.z, block);
+}
+
 static bool is_wet(int16_t x, int16_t y, int16_t z) {
     auto des = Maps::getTileDesignation(x, y, z);
     if (!des)
         return false;
     if (des->bits.liquid_type == df::tile_liquid::Water && des->bits.flow_size >= 1)
         return true;
-    if (des->bits.water_table && is_rough_wall(x, y, z))
+    if (is_aquifer(x, y, z, des))
         return true;
     return false;
 }
@@ -283,8 +324,8 @@ static void unhide_tagged(color_ostream& out, const df::coord & pos) {
     }
 }
 
-static void jobInitiatedHandler(color_ostream& out, void* ptr) {
-    df::job *job = (df::job *)ptr;
+static void unhide_surrounding_tagged_tiles(color_ostream& out, void* job_ptr) {
+    df::job *job = (df::job *)job_ptr;
     auto type = ENUM_ATTR(job_type, type, job->job_type);
     if (type != job_type_class::Digging)
         return;
@@ -1865,7 +1906,7 @@ static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
     }
 
     for (auto job : z_jobs)
-        jobInitiatedHandler(out, job);
+        unhide_surrounding_tagged_tiles(out, job);
 
     if (did_set_assignment)
         do_enable(out, true);
@@ -1879,22 +1920,24 @@ static void markCurLevelDampDig(color_ostream &out) {
     mark_cur_level(out, damp_config);
 }
 
-static void update_tile_mask(const df::coord & pos) {
+static void update_tile_mask(const df::coord & pos, std::unordered_map<df::coord, df::job *> & dig_jobs) {
     auto block = Maps::getTileBlock(pos);
     auto des = Maps::getTileDesignation(pos);
     if (!block || !des)
         return;
 
-    if (des->bits.dig == df::tile_dig_designation::No) {
+    if (des->bits.dig == df::tile_dig_designation::No && !dig_jobs.contains(pos)) {
         if (auto warm_mask = World::getPersistentTilemask(warm_config, block))
             warm_mask->setassignment(pos, false);
         if (auto damp_mask = World::getPersistentTilemask(damp_config, block))
             damp_mask->setassignment(pos, false);
     } else {
-        if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true))
-            warm_mask->setassignment(pos, true);
-        if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true))
-            damp_mask->setassignment(pos, true);
+        if (is_painting_warm)
+            if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true))
+                warm_mask->setassignment(pos, true);
+        if (is_painting_damp)
+            if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true))
+                damp_mask->setassignment(pos, true);
     }
 }
 
@@ -1902,7 +1945,11 @@ static int registerWarmDampTile(lua_State *L) {
     TRACE(log).print("entering registerWarmDampTile\n");
     df::coord pos;
     Lua::CheckDFAssign(L, &pos, 1);
-    update_tile_mask(pos);
+
+    std::unordered_map<df::coord, df::job *> dig_jobs;
+    fill_dig_jobs(dig_jobs);
+
+    update_tile_mask(pos, dig_jobs);
     return 0;
 }
 
@@ -1934,67 +1981,113 @@ static int registerWarmDampBox(lua_State *L) {
         return 0;
     }
 
+    std::unordered_map<df::coord, df::job *> dig_jobs;
+    fill_dig_jobs(dig_jobs);
+
     for (int32_t z = pos_start.z; z <= pos_end.z; ++z)
         for (int32_t y = pos_start.y; y <= pos_end.y; ++y)
             for (int32_t x = pos_start.x; x <= pos_end.x; ++x)
-                update_tile_mask(df::coord(x, y, z));
+                update_tile_mask(df::coord(x, y, z), dig_jobs);
 
     return 0;
+}
+
+static void bump_designation(Screen::Pen &pen, int x, int y) {
+    Screen::Pen desig_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_designation);
+    Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+    Screen::paintTile(pen, x, y, true, &df::graphic_viewportst::screentexpos_designation);
 }
 
 static void paintScreenWarmDamp(bool show_hidden = false) {
     TRACE(log).print("entering paintScreenDampWarm\n");
 
-    if (Screen::inGraphicsMode())
-        return;
+    static Screen::Pen empty_pen;
+
+    int damp_texpos = 0;
+    Screen::findGraphicsTile("MINING_INDICATORS", 0, 0, &damp_texpos);
+
+    long warm_dig_texpos = Textures::getTexposByHandle(textures[0]);
+    long damp_dig_texpos = Textures::getTexposByHandle(textures[0]);
+    long light_aq_texpos = Textures::getTexposByHandle(textures[7]);
+    long heavy_aq_texpos = Textures::getTexposByHandle(textures[8]);
+    Screen::Pen warm_dig_pen, damp_dig_pen, damp_pen, light_aq_pen, heavy_aq_pen;
+    warm_dig_pen.tile = warm_dig_texpos;
+    damp_dig_pen.tile = damp_dig_texpos;
+    damp_pen.tile = damp_texpos;
+    light_aq_pen.tile = light_aq_texpos;
+    heavy_aq_pen.tile = heavy_aq_texpos;
 
     auto dims = Gui::getDwarfmodeViewDims().map();
     for (int y = dims.first.y; y <= dims.second.y; ++y) {
         for (int x = dims.first.x; x <= dims.second.x; ++x) {
-            df::coord map_pos(*window_x + x, *window_y + y, *window_z);
+            df::coord pos(*window_x + x, *window_y + y, *window_z);
 
-            if (!Maps::isValidTilePos(map_pos))
+            auto block = Maps::getTileBlock(pos);
+            if (!block)
                 continue;
 
-            if (!show_hidden && !Maps::isTileVisible(map_pos)) {
+            if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+                if (warm_mask->getassignment(pos))
+                    bump_designation(warm_dig_pen, x, y);
+            }
+            if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+                if (damp_mask->getassignment(pos))
+                    bump_designation(damp_dig_pen, x, y);
+            }
+
+            if (!show_hidden && !Maps::isTileVisible(pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }
 
-            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
-                map_pos.x, map_pos.y, map_pos.z, x, y);
-
-            Screen::Pen cur_tile = Screen::readTile(x, y, true);
-            if (!cur_tile.valid()) {
-                DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
-                continue;
-            }
-
-            int color = is_warm(map_pos) ? COLOR_RED : is_damp(map_pos) ? COLOR_BLUE : COLOR_BLACK;
-            if (color == COLOR_BLACK) {
-                TRACE(log).print("skipping non-warm, non-damp tile\n");
-                continue;
-            }
-
-            // this will also change the color of the cursor or any selection box that overlaps
-            // the tile. this is intentional since it makes the UI more readable. it will also change
-            // the color of any UI elements (e.g. info sheets) that happen to overlap the map
-            // on that tile. this is undesirable, but unavoidable, since we can't know which tiles
-            // the UI is overwriting.
-            if (cur_tile.fg && cur_tile.ch != ' ') {
-                cur_tile.fg = color;
-                cur_tile.bg = 0;
+            if (Screen::inGraphicsMode()) {
+                Screen::Pen *pen = NULL;
+                if (is_aquifer(pos)) {
+                    pen = is_heavy_aquifer(pos, block) ? &heavy_aq_pen : &light_aq_pen;
+                } else if (is_wall(pos) && is_damp(pos)) {
+                    pen = &damp_pen;
+                }
+                if (pen) {
+                    if (Screen::readTile(x, y, true).tile == damp_texpos)
+                        Screen::paintTile(empty_pen, x, y, true);
+                    bump_designation(*pen, x, y);
+                }
             } else {
-                cur_tile.fg = 0;
-                cur_tile.bg = color;
+                TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                    pos.x, pos.y, pos.z, x, y);
+
+                Screen::Pen cur_tile = Screen::readTile(x, y, true);
+                if (!cur_tile.valid()) {
+                    DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
+                    continue;
+                }
+
+                int color = is_warm(pos) ? COLOR_RED : is_damp(pos) ? COLOR_BLUE : COLOR_BLACK;
+                if (color == COLOR_BLACK) {
+                    TRACE(log).print("skipping non-warm, non-damp tile\n");
+                    continue;
+                }
+
+                // this will also change the color of the cursor or any selection box that overlaps
+                // the tile. this is intentional since it makes the UI more readable. it will also change
+                // the color of any UI elements (e.g. info sheets) that happen to overlap the map
+                // on that tile. this is undesirable, but unavoidable, since we can't know which tiles
+                // the UI is overwriting.
+                if (cur_tile.fg && cur_tile.ch != ' ') {
+                    cur_tile.fg = color;
+                    cur_tile.bg = 0;
+                } else {
+                    cur_tile.fg = 0;
+                    cur_tile.bg = color;
+                }
+
+                cur_tile.bold = false;
+
+                if (cur_tile.tile)
+                    cur_tile.tile_mode = Screen::Pen::CharColor;
+
+                Screen::paintTile(cur_tile, x, y, true);
             }
-
-            cur_tile.bold = false;
-
-            if (cur_tile.tile)
-                cur_tile.tile_mode = Screen::Pen::CharColor;
-
-            Screen::paintTile(cur_tile, x, y, true);
         }
     }
 }

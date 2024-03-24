@@ -244,6 +244,12 @@ static bool is_rough_wall(int16_t x, int16_t y, int16_t z) {
         tileSpecial(*tt) != df::tiletype_special::SMOOTH;
 }
 
+static bool is_smooth_wall(const df::coord &pos) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    return tt && tileSpecial(*tt) == df::tiletype_special::SMOOTH
+                && tileShape(*tt) == df::tiletype_shape::WALL;
+}
+
 static bool is_aquifer(int16_t x, int16_t y, int16_t z, df::tile_designation *des = NULL) {
     if (!des)
         des = Maps::getTileDesignation(x, y, z);
@@ -1992,13 +1998,18 @@ static int registerWarmDampBox(lua_State *L) {
     return 0;
 }
 
-static void bump_layers(Screen::Pen &pen, int x, int y) {
+static void bump_layers(const Screen::Pen &pen, int x, int y) {
     Screen::Pen signpost_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_signpost);
     Screen::Pen desig_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_designation);
-    if (signpost_pen.tile)
+    if (signpost_pen.valid())
         Screen::paintTile(signpost_pen, x, y, true, &df::graphic_viewportst::screentexpos_background_two);
-    Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+    if (desig_pen.valid())
+        Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
     Screen::paintTile(pen, x, y, true, &df::graphic_viewportst::screentexpos_designation);
+}
+
+static bool blink(int delay) {
+    return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
 }
 
 static void paintScreenWarmDamp(bool show_hidden = false) {
@@ -2032,13 +2043,15 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
             if (!block)
                 continue;
 
-            if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
-                if (warm_mask->getassignment(pos))
-                    bump_layers(warm_dig_pen, x, y);
-            }
-            if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
-                if (damp_mask->getassignment(pos))
-                    bump_layers(damp_dig_pen, x, y);
+            if (Screen::inGraphicsMode()) {
+                if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+                    if (warm_mask->getassignment(pos))
+                        bump_layers(warm_dig_pen, x, y);
+                }
+                if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+                    if (damp_mask->getassignment(pos))
+                        bump_layers(damp_dig_pen, x, y);
+                }
             }
 
             if (!show_hidden && !Maps::isTileVisible(pos)) {
@@ -2065,15 +2078,39 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                 TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
                     pos.x, pos.y, pos.z, x, y);
 
+                auto des = Maps::getTileDesignation(pos);
+                if (des && des->bits.dig != df::tile_dig_designation::No) {
+                    if (blink(1000))
+                        continue;
+                }
+
                 Screen::Pen cur_tile = Screen::readTile(x, y, true);
                 if (!cur_tile.valid()) {
                     DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
                     continue;
                 }
 
-                int color = is_warm(pos) ? COLOR_RED : is_damp(pos) ? COLOR_BLUE : COLOR_BLACK;
+                int color = COLOR_BLACK;
+
+                if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+                    if (warm_mask->getassignment(pos) && blink(500))
+                        color = COLOR_LIGHTRED;
+                }
                 if (color == COLOR_BLACK) {
-                    TRACE(log).print("skipping non-warm, non-damp tile\n");
+                    if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+                        if (damp_mask->getassignment(pos) && blink(500))
+                            color = COLOR_BLUE;
+                    }
+                }
+                if (color == COLOR_BLACK && is_warm(pos)) {
+                    color = COLOR_RED;
+                }
+                if (color == COLOR_BLACK && is_damp(pos)) {
+                    color = COLOR_LIGHTBLUE;
+                }
+
+                if (color == COLOR_BLACK) {
+                    TRACE(log).print("no need to modify tile; skipping\n");
                     continue;
                 }
 
@@ -2230,16 +2267,6 @@ static char get_track_char(const designation &designation) {
     return (char)0xC5; // single line cross; should never happen
 }
 
-static bool is_smooth_wall(const df::coord &pos) {
-    df::tiletype *tt = Maps::getTileType(pos);
-    return tt && tileSpecial(*tt) == df::tiletype_special::SMOOTH
-                && tileShape(*tt) == df::tiletype_shape::WALL;
-}
-
-static bool blink(int delay) {
-    return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
-}
-
 static char get_tile_char(const df::coord &pos, char desig_char, bool draw_priority) {
     if (!draw_priority)
         return desig_char;
@@ -2293,7 +2320,7 @@ static void paintScreenCarve() {
 
             if (is_designated_for_smoothing(des)) {
                 if (is_smooth_wall(map_pos))
-                    cur_tile.ch = get_tile_char(map_pos, (char)206, draw_priority); // hash, indicating a fortification designation
+                    cur_tile.ch = get_tile_char(map_pos, (char)206, draw_priority); // octothorpe, indicating a fortification designation
                 else
                     cur_tile.ch = get_tile_char(map_pos, (char)219, draw_priority); // solid block, indicating a smoothing designation
             }

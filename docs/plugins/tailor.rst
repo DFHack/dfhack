@@ -24,17 +24,25 @@ Usage
     tailor [status]
     tailor now
     tailor materials <material> [<material> ...]
+    tailor confiscate [true|false]
 
 By default, ``tailor`` will prefer using materials in this order::
 
     silk cloth yarn leather
 
-but you can use the ``tailor materials`` command to restrict which materials
-are used, and in what order. ``tailor`` supports adamantine cloth (using the
-keyword ``adamantine``) but does not use it by default, as most players find
-adamantine too precious to routinely make into cloth. ``tailor`` does not
-support modded "cloth" types which utilize custom reactions to making clothing
-out of those cloth types.
+but you can use the ``tailor materials`` command to restrict which materials are
+used, and in what order. By default, ``tailor`` will "confiscate" (i.e., remove
+ownership and mark for dumping) equipped tattered clothing once replacements are
+available. This can be changed using ``tailor confiscate``. The default behavior
+minimizes the time you dwarves keep wearing worn-out clothing, minimizing the
+number of negative thoughts incurred by this. However, it will also result in
+tattered clothing being brought to your "garbage" zones and forbidden, which may
+be undesirable.
+
+``tailor`` supports adamantine cloth (using the keyword ``adamantine``) but does
+not use it by default, as most players find adamantine too precious to routinely
+make into cloth. ``tailor`` does not support modded "cloth" types which utilize
+custom reactions for making clothing out of those cloth types.
 
 Examples
 --------

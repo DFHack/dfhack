@@ -59,6 +59,7 @@ Template for new versions:
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
 
 ## Misc Improvements
+- `tailor`: allow turning off automatic confiscation of tattered clothing
 
 ## Documentation
 

@@ -15,7 +15,8 @@ local function process_args(opts, args)
 end
 
 function status()
-    print(('tailor is %s'):format(isEnabled() and "enabled" or "disabled"))
+    dfhack.print(('tailor is %s'):format(isEnabled() and "enabled" or "disabled"))
+    print((' %s confiscating tattered clothing'):format(tailor_getConfiscate() and "and" or "but not"))
     print('materials preference order:')
     for _,name in ipairs(tailor_getMaterialPreferences()) do
         print(('  %s'):format(name))
@@ -32,9 +33,9 @@ function setMaterials(names)
             idxs.adamantine or -1)
 end
 
-function setDebugMode(opt)
-    local fl = (opt[1] == "true" or opt[1] == "on")
-    tailor_setDebugFlag(fl)
+function setConfiscate(opt)
+    local fl = argparse.boolean(opt[1], "set confiscate")
+    tailor_setConfiscate(fl)
 end
 
 function parse_commandline(...)
@@ -52,8 +53,8 @@ function parse_commandline(...)
         tailor_doCycle()
     elseif command == 'materials' then
         setMaterials(positionals)
-    elseif command == 'debugging' then
-        setDebugMode(positionals)
+    elseif command == 'confiscate' then
+        setConfiscate(positionals)
     else
         return false
     end

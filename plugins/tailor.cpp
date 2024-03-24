@@ -109,7 +109,6 @@ static const MatType
 
 static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
 static const std::list<MatType> default_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // adamantine not included by default
-static std::list<MatType> material_order = default_materials;
 
 static struct BadFlags {
     uint32_t whole;
@@ -140,20 +139,39 @@ private:
     std::map<MatType, int> supply;
     std::map<MatType, int> reserves;
 
+    std::list<MatType> material_order = default_materials;
+
     int default_reserve = 10;
 
-    bool inventory_sanity_checking = false;
     bool confiscate = true;
 
 public:
-    void set_debug_flag(bool f)
-    {
-        inventory_sanity_checking = f;
-    }
-
     void set_confiscate(bool f){ confiscate = f; }
 
     bool get_confiscate() { return confiscate; }
+
+    void sync_material_order()
+    {
+        material_order.clear();
+        for (size_t i = 0; i < all_materials.size(); ++i) {
+            if (i == (size_t)config.get_int(CONFIG_SILK_IDX))
+                material_order.push_back(M_SILK);
+            else if (i == (size_t)config.get_int(CONFIG_CLOTH_IDX))
+                material_order.push_back(M_CLOTH);
+            else if (i == (size_t)config.get_int(CONFIG_YARN_IDX))
+                material_order.push_back(M_YARN);
+            else if (i == (size_t)config.get_int(CONFIG_LEATHER_IDX))
+                material_order.push_back(M_LEATHER);
+            else if (i == (size_t)config.get_int(CONFIG_ADAMANTINE_IDX))
+                material_order.push_back(M_ADAMANTINE);
+        }
+        if (!material_order.size())
+            std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
+    }
+
+    std::list<MatType> get_material_order() {
+        return material_order;
+    }
 
     void reset()
     {
@@ -646,23 +664,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-static void set_material_order() {
-    material_order.clear();
-    for (size_t i = 0; i < all_materials.size(); ++i) {
-        if (i == (size_t)config.get_int(CONFIG_SILK_IDX))
-            material_order.push_back(M_SILK);
-        else if (i == (size_t)config.get_int(CONFIG_CLOTH_IDX))
-            material_order.push_back(M_CLOTH);
-        else if (i == (size_t)config.get_int(CONFIG_YARN_IDX))
-            material_order.push_back(M_YARN);
-        else if (i == (size_t)config.get_int(CONFIG_LEATHER_IDX))
-            material_order.push_back(M_LEATHER);
-        else if (i == (size_t)config.get_int(CONFIG_ADAMANTINE_IDX))
-            material_order.push_back(M_ADAMANTINE);
-    }
-    if (!material_order.size())
-        std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
-}
+
 
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
@@ -685,7 +687,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
     DEBUG(control,out).print("loading persisted confiscation state: %s\n",
                             tailor_instance->get_confiscate() ? "true" : "false");
-    set_material_order();
+    tailor_instance->sync_material_order();
 
     return CR_OK;
 }
@@ -789,7 +791,7 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
     config.set_int(CONFIG_LEATHER_IDX, leatherIdx - 1);
     config.set_int(CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
 
-    set_material_order();
+    tailor_instance->sync_material_order();
 }
 
 static void tailor_setConfiscate(color_ostream& out, bool enable)
@@ -810,24 +812,15 @@ static int tailor_getMaterialPreferences(lua_State *L) {
         out = &Core::getInstance().getConsole();
     DEBUG(control,*out).print("entering tailor_getMaterialPreferences\n");
     vector<string> names;
-    for (const auto& m : material_order)
+    for (const auto& m : tailor_instance->get_material_order())
         names.emplace_back(m.name);
     Lua::PushVector(L, names);
     return 1;
 }
 
-static void tailor_setDebugFlag(color_ostream& out, bool enable)
-{
-    DEBUG(control,out).print("entering tailor_setDebugFlag\n");
-
-    tailor_instance->set_debug_flag(enable);
-
-}
-
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_doCycle),
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
-    DFHACK_LUA_FUNCTION(tailor_setDebugFlag),
     DFHACK_LUA_FUNCTION(tailor_setConfiscate),
     DFHACK_LUA_FUNCTION(tailor_getConfiscate),
     DFHACK_LUA_END

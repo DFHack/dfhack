@@ -450,7 +450,7 @@ static int fixImpassible(lua_State* L)
 {
     int workshop_type = get_workshop_type(L, 1);
     bool impassible_setting = lua_toboolean(L, 2);
-    
+
     auto& def = hacked_workshops[workshop_type];
     def.impassible_fix = impassible_setting;
     return 0;
@@ -465,8 +465,7 @@ static int setMachineInfo(lua_State* L)
     def.needs_power = lua_toboolean(L, 2);
     def.powerInfo.consumed = luaL_optinteger(L, 3,0);
     def.powerInfo.produced = luaL_optinteger(L, 4,0);
-    
-    
+
     //table of machine connection points
     luaL_checktype(L, 5, LUA_TTABLE);
     lua_pushvalue(L, 5);
@@ -494,7 +493,7 @@ static int setUpdateSkip(lua_State* L)
 {
     int workshop_type = get_workshop_type(L, 1);
     auto& def = hacked_workshops[workshop_type];
-    
+
     def.skip_updates = luaL_optinteger(L, 2, 0);
     return 0;
 }
@@ -555,7 +554,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_END
 };
 DFHACK_PLUGIN_LUA_COMMANDS{
-    
     DFHACK_LUA_COMMAND(getPower),
     DFHACK_LUA_COMMAND(setOwnableBuilding),
     DFHACK_LUA_COMMAND(setAnimationInfo),

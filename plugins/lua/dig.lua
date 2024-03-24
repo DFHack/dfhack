@@ -4,8 +4,112 @@ local gui = require('gui')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
+local toolbar_textures = dfhack.textures.loadTileset('hack/data/art/damp_dig_toolbar.png', 8, 12, true)
+
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect
+
+local BASELINE_OFFSET = 42
+
+local function get_l_offset(parent_rect)
+    local w = parent_rect.width
+    if w <= 177 then
+        return BASELINE_OFFSET + w - 114
+    end
+    return BASELINE_OFFSET + (w+1)//2 - 26
+end
+
+-- --------------------------------
+-- WarmDampDigConfig
+--
+
+WarmDampDigConfig = defclass(WarmDampDigConfig, widgets.Window)
+WarmDampDigConfig.ATTRS {
+    frame_title='Warm/Damp Dig',
+    frame={w=25, h=20, b=7},
+    draggable=false,
+    autoarrange_subviews=true,
+    autoarrange_gap=1,
+}
+
+function WarmDampDigConfig:init()
+    self:addviews{
+        widgets.Label{
+            text={
+                'Mark newly designated', NEWLINE,
+                'tiles for:'
+            },
+        },
+        widgets.ToggleHotkeyLabel{
+            key='CUSTOM_CTRL_D',
+            label='Damp dig:',
+            initial_option=false,
+            on_change=function(val) end,
+        },
+        widgets.ToggleHotkeyLabel{
+            key='CUSTOM_CTRL_W',
+            label='Warm dig:',
+            initial_option=false,
+            on_change=function(val) end,
+        },
+        widgets.Divider{
+            frame={h=1},
+            frame_style=gui.FRAME_INTERIOR,
+            frame_style_l=false,
+            frame_style_r=false,
+        },
+        widgets.Label{
+            text={
+                'Mark/unmark currently', NEWLINE,
+                'designated tiles on', NEWLINE,
+                'this level for:'
+            },
+        },
+        widgets.HotkeyLabel{
+            key='CUSTOM_CTRL_N',
+            label='Damp dig',
+            on_activate=function() end,
+        },
+        widgets.HotkeyLabel{
+            key='CUSTOM_CTRL_M',
+            label='Warm dig',
+            on_activate=function() end,
+        },
+    }
+end
+
+function WarmDampDigConfig:render(dc)
+    -- TODO: dismiss if icon no longer shown
+    -- TODO: set toggle states according to plugin config
+    WarmDampDigConfig.super.render(self, dc)
+end
+
+function WarmDampDigConfig:preUpdateLayout(parent_rect)
+    self.frame.l = get_l_offset(parent_rect) - 1
+end
+
+-- --------------------------------
+-- WarmDampDigConfigScreen
+--
+
+WarmDampDigConfigScreen = defclass(WarmDampDigConfigScreen, gui.ZScreen)
+WarmDampDigConfigScreen.ATTRS {
+    focus_path='WarmDampDigConfigScreen',
+    defocusable=false,
+    pass_movement_keys=true,
+}
+
+function WarmDampDigConfigScreen:init()
+    self:addviews{WarmDampDigConfig{}}
+end
+
+function WarmDampDigConfigScreen:onDismiss()
+    view = nil
+end
+
+local function launch_warm_damp_dig_config()
+    view = view and view:raise() or WarmDampDigConfigScreen{}:show()
+end
 
 -- --------------------------------
 -- WarmDampDigOverlay
@@ -14,32 +118,83 @@ local selection_rect = df.global.selection_rect
 WarmDampDigOverlay = defclass(WarmDampDigOverlay, overlay.OverlayWidget)
 WarmDampDigOverlay.ATTRS{
     desc='Adds widgets to the dig interface to allow uninterrupted digging through warm and damp tiles.',
-    default_pos={x=50,y=-7},
+    default_pos={x=BASELINE_OFFSET, y=-4},
     default_enabled=true,
     viewscreens={
         'dwarfmode/Designate/DIG_DIG',
+        'dwarfmode/Designate/DIG_REMOVE_STAIRS_RAMPS',
         'dwarfmode/Designate/DIG_STAIR_UP',
         'dwarfmode/Designate/DIG_STAIR_UPDOWN',
         'dwarfmode/Designate/DIG_STAIR_DOWN',
         'dwarfmode/Designate/DIG_RAMP',
         'dwarfmode/Designate/DIG_CHANNEL',
+        'dwarfmode/Designate/DIG_FROM_MARKER',
+        'dwarfmode/Designate/DIG_TO_MARKER',
         'dwarfmode/Designate/ERASE',
     },
-    frame={w=41, h=3},
-    frame_style=gui.FRAME_MEDIUM,
-    frame_background=gui.CLEAR_PEN,
+    frame={w=4, h=3},
 }
 
 function WarmDampDigOverlay:init()
+    local to_pen = dfhack.pen.parse
+    local function tp(idx, ch, fg)
+        return to_pen{
+            tile=function() return dfhack.textures.getTexposByHandle(toolbar_textures[idx]) end,
+            ch=ch,
+            fg=fg,
+            bold=fg>=8,
+        }
+    end
+    local function get_tile_tokens(offset, heat_color, damp_color, border_color)
+        return {
+            {tile=tp(1+offset, 218, border_color)},
+            {tile=tp(2+offset, 196, border_color)},
+            {tile=tp(3+offset, 196, border_color)},
+            {tile=tp(4+offset, 191, border_color)},
+            NEWLINE,
+            {tile=tp(9+offset, 179, border_color)},
+            {tile=tp(10+offset, '~', heat_color)},
+            {tile=tp(11+offset, '~', damp_color)},
+            {tile=tp(12+offset, 179, border_color)},
+            NEWLINE,
+            {tile=tp(17+offset, 192, border_color)},
+            {tile=tp(18+offset, 196, border_color)},
+            {tile=tp(19+offset, 196, border_color)},
+            {tile=tp(20+offset, 217, border_color)},
+        }
+    end
+
     self:addviews{
-        widgets.ToggleHotkeyLabel{
-            view_id='toggle',
-            frame={t=0, l=0},
-            key='CUSTOM_CTRL_W',
-            label='Dig through warm/damp tiles',
-            initial_option=false,
+        widgets.Panel{
+            frame={t=0, b=0, r=0, w=4},
+            subviews={
+                widgets.Label{
+                    text=get_tile_tokens(24, COLOR_GREY, COLOR_GREY, COLOR_GREY),
+                    on_click=launch_warm_damp_dig_config,
+                    visible=true,
+                },
+                widgets.Label{
+                    text=get_tile_tokens(28, COLOR_RED, COLOR_GREY, COLOR_WHITE),
+                    on_click=launch_warm_damp_dig_config,
+                    visible=false,
+                },
+                widgets.Label{
+                    text=get_tile_tokens(28, COLOR_GREY, COLOR_BLUE, COLOR_WHITE),
+                    on_click=launch_warm_damp_dig_config,
+                    visible=false,
+                },
+                widgets.Label{
+                    text=get_tile_tokens(28, COLOR_RED, COLOR_BLUE, COLOR_WHITE),
+                    on_click=launch_warm_damp_dig_config,
+                    visible=false,
+                },
+            },
         },
     }
+end
+
+function WarmDampDigOverlay:preUpdateLayout(parent_rect)
+    self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 4
 end
 
 local function get_bounds()
@@ -69,7 +224,7 @@ function WarmDampDigOverlay:onInput(keys)
     if WarmDampDigOverlay.super.onInput(self, keys) then
         return true
     end
-    if not self.subviews.toggle:getOptionValue() and
+    if --not self.subviews.toggle:getOptionValue() and
         main_if.main_designation_selected ~= df.main_designation_type.ERASE
     then
         return
@@ -108,7 +263,7 @@ end
 
 WarmDampOverlay = defclass(WarmDampOverlay, overlay.OverlayWidget)
 WarmDampOverlay.ATTRS{
-    desc='Makes warm and damp tiles visible when in ASCII mode.',
+    desc='Visibility improvements for warm and damp map tiles.',
     viewscreens={
         'dwarfmode/Designate/DIG_DIG',
         'dwarfmode/Designate/DIG_REMOVE_STAIRS_RAMPS',
@@ -119,6 +274,7 @@ WarmDampOverlay.ATTRS{
         'dwarfmode/Designate/DIG_CHANNEL',
         'dwarfmode/Designate/DIG_FROM_MARKER',
         'dwarfmode/Designate/DIG_TO_MARKER',
+        'dwarfmode/Designate/ERASE',
     },
     default_enabled=true,
     overlay_only=true,

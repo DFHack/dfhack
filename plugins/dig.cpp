@@ -1992,8 +1992,11 @@ static int registerWarmDampBox(lua_State *L) {
     return 0;
 }
 
-static void bump_designation(Screen::Pen &pen, int x, int y) {
+static void bump_layers(Screen::Pen &pen, int x, int y) {
+    Screen::Pen signpost_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_signpost);
     Screen::Pen desig_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_designation);
+    if (signpost_pen.tile)
+        Screen::paintTile(signpost_pen, x, y, true, &df::graphic_viewportst::screentexpos_background_two);
     Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
     Screen::paintTile(pen, x, y, true, &df::graphic_viewportst::screentexpos_designation);
 }
@@ -2003,17 +2006,20 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
     static Screen::Pen empty_pen;
 
-    int damp_texpos = 0;
+    int warm_texpos = 0, damp_texpos = 0;
+    Screen::findGraphicsTile("MINING_INDICATORS", 1, 0, &warm_texpos);
     Screen::findGraphicsTile("MINING_INDICATORS", 0, 0, &damp_texpos);
+    Screen::Pen warm_pen, damp_pen;
+    warm_pen.tile = warm_texpos;
+    damp_pen.tile = damp_texpos;
 
-    long warm_dig_texpos = Textures::getTexposByHandle(textures[2]);
-    long damp_dig_texpos = Textures::getTexposByHandle(textures[0]);
+    long warm_dig_texpos = Textures::getTexposByHandle(textures[1]);
+    long damp_dig_texpos = Textures::getTexposByHandle(textures[2]);
     long light_aq_texpos = Textures::getTexposByHandle(textures[7]);
     long heavy_aq_texpos = Textures::getTexposByHandle(textures[8]);
-    Screen::Pen warm_dig_pen, damp_dig_pen, damp_pen, light_aq_pen, heavy_aq_pen;
+    Screen::Pen warm_dig_pen, damp_dig_pen, light_aq_pen, heavy_aq_pen;
     warm_dig_pen.tile = warm_dig_texpos;
     damp_dig_pen.tile = damp_dig_texpos;
-    damp_pen.tile = damp_texpos;
     light_aq_pen.tile = light_aq_texpos;
     heavy_aq_pen.tile = heavy_aq_texpos;
 
@@ -2028,11 +2034,11 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
             if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
                 if (warm_mask->getassignment(pos))
-                    bump_designation(warm_dig_pen, x, y);
+                    bump_layers(warm_dig_pen, x, y);
             }
             if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
                 if (damp_mask->getassignment(pos))
-                    bump_designation(damp_dig_pen, x, y);
+                    bump_layers(damp_dig_pen, x, y);
             }
 
             if (!show_hidden && !Maps::isTileVisible(pos)) {
@@ -2042,15 +2048,18 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
             if (Screen::inGraphicsMode()) {
                 Screen::Pen *pen = NULL;
-                if (is_aquifer(pos)) {
+                if (is_warm(pos) && is_wall(pos)) {
+                    pen = &warm_pen;
+                } else if (is_aquifer(pos)) {
                     pen = is_heavy_aquifer(pos, block) ? &heavy_aq_pen : &light_aq_pen;
                 } else if (is_wall(pos) && is_damp(pos)) {
                     pen = &damp_pen;
                 }
                 if (pen) {
-                    if (Screen::readTile(x, y, true).tile == damp_texpos)
+                    int existing_tile = Screen::readTile(x, y, true).tile;
+                    if (existing_tile == damp_texpos)
                         Screen::paintTile(empty_pen, x, y, true);
-                    bump_designation(*pen, x, y);
+                    bump_layers(*pen, x, y);
                 }
             } else {
                 TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",

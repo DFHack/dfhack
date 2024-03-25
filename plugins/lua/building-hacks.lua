@@ -86,6 +86,9 @@ local function findGears( shop_def ) --finds positions of all gears and inverted
         end
     end
     end
+    if #ret==0 then
+        error(string.format("Could not find gears in a workshop (%s) that was marked for auto-gear finding",shop_def.code))
+    end
     return ret
 end
 --helper for reading tile color info from raws

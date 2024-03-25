@@ -36,6 +36,61 @@ function get_item_description(item_id, item, safety_label)
     end
     local desc = item.flags.artifact and get_artifact_name(item) or
         dfhack.items.getDescription(item, 0, true)
+    if item:getType() == df.item_type.CAGE then
+        local units = {}
+        for _, ref in pairs(item.general_refs) do
+            if df.general_ref_contains_unitst:is_instance(ref) then
+                local isWalkingCorpse = false
+                local unit = df.unit.find(ref.unit_id)
+                local printName = dfhack.units.getReadableName(unit)
+                local race = df.creature_raw.find(unit.race)
+                local raceName
+                if race ~= nil then
+                    if dfhack.units.isBaby(unit) then
+                        raceName = race.general_baby_name
+                    elseif dfhack.units.isChild(unit) then
+                        raceName = race.general_child_name
+                    else
+                        raceName = race.name
+                    end
+                else
+                    raceName = { [0] = " ", [1] = " " } -- just to avoid mess later on
+                end
+                if dfhack.units.isOpposedToLife(unit) and dfhack.units.isUndead(unit) then
+                    isWalkingCorpse = true
+                end
+
+                local alreadyExists = false
+                for _, un in ipairs(units) do
+                    if un.printName == printName and
+                        un.isWalkingCorpse == isWalkingCorpse then
+                        un.count = un.count + 1
+                        alreadyExists = true
+                        break
+                    end
+                end
+                if not alreadyExists then
+                    table.insert(units, {
+                        isWalkingCorpse = isWalkingCorpse,
+                        printName = printName,
+                        raceName = raceName,
+                        count = 1
+                    })
+                end
+            end
+        end
+        local separatorCount = 0
+        for _, unit in pairs(units) do
+            local nameToPrint = (unit.count == 1 and "" or string.format("%s ", unit.count)) ..
+                "(" ..
+                ((unit.isWalkingCorpse == true or unit.count == 1) and unit.printName or string.gsub(unit.printName, unit.raceName[0], unit.raceName[1])) ..
+                (unit.isWalkingCorpse == false and "" or (unit.count == 1 and " Corpse" or " Corpses")) ..
+                ")"
+
+            desc = ("%s%s %s"):format(desc, separatorCount == 0 and ' -' or ',', nameToPrint)
+            separatorCount = separatorCount + 1
+        end
+    end
     local wear_level = item:getWear()
     if wear_level == 1 then desc = ('x%sx'):format(desc)
     elseif wear_level == 2 then desc = ('X%sX'):format(desc)

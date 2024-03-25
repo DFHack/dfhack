@@ -105,10 +105,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-static void do_enable(color_ostream &out, bool enable) {
+static void do_enable(bool enable) {
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(log, out).print("%s\n", is_enabled ? "enabled" : "disabled");
+        DEBUG(log).print("%s\n", is_enabled ? "enabled" : "disabled");
         if (enable) {
             EventManager::registerListener(EventManager::EventType::JOB_STARTED,
                 EventManager::EventHandler(unhide_surrounding_tagged_tiles, 0), plugin_self);
@@ -117,7 +117,7 @@ static void do_enable(color_ostream &out, bool enable) {
         }
     }
     else {
-        DEBUG(log, out).print("%s, but already %s; no action\n",
+        DEBUG(log).print("%s, but already %s; no action\n",
             is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
     }
 }
@@ -139,6 +139,15 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         damp_config = World::AddPersistentSiteData(DAMP_CONFIG_KEY);
     }
 
+    for (auto & block : world->map.map_blocks) {
+        auto warm_mask = World::getPersistentTilemask(warm_config, block);
+        auto damp_mask = World::getPersistentTilemask(damp_config, block);
+        if (warm_mask || damp_mask) {
+            do_enable(true);
+            break;
+        }
+    }
+
     return CR_OK;
 }
 
@@ -146,7 +155,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (event == DFHack::SC_WORLD_UNLOADED) {
         is_painting_warm = false;
         is_painting_damp = false;
-        do_enable(out, false);
+        do_enable(false);
     }
     return CR_OK;
 }
@@ -209,7 +218,7 @@ static void do_cycle(color_ostream &out) {
 
     if (!has_assignment){
         DEBUG(log,out).print("no more active tagged tiles; disabling\n");
-        do_enable(out, false);
+        do_enable(false);
     }
 }
 
@@ -306,6 +315,78 @@ static bool is_damp(const df::coord &pos) {
 // event handlers
 //
 
+static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache & mc,
+    int16_t mat, bool warm, bool damp, const df::coord & pos)
+{
+    auto block = Maps::getTileBlock(pos);
+    auto des = Maps::getTileDesignation(pos);
+    if (!block || !des || !des->bits.hidden)
+        return;
+
+    INFO(log,out).print("testing adjacent tile at (%d,%d,%d), mat:%d",
+        pos.x, pos.y, pos.z, mc.veinMaterialAt(pos));
+
+    if (mat != mc.veinMaterialAt(pos))
+        return;
+
+    auto occ = Maps::getTileOccupancy(pos);
+    if (!occ)
+        return;
+
+    des->bits.dig = df::tile_dig_designation::Default;
+    occ->bits.dig_auto = true;
+
+    if (warm) {
+        if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true))
+            warm_mask->setassignment(pos, true);
+    }
+    if (damp) {
+        if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true))
+            damp_mask->setassignment(pos, true);
+    }
+}
+
+static void do_autodig(color_ostream& out, bool warm, bool damp, const df::coord & pos) {
+    MapExtras::MapCache mc;
+    int16_t mat = mc.veinMaterialAt(pos);
+    if (mat == -1)
+        return;
+
+    DEBUG(log,out).print("processing autodig tile at (%d,%d,%d), warm:%d, damp:%d, mat:%d\n",
+        pos.x, pos.y, pos.z, warm, damp, mat);
+
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord(-1, -1, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord( 0, -1, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord( 1, -1, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord(-1,  0, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord( 1,  0, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord(-1,  1, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord( 0,  1, 0));
+    propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord( 1,  1, 0));
+}
+
+static void process_taken_dig_job(color_ostream& out, const df::coord & pos) {
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return;
+
+    bool warm = false, damp = false;
+    if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+        warm = warm_mask->getassignment(pos);
+        warm_mask->setassignment(pos, false);
+    }
+    if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+        damp = damp_mask->getassignment(pos);
+        damp_mask->setassignment(pos, false);
+    }
+
+    auto occ = Maps::getTileOccupancy(pos);
+    if (!occ || !occ->bits.dig_auto || (!warm && !damp))
+        return;
+
+    do_autodig(out, warm, damp, pos);
+}
+
 static void unhide_tagged(color_ostream& out, const df::coord & pos) {
     auto block = Maps::getTileBlock(pos);
     if (!block)
@@ -316,7 +397,6 @@ static void unhide_tagged(color_ostream& out, const df::coord & pos) {
         if (warm_mask->getassignment(pos) && is_warm(pos)) {
             DEBUG(log,out).print("revealing warm dig tile at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
             block->designation[pos.x&15][pos.y&15].bits.hidden = false;
-            warm_mask->setassignment(pos, false);
         }
     }
     if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
@@ -325,7 +405,6 @@ static void unhide_tagged(color_ostream& out, const df::coord & pos) {
         if (damp_mask->getassignment(pos) && is_damp(pos)) {
             DEBUG(log,out).print("revealing damp dig tile at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
             block->designation[pos.x&15][pos.y&15].bits.hidden = false;
-            damp_mask->setassignment(pos, false);
         }
     }
 }
@@ -338,6 +417,8 @@ static void unhide_surrounding_tagged_tiles(color_ostream& out, void* job_ptr) {
 
     const auto & pos = job->pos;
     TRACE(log,out).print("handing dig job at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+
+    process_taken_dig_job(out, pos);
 
     unhide_tagged(out, pos + df::coord(-1, -1, 0));
     unhide_tagged(out, pos + df::coord( 0, -1, 0));
@@ -1915,7 +1996,7 @@ static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
         unhide_surrounding_tagged_tiles(out, job);
 
     if (did_set_assignment)
-        do_enable(out, true);
+        do_enable(true);
 }
 
 static void markCurLevelWarmDig(color_ostream &out) {
@@ -1939,11 +2020,15 @@ static void update_tile_mask(const df::coord & pos, std::unordered_map<df::coord
             damp_mask->setassignment(pos, false);
     } else {
         if (is_painting_warm)
-            if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true))
+            if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true)) {
                 warm_mask->setassignment(pos, true);
+                do_enable(true);
+            }
         if (is_painting_damp)
-            if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true))
+            if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true)) {
                 damp_mask->setassignment(pos, true);
+                do_enable(true);
+            }
     }
 }
 

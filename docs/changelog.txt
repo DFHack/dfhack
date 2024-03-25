@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
 
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
@@ -82,7 +83,6 @@ Template for new versions:
 - `sort`: updated and reinstated military status/squad membership/burrow membership filter for work animal assignment screen
 - `logistics`: ``autoretrain`` will automatically assign trainers to your partially-trained (but not yet domesticated) livestock. this prevents children of partially-trained parents from reverting to wild if you don't notice they were born
 - `orders`: add overlay for configuring labor and skill level restrictions for workshops
-- `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
 
 ## Fixes
 - `autochop`: fix underestimation of log yield for cavern mushrooms

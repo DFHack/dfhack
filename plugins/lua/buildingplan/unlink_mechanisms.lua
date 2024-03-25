@@ -216,7 +216,8 @@ MechLinkOverlay.ATTRS
     desc = "Allows unlinking mechanisms from buildings.",
     default_enabled = true,
     overlay_only = true,
-    frame = {b=3, r=40, w=56, h=27},
+    default_pos = {x=-41, y=-4},
+    frame = {w=56, h=27},
     viewscreens = {},
 }
 
@@ -468,8 +469,7 @@ function MechLinkOverlay:preUpdateLayout(parent_rect)
     self.frame.h = h + 1 --includes lower border
     self.num_buttons = h // 3
 
-    self.frame.b = 3
-    self.frame.r = 40
+    self.subviews.scroll.frame.h = self.num_buttons*3
 end
 
 function MechLinkOverlay:onRenderFrame(dc, rect)
@@ -493,7 +493,8 @@ MechItemOverlay.ATTRS
     desc = "Allows freeing unlinked mechanisms from buildings.",
     default_enabled = true,
     overlay_only = true,
-    frame = {b=3, r=40, w=56, h=27},
+    default_pos = {x=-41, y=-4},
+    frame = {w=56, h=27},
     viewscreens = {},
 }
 
@@ -657,9 +658,6 @@ function MechItemOverlay:fix_layout()
     local h = self.parent_height - 46 - (has_link_tab(self.building) and 3 or 0)
     self.frame.h = h + 1 --includes lower border
     self.num_buttons = h // 3
-
-    self.frame.b = 3
-    self.frame.r = 40
 end
 
 function MechItemOverlay:preUpdateLayout(parent_rect)

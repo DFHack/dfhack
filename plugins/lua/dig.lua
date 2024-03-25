@@ -129,11 +129,11 @@ local function launch_warm_damp_dig_config()
 end
 
 -- --------------------------------
--- WarmDampDigOverlay
+-- WarmDampToolbarOverlay
 --
 
-WarmDampDigOverlay = defclass(WarmDampDigOverlay, overlay.OverlayWidget)
-WarmDampDigOverlay.ATTRS{
+WarmDampToolbarOverlay = defclass(WarmDampToolbarOverlay, overlay.OverlayWidget)
+WarmDampToolbarOverlay.ATTRS{
     desc='Adds widgets to the dig interface to allow uninterrupted digging through warm and damp tiles.',
     default_pos={x=BASELINE_OFFSET, y=-4},
     default_enabled=true,
@@ -151,7 +151,7 @@ WarmDampDigOverlay.ATTRS{
     frame={w=4, h=3},
 }
 
-function WarmDampDigOverlay:init()
+function WarmDampToolbarOverlay:init()
     local to_pen = dfhack.pen.parse
     local function tp(idx, ch, fg)
         return to_pen{
@@ -209,7 +209,7 @@ function WarmDampDigOverlay:init()
     }
 end
 
-function WarmDampDigOverlay:preUpdateLayout(parent_rect)
+function WarmDampToolbarOverlay:preUpdateLayout(parent_rect)
     self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 4
 end
 
@@ -314,10 +314,14 @@ function CarveOverlay:onRenderFrame()
     paintScreenCarve()
 end
 
+-- --------------------------------
+-- Exported symbols
+--
+
 OVERLAY_WIDGETS = {
-    asciiwarmdamp=WarmDampOverlay,
     asciicarve=CarveOverlay,
-    digwarmdamp=WarmDampDigOverlay,
+    warmdamp=WarmDampOverlay,
+    warmdamptoolbar=WarmDampToolbarOverlay,
 }
 
 return _ENV

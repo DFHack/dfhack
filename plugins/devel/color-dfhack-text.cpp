@@ -39,7 +39,7 @@ bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * d
         pen2.bg = color;
         pen2.bold = true;
     }
-    return color_text_hook.next()(pen2, x, y, map);
+    return color_text_hook.next()(pen2, x, y, map, texpos_field);
 }
 
 bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
@@ -51,7 +51,7 @@ bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df
         pen2.ch = 'A';
     else if (pen.ch >= 'a' && pen.ch <= 'z')
         pen2.ch = 'a';
-    return aaaaa_set_tile_hook.next()(pen2, x, y, map);
+    return aaaaa_set_tile_hook.next()(pen2, x, y, map, texpos_field);
 }
 
 bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
@@ -59,7 +59,7 @@ GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, shift_set_tile_hook, shift_set_tile);
 bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     x = (x + 1) % gps->dimx;
-    return shift_set_tile_hook.next()(pen, x, y, map);
+    return shift_set_tile_hook.next()(pen, x, y, map, texpos_field);
 }
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)

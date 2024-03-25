@@ -54,6 +54,11 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
+- `dig`: damp and warm tile icons now show through the designation selection box when in graphics mode
+- `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
+- `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
+- `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
 
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
@@ -65,6 +70,7 @@ Template for new versions:
 ## API
 - ``Units::citizensRange``: c++-20 range for citizen units
 - ``Units::forCitizens``: iterator callback function for citizen units
+- ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
 
 ## Lua
 

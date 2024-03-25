@@ -2093,8 +2093,12 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                 int color = COLOR_BLACK;
 
                 if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
-                    if (warm_mask->getassignment(pos) && blink(500))
+                    if (warm_mask->getassignment(pos) && blink(500)) {
                         color = COLOR_LIGHTRED;
+                        auto damp_mask = World::getPersistentTilemask(damp_config, block);
+                        if (damp_mask && damp_mask->getassignment(pos) && blink(2000))
+                            color = COLOR_BLUE;
+                    }
                 }
                 if (color == COLOR_BLACK) {
                     if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
@@ -2106,7 +2110,8 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                     color = COLOR_RED;
                 }
                 if (color == COLOR_BLACK && is_damp(pos)) {
-                    color = COLOR_LIGHTBLUE;
+                    if (!is_aquifer(pos, des) || blink(is_heavy_aquifer(pos, block) ? 500 : 2000))
+                        color = COLOR_LIGHTBLUE;
                 }
 
                 if (color == COLOR_BLACK) {

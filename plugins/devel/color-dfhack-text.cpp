@@ -21,9 +21,9 @@ struct {
     uint8_t tick;
 } config;
 
-bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, color_text_hook, color_text_tile);
-bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     Screen::Pen pen2 = pen;
     uint8_t color = config.flicker ? config.tick % 8 : config.color;
@@ -42,9 +42,9 @@ bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
     return color_text_hook.next()(pen2, x, y, map);
 }
 
-bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, aaaaa_set_tile_hook, aaaaa_set_tile);
-bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     Screen::Pen pen2 = pen;
     if ((pen.ch >= 'A' && pen.ch <= 'Z') || (pen.ch >= '0' && pen.ch <= '9'))
@@ -54,9 +54,9 @@ bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map)
     return aaaaa_set_tile_hook.next()(pen2, x, y, map);
 }
 
-bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, shift_set_tile_hook, shift_set_tile);
-bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     x = (x + 1) % gps->dimx;
     return shift_set_tile_hook.next()(pen, x, y, map);

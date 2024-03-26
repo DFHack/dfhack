@@ -34,6 +34,7 @@ distribution.
 #include "modules/GuiHooks.h"
 
 #include "df/viewscreen.h"
+#include "df/graphic_viewportst.h"
 
 #include <set>
 #include <memory>
@@ -197,10 +198,10 @@ namespace DFHack
         DFHACK_EXPORT bool inGraphicsMode();
 
         /// Paint one screen tile with the given pen
-        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
+        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false, int32_t * df::graphic_viewportst::*texpos_field = NULL);
 
         /// Retrieves one screen tile from the buffer
-        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false);
+        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false, int32_t * df::graphic_viewportst::*texpos_field = NULL);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
@@ -312,8 +313,8 @@ namespace DFHack
         };
 
         namespace Hooks {
-            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map));
-            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
+            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field));
+            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field));
         }
 
         //! Temporary hide a screen until destructor is called

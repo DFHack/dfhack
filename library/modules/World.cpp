@@ -211,9 +211,7 @@ df::tile_bitmask *World::getPersistentTilemask(PersistentDataItem &item, df::map
     if (id > -100)
         return NULL;
 
-    for (size_t i = 0; i < block->block_events.size(); i++)
-    {
-        auto ev = block->block_events[i];
+    for (auto ev : block->block_events) {
         if (ev->getType() != block_square_event_type::world_construction)
             continue;
         auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
@@ -239,13 +237,13 @@ df::tile_bitmask *World::getPersistentTilemask(PersistentDataItem &item, df::map
 bool World::deletePersistentTilemask(PersistentDataItem &item, df::map_block *block) {
     if (!block)
         return false;
+
     int id = item.fake_df_id();
     if (id > -100)
         return false;
 
     bool found = false;
-    for (int i = block->block_events.size()-1; i >= 0; i--)
-    {
+    for (int i = block->block_events.size()-1; i >= 0; i--) {
         auto ev = block->block_events[i];
         if (ev->getType() != block_square_event_type::world_construction)
             continue;

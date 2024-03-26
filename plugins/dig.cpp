@@ -319,8 +319,7 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
     int16_t mat, bool warm, bool damp, const df::coord & pos)
 {
     auto block = Maps::getTileBlock(pos);
-    auto des = Maps::getTileDesignation(pos);
-    if (!block || !des || !des->bits.hidden)
+    if (!block)
         return;
 
     INFO(log,out).print("testing adjacent tile at (%d,%d,%d), mat:%d",
@@ -329,8 +328,9 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
     if (mat != mc.veinMaterialAt(pos))
         return;
 
+    auto des = Maps::getTileDesignation(pos);
     auto occ = Maps::getTileOccupancy(pos);
-    if (!occ)
+    if (!des || !occ)
         return;
 
     des->bits.dig = df::tile_dig_designation::Default;

@@ -440,7 +440,11 @@ You can go up or down multiple levels by adding a number after the ``<`` or
 ---------
 
 ``#dig`` blueprints are normally the first step in any design. They define the
-boundaries and layouts for the blueprints for later stages of construction. Despite their name, ``#dig`` blueprints are for more than just digging. They also handle smoothing, carving, traffic designations, and marking items on the ground for dumping, forbidding, or other similar tags. See the full list of supported designations in the `#dig mode reference`_.
+boundaries and layouts for the blueprints for later stages of construction.
+Despite their name, ``#dig`` blueprints are for more than just digging. They
+also handle smoothing, carving, traffic designations, and marking items on the
+ground for dumping, forbidding, or other similar tags. See the full list of
+supported designations in the `#dig mode reference`_.
 
 .. _quickfort-dig-priorities:
 
@@ -448,9 +452,9 @@ Dig priorities
 ~~~~~~~~~~~~~~
 
 DF designation priorities are supported in ``#dig`` blueprints. The full syntax
-is ``[symbol][number][expansion]``, where if the ``symbol`` is not specified,
-``d`` is assumed, and if ``number`` is not specified, ``4`` is assumed (the
-default priority). So all of these blueprints are equivalent::
+is ``[markers][symbol][number][expansion]``, where if the ``symbol`` is not
+specified, ``d`` is assumed, and if ``number`` is not specified, ``4`` is
+assumed (the default priority). So all of these blueprints are equivalent::
 
     #dig dig the interior of the room at high priority
     d  d  d  d  d  #
@@ -476,35 +480,57 @@ default priority). So all of these blueprints are equivalent::
     4  4  4  4  4  #
     #  #  #  #  #  #
 
-Marker mode
+At least one of the symbol and the priority number must be specified.
+
+Dig markers
 ~~~~~~~~~~~
 
-Marker mode is useful for when you want to plan out your digging, but you don't
-want to dig everything just yet. In ``#dig`` mode, you can add a :kbd:`m` before
-any other designation letter to indicate that the tile should be designated in
-marker mode. For example, to dig out the perimeter of a room, but leave the
-center of the room marked for digging later::
+There are three types of markers you can apply to dig designated tiles. You can
+apply multiple markers to the same tile by including multiple marker prefixes.
+For example, a tile that is in blueprint mode and that is also marked for warm
+and damp dig would be written as::
 
     #dig
-    d  d  d  d d #
-    d md md md d #
-    d md md md d #
-    d md md md d #
-    d  d  d  d d #
-    #  #  #  # # #
+    mbmwmdd
 
-Then you can use DF's "Toggle Standard/Marking" icons (DF calls them
-"blueprints", but hopefully that won't get too confusing in this context) to
-convert the center tiles to regular designations at your leisure.
+Blueprint marker
+````````````````
 
-To apply an entire dig blueprint in marker mode, regardless of what the
-blueprint itself says, you can set the global quickfort setting
+"Blueprint" markers are useful for when you want to plan out your digging, but
+you don't want to dig everything just yet. Here, "blueprint" refers to the
+vanilla UI "blueprint mode" vs. "standard mode" buttons. You can use DF's
+"Change blueprints to standard selections" button to convert the "blueprint"
+marked tiles to regular designations.
+
+For example, to dig out the perimeter of a room, but leave the center of the
+room marked for digging later::
+
+    #dig
+    d   d   d   d d #
+    d mbd mbd mbd d #
+    d mbd mbd mbd d #
+    d mbd mbd mbd d #
+    d   d   d   d d #
+    #   #   #   # # #
+
+To apply an entire dig blueprint in blueprint marker mode, regardless of what
+the blueprint itself says, you can set the global quickfort setting
 ``force_marker_mode`` to ``true`` before you apply the blueprint by running
 ``quickfort set force_marker_mode true``.
 
 Note that the state of the in-game vanilla button that you use to draw
 designations in either Standard or "Blueprint" mode does not have any effect on
 `quickfort`.
+
+Warm and damp dig markers
+`````````````````````````
+
+Warm and damp dig markers allow digging to continue uninterrupted through warm
+or damp tiles. These markers are useful to include in blueprints that are
+expected to be applied near magma or in damp/aquifer layers. See the `dig` tool
+for more info on warm and damp dig.
+
+The prefix for warm dig is ``mw`` and the prefix for damp dig is ``md``.
 
 Carved minecart tracks
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1909,10 +1935,23 @@ Symbol         Meaning
 =============  =======
 
 You can carve a track over an existing natural ramp to allow a minecart to
-safely traverse z-levels. You can write  ``trackramp<dir>`` instead of
+safely traverse z-levels. You can write ``trackramp<dir>`` instead of
 ``track<dir>`` (e.g. ``trackrampSW``) for clarity in blueprints where this is
 the intention. The actual designation produced by ``track<dir>`` and
 ``trackramp<dir>`` is identical.
+
+Any of the symbols can be prefixed by any number of marker specifications:
+
+=============  =======
+Marker         Meaning
+=============  =======
+mb             "blueprint" mode
+mw             warm dig
+md             damp dig
+=============  =======
+
+For example, a 10x10 block of standard dig tiles with warm + damp markers would
+be ``mwmdd(10x10)``.
 
 #zone mode reference
 ~~~~~~~~~~~~~~~~~~~~

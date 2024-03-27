@@ -9,7 +9,7 @@ A pump stack is useful for moving water or magma up through the z-levels.
 ""
 "4) Once you have everything lined up, hit Enter to apply. If the height ends up being one too many at the top, manually undesignate the top level."
 ""
-"5) Since the bottom up/down staircase is a liability, erase the Up/Down staircase designation on the lowest level and replace it with an Up staircase designation. Otherwise you might get magma critters climbing up through your access stairway!"
+"5) Since the bottom up/down staircase is a liability, erase the Up/Down staircase designation on the lowest level and replace it with an Up staircase designation. Otherwise you might get water (or magma) critters climbing up through your access stairway!"
 ""
 "6) After the stack is dug out, haul away (or dump) any stones that are in the way of building the pumps."
 ""
@@ -26,17 +26,17 @@ A pump stack is useful for moving water or magma up through the z-levels.
 See the wiki for more info on pump stacks: https://dwarffortresswiki.org/index.php/Screw_pump#Pump_stack
 #dig label(digSN) start(2;4;on access stairs) hidden() for a pump from south level
 
-,,,d
-,,,d
-,i,d,d
-,,,d
+,,,mwmdd
+,,,mwmdd
+,mwmdi,mwmdd,mwmdd
+,,,mwmdd
 
 #dig label(digNS) start(2;4;on access stairs) hidden() for a pump from north level
 
-,,,d
-,d,d,d
-,i,,d
-,,,d
+,,,mwmdd
+,mwmdd,mwmdd,mwmdd
+,mwmdi,,mwmdd
+,,,mwmdd
 
 #meta label(dig) start(at the bottom level on the access stairs) 2 levels of pump stack - bottom level pumps from the south
 /digSN

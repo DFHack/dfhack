@@ -1956,6 +1956,28 @@ static bool getDampPaintEnabled(color_ostream &out) {
     return is_painting_damp;
 }
 
+static void addTileWarmDig(df::coord pos) {
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return;
+
+    if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true)) {
+        warm_mask->setassignment(pos, true);
+        do_enable(true);
+    }
+}
+
+static void addTileDampDig(df::coord pos) {
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return;
+
+    if (auto damp_mask = World::getPersistentTilemask(damp_config, block, true)) {
+        damp_mask->setassignment(pos, true);
+        do_enable(true);
+    }
+}
+
 static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
     std::unordered_map<df::coord, df::job *> dig_jobs;
     fill_dig_jobs(dig_jobs);
@@ -2441,6 +2463,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(getWarmPaintEnabled),
     DFHACK_LUA_FUNCTION(setDampPaintEnabled),
     DFHACK_LUA_FUNCTION(getDampPaintEnabled),
+    DFHACK_LUA_FUNCTION(addTileWarmDig),
+    DFHACK_LUA_FUNCTION(addTileDampDig),
     DFHACK_LUA_FUNCTION(markCurLevelWarmDig),
     DFHACK_LUA_FUNCTION(markCurLevelDampDig),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),

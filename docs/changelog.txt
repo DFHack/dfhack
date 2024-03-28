@@ -65,6 +65,8 @@ Template for new versions:
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
 
 ## Misc Improvements
+- aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
+- pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
 
 ## Documentation
 

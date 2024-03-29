@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
@@ -76,20 +77,25 @@ namespace df {
         static const bool is_method = true;
     };
 
-/*
- * This is required to make GCC accept std::tuple{ (DFHack::Lua::Get<aT>(L,base++))... };
- * The order of effects is guaranteed since C+11
- * See: https://en.cppreference.com/w/cpp/language/eval_order (point 9)
- */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsequence-point"
+    template<typename RT, typename... AT, typename FT, typename... ET, std::size_t... I>
+        requires std::is_invocable_r_v<RT, FT, ET..., AT...>
+    void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
+    {
+        if constexpr (std::is_same_v<RT, void>) {
+            std::invoke(fun, extra..., (DFHack::Lua::Get<AT>(L, base+I))...);
+        }
+        else
+        {
+            RT rv = std::invoke(fun, extra..., (DFHack::Lua::Get<AT>(L, base+I))...);
+            df::identity_traits<RT>::get()->lua_read(L, UPVAL_METHOD_NAME, &rv);
+        }
+    }
 
-#define CALL_AND_PUSH(rT,fun,args) \
-    if constexpr (std::is_same_v<rT,void>){ \
-        std::apply(fun,args); \
-    } else { \
-        rT rv = std::apply(fun,args); \
-        df::identity_traits<rT>::get()->lua_read(L, UPVAL_METHOD_NAME, &rv); \
+    template<typename RT, typename... AT, typename FT, typename... ET, typename indices = std::index_sequence_for<AT...> >
+        requires std::is_invocable_r_v<RT, FT, ET..., AT...>
+    void call_and_push(lua_State* L, int base, FT fun, ET... extra)
+    {
+        call_and_push_impl<RT, AT...>(L, base, indices{}, fun, extra...);
     }
 
     template<typename T> struct function_wrapper {};
@@ -99,8 +105,7 @@ namespace df {
         static const int num_args = sizeof...(aT);
         static void execute(lua_State *L, int base, rT (fun)(DFHack::color_ostream& out, aT...)) {
              cur_lua_ostream_argument out(L);
-             auto args = std::tuple<DFHack::color_ostream&, aT...>{ out, (DFHack::Lua::Get<aT>(L,base++))... };
-             CALL_AND_PUSH(rT,fun,args);
+             call_and_push<rT, aT...>(L, base, fun, out);
         }
     };
 
@@ -108,8 +113,7 @@ namespace df {
     struct function_wrapper<rT(*)(aT...)> {
         static const int num_args = sizeof...(aT);
         static void execute(lua_State *L, int base, rT (fun)(aT...)) {
-            auto args = std::tuple<aT...>{ (DFHack::Lua::Get<aT>(L,base++))... };
-            CALL_AND_PUSH(rT,fun,args);
+            call_and_push<rT, aT...>(L, base, fun);
         }
     };
 
@@ -118,8 +122,7 @@ namespace df {
         static const int num_args = sizeof...(aT)+1;
         static void execute(lua_State *L, int base, rT(CT::*mem_fun)(aT...)) {
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
-            auto args = std::tuple<CT*, aT...>{ self, (DFHack::Lua::Get<aT>(L,base++))... };
-            CALL_AND_PUSH(rT,mem_fun,args);
+            call_and_push<rT, aT...>(L, base, mem_fun, self);
         };
     };
 
@@ -128,12 +131,9 @@ namespace df {
         static const int num_args = sizeof...(aT)+1;
         static void execute(lua_State *L, int base, rT(CT::*mem_fun)(aT...) const) {
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
-            auto args = std::tuple<CT*, aT...>{ self, (DFHack::Lua::Get<aT>(L,base++))... };
-            CALL_AND_PUSH(rT,mem_fun,args);
+            call_and_push<rT, aT...>(L, base, mem_fun, self);
         };
     };
-
-#pragma GCC diagnostic pop
 
     template<class T>
     class function_identity : public function_identity_base {

@@ -436,7 +436,6 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
 
                 lua_pop(L, 1); //pop current tile
             }
-            frame.push_back(t);
         }
         def.frames.push_back(frame);
         frame_index++;

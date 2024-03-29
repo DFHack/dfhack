@@ -382,6 +382,7 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     luaL_checktype(L,stack_pos,LUA_TTABLE);
 
     int frame_index = 1;
+    def.frames.clear();
 
     while (lua_geti(L,stack_pos,frame_index) != LUA_TNIL) { //get frame[i]
         luaL_checktype(L,-1,LUA_TTABLE); //ensure that it's a table

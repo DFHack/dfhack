@@ -72,7 +72,8 @@ local function processFrames(shop_def,frames)
     return frames
 end
 --locate gears on the workshop from the raws definition
-local function findGears( shop_def ) --finds positions of all gears and inverted gears
+local function findGears( shop_def ,gear_tiles) --finds positions of all gears and inverted gears
+    gear_tiles=gear_tiles or {42,15}
     local w,h=shop_def.dim_x,shop_def.dim_y
     local stage=shop_def.build_stages
     local ret={}
@@ -96,7 +97,8 @@ local function lookup_color( shop_def,x,y,stage )
     return shop_def.tile_color[0][stage][x][y],shop_def.tile_color[1][stage][x][y],shop_def.tile_color[2][stage][x][y]
 end
 --adds frames for all gear icons and inverted gear icons
-local function processFramesAuto( shop_def ,gears,auto_graphics)
+local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
+    gear_tiles=gear_tiles or {42,15,graphics_cache[1],graphics_cache[2]}
     local w,h=shop_def.dim_x,shop_def.dim_y
     local frames={{},{}} --two frames only
     local stage=shop_def.build_stages
@@ -105,11 +107,11 @@ local function processFramesAuto( shop_def ,gears,auto_graphics)
 
         local tile,tile_inv
         if v.inverted then
-            tile=42
-            tile_inv=15
+            tile=gear_tiles[1]
+            tile_inv=gear_tiles[2]
         else
-            tile=15
-            tile_inv=42
+            tile=gear_tiles[2]
+            tile_inv=gear_tiles[1]
         end
 
         table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y,stage)})
@@ -117,8 +119,8 @@ local function processFramesAuto( shop_def ,gears,auto_graphics)
 
         --insert default gear graphics if auto graphics is on
         if auto_graphics then
-            frames[1][#frames[1]][5]=graphics_cache[1]
-            frames[2][#frames[2]][5]=graphics_cache[2]
+            frames[1][#frames[1]][5]=gear_tiles[3]
+            frames[2][#frames[2]][5]=gear_tiles[4]
         end
     end
 
@@ -127,18 +129,18 @@ local function processFramesAuto( shop_def ,gears,auto_graphics)
     end
     return frames
 end
-function setMachineInfoAuto( name,need_power,consume,produce)
+function setMachineInfoAuto( name,need_power,consume,produce,gear_tiles)
     local shop_def=findCustomWorkshop(name)
-    local gears=findGears(shop_def)
+    local gears=findGears(shop_def,gear_tiles)
     setMachineInfo(name,need_power,consume,produce,gears)
 end
-function setAnimationInfoAuto( name,make_graphics_too,frame_length )
+function setAnimationInfoAuto( name,make_graphics_too,frame_length,gear_tiles )
     if graphics_cache==nil then
         reload_graphics_cache()
     end
     local shop_def=findCustomWorkshop(name)
-    local gears=findGears(shop_def)
-    local frames=processFramesAuto(shop_def,gears,make_graphics_too)
+    local gears=findGears(shop_def,gear_tiles)
+    local frames=processFramesAuto(shop_def,gears,make_graphics_too,gear_tiles)
     setAnimationInfo(name,frames,frame_length)
 end
 function setOnUpdate(name,interval,callback)

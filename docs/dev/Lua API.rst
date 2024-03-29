@@ -6554,10 +6554,11 @@ Functions
   :power_produced:   output this amount of power
   :connection_points:   a table of ``{x=?,y=?}`` points that can connect to other machines
 
-* ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced)``
+* ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced, gear_tiles)``
 
   Same as ``setMachineInfo`` but fills out the ``connection_points`` table from raws placing connection
-  points on tiles which have the gear tile.
+  points on tiles which have the gear tile. ``gear_tiles`` is an optional array of two tiles that are
+  counted as gears in the workshop ascii tile raws.
 
 * ``setAnimationInfo(workshop_type, frames, frame_skip)``
 
@@ -6573,7 +6574,7 @@ Functions
   :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
                     are synchronized with machine animation.
 
-* ``setAnimationInfoAuto(name, make_graphics_too, frame_skip)``
+* ``setAnimationInfoAuto(name, make_graphics_too, frame_skip, gear_tiles)``
 
   Animate workshop as with function above but generate frames automatically. This works by finding
   tiles which have gears and animating them with alternating gear tiles.
@@ -6582,6 +6583,7 @@ Functions
   :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
   :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
                     are synchronized with machine animation.
+  :gear_tiles:      Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles
 
 * ``setOnUpdate(name,interval,callback)``
 

@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `aquifer`: commandline tool for creating, draining, and modifying aquifers
 
 ## New Features
 - `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled

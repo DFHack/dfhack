@@ -7,7 +7,6 @@
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 #include "modules/Job.h"
-#include "modules/Persistence.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
@@ -2105,13 +2104,20 @@ static int registerWarmDampBox(lua_State *L) {
     return 0;
 }
 
+// re-composits layers using screentexpos layers unused for walls
 static void bump_layers(const Screen::Pen &pen, int x, int y) {
-    Screen::Pen signpost_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+    Screen::Pen vehicle_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_vehicle);
+    Screen::Pen vermin_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_vermin);
+    Screen::Pen projectile_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_projectile);
     Screen::Pen desig_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_designation);
-    if (signpost_pen.valid())
-        Screen::paintTile(signpost_pen, x, y, true, &df::graphic_viewportst::screentexpos_background_two);
+    if (vehicle_pen.valid())
+        Screen::paintTile(vehicle_pen, x, y, true, &df::graphic_viewportst::screentexpos_building_one);
+    if (vermin_pen.valid())
+        Screen::paintTile(vermin_pen, x, y, true, &df::graphic_viewportst::screentexpos_vehicle);
+    if (projectile_pen.valid())
+        Screen::paintTile(projectile_pen, x, y, true, &df::graphic_viewportst::screentexpos_vermin);
     if (desig_pen.valid())
-        Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+        Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_projectile);
     Screen::paintTile(pen, x, y, true, &df::graphic_viewportst::screentexpos_designation);
 }
 
@@ -2119,8 +2125,8 @@ static bool blink(int delay) {
     return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
 }
 
-static void paintScreenWarmDamp(bool show_hidden = false) {
-    TRACE(log).print("entering paintScreenDampWarm\n");
+static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = false) {
+    TRACE(log).print("entering paintScreenDampWarm aquifer_mode=%d, show_damp=%d\n", aquifer_mode, show_damp);
 
     static Screen::Pen empty_pen;
 
@@ -2150,7 +2156,7 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
             if (!block)
                 continue;
 
-            if (Screen::inGraphicsMode()) {
+            if (!aquifer_mode && Screen::inGraphicsMode()) {
                 if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
                     if (warm_mask->getassignment(pos))
                         bump_layers(warm_dig_pen, x, y);
@@ -2161,18 +2167,18 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                 }
             }
 
-            if (!show_hidden && !Maps::isTileVisible(pos)) {
+            if (!aquifer_mode && !Maps::isTileVisible(pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }
 
             if (Screen::inGraphicsMode()) {
                 Screen::Pen *pen = NULL;
-                if (is_warm(pos) && is_wall(pos)) {
+                if (!aquifer_mode && is_warm(pos) && is_wall(pos)) {
                     pen = &warm_pen;
                 } else if (is_aquifer(pos)) {
                     pen = is_heavy_aquifer(pos, block) ? &heavy_aq_pen : &light_aq_pen;
-                } else if (is_wall(pos) && is_damp(pos)) {
+                } else if ((!aquifer_mode || show_damp) && is_wall(pos) && is_damp(pos)) {
                     pen = &damp_pen;
                 }
                 if (pen) {
@@ -2199,25 +2205,31 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
                 int color = COLOR_BLACK;
 
-                if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
-                    if (warm_mask->getassignment(pos) && blink(500)) {
-                        color = COLOR_LIGHTRED;
-                        auto damp_mask = World::getPersistentTilemask(damp_config, block);
-                        if (damp_mask && damp_mask->getassignment(pos) && blink(2000))
-                            color = COLOR_BLUE;
+                if (!aquifer_mode) {
+                    if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+                        if (warm_mask->getassignment(pos) && blink(500)) {
+                            color = COLOR_LIGHTRED;
+                            auto damp_mask = World::getPersistentTilemask(damp_config, block);
+                            if (damp_mask && damp_mask->getassignment(pos) && blink(2000))
+                                color = COLOR_BLUE;
+                        }
+                    }
+                    if (color == COLOR_BLACK) {
+                        if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+                            if (damp_mask->getassignment(pos) && blink(500))
+                                color = COLOR_BLUE;
+                        }
+                    }
+                    if (color == COLOR_BLACK && is_warm(pos)) {
+                        color = COLOR_RED;
                     }
                 }
-                if (color == COLOR_BLACK) {
-                    if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
-                        if (damp_mask->getassignment(pos) && blink(500))
-                            color = COLOR_BLUE;
-                    }
-                }
-                if (color == COLOR_BLACK && is_warm(pos)) {
-                    color = COLOR_RED;
-                }
+
                 if (color == COLOR_BLACK && is_damp(pos)) {
-                    if (!is_aquifer(pos, des) || blink(is_heavy_aquifer(pos, block) ? 500 : 2000))
+                    if (is_aquifer(pos, des)) {
+                        if (blink(is_heavy_aquifer(pos, block) ? 500 : 2000))
+                            color = COLOR_LIGHTBLUE;
+                    } else if (!aquifer_mode || show_damp)
                         color = COLOR_LIGHTBLUE;
                 }
 

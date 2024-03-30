@@ -37,7 +37,7 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    if g_cursor.x ~= -30000 then
+    if g_cursor.x >= 0 then
         return copyall(g_cursor)
     end
 end

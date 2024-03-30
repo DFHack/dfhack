@@ -62,6 +62,7 @@ Template for new versions:
 
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
+- fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 
 ## Misc Improvements
 - aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer

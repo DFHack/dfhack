@@ -364,7 +364,7 @@ Struct and class types with an instance-vector attribute in the XML also support
 
 * ``type.get_vector()``
 
-  Returns the instance vector e.g ``df.unit.get_vector() == df.global.world.units.all``
+  Returns the instance vector e.g ``df.item.get_vector() == df.global.world.items.all``
 
 Global functions
 ================

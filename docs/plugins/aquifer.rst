@@ -39,6 +39,8 @@ Examples
     tiles and how many aquifer tiles are on each listed level.
 ``aquifer drain --all --skip-top 2``
     Drain all aquifer tiles on the map except for the top 2 levels of aquifer.
+    This example is available as a Gameplay -> Autostart option in
+    `gui/control-panel`.
 ``aquifer drain -z --leaky``
     Drain aquifer tiles on this z-level that are actively leaking into open
     adjacent tiles or into empty spaces underneath them.

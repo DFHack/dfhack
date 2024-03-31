@@ -289,21 +289,28 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
+set(DOWNLOAD_SDL2 TRUE CACHE BOOL "Download the SDL2 headers and libraries.")
+
 if(BUILD_LIBRARY)
-    # Download SDL release and extract into depends in the build dir
-    # all we need are the header files (including generated headers), so the same release package
-    # will work for all platforms
-    # (the above statement is untested for OSX)
-    set(SDL_VERSION 2.26.2)
-    set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
-    set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
-    set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
-    download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
-        ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
-        ${SDL_ZIP_MD5})
-    file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
-        DESTINATION ${SDL_ZIP_PATH})
-    include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+    if(DOWNLOAD_SDL2)
+        # Download SDL release and extract into depends in the build dir
+        # all we need are the header files (including generated headers), so the same release package
+        # will work for all platforms
+        # (the above statement is untested for OSX)
+        set(SDL_VERSION 2.26.2)
+        set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
+        set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
+        set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
+        download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+            ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+            ${SDL_ZIP_MD5})
+        file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+            DESTINATION ${SDL_ZIP_PATH})
+        include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+    else()
+        find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+        include_directories(${SDL2_INCLUDE_DIRS})
+    endif()
 endif()
 
 if(APPLE)

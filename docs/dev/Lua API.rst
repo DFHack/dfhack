@@ -356,9 +356,15 @@ bi-directional mapping between key strings and values, and
 also map ``_first_item`` and ``_last_item`` to the min and
 max values.
 
-Struct and class types with instance-vector attribute in the
-xml have a ``type.find(key)`` function that wraps the find
-method provided in C++.
+Struct and class types with an instance-vector attribute in the XML also support:
+
+* ``type.find(key)``
+
+  Returns an object from the instance vector that matches the key, where the field is determined by the 'key-field' specified in the XML.
+
+* ``type.get_vector()``
+
+  Returns the instance vector e.g ``df.item.get_vector() == df.global.world.items.all``
 
 Global functions
 ================

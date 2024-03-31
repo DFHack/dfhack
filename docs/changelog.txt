@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `aquifer`: commandline tool for creating, draining, and modifying aquifers
 
 ## New Features
 - `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
@@ -63,6 +64,7 @@ Template for new versions:
 
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
+- fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 
 ## Misc Improvements
 - aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
@@ -76,6 +78,7 @@ Template for new versions:
 - ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
 
 ## Lua
+- ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)
 
 ## Removed
 

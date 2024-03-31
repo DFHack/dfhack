@@ -10,7 +10,7 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.texpos_border_interior, ch=32, fg=0, bg=0, write_to_lower=true}
+CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.texpos_border_interior or nil, ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
@@ -965,8 +965,10 @@ end
 
 function FRAME_WINDOW(resizable)
     local frame = make_frame(textures.tp_border_window, true)
-    if not resizable then
-        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    if resizable then
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_window, 17), ch=217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    else
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=188, fg=COLOR_GREY, bg=COLOR_BLACK }
     end
     return frame
 end

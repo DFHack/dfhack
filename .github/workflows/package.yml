@@ -51,4 +51,5 @@ jobs:
       stonesense: true
       docs: true
       html: false
+      launchdf: ${{ inputs.launchdf }}
     secrets: inherit

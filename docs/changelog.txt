@@ -52,22 +52,40 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `aquifer`: commandline tool for creating, draining, and modifying aquifers
 
 ## New Features
+- `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
+- `dig`: damp and warm tile icons now show through the designation selection box when in graphics mode
+- `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
+- `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
+- `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
 
 ## Fixes
-- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
+- fix behavior of Linux Steam launcher on systems that don't support the inotify API
+- fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 
 ## Misc Improvements
 - `tailor`: allow turning off automatic confiscation of tattered clothing
+- aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
+- pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
 
 ## Documentation
 
 ## API
+- ``Units::citizensRange``: c++-20 range for citizen units
+- ``Units::forCitizens``: iterator callback function for citizen units
+- ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
 
 ## Lua
+- ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)
 
 ## Removed
+
+# 50.12-r2.1
+
+## Fixes
+- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
 
 # 50.12-r2
 

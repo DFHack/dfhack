@@ -218,6 +218,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(setupdwarfgame)
         case df::name_creator_context_type::EMBARK_GROUP_NAME:
             focusStrings.push_back(baseFocus + "/GroupName");
             break;
+        case df::name_creator_context_type::IMAGE_CREATOR_NAME:
+            focusStrings.push_back(baseFocus + "/ImageName");
+            break;
         default:
             break;
         }
@@ -899,19 +902,14 @@ void Gui::clearFocusStringCache() {
 }
 
 bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
-    focus_string = toLower_cp437(focus_string);
     if (!top)
         top = getCurViewscreen(true);
 
-    if (!cached_focus_strings.contains(top)) {
-        vector<string> focus_strings = getFocusStrings(top);
-        for (size_t i = 0; i < focus_strings.size(); ++i)
-            focus_strings[i] = toLower_cp437(focus_strings[i]);
-        cached_focus_strings[top] = focus_strings;
-    }
-    vector<string> &cached = cached_focus_strings[top];
+    if (!cached_focus_strings.contains(top))
+        cached_focus_strings[top] = getFocusStrings(top);
 
-    return std::find_if(cached.begin(), cached.end(), [&focus_string](std::string item) {
+    vector<string> &cached = cached_focus_strings[top];
+    return std::find_if(cached.begin(), cached.end(), [&focus_string](const std::string &item) {
         return prefix_matches(focus_string, item);
     }) != cached.end();
 }
@@ -2188,8 +2186,8 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
-            add_proper_report(info.unit_a, info.flags.bits.hostile_combat, new_report, true); // TODO: SPARRING_EVENT
-            add_proper_report(info.unit_d, info.flags.bits.hostile_combat, new_report, true); // TODO: SPARRING_EVENT
+            add_proper_report(info.unit_a, info.flags.bits.SPARRING_EVENT, new_report, true);
+            add_proper_report(info.unit_d, info.flags.bits.SPARRING_EVENT, new_report, true);
         }
 
         if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
@@ -2263,7 +2261,7 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     info.display_timer = ANNOUNCE_DISPLAY_TIME;
     info.unit_a = unit_a;
     info.unit_d = unit_d;
-    info.flags.bits.hostile_combat = is_sparring; // TODO: SPARRING_EVENT
+    info.flags.bits.SPARRING_EVENT = is_sparring;
 
     return autoDFAnnouncement(info, message);
 }

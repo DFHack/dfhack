@@ -5,7 +5,6 @@
 #else
 #  include <fcntl.h>
 #  include <unistd.h>
-#  include <sys/inotify.h>
 #endif
 
 #include "steam_api.h"
@@ -119,6 +118,40 @@ static const char * launch_direct() {
 
 #ifdef WIN32
 
+bool wrap_launch(LPCWSTR (*launch_fn)()) {
+    LPCWSTR err = launch_fn();
+    if (err != NULL) {
+        MessageBoxW(NULL, err, NULL, 0);
+        return false;
+    }
+    return true;
+}
+
+#else
+
+void notify(const char * msg) {
+    std::string command = "notify-send --app-name=DFHack \"";
+    command += msg;
+    command += "\"";
+    printf("%s\n", msg);
+    int result = system(command.c_str());
+    // if this fails; it's ok
+    (void)result;
+}
+
+bool wrap_launch(const char * (*launch_fn)()) {
+    const char * err = launch_fn();
+    if (err != NULL) {
+        notify(err);
+        return false;
+    }
+    return true;
+}
+
+#endif
+
+#ifdef WIN32
+
 DWORD findDwarfFortressProcess() {
     PROCESSENTRY32W entry;
     entry.dwSize = sizeof(PROCESSENTRY32W);
@@ -186,67 +219,9 @@ bool waitForDF() {
     if (df_pid <= 0)
         return false;
 
-    char path[32];
-    int in_fd = inotify_init();
-    snprintf(path, 32, "/proc/%i/exe", df_pid);
-    if (inotify_add_watch(in_fd, path, IN_CLOSE_NOWRITE) < 0) {
-        close(in_fd);
-        return false;
-    }
-
-    snprintf(path, 32, "/proc/%i", df_pid);
-    int dir_fd = open(path, 0);
-    if (dir_fd < 0) {
-        close(in_fd);
-        return false;
-    }
-
-    while (true) {
-        struct inotify_event event;
-        if (read(in_fd, &event, sizeof(event)) < 0)
-            break;
-        int f = openat(dir_fd, "fd", 0);
-        if (f < 0) break;
-        close(f);
-    }
-
-    close(dir_fd);
-    close(in_fd);
-    return true;
-}
-
-#endif
-
-#ifdef WIN32
-
-bool wrap_launch(LPCWSTR (*launch_fn)()) {
-    LPCWSTR err = launch_fn();
-    if (err != NULL) {
-        MessageBoxW(NULL, err, NULL, 0);
-        return false;
-    }
-    return true;
-}
-
-#else
-
-void notify(const char * msg) {
-    std::string command = "notify-send --app-name=DFHack \"";
-    command += msg;
-    command += "\"";
-    printf("%s\n", msg);
-    int result = system(command.c_str());
-    // if this fails; it's ok
-    (void)result;
-}
-
-bool wrap_launch(const char * (*launch_fn)()) {
-    const char * err = launch_fn();
-    if (err != NULL) {
-        notify(err);
-        return false;
-    }
-    return true;
+    char path[64];
+    snprintf(path, 64, "tail --pid=%i -f /dev/null", df_pid);
+    return 0 == system(path);
 }
 
 #endif
@@ -310,7 +285,7 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
         MessageBoxW(NULL, L"DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.", NULL, 0);
 #else
-        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.\n");
+        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.");
 #endif
         exit(1);
     }
@@ -327,7 +302,7 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
             MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);
 #else
-            notify("Dwarf Fortress took too long to launch, aborting\n");
+            notify("Dwarf Fortress took too long to launch, aborting");
 #endif
             exit(1);
         }

@@ -318,7 +318,7 @@ function MechLinkOverlay:get_button(n, ensure)
             widgets.TextButton
             {
                 view_id = "unlink_"..n,
-                frame = {t=0, r=9, w=8, h=1},
+                frame = {t=0, r=8, w=8, h=1},
                 label = "Unlink",
                 on_activate = function() self:activate_button(n) end,
                 visible = false,
@@ -437,6 +437,8 @@ function MechLinkOverlay:update_buttons()
     self:scroll(0)
 
     local bci_len = #self.building.contained_items
+    local h_offset = #self.links > self.num_buttons and 8 or 6 --account for scrollbar
+
     for i=1, self.num_buttons do
         local button = self:get_button(i, true)
         local offset = i*3 - 1 - ((scroll_pos + 1) % 3)
@@ -445,6 +447,7 @@ function MechLinkOverlay:update_buttons()
         button.visible = false
         if idx > 0 and idx < bci_len then
             button.frame.t = offset
+            button.frame.r = h_offset
             button.visible = true
         end
         button:updateLayout()
@@ -536,7 +539,7 @@ function MechItemOverlay:get_button(n, ensure)
             widgets.TextButton
             {
                 view_id = "free_"..n,
-                frame = {t=0, l=31, w=6, h=1},
+                frame = {t=0, r=21, w=6, h=1},
                 label = "Free",
                 on_activate = function() self:activate_button(n) end,
                 visible = false,
@@ -617,6 +620,8 @@ end
 function MechItemOverlay:update_buttons()
     local scroll_pos = sheet.scroll_position_item
     local bci_len = #self.building.contained_items
+    local h_offset = bci_len > self.num_buttons and 21 or 19 --account for scrollbar
+
     for i=1, self.num_buttons do
         local button = self:get_button(i, true)
         local offset = i*3 - 1 - ((scroll_pos + 1) % 3)
@@ -628,6 +633,7 @@ function MechItemOverlay:update_buttons()
             if item._type == df.item_trappartsst and item.flags.in_building and
                 not item.flags.in_job and not get_trigger_index(item) then
                     button.frame.t = offset
+                    button.frame.r = h_offset
                     button.visible = true
             end
         end

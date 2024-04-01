@@ -6,7 +6,10 @@
 -- preserved as a common denominator for all modules.
 -- This file uses it instead of the new default one.
 
+---@class dfhack
+---@field BASE_G _G Original Lua global environment
 local dfhack = dfhack
+
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
@@ -326,13 +329,19 @@ function printall_recurse(value, seen)
     local seen = seen or {}
     do_print_recurse(dfhack.println, value, seen, 0)
 end
-
+---@generic T
+---@param table `T`
+---@return T
 function copyall(table)
     local rv = {}
-    for k,v in pairs(table) do rv[k] = v end
+    for k, v in pairs(table) do rv[k] = v end
     return rv
 end
 
+---@param pos coord
+---@return number? x
+---@return number? y
+---@return number? z
 function pos2xyz(pos)
     if pos then
         local x = pos.x
@@ -342,22 +351,41 @@ function pos2xyz(pos)
     end
 end
 
-function xyz2pos(x,y,z)
+---@nodiscard
+---@param x number
+---@param y number
+---@param z number
+---@return coord
+function xyz2pos(x, y, z)
     if x then
-        return {x=x,y=y,z=z}
+        return { x = x, y = y, z = z }
     else
-        return {x=-30000,y=-30000,z=-30000}
+        return { x = -30000, y = -30000, z = -30000 }
     end
 end
 
-function same_xyz(a,b)
+---@nodiscard
+---@param a coord
+---@param b coord
+---@return boolean
+function same_xyz(a, b)
     return a and b and a.x == b.x and a.y == b.y and a.z == b.z
 end
 
-function get_path_xyz(path,i)
+---@nodiscard
+---@param path coord_path
+---@param i number
+---@return number x
+---@return number y
+---@return number z
+function get_path_xyz(path, i)
     return path.x[i], path.y[i], path.z[i]
 end
 
+---@nodiscard
+---@param pos coord|coord2d
+---@return number? x
+---@return number? y
 function pos2xy(pos)
     if pos then
         local x = pos.x
@@ -367,39 +395,65 @@ function pos2xy(pos)
     end
 end
 
-function xy2pos(x,y)
+---@nodiscard
+---@param x number
+---@param y number
+---@return coord2d
+function xy2pos(x, y)
     if x then
-        return {x=x,y=y}
+        return { x = x, y = y }
     else
-        return {x=-30000,y=-30000}
+        return { x = -30000, y = -30000 }
     end
 end
 
+---@nodiscard
+---@param a coord|coord2d
+---@param b coord|coord2d
+---@return boolean
 function same_xy(a,b)
     return a and b and a.x == b.x and a.y == b.y
 end
 
+---@nodiscard
+---@param path coord_path|coord2d_path
+---@param i number
+---@return integer x
+---@return integer y
 function get_path_xy(path,i)
     return path.x[i], path.y[i]
 end
 
-function safe_index(obj,idx,...)
+-- Walks a sequence of dereferences, which may be represented by numbers or
+-- strings. Returns nil if any of obj or indices is nil, or a numeric index is
+-- out of array bounds.
+---@generic T
+---@param obj `T`
+---@param idx number|string
+---@param ... number|string
+---@return T obj
+function safe_index(obj, idx, ...)
     if obj == nil or idx == nil then
         return nil
     end
     if type(idx) == 'number' and
-            type(obj) == 'userdata' and -- this check is only relevant for c++
-            (idx < 0 or idx >= #obj) then
+        type(obj) == 'userdata' and     -- this check is only relevant for c++
+        (idx < 0 or idx >= #obj) then
         return nil
     end
     obj = obj[idx]
-    if select('#',...) > 0 then
-        return safe_index(obj,...)
+    if select('#', ...) > 0 then
+        return safe_index(obj, ...)
     else
         return obj
     end
 end
 
+---@generic T
+---@param t `T`
+---@param key integer|string
+---@param default_value? any
+---@return T
 function ensure_key(t, key, default_value)
     if t[key] == nil then
         t[key] = (default_value ~= nil) and default_value or {}
@@ -407,6 +461,11 @@ function ensure_key(t, key, default_value)
     return t[key]
 end
 
+---@generic T
+---@param t `T`
+---@param key integer|string
+---@param ... integer|string
+---@return T
 function ensure_keys(t, key, ...)
     t = ensure_key(t, key)
     if select('#', ...) > 0 then
@@ -417,12 +476,23 @@ end
 
 -- String class extentions
 
+---@class string
+local string
+
 -- prefix is a literal string, not a pattern
+---@nodiscard
+---@param self string
+---@param prefix string
+---@return boolean
 function string:startswith(prefix)
     return self:sub(1, #prefix) == prefix
 end
 
 -- suffix is a literal string, not a pattern
+---@nodiscrd
+---@param self string
+---@param suffix string
+---@return boolean
 function string:endswith(suffix)
     return self:sub(-#suffix) == suffix or #suffix == 0
 end
@@ -433,6 +503,11 @@ end
 -- as a single delimiter, e.g. to avoid getting empty string elements, pass a
 -- pattern like ' +'. Be aware that passing patterns that match empty strings
 -- (like ' *') will result in improper string splits.
+---@nodiscard
+---@param self string
+---@param delimiter? string
+---@param plain? boolean
+---@return string[]
 function string:split(delimiter, plain)
     delimiter = delimiter or ' '
     local result = {}
@@ -451,6 +526,9 @@ end
 
 -- Removes spaces (i.e. everything that matches '%s') from the start and end of
 -- a string. Spaces between non-space characters are left untouched.
+---@nodiscard
+---@param self string
+---@return self
 function string:trim()
     local _, _, content = self:find('^%s*(.-)%s*$')
     return content
@@ -460,6 +538,10 @@ end
 -- Lines are split at space-separated word boundaries. Any existing newlines are
 -- kept in place. If a single word is longer than width, it is split over
 -- multiple lines. If width is not specified, 72 is used.
+---@nodiscard
+---@param self string
+---@param width number
+---@return self
 function string:wrap(width)
     width = width or 72
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
@@ -497,6 +579,9 @@ end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
 local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
+---@nodiscard
+---@param self string
+---@return self
 function string:escape_pattern()
     return self:gsub(regex_chars_pattern, '%%%1')
 end

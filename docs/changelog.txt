@@ -55,6 +55,7 @@ Template for new versions:
 - `aquifer`: commandline tool for creating, draining, and modifying aquifers
 
 ## New Features
+- `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
 - `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
 - `dig`: damp and warm tile icons now show through the designation selection box when in graphics mode
 - `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)

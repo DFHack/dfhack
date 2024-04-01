@@ -289,7 +289,7 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-set(DOWNLOAD_SDL2 TRUE CACHE BOOL "Download the SDL2 headers and libraries.")
+set(DOWNLOAD_SDL2 TRUE CACHE BOOL "Download the SDL2 headers for compilation. Set to FALSE to use system headers.")
 
 if(BUILD_LIBRARY)
     if(DOWNLOAD_SDL2)

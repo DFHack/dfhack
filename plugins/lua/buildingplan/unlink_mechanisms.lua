@@ -536,7 +536,7 @@ function MechItemOverlay:get_button(n, ensure)
             widgets.TextButton
             {
                 view_id = "free_"..n,
-                frame = {t=0, l=28, w=6, h=1},
+                frame = {t=0, l=31, w=6, h=1},
                 label = "Free",
                 on_activate = function() self:activate_button(n) end,
                 visible = false,

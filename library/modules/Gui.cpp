@@ -218,6 +218,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(setupdwarfgame)
         case df::name_creator_context_type::EMBARK_GROUP_NAME:
             focusStrings.push_back(baseFocus + "/GroupName");
             break;
+        case df::name_creator_context_type::IMAGE_CREATOR_NAME:
+            focusStrings.push_back(baseFocus + "/ImageName");
+            break;
         default:
             break;
         }

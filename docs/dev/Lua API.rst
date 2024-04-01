@@ -6520,8 +6520,7 @@ The names of the functions are also available as the keys of the
 building-hacks
 ==============
 
-This plugin overwrites some methods in workshop df class to change and extend workshop
-functionality. See exported function list for details.
+This plugin extends DF workshops to support custom powered buildings.
 
 .. contents::
   :local:

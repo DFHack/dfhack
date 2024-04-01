@@ -2137,10 +2137,10 @@ static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = fals
     warm_pen.tile = warm_texpos;
     damp_pen.tile = damp_texpos;
 
-    long warm_dig_texpos = Textures::getTexposByHandle(textures[1]);
+    long warm_dig_texpos = Textures::getTexposByHandle(textures[3]);
     long damp_dig_texpos = Textures::getTexposByHandle(textures[2]);
-    long light_aq_texpos = Textures::getTexposByHandle(textures[7]);
-    long heavy_aq_texpos = Textures::getTexposByHandle(textures[8]);
+    long light_aq_texpos = Textures::getTexposByHandle(textures[0]);
+    long heavy_aq_texpos = Textures::getTexposByHandle(textures[1]);
     Screen::Pen warm_dig_pen, damp_dig_pen, light_aq_pen, heavy_aq_pen;
     warm_dig_pen.tile = warm_dig_texpos;
     damp_dig_pen.tile = damp_dig_texpos;

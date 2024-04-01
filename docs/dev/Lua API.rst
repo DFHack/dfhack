@@ -357,8 +357,9 @@ also map ``_first_item`` and ``_last_item`` to the min and
 max values.
 
 Enum types also support the ``type.next_item(index)`` function,
-which returns the next valid index of the enum (returning the
-first value if index is greater than or equal to the max value).
+which returns the next valid numeric value of the enum. It
+Returns the first enum value if ``index`` is greater than or
+equal to the max enum value.
 
 Struct and class types with an instance-vector attribute in the XML also support:
 

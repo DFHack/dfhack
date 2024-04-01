@@ -33,19 +33,6 @@ distribution.
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
-namespace DFHack {
-    class color_ostream;
-
-    namespace Lua {
-        template<typename T>
-        T Get(lua_State *L, int idx) {
-            T val;
-            df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
-            return val;
-        }
-    }
-}
-
 namespace df {
     class DFHACK_EXPORT cur_lua_ostream_argument {
         DFHack::color_ostream *out;
@@ -56,38 +43,45 @@ namespace df {
 
     template<class T> struct return_type {};
 
-    template<typename rT, typename ...aT>
-    struct return_type<rT (*)(aT...)>{
-        typedef rT type;
+    template<typename RT, typename ...AT>
+    struct return_type<RT (*)(AT...)>{
+        using type = RT;
         static const bool is_method = false;
     };
 
-    template<typename rT, class CT, typename ...aT>
-    struct return_type<rT (CT::*)(aT...)>{
-        typedef rT type;
-        typedef CT class_type;
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT (CT::*)(AT...)>{
+        using type = RT;
+        using class_type = CT;
         static const bool is_method = true;
     };
 
-
-    template<typename rT, class CT, typename ...aT>
-    struct return_type<rT (CT::*)(aT...) const>{
-        typedef rT type;
-        typedef CT class_type;
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT (CT::*)(AT...) const>{
+        using type = RT;
+        using class_type = CT;
         static const bool is_method = true;
     };
+
+    template<typename T>
+    T get_from_lua_state(lua_State* L, int idx) {
+        T val;
+        df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
+        return val;
+    }
+
 
     template<typename RT, typename... AT, typename FT, typename... ET, std::size_t... I>
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
     void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
     {
         if constexpr (std::is_same_v<RT, void>) {
-            std::invoke(fun, extra..., (DFHack::Lua::Get<AT>(L, base+I))...);
+            std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
             lua_pushnil(L);
         }
         else
         {
-            RT rv = std::invoke(fun, extra..., (DFHack::Lua::Get<AT>(L, base+I))...);
+            RT rv = std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
             df::identity_traits<RT>::get()->lua_read(L, UPVAL_METHOD_NAME, &rv);
         }
     }
@@ -101,38 +95,38 @@ namespace df {
 
     template<typename T> struct function_wrapper {};
 
-    template<typename rT, typename ...aT>
-    struct function_wrapper<rT(*)(DFHack::color_ostream&, aT...)> {
-        static const int num_args = sizeof...(aT);
-        static void execute(lua_State *L, int base, rT (fun)(DFHack::color_ostream& out, aT...)) {
+    template<typename RT, typename ...AT>
+    struct function_wrapper<RT(*)(DFHack::color_ostream&, AT...)> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State *L, int base, RT (fun)(DFHack::color_ostream& out, AT...)) {
              cur_lua_ostream_argument out(L);
-             call_and_push<rT, aT...>(L, base, fun, out);
+             call_and_push<RT, AT...>(L, base, fun, out);
         }
     };
 
-    template<typename rT, typename ...aT>
-    struct function_wrapper<rT(*)(aT...)> {
-        static const int num_args = sizeof...(aT);
-        static void execute(lua_State *L, int base, rT (fun)(aT...)) {
-            call_and_push<rT, aT...>(L, base, fun);
+    template<typename RT, typename ...AT>
+    struct function_wrapper<RT(*)(AT...)> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State *L, int base, RT (fun)(AT...)) {
+            call_and_push<RT, AT...>(L, base, fun);
         }
     };
 
-    template<typename rT, class CT, typename ...aT>
-    struct function_wrapper<rT(CT::*)(aT...)> {
-        static const int num_args = sizeof...(aT)+1;
-        static void execute(lua_State *L, int base, rT(CT::*mem_fun)(aT...)) {
+    template<typename RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...)> {
+        static const int num_args = sizeof...(AT)+1;
+        static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...)) {
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
-            call_and_push<rT, aT...>(L, base, mem_fun, self);
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
         };
     };
 
-    template<typename rT, class CT, typename ...aT>
-    struct function_wrapper<rT(CT::*)(aT...) const> {
-        static const int num_args = sizeof...(aT)+1;
-        static void execute(lua_State *L, int base, rT(CT::*mem_fun)(aT...) const) {
+    template<typename RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...) const> {
+        static const int num_args = sizeof...(AT)+1;
+        static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...) const) {
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
-            call_and_push<rT, aT...>(L, base, mem_fun, self);
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
         };
     };
 
@@ -141,7 +135,7 @@ namespace df {
         T ptr;
 
     public:
-        typedef function_wrapper<T> wrapper;
+        using wrapper = function_wrapper<T>;
 
         function_identity(T ptr, bool vararg)
             : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};

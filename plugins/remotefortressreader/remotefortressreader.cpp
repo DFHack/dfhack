@@ -1638,7 +1638,8 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
     return GetUnitListInside(stream, NULL, out);
 }
 
-float lerp(float a, float b, float f)
+// NB: Cannot be called 'lerp': https://en.cppreference.com/w/cpp/numeric/lerp
+float Lerp(float a, float b, float f)
 {
     return a + f * (b - a);
 }
@@ -1801,9 +1802,9 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 case unit_action_type::Move:
                     if (unit->path.path.x.size() > 0)
                     {
-                        send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_x(Lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_y(Lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_z(Lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
                     }
                     break;
                 case unit_action_type::Job:

@@ -67,6 +67,7 @@ Template for new versions:
 - fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 
 ## Misc Improvements
+- `tailor`: allow turning off automatic confiscation of tattered clothing
 - aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
 - pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
 

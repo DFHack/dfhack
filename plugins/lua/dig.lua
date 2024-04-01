@@ -185,17 +185,17 @@ function WarmDampToolbarOverlay:init()
             frame={t=0, b=0, r=0, w=4},
             subviews={
                 widgets.Label{
-                    text=get_tile_tokens(24, COLOR_GREY, COLOR_GREY, COLOR_GREY),
+                    text=get_tile_tokens(0, COLOR_GREY, COLOR_GREY, COLOR_GREY),
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return not getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
-                    text=get_tile_tokens(28, COLOR_RED, COLOR_GREY, COLOR_WHITE),
+                    text=get_tile_tokens(24, COLOR_RED, COLOR_GREY, COLOR_WHITE),
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
-                    text=get_tile_tokens(28, COLOR_GREY, COLOR_BLUE, COLOR_WHITE),
+                    text=get_tile_tokens(4, COLOR_GREY, COLOR_BLUE, COLOR_WHITE),
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return not getWarmPaintEnabled() and getDampPaintEnabled() end,
                 },

@@ -1977,13 +1977,14 @@ static void addTileDampDig(df::coord pos) {
     }
 }
 
-static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
+static void toggle_cur_level(color_ostream &out, PersistentDataItem &config) {
     std::unordered_map<df::coord, df::job *> dig_jobs;
     fill_dig_jobs(dig_jobs);
 
     std::unordered_set<df::job *> z_jobs;
 
     bool did_set_assignment = false;
+    bool target_state = true;
     const int z = *window_z;
     for (auto & block : world->map.map_blocks) {
         if (block->map_pos.z != z)
@@ -2002,30 +2003,32 @@ static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
                 continue;
 
             if (!mask)
-                mask = World::getPersistentTilemask(config, block, true);
-            if (!mask) {
-                WARN(log,out).print("unable to allocate tile bitmask\n");
-                return;
-            }
+                mask = World::getPersistentTilemask(config, block, target_state);
+            if (!mask)
+                break;
 
-            mask->setassignment(x, y, true);
+            if (!did_set_assignment)
+                target_state = !mask->getassignment(x, y);
+
+            mask->setassignment(x, y, target_state);
             did_set_assignment = true;
         }
     }
 
-    for (auto job : z_jobs)
-        unhide_surrounding_tagged_tiles(out, job);
+    if (target_state)
+        for (auto job : z_jobs)
+            unhide_surrounding_tagged_tiles(out, job);
 
-    if (did_set_assignment)
+    if (target_state && did_set_assignment)
         do_enable(true);
 }
 
-static void markCurLevelWarmDig(color_ostream &out) {
-    mark_cur_level(out, warm_config);
+static void toggleCurLevelWarmDig(color_ostream &out) {
+    toggle_cur_level(out, warm_config);
 }
 
-static void markCurLevelDampDig(color_ostream &out) {
-    mark_cur_level(out, damp_config);
+static void toggleCurLevelDampDig(color_ostream &out) {
+    toggle_cur_level(out, damp_config);
 }
 
 static void update_tile_mask(const df::coord & pos, std::unordered_map<df::coord, df::job *> & dig_jobs) {
@@ -2477,8 +2480,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(getDampPaintEnabled),
     DFHACK_LUA_FUNCTION(addTileWarmDig),
     DFHACK_LUA_FUNCTION(addTileDampDig),
-    DFHACK_LUA_FUNCTION(markCurLevelWarmDig),
-    DFHACK_LUA_FUNCTION(markCurLevelDampDig),
+    DFHACK_LUA_FUNCTION(toggleCurLevelWarmDig),
+    DFHACK_LUA_FUNCTION(toggleCurLevelDampDig),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
     DFHACK_LUA_FUNCTION(paintScreenCarve),
     DFHACK_LUA_END

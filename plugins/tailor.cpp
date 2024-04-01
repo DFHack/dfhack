@@ -675,7 +675,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
     // transition existing saves to CONFIG_CONFISCATE=true
     if (config.get_int(CONFIG_CONFISCATE) < 0) {
-        INFO(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
+        DEBUG(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
         config.set_bool(CONFIG_CONFISCATE, true);
     }
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);

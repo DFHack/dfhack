@@ -83,6 +83,7 @@ namespace df {
     {
         if constexpr (std::is_same_v<RT, void>) {
             std::invoke(fun, extra..., (DFHack::Lua::Get<AT>(L, base+I))...);
+            lua_pushnil(L);
         }
         else
         {

@@ -5923,8 +5923,8 @@ Lua plugin functions
 Lua plugin classes
 ------------------
 
-``crng``
-~~~~~~~~
+crng
+~~~~
 
 - ``init(id, df, dist)``: constructor
 
@@ -5940,40 +5940,40 @@ Lua plugin classes
 - ``next()``: returns the next number in the distribution
 - ``shuffle()``: effectively shuffles the number distribution
 
-``normal_distribution``
-~~~~~~~~~~~~~~~~~~~~~~~
+normal_distribution
+~~~~~~~~~~~~~~~~~~~
 
 - ``init(avg, stddev)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
 
-``real_distribution``
-~~~~~~~~~~~~~~~~~~~~~
+real_distribution
+~~~~~~~~~~~~~~~~~
 
 - ``init(min, max)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
 
-``int_distribution``
-~~~~~~~~~~~~~~~~~~~~
+int_distribution
+~~~~~~~~~~~~~~~~
 
 - ``init(min, max)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
 
-``bool_distribution``
-~~~~~~~~~~~~~~~~~~~~~
+bool_distribution
+~~~~~~~~~~~~~~~~~
 
 - ``init(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function
 
-``num_sequence``
-~~~~~~~~~~~~~~~~
+num_sequence
+~~~~~~~~~~~~
 
 - ``init(a, b)``: constructor
 - ``add(num)``: adds num to the end of the number sequence
@@ -5983,32 +5983,33 @@ Lua plugin classes
 Usage
 -----
 
-The basic idea is you create a number distribution which you generate random numbers along. The C++ relies
-on engines keeping state information to determine the next number along the distribution.
-You're welcome to try and (ab)use this knowledge for your RNG purposes.
+The randomization state is kept in an "engine". The distribution class turns
+that engine state into random numbers.
 
 Example::
 
     local rng = require('plugins.cxxrandom')
-    local norm_dist = rng.normal_distribution(6820,116) // avg, stddev
+    local norm_dist = rng.normal_distribution(6820, 116)   -- avg, stddev
     local engID = rng.MakeNewEngine(0)
-    -- somewhat reminiscent of the C++ syntax
     print(norm_dist:next(engID))
 
-    -- a bit more streamlined
-    local cleanup = true --delete engine on cleanup
+    -- alternate syntax
+    local cleanup = true   -- delete engine on cleanup
     local number_generator = rng.crng:new(engID, cleanup, norm_dist)
     print(number_generator:next())
 
     -- simplified
-    print(rng.rollNormal(engID,6820,116))
+    print(rng.rollNormal(engID, 6820, 116))
 
-The number sequences are much simpler. They're intended for where you need to randomly generate an index, perhaps in a loop for an array. You technically don't need an engine to use it, if you don't mind never shuffling.
+The number sequences are much simpler. They're intended for where you need to
+randomly generate an index, perhaps in a loop for an array. You technically
+don't need an engine to use it, if you don't mind never shuffling.
 
 Example::
 
     local rng = require('plugins.cxxrandom')
-    local g = rng.crng:new(rng.MakeNewEngine(0), true, rng.num_sequence:new(0,table_size))
+    local engID = rng.MakeNewEngine(0)
+    local g = rng.crng:new(engId, true, rng.num_sequence:new(0, table_size))
     g:shuffle()
     for _ = 1, table_size do
         func(array[g:next()])

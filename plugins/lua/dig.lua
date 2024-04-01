@@ -71,12 +71,12 @@ function WarmDampDigConfig:init()
             widgets.HotkeyLabel{
                 key='CUSTOM_CTRL_N',
                 label='Damp dig',
-                on_activate=markCurLevelDampDig,
+                on_activate=toggleCurLevelDampDig,
             },
             widgets.HotkeyLabel{
                 key='CUSTOM_CTRL_M',
                 label='Warm dig',
-                on_activate=markCurLevelWarmDig,
+                on_activate=toggleCurLevelWarmDig,
             },
         },
     }

@@ -30,7 +30,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("building-hacks");
 REQUIRE_GLOBAL(world);
 
-constexpr uint32_t invalid_tile = std::numeric_limits<uint32_t>::max();
+constexpr uint32_t invalid_tile = 0;
 struct graphic_tile //could do just 31x31 and be done, but it's nicer to have flexible imho.
 {
     int16_t tile=-1; //originally uint8_t but we need to indicate non-animated tiles
@@ -419,19 +419,19 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
                 lua_pop(L,1);
 
                 lua_geti(L, -1, 5);
-                t.graphics_tile = luaL_optinteger(L, -1,-1);
+                t.graphics_tile = luaL_optinteger(L, -1,invalid_tile);
                 lua_pop(L, 1);
 
                 lua_geti(L, -1, 6);
-                t.overlay_tile = luaL_optinteger(L, -1, -1);
+                t.overlay_tile = luaL_optinteger(L, -1, invalid_tile);
                 lua_pop(L, 1);
 
                 lua_geti(L, -1, 7);
-                t.signpost_tile = luaL_optinteger(L, -1, -1);
+                t.signpost_tile = luaL_optinteger(L, -1, invalid_tile);
                 lua_pop(L, 1);
 
                 lua_geti(L, -1, 8);
-                t.item_tile = luaL_optinteger(L, -1, -1);
+                t.item_tile = luaL_optinteger(L, -1, invalid_tile);
                 lua_pop(L, 1);
 
                 lua_pop(L, 1); //pop current tile

@@ -428,17 +428,15 @@ end
 -- Walks a sequence of dereferences, which may be represented by numbers or
 -- strings. Returns nil if any of obj or indices is nil, or a numeric index is
 -- out of array bounds.
----@generic T
----@param obj `T`
+---@param obj table
 ---@param idx number|string
 ---@param ... number|string
----@return T obj
+---@return any obj
 function safe_index(obj, idx, ...)
     if obj == nil or idx == nil then
         return nil
     end
-    if type(idx) == 'number' and
-        type(obj) == 'userdata' and     -- this check is only relevant for c++
+    if type(idx) == 'number' and type(obj) == 'userdata' and -- this check is only relevant for c++
         (idx < 0 or idx >= #obj) then
         return nil
     end
@@ -450,11 +448,10 @@ function safe_index(obj, idx, ...)
     end
 end
 
----@generic T
----@param t `T`
+---@param t table
 ---@param key integer|string
 ---@param default_value? any
----@return T
+---@return any
 function ensure_key(t, key, default_value)
     if t[key] == nil then
         t[key] = (default_value ~= nil) and default_value or {}
@@ -462,11 +459,10 @@ function ensure_key(t, key, default_value)
     return t[key]
 end
 
----@generic T
----@param t `T`
+---@param t table
 ---@param key integer|string
 ---@param ... integer|string
----@return T
+---@return table
 function ensure_keys(t, key, ...)
     t = ensure_key(t, key)
     if select('#', ...) > 0 then

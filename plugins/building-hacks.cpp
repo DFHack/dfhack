@@ -28,6 +28,8 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("building-hacks");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 REQUIRE_GLOBAL(world);
 
 constexpr uint32_t invalid_tile = 0;
@@ -71,6 +73,8 @@ DFHACK_PLUGIN_LUA_EVENTS{
     DFHACK_LUA_EVENT(onSetTriggerState),
     DFHACK_LUA_END
 };
+
+static void enable_hooks(bool enable);
 
 struct work_hook : df::building_workshopst{
     typedef df::building_workshopst interpose_base;
@@ -463,6 +467,9 @@ static int fixImpassible(lua_State* L)
 
     auto& def = hacked_workshops[workshop_type];
     def.impassible_fix = impassible_setting;
+
+    enable_hooks(true);
+
     return 0;
 }
 //setMachineInfo(workshop_type,bool needs_power,int power_consumed=0,int power_produced=0,table [x=int,y=int] connection_points) -setups and enables machine (i.e. connected to gears, and co) behaviour of the building
@@ -496,6 +503,9 @@ static int setMachineInfo(lua_State* L)
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
+
+    enable_hooks(true);
+
     return 0;
 }
 //setUpdateSkip(workshop_type,int skip_frames) - skips frames to lower onupdate event call rate, 0 to disable
@@ -505,6 +515,9 @@ static int setUpdateSkip(lua_State* L)
     auto& def = hacked_workshops[workshop_type];
 
     def.skip_updates = luaL_optinteger(L, 2, 0);
+
+    enable_hooks(true);
+
     return 0;
 }
 //setAnimationInfo(workshop_type,table frames, [frame_skip]) - define animation and it's timing. If frame_skip is not set or set to -1, it will use machine timing (i.e. like gears/axels etc)
@@ -521,6 +534,9 @@ static int setAnimationInfo(lua_State* L)
         def.machine_timing = true;
     else
         def.machine_timing = false;
+
+    enable_hooks(true);
+
     return 0;
 }
 //setOwnableBuilding(workshop_type,bool is_ownable)
@@ -531,6 +547,9 @@ static int setOwnableBuilding(lua_State* L)
 
     auto& def = hacked_workshops[workshop_type];
     def.room_subset = room_subset;
+
+    enable_hooks(true);
+
     return 0;
 }
 static void setPower(df::building_workshopst* workshop, int power_produced, int power_consumed)
@@ -574,6 +593,10 @@ DFHACK_PLUGIN_LUA_COMMANDS{
 };
 static void enable_hooks(bool enable)
 {
+    if (is_enabled == enable)
+        return;
+    is_enabled = enable;
+
     INTERPOSE_HOOK(work_hook,getImpassableOccupancy).apply(enable);
     //machine part
     INTERPOSE_HOOK(work_hook,getPowerInfo).apply(enable);
@@ -591,9 +614,6 @@ static void enable_hooks(bool enable)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_WORLD_LOADED:
-        enable_hooks(true);
-        break;
     case SC_WORLD_UNLOADED:
         enable_hooks(false);
         clear_mapping();

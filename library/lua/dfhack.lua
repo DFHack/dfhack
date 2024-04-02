@@ -475,11 +475,6 @@ end
 
 -- String class extentions
 
--- This fixes LuaLS complaining about field injection.
-
----@type string
-local string
-
 -- prefix is a literal string, not a pattern
 ---@nodiscard
 ---@param self string

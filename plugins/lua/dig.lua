@@ -9,14 +9,14 @@ local toolbar_textures = dfhack.textures.loadTileset('hack/data/art/damp_dig_too
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect
 
-local BASELINE_OFFSET = 42
+local BASELINE_OFFSET = 20
 
 local function get_l_offset(parent_rect)
     local w = parent_rect.width
     if w <= 177 then
-        return BASELINE_OFFSET + w - 114
+        return BASELINE_OFFSET + w - 92
     end
-    return BASELINE_OFFSET + (w+1)//2 - 26
+    return BASELINE_OFFSET + (w+1)//2 - 4
 end
 
 -- --------------------------------
@@ -148,7 +148,7 @@ WarmDampToolbarOverlay.ATTRS{
         'dwarfmode/Designate/DIG_FROM_MARKER',
         'dwarfmode/Designate/DIG_TO_MARKER',
     },
-    frame={w=4, h=3},
+    frame={w=4, h=11},
 }
 
 function WarmDampToolbarOverlay:init()
@@ -182,7 +182,26 @@ function WarmDampToolbarOverlay:init()
 
     self:addviews{
         widgets.Panel{
-            frame={t=0, b=0, r=0, w=4},
+            frame={t=0, r=0, w=26, h=7},
+            frame_style=gui.FRAME_PANEL,
+            frame_background=gui.CLEAR_PEN,
+            frame_inset={l=1, r=1},
+            visible=function() return not not self.subviews.icon:getMousePos() end,
+            subviews={
+                widgets.Label{
+                    text={
+                        'Mark for uninterrupted', NEWLINE,
+                        'digging through damp', NEWLINE,
+                        'or warm tiles.', NEWLINE,
+                        NEWLINE,
+                        {text='Hotkey: ', pen=COLOR_GRAY}, {key='CUSTOM_CTRL_D'},
+                    },
+                },
+            },
+        },
+        widgets.Panel{
+            view_id='icon',
+            frame={b=0, r=0, w=4, h=3},
             subviews={
                 widgets.Label{
                     text=get_tile_tokens(0, COLOR_GREY, COLOR_GREY, COLOR_GREY),
@@ -211,6 +230,14 @@ end
 
 function WarmDampToolbarOverlay:preUpdateLayout(parent_rect)
     self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 4
+end
+
+function WarmDampToolbarOverlay:onInput(keys)
+    if keys.CUSTOM_CTRL_D then
+        launch_warm_damp_dig_config()
+        return true
+    end
+    return WarmDampToolbarOverlay.super.onInput(self, keys)
 end
 
 -- --------------------------------

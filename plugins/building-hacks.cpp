@@ -22,7 +22,7 @@
 #include "df/building_def_workshopst.h"
 #include "modules/Buildings.h"
 
-#include <map>
+#include <unordered_map>
 #include <limits>
 using namespace DFHack;
 using namespace df::enums;
@@ -60,7 +60,7 @@ struct workshop_hack_data
     int skip_updates=0;
     int room_subset=-1; //0 no, 1 yes, -1 default
 };
-typedef std::map<int32_t,workshop_hack_data> workshops_data_t;
+typedef std::unordered_map<int32_t,workshop_hack_data> workshops_data_t;
 workshops_data_t hacked_workshops;
 
 DEFINE_LUA_EVENT_NH_1(onUpdateAction,df::building_workshopst*);

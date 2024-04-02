@@ -329,6 +329,7 @@ function printall_recurse(value, seen)
     local seen = seen or {}
     do_print_recurse(dfhack.println, value, seen, 0)
 end
+
 ---@generic T
 ---@param table `T`
 ---@return T
@@ -476,7 +477,9 @@ end
 
 -- String class extentions
 
----@class string
+-- This fixes LuaLS complaining about field injection.
+
+---@type string
 local string
 
 -- prefix is a literal string, not a pattern
@@ -528,7 +531,7 @@ end
 -- a string. Spaces between non-space characters are left untouched.
 ---@nodiscard
 ---@param self string
----@return self
+---@return string
 function string:trim()
     local _, _, content = self:find('^%s*(.-)%s*$')
     return content
@@ -541,7 +544,7 @@ end
 ---@nodiscard
 ---@param self string
 ---@param width number
----@return self
+---@return string
 function string:wrap(width)
     width = width or 72
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
@@ -581,7 +584,7 @@ end
 local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
 ---@nodiscard
 ---@param self string
----@return self
+---@return string
 function string:escape_pattern()
     return self:gsub(regex_chars_pattern, '%%%1')
 end

@@ -2023,6 +2023,26 @@ static void toggle_cur_level(color_ostream &out, PersistentDataItem &config) {
         do_enable(true);
 }
 
+static int getCurLevelDesignatedCount(color_ostream &out) {
+    std::unordered_map<df::coord, df::job *> dig_jobs;
+    fill_dig_jobs(dig_jobs);
+
+    int count = 0;
+    const int z = *window_z;
+    for (auto & block : world->map.map_blocks) {
+        if (block->map_pos.z != z)
+            continue;
+
+        const auto & block_pos = block->map_pos;
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+            df::coord pos = block_pos + df::coord(x, y, 0);
+            if (block->designation[x][y].bits.dig || dig_jobs.contains(pos))
+                ++count;
+        }
+    }
+    return count;
+}
+
 static void toggleCurLevelWarmDig(color_ostream &out) {
     toggle_cur_level(out, warm_config);
 }
@@ -2480,6 +2500,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(getDampPaintEnabled),
     DFHACK_LUA_FUNCTION(addTileWarmDig),
     DFHACK_LUA_FUNCTION(addTileDampDig),
+    DFHACK_LUA_FUNCTION(getCurLevelDesignatedCount),
     DFHACK_LUA_FUNCTION(toggleCurLevelWarmDig),
     DFHACK_LUA_FUNCTION(toggleCurLevelDampDig),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),

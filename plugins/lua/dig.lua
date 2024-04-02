@@ -9,14 +9,14 @@ local toolbar_textures = dfhack.textures.loadTileset('hack/data/art/damp_dig_too
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect
 
-local BASELINE_OFFSET = 20
+local BASELINE_OFFSET = 42
 
 local function get_l_offset(parent_rect)
     local w = parent_rect.width
     if w <= 177 then
-        return BASELINE_OFFSET + w - 92
+        return BASELINE_OFFSET + w - 114
     end
-    return BASELINE_OFFSET + (w+1)//2 - 4
+    return BASELINE_OFFSET + (w+1)//2 - 26
 end
 
 -- --------------------------------
@@ -25,10 +25,12 @@ end
 
 WarmDampDigConfig = defclass(WarmDampDigConfig, widgets.Panel)
 WarmDampDigConfig.ATTRS {
-    frame={w=25, h=18, b=7},
+    frame={w=26, h=18, b=7},
 }
 
 function WarmDampDigConfig:init()
+    local dcount = getCurLevelDesignatedCount()
+
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
@@ -63,8 +65,9 @@ function WarmDampDigConfig:init()
             },
             widgets.Label{
                 text={
-                    'Mark/unmark currently', NEWLINE,
-                    'designated tiles on', NEWLINE,
+                    'Mark/unmark ',
+                    {text=dcount, pen=COLOR_YELLOW}, (' tile%s'):format(dcount == 1 and '' or 's'), NEWLINE,
+                    'currently designated on', NEWLINE,
                     'this level for:'
                 },
             },
@@ -148,7 +151,7 @@ WarmDampToolbarOverlay.ATTRS{
         'dwarfmode/Designate/DIG_FROM_MARKER',
         'dwarfmode/Designate/DIG_TO_MARKER',
     },
-    frame={w=4, h=11},
+    frame={w=26, h=11},
 }
 
 function WarmDampToolbarOverlay:init()
@@ -201,7 +204,7 @@ function WarmDampToolbarOverlay:init()
         },
         widgets.Panel{
             view_id='icon',
-            frame={b=0, r=0, w=4, h=3},
+            frame={b=0, r=22, w=4, h=3},
             subviews={
                 widgets.Label{
                     text=get_tile_tokens(0, COLOR_GREY, COLOR_GREY, COLOR_GREY),
@@ -229,7 +232,7 @@ function WarmDampToolbarOverlay:init()
 end
 
 function WarmDampToolbarOverlay:preUpdateLayout(parent_rect)
-    self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 4
+    self.frame.w = get_l_offset(parent_rect) - BASELINE_OFFSET + 26
 end
 
 function WarmDampToolbarOverlay:onInput(keys)

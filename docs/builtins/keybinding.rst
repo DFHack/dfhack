@@ -10,7 +10,8 @@ bindings are not remembered between runs of the game unless re-created in
 :file:`dfhack-config/init/dfhack.init`.
 
 Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or `
-(the key below the :kbd:`Esc` key on most keyboards).
+(the key below the :kbd:`Esc` key on most keyboards). You can also represent
+mouse buttons beyond the first three with ``MOUSE4`` through ``MOUSE15``.
 
 Usage
 -----
@@ -61,12 +62,22 @@ require the console for interactive input.
 Examples
 --------
 
-``keybinding add Ctrl-Shift-C hotkeys``
-    Bind Ctrl-Shift-C to run the `hotkeys` command on any screen at any time.
-``keybinding add Alt-F@dwarfmode gui/quickfort``
-    Bind Alt-F to run `gui/quickfort`, but only when on a screen that shows the
-    main map.
-``keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"``
-    Bind Ctrl-Shift-Z to run `stocks show <stocks>`, but only when on the main
-    map in the default mode (that is, no special mode, like cursor look, is
-    enabled).
+Bind Ctrl-Shift-C to run the `hotkeys` command on any screen at any time::
+
+    keybinding add Ctrl-Shift-C hotkeys
+
+Bind Ctrl-M to run `gui/mass-remove`, but only when on the main map with
+nothing else selected::
+
+    keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
+
+Bind the fourth mouse button to launch `gui/teleport` when a unit is selected
+or `gui/autodump` when an item is selected::
+
+    keybinding add MOUSE4@dwarfmode/ViewSheets/UNIT gui/teleport
+    keybinding add MOUSE4@dwarfmode/ViewSheets/ITEM gui/autodump
+
+Bind Shift + the fifth mouse button to toggle the keyboard cursor in fort or
+adventure mode::
+
+    keybinding add Shift-MOUSE5@dwarfmode|dungeonmode toggle-kbd-cursor

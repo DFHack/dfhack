@@ -70,6 +70,7 @@ Template for new versions:
 - `tailor`: allow turning off automatic confiscation of tattered clothing
 - aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
 - pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
+- `keybinding`: you can now assign keybindings to mouse buttons (if your mouse has more than the three buttons already used by DF)
 
 ## Documentation
 - ``Lua API.rst``: added previously undocumented ``next_item(index)`` function for enum types

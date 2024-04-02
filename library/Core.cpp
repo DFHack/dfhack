@@ -2390,8 +2390,7 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
-            bool handled = SelectHotkey(sym, modstate);
-            if (handled) {
+            if (SelectHotkey(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
@@ -2407,8 +2406,16 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
             DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
             hotkey_states[sym] = false;
         }
-    }
-    else if (ev->type == SDL_TEXTINPUT) {
+    } else if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        auto &but = ev->button;
+        DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
+        // don't mess with the first three buttons, which are critical elements of DF's control scheme
+        if (but.button > 3) {
+            SDL_Keycode sym = SDLK_F13 + but.button - 4;
+            if (sym <= SDLK_F24 && SelectHotkey(sym, modstate))
+                return suppress_duplicate_keyboard_events;
+        }
+    } else if (ev->type == SDL_TEXTINPUT) {
         auto &te = ev->text;
         DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
             te.text,
@@ -2548,6 +2555,12 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
         return true;
     } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
         *psym = SDLK_F10 + (keyspec[2]-'0');
+        return true;
+    } else if (keyspec.size() == 6 && keyspec.substr(0, 5) == "MOUSE" && keyspec[5] >= '4' && keyspec[5] <= '9') {
+        *psym = SDLK_F13 + (keyspec[5]-'4');
+        return true;
+    } else if (keyspec.size() == 7 && keyspec.substr(0, 6) == "MOUSE1" && keyspec[5] >= '0' && keyspec[5] <= '5') {
+        *psym = SDLK_F19 + (keyspec[5]-'0');
         return true;
     } else if (keyspec == "Enter") {
         *psym = SDLK_RETURN;

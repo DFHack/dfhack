@@ -335,7 +335,7 @@ end
 ---@return T
 function copyall(table)
     local rv = {}
-    for k, v in pairs(table) do rv[k] = v end
+    for k,v in pairs(table) do rv[k] = v end
     return rv
 end
 
@@ -357,11 +357,11 @@ end
 ---@param y number
 ---@param z number
 ---@return coord
-function xyz2pos(x, y, z)
+function xyz2pos(x,y,z)
     if x then
-        return { x = x, y = y, z = z }
+        return {x=x,y=y,z=z}
     else
-        return { x = -30000, y = -30000, z = -30000 }
+        return {x=-30000,y=-30000,z=-30000}
     end
 end
 
@@ -369,7 +369,7 @@ end
 ---@param a coord
 ---@param b coord
 ---@return boolean
-function same_xyz(a, b)
+function same_xyz(a,b)
     return a and b and a.x == b.x and a.y == b.y and a.z == b.z
 end
 
@@ -379,7 +379,7 @@ end
 ---@return number x
 ---@return number y
 ---@return number z
-function get_path_xyz(path, i)
+function get_path_xyz(path,i)
     return path.x[i], path.y[i], path.z[i]
 end
 
@@ -400,11 +400,11 @@ end
 ---@param x number
 ---@param y number
 ---@return coord2d
-function xy2pos(x, y)
+function xy2pos(x,y)
     if x then
-        return { x = x, y = y }
+        return {x=x,y=y}
     else
-        return { x = -30000, y = -30000 }
+        return {x=-30000,y=-30000}
     end
 end
 
@@ -432,17 +432,19 @@ end
 ---@param idx number|string
 ---@param ... number|string
 ---@return any obj
-function safe_index(obj, idx, ...)
+function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
     end
-    if type(idx) == 'number' and type(obj) == 'userdata' and -- this check is only relevant for c++
-        (idx < 0 or idx >= #obj) then
+    if type(idx) == 'number' and
+            type(obj) == 'userdata' and -- this check is only relevant for c++
+            (idx < 0 or idx >= #obj)
+    then
         return nil
     end
     obj = obj[idx]
-    if select('#', ...) > 0 then
-        return safe_index(obj, ...)
+    if select('#',...) > 0 then
+        return safe_index(obj,...)
     else
         return obj
     end

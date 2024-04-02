@@ -179,11 +179,21 @@ struct work_hook : df::building_workshopst{
     }
     DEFINE_VMETHOD_INTERPOSE(void, categorize, (bool free))
     {
+        /*
+            there are two ways to enter this:
+                a) we have plugin enabled and building added from script (thus def exists) and we are placing a new building
+                b) we are loading a game thus buildings are not added from script yet
+        */
         auto def = find_def();
-        if (def && def->is_machine)
+        //in "b" case this ref is used as indicator to signal that script added this building last time before we saved
+        df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
+        if( ref || (def && def->is_machine))
         {
             auto &vec = world->buildings.other[buildings_other_id::ANY_MACHINE];
             insert_into_vector(vec, &df::building::id, (df::building*)this);
+            //in "a" case we add a ref and set it's values to signal later that we are a modified workshop
+            if (!ref)
+                set_current_power(def->powerInfo.produced, def->powerInfo.consumed);
         }
 
         INTERPOSE_NEXT(categorize)(free);
@@ -569,8 +579,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(work_hook,getPowerInfo).apply(enable);
     INTERPOSE_HOOK(work_hook,getMachineInfo).apply(enable);
     INTERPOSE_HOOK(work_hook,isPowerSource).apply(enable);
-    INTERPOSE_HOOK(work_hook,categorize).apply(enable);
-    INTERPOSE_HOOK(work_hook,uncategorize).apply(enable);
+    
     INTERPOSE_HOOK(work_hook,canConnectToMachine).apply(enable);
     INTERPOSE_HOOK(work_hook,isUnpowered).apply(enable);
     INTERPOSE_HOOK(work_hook,canBeRoomSubset).apply(enable);
@@ -595,14 +604,22 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
+//this is needed as all other methods depend on world being loaded but categorize happens when we are loading stuff in
+static void init_categorize(bool enable)
+{
+    INTERPOSE_HOOK(work_hook, categorize).apply(enable);
+    INTERPOSE_HOOK(work_hook, uncategorize).apply(enable);
+}
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     enable_hooks(true);
+    init_categorize(true);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     plugin_onstatechange(out,SC_WORLD_UNLOADED);
+    init_categorize(false);
     return CR_OK;
 }

@@ -32,7 +32,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 
-constexpr uint32_t invalid_tile = 0;
+constexpr int32_t invalid_tile = 0;
 struct graphic_tile //could do just 31x31 and be done, but it's nicer to have flexible imho.
 {
     int16_t tile=-1; //originally uint8_t but we need to indicate non-animated tiles
@@ -40,11 +40,11 @@ struct graphic_tile //could do just 31x31 and be done, but it's nicer to have fl
     int8_t back;
     int8_t bright;
     //index of texpos
-    uint32_t graphics_tile = invalid_tile;
-    uint32_t overlay_tile = invalid_tile;
-    uint32_t item_tile = invalid_tile;
+    int32_t graphics_tile = invalid_tile;
+    int32_t overlay_tile = invalid_tile;
+    int32_t item_tile = invalid_tile;
     //only for first line
-    uint32_t signpost_tile = invalid_tile;
+    int32_t signpost_tile = invalid_tile;
 };
 struct workshop_hack_data
 {

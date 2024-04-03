@@ -769,7 +769,8 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                df::building_extents *ext,
                                bool create_ext,
                                bool allow_occupied,
-                               bool allow_wall)
+                               bool allow_wall,
+                               bool allow_flow)
 {
     bool found_any = false;
 
@@ -804,10 +805,11 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             else if (!allow_wall)
             {
                 auto &tt = block->tiletype[btile.x][btile.y];
+                if (!HighPassable(tt))
+                    allowed = false;
                 auto &des = block->designation[btile.x][btile.y];
-                if (!HighPassable(tt) ||
-                        des.bits.flow_size > 1 ||
-                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma))
+                if (!allow_flow && (des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma)))
                     allowed = false;
             }
 
@@ -860,7 +862,8 @@ static bool checkBuildingTiles(df::building *bld, bool can_change,
                                      can_change && bld->isExtentShaped(),
                                      !bld->isSettingOccupancy(),
                                      bld->getType() ==
-                                        df::building_type::Civzone);
+                                        df::building_type::Civzone,
+                                     !bld->isActual());
 }
 
 int Buildings::countExtentTiles(df::building_extents *ext, int defval)

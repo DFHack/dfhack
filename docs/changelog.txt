@@ -65,6 +65,7 @@ Template for new versions:
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
 - fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
+- `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
 
 ## Misc Improvements
 - `tailor`: allow turning off automatic confiscation of tattered clothing
@@ -73,12 +74,13 @@ Template for new versions:
 - `keybinding`: you can now assign keybindings to mouse buttons (if your mouse has more than the three buttons already used by DF)
 
 ## Documentation
-- ``Lua API.rst``: added previously undocumented ``next_item(index)`` function for enum types
+- ``Lua API``: documented existing ``enum:next_item(index)`` function
 
 ## API
 - ``Units::citizensRange``: c++-20 range for citizen units
 - ``Units::forCitizens``: iterator callback function for citizen units
 - ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
+- ``Buildings::checkFreeTiles``: now takes a ``allow_flow`` parameter to control whether water- or magma-filled tiles are valid
 
 ## Lua
 - ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)

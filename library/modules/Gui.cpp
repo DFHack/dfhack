@@ -379,6 +379,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 WARN(gui).print("Labor tab widget not found\n");
             } else if (tab->name == "Work Details") {
                 newFocusString += "/WORK_DETAILS";
+                if (auto details = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Details");
+                        details && !details->visibility_flags.bits.WIDGET_VISIBILITY_CAN_KEY_ACTIVATE)
+                    newFocusString += "/Details";
+                else
+                    newFocusString += "/Default";
             } else if (tab->name == "Standing orders") {
                 newFocusString += "/STANDING_ORDERS";
                 auto lsoi = virtual_cast<df::labor_standing_orders_interfacest>(tab);

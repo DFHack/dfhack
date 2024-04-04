@@ -61,6 +61,8 @@ Template for new versions:
 - `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
 - `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
 - `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
+- `blueprint`: designations and active dig jobs are now captured in generated blueprints
+- `blueprint`: warm/damp dig markers are captured in generated blueprints
 
 ## Fixes
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API

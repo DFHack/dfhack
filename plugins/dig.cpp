@@ -1939,6 +1939,14 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
 // Lua API
 //
 
+static string getWarmConfigKey() {
+    return WARM_CONFIG_KEY;
+}
+
+static string getDampConfigKey() {
+    return DAMP_CONFIG_KEY;
+}
+
 static void setWarmPaintEnabled(color_ostream &out, bool val) {
     is_painting_warm = val;
 }
@@ -2494,6 +2502,8 @@ DFHACK_PLUGIN_LUA_COMMANDS{
 };
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(getWarmConfigKey),
+    DFHACK_LUA_FUNCTION(getDampConfigKey),
     DFHACK_LUA_FUNCTION(setWarmPaintEnabled),
     DFHACK_LUA_FUNCTION(getWarmPaintEnabled),
     DFHACK_LUA_FUNCTION(setDampPaintEnabled),

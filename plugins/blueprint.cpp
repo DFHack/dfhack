@@ -20,6 +20,7 @@
 #include "modules/Buildings.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/World.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"
@@ -34,6 +35,9 @@
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
 #include "df/engraving.h"
+#include "df/tile_bitmask.h"
+#include "df/tile_designation.h"
+#include "df/tile_occupancy.h"
 #include "df/world.h"
 
 using std::endl;
@@ -177,13 +181,37 @@ struct blueprint_processor {
           get_tile(get_tile), init_ctx(init_ctx) { }
 };
 
-// global engravings cache, cleared when the string cache is cleared
-struct PosHash {
-    size_t operator()(const df::coord &c) const {
-        return c.x * 65537 + c.y * 513 + c.z;
+// global caches, cleared when the string cache is cleared
+static std::unordered_map<df::coord, df::engraving *> engravings_cache;
+static std::unordered_map<df::coord, df::job *> dig_job_cache;
+static PersistentDataItem warm_config, damp_config;
+
+static void init_caches(DFHack::color_ostream &out, bool cache_engravings) {
+    if (cache_engravings) {
+        // initialize the engravings cache
+        for (auto engraving : world->engravings) {
+            engravings_cache.emplace(engraving->pos, engraving);
+        }
     }
-};
-static std::unordered_map<df::coord, df::engraving *, PosHash> engravings_cache;
+
+    df::job_list_link *link = world->jobs.list.next;
+    for (; link; link = link->next) {
+        auto job = link->item;
+        auto type = ENUM_ATTR(job_type, type, job->job_type);
+        if (type != job_type_class::Digging && type != job_type_class::Carving && type != job_type_class::Gathering)
+            continue;
+        dig_job_cache.emplace(job->pos, job);
+    }
+
+    Lua::CallLuaModuleFunction(out, "plugins.dig", "getWarmConfigKey", {}, 1, [&](lua_State *L){
+        string warm_key = lua_tostring(L, -1);
+        warm_config = World::GetPersistentSiteData(warm_key);
+    });
+    Lua::CallLuaModuleFunction(out, "plugins.dig", "getDampConfigKey", {}, 1, [&](lua_State *L){
+        string damp_key = lua_tostring(L, -1);
+        damp_config = World::GetPersistentSiteData(damp_key);
+    });
+}
 
 // We use const char * throughout this code instead of std::string to avoid
 // having to allocate memory for all the small string literals. This
@@ -196,11 +224,13 @@ static const char * cache(const char *str) {
     // this local static assumes that no two blueprints are being generated at
     // the same time, which is currently ensured by the higher-level DFHack
     // command handling code. if this assumption ever becomes untrue, we'll
-    // need to protect the cache with thread synchronization primitives.
+    // need to protect the cache with thread synchronization primitives or make
+    // the cache per-blueprint.
     static std::set<string> _cache;
     if (!str) {
         _cache.clear();
         engravings_cache.clear();
+        dig_job_cache.clear();
         return NULL;
     }
     return _cache.emplace(str).first->c_str();
@@ -216,8 +246,104 @@ static const char * cache(std::ostringstream &str) {
     return cache(str.str());
 }
 
+static const char * add_markers(const df::coord &pos, const char *sym) {
+    if (!sym)
+        return NULL;
+
+    string str;
+    if (auto occ = Maps::getTileOccupancy(pos); occ && occ->bits.dig_marked)
+        str += "mb";
+
+    auto block = Maps::getTileBlock(pos);
+    if (auto warm_mask = World::getPersistentTilemask(warm_config, block); warm_mask && warm_mask->getassignment(pos))
+        str += "mw";
+    if (auto damp_mask = World::getPersistentTilemask(damp_config, block); damp_mask && damp_mask->getassignment(pos))
+        str += "md";
+
+    if (str.size()) {
+        str += sym;
+        return cache(str);
+    }
+
+    return sym;
+}
+
+static const char * get_tile_dig_default(const df::coord &pos, df::tiletype *tt) {
+    switch (tileShape(*tt)) {
+    case df::tiletype_shape::WALL:
+        if (auto tmat = tileMaterial(*tt))
+            if (tmat == df::tiletype_material::TREE)
+                return "t";
+        return "d";
+    case df::tiletype_shape::STAIR_UP:
+    case df::tiletype_shape::STAIR_UPDOWN:
+    case df::tiletype_shape::RAMP:
+        return "z";
+    case df::tiletype_shape::SHRUB:
+        return "p";
+    default:
+        return "d";
+    }
+}
+
+static const char * get_tile_dig_designation(const df::coord &pos, const df::tile_dig_designation &tdd) {
+    switch (tdd) {
+    case df::tile_dig_designation::Default:
+        if (auto tt = Maps::getTileType(pos))
+            return get_tile_dig_default(pos, tt);
+        return NULL;
+    case df::tile_dig_designation::UpDownStair:
+        return "i";
+    case df::tile_dig_designation::Channel:
+        return "h";
+    case df::tile_dig_designation::Ramp:
+        return "r";
+    case df::tile_dig_designation::DownStair:
+        if (auto tt = Maps::getTileType(pos))
+            if (tileShape(*tt) == tiletype_shape::STAIR_UP)
+                return "i";
+        return "j";
+    case df::tile_dig_designation::UpStair:
+        return "u";
+    default:
+        return NULL;
+    }
+}
+
+static const char * get_tile_dig_job(df::tile_designation *td, df::job *job) {
+    switch (job->job_type) {
+    case df::job_type::DigChannel:
+        return "h";
+    case df::job_type::Dig:
+        return "d";
+    case df::job_type::CarveUpwardStaircase:
+        return "u";
+    case df::job_type::CarveDownwardStaircase:
+        return "j";
+    case df::job_type::CarveUpDownStaircase:
+        return "i";
+    case df::job_type::CarveRamp:
+        return "r";
+    case df::job_type::FellTree:
+        return "t";
+    case df::job_type::GatherPlants:
+        return "p";
+    case df::job_type::RemoveStairs:
+        return "z";
+    default:
+        return NULL;
+    }
+}
+
 static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
-    df::tiletype *tt = Maps::getTileType(pos);
+    df::tile_designation *td = Maps::getTileDesignation(pos);
+    if (td && td->bits.dig != df::tile_dig_designation::No)
+        return add_markers(pos, get_tile_dig_designation(pos, td->bits.dig));
+    if (dig_job_cache.contains(pos))
+        if (const char * ret = get_tile_dig_job(td, dig_job_cache[pos]))
+            return add_markers(pos, ret);
+
+    auto tt = Maps::getTileType(pos);
     if (!tt)
         return NULL;
 
@@ -250,9 +376,17 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
 
 static const char * get_tile_smooth_minimal(const df::coord &pos,
                                             const tile_context &) {
-    df::tiletype *tt = Maps::getTileType(pos);
+    if (dig_job_cache.contains(pos) && dig_job_cache[pos]->job_type == df::job_type::CarveFortification)
+        return "s";
+
+    auto tt = Maps::getTileType(pos);
     if (!tt)
         return NULL;
+
+    // detect designated fortications
+    if (auto td = Maps::getTileDesignation(pos); td && td->bits.smooth == 1)
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH)
+            return "s";
 
     switch (tileShape(*tt))
     {
@@ -271,7 +405,15 @@ static const char * get_tile_smooth_with_engravings(const df::coord &pos,
     if (smooth_minimal)
         return smooth_minimal;
 
-    df::tiletype *tt = Maps::getTileType(pos);
+    if (dig_job_cache.contains(pos) &&
+            (dig_job_cache[pos]->job_type == df::job_type::DetailFloor ||
+             dig_job_cache[pos]->job_type == df::job_type::DetailWall))
+        return "s";
+
+    if (auto td = Maps::getTileDesignation(pos); td && td->bits.smooth == 2)
+        return "s";
+
+    auto tt = Maps::getTileType(pos);
     if (!tt)
         return NULL;
 
@@ -295,6 +437,14 @@ static const char * get_tile_smooth_all(const df::coord &pos,
     const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
     if (smooth_minimal)
         return smooth_minimal;
+
+    if (dig_job_cache.contains(pos) &&
+            (dig_job_cache[pos]->job_type == df::job_type::SmoothFloor ||
+             dig_job_cache[pos]->job_type == df::job_type::SmoothWall))
+        return "s";
+
+    if (auto td = Maps::getTileDesignation(pos); td && td->bits.smooth == 1)
+        return "s";
 
     df::tiletype *tt = Maps::getTileType(pos);
     if (!tt)
@@ -332,8 +482,26 @@ static const char * get_tile_carve_minimal(const df::coord &pos,
     if (!tt)
         return NULL;
 
+    if (dig_job_cache.contains(pos)) {
+        df::job *job = dig_job_cache[pos];
+        switch (job->job_type) {
+        case df::job_type::CarveTrack:
+            // TODO: where is the track direction stored in the job?
+            break;
+        case df::job_type::CarveFortification:
+            return "F";
+        default:
+            break;
+        }
+    }
+
+    auto td = Maps::getTileDesignation(pos);
     switch (tileShape(*tt))
     {
+    case tiletype_shape::WALL:
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH && td && td->bits.smooth == 1)
+            return "F";
+        break;
     case tiletype_shape::FLOOR:
         if (tileSpecial(*tt) == tiletype_special::TRACK)
             return get_track_str("track", *tt);
@@ -355,6 +523,14 @@ static const char * get_tile_carve(const df::coord &pos, const tile_context &tc)
     const char * tile_carve_minimal = get_tile_carve_minimal(pos, tc);
     if (tile_carve_minimal)
         return tile_carve_minimal;
+
+    if (dig_job_cache.contains(pos) &&
+            (dig_job_cache[pos]->job_type == df::job_type::DetailFloor ||
+             dig_job_cache[pos]->job_type == df::job_type::DetailWall))
+        return "e";
+
+    if (auto td = Maps::getTileDesignation(pos); td && td->bits.smooth == 2)
+        return "e";
 
     df::tiletype *tt = Maps::getTileType(pos);
     if (!tt)
@@ -1312,12 +1488,7 @@ static bool do_transform(color_ostream &out,
     static const bp_area EMPTY_AREA;
     static const bp_row EMPTY_ROW;
 
-    if (opts.engrave) {
-        // initialize the engravings cache
-        for (auto engraving : world->engravings) {
-            engravings_cache.emplace(engraving->pos, engraving);
-        }
-    }
+    init_caches(out, opts.engrave);
 
     vector<blueprint_processor> processors;
 
@@ -1509,7 +1680,10 @@ static command_result do_blueprint(color_ostream &out,
         end.z = -1;
 
     bool ok = do_transform(out, start, end, options, files);
+
+    // clear caches
     cache(NULL);
+
     return ok ? CR_OK : CR_FAILURE;
 }
 

@@ -17,7 +17,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install lua5.3
     - name: Clone DFHack
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
         ref: ${{ inputs.dfhack_ref }}
@@ -26,7 +26,7 @@ jobs:
       id: scriptssubmoduleref
       run: echo ref=$(git submodule | fgrep scripts | cut -c2-41) >> $GITHUB_OUTPUT
     - name: Clone scripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ inputs.scripts_ref && github.repository || 'DFHack/scripts' }}
         ref: ${{ inputs.scripts_ref || steps.scriptssubmoduleref.outputs.ref }}

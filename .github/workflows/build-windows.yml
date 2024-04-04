@@ -56,7 +56,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ccache
       - name: Clone DFHack
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
           ref: ${{ inputs.dfhack_ref }}
@@ -64,21 +64,21 @@ jobs:
           fetch-depth: 0
       - name: Clone scripts
         if: inputs.scripts_ref
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.scripts_ref && github.repository || 'DFHack/scripts' }}
           ref: ${{ inputs.scripts_ref }}
           path: scripts
       - name: Clone structures
         if: inputs.structures_ref
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.structures_ref && github.repository || 'DFHack/df-structures' }}
           ref: ${{ inputs.structures_ref }}
           path: library/xml
       - name: Get 3rd party SDKs
         if: inputs.launchdf
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: DFHack/3rdparty
           ref: main
@@ -86,7 +86,7 @@ jobs:
           path: depends/steam
       - name: Fetch ccache
         if: inputs.platform-files
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: build/win64-cross/ccache
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
@@ -109,7 +109,7 @@ jobs:
           ccache -d win64-cross/ccache --zero-stats
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: build/win64-cross/ccache
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
@@ -129,7 +129,7 @@ jobs:
           tar cjf ../../../${{ steps.artifactname.outputs.name }}.tar.bz2 .
       - name: Upload artifact
         if: inputs.artifact-name
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifactname.outputs.name }}
           path: ${{ steps.artifactname.outputs.name }}.tar.bz2

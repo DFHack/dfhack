@@ -6569,8 +6569,11 @@ Functions
   :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
   :frames:          table of frames. Each frame is sparse flat table with ids from ``0`` to ``31*31-1``.
                     Each frame tile is table of integers from 4 to 8 members long. Tile members are as
-                    follow: tile, foreground color, background color, bright, graphics tile, overlay tile,
-                    signpost tile, item tile.
+                    follow: ``tile``, ``foreground color``, ``background color``, ``bright``,
+                    ``graphics tile``, ``overlay tile``, ``signpost tile``, ``item tile``.
+                    First 4 are function same as ascii workshop definition. The latter 4 are graphics
+                    layers. ``signpost tile`` is an optional row that sticks up over the workshop.
+
   :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
                     are synchronized with machine animation.
 

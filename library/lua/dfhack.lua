@@ -81,9 +81,10 @@ safecall = dfhack.safecall
 curry = dfhack.curry
 
 ---@generic T
----@param f fun(...):T
+---@param f fun(...): T
 ---@param ... any
----@return T
+---@return boolean success
+---@return T|string ...
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
@@ -98,16 +99,27 @@ function qerror(msg, level)
     dfhack.error(msg, (level or 1) + 1, false)
 end
 
+---@generic T
+---@generic S
+---@param cleanup_fn fun(...): S
+---@param fn fun(...): T
 ---@param ... any
-function dfhack.with_finalize(...)
-    return dfhack.call_with_finalizer(0,true,...)
+---@return T|S
+function dfhack.with_finalize(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,true,cleanup_fn,fn,...)
 end
 
+---@generic T
+---@generic S
+---@param cleanup_fn fun(...): S
+---@param fn fun(...): T
 ---@param ... any
-function dfhack.with_onerror(...)
-    return dfhack.call_with_finalizer(0,false,...)
+---@return T|S
+function dfhack.with_onerror(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,false,cleanup_fn,fn,...)
 end
 
+---@param obj DFObject
 local function call_delete(obj)
     if obj then obj:delete() end
 end
@@ -115,8 +127,8 @@ end
 ---@generic T
 ---@param obj DFObject
 ---@param fn fun(...):T
----@param ...? any
----@return T
+---@param ... any
+---@return T ...
 function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
@@ -708,7 +720,7 @@ end
 ---@param which string
 ---@param key string
 ---@param data any
-function persistent_saveData(which, key, data)
+local function persistent_saveData(which, key, data)
     local serialized = require('json').encode(data)
     dfhack.persistent['save'..which..'DataString'](key, serialized)
 end

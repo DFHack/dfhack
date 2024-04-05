@@ -40,7 +40,7 @@ local function onUpdateLocal(workshop)
     end
 end
 local function findCustomWorkshop(name_or_id)
-    if type(name_or_id)="string" then
+    if type(name_or_id) == "string" then
         local raws=df.global.world.raws.buildings.all
         for k,v in ipairs(raws) do
             if v.code==name_or_id then
@@ -53,7 +53,6 @@ local function findCustomWorkshop(name_or_id)
     else
         error("Expected string or integer id for workshop definition")
     end
-    
 end
 local function registerUpdateAction(shopId,callback)
     _registeredStuff[shopId]=callback

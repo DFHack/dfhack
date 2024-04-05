@@ -600,7 +600,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(work_hook,getPowerInfo).apply(enable);
     INTERPOSE_HOOK(work_hook,getMachineInfo).apply(enable);
     INTERPOSE_HOOK(work_hook,isPowerSource).apply(enable);
-    
+
     INTERPOSE_HOOK(work_hook,canConnectToMachine).apply(enable);
     INTERPOSE_HOOK(work_hook,isUnpowered).apply(enable);
     INTERPOSE_HOOK(work_hook,canBeRoomSubset).apply(enable);

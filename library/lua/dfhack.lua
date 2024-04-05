@@ -8,6 +8,8 @@
 
 ---@class dfhack
 ---@field BASE_G _G Original Lua global environment
+---@field is_core_context boolean
+---@field is_interactive fun(): boolean
 local dfhack = dfhack
 
 local base_env = dfhack.BASE_G
@@ -60,11 +62,15 @@ end
 -- User-changeable options
 
 dfhack.HIDE_CONSOLE_ON_STARTUP = true
+---@nodiscard
+---@return boolean
 function dfhack.getHideConsoleOnStartup()
     return dfhack.HIDE_CONSOLE_ON_STARTUP
 end
 
 dfhack.HIDE_ARMOK_TOOLS = false
+---@nodiscard
+---@return boolean
 function dfhack.getHideArmokTools()
     return dfhack.HIDE_ARMOK_TOOLS
 end
@@ -74,10 +80,17 @@ end
 safecall = dfhack.safecall
 curry = dfhack.curry
 
+---@generic T
+---@param f fun(...): T
+---@param ... any
+---@return boolean success
+---@return T|string ...
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+---@param msg string
+---@param level? integer
 function qerror(msg, level)
     local name = dfhack.current_script_name()
     if name and not tostring(msg):match(name) then
@@ -86,17 +99,34 @@ function qerror(msg, level)
     dfhack.error(msg, (level or 1) + 1, false)
 end
 
-function dfhack.with_finalize(...)
-    return dfhack.call_with_finalizer(0,true,...)
-end
-function dfhack.with_onerror(...)
-    return dfhack.call_with_finalizer(0,false,...)
+---@generic T
+---@param cleanup_fn function
+---@param fn fun(...): T
+---@param ... any
+---@return T
+function dfhack.with_finalize(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,true,cleanup_fn,fn,...)
 end
 
+---@generic T
+---@param cleanup_fn function
+---@param fn fun(...): T
+---@param ... any
+---@return T
+function dfhack.with_onerror(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,false,cleanup_fn,fn,...)
+end
+
+---@param obj DFObject
 local function call_delete(obj)
     if obj then obj:delete() end
 end
 
+---@generic T
+---@param obj DFObject
+---@param fn fun(...):T
+---@param ... any
+---@return T ...
 function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
@@ -116,6 +146,10 @@ local function find_required_module_arg()
     end
 end
 
+---@nodiscard
+---@param module string
+---@param env? table|metatable
+---@return table pkg
 function mkmodule(module,env)
     -- Verify that the module name is correct
     local _, rq_modname = find_required_module_arg()
@@ -143,6 +177,7 @@ function mkmodule(module,env)
     return pkg
 end
 
+---@param module string
 function reload(module)
     if type(package.loaded[module]) ~= 'table' then
         error("Module not loaded: "..module)
@@ -223,10 +258,12 @@ local function print_element(k, v)
     dfhack.println(string.format("%-23s\t = %s", tostring(k), tostring(v)))
 end
 
+---@param table table
 function printall(table)
     safe_iterate(table, pairs, print_element)
 end
 
+---@param table table
 function printall_ipairs(table)
     safe_iterate(table, ipairs, print_element)
 end
@@ -592,37 +629,62 @@ end
 
 -- String conversions
 
+---@nodiscard
+---@param self self
+---@return string
 function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
 end
 
 dfhack.random.__index = dfhack.random
 
+---@nodiscard
+---@param self self
+---@return string
 function dfhack.random:__tostring()
     return "<random generator>"
 end
 
 dfhack.penarray.__index = dfhack.penarray
 
+---@nodiscard
+---@return string
 function dfhack.penarray.__tostring()
     return "<penarray>"
 end
 
+---@nodiscard
+---@return number x
+---@return number y
+---@return number z
 function dfhack.maps.getSize()
     local map = df.global.world.map
     return map.x_count_block, map.y_count_block, map.z_count_block
 end
 
+---@nodiscard
+---@return number x
+---@return number y
+---@return number z
 function dfhack.maps.getTileSize()
     local map = df.global.world.map
     return map.x_count, map.y_count, map.z_count
 end
 
+---@param bld building
+---@return number width
+---@return number height
+---@return number centerx
+---@return number centery
 function dfhack.buildings.getSize(bld)
     local x, y = bld.x1, bld.y1
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
 end
 
+---@nodiscard
+---@param scr_type _viewscreen
+---@param n? number
+---@return viewscreen|nil
 function dfhack.gui.getViewscreenByType(scr_type, n)
     -- translated from modules/Gui.cpp
     if n == nil then
@@ -644,33 +706,54 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
     end
 end
 
+---@nodiscard
+---@return world_site|nil
 function dfhack.world.getCurrentSite()
     return df.world_site.find(df.global.plotinfo.site_id)
 end
 
+---@nodiscard
+---@param which string
+---@param key string
+---@param default? any
+---@return any
 local function persistent_getData(which, key, default)
     local serialized = dfhack.persistent['get'..which..'DataString'](key)
     if not serialized then return default end
     return require('json').decode(serialized) or default
 end
 
-function persistent_saveData(which, key, data)
+---@param which string
+---@param key string
+---@param data any
+local function persistent_saveData(which, key, data)
     local serialized = require('json').encode(data)
     dfhack.persistent['save'..which..'DataString'](key, serialized)
 end
 
+---@nodiscard
+---@param key string
+---@param default? any
+---@return any
 function dfhack.persistent.getSiteData(key, default)
     return persistent_getData('Site', key, default)
 end
 
+---@param key string
+---@param data any
 function dfhack.persistent.saveSiteData(key, data)
     persistent_saveData('Site', key, data)
 end
 
+---@param key string
+---@param default? any
+---@return any
 function dfhack.persistent.getWorldData(key, default)
     return persistent_getData('World', key, default)
 end
 
+---@param key string
+---@param data any
 function dfhack.persistent.saveWorldData(key, data)
     persistent_saveData('World', key, data)
 end
@@ -679,6 +762,11 @@ end
 
 local print_banner = true
 
+---@param prompt? string
+---@param hfile? string
+---@param env? table|metatable
+---@return boolean|nil
+---@return string|nil
 function dfhack.interpreter(prompt,hfile,env)
     if not dfhack.is_interactive() then
         return nil, 'not interactive'

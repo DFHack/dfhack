@@ -100,21 +100,19 @@ function qerror(msg, level)
 end
 
 ---@generic T
----@generic S
----@param cleanup_fn fun(...): S
+---@param cleanup_fn function
 ---@param fn fun(...): T
 ---@param ... any
----@return T|S
+---@return T
 function dfhack.with_finalize(cleanup_fn,fn,...)
     return dfhack.call_with_finalizer(0,true,cleanup_fn,fn,...)
 end
 
 ---@generic T
----@generic S
----@param cleanup_fn fun(...): S
+---@param cleanup_fn function
 ---@param fn fun(...): T
 ---@param ... any
----@return T|S
+---@return T
 function dfhack.with_onerror(cleanup_fn,fn,...)
     return dfhack.call_with_finalizer(0,false,cleanup_fn,fn,...)
 end

@@ -6548,17 +6548,17 @@ Functions
   this as default power consumption/production. Note: due to implementation limitations
   workshop only connects to other machines if the other machine is build later than this one.
 
-  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
-  :needs_power:   only function if it has sufficient power
-  :power_consumed:   building consumes this amount of power
-  :power_produced:   output this amount of power
-  :connection_points:   a table of ``{x=?,y=?}`` points that can connect to other machines
+  :workshop_type:       custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :needs_power:         only function if it has sufficient power
+  :power_consumed:      building consumes this amount of power
+  :power_produced:      output this amount of power
+  :connection_points:   a table of ``{x=?,y=?}`` zero-based coordinates that can connect to other machines
 
-* ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced, gear_tiles)``
+* ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced, [gear_tiles])``
 
   Same as ``setMachineInfo`` but fills out the ``connection_points`` table from raws placing connection
   points on tiles which have the gear tile. ``gear_tiles`` is an optional array of two tiles that are
-  counted as gears in the workshop ascii tile raws.
+  counted as gears in the workshop ascii tile raws. The default gear tiles are ``42`` and ``15``.
 
 * ``setAnimationInfo(workshop_type, frames, frame_skip)``
 
@@ -6574,26 +6574,27 @@ Functions
   :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
                     are synchronized with machine animation.
 
-* ``setAnimationInfoAuto(name, make_graphics_too, frame_skip, gear_tiles)``
+* ``setAnimationInfoAuto(workshop_type, make_graphics_too, [frame_length], [gear_tiles])``
 
   Animate workshop as with function above but generate frames automatically. This works by finding
   tiles which have gears and animating them with alternating gear tiles.
 
-  :name:            custom workshop string id e.g. ``SOAPMAKER``
+  :workshop_type:     custom workshop string id e.g. ``SOAPMAKER`` or numeric id
   :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
-  :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
-                    are synchronized with machine animation.
-  :gear_tiles:      Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles
+  :frame_length:      How many ticks to display one frame. If set to negative number (or skipped) frames
+                      are synchronized with machine animation.
+  :gear_tiles:        Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
+                      This overrides default gear tiles.
 
-* ``setOnUpdate(name,interval,callback)``
+* ``setOnUpdate(workshop_type,interval,callback)``
 
   Setup callback to be called every ``interval`` of ticks for each building of this type. Note: low interval
   numbers and/or many workshops that use this might reduce DF performance.
 
-  :name:   custom workshop string id e.g. ``SOAPMAKER``
-  :interval:   how many ticks to skip between event triggers
-  :callback:   function to call. Function signature is ``func(workshop)`` where ``workshop`` is of type
-               ``df.building_workshopst``
+  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :interval:        how many ticks to skip between event triggers
+  :callback:        function to call. Function signature is ``func(workshop)`` where ``workshop`` is of type
+                    ``df.building_workshopst``
 
 * ``getPower(building)``
 

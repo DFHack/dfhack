@@ -1,11 +1,11 @@
 local _ENV = mkmodule('plugins.building-hacks')
 --[[
     from native:
-        setOwnableBuilding(workshop_type,bool)
+        setOwnableBuilding(workshop_type)
         setAnimationInfo(workshop_type,table frames,int frameskip=-1)
         setUpdateSkip(workshop_type,int=0)
         setMachineInfo(workshop_type,bool need_power,int consume=0,int produce=0,table connection_points)
-        fixImpassible(workshop_type,bool)
+        fixImpassible(workshop_type)
         getPower(building) -- 2 or 0 returns, produced and consumed
         setPower(building,produced, consumed)
     from here:
@@ -39,13 +39,21 @@ local function onUpdateLocal(workshop)
         f(workshop)
     end
 end
-local function findCustomWorkshop(name)
-    local raws=df.global.world.raws.buildings.all
-    for k,v in ipairs(raws) do
-        if v.code==name then
-            return v
+local function findCustomWorkshop(name_or_id)
+    if type(name_or_id)="string" then
+        local raws=df.global.world.raws.buildings.all
+        for k,v in ipairs(raws) do
+            if v.code==name_or_id then
+                return v
+            end
         end
+        error("Building def:"..name_or_id.." not found")
+    elseif type(name_or_id)=="number" then
+        return df.building_def.find(name_or_id)
+    else
+        error("Expected string or integer id for workshop definition")
     end
+    
 end
 local function registerUpdateAction(shopId,callback)
     _registeredStuff[shopId]=callback
@@ -80,9 +88,9 @@ local function findGears( shop_def ,gear_tiles) --finds positions of all gears a
     for x=0,w-1 do
     for y=0,h-1 do
         local tile=shop_def.tile[stage][x][y]
-        if tile==42 then --gear icon
+        if tile==gear_tiles[1] then --gear icon
             table.insert(ret,{x=x,y=y,invert=false})
-        elseif tile==15 then --inverted gear icon
+        elseif tile==gear_tiles[2] then --inverted gear icon
             table.insert(ret,{x=x,y=y,invert=true})
         end
     end

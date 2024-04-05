@@ -13,7 +13,10 @@
 #include "df/building.h"
 #include "df/construction_type.h"
 #include "df/coord.h"
+#include "df/item.h"
 #include "df/job.h"
+#include "df/job_item_ref.h"
+#include "df/map_block.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
 #include "df/world.h"
@@ -73,11 +76,13 @@ enum Reason {
     // Blocks a dead end (either a corridor or on top of a wall)
     DEADEND = 5,
     // Would cave in immediately on completion
-    UNSUPPORTED = 6
+    UNSUPPORTED = 6,
+    // Has an unmovable item in the same block that is part of a job
+    ITEM_IN_JOB = 7,
 };
 
 inline bool isExternalReason(Reason reason) {
-    return reason == Reason::BUILDINGPLAN || reason == Reason::UNDER_WATER;
+    return reason == Reason::BUILDINGPLAN || reason == Reason::UNDER_WATER || reason == Reason::ITEM_IN_JOB;
 }
 
 static string reasonToString(Reason reason) {
@@ -90,6 +95,8 @@ static string reasonToString(Reason reason) {
         return "Would collapse immediately";
     case Reason::ERASE_DESIGNATION:
         return "Waiting for carve/smooth/engrave";
+    case Reason::ITEM_IN_JOB:
+        return "Blocked by an unmovable item";
     default:
         return "External reason";
     }
@@ -289,6 +296,70 @@ private:
             }
         }
         return false;
+    }
+
+    static bool suitableToMoveItemTo(df::coord pos) {
+        if (!walkable(pos))
+            return false;
+
+        // Dwarves will move a blocking item to a walkable building, but only if its fully constructed
+        auto building = Buildings::findAtTile(pos);
+        return !building || building->flags.bits.exists;
+    }
+
+    // True for buildings planned on a tile with an item that cannot be moved aside
+    static bool isOnUnmovableItem(df::job *job) {
+        CHECK_NULL_POINTER(job);
+        auto building = Job::getHolder(job);
+        if (!building)
+            return false;
+
+        // Check for items on the building, look into all the map blocks overlapping
+        // the building
+        bool has_item = false;
+        for (size_t block_x = building->x1 >> 4; block_x <= building->x2 >> 4; ++block_x) {
+            for (size_t block_y = building->y1 >> 4; block_y <= building->y2 >> 4; ++block_y) {
+                auto block = Maps::getBlock(block_x,block_y,building->z);
+                if (!block)
+                    continue;
+
+                for (df::item *item : block->items | transform(df::item::find)) {
+                    if (!item)
+                        continue;
+                    if (item->pos.x < building->x1 || item->pos.x > building->x2 ||
+                        item->pos.y < building->y1 || item->pos.y > building->y2)
+                        continue;
+
+                    // Ok if it's an item of the job
+                    if (std::ranges::any_of(job->items, [item](df::job_item_ref *j) {return j->item == item;}))
+                        continue;
+                    if (item->flags.bits.in_job || item->flags.bits.forbid)
+                        return true; // Assigned to a different task or forbidden, not movable
+                    has_item = true;
+                }
+            }
+        }
+
+        if (!has_item)
+            return false;
+
+        // With an item, check for the surrounding of the building
+        // The position of the item does not matter, in multi-tile buildings
+        // dwarves will move the item multiple tiles if necessary
+        for (auto x : {building->x1-1, building->x2+1}) {
+            for (auto y = building->y1; y <= building->y2; ++y) {
+                if (suitableToMoveItemTo(coord(x,y,building->z)))
+                    return false;
+            }
+        }
+        for (auto y : {building->y1-1, building->y2+1}) {
+            for (auto x = building->x1; x <= building->x2; ++x) {
+                if (suitableToMoveItemTo(coord(x,y,building->z)))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     // check if the tile is suitable tile to stand on for construction (walkable & not a tree branch)
@@ -562,6 +633,9 @@ public:
                 continue;
             } else if (isBuildingPlanJob(job)) {
                 suspensions[job->id]=Reason::BUILDINGPLAN;
+                continue;
+            } else if (isOnUnmovableItem(job)) {
+                suspensions[job->id]=Reason::ITEM_IN_JOB;
                 continue;
             }
 

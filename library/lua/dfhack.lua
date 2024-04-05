@@ -6,8 +6,6 @@
 -- preserved as a common denominator for all modules.
 -- This file uses it instead of the new default one.
 
--- The fields of dfhack are not exhaustive
-
 ---@class dfhack
 ---@field BASE_G _G Original Lua global environment
 ---@field is_core_context boolean

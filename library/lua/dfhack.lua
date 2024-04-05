@@ -11,6 +11,7 @@
 ---@class dfhack
 ---@field BASE_G _G Original Lua global environment
 ---@field is_core_context boolean
+---@field is_interactive fun(): boolean
 local dfhack = dfhack
 
 local base_env = dfhack.BASE_G
@@ -748,7 +749,8 @@ local print_banner = true
 ---@param prompt? string
 ---@param hfile? string
 ---@param env? table|metatable
----@return boolean
+---@return boolean|nil
+---@return string|nil
 function dfhack.interpreter(prompt,hfile,env)
     if not dfhack.is_interactive() then
         return nil, 'not interactive'

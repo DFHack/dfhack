@@ -6522,29 +6522,30 @@ building-hacks
 
 This plugin extends DF workshops to support custom powered buildings.
 
+.. note:: when using numeric ids for workshops be aware that those id can change between worlds
+
 .. contents::
   :local:
 
 Functions
 ---------
 
-* ``setOwnableBuilding(workshop_type, enable)``
+* ``setOwnableBuilding(workshop_type)``
 
   Set workshop to be included in zones (such as bedroom or inn).
 
   :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
-  :enable:   boolean value to enable or disable this functionality
 
-* ``fixImpassible(workshop_type, enable)``
+* ``fixImpassible(workshop_type)``
 
   Set workshop non walkable tiles to also block liquids (i.e. water and magma).
 
   :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
-  :enable:   boolean value to enable or disable this functionality
 
 * ``setMachineInfo(workshop_type, needs_power, power_consumed, power_produced, connection_points)``
 
-  Setup and enable machine-like functionality for the workshop. Note: due to implementation limitations
+  Setup and enable machine-like functionality for the workshop. All workshops of this type will have
+  this as default power consumption/production. Note: due to implementation limitations
   workshop only connects to other machines if the other machine is build later than this one.
 
   :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
@@ -6591,7 +6592,8 @@ Functions
 
   :name:   custom workshop string id e.g. ``SOAPMAKER``
   :interval:   how many ticks to skip between event triggers
-  :callback:   function to call
+  :callback:   function to call. Function signature is ``func(workshop)`` where ``workshop`` is of type
+               ``df.building_workshopst``
 
 * ``getPower(building)``
 
@@ -6599,9 +6601,9 @@ Functions
 
   :building:   specific workshop that produces or consumes power
 
-* ``setPower(building,power_consumed, power_produced)``
+* ``setPower(building, power_consumed, power_produced)``
 
-  Sets current power production and consumption for a building. Can be used to make buildings that
+  Sets current power production and consumption for a specific workshop building. Can be used to make buildings that
   dynamically change power consumption and production.
 
   :building:   specific workshop that produces or consumes power

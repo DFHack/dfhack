@@ -459,14 +459,13 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     return ;
 }
 
-//fixImpassible(workshop_type,bool) - changes how impassible tiles work with liquids. False - default behaviour. True - blocks liquids.
+//fixImpassible(workshop_type) - changes how impassible tiles work with liquids.
 static int fixImpassible(lua_State* L)
 {
     int workshop_type = get_workshop_type(L, 1);
-    bool impassible_setting = lua_toboolean(L, 2);
 
     auto& def = hacked_workshops[workshop_type];
-    def.impassible_fix = impassible_setting;
+    def.impassible_fix = true;
 
     enable_hooks(true);
 
@@ -539,14 +538,13 @@ static int setAnimationInfo(lua_State* L)
 
     return 0;
 }
-//setOwnableBuilding(workshop_type,bool is_ownable)
+//setOwnableBuilding(workshop_type)
 static int setOwnableBuilding(lua_State* L)
 {
     int workshop_type = get_workshop_type(L, 1);
-    bool room_subset = lua_toboolean(L, 2);
 
     auto& def = hacked_workshops[workshop_type];
-    def.room_subset = room_subset;
+    def.room_subset = true;
 
     enable_hooks(true);
 

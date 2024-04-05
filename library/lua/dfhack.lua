@@ -166,9 +166,21 @@ end
 
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
-local class = require('class')
-defclass = class.defclass
-mkinstance = class.mkinstance
+---@generic T: table
+---@param class? T
+---@param parent? table
+---@return table|T
+function defclass(class,parent)
+    return require('class').defclass(class,parent)
+end
+
+---@generic T: table
+---@param class table
+---@param table? T
+---@return table|T
+function mkinstance(class,table)
+    return require('class').mkinstance(class,table)
+end
 
 -- Misc functions
 

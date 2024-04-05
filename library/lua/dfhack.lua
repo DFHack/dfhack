@@ -166,13 +166,9 @@ end
 
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
-function defclass(...)
-    return require('class').defclass(...)
-end
-
-function mkinstance(...)
-    return require('class').mkinstance(...)
-end
+local class = require('class')
+defclass = class.defclass
+mkinstance = class.mkinstance
 
 -- Misc functions
 

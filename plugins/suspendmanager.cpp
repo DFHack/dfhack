@@ -77,7 +77,7 @@ enum Reason {
     DEADEND = 5,
     // Would cave in immediately on completion
     UNSUPPORTED = 6,
-    // Has an unmovable item in the same block that is part of a job
+    // Has an unmovable item on top of the building job
     ITEM_IN_JOB = 7,
 };
 

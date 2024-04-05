@@ -317,8 +317,8 @@ private:
         // Check for items on the building, look into all the map blocks overlapping
         // the building
         bool has_item = false;
-        for (size_t block_x = building->x1 >> 4; block_x <= building->x2 >> 4; ++block_x) {
-            for (size_t block_y = building->y1 >> 4; block_y <= building->y2 >> 4; ++block_y) {
+        for (int32_t block_x = building->x1 >> 4; block_x <= building->x2 >> 4; ++block_x) {
+            for (int32_t block_y = building->y1 >> 4; block_y <= building->y2 >> 4; ++block_y) {
                 auto block = Maps::getBlock(block_x,block_y,building->z);
                 if (!block)
                     continue;

@@ -816,7 +816,8 @@ static int dfhack_pen_pairs(lua_State *L)
 }
 
 const char *const pen_fields[] = {
-    "ch", "fg", "bold", "bg", "tile", "tile_color", "tile_fg", "tile_bg", NULL
+    "ch", "fg", "bold", "bg", "tile", "tile_color", "tile_fg", "tile_bg",
+    "keep_lower", "write_to_lower", "top_of_text", "bottom_of_text", NULL
 };
 
 static int dfhack_pen_newindex(lua_State *L)
@@ -875,6 +876,22 @@ static int dfhack_pen_newindex(lua_State *L)
         pen.tile_bg = luaL_checkint(L, 3) & 15;
         pen.tile_mode = Pen::TileColor;
         lua_pushinteger(L, pen.tile_bg);
+        break;
+    case 8:
+        pen.keep_lower = lua_toboolean(L, 3);
+        lua_pushboolean(L, pen.keep_lower);
+        break;
+    case 9:
+        pen.write_to_lower = lua_toboolean(L, 3);
+        lua_pushboolean(L, pen.write_to_lower);
+        break;
+    case 10:
+        pen.top_of_text = lua_toboolean(L, 3);
+        lua_pushboolean(L, pen.top_of_text);
+        break;
+    case 11:
+        pen.bottom_of_text = lua_toboolean(L, 3);
+        lua_pushboolean(L, pen.bottom_of_text);
         break;
     }
 

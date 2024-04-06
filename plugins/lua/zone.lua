@@ -1341,7 +1341,7 @@ end
 
 AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
 AnimalActionsWidget.ATTRS {
-    desc = "Add options to tamed animals view sheet",
+    desc="Add options to tamed animals view sheet.",
     default_pos={x=-41,y=37},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/UNIT/Overview',

@@ -4,16 +4,19 @@
 Licenses
 ########
 
-DFHack is distributed under the Zlib license, with some MIT-
-and BSD-licensed components.  These licenses protect your right
-to use DFHack for any purpose, distribute copies, and so on.
+DFHack is distributed under the Zlib license, with some MIT- and BSD-licensed
+components.  These licenses protect your right to use DFHack for any purpose,
+distribute copies, and so on.
 
-The core, plugins, scripts, and other DFHack code all use the
-ZLib license unless noted otherwise.  By contributing to DFHack,
-authors release the contributed work under this license.
+The core, plugins, scripts, and other DFHack code all use the ZLib license
+unless noted otherwise.  By contributing to DFHack, authors release the
+contributed work under this license.
 
-DFHack also draws on several external packages.
-Their licenses are summarised here and reproduced below.
+Some graphic assets are derived from vanilla DF assets and used with permission
+from Bay12.
+
+DFHack also draws on several external packages. Their licenses are summarised
+here and reproduced below.
 
 =============== ============= =================================================
 Component       License       Copyright

@@ -329,7 +329,7 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
 
     auto des = Maps::getTileDesignation(pos);
     auto occ = Maps::getTileOccupancy(pos);
-    if (!des || !occ)
+    if (!des || !occ || !is_wall(pos))
         return;
 
     des->bits.dig = df::tile_dig_designation::Default;

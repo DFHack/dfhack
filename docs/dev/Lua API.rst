@@ -4714,7 +4714,7 @@ Here is an example skeleton for a ZScreen tool window::
 
     function MyWindow:init()
         self:addviews{
-          -- add subview widgets here
+            -- add subview widgets here
         }
     end
 

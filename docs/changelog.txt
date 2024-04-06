@@ -68,6 +68,7 @@ Template for new versions:
 - fix behavior of Linux Steam launcher on systems that don't support the inotify API
 - fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 - `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
+- `suspendmanager`: prevent cancellation spam when an item is preventing a building from being completed
 
 ## Misc Improvements
 - `tailor`: allow turning off automatic confiscation of tattered clothing

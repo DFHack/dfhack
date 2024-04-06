@@ -343,7 +343,10 @@ private:
         if (!has_item)
             return false;
 
-        // With an item, check for the surrounding of the building
+        // When there is an item on top of the building, check for the surrounding of the building
+        // for a place where the dwarves would be able to move the item to.
+        // The dwarves will move an item if there is a walkable space without any
+        // building planned, non-diagonally neighbouring the building.
         // The position of the item does not matter, in multi-tile buildings
         // dwarves will move the item multiple tiles if necessary
         for (auto x : {building->x1-1, building->x2+1}) {

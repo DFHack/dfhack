@@ -69,7 +69,7 @@ Template for new versions:
 - fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 - `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
 - `suspendmanager`: prevent cancellation spam when an item is preventing a building from being completed
-- `stonesense`: fix a crash that could happen with unusual build materials
+- `stonesense`: fix a crash with buildings made of unusual materials (such as pre-existing campsite tents)
 
 ## Misc Improvements
 - `tailor`: allow turning off automatic confiscation of tattered clothing

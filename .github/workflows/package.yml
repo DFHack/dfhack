@@ -18,11 +18,19 @@ on:
       launchdf:
         type: boolean
         default: false
+      include_windows:
+        type: boolean
+        default: true
+      include_linux:
+        type: boolean
+        default: true
+
 
 jobs:
   package-win64:
     name: Windows
     uses: ./.github/workflows/build-windows.yml
+    if: inputs.include_windows
     with:
       dfhack_ref: ${{ inputs.dfhack_ref }}
       scripts_ref: ${{ inputs.scripts_ref }}
@@ -40,6 +48,7 @@ jobs:
   package-linux:
     name: Linux
     uses: ./.github/workflows/build-linux.yml
+    if: inputs.include_linux
     with:
       dfhack_ref: ${{ inputs.dfhack_ref }}
       scripts_ref: ${{ inputs.scripts_ref }}

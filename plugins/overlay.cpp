@@ -2,6 +2,7 @@
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_export_regionst.h"
 #include "df/viewscreen_game_cleanerst.h"
@@ -117,6 +118,7 @@ struct viewscreen_overlay : T {
 IMPLEMENT_HOOKS(adopt_region)
 IMPLEMENT_HOOKS(choose_game_type)
 IMPLEMENT_HOOKS(choose_start_site)
+IMPLEMENT_HOOKS(dungeonmode)
 IMPLEMENT_HOOKS(dwarfmode)
 IMPLEMENT_HOOKS(export_region)
 IMPLEMENT_HOOKS(game_cleaner)
@@ -152,6 +154,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
             INTERPOSE_HOOKS_FAILED(choose_start_site) ||
             INTERPOSE_HOOKS_FAILED(choose_game_type) ||
+            INTERPOSE_HOOKS_FAILED(dungeonmode) ||
             INTERPOSE_HOOKS_FAILED(dwarfmode) ||
             INTERPOSE_HOOKS_FAILED(export_region) ||
             INTERPOSE_HOOKS_FAILED(game_cleaner) ||

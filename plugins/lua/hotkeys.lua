@@ -35,6 +35,7 @@ HotspotMenuWidget.ATTRS{
         'adopt_region',
         'choose_game_type',
         -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'dungeonmode',
         'dwarfmode',
         'export_region',
         'game_cleaner',

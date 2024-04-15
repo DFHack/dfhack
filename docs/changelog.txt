@@ -59,6 +59,8 @@ Template for new versions:
 
 ## Misc Improvements
 
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+
 ## Documentation
 
 ## API

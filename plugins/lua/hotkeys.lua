@@ -50,7 +50,6 @@ HotspotMenuWidget.ATTRS{
         -- 'loadgame', -- disable temporarily while we get texture reloading sorted
         -- 'new_arena', -- conflicts with vanilla panel layouts
         -- 'new_region', -- conflicts with vanilla panel layouts
-        -- 'optimize', -- need to verify compatibility
         'savegame',
         -- 'setupadventure', -- need to verify compatibility
         'setupdwarfgame',

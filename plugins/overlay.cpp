@@ -16,7 +16,6 @@
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
-#include "df/viewscreen_optimizest.h"
 #include "df/viewscreen_savegamest.h"
 #include "df/viewscreen_setupadventurest.h"
 #include "df/viewscreen_setupdwarfgamest.h"
@@ -139,7 +138,6 @@ IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(new_arena)
 IMPLEMENT_HOOKS(new_region)
-IMPLEMENT_HOOKS(optimize)
 IMPLEMENT_HOOKS(savegame)
 IMPLEMENT_HOOKS(setupadventure)
 IMPLEMENT_HOOKS(setupdwarfgame)
@@ -182,7 +180,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             INTERPOSE_HOOKS_FAILED(loadgame) ||
             INTERPOSE_HOOKS_FAILED(new_arena) ||
             INTERPOSE_HOOKS_FAILED(new_region) ||
-            INTERPOSE_HOOKS_FAILED(optimize) ||
             INTERPOSE_HOOKS_FAILED(savegame) ||
             INTERPOSE_HOOKS_FAILED(setupadventure) ||
             INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||

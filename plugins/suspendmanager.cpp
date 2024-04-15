@@ -111,7 +111,7 @@ static const std::bitset<64> construction_impassible = std::bitset<64>()
     .set(construction_type::Wall)
     .set(construction_type::Fortification);
 
-// constructions that can be stand on the tile above
+// constructions that allow walking on the tile above
 static const std::bitset<64> construction_stand_above = std::bitset<64>()
     .set(construction_type::Wall)
     .set(construction_type::UpStair)
@@ -390,7 +390,8 @@ private:
             return true;
 
         auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
-        if (below && below->getType() == df::building_type::Construction && construction_stand_above[below->getSubtype()])
+        if (below && below->getType() == df::building_type::Construction &&
+            construction_stand_above[below->getSubtype()])
             return true;
 
         return false;

@@ -59,7 +59,7 @@ Template for new versions:
 
 ## Misc Improvements
 
-- `suspendmanager`: Take in account walls planned on the z-layer below to determine accessibility to a job
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
 
 ## Documentation
 

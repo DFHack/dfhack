@@ -56,8 +56,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
 
 ## Misc Improvements
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
 
 ## Documentation
 

@@ -378,11 +378,11 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     {
         // TODO: check DfArray
     }
-    else if (base_container.starts_with("map<"))
+    else if (base_container.starts_with("map<") || base_container.starts_with("set<"))
     {
         check_stl_map(item, identity);
     }
-    else if (base_container.starts_with("unordered_map<"))
+    else if (base_container.starts_with("unordered_map<") || base_container.starts_with("unordered_set<"))
     {
         check_stl_unordered_map(item, identity);
     }

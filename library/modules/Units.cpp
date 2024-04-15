@@ -162,9 +162,10 @@ bool Units::isResident(df::unit *unit, bool include_insane){
         return false;
 
     return isOwnCiv(unit) &&
+        !isVisiting(unit) &&
+        !isForest(unit) &&
         !isAnimal(unit) &&
-        !isVisitor(unit) &&
-        !isCitizen(unit, true);
+        !isOwnGroup(unit);
 }
 
 bool Units::isFortControlled(df::unit *unit)

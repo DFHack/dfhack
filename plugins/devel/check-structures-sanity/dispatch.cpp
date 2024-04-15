@@ -365,6 +365,7 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
 {
     auto identity = static_cast<container_identity *>(cs.identity);
     auto base_container = identity->getFullName(nullptr);
+    std::cerr << base_container << std::endl;
     if (base_container == "vector<void>")
     {
         check_stl_vector(item, identity->getItemType(), identity->getIndexEnumType());
@@ -376,6 +377,10 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     else if (base_container == "DfArray<void>")
     {
         // TODO: check DfArray
+    }
+    else if (base_container.starts_with("set<"))
+    {
+        // TODO: check set
     }
     else if (base_container.starts_with("map<"))
     {

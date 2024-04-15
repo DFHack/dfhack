@@ -25,6 +25,9 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 # customizable quick command list
 keybinding add Ctrl-Shift-A gui/quickcmd
 
+# save the description of a selected unit or item to the `/markdown_{YourWorldName}.md` file in the root game directory
+keybinding add Shift-R@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheet markdown
+
 
 ###################
 # embark bindings #

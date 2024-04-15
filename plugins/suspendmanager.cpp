@@ -111,6 +111,12 @@ static const std::bitset<64> construction_impassible = std::bitset<64>()
     .set(construction_type::Wall)
     .set(construction_type::Fortification);
 
+// constructions that can be stand on the tile above
+static const std::bitset<64> construction_stand_above = std::bitset<64>()
+    .set(construction_type::Wall)
+    .set(construction_type::UpStair)
+    .set(construction_type::UpDownStair);
+
 // constructions requiring same support as walls
 static const std::bitset<64> construction_wall_support = std::bitset<64>()
     .set(construction_type::Wall)
@@ -378,6 +384,18 @@ private:
         return walkable(pos);
     }
 
+    // check if the tile is suitable to stand on and build, or is planned to become one
+    static bool isPotentialSuitableAccess (coord pos) {
+        if (isSuitableAccess(pos))
+            return true;
+
+        auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
+        if (below && below->getType() == df::building_type::Construction && construction_stand_above[below->getSubtype()])
+            return true;
+
+        return false;
+    }
+
     static bool tileHasSupportWall(coord pos) {
         auto tile_type = Maps::getTileType(pos);
         if (tile_type) {
@@ -452,8 +470,10 @@ private:
             return false; // not building a blocking construction, no risk
 
         coord pos(building->centerx,building->centery,building->z);
-        if (!isSuitableAccess(pos))
-            return false; // construction is on a non-walkable tile, can't block
+        if (!isPotentialSuitableAccess(pos))
+            // construction is on a tile that is not usable to build, and will not
+            // become one, can't block
+            return false;
 
         auto risk = riskOfStuckConstructionAt(pos);
         TRACE(cycle,out).print("  risk is %d\n", risk);
@@ -522,8 +542,9 @@ private:
 
             df::building* exit = nullptr;
             for (auto npos : neighbors | transform(around(pos))) {
-                if (!isSuitableAccess(npos))
-                    continue; // non walkable neighbour, not an exit
+                if (!isPotentialSuitableAccess(npos))
+                    // non walkable neighbour, nor planned to become one, not an exit
+                    continue;
 
                 auto impassiblePlan = plannedImpassibleAt(npos);
                 if (!impassiblePlan)

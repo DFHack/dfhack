@@ -1,17 +1,24 @@
 #include "df/enabler.h"
 #include "df/viewscreen_adopt_regionst.h"
+#include "df/viewscreen_adventure_logst.h"
+#include "df/viewscreen_barterst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_export_regionst.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_initial_prepst.h"
+#include "df/viewscreen_layer_unit_actionst.h"
+#include "df/viewscreen_layer_unit_healthst.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
+#include "df/viewscreen_optimizest.h"
 #include "df/viewscreen_savegamest.h"
+#include "df/viewscreen_setupadventurest.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
 #include "df/viewscreen_update_regionst.h"
@@ -116,18 +123,25 @@ struct viewscreen_overlay : T {
     template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, render, 100);
 
 IMPLEMENT_HOOKS(adopt_region)
+IMPLEMENT_HOOKS(adventure_log)
+IMPLEMENT_HOOKS(barter)
 IMPLEMENT_HOOKS(choose_game_type)
 IMPLEMENT_HOOKS(choose_start_site)
+IMPLEMENT_HOOKS(dungeon_monsterstatus)
 IMPLEMENT_HOOKS(dungeonmode)
 IMPLEMENT_HOOKS(dwarfmode)
 IMPLEMENT_HOOKS(export_region)
 IMPLEMENT_HOOKS(game_cleaner)
 IMPLEMENT_HOOKS(initial_prep)
+IMPLEMENT_HOOKS(layer_unit_action)
+IMPLEMENT_HOOKS(layer_unit_health)
 IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(new_arena)
 IMPLEMENT_HOOKS(new_region)
+IMPLEMENT_HOOKS(optimize)
 IMPLEMENT_HOOKS(savegame)
+IMPLEMENT_HOOKS(setupadventure)
 IMPLEMENT_HOOKS(setupdwarfgame)
 IMPLEMENT_HOOKS(title)
 IMPLEMENT_HOOKS(update_region)
@@ -152,18 +166,25 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
 
     if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
+            INTERPOSE_HOOKS_FAILED(adventure_log) ||
+            INTERPOSE_HOOKS_FAILED(barter) ||
             INTERPOSE_HOOKS_FAILED(choose_start_site) ||
             INTERPOSE_HOOKS_FAILED(choose_game_type) ||
+            INTERPOSE_HOOKS_FAILED(dungeon_monsterstatus) ||
             INTERPOSE_HOOKS_FAILED(dungeonmode) ||
             INTERPOSE_HOOKS_FAILED(dwarfmode) ||
             INTERPOSE_HOOKS_FAILED(export_region) ||
             INTERPOSE_HOOKS_FAILED(game_cleaner) ||
             INTERPOSE_HOOKS_FAILED(initial_prep) ||
+            INTERPOSE_HOOKS_FAILED(layer_unit_action) ||
+            INTERPOSE_HOOKS_FAILED(layer_unit_health) ||
             INTERPOSE_HOOKS_FAILED(legends) ||
             INTERPOSE_HOOKS_FAILED(loadgame) ||
             INTERPOSE_HOOKS_FAILED(new_arena) ||
             INTERPOSE_HOOKS_FAILED(new_region) ||
+            INTERPOSE_HOOKS_FAILED(optimize) ||
             INTERPOSE_HOOKS_FAILED(savegame) ||
+            INTERPOSE_HOOKS_FAILED(setupadventure) ||
             INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||
             INTERPOSE_HOOKS_FAILED(title) ||
             INTERPOSE_HOOKS_FAILED(update_region) ||

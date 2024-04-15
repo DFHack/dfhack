@@ -33,18 +33,26 @@ HotspotMenuWidget.ATTRS{
     version=2,
     viewscreens={
         'adopt_region',
+        -- 'adventure_log', -- need to verify compatibility
+        -- 'barter', -- need to verify compatibility
         'choose_game_type',
         -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        -- 'debug', -- need to verify compatibility
+        -- 'dungeon_monsterstatus', -- need to verify compatibility
         'dungeonmode',
         'dwarfmode',
         'export_region',
         'game_cleaner',
         'initial_prep',
+        -- 'layer_unit_action', -- need to verify compatibility
+        -- 'layer_unit_health', -- need to verify compatibility
         -- 'legends', -- conflicts with vanilla export button and info text
         -- 'loadgame', -- disable temporarily while we get texture reloading sorted
         -- 'new_arena', -- conflicts with vanilla panel layouts
         -- 'new_region', -- conflicts with vanilla panel layouts
+        -- 'optimize', -- need to verify compatibility
         'savegame',
+        -- 'setupadventure', -- need to verify compatibility
         'setupdwarfgame',
         'title/Default',
         'update_region',

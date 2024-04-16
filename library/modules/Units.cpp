@@ -1374,6 +1374,14 @@ string Units::getReadableName(df::unit* unit) {
             break;
         }
     }
+
+    if (unit->enemy.undead) {
+        if (unit->enemy.undead->undead_name.empty())
+            name = name + " Corpse";
+        else
+            name = name + " " + unit->enemy.undead->undead_name;
+    }
+
     if (isTame(unit)) {
         name += " (";
         name += getTameTag(unit);

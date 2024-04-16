@@ -1350,12 +1350,6 @@ static const char * getTameTag(df::unit *unit) {
 
 string Units::getReadableName(df::unit* unit) {
     string base_name = getProfessionName(unit);
-    if (isHunter(unit))
-        base_name = "hunter " + base_name;
-    if (isWar(unit))
-        base_name = "war " + base_name;
-    if (unit->flags4.bits.agitated_wilderness_creature)
-        base_name = "agitated " + base_name;
     string name = Translation::TranslateName(getVisibleName(unit), false);
     if (name.empty()) {
         name = base_name;
@@ -1363,6 +1357,10 @@ string Units::getReadableName(df::unit* unit) {
         name += ", ";
         name += base_name;
     }
+    if (isGhost(unit)) {
+        name = "Ghostly " + name;
+    }
+
     for (auto unit_syndrome : unit->syndromes.active) {
         auto syndrome = df::syndrome::find(unit_syndrome->type);
         if (!syndrome)
@@ -1980,7 +1978,11 @@ std::string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plu
             return prof;
     }
 
-    return getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    std::string cpn = getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    if (unit->flags4.bits.agitated_wilderness_creature)
+        cpn = "Agitated " + cpn;
+
+    return cpn;
 }
 
 std::string Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)

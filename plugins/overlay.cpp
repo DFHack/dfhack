@@ -122,18 +122,18 @@ struct viewscreen_overlay : T {
     template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, render, 100);
 
 IMPLEMENT_HOOKS(adopt_region)
-IMPLEMENT_HOOKS(adventure_log)
+//IMPLEMENT_HOOKS(adventure_log)
 IMPLEMENT_HOOKS(barter)
 IMPLEMENT_HOOKS(choose_game_type)
 IMPLEMENT_HOOKS(choose_start_site)
-IMPLEMENT_HOOKS(dungeon_monsterstatus)
+//IMPLEMENT_HOOKS(dungeon_monsterstatus)
 IMPLEMENT_HOOKS(dungeonmode)
 IMPLEMENT_HOOKS(dwarfmode)
 IMPLEMENT_HOOKS(export_region)
 IMPLEMENT_HOOKS(game_cleaner)
 IMPLEMENT_HOOKS(initial_prep)
-IMPLEMENT_HOOKS(layer_unit_action)
-IMPLEMENT_HOOKS(layer_unit_health)
+//IMPLEMENT_HOOKS(layer_unit_action)
+//IMPLEMENT_HOOKS(layer_unit_health)
 IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(new_arena)
@@ -164,18 +164,18 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
 
     if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
-            INTERPOSE_HOOKS_FAILED(adventure_log) ||
+//            INTERPOSE_HOOKS_FAILED(adventure_log) ||
             INTERPOSE_HOOKS_FAILED(barter) ||
             INTERPOSE_HOOKS_FAILED(choose_start_site) ||
             INTERPOSE_HOOKS_FAILED(choose_game_type) ||
-            INTERPOSE_HOOKS_FAILED(dungeon_monsterstatus) ||
+//            INTERPOSE_HOOKS_FAILED(dungeon_monsterstatus) ||
             INTERPOSE_HOOKS_FAILED(dungeonmode) ||
             INTERPOSE_HOOKS_FAILED(dwarfmode) ||
             INTERPOSE_HOOKS_FAILED(export_region) ||
             INTERPOSE_HOOKS_FAILED(game_cleaner) ||
             INTERPOSE_HOOKS_FAILED(initial_prep) ||
-            INTERPOSE_HOOKS_FAILED(layer_unit_action) ||
-            INTERPOSE_HOOKS_FAILED(layer_unit_health) ||
+//            INTERPOSE_HOOKS_FAILED(layer_unit_action) ||
+//            INTERPOSE_HOOKS_FAILED(layer_unit_health) ||
             INTERPOSE_HOOKS_FAILED(legends) ||
             INTERPOSE_HOOKS_FAILED(loadgame) ||
             INTERPOSE_HOOKS_FAILED(new_arena) ||

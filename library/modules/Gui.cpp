@@ -1105,6 +1105,8 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
         return df::unit::find(game->main_interface.view_sheets.active_id);
+    else if (plotinfo->follow_unit != -1)
+        return df::unit::find(plotinfo->follow_unit);
 
 /* TODO: understand how this changes for v50
    using namespace ui_sidebar_mode;

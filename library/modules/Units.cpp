@@ -1318,17 +1318,6 @@ string Units::getRaceChildName(df::unit* unit)
     return getRaceChildNameById(unit->race);
 }
 
-static string get_caste_name(df::unit* unit) {
-    int32_t id = unit->race;
-    if (id < 0 || (size_t)id >= world->raws.creatures.all.size())
-        return "";
-    df::creature_raw* raw = world->raws.creatures.all[id];
-    int16_t caste = unit->caste;
-    if (!raw || caste < 0 || (size_t)caste >= raw->caste.size())
-        return "";
-    return raw->caste[caste]->caste_name[0];
-}
-
 // must subtract 1 from animal_training_level value to index this array
 static const char * training_quality_table[] = {
     "trained",     // Trained
@@ -1360,22 +1349,19 @@ static const char * getTameTag(df::unit *unit) {
 }
 
 string Units::getReadableName(df::unit* unit) {
-    string race_name = isBaby(unit) ? getRaceBabyName(unit) :
-        (isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit));
-    if (race_name.empty())
-        race_name = getRaceReadableName(unit);
+    string base_name = getProfessionName(unit);
     if (isHunter(unit))
-        race_name = "hunter " + race_name;
+        base_name = "hunter " + base_name;
     if (isWar(unit))
-        race_name = "war " + race_name;
+        base_name = "war " + base_name;
     if (unit->flags4.bits.agitated_wilderness_creature)
-        race_name = "agitated " + race_name;
+        base_name = "agitated " + base_name;
     string name = Translation::TranslateName(getVisibleName(unit), false);
     if (name.empty()) {
-        name = race_name;
+        name = base_name;
     } else {
         name += ", ";
-        name += race_name;
+        name += base_name;
     }
     for (auto unit_syndrome : unit->syndromes.active) {
         auto syndrome = df::syndrome::find(unit_syndrome->type);

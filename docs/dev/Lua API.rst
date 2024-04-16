@@ -4719,9 +4719,9 @@ Here is an example skeleton for a ZScreen tool window::
     end
 
     -- implement if you need to handle custom input
-    function MyWindow:onInput(keys)
-        return MyWindow.super.onInput(self, keys)
-    end
+    --function MyWindow:onInput(keys)
+    --    return MyWindow.super.onInput(self, keys)
+    --end
 
     MyScreen = defclass(MyScreen, gui.ZScreen)
     MyScreen.ATTRS {

@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+- `regrass`: Work on non-floors, ashes, muddy stone, shrubs, trees. Operate on single block or tile. Add new grass events. Logging.
 
 ## Documentation
 

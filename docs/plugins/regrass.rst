@@ -19,8 +19,8 @@ Usage
 Regrasses the entire map by default.
 
 ``debugfilter set Debug regrass log`` can be used to figure out why regrass
-is failing on a tile. Avoid regrassing the entire map with this enabled, as it
-will flood the console for several minutes.
+is failing on a tile. (Avoid regrassing the entire map with this enabled, as it
+will make the game unresponsive and flood the console for several minutes!)
 Disable with ``debugfilter set Info regrass log``.
 
 Options

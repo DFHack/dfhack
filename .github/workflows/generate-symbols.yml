@@ -1,0 +1,299 @@
+name: Generate symbols
+
+on:
+  workflow_dispatch:
+    inputs:
+      structures_ref:
+        description: Structures branch to update
+        required: true
+      version:
+        description: DF version
+        required: true
+      platform:
+        description: Target OS platform
+        type: choice
+        required: true
+        default: all
+        options:
+        - all
+        - windows
+        - linux
+      channel:
+        description: DF distribution channel
+        type: choice
+        required: true
+        default: steam
+        options:
+        - all
+        - steam
+        - itch
+        - classic
+      df_steam_branch:
+        description: DF Steam branch to read from (if processing Steam distribution channel)
+        required: true
+        type: choice
+        default: beta
+        options:
+        - default
+        - testing
+        - beta
+      steam_branch:
+        description: DFHack Steam branch to deploy to (leave blank to skip deploy)
+        type: string
+
+jobs:
+  package:
+    uses: ./.github/workflows/build-linux.yml
+    if: inputs.platform == 'all' || inputs.platform == 'linux'
+    with:
+      dfhack_ref: ${{ github.ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: dfhack-symbols-linux64-build
+      append-date-and-hash: false
+      cache-id: release
+      cache-readonly: true
+      plugins: false
+    secrets: inherit
+
+  generate-linux:
+    name: Generate linux64 symbols
+    runs-on: ubuntu-latest
+    if: inputs.platform == 'all' || inputs.platform == 'linux'
+    needs:
+    - package
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          ansifilter \
+          libsdl2-2.0-0 \
+          libsdl2-image-2.0-0
+    - name: Clone structures
+      uses: actions/checkout@v4
+      with:
+        repository: DFHack/df-structures
+        ref: ${{ inputs.structures_ref }}
+        token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
+        path: xml
+    - name: Download DFHack
+      uses: actions/download-artifact@v4
+      with:
+        name: dfhack-symbols-linux64-build
+    - name: Start X server
+      run: Xvfb :0 -screen 0 1600x1200x24 &
+
+    # Steam
+    - name: Setup steamcmd
+      if: inputs.channel == 'all' || inputs.channel == 'steam'
+      id: steamcmd
+      uses: CyberAndrii/setup-steamcmd@v1
+    - name: Generate Steam symbols
+      if: inputs.channel == 'all' || inputs.channel == 'steam'
+      env:
+        DISPLAY: :0
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+      run: |
+        mkdir DF_steam
+        mkdir -p $HOME/Steam/config
+        echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        if [ "${{ inputs.df_steam_branch }}" = "default" ]; then
+          BETA_PARAMS=""
+        elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
+          BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        else
+          BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
+        fi
+        ${{ steps.steamcmd.outputs.executable }} \
+          +@ShutdownOnFailedCommand 1 \
+          +force_install_dir $PWD/DF_steam \
+          +login $STEAM_USERNAME \
+          +app_update "975370 validate $BETA_PARAMS" \
+          +quit
+        tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
+        xml/symbols_gen_linux.sh ${{ inputs.version }} STEAM DF_steam
+
+    # Itch
+    - name: Generate Itch symbols
+      if: inputs.channel == 'all' || inputs.channel == 'itch'
+      env:
+        DISPLAY: :0
+        ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
+      run: |
+        mkdir DF_itch
+        pip install itch-dl
+        minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
+        patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
+        fname="dwarf_fortress_${minor}_${patch}_linux.tar.bz2"
+        itch-dl https://kitfoxgames.itch.io/dwarf-fortress/$fname --api-key $ITCH_API_KEY
+        tar xjf "${fname}" -C DF_itch
+        tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_itch
+        xml/symbols_gen_linux.sh ${{ inputs.version }} ITCH DF_itch
+
+    # Classic
+    - name: Generate Classic symbols
+      if: inputs.channel == 'all' || inputs.channel == 'classic'
+      env:
+        DISPLAY: :0
+      run: |
+        mkdir DF_classic
+        minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
+        patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
+        fname="df_${minor}_${patch}_linux.tar.bz2"
+        wget "https://www.bay12games.com/dwarves/${fname}"
+        tar xjf "${fname}" -C DF_classic
+        tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_classic
+        xml/symbols_gen_linux.sh ${{ inputs.version }} CLASSIC DF_classic
+
+    # Finalize
+    - name: Merge updates
+      run: |
+        cd xml
+        if ! git diff --exit-code; then
+          git stash
+          git pull
+          git stash pop
+        fi
+    - name: Commit symbol updates
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Auto-update symbols
+        repository: xml
+        commit_user_name: DFHack-Urist via GitHub Actions
+        commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
+
+  generate-windows:
+    name: Generate win64 symbols
+    runs-on: ubuntu-latest
+    if: inputs.platform == 'all' || inputs.platform == 'windows'
+    steps:
+    - name: Install dependencies
+      run: pip install pefile
+    - name: Clone structures
+      uses: actions/checkout@v4
+      with:
+        repository: DFHack/df-structures
+        ref: ${{ inputs.structures_ref }}
+        token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
+        path: xml
+    - name: Clone df_misc
+      uses: actions/checkout@v4
+      with:
+        repository: DFHack/df_misc
+        path: df_misc
+    - name: Clone metasm
+      uses: actions/checkout@v4
+      with:
+        repository: jjyg/metasm
+        path: metasm
+
+    # Steam
+    - name: Setup steamcmd
+      if: inputs.channel == 'all' || inputs.channel == 'steam'
+      id: steamcmd
+      uses: CyberAndrii/setup-steamcmd@v1
+    - name: Generate Steam symbols
+      if: inputs.channel == 'all' || inputs.channel == 'steam'
+      env:
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+      run: |
+        mkdir DF_steam
+        mkdir -p $HOME/Steam/config
+        echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        if [ "${{ inputs.df_steam_branch }}" = "default" ]; then
+          BETA_PARAMS=""
+        elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
+          BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        else
+          BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
+        fi
+        ${{ steps.steamcmd.outputs.executable }} \
+          +@ShutdownOnFailedCommand 1 \
+          +@sSteamCmdForcePlatformType windows \
+          +force_install_dir $PWD/DF_steam \
+          +login $STEAM_USERNAME \
+          +app_update "975370 validate $BETA_PARAMS" \
+          +quit
+        xml/symbols_gen_windows.sh ${{ inputs.version }} STEAM DF_steam
+
+    # Itch
+    - name: Generate Itch symbols
+      if: inputs.channel == 'all' || inputs.channel == 'itch'
+      env:
+        ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
+      run: |
+        mkdir DF_itch
+        pip install itch-dl
+        minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
+        patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
+        fname="dwarf_fortress_${minor}_${patch}_windows.zip"
+        itch-dl https://kitfoxgames.itch.io/dwarf-fortress/$fname --api-key $ITCH_API_KEY
+        unzip -d DF_itch "${fname}"
+        xml/symbols_gen_windows.sh ${{ inputs.version }} ITCH DF_itch
+
+    # Classic
+    - name: Generate Classic symbols
+      if: inputs.channel == 'all' || inputs.channel == 'classic'
+      run: |
+        mkdir DF_classic
+        minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
+        patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
+        fname="df_${minor}_${patch}_win.zip"
+        wget "https://www.bay12games.com/dwarves/${fname}"
+        unzip -d DF_classic "${fname}"
+        xml/symbols_gen_windows.sh ${{ inputs.version }} CLASSIC DF_classic
+
+    # Finalize
+    - name: Merge updates
+      run: |
+        cd xml
+        if ! git diff --exit-code; then
+          git stash
+          git pull
+          git stash pop
+        fi
+    - name: Commit symbol updates
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Auto-update symbols
+        repository: xml
+        commit_user_name: DFHack-Urist via GitHub Actions
+        commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
+
+  update-ref:
+    name: Update structures ref
+    runs-on: ubuntu-latest
+    needs:
+    - generate-linux
+    - generate-windows
+    if: ${{ ! failure() }}
+    steps:
+    - name: Clone DFHack
+      uses: actions/checkout@v4
+      with:
+        repository: DFHack/dfhack
+        submodules: true
+    - name: Update ref
+      run: |
+        cd library/xml
+        git checkout ${{ inputs.structures_ref }}
+        git pull --ff-only
+    - name: Commit ref update
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Auto-update structures ref
+        commit_user_name: DFHack-Urist via GitHub Actions
+        commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
+
+  deploy:
+    uses: ./.github/workflows/steam-deploy.yml
+    needs: update-ref
+    if: inputs.steam_branch
+    with:
+      version: ${{ inputs.version }}
+      steam_branch: ${{ inputs.steam_branch }}
+    secrets: inherit

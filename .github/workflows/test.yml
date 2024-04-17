@@ -3,9 +3,16 @@ name: Test
 on:
   workflow_call:
     inputs:
+      dfhack_repo:
+        type: string
+        default: DFHack/dfhack
       dfhack_ref:
         type: string
+      scripts_repo:
+        type: string
       scripts_ref:
+        type: string
+      structures_repo:
         type: string
       structures_ref:
         type: string
@@ -15,8 +22,11 @@ jobs:
     name: Windows MSVC
     uses: ./.github/workflows/build-windows.yml
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-msvc
       cache-id: test
@@ -28,8 +38,11 @@ jobs:
     name: Linux gcc-${{ matrix.gcc }}
     uses: ./.github/workflows/build-linux.yml
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-gcc-${{ matrix.gcc }}
       cache-id: test
@@ -89,7 +102,7 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
+        repository: ${{ inputs.dfhack_repo }}
         ref: ${{ inputs.dfhack_ref }}
     - name: Detect DF version
       shell: bash

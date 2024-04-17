@@ -39,72 +39,6 @@ struct regrass_options
     bool block = false;
 };
 
-#define P_R_FLAG(btype) case biome_type::btype: return plant_raw_flags::BIOME_##btype
-
-static df::plant_raw_flags biome_flag(df::biome_type biome) // TODO: attr?
-{
-    DEBUG(log).print("Getting plant raw flag for biome_type::%s\n", ENUM_KEY_STR(biome_type, biome).c_str());
-    switch (biome)
-    {
-        P_R_FLAG(MOUNTAIN);
-        P_R_FLAG(GLACIER);
-        P_R_FLAG(TUNDRA);
-        P_R_FLAG(SWAMP_TEMPERATE_FRESHWATER);
-        P_R_FLAG(SWAMP_TEMPERATE_SALTWATER);
-        P_R_FLAG(MARSH_TEMPERATE_FRESHWATER);
-        P_R_FLAG(MARSH_TEMPERATE_SALTWATER);
-        P_R_FLAG(SWAMP_TROPICAL_FRESHWATER);
-        P_R_FLAG(SWAMP_TROPICAL_SALTWATER);
-        P_R_FLAG(SWAMP_MANGROVE);
-        P_R_FLAG(MARSH_TROPICAL_FRESHWATER);
-        P_R_FLAG(MARSH_TROPICAL_SALTWATER);
-        P_R_FLAG(FOREST_TAIGA);
-        P_R_FLAG(FOREST_TEMPERATE_CONIFER);
-        P_R_FLAG(FOREST_TEMPERATE_BROADLEAF);
-        P_R_FLAG(FOREST_TROPICAL_CONIFER);
-        P_R_FLAG(FOREST_TROPICAL_DRY_BROADLEAF);
-        P_R_FLAG(FOREST_TROPICAL_MOIST_BROADLEAF);
-        P_R_FLAG(GRASSLAND_TEMPERATE);
-        P_R_FLAG(SAVANNA_TEMPERATE);
-        P_R_FLAG(SHRUBLAND_TEMPERATE);
-        P_R_FLAG(GRASSLAND_TROPICAL);
-        P_R_FLAG(SAVANNA_TROPICAL);
-        P_R_FLAG(SHRUBLAND_TROPICAL);
-        P_R_FLAG(DESERT_BADLAND);
-        P_R_FLAG(DESERT_ROCK);
-        P_R_FLAG(DESERT_SAND);
-        P_R_FLAG(OCEAN_TROPICAL);
-        P_R_FLAG(OCEAN_TEMPERATE);
-        P_R_FLAG(OCEAN_ARCTIC);
-        P_R_FLAG(POOL_TEMPERATE_FRESHWATER);
-        P_R_FLAG(POOL_TEMPERATE_BRACKISHWATER);
-        P_R_FLAG(POOL_TEMPERATE_SALTWATER);
-        P_R_FLAG(POOL_TROPICAL_FRESHWATER);
-        P_R_FLAG(POOL_TROPICAL_BRACKISHWATER);
-        P_R_FLAG(POOL_TROPICAL_SALTWATER);
-        P_R_FLAG(LAKE_TEMPERATE_FRESHWATER);
-        P_R_FLAG(LAKE_TEMPERATE_BRACKISHWATER);
-        P_R_FLAG(LAKE_TEMPERATE_SALTWATER);
-        P_R_FLAG(LAKE_TROPICAL_FRESHWATER);
-        P_R_FLAG(LAKE_TROPICAL_BRACKISHWATER);
-        P_R_FLAG(LAKE_TROPICAL_SALTWATER);
-        P_R_FLAG(RIVER_TEMPERATE_FRESHWATER);
-        P_R_FLAG(RIVER_TEMPERATE_BRACKISHWATER);
-        P_R_FLAG(RIVER_TEMPERATE_SALTWATER);
-        P_R_FLAG(RIVER_TROPICAL_FRESHWATER);
-        P_R_FLAG(RIVER_TROPICAL_BRACKISHWATER);
-        P_R_FLAG(RIVER_TROPICAL_SALTWATER);
-        P_R_FLAG(SUBTERRANEAN_WATER);
-        P_R_FLAG(SUBTERRANEAN_CHASM);
-        P_R_FLAG(SUBTERRANEAN_LAVA);
-    }
-
-    Core::printerr("Bad biome %d!\n", biome);
-    return plant_raw_flags::BIOME_SUBTERRANEAN_LAVA;
-}
-
-#undef P_R_FLAG
-
 static bool valid_tile(df::map_block *block, int x, int y, regrass_options options)
 {   // Is valid tile for regrass
     auto des = block->designation[x][y];
@@ -250,7 +184,7 @@ static vector<int32_t> grasses_for_tile(df::map_block *block, int x, int y)
         }
 
         auto &biome_info = *Maps::getRegionBiome(rgn_pos);
-        auto plant_biome_flag = biome_flag(Maps::getBiomeType(rgn_pos.x, rgn_pos.y));
+        auto plant_biome_flag = ENUM_ATTR(biome_type, plant_raw_flag, Maps::getBiomeType(rgn_pos.x, rgn_pos.y));
 
         bool good = (biome_info.evilness < 33);
         bool evil = (biome_info.evilness > 65);

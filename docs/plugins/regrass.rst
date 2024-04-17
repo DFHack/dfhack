@@ -20,7 +20,7 @@ Regrasses the entire map by default.
 
 ``debugfilter set Debug regrass log`` can be used to figure out why regrass
 is failing on a tile. Avoid regrassing the entire map with this enabled, as it
-can take several minutes.
+can take several minutes. Disable with ``debugfilter set Info regrass log``.
 
 Options
 -------

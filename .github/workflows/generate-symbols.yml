@@ -108,11 +108,12 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update "975370 validate $BETA_PARAMS" \
+          +app_update "975370 $BETA_PARAMS validate" \
           +quit
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
         xml/symbols_gen_linux.sh ${{ inputs.version }} STEAM DF_steam
@@ -212,12 +213,13 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +@sSteamCmdForcePlatformType windows \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update "975370 validate $BETA_PARAMS" \
+          +app_update "975370 $BETA_PARAMS validate" \
           +quit
         xml/symbols_gen_windows.sh ${{ inputs.version }} STEAM DF_steam
 
@@ -284,16 +286,14 @@ jobs:
         git pull --ff-only
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
+      id: auto-commit
       with:
         commit_message: Auto-update structures ref
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
-
-  deploy:
-    uses: ./.github/workflows/steam-deploy.yml
-    needs: update-ref
-    if: inputs.steam_branch
-    with:
-      version: ${{ inputs.version }}
-      steam_branch: ${{ inputs.steam_branch }}
-    secrets: inherit
+    - name: Launch steam-deploy
+      if: inputs.steam_branch && steps.auto-commit.outputs.changes_detected == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ inputs.version }} -f steam_branch=${{ inputs.steam_branch }}

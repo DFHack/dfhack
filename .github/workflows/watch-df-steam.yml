@@ -1,0 +1,51 @@
+name: Watch DF Steam Releases
+
+on:
+  schedule:
+  - cron: '13/15 * * * *'
+
+jobs:
+  check-steam:
+    name: Check DF ${{ matrix.df_steam_branch }} branch
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dfhack_ref: adv-beta
+            structures_ref: adv-beta
+            version: 51.01-beta
+            df_steam_branch: beta
+            steam_branch: adventure-beta
+    steps:
+    - name: Setup steamcmd
+      id: steamcmd
+      uses: CyberAndrii/setup-steamcmd@v1
+    - name: Get current time
+      id: time
+      run: echo "::set-output name=seconds::$(date +'%s')"
+    - name: Fetch state
+      uses: actions/cache@v4
+      with:
+        path: state
+        key: watchstate-${{ matrix.version }}-${{ steps.time.outputs.seconds }}
+        restore-keys: watchstate-${{ matrix.version }}
+    - name: Detect changes on branch
+      env:
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+      run: |
+        mkdir -p $HOME/Steam/config
+        echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        timestamp=$(${{ steps.steamcmd.outputs.executable }} \
+          +@ShutdownOnFailedCommand 1 \
+          +login $STEAM_USERNAME \
+          +app_info_request 975370 \
+          +app_info_print 975370 \
+          +quit | awk '/^{/,0' | awk '/^\t\t"branches"/,0' | awk '/^\t\t\t"beta"/,0' | fgrep timeupdated | head -n1 | cut -d'"' -f4)
+        touch state/timestamp
+        last_timestamp=$(cat state/timestamp)
+        if [ "$timestamp" != "$last_timestamp" ]; then
+          echo "$timestamp" >state/timestamp
+          gh workflow run -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
+        fi

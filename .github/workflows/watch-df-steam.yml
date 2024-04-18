@@ -32,6 +32,7 @@ jobs:
         restore-keys: watchstate-${{ matrix.version }}
     - name: Detect changes on branch
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
       run: |
@@ -47,5 +48,6 @@ jobs:
         last_timestamp=$(cat state/timestamp)
         if [ "$timestamp" != "$last_timestamp" ]; then
           echo "$timestamp" >state/timestamp
+          echo $GITHUB_TOKEN | gh auth login --with-token
           gh workflow run -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
         fi

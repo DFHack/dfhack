@@ -10,10 +10,12 @@ on:
         type: string
       scripts_repo:
         type: string
+        default: DFHack/scripts
       scripts_ref:
         type: string
       structures_repo:
         type: string
+        default: DFHack/df-structures
       structures_ref:
         type: string
 

@@ -2127,7 +2127,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         for(vector<df::soundst *>::iterator it = world->raws.sound.sound.begin(); it < world->raws.sound.sound.end(); it++)
         {
             auto &cur_sound = **it;
-            if (binsearch_index(cur_sound.announcement, info.type) >= 0)
+            if (vector_contains(cur_sound.announcement, info.type))
                 valid_sounds.push_back(cur_sound.sound);
         }
 

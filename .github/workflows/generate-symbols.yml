@@ -74,6 +74,7 @@ jobs:
     - name: Clone structures
       uses: actions/checkout@v4
       with:
+        repository: DFHack/df-structures
         ref: ${{ inputs.structures_ref }}
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
         path: xml
@@ -175,6 +176,7 @@ jobs:
     - name: Clone structures
       uses: actions/checkout@v4
       with:
+        repository: DFHack/df-structures
         ref: ${{ inputs.structures_ref }}
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
         path: xml

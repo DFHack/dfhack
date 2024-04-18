@@ -279,13 +279,12 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v4
       with:
-        submodules: true
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
     - name: Update ref
       run: |
+        git submodule update --init --no-single-branch library/xml
         cd library/xml
         git checkout ${{ inputs.structures_ref }}
-        git pull --ff-only
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
       id: auto-commit

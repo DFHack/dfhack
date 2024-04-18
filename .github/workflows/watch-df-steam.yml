@@ -22,15 +22,16 @@ jobs:
       id: steamcmd
       uses: CyberAndrii/setup-steamcmd@v1
     - name: Get current time
-      id: time
-      run: echo "::set-output name=seconds::$(date +'%s')"
+      shell: bash
+      run: echo TIMESTAMP_SECONDS="$(date +'%s')" >> $GITHUB_ENV
     - name: Fetch state
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: state
-        key: watchstate-${{ matrix.version }}-${{ steps.time.outputs.seconds }}
+        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP_SECONDS }}
         restore-keys: watchstate-${{ matrix.version }}
     - name: Detect changes on branch
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
@@ -49,5 +50,12 @@ jobs:
         last_timestamp=$(cat state/timestamp)
         if [ "$timestamp" != "$last_timestamp" ]; then
           echo "$timestamp" >state/timestamp
-          gh workflow run generate-symbols -R DFHack/dfhack -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
+          gh workflow run "Generate symbols" -R DFHack/dfhack -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
+          echo TIMESTAMP_UPDATED=1 >> $GITHUB_ENV
         fi
+    - name: Save state
+      uses: actions/cache/save@v4
+      if: env.TIMESTAMP_UPDATED
+      with:
+        path: state
+        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP_SECONDS }}

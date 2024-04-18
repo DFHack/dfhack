@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       structures_ref:
-        description: Structures branch to update
+        description: Structures branch to build from and update
         required: true
+        default: master
       version:
         description: DF version
         required: true
@@ -22,7 +23,7 @@ on:
         description: DF distribution channel
         type: choice
         required: true
-        default: steam
+        default: all
         options:
         - all
         - steam
@@ -32,7 +33,7 @@ on:
         description: DF Steam branch to read from (if processing Steam distribution channel)
         required: true
         type: choice
-        default: beta
+        default: default
         options:
         - default
         - testing
@@ -40,6 +41,7 @@ on:
       steam_branch:
         description: DFHack Steam branch to deploy to (leave blank to skip deploy)
         type: string
+        default: staging
 
 jobs:
   package:
@@ -275,7 +277,6 @@ jobs:
     - name: Clone DFHack
       uses: actions/checkout@v4
       with:
-        repository: DFHack/dfhack
         submodules: true
     - name: Update ref
       run: |

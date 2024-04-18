@@ -234,6 +234,7 @@ jobs:
         patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
         fname="dwarf_fortress_${minor}_${patch}_windows.zip"
         itch-dl https://kitfoxgames.itch.io/dwarf-fortress/$fname --api-key $ITCH_API_KEY
+        find . -type f
         unzip -d DF_itch "${fname}"
         xml/symbols_gen_windows.sh ${{ inputs.version }} ITCH DF_itch
 

@@ -276,6 +276,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+        token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
     - name: Update ref
       run: |
         cd library/xml

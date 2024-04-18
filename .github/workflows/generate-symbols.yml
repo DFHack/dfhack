@@ -101,6 +101,7 @@ jobs:
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        echo "DF steam branch: ${{ inputs.df_steam_branch }}"
         if [ "${{ inputs.df_steam_branch }}" = "default" ]; then
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
@@ -113,7 +114,7 @@ jobs:
           +@ShutdownOnFailedCommand 1 \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update "975370 $BETA_PARAMS validate" \
+          "+app_update 975370 $BETA_PARAMS validate" \
           +quit
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
         xml/symbols_gen_linux.sh ${{ inputs.version }} STEAM DF_steam
@@ -206,6 +207,7 @@ jobs:
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        echo "DF steam branch: ${{ inputs.df_steam_branch }}"
         if [ "${{ inputs.df_steam_branch }}" = "default" ]; then
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
@@ -219,7 +221,7 @@ jobs:
           +@sSteamCmdForcePlatformType windows \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update "975370 $BETA_PARAMS validate" \
+          "+app_update 975370 $BETA_PARAMS validate" \
           +quit
         xml/symbols_gen_windows.sh ${{ inputs.version }} STEAM DF_steam
 

@@ -128,8 +128,9 @@ jobs:
         pip install itch-dl
         minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
         patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
-        itch-dl https://kitfoxgames.itch.io/dwarf-fortress --download-to itchdl --api-key $ITCH_API_KEY
-        tar xjf "itchdl/kitfoxgames/dwarf-fortress/dwarf_fortress_${minor}_${patch}_linux.tar.bz2" -C DF_itch
+        itch-dl https://kitfoxgames.itch.io/dwarf-fortress --download-to . --api-key $ITCH_API_KEY
+        find -type f .
+        tar xjf "kitfoxgames/dwarf-fortress/dwarf_fortress_${minor}_${patch}_linux.tar.bz2" -C DF_itch
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_itch
         xml/symbols_gen_linux.sh ${{ inputs.version }} ITCH DF_itch
 
@@ -231,8 +232,9 @@ jobs:
         pip install itch-dl
         minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
         patch=$(echo "${{ inputs.version }}" | cut -d. -f2)
-        itch-dl https://kitfoxgames.itch.io/dwarf-fortress --download-to itchdl --api-key $ITCH_API_KEY
-        unzip -d DF_itch "itchdl/kitfoxgames/dwarf-fortress/dwarf_fortress_${minor}_${patch}_windows.zip"
+        itch-dl https://kitfoxgames.itch.io/dwarf-fortress --download-to . --api-key $ITCH_API_KEY
+        find -type f .
+        unzip -d DF_itch "kitfoxgames/dwarf-fortress/dwarf_fortress_${minor}_${patch}_windows.zip"
         xml/symbols_gen_windows.sh ${{ inputs.version }} ITCH DF_itch
 
     # Classic

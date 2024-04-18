@@ -49,5 +49,5 @@ jobs:
         last_timestamp=$(cat state/timestamp)
         if [ "$timestamp" != "$last_timestamp" ]; then
           echo "$timestamp" >state/timestamp
-          gh workflow run generate-symbols -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
+          gh workflow run generate-symbols -R DFHack/dfhack -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
         fi

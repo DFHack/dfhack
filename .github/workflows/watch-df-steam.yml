@@ -45,7 +45,7 @@ jobs:
           +app_info_request 975370 \
           +app_info_print 975370 \
           +quit | awk '/^{/,0' | awk '/^\t\t"branches"/,0' | awk '/^\t\t\t"beta"/,0' | fgrep timeupdated | head -n1 | cut -d'"' -f4)
-        echo "timestamp of last branch update: $timestamp"
+        echo "timestamp of last branch update:        $timestamp"
         mkdir -p state
         touch state/timestamp
         last_timestamp=$(cat state/timestamp)

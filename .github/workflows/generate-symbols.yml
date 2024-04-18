@@ -285,6 +285,7 @@ jobs:
         git submodule update --init --no-single-branch library/xml
         cd library/xml
         git checkout ${{ inputs.structures_ref }}
+        git pull
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
       id: auto-commit

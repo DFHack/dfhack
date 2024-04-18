@@ -108,11 +108,12 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update \"975370 validate $BETA_PARAMS\" \
+          +app_update "975370 $BETA_PARAMS validate" \
           +quit
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
         xml/symbols_gen_linux.sh ${{ inputs.version }} STEAM DF_steam
@@ -212,12 +213,13 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +@sSteamCmdForcePlatformType windows \
           +force_install_dir $PWD/DF_steam \
           +login $STEAM_USERNAME \
-          +app_update \"975370 validate $BETA_PARAMS\" \
+          +app_update "975370 $BETA_PARAMS validate" \
           +quit
         xml/symbols_gen_windows.sh ${{ inputs.version }} STEAM DF_steam
 

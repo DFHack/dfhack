@@ -15,14 +15,6 @@ on:
         type: string
         required: true
         default: staging
-  workflow_call:
-    inputs:
-      version:
-        type: string
-        required: true
-      steam_branch:
-        type: string
-        required: true
 
 jobs:
   depot-common:

@@ -41,7 +41,7 @@ Options
     ``--ashes`` and ``--mud``.
 ``-b``, ``--block``
     Only regrass the map block containing the keyboard cursor.
-    `devel/block-borders` can be used to visualize map blocks.
+    ``devel/block-borders`` can be used to visualize map blocks.
 
 Examples
 --------

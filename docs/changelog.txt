@@ -63,6 +63,7 @@ Template for new versions:
 - `regrass`: Work on non-floors, ashes, muddy stone, shrubs, trees. Operate on single block or tile. Add new grass events. Logging.
 
 ## Documentation
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
 
 ## API
 

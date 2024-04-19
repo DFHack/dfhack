@@ -109,6 +109,8 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        mkdir Steam/logs
+        touch Steam/logs/stderr.txt
         tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
@@ -215,6 +217,8 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
+        mkdir Steam/logs
+        touch Steam/logs/stderr.txt
         tail -F Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \

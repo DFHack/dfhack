@@ -377,7 +377,7 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
 {
     regrass_options options;
 
-    for (size_t i = 0; i < parameters.size(); i++)
+    for (size_t i = 0; i < parameters.size(); i++) // TODO: argparse
     {
         auto &s = parameters[i];
         if (s == "m" || s == "max")
@@ -388,12 +388,20 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
             options.ashes = true;
         else if (s == "u" || s == "mud")
             options.mud = true;
-        else if (s == "p" || s == "here")
+        else if (s == "h" || s == "here")
             options.here = true;
         else if (s == "b" || s == "block")
             options.block = true;
-        else // "h", "help", invalid
+        else // invalid
             return CR_WRONG_USAGE;
+    }
+
+    if (options.here)
+    {
+        if (options.block)
+            return CR_WRONG_USAGE;
+        options.ashes = true;
+        options.mud = true;
     }
 
     if (!Core::getInstance().isMapLoaded())

@@ -1294,7 +1294,7 @@ static bool get_filename(string &fname,
     const char *s = NULL;
     if (!Lua::CallLuaModuleFunction(out, "plugins.blueprint", "get_filename",
             std::make_tuple(&opts, phase, ordinal), 1, [&](lua_State *L){
-                s = luaL_checkstring(L, -1);
+                s = lua_tostring(L, -1);
             }))
         return false;
 

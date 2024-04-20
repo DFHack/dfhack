@@ -41,7 +41,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 
     bool show_help = false;
-    if (!Lua::CallLuaModuleFunction(out, "plugins.aquifer", "parse_commandline", parameters,
+    if (!Lua::CallLuaModuleFunction(out, "plugins.aquifer", "parse_commandline", std::make_tuple(parameters),
             1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, 1);
             })) {

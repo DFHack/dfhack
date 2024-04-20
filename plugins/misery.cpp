@@ -121,26 +121,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool call_misery_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(control).print("calling misery lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.misery", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
@@ -150,12 +130,8 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 
     bool show_help = false;
-    if (!call_misery_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.misery", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;

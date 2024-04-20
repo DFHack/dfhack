@@ -52,12 +52,8 @@ static int cleanupHotkeys(lua_State *) {
 static bool should_hide_armok(color_ostream &out, const string &cmdline) {
     bool should_hide = false;
 
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-    Lua::CallLuaModuleFunction(out, L, "plugins.hotkeys", "should_hide_armok", 1, 1,
-        [&](lua_State *L){
-            Lua::Push(L, cmdline);
-        }, [&](lua_State *L){
+    Lua::CallLuaModuleFunction(out, "plugins.hotkeys", "should_hide_armok", std::make_tuple(cmdline),
+        1, [&](lua_State *L){
             should_hide = lua_toboolean(L, -1);
         });
 

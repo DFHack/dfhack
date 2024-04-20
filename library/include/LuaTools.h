@@ -394,7 +394,7 @@ namespace DFHack {namespace Lua {
         lua_settable(state, -3);
     }
 
-    template<class T>
+    template<typename T>
     void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {
         lua_createtable(state,pvec.size(), addn?1:0);
@@ -410,6 +410,11 @@ namespace DFHack {namespace Lua {
             Push(state, pvec[i]);
             lua_rawseti(state, -2, i+1);
         }
+    }
+
+    template<typename T>
+    void Push(lua_State *state, const std::vector<T> &vec) {
+        PushVector(state, vec);
     }
 
     template<typename T>
@@ -499,11 +504,9 @@ namespace DFHack {namespace Lua {
      */
     template<typename... aT>
     bool CallLuaModuleFunction(
-        color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args,
+        color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args = {},
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {
-        CoreSuspender guard;
-
         auto L = Lua::Core::State;
         bool ok;
 
@@ -520,8 +523,6 @@ namespace DFHack {namespace Lua {
         color_ostream &out, const char* module_name, const char* fn_name, const std::vector<aT> &args,
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {
-        CoreSuspender guard;
-
         auto L = Lua::Core::State;
         bool ok;
 

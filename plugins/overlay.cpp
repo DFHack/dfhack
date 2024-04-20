@@ -71,7 +71,7 @@ struct viewscreen_overlay : T {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         INTERPOSE_NEXT(logic)();
-        overlay_interpose_lua("plugins.overlay", "update_viewscreen_widgets", 2, 0,
+        overlay_interpose_lua("update_viewscreen_widgets", 2, 0,
                 [&](lua_State *L) {
                     Lua::Push(L, T::_identity.getName());
                     Lua::Push(L, this);
@@ -81,7 +81,7 @@ struct viewscreen_overlay : T {
         bool input_is_handled = false;
         // don't send input to the overlays if there is a modal dialog up
         if (!world->status.popups.size()) {
-            overlay_interpose_lua("plugins.overlay", "feed_viewscreen_widgets", 3, 1,
+            overlay_interpose_lua("feed_viewscreen_widgets", 3, 1,
                     [&](lua_State *L) {
                         Lua::Push(L, T::_identity.getName());
                         Lua::Push(L, this);
@@ -97,7 +97,7 @@ struct viewscreen_overlay : T {
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, (uint32_t curtick)) {
         INTERPOSE_NEXT(render)(curtick);
-        overlay_interpose_lua("plugins.overlay", "render_viewscreen_widgets", 2, 0,
+        overlay_interpose_lua("render_viewscreen_widgets", 2, 0,
                 [&](lua_State *L) {
                     Lua::Push(L, T::_identity.getName());
                     Lua::Push(L, this);

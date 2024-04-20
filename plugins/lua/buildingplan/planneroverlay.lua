@@ -275,6 +275,32 @@ local function compress(str, len)
         end
     end
 end
+
+local function filter_string(mats, cats, length)
+    local enabled_mat_names = {}
+    local enabled_cat_names = {}
+    for name, props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if enabled then table.insert(enabled_mat_names, name) end
+    end
+    if #enabled_mat_names == 1 then
+        return '['..compress(enabled_mat_names[1], length)..']'
+    elseif #enabled_mat_names > 1 then
+        for cat, _ in pairs(cats) do
+            if cat ~= 'unset' and cats[cat] then
+                table.insert(enabled_cat_names, cat)
+            end
+        end
+        if #enabled_cat_names == 1 then
+            return '[' .. enabled_cat_names[1]:gsub("^%l", string.upper) .. ']'
+        else
+            return '['..#enabled_cat_names..' mat. categories]'
+        end
+    else
+        -- can result from selecting wood and then toggling "fire safe" etc.
+        return '[impossible filter]'
+    end
+end
 --------------------------------
 -- ItemLine
 --
@@ -397,29 +423,7 @@ function ItemLine:get_filter_text()
         uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
     local cats = buildingplan.getMaterialMaskFilter(
         uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
-    local enabled_mat_names = {}
-    local enabled_cat_names = {}
-    for name, props in pairs(mats) do
-        local enabled = props.enabled == 'true' and cats[props.category]
-        if enabled then table.insert(enabled_mat_names, name) end
-    end
-    if #enabled_mat_names == 1 then
-        return '['..compress(enabled_mat_names[1], item_filter_chars)..']'
-    elseif #enabled_mat_names > 1 then
-        for cat, _ in pairs(cats) do
-            if cat ~= 'unset' and cats[cat] then
-                table.insert(enabled_cat_names, cat)
-            end
-        end
-        if #enabled_cat_names == 1 then
-            return '[' .. enabled_cat_names[1]:gsub("^%l", string.upper) .. ']'
-        else
-            return '['..#enabled_cat_names..' mat. categories]'
-        end
-    else
-        -- can result from selecting wood and then toggling "fire safe" etc.
-        return '[impossible filter]'
-    end
+    return filter_string(mats, cats, item_filter_chars)
 end
 
 -- short circuit version of the '[impossible filter]' case above
@@ -453,6 +457,74 @@ local function get_placement_errors()
 end
 
 --------------------------------
+-- QuickFilter
+--
+
+-- Used to store a table of the following format:
+-- table<integer, { label: string, mats: string[] }>
+-- integer: quick filter slot
+-- label: string representation of the filter
+-- mats: list of material names allowed by the filter
+BUILDINGPLAN_FILTERS_KEY = "buildingplan/quick-filters"
+
+QuickFilter = defclass(QuickFilter, widgets.Panel)
+QuickFilter.ATTRS{
+    idx=DEFAULT_NIL,
+    on_click_fn=DEFAULT_NIL,
+    is_selected_fn=function () return false end,
+}
+
+function QuickFilter:init()
+    local label = ('%d.'):format(self.idx)
+    self.frame.w = 27
+
+    self:addviews {
+        widgets.Label{
+            frame={t=0, l=0},
+            text=string.char(16), -- this is the "►" character
+            text_pen=COLOR_YELLOW,
+            auto_width=true,
+            visible=self.is_selected_fn,
+        },
+        widgets.Label { frame = { t = 0, l = 2 }, text = label },
+        widgets.Label {
+            frame = { t = 0, l = 5 },
+            text = { { text = self:callback('get_label_text'), pen = function() return COLOR_CYAN end } },
+            width = item_filter_chars + 2,
+            visible = true,
+            on_click = function() self.on_click_fn(self.idx) end,
+        },
+        widgets.Label {
+            frame = { t = 0, r = 0, w = 3 },
+            text = "[x]",
+            text_pen = COLOR_LIGHTRED,
+            visible = self:callback("slot_used", self.idx),
+            on_click = self:callback("clear", self.idx)
+        }
+    }
+end
+
+function QuickFilter:slot_used(slot)
+    local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    return quick_filters[self.idx] ~= nil
+end
+
+function QuickFilter:clear(slot)
+    local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    quick_filters[self.idx] = nil
+    dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, quick_filters)
+end
+
+function QuickFilter:get_label_text()
+    local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    local set = quick_filters[self.idx]
+    if not set then
+        return "empty"
+    else
+        return set.label
+    end
+end
+--------------------------------
 -- PlannerOverlay
 --
 
@@ -462,12 +534,15 @@ PlannerOverlay.ATTRS{
     default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
-    frame={w=56, h=22},
+    frame={w=56, h=32},
 }
 
 function PlannerOverlay:init()
     self.selected = 1
     self.state = ensure_key(config.data, 'planner')
+
+    self.favorites = false
+    self.selected_favorite = 1
 
     local main_panel = widgets.Panel{
         view_id='main',
@@ -648,7 +723,7 @@ function PlannerOverlay:init()
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
                 widgets.HotkeyLabel{
-                    frame={b=1, l=1, w=22},
+                    frame={b=2, l=1, w=22},
                     key='CUSTOM_F',
                     label=function()
                         return buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
@@ -657,7 +732,7 @@ function PlannerOverlay:init()
                     on_activate=function() self:set_filter(self.selected) end,
                 },
                 widgets.HotkeyLabel{
-                    frame={b=0, l=1, w=22},
+                    frame={b=1, l=1, w=22},
                     key='CUSTOM_CTRL_D',
                     label='Delete filter',
                     on_activate=function() self:clear_filter(self.selected) end,
@@ -666,8 +741,20 @@ function PlannerOverlay:init()
                     end
                 },
                 widgets.CycleHotkeyLabel{
+                    frame={b=0, l=1, w=22},
+                    key='CUSTOM_CTRL_F',
+                    label="",
+                    option_gap=0,
+                    options={
+                        { label='Show favorites', value = 0 },
+                        { label='Hide favorites', value = 1 },
+                    },
+                    initial_option=0,
+                    on_change=function(new,_) self:show_hide_favorites(new) end,
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='choose',
-                    frame={b=0, l=23},
+                    frame={b=0, l=24},
                     key='CUSTOM_Z',
                     label='Choose items:',
                     label_below=true,
@@ -689,7 +776,7 @@ function PlannerOverlay:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='safety',
-                    frame={b=2, l=23, w=25},
+                    frame={b=2, l=24, w=25},
                     key='CUSTOM_G',
                     label='Building safety:',
                     options={
@@ -770,14 +857,124 @@ function PlannerOverlay:init()
         },
     }
 
+    local function make_is_selected_filter(idx)
+        return function () return self.selected_favorite == idx end
+    end
+
+    local favorites_panel = widgets.Panel{
+        view_id='favorites',
+        frame={t=15, l=0, r=0, h=9},
+        frame_style=gui.FRAME_INTERIOR_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        visible=self:callback('show_favorites'),
+        subviews={
+            QuickFilter{idx=1, frame={t=0,l=0},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(1) },
+            QuickFilter{idx=2, frame={t=1,l=0},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(2) },
+            QuickFilter{idx=3, frame={t=2,l=0},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(3) },
+            QuickFilter{idx=4, frame={t=3,l=0},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(4) },
+            QuickFilter{idx=5, frame={t=4,l=0},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(5) },
+            QuickFilter{idx=6, frame={t=0,l=27},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(6) },
+            QuickFilter{idx=7, frame={t=1,l=27},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(7) },
+            QuickFilter{idx=8, frame={t=2,l=27},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(8) },
+            QuickFilter{idx=9, frame={t=3,l=27},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(9) },
+            QuickFilter{idx=0, frame={t=4,l=27},
+                        on_click_fn=self:callback("save_restore_filter"),
+                        is_selected_fn=make_is_selected_filter(0) },
+            widgets.HotkeyLabel{
+                frame={b=0, l=2},
+                label="foo",
+                key='CUSTOM_X',
+                on_activate=function() self.selected_favorite = (self.selected_favorite+1) % 10 end,
+            },
+            widgets.HotkeyLabel{
+                frame={b=0, l=3},
+                label="next/previous filter",
+                auto_width=true,
+                key='CUSTOM_SHIFT_X',
+                on_activate=function() self.selected_favorite = (self.selected_favorite-1) % 10 end,
+            },
+             widgets.HotkeyLabel{
+                frame={b=0, l=28},
+                label="set/apply selected",
+                key='CUSTOM_Y',
+                on_activate=function () self:save_restore_filter(self.selected_favorite) end,
+            },
+
+        }
+    }
+
     self:addviews{
         black_bar,
         minimized_panel,
         main_panel,
         divider_widget,
         error_panel,
+        favorites_panel
     }
 end
+
+function PlannerOverlay:show_favorites()
+    return not self.state.minimized and self.favorites
+end
+
+function PlannerOverlay:show_hide_favorites(new)
+    self.favorites = new > 0
+    local errors_frame = {t=15+(self.favorites and 9 or 0), l=0, r=0}
+    self.subviews.errors.frame = errors_frame
+    self:updateLayout()
+end
+
+function PlannerOverlay:save_restore_filter(slot)
+    self.selected_favorite = slot
+    local buildingplan = require('plugins.buildingplan')
+    local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    if quick_filters[slot] then -- restore saved filter
+        buildingplan.setMaterialFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1,
+            quick_filters[slot].mats
+        )
+    else -- save current filter
+
+        if not buildingplan.hasFilter(
+                uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+        then return end
+
+        local mats = buildingplan.getMaterialFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+        local cats = buildingplan.getMaterialMaskFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
+        local label = filter_string(mats, cats, item_filter_chars)
+        local enabled_mats = {}
+        for mat, props in pairs(mats) do
+            if props.enabled == "true" then
+                table.insert(enabled_mats, mat)
+            end
+        end
+        if #enabled_mats > 0 then
+            quick_filters[slot] = { label = label, mats = enabled_mats }
+            dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, quick_filters)
+        end
+    end
+end
+
 
 function PlannerOverlay:is_minimized()
     return self.state.minimized
@@ -1136,5 +1333,6 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     buildingplan.scheduleCycle()
     uibs.selection_pos:clear()
 end
+
 
 return _ENV

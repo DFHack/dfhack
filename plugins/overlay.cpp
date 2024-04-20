@@ -46,23 +46,42 @@ uint32_t total_overlay_ms = 0;
 static uint32_t get_framework_timer()   { return total_overlay_ms; }
 static void     reset_framework_timer() { total_overlay_ms = 0;    }
 
+static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    color_ostream & out = Core::getInstance().getConsole();
+    auto L = Lua::Core::State;
+
+    uint32_t start_ms = Core::getInstance().p->getTickCount();
+
+    Lua::CallLuaModuleFunction(out, L, "plugins.overlay", fn_name, nargs, nres,
+                               std::forward<Lua::LuaLambda&&>(args_lambda),
+                               std::forward<Lua::LuaLambda&&>(res_lambda));
+
+   total_overlay_ms += Core::getInstance().p->getTickCount() - start_ms;
+}
+
 template<class T>
 struct viewscreen_overlay : T {
     typedef T interpose_base;
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         INTERPOSE_NEXT(logic)();
-        color_ostream &out = Core::getInstance().getConsole();
-        Lua::CallLuaModuleFunction(out, "plugins.overlay", "update_viewscreen_widgets",
-            std::make_tuple(T::_identity.getName(), this));
+        overlay_interpose_lua("plugins.overlay", "update_viewscreen_widgets", 2, 0,
+                [&](lua_State *L) {
+                    Lua::Push(L, T::_identity.getName());
+                    Lua::Push(L, this);
+                });
     }
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
         bool input_is_handled = false;
         // don't send input to the overlays if there is a modal dialog up
         if (!world->status.popups.size()) {
-            color_ostream &out = Core::getInstance().getConsole();
-            auto L = Lua::Core::State;
-            Lua::CallLuaModuleFunction(out, L, "plugins.overlay", "feed_viewscreen_widgets", 3, 1,
+            overlay_interpose_lua("plugins.overlay", "feed_viewscreen_widgets", 3, 1,
                     [&](lua_State *L) {
                         Lua::Push(L, T::_identity.getName());
                         Lua::Push(L, this);
@@ -78,9 +97,11 @@ struct viewscreen_overlay : T {
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, (uint32_t curtick)) {
         INTERPOSE_NEXT(render)(curtick);
-        color_ostream &out = Core::getInstance().getConsole();
-        Lua::CallLuaModuleFunction(out, "plugins.overlay", "render_viewscreen_widgets",
-            std::make_tuple(T::_identity.getName(), this));
+        overlay_interpose_lua("plugins.overlay", "render_viewscreen_widgets", 2, 0,
+                [&](lua_State *L) {
+                    Lua::Push(L, T::_identity.getName());
+                    Lua::Push(L, this);
+                });
     }
 };
 

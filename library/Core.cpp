@@ -534,11 +534,8 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     std::vector<std::string> mod_script_paths;
-    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
-            Lua::DEFAULT_LUA_LAMBDA,
+    Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
                 Lua::GetVector(L, mod_script_paths);
             });
@@ -833,9 +830,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 );
             }
 
-            auto L = Lua::Core::State;
-            Lua::StackUnwinder top(L);
-            Lua::CallLuaModuleFunction(con, L, "script-manager", "list");
+            Lua::CallLuaModuleFunction(con, "script-manager", "list");
         }
     }
     else if (first == "ls" || first == "dir")
@@ -1323,7 +1318,6 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     // show the terminal if requested
     auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -2178,10 +2172,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_CORE_INITIALIZED:
     {
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "helpdb", "refresh");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
         break;
     }
     case SC_WORLD_LOADED:
@@ -2191,10 +2183,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
-            [](lua_State* L) {
-                Lua::Push(L, true);
-            });
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2253,9 +2242,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     {
         Persistence::Internal::clear(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
     }
 }
 

@@ -224,7 +224,7 @@ local function run_blueprint(basename, spec, pos)
     if playback_start_arg then
         table.insert(args, playback_start_arg)
     end
-    blueprint.run(args)
+    blueprint.run(table.unpack(args))
 end
 
 local function reset_area(area, spec)

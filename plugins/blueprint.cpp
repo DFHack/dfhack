@@ -1585,11 +1585,8 @@ static command_result do_blueprint(color_ostream &out,
     }
 
     blueprint_options options;
-    if (!Lua::CallLuaModuleFunction(out, Lua::Core::State, "plugins.blueprint", "parse_commandline", 2, 0,
-        [&](lua_State *L){
-            Lua::Push(L, &options);
-            Lua::PushVector(L, parameters);
-        }) || options.help)
+    if (!Lua::CallLuaModuleFunction(out, "plugins.blueprint", "parse_commandline", std::make_tuple(&options, parameters))
+        || options.help)
     {
         return CR_WRONG_USAGE;
     }
@@ -1642,8 +1639,15 @@ static command_result do_blueprint(color_ostream &out,
 
 // entrypoint when called from Lua. returns the names of the generated files
 static int run(lua_State *L) {
+    int argc = lua_gettop(L);
     vector<string> argv;
-    Lua::GetVector(L, argv);
+
+    for (int i = 1; i <= argc; ++i) {
+        const char *s = lua_tostring(L, i);
+        if (s == NULL)
+            luaL_error(L, "all parameters must be strings");
+        argv.push_back(s);
+    }
 
     vector<string> files;
     color_ostream *out = Lua::GetOutput(L);

@@ -63,35 +63,11 @@ void PlannedBuilding::remove(color_ostream &out) {
 static const int32_t CYCLE_TICKS = 599; // twice per game day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
-static bool call_buildingplan_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(control).print("calling buildingplan lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.buildingplan", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
     int num_filters = 0;
-    if (!call_buildingplan_lua(&out, "get_num_filters", 3, 1,
-            [&](lua_State *L) {
-                Lua::Push(L, std::get<0>(key));
-                Lua::Push(L, std::get<1>(key));
-                Lua::Push(L, std::get<2>(key));
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "get_num_filters",
+            std::make_tuple(std::get<0>(key), std::get<1>(key), std::get<2>(key)),
+            1, [&](lua_State *L) {
                 num_filters = lua_tonumber(L, -1);
             })) {
         return 0;
@@ -106,14 +82,9 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
     auto &jitems = job_item_cache[key];
     for (int index = 0; index < num_filters; ++index) {
         bool failed = false;
-        if (!call_buildingplan_lua(&out, "get_job_item", 4, 1,
-                [&](lua_State *L) {
-                    Lua::Push(L, std::get<0>(key));
-                    Lua::Push(L, std::get<1>(key));
-                    Lua::Push(L, std::get<2>(key));
-                    Lua::Push(L, index+1);
-                },
-                [&](lua_State *L) {
+        if (!Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "get_job_item",
+                std::make_tuple(std::get<0>(key), std::get<1>(key), std::get<2>(key), index+1),
+                1, [&](lua_State *L) {
                     df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
                     DEBUG(control,out).print("retrieving job_item for (%d, %d, %d) index=%d: 0x%p\n",
                             std::get<0>(key), std::get<1>(key), std::get<2>(key), index, jitem);
@@ -267,7 +238,7 @@ static void validate_materials_config(color_ostream &out, bool verbose = false) 
 static void reset_filters(color_ostream &out) {
     cur_heat_safety.clear();
     cur_item_filters.clear();
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 static int16_t get_subtype(df::building *bld) {
@@ -284,9 +255,8 @@ static int16_t get_subtype(df::building *bld) {
 
 static bool is_suspendmanager_enabled(color_ostream &out) {
     bool suspendmanager_enabled = false;
-    call_buildingplan_lua(&out, "is_suspendmanager_enabled", 0, 1,
-            Lua::DEFAULT_LUA_LAMBDA,
-            [&](lua_State *L){
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "is_suspendmanager_enabled", {},
+        1, [&](lua_State *L){
                 suspendmanager_enabled = lua_toboolean(L, -1);
             });
     return suspendmanager_enabled;
@@ -295,7 +265,7 @@ static bool is_suspendmanager_enabled(color_ostream &out) {
 DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
     mat_cache.clear();
     load_material_cache();
-    call_buildingplan_lua(&out, "reload_pens");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "reload_pens");
     return CR_OK;
 }
 
@@ -357,7 +327,7 @@ static void do_cycle(color_ostream &out) {
 
     bool unsuspend_on_finalize = !is_suspendmanager_enabled(out);
     buildingplan_cycle(out, tasks, planned_buildings, unsuspend_on_finalize);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
@@ -379,12 +349,8 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 
     bool show_help = false;
-    if (!call_buildingplan_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;
@@ -534,10 +500,10 @@ static string get_desc_string(color_ostream &out, df::job_item *jitem,
     for (auto &vec_id : vec_ids) {
         df::job_item jitem_copy = *jitem;
         jitem_copy.vector_id = vec_id;
-        call_buildingplan_lua(&out, "get_desc", 1, 1,
-                [&](lua_State *L) { Lua::Push(L, &jitem_copy); },
-                [&](lua_State *L) {
-                    descs.emplace_back(lua_tostring(L, -1)); });
+        Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "get_desc", std::make_tuple(&jitem_copy),
+                1, [&](lua_State *L) {
+                    descs.emplace_back(lua_tostring(L, -1));
+                });
     }
     return join_strings(" or ", descs);
 }
@@ -610,7 +576,7 @@ static bool setSetting(color_ostream &out, string name, bool value) {
     }
 
     validate_materials_config(out, true);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
     return true;
 }
 
@@ -808,7 +774,7 @@ static void clearFilter(color_ostream &out, df::building_type type, int16_t subt
     ItemFilter filter = filters.getItemFilters()[index];
     filter.clear();
     filters.setItemFilter(out, filter, index);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 static int setMaterialMaskFilter(lua_State *L) {
@@ -866,7 +832,7 @@ static int setMaterialMaskFilter(lua_State *L) {
     }
     filter.setMaterials(new_mats);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);
-    call_buildingplan_lua(out, "signal_reset");
+    Lua::CallLuaModuleFunction(*out, "plugins.buildingplan", "signal_reset");
     return 0;
 }
 
@@ -954,7 +920,7 @@ static int setMaterialFilter(lua_State *L) {
     }
     filter.setMaterialMask(mask.whole);
     get_item_filters(*out, key).setItemFilter(*out, filter, index);
-    call_buildingplan_lua(out, "signal_reset");
+    Lua::CallLuaModuleFunction(*out, "plugins.buildingplan", "signal_reset");
     return 0;
 }
 
@@ -1038,7 +1004,7 @@ static void setHeatSafetyFilter(color_ostream &out, df::building_type type, int1
         cur_heat_safety[key] = (HeatSafety)heat;
     else
         cur_heat_safety.erase(key);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 static int getHeatSafetyFilter(lua_State *L) {
@@ -1062,7 +1028,7 @@ static void setSpecial(color_ostream &out, df::building_type type, int16_t subty
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     filters.setSpecial(special, val);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 static int getSpecials(lua_State *L) {
@@ -1092,7 +1058,7 @@ static void setQualityFilter(color_ostream &out, df::building_type type, int16_t
     filter.setMinQuality(min_quality);
     filter.setMaxQuality(max_quality);
     get_item_filters(out, key).setItemFilter(out, filter, index);
-    call_buildingplan_lua(&out, "signal_reset");
+    Lua::CallLuaModuleFunction(out, "plugins.buildingplan", "signal_reset");
 }
 
 static int getQualityFilter(lua_State *L) {

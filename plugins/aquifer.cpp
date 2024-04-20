@@ -32,24 +32,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     return CR_OK;
 }
 
-static bool call_aquifer_lua(color_ostream &out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
-{
-    DEBUG(log,out).print("calling aquifer lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    return Lua::CallLuaModuleFunction(out, L, "plugins.aquifer", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
@@ -59,11 +41,8 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 
     bool show_help = false;
-    if (!call_aquifer_lua(out, "parse_commandline", 1, 1,
-            [&](lua_State *L) {
-                Lua::PushVector(L, parameters);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.aquifer", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, 1);
             })) {
         return CR_FAILURE;

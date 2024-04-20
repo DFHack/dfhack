@@ -45,8 +45,8 @@ local function process_races(opts, races, start_idx)
     end
 end
 
-function parse_commandline(opts, ...)
-    local positionals = process_args(opts, {...})
+function parse_commandline(opts, args)
+    local positionals = process_args(opts, args)
 
     local command = positionals[1]
     if command then opts.command = command end

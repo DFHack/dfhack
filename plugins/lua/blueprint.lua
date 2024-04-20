@@ -165,8 +165,8 @@ local function is_bad_dim(dim, negative_ok)
             (not negative_ok and dim < 1 or dim == 0)
 end
 
-function parse_commandline(opts, ...)
-    local positionals = process_args(opts, {...})
+function parse_commandline(opts, args)
+    local positionals = process_args(opts, args)
     if not positionals or opts.help then return end
 
     local width, height = tonumber(positionals[1]), tonumber(positionals[2])

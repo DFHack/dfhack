@@ -8,9 +8,9 @@ local VALID_SHOW_VALUES = utils.invert{
     'gems',    'veins',   'shrubs', 'trees'
 }
 
-function parse_commandline(opts, ...)
+function parse_commandline(opts, args)
     local show = {}
-    local positionals = argparse.processArgsGetopt({...}, {
+    local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'s', 'show', hasArg=true, handler=function(optarg)
                     show = argparse.stringList(optarg) end},

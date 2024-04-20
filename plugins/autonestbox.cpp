@@ -136,30 +136,6 @@ static const struct_field_info autonestbox_options_fields[] = {
 };
 struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df::allocator_fn<autonestbox_options>, NULL, "autonestbox_options", NULL, autonestbox_options_fields);
 
-static bool get_options(color_ostream &out,
-                        autonestbox_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.autonestbox", "parse_commandline")) {
-        out.printerr("Failed to load autonestbox Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
@@ -169,7 +145,8 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
     }
 
     autonestbox_options opts;
-    if (!get_options(out, opts, parameters) || opts.help)
+    if (!Lua::CallLuaModuleFunction(out, "plugins.autonestbox", "parse_commandline", std::make_tuple(&opts, parameters))
+            || opts.help)
         return CR_WRONG_USAGE;
 
     if (opts.now) {

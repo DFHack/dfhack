@@ -39,6 +39,8 @@ jobs:
       run: |
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        touch $HOME/Steam/logs/stderr.txt
+        tail -F $HOME/Steam/logs/stderr.txt &
         timestamp=$(${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +login $STEAM_USERNAME \

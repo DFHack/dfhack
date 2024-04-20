@@ -923,18 +923,6 @@ static void create_boulders(color_ostream &out,
     }
 }
 
-static void flood_unhide(color_ostream &out, const DFCoord &pos) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 2)
-            || !Lua::PushModulePublic(out, L, "plugins.reveal", "unhideFlood"))
-        return;
-
-    Lua::Push(L, pos);
-    Lua::SafeCall(out, L, 1, 0);
-}
-
 static bool needs_unhide(const DFCoord &pos) {
     return !Maps::ensureTileBlock(pos)
         || Maps::getTileDesignation(pos)->bits.hidden;
@@ -959,7 +947,7 @@ static void post_process_dug_tiles(color_ostream &out,
             // set current tile to hidden to allow flood_unhide to work on tiles
             // that were already visible but that reveal hidden tiles when dug.
             Maps::getTileDesignation(pos)->bits.hidden = true;
-            flood_unhide(out, pos);
+            Lua::CallLuaModuleFunction(out, "plugins.reveal", "unhideFlood", std::make_tuple(pos));
         }
 
         df::tile_occupancy &to = *Maps::getTileOccupancy(pos);

@@ -30,6 +30,7 @@ local argparse = require('argparse')
 local utils = require('utils')
 
 local blueprint = require('plugins.blueprint')
+local buildingplan = require('plugins.buildingplan')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
 
@@ -40,9 +41,9 @@ local output_dir = 'library/test/ecosystem/out/'
 
 local phase_names = utils.invert(blueprint.valid_phases)
 
--- clear the output dir before each test run (but not after -- to allow
--- inspection of failed results)
 local function test_wrapper(test_fn)
+    -- clear the output dir before each test run (but not after -- to allow
+    -- inspection of failed results)
     local outdir = blueprints_dir .. output_dir
     if dfhack.filesystem.exists(outdir) then
         for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
@@ -51,7 +52,21 @@ local function test_wrapper(test_fn)
             end
         end
     end
-    test_fn()
+
+    -- ensure buildingplan is running during the tests
+    local buildingplan_was_enabled = buildingplan.isEnabled()
+    if not buildingplan_was_enabled then
+        dfhack.run_command{'enable', 'buildingplan'}
+    end
+
+    return dfhack.with_finalize(
+        function()
+            if not buildingplan_was_enabled then
+                dfhack.run_command{'disable', 'buildingplan'}
+            end
+        end,
+        test_fn)
+
 end
 config.wrapper = test_wrapper
 

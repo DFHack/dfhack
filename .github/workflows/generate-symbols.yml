@@ -297,13 +297,12 @@ jobs:
         git pull
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
-      id: auto-commit
       with:
         commit_message: Auto-update structures ref
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
     - name: Launch steam-deploy
-      if: inputs.steam_branch && steps.auto-commit.outputs.changes_detected == 'true'
+      if: inputs.steam_branch
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -83,6 +83,7 @@ distribution.
 #include "df/inorganic_raw.h"
 #include "df/item.h"
 #include "df/itemdef.h"
+#include "df/item_type.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
@@ -2288,7 +2289,6 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
     WRAPM(Items, isRequestedTradeGood),
-    WRAPM(Items, createItem),
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
     WRAPM(Items, canTradeWithContents),
@@ -2359,12 +2359,27 @@ static int items_moveToBuilding(lua_State *state)
     return 1;
 }
 
+static int items_createItem(lua_State *state)
+{
+    auto unit = Lua::CheckDFObject<df::unit>(state, 1);
+    df::item_type item_type = (df::item_type)lua_tointeger(state, 2);
+    auto item_subtype = lua_tointeger(state, 3);
+    auto mat_type = lua_tointeger(state, 4);
+    auto mat_index = lua_tointeger(state, 5);
+    int growth_print = luaL_optint(state, 6, -1);
+    bool no_floor = lua_toboolean(state, 7);
+    std::vector<df::item *> out_items;
+    Items::createItem(out_items, unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor);
+    Lua::PushVector(state, out_items);
+    return 1;
+}
 
 static const luaL_Reg dfhack_items_funcs[] = {
     { "getPosition", items_getPosition },
     { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
     { "moveToBuilding", items_moveToBuilding },
+    { "createItem", items_createItem },
     { NULL, NULL }
 };
 

@@ -45,6 +45,9 @@
 
 local _ENV = mkmodule('3rdparty.alt_getopt')
 
+---@nodiscard
+---@param opts string
+---@return table<string, integer|string>
 local function get_opt_map(opts)
     local i = 1
     local len = #opts
@@ -57,11 +60,16 @@ local function get_opt_map(opts)
     return options
 end
 
+---@param opt string
 local function err_unknown_opt(opt)
     qerror(string.format('Unknown option "-%s%s"', #opt > 1 and '-' or '', opt))
 end
 
 -- resolve aliases into their canonical forms
+---@nodiscard
+---@param options table<string, string>
+---@param opt string
+---@return string
 local function canonicalize(options, opt)
     if not options[opt] then
         err_unknown_opt(opt)
@@ -71,6 +79,7 @@ local function canonicalize(options, opt)
         opt = options[opt]
 
         if not options[opt] then
+            ---@cast opt string
              err_unknown_opt(opt)
         end
     end
@@ -83,17 +92,22 @@ local function canonicalize(options, opt)
     return opt
 end
 
+---@nodiscard
+---@param options table<string, string>
+---@param opt string
+---@return boolean
 local function has_arg(options, opt)
     return options[canonicalize(options, opt)] == 1
 end
 
 -- returns vectors for opts, optargs, and nonoptions
----@param args any
----@param sh_opts any
----@param long_opts any
----@return table
----@return table
----@return table
+---@nodiscard
+---@param args string[]
+---@param sh_opts string e.g.: 'ak:hv'
+---@param long_opts table<string, integer|string>
+---@return string[] opts
+---@return string[] optargs
+---@return string[] nonoptions
 function get_ordered_opts(args, sh_opts, long_opts)
     local optind, count, opts, optargs, nonoptions = 1, 1, {}, {}, {}
 
@@ -165,6 +179,12 @@ end
 
 -- returns a map of options to their optargs (or 1 if the option doesn't take an
 -- argument), and a vector for nonoptions
+---@nodiscard
+---@param args string[]
+---@param sh_opts string
+---@param long_opts string[]
+---@return table
+---@return string[]
 function get_opts(args, sh_opts, long_opts)
     local ret = {}
 

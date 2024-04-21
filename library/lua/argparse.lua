@@ -4,12 +4,10 @@ local _ENV = mkmodule('argparse')
 
 local getopt = require('3rdparty.alt_getopt')
 
----@alias argparse.processArgs_result table<string, string|string[]|nil>
-
 ---@nodiscard
 ---@param args string[] Most commonly `{ ... }`
 ---@param validArgs table<string, integer> Use `utils.invert`
----@return argparse.processArgs_result
+---@return table<string, string[]|nil>
 function processArgs(args, validArgs)
     local result = {}
     local argName
@@ -65,10 +63,10 @@ function processArgs(args, validArgs)
 end
 
 ---@class argparse.OptionAction
----@field [1] string|nil
----@field [2] string|nil
----@field handler function
----@field hasArg? boolean
+---@field [1] string|nil Short option (eg. "q")
+---@field [2] string|nil Long option (eg. "quiet")
+---@field handler fun(optarg?: string)
+---@field hasArg boolean|nil
 
 -- See online docs for full usage info.
 --
@@ -91,7 +89,7 @@ end
 --   positionals == {'first', 'second'}.
 ---@param args string[] Most commonly `{ ... }`
 ---@param optionActions argparse.OptionAction[]
----@return nil
+---@return string[] positionals # Positional arguments
 function processArgsGetopt(args, optionActions)
     local sh_opts, long_opts = '', {}
     local handlers = {}
@@ -146,6 +144,7 @@ local function arg_error(arg_name, fmt, ...)
     qerror(('%s'..fmt):format(prefix, ...))
 end
 
+---@nodiscard
 ---@param arg string
 ---@param arg_name? string
 ---@param list_length? integer
@@ -163,6 +162,7 @@ function stringList(arg, arg_name, list_length)
     return list
 end
 
+---@nodiscard
 ---@param arg string
 ---@param arg_name? string
 ---@param list_length? integer
@@ -180,6 +180,7 @@ function numberList(arg, arg_name, list_length)
     return strings
 end
 
+---@nodiscard
 ---@param arg integer
 ---@param arg_name? string
 ---@return number
@@ -192,6 +193,7 @@ function positiveInt(arg, arg_name)
     return val
 end
 
+---@nodiscard
 ---@param arg integer
 ---@param arg_name? string
 ---@return number
@@ -204,6 +206,7 @@ function nonnegativeInt(arg, arg_name)
     return val
 end
 
+---@nodiscard
 ---@param arg string|'here'
 ---@param arg_name? string
 ---@param skip_validation? boolean

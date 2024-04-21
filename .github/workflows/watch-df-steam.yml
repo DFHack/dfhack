@@ -39,11 +39,9 @@ jobs:
       run: |
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+        touch $HOME/Steam/logs/{appinfo,cloud,compat,parental,workshop}_log.txt
         ls -l $HOME/Steam/logs
-        for fname in $HOME/Steam/logs/*; do
-          cat </dev/null >"$fname"
-        done
-        tail -F $HOME/Steam/logs/* &
+        tail -n0 -F $HOME/Steam/logs/* &
         timestamp=$(${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +login $STEAM_USERNAME \

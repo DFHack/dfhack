@@ -37,6 +37,7 @@ on:
         options:
         - default
         - testing
+        - adventure_test
         - beta
       steam_branch:
         description: DFHack Steam branch to deploy to (leave blank to skip deploy)
@@ -97,6 +98,7 @@ jobs:
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
         STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+        STEAM_DF_ADVENTURE_TEST: ${{ secrets.STEAM_DF_ADVENTURE_TEST }}
       run: |
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
@@ -106,6 +108,8 @@ jobs:
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
           BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        elif [ "${{ inputs.df_steam_branch }}" = "adventure_test" ]; then
+          BETA_PARAMS="-beta adventure_test -betapassword $STEAM_DF_ADVENTURE_TEST"
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
@@ -204,6 +208,7 @@ jobs:
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
         STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+        STEAM_DF_ADVENTURE_TEST: ${{ secrets.STEAM_DF_ADVENTURE_TEST }}
       run: |
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
@@ -213,6 +218,8 @@ jobs:
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
           BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        elif [ "${{ inputs.df_steam_branch }}" = "adventure_test" ]; then
+          BETA_PARAMS="-beta adventure_test -betapassword $STEAM_DF_ADVENTURE_TEST"
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi

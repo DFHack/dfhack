@@ -681,7 +681,7 @@ local function dump_df_state()
         enabler = {
             fps = df.global.enabler.fps,
             gfps = df.global.enabler.gfps,
-            fullscreen_state = df.global.enabler.fullscreen_state.whole,
+            fullscreen_state = df.global.enabler.fullscreen_state.fullscreen,
         },
         gps = {
             dimx = df.global.gps.dimx,

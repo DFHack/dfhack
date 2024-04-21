@@ -40,7 +40,9 @@ jobs:
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
         ls -l $HOME/Steam/logs
-        touch $HOME/Steam/logs/stderr.txt
+        for fname in $HOME/Steam/logs/*; do
+          cat </dev/null >"$fname"
+        done
         tail -F $HOME/Steam/logs/* &
         timestamp=$(${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
@@ -48,6 +50,7 @@ jobs:
           +app_info_request 975370 \
           +app_info_print 975370 \
           +quit | awk '/^{/,0' | awk '/^\t\t"branches"/,0' | awk '/^\t\t\t"beta"/,0' | fgrep timeupdated | head -n1 | cut -d'"' -f4)
+        ls -l $HOME/Steam/logs
         echo "timestamp of last branch update:        $timestamp"
         mkdir -p state
         touch state/timestamp

@@ -88,6 +88,12 @@ local function has_arg(options, opt)
 end
 
 -- returns vectors for opts, optargs, and nonoptions
+---@param args any
+---@param sh_opts any
+---@param long_opts any
+---@return table
+---@return table
+---@return table
 function get_ordered_opts(args, sh_opts, long_opts)
     local optind, count, opts, optargs, nonoptions = 1, 1, {}, {}, {}
 

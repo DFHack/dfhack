@@ -376,7 +376,7 @@ function printall_recurse(value, seen)
 end
 
 ---@generic T
----@param table `T`
+---@param table T
 ---@return T
 function copyall(table)
     local rv = {}

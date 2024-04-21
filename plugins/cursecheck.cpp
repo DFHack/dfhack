@@ -181,26 +181,16 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
             if (giveDetails)
             {
-                if (unit->name.has_name)
-                {
-                    string name = Translation::TranslateName(&unit->name, false);
-                    out << name << " ";
-                }
-                else
-                {
-                    // happens with unnamed zombies and resurrected body parts
-                    out.print("Unnamed creature ");
-                }
+                out << (Units::getReadableName(unit));
 
                 auto death = df::incident::find(unit->counters.death_id);
-                out.print("born in %d, cursed in %d to be a %s. (%s%s%s)\n",
+                out.print(", born in %d, cursed in %d to be a %s. (%s%s)\n",
                     unit->birth_year,
                     unit->curse_year,
                     curse_names[cursetype].c_str(),
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
                     unit->flags2.bits.killed ? "deceased" : "active",
-                    unit->flags3.bits.ghostly ? "-ghostly" : "",
                     death && !death->flags.bits.discovered ? "-missing" : ""
                 );
 

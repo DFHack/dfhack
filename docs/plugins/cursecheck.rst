@@ -8,8 +8,8 @@ cursecheck
 This command checks a single unit or the whole map for curses (ghosts, vampires,
 necromancers, werebeasts, zombies, etc.).
 
-If a unit is selected, only the selected unit will be checked. Otherwise, the
-all units on the map will be checked.
+If a unit is selected, only the selected unit will be checked. Otherwise, all
+units on the map will be checked.
 
 By default, you will just see the count of cursed creatures in case you just
 want to find out if you have any of them running around in your fort. Dead and

@@ -5,11 +5,11 @@ cursecheck
     :summary: Check for cursed creatures.
     :tags: fort armok inspection units
 
-This command checks a single map tile (or the whole map/world) for cursed
-creatures (ghosts, vampires, necromancers, werebeasts, zombies, etc.).
+This command checks a single unit or the whole map for curses (ghosts, vampires,
+necromancers, werebeasts, zombies, etc.).
 
-With an active in-game cursor, only the selected tile will be checked. Without a
-cursor, the whole map will be checked.
+If a unit is selected, only the selected unit will be checked. Otherwise, all
+units on the map will be checked.
 
 By default, you will just see the count of cursed creatures in case you just
 want to find out if you have any of them running around in your fort. Dead and

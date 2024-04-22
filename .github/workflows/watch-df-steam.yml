@@ -17,6 +17,11 @@ jobs:
             version: 51.01-beta
             df_steam_branch: beta
             steam_branch: adventure-beta
+          - dfhack_ref: testing
+            structures_ref: testing
+            version: testing
+            df_steam_branch: testing
+            steam_branch: ''
     steps:
     - name: Setup steamcmd
       id: steamcmd
@@ -30,34 +35,54 @@ jobs:
         path: state
         key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP_SECONDS }}
         restore-keys: watchstate-${{ matrix.version }}
-    - name: Detect changes on branch
-      shell: bash
+    - name: Prep Steam auth
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
       run: |
         mkdir -p $HOME/Steam/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
-        touch $HOME/Steam/logs/stderr.txt
-        tail -F $HOME/Steam/logs/stderr.txt &
-        timestamp=$(${{ steps.steamcmd.outputs.executable }} \
-          +@ShutdownOnFailedCommand 1 \
-          +login $STEAM_USERNAME \
-          +app_info_request 975370 \
-          +app_info_print 975370 \
-          +quit | awk '/^{/,0' | awk '/^\t\t"branches"/,0' | awk '/^\t\t\t"beta"/,0' | fgrep timeupdated | head -n1 | cut -d'"' -f4)
-        echo "timestamp of last branch update:        $timestamp"
-        mkdir -p state
-        touch state/timestamp
-        last_timestamp=$(cat state/timestamp)
-        echo "stored timestamp of last branch update: $last_timestamp"
-        if [ "$timestamp" != "$last_timestamp" ]; then
-          echo "launching generate-symbols"
-          echo "$timestamp" >state/timestamp
-          gh workflow run generate-symbols.yml -R DFHack/dfhack -r ${{ matrix.dfhack_ref }} -f structures_ref=${{ matrix.structures_ref }} -f version=${{ matrix.version }} -f platform=all -f channel=steam -f df_steam_branch=${{ matrix.df_steam_branch }} -f steam_branch=${{ matrix.steam_branch }}
-          echo TIMESTAMP_UPDATED=1 >> $GITHUB_ENV
-        fi
+    - name: Compare branch metadata
+      uses: nick-fields/retry@v3
+      env:
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+      with:
+        timeout_minutes: 2
+        command: |
+          timestamp=$(${{ steps.steamcmd.outputs.executable }} \
+            +@ShutdownOnFailedCommand 1 \
+            +login $STEAM_USERNAME \
+            +app_info_request 975370 \
+            +app_info_print 975370 \
+            +quit | \
+              awk '/^{/,0' | \
+              awk '/^\t\t"branches"/,0' | \
+              awk '/^\t\t\t"beta"/,0' | \
+              fgrep timeupdated | \
+              head -n1 | \
+              cut -d'"' -f4)
+          echo "timestamp of last branch update:        $timestamp"
+          mkdir -p state
+          touch state/timestamp
+          last_timestamp=$(cat state/timestamp)
+          echo "stored timestamp of last branch update: $last_timestamp"
+          if [ "$timestamp" != "$last_timestamp" ]; then
+            echo "$timestamp" >state/timestamp
+            echo TIMESTAMP_UPDATED=1 >> $GITHUB_ENV
+          fi
+    - name: Launch symbol generation workflow
+      if: env.TIMESTAMP_UPDATED
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh workflow run generate-symbols.yml \
+          -R DFHack/dfhack \
+          -r ${{ matrix.dfhack_ref }} \
+          -f structures_ref=${{ matrix.structures_ref }} \
+          -f version=${{ matrix.version }} \
+          -f platform=all \
+          -f channel=steam \
+          -f df_steam_branch=${{ matrix.df_steam_branch }} \
+          -f steam_branch=${{ matrix.steam_branch }}
     - name: Save state
       uses: actions/cache/save@v4
       if: env.TIMESTAMP_UPDATED

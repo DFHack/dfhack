@@ -57,6 +57,8 @@ Template for new versions:
 
 ## Fixes
 - Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: don't try to rely on cursor; check for selected unit instead
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
 
 ## Misc Improvements
 - `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job

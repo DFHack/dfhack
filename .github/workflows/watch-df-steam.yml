@@ -26,14 +26,10 @@ jobs:
     - name: Setup steamcmd
       id: steamcmd
       uses: CyberAndrii/setup-steamcmd@v1
-    - name: Get current time
-      shell: bash
-      run: echo TIMESTAMP_SECONDS="$(date +'%s')" >> $GITHUB_ENV
     - name: Fetch state
       uses: actions/cache/restore@v4
       with:
         path: state
-        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP_SECONDS }}
         restore-keys: watchstate-${{ matrix.version }}
     - name: Prep Steam auth
       env:
@@ -60,6 +56,8 @@ jobs:
               fgrep timeupdated | \
               head -n1 | \
               cut -d'"' -f4)
+          test -z "$timestamp" && echo "no timestamp result" && exit 1
+          test "$timestamp" -gt 0 || exit 1
           echo "timestamp of last branch update:        $timestamp"
           mkdir -p state
           touch state/timestamp
@@ -67,10 +65,10 @@ jobs:
           echo "stored timestamp of last branch update: $last_timestamp"
           if [ "$timestamp" != "$last_timestamp" ]; then
             echo "$timestamp" >state/timestamp
-            echo TIMESTAMP_UPDATED=1 >> $GITHUB_ENV
+            echo TIMESTAMP=$timestamp >> $GITHUB_ENV
           fi
     - name: Launch symbol generation workflow
-      if: env.TIMESTAMP_UPDATED
+      if: env.TIMESTAMP
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -85,7 +83,7 @@ jobs:
           -f steam_branch=${{ matrix.steam_branch }}
     - name: Save state
       uses: actions/cache/save@v4
-      if: env.TIMESTAMP_UPDATED
+      if: env.TIMESTAMP
       with:
         path: state
-        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP_SECONDS }}
+        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP }}

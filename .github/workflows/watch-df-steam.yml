@@ -14,12 +14,8 @@ jobs:
         platform: [all]
         channel: [steam]
         include:
-          - dfhack_ref: develop
-            structures_ref: master
-            version: stable
-            channel: all
-            df_steam_branch: public
-            steam_branch: staging
+          - df_steam_branch: public
+            version: public
           - dfhack_ref: adv-beta
             structures_ref: adv-beta
             version: 51.01-beta
@@ -38,6 +34,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: state
+        key: watchstate-${{ matrix.version }}
         restore-keys: watchstate-${{ matrix.version }}
     - name: Prep Steam auth
       env:
@@ -81,7 +78,7 @@ jobs:
         webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
         content: "DF Steam branch updated: ${{ matrix.df_steam_branch }}"
     - name: Launch symbol generation workflow
-      if: env.TIMESTAMP
+      if: env.TIMESTAMP && matrix.dfhack_ref
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |

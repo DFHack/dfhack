@@ -42,7 +42,6 @@ on:
       steam_branch:
         description: DFHack Steam branch to deploy to (leave blank to skip deploy)
         type: string
-        default: staging
 
 jobs:
   package:
@@ -113,8 +112,6 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
-        touch $HOME/Steam/logs/stderr.txt
-        tail -F $HOME/Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +force_install_dir $PWD/DF_steam \
@@ -223,8 +220,6 @@ jobs:
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
-        touch $HOME/Steam/logs/stderr.txt
-        tail -F $HOME/Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +@sSteamCmdForcePlatformType windows \

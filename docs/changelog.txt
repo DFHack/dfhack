@@ -56,8 +56,22 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r1
+
+## Fixes
 - Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
-- `cursecheck`: don't try to rely on cursor; check for selected unit instead
+- `cursecheck`: act on selected unit only if a unit is selected
 - Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
 
 ## Misc Improvements
@@ -65,12 +79,6 @@ Template for new versions:
 
 ## Documentation
 - `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
-
-## API
-
-## Lua
-
-## Removed
 
 # 50.12-r3
 

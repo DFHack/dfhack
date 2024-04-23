@@ -37,11 +37,11 @@ on:
         options:
         - default
         - testing
+        - adventure_test
         - beta
       steam_branch:
         description: DFHack Steam branch to deploy to (leave blank to skip deploy)
         type: string
-        default: staging
 
 jobs:
   package:
@@ -97,6 +97,7 @@ jobs:
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
         STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+        STEAM_DF_ADVENTURE_TEST: ${{ secrets.STEAM_DF_ADVENTURE_TEST }}
       run: |
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
@@ -106,11 +107,11 @@ jobs:
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
           BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        elif [ "${{ inputs.df_steam_branch }}" = "adventure_test" ]; then
+          BETA_PARAMS="-beta adventure_test -betapassword $STEAM_DF_ADVENTURE_TEST"
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
-        touch $HOME/Steam/logs/stderr.txt
-        tail -F $HOME/Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +force_install_dir $PWD/DF_steam \
@@ -204,6 +205,7 @@ jobs:
         STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
         STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
         STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+        STEAM_DF_ADVENTURE_TEST: ${{ secrets.STEAM_DF_ADVENTURE_TEST }}
       run: |
         mkdir DF_steam
         mkdir -p $HOME/Steam/config
@@ -213,11 +215,11 @@ jobs:
           BETA_PARAMS=""
         elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
           BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        elif [ "${{ inputs.df_steam_branch }}" = "adventure_test" ]; then
+          BETA_PARAMS="-beta adventure_test -betapassword $STEAM_DF_ADVENTURE_TEST"
         else
           BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
         fi
-        touch $HOME/Steam/logs/stderr.txt
-        tail -F $HOME/Steam/logs/stderr.txt &
         ${{ steps.steamcmd.outputs.executable }} \
           +@ShutdownOnFailedCommand 1 \
           +@sSteamCmdForcePlatformType windows \
@@ -290,13 +292,12 @@ jobs:
         git pull
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
-      id: auto-commit
       with:
         commit_message: Auto-update structures ref
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
     - name: Launch steam-deploy
-      if: inputs.steam_branch && steps.auto-commit.outputs.changes_detected == 'true'
+      if: inputs.steam_branch
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

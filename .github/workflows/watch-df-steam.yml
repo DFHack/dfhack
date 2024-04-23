@@ -81,7 +81,7 @@ jobs:
       if: env.TIMESTAMP
       with:
         webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
-        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> ${{ secrets.DISCORD_PING_USERS }} DF Steam branch updated: ${{ matrix.df_steam_branch }}"
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF Steam branch updated: ${{ matrix.df_steam_branch }}"
     - name: Launch symbol generation workflow
       if: env.TIMESTAMP && matrix.dfhack_ref
       env:

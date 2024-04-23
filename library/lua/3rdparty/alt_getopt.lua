@@ -47,7 +47,7 @@ local _ENV = mkmodule('3rdparty.alt_getopt')
 
 ---@nodiscard
 ---@param opts string
----@return table<string, integer|string>
+---@return table<string, string|integer>
 local function get_opt_map(opts)
     local i = 1
     local len = #opts
@@ -60,16 +60,16 @@ local function get_opt_map(opts)
     return options
 end
 
----@param opt string
+---@param opt string|integer
 local function err_unknown_opt(opt)
     qerror(string.format('Unknown option "-%s%s"', #opt > 1 and '-' or '', opt))
 end
 
 -- resolve aliases into their canonical forms
 ---@nodiscard
----@param options table<string, string>
----@param opt string
----@return string
+---@param options table<string, string|integer>
+---@param opt string|integer
+---@return integer
 local function canonicalize(options, opt)
     if not options[opt] then
         err_unknown_opt(opt)
@@ -79,7 +79,6 @@ local function canonicalize(options, opt)
         opt = options[opt]
 
         if not options[opt] then
-            ---@cast opt string
              err_unknown_opt(opt)
         end
     end
@@ -89,12 +88,13 @@ local function canonicalize(options, opt)
                 'Option "%s" resolves to non-number for has_arg flag', opt))
     end
 
+    ---@type integer
     return opt
 end
 
 ---@nodiscard
----@param options table<string, string>
----@param opt string
+---@param options table<string, string|integer>
+---@param opt string|integer
 ---@return boolean
 local function has_arg(options, opt)
     return options[canonicalize(options, opt)] == 1
@@ -102,9 +102,9 @@ end
 
 -- returns vectors for opts, optargs, and nonoptions
 ---@nodiscard
----@param args string[]
----@param sh_opts string e.g.: 'ak:hv'
----@param long_opts table<string, integer|string>
+---@param args string[] e.g, { ... }
+---@param sh_opts string e.g., 'ak:hv'
+---@param long_opts table<string, string|integer>
 ---@return string[] opts
 ---@return string[] optargs
 ---@return string[] nonoptions

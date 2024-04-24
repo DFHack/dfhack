@@ -1291,26 +1291,13 @@ static bool get_filename(string &fname,
                          blueprint_options opts, // copy because we can't const
                          const string &phase,
                          int32_t ordinal) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 4) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.blueprint", "get_filename")) {
-        out.printerr("Failed to load blueprint Lua code\n");
+    const char *s = NULL;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.blueprint", "get_filename",
+            std::make_tuple(&opts, phase, ordinal), 1, [&](lua_State *L){
+                s = lua_tostring(L, -1);
+            }))
         return false;
-    }
 
-    Lua::Push(L, &opts);
-    Lua::Push(L, phase);
-    Lua::Push(L, ordinal);
-
-    if (!Lua::SafeCall(out, L, 3, 1)) {
-        out.printerr("Failed Lua call to get_filename\n");
-        return false;
-    }
-
-    const char *s = lua_tostring(L, -1);
     if (!s) {
         out.printerr("Failed to retrieve filename from get_filename\n");
         return false;
@@ -1325,25 +1312,11 @@ static bool get_filename(string &fname,
 static bool is_meta_phase(color_ostream &out,
                           blueprint_options opts, // copy because we can't const
                           const string &phase) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 3) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.blueprint", "is_meta_phase")) {
-        out.printerr("Failed to load blueprint Lua code\n");
+    bool ret = false;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.blueprint", "is_meta_phase",
+            std::make_tuple(&opts, phase), 1, [&](lua_State *L){ret = lua_toboolean(L, -1);}))
         return false;
-    }
-
-    Lua::Push(L, &opts);
-    Lua::Push(L, phase);
-
-    if (!Lua::SafeCall(out, L, 2, 1)) {
-        out.printerr("Failed Lua call to is_meta_phase\n");
-        return false;
-    }
-
-    return lua_toboolean(L, -1);
+    return ret;
 }
 
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
@@ -1591,31 +1564,6 @@ static bool do_transform(color_ostream &out,
     return true;
 }
 
-static bool get_options(color_ostream &out,
-                        blueprint_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.blueprint", "parse_commandline")) {
-        out.printerr("Failed to load blueprint Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 // returns whether blueprint generation was successful. populates files with the
 // names of the files that were generated
 static command_result do_blueprint(color_ostream &out,
@@ -1637,7 +1585,9 @@ static command_result do_blueprint(color_ostream &out,
     }
 
     blueprint_options options;
-    if (!get_options(out, options, parameters) || options.help) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.blueprint", "parse_commandline", std::make_tuple(&options, parameters))
+        || options.help)
+    {
         return CR_WRONG_USAGE;
     }
 

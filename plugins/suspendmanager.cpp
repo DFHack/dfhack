@@ -378,6 +378,20 @@ private:
         return walkable(pos);
     }
 
+    // check if the tile is suitable to stand on and build, or is planned to become one
+    static bool isPotentialSuitableAccess (coord pos) {
+        if (isSuitableAccess(pos))
+            return true;
+
+        // if a wall is being constructed below, the tile will be suitable
+        auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
+        if (below && below->getType() == df::building_type::Construction &&
+            below->getSubtype() == construction_type::Wall)
+            return true;
+
+        return false;
+    }
+
     static bool tileHasSupportWall(coord pos) {
         auto tile_type = Maps::getTileType(pos);
         if (tile_type) {
@@ -452,8 +466,10 @@ private:
             return false; // not building a blocking construction, no risk
 
         coord pos(building->centerx,building->centery,building->z);
-        if (!isSuitableAccess(pos))
-            return false; // construction is on a non-walkable tile, can't block
+        if (!isPotentialSuitableAccess(pos))
+            // construction is on a tile that is not usable to build, and will not
+            // become one, can't block
+            return false;
 
         auto risk = riskOfStuckConstructionAt(pos);
         TRACE(cycle,out).print("  risk is %d\n", risk);
@@ -522,8 +538,9 @@ private:
 
             df::building* exit = nullptr;
             for (auto npos : neighbors | transform(around(pos))) {
-                if (!isSuitableAccess(npos))
-                    continue; // non walkable neighbour, not an exit
+                if (!isPotentialSuitableAccess(npos))
+                    // non walkable neighbour, nor planned to become one, not an exit
+                    continue;
 
                 auto impassiblePlan = plannedImpassibleAt(npos);
                 if (!impassiblePlan)

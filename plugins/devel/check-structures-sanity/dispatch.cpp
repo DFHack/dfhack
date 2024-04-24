@@ -377,6 +377,10 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     {
         // TODO: check DfArray
     }
+    else if (base_container.starts_with("set<"))
+    {
+        // TODO: check set
+    }
     else if (base_container.starts_with("map<"))
     {
         // TODO: check map

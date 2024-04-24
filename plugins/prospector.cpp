@@ -896,37 +896,13 @@ static command_result map_prospector(color_ostream &con,
     return CR_OK;
 }
 
-static bool get_options(color_ostream &out,
-                        prospect_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.prospector", "parse_commandline")) {
-        out.printerr("Failed to load prospector Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 command_result prospector(color_ostream &con, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
     prospect_options options;
-    if (!get_options(con, options, parameters) || options.help)
+    if (!Lua::CallLuaModuleFunction(con, "plugins.prospector", "parse_commandline", std::make_tuple(&options, parameters))
+            || options.help)
         return CR_WRONG_USAGE;
 
     // Embark screen active: estimate using world geology data

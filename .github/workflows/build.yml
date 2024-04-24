@@ -6,18 +6,21 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
     with:
+      dfhack_repo: ${{ github.repository }}
       dfhack_ref: ${{ github.ref }}
     secrets: inherit
 
   package:
     uses: ./.github/workflows/package.yml
     with:
+      dfhack_repo: ${{ github.repository }}
       dfhack_ref: ${{ github.ref }}
     secrets: inherit
 
   docs:
     uses: ./.github/workflows/build-linux.yml
     with:
+      dfhack_repo: ${{ github.repository }}
       dfhack_ref: ${{ github.ref }}
       platform-files: false
       common-files: false
@@ -27,6 +30,7 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yml
     with:
+      dfhack_repo: ${{ github.repository }}
       dfhack_ref: ${{ github.ref }}
     secrets: inherit
 

@@ -1,0 +1,104 @@
+name: Watch DF Steam Releases
+
+on:
+  schedule:
+  - cron: '8/10 * * * *'
+
+jobs:
+  check-steam:
+    name: Check DF ${{ matrix.df_steam_branch }} branch
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # leave blank if no structures update is desired
+        dfhack_ref: ['']
+        structures_ref: ['']
+        # leave blank if no steam push is desired
+        steam_branch: ['']
+        platform: [all]
+        channel: [steam]
+        include:
+          - df_steam_branch: public
+            version: public
+          - dfhack_ref: adv-beta
+            structures_ref: adv-beta
+            version: 51.01-beta
+            df_steam_branch: beta
+            steam_branch: adventure-beta
+          - dfhack_ref: testing
+            structures_ref: testing
+            version: testing
+            df_steam_branch: testing
+    steps:
+    - name: Setup steamcmd
+      id: steamcmd
+      uses: CyberAndrii/setup-steamcmd@v1
+    - name: Fetch state
+      uses: actions/cache/restore@v4
+      with:
+        path: state
+        key: watchstate-${{ matrix.version }}
+        restore-keys: watchstate-${{ matrix.version }}
+    - name: Prep Steam auth
+      env:
+        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+      run: |
+        mkdir -p $HOME/Steam/config
+        echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
+    - name: Compare branch metadata
+      uses: nick-fields/retry@v3
+      env:
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+      with:
+        timeout_minutes: 2
+        command: |
+          timestamp=$(${{ steps.steamcmd.outputs.executable }} \
+            +@ShutdownOnFailedCommand 1 \
+            +login $STEAM_USERNAME \
+            +app_info_request 975370 \
+            +app_info_print 975370 \
+            +quit | \
+              awk '/^{/,0' | \
+              awk '/^\t\t"branches"/,0' | \
+              awk '/^\t\t\t"${{ matrix.df_steam_branch }}"/,0' | \
+              fgrep timeupdated | \
+              head -n1 | \
+              cut -d'"' -f4)
+          test -z "$timestamp" && echo "no timestamp result" && exit 1
+          test "$timestamp" -gt 0 || exit 1
+          echo "timestamp of last branch update:        $timestamp"
+          mkdir -p state
+          touch state/timestamp
+          last_timestamp=$(cat state/timestamp)
+          echo "stored timestamp of last branch update: $last_timestamp"
+          if [ "$timestamp" != "$last_timestamp" ]; then
+            echo "$timestamp" >state/timestamp
+            echo TIMESTAMP=$timestamp >> $GITHUB_ENV
+          fi
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: env.TIMESTAMP
+      with:
+        webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF Steam branch updated: ${{ matrix.df_steam_branch }}"
+    - name: Launch symbol generation workflow
+      if: env.TIMESTAMP && matrix.dfhack_ref
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh workflow run generate-symbols.yml \
+          -R DFHack/dfhack \
+          -r ${{ matrix.dfhack_ref }} \
+          -f structures_ref=${{ matrix.structures_ref }} \
+          -f version=${{ matrix.version }} \
+          -f platform=${{ matrix.platform }} \
+          -f channel=${{ matrix.channel }} \
+          -f df_steam_branch=${{ matrix.df_steam_branch }} \
+          -f steam_branch=${{ matrix.steam_branch }}
+    - name: Save state
+      uses: actions/cache/save@v4
+      if: env.TIMESTAMP
+      with:
+        path: state
+        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP }}

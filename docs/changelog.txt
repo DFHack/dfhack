@@ -52,6 +52,37 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r1
+
+## Fixes
+- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: act on selected unit only if a unit is selected
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
+
+## Misc Improvements
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+
+## Documentation
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
+
+# 50.12-r3
+
+## New Tools
 - `aquifer`: commandline tool for creating, draining, and modifying aquifers
 
 ## New Features
@@ -69,15 +100,16 @@ Template for new versions:
 - fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
 - `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
 - `suspendmanager`: prevent cancellation spam when an item is preventing a building from being completed
+- `stonesense`: fix a crash with buildings made of unusual materials (such as campsite tents made out of organic "walls")
 
 ## Misc Improvements
 - `tailor`: allow turning off automatic confiscation of tattered clothing
-- aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
-- pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
+- aquifer_tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
+- pump_stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
 - `keybinding`: you can now assign keybindings to mouse buttons (if your mouse has more than the three buttons already used by DF)
 
 ## Documentation
-- ``Lua API``: documented existing ``enum:next_item(index)`` function
+- Lua API: documented existing ``enum:next_item(index)`` function
 
 ## API
 - ``Units::citizensRange``: c++-20 std::range filter for citizen units
@@ -87,8 +119,6 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)
-
-## Removed
 
 # 50.12-r2.1
 

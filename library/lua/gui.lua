@@ -10,7 +10,16 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.texpos_border_interior or nil, ch=32, fg=0, bg=0, write_to_lower=true}
+local function getInteriorTexpos()
+    if not dfhack.internal.getAddress('init') then return end
+    if dfhack.screen.inGraphicsMode() then
+        return df.global.init.texpos_border_interior
+    else
+        return df.global.init.classic_texpos_border_interior
+    end
+end
+
+CLEAR_PEN = to_pen{tile=getInteriorTexpos(), ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 

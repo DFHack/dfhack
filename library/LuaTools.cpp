@@ -839,6 +839,8 @@ bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
         const char *module_name, const char *fn_name,
         int nargs, int nres, LuaLambda && args_lambda, LuaLambda && res_lambda,
         bool perr){
+    Lua::StackUnwinder top(L);
+
     if (!lua_checkstack(L, 1 + nargs) ||
         !Lua::PushModulePublic(out, L, module_name, fn_name)) {
         if (perr)

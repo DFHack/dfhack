@@ -284,6 +284,10 @@ Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 ``ipairs`` order would have a gap.
 
+Additionally, bitfields have a ``whole`` property,
+which returns the value of the bitfield as an
+integer.
+
 Since currently there is no API to allocate a bitfield
 object fully in GC-managed lua heap, consider using the
 lua table assignment feature outlined below in order to
@@ -4719,9 +4723,9 @@ Here is an example skeleton for a ZScreen tool window::
     end
 
     -- implement if you need to handle custom input
-    function MyWindow:onInput(keys)
-        return MyWindow.super.onInput(self, keys)
-    end
+    --function MyWindow:onInput(keys)
+    --    return MyWindow.super.onInput(self, keys)
+    --end
 
     MyScreen = defclass(MyScreen, gui.ZScreen)
     MyScreen.ATTRS {

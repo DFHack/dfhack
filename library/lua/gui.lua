@@ -251,6 +251,7 @@ end
 -- Clipped painter object --
 ----------------------------
 
+---@class Painter
 Painter = defclass(Painter, ViewRect)
 
 function Painter:init(args)

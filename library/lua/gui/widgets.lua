@@ -1,6 +1,6 @@
 -- Simple widgets for screens
 
-local _ENV = mkmodule('gui.widgets')
+-- local _ENV = mkmodule('gui.widgets')
 
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
@@ -10,12 +10,17 @@ local utils = require('utils')
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
 
+---@param view table
+---@param vis boolean
 local function show_view(view,vis)
     if view then
         view.visible = vis
     end
 end
 
+---@param tab table
+---@param idx integer
+---@return table|integer
 local function map_opttab(tab,idx)
     if tab then
         return tab[idx]
@@ -24,6 +29,7 @@ local function map_opttab(tab,idx)
     end
 end
 
+---@enum STANDARDSCROLL
 STANDARDSCROLL = {
     STANDARDSCROLL_UP = -1,
     KEYBOARD_CURSOR_UP = -1,
@@ -39,6 +45,29 @@ STANDARDSCROLL = {
 -- Widget --
 ------------
 
+---@class (exact) widgets.WidgetFrame
+---@field l integer Gap between the left edges of the frame and the parent.
+---@field t integer Gap between the top edges of the frame and the parent.
+---@field r integer Gap between the right edges of the frame and the parent.
+---@field b integer Gap between the bottom edges of the frame and the parent.
+---@field w integer? Maximum width
+---@field h integer? Maximum height
+
+---@class (exact) widgets.WidgetInset
+---@field l integer? Left margin
+---@field t integer? Top margin
+---@field r integer? Right margin
+---@field b integer? Bottom margin
+---@field x integer? Left/right margin (if `l` and/or `r` are ommited)
+---@field y integer? Top/bottom margin (if `t` and/or `b` are ommited)
+
+---@class (exact) widgets.WidgetAttrs
+---@field frame widgets.WidgetFrame
+---@field frame_inset widgets.WidgetInset
+---@field frame_background any Pen
+
+---@class widgets.Widget: widgets.WidgetAttrs
+---@field ATTRS fun(attributes: widgets.WidgetAttrs)
 Widget = defclass(Widget, gui.View)
 
 Widget.ATTRS {
@@ -47,11 +76,15 @@ Widget.ATTRS {
     frame_background = DEFAULT_NIL,
 }
 
+---@param parent_rect any
+---@return nil
 function Widget:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
     return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset)
 end
 
+---@param dc Painter
+---@param rect { x1: integer, y1: integer, x2: integer, y2: integer }
 function Widget:onRenderFrame(dc, rect)
     if self.frame_background then
         dc:fill(rect, self.frame_background)

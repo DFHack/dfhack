@@ -200,30 +200,6 @@ static const struct_field_info autobutcher_options_fields[] = {
 };
 struct_identity autobutcher_options::_identity(sizeof(autobutcher_options), &df::allocator_fn<autobutcher_options>, NULL, "autobutcher_options", NULL, autobutcher_options_fields);
 
-static bool get_options(color_ostream &out,
-                        autobutcher_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.autobutcher", "parse_commandline")) {
-        out.printerr("Failed to load autobutcher Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 static bool isHighPriority(df::unit *unit) {
     return Units::isGay(unit) || Units::isGelded(unit);
 }
@@ -423,7 +399,8 @@ static command_result df_autobutcher(color_ostream &out, vector<string> &paramet
     }
 
     autobutcher_options opts;
-    if (!get_options(out, opts, parameters) || opts.help)
+    if (!Lua::CallLuaModuleFunction(out, "plugins.autobutcher", "parse_commandline", std::make_tuple(&opts, parameters))
+            || opts.help)
         return CR_WRONG_USAGE;
 
     if (opts.command == "now") {

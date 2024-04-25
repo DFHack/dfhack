@@ -1046,38 +1046,13 @@ command_result df_tiletypes_command (color_ostream &out, vector <string> & param
     return CR_OK;
 }
 
-static bool get_options(color_ostream &out,
-                        tiletypes_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.tiletypes", "parse_commandline"))
-    {
-        out.printerr("Failed to load tiletypes Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
     tiletypes_options opts;
-    if (!get_options(out, opts, parameters) || opts.help)
+    if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
+            || opts.help)
     {
         out << "This command is supposed to be mapped to a hotkey." << endl;
         out << "It will use the current/last parameters set in tiletypes (including brush settings!)." << endl;
@@ -1098,7 +1073,8 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
     CoreSuspender suspend;
 
     tiletypes_options opts;
-    if (!get_options(out, opts, parameters) || opts.help)
+    if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
+            || opts.help)
     {
         out << "This command is supposed to be mapped to a hotkey." << endl;
         out << "It will use the current/last parameters set in tiletypes (except with a point brush)." << endl;

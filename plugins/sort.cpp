@@ -35,25 +35,6 @@ struct sort_entry {
 
 static const string DFHACK_SORT_IDENT = "dfhack_sort";
 
-static void call_sort_lua(color_ostream *out, const char *module_name,
-        const char *fn_name, int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    DEBUG(log, *out).print("calling sort lua function: '%s'\n", fn_name);
-
-    Lua::CallLuaModuleFunction(*out, L, module_name, fn_name, nargs, nres,
-                               std::forward<Lua::LuaLambda&&>(args_lambda),
-                               std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 //
 // filter logic
 //
@@ -72,9 +53,11 @@ static bool do_filter(const char *module_name, const char *fn_name, const item_o
     }
 
     bool ret = true;
-    call_sort_lua(NULL, module_name, fn_name, 1, 1,
-        [&](lua_State *L){ Lua::Push(L, unit); },
-        [&](lua_State *L){ ret = lua_toboolean(L, 1); }
+    color_ostream &out = Core::getInstance().getConsole();
+    Lua::CallLuaModuleFunction(out, module_name, fn_name, std::make_tuple(unit),
+        1, [&](lua_State *L){
+            ret = lua_toboolean(L, 1);
+        }
     );
     TRACE(log).print("filter result for %s: %d\n", Units::getReadableName(unit).c_str(), ret);
     return !ret;
@@ -164,12 +147,12 @@ static bool sort_proxy(const item_or_unit &a, const item_or_unit &b) {
         return true;
 
     bool ret = true;
-    call_sort_lua(NULL, "plugins.sort", "do_sort", 2, 1,
-        [&](lua_State *L){
-            Lua::Push(L, (df::unit *)a.first);
-            Lua::Push(L, (df::unit *)b.first);
-        },
-        [&](lua_State *L){ ret = lua_toboolean(L, 1); }
+    color_ostream &out = Core::getInstance().getConsole();
+    Lua::CallLuaModuleFunction(out, "plugins.sort", "do_sort",
+        std::make_tuple((df::unit *)a.first, (df::unit *)b.first),
+        1, [&](lua_State *L){
+            ret = lua_toboolean(L, 1);
+        }
     );
     return ret;
 }

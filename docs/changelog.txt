@@ -56,20 +56,37 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
 
 ## Misc Improvements
-- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
-- `regrass`: Work on non-floors, ashes, muddy stone, shrubs, trees. Operate on single block or tile. Add new grass events. Logging.
+- `regrass`: Can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
+- `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
+- `regrass`: Can now add grass in map blocks where there hasn't been any
 
 ## Documentation
-- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
 
 ## API
 
 ## Lua
 
 ## Removed
+
+# 50.13-r1.1
+
+## Documentation
+- Update docs on release procedures and symbol generation
+
+# 50.13-r1
+
+## Fixes
+- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: act on selected unit only if a unit is selected
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
+
+## Misc Improvements
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+
+## Documentation
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
 
 # 50.12-r3
 

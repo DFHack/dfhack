@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "Core.h"
+#include "Debug.h"
 #include "Error.h"
 #include "Internal.h"
 #include "MemAccess.h"
@@ -36,6 +37,7 @@ distribution.
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
 #include "df/body_part_raw.h"
 #include "df/body_part_template_flags.h"
@@ -115,6 +117,10 @@ using df::global::world;
 using df::global::plotinfo;
 using df::global::ui_selected_unit;
 using df::global::proj_next_id;
+
+namespace DFHack {
+    DBG_DECLARE(core, items, DebugCategory::LINFO);
+}
 
 #define ITEMDEF_VECTORS \
     ITEM(WEAPON, weapons, itemdef_weaponst) \
@@ -2086,9 +2092,10 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
 int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
     //based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
-    df::map_block* block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
+    df::coord pos = Units::getPosition(unit);
+    df::map_block* block = Maps::getTileBlock(pos);
     CHECK_NULL_POINTER(block);
-    df::reaction_product_itemst* prod = df::allocate<df::reaction_product_itemst>();
+    auto prod = df::allocate<df::reaction_product_itemst>();
     prod->item_type = item_type;
     prod->item_subtype = item_subtype;
     prod->mat_type = mat_type;
@@ -2119,11 +2126,13 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
 
-    df::enums::game_type::game_type type = *df::global::gametype;
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             0, df::historical_entity::find(unit->civ_id),
-            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::plotinfo->site_id) : NULL,
+            World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL,
             NULL);
+    delete prod;
+
+    DEBUG(items).print("produced %zd items\n", out_items.size());
     if ( out_items.size() != 1 )
         return -1;
 

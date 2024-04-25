@@ -1,8 +1,13 @@
+// Regrow surface grass and cavern moss.
+
+#include "DataDefs.h"
 #include "Debug.h"
-#include "modules/Gui.h"
-#include "modules/Maps.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
+
+#include "modules/Gui.h"
+#include "modules/Maps.h"
 
 #include "df/biome_type.h"
 #include "df/block_square_event_grassst.h"
@@ -27,19 +32,39 @@ namespace DFHack
     DBG_DECLARE(regrass, log, DebugCategory::LINFO);
 }
 
-command_result df_regrass(color_ostream &out, vector<string> &parameters);
-
 struct regrass_options
 {
-    bool max_grass = false;
-    bool new_grass = false;
-    bool ashes = false;
-    bool mud = false;
-    bool here = false;
-    bool block = false;
-};
+    bool max_grass = false; // Fill all tile grass events
+    bool new_grass = false; // Add new valid grass events
+    bool force = false; // Force a grass regardless of no_grow and biome
+    bool ashes = false; // Regrass ashes
+    bool buildings = false; // Regrass under stockpiles and passable buildings
+    bool mud = false; // Regrass muddy stone
+    bool block = false; // Operate on single map block
+    bool zlevel = false; // Operate on entire z-levels
 
-static bool valid_tile(df::map_block *block, int x, int y, regrass_options options)
+    int32_t forced_plant = -1; // Plant raw index of grass to force
+
+    static struct_identity _identity;
+};
+static const struct_field_info regrass_options_fields[] =
+{
+    { struct_field_info::PRIMITIVE, "max_grass",    offsetof(regrass_options, max_grass),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "new_grass",    offsetof(regrass_options, new_grass),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "force",        offsetof(regrass_options, force),        &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "ashes",        offsetof(regrass_options, ashes),        &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "buildings",    offsetof(regrass_options, buildings),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "mud",          offsetof(regrass_options, mud),          &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "block",        offsetof(regrass_options, block),        &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "zlevel",       offsetof(regrass_options, zlevel),       &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "forced_plant", offsetof(regrass_options, forced_plant), &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::END }
+};
+struct_identity regrass_options::_identity(sizeof(regrass_options), &df::allocator_fn<regrass_options>, NULL, "regrass_options", NULL, regrass_options_fields);
+
+command_result df_regrass(color_ostream& out, vector<string> &parameters);
+
+static bool valid_tile(regrass_options options, df::map_block *block, int x, int y)
 {   // Is valid tile for regrass
     auto des = block->designation[x][y];
     auto tt = block->tiletype[x][y];
@@ -51,7 +76,7 @@ static bool valid_tile(df::map_block *block, int x, int y, regrass_options optio
         mat == tiletype_material::GRASS_DARK ||
         mat == tiletype_material::PLANT) // Shrubs and saplings can have grass underneath
     {   // Refill existing grass
-        DEBUG(log).print("Valid tile: Grass|Shrub|Sapling\n");
+        DEBUG(log).print("Valid tile: Grass/Shrub/Sapling\n");
         return true;
     }
     else if (tt == tiletype::TreeTrunkPillar)
@@ -90,12 +115,14 @@ static bool valid_tile(df::map_block *block, int x, int y, regrass_options optio
         DEBUG(log).print("Invalid tile: Shape\n");
         return false;
     }
-    else if (block->occupancy[x][y].bits.building != tile_building_occ::None)
-    {
-        DEBUG(log).print("Invalid tile: Building\n");
+    else if (block->occupancy[x][y].bits.building >
+        (options.buildings ? tile_building_occ::Passable : tile_building_occ::None))
+    {   // Avoid stockpiles and planned/passable buildings unless enabled
+        DEBUG(log).print("Invalid tile: Building (%s)\n",
+            ENUM_KEY_STR(tile_building_occ, block->occupancy[x][y].bits.building).c_str());
         return false;
     }
-    else if (block->occupancy[x][y].bits.no_grow)
+    else if (!options.force && block->occupancy[x][y].bits.no_grow)
     {
         DEBUG(log).print("Invalid tile: no_grow\n");
         return false;
@@ -104,7 +131,7 @@ static bool valid_tile(df::map_block *block, int x, int y, regrass_options optio
     {
         if (spec == tiletype_special::FURROWED || spec == tiletype_special::WET)
         {   // Dirt road or beach
-            DEBUG(log).print("Invalid tile: Furrowed|Wet\n");
+            DEBUG(log).print("Invalid tile: Furrowed/Wet\n");
             return false;
         }
 
@@ -127,7 +154,7 @@ static bool valid_tile(df::map_block *block, int x, int y, regrass_options optio
             mat != tiletype_material::LAVA_STONE &&
             mat != tiletype_material::MINERAL)
         {   // Not non-feature stone
-            DEBUG(log).print("Invalid tile: Wrong mat (mud check)\n");
+            DEBUG(log).print("Invalid tile: Wrong tile mat (mud check)\n");
             return false;
         }
 
@@ -160,6 +187,12 @@ static bool valid_tile(df::map_block *block, int x, int y, regrass_options optio
 static vector<int32_t> grasses_for_tile(df::map_block *block, int x, int y)
 {   // Return sorted vector of valid grass ids
     vector<int32_t> grasses;
+
+    if (block->occupancy[x][y].bits.no_grow)
+    {
+        DEBUG(log).print("Skipping grass collection: no_grow.\n");
+        return grasses;
+    }
 
     DEBUG(log).print("Collecting grasses...\n");
     if (block->designation[x][y].bits.subterranean)
@@ -208,9 +241,9 @@ static vector<int32_t> grasses_for_tile(df::map_block *block, int x, int y)
     return grasses;
 }
 
-static bool regrass_events(df::map_block *block, int x, int y, regrass_options options)
+static bool regrass_events(const regrass_options &options, df::map_block *block, int x, int y)
 {   // Modify grass block events
-    if (!valid_tile(block, x, y, options))
+    if (!valid_tile(options, block, x, y))
         return false;
 
     bool success = false;
@@ -235,7 +268,14 @@ static bool regrass_events(df::map_block *block, int x, int y, regrass_options o
     }
 
     auto valid_grasses = grasses_for_tile(block, x, y);
-    if (options.new_grass && !valid_grasses.empty())
+    if (options.force && valid_grasses.empty())
+    {
+        DEBUG(log).print("Forcing grass.\n");
+        valid_grasses.push_back(options.forced_plant);
+        block->occupancy[x][y].bits.no_grow = false;
+    }
+
+    if (options.force || (options.new_grass && !valid_grasses.empty()))
     {
         DEBUG(log).print("Adding missing grasses...\n");
         auto new_grasses(valid_grasses); // Copy vector
@@ -290,10 +330,17 @@ static bool regrass_events(df::map_block *block, int x, int y, regrass_options o
     return false;
 }
 
-int regrass_tile(df::map_block *block, int x, int y, regrass_options options)
+int regrass_tile(const regrass_options &options, df::map_block *block, int x, int y)
 {   // Regrass single tile. Return 1 if tile success, else 0
+    CHECK_NULL_POINTER(block);
+    if (!is_valid_tile_coord(df::coord2d(x, y)))
+    {
+        Core::printerr("(%d, %d) not in range 0-15!\n", x, y);
+        return 0;
+    }
+
     DEBUG(log).print("Regrass tile (%d, %d, %d)\n", block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
-    if (!regrass_events(block, x, y, options))
+    if (!regrass_events(options, block, x, y))
         return 0;
 
     auto tt = block->tiletype[x][y];
@@ -343,23 +390,89 @@ int regrass_tile(df::map_block *block, int x, int y, regrass_options options)
     return 1;
 }
 
-int regrass_block(df::map_block *block, regrass_options options)
+int regrass_block(const regrass_options &options, df::map_block *block)
 {   // Regrass single block
+    CHECK_NULL_POINTER(block);
+
     int count = 0;
-    for (int y = 0; y < 16; y++)
+    for (int x = 0; x < 16; x++)
     {
-        for (int x = 0; x < 16; x++)
-            count += regrass_tile(block, x, y, options);
+        for (int y = 0; y < 16; y++)
+            count += regrass_tile(options, block, x, y);
     }
 
     return count;
 }
 
-int regrass_map(regrass_options options)
+int regrass_zlevels(const regrass_options &options, int32_t z1, int32_t z2 = -30000)
+{   // Regrass a range of z-levels
+    if (z1 < 0 || z1 >= world->map.z_count_block)
+    {
+        Core::printerr("z1 out of map bounds!\n");
+        return 0;
+    }
+    else if (z2 != -30000 && (z2 < 0 || z2 >= world->map.z_count_block))
+    {
+        Core::printerr("z2 out of map bounds!\n");
+        return 0;
+    }
+
+    auto z = z2 < 0 ? z1 : std::min(z1, z2);
+    auto z_end = std::max(z1, z2);
+    int count = 0;
+    for (z; z <= z_end; z++)
+    {   // Iterate all blocks in z-level range
+        for (int32_t x = 0; x < world->map.x_count_block; x++)
+        {
+            for (int32_t y = 0; y < world->map.y_count_block; y++)
+            {
+                auto block = Maps::getBlock(x, y, z);
+                if (block)
+                    count += regrass_block(options, block);
+                else // Probably below HFS
+                    Core::print("No getBlock(%d, %d, %d)! Skipping.\n", x, y, z);
+            }
+        }
+    }
+
+    return count;
+}
+
+int regrass_cuboid(const regrass_options &options, df::coord pos_1, df::coord pos_2)
+{   // Regrass cuboid defined by pos_1, pos_2
+    if (!Maps::isValidTilePos(pos_1) || !Maps::isValidTilePos(pos_2))
+    {
+        Core::printerr("Cuboid extends out of map bounds!\n");
+        return 0;
+    }
+
+    int32_t x_max = std::max(pos_1.x, pos_2.x);
+    int32_t y_max = std::max(pos_1.y, pos_2.y);
+    int32_t z_max = std::max(pos_1.z, pos_2.z);
+    int count = 0;
+    for (int32_t z = std::min(pos_1.z, pos_2.z); z <= z_max; z++)
+    {   // Iterate all tiles in cuboid
+        for (int32_t x = std::min(pos_1.x, pos_2.x); x <= x_max; x++)
+        {
+            for (int32_t y = std::min(pos_1.y, pos_2.y); y <= y_max; y++)
+            {
+                auto block = Maps::getTileBlock(x, y, z);
+                if (block)
+                    count += regrass_tile(options, block, x&15, y&15);
+                else // Probably below HFS
+                    DEBUG(log).print("No getTileBlock(%d, %d, %d)! Skipping.\n", x, y, z);
+            }
+        }
+    }
+
+    return count;
+}
+
+int regrass_map(const regrass_options &options)
 {   // Regrass entire map
     int count = 0;
     for (auto block : world->map.map_blocks)
-        count += regrass_block(block, options);
+        count += regrass_block(options, block);
 
     return count;
 }
@@ -376,71 +489,85 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 command_result df_regrass(color_ostream &out, vector<string> &parameters)
 {
     regrass_options options;
+    df::coord pos_1, pos_2;
 
-    for (size_t i = 0; i < parameters.size(); i++) // TODO: argparse
+    CoreSuspender suspend;
+
+    if (!Lua::CallLuaModuleFunction(out, "plugins.regrass", "parse_commandline",
+        std::make_tuple(&options, &pos_1, &pos_2, parameters)))
     {
-        auto &s = parameters[i];
-        if (s == "m" || s == "max")
-            options.max_grass = true;
-        else if (s == "n" || s == "new")
-            options.new_grass = true;
-        else if (s == "a" || s == "ashes")
-            options.ashes = true;
-        else if (s == "u" || s == "mud")
-            options.mud = true;
-        else if (s == "h" || s == "here")
-            options.here = true;
-        else if (s == "b" || s == "block")
-            options.block = true;
-        else // invalid
-            return CR_WRONG_USAGE;
+        return CR_WRONG_USAGE;
     }
 
-    if (options.here)
-    {
-        if (options.block)
-            return CR_WRONG_USAGE;
-        options.ashes = true;
-        options.mud = true;
-    }
+    DEBUG(log).print("pos_1 = (%d, %d, %d)\npos_2 = (%d, %d, %d)\n",
+        pos_1.x, pos_1.y, pos_1.z, pos_2.x, pos_2.y, pos_2.z);
 
-    if (!Core::getInstance().isMapLoaded())
+    if (options.block && options.zlevel)
+    {
+        out.printerr("Choose only block or zlevel!\n");
+        return CR_WRONG_USAGE;
+    }
+    else if (options.block && (!pos_1.isValid() || pos_2.isValid()))
+    {
+        out.printerr("Attempt to regrass block with inappropriate pos!\n");
+        return CR_WRONG_USAGE;
+    }
+    else if (!Core::getInstance().isMapLoaded())
     {
         out.printerr("Map not loaded!\n");
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
-
-    int count = 0;
-    if (options.here || options.block)
+    if (options.force)
     {
-        auto p = Gui::getCursorPos();
-        if (!p.isValid())
-        {
-            out.printerr("Cursor required!\n");
-            return CR_FAILURE;
-        }
-
-        auto b = Maps::getTileBlock(p);
-        if (!b)
-        {
-            out.printerr("No map block at cursor!\n");
-            return CR_FAILURE;
-        }
-
-        if (options.block)
-        {
-            DEBUG(log).print("Regrassing block...\n");
-            count = regrass_block(b, options);
-        }
+        DEBUG(log).print("forced_plant = %d\n", options.forced_plant);
+        auto p_raw = vector_get(world->raws.plants.all, options.forced_plant);
+        if (p_raw)
+            DEBUG(log).print("Forced plant_raw = %s\n", p_raw->id.c_str());
         else
         {
-            DEBUG(log).print("Regrassing single tile...\n");
-            count = regrass_tile(b, p.x&15, p.y&15, options);
+            out.printerr("Plant raw not found for force regrass!\n");
+            return CR_FAILURE;
         }
     }
-    else
+
+    int count = 0;
+    if (options.zlevel)
+    {
+        auto z1 = pos_1.isValid() ? pos_1.z : Gui::getViewportPos().z;
+        auto z2 = pos_2.isValid() ? pos_2.z : z1;
+        DEBUG(log).print("Regrassing z-levels %d to %d...\n", z1, z2);
+        count = regrass_zlevels(options, z1, z2);
+    }
+    else if (pos_1.isValid())
+    {   // Block, cuboid, or point
+        if (!options.block && pos_2.isValid())
+        {   // Cuboid
+            DEBUG(log).print("Regrassing cuboid...\n");
+            count = regrass_cuboid(options, pos_1, pos_2);
+        }
+        else // Block or point
+        {
+            auto b = Maps::getTileBlock(pos_1);
+            if (!b)
+            {
+                out.printerr("No map block at pos!\n");
+                return CR_FAILURE;
+            }
+
+            if (options.block)
+            {
+                DEBUG(log).print("Regrassing block...\n");
+                count = regrass_block(options, b);
+            }
+            else // Point
+            {
+                DEBUG(log).print("Regrassing single tile...\n");
+                count = regrass_tile(options, b, pos_1.x&15, pos_1.y&15);
+            }
+        }
+    }
+    else // Entire map
     {
         DEBUG(log).print("Regrassing map...\n");
         count = regrass_map(options);

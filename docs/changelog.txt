@@ -67,6 +67,11 @@ Template for new versions:
 
 ## Removed
 
+# 50.13-r1.1
+
+## Documentation
+- Update docs on release procedures and symbol generation
+
 # 50.13-r1
 
 ## Fixes

@@ -420,7 +420,7 @@ int regrass_zlevels(const regrass_options &options, int32_t z1, int32_t z2 = -30
     auto z = z2 < 0 ? z1 : std::min(z1, z2);
     auto z_end = std::max(z1, z2);
     int count = 0;
-    for (z; z <= z_end; z++)
+    for (; z <= z_end; z++)
     {   // Iterate all blocks in z-level range
         for (int32_t x = 0; x < world->map.x_count_block; x++)
         {

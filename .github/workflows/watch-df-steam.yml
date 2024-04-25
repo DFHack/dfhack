@@ -6,6 +6,7 @@ on:
 
 jobs:
   check-steam:
+    if: github.repository == 'DFHack/dfhack'
     name: Check DF ${{ matrix.df_steam_branch }} branch
     runs-on: ubuntu-latest
     strategy:

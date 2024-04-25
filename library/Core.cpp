@@ -534,11 +534,8 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     std::vector<std::string> mod_script_paths;
-    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
-            Lua::DEFAULT_LUA_LAMBDA,
+    Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
                 Lua::GetVector(L, mod_script_paths);
             });
@@ -833,9 +830,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 );
             }
 
-            auto L = Lua::Core::State;
-            Lua::StackUnwinder top(L);
-            Lua::CallLuaModuleFunction(con, L, "script-manager", "list");
+            Lua::CallLuaModuleFunction(con, "script-manager", "list");
         }
     }
     else if (first == "ls" || first == "dir")
@@ -1323,7 +1318,6 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     // show the terminal if requested
     auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -2178,10 +2172,8 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_CORE_INITIALIZED:
     {
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "helpdb", "refresh");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
         break;
     }
     case SC_WORLD_LOADED:
@@ -2191,10 +2183,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
-            [](lua_State* L) {
-                Lua::Push(L, true);
-            });
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2253,9 +2242,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     {
         Persistence::Internal::clear(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
     }
 }
 
@@ -2390,8 +2377,7 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
-            bool handled = SelectHotkey(sym, modstate);
-            if (handled) {
+            if (SelectHotkey(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
@@ -2407,8 +2393,16 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
             DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
             hotkey_states[sym] = false;
         }
-    }
-    else if (ev->type == SDL_TEXTINPUT) {
+    } else if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        auto &but = ev->button;
+        DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
+        // don't mess with the first three buttons, which are critical elements of DF's control scheme
+        if (but.button > 3) {
+            SDL_Keycode sym = SDLK_F13 + but.button - 4;
+            if (sym <= SDLK_F24 && SelectHotkey(sym, modstate))
+                return suppress_duplicate_keyboard_events;
+        }
+    } else if (ev->type == SDL_TEXTINPUT) {
         auto &te = ev->text;
         DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
             te.text,
@@ -2548,6 +2542,12 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
         return true;
     } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
         *psym = SDLK_F10 + (keyspec[2]-'0');
+        return true;
+    } else if (keyspec.size() == 6 && keyspec.substr(0, 5) == "MOUSE" && keyspec[5] >= '4' && keyspec[5] <= '9') {
+        *psym = SDLK_F13 + (keyspec[5]-'4');
+        return true;
+    } else if (keyspec.size() == 7 && keyspec.substr(0, 6) == "MOUSE1" && keyspec[5] >= '0' && keyspec[5] <= '5') {
+        *psym = SDLK_F19 + (keyspec[5]-'0');
         return true;
     } else if (keyspec == "Enter") {
         *psym = SDLK_RETURN;

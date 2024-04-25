@@ -7,7 +7,6 @@
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 #include "modules/Job.h"
-#include "modules/Persistence.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
@@ -330,7 +329,7 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
 
     auto des = Maps::getTileDesignation(pos);
     auto occ = Maps::getTileOccupancy(pos);
-    if (!des || !occ)
+    if (!des || !occ || !is_wall(pos))
         return;
 
     des->bits.dig = df::tile_dig_designation::Default;
@@ -1940,6 +1939,14 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
 // Lua API
 //
 
+static string getWarmConfigKey() {
+    return WARM_CONFIG_KEY;
+}
+
+static string getDampConfigKey() {
+    return DAMP_CONFIG_KEY;
+}
+
 static void setWarmPaintEnabled(color_ostream &out, bool val) {
     is_painting_warm = val;
 }
@@ -1978,13 +1985,14 @@ static void addTileDampDig(df::coord pos) {
     }
 }
 
-static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
+static void toggle_cur_level(color_ostream &out, PersistentDataItem &config) {
     std::unordered_map<df::coord, df::job *> dig_jobs;
     fill_dig_jobs(dig_jobs);
 
     std::unordered_set<df::job *> z_jobs;
 
     bool did_set_assignment = false;
+    bool target_state = true;
     const int z = *window_z;
     for (auto & block : world->map.map_blocks) {
         if (block->map_pos.z != z)
@@ -2003,30 +2011,52 @@ static void mark_cur_level(color_ostream &out, PersistentDataItem &config) {
                 continue;
 
             if (!mask)
-                mask = World::getPersistentTilemask(config, block, true);
-            if (!mask) {
-                WARN(log,out).print("unable to allocate tile bitmask\n");
-                return;
-            }
+                mask = World::getPersistentTilemask(config, block, target_state);
+            if (!mask)
+                break;
 
-            mask->setassignment(x, y, true);
+            if (!did_set_assignment)
+                target_state = !mask->getassignment(x, y);
+
+            mask->setassignment(x, y, target_state);
             did_set_assignment = true;
         }
     }
 
-    for (auto job : z_jobs)
-        unhide_surrounding_tagged_tiles(out, job);
+    if (target_state)
+        for (auto job : z_jobs)
+            unhide_surrounding_tagged_tiles(out, job);
 
-    if (did_set_assignment)
+    if (target_state && did_set_assignment)
         do_enable(true);
 }
 
-static void markCurLevelWarmDig(color_ostream &out) {
-    mark_cur_level(out, warm_config);
+static int getCurLevelDesignatedCount(color_ostream &out) {
+    std::unordered_map<df::coord, df::job *> dig_jobs;
+    fill_dig_jobs(dig_jobs);
+
+    int count = 0;
+    const int z = *window_z;
+    for (auto & block : world->map.map_blocks) {
+        if (block->map_pos.z != z)
+            continue;
+
+        const auto & block_pos = block->map_pos;
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+            df::coord pos = block_pos + df::coord(x, y, 0);
+            if (block->designation[x][y].bits.dig || dig_jobs.contains(pos))
+                ++count;
+        }
+    }
+    return count;
 }
 
-static void markCurLevelDampDig(color_ostream &out) {
-    mark_cur_level(out, damp_config);
+static void toggleCurLevelWarmDig(color_ostream &out) {
+    toggle_cur_level(out, warm_config);
+}
+
+static void toggleCurLevelDampDig(color_ostream &out) {
+    toggle_cur_level(out, damp_config);
 }
 
 static void update_tile_mask(const df::coord & pos, std::unordered_map<df::coord, df::job *> & dig_jobs) {
@@ -2105,13 +2135,20 @@ static int registerWarmDampBox(lua_State *L) {
     return 0;
 }
 
+// re-composits layers using screentexpos layers unused for walls
 static void bump_layers(const Screen::Pen &pen, int x, int y) {
-    Screen::Pen signpost_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+    Screen::Pen vehicle_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_vehicle);
+    Screen::Pen vermin_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_vermin);
+    Screen::Pen projectile_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_projectile);
     Screen::Pen desig_pen = Screen::readTile(x, y, true, &df::graphic_viewportst::screentexpos_designation);
-    if (signpost_pen.valid())
-        Screen::paintTile(signpost_pen, x, y, true, &df::graphic_viewportst::screentexpos_background_two);
+    if (vehicle_pen.valid())
+        Screen::paintTile(vehicle_pen, x, y, true, &df::graphic_viewportst::screentexpos_building_one);
+    if (vermin_pen.valid())
+        Screen::paintTile(vermin_pen, x, y, true, &df::graphic_viewportst::screentexpos_vehicle);
+    if (projectile_pen.valid())
+        Screen::paintTile(projectile_pen, x, y, true, &df::graphic_viewportst::screentexpos_vermin);
     if (desig_pen.valid())
-        Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_signpost);
+        Screen::paintTile(desig_pen, x, y, true, &df::graphic_viewportst::screentexpos_projectile);
     Screen::paintTile(pen, x, y, true, &df::graphic_viewportst::screentexpos_designation);
 }
 
@@ -2119,8 +2156,8 @@ static bool blink(int delay) {
     return (Core::getInstance().p->getTickCount()/delay) % 2 == 0;
 }
 
-static void paintScreenWarmDamp(bool show_hidden = false) {
-    TRACE(log).print("entering paintScreenDampWarm\n");
+static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = false) {
+    TRACE(log).print("entering paintScreenDampWarm aquifer_mode=%d, show_damp=%d\n", aquifer_mode, show_damp);
 
     static Screen::Pen empty_pen;
 
@@ -2131,10 +2168,10 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
     warm_pen.tile = warm_texpos;
     damp_pen.tile = damp_texpos;
 
-    long warm_dig_texpos = Textures::getTexposByHandle(textures[1]);
+    long warm_dig_texpos = Textures::getTexposByHandle(textures[3]);
     long damp_dig_texpos = Textures::getTexposByHandle(textures[2]);
-    long light_aq_texpos = Textures::getTexposByHandle(textures[7]);
-    long heavy_aq_texpos = Textures::getTexposByHandle(textures[8]);
+    long light_aq_texpos = Textures::getTexposByHandle(textures[0]);
+    long heavy_aq_texpos = Textures::getTexposByHandle(textures[1]);
     Screen::Pen warm_dig_pen, damp_dig_pen, light_aq_pen, heavy_aq_pen;
     warm_dig_pen.tile = warm_dig_texpos;
     damp_dig_pen.tile = damp_dig_texpos;
@@ -2150,7 +2187,7 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
             if (!block)
                 continue;
 
-            if (Screen::inGraphicsMode()) {
+            if (!aquifer_mode && Screen::inGraphicsMode()) {
                 if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
                     if (warm_mask->getassignment(pos))
                         bump_layers(warm_dig_pen, x, y);
@@ -2161,18 +2198,18 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
                 }
             }
 
-            if (!show_hidden && !Maps::isTileVisible(pos)) {
+            if (!aquifer_mode && !Maps::isTileVisible(pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }
 
             if (Screen::inGraphicsMode()) {
                 Screen::Pen *pen = NULL;
-                if (is_warm(pos) && is_wall(pos)) {
+                if (!aquifer_mode && is_warm(pos) && is_wall(pos)) {
                     pen = &warm_pen;
                 } else if (is_aquifer(pos)) {
                     pen = is_heavy_aquifer(pos, block) ? &heavy_aq_pen : &light_aq_pen;
-                } else if (is_wall(pos) && is_damp(pos)) {
+                } else if ((!aquifer_mode || show_damp) && is_wall(pos) && is_damp(pos)) {
                     pen = &damp_pen;
                 }
                 if (pen) {
@@ -2199,25 +2236,31 @@ static void paintScreenWarmDamp(bool show_hidden = false) {
 
                 int color = COLOR_BLACK;
 
-                if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
-                    if (warm_mask->getassignment(pos) && blink(500)) {
-                        color = COLOR_LIGHTRED;
-                        auto damp_mask = World::getPersistentTilemask(damp_config, block);
-                        if (damp_mask && damp_mask->getassignment(pos) && blink(2000))
-                            color = COLOR_BLUE;
+                if (!aquifer_mode) {
+                    if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
+                        if (warm_mask->getassignment(pos) && blink(500)) {
+                            color = COLOR_LIGHTRED;
+                            auto damp_mask = World::getPersistentTilemask(damp_config, block);
+                            if (damp_mask && damp_mask->getassignment(pos) && blink(2000))
+                                color = COLOR_BLUE;
+                        }
+                    }
+                    if (color == COLOR_BLACK) {
+                        if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
+                            if (damp_mask->getassignment(pos) && blink(500))
+                                color = COLOR_BLUE;
+                        }
+                    }
+                    if (color == COLOR_BLACK && is_warm(pos)) {
+                        color = COLOR_RED;
                     }
                 }
-                if (color == COLOR_BLACK) {
-                    if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
-                        if (damp_mask->getassignment(pos) && blink(500))
-                            color = COLOR_BLUE;
-                    }
-                }
-                if (color == COLOR_BLACK && is_warm(pos)) {
-                    color = COLOR_RED;
-                }
+
                 if (color == COLOR_BLACK && is_damp(pos)) {
-                    if (!is_aquifer(pos, des) || blink(is_heavy_aquifer(pos, block) ? 500 : 2000))
+                    if (is_aquifer(pos, des)) {
+                        if (blink(is_heavy_aquifer(pos, block) ? 500 : 2000))
+                            color = COLOR_LIGHTBLUE;
+                    } else if (!aquifer_mode || show_damp)
                         color = COLOR_LIGHTBLUE;
                 }
 
@@ -2459,14 +2502,17 @@ DFHACK_PLUGIN_LUA_COMMANDS{
 };
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(getWarmConfigKey),
+    DFHACK_LUA_FUNCTION(getDampConfigKey),
     DFHACK_LUA_FUNCTION(setWarmPaintEnabled),
     DFHACK_LUA_FUNCTION(getWarmPaintEnabled),
     DFHACK_LUA_FUNCTION(setDampPaintEnabled),
     DFHACK_LUA_FUNCTION(getDampPaintEnabled),
     DFHACK_LUA_FUNCTION(addTileWarmDig),
     DFHACK_LUA_FUNCTION(addTileDampDig),
-    DFHACK_LUA_FUNCTION(markCurLevelWarmDig),
-    DFHACK_LUA_FUNCTION(markCurLevelDampDig),
+    DFHACK_LUA_FUNCTION(getCurLevelDesignatedCount),
+    DFHACK_LUA_FUNCTION(toggleCurLevelWarmDig),
+    DFHACK_LUA_FUNCTION(toggleCurLevelDampDig),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
     DFHACK_LUA_FUNCTION(paintScreenCarve),
     DFHACK_LUA_END

@@ -13,5 +13,6 @@ enable overlay
 
 # aliases
 alias add autounsuspend suspendmanager
+alias add drain-aquifer aquifer drain --all
 alias add gui/dig gui/design
 alias add version help

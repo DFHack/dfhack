@@ -162,9 +162,10 @@ bool Units::isResident(df::unit *unit, bool include_insane){
         return false;
 
     return isOwnCiv(unit) &&
+        !isVisiting(unit) &&
+        !isForest(unit) &&
         !isAnimal(unit) &&
-        !isVisitor(unit) &&
-        !isCitizen(unit, true);
+        !isOwnGroup(unit);
 }
 
 bool Units::isFortControlled(df::unit *unit)
@@ -1317,17 +1318,6 @@ string Units::getRaceChildName(df::unit* unit)
     return getRaceChildNameById(unit->race);
 }
 
-static string get_caste_name(df::unit* unit) {
-    int32_t id = unit->race;
-    if (id < 0 || (size_t)id >= world->raws.creatures.all.size())
-        return "";
-    df::creature_raw* raw = world->raws.creatures.all[id];
-    int16_t caste = unit->caste;
-    if (!raw || caste < 0 || (size_t)caste >= raw->caste.size())
-        return "";
-    return raw->caste[caste]->caste_name[0];
-}
-
 // must subtract 1 from animal_training_level value to index this array
 static const char * training_quality_table[] = {
     "trained",     // Trained
@@ -1359,23 +1349,18 @@ static const char * getTameTag(df::unit *unit) {
 }
 
 string Units::getReadableName(df::unit* unit) {
-    string race_name = isBaby(unit) ? getRaceBabyName(unit) :
-        (isChild(unit) ? getRaceChildName(unit) : get_caste_name(unit));
-    if (race_name.empty())
-        race_name = getRaceReadableName(unit);
-    if (isHunter(unit))
-        race_name = "hunter " + race_name;
-    if (isWar(unit))
-        race_name = "war " + race_name;
-    if (unit->flags4.bits.agitated_wilderness_creature)
-        race_name = "agitated " + race_name;
+    string base_name = getProfessionName(unit);
     string name = Translation::TranslateName(getVisibleName(unit), false);
     if (name.empty()) {
-        name = race_name;
+        name = base_name;
     } else {
         name += ", ";
-        name += race_name;
+        name += base_name;
     }
+    if (isGhost(unit)) {
+        name = "Ghostly " + name;
+    }
+
     for (auto unit_syndrome : unit->syndromes.active) {
         auto syndrome = df::syndrome::find(unit_syndrome->type);
         if (!syndrome)
@@ -1389,6 +1374,14 @@ string Units::getReadableName(df::unit* unit) {
             break;
         }
     }
+
+    if (unit->enemy.undead) {
+        if (unit->enemy.undead->undead_name.empty())
+            name = name + " Corpse";
+        else
+            name = name + " " + unit->enemy.undead->undead_name;
+    }
+
     if (isTame(unit)) {
         name += " (";
         name += getTameTag(unit);
@@ -1993,7 +1986,11 @@ std::string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plu
             return prof;
     }
 
-    return getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    std::string cpn = getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    if (unit->flags4.bits.agitated_wilderness_creature)
+        cpn = "Agitated " + cpn;
+
+    return cpn;
 }
 
 std::string Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)

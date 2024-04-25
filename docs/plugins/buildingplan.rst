@@ -208,3 +208,15 @@ Lever linking
 When linking levers, `buildingplan` extends the vanilla panel by offering
 control over which mechanisms are chosen for installation at the lever and at
 the target. Heat safety filters are provided for convenience.
+
+Mechanism unlinking
+-------------------
+
+When selecting a building linked with mechanisms, buttons to ``Unlink`` appear by
+each linked building on the ``Show linked buildings`` tab. This will undo the
+link without having to deconstruct and rebuild the target building. The unlinked
+mechanisms will remain a part of their respective buildings (providing value as
+usual) unless freed via the ``Free`` buttons on the ``Show items`` tab on both
+buildings. This will remove the mechanism from the building and drop it onto the
+ground, allowing it to be reused elsewhere. There is an option to auto-free
+mechanisms when unlinking to perform this step automatically.

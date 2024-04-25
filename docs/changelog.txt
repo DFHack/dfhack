@@ -54,29 +54,76 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
-- `dig`: damp and warm tile icons now show through the designation selection box when in graphics mode
-- `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
-- `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
-- `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
 
 ## Fixes
-- fix behavior of Linux Steam launcher on systems that don't support the inotify API
 
 ## Misc Improvements
-- aquifer tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
-- pump stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
 
 ## Documentation
 
 ## API
-- ``Units::citizensRange``: c++-20 range for citizen units
-- ``Units::forCitizens``: iterator callback function for citizen units
-- ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
 
 ## Lua
 
 ## Removed
+
+# 50.13-r1.1
+
+## Documentation
+- Update docs on release procedures and symbol generation
+
+# 50.13-r1
+
+## Fixes
+- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: act on selected unit only if a unit is selected
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
+
+## Misc Improvements
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+
+## Documentation
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
+
+# 50.12-r3
+
+## New Tools
+- `aquifer`: commandline tool for creating, draining, and modifying aquifers
+
+## New Features
+- `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
+- `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
+- `dig`: damp and warm tile icons now remain visible when included in the designation selection box (graphics mode)
+- `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
+- `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
+- `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
+- `blueprint`: designations and active dig jobs are now captured in generated blueprints
+- `blueprint`: warm/damp dig markers are captured in generated blueprints
+
+## Fixes
+- fix behavior of Linux Steam launcher on systems that don't support the inotify API
+- fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
+- `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
+- `suspendmanager`: prevent cancellation spam when an item is preventing a building from being completed
+- `stonesense`: fix a crash with buildings made of unusual materials (such as campsite tents made out of organic "walls")
+
+## Misc Improvements
+- `tailor`: allow turning off automatic confiscation of tattered clothing
+- aquifer_tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
+- pump_stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
+- `keybinding`: you can now assign keybindings to mouse buttons (if your mouse has more than the three buttons already used by DF)
+
+## Documentation
+- Lua API: documented existing ``enum:next_item(index)`` function
+
+## API
+- ``Units::citizensRange``: c++-20 std::range filter for citizen units
+- ``Units::forCitizens``: iterator callback function for citizen units
+- ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
+- ``Buildings::checkFreeTiles``: now takes a ``allow_flow`` parameter to control whether water- or magma-filled tiles are valid
+
+## Lua
+- ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)
 
 # 50.12-r2.1
 

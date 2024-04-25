@@ -3,8 +3,14 @@ name: Lint
 on:
   workflow_call:
     inputs:
+      dfhack_repo:
+        type: string
+        default: DFHack/dfhack
       dfhack_ref:
         type: string
+      scripts_repo:
+        type: string
+        default: DFHack/scripts
       scripts_ref:
         type: string
 
@@ -17,18 +23,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install lua5.3
     - name: Clone DFHack
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
+        repository: ${{ inputs.dfhack_repo }}
         ref: ${{ inputs.dfhack_ref }}
     - name: Get scripts submodule ref
       if: '!inputs.scripts_ref'
       id: scriptssubmoduleref
       run: echo ref=$(git submodule | fgrep scripts | cut -c2-41) >> $GITHUB_OUTPUT
     - name: Clone scripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.scripts_ref && github.repository || 'DFHack/scripts' }}
+        repository: ${{ inputs.scripts_repo }}
         ref: ${{ inputs.scripts_ref || steps.scriptssubmoduleref.outputs.ref }}
         path: scripts
     - name: Check whitespace

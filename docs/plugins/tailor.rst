@@ -15,6 +15,9 @@ manufacture some more. ``tailor`` will intelligently create orders using raw
 materials that you have on hand in the fort. For example, if you have lots of
 silk, but no cloth, then ``tailor`` will order only silk clothing to be made.
 
+If you are wondering whether you should enable `autoclothing` instead, see the
+head-to-head comparsion in the `autoclothing` docs.
+
 Usage
 -----
 
@@ -24,17 +27,26 @@ Usage
     tailor [status]
     tailor now
     tailor materials <material> [<material> ...]
+    tailor confiscate [true|false]
 
 By default, ``tailor`` will prefer using materials in this order::
 
     silk cloth yarn leather
 
-but you can use the ``tailor materials`` command to restrict which materials
-are used, and in what order. ``tailor`` supports adamantine cloth (using the
-keyword ``adamantine``) but does not use it by default, as most players find
-adamantine too precious to routinely make into cloth. ``tailor`` does not
-support modded "cloth" types which utilize custom reactions to making clothing
-out of those cloth types.
+but you can use the ``tailor materials`` command to restrict which materials are
+used, and in what order. By default, ``tailor`` will "confiscate" (i.e., remove
+ownership and mark for dumping) equipped tattered clothing once replacements are
+available. This can be changed using ``tailor confiscate``. The default behavior
+minimizes the time you dwarves keep wearing worn-out clothing, minimizing the
+number of negative thoughts incurred by this. However, it will also result in
+tattered clothing being brought to your "garbage" zones and forbidden, which may
+be undesirable.
+
+``tailor`` supports adamantine cloth (using the ``materials`` keyword
+``adamantine``) but does not use it by default, as most players find adamantine
+too precious to routinely make into cloth. ``tailor`` does not support modded
+"cloth" types which utilize custom reactions for making clothing out of those
+cloth types.
 
 Examples
 --------
@@ -51,11 +63,9 @@ Examples
     silk, cloth, and yarn, preferred in that order. This saves leather for
     other uses, like making armor.
 
-Note
-----
+Caveats
+-------
 
-The reason for the limitation on modded cloth-like materials is
-because custom reactions do not support the in-game mechanic
-which allows a manager order to specify a different size for clothing items.
-This mechanic only works for reactions that use the default make-clothing or
-make-armor reactions, and is a limitation of the game itself.
+Modded cloth-like materials are not supported because custom reactions do not
+support being sized for non-dwarf races. The game only supports sizing the
+built-in default make-clothing or make-armor reactions.

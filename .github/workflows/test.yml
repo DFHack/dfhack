@@ -3,10 +3,19 @@ name: Test
 on:
   workflow_call:
     inputs:
+      dfhack_repo:
+        type: string
+        default: DFHack/dfhack
       dfhack_ref:
         type: string
+      scripts_repo:
+        type: string
+        default: DFHack/scripts
       scripts_ref:
         type: string
+      structures_repo:
+        type: string
+        default: DFHack/df-structures
       structures_ref:
         type: string
 
@@ -15,8 +24,11 @@ jobs:
     name: Windows MSVC
     uses: ./.github/workflows/build-windows.yml
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-msvc
       cache-id: test
@@ -28,8 +40,11 @@ jobs:
     name: Linux gcc-${{ matrix.gcc }}
     uses: ./.github/workflows/build-linux.yml
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: test-gcc-${{ matrix.gcc }}
       cache-id: test
@@ -87,16 +102,16 @@ jobs:
           libsdl2-2.0-0 \
           libsdl2-image-2.0-0
     - name: Clone DFHack
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.dfhack_ref && format('{0}/dfhack', github.repository_owner) || 'DFHack/dfhack' }}
+        repository: ${{ inputs.dfhack_repo }}
         ref: ${{ inputs.dfhack_ref }}
     - name: Detect DF version
       shell: bash
       run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >> $GITHUB_ENV
     - name: Fetch DF cache
       id: restore-df
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: ${{ env.DF_FOLDER }}
         key: df-${{ matrix.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
@@ -105,7 +120,7 @@ jobs:
       run: sh ci/download-df.sh ${{ env.DF_FOLDER }} ${{ matrix.os }} ${{ env.DF_VERSION }}
     - name: Save DF cache
       if: steps.restore-df.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: ${{ env.DF_FOLDER }}
         key: df-${{ matrix.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
@@ -117,7 +132,7 @@ jobs:
         cd data/dfhack-config/init
         for fname in *.init; do touch ../../../${{ env.DF_FOLDER }}/dfhack-config/init/$fname; done
     - name: Download DFHack
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: test-${{ matrix.compiler }}
     - name: Install DFHack
@@ -135,7 +150,7 @@ jobs:
     - name: Check RPC interface
       run: python ci/check-rpc.py "${{ env.DF_FOLDER }}/dfhack-rpc.txt"
     - name: Upload test artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       continue-on-error: true
       with:

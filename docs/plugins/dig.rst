@@ -230,6 +230,9 @@ dig protection (e.g. you have run into a light aquifer and want to continue
 digging), the toolbar button gives you a shortcut to add the warm or damp dig
 marker to all designated tiles on the current z-level.
 
+Click on the new mining toolbar icon or hit :kbd:`Ctrl`:kbd:`D` to bring up the
+configuration submenu.
+
 warmdamp
 ~~~~~~~~
 

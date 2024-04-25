@@ -110,6 +110,12 @@ existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
 
+.. _drain-aquifer:
+
+drain-aquifer
+=============
+Replaced by `aquifer` and `gui/aquifer`.
+
 .. _embark-tools:
 
 embark-tools

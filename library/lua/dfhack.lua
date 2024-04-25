@@ -6,7 +6,12 @@
 -- preserved as a common denominator for all modules.
 -- This file uses it instead of the new default one.
 
+---@class dfhack
+---@field BASE_G _G Original Lua global environment
+---@field is_core_context boolean
+---@field is_interactive fun(): boolean
 local dfhack = dfhack
+
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
@@ -57,11 +62,15 @@ end
 -- User-changeable options
 
 dfhack.HIDE_CONSOLE_ON_STARTUP = true
+---@nodiscard
+---@return boolean
 function dfhack.getHideConsoleOnStartup()
     return dfhack.HIDE_CONSOLE_ON_STARTUP
 end
 
 dfhack.HIDE_ARMOK_TOOLS = false
+---@nodiscard
+---@return boolean
 function dfhack.getHideArmokTools()
     return dfhack.HIDE_ARMOK_TOOLS
 end
@@ -71,10 +80,17 @@ end
 safecall = dfhack.safecall
 curry = dfhack.curry
 
+---@generic T
+---@param f fun(...): T
+---@param ... any
+---@return boolean success
+---@return T|string ...
 function dfhack.pcall(f, ...)
     return xpcall(f, dfhack.onerror, ...)
 end
 
+---@param msg string
+---@param level? integer
 function qerror(msg, level)
     local name = dfhack.current_script_name()
     if name and not tostring(msg):match(name) then
@@ -83,17 +99,34 @@ function qerror(msg, level)
     dfhack.error(msg, (level or 1) + 1, false)
 end
 
-function dfhack.with_finalize(...)
-    return dfhack.call_with_finalizer(0,true,...)
-end
-function dfhack.with_onerror(...)
-    return dfhack.call_with_finalizer(0,false,...)
+---@generic T
+---@param cleanup_fn function
+---@param fn fun(...): T
+---@param ... any
+---@return T
+function dfhack.with_finalize(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,true,cleanup_fn,fn,...)
 end
 
+---@generic T
+---@param cleanup_fn function
+---@param fn fun(...): T
+---@param ... any
+---@return T
+function dfhack.with_onerror(cleanup_fn,fn,...)
+    return dfhack.call_with_finalizer(0,false,cleanup_fn,fn,...)
+end
+
+---@param obj DFObject
 local function call_delete(obj)
     if obj then obj:delete() end
 end
 
+---@generic T
+---@param obj DFObject
+---@param fn fun(...):T
+---@param ... any
+---@return T ...
 function dfhack.with_temp_object(obj,fn,...)
     return dfhack.call_with_finalizer(1,true,call_delete,obj,fn,obj,...)
 end
@@ -113,6 +146,10 @@ local function find_required_module_arg()
     end
 end
 
+---@nodiscard
+---@param module string
+---@param env? table|metatable
+---@return table pkg
 function mkmodule(module,env)
     -- Verify that the module name is correct
     local _, rq_modname = find_required_module_arg()
@@ -140,6 +177,7 @@ function mkmodule(module,env)
     return pkg
 end
 
+---@param module string
 function reload(module)
     if type(package.loaded[module]) ~= 'table' then
         error("Module not loaded: "..module)
@@ -163,12 +201,20 @@ end
 
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
-function defclass(...)
-    return require('class').defclass(...)
+---@generic T: table
+---@param class? T
+---@param parent? table
+---@return table|T
+function defclass(class,parent)
+    return require('class').defclass(class,parent)
 end
 
-function mkinstance(...)
-    return require('class').mkinstance(...)
+---@generic T: table
+---@param class table
+---@param table? T
+---@return table|T
+function mkinstance(class,table)
+    return require('class').mkinstance(class,table)
 end
 
 -- Misc functions
@@ -212,10 +258,12 @@ local function print_element(k, v)
     dfhack.println(string.format("%-23s\t = %s", tostring(k), tostring(v)))
 end
 
+---@param table table
 function printall(table)
     safe_iterate(table, pairs, print_element)
 end
 
+---@param table table
 function printall_ipairs(table)
     safe_iterate(table, ipairs, print_element)
 end
@@ -327,12 +375,19 @@ function printall_recurse(value, seen)
     do_print_recurse(dfhack.println, value, seen, 0)
 end
 
+---@generic T
+---@param table `T`
+---@return T
 function copyall(table)
     local rv = {}
     for k,v in pairs(table) do rv[k] = v end
     return rv
 end
 
+---@param pos coord
+---@return number? x
+---@return number? y
+---@return number? z
 function pos2xyz(pos)
     if pos then
         local x = pos.x
@@ -342,6 +397,11 @@ function pos2xyz(pos)
     end
 end
 
+---@nodiscard
+---@param x number
+---@param y number
+---@param z number
+---@return coord
 function xyz2pos(x,y,z)
     if x then
         return {x=x,y=y,z=z}
@@ -350,14 +410,28 @@ function xyz2pos(x,y,z)
     end
 end
 
+---@nodiscard
+---@param a coord
+---@param b coord
+---@return boolean
 function same_xyz(a,b)
     return a and b and a.x == b.x and a.y == b.y and a.z == b.z
 end
 
+---@nodiscard
+---@param path coord_path
+---@param i number
+---@return number x
+---@return number y
+---@return number z
 function get_path_xyz(path,i)
     return path.x[i], path.y[i], path.z[i]
 end
 
+---@nodiscard
+---@param pos coord|coord2d
+---@return number? x
+---@return number? y
 function pos2xy(pos)
     if pos then
         local x = pos.x
@@ -367,6 +441,10 @@ function pos2xy(pos)
     end
 end
 
+---@nodiscard
+---@param x number
+---@param y number
+---@return coord2d
 function xy2pos(x,y)
     if x then
         return {x=x,y=y}
@@ -375,21 +453,38 @@ function xy2pos(x,y)
     end
 end
 
+---@nodiscard
+---@param a coord|coord2d
+---@param b coord|coord2d
+---@return boolean
 function same_xy(a,b)
     return a and b and a.x == b.x and a.y == b.y
 end
 
+---@nodiscard
+---@param path coord_path|coord2d_path
+---@param i number
+---@return integer x
+---@return integer y
 function get_path_xy(path,i)
     return path.x[i], path.y[i]
 end
 
+-- Walks a sequence of dereferences, which may be represented by numbers or
+-- strings. Returns nil if any of obj or indices is nil, or a numeric index is
+-- out of array bounds.
+---@param obj table
+---@param idx number|string
+---@param ... number|string
+---@return any obj
 function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
     end
     if type(idx) == 'number' and
             type(obj) == 'userdata' and -- this check is only relevant for c++
-            (idx < 0 or idx >= #obj) then
+            (idx < 0 or idx >= #obj)
+    then
         return nil
     end
     obj = obj[idx]
@@ -400,6 +495,10 @@ function safe_index(obj,idx,...)
     end
 end
 
+---@param t table
+---@param key integer|string
+---@param default_value? any
+---@return any
 function ensure_key(t, key, default_value)
     if t[key] == nil then
         t[key] = (default_value ~= nil) and default_value or {}
@@ -407,6 +506,10 @@ function ensure_key(t, key, default_value)
     return t[key]
 end
 
+---@param t table
+---@param key integer|string
+---@param ... integer|string
+---@return table
 function ensure_keys(t, key, ...)
     t = ensure_key(t, key)
     if select('#', ...) > 0 then
@@ -418,11 +521,19 @@ end
 -- String class extentions
 
 -- prefix is a literal string, not a pattern
+---@nodiscard
+---@param self string
+---@param prefix string
+---@return boolean
 function string:startswith(prefix)
     return self:sub(1, #prefix) == prefix
 end
 
 -- suffix is a literal string, not a pattern
+---@nodiscrd
+---@param self string
+---@param suffix string
+---@return boolean
 function string:endswith(suffix)
     return self:sub(-#suffix) == suffix or #suffix == 0
 end
@@ -433,6 +544,11 @@ end
 -- as a single delimiter, e.g. to avoid getting empty string elements, pass a
 -- pattern like ' +'. Be aware that passing patterns that match empty strings
 -- (like ' *') will result in improper string splits.
+---@nodiscard
+---@param self string
+---@param delimiter? string
+---@param plain? boolean
+---@return string[]
 function string:split(delimiter, plain)
     delimiter = delimiter or ' '
     local result = {}
@@ -451,6 +567,9 @@ end
 
 -- Removes spaces (i.e. everything that matches '%s') from the start and end of
 -- a string. Spaces between non-space characters are left untouched.
+---@nodiscard
+---@param self string
+---@return string
 function string:trim()
     local _, _, content = self:find('^%s*(.-)%s*$')
     return content
@@ -460,6 +579,10 @@ end
 -- Lines are split at space-separated word boundaries. Any existing newlines are
 -- kept in place. If a single word is longer than width, it is split over
 -- multiple lines. If width is not specified, 72 is used.
+---@nodiscard
+---@param self string
+---@param width number
+---@return string
 function string:wrap(width)
     width = width or 72
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
@@ -497,43 +620,71 @@ end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
 local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
+---@nodiscard
+---@param self string
+---@return string
 function string:escape_pattern()
     return self:gsub(regex_chars_pattern, '%%%1')
 end
 
 -- String conversions
 
+---@nodiscard
+---@param self self
+---@return string
 function dfhack.matinfo:__tostring()
     return "<material "..self.type..":"..self.index.." "..self:getToken()..">"
 end
 
 dfhack.random.__index = dfhack.random
 
+---@nodiscard
+---@param self self
+---@return string
 function dfhack.random:__tostring()
     return "<random generator>"
 end
 
 dfhack.penarray.__index = dfhack.penarray
 
+---@nodiscard
+---@return string
 function dfhack.penarray.__tostring()
     return "<penarray>"
 end
 
+---@nodiscard
+---@return number x
+---@return number y
+---@return number z
 function dfhack.maps.getSize()
     local map = df.global.world.map
     return map.x_count_block, map.y_count_block, map.z_count_block
 end
 
+---@nodiscard
+---@return number x
+---@return number y
+---@return number z
 function dfhack.maps.getTileSize()
     local map = df.global.world.map
     return map.x_count, map.y_count, map.z_count
 end
 
+---@param bld building
+---@return number width
+---@return number height
+---@return number centerx
+---@return number centery
 function dfhack.buildings.getSize(bld)
     local x, y = bld.x1, bld.y1
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
 end
 
+---@nodiscard
+---@param scr_type _viewscreen
+---@param n? number
+---@return viewscreen|nil
 function dfhack.gui.getViewscreenByType(scr_type, n)
     -- translated from modules/Gui.cpp
     if n == nil then
@@ -555,33 +706,54 @@ function dfhack.gui.getViewscreenByType(scr_type, n)
     end
 end
 
+---@nodiscard
+---@return world_site|nil
 function dfhack.world.getCurrentSite()
     return df.world_site.find(df.global.plotinfo.site_id)
 end
 
+---@nodiscard
+---@param which string
+---@param key string
+---@param default? any
+---@return any
 local function persistent_getData(which, key, default)
     local serialized = dfhack.persistent['get'..which..'DataString'](key)
     if not serialized then return default end
     return require('json').decode(serialized) or default
 end
 
-function persistent_saveData(which, key, data)
+---@param which string
+---@param key string
+---@param data any
+local function persistent_saveData(which, key, data)
     local serialized = require('json').encode(data)
     dfhack.persistent['save'..which..'DataString'](key, serialized)
 end
 
+---@nodiscard
+---@param key string
+---@param default? any
+---@return any
 function dfhack.persistent.getSiteData(key, default)
     return persistent_getData('Site', key, default)
 end
 
+---@param key string
+---@param data any
 function dfhack.persistent.saveSiteData(key, data)
     persistent_saveData('Site', key, data)
 end
 
+---@param key string
+---@param default? any
+---@return any
 function dfhack.persistent.getWorldData(key, default)
     return persistent_getData('World', key, default)
 end
 
+---@param key string
+---@param data any
 function dfhack.persistent.saveWorldData(key, data)
     persistent_saveData('World', key, data)
 end
@@ -590,6 +762,11 @@ end
 
 local print_banner = true
 
+---@param prompt? string
+---@param hfile? string
+---@param env? table|metatable
+---@return boolean|nil
+---@return string|nil
 function dfhack.interpreter(prompt,hfile,env)
     if not dfhack.is_interactive() then
         return nil, 'not interactive'

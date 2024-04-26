@@ -42,6 +42,7 @@ function parse_commandline(opts, pos_1, pos_2, args)
             opts.forced_plant = find_grass_idx(plant_str)
         end
     elseif opts.force then
+        local grasses = df.global.world.raws.plants.grasses
         if #grasses == 0 then
             return -1 --no grass raws, world not loaded
         else

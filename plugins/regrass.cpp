@@ -79,7 +79,8 @@ static bool valid_tile(color_ostream &out, regrass_options options, df::map_bloc
         DEBUG(log, out).print("Valid tile: Grass/Shrub/Sapling\n");
         return true;
     }
-    else if (tt == tiletype::TreeTrunkPillar)
+    else if (tt == tiletype::TreeTrunkPillar || tt == tiletype::TreeTrunkInterior ||
+        (tt >= tiletype::TreeTrunkThickN && tt <= tiletype::TreeTrunkThickSE))
     {   // Trees can have grass for ground level tiles
         auto p = df::coord(block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
         auto plant = Maps::getPlantAtTile(p);
@@ -181,7 +182,7 @@ static vector<int32_t> grasses_for_tile(color_ostream &out, df::map_block *block
 
     if (block->occupancy[x][y].bits.no_grow)
     {
-        DEBUG(log, out).print("Skipping grass collection: no_grow.\n");
+        DEBUG(log, out).print("Skipping grass collection: no_grow\n");
         return grasses;
     }
 
@@ -341,7 +342,7 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
     if (mat == tiletype_material::GRASS_LIGHT ||
         mat == tiletype_material::GRASS_DARK ||
         mat == tiletype_material::PLANT ||
-        tt == tiletype::TreeTrunkPillar)
+        mat == tiletype_material::TREE)
     {   // Already appropriate tile
         DEBUG(log, out).print("Tiletype no change.\n");
         return 1;

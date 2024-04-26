@@ -16,13 +16,13 @@ Usage
 
     regrass [<pos> [<pos>]] [<options>]
 
-Regrasses the entire map by default, on compatible tiles in map blocks that
-had grass at some point. Supplying a ``pos`` argument can limit operation to
-a single tile. Supplying both can operate on a cuboid. ``pos`` should normally
-be in the form ``0,0,0``, without spaces. The string ``here`` can be used in
-place of ``pos`` to use the coords of the keyboard cursor, if active. The
-``--block`` and ``--zlevel`` options use the ``pos`` values differently
-than normal.
+Regrasses the entire map by default, restricted to compatible tiles in map
+blocks that had grass at some point. Supplying a ``pos`` argument can limit
+operation to a single tile. Supplying both can operate on a cuboid. ``pos``
+should normally be in the form ``0,0,0``, without spaces. The string ``here``
+can be used in place of numeric coordinates to use the position of the keyboard
+cursor, if active. The ``--block`` and ``--zlevel`` options use the ``pos``
+values differently.
 
 Options
 -------
@@ -38,12 +38,16 @@ Options
     Adds biome-compatible grass types that were not originally present in the
     map block. Allows regrass to work in blocks that never had any grass to
     begin with. Will still fail in incompatible biomes.
-``-f <grass_id>``, ``--force <grass_id>``
-    Force a grass type on tiles with no compatible grass types. ``grass_id`` is
-    not case-sensitive, but must be enclosed in quotes if spaces exist. If an
-    empty string is used via ``""``, then a single random grass type will be
-    selected from the world's raws. The ``--new`` option takes precidence for
-    compatible biomes, otherwise such tiles will be forced instead.
+``-f``, ``--force``
+    Force a grass type on tiles with no compatible grass types. The ``--new``
+    option takes precidence for compatible biomes, otherwise such tiles will be
+    forced instead. By default, a single random grass type is selected from
+    the world's raws. The ``--plant`` option allows a specific grass type to be
+    specified.
+``-p <grass_id>``, ``--plant <grass_id>``
+    Specify a grass type for the ``--force`` option. ``grass_id`` is not
+    case-sensitive, but must be enclosed in quotes if spaces exist. Providing
+    an empty string with ``""`` will print all available IDs and skip regrass.
 ``-a``, ``--ashes``
     Regrass tiles that've been burnt to ash.
 ``-d``, ``--buildings``
@@ -58,7 +62,7 @@ Options
     stone, obsidian, and ore.
 ``-b``, ``--block``
     Only regrass the map block that contains the first ``pos`` argument.
-    ``devel/block-borders`` can be used to visualize map blocks.
+    `devel/block-borders` can be used to visualize map blocks.
 ``-z``, ``--zlevel``
     Regrass entire z-levels. Will do all z-levels between ``pos`` arguments if
     both given, z-level of first ``pos`` if one given, else z-level of
@@ -82,13 +86,15 @@ Examples
     Regrass the block that contains the given coord; converting ashes, muddy
     stone, and tiles under buildings; adding all compatible grass types, and
     filling each grass type to max.
-``regrass -f ""``
+``regrass -f``
     Regrass the entire map, refilling existing and depleted grass, else filling
     with a randomly selected grass type if non-existent.
-``regrass -z -f underlichen``
+``regrass -p ""``
+    Print all valid grass raw ids. Don't regrass.
+``regrass -zf -p underlichen``
     Regrass the current z-level, refilling existing and depleted grass, else
     filling with ``underlichen`` if non-existent.
-``regrass here -bn -f "dog's tooth grass"``
+``regrass here -bnf -p "dog's tooth grass"``
     Regrass the selected block, adding all compatible grass types to block data,
     ``dog's tooth grass`` if no compatible types exist. Refill existing grass
     on each tile, else select one of the block's types if depleted or

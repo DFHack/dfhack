@@ -8,17 +8,8 @@ local function search_str(s)
 end
 
 local function find_grass_idx(s)
-    local grasses = df.global.world.raws.plants.grasses
-
-    if #grasses == 0 then
-        return -1 --no grass raws, world not loaded
-    elseif s == '' then
-        local rng = dfhack.random.new()
-        return grasses[rng:random(#grasses)].index
-    end
-
     local id_str = search_str(s)
-    for _,grass in ipairs(grasses) do
+    for _,grass in ipairs(df.global.world.raws.plants.grasses) do
         if search_str(grass.id) == id_str then
             return grass.index
         end
@@ -28,6 +19,7 @@ local function find_grass_idx(s)
 end
 
 function parse_commandline(opts, pos_1, pos_2, args)
+    local plant_str
     local positionals = argparse.processArgsGetopt(args,
     {
         {'m', 'max', handler=function() opts.max_grass = true end},
@@ -37,11 +29,26 @@ function parse_commandline(opts, pos_1, pos_2, args)
         {'u', 'mud', handler=function() opts.mud = true end},
         {'b', 'block', handler=function() opts.block = true end},
         {'z', 'zlevel', handler=function() opts.zlevel = true end},
-        {'f', 'force', hasArg=true, handler=function(optarg)
-            opts.force = true
-            opts.forced_plant = find_grass_idx(optarg)
-        end},
+        {'f', 'force', handler=function() opts.force = true end},
+        {'p', 'plant', hasArg=true, handler=function(optarg) plant_str = optarg end},
     })
+
+    if plant_str then
+        if plant_str == '' then --will print all ids
+            opts.forced_plant = -2
+        elseif not opts.force then
+            qerror('Use of --plant without --force!')
+        else
+            opts.forced_plant = find_grass_idx(plant_str)
+        end
+    elseif opts.force then
+        if #grasses == 0 then
+            return -1 --no grass raws, world not loaded
+        else
+            local rng = dfhack.random.new()
+            opts.forced_plant = grasses[rng:random(#grasses)].index
+        end
+    end
 
     if #positionals > 2 then
         qerror('Too many positionals!')

@@ -83,9 +83,9 @@ namespace DFHack
                                     T Y P E S
     ***************************************************************************/
     /**
-        * Function for translating feature index to its name
-        * \ingroup grp_maps
-        */
+     * Function for translating feature index to its name
+     * \ingroup grp_maps
+     */
     extern DFHACK_EXPORT const char * sa_feature(df::feature_type index);
 
     typedef df::coord DFCoord;
@@ -340,9 +340,12 @@ namespace DFHack
         DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
         DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 
-        // Get the plant that owns the tile at the specified position
-        extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z);
-        inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, pos.y, pos.z); }
+        /**
+         * Get the plant that owns the tile at the specified position
+         * If ignore_tree_tiles is true, then only a tree's original sapling tile will return the plant
+         */
+        extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z, bool ignore_tree_tiles = false);
+        inline df::plant *getPlantAtTile(df::coord pos, bool ignore_tree_tiles = false) { return getPlantAtTile(pos.x, pos.y, pos.z, ignore_tree_tiles); }
 
         // Get the biome type at the given region coordinates
         DFHACK_EXPORT df::enums::biome_type::biome_type getBiomeTypeWithRef(int16_t region_x, int16_t region_y, int16_t region_ref_y);

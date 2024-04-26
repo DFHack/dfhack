@@ -2473,7 +2473,7 @@ static int maps_getPlantAtTile(lua_State *L)
         auto pos = CheckCoordXYZ(L, 1, true);
         Lua::PushDFObject(L, Maps::getPlantAtTile(pos, lua_toboolean(L, 4)));
     }
-    
+
     return 1;
 }
 

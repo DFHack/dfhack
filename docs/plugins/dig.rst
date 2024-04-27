@@ -236,7 +236,8 @@ configuration submenu.
 warmdamp
 ~~~~~~~~
 
-The ``dig.warmdamp`` overlay makes a number of tile properties visible:
+The ``dig.warmdamp`` overlay makes a number of tile properties visible when in
+mining mode:
 
 - In ASCII mode, it highlights warm tiles red and damp tiles in light blue. Box
   selection characters and the keyboard cursor will also change color as
@@ -252,3 +253,9 @@ The ``dig.warmdamp`` overlay makes a number of tile properties visible:
   graphics mode, light aquifer tiles have a "two drip" icon and heavy aquifer
   tiles have three drips. In ASCII mode, light aquifer tiles blink slowly in
   blue and heavy aquifer tiles blink faster in blue.
+- The warm/damp/aquifer status will be shown for tiles that are visible from
+  the bottom. For example, if you dig out the layer underneath an aquifer and
+  notice dripping, entering mining mode and looking at the tiles above will
+  show their status, even if the tiles are otherwise unrevealed. This feature
+  was added with the rationale that if the dwarves can see the effects of the
+  tiles above them, the player should be able to as well.

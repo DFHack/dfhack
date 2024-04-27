@@ -66,6 +66,7 @@ Template for new versions:
 - `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
 - `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
 - `createitem`: refactored to use ``Items::createItem()`` API function
+- `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 
 ## Documentation
 

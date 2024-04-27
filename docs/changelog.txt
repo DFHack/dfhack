@@ -69,6 +69,7 @@ Template for new versions:
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 
 ## Documentation
+- Quickfort Blueprint Library: embed demo video for pump stack blueprint
 
 ## API
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)

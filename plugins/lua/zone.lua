@@ -671,6 +671,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=small_pet,
             desc=get_small_pet_desc(raw),
+            dist=self.get_distance(xyz2pos(dfhack.items.getPosition(small_pet))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(small_pet, bld_assignments),

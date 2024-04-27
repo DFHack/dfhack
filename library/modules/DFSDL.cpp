@@ -12,16 +12,18 @@ namespace DFHack {
 }
 
 using namespace DFHack;
+using std::string;
+using std::vector;
 
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
-static const std::vector<std::string> SDL_LIBS {
+static const vector<string> SDL_LIBS {
     "SDL2.dll",
     "SDL.framework/Versions/A/SDL",
     "SDL.framework/SDL",
     "libSDL2-2.0.so.0"
 };
-static const std::vector<std::string> SDL_IMAGE_LIBS {
+static const vector<string> SDL_IMAGE_LIBS {
     "SDL2_image.dll",
     "SDL_image.framework/Versions/A/SDL_image",
     "SDL_image.framework/SDL_image",
@@ -167,7 +169,7 @@ int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const c
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
 }
 
-DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
+DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return "";
     char *text = g_SDL_GetClipboardText();
@@ -176,13 +178,28 @@ DFHACK_EXPORT std::string DFHack::getClipboardTextCp437() {
         if (*c == '\t')
             *c = ' ';
     }
-    std::string textcp437 = UTF2DF(text);
+    string textcp437 = UTF2DF(text);
     DFHack::DFSDL::DFSDL_free(text);
     return textcp437;
 }
 
-DFHACK_EXPORT bool DFHack::setClipboardTextCp437(std::string text) {
+DFHACK_EXPORT bool DFHack::setClipboardTextCp437(string text) {
     if (!g_sdl_handle)
         return false;
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(DF2UTF(text).c_str());
+}
+
+DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
+    if (!g_sdl_handle)
+        return false;
+    vector<string> lines;
+    if (!split_string(&lines, text, "\n"))
+        return false;
+    std::ostringstream str;
+    for (size_t idx = 0; idx < lines.size(); ++idx) {
+        str << DF2UTF(lines[idx]);
+        if (idx < lines.size() - 1)
+            str << "\n";
+    }
+    return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
 }

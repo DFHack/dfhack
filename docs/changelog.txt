@@ -70,6 +70,7 @@ Template for new versions:
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
 
 ## Lua
+- ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
 
 ## Removed
 

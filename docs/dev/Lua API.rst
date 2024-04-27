@@ -2090,11 +2090,9 @@ Maps module
 
   Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
 
-* ``dfhack.maps.getPlantAtTile(pos[,ignore_tree_tiles])``, or ``getPlantAtTile(x,y,z[,ignore_tree_tiles])``
+* ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 
   Returns the plant struct that owns the tile at the specified position.
-  If ``ignore_tree_tiles`` is *true*, only the original sapling tile of a
-  tree will return the plant.
 
 * ``dfhack.maps.getWalkableGroup(pos)``
 

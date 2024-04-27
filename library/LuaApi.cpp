@@ -2462,18 +2462,8 @@ static int maps_getTileBiomeRgn(lua_State *L)
 
 static int maps_getPlantAtTile(lua_State *L)
 {
-    if (lua_isboolean(L, 2))
-    {
-        df::coord pos;
-        Lua::CheckDFAssign(L, &pos, 1);
-        Lua::PushDFObject(L, Maps::getPlantAtTile(pos, lua_toboolean(L, 2)));
-    }
-    else
-    {
-        auto pos = CheckCoordXYZ(L, 1, true);
-        Lua::PushDFObject(L, Maps::getPlantAtTile(pos, lua_toboolean(L, 4)));
-    }
-
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getPlantAtTile(pos));
     return 1;
 }
 

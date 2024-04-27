@@ -61,7 +61,6 @@ Template for new versions:
 - `regrass`: Can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
 - `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
 - `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
-- ``Maps::getPlantAtTile``: bool to only check main tile for plants (trees)
 
 ## Documentation
 

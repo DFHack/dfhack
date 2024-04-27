@@ -768,7 +768,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 /*
 * Plants
 */
-df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z, bool ignore_tree_tiles)
+df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
 {
     if (x < 0 || x >= world->map.x_count || y < 0 || y >= world->map.y_count || !world->map.column_index)
         return NULL;
@@ -781,8 +781,6 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z, bool ignore_tre
     {
         if (plant->pos.x == x && plant->pos.y == y && plant->pos.z == z)
             return plant;
-        else if (ignore_tree_tiles)
-            continue;
 
         auto &t = plant->tree_info;
         if (!t)

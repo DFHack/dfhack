@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 - `zone`: fix display of distance from cage for small pets in assignment dialog
 - `modtools/create-item`: now functions properly when the ``reaction-gloves`` tweak is active
+- `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile

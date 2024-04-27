@@ -57,7 +57,6 @@ Template for new versions:
 
 ## Fixes
 - `zone`: fix display of distance from cage for small pets in assignment dialog
-- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
 - `modtools/create-item`: now functions properly when the ``reaction-gloves`` tweak is active
 
 ## Misc Improvements

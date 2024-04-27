@@ -56,8 +56,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `zone`: fix display of distance from cage for small pets in assignment dialog
 
 ## Misc Improvements
+- `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
 - `regrass`: Can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
 - `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
 - `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
@@ -65,6 +67,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
 
 ## Lua
 

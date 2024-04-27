@@ -1018,6 +1018,16 @@ static const char * add_expansion_syntax(const tile_context &ctx,
     return add_expansion_syntax(ctx.b, keys);
 }
 
+static const char * add_label(const tile_context &ctx, const char *keys) {
+    if (!keys)
+        return "~";
+    auto bld = ctx.b;
+    std::ostringstream s;
+    // use building's id as the unique label
+    s << keys << "/" << "bld_" << bld->id;
+    return cache(s);
+}
+
 static const char * get_tile_build(const df::coord &pos,
                                    const tile_context &ctx) {
     if (!ctx.b || ctx.b->getType() == building_type::Stockpile) {
@@ -1064,17 +1074,13 @@ static const char * get_place_keys(const tile_context &ctx) {
     return cache(keys);
 }
 
-static bool is_single_tile(const tile_context &ctx) {
-    return ctx.b->x1 == ctx.b->x2 && ctx.b->y1 == ctx.b->y2;
-}
-
 static const char * get_tile_place(const df::coord &pos,
                                    const tile_context &ctx) {
     if (!ctx.b || ctx.b->getType() != building_type::Stockpile)
         return NULL;
 
-    if (!is_rectangular(ctx) || is_single_tile(ctx))
-        return get_place_keys(ctx);
+    if (!is_rectangular(ctx))
+        return add_label(ctx, get_place_keys(ctx));
 
     if (ctx.b->x1 != static_cast<int32_t>(pos.x)
             || ctx.b->y1 != static_cast<int32_t>(pos.y)) {

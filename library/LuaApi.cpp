@@ -3316,6 +3316,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAPN(msizeAddress, msize_address),
     WRAP(getClipboardTextCp437),
     WRAP(setClipboardTextCp437),
+    WRAP(setClipboardTextCp437Multiline),
     { NULL, NULL }
 };
 

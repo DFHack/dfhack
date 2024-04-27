@@ -1917,7 +1917,7 @@ Items module
   Returns whether a caravan will pay extra for the given item. If caravan_state
   is not given, checks all active caravans.
 
-* ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
+* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
 
   Creates an item, similar to the `createitem` plugin.
 

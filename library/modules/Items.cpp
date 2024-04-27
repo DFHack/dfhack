@@ -66,6 +66,7 @@ distribution.
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_bookst.h"
+#include "df/item_plant_growthst.h"
 #include "df/item_toolst.h"
 #include "df/item_type.h"
 #include "df/itemdef_ammost.h"
@@ -2143,7 +2144,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     return value;
 }
 
-int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
+bool Items::createItem(std::vector<df::item *> &out_items, df::unit* unit, df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print, bool no_floor) {
     //based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     df::coord pos = Units::getPosition(unit);
@@ -2176,10 +2177,10 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
 
     //makeItem
     vector<df::reaction_product*> out_products;
-    vector<df::item*> out_items;
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
 
+    out_items.clear();
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             0, df::historical_entity::find(unit->civ_id),
             World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL,
@@ -2187,14 +2188,18 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     delete prod;
 
     DEBUG(items).print("produced %zd items\n", out_items.size());
-    if ( out_items.size() != 1 )
-        return -1;
 
     for (size_t a = 0; a < out_items.size(); a++ ) {
-        out_items[a]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        // Plant growths need a valid "growth print", otherwise they behave oddly
+        auto growth = virtual_cast<df::item_plant_growthst>(out_items[a]);
+        if (growth)
+            growth->growth_print = growth_print;
+
+        if (!no_floor)
+            out_items[a]->moveToGround(pos.x, pos.y, pos.z);
     }
 
-    return out_items[0]->id;
+    return out_items.size() != 0;
 }
 
 /*

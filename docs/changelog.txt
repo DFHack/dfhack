@@ -57,17 +57,20 @@ Template for new versions:
 
 ## Fixes
 - `zone`: fix display of distance from cage for small pets in assignment dialog
+- `modtools/create-item`: now functions properly when the ``reaction-gloves`` tweak is active
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
 - `regrass`: Can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
 - `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
 - `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
+- `createitem`: refactored to use ``Items::createItem()`` API function
 
 ## Documentation
 
 ## API
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
+- ``Items::createItem``: now returns a list of item pointers rather than a single ID, moved creator parameter to beginning, added growth_print and no_floor parameters at end
 
 ## Lua
 - ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard

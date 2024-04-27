@@ -17,17 +17,11 @@
 #include "df/building.h"
 #include "df/game_type.h"
 #include "df/world.h"
-#include "df/plotinfost.h"
 #include "df/unit.h"
-#include "df/historical_entity.h"
-#include "df/world_site.h"
 #include "df/item.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
-#include "df/reaction_reagent.h"
-#include "df/reaction_product_itemst.h"
 #include "df/tool_uses.h"
-#include "df/item_plant_growthst.h"
 #include "df/plant_growth.h"
 #include "df/plant_growth_print.h"
 #include "df/plant_raw.h"
@@ -40,7 +34,6 @@ using namespace df::enums;
 DFHACK_PLUGIN("createitem");
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(cur_year_tick);
 
@@ -62,14 +55,11 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false, bool move_to_cursor = false, int32_t growth_print = -1)
+bool makeItem (df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool move_to_cursor = false, bool second_item = false)
 {
-    vector<df::reaction_product*> out_products;
-    vector<df::item *> out_items;
-    vector<df::reaction_reagent *> in_reag;
-    vector<df::item *> in_items;
-    bool is_gloves = (prod->item_type == item_type::GLOVES);
-    bool is_shoes = (prod->item_type == item_type::SHOES);
+    // Special logic for making Gloves and Shoes in pairs
+    bool is_gloves = (type == item_type::GLOVES);
+    bool is_shoes = (type == item_type::SHOES);
 
     df::item *container = NULL;
     df::building *building = NULL;
@@ -78,15 +68,11 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     if (dest_building != -1)
         building = df::building::find(dest_building);
 
-    prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-        0, df::historical_entity::find(unit->civ_id),
-        (World::isFortressMode()) ? df::world_site::find(plotinfo->site_id) : NULL, NULL);
-    if (!out_items.size())
+    bool on_floor = (container == NULL) && (building == NULL) && !move_to_cursor;
+
+    vector<df::item *> out_items;
+    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, growth_print, !on_floor))
         return false;
-    // if we asked to make shoes and we got twice as many as we asked, then we're okay
-    // otherwise, make a second set because shoes are normally made in pairs
-    if (is_shoes && out_items.size() == size_t(prod->count * 2))
-        is_shoes = false;
 
     MapExtras::MapCache mc;
 
@@ -106,26 +92,28 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
         else if (move_to_cursor)
             out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
-        else
-            out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        // else createItem() already put it on the floor at the unit's feet, so we're good
 
-        // Special logic for making gloves
+        // Special logic for creating proper gloves in pairs
         if (is_gloves)
         {
-            // if the reaction creates gloves without handedness, then create 2 sets (left and right)
+            // If the gloves have non-zero handedness, then disable special pair-making logic
+            // ("reaction-gloves" tweak is active, or Toady fixed glove-making reactions)
+            // Otherwise, set them to be either Left or Right-handed
             if (out_items[i]->getGloveHandedness() > 0)
                 is_gloves = false;
             else
                 out_items[i]->setGloveHandedness(second_item ? 2 : 1);
         }
-
-        // Special logic for making plant growths
-        auto growth = virtual_cast<df::item_plant_growthst>(out_items[i]);
-        if (growth)
-            growth->growth_print = growth_print;
     }
+
+    // If we asked to make a Shoe and we got more than one, then disable special pair-making logic
+    if (is_shoes && out_items.size() > 1)
+        is_shoes = false;
+
+    // If we asked for gloves/shoes and only got one (and we're making the first one), make another
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(prod, unit, true, move_to_cursor, growth_print);
+        return makeItem(unit, type, subtype, mat_type, mat_index, growth_print, move_to_cursor, true);
 
     return true;
 }
@@ -481,33 +469,6 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         out.printerr("Unit does not reside in a valid map block, somehow?\n");
         return CR_FAILURE;
     }
-
-    df::reaction_product_itemst *prod = df::allocate<df::reaction_product_itemst>();
-    prod->item_type = item_type;
-    prod->item_subtype = item_subtype;
-    prod->mat_type = mat_type;
-    prod->mat_index = mat_index;
-    prod->probability = 100;
-    prod->count = count;
-    switch (item_type)
-    {
-    case item_type::BAR:
-    case item_type::POWDER_MISC:
-    case item_type::LIQUID_MISC:
-    case item_type::DRINK:
-        prod->product_dimension = 150;
-        break;
-    case item_type::THREAD:
-        prod->product_dimension = 15000;
-        break;
-    case item_type::CLOTH:
-        prod->product_dimension = 10000;
-        break;
-    default:
-        prod->product_dimension = 1;
-        break;
-    }
-
     if ((dest_container != -1) && !df::item::find(dest_container))
     {
         dest_container = -1;
@@ -519,12 +480,13 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    bool result = makeItem(prod, unit, false, move_to_cursor, growth_print);
-    delete prod;
-    if (!result)
+    for (int i = 0; i < count; i++)
     {
-        out.printerr("Failed to create item!\n");
-        return CR_FAILURE;
+        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, move_to_cursor, false))
+        {
+            out.printerr("Failed to create item!\n");
+            return CR_FAILURE;
+        }
     }
     return CR_OK;
 }

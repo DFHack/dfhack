@@ -2198,7 +2198,7 @@ static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = fals
                 }
             }
 
-            if (!aquifer_mode && !Maps::isTileVisible(pos)) {
+            if (!aquifer_mode && !Maps::isTileVisible(pos) && !Maps::isTileVisible(pos-1)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }

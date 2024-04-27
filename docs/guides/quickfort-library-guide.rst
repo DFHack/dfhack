@@ -240,8 +240,7 @@ Pump stack
 
 The pump stack blueprints help you move water and magma up to more convenient
 locations in your fort. See the step-by-step guide for using it by running the
-``library/pump_stack.csv`` ``/help`` blueprint. You can also view the
-`demo video <https://www.youtube.com/watch?v=SkzgOjN6jxg>`__
+``library/pump_stack.csv`` ``/help`` blueprint or by viewing the demo video:
 
 .. raw:: html
 

@@ -58,10 +58,12 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
 
 ## Documentation
 
 ## API
+- ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
 
 ## Lua
 

@@ -1815,6 +1815,12 @@ Items module
   Returns the string description of the item, as produced by the ``getItemDescription``
   method. If decorate is true, also adds markings for quality and improvements.
 
+* ``dfhack.items.getReadableDescription(item)``
+
+  Returns a string generally fit to usefully describe the item to the player.
+  When the item description appears anywhere in a script output or in the UI,
+  this is usually the string you should use.
+
 * ``dfhack.items.getGeneralRef(item, type)``
 
   Searches for a general_ref with the given type.

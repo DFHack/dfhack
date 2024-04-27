@@ -153,6 +153,8 @@ DFHACK_EXPORT std::string getBookTitle(df::item *item);
 /// Returns the description string of the item.
 DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool decorate = false);
 
+DFHACK_EXPORT std::string getReadableDescription(df::item *item);
+
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,

@@ -36,9 +36,11 @@ distribution.
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
+#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/artifact_record.h"
 #include "df/body_part_raw.h"
 #include "df/body_part_template_flags.h"
 #include "df/building.h"
@@ -835,6 +837,58 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
     }
 
     return tmp;
+}
+
+static df::artifact_record* get_artifact(df::item *item) {
+    if (!item->flags.bits.artifact)
+        return NULL;
+    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::IS_ARTIFACT))
+        return gref->getArtifact();
+    return NULL;
+}
+
+static string get_item_type_str(df::item *item) {
+    ItemTypeInfo iti;
+    iti.decode(item);
+    auto str = capitalize_string_words(iti.toString());
+    if (str == "Trapparts")
+        str = "Mechanism";
+    return str;
+}
+
+static string get_base_desc(df::item *item) {
+    if (auto name = Items::getBookTitle(item); name.size())
+        return name;
+    if (auto artifact = get_artifact(item)) {
+        return Translation::TranslateName(&artifact->name) + " (" + get_item_type_str(item) + ")";
+    }
+    return Items::getDescription(item, 0, true);
+}
+
+string Items::getReadableDescription(df::item *item) {
+    CHECK_NULL_POINTER(item);
+
+    auto desc = get_base_desc(item);
+
+    switch (item->getWear()) {
+    case 1: desc = "x" + desc + "x"; break;
+    case 2: desc = "X" + desc + "X"; break;
+    case 3: desc = "XX" + desc + "XX"; break;
+    default:
+        break;
+    }
+
+    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT)) {
+        if (auto unit = gref->getUnit()) {
+            auto str = " [" + Units::getReadableName(unit);
+            if (Units::isInvader(unit) || Units::isOpposedToLife(unit))
+                str += " (hostile)";
+            str += "]";
+            return desc + str;
+        }
+    }
+
+    return desc;
 }
 
 static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item)

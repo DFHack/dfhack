@@ -59,6 +59,8 @@ Template for new versions:
 - `zone`: fix display of distance from cage for small pets in assignment dialog
 - `modtools/create-item`: now functions properly when the ``reaction-gloves`` tweak is active
 - `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
+- `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
+- `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
@@ -67,6 +69,7 @@ Template for new versions:
 - `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
 - `createitem`: refactored to use ``Items::createItem()`` API function
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
+- `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
 
 ## Documentation
 - Quickfort Blueprint Library: embed demo video for pump stack blueprint

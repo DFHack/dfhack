@@ -91,6 +91,8 @@ namespace DFHack
         DFHACK_EXPORT int32_t GetCurrentSiteId();
         DFHACK_EXPORT bool IsSiteLoaded();
 
+        DFHACK_EXPORT df::unit * getAdventurer();
+
         // Store DFHack tool data in the game save directory.
         // Use the relevant API depending on whether you are storing world-global data,
         // site-specific data, or data specific to some other historical entity (including

@@ -77,9 +77,12 @@ Template for new versions:
 ## API
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
 - ``Items::createItem``: now returns a list of item pointers rather than a single ID, moved creator parameter to beginning, added growth_print and no_floor parameters at end
+- ``World::getAdventurer``: returns current adventurer unit
 
 ## Lua
 - ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
+- ``dfhack.world.getAdventurer``: returns current adventurer unit
+- ``dfhack.gui.getSelectedUnit``: returns current adventurer unit if in adventure mode and no other unit is currently selected
 
 ## Removed
 

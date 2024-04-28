@@ -168,6 +168,14 @@ Note the :kbd:`#` symbols at the right end of each row and below the last row.
 These are completely optional, but can be helpful to make the row and column
 positions clear.
 
+In general, any cell that contains text that starts with a :kbd:`#` is
+interpreted as a comment and is ignored by `quickfort`. You can use this to
+leave notes for yourself inside of a blueprint. Take care to start your comment
+with a space after the ``#`` to avoid accidentally starting a modeline if your
+comment happens to be in the first column and happens to start with a modeline
+keyword. For example, ``#dig this area out`` is an accidental modeline that
+will cause problems. However, ``# dig this area out`` is a safe comment.
+
 Once the dwarves have that dug out, let's zone it as a bedroom::
 
     #zone

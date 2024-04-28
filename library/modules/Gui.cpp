@@ -43,7 +43,6 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "df/adventurest.h"
 #include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
@@ -1097,16 +1096,17 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
-    using df::global::game;
-
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedUnit();
 
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
         return df::unit::find(game->main_interface.view_sheets.active_id);
-    else if (plotinfo->follow_unit != -1)
+    if (plotinfo->follow_unit != -1)
         return df::unit::find(plotinfo->follow_unit);
+
+    if (auto adv = World::getAdventurer())
+        return adv;
 
 /* TODO: understand how this changes for v50
    using namespace ui_sidebar_mode;

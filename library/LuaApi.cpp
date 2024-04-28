@@ -2516,6 +2516,7 @@ static const LuaWrapper::FunctionReg dfhack_world_module[] = {
     WRAPM(World, ReadCurrentWeather),
     WRAPM(World, SetCurrentWeather),
     WRAPM(World, ReadWorldFolder),
+    WRAPM(World, getAdventurer),
     { NULL, NULL }
 };
 

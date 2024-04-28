@@ -2026,6 +2026,10 @@ World module
   Returns the currently loaded ``df.world_site`` or ``nil`` if no site is
   loaded.
 
+* ``dfhack.world.getAdventurer()``
+
+  Returns the current adventurer unit (if in adventure mode).
+
 .. _lua-maps:
 
 Maps module

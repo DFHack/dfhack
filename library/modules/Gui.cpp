@@ -1096,8 +1096,6 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
-    using df::global::adventure;
-
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedUnit();
 

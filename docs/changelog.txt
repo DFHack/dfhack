@@ -82,7 +82,6 @@ Template for new versions:
 ## Lua
 - ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
 - ``dfhack.world.getAdventurer``: returns current adventurer unit
-- ``dfhack.gui.getSelectedUnit``: returns current adventurer unit if in adventure mode and no other unit is currently selected
 
 ## Removed
 

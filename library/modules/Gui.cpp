@@ -1105,9 +1105,6 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     if (plotinfo->follow_unit != -1)
         return df::unit::find(plotinfo->follow_unit);
 
-    if (auto adv = World::getAdventurer())
-        return adv;
-
 /* TODO: understand how this changes for v50
    using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;

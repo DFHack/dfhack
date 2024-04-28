@@ -228,7 +228,9 @@ aquifer.
 If you have already designated a z-level when you realize you need warm or damp
 dig protection (e.g. you have run into a light aquifer and want to continue
 digging), the toolbar button gives you a shortcut to add the warm or damp dig
-marker to all designated tiles on the current z-level.
+marker to all designated tiles on the current z-level. Note that it only
+affects tiles that are not yet revealed since revealed tiles don't benefit from
+the warm or damp dig designations.
 
 Click on the new mining toolbar icon or hit :kbd:`Ctrl`:kbd:`D` to bring up the
 configuration submenu.
@@ -237,7 +239,7 @@ warmdamp
 ~~~~~~~~
 
 The ``dig.warmdamp`` overlay makes a number of tile properties visible when in
-mining mode:
+mining or smoothing mode:
 
 - In ASCII mode, it highlights warm tiles red and damp tiles in light blue. Box
   selection characters and the keyboard cursor will also change color as

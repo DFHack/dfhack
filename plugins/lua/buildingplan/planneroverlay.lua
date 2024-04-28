@@ -477,6 +477,7 @@ QuickFilter.ATTRS{
 function QuickFilter:init()
     local label = ('%d.'):format(self.idx)
     self.frame.w = 27
+    self.renaming = false
 
     self:addviews {
         widgets.Label{
@@ -491,25 +492,44 @@ function QuickFilter:init()
             frame = { t = 0, l = 5 },
             text = { { text = self:callback('get_label_text'), pen = function() return COLOR_CYAN end } },
             width = item_filter_chars + 2,
-            visible = true,
-            on_click = function() self.on_click_fn(self.idx) end,
+            visible = function () return self.renaming == false end,
+            on_click = self:callback("on_click"),
+        },
+        widgets.EditField {
+            view_id='edit_field',
+            frame = { t = 0, l = 5 },
+            text = "",
+            width = item_filter_chars + 2,
+            modal = true,
+            visible = function () return self.renaming == true end,
+            on_submit = function (text) self:submit_name(text) end,
         },
         widgets.Label {
             frame = { t = 0, r = 0, w = 3 },
             text = "[x]",
             text_pen = COLOR_LIGHTRED,
-            visible = self:callback("slot_used", self.idx),
-            on_click = self:callback("clear", self.idx)
+            visible = self:callback("slot_used"),
+            on_click = self:callback("clear")
         }
     }
 end
 
-function QuickFilter:slot_used(slot)
+function QuickFilter:on_click()
+    if dfhack.internal.getModifiers().shift and self:slot_used() then
+        self.subviews.edit_field.text = self:get_label_text()
+        self.renaming = true
+        self.subviews.edit_field:setFocus(true)
+    else
+        self.on_click_fn(self.idx) -- save/apply filter based on selected ItemLine
+    end
+end
+
+function QuickFilter:slot_used()
     local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
     return quick_filters[self.idx] ~= nil
 end
 
-function QuickFilter:clear(slot)
+function QuickFilter:clear()
     local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
     quick_filters[self.idx] = nil
     dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, quick_filters)
@@ -523,6 +543,13 @@ function QuickFilter:get_label_text()
     else
         return set.label
     end
+end
+
+function QuickFilter:submit_name(text)
+    local quick_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    quick_filters[self.idx].label = compress(text, item_filter_chars+2)
+    dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, quick_filters)
+    self.renaming = false
 end
 --------------------------------
 -- PlannerOverlay
@@ -541,7 +568,6 @@ function PlannerOverlay:init()
     self.selected = 1
     self.state = ensure_key(config.data, 'planner')
 
-    self.favorites = false
     self.selected_favorite = 1
 
     local main_panel = widgets.Panel{
@@ -671,18 +697,7 @@ function PlannerOverlay:init()
             key_back='CUSTOM_SHIFT_T',
             label='Number of weapons:',
             visible=is_weapon_or_spike_trap,
-            options={
-                        {label='(1)', value=1, pen=COLOR_YELLOW},
-                        {label='(2)', value=2, pen=COLOR_YELLOW},
-                        {label='(3)', value=3, pen=COLOR_YELLOW},
-                        {label='(4)', value=4, pen=COLOR_YELLOW},
-                        {label='(5)', value=5, pen=COLOR_YELLOW},
-                        {label='(6)', value=6, pen=COLOR_YELLOW},
-                        {label='(7)', value=7, pen=COLOR_YELLOW},
-                        {label='(8)', value=8, pen=COLOR_YELLOW},
-                        {label='(9)', value=9, pen=COLOR_YELLOW},
-                        {label='(10)', value=10, pen=COLOR_YELLOW},
-                    },
+            options=utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10),
             on_change=function(val) weapon_quantity = val end,
         },
         widgets.ToggleHotkeyLabel {
@@ -741,15 +756,16 @@ function PlannerOverlay:init()
                     end
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='show_favorites',
                     frame={b=0, l=1, w=22},
                     key='CUSTOM_CTRL_F',
                     label="",
                     option_gap=0,
                     options={
-                        { label='Show favorites', value = 0 },
-                        { label='Hide favorites', value = 1 },
+                        { label='Show favorites', value = false },
+                        { label='Hide favorites', value = true },
                     },
-                    initial_option=0,
+                    initial_option=false,
                     on_change=function(new,_) self:show_hide_favorites(new) end,
                 },
                 widgets.CycleHotkeyLabel{
@@ -898,20 +914,18 @@ function PlannerOverlay:init()
             QuickFilter{idx=0, frame={t=4,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
                         is_selected_fn=make_is_selected_filter(0) },
-            widgets.HotkeyLabel{
+            widgets.CycleHotkeyLabel {
+                view_id='slot_select',
                 frame={b=0, l=2},
-                label="foo",
                 key='CUSTOM_X',
-                on_activate=function() self.selected_favorite = (self.selected_favorite+1) % 10 end,
+                key_back='CUSTOM_SHIFT_X',
+                label='next/previous slot',
+                auto_width=true,
+                options=utils.tabulate(function(i) return {label="", value=i} end, 0, 9),
+                initial_option=1,
+                on_change=function(val) print(val) self.selected_favorite = val end,
             },
             widgets.HotkeyLabel{
-                frame={b=0, l=3},
-                label="next/previous filter",
-                auto_width=true,
-                key='CUSTOM_SHIFT_X',
-                on_activate=function() self.selected_favorite = (self.selected_favorite-1) % 10 end,
-            },
-             widgets.HotkeyLabel{
                 frame={b=0, l=28},
                 label="set/apply selected",
                 key='CUSTOM_Y',
@@ -932,12 +946,11 @@ function PlannerOverlay:init()
 end
 
 function PlannerOverlay:show_favorites()
-    return not self.state.minimized and self.favorites
+    return not self.state.minimized and self.subviews.show_favorites:getOptionValue()
 end
 
 function PlannerOverlay:show_hide_favorites(new)
-    self.favorites = new > 0
-    local errors_frame = {t=15+(self.favorites and 9 or 0), l=0, r=0}
+    local errors_frame = {t=15+(new and 9 or 0), l=0, r=0}
     self.subviews.errors.frame = errors_frame
     self:updateLayout()
 end

@@ -170,7 +170,8 @@ slot stores the filter for the currently selected item type to the respective
 slot. Clicking on a slot with a filter restores that filter to the currently
 selected item type. Alternatively you can navigate to a slot using
 :kbd:`x`/:kbd:`X` and press :kbd:`y` to save or restore a filter. You can free a
-slot by clicking the "[x]".
+slot by clicking the "[x]", and you can edit the label of a saved filter by
+shift-clicking the label.
 
 Choosing specific items
 +++++++++++++++++++++++

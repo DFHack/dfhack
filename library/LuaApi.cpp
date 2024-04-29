@@ -3934,6 +3934,45 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
     return 0;
 }
 
+template<typename T>
+static std::map<const char *, T> translate_event_types(const std::unordered_map<int32_t, T> & in_map) {
+    std::map<const char *, T> out_map;
+    for (auto [k, v] : in_map) {
+        using namespace EventManager::EventType;
+        switch (k) {
+        case TICK:             out_map["TICK"] = v; break;
+        case JOB_INITIATED:    out_map["JOB_INITIATED"] = v; break;
+        case JOB_STARTED:      out_map["JOB_STARTED"] = v; break;
+        case JOB_COMPLETED:    out_map["JOB_COMPLETED"] = v; break;
+        case UNIT_NEW_ACTIVE:  out_map["UNIT_NEW_ACTIVE"] = v; break;
+        case UNIT_DEATH:       out_map["UNIT_DEATH"] = v; break;
+        case ITEM_CREATED:     out_map["ITEM_CREATED"] = v; break;
+        case BUILDING:         out_map["BUILDING"] = v; break;
+        case CONSTRUCTION:     out_map["CONSTRUCTION"] = v; break;
+        case SYNDROME:         out_map["SYNDROME"] = v; break;
+        case INVASION:         out_map["INVASION"] = v; break;
+        case INVENTORY_CHANGE: out_map["INVENTORY_CHANGE"] = v; break;
+        case REPORT:           out_map["REPORT"] = v; break;
+        case UNIT_ATTACK:      out_map["UNIT_ATTACK"] = v; break;
+        case UNLOAD:           out_map["UNLOAD"] = v; break;
+        case INTERACTION:      out_map["INTERACTION"] = v; break;
+        case EVENT_MAX: break;
+        //default:
+        // force compiler to complain for missing enum cases
+        }
+    }
+    return out_map;
+}
+
+static std::map<const char *, std::map<std::string, uint32_t>> mapify(std::map<const char *, std::unordered_map<std::string, uint32_t>> in_map) {
+    std::map<const char *, std::map<std::string, uint32_t>> out_map;
+    for (auto [k, v] : in_map)
+        out_map[k].insert(v.begin(), v.end());
+    return out_map;
+}
+
+static std::map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
+
 static int internal_getPerfCounters(lua_State *L) {
     auto &counters = Core::getInstance().perf_counters;
 
@@ -3945,37 +3984,9 @@ static int internal_getPerfCounters(lua_State *L) {
     summary["update_lua_ms"] = counters.update_lua_ms;
     summary["total_input_ms"] = counters.total_input_ms;
     Lua::Push(L, summary);
-
-    std::map<const char *, uint32_t> em_per_event;
-    for (auto [k, v] : counters.event_manager_event_total_ms) {
-        using namespace EventManager::EventType;
-        switch (k) {
-        case TICK:             em_per_event["TICK"] = v; break;
-        case JOB_INITIATED:    em_per_event["JOB_INITIATED"] = v; break;
-        case JOB_STARTED:      em_per_event["JOB_STARTED"] = v; break;
-        case JOB_COMPLETED:    em_per_event["JOB_COMPLETED"] = v; break;
-        case UNIT_NEW_ACTIVE:  em_per_event["UNIT_NEW_ACTIVE"] = v; break;
-        case UNIT_DEATH:       em_per_event["UNIT_DEATH"] = v; break;
-        case ITEM_CREATED:     em_per_event["ITEM_CREATED"] = v; break;
-        case BUILDING:         em_per_event["BUILDING"] = v; break;
-        case CONSTRUCTION:     em_per_event["CONSTRUCTION"] = v; break;
-        case SYNDROME:         em_per_event["SYNDROME"] = v; break;
-        case INVASION:         em_per_event["INVASION"] = v; break;
-        case INVENTORY_CHANGE: em_per_event["INVENTORY_CHANGE"] = v; break;
-        case REPORT:           em_per_event["REPORT"] = v; break;
-        case UNIT_ATTACK:      em_per_event["UNIT_ATTACK"] = v; break;
-        case UNLOAD:           em_per_event["UNLOAD"] = v; break;
-        case INTERACTION:      em_per_event["INTERACTION"] = v; break;
-        case EVENT_MAX: break;
-        //default:
-        // force compiler to complain for missing enum cases
-        }
-    }
-    Lua::Push(L, em_per_event);
-
-    Lua::Push(L, counters.event_manager_event_per_plugin_ms);
+    Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));
+    Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
     Lua::Push(L, counters.plugin_details);
-
     return 4;
 }
 

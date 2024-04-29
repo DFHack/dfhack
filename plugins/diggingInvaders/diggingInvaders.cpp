@@ -84,7 +84,7 @@ REQUIRE_GLOBAL(world);
 static int32_t lastInvasionJob=-1;
 static int32_t lastInvasionDigger = -1;
 static int32_t edgesPerTick = 100;
-//static EventManager::EventHandler jobCompleteHandler(watchForJobComplete, 5);
+//static EventManager::EventHandler jobCompleteHandler(plugin_self, watchForJobComplete, 5);
 static bool activeDigging=false;
 static unordered_set<string> diggingRaces;
 static unordered_set<int32_t> invaderJobs;
@@ -144,8 +144,8 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     activeDigging = false;
     invaderJobs.clear();
     if ( enabled ) {
-        EventManager::EventHandler handler(newInvasionHandler, 1000);
-        EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
+        EventManager::EventHandler handler(plugin_self, newInvasionHandler, 1000);
+        EventManager::registerListener(EventManager::EventType::INVASION, handler);
         findAndAssignInvasionJob(out, (void*)0);
     }
 
@@ -321,7 +321,7 @@ unordered_map<df::coord,cost_t,PointHash> costMap;
 
 PointComp comp(&costMap);
 set<df::coord, PointComp> fringe(comp);
-EventManager::EventHandler findJobTickHandler(findAndAssignInvasionJob, 1);
+EventManager::EventHandler findJobTickHandler(plugin_self, findAndAssignInvasionJob, 1);
 
 int32_t localPtsFound = 0;
 unordered_set<df::coord,PointHash> closedSet;
@@ -355,8 +355,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     }
 
     //we're going to unregister just in case this function has been called 20 times or something.
-    EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
-    EventManager::registerTick(findJobTickHandler, 1, plugin_self);
+    EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler);
+    EventManager::registerTick(findJobTickHandler, 1);
 
     if ( fringe.empty() ) {
         df::unit* lastDigger = df::unit::find(lastInvasionDigger);

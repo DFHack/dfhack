@@ -110,7 +110,7 @@ static void do_enable(bool enable) {
         DEBUG(log).print("%s\n", is_enabled ? "enabled" : "disabled");
         if (enable) {
             EventManager::registerListener(EventManager::EventType::JOB_STARTED,
-                EventManager::EventHandler(unhide_surrounding_tagged_tiles, 0), plugin_self);
+                EventManager::EventHandler(plugin_self, unhide_surrounding_tagged_tiles, 0));
         } else {
             EventManager::unregisterAll(plugin_self);
         }

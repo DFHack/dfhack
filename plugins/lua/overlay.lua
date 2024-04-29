@@ -83,6 +83,18 @@ function print_timers()
         print_sorted_timers(em_per_event, 25, summary.update_event_manager_ms, 'event manager', elapsed, 'elapsed')
         print()
         print()
+
+        for k,v in pairs(em_per_plugin_per_event) do
+            if em_per_event[k] <= 0 then goto continue end
+            local title = ('Event manager %s event per plugin'):format(k)
+            print(title)
+            print(('-'):rep(#title))
+            print()
+            print_sorted_timers(v, 25, em_per_event[k], 'event type', elapsed, 'elapsed')
+            print()
+            print()
+            ::continue::
+        end
     end
 
     if total_overlay_time > 0 then

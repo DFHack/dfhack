@@ -28,7 +28,7 @@ command_result digFlood (color_ostream &out, std::vector <std::string> & paramet
 
 void onDig(color_ostream& out, void* ptr);
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
-EventManager::EventHandler digHandler(onDig, 0);
+EventManager::EventHandler digHandler(plugin_self, onDig, 0);
 
 //bool enabled = false;
 DFHACK_PLUGIN_IS_ENABLED(enabled);

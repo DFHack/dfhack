@@ -13,41 +13,70 @@ local GLOBAL_KEY = 'OVERLAY'
 local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 
 local timers = {}
-local timers_start_ms = dfhack.getTickCount()
 function reset_timers()
     timers = {}
-    timers_start_ms = dfhack.getTickCount()
+    dfhack.internal.resetPerfCounters()
     reset_framework_timer()
 end
-function print_timers()
-    local elapsed = dfhack.getTickCount() - timers_start_ms
-    local sum = 0
-    for _,timer in pairs(timers) do
-        sum = sum + timer
+local function format_time(ms)
+    return ('%8d ms (%dm %ds)'):format(ms, ms // 60000, (ms % 60000) // 1000)
+end
+local function format_relative_time(width, name, ms, rel1_ms, desc1, rel2_ms, desc2)
+    local fmt = '%' .. tostring(width) .. 's %8d ms (%6.2f%% %s'
+    local str = fmt:format(name, ms, (ms * 100) / rel1_ms, desc1)
+    if rel2_ms then
+        str = str .. (', %6.2f%% %s'):format((ms * 100) / rel2_ms, desc2)
     end
-    if elapsed <= 0 then elapsed = 1 end
-    if sum <= 0 then sum = 1 end
+    return str .. ')'
+end
+function print_timers()
+    local counters = dfhack.internal.getPerfCounters()
+    local elapsed = math.max(1, counters.elapsed_ms)
+    local total_update_time = counters.total_update_ms
+    local total_overlay_time = get_framework_timer()
+
+    print('Summary')
+    print('-------')
+    print()
+    print(('%7s %s'):format('elapsed', format_time(elapsed)))
+    local sum = counters.total_input_ms + total_update_time + total_overlay_time
+    print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
+    print()
+    print(format_relative_time(10, 'input', counters.total_input_ms, sum, 'dfhack', elapsed, 'elapsed'))
+    print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))
+    print(format_relative_time(10, 'overlay', total_overlay_time, sum, 'dfhack', elapsed, 'elapsed'))
+    print()
+    print()
+
+    print('Update details')
+    print('--------------')
+    print()
+    print(format_relative_time(15, 'event manager', counters.update_event_manager_ms, total_update_time, 'update', elapsed, 'elapsed'))
+    print(format_relative_time(15, 'plugin onUpdate', counters.update_plugin_ms, total_update_time, 'update', elapsed, 'elapsed'))
+    print(format_relative_time(15, 'lua timers', counters.update_lua_ms, total_update_time, 'update', elapsed, 'elapsed'))
+    print()
+    print()
+
+    print('Overlay details')
+    print('---------------')
+    print()
     local sorted = {}
     for name,timer in pairs(timers) do
         table.insert(sorted, {name=name, ms=timer})
     end
     table.sort(sorted, function(a, b) return a.ms > b.ms end)
     for _, elem in ipairs(sorted) do
-        print(('%45s %8d ms  %6.2f%% overlay  %6.2f%% overall'):format(
-            elem.name, elem.ms, (elem.ms * 100) / sum, (elem.ms * 100) / elapsed
-        ))
+        print(format_relative_time(45, elem.name, elem.ms, total_overlay_time, 'overlay', elapsed, 'elapsed'))
     end
+    sum = 0
+    for _,timer in pairs(timers) do
+        sum = sum + timer
+    end
+    if sum <= 0 then sum = 1 end
+    local framework_time = math.max(0, total_overlay_time - sum)
     print()
-    print(('elapsed time:   %10d ms (%dm %ds)'):format(
-        elapsed, elapsed // 60000, (elapsed % 60000) // 1000
-    ))
-    local framework_time = get_framework_timer() - sum
-    print(('framework time: %10d ms (%.2f%% of elapsed time)'):format(
-        framework_time, (framework_time * 100) / elapsed
-    ))
-    print(('widget time:    %10d ms (%.2f%% of elapsed time)'):format(
-        sum, (sum * 100) / elapsed
-    ))
+    print(format_relative_time(45, 'overlay framework', framework_time, total_overlay_time, 'overlay', elapsed, 'elapsed'))
+    print(format_relative_time(45, 'all overlays', sum, total_overlay_time, 'overlay', elapsed, 'elapsed'))
 end
 
 -- ---------------- --

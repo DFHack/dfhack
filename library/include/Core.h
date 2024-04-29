@@ -194,6 +194,17 @@ namespace DFHack
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
+        struct {
+            uint32_t start_ms;
+            uint32_t total_update_ms;
+            uint32_t update_event_manager_ms;
+            uint32_t update_plugin_ms;
+            uint32_t update_lua_ms;
+            uint32_t total_input_ms;
+        } perf_counters;
+
+        void resetPerfCounters();
+
     private:
         DFHack::Console con;
 
@@ -211,6 +222,7 @@ namespace DFHack
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 
+        bool doSdlInputEvent(SDL_Event* event);
         void doUpdate(color_ostream &out);
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);

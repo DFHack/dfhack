@@ -147,6 +147,11 @@ struct Core::Private
     bool was_load_save{false};
 };
 
+void Core::resetPerfCounters() {
+    perf_counters = {};
+    perf_counters.start_ms = p->getTickCount();
+}
+
 struct CommandDepthCounter
 {
     static const int MAX_DEPTH = 20;
@@ -1567,6 +1572,8 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
+    resetPerfCounters();
+
     return true;
 }
 
@@ -1990,7 +1997,9 @@ int Core::Update()
                 return -1;
         }
 
+        uint32_t start_ms = p->getTickCount();
         doUpdate(out);
+        perf_counters.total_update_ms += p->getTickCount() - start_ms;
     }
 
     // Let all commands run that require CoreSuspender
@@ -2010,21 +2019,26 @@ void Core::onUpdate(color_ostream &out)
 {
     Gui::clearFocusStringCache();
 
+    uint32_t step_start_ms = p->getTickCount();
     EventManager::manageEvents(out);
+    perf_counters.update_event_manager_ms += p->getTickCount() - step_start_ms;
 
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
         buildings_onUpdate(out);
 
     // notify all the plugins that a game tick is finished
+    step_start_ms = p->getTickCount();
     plug_mgr->OnUpdate(out);
+    perf_counters.update_plugin_ms += p->getTickCount() - step_start_ms;
 
     // process timers in lua
+    step_start_ms = p->getTickCount();
     Lua::Core::onUpdate(out);
+    perf_counters.update_lua_ms += p->getTickCount() - step_start_ms;
 }
 
 void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
-    //DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
     std::vector<std::string> files;
     DFHack::Filesystem::listdir(folder, files);
     for ( size_t a = 0; a < files.size(); a++ ) {
@@ -2348,7 +2362,14 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 // returns true if the event is handled
-bool Core::DFH_SDL_Event(SDL_Event* ev)
+bool Core::DFH_SDL_Event(SDL_Event* ev) {
+    uint32_t start_ms = p->getTickCount();
+    bool ret = doSdlInputEvent(ev);
+    perf_counters.total_input_ms += p->getTickCount() - start_ms;
+    return ret;
+}
+
+bool Core::doSdlInputEvent(SDL_Event* ev)
 {
     static std::map<int, bool> hotkey_states;
 

@@ -3933,6 +3933,24 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
     return 0;
 }
 
+static int internal_getPerfCounters(lua_State *L) {
+    auto &counters = Core::getInstance().perf_counters;
+    std::map<const char *, uint32_t> ret;
+    ret["elapsed_ms"] = Core::getInstance().p->getTickCount() - counters.start_ms;
+    ret["total_update_ms"] = counters.total_update_ms;
+    ret["update_event_manager_ms"] = counters.update_event_manager_ms;
+    ret["update_plugin_ms"] = counters.update_plugin_ms;
+    ret["update_lua_ms"] = counters.update_lua_ms;
+    ret["total_input_ms"] = counters.total_input_ms;
+    Lua::Push(L, ret);
+    return 1;
+}
+
+static int internal_resetPerfCounters(lua_State *L) {
+    Core::getInstance().resetPerfCounters();
+    return 0;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -3963,6 +3981,8 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "md5File", internal_md5file },
     { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
     { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
+    { "getPerfCounters", internal_getPerfCounters },
+    { "resetPerfCounters", internal_resetPerfCounters },
     { NULL, NULL }
 };
 

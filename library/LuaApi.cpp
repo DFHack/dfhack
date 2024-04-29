@@ -43,6 +43,7 @@ distribution.
 #include "modules/Burrows.h"
 #include "modules/Constructions.h"
 #include "modules/Designations.h"
+#include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -3935,15 +3936,47 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
 
 static int internal_getPerfCounters(lua_State *L) {
     auto &counters = Core::getInstance().perf_counters;
-    std::map<const char *, uint32_t> ret;
-    ret["elapsed_ms"] = Core::getInstance().p->getTickCount() - counters.start_ms;
-    ret["total_update_ms"] = counters.total_update_ms;
-    ret["update_event_manager_ms"] = counters.update_event_manager_ms;
-    ret["update_plugin_ms"] = counters.update_plugin_ms;
-    ret["update_lua_ms"] = counters.update_lua_ms;
-    ret["total_input_ms"] = counters.total_input_ms;
-    Lua::Push(L, ret);
-    return 1;
+
+    std::map<const char *, uint32_t> summary;
+    summary["elapsed_ms"] = Core::getInstance().p->getTickCount() - counters.start_ms;
+    summary["total_update_ms"] = counters.total_update_ms;
+    summary["update_event_manager_ms"] = counters.update_event_manager_ms;
+    summary["update_plugin_ms"] = counters.update_plugin_ms;
+    summary["update_lua_ms"] = counters.update_lua_ms;
+    summary["total_input_ms"] = counters.total_input_ms;
+    Lua::Push(L, summary);
+
+    std::map<const char *, uint32_t> em_per_event;
+    for (auto [k, v] : counters.event_manager_event_total_ms) {
+        using namespace EventManager::EventType;
+        switch (k) {
+        case TICK:             em_per_event["TICK"] = v; break;
+        case JOB_INITIATED:    em_per_event["JOB_INITIATED"] = v; break;
+        case JOB_STARTED:      em_per_event["JOB_STARTED"] = v; break;
+        case JOB_COMPLETED:    em_per_event["JOB_COMPLETED"] = v; break;
+        case UNIT_NEW_ACTIVE:  em_per_event["UNIT_NEW_ACTIVE"] = v; break;
+        case UNIT_DEATH:       em_per_event["UNIT_DEATH"] = v; break;
+        case ITEM_CREATED:     em_per_event["ITEM_CREATED"] = v; break;
+        case BUILDING:         em_per_event["BUILDING"] = v; break;
+        case CONSTRUCTION:     em_per_event["CONSTRUCTION"] = v; break;
+        case SYNDROME:         em_per_event["SYNDROME"] = v; break;
+        case INVASION:         em_per_event["INVASION"] = v; break;
+        case INVENTORY_CHANGE: em_per_event["INVENTORY_CHANGE"] = v; break;
+        case REPORT:           em_per_event["REPORT"] = v; break;
+        case UNIT_ATTACK:      em_per_event["UNIT_ATTACK"] = v; break;
+        case UNLOAD:           em_per_event["UNLOAD"] = v; break;
+        case INTERACTION:      em_per_event["INTERACTION"] = v; break;
+        case EVENT_MAX: break;
+        //default:
+        // force compiler to complain for missing enum cases
+        }
+    }
+    Lua::Push(L, em_per_event);
+
+    Lua::Push(L, counters.event_manager_event_per_plugin_ms);
+    Lua::Push(L, counters.plugin_details);
+
+    return 4;
 }
 
 static int internal_resetPerfCounters(lua_State *L) {

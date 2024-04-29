@@ -247,14 +247,14 @@ static int32_t nextInvasion;
 
 //equipment change
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
-static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
+static unordered_map<int32_t, vector<InventoryItem>> equipmentLog;
 
 //report
 static int32_t lastReport;
 
 //unit attack
 static int32_t lastReportUnitAttack;
-static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static std::map<int32_t,std::vector<int32_t>> reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
 //interaction
@@ -394,6 +394,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     TRACE(log,out).print("processing events at tick %d\n", tick);
 
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
         if ( handlers[a].empty() )
             continue;
@@ -408,8 +410,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
 
+        uint32_t start_ms = core.p->getTickCount();
         eventManager[a](out);
         eventLastTick[a] = tick;
+        counters.event_manager_event_total_ms[a] += core.p->getTickCount() - start_ms;
     }
 }
 

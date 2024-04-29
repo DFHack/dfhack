@@ -25,20 +25,23 @@ distribution.
 #pragma once
 
 #include "Pragma.h"
+
+#include "Console.h"
 #include "Export.h"
 #include "Hooks.h"
-#include <vector>
-#include <stack>
-#include <map>
-#include <memory>
-#include <stdint.h>
-#include "Console.h"
+
 #include "modules/Graphic.h"
 
 #include <atomic>
 #include <condition_variable>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <stack>
 #include <thread>
+#include <unordered_map>
+#include <vector>
+#include <stdint.h>
 
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
@@ -201,6 +204,9 @@ namespace DFHack
             uint32_t update_plugin_ms;
             uint32_t update_lua_ms;
             uint32_t total_input_ms;
+            std::unordered_map<int32_t, uint32_t> event_manager_event_total_ms;
+            std::unordered_map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
+            std::unordered_map<std::string, uint32_t> plugin_details;
         } perf_counters;
 
         void resetPerfCounters();

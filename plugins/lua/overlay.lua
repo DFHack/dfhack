@@ -29,54 +29,68 @@ local function format_relative_time(width, name, ms, rel1_ms, desc1, rel2_ms, de
     end
     return str .. ')'
 end
+local function print_sorted_timers(in_timers, width, rel1_ms, desc1, rel2_ms, desc2)
+    local sum = 0
+    local sorted = {}
+    for name,timer in pairs(in_timers) do
+        table.insert(sorted, {name=name, ms=timer})
+        sum = sum + timer
+    end
+    table.sort(sorted, function(a, b) return a.ms > b.ms end)
+    for _, elem in ipairs(sorted) do
+        print(format_relative_time(width, elem.name, elem.ms, rel1_ms, desc1, rel2_ms, desc2))
+    end
+    local framework_time = math.max(0, rel1_ms - sum)
+    print()
+    print(format_relative_time(width, 'framework', framework_time, rel1_ms, desc1, rel2_ms, desc2))
+    print(format_relative_time(width, 'all subtimers', sum, rel1_ms, desc1, rel2_ms, desc2))
+end
 function print_timers()
-    local counters = dfhack.internal.getPerfCounters()
-    local elapsed = math.max(1, counters.elapsed_ms)
-    local total_update_time = counters.total_update_ms
+    local summary, em_per_event, em_per_plugin_per_event, update_per_plugin = dfhack.internal.getPerfCounters()
+
+    local elapsed = math.max(1, summary.elapsed_ms)
+    local total_update_time = summary.total_update_ms
     local total_overlay_time = get_framework_timer()
 
     print('Summary')
     print('-------')
     print()
     print(('%7s %s'):format('elapsed', format_time(elapsed)))
-    local sum = counters.total_input_ms + total_update_time + total_overlay_time
+    local sum = summary.total_input_ms + total_update_time + total_overlay_time
     print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
     print()
-    print(format_relative_time(10, 'input', counters.total_input_ms, sum, 'dfhack', elapsed, 'elapsed'))
+    print(format_relative_time(10, 'input', summary.total_input_ms, sum, 'dfhack', elapsed, 'elapsed'))
     print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))
     print(format_relative_time(10, 'overlay', total_overlay_time, sum, 'dfhack', elapsed, 'elapsed'))
     print()
     print()
 
-    print('Update details')
-    print('--------------')
-    print()
-    print(format_relative_time(15, 'event manager', counters.update_event_manager_ms, total_update_time, 'update', elapsed, 'elapsed'))
-    print(format_relative_time(15, 'plugin onUpdate', counters.update_plugin_ms, total_update_time, 'update', elapsed, 'elapsed'))
-    print(format_relative_time(15, 'lua timers', counters.update_lua_ms, total_update_time, 'update', elapsed, 'elapsed'))
-    print()
-    print()
+    if total_update_time > 0 then
+        print('Update details')
+        print('--------------')
+        print()
+        print(format_relative_time(15, 'event manager', summary.update_event_manager_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print(format_relative_time(15, 'plugin onUpdate', summary.update_plugin_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print(format_relative_time(15, 'lua timers', summary.update_lua_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print()
+        print()
+    end
 
-    print('Overlay details')
-    print('---------------')
-    print()
-    local sorted = {}
-    for name,timer in pairs(timers) do
-        table.insert(sorted, {name=name, ms=timer})
+    if summary.update_event_manager_ms > 0 then
+        print('Event manager per event type')
+        print('----------------------------')
+        print()
+        print_sorted_timers(em_per_event, 25, summary.update_event_manager_ms, 'event manager', elapsed, 'elapsed')
+        print()
+        print()
     end
-    table.sort(sorted, function(a, b) return a.ms > b.ms end)
-    for _, elem in ipairs(sorted) do
-        print(format_relative_time(45, elem.name, elem.ms, total_overlay_time, 'overlay', elapsed, 'elapsed'))
+
+    if total_overlay_time > 0 then
+        print('Overlay details')
+        print('---------------')
+        print()
+        print_sorted_timers(timers, 45, total_overlay_time, 'overlay', elapsed, 'elapsed')
     end
-    sum = 0
-    for _,timer in pairs(timers) do
-        sum = sum + timer
-    end
-    if sum <= 0 then sum = 1 end
-    local framework_time = math.max(0, total_overlay_time - sum)
-    print()
-    print(format_relative_time(45, 'overlay framework', framework_time, total_overlay_time, 'overlay', elapsed, 'elapsed'))
-    print(format_relative_time(45, 'all overlays', sum, total_overlay_time, 'overlay', elapsed, 'elapsed'))
 end
 
 -- ---------------- --

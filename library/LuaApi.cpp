@@ -3986,8 +3986,9 @@ static int internal_getPerfCounters(lua_State *L) {
     Lua::Push(L, summary);
     Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));
     Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
-    Lua::Push(L, counters.plugin_details);
-    return 4;
+    Lua::Push(L, counters.update_per_plugin);
+    Lua::Push(L, counters.state_change_per_plugin);
+    return 5;
 }
 
 static int internal_resetPerfCounters(lua_State *L) {

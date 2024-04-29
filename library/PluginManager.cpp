@@ -1037,14 +1037,28 @@ bool PluginManager::CanInvokeHotkey(const std::string &command, df::viewscreen *
 
 void PluginManager::OnUpdate(color_ostream &out)
 {
-    for (auto it = begin(); it != end(); ++it)
-        it->second->on_update(out);
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
+    for (auto it = begin(); it != end(); ++it) {
+        auto & plugin_name = it->first;
+        auto & plugin = it->second;
+        uint32_t start_ms = core.p->getTickCount();
+        plugin->on_update(out);
+        counters.update_per_plugin[plugin_name] += core.p->getTickCount() - start_ms;
+    }
 }
 
 void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
 {
-    for (auto it = begin(); it != end(); ++it)
-        it->second->on_state_change(out, event);
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
+    for (auto it = begin(); it != end(); ++it) {
+        auto & plugin_name = it->first;
+        auto & plugin = it->second;
+        uint32_t start_ms = core.p->getTickCount();
+        plugin->on_state_change(out, event);
+        counters.state_change_per_plugin[plugin_name] += core.p->getTickCount() - start_ms;
+    }
 }
 
 void PluginManager::registerCommands( Plugin * p )

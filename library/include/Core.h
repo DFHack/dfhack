@@ -206,7 +206,8 @@ namespace DFHack
             uint32_t total_input_ms;
             std::unordered_map<int32_t, uint32_t> event_manager_event_total_ms;
             std::unordered_map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
-            std::unordered_map<std::string, uint32_t> plugin_details;
+            std::unordered_map<std::string, uint32_t> update_per_plugin;
+            std::unordered_map<std::string, uint32_t> state_change_per_plugin;
         } perf_counters;
 
         void resetPerfCounters();

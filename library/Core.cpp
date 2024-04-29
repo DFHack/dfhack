@@ -2192,6 +2192,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     case SC_WORLD_LOADED:
     {
+        Lua::CallLuaModuleFunction(con, "script-manager", "reset_timers");
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);

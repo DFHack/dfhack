@@ -179,4 +179,123 @@ function get_mod_script_paths()
     return paths
 end
 
+---------------------
+-- perf API
+
+function reset_timers()
+    local overlay = require('plugins.overlay')
+    if overlay then
+        overlay.reset_timers()
+    end
+    dfhack.internal.resetPerfCounters()
+end
+
+local function format_time(ms)
+    return ('%8d ms (%dm %ds)'):format(ms, ms // 60000, (ms % 60000) // 1000)
+end
+
+local function format_relative_time(width, name, ms, rel1_ms, desc1, rel2_ms, desc2)
+    local fmt = '%' .. tostring(width) .. 's %8d ms (%6.2f%% %s'
+    local str = fmt:format(name, ms, (ms * 100) / rel1_ms, desc1)
+    if rel2_ms then
+        str = str .. (', %6.2f%% %s'):format((ms * 100) / rel2_ms, desc2)
+    end
+    return str .. ')'
+end
+
+local function print_sorted_timers(in_timers, width, rel1_ms, desc1, rel2_ms, desc2)
+    local sum = 0
+    local sorted = {}
+    for name,timer in pairs(in_timers) do
+        table.insert(sorted, {name=name, ms=timer})
+        sum = sum + timer
+    end
+    table.sort(sorted, function(a, b) return a.ms > b.ms end)
+    for _, elem in ipairs(sorted) do
+        print(format_relative_time(width, elem.name, elem.ms, rel1_ms, desc1, rel2_ms, desc2))
+    end
+    local framework_time = math.max(0, rel1_ms - sum)
+    print()
+    print(format_relative_time(width, 'framework', framework_time, rel1_ms, desc1, rel2_ms, desc2))
+    print(format_relative_time(width, 'all subtimers', sum, rel1_ms, desc1, rel2_ms, desc2))
+end
+
+function print_timers()
+    local overlay = require('plugins.overlay')
+
+    local summary, em_per_event, em_per_plugin_per_event, update_per_plugin, state_change_per_plugin =
+        dfhack.internal.getPerfCounters()
+
+    local elapsed = math.max(1, summary.elapsed_ms)
+    local total_update_time = summary.total_update_ms
+    local total_overlay_time = overlay and overlay.get_framework_timer() or 0
+
+    print('Summary')
+    print('-------')
+    print()
+    print(('%7s %s'):format('elapsed', format_time(elapsed)))
+    local sum = summary.total_input_ms + total_update_time + total_overlay_time
+    print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
+    print()
+    print(format_relative_time(10, 'input', summary.total_input_ms, sum, 'dfhack', elapsed, 'elapsed'))
+    print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))
+    print(format_relative_time(10, 'overlay', total_overlay_time, sum, 'dfhack', elapsed, 'elapsed'))
+    print()
+    print()
+
+    if total_update_time > 0 then
+        print('Update details')
+        print('--------------')
+        print()
+        print(format_relative_time(15, 'event manager', summary.update_event_manager_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print(format_relative_time(15, 'plugin onUpdate', summary.update_plugin_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print(format_relative_time(15, 'lua timers', summary.update_lua_ms, total_update_time, 'update', elapsed, 'elapsed'))
+        print()
+        print()
+    end
+
+    if summary.update_event_manager_ms > 0 then
+        print('Event manager per event type')
+        print('----------------------------')
+        print()
+        print_sorted_timers(em_per_event, 25, summary.update_event_manager_ms, 'event manager', elapsed, 'elapsed')
+        print()
+        print()
+
+        for k,v in pairs(em_per_plugin_per_event) do
+            if em_per_event[k] <= 0 then goto continue end
+            local title = ('Event manager %s event per plugin'):format(k)
+            print(title)
+            print(('-'):rep(#title))
+            print()
+            print_sorted_timers(v, 25, em_per_event[k], 'event type', elapsed, 'elapsed')
+            print()
+            print()
+            ::continue::
+        end
+    end
+
+    if summary.update_plugin_ms > 0 then
+        print('Update per plugin')
+        print('-----------------')
+        print()
+        print_sorted_timers(update_per_plugin, 25, summary.update_plugin_ms, 'update', elapsed, 'elapsed')
+        print()
+        print()
+        print('State change per plugin')
+        print('-----------------------')
+        print()
+        print_sorted_timers(state_change_per_plugin, 25, summary.update_plugin_ms, 'update', elapsed, 'elapsed')
+        print()
+        print()
+    end
+
+    if total_overlay_time > 0 then
+        print('Overlay details')
+        print('---------------')
+        print()
+        print_sorted_timers(overlay.get_timers(), 45, total_overlay_time, 'overlay', elapsed, 'elapsed')
+    end
+end
+
 return _ENV

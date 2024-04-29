@@ -3977,8 +3977,6 @@ static std::map<const char *, std::map<std::string, uint32_t>> mapify(std::map<c
     return out_map;
 }
 
-static std::map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
-
 static int internal_getPerfCounters(lua_State *L) {
     auto & core = Core::getInstance();
     auto & counters = core.perf_counters;

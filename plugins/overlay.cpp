@@ -207,8 +207,7 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
 }
 
 static void record_widget_runtime(string name, uint32_t start_ms) {
-    auto & core = Core::getInstance();
-    auto & counters = core.perf_counters;
+    auto & counters = Core::getInstance().perf_counters;
     counters.incCounter(counters.overlay_per_widget[name.c_str()], start_ms);
 }
 

@@ -271,10 +271,11 @@ struct hash_pair {
 
 static void run_handler(color_ostream& out, EventType::EventType eventType, const EventHandler & handle, void * arg) {
     auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
     uint32_t start_ms = core.p->getTickCount();
     const char * plugin_name = !handle.plugin ? "<null>" : handle.plugin->getName().c_str();
     handle.eventHandler(out, arg);
-    core.perf_counters.event_manager_event_per_plugin_ms[eventType][plugin_name] += core.p->getTickCount() - start_ms;
+    counters.incCounter(counters.event_manager_event_per_plugin_ms[eventType][plugin_name], start_ms);
 }
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
@@ -421,7 +422,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         uint32_t start_ms = core.p->getTickCount();
         eventManager[a](out);
         eventLastTick[a] = tick;
-        counters.event_manager_event_total_ms[a] += core.p->getTickCount() - start_ms;
+        counters.incCounter(counters.event_manager_event_total_ms[a], start_ms);
     }
 }
 

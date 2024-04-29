@@ -3317,6 +3317,11 @@ static int msize_address(uintptr_t ptr)
     return -1;
 }
 
+static void resetPerfCounters(bool ignorePauseState) {
+    auto & counters = Core::getInstance().perf_counters;
+    counters.reset(ignorePauseState);
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3334,6 +3339,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getClipboardTextCp437),
     WRAP(setClipboardTextCp437),
     WRAP(setClipboardTextCp437Multiline),
+    WRAP(resetPerfCounters),
     { NULL, NULL }
 };
 
@@ -3974,26 +3980,29 @@ static std::map<const char *, std::map<std::string, uint32_t>> mapify(std::map<c
 static std::map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
 
 static int internal_getPerfCounters(lua_State *L) {
-    auto &counters = Core::getInstance().perf_counters;
+    auto & core = Core::getInstance();
+    auto & counters = core.perf_counters;
+
+    uint32_t elapsed_ms = counters.elapsed_ms;
+    if (counters.getIgnorePauseState() || !World::ReadPauseState())
+        elapsed_ms += core.p->getTickCount() - counters.baseline_elapsed_ms;
 
     std::map<const char *, uint32_t> summary;
-    summary["elapsed_ms"] = Core::getInstance().p->getTickCount() - counters.start_ms;
+    summary["unpaused_only"] = counters.getIgnorePauseState() ? 0 : 1;
+    summary["elapsed_ms"] = elapsed_ms;
     summary["total_update_ms"] = counters.total_update_ms;
     summary["update_event_manager_ms"] = counters.update_event_manager_ms;
     summary["update_plugin_ms"] = counters.update_plugin_ms;
     summary["update_lua_ms"] = counters.update_lua_ms;
     summary["total_input_ms"] = counters.total_input_ms;
+    summary["total_overlay_ms"] = counters.total_overlay_ms;
     Lua::Push(L, summary);
     Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));
     Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
     Lua::Push(L, counters.update_per_plugin);
     Lua::Push(L, counters.state_change_per_plugin);
-    return 5;
-}
-
-static int internal_resetPerfCounters(lua_State *L) {
-    Core::getInstance().resetPerfCounters();
-    return 0;
+    Lua::Push(L, counters.overlay_per_widget);
+    return 6;
 }
 
 static const luaL_Reg dfhack_internal_funcs[] = {
@@ -4027,7 +4036,6 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
     { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
     { "getPerfCounters", internal_getPerfCounters },
-    { "resetPerfCounters", internal_resetPerfCounters },
     { NULL, NULL }
 };
 

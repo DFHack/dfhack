@@ -147,9 +147,20 @@ struct Core::Private
     bool was_load_save{false};
 };
 
-void Core::resetPerfCounters() {
-    perf_counters = {};
-    perf_counters.start_ms = p->getTickCount();
+void PerfCounters::reset(bool ignorePauseState) {
+    *this = {};
+    ignore_pause_state = ignorePauseState;
+    baseline_elapsed_ms = Core::getInstance().p->getTickCount();
+}
+
+void PerfCounters::incCounter(uint32_t &counter, uint32_t baseline_ms) {
+    if (!ignore_pause_state && World::ReadPauseState())
+        return;
+    counter += Core::getInstance().p->getTickCount() - baseline_ms;
+}
+
+bool PerfCounters::getIgnorePauseState() {
+    return ignore_pause_state;
 }
 
 struct CommandDepthCounter
@@ -1572,7 +1583,7 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
-    resetPerfCounters();
+    perf_counters.reset();
 
     return true;
 }
@@ -1999,7 +2010,7 @@ int Core::Update()
 
         uint32_t start_ms = p->getTickCount();
         doUpdate(out);
-        perf_counters.total_update_ms += p->getTickCount() - start_ms;
+        perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
 
     // Let all commands run that require CoreSuspender
@@ -2021,7 +2032,7 @@ void Core::onUpdate(color_ostream &out)
 
     uint32_t step_start_ms = p->getTickCount();
     EventManager::manageEvents(out);
-    perf_counters.update_event_manager_ms += p->getTickCount() - step_start_ms;
+    perf_counters.incCounter(perf_counters.update_event_manager_ms, step_start_ms);
 
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
@@ -2030,12 +2041,12 @@ void Core::onUpdate(color_ostream &out)
     // notify all the plugins that a game tick is finished
     step_start_ms = p->getTickCount();
     plug_mgr->OnUpdate(out);
-    perf_counters.update_plugin_ms += p->getTickCount() - step_start_ms;
+    perf_counters.incCounter(perf_counters.update_plugin_ms, step_start_ms);
 
     // process timers in lua
     step_start_ms = p->getTickCount();
     Lua::Core::onUpdate(out);
-    perf_counters.update_lua_ms += p->getTickCount() - step_start_ms;
+    perf_counters.incCounter(perf_counters.update_lua_ms, step_start_ms);
 }
 
 void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
@@ -2192,7 +2203,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     case SC_WORLD_LOADED:
     {
-        Lua::CallLuaModuleFunction(con, "script-manager", "reset_timers");
+        perf_counters.reset();
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
@@ -2238,6 +2249,16 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_MAP_LOADED:
         if (World::IsSiteLoaded())
             plug_mgr->doLoadSiteData(out);
+        break;
+    case SC_PAUSED:
+        if (!perf_counters.getIgnorePauseState()) {
+            perf_counters.elapsed_ms += p->getTickCount() - perf_counters.baseline_elapsed_ms;
+            perf_counters.baseline_elapsed_ms = 0;
+        }
+        break;
+    case SC_UNPAUSED:
+        if (!perf_counters.getIgnorePauseState())
+            perf_counters.baseline_elapsed_ms = p->getTickCount();
         break;
     default:
         break;

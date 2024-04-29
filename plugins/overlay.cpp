@@ -27,6 +27,8 @@
 #include "modules/Screen.h"
 
 using namespace DFHack;
+using std::string;
+using std::vector;
 
 DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
@@ -41,11 +43,6 @@ namespace DFHack {
 
 static df::coord2d screenSize;
 
-// instrumentation
-uint32_t total_overlay_ms = 0;
-static uint32_t get_framework_timer()   { return total_overlay_ms; }
-static void     reset_framework_timer() { total_overlay_ms = 0;    }
-
 static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
@@ -56,13 +53,15 @@ static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres =
     color_ostream & out = Core::getInstance().getConsole();
     auto L = Lua::Core::State;
 
-    uint32_t start_ms = Core::getInstance().p->getTickCount();
+    auto & core = Core::getInstance();
+    auto & counters = core.perf_counters;
+    uint32_t start_ms = core.p->getTickCount();
 
     Lua::CallLuaModuleFunction(out, L, "plugins.overlay", fn_name, nargs, nres,
                                std::forward<Lua::LuaLambda&&>(args_lambda),
                                std::forward<Lua::LuaLambda&&>(res_lambda));
 
-   total_overlay_ms += Core::getInstance().p->getTickCount() - start_ms;
+    counters.incCounter(counters.total_overlay_ms, start_ms);
 }
 
 template<class T>
@@ -170,7 +169,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 #undef INTERPOSE_HOOKS_FAILED
 
-static command_result overlay_cmd(color_ostream &out, std::vector <std::string> & parameters) {
+static command_result overlay_cmd(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
 
     bool show_help = false;
@@ -182,7 +181,7 @@ static command_result overlay_cmd(color_ostream &out, std::vector <std::string> 
     return show_help ? CR_WRONG_USAGE : CR_OK;
 }
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     commands.push_back(
         PluginCommand(
             "overlay",
@@ -207,8 +206,13 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     return CR_OK;
 }
 
+static void record_widget_runtime(string name, uint32_t start_ms) {
+    auto & core = Core::getInstance();
+    auto & counters = core.perf_counters;
+    counters.incCounter(counters.overlay_per_widget[name.c_str()], start_ms);
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(get_framework_timer),
-    DFHACK_LUA_FUNCTION(reset_framework_timer),
+    DFHACK_LUA_FUNCTION(record_widget_runtime),
     DFHACK_LUA_END
 };

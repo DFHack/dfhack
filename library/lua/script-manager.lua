@@ -231,12 +231,12 @@ function print_timers()
 
     if elapsed <= 0 then return end
 
-    local sum = summary.total_input_ms + total_update_time + total_overlay_time
+    local sum = summary.total_keybinding_ms + total_update_time + total_overlay_time
     print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
 
     if sum > 0 then
         print()
-        print(format_relative_time(10, 'input', summary.total_input_ms, sum, 'dfhack', elapsed, 'elapsed'))
+        print(format_relative_time(10, 'keybinding', summary.total_keybinding_ms, sum, 'dfhack', elapsed, 'elapsed'))
         print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))
         print(format_relative_time(10, 'overlay', total_overlay_time, sum, 'dfhack', elapsed, 'elapsed'))
     end

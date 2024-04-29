@@ -2387,7 +2387,7 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
     uint32_t start_ms = p->getTickCount();
     bool ret = doSdlInputEvent(ev);
-    perf_counters.incCounter(perf_counters.total_input_ms, start_ms);
+    perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
     return ret;
 }
 

@@ -109,7 +109,7 @@ namespace DFHack
         uint32_t update_event_manager_ms;
         uint32_t update_plugin_ms;
         uint32_t update_lua_ms;
-        uint32_t total_input_ms;
+        uint32_t total_keybinding_ms;
         uint32_t total_overlay_ms;
         std::unordered_map<int32_t, uint32_t> event_manager_event_total_ms;
         std::unordered_map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;

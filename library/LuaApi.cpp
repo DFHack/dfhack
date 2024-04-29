@@ -3992,7 +3992,7 @@ static int internal_getPerfCounters(lua_State *L) {
     summary["update_event_manager_ms"] = counters.update_event_manager_ms;
     summary["update_plugin_ms"] = counters.update_plugin_ms;
     summary["update_lua_ms"] = counters.update_lua_ms;
-    summary["total_input_ms"] = counters.total_input_ms;
+    summary["total_keybinding_ms"] = counters.total_keybinding_ms;
     summary["total_overlay_ms"] = counters.total_overlay_ms;
     Lua::Push(L, summary);
     Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));

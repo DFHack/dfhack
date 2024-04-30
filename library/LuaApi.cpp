@@ -43,6 +43,7 @@ distribution.
 #include "modules/Burrows.h"
 #include "modules/Constructions.h"
 #include "modules/Designations.h"
+#include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -3316,6 +3317,11 @@ static int msize_address(uintptr_t ptr)
     return -1;
 }
 
+static void resetPerfCounters(bool ignorePauseState) {
+    auto & counters = Core::getInstance().perf_counters;
+    counters.reset(ignorePauseState);
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3333,6 +3339,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getClipboardTextCp437),
     WRAP(setClipboardTextCp437),
     WRAP(setClipboardTextCp437Multiline),
+    WRAP(resetPerfCounters),
     { NULL, NULL }
 };
 
@@ -3933,6 +3940,69 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
     return 0;
 }
 
+template<typename T>
+static std::map<const char *, T> translate_event_types(const std::unordered_map<int32_t, T> & in_map) {
+    std::map<const char *, T> out_map;
+    for (auto [k, v] : in_map) {
+        using namespace EventManager::EventType;
+        switch (k) {
+        case TICK:             out_map["TICK"] = v; break;
+        case JOB_INITIATED:    out_map["JOB_INITIATED"] = v; break;
+        case JOB_STARTED:      out_map["JOB_STARTED"] = v; break;
+        case JOB_COMPLETED:    out_map["JOB_COMPLETED"] = v; break;
+        case UNIT_NEW_ACTIVE:  out_map["UNIT_NEW_ACTIVE"] = v; break;
+        case UNIT_DEATH:       out_map["UNIT_DEATH"] = v; break;
+        case ITEM_CREATED:     out_map["ITEM_CREATED"] = v; break;
+        case BUILDING:         out_map["BUILDING"] = v; break;
+        case CONSTRUCTION:     out_map["CONSTRUCTION"] = v; break;
+        case SYNDROME:         out_map["SYNDROME"] = v; break;
+        case INVASION:         out_map["INVASION"] = v; break;
+        case INVENTORY_CHANGE: out_map["INVENTORY_CHANGE"] = v; break;
+        case REPORT:           out_map["REPORT"] = v; break;
+        case UNIT_ATTACK:      out_map["UNIT_ATTACK"] = v; break;
+        case UNLOAD:           out_map["UNLOAD"] = v; break;
+        case INTERACTION:      out_map["INTERACTION"] = v; break;
+        case EVENT_MAX: break;
+        //default:
+        // force compiler to complain for missing enum cases
+        }
+    }
+    return out_map;
+}
+
+static std::map<const char *, std::map<std::string, uint32_t>> mapify(std::map<const char *, std::unordered_map<std::string, uint32_t>> in_map) {
+    std::map<const char *, std::map<std::string, uint32_t>> out_map;
+    for (auto [k, v] : in_map)
+        out_map[k].insert(v.begin(), v.end());
+    return out_map;
+}
+
+static int internal_getPerfCounters(lua_State *L) {
+    auto & core = Core::getInstance();
+    auto & counters = core.perf_counters;
+
+    uint32_t elapsed_ms = counters.elapsed_ms;
+    if (counters.getIgnorePauseState() || !World::ReadPauseState())
+        elapsed_ms += core.p->getTickCount() - counters.baseline_elapsed_ms;
+
+    std::map<const char *, uint32_t> summary;
+    summary["unpaused_only"] = counters.getIgnorePauseState() ? 0 : 1;
+    summary["elapsed_ms"] = elapsed_ms;
+    summary["total_update_ms"] = counters.total_update_ms;
+    summary["update_event_manager_ms"] = counters.update_event_manager_ms;
+    summary["update_plugin_ms"] = counters.update_plugin_ms;
+    summary["update_lua_ms"] = counters.update_lua_ms;
+    summary["total_keybinding_ms"] = counters.total_keybinding_ms;
+    summary["total_overlay_ms"] = counters.total_overlay_ms;
+    Lua::Push(L, summary);
+    Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));
+    Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
+    Lua::Push(L, counters.update_per_plugin);
+    Lua::Push(L, counters.state_change_per_plugin);
+    Lua::Push(L, counters.overlay_per_widget);
+    return 6;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -3963,6 +4033,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "md5File", internal_md5file },
     { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
     { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
+    { "getPerfCounters", internal_getPerfCounters },
     { NULL, NULL }
 };
 

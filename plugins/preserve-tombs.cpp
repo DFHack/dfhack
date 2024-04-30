@@ -85,7 +85,7 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
 }
 
 // event listener
-EventManager::EventHandler assign_tomb_handler(onUnitDeath, 0);
+EventManager::EventHandler assign_tomb_handler(plugin_self, onUnitDeath, 0);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
@@ -99,7 +99,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
-            EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler, plugin_self);
+            EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler);
             update_tomb_assignments(out);
         }
         else {

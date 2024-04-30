@@ -187,10 +187,10 @@ local function format_time(ms)
 end
 
 local function format_relative_time(width, name, ms, rel1_ms, desc1, rel2_ms, desc2)
-    local fmt = '%' .. tostring(width) .. 's %8d ms (%6.2f%% %s'
+    local fmt = '%' .. tostring(width) .. 's %8d ms (%6.2f%% of %s'
     local str = fmt:format(name, ms, (ms * 100) / rel1_ms, desc1)
     if rel2_ms then
-        str = str .. (', %6.2f%% %s'):format((ms * 100) / rel2_ms, desc2)
+        str = str .. (', %6.2f%% of %s'):format((ms * 100) / rel2_ms, desc2)
     end
     return str .. ')'
 end
@@ -235,6 +235,10 @@ function print_timers()
     print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
 
     if sum > 0 then
+        print()
+        print()
+        print('DFHack details')
+        print('--------------')
         print()
         print(format_relative_time(10, 'keybinding', summary.total_keybinding_ms, sum, 'dfhack', elapsed, 'elapsed'))
         print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))

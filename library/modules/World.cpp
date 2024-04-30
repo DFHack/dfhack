@@ -29,6 +29,7 @@ distribution.
 
 #include "df/adventurest.h"
 #include "df/block_square_event_world_constructionst.h"
+#include "df/gamest.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/plotinfost.h"
@@ -44,7 +45,46 @@ using df::global::world;
 
 bool World::ReadPauseState()
 {
-    return DF_GLOBAL_VALUE(pause_state, false);
+    using df::global::game;
+    using df::global::pause_state;
+
+    if (!pause_state || !plotinfo || !game || !world)
+        return false;
+
+    return *pause_state ||
+        (plotinfo->main.mode != df::ui_sidebar_mode::Default &&
+            (plotinfo->main.mode != df::ui_sidebar_mode::Squads ||
+             plotinfo->squads.in_kill_order ||
+             plotinfo->squads.in_move_order
+            )
+        ) ||
+        (game->main_interface.squads.open &&
+            (game->main_interface.squads.giving_kill_order ||
+             game->main_interface.squads.giving_move_order ||
+             game->main_interface.squads.giving_patrol_order ||
+             game->main_interface.squads.giving_burrow_order
+            )
+        ) ||
+        game->main_interface.bottom_mode_selected == df::main_bottom_mode_type::BUILDING_PICK_MATERIALS ||
+        (game->main_interface.view_sheets.open &&
+            game->main_interface.view_sheets.unit_overview_expelling
+        ) ||
+        game->main_interface.create_work_order.open ||
+        game->main_interface.info.open ||
+        game->main_interface.assign_trade.open ||
+        game->main_interface.trade.open ||
+        game->main_interface.announcement_alert.open ||
+        world->status.popups.size() ||
+        game->main_interface.stocks.open ||
+        game->main_interface.petitions.open ||
+        game->main_interface.diplomacy.open ||
+        game->main_interface.name_creator.open ||
+        game->main_interface.image_creator.open ||
+        game->main_interface.assign_vehicle.open ||
+        game->main_interface.job_details.open ||
+        game->main_interface.options.open ||
+        game->main_interface.assign_display_item.open ||
+        game->main_interface.custom_stockpile.open;
 }
 
 void World::SetPauseState(bool paused)

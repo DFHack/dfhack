@@ -394,18 +394,34 @@ restarting DF.
 
 - ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
 
-Miscellaneous notes
-===================
-This section is for odd but important notes that don't fit anywhere else.
+Performance monitoring
+======================
 
-* If a DF :kbd:`H` hotkey is named with a DFHack command, pressing
-  the corresponding :kbd:`Fx` button will run that command, instead of
-  zooming to the set location.
-  *This feature will be removed in a future version.*  (see :issue:`731`)
+Though DFHack tools are generally performant, they do take some amount of time
+to run. DFHack tracks its impact on DF game speed so the DFHack team can be
+aware of (and fix) tools that are taking more than their fair share of
+processing time.
 
-* The binaries for 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
-  Older versions are available here_.
-  *These files will eventually be migrated to GitHub.*  (see :issue:`473`)
+The target threshold for DFHack CPU utilization during unpaused gameplay with
+all overlays and automation tools enabled is 10%. This is about the level where
+players would notice the impact. In general, DFHack will have even less impact
+for most players, since it is not common for every single DFHack tool to be
+enabled at once.
 
-  .. _DFFD: https://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
-  .. _here: https://dethware.org/dfhack/download
+DFHack will record a performance report with the savegame files named
+``dfhack-perf-counters.dat``. The report contains measurements from when the
+game was loaded to the time when it was saved. By default, only unpaused time is
+measured (since processing done while the game is paused doesn't slow anything
+down from the player's perspective). You can display a live report at any time
+by running::
+
+    :lua require('script-manager').print_timers()
+
+You can reset the timers to start a new measurement session by running::
+
+    :lua dfhack.internal.resetPerfCounters()
+
+If you want to record performance over all elapsed time, not just unpaused
+time, then instead run::
+
+    :lua dfhack.internal.resetPerfCounters(true)

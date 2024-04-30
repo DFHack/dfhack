@@ -48,7 +48,7 @@ bool World::ReadPauseState()
     using df::global::game;
     using df::global::pause_state;
 
-    if (!pause_state || !plotinfo || !game)
+    if (!pause_state || !plotinfo || !game || !world)
         return false;
 
     return *pause_state ||

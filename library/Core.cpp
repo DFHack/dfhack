@@ -1968,13 +1968,11 @@ void Core::doUpdate(color_ostream &out)
     if (vs_changed)
         onStateChange(out, SC_VIEWSCREEN_CHANGED);
 
-    if (df::global::pause_state)
+    bool paused = World::ReadPauseState();
+    if (paused != last_pause_state)
     {
-        if (*df::global::pause_state != last_pause_state)
-        {
-            onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
-            last_pause_state = *df::global::pause_state;
-        }
+        onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
+        last_pause_state = paused;
     }
 
     // Execute per-frame handlers

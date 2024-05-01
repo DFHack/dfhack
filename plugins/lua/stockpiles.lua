@@ -428,10 +428,10 @@ end
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
     desc='Shows a panel when a stockpile is selected for stockpile automation.',
-    default_pos={x=24, y=-6},
+    default_pos={x=5, y=-11},
     default_enabled=true,
     viewscreens='dwarfmode/Stockpile/Some',
-    frame={w=65, h=4},
+    frame={w=65, h=5},
 }
 
 function StockpilesOverlay:init()
@@ -508,6 +508,16 @@ function StockpilesOverlay:init()
                                 {label='Training', value=false}},
                         initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'train'),
+                    }, widgets.CycleHotkeyLabel{
+                        view_id='forbid',
+                        frame={t=2, l=0, w=16},
+                        key='CUSTOM_CTRL_F',
+                        option_gap=-1,
+                        options={{label='Forbid', value='noforbid'},
+                                {label='Forbid', value='forbid', pen=COLOR_LIGHTRED},
+                                {label='Unforbid', value='unforbid', pen=COLOR_LIGHTBLUE}},
+                        initial_option='noforbid',
+                        on_change=self:callback('toggleLogisticsFeature'),
                     },
                 },
             },
@@ -545,6 +555,7 @@ function StockpilesOverlay:onRenderFrame()
         self.subviews.melt:setOption(config.melt == 1)
         self.subviews.trade:setOption(config.trade == 1)
         self.subviews.dump:setOption(config.dump == 1)
+        self.subviews.forbid:setOption(config.forbid+1)
         self.subviews.train:setOption(config.train == 1)
         self.cur_stockpile = sp
     end
@@ -555,11 +566,15 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     local sp = dfhack.gui.getSelectedStockpile(true)
     if not sp then return end
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
+    if (feature == 'noforbid') then config.forbid = 0
+    elseif (feature == 'forbid') then config.forbid = 1
+    elseif (feature == 'unforbid') then config.forbid = 2
+    end
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
             (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1),
-            config.melt_masterworks == 1)
+            config.forbid, config.melt_masterworks == 1)
 end
 
 function StockpilesOverlay:on_custom_config(custom)
@@ -567,7 +582,9 @@ function StockpilesOverlay:on_custom_config(custom)
     if not sp then return end
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
     logistics.logistics_setStockpileConfig(config.stockpile_number,
-            config.melt == 1, config.trade == 1, config.dump == 1, config.train == 1, custom.melt_masterworks)
+            config.melt == 1, config.trade == 1,
+            config.dump == 1, config.train == 1,
+            config.forbid, custom.melt_masterworks)
 end
 
 function StockpilesOverlay:toggleMinimized()

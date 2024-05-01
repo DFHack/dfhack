@@ -32,6 +32,8 @@ function getStockpileData()
             trade=make_stat('trade', stockpile_number, stats, configs),
             dump=make_stat('dump', stockpile_number, stats, configs),
             train=make_stat('train', stockpile_number, stats, configs),
+            forbid=make_stat('forbid', stockpile_number, stats, configs),
+            unforbid=make_stat('unforbid', stockpile_number, stats, configs),
             melt_masterworks=configs[stockpile_number] and configs[stockpile_number].melt_masterworks == 'true',
         })
     end
@@ -49,16 +51,34 @@ local function print_stockpile_data(data)
 
     print('Designated/designatable items in stockpiles:')
     print()
-    local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s  %5s %11s';
-    print(fmt:format('number', 'name', 'melt', 'melt items', 'trade', 'trade items', 'dump', 'dump items', 'train', 'train items'))
+    --          sp.#  __sp.name____________  __melt__  _trade__  __dump__  _train__  frbd  un/frbd
+    local fmt = '%6s  %-' .. name_len .. 's  %4s %10s  %5s %11s  %4s %10s  %6s %11s  %12s  %12s';
+    print(fmt:format('number', 'name',
+            'melt',  'melt items',
+            'trade', 'trade items',
+            'dump',  'dump items',
+            'train', 'train items',
+            'forbid items',
+            '[un][forbid]'))
     local function uline(len) return ('-'):rep(len) end
-    print(fmt:format(uline(6), uline(name_len), uline(4), uline(10), uline(5), uline(11), uline(4), uline(10), uline(5), uline(11)))
+    print(fmt:format(uline(6), uline(name_len),
+            uline(4), uline(10), -- melt
+            uline(5), uline(11), -- trade
+            uline(4), uline(10), -- dump
+            uline(6), uline(11), -- train
+            uline(12),           -- forbid items
+            uline(12)))          -- [un][forbid]
     local function get_enab(stats, ch) return ('[%s]'):format(stats.enabled and (ch or 'x') or ' ') end
     local function get_dstat(stats) return ('%d/%d'):format(stats.designated, stats.designated + stats.can_designate) end
     for _,sp in ipairs(data) do
         has_melt_mastworks = has_melt_mastworks or sp.melt_masterworks
-        print(fmt:format(sp.stockpile_number, sp.name, get_enab(sp.melt, sp.melt_masterworks and 'X'), get_dstat(sp.melt),
-            get_enab(sp.trade), get_dstat(sp.trade), get_enab(sp.dump), get_dstat(sp.dump), get_enab(sp.train), get_dstat(sp.train)))
+        print(fmt:format(sp.stockpile_number, sp.name,
+                get_enab(sp.melt, sp.melt_masterworks and 'X'), get_dstat(sp.melt),
+                get_enab(sp.trade), get_dstat(sp.trade),
+                get_enab(sp.dump), get_dstat(sp.dump),
+                get_enab(sp.train), get_dstat(sp.train),
+                get_dstat(sp.forbid),
+                get_enab(sp.unforbid) .. '  ' .. get_enab(sp.forbid) .. '  '))
     end
     if has_melt_mastworks then
         print()
@@ -91,6 +111,8 @@ local function print_status()
     print(('Total items marked for melting: %5d'):format(global_stats.total_melt))
     print(('Total items marked for trading: %5d'):format(global_stats.total_trade))
     print(('Total items marked for dumping: %5d'):format(global_stats.total_dump))
+    print(('Total items marked forbidden: %7d'):format(global_stats.total_forbid))
+    print(('Total items unforbidden: %12d'):format(global_stats.total_unforbid))
     print(('Total animals marked for training: %2d'):format(global_stats.total_train))
 end
 
@@ -113,12 +135,16 @@ local function do_add_stockpile_config(features, opts)
             dfhack.printerr('invalid stockpile: '..sp)
         else
             for _,config in ipairs(configs) do
+                if (features.forbid) then config.forbid = 1
+                elseif (features.unforbid) then config.forbid = 2
+                end
                 logistics_setStockpileConfig(config.stockpile_number,
-                    features.melt or config.melt == 1,
-                    features.trade or config.trade == 1,
-                    features.dump or config.dump == 1,
-                    features.train or config.train == 1,
-                    not not opts.melt_masterworks)
+                        features.melt or config.melt == 1,
+                        features.trade or config.trade == 1,
+                        features.dump or config.dump == 1,
+                        features.train or config.train == 1,
+                        config.forbid,
+                        not not opts.melt_masterworks)
             end
         end
     end)

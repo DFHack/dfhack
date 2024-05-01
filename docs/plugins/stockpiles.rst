@@ -113,7 +113,8 @@ Overlay
 
 This plugin provides a panel that appears when you select a stockpile via an
 `overlay` widget. You can use it to easily toggle `logistics` plugin features
-like autotrade, automelt, or autotrain. There are also buttons along the top frame for:
+like autotrade, automelt, autodump, autoforbid/unforbid, or autotrain. There
+are also buttons along the top frame for:
 
 - minimizing the panel (if it is in the way of the vanilla stockpile
   configuration widgets)

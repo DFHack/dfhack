@@ -471,7 +471,7 @@ QuickFilter = defclass(QuickFilter, widgets.Panel)
 QuickFilter.ATTRS{
     idx=DEFAULT_NIL,
     on_click_fn=DEFAULT_NIL,
-    is_selected_fn=function () return false end,
+    is_selected_fn=DEFAULT_NIL
 }
 
 function QuickFilter:init()
@@ -480,29 +480,26 @@ function QuickFilter:init()
     self.renaming = false
 
     self:addviews {
-        widgets.Label{
-            frame={t=0, l=0},
-            text=string.char(16), -- this is the "►" character
-            text_pen=COLOR_YELLOW,
-            auto_width=true,
-            visible=self.is_selected_fn,
+        widgets.Label {
+            frame = { t = 0, l = 0 },
+            text = string.char(16), -- this is the "►" character
+            text_pen = COLOR_YELLOW,
+            auto_width = true,
+            visible = self.is_selected_fn,
         },
         widgets.Label { frame = { t = 0, l = 2 }, text = label },
         widgets.Label {
-            frame = { t = 0, l = 5 },
+            frame = { t = 0, l = 5, w = item_filter_chars + 2 },
             text = { { text = self:callback('get_label_text'), pen = function() return COLOR_CYAN end } },
-            width = item_filter_chars + 2,
-            visible = function () return self.renaming == false end,
+            visible = function() return self.renaming == false end,
             on_click = self:callback("on_click"),
         },
         widgets.EditField {
-            view_id='edit_field',
-            frame = { t = 0, l = 5 },
+            view_id = 'edit_field',
+            frame = { t = 0, l = 5, w = item_filter_chars + 2 },
             text = "",
-            width = item_filter_chars + 2,
-            modal = true,
-            visible = function () return self.renaming == true end,
-            on_submit = function (text) self:submit_name(text) end,
+            visible = function() return self.renaming == true end,
+            on_submit = function(text) self:submit_name(text) end,
         },
         widgets.Label {
             frame = { t = 0, r = 0, w = 3 },
@@ -514,9 +511,22 @@ function QuickFilter:init()
     }
 end
 
+function QuickFilter:onInput(keys)
+    if keys.LEAVESCREEN or keys._MOUSE_R then
+        if self.renaming then
+            self.subviews.edit_field:setFocus(false)
+            self.renaming = false
+            return true
+        else
+            return false
+        end
+    end
+    return QuickFilter.super.onInput(self, keys)
+end
+
 function QuickFilter:on_click()
     if dfhack.internal.getModifiers().shift and self:slot_used() then
-        self.subviews.edit_field.text = self:get_label_text()
+        self.subviews.edit_field:setText(self:get_label_text())
         self.renaming = true
         self.subviews.edit_field:setFocus(true)
     else
@@ -1088,6 +1098,9 @@ end
 
 function PlannerOverlay:onInput(keys)
     if not is_plannable() then return false end
+    if PlannerOverlay.super.onInput(self, keys) then
+        return true
+    end
     if keys.LEAVESCREEN or keys._MOUSE_R then
         if uibs.selection_pos:isValid() then
             uibs.selection_pos:clear()
@@ -1101,9 +1114,6 @@ function PlannerOverlay:onInput(keys)
     end
     if keys.CUSTOM_ALT_M then
         self:toggle_minimized()
-        return true
-    end
-    if PlannerOverlay.super.onInput(self, keys) then
         return true
     end
     if self:is_minimized() then return false end

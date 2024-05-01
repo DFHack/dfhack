@@ -15,6 +15,12 @@
 #include "df/organic_mat_category.h"
 #include "df/world.h"
 
+#if (defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14)
+#define NO_DANGLING_REFERENCE [[gnu::no_dangling]]
+#else
+#define NO_DANGLING_REFERENCE
+#endif
+
 using std::map;
 using std::set;
 using std::string;
@@ -75,6 +81,7 @@ static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
     return num_filters;
 }
 
+NO_DANGLING_REFERENCE
 static const vector<const df::job_item *> & get_job_items(color_ostream &out, BuildingTypeKey key) {
     if (job_item_cache.count(key))
         return job_item_cache[key];

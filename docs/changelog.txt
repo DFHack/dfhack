@@ -73,7 +73,7 @@ Template for new versions:
 
 ## Documentation
 - Quickfort Blueprint Library: embed demo video for pump stack blueprint
-- Update Linux compiling dependency requirements
+- Update compilation and dependency requirements and procedures
 
 ## API
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)

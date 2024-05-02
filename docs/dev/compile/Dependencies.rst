@@ -88,7 +88,7 @@ To build DFHack, you need GCC 10 or newer. Note that extremely new GCC versions
 may not have been used to build DFHack yet, so if you run into issues with
 these, please let us know (e.g. by opening a GitHub issue).
 
-Note that distributing binaries compiled with newer GCC versions may result in
+Distributing binaries compiled with newer GCC versions may result in
 compatibility issues for players with older GCC versions. This is why DFHack
 builds distributables with GCC 10, which is the same GCC version that DF itself
 is compiled with.
@@ -96,7 +96,8 @@ is compiled with.
 Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` (the interactive configuration interface) on distributions
 that split the cmake package into multiple parts. As mentioned above, ``ninja``
-is recommended (many distributions call this package ``ninja-build``).
+is recommended as the build system (many distributions call this package
+``ninja-build``), but ``make`` also works.
 
 You will need pthread; most systems should have this already. Note that older
 CMake versions may have trouble detecting pthread, so if you run into

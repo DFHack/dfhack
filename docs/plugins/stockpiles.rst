@@ -8,6 +8,9 @@ stockpiles
 Commands act upon the stockpile selected in the UI unless another stockpile
 identifier is specified on the commandline.
 
+You can also specify hauling route stops to import and export "desired items"
+configuration.
+
 Usage
 -----
 
@@ -18,9 +21,9 @@ Usage
     stockpiles import <name> [<options>]
     stockpiles export <name> [<options>]
 
-Exported stockpile settings are saved in the ``dfhack-config/stockpiles``
-folder, where you can view and delete them, if desired. Names can only
-contain numbers, letters, periods, and underscores.
+Exported settings are saved in the ``dfhack-config/stockpiles`` folder, where
+you can view and delete them, if desired. Names can only contain numbers,
+letters, periods, and underscores.
 
 The names of library settings files are all prefixed by the string ``library/``.
 You can specify library files explicitly by including the prefix, or you can
@@ -57,6 +60,13 @@ Examples
     and general settings. This allows you to import the configuration later
     without touching the container and general settings of the target
     stockpile.
+``stockpiles export mydumpersettings -r "Stone quantum"``
+    Exports the "desired items" for the first stop of the "Stone quantum"
+    hauling route.
+``stockpiles export myroutesettings -r "Train porter,2"``
+    Exports the "desired items" for the stop with id 2 (the second stop, unless
+    you've previously deleted the original first stop and now this is the
+    first) of the "Train porter" hauling route.
 
 Options
 -------
@@ -64,6 +74,9 @@ Options
 ``-s``, ``--stockpile <name or id>``
     Specify a specific stockpile by name or internal ID instead of using the
     stockpile currently selected in the UI.
+``-r``, ``--route <route name or id>[,<stop name or id>]``
+    Specify a hauling route and route stop as the target for import/export
+    instead of a stockpile. If not specified, the first route stop is targeted.
 ``-i``, ``--include <comma separated list of elements to include>``
     When exporting, you can include this option to select only specific elements
     of the stockpile to record. If not specified, everything is included. When

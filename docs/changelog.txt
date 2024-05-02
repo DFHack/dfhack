@@ -70,6 +70,7 @@ Template for new versions:
 - `createitem`: refactored to use ``Items::createItem()`` API function
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
+- `stockpiles`: import and export "desired items" configuration for route stops
 
 ## Documentation
 - Quickfort Blueprint Library: embed demo video for pump stack blueprint

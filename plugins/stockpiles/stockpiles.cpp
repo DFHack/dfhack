@@ -124,18 +124,49 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
     return true;
 }
 
-static bool stockpiles_route_import(color_ostream& out, string fname, int route_id, int stop_id, string mode_str, string filter) {
+static df::stockpile_settings * get_stop_settings(color_ostream& out, int route_id, int stop_id) {
     auto route = df::hauling_route::find(route_id);
     if (!route) {
         out.printerr("Specified hauling route not found: %d.\n", route_id);
-        return false;
+        return NULL;
     }
 
     df::hauling_stop *stop = binsearch_in_vector(route->stops, &df::hauling_stop::id, stop_id);
     if (!stop) {
         out.printerr("Specified hauling stop not found in route %d: %d.\n", route_id, stop_id);
+        return NULL;
+    }
+
+    return &stop->settings;
+}
+
+static bool stockpiles_route_export(color_ostream& out, string fname, int route_id, int stop_id, uint32_t includedElements) {
+    auto settings = get_stop_settings(out, route_id, stop_id);
+    if (!settings)
+        return false;
+
+    if (!is_dfstockfile(fname))
+        fname += ".dfstock";
+
+    try {
+        StockpileSettingsSerializer cereal(settings);
+        if (!cereal.serialize_to_file(out, fname, includedElements)) {
+            out.printerr("could not save to '%s'\n", fname.c_str());
+            return false;
+        }
+    }
+    catch (std::exception& e) {
+        out.printerr("serialization failed: protobuf exception: %s\n", e.what());
         return false;
     }
+
+    return true;
+}
+
+static bool stockpiles_route_import(color_ostream& out, string fname, int route_id, int stop_id, string mode_str, string filter) {
+    auto settings = get_stop_settings(out, route_id, stop_id);
+    if (!settings)
+        return false;
 
     if (!is_dfstockfile(fname))
         fname += ".dfstock";
@@ -155,7 +186,7 @@ static bool stockpiles_route_import(color_ostream& out, string fname, int route_
     split_string(&filters, filter, ",", true);
 
     try {
-        StockpileSettingsSerializer cereal(&stop->settings);
+        StockpileSettingsSerializer cereal(settings);
         if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
             out.printerr("deserialization failed: '%s'\n", fname.c_str());
             return false;
@@ -172,6 +203,7 @@ static bool stockpiles_route_import(color_ostream& out, string fname, int route_
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(stockpiles_export),
     DFHACK_LUA_FUNCTION(stockpiles_import),
+    DFHACK_LUA_FUNCTION(stockpiles_route_export),
     DFHACK_LUA_FUNCTION(stockpiles_route_import),
     DFHACK_LUA_END
 };

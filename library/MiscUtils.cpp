@@ -27,6 +27,8 @@ distribution.
 #include "MiscUtils.h"
 #include "ColorText.h"
 
+#include "modules/DFSDL.h"
+
 #ifndef LINUX_BUILD
 // We don't want min and max macros
 #define NOMINMAX
@@ -34,6 +36,7 @@ distribution.
 #else
     #include <sys/time.h>
     #include <ctime>
+    #include <cxxabi.h>
 #endif
 
 #include <ctype.h>
@@ -44,6 +47,11 @@ distribution.
 #include <sstream>
 #include <map>
 #include <array>
+
+int random_int(int max)
+{
+    return int(int64_t(rand()) * max / (int64_t(RAND_MAX) + 1));
+}
 
 std::string stl_sprintf(const char *fmt, ...) {
     va_list lst;
@@ -112,19 +120,69 @@ std::string join_strings(const std::string &separator, const std::vector<std::st
     return ss.str();
 }
 
-std::string toUpper(const std::string &str)
+char toupper_cp437(char c)
+{
+    switch (c)
+    {
+        case (char)129: // 'ü'
+            return (char)154; // 'Ü'
+        case (char)164: // 'ñ'
+            return (char)165; // 'Ñ'
+        case (char)132: // 'ä'
+            return (char)142; // 'Ä'
+        case (char)134: // 'å'
+            return (char)143; // 'Å'
+        case (char)130: // 'é'
+            return (char)144; // 'É'
+        case (char)148: // 'ö'
+            return (char)153; // 'Ö'
+        case (char)135: // 'ç'
+            return (char)128; // 'Ç'
+        case (char)145: // 'æ'
+            return (char)146; // 'Æ'
+        default: // toupper consistently across locales
+            return (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
+    }
+}
+
+char tolower_cp437(char c)
+{
+    switch (c)
+    {
+        case (char)154: // 'Ü'
+            return (char)129; // 'ü'
+        case (char)165: // 'Ñ'
+            return (char)164; // 'ñ'
+        case (char)142: // 'Ä'
+            return (char)132; // 'ä'
+        case (char)143: // 'Å'
+            return (char)134; // 'å'
+        case (char)144: // 'É'
+            return (char)130; // 'é'
+        case (char)153: // 'Ö'
+            return (char)148; // 'ö'
+        case (char)128: // 'Ç'
+            return (char)135; // 'ç'
+        case (char)146: // 'Æ'
+            return (char)145; // 'æ'
+        default: // tolower consistently across locales
+            return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
+    }
+}
+
+std::string toUpper_cp437(const std::string &str)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = toupper(str[i]);
+        rv[i] = toupper_cp437(str[i]);
     return rv;
 }
 
-std::string toLower(const std::string &str)
+std::string toLower_cp437(const std::string &str)
 {
     std::string rv(str.size(),' ');
     for (unsigned i = 0; i < str.size(); ++i)
-        rv[i] = tolower(str[i]);
+        rv[i] = tolower_cp437(str[i]);
     return rv;
 }
 
@@ -166,6 +224,39 @@ std::string to_search_normalized(const std::string &str)
     }
 
     return result;
+}
+
+std::string capitalize_string_words(const std::string& str)
+{   // Cleaned up from g_src/basics.cpp, and returns new string
+    std::string out = str;
+    bool starting = true;
+    int32_t bracket_count = 0;
+    bool conf;
+
+    for (size_t s = 0; s < out.length(); s++)
+    {
+        if (out[s] == '[') { ++bracket_count; continue; }
+        else if (out[s] == ']') { --bracket_count; continue; }
+        else if (bracket_count > 0) continue;
+
+        conf = false;
+        if (!starting)
+        {
+            if (out[s - 1] == ' ' || out[s - 1] == '\"')
+                conf = true;
+            // Discount single quote if it isn't preceded by space, comma, or nothing
+            else if (out[s - 1] == '\'' && s >= 2 && (out[s - 2] == ' ' || out[s - 2] == ','))
+                conf = true;
+        }
+
+        if (starting || conf)
+        {   // Capitalize
+            out[s] = toupper_cp437(out[s]);
+            starting = false;
+        }
+    }
+
+    return out;
 }
 
 bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length,
@@ -227,6 +318,21 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t lin
     return true;
 }
 
+std::string grab_token_string_pos(const std::string& source, int32_t pos, char compc)
+{   // Cleaned up from g_src/basics.cpp, return string instead of bool
+    std::string out;
+
+    // Go until you hit compc, ']', or the end
+    for (auto s = source.begin() + pos; s < source.end(); ++s)
+    {
+        if (*s == compc || *s == ']')
+            break;
+        out += *s;
+    }
+
+    return out;
+}
+
 bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail)
 {
     size_t ksize = key.size();
@@ -248,11 +354,6 @@ bool prefix_matches(const std::string &prefix, const std::string &key, std::stri
         return true;
     }
     return false;
-}
-
-int random_int(int max)
-{
-    return int(int64_t(rand())*max/(int64_t(RAND_MAX)+1));
 }
 
 #ifdef LINUX_BUILD // Linux
@@ -459,7 +560,7 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
         locale += getenv("LANG");
     if (getenv("LC_CTYPE"))
         locale += getenv("LC_CTYPE");
-    locale = toUpper(locale);
+    locale = toUpper_cp437(locale);
     is_utf = (locale.find("UTF-8") != std::string::npos) ||
              (locale.find("UTF8") != std::string::npos);
 #endif
@@ -469,4 +570,30 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in)
 {
     return out.is_console() ? DF2CONSOLE(in) : in;
+}
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out)
+{
+#ifdef __GNUC__
+    int status;
+    char *demangled = abi::__cxa_demangle(mangled_name.c_str(), nullptr, nullptr, &status);
+    std::string out;
+    if (demangled) {
+        out = demangled;
+        free(demangled);
+    }
+    if (status_out) {
+        if (status == 0) *status_out = "success";
+        else if (status == -1) *status_out = "memory allocation failure";
+        else if (status == -2) *status_out = "invalid mangled name";
+        else if (status == -3) *status_out = "invalid arguments";
+        else *status_out = "unknown error";
+    }
+    return out;
+#else
+    if (status_out) {
+        *status_out = "not implemented on this platform";
+    }
+    return "";
+#endif
 }

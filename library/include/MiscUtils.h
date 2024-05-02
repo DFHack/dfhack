@@ -61,27 +61,7 @@ namespace DFHack {
     class color_ostream;
 }
 
-/*! \namespace dts
- * std.reverse() == dts, The namespace that include forward compatible helpers
- * which can be used from newer standards. The preprocessor check prefers
- * standard version if one is available. The standard version gets imported with
- * using.
- */
-namespace dts {
-//  Check if lib supports the feature test macro or version is over c++14.
-#if __cpp_lib_make_unique < 201304 && __cplusplus < 201402L
-//! Insert c++14 make_unique to be forward compatible. Array versions are
-//! missing
-template<typename T, typename... Args>
-typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T> >::type
-make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>{new T{std::forward<Args>(args)...}};
-}
-#else /* >= c++14 */
-using std::make_unique;
-#endif
-}
+DFHACK_EXPORT int random_int(int max);
 
 template <typename T>
 void print_bits ( T val, std::ostream& out )
@@ -200,6 +180,17 @@ inline int binsearch_index(const std::vector<CT*> &vec, typename CT::key_pointer
     return CT::binsearch_index(vec, key, exact);
 }
 
+template <typename FT>
+int random_index(const std::vector<FT>& vec)
+{
+    if (vec.empty())
+        return -1;
+    else if (vec.size() == 1)
+        return 0;
+
+    return random_int(vec.size());
+}
+
 template<typename FT, typename KT>
 inline bool vector_contains(const std::vector<FT> &vec, KT key)
 {
@@ -219,6 +210,12 @@ inline T vector_get(const std::vector<T> &vec, unsigned idx, const T &defval = T
         return vec[idx];
     else
         return defval;
+}
+
+template<typename T>
+inline T vector_get_random(const std::vector<T>& vec, const T& defval = T())
+{
+    return vector_get(vec, random_index(vec), defval);
 }
 
 template<typename T>
@@ -404,9 +401,28 @@ DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
                                 bool squash_empty = false);
 DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::vector<std::string> &items);
 
-DFHACK_EXPORT std::string toUpper(const std::string &str);
-DFHACK_EXPORT std::string toLower(const std::string &str);
+template<typename T>
+inline std::string join_strings(const std::string &separator, T &items) {
+    std::stringstream ss;
+
+    bool first = true;
+    for (auto &item : items) {
+        if (first)
+            first = false;
+        else
+            ss << separator;
+        ss << item;
+    }
+
+    return ss.str();
+}
+
+DFHACK_EXPORT char toupper_cp437(char c);
+DFHACK_EXPORT char tolower_cp437(char c);
+DFHACK_EXPORT std::string toUpper_cp437(const std::string &str);
+DFHACK_EXPORT std::string toLower_cp437(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
+DFHACK_EXPORT std::string capitalize_string_words(const std::string& str);
 
 static inline std::string int_to_string(const int n) {
     std::ostringstream ss;
@@ -450,6 +466,13 @@ DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
                              size_t line_length = 80,
                              word_wrap_whitespace_mode mode = WSMODE_KEEP_ALL);
+/**
+* Function to assist in parsing tokens. Returns string from source pos until next compc, ']', or end.
+* pos should be set to position after '[' to start with, then incremented by the result's size+1 before subsequent calls.
+* compc is usually ':', but can be '.' for parsing number ranges.
+* Based on Bay12's g_src/basics.cpp
+*/
+std::string grab_token_string_pos(const std::string& source, int32_t pos, char compc = ':');
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {
@@ -462,8 +485,6 @@ inline T clip_range(T a, T1 minv, T2 maxv) {
     if (a > maxv) return maxv;
     return a;
 }
-
-DFHACK_EXPORT int random_int(int max);
 
 /**
  * Returns the amount of milliseconds elapsed since the UNIX epoch.
@@ -480,3 +501,5 @@ DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);
+
+DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::string *status_out);

@@ -28,8 +28,9 @@ distribution.
  * Units
  */
 #include "Export.h"
-#include "modules/Items.h"
 #include "DataDefs.h"
+
+#include "modules/Items.h"
 
 #include "df/caste_raw_flags.h"
 #include "df/goal_type.h"
@@ -37,20 +38,23 @@ distribution.
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
 #include "df/physical_attribute_type.h"
-#include "df/unit.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
+
+#include <ranges>
 
 namespace df
 {
     struct activity_entry;
     struct activity_event;
-    struct nemesis_record;
     struct burrow;
-    struct identity;
-    struct historical_entity;
     struct entity_position_assignment;
     struct entity_position;
+    struct historical_entity;
+    struct identity;
+    struct language_name;
+    struct nemesis_record;
+    struct unit;
     struct unit_misc_trait;
 }
 
@@ -76,7 +80,8 @@ DFHACK_EXPORT bool isUnitInBox(df::unit* u,
 
 DFHACK_EXPORT bool isActive(df::unit *unit);
 DFHACK_EXPORT bool isVisible(df::unit* unit);
-DFHACK_EXPORT bool isCitizen(df::unit *unit, bool ignore_sanity = false);
+DFHACK_EXPORT bool isCitizen(df::unit *unit, bool include_insane = false);
+DFHACK_EXPORT bool isResident(df::unit *unit, bool include_insane = false);
 DFHACK_EXPORT bool isFortControlled(df::unit *unit);
 DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
 DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
@@ -109,14 +114,22 @@ DFHACK_EXPORT bool isWar(df::unit* unit);
 DFHACK_EXPORT bool isTame(df::unit* unit);
 DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isDomesticated(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForTraining(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForTaming(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForWarTraining(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForHuntTraining(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForGelding(df::unit* unit);
+DFHACK_EXPORT bool isGeldable(df::unit* unit);
 DFHACK_EXPORT bool isGelded(df::unit* unit);
 DFHACK_EXPORT bool isEggLayer(df::unit* unit);
+DFHACK_EXPORT bool isEggLayerRace(df::unit* unit);
 DFHACK_EXPORT bool isGrazer(df::unit* unit);
 DFHACK_EXPORT bool isMilkable(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMischievous(df::unit *unit);
 DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
+DFHACK_EXPORT bool isPet(df::unit* unit);
 
 DFHACK_EXPORT bool hasExtravision(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
@@ -133,6 +146,7 @@ DFHACK_EXPORT bool isNightCreature(df::unit* unit);
 DFHACK_EXPORT bool isSemiMegabeast(df::unit* unit);
 DFHACK_EXPORT bool isMegabeast(df::unit* unit);
 DFHACK_EXPORT bool isTitan(df::unit* unit);
+DFHACK_EXPORT bool isForgottenBeast(df::unit* unit);
 DFHACK_EXPORT bool isDemon(df::unit* unit);
 DFHACK_EXPORT bool isDanger(df::unit* unit);
 DFHACK_EXPORT bool isGreatDanger(df::unit* unit);
@@ -145,7 +159,21 @@ DFHACK_EXPORT df::unit *getUnit(const int32_t index);
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2);
-DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity = false);
+DFHACK_EXPORT bool getUnitsByNobleRole(std::vector<df::unit *> &units, std::string noble);
+DFHACK_EXPORT df::unit *getUnitByNobleRole(std::string noble);
+
+inline auto citizensRange(std::vector<df::unit *> &vec, bool exclude_residents = false, bool include_insane = false) {
+    return vec |
+        std::views::filter([=](df::unit * unit) {
+            if (isDead(unit) || !isActive(unit))
+                return false;
+            return isCitizen(unit, include_insane) ||
+                (!exclude_residents && isResident(unit, include_insane));
+        });
+}
+
+DFHACK_EXPORT void forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents = false, bool include_insane = false);
+DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents = false, bool include_insane = false);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);
 
@@ -165,6 +193,9 @@ DFHACK_EXPORT inline df::specific_ref getOuterContainerRef(df::unit *unit) { df:
 
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
+
+DFHACK_EXPORT bool assignTrainer(df::unit *unit, int32_t trainer_id = -1);
+DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
 
 DFHACK_EXPORT df::identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
@@ -186,7 +217,7 @@ DFHACK_EXPORT std::string getRaceBabyNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
-
+DFHACK_EXPORT std::string getReadableName(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 DFHACK_EXPORT int getKillCount(df::unit *unit);
@@ -218,8 +249,6 @@ DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession
 DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
-
-DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);

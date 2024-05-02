@@ -6,11 +6,14 @@
 
 #include "modules/Filesystem.h"
 #include "modules/Materials.h"
+#include "modules/World.h"
 
 #include "json/json.h"
 
 #include "df/building.h"
+#include "df/gamest.h"
 #include "df/historical_figure.h"
+#include "df/inorganic_raw.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_foodst.h"
@@ -35,6 +38,8 @@
 
 using namespace DFHack;
 using namespace df::enums;
+
+using df::global::game;
 
 DFHACK_PLUGIN("orders");
 
@@ -64,6 +69,8 @@ static command_result orders_export_command(color_ostream & out, const std::stri
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
 static command_result orders_sort_command(color_ostream & out);
+static command_result orders_recheck_command(color_ostream & out);
+static command_result orders_recheck_current_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -86,8 +93,8 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_list_command(out);
     }
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -109,6 +116,19 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "sort" && parameters.size() == 1)
     {
         return orders_sort_command(out);
+    }
+
+    if (parameters[0] == "recheck" && parameters.size() == 1)
+    {
+        return orders_recheck_command(out);
+    }
+
+    if (parameters[0] == "recheck" && parameters.size() == 2)
+    {
+        if (parameters[1] == "this")
+        {
+            return orders_recheck_current_command(out);
+        }
     }
 
     return CR_WRONG_USAGE;
@@ -1013,5 +1033,33 @@ static command_result orders_sort_command(color_ostream & out)
         out << "Fixed priority of manager orders." << std::endl;
     }
 
+    return CR_OK;
+}
+
+static command_result orders_recheck_command(color_ostream & out)
+{
+    size_t count = 0;
+    for (auto it : world->manager_orders) {
+        if (it->item_conditions.size() && it->status.bits.active) {
+            ++count;
+            it->status.bits.active = false;
+            it->status.bits.validated = false;
+        }
+    }
+    out << "Re-checking conditions for " << count << " manager orders." << std::endl;
+    return CR_OK;
+}
+
+static command_result orders_recheck_current_command(color_ostream & out)
+{
+    if (game->main_interface.info.work_orders.conditions.open)
+    {
+        game->main_interface.info.work_orders.conditions.wq->status.bits.active = false;
+    }
+    else
+    {
+        out << COLOR_LIGHTRED << "Order conditions is not open" << std::endl;
+        return CR_FAILURE;
+    }
     return CR_OK;
 }

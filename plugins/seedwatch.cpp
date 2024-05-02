@@ -16,6 +16,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/item.h"
 #include "df/item_flags.h"
 #include "df/items_other_id.h"
 #include "df/plant_raw.h"
@@ -38,7 +39,7 @@ REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(seedwatch, config, DebugCategory::LINFO);
+    DBG_DECLARE(seedwatch, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(seedwatch, cycle, DebugCategory::LINFO);
 }
@@ -63,47 +64,50 @@ enum SeedConfigValues {
     SEED_CONFIG_TARGET = 1,
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
-}
-
 static PersistentDataItem & ensure_seed_config(color_ostream &out, int id) {
     if (watched_seeds.count(id))
         return watched_seeds[id];
     string keyname = SEED_CONFIG_KEY_PREFIX + int_to_string(id);
-    DEBUG(config,out).print("creating new persistent key for seed type %d\n", id);
-    watched_seeds.emplace(id, World::GetPersistentData(keyname, NULL));
+    DEBUG(control,out).print("creating new persistent key for seed type %d\n", id);
+    watched_seeds.emplace(id, World::GetPersistentSiteData(keyname, true));
+    watched_seeds[id].set_int(SEED_CONFIG_ID, id);
     return watched_seeds[id];
 }
 static void remove_seed_config(color_ostream &out, int id) {
     if (!watched_seeds.count(id))
         return;
-    DEBUG(config,out).print("removing persistent key for seed type %d\n", id);
+    DEBUG(control,out).print("removing persistent key for seed type %d\n", id);
     World::DeletePersistentData(watched_seeds[id]);
     watched_seeds.erase(id);
 }
 
-static const int32_t CYCLE_TICKS = 1200;
+// this validation removes configuration data from versions prior to 50.09-r3
+// it can be removed once saves from 50.09 are no longer loadable
+
+static bool validate_seed_config(color_ostream& out, PersistentDataItem c)
+{
+    int seed_id = c.get_int(SEED_CONFIG_ID);
+    auto plant = df::plant_raw::find(seed_id);
+    if (!plant) {
+        WARN(control,out).print("discarded invalid seed id: %d\n", seed_id);
+        return false;
+    }
+    bool valid = (!plant->flags.is_set(df::enums::plant_raw_flags::TREE));
+    if (!valid) {
+        DEBUG(control, out).print("invalid configuration for %s discarded\n", plant->id.c_str());
+    }
+    return valid;
+}
+
+static const int32_t CYCLE_TICKS = 1229;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
-static void do_cycle(color_ostream &out, int32_t *num_enabled_seeds, int32_t *num_disabled_seeds);
+static void do_cycle(color_ostream &out, int32_t *num_enabled_seeds = NULL, int32_t *num_disabled_seeds = NULL);
 static void seedwatch_setTarget(color_ostream &out, string name, int32_t num);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(config,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -138,20 +142,20 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(config,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
-            seedwatch_setTarget(out, "all", DEFAULT_TARGET);
+            do_cycle(out);
     } else {
-        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -159,48 +163,54 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    cycle_timestamp = 0;
-
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
     world_plant_ids.clear();
     for (size_t i = 0; i < world->raws.plants.all.size(); ++i) {
         auto & plant = world->raws.plants.all[i];
-        if (plant->material_defs.type[plant_material_def::seed] != -1)
+        if (plant->material_defs.type[plant_material_def::seed] != -1 &&
+            !plant->flags.is_set(df::enums::plant_raw_flags::TREE))
             world_plant_ids[plant->id] = i;
     }
+    return CR_OK;
+}
 
-    config = World::GetPersistentData(CONFIG_KEY);
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
 
-    if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-    }
-
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
-                            is_enabled ? "true" : "false");
     watched_seeds.clear();
     vector<PersistentDataItem> seed_configs;
-    World::GetPersistentData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
     const size_t num_seed_configs = seed_configs.size();
     for (size_t idx = 0; idx < num_seed_configs; ++idx) {
-        auto &c = seed_configs[idx];
-        watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
+        auto& c = seed_configs[idx];
+        if (validate_seed_config(out, c))
+            watched_seeds.emplace(c.get_int(SEED_CONFIG_ID), c);
     }
 
+    config = World::GetPersistentSiteData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        seedwatch_setTarget(out, "all", DEFAULT_TARGET);
+    }
+
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -222,41 +232,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool call_seedwatch_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    DEBUG(config,*out).print("calling %s lua function: '%s'\n", plugin_name, fn_name);
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.seedwatch", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     bool show_help = false;
-    if (!call_seedwatch_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.seedwatch", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;
@@ -278,7 +264,7 @@ struct BadFlags {
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction); F(artifact);
-        F(in_job); F(owned); F(in_chest); F(removed);
+        F(in_job); F(owned); F(removed);
         F(encased); F(spider_web);
         #undef F
         whole = flags.whole;
@@ -299,7 +285,7 @@ static void scan_seeds(color_ostream &out, unordered_map<int32_t, int32_t> *acce
     static const BadFlags bad_flags;
 
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
 
     for (auto &item : world->items.other[items_other_id::SEEDS]) {
         MaterialInfo mat(item);
@@ -333,7 +319,7 @@ static void do_cycle(color_ostream &out, int32_t *num_enabled_seed_types, int32_
         int32_t id = entry.first;
         if (id < 0 || (size_t)id >= world->raws.plants.all.size())
             continue;
-        int32_t target = get_config_val(entry.second, SEED_CONFIG_TARGET);
+        int32_t target = entry.second.get_int(SEED_CONFIG_TARGET);
         if (accessible_counts[id] <= target &&
                 (Kitchen::isPlantCookeryAllowed(id) ||
                  Kitchen::isSeedCookeryAllowed(id))) {
@@ -362,12 +348,12 @@ static void set_target(color_ostream &out, int32_t id, int32_t target) {
         remove_seed_config(out, id);
     else {
         if (id < 0 || (size_t)id >= world->raws.plants.all.size()) {
-            WARN(config,out).print(
+            WARN(control,out).print(
                     "cannot set target for unknown plant id: %d\n", id);
             return;
         }
         PersistentDataItem &c = ensure_seed_config(out, id);
-        set_config_val(c, SEED_CONFIG_TARGET, target);
+        c.set_int(SEED_CONFIG_TARGET, target);
     }
 }
 
@@ -379,7 +365,7 @@ static string searchAbbreviations(string in) {
 };
 
 static void seedwatch_setTarget(color_ostream &out, string name, int32_t num) {
-    DEBUG(config,out).print("entering seedwatch_setTarget\n");
+    DEBUG(control,out).print("entering seedwatch_setTarget\n");
 
     if (num < 0) {
         out.printerr("target must be at least 0\n");
@@ -395,8 +381,11 @@ static void seedwatch_setTarget(color_ostream &out, string name, int32_t num) {
 
     string token = searchAbbreviations(name);
     if (!world_plant_ids.count(token)) {
-        out.printerr("%s has not been found as a material.\n", token.c_str());
-        return;
+        token = toUpper_cp437(token);
+        if (!world_plant_ids.count(token)) {
+            out.printerr("%s has not been found as a material.\n", token.c_str());
+            return;
+        }
     }
 
     set_target(out, world_plant_ids[token], num);
@@ -406,11 +395,11 @@ static int seedwatch_getData(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(config,*out).print("entering seedwatch_getData\n");
+    DEBUG(control,*out).print("entering seedwatch_getData\n");
     unordered_map<int32_t, int32_t> watch_map, accessible_counts;
     scan_seeds(*out, &accessible_counts);
     for (auto &entry : watched_seeds) {
-        watch_map.emplace(entry.first, get_config_val(entry.second, SEED_CONFIG_TARGET));
+        watch_map.emplace(entry.first, entry.second.get_int(SEED_CONFIG_TARGET));
     }
     Lua::Push(L, watch_map);
     Lua::Push(L, accessible_counts);

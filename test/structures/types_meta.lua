@@ -1,3 +1,5 @@
+config.target = 'core'
+
 function test.struct()
     expect.eq(df.coord._kind, 'struct-type')
     expect.eq(tostring(df.coord), '<type: coord>')

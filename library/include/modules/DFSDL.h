@@ -3,59 +3,20 @@
 #include "Export.h"
 #include "ColorText.h"
 
+struct SDL_Surface;
+struct SDL_Rect;
+struct SDL_PixelFormat;
+struct SDL_Window;
+union SDL_Event;
+
 namespace DFHack
 {
-    // SDL stand-in type definitions
-    typedef signed short SINT16;
-    typedef void DFSDL_sem;
-
-    typedef struct
-    {
-        int16_t x, y;
-        uint16_t w, h;
-    } DFSDL_Rect;
-    typedef struct
-    {
-        void *palette; // SDL_Palette*
-        uint8_t  BitsPerPixel;
-        uint8_t  BytesPerPixel;
-        uint8_t  Rloss;
-        uint8_t  Gloss;
-        uint8_t  Bloss;
-        uint8_t  Aloss;
-        uint8_t  Rshift;
-        uint8_t  Gshift;
-        uint8_t  Bshift;
-        uint8_t  Ashift;
-        uint32_t Rmask;
-        uint32_t Gmask;
-        uint32_t Bmask;
-        uint32_t Amask;
-        uint32_t colorkey;
-        uint8_t  alpha;
-    } DFSDL_PixelFormat;
-    typedef struct
-    {
-        uint32_t flags;
-        DFSDL_PixelFormat* format;
-        int w, h;
-        int pitch;
-        void* pixels;
-        void* userdata; // as far as i could see DF doesnt use this
-        int locked;
-        void* lock_data;
-        DFSDL_Rect clip_rect;
-        void* map;
-        int refcount;
-    } DFSDL_Surface;
-
-    // =========
     struct DFTileSurface
     {
         bool paintOver; // draw over original tile?
-        DFSDL_Surface* surface; // from where it should be drawn
-        DFSDL_Rect* rect; // from which coords (NULL to draw whole surface)
-        DFSDL_Rect* dstResize; // if not NULL dst rect will be resized (x/y/w/h will be added to original dst)
+        SDL_Surface* surface; // from where it should be drawn
+        SDL_Rect* rect; // from which coords (NULL to draw whole surface)
+        SDL_Rect* dstResize; // if not NULL dst rect will be resized (x/y/w/h will be added to original dst)
     };
 
 /**
@@ -78,15 +39,32 @@ bool init(DFHack::color_ostream &out);
  */
 void cleanup();
 
-DFHACK_EXPORT DFSDL_Surface * DFIMG_Load(const char *file);
-DFHACK_EXPORT int DFSDL_SetAlpha(DFSDL_Surface *surface, uint32_t flag, uint8_t alpha);
-DFHACK_EXPORT DFSDL_Surface * DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
-DFHACK_EXPORT int DFSDL_UpperBlit(DFSDL_Surface *src, const DFSDL_Rect *srcrect, DFSDL_Surface *dst, DFSDL_Rect *dstrect);
-DFHACK_EXPORT DFSDL_Surface * DFSDL_ConvertSurface(DFSDL_Surface *src, const DFSDL_PixelFormat *fmt, uint32_t flags);
-DFHACK_EXPORT void DFSDL_FreeSurface(DFSDL_Surface *surface);
-DFHACK_EXPORT int DFSDL_SemWait(DFSDL_sem *sem);
-DFHACK_EXPORT int DFSDL_SemPost(DFSDL_sem *sem);
+DFHACK_EXPORT SDL_Surface * DFIMG_Load(const char *file);
+DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
+DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
+DFHACK_EXPORT int DFSDL_UpperBlit(SDL_Surface *src, const SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect);
+DFHACK_EXPORT SDL_Surface * DFSDL_ConvertSurface(SDL_Surface *src, const SDL_PixelFormat *fmt, uint32_t flags);
+DFHACK_EXPORT void DFSDL_FreeSurface(SDL_Surface *surface);
+// DFHACK_EXPORT int DFSDL_SemWait(SDL_sem *sem);
+// DFHACK_EXPORT int DFSDL_SemPost(SDL_sem *sem);
+DFHACK_EXPORT int DFSDL_PushEvent(SDL_Event *event);
+DFHACK_EXPORT void DFSDL_free(void *ptr);
+DFHACK_EXPORT SDL_PixelFormat* DFSDL_AllocFormat(uint32_t pixel_format);
+DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format);
+DFHACK_EXPORT int DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window);
+
+// submitted and returned text is UTF-8
+// see wrapper functions below for cp-437 variants
+DFHACK_EXPORT char * DFSDL_GetClipboardText();
+DFHACK_EXPORT int DFSDL_SetClipboardText(const char *text);
 
 }
+
+// System clipboard -- submitted and returned text must be in CP437
+DFHACK_EXPORT std::string getClipboardTextCp437();
+DFHACK_EXPORT bool setClipboardTextCp437(std::string text);
+
+// interprets 0xa as newline instead of usual CP437 char
+DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
 
 }

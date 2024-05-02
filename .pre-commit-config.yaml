@@ -4,7 +4,7 @@ ci:
 repos:
 # shared across repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
     - id: check-added-large-files
     - id: check-case-conflict
@@ -20,11 +20,11 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.19.2
+  rev: 0.28.1
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.3.1
+  rev: v1.5.5
   hooks:
     - id: forbid-tabs
       exclude_types:
@@ -41,4 +41,4 @@ repos:
       entry: python3 ci/authors-rst.py
       files: docs/about/Authors\.rst
       pass_filenames: false
-exclude: '^(depends/|data/.*\.json$|.*\.diff$)'
+exclude: '^(depends/|data/.*\.json$|.*\.diff$|.*\.dfstock$)'

@@ -1,3 +1,4 @@
+#include "df/enabler.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -7,15 +8,18 @@
 #include "df/viewscreen_initial_prepst.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
 #include "df/viewscreen_update_regionst.h"
 #include "df/viewscreen_worldst.h"
+#include "df/world.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
+#include "MemAccess.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
@@ -23,9 +27,14 @@
 #include "modules/Screen.h"
 
 using namespace DFHack;
+using std::string;
+using std::vector;
 
 DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(enabler);
 
 namespace DFHack {
     DBG_DECLARE(overlay, control, DebugCategory::LINFO);
@@ -34,23 +43,25 @@ namespace DFHack {
 
 static df::coord2d screenSize;
 
-static void call_overlay_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
+static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
     DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
 
+    color_ostream & out = Core::getInstance().getConsole();
     auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
 
-    if (!out)
-        out = &Core::getInstance().getConsole();
+    auto & core = Core::getInstance();
+    auto & counters = core.perf_counters;
+    uint32_t start_ms = core.p->getTickCount();
 
-    Lua::CallLuaModuleFunction(*out, L, "plugins.overlay", fn_name, nargs, nres,
+    Lua::CallLuaModuleFunction(out, L, "plugins.overlay", fn_name, nargs, nres,
                                std::forward<Lua::LuaLambda&&>(args_lambda),
                                std::forward<Lua::LuaLambda&&>(res_lambda));
+
+    counters.incCounter(counters.total_overlay_ms, start_ms);
 }
 
 template<class T>
@@ -59,7 +70,7 @@ struct viewscreen_overlay : T {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         INTERPOSE_NEXT(logic)();
-        call_overlay_lua(NULL, "update_viewscreen_widgets", 2, 0,
+        overlay_interpose_lua("update_viewscreen_widgets", 2, 0,
                 [&](lua_State *L) {
                     Lua::Push(L, T::_identity.getName());
                     Lua::Push(L, this);
@@ -67,19 +78,25 @@ struct viewscreen_overlay : T {
     }
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
         bool input_is_handled = false;
-        call_overlay_lua(NULL, "feed_viewscreen_widgets", 2, 1,
-                [&](lua_State *L) {
-                    Lua::Push(L, T::_identity.getName());
-                    Lua::PushInterfaceKeys(L, *input);
-                }, [&](lua_State *L) {
-                    input_is_handled = lua_toboolean(L, -1);
-                });
+        // don't send input to the overlays if there is a modal dialog up
+        if (!world->status.popups.size()) {
+            overlay_interpose_lua("feed_viewscreen_widgets", 3, 1,
+                    [&](lua_State *L) {
+                        Lua::Push(L, T::_identity.getName());
+                        Lua::Push(L, this);
+                        Lua::PushInterfaceKeys(L, Screen::normalize_text_keys(*input));
+                    }, [&](lua_State *L) {
+                        input_is_handled = lua_toboolean(L, -1);
+                    });
+        }
         if (!input_is_handled)
             INTERPOSE_NEXT(feed)(input);
+        else
+            dfhack_lua_viewscreen::markInputAsHandled();
     }
-    DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
-        INTERPOSE_NEXT(render)();
-        call_overlay_lua(NULL, "render_viewscreen_widgets", 2, 0,
+    DEFINE_VMETHOD_INTERPOSE(void, render, (uint32_t curtick)) {
+        INTERPOSE_NEXT(render)(curtick);
+        overlay_interpose_lua("render_viewscreen_widgets", 2, 0,
                 [&](lua_State *L) {
                     Lua::Push(L, T::_identity.getName());
                     Lua::Push(L, this);
@@ -102,6 +119,7 @@ IMPLEMENT_HOOKS(game_cleaner)
 IMPLEMENT_HOOKS(initial_prep)
 IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
+IMPLEMENT_HOOKS(new_arena)
 IMPLEMENT_HOOKS(new_region)
 IMPLEMENT_HOOKS(savegame)
 IMPLEMENT_HOOKS(setupdwarfgame)
@@ -122,7 +140,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable) {
         screenSize = Screen::getWindowSize();
-        call_overlay_lua(&out, "reload");
+        Lua::CallLuaModuleFunction(out, "plugins.overlay", "rescan");
     }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
@@ -136,6 +154,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             INTERPOSE_HOOKS_FAILED(initial_prep) ||
             INTERPOSE_HOOKS_FAILED(legends) ||
             INTERPOSE_HOOKS_FAILED(loadgame) ||
+            INTERPOSE_HOOKS_FAILED(new_arena) ||
             INTERPOSE_HOOKS_FAILED(new_region) ||
             INTERPOSE_HOOKS_FAILED(savegame) ||
             INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||
@@ -150,18 +169,19 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 #undef INTERPOSE_HOOKS_FAILED
 
-static command_result overlay_cmd(color_ostream &out, std::vector <std::string> & parameters) {
+static command_result overlay_cmd(color_ostream &out, vector<string> & parameters) {
+    CoreSuspender suspend;
+
     bool show_help = false;
-    call_overlay_lua(&out, "overlay_command", 1, 1, [&](lua_State *L) {
-            Lua::PushVector(L, parameters);
-        }, [&](lua_State *L) {
+    Lua::CallLuaModuleFunction(out, "plugins.overlay", "overlay_command", std::make_tuple(parameters),
+        1, [&](lua_State *L) {
             show_help = !lua_toboolean(L, -1);
         });
 
     return show_help ? CR_WRONG_USAGE : CR_OK;
 }
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     commands.push_back(
         PluginCommand(
             "overlay",
@@ -179,9 +199,19 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     df::coord2d newScreenSize = Screen::getWindowSize();
     if (newScreenSize != screenSize) {
-        call_overlay_lua(&out, "reposition_widgets");
+        Lua::CallLuaModuleFunction(out, "plugins.overlay", "reposition_widgets");
         screenSize = newScreenSize;
     }
-    call_overlay_lua(&out, "update_hotspot_widgets");
+    Lua::CallLuaModuleFunction(out, "plugins.overlay", "update_hotspot_widgets");
     return CR_OK;
 }
+
+static void record_widget_runtime(string name, uint32_t start_ms) {
+    auto & counters = Core::getInstance().perf_counters;
+    counters.incCounter(counters.overlay_per_widget[name.c_str()], start_ms);
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(record_widget_runtime),
+    DFHACK_LUA_END
+};

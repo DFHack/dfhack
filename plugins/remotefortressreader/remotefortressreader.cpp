@@ -14,8 +14,6 @@
 #include "PluginManager.h"
 #include "RemoteFortressReader.pb.h"
 #include "RemoteServer.h"
-#include "SDL_events.h"
-#include "SDL_keyboard.h"
 #include "TileTypes.h"
 #include "VersionInfo.h"
 #if DF_VERSION_INT > 34011
@@ -27,6 +25,7 @@
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/DFSDL.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -50,6 +49,7 @@
 #include "df/caste_raw.h"
 #include "df/caste_raw.h"
 #include "df/color_modifier_raw.h"
+#include "df/construction.h"
 #include "df/creature_raw.h"
 #include "df/creature_raw.h"
 #include "df/descriptor_color.h"
@@ -64,18 +64,25 @@
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 #include "df/identity.h"
+#include "df/inorganic_raw.h"
+#include "df/item.h"
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
+#include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/material.h"
 #include "df/material_vec_ref.h"
 #include "df/matter_state.h"
 #include "df/mental_attribute_type.h"
 #include "df/ocean_wave.h"
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
+#include "df/plant_tree_tile.h"
+#include "df/plant_raw.h"
 #include "df/plant_raw_flags.h"
+#include "df/plant_root_tile.h"
 #include "df/projectile.h"
 #include "df/proj_itemst.h"
 #include "df/proj_unitst.h"
@@ -123,10 +130,12 @@
 #include "dwarf_control.h"
 #include "item_reader.h"
 
+#include <SDL_events.h>
+#include <SDL_keyboard.h>
+
 using namespace DFHack;
 using namespace df::enums;
 using namespace RemoteFortressReader;
-using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
 
@@ -189,7 +198,7 @@ const char* growth_locations[] = {
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
 #include "df/art_image_ref.h"
-command_result loadArtImageChunk(color_ostream &out, vector <string> & parameters)
+command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & parameters)
 {
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
@@ -210,7 +219,7 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     return CR_OK;
 }
 
-command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
+command_result RemoteFortressReader_version(color_ostream &out, std::vector<std::string> &parameters)
 {
     out.print(RFR_VERSION);
     return CR_OK;
@@ -641,7 +650,7 @@ void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 
 }
 
-map<DFCoord, uint16_t> hashes;
+std::map<DFCoord, uint16_t> hashes;
 
 bool IsTiletypeChanged(DFCoord pos)
 {
@@ -659,7 +668,7 @@ bool IsTiletypeChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint16_t> waterHashes;
+std::map<DFCoord, uint16_t> waterHashes;
 
 bool IsDesignationChanged(DFCoord pos)
 {
@@ -677,7 +686,7 @@ bool IsDesignationChanged(DFCoord pos)
     return false;
 }
 
-map<DFCoord, uint8_t> buildingHashes;
+std::map<DFCoord, uint8_t> buildingHashes;
 
 bool IsBuildingChanged(DFCoord pos)
 {
@@ -696,7 +705,7 @@ bool IsBuildingChanged(DFCoord pos)
     return changed;
 }
 
-map<DFCoord, uint16_t> spatterHashes;
+std::map<DFCoord, uint16_t> spatterHashes;
 
 bool IsspatterChanged(DFCoord pos)
 {
@@ -733,7 +742,7 @@ bool IsspatterChanged(DFCoord pos)
     return false;
 }
 
-map<int, uint16_t> itemHashes;
+std::map<int, uint16_t> itemHashes;
 
 bool isItemChanged(int i)
 {
@@ -751,7 +760,7 @@ bool isItemChanged(int i)
     return false;
 }
 
-bool areItemsChanged(vector<int> * items)
+bool areItemsChanged(std::vector<int> * items)
 {
     bool result = false;
     for (size_t i = 0; i < items->size(); i++)
@@ -762,7 +771,7 @@ bool areItemsChanged(vector<int> * items)
     return result;
 }
 
-map<int, int> engravingHashes;
+std::map<int, int> engravingHashes;
 
 bool isEngravingNew(int index)
 {
@@ -805,8 +814,6 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         return CR_OK;
     }
 
-
-
     df::world_raws *raws = &world->raws;
     // df::world_history *history = &world->history;
     MaterialInfo mat;
@@ -817,7 +824,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->mutable_mat_pair()->set_mat_type(0);
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
-        mat_def->set_name(mat.toString()); //find the name at cave temperature;
+        mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
         if (size_t(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]) < raws->descriptors.colors.size())
         {
             ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
@@ -835,7 +842,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(i);
             mat_def->mutable_mat_pair()->set_mat_index(j);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])], mat_def->mutable_state_color());
@@ -852,7 +859,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(j + 19);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(creature->material[j]->state_color[GetState(creature->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(creature->material[j]->state_color[GetState(creature->material[j])], mat_def->mutable_state_color());
@@ -869,7 +876,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_type(j + 419);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
             if (size_t(plant->material[j]->state_color[GetState(plant->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(plant->material[j]->state_color[GetState(plant->material[j])], mat_def->mutable_state_color());
@@ -900,7 +907,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
             continue;
         MaterialDefinition * basePlant = out->add_material_list();
         basePlant->set_id(pp->id + ":BASE");
-        basePlant->set_name(pp->name);
+        basePlant->set_name(DF2UTF(pp->name));
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
 #if DF_VERSION_INT > 40001
@@ -913,7 +920,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
             {
                 MaterialDefinition * out_growth = out->add_material_list();
                 out_growth->set_id(pp->id + ":" + growth->id + +":" + growth_locations[l]);
-                out_growth->set_name(growth->name);
+                out_growth->set_name(DF2UTF(growth->name));
                 out_growth->mutable_mat_pair()->set_mat_type(g * 10 + l);
                 out_growth->mutable_mat_pair()->set_mat_index(i);
             }
@@ -970,17 +977,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                     || yyy >= 16
                     )
                     continue;
-                df::plant_tree_tile tile;
                 if (-localPos.z < 0)
                 {
-                    tile = tree_info->roots[-1 + localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_root_tile tile = tree_info->roots[-1 + localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
                 else
                 {
-                    tile = tree_info->body[-localPos.z][xx + (yy*tree_info->dim_x)];
+                    df::plant_tree_tile tile = tree_info->body[-localPos.z][xx + (yy * tree_info->dim_x)];
+                    if (!tile.whole || tile.bits.blocked)
+                        continue;
                 }
-                if (!tile.whole || tile.bits.blocked)
-                    continue;
                 if (tree_info->body_height <= 1)
                     trunk_percent[xxx][yyy] = 0;
                 else
@@ -1390,6 +1398,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y();
     int min_z = in->min_z();
     int max_z = in->max_z();
+    bool forceReload = in->force_reload();
     bool firstBlock = true; //Always send all the buildings needed on the first block, and none on the rest.
                                 //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = max_z - 1; zz >= min_z; zz--)
@@ -1437,19 +1446,19 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool itemsChanged = block->items.size() > 0;
                         bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block = nullptr;
-                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows || forceReload)
                         {
                             net_block = out->add_map_blocks();
                             net_block->set_map_x(block->map_pos.x);
                             net_block->set_map_y(block->map_pos.y);
                             net_block->set_map_z(block->map_pos.z);
                         }
-                        if (tileChanged)
+                        if (tileChanged || forceReload)
                         {
                             CopyBlock(block, net_block, &MC, pos);
                             blocks_sent++;
                         }
-                        if (desChanged)
+                        if (desChanged || forceReload)
                             CopyDesignation(block, net_block, &MC, pos);
                         if (firstBlock)
                         {
@@ -1457,7 +1466,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyProjectiles(net_block);
                             firstBlock = false;
                         }
-                        if (spatterChanged)
+                        if (spatterChanged || forceReload)
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)
                             CopyItems(block, net_block, &MC, pos);
@@ -1528,7 +1537,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         ConvertDFCoord(engraving->pos, netEngraving->mutable_pos());
         netEngraving->set_quality(engraving->quality);
         netEngraving->set_tile(engraving->tile);
-        CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        if (chunk->images[engraving->art_subid]) {
+            CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        }
         netEngraving->set_floor(engraving->flags.bits.floor);
         netEngraving->set_west(engraving->flags.bits.west);
         netEngraving->set_east(engraving->flags.bits.east);
@@ -1627,7 +1638,8 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
     return GetUnitListInside(stream, NULL, out);
 }
 
-float lerp(float a, float b, float f)
+// NB: Cannot be called 'lerp': https://en.cppreference.com/w/cpp/numeric/lerp
+float Lerp(float a, float b, float f)
 {
     return a + f * (b - a);
 }
@@ -1790,9 +1802,9 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 case unit_action_type::Move:
                     if (unit->path.path.x.size() > 0)
                     {
-                        send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_x(Lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_y(Lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_z(Lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
                     }
                     break;
                 case unit_action_type::Job:
@@ -1947,8 +1959,8 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);
     out->set_center_z(pos.z);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
     out->set_cur_year(World::ReadCurrentYear());
     out->set_cur_year_tick(World::ReadCurrentTick());
     return CR_OK;
@@ -1973,8 +1985,8 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
     auto poles = data->flip_latitude;
 #if DF_VERSION_INT > 34011
     switch (poles)
@@ -2122,8 +2134,8 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(Translation::TranslateName(&(data->name), false));
-    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
 #if DF_VERSION_INT > 34011
     auto poles = data->flip_latitude;
     switch (poles)
@@ -2793,8 +2805,8 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
             auto send_tissue = send_creature->add_tissues();
 
             send_tissue->set_id(orig_tissue->id);
-            send_tissue->set_name(orig_tissue->tissue_name_singular);
-            send_tissue->set_subordinate_to_tissue(orig_tissue->subordinate_to_tissue);
+            send_tissue->set_name(DF2UTF(orig_tissue->tissue_name_singular));
+            send_tissue->set_subordinate_to_tissue(DF2UTF(orig_tissue->subordinate_to_tissue));
 
             CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
@@ -2827,7 +2839,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
 
         plant_remote->set_index(i);
         plant_remote->set_id(plant_local->id);
-        plant_remote->set_name(plant_local->name);
+        plant_remote->set_name(DF2UTF(plant_local->name));
         if (!plant_local->flags.is_set(df::plant_raw_flags::TREE))
             plant_remote->set_tile(plant_local->tiles.shrub_tile);
         else
@@ -2839,7 +2851,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
             TreeGrowth * growth_remote = plant_remote->add_growths();
             growth_remote->set_index(j);
             growth_remote->set_id(growth_local->id);
-            growth_remote->set_name(growth_local->name);
+            growth_remote->set_name(DF2UTF(growth_local->name));
             for (size_t k = 0; k < growth_local->prints.size(); k++)
             {
                 df::plant_growth_print* print_local = growth_local->prints[k];
@@ -2890,14 +2902,13 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
 {
 #if DF_VERSION_INT > 34011
-    SDL::Event e;
+    SDL_Event e;
     e.key.type = in->type();
     e.key.state = in->state();
-    e.key.ksym.mod = (SDL::Mod)in->mod();
-    e.key.ksym.scancode = in->scancode();
-    e.key.ksym.sym = (SDL::Key)in->sym();
-    e.key.ksym.unicode = in->unicode();
-    SDL_PushEvent(&e);
+    e.key.keysym.mod = in->mod();
+    e.key.keysym.scancode = (SDL_Scancode)in->scancode();
+    e.key.keysym.sym = in->sym();
+    DFHack::DFSDL::DFSDL_PushEvent(&e);
 #endif
     return CR_OK;
 }

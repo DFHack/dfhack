@@ -21,24 +21,27 @@ void ChannelJobs::load_channel_jobs() {
 }
 
 bool ChannelJobs::has_cavein_conditions(const df::coord &map_pos) {
-    auto p = map_pos;
-    auto ttype = *Maps::getTileType(p);
-    if (!DFHack::isOpenTerrain(ttype)) {
-        // check shared neighbour for cave-in conditions
-        df::coord neighbours[4];
-        get_connected_neighbours(map_pos, neighbours);
-        int connectedness = 4;
-        for (auto n: neighbours) {
-            if (active.count(n) || DFHack::isOpenTerrain(*Maps::getTileType(n))) {
-                connectedness--;
+    if likely(Maps::isValidTilePos(map_pos)) {
+        auto p = map_pos;
+        auto ttype = *Maps::getTileType(p);
+        if (!DFHack::isOpenTerrain(ttype)) {
+            // check shared neighbour for cave-in conditions
+            df::coord neighbours[4];
+            get_connected_neighbours(map_pos, neighbours);
+            int connectedness = 4;
+            for (auto n: neighbours) {
+                if (!Maps::isValidTilePos(n) || active.count(n) || DFHack::isOpenTerrain(*Maps::getTileType(n))) {
+                    connectedness--;
+                }
             }
-        }
-        if (!connectedness) {
-            // do what?
-            p.z--;
-            ttype = *Maps::getTileType(p);
-            if (DFHack::isOpenTerrain(ttype) || DFHack::isFloorTerrain(ttype)) {
-                return true;
+            if (!connectedness) {
+                // do what?
+                p.z--;
+                if (!Maps::isValidTilePos(p)) return false;
+                ttype = *Maps::getTileType(p);
+                if (DFHack::isOpenTerrain(ttype) || DFHack::isFloorTerrain(ttype)) {
+                    return true;
+                }
             }
         }
     }
@@ -88,6 +91,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
     DEBUG(groups).print("    add(" COORD ")\n", COORDARGS(map_pos));
     // and so we begin iterating the neighbours
     for (auto &neighbour: neighbors) {
+        if unlikely(!Maps::isValidTilePos(neighbour)) continue;
         // go to the next neighbour if this one doesn't have a group
         if (!groups_map.count(neighbour)) {
             TRACE(groups).print(" -> neighbour is not designated\n");

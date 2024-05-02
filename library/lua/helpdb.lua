@@ -12,6 +12,8 @@ local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
 
+local GLOBAL_KEY = 'HELPDB'
+
 -- enums
 local ENTRY_TYPES = {
     BUILTIN='builtin',
@@ -136,6 +138,7 @@ local function update_entry(entry, iterator, opts)
     local tags_found, short_help_found = false, opts.skip_short_help
     local in_tags, in_short_help = false, false
     for line in iterator do
+        line = dfhack.utf2df(line)
         if not short_help_found and first_line_is_short_help then
             line = line:trim()
             local _,_,text = line:find('^'..first_line_is_short_help..'%s*(.*)')
@@ -423,6 +426,14 @@ function refresh()
     ensure_db()
 end
 
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_WORLD_LOADED then
+        return
+    end
+    -- pick up widgets from active mods
+    refresh()
+end
+
 local function parse_blocks(text)
     local blocks = {}
     for line in text:gmatch('[^\n]*') do
@@ -621,13 +632,13 @@ local function matches(entry_name, filter)
     return true
 end
 
-local function matches_any(entry_name, filters)
+local function matches_all(entry_name, filters)
     for _,filter in ipairs(filters) do
-        if matches(entry_name, filter) then
-            return true
+        if not matches(entry_name, filter) then
+            return false
         end
     end
-    return false
+    return true
 end
 
 -- normalizes the lists in the filter and returns nil if no filter elements are
@@ -678,8 +689,8 @@ function search_entries(include, exclude)
     exclude = normalize_filter_list(exclude)
     local entries = {}
     for entry in pairs(entrydb) do
-        if (not include or matches_any(entry, include)) and
-                (not exclude or not matches_any(entry, exclude)) then
+        if (not include or matches_all(entry, include)) and
+                (not exclude or not matches_all(entry, exclude)) then
             table.insert(entries, entry)
         end
     end
@@ -778,7 +789,11 @@ function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
         table.insert(excludes, {str=argparse.stringList(exclude_strs)})
     end
     if not show_dev_commands then
-        table.insert(excludes, {tag='dev'})
+        local dev_tags = {'dev', 'unavailable'}
+        if filter_str ~= 'armok' and dfhack.getHideArmokTools() then
+            table.insert(dev_tags, 'armok')
+        end
+        table.insert(excludes, {tag=dev_tags})
     end
     list_entries(skip_tags, include, excludes)
 end
@@ -803,7 +818,16 @@ function tags(tag)
 
     local skip_tags = true
     local include = {entry_type={ENTRY_TYPES.COMMAND}, tag=tag}
-    list_entries(skip_tags, include)
+
+    local excludes = {tag={}}
+    if tag ~= 'unavailable' then
+        table.insert(excludes.tag, 'unavailable')
+    end
+    if tag ~= 'armok' and dfhack.getHideArmokTools() then
+        table.insert(excludes.tag, 'armok')
+    end
+
+    list_entries(skip_tags, include, excludes)
 end
 
 return _ENV

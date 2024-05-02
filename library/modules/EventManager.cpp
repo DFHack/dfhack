@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "VTableInterpose.h"
+
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
@@ -43,6 +44,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <array>
+#include <utility>
 
 namespace DFHack {
     DBG_DECLARE(eventmanager, log, DebugCategory::LINFO);
@@ -67,12 +69,12 @@ static int32_t eventLastTick[EventType::EVENT_MAX];
 
 static const int32_t ticksPerYear = 403200;
 
-void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
-    handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
+void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler) {
+    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
+    handlers[e].insert(pair<Plugin*, EventHandler>(handler.plugin, handler));
 }
 
-int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
+int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, bool absolute) {
     if ( !absolute ) {
         df::world* world = df::global::world;
         if ( world ) {
@@ -84,8 +86,8 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
-    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, plugin->getName().c_str());
-    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str());
+    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(handler.plugin,handler));
     return when;
 }
 
@@ -101,16 +103,16 @@ static void removeFromTickQueue(EventHandler getRidOf) {
     }
 }
 
-void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    for ( auto i = handlers[e].find(plugin); i != handlers[e].end(); ) {
-        if ( (*i).first != plugin )
+void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler) {
+    for ( auto i = handlers[e].find(handler.plugin); i != handlers[e].end(); ) {
+        if ( (*i).first != handler.plugin )
             break;
         EventHandler &handle = (*i).second;
         if ( handle != handler ) {
             i++;
             continue;
         }
-        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
+        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
         i = handlers[e].erase(i);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
@@ -118,7 +120,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
-    DEBUG(log).print("unregistering all handlers for plugin %s\n", plugin->getName().c_str());
+    DEBUG(log).print("unregistering all handlers for plugin %s\n", !plugin ? "<null>" : plugin->getName().c_str());
     for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;
@@ -205,6 +207,9 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
 //job initiated
 static int32_t lastJobId = -1;
 
+//job started
+static unordered_set<int32_t> startedJobs;
+
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
@@ -221,6 +226,15 @@ static int32_t nextItem;
 static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
 
+namespace std {
+    template <>
+    struct hash<df::construction> {
+        std::size_t operator()(const df::construction& construct) const {
+            return construct();
+        }
+    };
+}
+
 //construction
 static unordered_set<df::construction> constructions;
 static bool gameLoaded;
@@ -233,18 +247,36 @@ static int32_t nextInvasion;
 
 //equipment change
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
-static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
+static unordered_map<int32_t, vector<InventoryItem>> equipmentLog;
 
 //report
 static int32_t lastReport;
 
 //unit attack
 static int32_t lastReportUnitAttack;
-static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static std::map<int32_t,std::vector<int32_t>> reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
 //interaction
 static int32_t lastReportInteraction;
+
+struct hash_pair {
+    template<typename A, typename B>
+    size_t operator()(const std::pair<A,B>& p) const {
+        auto h1 = std::hash<A>{}(p.first);
+        auto h2 = std::hash<B>{}(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+static void run_handler(color_ostream& out, EventType::EventType eventType, const EventHandler & handle, void * arg) {
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
+    uint32_t start_ms = core.p->getTickCount();
+    const char * plugin_name = !handle.plugin ? "<null>" : handle.plugin->getName().c_str();
+    handle.eventHandler(out, arg);
+    counters.incCounter(counters.event_manager_event_per_plugin_ms[eventType][plugin_name], start_ms);
+}
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
@@ -253,12 +285,13 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     if ( !doOnce ) {
         //TODO: put this somewhere else
         doOnce = true;
-        EventHandler buildingHandler(Buildings::updateBuildings, 100);
-        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, nullptr);
+        EventHandler buildingHandler(nullptr, Buildings::updateBuildings, 100);
+        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
+        startedJobs.clear();
         for (auto &prevJob : prevJobs) {
             Job::deleteJobStruct(prevJob.second, true);
         }
@@ -276,9 +309,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto &key_value : copy) {
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for map unloaded state change event\n");
-            key_value.second.eventHandler(out, nullptr);
+            run_handler(out, EventType::UNLOAD, handle, nullptr);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -370,13 +403,14 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     TRACE(log,out).print("processing events at tick %d\n", tick);
 
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
         if ( handlers[a].empty() )
             continue;
         int32_t eventFrequency = -100;
         if ( a != EventType::TICK )
-            for (auto &key_value : handlers[a]) {
-                EventHandler &handle = key_value.second;
+            for (auto &[_,handle] : handlers[a]) {
                 if (handle.freq < eventFrequency || eventFrequency == -100 )
                     eventFrequency = handle.freq;
             }
@@ -385,8 +419,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
 
+        uint32_t start_ms = core.p->getTickCount();
         eventManager[a](out);
         eventLastTick[a] = tick;
+        counters.incCounter(counters.event_manager_event_total_ms[a], start_ms);
     }
 }
 
@@ -401,7 +437,7 @@ static void manageTickEvent(color_ostream& out) {
         EventHandler &handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
         DEBUG(log,out).print("calling handler for tick event\n");
-        handle.eventHandler(out, (void*)intptr_t(tick));
+        run_handler(out, EventType::TICK, handle, (void*)intptr_t(tick));
         toRemove.insert(handle);
     }
     if ( toRemove.empty() )
@@ -439,10 +475,9 @@ static void manageJobInitiatedEvent(color_ostream& out) {
             continue;
         if ( link->item->id <= lastJobId )
             continue;
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for job initiated event\n");
-            handle.eventHandler(out, (void*)link->item);
+            run_handler(out, EventType::JOB_INITIATED, handle, (void*)link->item);
         }
     }
 
@@ -453,22 +488,27 @@ static void manageJobStartedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
 
-    static unordered_set<int32_t> startedJobs;
-
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
-    for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
-        df::job* job = link->item;
-        if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
-            startedJobs.emplace(job->id);
-            for (auto &key_value : copy) {
-                auto &handler = key_value.second;
-                // the jobs must have a worker to start
+
+    unordered_set<int32_t> newStartedJobs;
+
+    for (df::job_list_link* link = &df::global::world->jobs.list; link->next != nullptr; link = link->next) {
+        df::job* job = link->next->item;
+        if (!job || !Job::getWorker(job))
+            continue;
+
+        int32_t j_id = job->id;
+        newStartedJobs.emplace(j_id);
+        if (!startedJobs.count(j_id)) {
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for job started event\n");
-                handler.eventHandler(out, job);
+                run_handler(out, EventType::JOB_STARTED, handle, job);
             }
         }
     }
+
+    startedJobs = newStartedJobs;
 }
 
 //helper function for manageJobCompletedEvent
@@ -483,15 +523,16 @@ TODO: consider checking item creation / experience gain just in case
 static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
+
     int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
     int32_t tick1 = df::global::world->frame_counter;
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
-    map<int32_t, df::job*> nowJobs;
+    unordered_map<int32_t, df::job*> nowJobs;
     for ( df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next ) {
         if ( link->item == nullptr )
             continue;
-        nowJobs[link->item->id] = link->item;
+        nowJobs.emplace(link->item->id, link->item);
     }
 
 #if 0
@@ -573,10 +614,9 @@ static void manageJobCompletedEvent(color_ostream& out) {
                 continue;
 
             //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for repeated job completed event\n");
-                handle.eventHandler(out, (void*)&job0);
+                run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
             }
             continue;
         }
@@ -586,28 +626,27 @@ static void manageJobCompletedEvent(color_ostream& out) {
         if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
             continue;
 
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for job completed event\n");
-            handle.eventHandler(out, (void*)&job0);
+            run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
         }
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for (auto &prevJob : prevJobs) {
-        Job::deleteJobStruct(prevJob.second, true);
+    for (auto &[_,prev_job] : prevJobs) {
+        Job::deleteJobStruct(prev_job, true);
     }
     prevJobs.clear();
 
     //create new jobs
-    for (auto &nowJob : nowJobs) {
+    for (auto &[_,now_job] : nowJobs) {
         /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
         if ( i != prevJobs.end() ) {
             continue;
         }*/
 
-        df::job* newJob = Job::cloneJobStruct(nowJob.second, true);
-        prevJobs[newJob->id] = newJob;
+        df::job* newJob = Job::cloneJobStruct(now_job, true);
+        prevJobs.emplace(newJob->id, newJob);
     }
 }
 
@@ -617,15 +656,17 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
-    for (auto &key_value : copy) {
-        auto &handler = key_value.second;
-        for (df::unit* unit : df::global::world->units.active) {
-            int32_t id = unit->id;
-            if (!activeUnits.count(id)) {
-                activeUnits.emplace(id);
-                DEBUG(log,out).print("calling handler for new unit event\n");
-                handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
-            }
+    vector<int32_t> new_active_unit_ids;
+    for (df::unit* unit : df::global::world->units.active) {
+        if (!activeUnits.count(unit->id)) {
+            activeUnits.emplace(unit->id);
+            new_active_unit_ids.emplace_back(unit->id);
+        }
+    }
+    for (int32_t unit_id : new_active_unit_ids) {
+        for (auto &[_,handle] : copy) {
+            DEBUG(log,out).print("calling handler for new unit event\n");
+            run_handler(out, EventType::UNIT_NEW_ACTIVE, handle, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
         }
     }
 }
@@ -635,22 +676,26 @@ static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
+    vector<int32_t> dead_unit_ids;
     for (auto unit : df::global::world->units.all) {
         //if ( unit->counters.death_id == -1 ) {
         if ( Units::isActive(unit) ) {
             livingUnits.insert(unit->id);
             continue;
         }
+        if (!Units::isDead(unit)) continue; // for units that have left the map but aren't dead
         //dead: if dead since last check, trigger events
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
-
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
-            DEBUG(log,out).print("calling handler for unit death event\n");
-            handle.eventHandler(out, (void*)intptr_t(unit->id));
-        }
         livingUnits.erase(unit->id);
+        dead_unit_ids.emplace_back(unit->id);
+    }
+
+    for (int32_t unit_id : dead_unit_ids) {
+        for (auto &[_,handle] : copy) {
+            DEBUG(log,out).print("calling handler for unit death event\n");
+            run_handler(out, EventType::UNIT_DEATH, handle, (void*)intptr_t(unit_id));
+        }
     }
 }
 
@@ -666,6 +711,8 @@ static void manageItemCreationEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     if ( index != 0 ) index--;
+
+    std::vector<int32_t> created_items;
     for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
         df::item* item = df::global::world->items.all[a];
         //already processed
@@ -683,12 +730,17 @@ static void manageItemCreationEvent(color_ostream& out) {
         //spider webs don't count
         if ( item->flags.bits.spider_web )
             continue;
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        created_items.push_back(item->id);
+    }
+
+    // handle all created items
+    for (int32_t item_id : created_items) {
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for item created event\n");
-            handle.eventHandler(out, (void*)intptr_t(item->id));
+            run_handler(out, EventType::ITEM_CREATED, handle, (void*)intptr_t(item_id));
         }
     }
+
     nextItem = *df::global::item_next_id;
 }
 
@@ -703,6 +755,7 @@ static void manageBuildingEvent(color_ostream& out) {
      **/
     multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
     //first alert people about new buildings
+    vector<int32_t> new_buildings;
     for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
         if ( index == -1 ) {
@@ -711,30 +764,34 @@ static void manageBuildingEvent(color_ostream& out) {
             continue;
         }
         buildings.insert(a);
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
-            DEBUG(log,out).print("calling handler for created building event\n");
-            handle.eventHandler(out, (void*)intptr_t(a));
-        }
+        new_buildings.emplace_back(a);
+
     }
     nextBuilding = *df::global::building_next_id;
 
     //now alert people about destroyed buildings
-    for ( auto a = buildings.begin(); a != buildings.end(); ) {
-        int32_t id = *a;
+    for ( auto it = buildings.begin(); it != buildings.end(); ) {
+        int32_t id = *it;
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
         if ( index != -1 ) {
-            a++;
+            ++it;
             continue;
         }
 
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for destroyed building event\n");
-            handle.eventHandler(out, (void*)intptr_t(id));
+            run_handler(out, EventType::BUILDING, handle, (void*)intptr_t(id));
         }
-        a = buildings.erase(a);
+        it = buildings.erase(it);
     }
+
+    //alert people about newly created buildings
+    std::for_each(new_buildings.begin(), new_buildings.end(), [&](int32_t building){
+        for (auto &[_,handle] : copy) {
+            DEBUG(log,out).print("calling handler for created building event\n");
+            run_handler(out, EventType::BUILDING, handle, (void*)intptr_t(building));
+        }
+    });
 }
 
 static void manageConstructionEvent(color_ostream& out) {
@@ -743,35 +800,41 @@ static void manageConstructionEvent(color_ostream& out) {
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
 
     multimap<Plugin*, EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    // find & send construction removals
-    for (auto iter = constructions.begin(); iter != constructions.end();) {
-        auto &construction = *iter;
-        // if we can't find it, it was removed
-        if (df::construction::find(construction.pos) != nullptr) {
-            ++iter;
-            continue;
+
+    unordered_set<df::construction> next_construction_set; // will be swapped with constructions
+    next_construction_set.reserve(constructions.bucket_count());
+    vector<df::construction> new_constructions;
+
+    // find new constructions - swapping found constructions over from constructions to next_construction_set
+    for (auto c : df::global::world->constructions) {
+        auto &construction = *c;
+        auto it = constructions.find(construction);
+        if (it == constructions.end()) {
+            // handle new construction event later
+            new_constructions.emplace_back(construction);
         }
-        // send construction to handlers, because it was removed
-        for (const auto &key_value: copy) {
-            EventHandler handle = key_value.second;
-            DEBUG(log,out).print("calling handler for destroyed construction event\n");
-            handle.eventHandler(out, (void*) &construction);
+        else {
+            constructions.erase(it);
         }
-        // erase from existent constructions
-        iter = constructions.erase(iter);
+        next_construction_set.emplace(construction);
     }
 
-    // find & send construction additions
-    for (auto c: df::global::world->constructions) {
-        auto &construction = *c;
-        // add construction to constructions, if it isn't already present
-        if (constructions.emplace(construction).second) {
-            // send construction to handlers, because it is new
-            for (const auto &key_value: copy) {
-                EventHandler handle = key_value.second;
-                DEBUG(log,out).print("calling handler for created construction event\n");
-                handle.eventHandler(out, (void*) &construction);
-            }
+    constructions.swap(next_construction_set);
+
+    // now next_construction_set contains all the constructions that were removed (not found in df::global::world->constructions)
+    for (auto& construction : next_construction_set) {
+        // handle construction removed event
+        for (const auto &[_,handle]: copy) {
+            DEBUG(log,out).print("calling handler for destroyed construction event\n");
+            run_handler(out, EventType::CONSTRUCTION, handle, (void*) &construction);
+        }
+    }
+
+    // now handle all the new constructions
+    for (auto& construction : new_constructions) {
+        for (const auto &[_,handle]: copy) {
+            DEBUG(log,out).print("calling handler for created construction event\n");
+            run_handler(out, EventType::CONSTRUCTION, handle, (void*) &construction);
         }
     }
 }
@@ -781,6 +844,8 @@ static void manageSyndromeEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     int32_t highestTime = -1;
+
+    std::vector<SyndromeData> new_syndrome_data;
     for (auto unit : df::global::world->units.all) {
 
 /*
@@ -795,14 +860,16 @@ static void manageSyndromeEvent(color_ostream& out) {
             if ( startTime <= lastSyndromeTime )
                 continue;
 
-            SyndromeData data(unit->id, b);
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
-                DEBUG(log,out).print("calling handler for syndrome event\n");
-                handle.eventHandler(out, (void*)&data);
-            }
+            new_syndrome_data.emplace_back(unit->id, b);
         }
     }
+    for (auto& data : new_syndrome_data) {
+        for (auto &[_,handle] : copy) {
+            DEBUG(log,out).print("calling handler for syndrome event\n");
+            run_handler(out, EventType::SYNDROME, handle, (void*)&data);
+        }
+    }
+
     lastSyndromeTime = highestTime;
 }
 
@@ -815,10 +882,9 @@ static void manageInvasionEvent(color_ostream& out) {
         return;
     nextInvasion = df::global::plotinfo->invasions.next_id;
 
-    for (auto &key_value : copy) {
-        EventHandler &handle = key_value.second;
+    for (auto &[_,handle] : copy) {
         DEBUG(log,out).print("calling handler for invasion event\n");
-        handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
+        run_handler(out, EventType::INVASION, handle, (void*)intptr_t(nextInvasion-1));
     }
 }
 
@@ -829,6 +895,18 @@ static void manageEquipmentEvent(color_ostream& out) {
 
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
     unordered_set<int32_t> currentlyEquipped;
+
+    vector<InventoryChangeData> equipment_pickups;
+    vector<InventoryChangeData> equipment_drops;
+    vector<InventoryChangeData> equipment_changes;
+
+
+    // This vector stores the pointers to newly created changed items
+    // needed as the stack allocated temporary (in the loop) is lost when we go to
+    // handle the event calls, so we move that data to the heap if its needed,
+    // and then once we are done we delete everything.
+    vector<InventoryItem*> changed_items;
+
     for (auto unit : df::global::world->units.all) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
@@ -856,40 +934,30 @@ static void manageEquipmentEvent(color_ostream& out) {
             auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
             if ( c == itemIdToInventoryItem.end() ) {
                 //new item equipped (probably just picked up)
-                InventoryChangeData data(unit->id, nullptr, &item_new);
-                for (auto &key_value : copy) {
-                    EventHandler &handle = key_value.second;
-                    DEBUG(log,out).print("calling handler for new item equipped inventory change event\n");
-                    handle.eventHandler(out, (void*)&data);
-                }
+                changed_items.emplace_back(new InventoryItem(item_new));
+                equipment_pickups.emplace_back(unit->id, nullptr, changed_items.back());
                 continue;
             }
-            InventoryItem item_old = (*c).second;
+            InventoryItem item_old = c->second;
 
             df::unit_inventory_item& item0 = item_old.item;
             df::unit_inventory_item& item1 = item_new.item;
             if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
                 continue;
             //some sort of change in how it's equipped
-
-            InventoryChangeData data(unit->id, &item_old, &item_new);
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
-                DEBUG(log,out).print("calling handler for inventory change event\n");
-                handle.eventHandler(out, (void*)&data);
-            }
+            changed_items.emplace_back(new InventoryItem(item_new));
+            InventoryItem* item_new_ptr = changed_items.back();
+            changed_items.emplace_back(new InventoryItem(item_old));
+            InventoryItem* item_old_ptr = changed_items.back();
+            equipment_changes.emplace_back(unit->id, item_old_ptr, item_new_ptr);
         }
         //check for dropped items
         for (auto i : v) {
             if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
                 continue;
             //TODO: delete ptr if invalid
-            InventoryChangeData data(unit->id, &i, nullptr);
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
-                DEBUG(log,out).print("calling handler for dropped item inventory change event\n");
-                handle.eventHandler(out, (void*)&data);
-            }
+            changed_items.emplace_back(new InventoryItem(i));
+            equipment_drops.emplace_back(unit->id, changed_items.back(), nullptr);
         }
         if ( !hadEquipment )
             delete temp;
@@ -902,6 +970,31 @@ static void manageEquipmentEvent(color_ostream& out) {
             equipment.push_back(item);
         }
     }
+
+    // now handle events
+    std::for_each(equipment_pickups.begin(), equipment_pickups.end(), [&](InventoryChangeData& data) {
+        for (auto &[_, handle] : copy) {
+            DEBUG(log,out).print("calling handler for new item equipped inventory change event\n");
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
+        }
+    });
+    std::for_each(equipment_drops.begin(), equipment_drops.end(), [&](InventoryChangeData& data) {
+        for (auto &[_, handle] : copy) {
+            DEBUG(log,out).print("calling handler for dropped item inventory change event\n");
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
+        }
+    });
+    std::for_each(equipment_changes.begin(), equipment_changes.end(), [&](InventoryChangeData& data) {
+        for (auto &[_, handle] : copy) {
+            DEBUG(log,out).print("calling handler for inventory change event\n");
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
+        }
+    });
+
+    // clean up changed items list
+    std::for_each(changed_items.begin(), changed_items.end(), [](InventoryItem* p){
+        delete p;
+    });
 }
 
 static void updateReportToRelevantUnits() {
@@ -939,10 +1032,9 @@ static void manageReportEvent(color_ostream& out) {
 
     for ( ; idx < reports.size(); idx++ ) {
         df::report* report = reports[idx];
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for report event\n");
-            handle.eventHandler(out, (void*)intptr_t(report->id));
+            run_handler(out, EventType::REPORT, handle, (void*)intptr_t(report->id));
         }
         lastReport = report->id;
     }
@@ -981,7 +1073,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
     if ( strikeReports.empty() )
         return;
     updateReportToRelevantUnits();
-    map<int32_t, map<int32_t, int32_t> > alreadyDone;
+    unordered_set<std::pair<int32_t, int32_t>, hash_pair> already_done;
     for (int reportId : strikeReports) {
         df::report* report = df::report::find(reportId);
         if ( !report )
@@ -1011,29 +1103,27 @@ static void manageUnitAttackEvent(color_ostream& out) {
 
         UnitAttackData data{};
         data.report_id = report->id;
-        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
+        if ( wound1 && already_done.find(std::make_pair(unit1->id,unit2->id)) == already_done.end() ) {
             data.attacker = unit1->id;
             data.defender = unit2->id;
             data.wound = wound1->id;
 
-            alreadyDone[data.attacker][data.defender] = 1;
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
+            already_done.emplace(unit1->id, unit2->id);
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit1 attack unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
-        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
+        if ( wound2 && already_done.find(std::make_pair(unit1->id,unit2->id)) == already_done.end() ) {
             data.attacker = unit2->id;
             data.defender = unit1->id;
             data.wound = wound2->id;
 
-            alreadyDone[data.attacker][data.defender] = 1;
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
+            already_done.emplace(unit1->id, unit2->id);
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit2 attack unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1041,11 +1131,11 @@ static void manageUnitAttackEvent(color_ostream& out) {
             data.attacker = unit2->id;
             data.defender = unit1->id;
             data.wound = -1;
-            alreadyDone[data.attacker][data.defender] = 1;
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
+
+            already_done.emplace(unit1->id, unit2->id);
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit1 killed unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1053,11 +1143,11 @@ static void manageUnitAttackEvent(color_ostream& out) {
             data.attacker = unit1->id;
             data.defender = unit2->id;
             data.wound = -1;
-            alreadyDone[data.attacker][data.defender] = 1;
-            for (auto &key_value : copy) {
-                EventHandler &handle = key_value.second;
+
+            already_done.emplace(unit1->id, unit2->id);
+            for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit2 killed unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1313,10 +1403,9 @@ static void manageInteractionEvent(color_ostream& out) {
         lastAttacker = df::unit::find(data.attacker);
         //lastDefender = df::unit::find(data.defender);
         //fire event
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
+        for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for interaction event\n");
-            handle.eventHandler(out, (void*)&data);
+            run_handler(out, EventType::INTERACTION, handle, (void*)&data);
         }
         //TODO: deduce attacker from latest defend event first
     }

@@ -88,9 +88,9 @@ assistance.
 
 All Platforms
 =============
-Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this,
-but from command line is the usual way to do this; thought the Windows section below points out some
-Windows batch files that can be used to avoid opening a terminal/command-prompt.
+Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this
+for you, but it's more common to do it from the command line. Windows developers can refer to the
+Windows section below for batch files that can be used to avoid opening a terminal/command-prompt.
 
 You should seek cmake's documentation online or via ``cmake --help`` to see how the command works. See
 the `build-options` page for help finding the DFHack build options relevant to you.
@@ -102,10 +102,7 @@ be sure you've read the section about getting the code.
 
 Linux
 =====
-On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
 
-Build
------
 Building is fairly straightforward. Enter the ``build`` folder (or create an
 empty folder in the DFHack directory to use instead) and start the build like this::
 
@@ -191,6 +188,10 @@ experience by providing more scrollback and larger window sizes.
 
 macOS
 =====
+
+NOTE: this section is currently outdated. Once DF itself can build on macOS
+again, we will match DF's build environment and update the instructions here.
+
 DFHack functions similarly on macOS and Linux, and the majority of the
 information above regarding the build process (CMake and Ninja) applies here
 as well.

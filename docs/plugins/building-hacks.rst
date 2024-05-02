@@ -3,7 +3,7 @@ building-hacks
 
 .. dfhack-tool::
     :summary: Provides a Lua API for creating powered workshops.
-    :tags: untested fort gameplay buildings
+    :tags: unavailable
     :no-command:
 
 See `building-hacks-api` for more details.

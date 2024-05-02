@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "tinythread.h"
-
 #include "LuaTools.h"
 
 #include "modules/Gui.h"
@@ -32,7 +30,6 @@
 using df::global::gps;
 using namespace DFHack;
 using df::coord2d;
-using namespace tthread;
 
 const float RootTwo = 1.4142135623730950488016887242097f;
 
@@ -108,9 +105,9 @@ lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):light
 {
     reinit();
     defaultSettings();
-    int numTreads=tthread::thread::hardware_concurrency();
-    if(numTreads==0)numTreads=1;
-    threading.start(numTreads);
+    int numThreads=std::thread::hardware_concurrency();
+    if(numThreads==0)numThreads=1;
+    threading.start(numThreads);
 }
 
 void lightingEngineViewscreen::reinit()
@@ -1261,9 +1258,9 @@ void lightThread::run()
     {
         //TODO: get area to process, and then process (by rounds): 1. occlusions, 2.sun, 3.lights(could be difficult, units/items etc...)
         {//wait for occlusion (and lights) to be ready
-            tthread::lock_guard<tthread::mutex> guard(dispatch.occlusionMutex);
+            std::unique_lock<std::mutex> guard(dispatch.occlusionMutex);
             if(!dispatch.occlusionReady)
-            dispatch.occlusionDone.wait(dispatch.occlusionMutex);//wait for work
+                dispatch.occlusionDone.wait(guard);//wait for work
             if(dispatch.unprocessed.size()==0 || !dispatch.occlusionReady) //spurious wake-up
                 continue;
             if(dispatch.occlusion.size()!=canvas.size()) //oh no somebody resized stuff
@@ -1272,7 +1269,7 @@ void lightThread::run()
 
 
         { //get my rectangle (any will do)
-            tthread::lock_guard<tthread::mutex> guard(dispatch.unprocessedMutex);
+            std::lock_guard<std::mutex> guard(dispatch.unprocessedMutex);
             if (dispatch.unprocessed.size()==0)
             {
                 //wtf?? why?!
@@ -1288,7 +1285,7 @@ void lightThread::run()
         }
         work();
         {
-            tthread::lock_guard<tthread::mutex> guard(dispatch.writeLock);
+            std::lock_guard<std::mutex> guard(dispatch.writeLock);
             combine();//write it back
             dispatch.writeCount++;
         }
@@ -1399,11 +1396,11 @@ void lightThread::doLight( int x,int y )
 void lightThreadDispatch::signalDoneOcclusion()
 {
     {
-        tthread::lock_guard<tthread::mutex> guardWrite(writeLock);
+        std::lock_guard<std::mutex> guardWrite(writeLock);
         writeCount=0;
     }
-    tthread::lock_guard<tthread::mutex> guard1(occlusionMutex);
-    tthread::lock_guard<tthread::mutex> guard2(unprocessedMutex);
+    std::lock_guard<std::mutex> guard1(occlusionMutex);
+    std::lock_guard<std::mutex> guard2(unprocessedMutex);
     while(!unprocessed.empty())
         unprocessed.pop();
     viewPort=getMapViewport();
@@ -1465,17 +1462,17 @@ void lightThreadDispatch::start(int count)
     for(int i=0;i<count;i++)
     {
         std::unique_ptr<lightThread> nthread(new lightThread(*this));
-        nthread->myThread=new tthread::thread(&threadStub,nthread.get());
+        nthread->myThread=new std::thread(&threadStub,nthread.get());
         threadPool.push_back(std::move(nthread));
     }
 }
 
 void lightThreadDispatch::waitForWrites()
 {
-    tthread::lock_guard<tthread::mutex> guard(writeLock);
+    std::unique_lock<std::mutex> lock(writeLock);
     while(threadPool.size()>size_t(writeCount))//missed it somehow already.
     {
-        writesDone.wait(writeLock); //if not, wait a bit
+        writesDone.wait(lock); //if not, wait a bit
     }
 }
 

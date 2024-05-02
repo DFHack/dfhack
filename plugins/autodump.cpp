@@ -41,236 +41,6 @@ DFHACK_PLUGIN("autodump");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 
-/* TODO: merge with stockpiles plugin
-// Stockpile interface START
-static const string PERSISTENCE_KEY = "autodump/stockpiles";
-
-static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
-{
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
-
-    // Precompute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact);
-    F(spider_web); F(owned); F(in_job);
-#undef F
-
-    size_t marked_count = 0;
-    for (size_t i = 0; i < items.size(); i++)
-    {
-        df::item *item = items[i];
-        if (item->flags.whole & bad_flags.whole)
-            continue;
-
-        for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
-        {
-            if (!it->inStockpile(item))
-                continue;
-
-            ++marked_count;
-            item->flags.bits.dump = true;
-        }
-    }
-
-    if (marked_count)
-        Gui::showAnnouncement("Marked " + int_to_string(marked_count) + " items to dump", COLOR_GREEN, false);
-}
-
-class StockpileMonitor
-{
-public:
-    bool isMonitored(df::building_stockpilest *sp)
-    {
-        for (auto it = monitored_stockpiles.begin(); it != monitored_stockpiles.end(); it++)
-        {
-            if (it->matches(sp))
-                return true;
-        }
-
-        return false;
-    }
-
-    void add(df::building_stockpilest *sp)
-    {
-        auto pile = PersistentStockpileInfo(sp, PERSISTENCE_KEY);
-        if (pile.isValid())
-        {
-            monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            monitored_stockpiles.back().save();
-        }
-    }
-
-    void remove(df::building_stockpilest *sp)
-    {
-        for (auto it = monitored_stockpiles.begin(); it != monitored_stockpiles.end(); it++)
-        {
-            if (it->matches(sp))
-            {
-                it->remove();
-                monitored_stockpiles.erase(it);
-                break;
-            }
-        }
-    }
-
-    void doCycle()
-    {
-        for (auto it = monitored_stockpiles.begin(); it != monitored_stockpiles.end();)
-        {
-            if (!it->isValid())
-                it = monitored_stockpiles.erase(it);
-            else
-                ++it;
-        }
-
-        mark_all_in_stockpiles(monitored_stockpiles);
-    }
-
-    void reset()
-    {
-        monitored_stockpiles.clear();
-        std::vector<PersistentDataItem> items;
-        DFHack::World::GetPersistentData(&items, PERSISTENCE_KEY);
-
-        for (auto i = items.begin(); i != items.end(); i++)
-        {
-            auto pile = PersistentStockpileInfo(*i, PERSISTENCE_KEY);
-            if (pile.load())
-                monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            else
-                pile.remove();
-        }
-    }
-
-
-private:
-    vector<PersistentStockpileInfo> monitored_stockpiles;
-};
-
-static StockpileMonitor monitor;
-
-#define DELTA_TICKS 620
-
-
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    if(!Maps::IsValid())
-        return CR_OK;
-
-    if (DFHack::World::ReadPauseState())
-        return CR_OK;
-
-    if (world->frame_counter % DELTA_TICKS != 0)
-        return CR_OK;
-
-    monitor.doCycle();
-
-    return CR_OK;
-}
-
-struct dump_hook : public df::viewscreen_dwarfmodest
-{
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    bool handleInput(set<df::interface_key> *input)
-    {
-        if (Gui::inRenameBuilding())
-            return false;
-
-        building_stockpilest *sp = get_selected_stockpile();
-        if (!sp)
-            return false;
-
-        if (input->count(interface_key::CUSTOM_SHIFT_D))
-        {
-            if (monitor.isMonitored(sp))
-                monitor.remove(sp);
-            else
-                monitor.add(sp);
-        }
-
-        return false;
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (!handleInput(input))
-            INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-
-        building_stockpilest *sp = get_selected_stockpile();
-        if (!sp)
-            return;
-
-        auto dims = Gui::getDwarfmodeViewDims();
-        int left_margin = dims.menu_x1 + 1;
-        int x = left_margin;
-        int y = dims.y2 - 7;
-
-        int links = 0;
-        links += sp->links.give_to_pile.size();
-        links += sp->links.take_from_pile.size();
-        links += sp->links.give_to_workshop.size();
-        links += sp->links.take_from_workshop.size();
-        bool state = monitor.isMonitored(sp);
-
-        if (links + 12 >= y) {
-            y = dims.y2;
-            OutputString(COLOR_WHITE, x, y, "Auto: ");
-            OutputString(COLOR_LIGHTRED, x, y, "D");
-            OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "ump ");
-        } else {
-            OutputToggleString(x, y, "Auto dump", "D", state, true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
-        }
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dump_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(dump_hook, render);
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event)
-    {
-    case DFHack::SC_MAP_LOADED:
-        monitor.reset();
-        break;
-    case DFHack::SC_MAP_UNLOADED:
-        break;
-    default:
-        break;
-    }
-    return CR_OK;
-}
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    if (enable != is_enabled)
-    {
-        if (!INTERPOSE_HOOK(dump_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(dump_hook, render).apply(enable))
-            return CR_FAILURE;
-
-        is_enabled = enable;
-    }
-
-    return CR_OK;
-}
-
-// Stockpile interface END
-*/
-
 command_result df_autodump(color_ostream &out, vector <string> & parameters);
 command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters);
 command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters);
@@ -280,20 +50,17 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     commands.push_back(PluginCommand(
         "autodump",
         "Teleport items marked for dumping to the keyboard cursor.",
-        df_autodump,
-        Gui::cursor_hotkey));
+        df_autodump));
     commands.push_back(PluginCommand(
         "autodump-destroy-here",
         "Destroy items marked for dumping under the keyboard cursor.",
         df_autodump_destroy_here,
         Gui::cursor_hotkey));
-    /* you can no longer select items
     commands.push_back(PluginCommand(
         "autodump-destroy-item",
         "Destroy the selected item.",
         df_autodump_destroy_item,
         Gui::any_item_hotkey));
-        */
     return CR_OK;
 }
 
@@ -335,7 +102,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         return CR_WRONG_USAGE;
     }
 
-    //DFHack::VersionInfo *mem = Core::getInstance().vinfo;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -365,7 +131,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
                 return CR_FAILURE;
             }
             df::tiletype ttype = MC.tiletypeAt(pos_cursor);
-            if(!DFHack::isWalkable(ttype) || DFHack::isOpenTerrain(ttype))
+            if(!DFHack::isWalkable(ttype))
             {
                 out.printerr("Cursor should be placed over a floor.\n");
                 return CR_FAILURE;
@@ -379,13 +145,10 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         df::item * itm = world->items.all[i];
         DFCoord pos_item(itm->pos.x, itm->pos.y, itm->pos.z);
 
-        // only dump the stuff marked for dumping and laying on the ground
+        // only dump valid stuff marked for dumping
         if (   !itm->flags.bits.dump
-//          || !itm->flags.bits.on_ground
             ||  itm->flags.bits.construction
             ||  itm->flags.bits.in_building
-            ||  itm->flags.bits.in_chest
-//          ||  itm->flags.bits.in_inventory
             ||  itm->flags.bits.artifact
         )
             continue;
@@ -399,18 +162,22 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         if (!need_forbidden && itm->flags.bits.forbid)
             continue;
 
-        if(!destroy) // move to cursor
+        if (!destroy) // move to cursor
         {
-            // Change flags to indicate the dump was completed, as if by super-dwarfs
-            itm->flags.bits.dump = false;
-            itm->flags.bits.forbid = true;
-
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
             {
-                if (!Items::moveToGround(MC, itm, pos_cursor))
+                if (Items::moveToGround(MC, itm, pos_cursor))
+                {
+                    // Change flags to indicate the dump was completed, as if by super-dwarfs
+                    itm->flags.bits.dump = false;
+                    itm->flags.bits.forbid = true;
+                }
+                else
+                {
                     out.print("Could not move item: %s\n",
-                              Items::getDescription(itm, 0, true).c_str());
+                        Items::getDescription(itm, 0, true).c_str());
+                }
             }
         }
         else // destroy
@@ -461,9 +228,10 @@ static int last_frame = 0;
 
 command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
 
     df::item *item = Gui::getSelectedItem(out);
     if (!item)

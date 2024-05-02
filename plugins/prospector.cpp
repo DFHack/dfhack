@@ -1,30 +1,17 @@
 // Produces a list of materials available on the map.
-// Options:
-//  -a : show unrevealed tiles
-//  -p : don't show plants
-//  -s : don't show slade
-//  -t : don't show demon temple
 
-//#include <cstdlib>
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
-#include <functional>
-#include <vector>
-
-using namespace std;
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "MiscUtils.h"
+#include "DataDefs.h"
+
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 
-#include "MiscUtils.h"
-
-#include "DataDefs.h"
+#include "df/inorganic_raw.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_region_details.h"
@@ -35,9 +22,21 @@ using namespace std;
 #include "df/feature_init.h"
 #include "df/region_map_entry.h"
 #include "df/inclusion_type.h"
+#include "df/map_block.h"
+#include "df/map_block_column.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
 
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::coord2d;
@@ -143,7 +142,7 @@ struct shallower
 
 
 typedef std::map<int16_t, matdata> MatMap;
-typedef std::vector< pair<int16_t, matdata> > MatSorter;
+typedef std::vector< std::pair<int16_t, matdata> > MatSorter;
 
 typedef std::vector<df::plant *> PlantList;
 
@@ -168,9 +167,11 @@ static void printMatdata(color_ostream &con, const matdata &data, bool only_z = 
         con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
-        con <<"   Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
+        con <<"   Elev:" << std::setw(4) << (data.lower_z) << ".." << (data.upper_z)
+            << std::endl;
     else
-        con <<"   Z:" << std::setw(4) << data.lower_z << std::endl;
+        con <<"   Elev:" << std::setw(4) << (data.lower_z)
+            << std::endl;
 }
 
 static int getValue(const df::inorganic_raw &info)
@@ -200,7 +201,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, cons
         if(size_t(it->first) >= materials.size())
         {
             con << "Bad index: " << it->first << " out of "
-                <<  materials.size() << endl;
+                <<  materials.size() << std::endl;
             continue;
         }
         T* mat = materials[it->first];
@@ -565,19 +566,8 @@ static command_result embark_prospector(color_ostream &out,
                                         df::viewscreen_choose_start_sitest *screen,
                                         const prospect_options &options)
 {
-    if (!world || !world->world_data)
-    {
+    if (!world->world_data) {
         out.printerr("World data is not available.\n");
-        return CR_FAILURE;
-    }
-
-    df::world_data *data = world->world_data;
-    coord2d cur_region = screen->location.region_pos;
-    auto cur_details = get_details(data, cur_region);
-
-    if (!cur_details)
-    {
-        out.printerr("Current region details are not available.\n");
         return CR_FAILURE;
     }
 
@@ -589,12 +579,18 @@ static command_result embark_prospector(color_ostream &out,
     // Compute biomes
     std::map<coord2d, int> biomes;
 
-    for (int x = screen->location.embark_pos_min.x; x <= 15 && x <= screen->location.embark_pos_max.x; x++)
-    {
-        for (int y = screen->location.embark_pos_min.y; y <= 15 && y <= screen->location.embark_pos_max.y; y++)
-        {
+    int32_t max_x = (world->worldgen.worldgen_parms.dim_x * 16) - 1;
+    int32_t max_y = (world->worldgen.worldgen_parms.dim_y * 16) - 1;
+
+    for (int x = screen->location.embark_pos_min.x; x <= max_x && x <= screen->location.embark_pos_max.x; ++x) {
+        for (int y = screen->location.embark_pos_min.y; y <= max_y && y <= screen->location.embark_pos_max.y; ++y) {
+            auto cur_details = get_details(world->world_data, coord2d(x / 16, y / 16));
+
+            if (!cur_details)
+                continue;
+
             EmbarkTileLayout tile;
-            if (!estimate_underground(out, tile, cur_details, x, y) ||
+            if (!estimate_underground(out, tile, cur_details, x % 16, y % 16) ||
                 !estimate_materials(out, tile, layerMats, veinMats))
                 return CR_FAILURE;
 
@@ -655,6 +651,9 @@ static command_result map_prospector(color_ostream &con,
 
     for(uint32_t z = 0; z < z_max; z++)
     {
+        // the '- 100' is because DF v50 and later have a 100 offset in reported elevation
+        int global_z = world->map.region_z + z - 100;
+
         for(uint32_t b_y = 0; b_y < y_max; b_y++)
         {
             for(uint32_t b_x = 0; b_x < x_max; b_x++)
@@ -670,8 +669,6 @@ static command_result map_prospector(color_ostream &con,
                 // Find features
                 b->GetGlobalFeature(&blockFeatureGlobal);
                 b->GetLocalFeature(&blockFeatureLocal);
-
-                int global_z = world->map.region_z + z;
 
                 // Iterate over all the tiles in the block
                 for(uint32_t y = 0; y < 16; y++)
@@ -899,37 +896,13 @@ static command_result map_prospector(color_ostream &con,
     return CR_OK;
 }
 
-static bool get_options(color_ostream &out,
-                        prospect_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.prospector", "parse_commandline")) {
-        out.printerr("Failed to load prospector Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 command_result prospector(color_ostream &con, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
     prospect_options options;
-    if (!get_options(con, options, parameters) || options.help)
+    if (!Lua::CallLuaModuleFunction(con, "plugins.prospector", "parse_commandline", std::make_tuple(&options, parameters))
+            || options.help)
         return CR_WRONG_USAGE;
 
     // Embark screen active: estimate using world geology data

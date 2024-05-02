@@ -3,7 +3,7 @@ digFlood
 
 .. dfhack-tool::
     :summary: Digs out veins as they are discovered.
-    :tags: untested fort auto map
+    :tags: unavailable
 
 Once you register specific vein types, this tool will automatically designate
 tiles of those types of veins for digging as your miners complete adjacent

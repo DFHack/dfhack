@@ -17,6 +17,14 @@ Usage
     manager orders. It will not clear the orders that already exist.
 ``orders clear``
     Deletes all manager orders in the current embark.
+``orders recheck [this]``
+    Sets the status to ``Checking`` (from ``Active``) for all work orders that
+    have conditions that can be re-checked. If the "this" option is passed,
+    only sets the status for the workorder whose condition details page is
+    open. This makes the manager reevaluate its conditions. This is especially
+    useful for an order that had its conditions met when it was started, but
+    the requisite items have since disappeared and the workorder is now
+    generating job cancellation spam.
 ``orders sort``
     Sorts current manager orders by repeat frequency so repeating orders don't
     prevent one-time orders from ever being completed. The sorting order is:
@@ -43,12 +51,62 @@ Examples
 Overlay
 -------
 
-Orders plugin functionality is directly available when the manager orders screen
-is open via an `overlay` widget. There are hotkeys assigned to export, import,
-sort, and clear. You can also click on the hotkey hints as if they were buttons.
-Clearing will ask for confirmation before acting.
+Fort-wide work orders screen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to change where the hotkey hints appear, you can move them via
+Orders plugin functionality is directly available via an `overlay` widget when
+the fort-wide work orders screen is open. There are hotkeys assigned to export,
+import, sort, clear, and recheck conditions. You can also click on the hotkey
+hints as if they were buttons. Clearing will ask for confirmation before acting.
+
+When you open the conditions screen for a manager order, there is also a small
+overlay that allows you to recheck conditions for just that order. This is
+useful for when the conditions were true when the order started, but they have
+become false and now you're just getting repeated cancellation spam as the
+order cannot be fulfilled.
+
+Workshop Workers tab
+~~~~~~~~~~~~~~~~~~~~
+
+For workshops that do *not* have a workshop master assigned, there is a slider
+you can use to restrict the units that perform jobs at that workshop by their
+skill level.
+
+Due to space constraints, some skill levels are combined with the adjacent
+higher rank on the slider:
+
+- "Competent" includes "Adequate" workers
+- "Proficient" includes "Skilled" workers
+- "Expert" includes "Adept" workers
+- "Accomplished" includes "Professional" workers
+- "Master" includes "Great" workers
+- "Grand Master" includes "High Master" workers
+
+Finally, a list is shown for workshops that service manager orders of multiple
+labor types. You can toggle the listed labors so the workshop only accepts
+general work orders that match the enabled labors (the list of allowed labors
+is different for every workshop).
+
+For example, by default, all weapon, armor, and blacksmithing general manager
+orders get sent to all forges that can take general work orders. With labor
+restrictions, you can designate specific forges to handle just weapons, just
+armor, or just metalsmithing. Then, you can assign appropriate legendary
+masters to each forge, and they will only receive orders for appropriate
+products.
+
+Simiarly, you can set up Craftsdwarf's workshops to specialize in stone, wood,
+or bone.
+
+Regardless of the labor restriction settings, you can manually assign any task
+to the workshop and it will still be completed. The labor restrictions only
+apply to general manager work orders scheduled from the fort-wide work orders
+screen.
+
+Veteran players may remember these overlays as vanilla features in pre-v50 Dwarf
+Fortress. This is actually still the case. The DFHack overlay simply provides a
+UI for the vanilla feature hiding beneath the surface.
+
+If you want to change where the overlay panels appear, you can move them with
 `gui/overlay`.
 
 The orders library
@@ -64,7 +122,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets/mugs
+- pots/bins/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts, totems, and shleggings from otherwise unusable by-products
 - mechanisms/cages
@@ -77,7 +135,10 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-Armok's note: shleggings? Yes, `shleggings <https://youtu.be/bLN8cOcTjdo>`__.
+Note that the jugs are specifically made out of wood. This is so, as long as you don't may any other "Tools" out of wood, you can have a stockpile just for jugs by restricting a finished goods stockpile to only take wooden tools.
+
+Armok's additional note: "shleggings? Yes,
+`shleggings <https://youtu.be/bLN8cOcTjdo>`__."
 
 :source:`library/furnace <data/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,13 +162,15 @@ Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 This collection adds high-volume smelting jobs for military-grade metal ores and
 produces weapons and armor:
 
-- leather backpacks/waterskins/cloaks/quivers/armor
+- leather backpacks/waterskins/quivers/armor
+- silk cloaks
 - bone/wooden bolts
 - smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
   their dependencies)
 - bronze/bismuth bronze/copper bolts
-- silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+- steel/silver/iron/bismuth bronze/bronze/copper weapons and armor,
   with checks to ensure only the best available materials are being used
+- wooden shields (if metal isn't available)
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
 and turn on `automelt` (like what `dreamfort` provides on its industry level),
@@ -116,16 +179,6 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 ``automelt`` on, though!
 
 This file should only be imported, of course, if you need to equip a military.
-
-:source:`library/military_include_artifact_materials <data/orders/military_include_artifact_materials.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As above, but this collection will also allow creation of platinum blunt weapons.
-Normally these are only created by artifact moods, work orders can't be created
-manually for them.
-
-- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
-  with checks to ensure only the best available materials are being used
 
 :source:`library/smelting <data/orders/smelting.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

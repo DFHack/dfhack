@@ -4,8 +4,6 @@ local _ENV = mkmodule('gui.buildings')
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local dlg = require('gui.dialogs')
-local utils = require('utils')
 
 ARROW = string.char(26)
 
@@ -270,6 +268,7 @@ function BuildingDialog:onInput(keys)
         return true
     end
     self:inputToSubviews(keys)
+    return true
 end
 
 function showBuildingPrompt(title, prompt, on_select, on_cancel, build_filter)

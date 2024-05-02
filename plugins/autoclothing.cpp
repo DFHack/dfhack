@@ -1,22 +1,15 @@
-#include "Core.h"
-#include "Console.h"
 #include "Debug.h"
-#include "Export.h"
 #include "PluginManager.h"
-
-#include <map>
-
-// DF data structure definition headers
-#include "DataDefs.h"
 
 #include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Persistence.h"
+#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
-#include "modules/Translation.h"
 
+#include "df/creature_raw.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/item_crafted.h"
@@ -32,7 +25,7 @@
 #include "df/itemdef_helmst.h"
 #include "df/itemdef_pantsst.h"
 #include "df/manager_order.h"
-#include "df/creature_raw.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using std::endl;
@@ -45,35 +38,36 @@ using namespace DFHack::Items;
 using namespace DFHack::Units;
 using namespace df::enums;
 
-
 DFHACK_PLUGIN("autoclothing");
 REQUIRE_GLOBAL(world);
 
 // Only run if this is enabled
-DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(autoclothing, report, DebugCategory::LINFO);
+    DBG_DECLARE(autoclothing, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autoclothing, cycle, DebugCategory::LINFO);
 }
 
-static const string CONFIG_KEY = string(plugin_name) + "/config";
+static const int32_t CYCLE_TICKS = 1283; // one day-ish
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+};
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 struct ClothingRequirement;
 command_result autoclothing(color_ostream &out, vector <string> & parameters);
-static void init_state(color_ostream &out);
-static void save_state(color_ostream &out);
-static void cleanup_state(color_ostream &out);
 static void do_autoclothing();
 static bool validateMaterialCategory(ClothingRequirement * requirement);
 static bool setItem(string name, ClothingRequirement* requirement);
-static void generate_report(color_ostream& out);
+static void generate_control(color_ostream& out);
 static bool isAvailableItem(df::item* item);
 
 enum match_strictness
@@ -222,11 +216,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginComma
 // This is called right before the plugin library is removed from memory.
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
-    // You *MUST* kill all threads you created before this returns.
-    // If everything fails, just return CR_FAILURE. Your plugin will be
-    // in a zombie state, but things won't crash.
-    cleanup_state(out);
-
     return CR_OK;
 }
 
@@ -237,11 +226,9 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_WORLD_LOADED:
-        init_state(out);
-        break;
     case SC_WORLD_UNLOADED:
-        cleanup_state(out);
+        clothingOrders.clear();
+        is_enabled = false;
         break;
     default:
         break;
@@ -249,26 +236,97 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
+    if (!enabled.isValid()) {
+        DEBUG(control, out).print("no config found in this save; initializing\n");
+        enabled = World::AddPersistentSiteData(CONFIG_KEY);
+        enabled.set_bool(CONFIG_IS_ENABLED, is_enabled);
+    }
+
+    is_enabled = enabled.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control, out).print("loading persisted enabled state: %s\n",
+        is_enabled ? "true" : "false");
+
+    // Parse constraints
+    vector<PersistentDataItem> items;
+    World::GetPersistentSiteData(&items, "autoclothing/clothingItems");
+
+    for (auto& item : items)
+    {
+        if (!item.isValid())
+            continue;
+        ClothingRequirement req;
+        req.Deserialize(item.get_str());
+        clothingOrders.push_back(req);
+        out << "autoclothing added " << req.ToReadableLabel() << endl;
+    }
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_save_site_data (color_ostream &out)
+{
+    for (auto& order : clothingOrders)
+    {
+        auto orderSave = World::AddPersistentSiteData("autoclothing/clothingItems");
+        orderSave.set_str(order.Serialize());
+    }
+
+    // Parse constraints
+    vector<PersistentDataItem> items;
+    World::GetPersistentSiteData(&items, "autoclothing/clothingItems");
+
+    for (size_t i = 0; i < items.size(); i++)
+    {
+        if (i < clothingOrders.size())
+        {
+            items[i].set_str(clothingOrders[i].Serialize());
+        }
+        else
+        {
+            World::DeletePersistentData(items[i]);
+        }
+    }
+    for (size_t i = items.size(); i < clothingOrders.size(); i++)
+    {
+        auto item = World::AddPersistentSiteData("autoclothing/clothingItems");
+        item.set_str(clothingOrders[i].Serialize());
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
+        is_enabled = enable;
+        DEBUG(control, out).print("%s from the API; persisting\n",
+            is_enabled ? "enabled" : "disabled");
+        enabled.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_autoclothing();
+    }
+    else {
+        DEBUG(control, out).print("%s from the API, but already %s; no action\n",
+            is_enabled ? "enabled" : "disabled",
+            is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
 
 // Whatever you put here will be done in each game step. Don't abuse it.
 // It's optional, so you can just comment it out like this if you don't need it.
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (!autoclothing_enabled)
-        return CR_OK;
-
-    if (!Maps::IsValid())
-        return CR_OK;
-
-    if (DFHack::World::ReadPauseState())
-        return CR_OK;
-
-    if ((world->frame_counter + 500) % 1200 != 0) // Check every day, but not the same day as other things
-        return CR_OK;
-
-    do_autoclothing();
-
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_autoclothing();
     return CR_OK;
 }
 
@@ -380,6 +438,14 @@ static bool validateMaterialCategory(ClothingRequirement * requirement)
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, vector <string> & parameters)
 {
+    // be sure to suspend the core if any DF state is read or modified
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     // It's nice to print a help message you get invalid options
     // from the user instead of just acting strange.
     // This can be achieved by adding the extended help string to the
@@ -388,13 +454,13 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
     // be used by 'help your-command'.
     if (parameters.size() == 0)
     {
-        CoreSuspender suspend;
+        out << "Automatic clothing management is currently " << (is_enabled ? "enabled" : "disabled") << "." << endl;
         out << "Currently set " << clothingOrders.size() << " automatic clothing orders" << endl;
         for (size_t i = 0; i < clothingOrders.size(); i++)
         {
             out << clothingOrders[i].ToReadableLabel() << endl;
         }
-        generate_report(out);
+        generate_control(out);
         return CR_OK;
     }
     ////Disabled until I have time to fully implement it.
@@ -417,12 +483,6 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
         out << "Wrong number of arguments." << endl;
         return CR_WRONG_USAGE;
     }
-    // Commands are called from threads other than the DF one.
-    // Suspend this thread until DF has time for us. If you
-    // use CoreSuspender, it'll automatically resume DF when
-    // execution leaves the current scope.
-    CoreSuspender suspend;
-
 
     // Create a new requirement from the available parameters.
     ClothingRequirement newRequirement;
@@ -490,14 +550,13 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
     }
     if (settingSize)
     {
-        if (!autoclothing_enabled)
+        if (!is_enabled)
         {
             out << "Enabling automatic clothing management" << endl;
-            autoclothing_enabled = true;
+            is_enabled = true;
         }
         do_autoclothing();
     }
-    save_state(out);
 
     // Give control back to DF.
     return CR_OK;
@@ -505,12 +564,7 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
 
 static void find_needed_clothing_items()
 {
-    for (auto& unit : world->units.active)
-    {
-        //obviously we don't care about illegal aliens.
-        if (!isCitizen(unit))
-            continue;
-
+    Units::forCitizens([&](auto unit) {
         //now check each clothing order to see what the unit might be missing.
         for (auto& clothingOrder : clothingOrders)
         {
@@ -523,13 +577,15 @@ static void find_needed_clothing_items()
 
                 if (!item)
                 {
-                    WARN(cycle).print("Invalid inventory item ID: %d\n", ownedItem);
+                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
                     continue;
                 }
 
                 if (item->getType() != clothingOrder.itemType)
                     continue;
                 if (item->getSubtype() != clothingOrder.item_subtype)
+                    continue;
+                if (item->getWear() >= 1)
                     continue;
 
                 MaterialInfo matInfo;
@@ -548,7 +604,7 @@ static void find_needed_clothing_items()
             //technically, there's some leeway in sizes, but only caring about exact sizes is simpler.
             clothingOrder.total_needed_per_race[unit->race] += neededAmount;
         }
-    }
+    });
 }
 
 static void remove_available_clothing()
@@ -557,6 +613,9 @@ static void remove_available_clothing()
     {
         //skip any owned items.
         if (getOwner(item))
+            continue;
+        //skip any worn or more items
+        if (item->getWear() >= 1)
             continue;
 
         //again, for each item, find if any clothing order matches
@@ -632,6 +691,9 @@ static void add_clothing_orders()
 
 static void do_autoclothing()
 {
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
     if (clothingOrders.size() == 0)
         return;
 
@@ -643,76 +705,6 @@ static void do_autoclothing()
 
     //Finally loop through the clothing orders to find ones that need more made.
     add_clothing_orders();
-}
-
-static void cleanup_state(color_ostream &out)
-{
-    clothingOrders.clear();
-    autoclothing_enabled = false;
-}
-
-static void init_state(color_ostream &out)
-{
-    auto enabled = World::GetPersistentData("autoclothing/enabled");
-    if (enabled.isValid() && enabled.ival(0) == 1)
-    {
-        out << "autoclothing enabled" << endl;
-        autoclothing_enabled = true;
-    }
-    else
-    {
-        autoclothing_enabled = false;
-    }
-
-    // Parse constraints
-    vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autoclothing/clothingItems");
-
-    for (auto& item : items)
-    {
-        if (!item.isValid())
-            continue;
-        ClothingRequirement req;
-        req.Deserialize(item.val());
-        clothingOrders.push_back(req);
-        out << "autoclothing added " << req.ToReadableLabel() << endl;
-    }
-}
-
-static void save_state(color_ostream &out)
-{
-    auto enabled = World::GetPersistentData("autoclothing/enabled");
-    if (!enabled.isValid())
-        enabled = World::AddPersistentData("autoclothing/enabled");
-    enabled.ival(0) = autoclothing_enabled;
-
-    for (auto& order : clothingOrders)
-    {
-        auto orderSave = World::AddPersistentData("autoclothing/clothingItems");
-        orderSave.val() = order.Serialize();
-    }
-
-
-    // Parse constraints
-    vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autoclothing/clothingItems");
-
-    for (size_t i = 0; i < items.size(); i++)
-    {
-        if (i < clothingOrders.size())
-        {
-            items[i].val() = clothingOrders[i].Serialize();
-        }
-        else
-        {
-            World::DeletePersistentData(items[i]);
-        }
-    }
-    for (size_t i = items.size(); i < clothingOrders.size(); i++)
-    {
-        auto item = World::AddPersistentData("autoclothing/clothingItems");
-        item.val() = clothingOrders[i].Serialize();
-    }
 }
 
 static void list_unit_counts(color_ostream& out, map<int, int>& unitList)
@@ -728,42 +720,36 @@ static void list_unit_counts(color_ostream& out, map<int, int>& unitList)
 
 static bool isAvailableItem(df::item* item)
 {
-    if (item->flags.bits.in_job)
+    static struct BadFlags {
+        uint32_t whole;
+
+        BadFlags() {
+            df::item_flags flags;
+#define F(x) flags.bits.x = true;
+            F(in_job); F(hostile); F(in_building); F(encased);
+            F(foreign); F(trader); F(owned); F(forbid);
+            F(dump); F(on_fire); F(melt); F(hidden);
+
+            F(garbage_collect); F(rotten); F(construction);
+            F(removed); F(spider_web);
+
+            // F(artifact); -- TODO: should this be included?
+#undef F
+            whole = flags.whole;
+        }
+    } badFlags;
+
+    if ((item->flags.whole & badFlags.whole) != 0)
         return false;
-    if (item->flags.bits.hostile)
-        return false;
-    if (item->flags.bits.in_building)
-        return false;
-    if (item->flags.bits.in_building)
-        return false;
-    if (item->flags.bits.encased)
-        return false;
-    if (item->flags.bits.foreign)
-        return false;
-    if (item->flags.bits.trader)
-        return false;
-    if (item->flags.bits.owned)
-        return false;
-    if (item->flags.bits.artifact)
-        return false;
-    if (item->flags.bits.forbid)
-        return false;
-    if (item->flags.bits.dump)
-        return false;
-    if (item->flags.bits.on_fire)
-        return false;
-    if (item->flags.bits.melt)
-        return false;
-    if (item->flags.bits.hidden)
-        return false;
-    if (item->getWear() > 1)
+
+    if (item->getWear() >= 1)
         return false;
     if (!item->isClothing())
         return false;
     return true;
 }
 
-static void generate_report(color_ostream& out)
+static void generate_control(color_ostream& out)
 {
     map<int, int> fullUnitList;
     map<int, int> missingArmor;
@@ -771,10 +757,8 @@ static void generate_report(color_ostream& out)
     map<int, int> missingHelms;
     map<int, int> missingGloves;
     map<int, int> missingPants;
-    for (df::unit* unit : world->units.active)
-    {
-        if (!Units::isCitizen(unit))
-            continue;
+
+    Units::forCitizens([&](auto unit) {
         fullUnitList[unit->race]++;
         int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
         for (auto itemId : unit->owned_items)
@@ -782,7 +766,7 @@ static void generate_report(color_ostream& out)
             auto item = Items::findItemByID(itemId);
             if (!item)
             {
-                WARN(cycle,out).print("Invalid inventory item ID: %d\n", itemId);
+                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
                 continue;
             }
             if (item->getWear() >= 1)
@@ -818,8 +802,9 @@ static void generate_report(color_ostream& out)
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        DEBUG(report,out) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
-    }
+        DEBUG(control,out) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
+    });
+
     if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
     {
         out << "Everybody has a full set of clothes to wear, congrats!" << endl;
@@ -829,27 +814,27 @@ static void generate_report(color_ostream& out)
     {
         if (missingArmor.size())
         {
-            out << "Following units need new bodywear:" << endl;
+            out << "The following units need new bodywear:" << endl;
             list_unit_counts(out, missingArmor);
         }
         if (missingShoes.size())
         {
-            out << "Following units need new shoes:" << endl;
+            out << "The following units need new shoes:" << endl;
             list_unit_counts(out, missingShoes);
         }
         if (missingHelms.size())
         {
-            out << "Following units need new headwear:" << endl;
+            out << "The following units need new headwear:" << endl;
             list_unit_counts(out, missingHelms);
         }
         if (missingGloves.size())
         {
-            out << "Following units need new handwear:" << endl;
+            out << "The following units need new handwear:" << endl;
             list_unit_counts(out, missingGloves);
         }
         if (missingPants.size())
         {
-            out << "Following units need new legwear:" << endl;
+            out << "The following units need new legwear:" << endl;
             list_unit_counts(out, missingPants);
         }
     }
@@ -915,3 +900,23 @@ static void generate_report(color_ostream& out)
     }
 
 }
+
+/////////////////////////////////////////////////////
+// Lua API
+// TODO: implement Lua hooks to manipulate the persistent order configuration
+//
+
+static void autoclothing_doCycle(color_ostream& out) {
+    DEBUG(control, out).print("entering autoclothing_doCycle\n");
+    do_autoclothing();
+}
+
+
+DFHACK_PLUGIN_LUA_FUNCTIONS{
+    DFHACK_LUA_FUNCTION(autoclothing_doCycle),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS{
+    DFHACK_LUA_END
+};

@@ -29,12 +29,12 @@ distribution.
 #include "Export.h"
 #include "Module.h"
 #include "Types.h"
+#include "DataDefs.h"
+
+#include "df/item_type.h"
+#include "df/job_item_ref.h"
 
 #include <ostream>
-
-#include "DataDefs.h"
-#include "df/job_item_ref.h"
-#include "df/item_type.h"
 
 namespace df
 {
@@ -101,8 +101,8 @@ namespace DFHack
                                          df::job_item_ref::T_role role,
                                          int filter_idx = -1, int insert_idx = -1);
 
-        DFHACK_EXPORT bool isSuitableItem(df::job_item *item, df::item_type itype, int isubtype);
-        DFHACK_EXPORT bool isSuitableMaterial(df::job_item *item, int mat_type,
+        DFHACK_EXPORT bool isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype);
+        DFHACK_EXPORT bool isSuitableMaterial(const df::job_item *item, int mat_type,
                                               int mat_index,
                                               df::item_type itype);
         DFHACK_EXPORT std::string getName(df::job *job);

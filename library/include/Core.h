@@ -25,22 +25,23 @@ distribution.
 #pragma once
 
 #include "Pragma.h"
+
+#include "Console.h"
 #include "Export.h"
 #include "Hooks.h"
-#include <vector>
-#include <stack>
-#include <map>
-#include <memory>
-#include <stdint.h>
-#include "Console.h"
+
 #include "modules/Graphic.h"
 
 #include <atomic>
 #include <condition_variable>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <stack>
 #include <thread>
-
-#include "RemoteClient.h"
+#include <unordered_map>
+#include <vector>
+#include <stdint.h>
 
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
@@ -74,6 +75,17 @@ namespace DFHack
         struct Hide;
     }
 
+    enum command_result
+    {
+        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
+        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
+        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
+        CR_OK = 0,               // Success
+        CR_FAILURE = 1,          // Failure
+        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
+        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
+    };
+
     enum state_change_event
     {
         SC_UNKNOWN = -1,
@@ -88,6 +100,33 @@ namespace DFHack
         SC_UNPAUSED = 8
     };
 
+    class DFHACK_EXPORT PerfCounters
+    {
+    public:
+        uint32_t baseline_elapsed_ms;
+        uint32_t elapsed_ms;
+        uint32_t total_update_ms;
+        uint32_t update_event_manager_ms;
+        uint32_t update_plugin_ms;
+        uint32_t update_lua_ms;
+        uint32_t total_keybinding_ms;
+        uint32_t total_overlay_ms;
+        std::unordered_map<int32_t, uint32_t> event_manager_event_total_ms;
+        std::unordered_map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
+        std::unordered_map<std::string, uint32_t> update_per_plugin;
+        std::unordered_map<std::string, uint32_t> state_change_per_plugin;
+        std::unordered_map<std::string, uint32_t> overlay_per_widget;
+
+        void reset(bool ignorePauseState = false);
+        bool getIgnorePauseState();
+
+        // noop if game is paused and getIgnorePauseState() returns false
+        void incCounter(uint32_t &perf_counter, uint32_t baseline_ms);
+
+    private:
+        bool ignore_pause_state = false;
+    };
+
     class DFHACK_EXPORT StateChangeScript
     {
     public:
@@ -97,9 +136,13 @@ namespace DFHack
         StateChangeScript(state_change_event event, std::string path, bool save_specific = false)
             :event(event), path(path), save_specific(save_specific)
         { }
-        bool operator==(const StateChangeScript& other)
+        bool const operator==(const StateChangeScript& other)
         {
             return event == other.event && path == other.path && save_specific == other.save_specific;
+        }
+        bool const operator!=(const StateChangeScript& other)
+        {
+            return !(operator==(other));
         }
     };
 
@@ -108,32 +151,15 @@ namespace DFHack
     // Better than tracking some weird variables all over the place.
     class DFHACK_EXPORT Core
     {
-#ifdef _DARWIN
-        friend int  ::DFH_SDL_NumJoysticks(void);
-        friend void ::DFH_SDL_Quit(void);
-        friend int  ::DFH_SDL_PollEvent(SDL::Event *);
-        friend int  ::DFH_SDL_Init(uint32_t flags);
-        friend int  ::DFH_wgetch(WINDOW * w);
-#else
-        friend int  ::SDL_NumJoysticks(void);
-        friend void ::SDL_Quit(void);
-        friend int  ::SDL_PollEvent(SDL::Event *);
-        friend int  ::SDL_Init(uint32_t flags);
-        friend int  ::wgetch(WINDOW * w);
-#endif
         friend void ::dfhooks_init();
         friend void ::dfhooks_shutdown();
         friend void ::dfhooks_update();
         friend void ::dfhooks_prerender();
-        friend bool ::dfhooks_sdl_event(SDL::Event* event);
+        friend bool ::dfhooks_sdl_event(SDL_Event* event);
         friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
-        static Core& getInstance()
-        {
-            static Core instance;
-            return instance;
-        }
+        static Core& getInstance();
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -158,9 +184,13 @@ namespace DFHack
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 
         bool addScriptPath(std::string path, bool search_before = false);
+        bool setModScriptPaths(const std::vector<std::string> &mod_script_paths);
         bool removeScriptPath(std::string path);
         std::string findScript(std::string name);
         void getScriptPaths(std::vector<std::string> *dest);
+
+        bool getSuppressDuplicateKeyboardEvents();
+        void setSuppressDuplicateKeyboardEvents(bool suppress);
 
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
@@ -173,14 +203,14 @@ namespace DFHack
         bool RunAlias(color_ostream &out, const std::string &name,
             const std::vector<std::string> &parameters, command_result &result);
         std::map<std::string, std::vector<std::string>> ListAliases();
-        std::string GetAliasCommand(const std::string &name, const std::string &default_ = "");
+        std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
         std::string getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
 
-        static df::viewscreen *getTopViewscreen() { return getInstance().top_viewscreen; }
+        static df::viewscreen *getTopViewscreen();
 
         DFHack::Console &getConsole() { return con; }
 
@@ -194,6 +224,8 @@ namespace DFHack
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
+        PerfCounters perf_counters;
+
     private:
         DFHack::Console con;
 
@@ -203,19 +235,19 @@ namespace DFHack
         struct Private;
         std::unique_ptr<Private> d;
 
-        bool Init();
+        bool InitMainThread();
+        bool InitSimulationThread();
         int Update (void);
         int Shutdown (void);
-        int DFH_SDL_Event(SDL::Event* event);
+        bool DFH_SDL_Event(SDL_Event* event);
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 
+        bool doSdlInputEvent(SDL_Event* event);
         void doUpdate(color_ostream &out);
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
-        void doSaveData(color_ostream &out);
-        void doLoadData(color_ostream &out);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
@@ -239,7 +271,7 @@ namespace DFHack
         std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
-        std::vector<std::string> script_paths[2];
+        std::vector<std::string> script_paths[3];
         std::mutex script_path_mutex;
 
         // hotkey-related stuff
@@ -251,8 +283,8 @@ namespace DFHack
         };
         int8_t modstate;
 
+        bool suppress_duplicate_keyboard_events;
         std::map<int, std::vector<KeyBinding> > key_bindings;
-        std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
         enum hotkey_set_t {
             NO,

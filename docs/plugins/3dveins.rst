@@ -3,7 +3,7 @@
 
 .. dfhack-tool::
     :summary: Rewrite layer veins to expand in 3D space.
-    :tags: untested fort gameplay map
+    :tags: fort gameplay map
 
 Existing, flat veins are removed and new 3D veins that naturally span z-levels
 are generated in their place. The transformation preserves the mineral counts

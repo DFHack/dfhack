@@ -31,11 +31,14 @@ distribution.
 #include <map>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 
-#include "df/interfacest.h"
-
+#include "Core.h"
 #include "ColorText.h"
 #include "DataDefs.h"
+
+#include "df/interface_key.h"
+#include "df/interfacest.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -325,10 +328,10 @@ namespace DFHack {namespace Lua {
     inline void Push(lua_State *state, const std::string &str) {
         lua_pushlstring(state, str.data(), str.size());
     }
-    DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
-    DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
+    DFHACK_EXPORT void Push(lua_State *state, const df::coord &obj);
+    DFHACK_EXPORT void Push(lua_State *state, const df::coord2d &obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
-    DFHACK_EXPORT void Push(lua_State *state, MaterialInfo &info);
+    DFHACK_EXPORT void Push(lua_State *state, const MaterialInfo &info);
     DFHACK_EXPORT void Push(lua_State *state, const Screen::Pen &info);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
@@ -341,7 +344,57 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT void PushInterfaceKeys(lua_State *L, const std::set<df::interface_key> &keys);
 
-    template<class T>
+    DFHACK_EXPORT int PushPosXYZ(lua_State *state, const df::coord &pos);
+    DFHACK_EXPORT int PushPosXY(lua_State *state, const df::coord2d &pos);
+
+    template<typename T>
+    void Push(lua_State *L, const std::set<T> &pset) {
+        lua_createtable(L, 0, pset.size());
+        for (auto &entry : pset) {
+            Lua::Push(L, entry);
+            Lua::Push(L, true);
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T_Key, typename T_Hash>
+    void Push(lua_State *L, const std::unordered_set<T_Key, T_Hash> &pset) {
+        lua_createtable(L, 0, pset.size());
+        for (auto &entry : pset) {
+            Lua::Push(L, entry);
+            Lua::Push(L, true);
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap) {
+            Lua::Push(L, entry.first);
+            Lua::Push(L, entry.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::unordered_map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap) {
+            Lua::Push(L, entry.first);
+            Lua::Push(L, entry.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    template <typename T_Key, typename T_Value>
+    inline void TableInsert(lua_State *state, const T_Key &key, const T_Value &value) {
+        Lua::Push(state, key);
+        Lua::Push(state, value);
+        lua_settable(state, -3);
+    }
+
+    template<typename T>
     void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {
         lua_createtable(state,pvec.size(), addn?1:0);
@@ -359,32 +412,23 @@ namespace DFHack {namespace Lua {
         }
     }
 
-    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec);
-
-    DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
-    DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
-
-    template <typename T_Key, typename T_Value>
-    inline void TableInsert(lua_State *state, T_Key key, T_Value value)
-    {
-        Lua::Push(state, key);
-        Lua::Push(state, value);
-        lua_settable(state, -3);
+    template<typename T>
+    void Push(lua_State *state, const std::vector<T> &vec) {
+        PushVector(state, vec);
     }
 
-    template<typename T_Key, typename T_Value>
-    void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
-        lua_createtable(L, 0, pmap.size());
-        for (auto &entry : pmap)
-            TableInsert(L, entry.first, entry.second);
+    template<typename T>
+    requires std::is_arithmetic_v<T>
+    void GetVector(lua_State *state, std::vector<T> &pvec, int idx = 1) {
+        lua_pushnil(state);   // first key
+        while (lua_next(state, idx) != 0)
+        {
+            pvec.push_back(lua_tointeger(state, -1));
+            lua_pop(state, 1);  // remove value, leave key
+        }
     }
 
-    template<typename T_Key, typename T_Value>
-    void Push(lua_State *L, const std::unordered_map<T_Key, T_Value> &pmap) {
-        lua_createtable(L, 0, pmap.size());
-        for (auto &entry : pmap)
-            TableInsert(L, entry.first, entry.second);
-    }
+    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec, int idx = 1);
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 
@@ -452,6 +496,42 @@ namespace DFHack {namespace Lua {
         inline bool PushModulePublic(color_ostream &out, const char *module, const char *name) {
             return Lua::PushModulePublic(out, State, module, name);
         }
+    }
+    /**
+     * High-level wrappers for CallLuaModuleFunction that automatically suspends the
+     * core and pushes either an argument vector (i.e. single type variable number) or
+     * an argument tuple (i.e. fixed number of arguments of various types)
+     */
+    template<typename... aT>
+    bool CallLuaModuleFunction(
+        color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args = {},
+        size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
+    {
+        auto L = Lua::Core::State;
+        bool ok;
+
+        ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, sizeof...(aT), nres,
+            [&args](lua_State *L) {
+                std::apply([&L](auto&&... param){ ((Lua::Push(L, param)), ...); }, args);
+            },
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+        return ok;
+    }
+
+    template<typename aT>
+    bool CallLuaModuleFunction(
+        color_ostream &out, const char* module_name, const char* fn_name, const std::vector<aT> &args,
+        size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
+    {
+        auto L = Lua::Core::State;
+        bool ok;
+
+        ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, args.size(), nres,
+            [&args](lua_State *L) {
+                for (auto&& param : args) Lua::Push(L,param);
+            },
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+        return ok;
     }
 
     class DFHACK_EXPORT Notification : public Event::Owner {

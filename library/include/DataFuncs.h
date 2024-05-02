@@ -28,28 +28,12 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
-namespace DFHack {
-    class color_ostream;
-}
-
 namespace df {
-    // A very simple and stupid implementation of some stuff from boost
-    template<class U, class V> struct is_same_type { static const bool value = false; };
-    template<class T> struct is_same_type<T,T> { static const bool value = true; };
-    template<class T> struct return_type {};
-
-    /*
-     * Workaround for a msvc bug suggested by:
-     *
-     * http://stackoverflow.com/questions/5110529/class-template-partial-specialization-parametrized-on-member-function-return-typ
-     */
-    template<class T, bool isvoid = is_same_type<typename return_type<T>::type,void>::value>
-    struct function_wrapper {};
-
     class DFHACK_EXPORT cur_lua_ostream_argument {
         DFHack::color_ostream *out;
     public:
@@ -57,213 +41,101 @@ namespace df {
         operator DFHack::color_ostream& () { return *out; }
     };
 
-    /*
-     * Since templates can't match variable arg count,
-     * a separate specialization is needed for every
-     * supported count value...
-     *
-     * The FW_TARGS ugliness is needed because of
-     * commas not wrapped in ()
-     */
+    template<class T> struct return_type {};
 
-#define INVOKE_VOID(call) \
-    call; lua_pushnil(state);
-#define INVOKE_RV(call) \
-    RT rv = call; df::identity_traits<RT>::get()->lua_read(state, UPVAL_METHOD_NAME, &rv);
-#define LOAD_CLASS() \
-    CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(state, base++, UPVAL_METHOD_NAME, "invoke");
-#define LOAD_ARG(type) \
-    type v##type; df::identity_traits<type>::get()->lua_write(state, UPVAL_METHOD_NAME, &v##type, base++);
-#define OSTREAM_ARG DFHack::color_ostream&
-#define LOAD_OSTREAM(name) \
-    cur_lua_ostream_argument name(state);
-
-#define INSTANTIATE_RETURN_TYPE(FArgs) \
-    template<FW_TARGSC class RT> struct return_type<RT (*) FArgs> { \
-        typedef RT type; \
-        static const bool is_method = false; \
-    }; \
-    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs> { \
-        typedef RT type; \
-        typedef CT class_type; \
-        static const bool is_method = true; \
-    }; \
-    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs const> { \
-        typedef RT type; \
-        typedef CT class_type; \
-        static const bool is_method = true; \
+    template<typename RT, typename ...AT>
+    struct return_type<RT (*)(AT...)>{
+        using type = RT;
+        static const bool is_method = false;
     };
 
-#define INSTANTIATE_WRAPPERS2(Count, FArgs, Args, Loads) \
-    template<FW_TARGS> struct function_wrapper<void (*) FArgs, true> { \
-        static const int num_args = Count; \
-        static void execute(lua_State *state, int base, void (*cb) FArgs) { Loads; INVOKE_VOID(cb Args); } \
-    }; \
-    template<FW_TARGSC class RT> struct function_wrapper<RT (*) FArgs, false> { \
-        static const int num_args = Count; \
-        static void execute(lua_State *state, int base, RT (*cb) FArgs) { Loads; INVOKE_RV(cb Args); } \
-    }; \
-    template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs, true> { \
-        static const int num_args = Count+1; \
-        static void execute(lua_State *state, int base, void (CT::*cb) FArgs) { \
-            LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
-    }; \
-    template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs const, true> { \
-        static const int num_args = Count+1; \
-        static void execute(lua_State *state, int base, void (CT::*cb) FArgs const) { \
-            LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
-    }; \
-    template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs, false> { \
-        static const int num_args = Count+1; \
-        static void execute(lua_State *state, int base, RT (CT::*cb) FArgs) { \
-            LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \
-    }; \
-    template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs const, false> { \
-        static const int num_args = Count+1; \
-        static void execute(lua_State *state, int base, RT (CT::*cb) FArgs const) { \
-            LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT (CT::*)(AT...)>{
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
     };
 
-#define INSTANTIATE_WRAPPERS(Count, FArgs, OFArgs, Args, OArgs, Loads) \
-    INSTANTIATE_WRAPPERS2(Count, FArgs, Args, Loads) \
-    INSTANTIATE_WRAPPERS2(Count, OFArgs, OArgs, LOAD_OSTREAM(out); Loads)
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT (CT::*)(AT...) const>{
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
 
-#define FW_TARGSC
-#define FW_TARGS
-INSTANTIATE_RETURN_TYPE(())
-INSTANTIATE_WRAPPERS(0, (), (OSTREAM_ARG), (), (out), ;)
-#undef FW_TARGS
+    template<typename T>
+    T get_from_lua_state(lua_State* L, int idx) {
+        T val;
+        df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
+        return val;
+    }
 
-#undef FW_TARGSC
-#define FW_TARGSC FW_TARGS,
-#define FW_TARGS class A1
-INSTANTIATE_RETURN_TYPE((A1))
-INSTANTIATE_WRAPPERS(1, (A1), (OSTREAM_ARG,A1), (vA1), (out,vA1), LOAD_ARG(A1);)
-#undef FW_TARGS
 
-#define FW_TARGS class A1, class A2
-INSTANTIATE_RETURN_TYPE((A1,A2))
-INSTANTIATE_WRAPPERS(2, (A1,A2), (OSTREAM_ARG,A1,A2), (vA1,vA2), (out,vA1,vA2),
-                     LOAD_ARG(A1); LOAD_ARG(A2);)
-#undef FW_TARGS
+    template<typename RT, typename... AT, typename FT, typename... ET, std::size_t... I>
+        requires std::is_invocable_r_v<RT, FT, ET..., AT...>
+    void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
+    {
+        if constexpr (std::is_same_v<RT, void>) {
+            std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
+            lua_pushnil(L);
+        }
+        else
+        {
+            RT rv = std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
+            df::identity_traits<RT>::get()->lua_read(L, UPVAL_METHOD_NAME, &rv);
+        }
+    }
 
-#define FW_TARGS class A1, class A2, class A3
-INSTANTIATE_RETURN_TYPE((A1,A2,A3))
-INSTANTIATE_WRAPPERS(3, (A1,A2,A3), (OSTREAM_ARG,A1,A2,A3), (vA1,vA2,vA3), (out,vA1,vA2,vA3),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3);)
-#undef FW_TARGS
+    template<typename RT, typename... AT, typename FT, typename... ET, typename indices = std::index_sequence_for<AT...> >
+        requires std::is_invocable_r_v<RT, FT, ET..., AT...>
+    void call_and_push(lua_State* L, int base, FT fun, ET... extra)
+    {
+        call_and_push_impl<RT, AT...>(L, base, indices{}, fun, extra...);
+    }
 
-#define FW_TARGS class A1, class A2, class A3, class A4
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4))
-INSTANTIATE_WRAPPERS(4, (A1,A2,A3,A4), (OSTREAM_ARG,A1,A2,A3,A4),
-                        (vA1,vA2,vA3,vA4), (out,vA1,vA2,vA3,vA4),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);)
-#undef FW_TARGS
+    template<typename T> struct function_wrapper {};
 
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5))
-INSTANTIATE_WRAPPERS(5, (A1,A2,A3,A4,A5), (OSTREAM_ARG,A1,A2,A3,A4,A5),
-                        (vA1,vA2,vA3,vA4,vA5), (out,vA1,vA2,vA3,vA4,vA5),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5);)
-#undef FW_TARGS
+    template<typename RT, typename ...AT>
+    struct function_wrapper<RT(*)(DFHack::color_ostream&, AT...)> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State *L, int base, RT (fun)(DFHack::color_ostream& out, AT...)) {
+             cur_lua_ostream_argument out(L);
+             call_and_push<RT, AT...>(L, base, fun, out);
+        }
+    };
 
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6))
-INSTANTIATE_WRAPPERS(6, (A1,A2,A3,A4,A5,A6), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6),
-                        (vA1,vA2,vA3,vA4,vA5,vA6), (out,vA1,vA2,vA3,vA4,vA5,vA6),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6);)
-#undef FW_TARGS
+    template<typename RT, typename ...AT>
+    struct function_wrapper<RT(*)(AT...)> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State *L, int base, RT (fun)(AT...)) {
+            call_and_push<RT, AT...>(L, base, fun);
+        }
+    };
 
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7))
-INSTANTIATE_WRAPPERS(7, (A1,A2,A3,A4,A5,A6,A7), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7),
-                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7);)
-#undef FW_TARGS
+    template<typename RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...)> {
+        static const int num_args = sizeof...(AT)+1;
+        static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...)) {
+            CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
+        };
+    };
 
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8))
-INSTANTIATE_WRAPPERS(8, (A1,A2,A3,A4,A5,A6,A7,A8), (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8),
-                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8), (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);)
-#undef FW_TARGS
-
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9))
-INSTANTIATE_WRAPPERS(9, (A1,A2,A3,A4,A5,A6,A7,A8,A9),
-                        (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9),
-                        (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9),
-                        (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
-                     LOAD_ARG(A9);)
-#undef FW_TARGS
-
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10))
-INSTANTIATE_WRAPPERS(10, (A1,A2,A3,A4,A5,A6,A7,A8,A9,A10),
-                         (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10),
-                         (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10),
-                         (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
-                     LOAD_ARG(A9); LOAD_ARG(A10);)
-#undef FW_TARGS
-
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11))
-INSTANTIATE_WRAPPERS(11, (A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11),
-                         (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11),
-                         (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11),
-                         (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
-                     LOAD_ARG(A9); LOAD_ARG(A10); LOAD_ARG(A11);)
-#undef FW_TARGS
-
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12))
-INSTANTIATE_WRAPPERS(12, (A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12),
-                         (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12),
-                         (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11,vA12),
-                         (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11,vA12),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
-                     LOAD_ARG(A9); LOAD_ARG(A10); LOAD_ARG(A11); LOAD_ARG(A12);)
-#undef FW_TARGS
-
-#define FW_TARGS class A1, class A2, class A3, class A4, class A5, class A6, class A7, class A8, class A9, class A10, class A11, class A12, class A13
-INSTANTIATE_RETURN_TYPE((A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13))
-INSTANTIATE_WRAPPERS(13, (A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13),
-                         (OSTREAM_ARG,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13),
-                         (vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11,vA12,vA13),
-                         (out,vA1,vA2,vA3,vA4,vA5,vA6,vA7,vA8,vA9,vA10,vA11,vA12,vA13),
-                     LOAD_ARG(A1); LOAD_ARG(A2); LOAD_ARG(A3); LOAD_ARG(A4);
-                     LOAD_ARG(A5); LOAD_ARG(A6); LOAD_ARG(A7); LOAD_ARG(A8);
-                     LOAD_ARG(A9); LOAD_ARG(A10); LOAD_ARG(A11); LOAD_ARG(A12);
-                     LOAD_ARG(A13);)
-#undef FW_TARGS
-
-#undef FW_TARGSC
-#undef INSTANTIATE_WRAPPERS
-#undef INSTANTIATE_WRAPPERS2
-#undef INVOKE_VOID
-#undef INVOKE_RV
-#undef LOAD_CLASS
-#undef LOAD_ARG
-#undef OSTREAM_ARG
-#undef LOAD_OSTREAM
+    template<typename RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...) const> {
+        static const int num_args = sizeof...(AT)+1;
+        static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...) const) {
+            CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
+        };
+    };
 
     template<class T>
     class function_identity : public function_identity_base {
         T ptr;
 
     public:
-        typedef function_wrapper<T> wrapper;
+        using wrapper = function_wrapper<T>;
 
         function_identity(T ptr, bool vararg)
             : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};

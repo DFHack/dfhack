@@ -32,7 +32,11 @@ function setTargets(max, min)
 end
 
 local function do_set_burrow_config(var_name, val, burrows)
-    for _,bspec in ipairs(argparse.stringList(burrows)) do
+    burrows = argparse.stringList(burrows)
+    if #burrows == 0 then
+        qerror('no target burrows specified')
+    end
+    for _,bspec in ipairs(burrows) do
         local config = autochop_getBurrowConfig(bspec)
         config[var_name] = val
         autochop_setBurrowConfig(config.id, config.chop, config.clearcut,
@@ -51,7 +55,7 @@ function parse_commandline(...)
     local args, opts = {...}, {}
     local positionals = process_args(opts, args)
 
-    if opts.help then
+    if opts.help or not positionals then
         return false
     end
 
@@ -96,14 +100,23 @@ function getTreeCountsAndBurrowConfigs()
     ret.summary = table.remove(data, 1)
     ret.tree_counts = table.remove(data, 1)
     ret.designated_tree_counts = table.remove(data, 1)
-    ret.burrow_configs = data
-    for _,c in ipairs(ret.burrow_configs) do
-        c.name = df.burrow.find(c.id).name
+    local unparsed_burrow_configs = table.remove(data, 1)
+
+    ret.burrow_configs = {}
+    for idx,c in pairs(unparsed_burrow_configs) do
+        local burrow = df.burrow.find(c.id)
+        if not burrow then goto continue end
+        c.name = burrow.name
+        if #c.name == 0 then
+            c.name = ('Burrow %d'):format(c.id + 1)
+        end
         c.chop = c.chop ~= 0
         c.clearcut = c.clearcut ~= 0
         c.protect_brewable = c.protect_brewable ~= 0
         c.protect_edible = c.protect_edible ~= 0
         c.protect_cookable = c.protect_cookable ~= 0
+        table.insert(ret.burrow_configs, c)
+        ::continue::
     end
     return ret
 end

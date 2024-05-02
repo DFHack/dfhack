@@ -3,7 +3,7 @@ stockflow
 
 .. dfhack-tool::
     :summary: Queue manager jobs based on free space in stockpiles.
-    :tags: untested fort auto stockpiles workorders
+    :tags: unavailable
 
 With this plugin, the fortress bookkeeper can tally up free space in specific
 stockpiles and queue jobs through the manager to produce items to fill the free

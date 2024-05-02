@@ -12,6 +12,7 @@
 
 #include "df/block_square_event.h"
 #include "df/block_square_event_mineralst.h"
+#include "df/inorganic_raw.h"
 #include "df/map_block.h"
 
 using std::vector;

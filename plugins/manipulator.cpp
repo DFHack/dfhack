@@ -8,6 +8,7 @@
 #include <modules/Screen.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
+#include <modules/Military.h>
 #include <modules/Filesystem.h>
 #include <modules/Job.h>
 #include <vector>
@@ -1305,7 +1306,7 @@ void viewscreen_unitlaborsst::refreshNames()
             cur->job_mode = UnitInfo::JOB;
         }
         if (unit->military.squad_id > -1) {
-            cur->squad_effective_name = Units::getSquadName(unit);
+            cur->squad_effective_name = Military::getSquadName(unit->military.squad_id);
             cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + cur->squad_effective_name;
         } else {
             cur->squad_effective_name = "";
@@ -1874,14 +1875,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_B))
     {
-        Screen::show(dts::make_unique<viewscreen_unitbatchopst>(units, true, &do_refresh_names), plugin_self);
+        Screen::show(std::make_unique<viewscreen_unitbatchopst>(units, true, &do_refresh_names), plugin_self);
     }
 
     if (events->count(interface_key::CUSTOM_E))
     {
         vector<UnitInfo*> tmp;
         tmp.push_back(cur);
-        Screen::show(dts::make_unique<viewscreen_unitbatchopst>(tmp, false, &do_refresh_names), plugin_self);
+        Screen::show(std::make_unique<viewscreen_unitbatchopst>(tmp, false, &do_refresh_names), plugin_self);
     }
 
     if (events->count(interface_key::CUSTOM_P))
@@ -1892,11 +1893,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 has_selected = true;
 
         if (has_selected) {
-            Screen::show(dts::make_unique<viewscreen_unitprofessionset>(units, true), plugin_self);
+            Screen::show(std::make_unique<viewscreen_unitprofessionset>(units, true), plugin_self);
         } else {
             vector<UnitInfo*> tmp;
             tmp.push_back(cur);
-            Screen::show(dts::make_unique<viewscreen_unitprofessionset>(tmp, false), plugin_self);
+            Screen::show(std::make_unique<viewscreen_unitprofessionset>(tmp, false), plugin_self);
         }
     }
 
@@ -2285,7 +2286,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             if (units[page].size())
             {
-                Screen::show(dts::make_unique<viewscreen_unitlaborsst>(units[page], cursor_pos[page]), plugin_self);
+                Screen::show(std::make_unique<viewscreen_unitlaborsst>(units[page], cursor_pos[page]), plugin_self);
                 return;
             }
         }

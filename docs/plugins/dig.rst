@@ -50,7 +50,7 @@ Usage
     Designate circles. The diameter is the number of tiles across the center of
     the circle that you want to dig. See the `digcircle`_ section below for
     options.
-``digtype [<designation>] [-p<number>] [-z]``
+``digtype [<designation>] [-p<number>] [--zup|-u] [--zdown|-zu] [--cur-zlevel|-z] [--hidden|-h] [--no-auto|-a]``
     Designate all vein tiles of the same type as the selected tile. See the
     `digtype`_ section below for options.
 ``digexp [<pattern>] [<filter>] [-p<number>]``
@@ -119,9 +119,11 @@ the last selected parameters.
 digtype
 -------
 
-For every tile on the map of the same vein type as the selected tile, this
-command designates it to have the same designation as the selected tile. If the
-selected tile has no designation, they will be dig designated.
+For every tile on the map of the same vein type as the selected tile, this command
+designates it to have the same designation as the selected tile. If the selected
+tile has no designation, they will be dig designated. By default, only designates
+visible tiles, and in the case of dig designation, applies automatic mining to them
+(designates uncovered neighbouring tiles of the same type to be dug).
 
 If an argument is given, the designation of the selected tile is ignored, and
 all appropriate tiles are set to the specified designation.
@@ -143,9 +145,18 @@ Designation options:
 ``clear``
     Clear any designations.
 
-You can also pass a ``-z`` option, which restricts designations to the current
-z-level and down. This is useful when you don't want to designate tiles on the
-same z-levels as your carefully dug fort above.
+Other options:
+
+``-d``, ``--zdown``
+    Only designates tiles on the cursor's z-level and below.
+``-u``, ``--zup``
+    Only designates tiles on the cursor's z-level and above.
+``-z``, ``--cur-zlevel``
+    Only designates tiles on the same z-level as the cursor.
+``-h``, ``--hidden``
+    Allows designation of hidden tiles, and picking a hidden tile as the target type.
+``-a``, ``--no-auto``
+    No automatic mining mode designation - useful if you want to avoid dwarves digging where you don't want them.
 
 digexp
 ------
@@ -179,3 +190,74 @@ Filters:
     Take current designation and apply the selected pattern to it.
 
 After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Overlay
+-------
+
+This tool also provides three overlays that are managed by the `overlay`
+framework.
+
+asciicarve
+~~~~~~~~~~
+
+The ``dig.asciicarve`` overlay makes carving designations visible in ASCII
+mode. It highlights tiles that are designated for smoothing, engraving, track
+carving, or fortification carving. The designations blink (slowly) so you can
+still see what is underneath them.
+
+Due to the limitations of the ASCII mode screen buffer, the designation
+highlights may show through other interface elements that overlap the
+designated area.
+
+warmdamptoolbar
+~~~~~~~~~~~~~~~
+
+The ``dig.warmdamptoolbar`` overlay adds a button to the toolbar at the bottom
+of the screen when mining mode is active. It allows you to turn on warm or damp
+dig mode. Tiles designated for digging while warm and/or damp dig mode is
+enabled will be marked with a special symbol in graphics mode or color pattern
+in ASCII mode. The digging designations for these tiles are protected from
+cancellation due to warmth or dampness (respectively). This is very useful when
+digging beneath a lake or just above a magma flow.
+
+If you also have one of the vanilla autodig modes enabled, the warm/damp dig
+marker will be propagated along with the autodig designation. This allows you
+to, for example, easily autodig a mineral vein that goes through a light
+aquifer.
+
+If you have already designated a z-level when you realize you need warm or damp
+dig protection (e.g. you have run into a light aquifer and want to continue
+digging), the toolbar button gives you a shortcut to add the warm or damp dig
+marker to all designated tiles on the current z-level. Note that it only
+affects tiles that are not yet revealed since revealed tiles don't benefit from
+the warm or damp dig designations.
+
+Click on the new mining toolbar icon or hit :kbd:`Ctrl`:kbd:`D` to bring up the
+configuration submenu.
+
+warmdamp
+~~~~~~~~
+
+The ``dig.warmdamp`` overlay makes a number of tile properties visible when in
+mining or smoothing mode:
+
+- In ASCII mode, it highlights warm tiles red and damp tiles in light blue. Box
+  selection characters and the keyboard cursor will also change color as
+  appropriate when over a warm or damp tile. These can show through UI elements
+  that happen to overlap the highlighted areas, just like the ``asciicarve``
+  overlay.
+- The tiles marked with warm and/or damp dig from the ``warmdamptoolbar`` get
+  badges (in graphics mode) or distinctive color patterns (in ASCII mode)
+  showing their status.
+- In graphics mode, the "water drop" signifying a damp tile will no longer
+  disappear when the tile is being box selected for applying a designation.
+- Aquifer tiles are shown with icons distinct from "just damp" tiles. In
+  graphics mode, light aquifer tiles have a "two drip" icon and heavy aquifer
+  tiles have three drips. In ASCII mode, light aquifer tiles blink slowly in
+  blue and heavy aquifer tiles blink faster in blue.
+- The warm/damp/aquifer status will be shown for tiles that are visible from
+  the bottom. For example, if you dig out the layer underneath an aquifer and
+  notice dripping, entering mining mode and looking at the tiles above will
+  show their status, even if the tiles are otherwise unrevealed. This feature
+  was added with the rationale that if the dwarves can see the effects of the
+  tiles above them, the player should be able to as well.

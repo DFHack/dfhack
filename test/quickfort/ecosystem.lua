@@ -18,26 +18,19 @@
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
 -- quickfort script and anything else run in the extra_fns, of course)
 --
--- note that this test harness cannot (yet) test #query blueprints that define
--- rooms since furniture is not actually built during the test. It also cannot
--- test blueprints that #build flooring and then #build a workshop on top, again
--- since the flooring is never actually built. We can support these features
--- once we figure out how to programmatically deconstruct buildlings without
--- crashing the game.
+-- note that this test harness cannot (yet) test blueprints that #build
+--  flooring and then #build a workshop on top_elem since the flooring is
+-- never actually built. We can support these features once we figure out how
+-- to programmatically deconstruct buildlings without crashing the game.
 
 config.mode = 'fortress'
+config.target = {'quickfort', 'blueprint', 'dig-now', 'tiletypes'}
 
 local argparse = require('argparse')
-local gui = require('gui')
-local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
 local blueprint = require('plugins.blueprint')
-local confirm = require('plugins.confirm')
-
-local assign_minecarts = reqscript('assign-minecarts')
-local quantum = reqscript('gui/quantum')
-local quickfort = reqscript('quickfort')
+local buildingplan = require('plugins.buildingplan')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
 
@@ -48,9 +41,9 @@ local output_dir = 'library/test/ecosystem/out/'
 
 local phase_names = utils.invert(blueprint.valid_phases)
 
--- clear the output dir before each test run (but not after -- to allow
--- inspection of failed results)
 local function test_wrapper(test_fn)
+    -- clear the output dir before each test run (but not after -- to allow
+    -- inspection of failed results)
     local outdir = blueprints_dir .. output_dir
     if dfhack.filesystem.exists(outdir) then
         for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
@@ -59,26 +52,23 @@ local function test_wrapper(test_fn)
             end
         end
     end
-    test_fn()
+
+    -- ensure buildingplan is running during the tests
+    local buildingplan_was_enabled = buildingplan.isEnabled()
+    if not buildingplan_was_enabled then
+        dfhack.run_command{'enable', 'buildingplan'}
+    end
+
+    return dfhack.with_finalize(
+        function()
+            if not buildingplan_was_enabled then
+                dfhack.run_command{'disable', 'buildingplan'}
+            end
+        end,
+        test_fn)
+
 end
 config.wrapper = test_wrapper
-
-local function bad_spec(expected, varname, basename, bad_value)
-    qerror(('expected %s for %s in "%s" test spec; got "%s"'):
-               format(expected, varname, basename, bad_value))
-end
-
-local function get_positive_int(numstr, varname, basename)
-    local num = tonumber(numstr)
-    if not num or num <= 0 or num ~= math.floor(num) then
-        bad_spec('positive integer', varname, basename, numstr)
-    end
-    return num
-end
-
-local function os_exists(path)
-    return os.rename(path, path) and true or false
-end
 
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
@@ -99,7 +89,7 @@ local function get_blueprint_sets()
             local _,_,basename = file_part:find('^([^-.]+)')
             if not sets[basename] then sets[basename] = {spec={}, phases={}} end
             local golden_path = golden_dir..file_part
-            if not os_exists(blueprints_dir..golden_path) then
+            if not dfhack.filesystem.exists(blueprints_dir..golden_path) then
                 golden_path = fname
             end
             sets[basename].phases[phase] = {
@@ -133,13 +123,13 @@ local function get_blueprint_sets()
             qerror(('missing description in test spec for "%s"'):
                         format(basename))
         end
-        spec.width = get_positive_int(spec.width, 'width', basename)
-        spec.height = get_positive_int(spec.height, 'height', basename)
-        spec.depth = get_positive_int(spec.depth, 'depth', basename)
+        spec.width = argparse.positiveInt(spec.width, basename..'.width')
+        spec.height = argparse.positiveInt(spec.height, basename..'.height')
+        spec.depth = argparse.positiveInt(spec.depth, basename..'.depth')
         if spec.start then
             local start_spec = argparse.numberList(spec.start, basename, 2)
-            spec.start = {x=get_positive_int(start_spec[1], 'startx', basename),
-                          y=get_positive_int(start_spec[2], 'starty', basename)}
+            spec.start = {x=argparse.positiveInt(start_spec[1], basename..'.startx'),
+                          y=argparse.positiveInt(start_spec[2], basename..'.starty')}
         end
     end
 
@@ -371,12 +361,14 @@ function test.end_to_end()
                 -- show diff
                 local input, output =
                     io.open(golden_filepath, 'r'), io.open(output_filepath, 'r')
-                local input_lines, output_lines = {}, {}
-                for l in input:lines() do table.insert(input_lines, l) end
-                for l in output:lines() do table.insert(output_lines, l) end
-                input:close()
-                output:close()
-                expect.table_eq(input_lines, output_lines)
+                if input and output then
+                    local input_lines, output_lines = {}, {}
+                    for l in input:lines() do table.insert(input_lines, l) end
+                    for l in output:lines() do table.insert(output_lines, l) end
+                    input:close()
+                    output:close()
+                    expect.table_eq(input_lines, output_lines)
+                end
                 return nil
             end
             ::continue::
@@ -384,99 +376,4 @@ function test.end_to_end()
 
         ::continue::
     end
-end
-
-local function send_keys(...)
-    local keys = {...}
-    for _,key in ipairs(keys) do
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true), key)
-    end
-end
-
-function extra_fns.gui_quantum(pos)
-    local vehicles = assign_minecarts.get_free_vehicles()
-    local confirm_state = confirm.isEnabled()
-    local confirm_conf = confirm.get_conf_data()
-    local routes = df.global.plotinfo.hauling.routes
-    local num_routes = #routes
-    local next_order_id = df.global.world.manager_order_next_id
-
-    return dfhack.with_finalize(
-        function()
-            -- unforbid the minecarts we forbade
-            for _,minecart in ipairs(vehicles) do
-                local item = df.item.find(minecart.item_id)
-                if not item then error('could not find item in list') end
-                item.flags.forbid = false
-            end
-
-            if confirm_state then
-                dfhack.run_command('enable confirm')
-                for _,c in pairs(confirm_conf) do
-                    confirm.set_conf_state(c.id, c.enabled)
-                end
-            end
-        end,
-        function()
-            -- forbid all available minecarts
-            for _,minecart in ipairs(vehicles) do
-                local item = df.item.find(minecart.item_id)
-                if not item then error('could not find item in list') end
-                item.flags.forbid = true
-            end
-
-            dfhack.run_script('gui/quantum')
-            local view = quantum.view
-            view:onRender()
-            guidm.setCursorPos(pos)
-            -- select the feeder stockpile
-            send_keys('CURSOR_RIGHT', 'CURSOR_RIGHT', 'SELECT')
-            view:onRender()
-            -- deselect the feeder stockpile
-            send_keys('LEAVESCREEN')
-            view:onRender()
-            -- reselect the feeder stockpile
-            send_keys('SELECT')
-            view:onRender()
-            -- set a custom name
-            send_keys('CUSTOM_N')
-            view:onRender()
-            view:onInput({_STRING=string.byte('f')})
-            view:onInput({_STRING=string.byte('o')})
-            view:onInput({_STRING=string.byte('o')})
-            send_keys('SELECT')
-            -- rotate the dump direction to the south
-            send_keys('CUSTOM_D')
-            view:onRender()
-            -- move the cursor to the dump position
-            send_keys('CURSOR_DOWN', 'CURSOR_DOWN', 'CURSOR_DOWN')
-            view:onRender()
-            -- commit and dismiss the dialog
-            send_keys('SELECT', 'SELECT')
-
-            -- verify the created route
-            expect.eq(num_routes + 1, #routes)
-            local route = routes[#routes-1]
-            expect.eq(0, #route.vehicle_ids, 'minecart should not be assigned')
-            expect.eq(1, #route.stops, 'should have 1 stop')
-            expect.eq(1, #route.stops[0].stockpiles,
-                      'should have 1 link')
-
-            -- verify the created order
-            expect.eq(next_order_id + 1, df.global.world.manager_order_next_id)
-            local orders = df.global.world.manager_orders
-            local order = orders[#orders - 1]
-            expect.eq(df.job_type.MakeTool, order.job_type)
-
-            -- if confirm is enabled, temporarily disable it so we can remove
-            -- the route and manager order via the ui (easier than walking the
-            -- structures and carefully deleting all the memory)
-            if confirm_state then
-                dfhack.run_command('disable confirm')
-            end
-            -- delete last route
-            quickfort.apply_blueprint{mode='config', data='h--x^'}
-            -- delete last manager order
-            quickfort.apply_blueprint{mode='config', data='jm{Up}r^^'}
-        end)
 end

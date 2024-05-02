@@ -23,24 +23,26 @@ distribution.
 */
 
 #pragma once
-#ifndef MAPEXTRAS_H
-#define MAPEXTRAS_H
+
+#include "TileTypes.h"
 
 #include "modules/Maps.h"
-#include "TileTypes.h"
-#include <stdint.h>
-#include <cstring>
-#include "df/map_block.h"
-#include "df/map_block_column.h"
-#include "df/tile_bitmask.h"
+
 #include "df/block_square_event_mineralst.h"
-#include "df/construction.h"
-#include "df/item.h"
 #include "df/inclusion_type.h"
+#include "df/tile_bitmask.h"
+#include "df/tile_designation.h"
+#include "df/tile_occupancy.h"
 
 #include <bitset>
+#include <cstring>
+#include <stdint.h>
 
 namespace df {
+    struct map_block;
+    struct map_block_column;
+    struct construction;
+    struct item;
     struct world_region_details;
 }
 
@@ -230,13 +232,7 @@ public:
                tiles->con_info->constructed.getassignment(p);
     }
 
-    df::tiletype tiletypeAt(df::coord2d p)
-    {
-        if (!block) return tiletype::Void;
-        if (tiles)
-            return index_tile(tiles->raw_tiles,p);
-        return index_tile(block->tiletype,p);
-    }
+    df::tiletype tiletypeAt(df::coord2d p);
     bool setTiletypeAt(df::coord2d, df::tiletype tt, bool force = false);
 
     uint16_t temperature1At(df::coord2d p)
@@ -267,25 +263,7 @@ public:
     {
         return index_tile(designation,p);
     }
-    bool setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority = 0)
-    {
-        if(!valid) return false;
-        dirty_designations = true;
-        designated_tiles[(p.x&15) + (p.y&15)*16] = true;
-        //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
-        index_tile(designation,p) = des;
-        if((des.bits.dig || des.bits.smooth) && block) {
-            block->flags.bits.designated = true;
-            // if priority is not specified, keep the existing priority if it
-            // is set. otherwise default to 4000.
-            if (priority <= 0)
-                priority = priorityAt(p);
-            if (priority <= 0)
-                priority = 4000;
-            setPriorityAt(p, priority);
-        }
-        return true;
-    }
+    bool setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority = 0);
 
     int32_t priorityAt(df::coord2d p);
     bool setPriorityAt(df::coord2d p, int32_t priority);
@@ -317,10 +295,7 @@ public:
         return index_tile(item_counts,p);
     }
 
-    t_blockflags BlockFlags()
-    {
-        return block ? block->flags : t_blockflags();
-    }
+    t_blockflags BlockFlags();
 
     bool Write();
     bool isDirty();
@@ -601,14 +576,8 @@ class DFHACK_EXPORT MapCache
         return (b && b->valid);
     }
 
-    bool addItemOnGround(df::item *item) {
-        Block * b= BlockAtTile(item->pos);
-        return b ? b->addItemOnGround(item) : false;
-    }
-    bool removeItemOnGround(df::item *item) {
-        Block * b= BlockAtTile(item->pos);
-        return b ? b->removeItemOnGround(item) : false;
-    }
+    bool addItemOnGround(df::item *item);
+    bool removeItemOnGround(df::item *item);
 
     bool WriteAll();
 
@@ -651,4 +620,3 @@ private:
     std::map<DFCoord, Block *> blocks;
 };
 }
-#endif

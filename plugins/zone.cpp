@@ -15,6 +15,13 @@
 // - unassign single creature under cursor from current zone
 // - pitting own dwarves :)
 
+#include "PluginManager.h"
+
+using namespace DFHack;
+
+DFHACK_PLUGIN("zone");
+
+/*
 #include <functional>
 #include <stdexcept>
 #include <unordered_map>
@@ -29,8 +36,6 @@
 #include "df/unit_relationship_type.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
-
-#include "PluginManager.h"
 #include "uicommon.h"
 #include "VTableInterpose.h"
 
@@ -49,9 +54,6 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-using namespace DFHack;
-
-DFHACK_PLUGIN("zone");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(cursor);
@@ -1856,7 +1858,7 @@ public:
             }
         }
 
-        string search_string_l = toLower(search_string);
+        string search_string_l = toLower_cp437(search_string);
         saved_indexes.clear();
         ui_building_assign_type->clear();
         ui_building_assign_is_marked->clear();
@@ -1898,7 +1900,7 @@ public:
                     Units::getVisibleName(curr_unit), false);
 
                 desc += Units::getProfessionName(curr_unit);
-                desc = toLower(desc);
+                desc = toLower_cp437(desc);
 
                 if (desc.find(search_string_l) == string::npos)
                     continue;
@@ -2177,11 +2179,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     return CR_OK;
 }
+*/
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "zone",
-        "Manage activity zones.",
-        df_zone));
+    // commands.push_back(PluginCommand(
+    //     "zone",
+    //     "Manage activity zones.",
+    //     df_zone));
     return CR_OK;
 }

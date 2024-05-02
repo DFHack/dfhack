@@ -9,7 +9,7 @@ With ``blueprint``, you can export the structure of a portion of your fortress
 in a blueprint file that you (or anyone else) can later play back with
 `gui/quickfort`.
 
-Blueprints are ``.csv`` or ``.xlsx`` files created in the ``blueprints``
+Blueprints are ``.csv`` or ``.xlsx`` files created in the ``dfhack-config/blueprints``
 subdirectory of your DF folder. The map area to turn into a blueprint is either
 selected interactively with the ``gui/blueprint`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the

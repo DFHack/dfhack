@@ -23,25 +23,26 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
-
-#include <string>
-#include <set>
-#include <memory>
-
 #include "DataDefs.h"
-#include "df/graphic.h"
-#include "df/viewscreen.h"
-#include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
 
+#include "df/viewscreen.h"
+#include "df/graphic_viewportst.h"
+
+#include <set>
+#include <memory>
+
 namespace df
 {
+    struct building_civzonest;
+    struct building_stockpilest;
     struct job;
     struct item;
     struct unit;
@@ -191,16 +192,16 @@ namespace DFHack
         }
 
         /// Wrapper to call enabler->zoom_display from plugins
-        DFHACK_EXPORT void zoom(df::zoom_commands cmd);
+        //DFHACK_EXPORT void zoom(df::zoom_commands cmd);
 
         /// Returns the state of [GRAPHICS:YES/NO]
         DFHACK_EXPORT bool inGraphicsMode();
 
         /// Paint one screen tile with the given pen
-        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
+        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false, int32_t * df::graphic_viewportst::*texpos_field = NULL);
 
         /// Retrieves one screen tile from the buffer
-        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false);
+        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false, int32_t * df::graphic_viewportst::*texpos_field = NULL);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
@@ -228,6 +229,9 @@ namespace DFHack
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
         DFHACK_EXPORT void raise(df::viewscreen *screen);
+
+        // returns a new set of interface keys that ensures that string input matches the DF text buffer
+        DFHACK_EXPORT std::set<df::interface_key> normalize_text_keys(const std::set<df::interface_key>& keys);
 
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
@@ -309,8 +313,8 @@ namespace DFHack
         };
 
         namespace Hooks {
-            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map));
-            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
+            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field));
+            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field));
         }
 
         //! Temporary hide a screen until destructor is called
@@ -343,14 +347,16 @@ namespace DFHack
         static dfhack_viewscreen *try_cast(df::viewscreen *screen);
 
         virtual void logic();
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void resize(int w, int h) { return; }
+        virtual df::extentst get_rect();
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);
 
         virtual bool is_lua_screen() { return false; }
 
+        virtual bool isFocused() { return true; }
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
@@ -358,6 +364,8 @@ namespace DFHack
         virtual df::item *getSelectedItem() { return nullptr; }
         virtual df::job *getSelectedJob() { return nullptr; }
         virtual df::building *getSelectedBuilding() { return nullptr; }
+        virtual df::building_stockpilest *getSelectedStockpile() { return nullptr; }
+        virtual df::building_civzonest *getSelectedCivZone() { return nullptr; }
         virtual df::plant *getSelectedPlant() { return nullptr; }
 
         static virtual_identity _identity;
@@ -365,6 +373,7 @@ namespace DFHack
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
         std::string focus;
+        bool defocused = false;
 
         void update_focus(lua_State *L, int idx);
 
@@ -382,11 +391,13 @@ namespace DFHack
         virtual ~dfhack_lua_viewscreen();
 
         static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
+        static void markInputAsHandled();
 
         virtual bool is_lua_screen() { return true; }
+        virtual bool isFocused() { return !defocused; }
         virtual std::string getFocusString() { return focus; }
 
-        virtual void render();
+        virtual void render(uint32_t curtick);
         virtual void logic();
         virtual void help();
         virtual void resize(int w, int h);
@@ -400,6 +411,8 @@ namespace DFHack
         virtual df::item *getSelectedItem();
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
+        virtual df::building_civzonest *getSelectedCivZone();
+        virtual df::building_stockpilest *getSelectedStockpile();
         virtual df::plant *getSelectedPlant();
 
         static virtual_identity _identity;

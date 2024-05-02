@@ -32,7 +32,6 @@ distribution.
 #include "Core.h"
 #include "Error.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
@@ -635,7 +634,7 @@ static int meta_struct_index(lua_State *state)
 static int meta_struct_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(name)");
+        luaL_error(state, "Usage: object:_field(name)");
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
@@ -660,10 +659,13 @@ static int meta_struct_field_reference(lua_State *state)
 static int meta_global_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(name)");
+        luaL_error(state, "Usage: object:_field(name)");
     auto field = (struct_field_info*)find_field(state, 2, "reference");
     if (!field)
         field_error(state, 2, "builtin property or method", "reference");
+    void *ptr = *(void**)field->offset;
+    if (!ptr)
+        field_error(state, 2, "global address not known", "reference");
     field_reference(state, field, *(void**)field->offset);
     return 1;
 }
@@ -944,7 +946,7 @@ static int meta_container_index(lua_State *state)
 static int meta_container_field_reference(lua_State *state)
 {
     if (lua_gettop(state) != 2)
-        luaL_error(state, "Usage: object._field(index)");
+        luaL_error(state, "Usage: object:_field(index)");
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     int iidx = lookup_container_field(state, 2, "reference");
 
@@ -1288,11 +1290,27 @@ void LuaWrapper::SetFunctionWrappers(lua_State *state, const FunctionReg *reg)
 
 /**
  * Add fields in the array to the UPVAL_FIELDTABLE candidates on the stack.
+ *
+ * flags:
+ *  GLOBALS: if true, pstruct is a global_identity and fields with addresses of 0 are skipped
+ *  RAW: if true, no fields are skipped (supersedes `GLOBALS` flag) and
+ *       special-case fields like OBJ_METHODs are not added to the metatable
+ *
+ * Stack in & out:
+ *  base+1: metatable
+ *  base+2: fields table (to be populated, map of name -> struct_field_info*)
+ *  base+3: field iter table (to be populated, bimap of name <-> integer index)
  */
-static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bool globals)
+namespace IndexFieldsFlags {
+    enum IndexFieldsFlags {
+        GLOBALS = 1 << 0,
+        RAW     = 1 << 1,
+    };
+}
+static void IndexFields(lua_State *state, int base, struct_identity *pstruct, int flags)
 {
     if (pstruct->getParent())
-        IndexFields(state, base, pstruct->getParent(), globals);
+        IndexFields(state, base, pstruct->getParent(), flags);
 
     auto fields = pstruct->getFields();
     if (!fields)
@@ -1312,6 +1330,7 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
 
         bool add_to_enum = true;
 
+        if (!(flags & IndexFieldsFlags::RAW))
         // Handle the field
         switch (fields[i].mode)
         {
@@ -1334,10 +1353,10 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
         }
 
         // Do not add invalid globals to the enumeration order
-        if (globals && !*(void**)fields[i].offset)
+        if ((flags & IndexFieldsFlags::GLOBALS) && !*(void**)fields[i].offset)
             add_to_enum = false;
 
-        if (add_to_enum)
+        if (add_to_enum || (flags & IndexFieldsFlags::RAW))
             AssociateId(state, base+3, ++cnt, name.c_str());
 
         lua_pushlightuserdata(state, (void*)&fields[i]);
@@ -1345,10 +1364,168 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
     }
 }
 
+static void PushTypeIdentity(lua_State *state, const type_identity *id)
+{
+    lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPEID_TABLE_TOKEN);
+    lua_rawgetp(state, -1, id);
+    lua_remove(state, -2);  // TYPEID_TABLE
+}
+
+static void PushFieldInfoSubTable(lua_State *state, const struct_field_info *field)
+{
+    if (!field) {
+        lua_pushnil(state);
+        return;
+    }
+
+    lua_newtable(state);    // new field info
+    Lua::TableInsert(state, "mode", field->mode);
+    Lua::TableInsert(state, "name", field->name);
+    Lua::TableInsert(state, "offset", field->offset);
+    Lua::TableInsert(state, "count", field->count);
+
+    if (field->type) {
+        Lua::TableInsert(state, "type_name", field->type->getFullName());
+
+        lua_pushlightuserdata(state, field->type);
+        lua_setfield(state, -2, "type_identity");
+
+        PushTypeIdentity(state, field->type);
+        lua_setfield(state, -2, "type");
+    }
+
+    if (field->extra) {
+        if (field->extra->index_enum) {
+            PushTypeIdentity(state, field->extra->index_enum);
+            lua_setfield(state, -2, "index_enum");
+        }
+        if (field->extra->ref_target) {
+            PushTypeIdentity(state, field->extra->ref_target);
+            lua_setfield(state, -2, "ref_target");
+        }
+        if (field->extra->union_tag_field) {
+            Lua::TableInsert(state, "union_tag_field", field->extra->union_tag_field);
+        }
+        if (field->extra->union_tag_attr) {
+            Lua::TableInsert(state, "union_tag_attr", field->extra->union_tag_attr);
+        }
+        if (field->extra->original_name) {
+            Lua::TableInsert(state, "original_name", field->extra->original_name);
+        }
+    }
+}
+
+/**
+ * Metamethod: __index for struct._fields
+ *
+ * upvalue 1: name -> struct_field_info* table
+ */
+static int meta_fieldinfo_index(lua_State *state)
+{
+    luaL_checktype(state, -1, LUA_TSTRING);
+
+    lua_gettable(state, lua_upvalueindex(1));
+    auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
+    lua_pop(state, 1);
+    PushFieldInfoSubTable(state, field);
+
+    return 1;
+}
+
+/**
+ * Metamethod: iterator for struct._fields
+ *
+ * upvalue 1: name -> struct_field_info* table
+ * upvalue 3: field table (int <-> name)
+ */
+static int meta_fieldinfo_next(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    int len = lua_rawlen(state, UPVAL_FIELDTABLE);
+    int idx = cur_iter_index(state, len+1, 2, 0);
+    if (idx == len)
+        return 0;
+
+    lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
+
+    // modified from meta_struct_next:
+    // retrieve the struct_field_info* from the table and convert it
+    lua_dup(state);
+    lua_gettable(state, lua_upvalueindex(1));
+    auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
+    lua_pop(state, 1);
+    PushFieldInfoSubTable(state, field);
+
+    return 2;
+}
+
+static void AddFieldInfoTable(lua_State *state, int ftable_idx, struct_identity *pstruct)
+{
+    Lua::StackUnwinder base{state};
+
+    // metatable
+    lua_newtable(state);
+    int ix_meta = lua_gettop(state);
+
+    // field info table (name -> struct_field_info*)
+    lua_newtable(state);
+    int ix_fieldinfo = lua_gettop(state);
+
+    // field iter table (int <-> name)
+    lua_newtable(state);
+    int ix_fielditer = lua_gettop(state);
+    IndexFields(state, base, pstruct, IndexFieldsFlags::RAW);
+
+    PushStructMethod(state, ix_meta, ix_fielditer, meta_fieldinfo_next);
+    // change upvalue 1 to the field info table since we don't need the original
+    lua_pushvalue(state, ix_fieldinfo);
+    lua_setupvalue(state, -2, 1);
+    SetPairsMethod(state, ix_meta, "__pairs");
+
+    // field table (name -> table representation of struct_field_info)
+    lua_newtable(state);
+    int ix_fields = lua_gettop(state);
+
+    // wrapper table (empty, indexes into field table with metamethods)
+    lua_newtable(state);
+    int ix_wrapper = lua_gettop(state);
+
+    // set up metatable for the wrapper
+    // use field table for __index
+    lua_pushstring(state, "__index");
+    lua_pushvalue(state, ix_fieldinfo);
+    lua_pushcclosure(state, meta_fieldinfo_index, 1);
+    lua_settable(state, ix_meta);
+
+    // use change_error() for __newindex
+    lua_pushstring(state, "__newindex");
+    lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_CHANGEERROR_NAME);
+    lua_settable(state, ix_meta);
+
+    lua_pushvalue(state, ix_meta);
+    lua_setmetatable(state, ix_wrapper);
+
+    // convert field info table (struct_field_info) to field table (lua tables)
+    lua_pushnil(state);  // initial key for next()
+    while (lua_next(state, ix_fieldinfo)) {
+        auto field = static_cast<const struct_field_info*>(lua_touserdata(state, -1));
+        lua_pushvalue(state, -2);  // field name
+        PushFieldInfoSubTable(state, field);
+        lua_settable(state, ix_fields);
+        lua_pop(state, 1); // struct_field_info
+    }
+
+    // lua_pushvalue(state, ix_fields);
+    // freeze_table(state); // TODO: figure out why this creates an __index cycle for nonexistent fields
+    lua_pushvalue(state, ix_wrapper);
+    lua_setfield(state, ftable_idx, "_fields");
+}
+
 void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct)
 {
     // stack: metatable fieldtable
-
+    AddFieldInfoTable(state, ftable_idx, pstruct);
     for (struct_identity *p = pstruct; p; p = p->getParent())
     {
         auto fields = p->getFields();
@@ -1384,8 +1561,7 @@ static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
 
     // Index the fields
     lua_newtable(state);
-
-    IndexFields(state, base, pstruct, globals);
+    IndexFields(state, base, pstruct, globals ? IndexFieldsFlags::GLOBALS : 0);
 
     // Add the iteration metamethods
     PushStructMethod(state, base+1, base+3, iterator);

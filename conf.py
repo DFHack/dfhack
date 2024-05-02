@@ -78,8 +78,7 @@ def write_tool_docs():
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
-            if k[0] != 'search':
-                outfile.write(label)
+            outfile.write(label)
             outfile.write(include)
 
 
@@ -115,7 +114,7 @@ extlinks = {
                get_caption_str('Bay12 forums thread ')),
     'dffd': ('https://dffd.bay12games.com/file.php?id=%s',
              get_caption_str('DFFD file ')),
-    'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
+    'bug': ('https://dwarffortressbugtracker.com/view.php?id=%s',
             get_caption_str('Bug ')),
     'source': ('https://github.com/DFHack/dfhack/tree/develop/%s',
                get_caption_str()),

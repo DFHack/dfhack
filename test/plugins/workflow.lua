@@ -1,7 +1,10 @@
-local workflow = require('plugins.workflow')
+-- comment out until workflow has been re-added to the build
+-- config.target = 'workflow'
 
-function test.job_outputs()
-    for job_type in pairs(workflow.test_data.job_outputs) do
-        expect.ne(df.job_type[job_type], nil, "Found unrecognized job type: " .. tostring(job_type))
-    end
-end
+-- local workflow = require('plugins.workflow')
+
+-- function test.job_outputs()
+--     for job_type in pairs(workflow.test_data.job_outputs) do
+--         expect.ne(df.job_type[job_type], nil, "Found unrecognized job type: " .. tostring(job_type))
+--     end
+-- end

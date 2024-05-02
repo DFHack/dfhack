@@ -1,27 +1,30 @@
+#include "Debug.h"
+#include "PluginManager.h"
+
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
 #include "modules/Textures.h"
 
-#include "Debug.h"
-#include "LuaTools.h"
-#include "PluginManager.h"
+#include "df/init.h"
 
 using namespace DFHack;
 
 DFHACK_PLUGIN("pathable");
 
-REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(init);
 REQUIRE_GLOBAL(window_x);
 REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);
-REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     DBG_DECLARE(pathable, log, DebugCategory::LINFO);
 }
 
+static std::vector<TexposHandle> textures;
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+    textures = Textures::loadTileset("hack/data/art/pathable.png", 32, 32, true);
     return CR_OK;
 }
 
@@ -29,7 +32,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-static void paintScreen(df::coord target, bool skip_unrevealed = false) {
+static void paintScreenPathable(df::coord target, bool show_hidden = false) {
     DEBUG(log).print("entering paintScreen\n");
 
     bool use_graphics = Screen::inGraphicsMode();
@@ -37,12 +40,12 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
     int selected_tile_texpos = 0;
     Screen::findGraphicsTile("CURSORS", 4, 3, &selected_tile_texpos);
 
-    long pathable_tile_texpos = 779;
-    long unpathable_tile_texpos = 782;
-    long on_off_texpos = Textures::getOnOffTexposStart();
+    long pathable_tile_texpos = init->load_bar_texpos[1];
+    long unpathable_tile_texpos = init->load_bar_texpos[4];
+    long on_off_texpos = Textures::getTexposByHandle(textures[0]);
     if (on_off_texpos > 0) {
-        pathable_tile_texpos = on_off_texpos + 0;
-        unpathable_tile_texpos = on_off_texpos + 1;
+        pathable_tile_texpos = on_off_texpos;
+        unpathable_tile_texpos = Textures::getTexposByHandle(textures[1]);
     }
 
     auto dims = Gui::getDwarfmodeViewDims().map();
@@ -59,7 +62,7 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
                 continue;
             }
 
-            if (skip_unrevealed && !Maps::isTileVisible(map_pos)) {
+            if (!show_hidden && !Maps::isTileVisible(map_pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }
@@ -109,6 +112,6 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(paintScreen),
+    DFHACK_LUA_FUNCTION(paintScreenPathable),
     DFHACK_LUA_END
 };

@@ -1,51 +1,26 @@
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
-#include <modules/Maps.h>
-#include <modules/Job.h>
-#include <modules/Items.h>
-#include <modules/Units.h>
-#include <TileTypes.h>
-#include <vector>
-#include <cstdio>
-#include <stack>
-#include <string>
-#include <cmath>
-#include <string.h>
+#include "PluginManager.h"
+#include "VTableInterpose.h"
 
-#include <VTableInterpose.h>
-#include "df/item_liquid_miscst.h"
+#include "modules/Items.h"
+#include "modules/Units.h"
+
 #include "df/item_constructed.h"
-#include "df/builtin_mats.h"
-#include "df/world.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_item_ref.h"
-#include "df/plotinfost.h"
-#include "df/report.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_item_improvementst.h"
-#include "df/reaction_product_improvement_flags.h"
-#include "df/matter_state.h"
 #include "df/spatter.h"
-
-#include "MiscUtils.h"
 
 using std::vector;
 using std::string;
-using std::stack;
+
 using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("add-spatter");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(plotinfo);
 
 typedef df::reaction_product_item_improvementst improvement_product;
 
@@ -397,18 +372,20 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(product_hook, produce).apply(enable);
 }
 
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
+    if (find_reactions(out)) {
+        out.print("Detected spatter add reactions - enabling plugin.\n");
+        enable_hooks(true);
+    }
+    else
+        enable_hooks(false);
+
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
-    case SC_WORLD_LOADED:
-        if (find_reactions(out))
-        {
-            out.print("Detected spatter add reactions - enabling plugin.\n");
-            enable_hooks(true);
-        }
-        else
-            enable_hooks(false);
-        break;
     case SC_WORLD_UNLOADED:
         enable_hooks(false);
         reactions.clear();
@@ -423,9 +400,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (Core::getInstance().isWorldLoaded())
-        plugin_onstatechange(out, SC_WORLD_LOADED);
-
     return CR_OK;
 }
 

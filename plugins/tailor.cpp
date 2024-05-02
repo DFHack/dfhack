@@ -1,160 +1,216 @@
 /*
  * Tailor plugin. Automatically manages keeping your dorfs clothed.
- * For best effect, place "tailor enable" in your dfhack.init configuration,
- * or set AUTOENABLE to true.
  */
 
 #include "Core.h"
-#include "DataDefs.h"
 #include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 
+#include "modules/Materials.h"
+#include "modules/Persistence.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
+#include "modules/World.h"
+
 #include "df/creature_raw.h"
-#include "df/global_objects.h"
 #include "df/historical_entity.h"
+#include "df/item.h"
+#include "df/item_flags.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_glovesst.h"
 #include "df/itemdef_helmst.h"
 #include "df/itemdef_pantsst.h"
 #include "df/itemdef_shoesst.h"
 #include "df/items_other_id.h"
-#include "df/job.h"
-#include "df/job_type.h"
 #include "df/manager_order.h"
+#include "df/material.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
 
-#include "modules/Maps.h"
-#include "modules/Units.h"
-#include "modules/Translation.h"
-#include "modules/World.h"
+using std::string;
+using std::vector;
 
 using namespace DFHack;
 
-using df::global::world;
-using df::global::plotinfo;
-
 DFHACK_PLUGIN("tailor");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-#define AUTOENABLE false
-DFHACK_PLUGIN_IS_ENABLED(enabled);
-
-REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(standing_orders_use_dyed_cloth);
+REQUIRE_GLOBAL(world);
 
 namespace DFHack {
+    DBG_DECLARE(tailor, control, DebugCategory::LINFO);
     DBG_DECLARE(tailor, cycle, DebugCategory::LINFO);
-    DBG_DECLARE(tailor, config, DebugCategory::LINFO);
 }
 
-class Tailor {
-    // ARMOR, SHOES, HELM, GLOVES, PANTS
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
 
-    // ah, if only STL had a bimap
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+    CONFIG_SILK_IDX = 1,
+    CONFIG_CLOTH_IDX = 2,
+    CONFIG_YARN_IDX = 3,
+    CONFIG_LEATHER_IDX = 4,
+    CONFIG_ADAMANTINE_IDX = 5,
+    CONFIG_CONFISCATE = 6
+};
+
+static const int32_t CYCLE_TICKS = 1231; // one day
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+// ah, if only STL had a bimap
+static const std::map<df::job_type, df::item_type> jobTypeMap = {
+    { df::job_type::MakeArmor, df::item_type::ARMOR },
+    { df::job_type::MakePants, df::item_type::PANTS },
+    { df::job_type::MakeHelm, df::item_type::HELM },
+    { df::job_type::MakeGloves, df::item_type::GLOVES },
+    { df::job_type::MakeShoes, df::item_type::SHOES }
+};
+
+static const std::map<df::item_type, df::job_type> itemTypeMap = {
+    { df::item_type::ARMOR, df::job_type::MakeArmor },
+    { df::item_type::PANTS, df::job_type::MakePants },
+    { df::item_type::HELM, df::job_type::MakeHelm },
+    { df::item_type::GLOVES, df::job_type::MakeGloves },
+    { df::item_type::SHOES, df::job_type::MakeShoes }
+};
+
+class MatType {
+public:
+    const std::string name;
+    const df::job_material_category job_material;
+    const df::armor_general_flags armor_flag;
+
+    bool operator==(const MatType& m) const {
+        return name == m.name;
+    }
+
+    // operator< is required to use this as a std::map key
+    bool operator<(const MatType& m) const {
+        return name < m.name;
+    }
+
+    MatType(std::string& n, df::job_material_category jm, df::armor_general_flags af)
+        : name(n), job_material(jm), armor_flag(af) {};
+    MatType(const char* n, df::job_material_category jm, df::armor_general_flags af)
+        : name(std::string(n)), job_material(jm), armor_flag(af) {};
+};
+
+static const MatType
+    M_SILK = MatType("silk", df::job_material_category::mask_silk, df::armor_general_flags::SOFT),
+    M_CLOTH = MatType("cloth", df::job_material_category::mask_cloth, df::armor_general_flags::SOFT),
+    M_YARN = MatType("yarn", df::job_material_category::mask_yarn, df::armor_general_flags::SOFT),
+    M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER),
+    M_ADAMANTINE = MatType("adamantine", df::job_material_category::mask_strand, df::armor_general_flags::SOFT);
+
+static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
+static const std::list<MatType> default_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // adamantine not included by default
+
+static struct BadFlags {
+    uint32_t whole;
+
+    BadFlags() {
+        df::item_flags flags;
+        #define F(x) flags.bits.x = true;
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(owned);
+        F(removed); F(encased); F(spider_web);
+        #undef F
+        whole = flags.whole;
+    }
+} badFlags;
+
+class Tailor {
 
 private:
-
-    const std::map<df::job_type, df::item_type> jobTypeMap = {
-        { df::job_type::MakeArmor, df::item_type::ARMOR },
-        { df::job_type::MakePants, df::item_type::PANTS },
-        { df::job_type::MakeHelm, df::item_type::HELM },
-        { df::job_type::MakeGloves, df::item_type::GLOVES },
-        { df::job_type::MakeShoes, df::item_type::SHOES }
-    };
-
-    const std::map<df::item_type, df::job_type> itemTypeMap = {
-        { df::item_type::ARMOR, df::job_type::MakeArmor },
-        { df::item_type::PANTS, df::job_type::MakePants },
-        { df::item_type::HELM, df::job_type::MakeHelm },
-        { df::item_type::GLOVES, df::job_type::MakeGloves },
-        { df::item_type::SHOES, df::job_type::MakeShoes }
-    };
-
-#define F(x) df::item_flags::mask_##x
-    const df::item_flags bad_flags = {
-        (
-        F(dump) | F(forbid) | F(garbage_collect) |
-        F(hostile) | F(on_fire) | F(rotten) | F(trader) |
-        F(in_building) | F(construction) | F(owned)
-        )
-    #undef F
-    };
-
-    class MatType {
-
-    public:
-        std::string name;
-        df::job_material_category job_material;
-        df::armor_general_flags armor_flag;
-
-        bool operator==(const MatType& m) const
-        {
-            return name == m.name;
-        }
-
-        // operator< is required to use this as a std::map key
-        bool operator<(const MatType& m) const
-        {
-            return name < m.name;
-        }
-
-        MatType(std::string& n, df::job_material_category jm, df::armor_general_flags af)
-            : name(n), job_material(jm), armor_flag(af) {};
-        MatType(const char* n, df::job_material_category jm, df::armor_general_flags af)
-            : name(std::string(n)), job_material(jm), armor_flag(af) {};
-
-    };
-
-    const MatType
-        M_SILK = MatType("silk", df::job_material_category::mask_silk, df::armor_general_flags::SOFT),
-        M_CLOTH = MatType("cloth", df::job_material_category::mask_cloth, df::armor_general_flags::SOFT),
-        M_YARN = MatType("yarn", df::job_material_category::mask_yarn, df::armor_general_flags::SOFT),
-        M_LEATHER = MatType("leather", df::job_material_category::mask_leather, df::armor_general_flags::LEATHER);
-
-    std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER };
-
-    std::map<std::pair<df::item_type, int>, int> available; // key is item type & size
-    std::map<std::pair<df::item_type, int>, int> needed;    // same
-    std::map<std::pair<df::item_type, int>, int> queued;    // same
-
     std::map<int, int> sizes; // this maps body size to races
 
-    std::map<std::tuple<df::job_type, int, int>, int> orders;  // key is item type, item subtype, size
+    std::map<std::pair<df::item_type, int>, int> available;
+
+    std::map<std::pair<df::item_type, int>, int> needed;
+
+    std::map<std::tuple<df::job_type, int, int>, int> orders;
 
     std::map<MatType, int> supply;
-
-    color_ostream* out;
-
-    std::list<MatType> material_order = { M_SILK, M_CLOTH, M_YARN, M_LEATHER };
     std::map<MatType, int> reserves;
 
+    std::list<MatType> material_order = default_materials;
+
     int default_reserve = 10;
+
+    bool confiscate = true;
+
+public:
+    void set_confiscate(bool f){ confiscate = f; }
+
+    bool get_confiscate() { return confiscate; }
+
+    void sync_material_order()
+    {
+        material_order.clear();
+        for (size_t i = 0; i < all_materials.size(); ++i) {
+            if (i == (size_t)config.get_int(CONFIG_SILK_IDX))
+                material_order.push_back(M_SILK);
+            else if (i == (size_t)config.get_int(CONFIG_CLOTH_IDX))
+                material_order.push_back(M_CLOTH);
+            else if (i == (size_t)config.get_int(CONFIG_YARN_IDX))
+                material_order.push_back(M_YARN);
+            else if (i == (size_t)config.get_int(CONFIG_LEATHER_IDX))
+                material_order.push_back(M_LEATHER);
+            else if (i == (size_t)config.get_int(CONFIG_ADAMANTINE_IDX))
+                material_order.push_back(M_ADAMANTINE);
+        }
+        if (!material_order.size())
+            std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
+    }
+
+    std::list<MatType> get_material_order() {
+        return material_order;
+    }
 
     void reset()
     {
         available.clear();
         needed.clear();
-        queued.clear();
         sizes.clear();
-        orders.clear();
         supply.clear();
+        orders.clear();
     }
 
     void scan_clothing()
     {
-        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "clothing"
+        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "nontattered clothing"
         {
-            if (i->flags.whole & bad_flags.whole)
+            if (i->flags.whole & badFlags.whole)
+            {
                 continue;
-            if (i->flags.bits.owned)
-                continue;
+            }
             if (i->getWear() >= 1)
                 continue;
+            if (i->getMakerRace() < 0) // sometimes we get borked items with no valid maker race
+                continue;
+
             df::item_type t = i->getType();
             int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 
             available[std::make_pair(t, size)] += 1;
+        }
+
+        if (DBG_NAME(cycle).isEnabled(DebugCategory::LDEBUG))
+        {
+            for (auto& i : available)
+            {
+                df::item_type t;
+                int size;
+                std::tie(t, size) = i.first;
+                DEBUG(cycle).print("tailor: %d %s of size %d found\n",
+                    i.second, ENUM_KEY_STR(item_type, t).c_str(), size);
+            }
         }
     }
 
@@ -164,15 +220,15 @@ private:
 
         for (auto i : world->items.other[df::items_other_id::CLOTH])
         {
-            if (i->flags.whole & bad_flags.whole)
+            if (i->flags.whole & badFlags.whole)
                 continue;
 
-            if (require_dyed && !i->hasImprovements())
+            if (require_dyed && (!i->isDyed()))
             {
                 // only count dyed
                 std::string d;
                 i->getItemDescription(&d, 0);
-                TRACE(cycle).print("tailor: skipping undyed %s\n", d.c_str());
+                TRACE(cycle).print("tailor: skipping undyed %s\n", DF2CONSOLE(d).c_str());
                 continue;
             }
             MaterialInfo mat(i);
@@ -186,81 +242,84 @@ private:
                     supply[M_CLOTH] += ss;
                 else if (mat.material->flags.is_set(df::material_flags::YARN))
                     supply[M_YARN] += ss;
+                else if (mat.material->flags.is_set(df::material_flags::STOCKPILE_THREAD_METAL))
+                    supply[M_ADAMANTINE] += ss;
                 else
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    WARN(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", DF2CONSOLE(d).c_str(), i->id);
                 }
             }
         }
 
         for (auto i : world->items.other[df::items_other_id::SKIN_TANNED])
         {
-            if (i->flags.whole & bad_flags.whole)
+            if (i->flags.whole & badFlags.whole)
                 continue;
             supply[M_LEATHER] += i->getStackSize();
         }
 
-        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d\n", supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER]);
+        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d adamantine %d\n",
+            supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER], supply[M_ADAMANTINE]);
     }
 
     void scan_replacements()
     {
-        for (auto u : world->units.active)
-        {
-            if (!Units::isOwnCiv(u) ||
-                !Units::isOwnGroup(u) ||
-                !Units::isActive(u) ||
-                Units::isBaby(u))
-                continue; // skip units we don't control
+        for (auto u : Units::citizensRange(world->units.active)) {
+            if (Units::isBaby(u) ||
+                !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
+                continue; // skip units we don't control or that can't wear clothes
 
-            std::set <df::item_type> wearing;
-            wearing.clear();
-
-            std::deque<df::item*> worn;
-            worn.clear();
+            std::set <df::item_type> equipped;
+            std::set <df::item_type> ordered;
+            std::deque<df::item*> damaged;
 
             for (auto inv : u->inventory)
             {
                 if (inv->mode != df::unit_inventory_item::Worn)
                     continue;
-                if (inv->item->getWear() > 0)
-                    worn.push_back(inv->item);
-                else
-                    wearing.insert(inv->item->getType());
-            }
-
-            int size = world->raws.creatures.all[u->race]->adultsize;
-            sizes[size] = u->race;
-
-            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
-            {
-                if (wearing.count(ty) == 0)
-                {
-                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
-                        ENUM_KEY_STR(item_type, ty).c_str(),
-                        size,
-                        Translation::TranslateName(&u->name, false).c_str());
-                    needed[std::make_pair(ty, size)] += 1;
-                }
-            }
-
-            for (auto w : worn)
-            {
-                auto ty = w->getType();
-                auto oo = itemTypeMap.find(ty);
-                if (oo == itemTypeMap.end())
-                {
+                // skip non-clothing
+                if (!inv->item->isClothing())
                     continue;
-                }
-                const df::job_type o = oo->second;
+                if (inv->item->getWear() > 0)
+                    damaged.push_back(inv->item);
+                else
+                    equipped.insert(inv->item->getType());
+            }
 
-                int size = world->raws.creatures.all[w->getMakerRace()]->adultsize;
+            int usize = world->raws.creatures.all[u->race]->adultsize;
+            sizes[usize] = u->race;
+
+            for (auto w : damaged)
+            {
+                // skip armor
+                if (w->getEffectiveArmorLevel() > 0)
+                    continue;
+
+                auto ty = w->getType();
+
+                auto makerRace = w->getMakerRace();
+                if (makerRace < 0 || makerRace >= (int16_t) world->raws.creatures.all.size())
+                    continue;
+
+                int isize = world->raws.creatures.all[makerRace]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (available[std::make_pair(ty, size)] > 0)
+                if (equipped.count(ty) == 0)
+                {
+                    if (ordered.count(ty) == 0)
+                    {
+                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement\n",
+                                            DF2CONSOLE(description).c_str(), isize,
+                                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str(), usize);
+                        needed[std::make_pair(ty, usize)] += 1;
+                        ordered.insert(ty);
+                    }
+                }
+
+                if (confiscate && equipped.count(ty) > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -269,28 +328,26 @@ private:
                         INFO(cycle).print(
                             "tailor: %s %s from %s.\n",
                             (confiscated ? "confiscated" : "could not confiscate"),
-                            description.c_str(),
-                            Translation::TranslateName(&u->name, false).c_str()
+                            DF2CONSOLE(description).c_str(),
+                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str()
                         );
-                    }
-
-                    if (wearing.count(ty) == 0)
-                    {
-                        DEBUG(cycle).print("tailor: allocating a %s to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(),
-                            Translation::TranslateName(&u->name, false).c_str());
-                        available[std::make_pair(ty, size)] -= 1;
                     }
 
                     if (w->getWear() > 1)
                         w->flags.bits.dump = true;
                 }
-                else
+
+            }
+
+            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
+            {
+                if (equipped.count(ty) == 0 && ordered.count(ty) == 0)
                 {
-                    DEBUG(cycle).print ("tailor: %s worn by %s needs replacement, but none available\n",
-                                        description.c_str(),
-                                        Translation::TranslateName(&u->name, false).c_str());
-                    orders[std::make_tuple(o, w->getSubtype(), size)] += 1;
+                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
+                        ENUM_KEY_STR(item_type, ty).c_str(),
+                        usize,
+                        DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str());
+                    needed[std::make_pair(ty, usize)] += 1;
                 }
             }
         }
@@ -305,6 +362,12 @@ private:
             df::item_type ty = a.first.first;
             int size = a.first.second;
             int count = a.second;
+
+            // decrease "need" by "available"
+            count -= available[std::make_pair(ty, size)];
+
+            if (count <= 0)
+                continue;
 
             int sub = 0;
             std::vector<int16_t> v;
@@ -353,14 +416,30 @@ private:
             if (f == jobTypeMap.end())
                 continue;
 
-            auto sub = o->item_subtype;
             int race = o->hist_figure_id;
+
+            for (auto& m : all_materials)
+            {
+                if (o->material_category.whole == m.job_material.whole)
+                {
+                    supply[m] -= o->amount_left;
+                    TRACE(cycle).print("tailor: supply of %s reduced by %d due to being required for an existing order\n",
+                        DF2CONSOLE(m.name).c_str(), o->amount_left);
+                }
+            }
+
             if (race == -1)
                 continue; // -1 means that the race of the worker will determine the size made; we must ignore these jobs
 
             int size = world->raws.creatures.all[race]->adultsize;
 
-            orders[std::make_tuple(o->job_type, sub, size)] -= o->amount_left;
+            auto tt = jobTypeMap.find(o->job_type);
+            if (tt == jobTypeMap.end())
+            {
+                continue;
+            }
+
+            needed[std::make_pair(tt->second, size)] -= o->amount_left;
             TRACE(cycle).print("tailor: existing order for %d %s of size %d detected\n",
                 o->amount_left,
                 ENUM_KEY_STR(job_type, o->job_type).c_str(),
@@ -369,8 +448,24 @@ private:
 
     }
 
-    void place_orders()
+    static df::manager_order * get_existing_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat) {
+        for (auto order : world->manager_orders) {
+            if (order->job_type == ty &&
+                    order->item_type == df::item_type::NONE &&
+                    order->item_subtype == sub &&
+                    order->mat_type == -1 &&
+                    order->mat_index == -1 &&
+                    order->hist_figure_id == hfid &&
+                    order->material_category.whole == mcat.whole &&
+                    order->frequency == df::manager_order::T_frequency::OneTime)
+                return order;
+        }
+        return NULL;
+    }
+
+    int place_orders()
     {
+        int ordered = 0;
         auto entity = world->entities.all[plotinfo->civ_id];
 
         for (auto& o : orders)
@@ -381,6 +476,13 @@ private:
 
             std::tie(ty, sub, size) = o.first;
             int count = o.second;
+
+            if (sizes.count(size) == 0)
+            {
+                WARN(cycle).print("tailor: cannot determine race for clothing of size %d, skipped\n",
+                    size);
+                continue;
+            }
 
             if (count > 0)
             {
@@ -428,11 +530,11 @@ private:
 
                 if (!can_make)
                 {
-                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", name_p.c_str());
+                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", DF2CONSOLE(name_p).c_str());
                     continue;
                 }
 
-                DEBUG(cycle).print("tailor: ordering %d %s\n", count, name_p.c_str());
+                DEBUG(cycle).print("tailor: ordering %d %s\n", count, DF2CONSOLE(name_p).c_str());
 
                 for (auto& m : material_order)
                 {
@@ -448,253 +550,256 @@ private:
                         {
                             c = supply[m] - res;
                             TRACE(cycle).print("tailor: order reduced from %d to %d to protect reserves of %s\n",
-                                count, c, m.name.c_str());
+                                count, c, DF2CONSOLE(m.name).c_str());
                         }
                         supply[m] -= c;
 
-                        auto order = new df::manager_order;
-                        order->job_type = ty;
-                        order->item_type = df::item_type::NONE;
-                        order->item_subtype = sub;
-                        order->mat_type = -1;
-                        order->mat_index = -1;
-                        order->amount_left = c;
-                        order->amount_total = c;
-                        order->status.bits.validated = false;
-                        order->status.bits.active = false;
-                        order->id = world->manager_order_next_id++;
-                        order->hist_figure_id = sizes[size];
-                        order->material_category = m.job_material;
+                        auto order = get_existing_order(ty, sub, sizes[size], m.job_material);
+                        if (order) {
+                            if (order->amount_total > 0) {
+                                order->amount_left += c;
+                                order->amount_total += c;
+                            }
+                        } else {
+                            order = new df::manager_order;
+                            order->job_type = ty;
+                            order->item_type = df::item_type::NONE;
+                            order->item_subtype = sub;
+                            order->mat_type = -1;
+                            order->mat_index = -1;
+                            order->amount_left = c;
+                            order->amount_total = c;
+                            order->status.bits.validated = false;
+                            order->status.bits.active = false;
+                            order->id = world->manager_order_next_id++;
+                            order->hist_figure_id = sizes[size];
+                            order->material_category = m.job_material;
 
-                        world->manager_orders.push_back(order);
+                            world->manager_orders.push_back(order);
+                        }
 
                         INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
                             order->id,
                             c,
                             bitfield_to_string(order->material_category).c_str(),
-                            (c > 1) ? name_p.c_str() : name_s.c_str(),
-                            world->raws.creatures.all[order->hist_figure_id]->name[1].c_str()
+                            DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
+                            DF2CONSOLE(world->raws.creatures.all[order->hist_figure_id]->name[1]).c_str()
                         );
 
                         count -= c;
+                        ordered += c;
                     }
                     else
                     {
-                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", m.name.c_str(), supply[m]);
+                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
                     }
 
                 }
             }
         }
+        return ordered;
     }
 
-public:
-    void do_scan(color_ostream& o)
+    int do_cycle()
     {
-        out = &o;
-
         reset();
-
-        // scan for useable clothing
-
         scan_clothing();
-
-        // scan for clothing raw materials
-
         scan_materials();
-
-        // scan for units who need replacement clothing
-
         scan_replacements();
-
-        // create new orders
-
-        create_orders();
-
-        // scan existing orders and subtract
-
         scan_existing_orders();
-
-        // place orders
-
-        place_orders();
+        create_orders();
+        return place_orders();
     }
 
-public:
-    command_result set_materials(color_ostream& out, std::vector<std::string>& parameters)
-    {
-        std::list<MatType> newmat;
-        newmat.clear();
-
-        for (auto m = parameters.begin() + 1; m != parameters.end(); m++)
-        {
-            auto nameMatch = [m](MatType& m1) { return *m == m1.name; };
-            auto mm = std::find_if(all_materials.begin(), all_materials.end(), nameMatch);
-            if (mm == all_materials.end())
-            {
-                WARN(config,out).print("tailor: material %s not recognized\n", m->c_str());
-                return CR_WRONG_USAGE;
-            }
-            else {
-                newmat.push_back(*mm);
-            }
-        }
-
-        material_order = newmat;
-        INFO(config,out).print("tailor: material list set to %s\n", get_material_list().c_str());
-
-        return CR_OK;
-    }
-
-public:
-    std::string get_material_list()
-    {
-        std::string s;
-        for (const auto& m : material_order)
-        {
-            if (!s.empty()) s += ", ";
-            s += m.name;
-        }
-        return s;
-    }
-
-public:
-    void process(color_ostream& out)
-    {
-        bool found = false;
-
-        for (df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next)
-        {
-            if (link->item == NULL) continue;
-            if (link->item->job_type == df::enums::job_type::UpdateStockpileRecords)
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if (found)
-        {
-            do_scan(out);
-        }
-    }
 };
 
 static std::unique_ptr<Tailor> tailor_instance;
 
-#define DELTA_TICKS 50
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static int do_cycle(color_ostream &out);
 
-DFhackCExport command_result plugin_onupdate(color_ostream& out)
-{
-    if (!enabled || !tailor_instance)
-        return CR_OK;
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
-    if (!Maps::IsValid())
-        return CR_OK;
+    tailor_instance = std::make_unique<Tailor>();
 
-    if (DFHack::World::ReadPauseState())
-        return CR_OK;
-
-    if (world->frame_counter % DELTA_TICKS != 0)
-        return CR_OK;
-
-    {
-        CoreSuspender suspend;
-        tailor_instance->process(out);
-    }
-
-    return CR_OK;
-}
-
-static command_result tailor_cmd(color_ostream& out, std::vector <std::string>& parameters) {
-    bool desired = enabled;
-    if (parameters.size() == 1 && (parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1"))
-    {
-        desired = true;
-    }
-    else if (parameters.size() == 1 && (parameters[0] == "disable" || parameters[0] == "off" || parameters[0] == "0"))
-    {
-        desired = false;
-    }
-    else if (parameters.size() == 1 && (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?"))
-    {
-        return CR_WRONG_USAGE;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "test")
-    {
-        if (tailor_instance)
-        {
-            tailor_instance->do_scan(out);
-            return CR_OK;
-        }
-        else
-        {
-            out.print("%s: not instantiated\n", plugin_name);
-            return CR_FAILURE;
-        }
-    }
-    else if (parameters.size() > 1 && parameters[0] == "materials")
-    {
-        if (tailor_instance)
-        {
-            return tailor_instance->set_materials(out, parameters);
-        }
-        else
-        {
-            out.print("%s: not instantiated\n", plugin_name);
-            return CR_FAILURE;
-        }
-    }
-    else if (parameters.size() == 1 && parameters[0] != "status")
-    {
-        return CR_WRONG_USAGE;
-    }
-
-    out.print("Tailor is %s %s.\n", (desired == enabled) ? "currently" : "now", desired ? "enabled" : "disabled");
-    if (tailor_instance)
-    {
-        out.print("Material list is: %s\n", tailor_instance->get_material_list().c_str());
-    }
-    else
-    {
-        out.print("%s: not instantiated\n", plugin_name);
-    }
-
-    enabled = desired;
-
-    return CR_OK;
-}
-
-
-DFhackCExport command_result plugin_onstatechange(color_ostream& out, state_change_event event)
-{
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
-{
-    enabled = enable;
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_init(color_ostream& out, std::vector <PluginCommand>& commands)
-{
-    tailor_instance = std::move(dts::make_unique<Tailor>());
-
-    if (AUTOENABLE) {
-        enabled = true;
-    }
-
+    // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
         plugin_name,
         "Automatically keep your dwarves in fresh clothing.",
-        tailor_cmd));
+        do_command));
+
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown(color_ostream& out)
-{
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(control,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out);
+    } else {
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+
     tailor_instance.release();
 
-    return plugin_enable(out, false);
+    return CR_OK;
 }
+
+
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentSiteData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_CONFISCATE, true);
+    }
+    // transition existing saves to CONFIG_CONFISCATE=true
+    if (config.get_int(CONFIG_CONFISCATE) < 0) {
+        DEBUG(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
+        config.set_bool(CONFIG_CONFISCATE, true);
+    }
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+    tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
+    DEBUG(control,out).print("loading persisted confiscation state: %s\n",
+                            tailor_instance->get_confiscate() ? "true" : "false");
+    tailor_instance->sync_material_order();
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
+        int ordered = do_cycle(out);
+        if (0 < ordered)
+            out.print("tailor: ordered %d items of clothing\n", ordered);
+    }
+    return CR_OK;
+}
+
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    bool show_help = false;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.tailor", "parse_commandline", parameters, 1,
+            [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
+        return CR_FAILURE;
+    }
+
+    return show_help ? CR_WRONG_USAGE : CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static int do_cycle(color_ostream &out) {
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+
+    return tailor_instance->do_cycle();
+}
+
+/////////////////////////////////////////////////////
+// Lua API
+//
+
+static void tailor_doCycle(color_ostream &out) {
+    DEBUG(control,out).print("entering tailor_doCycle\n");
+    out.print("ordered %d items of clothing\n", do_cycle(out));
+}
+
+// remember, these are ONE-based indices from Lua
+static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
+                        int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx,
+                        int32_t adamantineIdx) {
+    DEBUG(control,out).print("entering tailor_setMaterialPreferences\n");
+
+    // it doesn't really matter if these are invalid. set_material_order will do
+    // the right thing.
+    config.set_int(CONFIG_SILK_IDX, silkIdx - 1);
+    config.set_int(CONFIG_CLOTH_IDX, clothIdx - 1);
+    config.set_int(CONFIG_YARN_IDX, yarnIdx - 1);
+    config.set_int(CONFIG_LEATHER_IDX, leatherIdx - 1);
+    config.set_int(CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
+
+    tailor_instance->sync_material_order();
+}
+
+static void tailor_setConfiscate(color_ostream& out, bool enable)
+{
+    DEBUG(control,out).print("%s confiscation of tattered clothing \n", enable ? "enabling" : "disabling");
+    config.set_bool(CONFIG_CONFISCATE, enable);
+    tailor_instance->set_confiscate(enable);
+}
+
+static bool tailor_getConfiscate(color_ostream& out)
+{
+    return tailor_instance->get_confiscate();
+}
+
+static int tailor_getMaterialPreferences(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(control,*out).print("entering tailor_getMaterialPreferences\n");
+    vector<string> names;
+    for (const auto& m : tailor_instance->get_material_order())
+        names.emplace_back(m.name);
+    Lua::PushVector(L, names);
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(tailor_doCycle),
+    DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
+    DFHACK_LUA_FUNCTION(tailor_setConfiscate),
+    DFHACK_LUA_FUNCTION(tailor_getConfiscate),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(tailor_getMaterialPreferences),
+    DFHACK_LUA_END
+};

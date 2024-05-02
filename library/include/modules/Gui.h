@@ -23,31 +23,35 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "Module.h"
 #include "BitArray.h"
 #include "ColorText.h"
-#include <string>
-
 #include "Types.h"
-
 #include "DataDefs.h"
-#include "df/init.h"
-#include "df/plotinfost.h"
-#include "df/announcement_type.h"
-#include "df/announcement_flags.h"
-#include "df/report_init.h"
-#include "df/report_zoom_type.h"
-#include "df/unit_report_type.h"
 
 #include "modules/GuiHooks.h"
 
+#include "df/announcement_type.h"
+#include "df/report_zoom_type.h"
+#include "df/unit_report_type.h"
+
 namespace df {
-    struct viewscreen;
+    struct announcement_infost;
+    struct building_civzonest;
+    struct building_stockpilest;
     struct job;
-    struct unit;
     struct item;
+    struct markup_text_boxst;
     struct plant;
+    struct report;
+    struct unit;
+    struct widget;
+    struct widget_container;
+    struct viewscreen;
+
+    union announcement_flags;
 };
 
 /**
@@ -65,7 +69,9 @@ namespace DFHack
      */
     namespace Gui
     {
-        DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
+        DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
+        DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
+        void clearFocusStringCache();
 
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
@@ -82,10 +88,12 @@ namespace DFHack
         DFHACK_EXPORT bool unit_inventory_hotkey(df::viewscreen *top);
 
         // In workshop_job_hotkey, returns the job
+        DFHACK_EXPORT df::job *getAnyWorkshopJob(df::viewscreen *top);
         DFHACK_EXPORT df::job *getSelectedWorkshopJob(color_ostream &out, bool quiet = false);
 
         // A job is selected in a workshop, or unitjobs
         DFHACK_EXPORT bool any_job_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::job *getAnyJob(df::viewscreen *top);
         DFHACK_EXPORT df::job *getSelectedJob(color_ostream &out, bool quiet = false);
 
         // A unit is selected via 'v', 'k', unitjobs, or
@@ -102,10 +110,20 @@ namespace DFHack
         DFHACK_EXPORT df::item *getAnyItem(df::viewscreen *top);
         DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
 
-        // A building is selected via 'q', 't' or 'i' (civzone)
+        // A building is selected via 'q', 't' or 'i' (?)
         DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
+
+        // A (civ)zone is selected via 'z'
+        DFHACK_EXPORT bool any_civzone_hotkey(df::viewscreen* top);
+        DFHACK_EXPORT df::building_civzonest *getAnyCivZone(df::viewscreen* top);
+        DFHACK_EXPORT df::building_civzonest *getSelectedCivZone(color_ostream& out, bool quiet = false);
+
+        // A stockpile is selected via 'p'
+        DFHACK_EXPORT bool any_stockpile_hotkey(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getAnyStockpile(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getSelectedStockpile(color_ostream& out, bool quiet = false);
 
         // A plant is selected, e.g. via 'k'
         DFHACK_EXPORT bool any_plant_hotkey(df::viewscreen *top);
@@ -116,7 +134,11 @@ namespace DFHack
         DFHACK_EXPORT void writeToGamelog(std::string message);
 
         DFHACK_EXPORT int makeAnnouncement(df::announcement_type type, df::announcement_flags mode, df::coord pos, std::string message, int color = 7, bool bright = true);
-        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index);
+
+        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, df::report *report, bool update_alert = false);
+        DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert = false);
+
+        DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::report *report);
         DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index);
 
         // Show a plain announcement, or a titan-style popup message
@@ -125,19 +147,29 @@ namespace DFHack
         DFHACK_EXPORT void showPopupAnnouncement(std::string message, int color = 7, bool bright = true);
 
         // Show an announcement with effects determined by announcements.txt
-        DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL);
+        DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
+                                                df::unit *unit_a = NULL, df::unit *unit_d = NULL);
 
         // Process an announcement exactly like DF would, which might result in no announcement
-        DFHACK_EXPORT bool autoDFAnnouncement(df::report_init r, std::string message);
+        DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_infost info, std::string message);
         DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
-                                              df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool is_sparring = false);
+                                              df::unit *unit_a = NULL, df::unit *unit_d = NULL, bool is_sparring = false);
+        /*
+         * Markup Text Box functions
+         */
+        // Clear MTB before use
+        DFHACK_EXPORT void MTB_clean(df::markup_text_boxst *mtb);
+        // Build MTB's word vector from string
+        DFHACK_EXPORT void MTB_parse(df::markup_text_boxst *mtb, std::string parse_text);
+        // Size MTB appropriately and place words at proper positions
+        DFHACK_EXPORT void MTB_set_width(df::markup_text_boxst *mtb, int32_t width = 50);
 
         /*
          * Cursor and window map coords
          */
         DFHACK_EXPORT df::coord getViewportPos();
         DFHACK_EXPORT df::coord getCursorPos();
-        DFHACK_EXPORT df::coord getMousePos();
+        DFHACK_EXPORT df::coord getMousePos(bool allow_out_of_bounds = false);
 
         static const int AREA_MAP_WIDTH = 23;
         static const int MENU_WIDTH = 30;
@@ -152,8 +184,8 @@ namespace DFHack
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
 
         DFHACK_EXPORT void resetDwarfmodeView(bool pause = false);
-        DFHACK_EXPORT bool revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center = false);
-        DFHACK_EXPORT inline bool revealInDwarfmodeMap(df::coord pos, bool center = false) { return revealInDwarfmodeMap(pos.x, pos.y, pos.z, center); };
+        DFHACK_EXPORT bool revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center = false, bool highlight = false);
+        DFHACK_EXPORT inline bool revealInDwarfmodeMap(df::coord pos, bool center = false, bool highlight = false) { return revealInDwarfmodeMap(pos.x, pos.y, pos.z, center, highlight); };
         DFHACK_EXPORT bool pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause = true);
         DFHACK_EXPORT inline bool pauseRecenter(df::coord pos, bool pause = true) { return pauseRecenter(pos.x, pos.y, pos.z, pause); };
         DFHACK_EXPORT bool refreshSidebar();
@@ -182,7 +214,10 @@ namespace DFHack
         DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
-        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false);
+        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);
+
+        DFHACK_EXPORT df::widget * getWidget(df::widget_container *container, std::string name);
+        DFHACK_EXPORT df::widget * getWidget(df::widget_container *container, size_t idx);
 
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match
@@ -191,8 +226,8 @@ namespace DFHack
             return strict_virtual_cast<T>(getViewscreenByIdentity(T::_identity, n));
         }
 
-        inline std::string getCurFocus(bool skip_dismissed = false) {
-            return getFocusString(getCurViewscreen(skip_dismissed));
+        inline std::vector<std::string> getCurFocus(bool skip_dismissed = false) {
+            return getFocusStrings(getCurViewscreen(skip_dismissed));
         }
 
         /// get the size of the window buffer

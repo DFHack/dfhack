@@ -1,0 +1,81 @@
+name: Deploy to GitHub
+
+on:
+  push:
+    tags:
+    - '*-r*'
+
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag
+        required: true
+
+jobs:
+  package:
+    uses: ./.github/workflows/package.yml
+    with:
+      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      append-date-and-hash: false
+      cache-readonly: true
+      launchdf: true
+    secrets: inherit
+
+  create-update-release:
+    name: Draft GitHub release
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Install doc dependencies
+      run: pip install 'sphinx'
+    - name: Clone DFHack
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+        submodules: true
+    - name: Get tag
+      id: gettag
+      run: |
+        TAG=$(git describe --tags --abbrev=0 --exact-match)
+        echo name="$TAG" >> $GITHUB_OUTPUT
+        echo type=$(echo "$TAG" | egrep 'r[0-9]+$' && echo "release" || echo "prerelease") >> $GITHUB_OUTPUT
+    - name: Generate release text
+      run: |
+        python docs/gen_changelog.py -a
+        CHANGELOG_FILE=docs/changelogs/${{ steps.gettag.outputs.name }}-github.txt
+        if ! test -f $CHANGELOG_FILE; then CHANGELOG_FILE=docs/changelogs/future-github.txt; fi
+        TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
+        head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
+        CHANGELOG_LINES=$(wc -l <$CHANGELOG_FILE)
+        tail -n $((CHANGELOG_LINES - 3)) $CHANGELOG_FILE >> release_body.md
+        tail -n 1 .github/release_template.md >> release_body.md
+        cat release_body.md
+    - name: Stage release
+      uses: actions/download-artifact@v4
+    - name: Prep artifacts
+      run: |
+        mkdir artifacts
+        cd dfhack-windows64-build
+        tar xjf dfhack-windows64-build.tar.bz2
+        rm dfhack-windows64-build.tar.bz2
+        zip -qr ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Windows-64bit.zip .
+        cd ../dfhack-linux64-build
+        mv dfhack-linux64-build.tar.bz2 ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2
+    - name: Create or update GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "artifacts/dfhack-*"
+        bodyFile: "release_body.md"
+        allowUpdates: true
+        artifactErrorsFailBuild: true
+        draft: true
+        name: "DFHack ${{ steps.gettag.outputs.name }}"
+        omitBodyDuringUpdate: true
+        omitDraftDuringUpdate: true
+        omitNameDuringUpdate: true
+        omitPrereleaseDuringUpdate: true
+        prerelease: ${{ steps.gettag.outputs.type == 'prerelease' }}
+        replacesArtifacts: true
+        tag: ${{ steps.gettag.outputs.name }}

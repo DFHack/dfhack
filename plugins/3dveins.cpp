@@ -1,21 +1,17 @@
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
-#include <vector>
-#include <math.h>
-
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
+#include "Debug.h"
 #include "Export.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
+
 #include "modules/MapCache.h"
 #include "modules/Random.h"
 #include "modules/World.h"
 
-#include "MiscUtils.h"
-
-#include "DataDefs.h"
+#include "df/inorganic_raw.h"
+#include "df/map_block.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_region_details.h"
@@ -28,6 +24,13 @@
 #include "df/inclusion_type.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
+
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <algorithm>
+#include <vector>
+#include <math.h>
 
 #ifdef LINUX_BUILD
 #include <tr1/memory>
@@ -46,6 +49,10 @@ using namespace DFHack::Random;
 DFHACK_PLUGIN("3dveins");
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gametype);
+
+namespace DFHack {
+    DBG_DECLARE(_3dveins, process, DebugCategory::LINFO);
+}
 
 command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -431,11 +438,13 @@ struct GeoLayer
     void print_mineral_stats(color_ostream &out)
     {
         for (auto it = mineral_count.begin(); it != mineral_count.end(); ++it)
-            out << "    " << MaterialInfo(0,it->first.first).getToken()
-                << " " << ENUM_KEY_STR(inclusion_type,it->first.second)
-                << ": \t\t" << it->second << " (" << (float(it->second)/unmined_tiles) << ")" << std::endl;
+            INFO(process, out).print("3dveins:    %s %s: %d  (%f)\n",
+                MaterialInfo(0, it->first.first).getToken().c_str(),
+                ENUM_KEY_STR(inclusion_type, it->first.second).c_str(),
+                it->second,
+                (float(it->second) / unmined_tiles));
 
-        out.print("    Total tiles: %d (%d unmined)\n", tiles, unmined_tiles);
+        INFO(process, out).print ("3dveins:    Total tiles: %d (%d unmined)\n", tiles, unmined_tiles);
     }
 
     bool form_veins(color_ostream &out);
@@ -467,12 +476,12 @@ struct GeoBiome
 
     void print_mineral_stats(color_ostream &out)
     {
-        out.print("Geological biome %d:\n", info.geo_index);
+        INFO(process,out).print("3dveins: Geological biome %d:\n", info.geo_index);
 
         for (size_t i = 0; i < layers.size(); i++)
             if (layers[i])
             {
-                out << "  Layer " << i << std::endl;
+                INFO(process, out).print("3dveins:  Layer %ld\n", i);
                 layers[i]->print_mineral_stats(out);
             }
     }
@@ -586,7 +595,7 @@ bool VeinGenerator::init_biomes()
 
         if (info.geo_index < 0 || !info.geobiome)
         {
-            out.printerr("Biome %zd is not defined.\n", i);
+            WARN(process, out).print("Biome %zd is not defined.\n", i);
             return false;
         }
 
@@ -797,8 +806,7 @@ bool VeinGenerator::scan_layer_depth(Block *b, df::coord2d column, int z)
             {
                 if (z != min_level[idx]-1 && min_level[idx] <= top_solid)
                 {
-                    out.printerr(
-                        "Discontinuous layer %d at (%d,%d,%d).\n",
+                    WARN(process, out).print("Discontinuous layer %d at (%d,%d,%d).\n",
                         layer->index, x+column.x*16, y+column.y*16, z
                     );
                     return false;
@@ -848,7 +856,7 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
 
                     if (max_level[i+1] != min_level[i]-1)
                     {
-                        out.printerr(
+                        WARN(process, out).print(
                             "Gap or overlap with next layer %d at (%d,%d,%d-%d).\n",
                             i+1, x+column.x*16, y+column.y*16, max_level[i+1], min_level[i]
                         );
@@ -891,7 +899,7 @@ bool VeinGenerator::adjust_layer_depth(df::coord2d column)
                         }
                     }
 
-                    out.printerr(
+                    WARN(process, out).print(
                         "Layer height change in layer %d at (%d,%d,%d): %d instead of %d.\n",
                         i, x+column.x*16, y+column.y*16, max_level[i],
                         size, biome->layers[i]->thickness
@@ -914,6 +922,7 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
         for (int y = 0; y < 16; y++)
         {
             df::coord2d tile(x,y);
+
             GeoLayer *layer = mapLayer(b, tile);
             if (!layer)
                 continue;
@@ -932,7 +941,7 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
                     if (unsigned(key.first) >= materials.size() ||
                         unsigned(key.second) >= NUM_INCLUSIONS)
                     {
-                        out.printerr("Invalid vein code: %d %d - aborting.\n",key.first,key.second);
+                        WARN(process, out).print("Invalid vein code: %d %d - aborting.\n",key.first,key.second);
                         return false;
                     }
 
@@ -941,7 +950,7 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
                     if (status == -1)
                     {
                         // Report first occurence of unreasonable vein spec
-                        out.printerr(
+                        WARN(process, out).print(
                             "Unexpected vein %s %s - ",
                             MaterialInfo(0,key.first).getToken().c_str(),
                             ENUM_KEY_STR(inclusion_type, key.second).c_str()
@@ -949,9 +958,9 @@ bool VeinGenerator::scan_block_tiles(Block *b, df::coord2d column, int z)
 
                         status = materials[key.first].default_type;
                         if (status < 0)
-                            out.printerr("will be left in place.\n");
+                            WARN(process, out).print("will be left in place.\n");
                         else
-                            out.printerr(
+                            WARN(process, out).print(
                                 "correcting to %s.\n",
                                 ENUM_KEY_STR(inclusion_type, df::inclusion_type(status)).c_str()
                             );
@@ -1090,7 +1099,7 @@ void VeinGenerator::write_block_tiles(Block *b, df::coord2d column, int z)
 
                 if (!ok)
                 {
-                    out.printerr(
+                    WARN(process, out).print(
                         "Couldn't write %d vein at (%d,%d,%d)\n",
                         mat, x+column.x*16, y+column.y*16, z
                     );
@@ -1281,7 +1290,7 @@ bool GeoLayer::form_veins(color_ostream &out)
 
         if (parent_id >= (int)refs.size())
         {
-            out.printerr("Forward vein reference in biome %d.\n", biome->info.geo_index);
+            WARN(process, out).print("Forward vein reference in biome %d.\n", biome->info.geo_index);
             return false;
         }
 
@@ -1301,7 +1310,7 @@ bool GeoLayer::form_veins(color_ostream &out)
                 if (vptr->parent)
                     ctx = "only be in "+MaterialInfo(0,vptr->parent_mat()).getToken();
 
-                out.printerr(
+                WARN(process, out).print(
                     "Duplicate vein %s %s in biome %d layer %d - will %s.\n",
                     MaterialInfo(0,key.first).getToken().c_str(),
                     ENUM_KEY_STR(inclusion_type, key.second).c_str(),
@@ -1357,13 +1366,13 @@ bool VeinGenerator::place_orphan(t_veinkey key, int size, GeoLayer *from)
 
     if (best.empty())
     {
-        out.printerr(
+        WARN(process,out).print(
             "Could not place orphaned vein %s %s anywhere.\n",
             MaterialInfo(0,key.first).getToken().c_str(),
             ENUM_KEY_STR(inclusion_type, key.second).c_str()
         );
 
-        return false;
+        return true;
     }
 
     for (auto it = best.begin(); size > 0 && it != best.end(); ++it)
@@ -1391,7 +1400,7 @@ bool VeinGenerator::place_orphan(t_veinkey key, int size, GeoLayer *from)
 
     if (size > 0)
     {
-         out.printerr(
+        WARN(process, out).print(
             "Could not place all of orphaned vein %s %s: %d left.\n",
             MaterialInfo(0,key.first).getToken().c_str(),
             ENUM_KEY_STR(inclusion_type, key.second).c_str(),
@@ -1541,7 +1550,7 @@ bool VeinGenerator::place_veins(bool verbose)
 
             if (!isStoneInorganic(key.first))
             {
-                out.printerr(
+                WARN(process, out).print(
                     "Invalid vein material: %s\n",
                     MaterialInfo(0, key.first).getToken().c_str()
                 );
@@ -1551,7 +1560,7 @@ bool VeinGenerator::place_veins(bool verbose)
 
             if (!is_valid_enum_item(key.second))
             {
-                out.printerr("Invalid vein type: %d\n", key.second);
+                WARN(process, out).print("Invalid vein type: %d\n", key.second);
                 return false;
             }
 
@@ -1564,13 +1573,13 @@ bool VeinGenerator::place_veins(bool verbose)
     sort(queue.begin(), queue.end(), vein_cmp);
 
     // Place tiles
-    out.print("Processing... (%zu)", queue.size());
+    TRACE(process,out).print("Processing... (%zu)", queue.size());
 
     for (size_t j = 0; j < queue.size(); j++)
     {
         if (queue[j]->parent && !queue[j]->parent->placed)
         {
-            out.printerr(
+            WARN(process, out).print(
                 "\nParent vein not placed for %s %s.\n",
                 MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
                 ENUM_KEY_STR(inclusion_type, queue[j]->vein.second).c_str()
@@ -1582,9 +1591,11 @@ bool VeinGenerator::place_veins(bool verbose)
         if (verbose)
         {
             if (j > 0)
-                out.print("done.");
+            {
+                TRACE(process, out).print("done.");
+            }
 
-            out.print(
+            TRACE(process, out).print(
                 "\nVein layer %zu of %zu: %s %s (%.2f%%)... ",
                 j+1, queue.size(),
                 MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
@@ -1594,14 +1605,13 @@ bool VeinGenerator::place_veins(bool verbose)
         }
         else
         {
-            out.print("\rVein layer %zu of %zu... ", j+1, queue.size());
-            out.flush();
+            TRACE(process, out).print("\rVein layer %zu of %zu... ", j+1, queue.size());
         }
 
         queue[j]->place_tiles();
     }
 
-    out.print("done.\n");
+    TRACE(process, out).print("done.\n");
     return true;
 }
 

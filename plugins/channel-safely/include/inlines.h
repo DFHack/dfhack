@@ -23,7 +23,7 @@ namespace CSP {
 inline uint32_t calc_distance(df::coord p1, df::coord p2) {
     // calculate chebyshev (chessboard) distance
     uint32_t distance = abs(p2.z - p1.z);
-    distance += max(abs(p2.x - p1.x), abs(p2.y - p1.y));
+    distance += std::max(abs(p2.x - p1.x), abs(p2.y - p1.y));
     return distance;
 }
 
@@ -64,11 +64,13 @@ inline uint8_t count_accessibility(const df::coord &unit_pos, const df::coord &m
     get_connected_neighbours(map_pos, connections);
     uint8_t accessibility = Maps::canWalkBetween(unit_pos, map_pos) ? 1 : 0;
     for (auto n: neighbours) {
+        if unlikely(!Maps::isValidTilePos(n)) continue;
         if (Maps::canWalkBetween(unit_pos, n)) {
             accessibility++;
         }
     }
     for (auto n : connections) {
+        if unlikely(Maps::isValidTilePos(n)) continue;
         if (Maps::canWalkBetween(unit_pos, n)) {
             accessibility++;
         }
@@ -77,22 +79,22 @@ inline uint8_t count_accessibility(const df::coord &unit_pos, const df::coord &m
 }
 
 inline bool isEntombed(const df::coord &unit_pos, const df::coord &map_pos) {
-    if (Maps::canWalkBetween(unit_pos, map_pos)) {
+    if likely(Maps::canWalkBetween(unit_pos, map_pos)) {
         return false;
     }
     df::coord neighbours[8];
     get_neighbours(map_pos, neighbours);
     return std::all_of(neighbours+0, neighbours+8, [&unit_pos](df::coord n) {
-        return !Maps::canWalkBetween(unit_pos, n);
+        return !Maps::isValidTilePos(n) || !Maps::canWalkBetween(unit_pos, n);
     });
 }
 
 inline bool is_dig_job(const df::job* job) {
-    return job->job_type == df::job_type::Dig || job->job_type == df::job_type::DigChannel;
+    return job && (job->job_type == df::job_type::Dig || job->job_type == df::job_type::DigChannel);
 }
 
 inline bool is_channel_job(const df::job* job) {
-    return job->job_type == df::job_type::DigChannel;
+    return job && (job->job_type == df::job_type::DigChannel);
 }
 
 inline bool is_group_job(const ChannelGroups &groups, const df::job* job) {
@@ -111,34 +113,48 @@ inline bool is_safe_fall(const df::coord &map_pos) {
     df::coord below(map_pos);
     for (uint8_t zi = 0; zi < config.fall_threshold; ++zi) {
         below.z--;
-        if (config.require_vision && Maps::getTileDesignation(below)->bits.hidden) {
-            return true; //we require vision, and we can't see below.. so we gotta assume it's safe
+        // falling out of bounds is probably considerably unsafe for a dwarf
+        if unlikely(!Maps::isValidTilePos(below)) {
+            return false;
         }
+        // if we require vision, and we can't see below.. we'll need to assume it's safe to get anything done
+        if (config.require_vision && Maps::getTileDesignation(below)->bits.hidden) {
+            return true;
+        }
+        // finally, if we're not looking at open space (air to fall through) it's safe to fall to
         df::tiletype type = *Maps::getTileType(below);
         if (!DFHack::isOpenTerrain(type)) {
             return true;
         }
     }
+    // we exceeded the fall threshold, so it's not a safe fall
     return false;
 }
 
 inline bool is_safe_to_dig_down(const df::coord &map_pos) {
     df::coord pos(map_pos);
 
+    // todo: probably should rely on is_safe_fall, it looks like it could be simplified a great deal
     for (uint8_t zi = 0; zi <= config.fall_threshold; ++zi) {
-        // assume safe if we can't see and need vision
+        // if we're digging out of bounds, the game can handle that (hopefully)
+        if unlikely(!Maps::isValidTilePos(pos)) {
+            return true;
+        }
+        // if we require vision, and we can't see the tiles in question.. we'll need to assume it's safe to dig to get anything done
         if (config.require_vision && Maps::getTileDesignation(pos)->bits.hidden) {
             return true;
         }
+
         df::tiletype type = *Maps::getTileType(pos);
         if (zi == 0 && DFHack::isOpenTerrain(type)) {
+            // todo: remove? this is probably not useful.. and seems like the only considerable difference to is_safe_fall (aside from where each stops looking)
             // the starting tile is open space, that's obviously not safe
             return false;
         } else if (!DFHack::isOpenTerrain(type)) {
             // a tile after the first one is not open space
             return true;
         }
-        pos.z--;
+        pos.z--; // todo: this can probably move to the beginning of the loop
     }
     return false;
 }

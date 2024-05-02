@@ -22,8 +22,64 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
+
+#include "VersionInfo.h"
+#include "MemAccess.h"
+#include "Error.h"
+#include "Types.h"
+#include "ModuleFactory.h"
+#include "Core.h"
+#include "MiscUtils.h"
+
+#include "modules/Units.h"
+#include "modules/Items.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Translation.h"
+#include "modules/World.h"
+
+#include "df/activity_entry.h"
+#include "df/burrow.h"
+#include "df/caste_raw.h"
+#include "df/creature_interaction_effect_display_namest.h"
+#include "df/creature_raw.h"
+#include "df/curse_attr_change.h"
+#include "df/entity_position.h"
+#include "df/entity_position_assignment.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
+#include "df/entity_site_link.h"
+#include "df/identity_type.h"
+#include "df/game_mode.h"
+#include "df/general_ref.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_relationship_type.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/historical_kills.h"
+#include "df/history_event_hist_figure_diedst.h"
+#include "df/identity.h"
+#include "df/item.h"
+#include "df/job.h"
+#include "df/nemesis_record.h"
+#include "df/tile_occupancy.h"
+#include "df/plotinfost.h"
+#include "df/syndrome.h"
+#include "df/training_assignment.h"
+#include "df/unit.h"
+#include "df/unit_inventory_item.h"
+#include "df/unit_misc_trait.h"
+#include "df/unit_relationship_type.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/unit_syndrome.h"
+#include "df/unit_wound.h"
+#include "df/world.h"
+#include "df/world_site.h"
+#include "df/unit_action.h"
+#include "df/unit_action_type_group.h"
 
 #include <stddef.h>
 #include <string>
@@ -33,57 +89,9 @@ distribution.
 #include <algorithm>
 #include <numeric>
 #include <functional>
-using namespace std;
 
-#include "VersionInfo.h"
-#include "MemAccess.h"
-#include "Error.h"
-#include "Types.h"
-
-// we connect to those
-#include "modules/Units.h"
-#include "modules/Items.h"
-#include "modules/Maps.h"
-#include "modules/Materials.h"
-#include "modules/Translation.h"
-#include "ModuleFactory.h"
-#include "Core.h"
-#include "MiscUtils.h"
-
-#include "df/activity_entry.h"
-#include "df/burrow.h"
-#include "df/caste_raw.h"
-#include "df/creature_raw.h"
-#include "df/curse_attr_change.h"
-#include "df/entity_position.h"
-#include "df/entity_position_assignment.h"
-#include "df/entity_raw.h"
-#include "df/entity_raw_flags.h"
-#include "df/identity_type.h"
-#include "df/game_mode.h"
-#include "df/histfig_entity_link_positionst.h"
-#include "df/histfig_relationship_type.h"
-#include "df/historical_entity.h"
-#include "df/historical_figure.h"
-#include "df/historical_figure_info.h"
-#include "df/historical_kills.h"
-#include "df/history_event_hist_figure_diedst.h"
-#include "df/identity.h"
-#include "df/job.h"
-#include "df/nemesis_record.h"
-#include "df/squad.h"
-#include "df/tile_occupancy.h"
-#include "df/plotinfost.h"
-#include "df/unit_inventory_item.h"
-#include "df/unit_misc_trait.h"
-#include "df/unit_relationship_type.h"
-#include "df/unit_skill.h"
-#include "df/unit_soul.h"
-#include "df/unit_wound.h"
-#include "df/world.h"
-#include "df/unit_action.h"
-#include "df/unit_action_type_group.h"
-
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
@@ -95,9 +103,9 @@ bool Units::isUnitInBox(df::unit* u,
                         int16_t x1, int16_t y1, int16_t z1,
                         int16_t x2, int16_t y2, int16_t z2) {
 
-    if (x1 > x2) swap(x1, x2);
-    if (y1 > y2) swap(y1, y2);
-    if (z1 > z2) swap(z1, z2);
+    if (x1 > x2) std::swap(x1, x2);
+    if (y1 > y2) std::swap(y1, y2);
+    if (z1 > z2) std::swap(z1, z2);
     if (u->pos.x >= x1 && u->pos.x <= x2) {
         if (u->pos.y >= y1 && u->pos.y <= y2) {
             if (u->pos.z >= z1 && u->pos.z <= z2) {
@@ -121,7 +129,7 @@ bool Units::isVisible(df::unit* unit)
     return Maps::isTileVisible(unit->pos);
 }
 
-bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
+bool Units::isCitizen(df::unit *unit, bool include_insane)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -141,10 +149,23 @@ bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
         unit->flags2.bits.resident)
         return false;
 
-    if (!ignore_sanity && !isSane(unit))
+    if (!include_insane && !isSane(unit))
         return false;
 
     return isOwnGroup(unit);
+}
+
+bool Units::isResident(df::unit *unit, bool include_insane){
+    CHECK_NULL_POINTER(unit);
+
+    if (!include_insane && !isSane(unit))
+        return false;
+
+    return isOwnCiv(unit) &&
+        !isVisiting(unit) &&
+        !isForest(unit) &&
+        !isAnimal(unit) &&
+        !isOwnGroup(unit);
 }
 
 bool Units::isFortControlled(df::unit *unit)
@@ -175,7 +196,8 @@ bool Units::isFortControlled(df::unit *unit)
     if (unit->flags2.bits.visitor ||
         unit->flags2.bits.visitor_uninvited ||
         unit->flags2.bits.underworld ||
-        unit->flags2.bits.resident)
+        unit->flags2.bits.resident ||
+        unit->flags4.bits.agitated_wilderness_creature)
         return false;
 
     return unit->civ_id != -1 && unit->civ_id == plotinfo->civ_id;
@@ -412,7 +434,7 @@ bool Units::isTrained(df::unit* unit)
         return true;
 
     // case b: tamed and trained wild creature, gets a training level
-    bool trained = false;
+    // does not include domesticated creatures
     switch (unit->training_level)
     {
         case df::animal_training_level::Trained:
@@ -421,13 +443,11 @@ bool Units::isTrained(df::unit* unit)
         case df::animal_training_level::ExpertlyTrained:
         case df::animal_training_level::ExceptionallyTrained:
         case df::animal_training_level::MasterfullyTrained:
-            //case df::animal_training_level::Domesticated:
-            trained = true;
-            break;
+            return true;
         default:
             break;
     }
-    return trained;
+    return false;
 }
 
 // check for profession "hunting creature"
@@ -477,10 +497,34 @@ bool Units::isTame(df::unit* unit)
 bool Units::isTamable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
+    if (isInvader(unit))
+        return false;
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
     df::caste_raw *caste = raw->caste.at(unit->caste);
     return caste->flags.is_set(caste_raw_flags::PET)
            || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
+}
+
+bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
+    CHECK_NULL_POINTER(unit);
+    if (!isTamable(unit) || isDomesticated(unit) || isMarkedForTraining(unit))
+        return false;
+    if (trainer_id != -1 && !df::unit::find(trainer_id))
+        return false;
+    df::training_assignment *assignment = new df::training_assignment();
+    assignment->animal_id = unit->id;
+    assignment->trainer_id = trainer_id;
+    assignment->flags.whole = 0;
+    assignment->flags.bits.any_trainer = trainer_id == -1;
+    insert_into_vector(plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, assignment);
+    return true;
+}
+
+bool Units::unassignTrainer(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    return erase_from_vector(plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, unit->id);
 }
 
 // check if creature is domesticated
@@ -504,10 +548,59 @@ bool Units::isDomesticated(df::unit* unit)
     return tame;
 }
 
+static df::training_assignment * get_training_assignment(df::unit* unit) {
+    return binsearch_in_vector(plotinfo->equipment.training_assignments,
+        &df::training_assignment::animal_id, unit->id);
+}
+
+bool Units::isMarkedForTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return !!get_training_assignment(unit);
+}
+
+bool Units::isMarkedForTaming(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && !assignment->flags.bits.train_war && !assignment->flags.bits.train_hunt;
+}
+
+bool Units::isMarkedForWarTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && assignment->flags.bits.train_war;
+}
+
+bool Units::isMarkedForHuntTraining(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto assignment = get_training_assignment(unit);
+    return assignment && assignment->flags.bits.train_hunt;
+}
+
 bool Units::isMarkedForSlaughter(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->flags2.bits.slaughter == 1;
+}
+
+bool Units::isMarkedForGelding(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags3.bits.marked_for_gelding == 1;
+}
+
+bool Units::isGeldable(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(world->raws.creatures.all[unit->race]->caste[unit->caste]->flags.is_set(caste_raw_flags::GELDABLE)) {
+        return true;
+    }
+
+    return false;
 }
 
 bool Units::isGelded(df::unit* unit)
@@ -533,6 +626,18 @@ bool Units::isEggLayer(df::unit* unit)
     df::caste_raw *caste = raw->caste.at(unit->caste);
     return caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
            || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
+}
+
+bool Units::isEggLayerRace(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    for (auto &caste : raw->caste) {
+        if (caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
+                || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS))
+            return true;
+    }
+    return false;
 }
 
 bool Units::isGrazer(df::unit* unit)
@@ -571,21 +676,18 @@ bool Units::isMischievous(df::unit *unit)
 bool Units::isAvailableForAdoption(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    auto refs = unit->specific_refs;
-    for(size_t i=0; i<refs.size(); i++)
-    {
-        auto ref = refs[i];
-        auto reftype = ref->type;
-        if( reftype == df::specific_ref_type::PETINFO_PET )
-        {
-            //df::pet_info* pet = ref->pet;
-            return true;
-        }
-    }
+    return unit->flags3.bits.available_for_adoption;
+}
+
+bool Units::isPet(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+        return true;
 
     return false;
 }
-
 
 bool Units::hasExtravision(df::unit *unit)
 {
@@ -701,6 +803,12 @@ bool Units::isTitan(df::unit* unit)
     return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::TITAN);
 }
 
+bool Units::isForgottenBeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::FEATURE_BEAST);
+}
+
 bool Units::isDemon(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -714,6 +822,7 @@ bool Units::isDanger(df::unit* unit) {
     return isCrazed(unit) ||
            isInvader(unit) ||
            isUndead(unit, true) ||
+           unit->flags4.bits.agitated_wilderness_creature ||
            isSemiMegabeast(unit) ||
            isNightCreature(unit) ||
            isGreatDanger(unit);
@@ -722,7 +831,8 @@ bool Units::isDanger(df::unit* unit) {
 bool Units::isGreatDanger(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
+    return isDemon(unit) || isTitan(unit) ||
+        isMegabeast(unit) || isForgottenBeast(unit);
 }
 
 
@@ -756,11 +866,69 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
     return true;
 }
 
-bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
-    for (auto &unit : world->units.active) {
-        if (isCitizen(unit, ignore_sanity))
-            citizens.emplace_back(unit);
+static int32_t get_noble_position_id(const df::historical_entity::T_positions &positions, const string &noble) {
+    string target_id = toUpper_cp437(noble);
+    for (auto &position : positions.own) {
+        if (position->code == target_id)
+            return position->id;
     }
+    return -1;
+}
+
+static void add_assigned_noble_units(vector<df::unit *> &units, const df::historical_entity::T_positions &positions, int32_t noble_position_id, size_t limit) {
+    for (auto &assignment : positions.assignments) {
+        if (assignment->position_id != noble_position_id)
+            continue;
+        auto histfig = df::historical_figure::find(assignment->histfig);
+        if (!histfig)
+            continue;
+        auto unit = df::unit::find(histfig->unit_id);
+        if (!unit)
+            continue;
+        units.emplace_back(unit);
+        if (limit > 0 && units.size() >= limit)
+            break;
+    }
+}
+
+static void add_entity_nobles(vector<df::unit *> &units, string noble, size_t limit, df::historical_entity *he) {
+    if (!he)
+        return ;
+    int32_t noble_position_id = get_noble_position_id(he->positions, noble);
+    if (noble_position_id >= 0)
+        add_assigned_noble_units(units, he->positions, noble_position_id, limit);
+}
+
+
+static void get_units_by_noble_role(vector<df::unit *> &units, string noble, size_t limit = 0) {
+    if (!plotinfo)
+        return;
+    add_entity_nobles(units, noble, limit, df::historical_entity::find(plotinfo->civ_id));
+    add_entity_nobles(units, noble, limit, df::historical_entity::find(plotinfo->group_id));
+}
+
+bool Units::getUnitsByNobleRole(vector<df::unit *> &units, std::string noble) {
+    units.clear();
+    get_units_by_noble_role(units, noble);
+    return !units.empty();
+}
+
+df::unit *Units::getUnitByNobleRole(string noble) {
+    vector<df::unit *> units;
+    get_units_by_noble_role(units, noble, 1);
+    if (units.empty())
+        return NULL;
+    return units[0];
+}
+
+void Units::forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(world->units.active, exclude_residents, include_insane))
+        fn(unit);
+}
+
+bool Units::getCitizens(vector<df::unit *> & citizens, bool exclude_residents, bool include_insane) {
+    for (auto unit : citizensRange(world->units.active, exclude_residents, include_insane))
+        citizens.emplace_back(unit);
     return true;
 }
 
@@ -935,11 +1103,18 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    // as of 0.44.11, identity names take precedence over associated histfig names
-    if (auto identity = getIdentity(unit))
-        return &identity->name;
+    auto hf = df::historical_figure::find(unit->hist_figure_id);
+    if (!hf)
+        return &unit->name;
 
-    return &unit->name;
+    auto identity = getFigureIdentity(hf);
+    if (identity)
+    {
+        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+    }
+
+    return &hf->name;
 }
 
 df::nemesis_record *Units::getNemesis(df::unit *unit)
@@ -1106,8 +1281,12 @@ string Units::getRaceBabyNameById(int32_t id)
     if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
     {
         df::creature_raw* raw = world->raws.creatures.all[id];
-        if (raw)
-            return raw->general_baby_name[0];
+        if (raw) {
+            string & baby_name = raw->general_baby_name[0];
+            if (!baby_name.empty())
+                return baby_name;
+            return getRaceReadableNameById(id) + " baby";
+        }
     }
     return "";
 }
@@ -1123,8 +1302,12 @@ string Units::getRaceChildNameById(int32_t id)
     if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
     {
         df::creature_raw* raw = world->raws.creatures.all[id];
-        if (raw)
-            return raw->general_child_name[0];
+        if (raw) {
+            string & child_name = raw->general_child_name[0];
+            if (!child_name.empty())
+                return child_name;
+            return getRaceReadableNameById(id) + " child";
+        }
     }
     return "";
 }
@@ -1135,6 +1318,77 @@ string Units::getRaceChildName(df::unit* unit)
     return getRaceChildNameById(unit->race);
 }
 
+// must subtract 1 from animal_training_level value to index this array
+static const char * training_quality_table[] = {
+    "trained",     // Trained
+    "-trained-",    // WellTrained
+    "+trained+",    // SkilfullyTrained
+    "*trained*",    // ExpertlyTrained
+    "\xF0trained\xF0", // (≡) ExceptionallyTrained
+    "\x0Ftrained\x0F"  // (☼) MasterfullyTrained
+};
+
+static const char * getTameTag(df::unit *unit) {
+    int32_t level = unit->training_level;
+    switch (level) {
+        case df::animal_training_level::SemiWild:
+            return "semi-wild";
+        case df::animal_training_level::Trained:
+        case df::animal_training_level::WellTrained:
+        case df::animal_training_level::SkilfullyTrained:
+        case df::animal_training_level::ExpertlyTrained:
+        case df::animal_training_level::ExceptionallyTrained:
+        case df::animal_training_level::MasterfullyTrained:
+            return training_quality_table[level-1];
+        case df::animal_training_level::Domesticated:
+            return "tame";
+        case df::animal_training_level::WildUntamed:
+        default:
+            return "wild";
+    }
+}
+
+string Units::getReadableName(df::unit* unit) {
+    string base_name = getProfessionName(unit);
+    string name = Translation::TranslateName(getVisibleName(unit), false);
+    if (name.empty()) {
+        name = base_name;
+    } else {
+        name += ", ";
+        name += base_name;
+    }
+    if (isGhost(unit)) {
+        name = "Ghostly " + name;
+    }
+
+    for (auto unit_syndrome : unit->syndromes.active) {
+        auto syndrome = df::syndrome::find(unit_syndrome->type);
+        if (!syndrome)
+            continue;
+        for (auto effect : syndrome->ce) {
+            auto cie = strict_virtual_cast<df::creature_interaction_effect_display_namest>(effect);
+            if (!cie)
+                continue;
+            name += " ";
+            name += cie->name;
+            break;
+        }
+    }
+
+    if (unit->enemy.undead) {
+        if (unit->enemy.undead->undead_name.empty())
+            name = name + " Corpse";
+        else
+            name = name + " " + unit->enemy.undead->undead_name;
+    }
+
+    if (isTame(unit)) {
+        name += " (";
+        name += getTameTag(unit);
+        name += ")";
+    }
+    return name;
+}
 
 double Units::getAge(df::unit *unit, bool true_age)
 {
@@ -1732,7 +1986,11 @@ std::string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plu
             return prof;
     }
 
-    return getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    std::string cpn = getCasteProfessionName(unit->race, unit->caste, unit->profession, plural);
+    if (unit->flags4.bits.agitated_wilderness_creature)
+        cpn = "Agitated " + cpn;
+
+    return cpn;
 }
 
 std::string Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural)
@@ -1932,19 +2190,6 @@ bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
         && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
 }
 
-std::string Units::getSquadName(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->military.squad_id == -1)
-        return "";
-    df::squad *squad = df::squad::find(unit->military.squad_id);
-    if (!squad)
-        return "";
-    if (squad->alias.size() > 0)
-        return squad->alias;
-    return Translation::TranslateName(&squad->name, true);
-}
-
 df::activity_entry *Units::getMainSocialActivity(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -2065,7 +2310,7 @@ void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+        mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue - amount, 1.0);});
     }
 }
 
@@ -2076,7 +2321,7 @@ void Units::subtractGroupActionTimers(color_ostream &out, df::unit *unit, int32_
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypeGroup) {
-                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+                mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue - amount, 1.0);});
                 break;
             }
         }
@@ -2098,7 +2343,7 @@ void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amoun
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+        mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue * amount, 1.0);});
     }
 }
 
@@ -2111,7 +2356,7 @@ void Units::multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float 
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypeGroup) {
-                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+                mutateActionTimerCore(action, [=](double timerValue){return std::max(timerValue * amount, 1.0);});
                 break;
             }
         }

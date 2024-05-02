@@ -56,10 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "json/json.h"
-#include "tinythread.h"
 
 using namespace DFHack;
-using namespace tthread;
 
 using dfproto::CoreTextNotification;
 
@@ -150,7 +148,11 @@ int RemoteClient::GetDefaultPort()
             if (in_file)
             {
                 Json::Value config;
-                in_file >> config;
+                try {
+                    in_file >> config;
+                } catch (const std::exception & e) {
+                    std::cerr << "Error reading remote server config file: " << filename << ": " << e.what() << std::endl;
+                }
                 in_file.close();
                 if (config.isMember("port")) {
                     port = config["port"].asInt();

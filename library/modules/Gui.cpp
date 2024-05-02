@@ -25,11 +25,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-using namespace std;
-
 #include "modules/Gui.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
@@ -40,7 +35,7 @@ using namespace std;
 #include "Debug.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
-using namespace DFHack;
+#include "DataDefs.h"
 
 #include "modules/Job.h"
 #include "modules/Screen.h"
@@ -48,47 +43,71 @@ using namespace DFHack;
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "DataDefs.h"
-
+#include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
+#include "df/announcement_infost.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
+#include "df/building_def_workshopst.h"
+#include "df/building_def_furnacest.h"
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
 #include "df/building_type.h"
 #include "df/building_workshopst.h"
+#include "df/buildreq.h"
+#include "df/cri_unitst.h"
 #include "df/d_init.h"
+#include "df/enabler.h"
 #include "df/game_mode.h"
+#include "df/gamest.h"
 #include "df/general_ref.h"
 #include "df/global_objects.h"
 #include "df/graphic.h"
 #include "df/graphic_viewportst.h"
 #include "df/historical_figure.h"
+#include "df/init.h"
 #include "df/interfacest.h"
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
+#include "df/legend_pagest.h"
+#include "df/markup_text_boxst.h"
+#include "df/markup_text_linkst.h"
+#include "df/markup_text_wordst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
+#include "df/plotinfost.h"
 #include "df/popup_message.h"
 #include "df/report.h"
 #include "df/report_zoom_type.h"
 #include "df/route_stockpile_link.h"
+#include "df/soundst.h"
 #include "df/stop_depart_condition.h"
-#include "df/adventurest.h"
-#include "df/buildreq.h"
 #include "df/ui_look_list.h"
-#include "df/gamest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_legendsst.h"
+#include "df/viewscreen_new_regionst.h"
+#include "df/viewscreen_setupdwarfgamest.h"
+#include "df/viewscreen_titlest.h"
+#include "df/viewscreen_worldst.h"
 #include "df/world.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+using std::string;
+using std::vector;
+using namespace DFHack;
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
 const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
-const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 3.3 sec at 30 GFPS
-const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 66.6 sec at 30 GFPS
+const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
+const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
 
 namespace DFHack
 {
@@ -97,14 +116,15 @@ namespace DFHack
 
 using namespace df::enums;
 
+using df::building_civzonest;
+using df::global::game;
 using df::global::gamemode;
 using df::global::gps;
 using df::global::gview;
 using df::global::init;
-using df::global::selection_rect;
 using df::global::plotinfo;
+using df::global::selection_rect;
 using df::global::ui_menu_width;
-using df::global::game;
 using df::global::world;
 
 /* TODO: understand how this changes for v50
@@ -130,236 +150,741 @@ static std::string getNameChunk(virtual_identity *id, int start, int end)
  * Classifying focus context by means of a string path.
  */
 
-typedef void (*getFocusStringHandler)(std::string &str, df::viewscreen *screen);
-static std::map<virtual_identity*, getFocusStringHandler> getFocusStringHandlers;
+typedef void (*getFocusStringsHandler)(std::string &str, std::vector<std::string> &strList, df::viewscreen *screen);
+static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
-    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen);\
+    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
-        &getFocusStringHandlers, &VIEWSCREEN(screen_type)::_identity, \
-        (getFocusStringHandler)getFocusString_##screen_type \
+        &getFocusStringsHandlers, &VIEWSCREEN(screen_type)::_identity, \
+        (getFocusStringsHandler)getFocusStrings_##screen_type \
     ); \
-    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen)
+    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
+
+DEFINE_GET_FOCUS_STRING_HANDLER(title)
+{
+    if (screen->managing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (game->main_interface.settings.open)
+        focusStrings.push_back(baseFocus + "/Settings");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
+{
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+    else if (screen->doing_simple_params)
+        focusStrings.push_back(baseFocus + "/Basic");
+    else if (screen->doing_params)
+        focusStrings.push_back(baseFocus + "/Advanced");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
+{
+    if (screen->doing_site_finder)
+        focusStrings.push_back(baseFocus + "/SiteFinder");
+    else if (screen->choosing_civilization)
+        focusStrings.push_back(baseFocus + "/ChooseCiv");
+    else if (screen->choosing_reclaim)
+        focusStrings.push_back(baseFocus + "/Reclaim");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(setupdwarfgame)
+{
+    if (screen->doing_custom_settings)
+        focusStrings.push_back(baseFocus + "/CustomSettings");
+    else if (game->main_interface.options.open)
+        focusStrings.push_back(baseFocus + "/Abort");
+    else if (screen->initial_selection == 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else if (game->main_interface.name_creator.open) {
+        switch (game->main_interface.name_creator.context) {
+        case df::name_creator_context_type::EMBARK_FORT_NAME:
+            focusStrings.push_back(baseFocus + "/FortName");
+            break;
+        case df::name_creator_context_type::EMBARK_GROUP_NAME:
+            focusStrings.push_back(baseFocus + "/GroupName");
+            break;
+        case df::name_creator_context_type::IMAGE_CREATOR_NAME:
+            focusStrings.push_back(baseFocus + "/ImageName");
+            break;
+        default:
+            break;
+        }
+    }
+    else if (game->main_interface.image_creator.open) {
+        focusStrings.push_back(baseFocus + "/GroupSymbol");
+    }
+    else if (screen->viewing_objections != 0)
+        focusStrings.push_back(baseFocus + "/Objections");
+    else {
+        switch (screen->mode) {
+        case 0: focusStrings.push_back(baseFocus + "/Dwarves"); break;
+        case 1: focusStrings.push_back(baseFocus + "/Items"); break;
+        case 2: focusStrings.push_back(baseFocus + "/Animals"); break;
+        default:
+            break;
+        }
+    }
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus + "/Default");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(legends)
+{
+    if (screen->init_stage != -1)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->page.size() <= 1)
+        focusStrings.push_back(baseFocus + "/Default");
+    else
+        focusStrings.push_back(baseFocus + '/' + screen->page[screen->active_page_index]->header);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(world)
+{
+    focusStrings.push_back(baseFocus + '/' + enum_item_key(screen->view_mode));
+}
+
+static bool widget_is_visible(df::widget * w) {
+    return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
+}
+
+static df::widget * get_visible_child(df::widget *parent) {
+    df::widget_container *container = virtual_cast<df::widget_container>(parent);
+    if (!container)
+        return NULL;
+    for (auto child : container->children) {
+        if (widget_is_visible(child.get()))
+            return child.get();
+    }
+    return NULL;
+}
+
+static df::widget_container * get_visible_child_container(df::widget *parent) {
+    df::widget_container *container = virtual_cast<df::widget_container>(parent);
+    if (!container)
+        return NULL;
+    for (auto child : container->children) {
+        if (widget_is_visible(child.get()))
+            return virtual_cast<df::widget_container>(child.get());
+    }
+    return NULL;
+}
+
+static string get_building_custom_name(df::building_workshopst * bld) {
+    if (bld->type != df::workshop_type::Custom)
+        return "";
+    if (auto bld_def = vector_get(world->raws.buildings.workshops, bld->custom_type))
+        return bld_def->code + '/';
+    return "";
+}
+
+static string get_building_custom_name(df::building_furnacest * bld) {
+    if (bld->type != df::furnace_type::Custom)
+        return "";
+    if (auto bld_def = vector_get(world->raws.buildings.furnaces, bld->custom_type))
+        return bld_def->code + '/';
+    return "";
+}
+
+static string get_building_custom_name(df::building_trapst * bld) {
+    return "";
+}
+
+template<typename T>
+static void add_profile_tab_focus_string(
+    vector<string> & focusStrings, const string & base, T * bld)
+{
+    string fs = base + '/' + get_building_custom_name(bld);
+    switch (game->main_interface.view_sheets.active_sub_tab) {
+    case 0: fs += "Tasks"; break;
+    case 1: fs += "Workers"; break;
+    case 2: fs += "WorkOrders"; break;
+    default:
+        return;
+    }
+    focusStrings.push_back(fs);
+}
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
-/* TODO: understand how this changes for v50
-    using namespace df::enums::ui_sidebar_mode;
+    std::string newFocusString;
 
-    using df::global::ui_workshop_in_add;
-    using df::global::ui_build_selector;
-    using df::global::ui_selected_unit;
-    using df::global::ui_look_list;
-    using df::global::ui_look_cursor;
-    using df::global::ui_building_item_cursor;
-    using df::global::ui_building_assign_type;
-    using df::global::ui_building_assign_is_marked;
-    using df::global::ui_building_assign_units;
-    using df::global::ui_building_assign_items;
-    using df::global::ui_building_in_assign;
+    if (df::global::gametype && !World::isFortressMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.main_designation_selected != -1) {
+        newFocusString = baseFocus;
+        newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
+        focusStrings.push_back(newFocusString);
+    }
+    if (get_visible_child(&game->main_interface.announcements.stack)) {
+        focusStrings.push_back(baseFocus + "/Announcements");
+    }
+    if (game->main_interface.info.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Info";
+        newFocusString += '/' + enum_item_key(game->main_interface.info.current_mode);
 
-    focus += "/" + enum_item_key(plotinfo->main.mode);
-
-    switch (plotinfo->main.mode)
-    {
-    case QueryBuilding:
-        if (df::building *selected = world->selected_building)
+        switch(game->main_interface.info.current_mode) {
+        case df::enums::info_interface_mode_type::CREATURES:
         {
-            if (!selected->jobs.empty() &&
-                selected->jobs[0]->job_type == job_type::DestroyBuilding)
-            {
-                focus += "/Destroying";
+            auto tab = get_visible_child_container(Gui::getWidget(&game->main_interface.info.creatures, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Info tab widget not found\n");
+            } else if (tab->name == "Citizens") {
+                if (tab->children.size() > 1)
+                    newFocusString += "/ActivityDetails";
+                else
+                    newFocusString += "/CITIZEN";
+            } else if (tab->name == "Pets/Livestock") {
+                if (Gui::getWidget(tab, "Overall training"))
+                    newFocusString += "/OverallTraining";
+                else if (Gui::getWidget(tab, "Trainer"))
+                    newFocusString += "/AddingTrainer";
+                else if (Gui::getWidget(tab, "Hunting assignment"))
+                    newFocusString += "/AssignWorkAnimal";
+                else
+                    newFocusString += "/PET";
+            } else if (tab->name == "Other") {
+                newFocusString += "/OTHER";
+            } else if (tab->name == "Dead/Missing") {
+                newFocusString += "/DECEASED";
+            }
+            break;
+        }
+        case df::enums::info_interface_mode_type::BUILDINGS:
+            newFocusString += '/' + enum_item_key(game->main_interface.info.buildings.mode);
+            break;
+        case df::enums::info_interface_mode_type::LABOR:
+        {
+            auto tab = get_visible_child(Gui::getWidget(&game->main_interface.info.labor, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Labor tab widget not found\n");
+            } else if (tab->name == "Work Details") {
+                newFocusString += "/WORK_DETAILS";
+                if (auto details = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Details");
+                        details && !details->visibility_flags.bits.WIDGET_VISIBILITY_CAN_KEY_ACTIVATE)
+                    newFocusString += "/Details";
+                else
+                    newFocusString += "/Default";
+            } else if (tab->name == "Standing orders") {
+                newFocusString += "/STANDING_ORDERS";
+                auto lsoi = virtual_cast<df::labor_standing_orders_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lsoi->current_category);
+            } else if (tab->name == "Kitchen") {
+                newFocusString += "/KITCHEN";
+                auto lki = virtual_cast<df::labor_kitchen_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lki->current_category);
+            } else if (tab->name == "Stone use") {
+                newFocusString += "/STONE_USE";
+                auto lsui = virtual_cast<df::labor_stone_use_interfacest>(tab);
+                newFocusString += '/' + enum_item_key(lsui->current_category);
+            }
+            break;
+        }
+        case df::enums::info_interface_mode_type::ARTIFACTS:
+            newFocusString += '/' + enum_item_key(game->main_interface.info.artifacts.mode);
+            break;
+        case df::enums::info_interface_mode_type::JUSTICE:
+        {
+            auto tab = get_visible_child(Gui::getWidget(&game->main_interface.info.justice, "Tabs"));
+            if (!tab) {
+                WARN(gui).print("Justice tab widget not found\n");
+            } else if (tab->name == "Open cases") {
+                auto * container_tab = virtual_cast<df::widget_container>(tab);
+                auto * right_panel = container_tab ?
+                    virtual_cast<df::widget_container>(Gui::getWidget(container_tab, "Right panel")) :
+                    NULL;
+                bool is_valid = right_panel && right_panel->children.size() > 1;
+                if (is_valid && right_panel->children[1]->name == "Interrogate")
+                    newFocusString += "/Interrogating";
+                else if (is_valid && right_panel->children[1]->name == "Convict")
+                    newFocusString += "/Convicting";
+                else
+                    newFocusString += "/OPEN_CASES";
+            } else if (tab->name == "Closed cases") {
+                newFocusString += "/CLOSED_CASES";
+            } else if (tab->name == "Cold cases") {
+                auto * container_tab = virtual_cast<df::widget_container>(tab);
+                auto * right_panel = container_tab ?
+                    virtual_cast<df::widget_container>(Gui::getWidget(container_tab, "Right panel")) :
+                    NULL;
+                bool is_valid = right_panel && right_panel->children.size() > 1;
+                if (is_valid && right_panel->children[1]->name == "Interrogate")
+                    newFocusString += "/Interrogating";
+                else if (is_valid && right_panel->children[1]->name == "Convict")
+                    newFocusString += "/Convicting";
+                else
+                    newFocusString += "/COLD_CASES";
+            } else if (tab->name == "Fortress guard") {
+                newFocusString += "/FORTRESS_GUARD";
+            } else if (tab->name == "Convicts") {
+                newFocusString += "/CONVICTS";
+            } else if (tab->name == "Intelligence") {
+                newFocusString += "/COUNTERINTELLIGENCE";
+            }
+            break;
+        }
+        case df::enums::info_interface_mode_type::WORK_ORDERS:
+            if (game->main_interface.info.work_orders.conditions.open)
+                newFocusString += "/Conditions";
+            else if (game->main_interface.create_work_order.open)
+                newFocusString += "/Create";
+            else
+                newFocusString += "/Default";
+            break;
+        case df::enums::info_interface_mode_type::ADMINISTRATORS:
+            if (game->main_interface.info.administrators.choosing_candidate)
+                newFocusString += "/Candidates";
+            else if (game->main_interface.info.administrators.assigning_symbol)
+                newFocusString += "/Symbols";
+            else
+                newFocusString += "/Default";
+            break;
+        default:
+            break;
+        }
+
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.view_sheets.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/ViewSheets";
+        newFocusString += '/' + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        switch (game->main_interface.view_sheets.active_sheet) {
+        case df::view_sheet_type::UNIT:
+            switch (game->main_interface.view_sheets.active_sub_tab) {
+            case 0: newFocusString += "/Overview"; break;
+            case 1: newFocusString += "/Items"; break;
+            case 2:
+                newFocusString += "/Health";
+                switch (game->main_interface.view_sheets.unit_health_active_tab) {
+                    case 0: newFocusString += "/Status"; break;
+                    case 1: newFocusString += "/Wounds"; break;
+                    case 2: newFocusString += "/Treatment"; break;
+                    case 3: newFocusString += "/History"; break;
+                    case 4: newFocusString += "/Description"; break;
+                    default: break;
+                }
+                break;
+            case 3:
+                newFocusString += "/Skills";
+                switch (game->main_interface.view_sheets.unit_skill_active_tab) {
+                    case 0: newFocusString += "/Labor"; break;
+                    case 1: newFocusString += "/Combat"; break;
+                    case 2: newFocusString += "/Social"; break;
+                    case 3: newFocusString += "/Other"; break;
+                    case 4:
+                        newFocusString += "/Knowledge";
+                        if (game->main_interface.view_sheets.skill_description_raw_str.size())
+                            newFocusString += "/Details";
+                        else
+                            newFocusString += "/Default";
+                        break;
+                    default: break;
+                }
+                break;
+            case 4: newFocusString += "/Rooms"; break;
+            case 5:
+                newFocusString += "/Labor";
+                switch (game->main_interface.view_sheets.unit_labor_active_tab) {
+                    case 0: newFocusString += "/WorkDetails"; break;
+                    case 1: newFocusString += "/Workshops"; break;
+                    case 2: newFocusString += "/Locations"; break;
+                    case 3: newFocusString += "/WorkAnimals"; break;
+                    default: break;
+                }
+                break;
+            case 6: newFocusString += "/Relations"; break;
+            case 7: newFocusString += "/Groups"; break;
+            case 8:
+                newFocusString += "/Military";
+                switch (game->main_interface.view_sheets.unit_military_active_tab) {
+                    case 0: newFocusString += "/Squad"; break;
+                    case 1: newFocusString += "/Uniform"; break;
+                    case 2: newFocusString += "/Kills"; break;
+                    default: break;
+                }
+                break;
+            case 9:
+                newFocusString += "/Thoughts";
+                switch (game->main_interface.view_sheets.thoughts_active_tab) {
+                    case 0: newFocusString += "/Recent"; break;
+                    case 1: newFocusString += "/Memories"; break;
+                    default: break;
+                }
+                break;
+            case 10:
+                newFocusString += "/Personality";
+                switch (game->main_interface.view_sheets.personality_active_tab) {
+                    case 0: newFocusString += "/Traits"; break;
+                    case 1: newFocusString += "/Values"; break;
+                    case 2: newFocusString += "/Preferences"; break;
+                    case 3: newFocusString += "/Needs"; break;
+                    default: break;
+                }
+                break;
+            default:
                 break;
             }
-
-            focus += "/Some";
-
-            virtual_identity *id = virtual_identity::get(selected);
-
-            bool jobs = false;
-
-            if (id == &df::building_workshopst::_identity ||
-                id == &df::building_furnacest::_identity)
-            {
-                focus += "/Workshop";
-                jobs = true;
-            }
-            else if (id == &df::building_trapst::_identity)
-            {
-                auto trap = (df::building_trapst*)selected;
-                focus += "/" + enum_item_key(trap->trap_type);
-                if (trap->trap_type == trap_type::Lever)
-                    jobs = true;
-            }
-            else if (ui_building_in_assign && *ui_building_in_assign &&
-                     ui_building_assign_type && ui_building_assign_units &&
-                     ui_building_assign_type->size() == ui_building_assign_units->size())
-            {
-                focus += "/Assign";
-                if (ui_building_item_cursor)
-                {
-                    auto unit = vector_get(*ui_building_assign_units, *ui_building_item_cursor);
-                    focus += unit ? "/Unit" : "/None";
+            break;
+        case df::view_sheet_type::BUILDING:
+            if (game->main_interface.view_sheets.linking_lever)
+                newFocusString = baseFocus + "/LinkingLever";
+            else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
+                newFocusString += '/' + enum_item_key(bld->getType());
+                auto bld_type = bld->getType();
+                if (bld_type == df::enums::building_type::Trap) {
+                    if (auto trap = strict_virtual_cast<df::building_trapst>(bld)) {
+                        newFocusString += '/' + enum_item_key(trap->trap_type);
+                        if (trap->trap_type == df::trap_type::Lever)
+                            add_profile_tab_focus_string(focusStrings, newFocusString, trap);
+                    }
+                } else if (bld_type == df::enums::building_type::Workshop) {
+                    if (auto ws = strict_virtual_cast<df::building_workshopst>(bld)) {
+                        newFocusString += '/' + enum_item_key(ws->type);
+                        add_profile_tab_focus_string(focusStrings, newFocusString, ws);
+                    }
+                } else if (bld_type == df::enums::building_type::Furnace) {
+                    if (auto furn = strict_virtual_cast<df::building_furnacest>(bld)) {
+                        newFocusString += '/' + enum_item_key(furn->type);
+                        add_profile_tab_focus_string(focusStrings, newFocusString, furn);
+                    }
                 }
-            }
-            else
-                focus += "/" + enum_item_key(selected->getType());
-
-            if (jobs)
-            {
-                if (ui_workshop_in_add && *ui_workshop_in_add)
-                    focus += "/AddJob";
-                else if (!selected->jobs.empty())
-                    focus += "/Job";
+                if (game->main_interface.view_sheets.show_linked_buildings)
+                    newFocusString += "/LinkedBuildings";
                 else
-                    focus += "/Empty";
+                    newFocusString += "/Items";
             }
+            break;
+        default:
+            break;
         }
-        else
-            focus += "/None";
-        break;
-
-    case Build:
-        if (ui_build_selector)
-        {
-            // Not selecting, or no choices?
-            if (ui_build_selector->building_type < 0)
-                focus += "/Type";
-            else if (ui_build_selector->stage != 2)
-            {
-                if (ui_build_selector->stage != 1)
-                    focus += "/NoMaterials";
-                else
-                    focus += "/Position";
-
-                focus += "/" + enum_item_key(ui_build_selector->building_type);
-            }
-            else
-            {
-                focus += "/Material";
-                if (ui_build_selector->is_grouped)
-                    focus += "/Groups";
-                else
-                    focus += "/Items";
-            }
-        }
-        break;
-
-    case ViewUnits:
-        if (ui_selected_unit)
-        {
-            if (vector_get(world->units.active, *ui_selected_unit))
-            {
-                focus += "/Some";
-
-                using df::global::ui_unit_view_mode;
-
-                if (ui_unit_view_mode)
-                    focus += "/" + enum_item_key(ui_unit_view_mode->value);
-            }
-            else
-                focus += "/None";
-        }
-        break;
-
-    case LookAround:
-        if (ui_look_list && ui_look_cursor)
-        {
-            auto item = vector_get(ui_look_list->items, *ui_look_cursor);
-            if (item)
-                focus += "/" + enum_item_key(item->type);
-            else
-                focus += "/None";
-        }
-        break;
-
-    case BuildingItems:
-        if (VIRTUAL_CAST_VAR(selected, df::building_actual, world->selected_building))
-        {
-            if (selected->contained_items.empty())
-                focus += "/Some/Empty";
-            else
-                focus += "/Some/Item";
-        }
-        else
-            focus += "/None";
-        break;
-
-    case ZonesPenInfo:
-        if (ui_building_assign_type && ui_building_assign_units &&
-            ui_building_assign_is_marked && ui_building_assign_items &&
-            ui_building_assign_type->size() == ui_building_assign_units->size())
-        {
-            focus += "/Assign";
-            if (ui_building_item_cursor)
-            {
-                if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
-                    focus += "/Unit";
-                else if (vector_get(*ui_building_assign_items, *ui_building_item_cursor))
-                    focus += "/Vermin";
-                else
-                    focus += "/None";
-            }
-        }
-        break;
-
-    case Burrows:
-        if (plotinfo->burrows.in_confirm_delete)
-            focus += "/ConfirmDelete";
-        else if (plotinfo->burrows.in_add_units_mode)
-            focus += "/AddUnits";
-        else if (plotinfo->burrows.in_edit_name_mode)
-            focus += "/EditName";
-        else if (plotinfo->burrows.in_define_mode)
-            focus += "/Define";
-        else
-            focus += "/List";
-        break;
-
-    case Hauling:
-        if (plotinfo->hauling.in_assign_vehicle)
-        {
-            auto vehicle = vector_get(plotinfo->hauling.vehicles, plotinfo->hauling.cursor_vehicle);
-            focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
-        }
-        else
-        {
-            int idx = plotinfo->hauling.cursor_top;
-            auto route = vector_get(plotinfo->hauling.view_routes, idx);
-            auto stop = vector_get(plotinfo->hauling.view_stops, idx);
-            std::string tag = stop ? "Stop" : (route ? "Route" : "None");
-
-            if (plotinfo->hauling.in_name)
-                focus += "/Rename/" + tag;
-            else if (plotinfo->hauling.in_stop)
-            {
-                int sidx = plotinfo->hauling.cursor_stop;
-                auto cond = vector_get(plotinfo->hauling.stop_conditions, sidx);
-                auto link = vector_get(plotinfo->hauling.stop_links, sidx);
-
-                focus += "/DefineStop";
-
-                if (cond)
-                    focus += "/Cond/" + enum_item_key(cond->mode);
-                else if (link)
-                {
-                    focus += "/Link/";
-                    if (link->mode.bits.give) focus += "Give";
-                    if (link->mode.bits.take) focus += "Take";
-                }
-                else
-                    focus += "/None";
-            }
-            else
-                focus += "/Select/" + tag;
-        }
-        break;
-
-    default:
-        break;
+        focusStrings.push_back(newFocusString);
     }
-*/
+
+    if(game->main_interface.bottom_mode_selected != -1) {
+        newFocusString = baseFocus;
+
+        switch(game->main_interface.bottom_mode_selected) {
+        case df::enums::main_bottom_mode_type::STOCKPILE:
+            newFocusString += "/Stockpile";
+            if (game->main_interface.stockpile.cur_bld) {
+                newFocusString += "/Some";
+            }
+            break;
+        case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
+            newFocusString += "/Stockpile/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::HAULING:
+            newFocusString += "/Hauling";
+            break;
+        case df::enums::main_bottom_mode_type::ZONE:
+            newFocusString += "/Zone";
+            if (game->main_interface.civzone.cur_bld) {
+                newFocusString += "/Some";
+                newFocusString += '/' + enum_item_key(game->main_interface.civzone.cur_bld->type);
+            }
+            break;
+        case df::enums::main_bottom_mode_type::ZONE_PAINT:
+            newFocusString += "/Zone/Paint";
+
+            // TODO: figure out why enum_item_key doesn't work on this?
+            switch(game->main_interface.civzone.adding_new_type) {
+            case df::enums::civzone_type::MeetingHall:
+                newFocusString += "/MeetingHall";
+                break;
+            case df::enums::civzone_type::Bedroom:
+                newFocusString += "/Bedroom";
+                break;
+            case df::enums::civzone_type::DiningHall:
+                newFocusString += "/DiningHall";
+                break;
+            case df::enums::civzone_type::Pen:
+                newFocusString += "/Pen";
+                break;
+            case df::enums::civzone_type::Pond:
+                newFocusString += "/Pond";
+                break;
+            case df::enums::civzone_type::WaterSource:
+                newFocusString += "/WaterSource";
+                break;
+            case df::enums::civzone_type::Dungeon:
+                newFocusString += "/Dungeon";
+                break;
+            case df::enums::civzone_type::FishingArea:
+                newFocusString += "/FishingArea";
+                break;
+            case df::enums::civzone_type::SandCollection:
+                newFocusString += "/SandCollection";
+                break;
+            case df::enums::civzone_type::Office:
+                newFocusString += "/Office";
+                break;
+            case df::enums::civzone_type::Dormitory:
+                newFocusString += "/Dormitory";
+                break;
+            case df::enums::civzone_type::Barracks:
+                newFocusString += "/Barracks";
+                break;
+            case df::enums::civzone_type::ArcheryRange:
+                newFocusString += "/ArcheryRange";
+                break;
+            case df::enums::civzone_type::Dump:
+                newFocusString += "/Dump";
+                break;
+            case df::enums::civzone_type::AnimalTraining:
+                newFocusString += "/AnimalTraining";
+                break;
+            case df::enums::civzone_type::Tomb:
+                newFocusString += "/Tomb";
+                break;
+            case df::enums::civzone_type::PlantGathering:
+                newFocusString += "/PlantGathering";
+                break;
+            case df::enums::civzone_type::ClayCollection:
+                newFocusString += "/ClayCollection";
+                break;
+            }
+            break;
+        case df::enums::main_bottom_mode_type::BURROW:
+            newFocusString += "/Burrow";
+            break;
+        case df::enums::main_bottom_mode_type::BURROW_PAINT:
+            newFocusString += "/Burrow/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING:
+            newFocusString += "/Building";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PLACEMENT:
+            newFocusString += "/Building/Placement";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS:
+            newFocusString += "/Building/PickMaterials";
+            break;
+        default:
+            break;
+        }
+
+        focusStrings.push_back(newFocusString);
+    }
+
+    if (game->main_interface.trade.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Trade";
+        if (game->main_interface.trade.choosing_merchant)
+            newFocusString += "/ChoosingMerchant";
+        else
+            newFocusString += "/Default";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.job_details.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/JobDetails/" + enum_item_key(game->main_interface.job_details.context);
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_trade.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignTrade";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.diplomacy.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Diplomacy";
+        if (game->main_interface.diplomacy.taking_requests)
+            newFocusString += "/Requests";
+        else if (game->main_interface.diplomacy.selecting_land_holder_position)
+            newFocusString += "/ElevateLandHolder";
+        else
+            newFocusString += "/Default";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.petitions.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Petitions";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stocks.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Stocks";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_display_item.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignDisplayItem";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.name_creator.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/NameCreator";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.image_creator.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/ImageCreator";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.unit_selector.visibility_flags.bits.WIDGET_VISIBILITY_ACTIVE) {
+        newFocusString = baseFocus;
+        newFocusString += "/UnitSelector/";
+        newFocusString += enum_item_key(game->main_interface.unit_selector.context);
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.announcement_alert.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AnnouncementAlert";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.custom_symbol.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CustomSymbol";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.patrol_routes.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/PatrolRoutes";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_schedule.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSchedule";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.burrow_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/BurrowSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.location_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/LocationSelector/";
+        if (game->main_interface.location_selector.choosing_temple_religious_practice)
+            newFocusString += "Temple";
+        else if (game->main_interface.location_selector.choosing_craft_guild)
+            newFocusString += "Guildhall";
+        else
+            newFocusString += "Default";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.location_details.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/LocationDetails";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.hauling_stop_conditions.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/HaulingStopConditions";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_vehicle.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignVehicle";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stockpile_link.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/StockpileLink";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stockpile_tools.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/StockpileTools";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.custom_stockpile.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CustomStockpile";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.create_squad.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CreateSquad";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_supplies.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSupplies";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_uniform.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignUniform";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.hotkey.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Hotkey";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.options.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Options";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.help.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Help";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.settings.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Settings";
+        newFocusString += '/' + enum_item_key(game->main_interface.settings.current_mode);
+        if (game->main_interface.settings.doing_custom_settings)
+            newFocusString += "/CustomSettings";
+        else
+            newFocusString += "/Default";
+
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_equipment.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadEquipment";
+        if (game->main_interface.squad_equipment.customizing_equipment) {
+            newFocusString += "/Customizing";
+            if (game->main_interface.squad_equipment.cs_setting_material)
+                newFocusString += "/Material";
+            else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
+                newFocusString += "/Color";
+            else
+                newFocusString += "/Default";
+        }
+        else
+            newFocusString += "/Default";
+        focusStrings.push_back(newFocusString);
+    }
+
+    if (!focusStrings.size()) {
+        focusStrings.push_back(baseFocus + "/Default");
+    }
+
+    // squads panel is not exclusive with the others
+    if (game->main_interface.squads.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Squads";
+        focusStrings.push_back(newFocusString);
+    }
 }
 
 /* TODO: understand how this changes for v50
@@ -370,256 +895,86 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
     if (!adventure)
         return;
 
-    focus += "/" + enum_item_key(adventure->menu);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
-{
-    focus += "/" + enum_item_key(screen->page);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    auto list3 = getLayerList(screen, 2);
-    if (!list1 || !list2 || !list3) return;
-
-    focus += "/" + enum_item_key(screen->page);
-
-    int cur_list;
-    if (list1->active) cur_list = 0;
-    else if (list2->active) cur_list = 1;
-    else if (list3->active) cur_list = 2;
-    else return;
-
-    switch (screen->page)
-    {
-    case df::viewscreen_layer_militaryst::Positions:
-        {
-            static const char *lists[] = { "/Squads", "/Positions", "/Candidates" };
-            focus += lists[cur_list];
-            break;
-        }
-
-    case df::viewscreen_layer_militaryst::Equip:
-        {
-            focus += "/" + enum_item_key(screen->equip.mode);
-
-            switch (screen->equip.mode)
-            {
-            case df::viewscreen_layer_militaryst::T_equip::Customize:
-                {
-                    if (screen->equip.edit_mode < 0)
-                        focus += "/View";
-                    else
-                        focus += "/" + enum_item_key(screen->equip.edit_mode);
-                    break;
-                }
-            case df::viewscreen_layer_militaryst::T_equip::Uniform:
-                break;
-            case df::viewscreen_layer_militaryst::T_equip::Priority:
-                {
-                    if (screen->equip.prio_in_move >= 0)
-                        focus += "/Move";
-                    else
-                        focus += "/View";
-                    break;
-                }
-            }
-
-            static const char *lists[] = { "/Squads", "/Positions", "/Choices" };
-            focus += lists[cur_list];
-            break;
-        }
-
-    default:
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(workshop_profile)
-{
-    typedef df::viewscreen_workshop_profilest::T_tab T_tab;
-    switch(screen->tab)
-    {
-    case T_tab::Workers:
-        focus += "/Unit";
-        break;
-    case T_tab::Orders:
-        focus += "/Orders";
-        break;
-    case T_tab::Restrictions:
-        focus += "/Restrictions";
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    if (!list1 || !list2) return;
-
-    focus += "/" + enum_item_key(screen->mode);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(pet)
-{
-    focus += "/" + enum_item_key(screen->mode);
-
-    switch (screen->mode)
-    {
-    case df::viewscreen_petst::List:
-        focus += vector_get(screen->is_vermin, screen->cursor) ? "/Vermin" : "/Unit";
-        break;
-
-    case df::viewscreen_petst::SelectTrainer:
-        if (vector_get(screen->trainer_unit, screen->trainer_cursor))
-            focus += "/Unit";
-        break;
-
-    default:
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_overall_health)
-{
-    auto list1 = getLayerList(screen, 0);
-    if (!list1) return;
-
-    focus += "/Units";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(tradegoods)
-{
-    if (!screen->has_traders || screen->is_unloading)
-        focus += "/NoTraders";
-    else if (screen->in_edit_count)
-        focus += "/EditCount";
-    else
-        focus += (screen->in_right_pane ? "/Items/Broker" : "/Items/Trader");
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    if (!list1 || !list2) return;
-
-    int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);
-    unsigned num_lists = sizeof(screen->lists)/sizeof(screen->lists[0]);
-    if (unsigned(list_idx) >= num_lists)
-        return;
-
-    if (list1->active)
-        focus += "/Groups";
-    else
-        focus += "/Items";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(stores)
-{
-    if (!screen->in_right_list)
-        focus += "/Categories";
-    else if (screen->in_group_mode)
-        focus += "/Groups";
-    else
-        focus += "/Items";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    auto list3 = getLayerList(screen, 2);
-    if (!list1 || !list2 || !list3 || !screen->settings) return;
-
-    auto group = screen->cur_group;
-    if (group != vector_get(screen->group_ids, list1->cursor))
-        return;
-
-    focus += "/" + enum_item_key(group);
-
-    auto bits = vector_get(screen->group_bits, list1->cursor);
-    if (bits.whole && !(bits.whole & screen->settings->flags.whole))
-    {
-        focus += "/Off";
-        return;
-    }
-
-    focus += "/On";
-
-    if (list2->active || list3->active || screen->list_ids.empty()) {
-        focus += "/" + enum_item_key(screen->cur_list);
-
-        if (list3->active)
-            focus += (screen->item_names.empty() ? "/None" : "/Item");
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(locations)
-{
-    focus += "/" + enum_item_key(screen->menu);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(jobmanagement)
-{
-    focus += (screen->in_max_workshops ? "/MaxWorkshops" : "/Main");
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(workquota_condition)
-{
-    focus += "/" + enum_item_key(screen->mode);
-    if (screen->item_count_edit)
-        focus += "/EditCount";
+    focus += '/' + enum_item_key(adventure->menu);
 }
 */
 
-std::string Gui::getFocusString(df::viewscreen *top)
-{
+static std::unordered_map<df::viewscreen *, vector<string>> cached_focus_strings;
+
+void Gui::clearFocusStringCache() {
+    cached_focus_strings.clear();
+}
+
+bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
     if (!top)
-        return "";
+        top = getCurViewscreen(true);
+
+    if (!cached_focus_strings.contains(top))
+        cached_focus_strings[top] = getFocusStrings(top);
+
+    vector<string> &cached = cached_focus_strings[top];
+    return std::find_if(cached.begin(), cached.end(), [&focus_string](const std::string &item) {
+        return prefix_matches(focus_string, item);
+    }) != cached.end();
+}
+
+static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)
+{
+    auto name = vs->getFocusString();
+    if (name.empty())
+        name = "dfhack";
+    else if (string::npos == name.find("dfhack/"))
+        name = "dfhack/" + name;
+
+    focusStrings.push_back(name);
+}
+
+std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
+{
+    std::vector<std::string> focusStrings;
+
+    if (!top)
+        return focusStrings;
 
     if (dfhack_viewscreen::is_instance(top))
     {
-        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
-        return name.empty() ? "dfhack" : "dfhack/"+name;
+        dfhack_viewscreen *vs = static_cast<dfhack_viewscreen*>(top);
+        if (vs->isFocused())
+        {
+            push_dfhack_focus_string(vs, focusStrings);
+            return focusStrings;
+        }
+        top = Gui::getDFViewscreen(top);
+        if (dfhack_viewscreen::is_instance(top))
+        {
+            push_dfhack_focus_string(static_cast<dfhack_viewscreen*>(top), focusStrings);
+            return focusStrings;
+        }
     }
-    else if (virtual_identity *id = virtual_identity::get(top))
+
+    if (virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
-        auto handler = map_find(getFocusStringHandlers, id);
+        auto handler = map_find(getFocusStringsHandlers, id);
         if (handler)
-            handler(name, top);
-
-        return name;
+            handler(name, focusStrings, top);
     }
-    else
+
+    if (!focusStrings.size())
     {
         Core &core = Core::getInstance();
         std::string name = core.p->readClassName(*(void**)top);
-        return name.substr(11, name.size()-11-2);
+        focusStrings.push_back(name.substr(11, name.size()-11-2));
     }
+    return focusStrings;
 }
 
 // Predefined common guard functions
 
 bool Gui::default_hotkey(df::viewscreen *top)
 {
-    // Default hotkey guard function
-    for (;top ;top = top->parent)
-    {
-        if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
-            return true;
-/* TODO: understand how this changes for v50
-        if (strict_virtual_cast<df::viewscreen_dungeonmodest>(top))
-            return true;
-*/
-    }
-    return false;
+    return World::isFortressMode() || World::isAdventureMode();
 }
 
 bool Gui::anywhere_hotkey(df::viewscreen *) {
@@ -627,24 +982,7 @@ bool Gui::anywhere_hotkey(df::viewscreen *) {
 }
 
 bool Gui::dwarfmode_hotkey(df::viewscreen *top) {
-    return World::isFortressMode();
-}
-
-bool Gui::unitjobs_hotkey(df::viewscreen *top)
-{
-/* TODO: understand how this changes for v50
-    // Require the unit or jobs list
-    return !!strict_virtual_cast<df::viewscreen_joblistst>(top) ||
-           !!strict_virtual_cast<df::viewscreen_unitlistst>(top);
-*/ return false;
-}
-
-bool Gui::item_details_hotkey(df::viewscreen *top)
-{
-/* TODO: understand how this changes for v50
-    // Require the main dwarf mode screen
-    return !!strict_virtual_cast<df::viewscreen_itemst>(top);
-*/ return false;
+    return matchFocusString("dwarfmode", top);
 }
 
 static bool has_cursor()
@@ -669,179 +1007,106 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
     if (!dwarfmode_hotkey(top))
         return false;
 
-/* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
-    using df::global::ui_workshop_in_add;
-    using df::global::ui_workshop_job_cursor;
-
-    switch (plotinfo->main.mode) {
-    case QueryBuilding:
-        {
-            if (!ui_workshop_job_cursor) // allow missing
-                return false;
-
-            df::building *selected = world->selected_building;
-            if (!virtual_cast<df::building_workshopst>(selected) &&
-                !virtual_cast<df::building_furnacest>(selected))
-                return false;
-
-            // No jobs?
-            if (selected->jobs.empty() ||
-                selected->jobs[0]->job_type == job_type::DestroyBuilding)
-                return false;
-
-            // Add job gui activated?
-            if (ui_workshop_in_add && *ui_workshop_in_add)
-                return false;
-
-            return true;
-        };
-    default:
+    df::building *selected = getAnyBuilding(top);
+    if (!virtual_cast<df::building_workshopst>(selected) &&
+            !virtual_cast<df::building_furnacest>(selected))
         return false;
-    }
-*/ return false;
+
+    if (selected->jobs.empty() ||
+            selected->jobs[0]->job_type == job_type::DestroyBuilding)
+        return false;
+
+    return true;
 }
 
 bool Gui::build_selector_hotkey(df::viewscreen *top)
 {
+    using df::global::buildreq;
+
     if (!dwarfmode_hotkey(top))
         return false;
 
-/* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
-    using df::global::ui_build_selector;
-
-    switch (plotinfo->main.mode) {
-    case Build:
-        {
-            if (!ui_build_selector) // allow missing
-                return false;
-
-            // Not selecting, or no choices?
-            if (ui_build_selector->building_type < 0 ||
-                ui_build_selector->stage != 2 ||
-                ui_build_selector->choices.empty())
-                return false;
-
-            return true;
-        };
-    default:
+    if (buildreq->building_type < 0 ||
+            buildreq->stage != 2 ||
+            buildreq->choices.empty())
         return false;
-    }
-*/ return false;
+
+    return true;
 }
 
 bool Gui::view_unit_hotkey(df::viewscreen *top)
 {
     if (!dwarfmode_hotkey(top))
         return false;
-/* TODO: understand how this changes for v50
-    using df::global::ui_selected_unit;
 
-    if (plotinfo->main.mode != ui_sidebar_mode::ViewUnits)
-        return false;
-    if (!ui_selected_unit) // allow missing
-        return false;
-
-    return vector_get(world->units.active, *ui_selected_unit) != NULL;
-*/ return false;
-}
-
-bool Gui::unit_inventory_hotkey(df::viewscreen *top)
-{
-    using df::global::ui_unit_view_mode;
-
-    if (!view_unit_hotkey(top))
-        return false;
-    if (!ui_unit_view_mode)
-        return false;
-
-    return ui_unit_view_mode->value == df::ui_unit_view_mode::Inventory;
-}
-
-df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
-{
-    using df::global::ui_workshop_job_cursor;
-
-    if (!workshop_job_hotkey(Core::getTopViewscreen())) {
-        if (!quiet)
-            out.printerr("Not in a workshop, or no job is highlighted.\n");
-        return NULL;
-    }
-
-    df::building *selected = world->selected_building;
-    int idx = *ui_workshop_job_cursor;
-
-    if (size_t(idx) >= selected->jobs.size())
-    {
-        out.printerr("Invalid job cursor index: %d\n", idx);
-        return NULL;
-    }
-
-    return selected->jobs[idx];
+    return !!getAnyUnit(top);
 }
 
 bool Gui::any_job_hotkey(df::viewscreen *top)
 {
-/* TODO: understand how this changes for v50
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
-        return vector_get(screen->jobs, screen->cursor_pos) != NULL;
+    return matchFocusString("dwarfmode/Info/JOBS", top)
+            || matchFocusString("dwarfmode/Info/CREATURES/CITIZEN", top)
+            || workshop_job_hotkey(top);
+}
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
-        return vector_get(screen->jobs[screen->page], screen->cursor_pos[screen->page]) != NULL;
+df::job *Gui::getAnyWorkshopJob(df::viewscreen *top) {
+    auto bld = getAnyBuilding(top);
+    if (!bld)
+        return NULL;
 
-    return workshop_job_hotkey(top);
-*/ return false;
+    // no way to select a specific job; just get the first one
+    return bld->jobs.size() ? bld->jobs[0] : NULL;
+}
+
+df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet) {
+    df::job *job = getAnyWorkshopJob(Core::getTopViewscreen());
+
+    if (!job && !quiet)
+        out.printerr("No workshop selected or job cannot be found in the selected workshop.\n");
+
+    return job;
+}
+
+df::job *Gui::getAnyJob(df::viewscreen *top) {
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedJob();
+
+    if (matchFocusString("dwarfmode/Info/JOBS")) {
+        auto &cri_job = game->main_interface.info.jobs.cri_job;
+        // no way to select specific jobs; just get the first one
+        return cri_job.size() ? cri_job[0]->jb : NULL;
+    }
+
+    if (auto unit = getAnyUnit(top)) {
+        return unit->job.current_job;
+    }
+
+    return getAnyWorkshopJob(top);
 }
 
 df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
-/* TODO: understand how this changes for v50
-    df::viewscreen *top = Core::getTopViewscreen();
+    df::job *job = getAnyJob(Core::getTopViewscreen());
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
-    {
-        return screen->job;
-    }
-    if (VIRTUAL_CAST_VAR(joblist, df::viewscreen_joblistst, top))
-    {
-        df::job *job = vector_get(joblist->jobs, joblist->cursor_pos);
+    if (!job && !quiet)
+        out.printerr("No job can be found from what is selected in the UI.\n");
 
-        if (!job && !quiet)
-            out.printerr("Selected unit has no job\n");
-
-        return job;
-    }
-    else if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, top))
-    {
-        int page = unitlist->page;
-        df::job *job = vector_get(unitlist->jobs[page], unitlist->cursor_pos[page]);
-
-        if (!job && !quiet)
-            out.printerr("Selected unit has no job\n");
-
-        return job;
-    }
-    else if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedJob();
-    else
-        return getSelectedWorkshopJob(out, quiet);
-*/ return getSelectedWorkshopJob(out, quiet);
+    return job;
 }
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
-    using df::global::game;
-
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedUnit();
 
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
         return df::unit::find(game->main_interface.view_sheets.active_id);
+    if (plotinfo->follow_unit != -1)
+        return df::unit::find(plotinfo->follow_unit);
 
 /* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
+   using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;
@@ -1269,10 +1534,55 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
     return item;
 }
 
+bool Gui::any_stockpile_hotkey(df::viewscreen* top)
+{
+    return getAnyStockpile(top) != NULL;
+}
+
+df::building_stockpilest* Gui::getAnyStockpile(df::viewscreen* top) {
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedStockpile();
+
+    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::STOCKPILE)
+        return game->main_interface.stockpile.cur_bld;
+
+    return NULL;
+}
+
+df::building_stockpilest* Gui::getSelectedStockpile(color_ostream& out, bool quiet) {
+    df::building_stockpilest* stockpile = getAnyStockpile(Core::getTopViewscreen());
+
+    if (!stockpile && !quiet)
+        out.printerr("No stockpile is selected in the UI.\n");
+
+    return stockpile;
+}
+
+bool Gui::any_civzone_hotkey(df::viewscreen* top) {
+    return getAnyCivZone(top) != NULL;
+}
+
+df::building_civzonest *Gui::getAnyCivZone(df::viewscreen* top) {
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedCivZone();
+
+    if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::ZONE)
+        return game->main_interface.civzone.cur_bld;
+
+    return NULL;
+}
+
+df::building_civzonest *Gui::getSelectedCivZone(color_ostream &out, bool quiet) {
+    df::building_civzonest *civzone = getAnyCivZone(Core::getTopViewscreen());
+
+    if (!civzone && !quiet)
+        out.printerr("No zone is selected in the UI");
+
+    return civzone;
+}
+
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
-    using df::global::game;
-
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();
 
@@ -1351,17 +1661,12 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedPlant();
 
-    if (Gui::dwarfmode_hotkey(top))
+    if (Gui::dwarfmode_hotkey(top) && has_cursor())
     {
         if (!cursor || !plotinfo || !world)
             return nullptr;
 
-/* TODO: understand how this changes for v50
-        if (plotinfo->main.mode == ui_sidebar_mode::LookAround)
-        {
-            return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
-        }
-*/
+        return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
     }
 
     return nullptr;
@@ -1396,39 +1701,47 @@ DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
 }
 
 // Utility functions for reports
-static bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
-{   // parse a string into output strings like DF does for reports
-    if (str.empty() || line_length == 0)
+static bool update_ucr_alert(df::unit *unit, df::announcement_alert_type alert_type)
+{   // Updates combat/sparring/hunting alert
+    if (!unit)
         return false;
 
-    string parsed;
-    size_t i = 0;
-
-    do
+    df::unit_report_type ucr_type;
+    // Choose correct UCR type or abort
+    switch (alert_type)
     {
-        if (str[i] == '&') // escape character
-        {
-            i++; // ignore the '&' itself
-            if (i >= str.length())
-                break;
-
-            if (str[i] == 'r') // "&r" adds a blank line
-            {
-                word_wrap(out, parsed, line_length, WSMODE_TRIM_LEADING);
-                out->push_back(" "); // DF adds a line with a space for some reason
-                parsed.clear();
-            }
-            else if (str[i] == '&') // "&&" is '&'
-                parsed.push_back('&');
-            // else next char is ignored
-        }
-        else
-            parsed.push_back(str[i]);
+        case announcement_alert_type::COMBAT:
+            ucr_type = unit_report_type::Combat;
+            break;
+        case announcement_alert_type::SPARRING:
+            ucr_type = unit_report_type::Sparring;
+            break;
+        case announcement_alert_type::HUNTING:
+            ucr_type = unit_report_type::Hunting;
+            break;
+        default:
+            return false;
     }
-    while (++i < str.length());
 
-    if (parsed.length())
-        word_wrap(out, parsed, line_length, WSMODE_TRIM_LEADING);
+    auto &alerts = world->status.announcement_alert;
+    // Find existing alert of same type, else create new
+    df::announcement_alertst *alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
+    if (!alert)
+    {
+        alert = new df::announcement_alertst();
+        alert->type = alert_type;
+        alerts.push_back(alert);
+    }
+
+    // Add unit id, UCR category pair to alert if not present
+    for (size_t i = 0; i < alert->report_unid.size(); i++)
+    {
+        if (alert->report_unid[i] == unit->id && alert->report_unit_announcement_category[i] == ucr_type)
+            return false;
+    }
+
+    alert->report_unid.push_back(unit->id);
+    alert->report_unit_announcement_category.push_back(ucr_type);
 
     return true;
 }
@@ -1450,198 +1763,211 @@ static bool recent_report_any(df::unit *unit)
     return false;
 }
 
-static void delete_old_reports()
-{
-    auto &reports = world->status.reports;
-    if (reports.size() > MAX_REPORTS_SIZE)
-    {
-        size_t excess = reports.size() - MAX_REPORTS_SIZE;
-        for (size_t i = 0; i < excess; i++)
-        {
-            if (reports[i] != NULL)
-            {   // report destructor
-                if (reports[i]->flags.bits.announcement)
-                    erase_from_vector(world->status.announcements, &df::report::id, reports[i]->id);
-                delete reports[i];
-            }
-        }
-        reports.erase(reports.begin(), reports.begin() + excess);
-    }
-}
-
-static int32_t check_repeat_report(vector<string> &results)
-{   // returns the new repeat count, else 0
-    if (*gamemode == game_mode::DWARF && !results.empty() && world->status.reports.size() >= results.size())
-    {
-        auto &reports = world->status.reports;
-        size_t base = reports.size() - results.size(); // index where a repeat would start
-        size_t offset = 0;
-        while (reports[base + offset]->text == results[offset] && ++offset < results.size()); // match each report
-
-        if (offset == results.size()) // all lines matched
-        {
-            reports[base]->duration = ANNOUNCE_LINE_DURATION; // display the last line again
-            return ++(reports[base]->repeat_count);
-        }
-    }
-    return 0;
-}
-
-static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
-{   // add report to proper category based on is_sparring and unit current job
+static bool add_proper_report(df::unit* unit, bool is_sparring, df::report *report, bool update_alert = false)
+{   // Add report to proper category based on is_sparring and unit current job
     if (is_sparring)
-        return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
-    else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
-        return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
+        return Gui::addCombatReport(unit, unit_report_type::Sparring, report, update_alert);
+    else if (unit && unit->job.current_job && unit->job.current_job->job_type == job_type::Hunt)
+        return Gui::addCombatReport(unit, unit_report_type::Hunting, report, update_alert);
     else
-        return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
+        return Gui::addCombatReport(unit, unit_report_type::Combat, report, update_alert);
+}
+
+static bool add_recent_reports(df::unit *unit, df::report *report, bool update_alert = false)
+{   // Attempt to add report to all recent categories
+    if (!unit || !report)
+        return false;
+
+    auto alert_type = announcement_alert_type::NONE;
+
+    // These are ordered by priority for setting alert_type
+    if (recent_report(unit, unit_report_type::Sparring))
+    {
+        Gui::addCombatReport(unit, unit_report_type::Sparring, report, false);
+        alert_type = announcement_alert_type::SPARRING;
+    }
+
+    if (recent_report(unit, unit_report_type::Hunting))
+    {
+        Gui::addCombatReport(unit, unit_report_type::Hunting, report, false);
+        alert_type = announcement_alert_type::HUNTING;
+    }
+
+    if (recent_report(unit, unit_report_type::Combat))
+    {
+        Gui::addCombatReport(unit, unit_report_type::Combat, report, false);
+        alert_type = announcement_alert_type::COMBAT;
+    }
+
+    if (update_alert)
+        update_ucr_alert(unit, alert_type);
+
+    return alert_type != announcement_alert_type::NONE;
 }
 // End of utility functions for reports
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
 {
-    using df::global::cur_year;
-    using df::global::cur_year_tick;
-
-    if (gamemode == NULL || cur_year == NULL || cur_year_tick == NULL)
-    {
+    if (!world->allow_announcements || !is_valid_enum_item(type) || type == df::announcement_type::NONE)
         return -1;
-    }
     else if (message.empty())
     {
         Core::printerr("Empty announcement %u\n", type); // DF would print this to errorlog.txt
         return -1;
     }
 
-    // Apply the requested effects
-
     if (flags.bits.PAUSE || flags.bits.RECENTER)
-        pauseRecenter((flags.bits.RECENTER ? pos : df::coord()), flags.bits.PAUSE);
+        pauseRecenter((flags.bits.RECENTER ? pos : df::coord()), flags.bits.PAUSE); // Does nothing if not dwarf mode
 
     bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
 
     if (flags.bits.DO_MEGA && !adv_unconscious)
         showPopupAnnouncement(message, color, bright);
 
-    vector<string> results;
-    word_wrap(&results, message, init->display.grid_x - 7);
-
-    // Check for repeat report
-    int32_t repeat_count = check_repeat_report(results); // Does nothing outside dwarf mode
-    if (repeat_count > 0)
-    {
-        if (flags.bits.D_DISPLAY)
-        {
-            world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
-        }
-        return -1;
-    }
-
-    // Not a repeat, write the message to gamelog.txt
     writeToGamelog(message);
 
-    // Generate the report objects
-    int report_idx = world->status.reports.size();
-    bool continued = false;
-    bool display = ((*gamemode == game_mode::ADVENTURE && flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && flags.bits.D_DISPLAY));
+    auto &reports = world->status.reports;
+    auto &alerts = world->status.announcement_alert;
 
-    for (size_t i = 0; i < results.size(); i++)
+    // Check for repeat report as part of an existing alert
+    if (*gamemode == game_mode::DWARF && !flags.bits.ALERT)
     {
-        auto new_rep = new df::report();
-        new_rep->type = type;
-        new_rep->pos = pos;
-
-        new_rep->color = color;
-        new_rep->bright = bright;
-        new_rep->year = *cur_year;
-        new_rep->time = *cur_year_tick;
-
-        new_rep->flags.bits.continuation = continued;
-        continued = true;
-
-        new_rep->text = results[i];
-        new_rep->id = world->status.next_report_id++;
-        world->status.reports.push_back(new_rep);
-
-        if (adv_unconscious)
-            new_rep->flags.bits.unconscious = true;
-
-        if (display)
+        if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, type)) >= 0) // Alert of type exists
         {
-            insert_into_vector(world->status.announcements, &df::report::id, new_rep);
-            new_rep->flags.bits.announcement = true;
-            world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
+            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+            {
+                auto& cur_report = **it;
+                if (cur_report.text == message) // Repeat if text matches
+                {
+                    cur_report.duration = ANNOUNCE_LINE_DURATION;
+                    cur_report.repeat_count++;
+
+                    if (flags.bits.D_DISPLAY)
+                        world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
+
+                    return -1;
+                }
+            }
         }
     }
 
-    delete_old_reports();
-    return report_idx;
+    auto new_report = new df::report();
+    new_report->type = type;
+    new_report->text = message;
+    new_report->color = color;
+    new_report->bright = bright;
+    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->pos = pos;
+    new_report->id = world->status.next_report_id++;
+    new_report->year = *df::global::cur_year;
+    new_report->time = *df::global::cur_year_tick;
+    reports.push_back(new_report);
+
+    // Handle alerts
+    if (*gamemode == game_mode::DWARF)
+    {
+        if (flags.bits.D_DISPLAY)
+        {   // Find existing alert of same type, else create new
+            auto alert_type = ENUM_ATTR(announcement_type, alert_type, type);
+            df::announcement_alertst* alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
+
+            if (!alert)
+            {
+                alert = new df::announcement_alertst();
+                alert->type = alert_type;
+                alerts.push_back(alert);
+            }
+
+            alert->announcement_id.push_back(new_report->id);
+        }
+
+        if (flags.bits.ALERT)
+        {
+            world->status.alert_button_announcement_id.push_back(new_report->id);
+            game->main_interface.hover_announcement_alert_button_width = 0;
+        }
+    }
+
+    // Handle proper announcements
+    if ((*gamemode == game_mode::ADVENTURE && flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && flags.bits.D_DISPLAY))
+    {
+        insert_into_vector(world->status.announcements, &df::report::id, new_report);
+        new_report->flags.bits.announcement = true;
+        world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
+    }
+
+    // Delete excess reports
+    while (reports.size() > MAX_REPORTS_SIZE)
+    {   // Report destructor
+        if (reports[0] != NULL)
+        {
+            if (reports[0]->flags.bits.announcement)
+                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
+            delete reports[0];
+        }
+        reports.erase(reports.begin());
+    }
+
+    return world->status.reports.size() - 1;
 }
 
-bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index)
+bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report *report, bool update_alert)
 {
     CHECK_INVALID_ARGUMENT(is_valid_enum_item(slot));
-
-    auto &vec = world->status.reports;
-    auto report = vector_get(vec, report_index);
 
     if (!unit || !report)
         return false;
 
-    // Check that it is a new report
-    auto &rvec = unit->reports.log[slot];
-    if (!rvec.empty() && rvec.back() >= report->id)
-        return false;
-
-    // Add the report
-    rvec.push_back(report->id);
-
+    unit->reports.log[slot].push_back(report->id);
     unit->reports.last_year[slot] = report->year;
     unit->reports.last_year_tick[slot] = report->time;
 
-    switch (slot) {
+    auto alert_type = announcement_alert_type::NONE;
+    switch (slot)
+    {
         case unit_report_type::Combat:
             world->status.flags.bits.combat = true;
+            alert_type = announcement_alert_type::COMBAT;
             break;
         case unit_report_type::Hunting:
             world->status.flags.bits.hunting = true;
+            alert_type = announcement_alert_type::HUNTING;
             break;
         case unit_report_type::Sparring:
             world->status.flags.bits.sparring = true;
+            alert_type = announcement_alert_type::SPARRING;
             break;
     }
 
-    // And all the continuation lines
-    for (size_t i = report_index+1; i < vec.size() && vec[i]->flags.bits.continuation; i++)
-        rvec.push_back(vec[i]->id);
+    if (update_alert)
+        update_ucr_alert(unit, alert_type);
 
     return true;
 }
 
-bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
-{
-    auto &vec = world->status.reports;
-    auto report = vector_get(vec, report_index);
 
+bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert) {
+    return addCombatReport(unit, slot, vector_get(df::global::world->status.reports, report_index), update_alert);
+}
+
+bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::report *report)
+{
     if (!unit || !report)
         return false;
 
     bool ok = false;
 
     if (mode.bits.UNIT_COMBAT_REPORT)
-        ok |= add_proper_report(unit, unit->flags2.bits.sparring, report_index);
+        ok |= add_proper_report(unit, unit->flags2.bits.sparring, report, true);
 
     if (mode.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
-    {
-        FOR_ENUM_ITEMS(unit_report_type, slot)
-        {
-            if (recent_report(unit, slot))
-                ok |= addCombatReport(unit, slot, report_index);
-        }
-    }
+        ok |= add_recent_reports(unit, report, true);
 
     return ok;
+}
+
+bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index) {
+    return addCombatReportAuto(unit, mode, vector_get(df::global::world->status.reports, report_index));
 }
 
 void Gui::showAnnouncement(std::string message, int color, bool bright)
@@ -1652,9 +1978,8 @@ void Gui::showAnnouncement(std::string message, int color, bool bright)
     makeAnnouncement(df::announcement_type(), mode, df::coord(), message, color, bright);
 }
 
-void Gui::showZoomAnnouncement(
-    df::announcement_type type, df::coord pos, std::string message, int color, bool bright
-) {
+void Gui::showZoomAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color, bool bright)
+{
     df::announcement_flags mode;
     mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
 
@@ -1665,70 +1990,84 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 {
     df::popup_message *popup = new df::popup_message();
     popup->text = message;
-    popup->color = color;
-    popup->bright = bright;
+    popup->color = color; // Doesn't do anything anymore? Popups are always [C:7:0:0] gray text
+    popup->bright = bright; // See: https://dwarffortressbugtracker.com/view.php?id=12672
 
     auto &popups = world->status.popups;
     popups.push_back(popup);
 
+    // Delete excess popups
     while (popups.size() > MAX_REPORTS_SIZE)
-    {   // Delete old popups
+    {
         if (popups[0] != NULL)
             delete popups[0];
         popups.erase(popups.begin());
     }
+
+    Gui::MTB_clean(&world->status.mega_text);
+    Gui::MTB_parse(&world->status.mega_text, popups[0]->text);
+    Gui::MTB_set_width(&world->status.mega_text);
+
+    if (gps->force_full_display_count < 2)
+        gps->force_full_display_count = 2;
 }
 
 void Gui::showAutoAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright,
-    df::unit *unit1, df::unit *unit2
-) {
+    df::unit *unit_a, df::unit *unit_d)
+{
     using df::global::d_init;
 
     df::announcement_flags flags;
     flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
 
-    if (is_valid_enum_item(type) && d_init)
+    if (is_valid_enum_item(type) && type != df::announcement_type::NONE && d_init)
         flags = d_init->announcements.flags[type];
 
     int id = makeAnnouncement(type, flags, pos, message, color, bright);
 
-    addCombatReportAuto(unit1, flags, id);
-    addCombatReportAuto(unit2, flags, id);
+    addCombatReportAuto(unit_a, flags, id);
+    addCombatReportAuto(unit_d, flags, id);
 }
 
-bool Gui::autoDFAnnouncement(df::report_init r, string message)
-{   // Reverse-engineered from DF announcement code
+bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
+{   // Based on reverse-engineering of "make_announcement" FUN_1400574e0 (v50.11 win64 Steam)
     if (!world->allow_announcements)
     {
         DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
         return false;
     }
-    else if (!is_valid_enum_item(r.type))
+    else if (!is_valid_enum_item(info.type) || info.type == df::announcement_type::NONE)
     {
         WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
         return false;
     }
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", r.type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement %u\n", info.type); // DF would print this to errorlog.txt
         return false;
     }
 
-    df::announcement_flags a_flags = df::global::d_init->announcements.flags[r.type];
+    auto a_flags = df::global::d_init->announcements.flags[info.type];
 
-    // Check if the announcement will actually be announced
+    // Check if the announcement will actually be used and written to gamelog
     if (*gamemode == game_mode::ADVENTURE)
     {
-        if (r.pos.x >= 0 &&
-            r.type != announcement_type::CREATURE_SOUND &&
-            r.type != announcement_type::REGULAR_CONVERSATION &&
-            r.type != announcement_type::CONFLICT_CONVERSATION &&
-            r.type != announcement_type::MECHANISM_SOUND)
-        {   // If not sound, make sure we can see pos
-            if (world->units.active.empty() || (r.unit1 != world->units.active[0] && r.unit2 != world->units.active[0]))
+        // TODO: Expect this check when adventure mode is re-added; sound and gamelog will happen otherwise
+        /*if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
+        {
+            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
+            return false;
+        }*/
+        if (info.pos.x >= 0 &&
+            info.type != announcement_type::CREATURE_SOUND &&
+            info.type != announcement_type::REGULAR_CONVERSATION &&
+            info.type != announcement_type::CONFLICT_CONVERSATION &&
+            info.type != announcement_type::MECHANISM_SOUND)
+        {   // If not sound, make sure we can see pos if we're not involved
+            if (world->units.active.empty() || (info.unit_a != world->units.active[0] && info.unit_d != world->units.active[0]))
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
-                if (!Maps::isValidTilePos(r.pos) || (Maps::getTileDesignation(r.pos)->whole & 0x10) == 0x0)
+                if (!Maps::isValidTilePos(info.pos) || (Maps::getTileDesignation(info.pos)->whole & 0x10) == 0x0)
                 {
                     DEBUG(gui).print("Adventure mode announcement not detected:\n%s\n", message.c_str());
                     return false;
@@ -1736,19 +2075,19 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
             }
         }
     }
-    else
-    {   // Dwarf mode
-        if ((r.unit1 != NULL || r.unit2 != NULL) && (r.unit1 == NULL || Units::isHidden(r.unit1)) && (r.unit2 == NULL || Units::isHidden(r.unit2)))
+    else // Dwarf mode
+    {
+        if ((info.unit_a || info.unit_d) && (!info.unit_a || Units::isHidden(info.unit_a)) && (!info.unit_d || Units::isHidden(info.unit_d)))
         {
             DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
             return false;
         }
 
-        if (!a_flags.bits.D_DISPLAY)
+        if (!a_flags.bits.D_DISPLAY && !a_flags.bits.DO_MEGA) // Apparently ALERT flag is insufficent for announcement to succeed
         {
             if (a_flags.bits.UNIT_COMBAT_REPORT)
             {
-                if (r.unit1 == NULL && r.unit2 == NULL)
+                if (!info.unit_a && !info.unit_d)
                 {
                     DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
                     return false;
@@ -1758,10 +2097,10 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
             {
                 if (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
                 {
-                    DEBUG(gui).print("Skipped announcement not enabled for this game mode:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n%s\n", message.c_str());
                     return false;
                 }
-                else if (!recent_report_any(r.unit1) && !recent_report_any(r.unit2))
+                else if (!recent_report_any(info.unit_a) && !recent_report_any(info.unit_d))
                 {
                     DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
                     return false;
@@ -1771,132 +2110,558 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     }
 
     if (a_flags.bits.PAUSE || a_flags.bits.RECENTER)
-        pauseRecenter((a_flags.bits.RECENTER ? r.pos : df::coord()), a_flags.bits.PAUSE); // Does nothing outside dwarf mode
+        pauseRecenter((a_flags.bits.RECENTER ? info.pos : df::coord()), a_flags.bits.PAUSE); // Does nothing if not dwarf mode
 
     bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
 
     if (a_flags.bits.DO_MEGA && !adv_unconscious)
-        showPopupAnnouncement(message, r.color, r.bright);
+        showPopupAnnouncement(message, info.color, info.bright);
 
-    vector<string> results;
-    size_t line_length = (r.speaker_id == -1) ? (init->display.grid_x - 7) : (init->display.grid_x - 10);
-    parseReportString(&results, message, line_length);
-
-    if (results.empty()) // DF doesn't do this check
+    // Play announcement sound
+    //if (!adv_unconscious) // TODO: Find out if sounds will be played while unconscious
     {
-        DEBUG(gui).print("Skipped announcement because it was empty after parsing:\n%s\n", message.c_str());
-        return false;
-    }
-
-    // Check for repeat report
-    int32_t repeat_count = check_repeat_report(results); // always returns 0 outside dwarf mode
-    if (repeat_count > 0)
-    {
-        if (a_flags.bits.D_DISPLAY)
+        vector<int32_t> valid_sounds;
+        for(vector<df::soundst *>::iterator it = world->raws.sound.sound.begin(); it < world->raws.sound.sound.end(); it++)
         {
-            world->status.display_timer = r.display_timer;
-            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+            auto &cur_sound = **it;
+            if (vector_contains(cur_sound.announcement, info.type))
+                valid_sounds.push_back(cur_sound.sound);
         }
-        DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
-        return true;
-    }
 
-    size_t new_report_index = world->status.reports.size(); // we need this for addCombatReport
-    bool success = false; // only print to gamelog if report was used
-    bool display = ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY));
+        // Default to SOUND_ALERT (10) when vector empty if is ALERT, else no sound
+        int32_t samp_index = vector_get_random(valid_sounds, (*gamemode == game_mode::DWARF && a_flags.bits.ALERT) ? 10 : -1);
 
-    for (size_t i = 0; i < results.size(); i++)
-    {   // Generate report entries for each line
-        auto new_report = new df::report();
-        new_report->type = r.type;
-        new_report->text = results[i];
-        new_report->color = r.color;
-        new_report->bright = r.bright;
-        new_report->flags.whole = 0x0;
-        new_report->zoom_type = r.zoom_type;
-        new_report->pos = r.pos;
-        new_report->zoom_type2 = r.zoom_type2;
-        new_report->pos2 = r.pos2;
-        new_report->id = world->status.next_report_id++;
-        new_report->year = *df::global::cur_year;
-        new_report->time = *df::global::cur_year_tick;
-        new_report->unk_v40_1 = r.unk_v40_1;
-        new_report->unk_v40_2 = r.unk_v40_2;
-        new_report->speaker_id = r.speaker_id;
-        world->status.reports.push_back(new_report);
-
-        if (i > 0)
-            new_report->flags.bits.continuation = true;
-
-        if (adv_unconscious)
-            new_report->flags.bits.unconscious = true;
-
-        if (display)
+        if (samp_index >= 0)
         {
-            insert_into_vector(world->status.announcements, &df::report::id, new_report);
-            new_report->flags.bits.announcement = true;
-            world->status.display_timer = r.display_timer;
-            success = true;
+            DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
+            //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
 
-    if (*gamemode == game_mode::DWARF) // DF does this inside the previous loop, but we're using addCombatReport instead
+    writeToGamelog(message);
+
+    auto &reports = world->status.reports;
+    auto &alerts = world->status.announcement_alert;
+
+    // Check for repeat report as part of an existing alert
+    // TODO: Implement fix for https://dwarffortressbugtracker.com/view.php?id=12670
+    if (*gamemode == game_mode::DWARF && !a_flags.bits.ALERT)
     {
-        if (a_flags.bits.UNIT_COMBAT_REPORT)
+        if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, info.type)) >= 0) // Alert of type exists
         {
-            if (r.unit1 != NULL)
-                success |= add_proper_report(r.unit1, !r.flags.bits.hostile_combat, new_report_index);
-
-            if (r.unit2 != NULL)
-                success |= add_proper_report(r.unit2, !r.flags.bits.hostile_combat, new_report_index);
-        }
-
-        if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
-        {
-            FOR_ENUM_ITEMS(unit_report_type, slot)
+            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
             {
-                if (recent_report(r.unit1, slot))
-                    success |= addCombatReport(r.unit1, slot, new_report_index);
+                auto& cur_report = **it;
+                if (cur_report.text == message) // Repeat if text matches
+                {
+                    cur_report.duration = ANNOUNCE_LINE_DURATION;
+                    cur_report.repeat_count++;
 
-                if (recent_report(r.unit2, slot))
-                    success |= addCombatReport(r.unit2, slot, new_report_index);
+                    if (a_flags.bits.D_DISPLAY)
+                        world->status.display_timer = info.display_timer;
+
+                    DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+                    return true;
+                }
             }
         }
     }
 
-    delete_old_reports();
+    auto new_report = new df::report();
+    new_report->type = info.type;
+    new_report->text = message;
+    new_report->color = info.color;
+    new_report->bright = info.bright;
+    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->zoom_type = info.zoom_type;
+    new_report->pos = info.pos;
+    new_report->zoom_type2 = info.zoom_type2;
+    new_report->pos2 = info.pos2;
+    new_report->id = world->status.next_report_id++;
+    new_report->year = *df::global::cur_year;
+    new_report->time = *df::global::cur_year_tick;
+    new_report->activity_id = info.activity_id;
+    new_report->activity_event_id = info.activity_event_id;
+    new_report->speaker_id = info.speaker_id;
+    reports.push_back(new_report);
 
-    if (/*debug_gamelog &&*/ success) // TODO: Add debug_gamelog to globals?
+    // Handle alerts and combat reports
+    if (*gamemode == game_mode::DWARF)
     {
-        DEBUG(gui).print("Announcement succeeded and printed to gamelog.txt:\n%s\n", message.c_str());
-        Gui::writeToGamelog(message);
+        if (a_flags.bits.UNIT_COMBAT_REPORT)
+        {
+            add_proper_report(info.unit_a, info.flags.bits.SPARRING_EVENT, new_report, true);
+            add_proper_report(info.unit_d, info.flags.bits.SPARRING_EVENT, new_report, true);
+        }
+
+        if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
+        {
+            add_recent_reports(info.unit_a, new_report, true);
+            add_recent_reports(info.unit_d, new_report, true);
+        }
+
+        if (a_flags.bits.D_DISPLAY)
+        {   // Find existing alert of same type, else create new
+            auto alert_type = ENUM_ATTR(announcement_type, alert_type, info.type);
+            df::announcement_alertst *alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
+
+            if (!alert)
+            {
+                alert = new df::announcement_alertst();
+                alert->type = alert_type;
+                alerts.push_back(alert);
+            }
+
+            alert->announcement_id.push_back(new_report->id);
+        }
+
+        if (a_flags.bits.ALERT)
+        {
+            world->status.alert_button_announcement_id.push_back(new_report->id);
+            game->main_interface.hover_announcement_alert_button_width = 0;
+        }
     }
-    /*else if (success)
+
+    // Handle proper announcements
+    if ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY))
     {
-        DEBUG(gui).print("Announcement succeeded but skipped printing to gamelog.txt because debug_gamelog is false:\n%s\n", message.c_str());
-    }*/
-    else // not sure if this can actually happen; our results.empty() check handles the one edge case I can think of that would get this far
-    {
-        DEBUG(gui).print("Announcement succeeded internally but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
+        insert_into_vector(world->status.announcements, &df::report::id, new_report);
+        new_report->flags.bits.announcement = true;
+        world->status.display_timer = info.display_timer;
     }
+
+    // Delete excess reports
+    while (reports.size() > MAX_REPORTS_SIZE)
+    {   // Report destructor
+        if (reports[0] != NULL)
+        {
+            if (reports[0]->flags.bits.announcement)
+                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
+            delete reports[0];
+        }
+        reports.erase(reports.begin());
+    }
+
+    if (*gamemode == game_mode::DWARF || // Did dwarf announcement or UCR
+        (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
+        (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
+    {
+        DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
+    }
+    else
+        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
 
     return true;
 }
 
 bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color,
-                             bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring)
+    bool bright, df::unit *unit_a, df::unit *unit_d, bool is_sparring)
 {
-    auto r = df::report_init();
-    r.type = type;
-    r.color = color;
-    r.bright = bright;
-    r.pos = pos;
-    r.display_timer = ANNOUNCE_DISPLAY_TIME;
-    r.unit1 = unit1;
-    r.unit2 = unit2;
-    r.flags.bits.hostile_combat = !is_sparring;
+    auto info = df::announcement_infost();
+    info.type = type;
+    info.color = color;
+    info.bright = bright;
+    info.pos = pos;
+    info.display_timer = ANNOUNCE_DISPLAY_TIME;
+    info.unit_a = unit_a;
+    info.unit_d = unit_d;
+    info.flags.bits.SPARRING_EVENT = is_sparring;
 
-    return autoDFAnnouncement(r, message);
+    return autoDFAnnouncement(info, message);
+}
+
+void Gui::MTB_clean(df::markup_text_boxst *mtb)
+{   // Reverse-engineered from "markup_text_boxst::clean" FUN_140056f60 (v50.11 win64 Steam)
+    mtb->word.clear();
+    mtb->link.clear();
+    mtb->current_width = -1;
+    mtb->max_y = 0;
+    mtb->environment = NULL;
+}
+
+static bool insert_markup_text_wordst(vector<df::markup_text_wordst *> &vec, string &str, int32_t link_index, int32_t color)
+{
+    if (str.empty())
+        return false;
+
+    auto ptr = new df::markup_text_wordst();
+    ptr->str = str;
+    ptr->link_index = link_index;
+
+    ptr->red = gps->uccolor[color][0];
+    ptr->green = gps->uccolor[color][1];
+    ptr->blue = gps->uccolor[color][2];
+
+    vec.push_back(ptr);
+    str.clear();
+
+    return true;
+}
+
+void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
+{   // Reverse-engineered from "markup_text_boxst::process_string_to_lines" FUN_1409f70b0 (v50.11 win64 Steam)
+    CHECK_NULL_POINTER(mtb);
+    auto &word_vec = mtb->word;
+
+    if (parse_text.empty())
+    {
+        auto ptr = new df::markup_text_wordst();
+        ptr->flags.bits.NEW_LINE = true;
+        word_vec.push_back(ptr);
+        return;
+    }
+
+    string str;
+    int32_t link_index = -1;
+    int32_t color = curses_color::White; // fg = curses_color::White; bg = curses_color::Black; bright = false
+    bool use_char, no_split_space;
+
+    size_t i_max = parse_text.size();
+    size_t i = 0;
+    while (i < i_max)
+    {
+        char char_token = '\0';
+        use_char = true;
+        no_split_space = false;
+
+        if (parse_text[i] == ']')
+        {
+            if (++i >= i_max) // Skip over ']'
+                break;
+
+            if (parse_text[i] != ']')
+            {
+                i--; // Check this char again from top
+                continue;
+            }
+            // else "]]", append ']' to str since use_char == true
+        }
+        else if (parse_text[i] == '[')
+        {
+            if (++i >= i_max) // Skip over '['
+                break;
+
+            if (parse_text[i] == '.' || parse_text[i] == ':' || parse_text[i] == '?' || parse_text[i] == ' ' || parse_text[i] == '!') // Immediately after '['
+                no_split_space = true; // Completely pointless for everything but ' '?
+            else if (parse_text[i] != '[') // else "[[", append '[' to str since use_char == true
+            {
+                use_char = false;
+
+                string token_buffer = grab_token_string_pos(parse_text, i, ':'); // Capture until next ':', ']', or end
+                i += token_buffer.size();
+
+                if (token_buffer == "CHAR")
+                {
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff = grab_token_string_pos(parse_text, i, ':');
+                    i += buff.size();
+
+                    char_token = (buff.size() > 1 && buff[0] == '~') ? buff[1] : atoi(buff.c_str());
+                    no_split_space = true;
+                    use_char = true;
+                }
+                else if (token_buffer == "LPAGE") // Legends page link
+                {
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff_type = grab_token_string_pos(parse_text, i, ':');
+                    i += buff_type.size();
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff_id = grab_token_string_pos(parse_text, i, ':');
+                    i += buff_id.size();
+
+                    df::markup_text_link_type link_type = markup_text_link_type::NONE;
+                    if (buff_type == "HF")
+                        link_type = markup_text_link_type::HIST_FIG;
+                    else if (buff_type == "SITE")
+                        link_type = markup_text_link_type::SITE;
+                    else if (buff_type == "ARTIFACT")
+                        link_type = markup_text_link_type::ARTIFACT;
+                    else if (buff_type == "BOOK")
+                        link_type = markup_text_link_type::BOOK;
+                    else if (buff_type == "SR")
+                        link_type = markup_text_link_type::SUBREGION;
+                    else if (buff_type == "FL")
+                        link_type = markup_text_link_type::FEATURE_LAYER;
+                    else if (buff_type == "ENT")
+                        link_type = markup_text_link_type::ENTITY;
+                    else if (buff_type == "AB")
+                        link_type = markup_text_link_type::ABSTRACT_BUILDING;
+                    else if (buff_type == "EPOP")
+                        link_type = markup_text_link_type::ENTITY_POPULATION;
+                    else if (buff_type == "ART_IMAGE")
+                        link_type = markup_text_link_type::ART_IMAGE;
+                    else if (buff_type == "ERA")
+                        link_type = markup_text_link_type::ERA;
+                    else if (buff_type == "HEC")
+                        link_type = markup_text_link_type::HEC;
+
+                    int32_t id = atoi(buff_id.c_str());
+                    int32_t subid = -1;
+
+                    if (link_type == markup_text_link_type::ABSTRACT_BUILDING || link_type == markup_text_link_type::ART_IMAGE)
+                    {
+                        if (++i >= i_max) // Skip over ':'
+                            break;
+
+                        string buff_subid = grab_token_string_pos(parse_text, i, ':');
+                        i += buff_subid.size();
+
+                        subid = atoi(buff_subid.c_str());
+                    }
+
+                    if (link_type != markup_text_link_type::NONE)
+                    {
+                        auto ptr = new df::markup_text_linkst();
+                        ptr->type = link_type;
+                        ptr->id = id;
+                        ptr->subid = subid;
+                        mtb->link.push_back(ptr);
+                        link_index = mtb->link.size() - 1;
+                    }
+                }
+                else if (token_buffer == "/LPAGE")
+                {
+                    insert_markup_text_wordst(word_vec, str, link_index, color);
+                    link_index = -1;
+                }
+                else if (token_buffer == "C") // Color
+                {
+                    insert_markup_text_wordst(word_vec, str, link_index, color);
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff1 = grab_token_string_pos(parse_text, i, ':');
+                    i += buff1.size();
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff2 = grab_token_string_pos(parse_text, i, ':');
+                    i += buff2.size();
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff3 = grab_token_string_pos(parse_text, i, ':');
+                    i += buff3.size();
+
+                    if (buff1 == "VAR") // Color from dipscript var
+                    {
+                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
+                            buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
+                        //MTB_set_color_on_var(mtb, buff2, buff3);
+                    }
+                    else
+                    {
+                        gps->screenf = (df::curses_color)atoi(buff1.c_str());
+                        gps->screenb = (df::curses_color)atoi(buff2.c_str());
+                        gps->screenbright = (bool)atoi(buff3.c_str());
+                        gps->use_old_16_colors = true;
+                    }
+
+                    color = (int32_t)gps->screenf + (gps->screenbright ? 8 : 0);
+                }
+                else if (token_buffer == "KEY")
+                {
+                    insert_markup_text_wordst(word_vec, str, link_index, color);
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff = grab_token_string_pos(parse_text, i, ':');
+                    i += buff.size();
+
+                    auto ptr = new df::markup_text_wordst();
+                    ptr->str = df::global::enabler->GetKeyDisplay((df::interface_key)atoi(buff.c_str()));
+
+#define COLOR_LGREEN_INDEX (int32_t)curses_color::Green + 8
+                    ptr->red = gps->uccolor[COLOR_LGREEN_INDEX][0];
+                    ptr->green = gps->uccolor[COLOR_LGREEN_INDEX][1];
+                    ptr->blue = gps->uccolor[COLOR_LGREEN_INDEX][2];
+#undef COLOR_LGREEN_INDEX
+
+                    word_vec.push_back(ptr);
+                }
+                else if (token_buffer == "VAR")
+                {
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff_format = grab_token_string_pos(parse_text, i, ':');
+                    i += buff_format.size();
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff_var_type = grab_token_string_pos(parse_text, i, ':');
+                    i += buff_var_type.size();
+
+                    if (++i >= i_max) // Skip over ':'
+                        break;
+
+                    string buff_var_name = grab_token_string_pos(parse_text, i, ':');
+                    i += buff_var_name.size();
+
+                    DEBUG(gui).print("MTB_parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
+                        buff_format.c_str(), buff_var_type.c_str(), buff_var_name.c_str(), mtb->environment ? "Active" : "NULL");
+                    //MTB_append_variable(mtb, str, buff_format, buff_var_type, buff_var_name);
+                }
+                else if (token_buffer == "R" || token_buffer == "B" || token_buffer == "P")
+                {
+                    insert_markup_text_wordst(word_vec, str, link_index, color);
+
+                    auto ptr = new df::markup_text_wordst();
+                    if (token_buffer == "R")
+                        ptr->flags.bits.NEW_LINE = true;
+                    else if (token_buffer == "B")
+                        ptr->flags.bits.BLANK_LINE = true;
+                    else // "P"
+                        ptr->flags.bits.INDENT = true;
+                    word_vec.push_back(ptr);
+                }
+            }
+        }
+
+        if (use_char)
+        {
+            char ch = (char_token == '\0') ? parse_text[i] : char_token;
+            if (ch != ' ' || no_split_space)
+                str += ch;
+            else
+                insert_markup_text_wordst(word_vec, str, link_index, color);
+        }
+
+        i++;
+    }
+
+    insert_markup_text_wordst(word_vec, str, link_index, color);
+
+    if (word_vec.size() > 1) // Merge punctuation after "[/LPAGE]" left into link word
+    {
+        for (vector<df::markup_text_wordst*>::iterator it = word_vec.end() - 1; it > word_vec.begin(); it--)
+        {
+            auto cur_entry = *it;
+            if (cur_entry->link_index != -1 || cur_entry->str.empty()) // Doesn't check (cur_entry->str.size() != 1)
+                continue;
+            auto prev_entry = *(it - 1);
+            if (prev_entry->link_index == -1 || prev_entry->str.empty())
+                continue;
+
+            if (cur_entry->str[0] == '.' || cur_entry->str[0] == ',' || cur_entry->str[0] == '?' || cur_entry->str[0] == '!')
+            {
+                prev_entry->str += cur_entry->str;
+                delete cur_entry;
+                word_vec.erase(it);
+            }
+        }
+    }
+
+    return;
+}
+
+void Gui::MTB_set_width(df::markup_text_boxst* mtb, int32_t width)
+{   // Reverse-engineered from "markup_text_boxst::set_width" FUN_1409f6e80 (v50.11 win64 Steam)
+    if (mtb->current_width == width)
+        return;
+
+    mtb->max_y = 0;
+    mtb->current_width = width;
+
+    int32_t remain_width = width;
+    int32_t px_val = 0;
+    int32_t py_val = 0;
+
+    for (vector<df::markup_text_wordst*>::iterator it = mtb->word.begin(); it < mtb->word.end(); it++)
+    {
+        auto &cur_word = **it;
+
+        if (cur_word.flags.bits.NEW_LINE)
+        {
+            remain_width = 0;
+            continue;
+        }
+        else if (cur_word.flags.bits.BLANK_LINE)
+        {
+            remain_width = 0;
+            px_val = 0;
+            py_val++;
+            continue;
+        }
+        else if (cur_word.flags.bits.INDENT)
+        {
+            remain_width = width;
+            px_val = 4;
+            py_val++;
+            continue;
+        }
+
+        int32_t str_size = cur_word.str.size();
+        if (remain_width < str_size)
+        {
+            remain_width = width;
+            px_val = 0;
+            py_val++;
+        }
+
+        char only_char = (str_size == 1) ? cur_word.str[0] : '\0';
+        if (only_char && (only_char == '.' || only_char == ',' || only_char == '?' || only_char == '!'))
+        {
+            if (it + 1 < mtb->word.end() && px_val > 0 && remain_width < 3) // remain_width < str_size + 2
+            {
+                remain_width = width;
+                px_val = 0;
+                py_val++;
+            }
+            else if (px_val > 0)
+            {
+                cur_word.px = px_val - 1;
+                cur_word.py = py_val;
+
+                if (mtb->max_y < py_val)
+                    mtb->max_y = py_val;
+
+                remain_width--; // remain_width -= str_size
+                px_val++; // px_val += str_size
+                continue;
+            }
+        }
+
+        cur_word.px = px_val;
+        cur_word.py = py_val;
+
+        if (mtb->max_y < py_val)
+            mtb->max_y = py_val;
+
+        remain_width -= str_size + 1;
+        px_val += str_size + 1;
+    }
+
+    return;
+}
+
+df::widget * Gui::getWidget(df::widget_container *container, string name) {
+    CHECK_NULL_POINTER(container);
+    // ensure the compiler catches the change if we ever fix the template parameters
+    std::map<void *, void *> & orig_field = container->children_by_name;
+    auto children_by_name = reinterpret_cast<std::map<std::string, std::shared_ptr<df::widget>> *>(&orig_field);
+    if (children_by_name->contains(name))
+        return (*children_by_name)[name].get();
+    return NULL;
+}
+
+df::widget * Gui::getWidget(df::widget_container *container, size_t idx) {
+    CHECK_NULL_POINTER(container);
+    if (idx >= container->children.size())
+        return NULL;
+    return container->children[idx].get();
 }
 
 static df::viewscreen * do_skip_dismissed(df::viewscreen * ws) {
@@ -1935,8 +2700,9 @@ df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
     return NULL;
 }
 
-df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed) {
-    df::viewscreen *screen = Gui::getCurViewscreen(skip_dismissed);
+df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed, df::viewscreen *screen) {
+    if (!screen)
+        screen = Gui::getCurViewscreen(skip_dismissed);
     while (screen && dfhack_viewscreen::is_instance(screen)) {
         screen = screen->parent;
         if (skip_dismissed)
@@ -1984,24 +2750,34 @@ Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
     return GUI_HOOK_TOP(Gui::Hooks::dwarfmode_view_dims)();
 }
 
+static void unfollow() {
+    if (!plotinfo)
+        return;
+
+    plotinfo->follow_unit = -1;
+    plotinfo->follow_item = -1;
+}
+
 void Gui::resetDwarfmodeView(bool pause)
 {
     using df::global::cursor;
 
+    unfollow();
+
     if (plotinfo)
-    {
-        plotinfo->follow_unit = -1;
-        plotinfo->follow_item = -1;
-/* TODO: understand how this changes for v50
         plotinfo->main.mode = ui_sidebar_mode::Default;
-*/
-    }
 
     if (selection_rect)
     {
         selection_rect->start_x = -30000;
+        selection_rect->start_y = -30000;
+        selection_rect->start_z = -30000;
         selection_rect->end_x = -30000;
+        selection_rect->end_y = -30000;
+        selection_rect->end_z = -30000;
     }
+    // NOTE: There's an unidentified global coord after selection_rect that is reset to -30000 here.
+    // This coord goes into game->main_interface.keyboard_last_track_s if the x value is not -30000. Probably okay to ignore?
 
     if (cursor)
         cursor->x = cursor->y = cursor->z = -30000;
@@ -2010,14 +2786,16 @@ void Gui::resetDwarfmodeView(bool pause)
         *df::global::pause_state = true;
 }
 
-bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
+bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, bool highlight)
 {   // Reverse-engineered from DF announcement and scrolling code
     using df::global::window_x;
     using df::global::window_y;
     using df::global::window_z;
 
-    if (!window_x || !window_y || !window_z || !world)
+    if (!window_x || !window_y || !window_z || !world || !game)
         return false;
+
+    unfollow();
 
     auto dims = getDwarfmodeViewDims();
     int32_t w = dims.map_x2 - dims.map_x1 + 1;
@@ -2047,11 +2825,17 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
         new_win_z = z;
     }
 
-    *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
-    *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
+    *window_x = new_win_x;
+    *window_y = new_win_y;
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
     game->minimap.update = true;
     game->minimap.mustmake = true;
+
+    if (highlight) {
+        game->main_interface.recenter_indicator_m.x = x;
+        game->main_interface.recenter_indicator_m.y = y;
+        game->main_interface.recenter_indicator_m.z = z;
+    }
 
     return true;
 }
@@ -2163,7 +2947,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 }
 
 // returns the map coordinates that the mouse cursor is over
-df::coord Gui::getMousePos()
+df::coord Gui::getMousePos(bool allow_out_of_bounds)
 {
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
@@ -2177,7 +2961,7 @@ df::coord Gui::getMousePos()
             pos.y += gps->mouse_y;
         }
     }
-    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+    if (!allow_out_of_bounds && !Maps::isValidTilePos(pos.x, pos.y, pos.z))
         return df::coord();
     return pos;
 }

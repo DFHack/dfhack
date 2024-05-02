@@ -25,35 +25,35 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <cassert>
-using namespace std;
-
 #include "Core.h"
 #include "Error.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 #include "Types.h"
+#include "DataDefs.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/plotinfost.h"
-#include "df/unit.h"
 #include "df/building.h"
-#include "df/job.h"
-#include "df/job_item.h"
-#include "df/job_list_link.h"
-#include "df/specific_ref.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/interface_button_building_new_jobst.h"
+#include "df/item.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/job_list_link.h"
+#include "df/plotinfost.h"
+#include "df/specific_ref.h"
+#include "df/unit.h"
+#include "df/world.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cassert>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -165,6 +165,8 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 
 void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int idx)
 {
+    using std::endl;
+
     CHECK_NULL_POINTER(item);
 
     ItemTypeInfo info(item);
@@ -201,6 +203,8 @@ void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int i
 
 void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
+    using std::endl;
+
     CHECK_NULL_POINTER(job);
 
     out.color(job->flags.bits.suspend ? COLOR_DARKGREY : COLOR_GREY);
@@ -361,33 +365,23 @@ bool DFHack::Job::removeJob(df::job* job) {
     CHECK_NULL_POINTER(job);
 
     // cancel_job below does not clean up all refs, so we have to do some work
-
-    // manually handle DESTROY_BUILDING jobs (cancel_job doesn't handle them)
-    if (job->job_type == df::job_type::DestroyBuilding) {
-        for (auto &genRef : job->general_refs) {
-            disconnectJobGeneralRef(job, genRef);
-            if (genRef) delete genRef;
-        }
-        job->general_refs.resize(0);
-
-        // remove the job from the world
-        job->list_link->prev->next = job->list_link->next;
-        delete job->list_link;
-        delete job;
-        return true;
-    }
-
-    // clean up item refs and delete them
     for (auto &item_ref : job->items) {
-       disconnectJobItem(job, item_ref);
-       if (item_ref) delete item_ref;
+        disconnectJobItem(job, item_ref);
+        if (item_ref) delete item_ref;
     }
     job->items.resize(0);
 
     // call the job cancel vmethod graciously provided by The Toady One.
     // job_handler::cancel_job calls job::~job, and then deletes job (this has
     // been confirmed by disassembly).
-    world->jobs.cancel_job(job);
+
+    // HACK: GCC (starting around GCC 10 targeting C++20 as of v50.09) optimizes
+    // out the vmethod call here regardless of optimization level, so we need to
+    // invoke the vmethod manually through a pointer, as the Lua wrapper does.
+    // `volatile` does not seem to be necessary but is included for good
+    // measure.
+    volatile auto cancel_job_method = &df::job_handler::cancel_job;
+    (world->jobs.*cancel_job_method)(job);
 
     return true;
 }
@@ -560,7 +554,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
     return true;
 }
 
-bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
+bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype)
 {
     CHECK_NULL_POINTER(item);
 
@@ -574,7 +568,7 @@ bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
 }
 
 bool Job::isSuitableMaterial(
-    df::job_item *item, int mat_type, int mat_index, df::item_type itype)
+    const df::job_item *item, int mat_type, int mat_index, df::item_type itype)
 {
     CHECK_NULL_POINTER(item);
 

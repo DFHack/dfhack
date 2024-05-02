@@ -265,6 +265,7 @@ namespace DFHack
         type_identity *ref_target;
         const char *union_tag_field;
         const char *union_tag_attr;
+        const char *original_name;
     };
 
     struct struct_field_info {
@@ -497,11 +498,29 @@ namespace df
     using DFHack::DfLinkedList;
     using DFHack::DfOtherVectors;
 
+    template<class T>
+    typename std::enable_if<
+        std::is_copy_assignable<T>::value,
+        void*
+    >::type allocator_try_assign(void *out, const void *in) {
+        *(T*)out = *(const T*)in;
+        return out;
+    }
+
+    template<class T>
+    typename std::enable_if<
+        !std::is_copy_assignable<T>::value,
+        void*
+    >::type allocator_try_assign(void *out, const void *in) {
+        // assignment is not possible; do nothing
+        return NULL;
+    }
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
     template<class T>
     void *allocator_fn(void *out, const void *in) {
-        if (out) { *(T*)out = *(const T*)in; return out; }
+        if (out) { return allocator_try_assign<T>(out, in); }
         else if (in) { delete (T*)in; return (T*)in; }
         else return new T();
     }
@@ -511,6 +530,13 @@ namespace df
     void *allocator_nodel_fn(void *out, const void *in) {
         if (out) { *(T*)out = *(const T*)in; return out; }
         else if (in) { return NULL; }
+        else return new T();
+    }
+
+    template<class T>
+    void *allocator_noassign_fn(void *out, const void *in) {
+        if (out) { return NULL; }
+        else if (in) { delete (T*)in; return (T*)in; }
         else return new T();
     }
 
@@ -872,3 +898,12 @@ namespace DFHack {
 // A couple of headers that have to be included at once
 #include "df/coord2d.h"
 #include "df/coord.h"
+
+namespace std {
+    template <>
+    struct hash<df::coord> {
+        std::size_t operator()(const df::coord& c) const {
+            return c();
+        }
+    };
+}

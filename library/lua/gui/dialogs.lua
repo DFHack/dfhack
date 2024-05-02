@@ -4,9 +4,134 @@ local _ENV = mkmodule('gui.dialogs')
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local utils = require('utils')
 
-local dscreen = dfhack.screen
+---------------------------------
+-- DialogWindow and DialogScreen
+--
+
+DialogWindow = defclass(DialogWindow, widgets.Window)
+DialogWindow.ATTRS {
+    frame={w=20, h=10},
+    label_params=DEFAULT_NIL,
+    accept_label=DEFAULT_NIL,
+    on_accept=DEFAULT_NIL,
+    on_cancel=DEFAULT_NIL,
+}
+
+function DialogWindow:init(info)
+    self:addviews{
+        widgets.Label{
+            view_id='label',
+            frame={t=0, l=0, b=3},
+            text=self.label_params.text,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=0, r=0},
+            label=self.accept_label,
+            key='SELECT',
+            auto_width=true,
+            on_activate=self:callback('accept'),
+        },
+    }
+end
+
+function DialogWindow:accept()
+    if self.on_accept then
+        self.on_accept()
+    end
+    self.parent_view:dismiss()
+end
+
+function DialogWindow:cancel()
+    if self.on_cancel then
+        self.on_cancel()
+    end
+    self.parent_view:dismiss()
+end
+
+function DialogWindow:computeFrame()
+    local min_width = math.max(self.frame.w or 0, 20, #(self.frame_title or '') + 4)
+
+    local label = self.subviews.label
+    local text_area_width = label:getTextWidth() + 1
+    local text_height = label:getTextHeight()
+    local sw, sh = dfhack.screen.getWindowSize()
+    if text_height >= sh - 6 then
+        -- account for scrollbar
+        text_area_width = text_area_width + 2
+    end
+
+    local fw, fh = math.max(min_width, text_area_width), text_height + 3
+    return gui.compute_frame_body(sw, sh, {w=fw, h=fh}, 1, 1, true)
+end
+
+function DialogWindow:onInput(keys)
+    if (keys.LEAVESCREEN or keys._MOUSE_R) and self.on_cancel then
+        self:cancel()
+    end
+    return DialogWindow.super.onInput(self, keys)
+end
+
+DialogScreen = defclass(DialogScreen, gui.ZScreenModal)
+DialogScreen.ATTRS {
+    focus_path='MessageBox',
+    title=DEFAULT_NIL,
+    label_params={},
+    accept_label='Ok',
+    on_accept=DEFAULT_NIL,
+    on_cancel=DEFAULT_NIL,
+    on_close=DEFAULT_NIL,
+}
+
+function DialogScreen:init()
+    self:addviews{
+        DialogWindow{
+            frame_title=self.title,
+            accept_label=self.accept_label,
+            label_params=self.label_params,
+            on_accept=self.on_accept,
+            on_cancel=self.on_cancel,
+        }
+    }
+end
+
+function DialogScreen:onDismiss()
+    if self.on_close then
+        self.on_close()
+    end
+end
+
+------------------------
+-- Convenience methods
+--
+
+function showMessage(title, text, tcolor, on_close)
+    return DialogScreen{
+        title=title,
+        label_params={
+            text=text,
+            text_pen=tcolor,
+        },
+        on_close=on_close,
+    }:show()
+end
+
+function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel)
+    return DialogScreen{
+        title=title,
+        label_params={
+            text=text,
+            text_pen=tcolor,
+        },
+        accept_label='Yes, proceed',
+        on_accept=on_accept,
+        on_cancel=on_cancel,
+    }:show()
+end
+
+------------------------
+-- Legacy classes
+--
 
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
@@ -14,7 +139,7 @@ MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
     frame_style = gui.WINDOW_FRAME,
-    frame_inset = 1,
+    frame_inset = {l=1, t=1, b=1, r=0},
     -- new attrs
     on_accept = DEFAULT_NIL,
     on_cancel = DEFAULT_NIL,
@@ -36,13 +161,14 @@ end
 function MessageBox:getWantedFrameSize()
     local label = self.subviews.label
     local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
-    local text_area_width = label:getTextWidth()
-    if label.frame_inset then
-        -- account for scroll icons
-        text_area_width = text_area_width + (label.frame_inset.l or 0)
-        text_area_width = text_area_width + (label.frame_inset.r or 0)
+    local text_area_width = label:getTextWidth() + 1
+    local text_height = label:getTextHeight()
+    local sw, sh = dfhack.screen.getWindowSize()
+    if text_height > sh - 4 then
+        -- account for scrollbar
+        text_area_width = text_area_width + 2
     end
-    return math.max(width, text_area_width), label:getTextHeight()
+    return math.max(width, text_area_width), text_height
 end
 
 function MessageBox:onRenderFrame(dc,rect)
@@ -59,39 +185,17 @@ function MessageBox:onDestroy()
 end
 
 function MessageBox:onInput(keys)
-    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if keys.SELECT and self.on_accept then
             self.on_accept()
-        elseif (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) and self.on_cancel then
+        elseif (keys.LEAVESCREEN or keys._MOUSE_R) and self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
-end
-
-function showMessage(title, text, tcolor, on_close)
-    local mb = MessageBox{
-        frame_title = title,
-        text = text,
-        text_pen = tcolor,
-        on_close = on_close
-    }
-    mb:show()
-    return mb
-end
-
-function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel)
-    local mb = MessageBox{
-        frame_title = title,
-        text = text,
-        text_pen = tcolor,
-        on_accept = on_accept,
-        on_cancel = on_cancel,
-    }
-    mb:show()
-    return mb
+    self:inputToSubviews(keys)
+    return true
 end
 
 InputBox = defclass(InputBox, MessageBox)
@@ -130,14 +234,15 @@ function InputBox:onInput(keys)
             self.on_input(self.subviews.edit.text)
         end
         return true
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -218,9 +323,9 @@ end
 
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
-    --if self.select2_hint then
-    --    dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
-    --end
+    if self.select2_hint then
+       dc:seek(rect.x1+2,rect.y2):string('Shift-Click', COLOR_LIGHTGREEN):string(': '..self.select2_hint, COLOR_GREY)
+    end
 end
 
 function ListBox:getWantedFrameSize()
@@ -231,14 +336,15 @@ function ListBox:getWantedFrameSize()
 end
 
 function ListBox:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
         return true
     end
-    return self:inputToSubviews(keys)
+    self:inputToSubviews(keys)
+    return true
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

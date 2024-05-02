@@ -31,7 +31,6 @@ distribution.
 #include "MemAccess.h"
 #include "Core.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
@@ -118,12 +117,12 @@ std::string compound_identity::getFullName()
         return getName();
 }
 
-static tthread::mutex *known_mutex = NULL;
+static std::mutex *known_mutex = NULL;
 
 void compound_identity::Init(Core *core)
 {
     if (!known_mutex)
-        known_mutex = new tthread::mutex();
+        known_mutex = new std::mutex();
 
     // This cannot be done in the constructors, because
     // they are called in an undefined order.
@@ -213,12 +212,12 @@ std::string pointer_identity::getFullName()
 
 std::string container_identity::getFullName(type_identity *item)
 {
-    return "<" + (item ? item->getFullName() : std::string("void")) + ">";
+    return '<' + (item ? item->getFullName() : std::string("void")) + '>';
 }
 
 std::string ptr_container_identity::getFullName(type_identity *item)
 {
-    return "<" + (item ? item->getFullName() : std::string("void")) + "*>";
+    return '<' + (item ? item->getFullName() : std::string("void")) + std::string("*>");
 }
 
 std::string bit_container_identity::getFullName(type_identity *)
@@ -310,7 +309,7 @@ virtual_identity *virtual_identity::find(void *vtable)
 
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
-    tthread::lock_guard<tthread::mutex> lock(*known_mutex);
+    std::lock_guard<std::mutex> lock(*known_mutex);
 
     std::map<void*, virtual_identity*>::iterator it = known.find(vtable);
 

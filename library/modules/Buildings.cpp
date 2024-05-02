@@ -22,33 +22,22 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <string>
-#include <unordered_map>
-#include <vector>
-using namespace std;
 
 #include "ColorText.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
 #include "Error.h"
-#include "modules/Buildings.h"
-#include "modules/Maps.h"
-#include "modules/Job.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
-using namespace DFHack;
-
 #include "DataDefs.h"
+
+#include "modules/Buildings.h"
+#include "modules/Maps.h"
+#include "modules/Job.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bars_floorst.h"
@@ -68,6 +57,7 @@ using namespace DFHack;
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
+#include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
@@ -81,6 +71,7 @@ using namespace DFHack;
 #include "df/job_item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
+#include "df/inorganic_raw.h"
 #include "df/plotinfost.h"
 #include "df/squad.h"
 #include "df/ui_look_list.h"
@@ -88,13 +79,28 @@ using namespace DFHack;
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
 
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+using namespace DFHack;
 using namespace df::enums;
+
 using df::global::plotinfo;
 using df::global::world;
 using df::global::d_init;
 using df::global::building_next_id;
 using df::global::process_jobs;
 using df::building_def;
+
+using std::map;
+using std::string;
+using std::unordered_map;
+using std::vector;
 
 struct CoordHash {
     size_t operator()(const df::coord pos) const {
@@ -349,32 +355,30 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     return findRef(building->specific_refs, type);
 }
 
-bool Buildings::setOwner(df::building *bld, df::unit *unit)
+bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
-/* TODO: understand how this changes for v50
-    if (!bld->is_room)
-        return false;
-    if (bld->owner == unit)
+
+    if (bld->assigned_unit == unit)
         return true;
 
-    if (bld->owner)
+    if (bld->assigned_unit)
     {
-        auto &blist = bld->owner->owned_buildings;
+        auto &blist = bld->assigned_unit->owned_buildings;
         vector_erase_at(blist, linear_index(blist, bld));
 
-        if (auto spouse = df::unit::find(bld->owner->relationship_ids[df::unit_relationship_type::Spouse]))
+        if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
             vector_erase_at(blist, linear_index(blist, bld));
         }
     }
 
-    bld->owner = unit;
+    bld->assigned_unit = unit;
 
     if (unit)
     {
-        bld->owner_id = unit->id;
+        bld->assigned_unit_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
@@ -386,9 +390,8 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
     }
     else
     {
-        bld->owner_id = -1;
+        bld->assigned_unit_id = -1;
     }
-*/
 
     return true;
 }
@@ -444,8 +447,8 @@ static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
 static void cacheBuilding(df::building *building) {
     int32_t id = building->id;
-    df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-    df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+    df::coord p1(std::min(building->x1, building->x2), std::min(building->y1,building->y2), building->z);
+    df::coord p2(std::max(building->x1, building->x2), std::max(building->y1,building->y2), building->z);
 
     corner1[id] = p1;
     corner2[id] = p2;
@@ -464,7 +467,7 @@ bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
                                df::coord pos) {
     pvec->clear();
 
-    for (df::building_civzonest* zone : world->buildings.other.ACTIVITY_ZONE)
+    for (df::building_civzonest* zone : world->buildings.other.ANY_ZONE)
     {
         if (pos.z != zone->z)
             continue;
@@ -588,6 +591,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     case building_type::Bridge:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bridgest, bld))
+            obj->gate_flags.bits.closed = false;
+        break;
+    }
+    case building_type::Weapon:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
             obj->gate_flags.bits.closed = false;
         break;
     }
@@ -760,7 +769,8 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                df::building_extents *ext,
                                bool create_ext,
                                bool allow_occupied,
-                               bool allow_wall)
+                               bool allow_wall,
+                               bool allow_flow)
 {
     bool found_any = false;
 
@@ -792,10 +802,14 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             if (!allow_occupied &&
                 block->occupancy[btile.x][btile.y].bits.building)
                 allowed = false;
-            else
+            else if (!allow_wall)
             {
-                auto tile = block->tiletype[btile.x][btile.y];
-                if (!allow_wall && !HighPassable(tile))
+                auto &tt = block->tiletype[btile.x][btile.y];
+                if (!HighPassable(tt))
+                    allowed = false;
+                auto &des = block->designation[btile.x][btile.y];
+                if (!allow_flow && (des.bits.flow_size > 1 ||
+                        (des.bits.flow_size >= 1 && des.bits.liquid_type == df::tile_liquid::Magma)))
                     allowed = false;
             }
 
@@ -848,7 +862,8 @@ static bool checkBuildingTiles(df::building *bld, bool can_change,
                                      can_change && bld->isExtentShaped(),
                                      !bld->isSettingOccupancy(),
                                      bld->getType() ==
-                                        df::building_type::Civzone);
+                                        df::building_type::Civzone,
+                                     !bld->isActual());
 }
 
 int Buildings::countExtentTiles(df::building_extents *ext, int defval)
@@ -1105,31 +1120,17 @@ static void createDesign(df::building *bld, bool rough)
 
 static int getMaxStockpileId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::STOCKPILE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_stockpilest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->stockpile_number);
-    }
-
+    for (auto bld : world->buildings.other.STOCKPILE)
+        max_id = std::max(max_id, bld->stockpile_number);
     return max_id;
 }
 
 static int getMaxCivzoneId()
 {
-    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
     int max_id = 0;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
-        if (bld)
-            max_id = std::max(max_id, bld->zone_num);
-    }
-
+    for (auto bld : world->buildings.other.ANY_ZONE)
+        max_id = std::max(max_id, bld->zone_num);
     return max_id;
 }
 
@@ -1589,45 +1590,31 @@ bool Buildings::isPenPasture(df::building * building)
     if (!isActivityZone(building))
         return false;
 
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
-*/ return false;
+    return ((df::building_civzonest*)building)->type == civzone_type::Pen;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
-*/ return false;
+
+    return ((df::building_civzonest*)building)->type == civzone_type::Pond;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
-*/ return false;
+    // 8 is the value obtained by reverse engineering
+    return ((df::building_civzonest*)building)->is_active == 8;
 }
-
-bool Buildings::isHospital(df::building * building)
- {
-     if (!isActivityZone(building))
-         return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
-*/ return false;
- }
 
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
-*/ return false;
+
+     return ((df::building_civzonest*)building)->type == civzone_type::AnimalTraining;
  }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)
@@ -1649,19 +1636,25 @@ StockpileIterator& StockpileIterator::operator++() {
         if (block) {
             // Check the next item in the current block.
             ++current;
+        }
+        else if (stockpile->x2 < 0 || stockpile->y2 < 0 || stockpile->z < 0 || stockpile->x1 > world->map.x_count - 1 || stockpile->y1 > world->map.y_count - 1 || stockpile->z > world->map.z_count - 1) {
+            // if the stockpile bounds exist outside of valid map plane then no items can be in the stockpile
+            block = NULL;
+            item = NULL;
+            return *this;
         } else {
             // Start with the top-left block covering the stockpile.
-            block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+            block = Maps::getTileBlock(std::min(std::max(stockpile->x1, 0), world->map.x_count-1), std::min(std::max(stockpile->y1, 0), world->map.y_count-1), stockpile->z);
             current = 0;
         }
 
         while (current >= block->items.size()) {
             // Out of items in this block; find the next block to search.
-            if (block->map_pos.x + 16 < stockpile->x2) {
+            if (block->map_pos.x + 16 <= std::min(stockpile->x2, world->map.x_count-1)) {
                 block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
                 current = 0;
-            } else if (block->map_pos.y + 16 < stockpile->y2) {
-                block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+            } else if (block->map_pos.y + 16 <= std::min(stockpile->y2, world->map.y_count-1)) {
+                block = Maps::getTileBlock(std::max(stockpile->x1, 0), block->map_pos.y + 16, stockpile->z);
                 current = 0;
             } else {
                 // All items in all blocks have been checked.
@@ -1719,4 +1712,19 @@ bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &u
     }
 
     return true;
+}
+
+void Buildings::completeBuild(df::building* bld)
+{
+    CHECK_NULL_POINTER(bld);
+
+    auto fp = df::global::buildingst_completebuild;
+    CHECK_NULL_POINTER(fp);
+
+    // whether to add to the IN_PLAY vector, which we always want to do
+    char in_play = 1;
+
+    using FT = std::function<void(df::building* bld, char)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(bld, in_play);
 }

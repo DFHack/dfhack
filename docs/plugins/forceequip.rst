@@ -3,7 +3,7 @@ forceequip
 
 .. dfhack-tool::
     :summary: Move items into a unit's inventory.
-    :tags: untested adventure fort animals items military units
+    :tags: unavailable
 
 This tool is typically used to equip specific clothing/armor items onto a dwarf,
 but can also be used to put armor onto a war animal or to add unusual items

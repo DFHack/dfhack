@@ -1,3 +1,5 @@
+config.target = 'core'
+
 local utils = require 'utils'
 
 function test.OrderedTable()
@@ -102,7 +104,7 @@ function test.df_expr_to_ref()
             expect.eq(df.reinterpret_cast(df.world, utils.df_expr_to_ref('unit[0]').value), df.global.world)
 
             expect.eq(utils.df_expr_to_ref('unit[1]'), utils.df_expr_to_ref('unit.1'))
-            expect.eq(df.reinterpret_cast(df.ui, utils.df_expr_to_ref('unit[1]').value), df.global.plotinfo)
+            expect.eq(df.reinterpret_cast(df.plotinfost, utils.df_expr_to_ref('unit[1]').value), df.global.plotinfo)
 
             expect.error_match('index out of bounds', function() utils.df_expr_to_ref('unit.2') end)
             expect.error_match('index out of bounds', function() utils.df_expr_to_ref('unit[2]') end)

@@ -29,21 +29,15 @@ distribution.
 #include "ColorText.h"
 #include "MiscUtils.h"
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include "Core.h"
 #include "DataFuncs.h"
 
-#include "RemoteClient.h"
-
 typedef struct lua_State lua_State;
 
-namespace tthread
-{
-    class mutex;
-    class condition_variable;
-}
 namespace df
 {
     struct viewscreen;
@@ -153,8 +147,10 @@ namespace DFHack
         ~Plugin();
         command_result on_update(color_ostream &out);
         command_result on_state_change(color_ostream &out, state_change_event event);
-        command_result save_data(color_ostream &out);
-        command_result load_data(color_ostream &out);
+        command_result save_world_data(color_ostream &out);
+        command_result save_site_data(color_ostream &out);
+        command_result load_world_data(color_ostream &out);
+        command_result load_site_data(color_ostream &out);
         void detach_connection(RPCService *svc);
     public:
         enum plugin_state
@@ -238,8 +234,10 @@ namespace DFHack
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_save_data)(color_ostream &);
-        command_result (*plugin_load_data)(color_ostream &);
+        command_result (*plugin_save_world_data)(color_ostream &);
+        command_result (*plugin_save_site_data)(color_ostream &);
+        command_result (*plugin_load_world_data)(color_ostream &);
+        command_result (*plugin_load_site_data)(color_ostream &);
     };
     class DFHACK_EXPORT PluginManager
     {
@@ -254,7 +252,8 @@ namespace DFHack
         void registerCommands( Plugin * p );
         void unregisterCommands( Plugin * p );
         void doSaveData(color_ostream &out);
-        void doLoadData(color_ostream &out);
+        void doLoadWorldData(color_ostream &out);
+        void doLoadSiteData(color_ostream &out);
     // PUBLIC METHODS
     public:
         // list names of all plugins present in hack/plugins
@@ -282,8 +281,8 @@ namespace DFHack
     private:
         Core *core;
         bool addPlugin(std::string name);
-        tthread::recursive_mutex * plugin_mutex;
-        tthread::mutex * cmdlist_mutex;
+        std::recursive_mutex * plugin_mutex;
+        std::mutex * cmdlist_mutex;
         std::map <std::string, Plugin*> command_map;
         std::map <std::string, Plugin*> all_plugins;
         std::string plugin_path;
@@ -300,14 +299,16 @@ namespace DFHack
 };
 
 #define DFHACK_PLUGIN_AUX(m_plugin_name, is_dev) \
+extern "C" { \
     DFhackDataExport const char * plugin_name = m_plugin_name;\
     DFhackDataExport const char * plugin_version = DFHack::Version::dfhack_version();\
     DFhackDataExport const char * plugin_git_description = DFHack::Version::git_description();\
     DFhackDataExport int plugin_abi_version = DFHack::Version::dfhack_abi_version();\
     DFhackDataExport DFHack::Plugin *plugin_self = NULL;\
-    std::vector<std::string> _plugin_globals;\
-    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \
-    DFhackDataExport bool plugin_dev = is_dev;
+    std::vector<std::string> plugin_globals_noptr;\
+    DFhackDataExport std::vector<std::string>* plugin_globals = &plugin_globals_noptr; \
+    DFhackDataExport bool plugin_dev = is_dev; \
+}
 
 /// You have to include DFHACK_PLUGIN("plugin_name") in every plugin you write - just once. Ideally at the top of the main file.
 #ifdef DEV_PLUGIN

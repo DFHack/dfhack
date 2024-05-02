@@ -3,7 +3,7 @@ autonestbox
 
 .. dfhack-tool::
     :summary: Auto-assign egg-laying female pets to nestbox zones.
-    :tags: untested fort auto animals
+    :tags: fort auto animals
 
 To use this feature, you must create pen/pasture zones on the same tiles as
 built nestboxes. If the pen is bigger than 1x1, the nestbox must be in the top
@@ -28,6 +28,3 @@ Usage
 ``autonestbox now``
     Run a scan and assignment cycle right now. Does not require that the plugin
     is enabled.
-``autonestbox ticks <ticks>``
-    Change the number of ticks between scan and assignment cycles when the
-    plugin is enabled. The default is 6000 (about 8 days).

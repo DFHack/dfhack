@@ -2,24 +2,27 @@
  * Confiscates and dumps garbage owned by dwarfs.
  */
 
-#include <sstream>
-#include <climits>
-#include <vector>
-#include <set>
-using namespace std;
-
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include <vector>
-#include <string>
+#include "DataDefs.h"
+
 #include "modules/Items.h"
 #include "modules/Units.h"
 #include "modules/Translation.h"
-#include "DataDefs.h"
+
+#include "df/item.h"
+#include "df/unit.h"
 #include "df/world.h"
 
+#include <sstream>
+#include <climits>
+#include <vector>
+#include <set>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -48,6 +51,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
     bool confiscate_all = false;
     bool dry_run = false;
     int wear_dump_level = 65536;
+    bool nodump = false;
 
     for(std::size_t i = 0; i < parameters.size(); i++)
     {
@@ -62,6 +66,8 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             wear_dump_level = 1;
         else if(param == "X")
             wear_dump_level = 2;
+        else if(param == "nodump")
+            nodump = true;
         else
             return CR_WRONG_USAGE;
     }
@@ -73,8 +79,6 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         out.printerr("Translation data unavailable!\n");
         return CR_FAILURE;
     }
-
-    out.print("Found total %zd items.\n", world->items.all.size());
 
     for (std::size_t i=0; i < world->items.all.size(); i++)
     {
@@ -113,7 +117,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             )
             {
                 confiscate = true;
-                if(dump_scattered)
+                if(dump_scattered && !nodump)
                 {
                     out.print("Dumping a dropped item: \t");
                     dump = true;
@@ -125,16 +129,26 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             }
             else if(dump_scattered)
             {
-                out.print("Confiscating and dumping litter: \t");
+                if (nodump)
+                    out.print("Confiscating litter: \t");
+                else
+                {
+                    out.print("Confiscating and dumping litter: \t");
+                    dump = true;
+                }
                 confiscate = true;
-                dump = true;
             }
         }
         else if (item->getWear() >= wear_dump_level)
         {
-            out.print("Confiscating and dumping a worn item: \t");
+            if (nodump)
+                out.print("Confiscating a worn item: \t");
+            else
+            {
+                out.print("Confiscating and dumping a worn item: \t");
+                dump = true;
+            }
             confiscate = true;
-            dump = true;
         }
         else if (confiscate_all)
         {
@@ -149,14 +163,14 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             out.print(
                 "[%d] %s (wear level %d)",
                 item->id,
-                description.c_str(),
+                DF2CONSOLE(description).c_str(),
                 item->getWear()
             );
 
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", Translation::TranslateName(&owner->name,false).c_str());
+                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name,false)).c_str());
 
             if (!dry_run)
             {

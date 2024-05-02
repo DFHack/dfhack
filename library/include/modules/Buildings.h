@@ -23,29 +23,29 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "DataDefs.h"
 #include "Types.h"
+
 #include "modules/Items.h"
 #include "modules/Maps.h"
 
-#include "df/building.h"
-#include "df/building_stockpilest.h"
 #include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/construction_type.h"
 #include "df/furnace_type.h"
-#include "df/item.h"
 #include "df/shop_type.h"
 #include "df/siegeengine_type.h"
 #include "df/trap_type.h"
 #include "df/workshop_type.h"
 
-namespace df
-{
+namespace df {
+    struct building;
     struct building_cagest;
     struct building_civzonest;
     struct building_extents;
+    struct building_stockpilest;
     struct item;
     struct job_item;
     struct unit;
@@ -108,9 +108,9 @@ DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general
 DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
 
 /**
- * Sets the owner unit for the building.
+ * Sets the owner unit for the zone.
  */
-DFHACK_EXPORT bool setOwner(df::building *building, df::unit *owner);
+DFHACK_EXPORT bool setOwner(df::building_civzonest *building, df::unit *owner);
 
 /**
  * Find the building located at the specified tile.
@@ -143,7 +143,8 @@ DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
                                   df::building_extents *ext = NULL,
                                   bool create_ext = false,
                                   bool allow_occupied = false,
-                                  bool allow_wall = false);
+                                  bool allow_wall = false,
+                                  bool allow_flow = false);
 
 /**
  * Returns the number of tiles included by the extent, or defval.
@@ -237,7 +238,7 @@ DFHACK_EXPORT std::string getRoomDescription(df::building *building, df::unit *u
  * starting at the top left and moving right, row by row,
  * the block's items are checked for anything on the ground within that stockpile.
  */
-class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator_tag, df::item>
+class DFHACK_EXPORT StockpileIterator
 {
     df::building_stockpilest* stockpile;
     df::map_block* block;
@@ -245,6 +246,12 @@ class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator
     df::item *item;
 
 public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = df::item*;
+    using difference_type = std::ptrdiff_t;
+    using pointer = df::item**;
+    using reference = df::item*&;
+
     StockpileIterator() {
         stockpile = NULL;
         block = NULL;
@@ -275,7 +282,6 @@ DFHACK_EXPORT bool isActivityZone(df::building * building);
 DFHACK_EXPORT bool isPenPasture(df::building * building);
 DFHACK_EXPORT bool isPitPond(df::building * building);
 DFHACK_EXPORT bool isActive(df::building * building);
-DFHACK_EXPORT bool isHospital(df::building * building);
 DFHACK_EXPORT bool isAnimalTraining(df::building * building);
 
 DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
@@ -284,5 +290,10 @@ DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
  * Returns the units currently in the given cage
  */
 DFHACK_EXPORT bool getCageOccupants(df::building_cagest *cage, std::vector<df::unit*> &units);
+
+/**
+ * Finalizes a new building into the world
+ */
+DFHACK_EXPORT void completeBuild(df::building* bld);
 }
 }

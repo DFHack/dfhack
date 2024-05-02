@@ -1,0 +1,80 @@
+#notes label(help)
+A pump stack is useful for moving water or magma up through the z-levels.
+""
+"1) Select the ""/dig"" blueprint and position the blueprint preview on the bottom level of the future pump stack. It should be on the z-level just above the liquid you want to pump."
+""
+"2) Enable repetitions with the ""r"" hotkey (ensure you're repeating Up z-levels, not Down) and lock the blueprint in place with the ""L"" hotkey. Move up the z-levels to check that the pump stack has a clear path and doesn't intersect with any open areas (e.g. caverns). Increase the number of repetitions with the ""+"" or ""*"" hotkeys if you need the pump stack to extend further up. Unlock the blueprint and shift it around if you need to, then lock it again to recheck the vertical path."
+""
+"3) If you need to flip the pump stack around to make it fit through the rock layers, enable transformations with the ""t"" hotkey and rotate/flip the blueprint as necessary."
+""
+"4) Once you have everything lined up, hit Enter to apply. If the height ends up being one too many at the top, manually undesignate the top level."
+""
+"5) Since the bottom up/down staircase is a liability, erase the Up/Down staircase designation on the lowest level and replace it with an Up staircase designation. Otherwise you might get water (or magma) critters climbing up through your access stairway!"
+""
+"6) After the stack is dug out, haul away (or dump) any stones that are in the way of building the pumps."
+""
+"7) Load up the ""/channel"" blueprint and apply it with the same repetition and transformation settings that you used for the ""/dig"" blueprint. Unless you have restarted DF, gui/quickfort will have saved your settings."
+""
+"8) Since you do not need to transmit power down below the lowest level, erase the channel designation on the middle tile of the bottom-most pump stack level."
+""
+"9) After the channels are dug, prepare for building by setting the buildingplan plugin material filters for screw pumps. If you are planning to move magma, be sure to select magma-safe materials (like green glass) for all three components of the screw pump."
+""
+"10) Finally, generate orders for (the ""o"" hotkey) and run the ""/build"" blueprint with the same repetition and transformation settings that you used for the other blueprints. As you manufacture the materials you need to construct the screw pumps, your dwarves will build the pump stack from the bottom up, ensuring each new screw pump is properly supported by the one below."
+""
+"If your dwarves end up building the pumps out of order, a section of the stack may spontaneously deconstruct. This will reduce the efficiency of the stack a little, but it's nothing to worry about. Just re-run the ""/build"" blueprint over the entire stack to ""fix up"" any broken pieces. The blueprint will harmlessly skip over any correctly-built screw pumps."
+""
+See the wiki for more info on pump stacks: https://dwarffortresswiki.org/index.php/Screw_pump#Pump_stack
+#dig label(digSN) start(2;4;on access stairs) hidden() for a pump from south level
+
+,,,mwmdd
+,,,mwmdd
+,mwmdi,mwmdd,mwmdd
+,,,mwmdd
+
+#dig label(digNS) start(2;4;on access stairs) hidden() for a pump from north level
+
+,,,mwmdd
+,mwmdd,mwmdd,mwmdd
+,mwmdi,,mwmdd
+,,,mwmdd
+
+#meta label(dig) start(at the bottom level on the access stairs) 2 levels of pump stack - bottom level pumps from the south
+/digSN
+#<
+/digNS
+#dig label(channelSN) start(2;4;on access stairs) hidden() for a pump from south level
+
+,,,`
+,,,h
+,~,`,`
+,,,h
+
+#dig label(channelNS) start(2;4;on access stairs) hidden() for a pump from north level
+
+,,,h
+,`,`,`
+,~,,h
+,,,`
+
+#meta label(channel) start(at the bottom level on the access stairs) 2 levels of pump stack - bottom level pumps from the south
+/channelSN
+#<
+/channelNS
+#build label(buildSN) start(2;4;on access stairs) hidden() for a pump from south level
+
+,,,`
+,,,~
+,`,`,Msm
+,,,`
+
+#build label(buildNS) start(2;4;on access stairs) hidden() for a pump from north level
+
+,,,`
+,`,`,~
+,`,,Msu
+,,,`
+
+#meta label(build) start(at the bottom level on the access stairs) 2 levels of pump stack - bottom level pumps from the south
+/buildSN
+#<
+/buildNS

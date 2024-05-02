@@ -18,6 +18,48 @@ An automated labor management tool that only addressed hauling labors, leaving t
 of skilled labors entirely up to the player. Fundamentally incompatible with the work detail
 system of labor management in v50 of Dwarf Fortress.
 
+.. _automaterial:
+
+automaterial
+============
+Moved frequently used materials to the top of the materials list when building
+buildings. Also offered extended options when building constructions. All
+functionality has been merged into `buildingplan`.
+
+.. _automelt:
+
+automelt
+========
+Automatically mark items for melting when they are brought to a monitored
+stockpile. Merged into `logistics`.
+
+.. _autotrade:
+
+autotrade
+=========
+Automatically mark items for trading when they are brought to a monitored
+stockpile. Merged into `logistics`.
+
+.. _autounsuspend:
+
+autounsuspend
+=============
+Replaced by `suspendmanager`.
+
+.. _combine-drinks:
+
+combine-drinks
+==============
+Replaced by the new `combine` script. Run
+``combine here --types=drink``
+
+.. _combine-plants:
+
+combine-plants
+==============
+Replaced by the new `combine` script. Run
+``combine here --types=plants``
+
 .. _command-prompt:
 
 command-prompt
@@ -28,7 +70,7 @@ Replaced by `gui/launcher --minimal <gui/launcher>`.
 
 create-items
 ============
-Replaced by `gui/create-item --multi <gui/create-item>`.
+Replaced by `gui/create-item`.
 
 .. _deteriorateclothes:
 
@@ -67,6 +109,19 @@ Please use DFHack's more powerful `quickfort` script instead. You can use your
 existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
+
+.. _drain-aquifer:
+
+drain-aquifer
+=============
+Replaced by `aquifer` and `gui/aquifer`.
+
+.. _embark-tools:
+
+embark-tools
+============
+Replaced by `gui/embark-anywhere`. Other functionality was replaced by the DF
+v50 UI.
 
 .. _fix-armory:
 
@@ -124,11 +179,41 @@ This script is no longer useful in current DF versions. The script required a
 binpatch <binpatches/needs-patch>`, which has not been available since DF
 0.34.11.
 
+.. _gui/automelt:
+
+gui/automelt
+============
+Replaced by the `stockpiles` overlay and the gui for `logistics`.
+
+.. _gui/create-tree:
+
+gui/create-tree
+===============
+Replaced by `gui/sandbox`.
+
+.. _gui/dig:
+
+gui/dig
+=======
+Renamed to gui/design
+
 .. _gui/hack-wish:
 
 gui/hack-wish
 =============
 Replaced by `gui/create-item`.
+
+.. _gui/manager-quantity:
+
+gui/manager-quantity
+====================
+Ability to modify manager order quantities has been added to the vanilla UI.
+
+.. _gui/mechanisms:
+
+gui/mechanisms
+==============
+Linked building interface has been added to the vanilla UI.
 
 .. _gui/no-dfhack-init:
 
@@ -143,6 +228,18 @@ longer necessary.
 masspit
 =======
 Replaced with a GUI version: `gui/masspit`.
+
+.. _mousequery:
+
+mousequery
+==========
+Functionality superseded by vanilla v50 interface.
+
+.. _petcapRemover:
+
+petcapRemover
+=============
+Renamed to `pet-uncapper`.
 
 .. _resume:
 
@@ -159,14 +256,58 @@ ruby
 Support for the Ruby language in DFHack scripts was removed due to the issues
 the Ruby library causes when used as an embedded language.
 
+.. _search-plugin:
+
+search
+======
+Functionality was merged into `sort`.
+
 .. _show-unit-syndromes:
 
 show-unit-syndromes
 ===================
 Replaced with a GUI version: `gui/unit-syndromes`.
 
+.. _stocksettings:
+
+stocksettings
+=============
+Along with ``copystock``, ``loadstock`` and ``savestock``, replaced with the new
+`stockpiles` API.
+
+.. _title-version:
+
+title-version
+=============
+Replaced with an `overlay`.
+
+.. _unsuspend:
+
+unsuspend
+=========
+Merged into `suspendmanager`.
+
+.. _warn-starving:
+
+warn-starving
+=============
+Functionality was merged into `gui/notify`.
+
+.. _warn-stealers:
+
+warn-stealers
+=============
+Functionality was merged into `gui/notify`.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees
 ================
 The corresponding DF :bug:`9252` was fixed in DF 0.44.01.
+
+.. _workorder-recheck:
+
+workorder-recheck
+=================
+Tool to set 'Checking' status of the selected work order, allowing conditions
+to be reevaluated. Merged into `orders`.

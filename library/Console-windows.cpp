@@ -58,9 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <deque>
 using namespace DFHack;
 
-#include "tinythread.h"
-using namespace tthread;
-
 // FIXME: maybe make configurable with an ini option?
 #define MAX_CONSOLE_LINES 999
 
@@ -262,7 +259,7 @@ namespace DFHack
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
         }
 
-        int prompt_loop(recursive_mutex * lock, CommandHistory & history)
+        int prompt_loop(std::recursive_mutex * lock, CommandHistory & history)
         {
             raw_buffer.clear(); // make sure the buffer is empty!
             size_t plen = prompt.size();
@@ -374,7 +371,7 @@ namespace DFHack
                 }
             }
         }
-        int lineedit(const std::string & prompt, std::string & output, recursive_mutex * lock, CommandHistory & ch)
+        int lineedit(const std::string & prompt, std::string & output, std::recursive_mutex * lock, CommandHistory & ch)
         {
             if(state == con_lineedit)
                 return Console::FAILURE;
@@ -472,7 +469,7 @@ bool Console::init(bool)
     // Allocate a console!
     AllocConsole();
     d->ConsoleWindow = GetConsoleWindow();
-    wlock = new recursive_mutex();
+    wlock = new std::recursive_mutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
 
@@ -508,12 +505,13 @@ bool Console::init(bool)
     inited = true;
     // DOESN'T WORK - locks up DF!
     // ForceForegroundWindow(d->MainWindow);
+    hide();
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     FreeConsole();
     inited = false;
     return true;
@@ -539,21 +537,21 @@ void Console::end_batch()
 
 void Console::flush_proxy()
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->flush();
 }
 
 void Console::add_text(color_value color, const std::string &text)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->print_text(color, text);
 }
 
 int Console::get_columns(void)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = -1;
     if(inited)
         ret = d->get_columns();
@@ -562,7 +560,7 @@ int Console::get_columns(void)
 
 int Console::get_rows(void)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = -1;
     if(inited)
         ret = d->get_rows();
@@ -571,21 +569,21 @@ int Console::get_rows(void)
 
 void Console::clear()
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->clear();
 }
 
 void Console::gotoxy(int x, int y)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->gotoxy(x,y);
 }
 
 void Console::cursor(bool enable)
 {
-    lock_guard <recursive_mutex> g(*wlock);
+    std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->cursor(enable);
 }

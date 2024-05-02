@@ -24,42 +24,67 @@ distribution.
 
 
 #include "Internal.h"
-#include <array>
-#include <string>
-#include <vector>
-#include <map>
-#include <cstring>
-using namespace std;
 
 #include "modules/World.h"
-#include "MemAccess.h"
-#include "VersionInfo.h"
-#include "Types.h"
-#include "Error.h"
-#include "ModuleFactory.h"
-#include "Core.h"
 
-#include "modules/Maps.h"
-
-#include "MiscUtils.h"
-
-#include "VTableInterpose.h"
-
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/historical_figure.h"
-#include "df/map_block.h"
+#include "df/adventurest.h"
 #include "df/block_square_event_world_constructionst.h"
-#include "df/viewscreen_legendsst.h"
+#include "df/gamest.h"
+#include "df/map_block.h"
+#include "df/nemesis_record.h"
+#include "df/plotinfost.h"
+#include "df/world.h"
+
+using std::string;
 
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::plotinfo;
 using df::global::world;
 
 bool World::ReadPauseState()
 {
-    return DF_GLOBAL_VALUE(pause_state, false);
+    using df::global::game;
+    using df::global::pause_state;
+
+    if (!pause_state || !plotinfo || !game || !world)
+        return false;
+
+    return *pause_state ||
+        (plotinfo->main.mode != df::ui_sidebar_mode::Default &&
+            (plotinfo->main.mode != df::ui_sidebar_mode::Squads ||
+             plotinfo->squads.in_kill_order ||
+             plotinfo->squads.in_move_order
+            )
+        ) ||
+        (game->main_interface.squads.open &&
+            (game->main_interface.squads.giving_kill_order ||
+             game->main_interface.squads.giving_move_order ||
+             game->main_interface.squads.giving_patrol_order ||
+             game->main_interface.squads.giving_burrow_order
+            )
+        ) ||
+        game->main_interface.bottom_mode_selected == df::main_bottom_mode_type::BUILDING_PICK_MATERIALS ||
+        (game->main_interface.view_sheets.open &&
+            game->main_interface.view_sheets.unit_overview_expelling
+        ) ||
+        game->main_interface.create_work_order.open ||
+        game->main_interface.info.open ||
+        game->main_interface.assign_trade.open ||
+        game->main_interface.trade.open ||
+        game->main_interface.announcement_alert.open ||
+        world->status.popups.size() ||
+        game->main_interface.stocks.open ||
+        game->main_interface.petitions.open ||
+        game->main_interface.diplomacy.open ||
+        game->main_interface.name_creator.open ||
+        game->main_interface.image_creator.open ||
+        game->main_interface.assign_vehicle.open ||
+        game->main_interface.job_details.open ||
+        game->main_interface.options.open ||
+        game->main_interface.assign_display_item.open ||
+        game->main_interface.custom_stockpile.open;
 }
 
 void World::SetPauseState(bool paused)
@@ -101,28 +126,6 @@ bool World::WriteGameMode(const t_gamemodes & wr)
     return false;
 }
 
-/*
-FIXME: Japa said that he had to do this with the time stuff he got from here
-       Investigate.
-
-    currentYear = Wold->ReadCurrentYear();
-    currentTick = Wold->ReadCurrentTick();
-    currentMonth = (currentTick+9)/33600;
-    currentDay = ((currentTick+9)%33600)/1200;
-    currentHour = ((currentTick+9)-(((currentMonth*28)+currentDay)*1200))/50;
-    currentTickRel = (currentTick+9)-(((((currentMonth*28)+currentDay)*24)+currentHour)*50);
-    */
-
-// FIX'D according to this:
-/*
-World::ReadCurrentMonth and World::ReadCurrentDay
-« Sent to: peterix on: June 04, 2010, 04:44:30 »
-« You have forwarded or responded to this message. »
-
-Shouldn't these be /28 and %28 instead of 24?  There're 28 days in a DF month.
-Using 28 and doing the calculation on the value stored at the memory location
-specified by memory.xml gets me the current month/date.
-*/
 uint32_t World::ReadCurrentMonth()
 {
     return ReadCurrentTick() / 1200 / 28;
@@ -180,74 +183,89 @@ bool World::isLegends(df::game_type t)
     return (t == game_type::VIEW_LEGENDS);
 }
 
-PersistentDataItem World::AddPersistentData(const std::string &key)
-{
-    return Persistence::addItem(key);
+df::unit * World::getAdventurer() {
+    using df::global::adventure;
+
+    if (!isAdventureMode() || !adventure)
+        return NULL;
+
+    if (auto nem = df::nemesis_record::find(adventure->player_id))
+        return nem->unit;
+
+    return NULL;
 }
 
-PersistentDataItem World::GetPersistentData(const std::string &key)
-{
-    return Persistence::getByKey(key);
+int32_t World::GetCurrentSiteId() {
+    if (!plotinfo)
+        return -1;
+    return plotinfo->site_id;
 }
 
-PersistentDataItem World::GetPersistentData(int entry_id)
-{
-    if (entry_id < 100)
-        return PersistentDataItem();
-
-    return Persistence::getByIndex(size_t(entry_id - 100));
+bool World::IsSiteLoaded() {
+    return GetCurrentSiteId() != -1;
 }
 
-PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
-{
-    bool temp = false;
-    if (!added)
-        added = &temp;
-
-    return Persistence::getByKey(key, added);
+PersistentDataItem World::AddPersistentEntityData(int entity_id, const std::string &key) {
+    return Persistence::addItem(entity_id, key);
 }
 
-void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix)
-{
+PersistentDataItem World::AddPersistentWorldData(const std::string &key) {
+    return AddPersistentEntityData(Persistence::WORLD_ENTITY_ID, key);
+}
+
+PersistentDataItem World::AddPersistentSiteData(const std::string &key) {
+    return AddPersistentEntityData(GetCurrentSiteId(), key);
+}
+
+PersistentDataItem World::GetPersistentEntityData(int entity_id, const std::string &key, bool create) {
+    bool added = false;
+    return create ? Persistence::getByKey(entity_id, key, &added) : Persistence::getByKey(entity_id, key);
+}
+
+PersistentDataItem World::GetPersistentWorldData(const std::string &key, bool create) {
+    return GetPersistentEntityData(Persistence::WORLD_ENTITY_ID, key, create);
+}
+
+PersistentDataItem World::GetPersistentSiteData(const std::string &key, bool create) {
+    return GetPersistentEntityData(GetCurrentSiteId(), key, create);
+}
+
+void World::GetPersistentEntityData(std::vector<PersistentDataItem> *vec, int entity_id, const std::string &key, bool prefix) {
     if (prefix && key.empty())
-    {
-        Persistence::getAll(*vec);
-    }
-    else if (prefix)
-    {
+        Persistence::getAll(*vec, entity_id);
+    else if (prefix) {
         std::string min = key;
         if (min.back() != '/')
-        {
             min.push_back('/');
-        }
         std::string max = min;
         ++max.back();
-
-        Persistence::getAllByKeyRange(*vec, min, max);
+        Persistence::getAllByKeyRange(*vec, entity_id, min, max);
     }
     else
-    {
-        Persistence::getAllByKey(*vec, key);
-    }
+        Persistence::getAllByKey(*vec, entity_id, key);
 }
 
-bool World::DeletePersistentData(const PersistentDataItem &item)
-{
+void World::GetPersistentWorldData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix) {
+    GetPersistentEntityData(vec, Persistence::WORLD_ENTITY_ID, key, prefix);
+}
+
+void World::GetPersistentSiteData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix) {
+    GetPersistentEntityData(vec, GetCurrentSiteId(), key, prefix);
+}
+
+bool World::DeletePersistentData(const PersistentDataItem &item) {
     return Persistence::deleteItem(item);
 }
 
-df::tile_bitmask *World::getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create)
-{
+df::tile_bitmask *World::getPersistentTilemask(PersistentDataItem &item, df::map_block *block, bool create) {
     if (!block)
         return NULL;
 
-    int id = item.raw_id();
+    int id = item.fake_df_id();
     if (id > -100)
         return NULL;
 
-    for (size_t i = 0; i < block->block_events.size(); i++)
-    {
-        auto ev = block->block_events[i];
+    for (auto ev : block->block_events) {
         if (ev->getType() != block_square_event_type::world_construction)
             continue;
         auto wcsev = strict_virtual_cast<df::block_square_event_world_constructionst>(ev);
@@ -270,17 +288,16 @@ df::tile_bitmask *World::getPersistentTilemask(const PersistentDataItem &item, d
     return &ev->tile_bitmask;
 }
 
-bool World::deletePersistentTilemask(const PersistentDataItem &item, df::map_block *block)
-{
+bool World::deletePersistentTilemask(PersistentDataItem &item, df::map_block *block) {
     if (!block)
         return false;
-    int id = item.raw_id();
+
+    int id = item.fake_df_id();
     if (id > -100)
         return false;
 
     bool found = false;
-    for (int i = block->block_events.size()-1; i >= 0; i--)
-    {
+    for (int i = block->block_events.size()-1; i >= 0; i--) {
         auto ev = block->block_events[i];
         if (ev->getType() != block_square_event_type::world_construction)
             continue;

@@ -1,3 +1,5 @@
+config.target = 'core'
+
 local gui = require('gui')
 
 function test.getKeyDisplay()
@@ -9,12 +11,17 @@ function test.getKeyDisplay()
 end
 
 function test.clear_pen()
+    local expected_tile = dfhack.screen.inGraphicsMode() and
+        df.global.init.texpos_border_interior or df.global.init.classic_texpos_border_interior
+
     expect.table_eq(gui.CLEAR_PEN, {
+        tile = expected_tile,
         ch = string.byte(' '),
         fg = COLOR_BLACK,
         bg = COLOR_BLACK,
         bold = false,
         tile_color = false,
+        write_to_lower = true,
     })
 end
 

@@ -188,10 +188,12 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
     ranges.clear();
 
+    HANDLE my_handle = GetCurrentProcess();
+
     // enumerate heaps
     // HeapNodes(d->my_pid, heaps);
     // go through all the VM regions, convert them to our internal format
-    while (VirtualQueryEx(d->my_handle, (const void*) (movingStart), &MBI, sizeof(MBI)) == sizeof(MBI))
+    while (VirtualQueryEx(my_handle, (const void*) (movingStart), &MBI, sizeof(MBI)) == sizeof(MBI))
     {
         movingStart = ((uint64_t)MBI.BaseAddress + MBI.RegionSize);
         if(movingStart % PageSize != 0)
@@ -242,7 +244,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 #if 1
         // Find the mapped file name
-        if (GetMappedFileName(d->my_handle, temp.start, temp.name, 1024))
+        if (GetMappedFileName(my_handle, temp.start, temp.name, 1024))
         {
             int vsize = strlen(temp.name);
 

@@ -3,9 +3,13 @@ tubefill
 
 .. dfhack-tool::
     :summary: Replenishes mined-out adamantine.
-    :tags: untested fort armok map
+    :tags: fort armok map
 
-Veins that were originally hollow will be left alone.
+This tool replaces mined-out tiles of adamantine spires with fresh, undug
+adamantine walls, ready to be re-harvested. Empty tiles within the spire that
+used to contain special gemstones, obsidian, water, or magma will also be
+replaced with fresh adamantine. Adamantine spires that were originally hollow
+will be left hollow. See below for more details.
 
 Usage
 -----

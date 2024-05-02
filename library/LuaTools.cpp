@@ -24,19 +24,18 @@ distribution.
 
 #include "Internal.h"
 
-#include <csignal>
-#include <string>
-#include <vector>
-#include <map>
-
 #include "MemAccess.h"
 #include "Core.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "LuaWrapper.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
+#include "DFHackVersion.h"
+#include "PluginManager.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"
@@ -45,29 +44,29 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Units.h"
 
-#include "LuaWrapper.h"
-#include "LuaTools.h"
-
-#include "MiscUtils.h"
-#include "DFHackVersion.h"
-#include "PluginManager.h"
-
 #include "df/building.h"
 #include "df/enabler.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
+#include "df/extentst.h"
 #include "df/historical_entity.h"
+#include "df/interface_key.h"
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/unit.h"
+#include "df/viewscreen.h"
 #include "df/world.h"
 
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-
 #include <lstate.h>
+
+#include <csignal>
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -101,7 +100,7 @@ void DFHack::Lua::Push(lua_State *state, const Units::NoblePosition &pos)
     lua_setfield(state, -2, "position");
 }
 
-void DFHack::Lua::Push(lua_State *state, df::coord pos)
+void DFHack::Lua::Push(lua_State *state, const df::coord &pos)
 {
     lua_createtable(state, 0, 3);
     lua_pushinteger(state, pos.x);
@@ -112,7 +111,7 @@ void DFHack::Lua::Push(lua_State *state, df::coord pos)
     lua_setfield(state, -2, "z");
 }
 
-void DFHack::Lua::Push(lua_State *state, df::coord2d pos)
+void DFHack::Lua::Push(lua_State *state, const df::coord2d &pos)
 {
     lua_createtable(state, 0, 2);
     lua_pushinteger(state, pos.x);
@@ -121,22 +120,22 @@ void DFHack::Lua::Push(lua_State *state, df::coord2d pos)
     lua_setfield(state, -2, "y");
 }
 
-void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
+void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec, int idx)
 {
     lua_pushnil(state);   // first key
-    while (lua_next(state, 1) != 0)
+    while (lua_next(state, idx) != 0)
     {
         pvec.push_back(lua_tostring(state, -1));
         lua_pop(state, 1);  // remove value, leave key
     }
 }
 
-static bool trigger_inhibit_l_down = false;
-static bool trigger_inhibit_r_down = false;
-static bool trigger_inhibit_m_down = false;
-static bool inhibit_l_down = false;
-static bool inhibit_r_down = false;
-static bool inhibit_m_down = false;
+static bool trigger_inhibit_l = false;
+static bool trigger_inhibit_r = false;
+static bool trigger_inhibit_m = false;
+static bool inhibit_l = false;
+static bool inhibit_r = false;
+static bool inhibit_m = false;
 
 void DFHack::Lua::PushInterfaceKeys(lua_State *L,
                             const std::set<df::interface_key> &keys) {
@@ -161,37 +160,37 @@ void DFHack::Lua::PushInterfaceKeys(lua_State *L,
     }
 
     if (df::global::enabler) {
-        if (!inhibit_l_down && df::global::enabler->mouse_lbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L_DOWN");
-            trigger_inhibit_l_down = true;
-        }
-        if (!inhibit_r_down && df::global::enabler->mouse_rbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R_DOWN");
-            trigger_inhibit_r_down = true;
-        }
-        if (!inhibit_m_down && df::global::enabler->mouse_mbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_M_DOWN");
-            trigger_inhibit_m_down = true;
-        }
-        if (df::global::enabler->mouse_lbut) {
+        if (!inhibit_l && df::global::enabler->mouse_lbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_L");
+            trigger_inhibit_l = true;
         }
-        if (df::global::enabler->mouse_rbut) {
+        if (!inhibit_r && df::global::enabler->mouse_rbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_R");
+            trigger_inhibit_r = true;
         }
-        if (df::global::enabler->mouse_mbut) {
+        if (!inhibit_m && df::global::enabler->mouse_mbut) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_M");
+            trigger_inhibit_m = true;
+        }
+        if (df::global::enabler->mouse_lbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+        }
+        if (df::global::enabler->mouse_rbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+        }
+        if (df::global::enabler->mouse_mbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_M_DOWN");
         }
     }
 }
 
-int DFHack::Lua::PushPosXYZ(lua_State *state, df::coord pos)
+int DFHack::Lua::PushPosXYZ(lua_State *state, const df::coord &pos)
 {
     if (!pos.isValid())
     {
@@ -207,7 +206,7 @@ int DFHack::Lua::PushPosXYZ(lua_State *state, df::coord pos)
     }
 }
 
-int DFHack::Lua::PushPosXY(lua_State *state, df::coord2d pos)
+int DFHack::Lua::PushPosXY(lua_State *state, const df::coord2d &pos)
 {
     if (!pos.isValid())
     {
@@ -840,6 +839,8 @@ bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
         const char *module_name, const char *fn_name,
         int nargs, int nres, LuaLambda && args_lambda, LuaLambda && res_lambda,
         bool perr){
+    Lua::StackUnwinder top(L);
+
     if (!lua_checkstack(L, 1 + nargs) ||
         !Lua::PushModulePublic(out, L, module_name, fn_name)) {
         if (perr)
@@ -2159,23 +2160,25 @@ void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
         lua_settop(State, 0);
     }
 
-    if (trigger_inhibit_l_down) {
-        trigger_inhibit_l_down = false;
-        inhibit_l_down = true;
+    if (trigger_inhibit_l) {
+        trigger_inhibit_l = false;
+        inhibit_l = true;
     }
-    if (trigger_inhibit_r_down) {
-        trigger_inhibit_r_down = false;
-        inhibit_r_down = true;
+    if (trigger_inhibit_r) {
+        trigger_inhibit_r = false;
+        inhibit_r = true;
     }
-    if (trigger_inhibit_m_down) {
-        trigger_inhibit_m_down = false;
-        inhibit_m_down = true;
+    if (trigger_inhibit_m) {
+        trigger_inhibit_m = false;
+        inhibit_m = true;
     }
 
-    if (!df::global::enabler->mouse_lbut)
-        inhibit_l_down = false;
-    if (!df::global::enabler->mouse_rbut)
-        inhibit_r_down = false;
-    if (!df::global::enabler->mouse_mbut)
-        inhibit_m_down = false;
+    if (df::global::enabler) {
+        if (!df::global::enabler->mouse_lbut_down)
+            inhibit_l = false;
+        if (!df::global::enabler->mouse_rbut_down)
+            inhibit_r = false;
+        if (!df::global::enabler->mouse_mbut_down)
+            inhibit_m = false;
+    }
 }

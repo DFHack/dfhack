@@ -1,14 +1,14 @@
-#include "Core.h"
-#include "Console.h"
 #include "Debug.h"
-#include "Export.h"
 #include "PluginManager.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/plotinfost.h"
-#include "df/building_type.h"
+#include "modules/Items.h"
+#include "modules/Maps.h"
+#include "modules/World.h"
+
+#include "df/biome_type.h"
+#include "df/building.h"
 #include "df/building_farmplotst.h"
+#include "df/building_type.h"
 #include "df/buildings_other_id.h"
 #include "df/global_objects.h"
 #include "df/item.h"
@@ -16,35 +16,34 @@
 #include "df/item_plant_growthst.h"
 #include "df/item_seedsst.h"
 #include "df/items_other_id.h"
-#include "df/unit.h"
-#include "df/building.h"
 #include "df/plant_raw.h"
 #include "df/plant_raw_flags.h"
-#include "df/biome_type.h"
-#include "modules/Items.h"
-#include "modules/Maps.h"
-#include "modules/World.h"
+#include "df/plotinfost.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 #include <queue>
 
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::plotinfo;
+DFHACK_PLUGIN("autofarm");
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(plotinfo);
 
 static command_result autofarm(color_ostream& out, std::vector<std::string>& parameters);
-
-DFHACK_PLUGIN("autofarm");
-
-DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 #define CONFIG_KEY "autofarm/config"
 
 namespace DFHack {
     DBG_DECLARE(autofarm, cycle, DebugCategory::LINFO);
-    DBG_DECLARE(autofarm, config, DebugCategory::LINFO);
+    DBG_DECLARE(autofarm, control, DebugCategory::LINFO);
 }
+
+static const int32_t CYCLE_TICKS = 53; // one hour-ish
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 class AutoFarm {
 private:
@@ -260,8 +259,8 @@ public:
 
     void process(color_ostream& out)
     {
-        if (!enabled)
-            return;
+        // mark that we have recently run
+        cycle_timestamp = world->frame_counter;
 
         find_plantable_plants();
 
@@ -360,28 +359,26 @@ public:
     void load_state(color_ostream& out)
     {
         initialize();
-        if (!(Core::getInstance().isWorldLoaded()))
-            return;
 
-        cfg_enabled = World::GetPersistentData("autofarm/enabled");
+        cfg_enabled = World::GetPersistentSiteData("autofarm/enabled");
         if (cfg_enabled.isValid())
             enabled = cfg_enabled.ival(0) != 0;
         else {
-            cfg_enabled = World::AddPersistentData("autofarm/enabled");
+            cfg_enabled = World::AddPersistentSiteData("autofarm/enabled");
             cfg_enabled.ival(0) = enabled;
         }
 
-        cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
+        cfg_default_threshold = World::GetPersistentSiteData("autofarm/default_threshold");
 
         if (cfg_default_threshold.isValid())
             defaultThreshold = cfg_default_threshold.ival(0);
         else {
-            cfg_default_threshold = World::AddPersistentData("autofarm/default_threshold");
+            cfg_default_threshold = World::AddPersistentSiteData("autofarm/default_threshold");
             cfg_default_threshold.ival(0) = defaultThreshold;
         }
 
         std::vector<PersistentDataItem> items;
-        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        World::GetPersistentSiteData(&items, "autofarm/threshold/", true);
         for (auto& i: items) {
             if (i.isValid())
             {
@@ -392,11 +389,11 @@ public:
                 if (plant != std::end(allPlants))
                 {
                     setThreshold((*plant)->index, val);
-                    INFO(config, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id.c_str());
+                    INFO(control, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id.c_str());
                 }
                 else
                 {
-                    WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id.c_str());
+                    WARN(control, out).print("threshold for unknown plant %s in saved configuration ignored\n", id.c_str());
                 }
             }
         }
@@ -409,7 +406,7 @@ public:
         cfg_enabled.ival(0) = enabled;
 
         std::vector<PersistentDataItem> items;
-        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        World::GetPersistentSiteData(&items, "autofarm/threshold/", true);
         for (auto& i : items)
             World::DeletePersistentData(i);
 
@@ -417,7 +414,7 @@ public:
         {
             const std::string& plantID = world->raws.plants.all[t.first]->id;
             const std::string keyName = "autofarm/threshold/" + plantID;
-            PersistentDataItem cfgThreshold = World::AddPersistentData(keyName);
+            PersistentDataItem cfgThreshold = World::AddPersistentSiteData(keyName);
             cfgThreshold.val() = plantID;
             cfgThreshold.ival(0) = t.second;
         }
@@ -430,64 +427,52 @@ static std::unique_ptr<AutoFarm> autofarmInstance;
 
 DFhackCExport command_result plugin_init(color_ostream& out, std::vector <PluginCommand>& commands)
 {
-    if (world && plotinfo) {
-        commands.push_back(
-            PluginCommand("autofarm",
-                          "Automatically manage farm crop selection.",
-                          autofarm));
-    }
-    autofarmInstance = std::move(dts::make_unique<AutoFarm>());
-    autofarmInstance->load_state(out);
+    commands.push_back(
+        PluginCommand("autofarm",
+                        "Automatically manage farm crop selection.",
+                        autofarm));
+
+    autofarmInstance = std::move(std::make_unique<AutoFarm>());
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream& out)
 {
     autofarmInstance.release();
-
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out)
 {
-    if (!autofarmInstance)
-        return CR_OK;
-
-    if (!Maps::IsValid())
-        return CR_OK;
-
-    if (DFHack::World::ReadPauseState())
-        return CR_OK;
-
-    if (world->frame_counter % 50 != 0) // Check every hour
-        return CR_OK;
-
-    {
-        CoreSuspender suspend;
+    if (enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autofarmInstance->process(out);
-    }
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
 {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     enabled = enable;
-    if (Core::getInstance().isWorldLoaded())
-        autofarmInstance->save_state(out);
+    autofarmInstance->save_state(out);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    autofarmInstance->load_state(out);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream& out, state_change_event event)
 {
-    if (!autofarmInstance)
-        return CR_OK;
-
     switch (event) {
-    case SC_WORLD_LOADED:
-        autofarmInstance->load_state(out);
-        break;
-    case SC_MAP_UNLOADED:
+    case SC_WORLD_UNLOADED:
+        enabled = false;
         break;
     default:
         break;
@@ -526,6 +511,11 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
 
 static command_result autofarm(color_ostream& out, std::vector<std::string>& parameters)
 {
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     CoreSuspender suspend;
 
     if (parameters.size() == 1 && parameters[0] == "runonce")

@@ -14,12 +14,16 @@
 #include "modules/World.h"
 
 #include "df/burrow.h"
+#include "df/general_ref.h"
 #include "df/item.h"
 #include "df/map_block.h"
+#include "df/material.h"
 #include "df/plant.h"
+#include "df/plant_raw.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 #include <map>
@@ -43,7 +47,7 @@ REQUIRE_GLOBAL(plotinfo);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(autochop, status, DebugCategory::LINFO);
+    DBG_DECLARE(autochop, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autochop, cycle, DebugCategory::LINFO);
 }
@@ -70,28 +74,12 @@ enum BurrowConfigValues {
     BURROW_CONFIG_PROTECT_COOKABLE = 5,
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
-}
-
 static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
     if (watched_burrows_indices.count(id))
         return watched_burrows[watched_burrows_indices[id]];
     string keyname = BURROW_CONFIG_KEY_PREFIX + int_to_string(id);
-    DEBUG(status,out).print("creating new persistent key for burrow %d\n", id);
-    watched_burrows.emplace_back(World::GetPersistentData(keyname, NULL));
+    DEBUG(control,out).print("creating new persistent key for burrow %d\n", id);
+    watched_burrows.emplace_back(World::GetPersistentSiteData(keyname, true));
     size_t idx = watched_burrows.size()-1;
     watched_burrows_indices.emplace(id, idx);
     return watched_burrows[idx];
@@ -99,7 +87,7 @@ static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
 static void remove_burrow_config(color_ostream &out, int id) {
     if (!watched_burrows_indices.count(id))
         return;
-    DEBUG(status,out).print("removing persistent key for burrow %d\n", id);
+    DEBUG(control,out).print("removing persistent key for burrow %d\n", id);
     size_t idx = watched_burrows_indices[id];
     World::DeletePersistentData(watched_burrows[idx]);
     watched_burrows.erase(watched_burrows.begin()+idx);
@@ -107,21 +95,21 @@ static void remove_burrow_config(color_ostream &out, int id) {
 }
 static void validate_burrow_configs(color_ostream &out) {
     for (int32_t idx = watched_burrows.size()-1; idx >=0; --idx) {
-        int id = get_config_val(watched_burrows[idx], BURROW_CONFIG_ID);
+        int id = watched_burrows[idx].get_int(BURROW_CONFIG_ID);
         if (!df::burrow::find(id)) {
             remove_burrow_config(out, id);
         }
     }
 }
 
-static const int32_t CYCLE_TICKS = 1200;
+static const int32_t CYCLE_TICKS = 1181;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static int32_t do_cycle(color_ostream &out, bool force_designate = false);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(status,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -133,18 +121,20 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(status,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out, true);
     } else {
-        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -152,36 +142,36 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(config, CONFIG_MAX_LOGS, 200);
-        set_config_val(config, CONFIG_MIN_LOGS, 160);
-        set_config_bool(config, CONFIG_WAITING_FOR_MIN, false);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_int(CONFIG_MAX_LOGS, 200);
+        config.set_int(CONFIG_MIN_LOGS, 160);
+        config.set_bool(CONFIG_WAITING_FOR_MIN, false);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but
     // all the other state we can directly read/modify from the persistent
     // data structure.
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
-    World::GetPersistentData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
+    World::GetPersistentSiteData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
     watched_burrows_indices.clear();
     const size_t num_watched_burrows = watched_burrows.size();
     for (size_t idx = 0; idx < num_watched_burrows; ++idx) {
         auto &c = watched_burrows[idx];
-        watched_burrows_indices.emplace(get_config_val(c, BURROW_CONFIG_ID), idx);
+        watched_burrows_indices.emplace(c.get_int(BURROW_CONFIG_ID), idx);
     }
     validate_burrow_configs(out);
 
@@ -191,7 +181,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(status,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -208,41 +198,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool call_autochop_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(status).print("calling autochop lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.autochop", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     bool show_help = false;
-    if (!call_autochop_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.autochop", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;
@@ -306,9 +272,9 @@ static bool is_valid_tree(const df::plant *plant) {
 static bool is_protected(const df::plant * plant, PersistentDataItem &c) {
     const df::plant_raw *plant_raw = df::plant_raw::find(plant->material);
 
-    bool protect_brewable = get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE);
-    bool protect_edible = get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE);
-    bool protect_cookable = get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE);
+    bool protect_brewable = c.get_bool(BURROW_CONFIG_PROTECT_BREWABLE);
+    bool protect_edible = c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE);
+    bool protect_cookable = c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE);
 
     if (protect_brewable && plant_raw->material_defs.type[plant_material_def::drink] != -1)
         return true;
@@ -330,23 +296,28 @@ static int32_t estimate_logs(const df::plant *plant) {
     if (!plant->tree_info)
         return 0;
 
-    //adapted from code by aljohnston112 @ github
     df::plant_tree_tile** tiles = plant->tree_info->body;
 
     if (!tiles)
         return 0;
 
-    int32_t trunks = 0;
+    MaterialInfo mi;
+    mi.decode(MaterialInfo::PLANT_BASE, plant->material);
+    bool is_shroom = mi.plant->flags.is_set(df::plant_raw_flags::TREE_HAS_MUSHROOM_CAP);
+
+    int32_t trunks = 0, parent_dir = 0;
     const int32_t area = plant->tree_info->dim_y * plant->tree_info->dim_x;
-    for (int i = 0; i < plant->tree_info->body_height; i++) {
-        df::plant_tree_tile* tilesRow = tiles[i];
+    for (int z = 0; z < plant->tree_info->body_height; z++) {
+        df::plant_tree_tile* tilesRow = tiles[z];
         if (!tilesRow)
             return 0; // tree data is corrupt; let's not touch it
-        for (int j = 0; j < area; j++)
-            trunks += tilesRow[j].bits.trunk;
+        for (int i = 0; i < area; i++) {
+            auto & tile = tilesRow[i];
+            trunks += tile.bits.trunk;
+            parent_dir += (tile.bits.parent_dir == 0) ? 0 : 1;
+        }
     }
-
-    return trunks;
+    return is_shroom ? parent_dir : trunks;
 }
 
 static void bucket_tree(df::plant *plant, bool designate_clearcut, bool *designated, bool *can_chop,
@@ -383,10 +354,10 @@ static void bucket_watched_burrows(color_ostream & out,
         map<int, PersistentDataItem *> &clearcut_burrows,
         map<int, PersistentDataItem *> &chop_burrows) {
     for (auto &c : watched_burrows) {
-        int id = get_config_val(c, BURROW_CONFIG_ID);
-        if (get_config_bool(c, BURROW_CONFIG_CLEARCUT))
+        int id = c.get_int(BURROW_CONFIG_ID);
+        if (c.get_bool(BURROW_CONFIG_CLEARCUT))
             clearcut_burrows.emplace(id, &c);
-        else if (get_config_bool(c, BURROW_CONFIG_CHOP))
+        else if (c.get_bool(BURROW_CONFIG_CHOP))
             chop_burrows.emplace(id, &c);
     }
 }
@@ -530,7 +501,7 @@ struct BadFlags
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction); F(artifact);
-        F(in_job); F(owned); F(in_chest); F(removed);
+        F(in_job); F(owned); F(removed);
         F(encased); F(spider_web);
         #undef F
         whole = flags.whole;
@@ -579,7 +550,7 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
     int32_t expected_yield;
     TreesBySize designatable_trees_by_size;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     int32_t newly_marked = scan_trees(out, &expected_yield,
             &designatable_trees_by_size, true, citizens);
 
@@ -587,28 +558,28 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
     int32_t usable_logs;
     scan_logs(out, &usable_logs, citizens);
 
-    if (get_config_bool(config, CONFIG_WAITING_FOR_MIN)
-            && usable_logs <= get_config_val(config, CONFIG_MIN_LOGS)) {
+    if (config.get_bool(CONFIG_WAITING_FOR_MIN)
+            && usable_logs <= config.get_int(CONFIG_MIN_LOGS)) {
         DEBUG(cycle,out).print("minimum threshold crossed\n");
-        set_config_bool(config, CONFIG_WAITING_FOR_MIN, false);
+        config.set_bool(CONFIG_WAITING_FOR_MIN, false);
     }
-    else if (!get_config_bool(config, CONFIG_WAITING_FOR_MIN)
-            && usable_logs > get_config_val(config, CONFIG_MAX_LOGS)) {
+    else if (!config.get_bool(CONFIG_WAITING_FOR_MIN)
+            && usable_logs > config.get_int(CONFIG_MAX_LOGS)) {
         DEBUG(cycle,out).print("maximum threshold crossed\n");
-        set_config_bool(config, CONFIG_WAITING_FOR_MIN, true);
+        config.set_bool(CONFIG_WAITING_FOR_MIN, true);
     }
 
     // if we already have designated enough, we're done
-    int32_t limit = force_designate || !get_config_bool(config, CONFIG_WAITING_FOR_MIN) ?
-        get_config_val(config, CONFIG_MAX_LOGS) :
-        get_config_val(config, CONFIG_MIN_LOGS);
+    int32_t limit = force_designate || !config.get_bool(CONFIG_WAITING_FOR_MIN) ?
+        config.get_int(CONFIG_MAX_LOGS) :
+        config.get_int(CONFIG_MIN_LOGS);
     if (usable_logs + expected_yield > limit) {
         return newly_marked;
     }
 
     // designate until the expected yield gets us to our target or we run out
     // of accessible trees
-    int32_t needed = get_config_val(config, CONFIG_MAX_LOGS) -
+    int32_t needed = config.get_int(CONFIG_MAX_LOGS) -
             (usable_logs + expected_yield);
     DEBUG(cycle,out).print("needed logs for this cycle: %d\n", needed);
     for (auto & entry : designatable_trees_by_size) {
@@ -651,12 +622,12 @@ static const char * get_protect_str(bool protect_brewable, bool protect_edible, 
 }
 
 static void autochop_printStatus(color_ostream &out) {
-    DEBUG(status,out).print("entering autochop_printStatus\n");
+    DEBUG(control,out).print("entering autochop_printStatus\n");
     validate_burrow_configs(out);
     out.print("autochop is %s\n\n", is_enabled ? "enabled" : "disabled");
     out.print("  keeping log counts between %d and %d\n",
-            get_config_val(config, CONFIG_MIN_LOGS), get_config_val(config, CONFIG_MAX_LOGS));
-    if (get_config_bool(config, CONFIG_WAITING_FOR_MIN))
+            config.get_int(CONFIG_MIN_LOGS), config.get_int(CONFIG_MAX_LOGS));
+    if (config.get_bool(CONFIG_WAITING_FOR_MIN))
         out.print("  currently waiting for min threshold to be crossed before designating more trees\n");
     else
         out.print("  currently designating trees until max threshold is crossed\n");
@@ -667,7 +638,7 @@ static void autochop_printStatus(color_ostream &out) {
     int32_t designated_trees, expected_yield, accessible_yield;
     map<int32_t, int32_t> tree_counts, designated_tree_counts;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_logs(out, &usable_logs, citizens, &inaccessible_logs);
     scan_trees(out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
@@ -713,11 +684,11 @@ static void autochop_printStatus(color_ostream &out) {
         bool protect_cookable = false;
         if (watched_burrows_indices.count(burrow->id)) {
             auto &c = watched_burrows[watched_burrows_indices[burrow->id]];
-            chop = get_config_bool(c, BURROW_CONFIG_CHOP);
-            clearcut = get_config_bool(c, BURROW_CONFIG_CLEARCUT);
-            protect_brewable = get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE);
-            protect_edible = get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE);
-            protect_cookable = get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE);
+            chop = c.get_bool(BURROW_CONFIG_CHOP);
+            clearcut = c.get_bool(BURROW_CONFIG_CLEARCUT);
+            protect_brewable = c.get_bool(BURROW_CONFIG_PROTECT_BREWABLE);
+            protect_edible = c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE);
+            protect_cookable = c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE);
         }
         out.print(fmt, name_width, burrow->name.c_str(), int_to_string(burrow->id).c_str(),
                 chop ? "[x]" : "[ ]", clearcut ? "[x]" : "[ ]",
@@ -728,12 +699,12 @@ static void autochop_printStatus(color_ostream &out) {
 }
 
 static void autochop_designate(color_ostream &out) {
-    DEBUG(status,out).print("entering autochop_designate\n");
+    DEBUG(control,out).print("entering autochop_designate\n");
     out.print("designated %d tree(s) for chopping\n", do_cycle(out, true));
 }
 
 static void autochop_undesignate(color_ostream &out) {
-    DEBUG(status,out).print("entering autochop_undesignate\n");
+    DEBUG(control,out).print("entering autochop_undesignate\n");
     int32_t count = 0;
     for (auto plant : world->plants.all) {
         if (is_valid_tree(plant) && Designations::unmarkPlant(plant))
@@ -743,13 +714,13 @@ static void autochop_undesignate(color_ostream &out) {
 }
 
 static void autochop_setTargets(color_ostream &out, int32_t max_logs, int32_t min_logs) {
-    DEBUG(status,out).print("entering autochop_setTargets\n");
+    DEBUG(control,out).print("entering autochop_setTargets\n");
     if (max_logs < min_logs || min_logs < 0) {
         out.printerr("max and min must be at least 0 and max must be greater than min\n");
         return;
     }
-    set_config_val(config, CONFIG_MAX_LOGS, max_logs);
-    set_config_val(config, CONFIG_MIN_LOGS, min_logs);
+    config.set_int(CONFIG_MAX_LOGS, max_logs);
+    config.set_int(CONFIG_MIN_LOGS, min_logs);
 
     // check limits and designate up to the new maximum
     autochop_designate(out);
@@ -759,9 +730,9 @@ static int autochop_getTargets(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(status,*out).print("entering autochop_getTargets\n");
-    Lua::Push(L, get_config_val(config, CONFIG_MAX_LOGS));
-    Lua::Push(L, get_config_val(config, CONFIG_MIN_LOGS));
+    DEBUG(control,*out).print("entering autochop_getTargets\n");
+    Lua::Push(L, config.get_int(CONFIG_MAX_LOGS));
+    Lua::Push(L, config.get_int(CONFIG_MIN_LOGS));
     return 2;
 }
 
@@ -769,10 +740,10 @@ static int autochop_getLogCounts(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(status,*out).print("entering autochop_getNumLogs\n");
+    DEBUG(control,*out).print("entering autochop_getNumLogs\n");
     int32_t usable_logs, inaccessible_logs;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_logs(*out, &usable_logs, citizens, &inaccessible_logs);
     Lua::Push(L, usable_logs);
     Lua::Push(L, inaccessible_logs);
@@ -793,29 +764,56 @@ static void push_burrow_config(lua_State *L, int id, bool chop = false,
 }
 
 static void push_burrow_config(lua_State *L, PersistentDataItem &c) {
-    push_burrow_config(L, get_config_val(c, BURROW_CONFIG_ID),
-            get_config_bool(c, BURROW_CONFIG_CHOP),
-            get_config_bool(c, BURROW_CONFIG_CLEARCUT),
-            get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE),
-            get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE),
-            get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
+    push_burrow_config(L, c.get_int(BURROW_CONFIG_ID),
+            c.get_bool(BURROW_CONFIG_CHOP),
+            c.get_bool(BURROW_CONFIG_CLEARCUT),
+            c.get_bool(BURROW_CONFIG_PROTECT_BREWABLE),
+            c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE),
+            c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE));
+}
+
+static void emplace_bulk_burrow_config(lua_State *L,  map<int32_t, map<string, int32_t>> &burrows, int id, bool chop = false,
+        bool clearcut = false, bool protect_brewable = false,
+        bool protect_edible = false, bool protect_cookable = false) {
+
+    map<string, int32_t> burrow_config;
+    burrow_config.emplace("id", id);
+    burrow_config.emplace("chop", chop);
+    burrow_config.emplace("clearcut", clearcut);
+    burrow_config.emplace("protect_brewable", protect_brewable);
+    burrow_config.emplace("protect_edible", protect_edible);
+    burrow_config.emplace("protect_cookable", protect_cookable);
+
+    burrows.emplace(id, burrow_config);
+}
+
+static void emplace_bulk_burrow_config(lua_State *L, map<int32_t, map<string, int32_t>> &burrows, PersistentDataItem &c) {
+    emplace_bulk_burrow_config(L, burrows, c.get_int(BURROW_CONFIG_ID),
+            c.get_bool(BURROW_CONFIG_CHOP),
+            c.get_bool(BURROW_CONFIG_CLEARCUT),
+            c.get_bool(BURROW_CONFIG_PROTECT_BREWABLE),
+            c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE),
+            c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE));
 }
 
 static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(status,*out).print("entering autochop_getTreeCountsAndBurrowConfigs\n");
+    DEBUG(control,*out).print("entering autochop_getTreeCountsAndBurrowConfigs\n");
     validate_burrow_configs(*out);
     int32_t accessible_trees, inaccessible_trees;
     int32_t designated_trees, expected_yield, accessible_yield;
     map<int32_t, int32_t> tree_counts, designated_tree_counts;
     vector<df::unit *> citizens;
-    Units::getCitizens(citizens);
+    Units::getCitizens(citizens, true);
     scan_trees(*out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
 
     map<string, int32_t> summary;
+
+    map<int32_t, map<string, int32_t>> burrow_config_map;
+
     summary.emplace("accessible_trees", accessible_trees);
     summary.emplace("inaccessible_trees", inaccessible_trees);
     summary.emplace("designated_trees", designated_trees);
@@ -828,21 +826,23 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
 
     for (auto &burrow : plotinfo->burrows.list) {
         int id = burrow->id;
-        if (watched_burrows_indices.count(id)) {
-            push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
-        } else {
-            push_burrow_config(L, id);
-        }
+        if (watched_burrows_indices.count(id))
+            emplace_bulk_burrow_config(L, burrow_config_map,
+                    watched_burrows[watched_burrows_indices[id]]);
+        else
+            emplace_bulk_burrow_config(L, burrow_config_map, id);
     }
 
-    return 3 + plotinfo->burrows.list.size();
+    Lua::Push(L, burrow_config_map);
+
+    return 4;
 }
 
 static int autochop_getBurrowConfig(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(status,*out).print("entering autochop_getBurrowConfig\n");
+    DEBUG(control,*out).print("entering autochop_getBurrowConfig\n");
     validate_burrow_configs(*out);
     // param can be a name or an id
     int id;
@@ -879,7 +879,7 @@ static int autochop_getBurrowConfig(lua_State *L) {
 static void autochop_setBurrowConfig(color_ostream &out, int id, bool chop,
         bool clearcut, bool protect_brewable, bool protect_edible,
         bool protect_cookable) {
-    DEBUG(status,out).print("entering autochop_setBurrowConfig\n");
+    DEBUG(control,out).print("entering autochop_setBurrowConfig\n");
     validate_burrow_configs(out);
 
     bool isInvalidBurrow = !df::burrow::find(id);
@@ -892,12 +892,12 @@ static void autochop_setBurrowConfig(color_ostream &out, int id, bool chop,
     }
 
     PersistentDataItem &c = ensure_burrow_config(out, id);
-    set_config_val(c, BURROW_CONFIG_ID, id);
-    set_config_bool(c, BURROW_CONFIG_CHOP, chop);
-    set_config_bool(c, BURROW_CONFIG_CLEARCUT, clearcut);
-    set_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE, protect_brewable);
-    set_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE, protect_edible);
-    set_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE, protect_cookable);
+    c.set_int(BURROW_CONFIG_ID, id);
+    c.set_bool(BURROW_CONFIG_CHOP, chop);
+    c.set_bool(BURROW_CONFIG_CLEARCUT, clearcut);
+    c.set_bool(BURROW_CONFIG_PROTECT_BREWABLE, protect_brewable);
+    c.set_bool(BURROW_CONFIG_PROTECT_EDIBLE, protect_edible);
+    c.set_bool(BURROW_CONFIG_PROTECT_COOKABLE, protect_cookable);
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

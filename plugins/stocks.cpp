@@ -1,3 +1,13 @@
+#include "PluginManager.h"
+
+using std::vector;
+using std::string;
+
+using namespace DFHack;
+
+DFHACK_PLUGIN("stocks");
+
+/*
 #include "uicommon.h"
 #include "listcolumn.h"
 
@@ -41,12 +51,12 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 #define MAX_NAME 30
 #define SIDEBAR_WIDTH 30
-
+*/
 
 /*
  * Utility
  */
-
+/*
 static string get_quality_name(const df::item_quality quality)
 {
     if (gps->dimx - SIDEBAR_WIDTH < 60)
@@ -66,12 +76,12 @@ static df::item *get_container_of(df::unit *unit)
     auto ref = Units::getGeneralRef(unit, general_ref_type::CONTAINED_IN_ITEM);
     return (ref) ? ref->getItem() : nullptr;
 }
-
+*/
 
 /*
  * Trade Info
  */
-
+/*
 class TradeDepotInfo
 {
 public:
@@ -168,12 +178,12 @@ private:
 };
 
 static TradeDepotInfo depot_info;
-
+*/
 
 /*
  * Item manipulation
  */
-
+/*
 static map<df::item *, bool> items_in_cages;
 
 static df::job *get_item_job(df::item *item)
@@ -541,7 +551,7 @@ class StockListColumn : public ListColumn<T>
             raw_search.erase(0, 1);
         if (raw_search.size() && raw_search[raw_search.size() - 1] == '$')
             raw_search.erase(raw_search.size() - 1, 1);
-        return toLower(raw_search);
+        return toLower_cp437(raw_search);
     }
 
     virtual void tokenizeSearch (vector<string> *dest, const string search)
@@ -566,10 +576,10 @@ class StockListColumn : public ListColumn<T>
         if (!ListColumn<T>::showEntry(entry, search_tokens))
             return false;
 
-        string item_name = toLower(Items::getBookTitle(entry->elem->entries[0]));
+        string item_name = toLower_cp437(Items::getBookTitle(entry->elem->entries[0]));
         if (item_name == "")
         {
-            item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+            item_name = toLower_cp437(Items::getDescription(entry->elem->entries[0], 0, false));
         }
 
         if ((match_start || match_end) && raw_search.size() > item_name.size())
@@ -685,7 +695,7 @@ public:
         }
         else if (input->count(interface_key::HELP))
         {
-            Screen::show(dts::make_unique<search_help>(), plugin_self);
+            Screen::show(std::make_unique<search_help>(), plugin_self);
         }
 
         bool key_processed = false;
@@ -950,7 +960,7 @@ public:
 
         OutputHotkeyString(x, y, "Min Qual: ", "-+");
         OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
-        OutputHotkeyString(x, y, "Max Qual: ", "/*");
+        OutputHotkeyString(x, y, "Max Qual: ", "/ *");
         OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
@@ -1350,7 +1360,7 @@ struct stocks_hook : public df::viewscreen_storesst
         if (input->count(interface_key::CUSTOM_E))
         {
             Screen::dismiss(this);
-            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
+            Screen::show(std::make_unique<ViewscreenStocks>(), plugin_self);
             return;
         }
         INTERPOSE_NEXT(feed)(input);
@@ -1385,7 +1395,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
 
         if (input->count(interface_key::CUSTOM_I))
         {
-            Screen::show(dts::make_unique<ViewscreenStocks>(sp), plugin_self);
+            Screen::show(std::make_unique<ViewscreenStocks>(sp), plugin_self);
             return true;
         }
 
@@ -1452,33 +1462,36 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
 {
     if (!parameters.empty())
     {
-        if (toLower(parameters[0])[0] == 'v')
+        if (toLower_cp437(parameters[0])[0] == 'v')
         {
             out << "Stocks plugin" << endl << "Version: " << PLUGIN_VERSION << endl;
             return CR_OK;
         }
-        else if (toLower(parameters[0])[0] == 's')
+        else if (toLower_cp437(parameters[0])[0] == 's')
         {
-            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
+            Screen::show(std::make_unique<ViewscreenStocks>(), plugin_self);
             return CR_OK;
         }
     }
 
     return CR_WRONG_USAGE;
 }
+*/
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
+    /*
     commands.push_back(PluginCommand(
         "stocks",
         "An improved stocks management screen.",
         stocks_cmd));
 
     ViewscreenStocks::reset();
-
+    */
     return CR_OK;
 }
 
+/*
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
@@ -1491,3 +1504,4 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
+*/

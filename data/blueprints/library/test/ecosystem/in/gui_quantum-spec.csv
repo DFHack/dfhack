@@ -1,5 +1,0 @@
-#notes
-description=integration test for the gui/quantum script
-width=5
-height=5
-extra_fn=gui_quantum

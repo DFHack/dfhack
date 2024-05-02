@@ -1,26 +1,20 @@
 #!/bin/sh
 
-# NOTE: This is dfhack's modification of the normal invocation script,
-# changed to properly set LD_PRELOAD so as to run DFHACK.
-#
 # You can run DF under gdb by passing -g or --gdb as the first argument.
 #
 # If the file ".dfhackrc" exists in the DF directory or your home directory
 # it will be sourced by this script, to let you set environmental variables.
 # If it exists in both places it will first source the one in your home
-# directory, then the on in the game directory.
+# directory, then the one in the game directory.
 #
 # Shell variables .dfhackrc can set to affect this script:
 #     DF_GDB_OPTS: Options to pass to gdb, if it's being run
 #     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
 #     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
 #     DF_POST_CMD: Shell command to be run at very end of script
-#     DFHACK_NO_RENAME_LIBSTDCXX: Non-empty to prevent automatically renaming libstdc++
 
 DF_DIR=$(dirname "$0")
 cd "${DF_DIR}"
-export SDL_DISABLE_LOCK_KEYS=1 # Work around for bug in Debian/Ubuntu SDL patch.
-#export SDL_VIDEO_CENTERED=1 # Centre the screen.  Messes up resizing.
 
 # User config files
 RC=".dfhackrc"
@@ -32,22 +26,6 @@ if [ -r "./$RC" ]; then
     . "./$RC"
 fi
 
-# Disable bundled libstdc++
-libcxx_orig="libs/libstdc++.so.6"
-libcxx_backup="libs/libstdc++.so.6.backup"
-if [ -z "${DFHACK_NO_RENAME_LIBSTDCXX:-}" ] && [ -e "$libcxx_orig" ] && [ ! -e "$libcxx_backup" ]; then
-    mv "$libcxx_orig" "$libcxx_backup"
-    cat <<EOF
-NOTICE: $libcxx_orig has been moved to $libcxx_backup
-for better compatibility. If you are using an older distro and this breaks,
-run "cp $libcxx_backup $libcxx_orig", or add this to
-$HOME/$RC to affect future DFHack installations:
-
-    export DFHACK_NO_RENAME_LIBSTDCXX=1
-
-EOF
-fi
-
 if [ ! -t 0 ]; then
     stty() {
         return
@@ -57,15 +35,8 @@ fi
 # Save current terminal settings
 old_tty_settings=$(stty -g)
 
-# Use distro_fixes.sh from LNP if it exists
-DISTROFIXES="distro_fixes.sh"
-if [ -r "$DISTROFIXES" ]; then
-    . "./$DISTROFIXES"
-fi
-
 # Now run
-
-export LD_LIBRARY_PATH="./hack/libs:./hack:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
 
 LIB="./hack/libdfhack.so"
 LIBSAN=""
@@ -74,7 +45,7 @@ if which objdump > /dev/null; then
 fi
 PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}${LIBSAN}${LIB}"
 
-setarch_arch=$(cat hack/dfhack_setarch.txt || printf i386)
+setarch_arch=$(cat hack/dfhack_setarch.txt || printf x86_64)
 if ! setarch "$setarch_arch" -R true 2>/dev/null; then
     echo "warn: architecture '$setarch_arch' not supported by setarch" >&2
     if [ "$setarch_arch" = "i386" ]; then
@@ -89,8 +60,8 @@ fi
 case "$1" in
   -g | --gdb)
     shift
-    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
-    gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./libs/Dwarf_Fortress "$@"
+    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./dwarfort "$@"
     rm gdbcmd.tmp
     ret=$?
     ;;
@@ -107,11 +78,11 @@ case "$1" in
     echo "set environment MALLOC_PERTURB_ 45" >> gdbcmd.tmp
     echo "set startup-with-shell off" >> gdbcmd.tmp
     echo "target extended-remote localhost:12345" >> gdbcmd.tmp
-    echo "set remote exec-file ./libs/Dwarf_Fortress" >> gdbcmd.tmp
+    echo "set remote exec-file ./dwarfort" >> gdbcmd.tmp
     # For some reason gdb ignores sysroot setting if it is from same file as
     # target extended-remote command
     echo "set sysroot /" > gdbcmd_sysroot.tmp
-    gdb $DF_GDB_OPTS -x gdbcmd.tmp -x gdbcmd_sysroot.tmp --args ./libs/Dwarf_Fortress "$@"
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp -x gdbcmd_sysroot.tmp --args ./dwarfort "$@"
     rm gdbcmd.tmp gdbcmd_sysroot.tmp
     ret=$?
     ;;
@@ -124,35 +95,39 @@ case "$1" in
     ;;
   -h | --helgrind)
     shift
-    LD_PRELOAD="$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    LD_PRELOAD="$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   -c | --callgrind)
     shift
-    LD_PRELOAD="$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   --strace)
     shift
-    strace -f setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@" 2> strace.log
+    strace -f setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@" 2> strace.log
     ret=$?
     ;;
   -x | --exec)
-    exec setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
+    exec setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@"
     # script does not resume
     ;;
   --sc | --sizecheck)
     PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}./hack/libsizecheck.so"
-    MALLOC_PERTURB_=45 setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
+    MALLOC_PERTURB_=45 setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@"
     ret=$?
     ;;
   *)
-    setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
+    TARGET=./dwarfort
+    if [ "$SteamAppId" = 2346660 ]; then
+      TARGET=hack/launchdf
+    fi
+    setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" $TARGET "$@"
     ret=$?
     ;;
 esac

@@ -22,15 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
 #include "Internal.h"
-
-#include <string>
-#include <vector>
-#include <map>
-#include <cstring>
-using namespace std;
-
 #include "Types.h"
 #include "modules/Materials.h"
 #include "VersionInfo.h"
@@ -38,32 +30,38 @@ using namespace std;
 #include "Error.h"
 #include "ModuleFactory.h"
 #include "Core.h"
-
 #include "MiscUtils.h"
 
-#include "df/world.h"
 #include "df/plotinfost.h"
 #include "df/item.h"
+#include "df/builtin_mats.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/body_part_raw.h"
 #include "df/historical_figure.h"
-
+#include "df/inorganic_raw.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/dfhack_material_category.h"
 #include "df/matter_state.h"
+#include "df/material.h"
 #include "df/material_vec_ref.h"
-#include "df/builtin_mats.h"
-
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
 #include "df/descriptor_shape.h"
-
 #include "df/physical_attribute_type.h"
+#include "df/plant_raw.h"
 #include "df/mental_attribute_type.h"
-#include <df/color_modifier_raw.h>
+#include "df/color_modifier_raw.h"
+#include "df/world.h"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <cstring>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -376,7 +374,7 @@ df::craft_material_class MaterialInfo::getCraftClass()
     return craft_material_class::None;
 }
 
-bool MaterialInfo::isAnyCloth()
+bool MaterialInfo::isAnyCloth() const
 {
     using namespace df::enums::material_flags;
 
@@ -387,7 +385,7 @@ bool MaterialInfo::isAnyCloth()
     );
 }
 
-bool MaterialInfo::matches(const df::job_material_category &cat)
+bool MaterialInfo::matches(const df::job_material_category &cat) const
 {
     if (!material)
         return false;
@@ -416,7 +414,7 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
     return false;
 }
 
-bool MaterialInfo::matches(const df::dfhack_material_category &cat)
+bool MaterialInfo::matches(const df::dfhack_material_category &cat) const
 {
     if (!material)
         return false;
@@ -439,12 +437,13 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
         return true;
     if (cat.bits.milk && linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0)
         return true;
+    TEST(gem, IS_GEM);
     return false;
 }
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
+bool MaterialInfo::matches(const df::job_item &item, df::item_type itype) const
 {
     if (!isValid()) return false;
 
@@ -465,7 +464,7 @@ bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
            bits_match(item.flags3.whole, ok3.whole, mask3.whole);
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -500,7 +499,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     //04000000 - "milkable" - vtable[107],1,1
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -513,8 +512,16 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(sewn_imageless, is_cloth);
     TEST(glass_making, MAT_FLAG(CRYSTAL_GLASSABLE));
 
-    TEST(fire_safe, material->heat.melting_point > 11000);
-    TEST(magma_safe, material->heat.melting_point > 12000);
+    TEST(fire_safe, material->heat.melting_point > 11000
+                    && material->heat.boiling_point > 11000
+                    && material->heat.ignite_point > 11000
+                    && material->heat.heatdam_point > 11000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 11000));
+    TEST(magma_safe, material->heat.melting_point > 12000
+                    && material->heat.boiling_point > 12000
+                    && material->heat.ignite_point > 12000
+                    && material->heat.heatdam_point > 12000
+                    && (material->heat.colddam_point == 60001 || material->heat.colddam_point < 12000));
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
     TEST(non_economic, !inorganic || !(plotinfo && vector_get(plotinfo->economic_stone, index)));
 
@@ -532,7 +539,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(yarn, MAT_FLAG(YARN));
 }
 
-void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask)
+void MaterialInfo::getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask) const
 {
     ok.whole = mask.whole = 0;
     if (!isValid()) return;
@@ -549,7 +556,7 @@ bool DFHack::parseJobMaterialCategory(df::job_material_category *cat, const std:
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -565,7 +572,7 @@ bool DFHack::parseJobMaterialCategory(df::dfhack_material_category *cat, const s
     cat->whole = 0;
 
     std::vector<std::string> items;
-    split_string(&items, toLower(token), ",", true);
+    split_string(&items, toLower_cp437(token), ",", true);
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -597,7 +604,7 @@ bool DFHack::isStoneInorganic(int material)
 
 std::unique_ptr<Module> DFHack::createMaterials()
 {
-    return dts::make_unique<Materials>();
+    return std::make_unique<Materials>();
 }
 
 Materials::Materials()

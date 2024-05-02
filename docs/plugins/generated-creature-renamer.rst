@@ -3,7 +3,7 @@ generated-creature-renamer
 
 .. dfhack-tool::
     :summary: Automatically renames generated creatures.
-    :tags: untested adventure fort legends units
+    :tags: unavailable
     :no-command:
 
 .. dfhack-command:: list-generated

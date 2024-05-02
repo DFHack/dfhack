@@ -6,22 +6,27 @@ autobutcher
     :tags: fort auto fps animals
 
 This plugin monitors how many pets you have of each gender and age and assigns
-excess livestock for slaughter. It requires that you add the target race(s) to a
-watch list. Units will be ignored if they are:
+excess livestock for slaughter. Units will be ignored if they are:
 
 * Untamed
-* Nicknamed (for custom protection; you can use the `rename` ``unit`` tool
-  individually, or `zone` ``nick`` for groups)
+* Named or nicknamed
 * Caged, if and only if the cage is in a zone (to protect zoos)
 * Trained for war or hunting
 
-Creatures who will not reproduce (because they're not interested in the
-opposite sex or have been gelded) will be butchered before those who will.
-Older adults and younger children will be butchered first if the population
-is above the target (defaults are: 1 male kid, 5 female kids, 1 male adult,
-5 female adults). Note that you may need to set a target above 1 to have a
-reliable breeding population due to asexuality etc. See `fix-ster` if this is a
-problem.
+Creatures that are least useful for animal breeding programs are marked for
+slaughter first. That is:
+
+- Creatures who will not reproduce (because they're not interested in the
+  opposite sex or have been gelded) will be butchered before those who will
+- Creatures that are only partially trained will be butchered before those who
+  are fully domesticated.
+- Older adults will be butchered before younger adults.
+- Younger juveniles will be butchered before juveniles that are closer to
+  becoming adults.
+
+The default targets are: 2 male kids, 4 female kids, 2 male adults, and
+4 female adults. Note that you may need to set a target above 1 to have a
+reliable breeding population due to asexuality etc.
 
 Usage
 -----
@@ -31,10 +36,13 @@ Usage
     no races are watched by default. You have to add the ones you want to
     monitor with ``autobutcher watch``, ``autobutcher target`` or
     ``autobutcher autowatch``.
+``autobutcher [list]``
+    Print status and current settings, including the watchlist. This is the
+    default command if autobutcher is run without parameters.
 ``autobutcher autowatch``
     Automatically add all new races (animals you buy from merchants, tame
     yourself, or get from migrants) to the watch list using the default target
-    counts.
+    counts. This option is enabled by default.
 ``autobutcher noautowatch``
     Stop auto-adding new races to the watch list.
 ``autobutcher target <fk> <mk> <fa> <ma> all|new|<race> [<race> ...]``
@@ -50,9 +58,6 @@ Usage
     future watch commands without changing your current watchlist. Otherwise,
     all space separated races listed will be modified (or added to the watchlist
     if they aren't there already).
-``autobutcher ticks <ticks>``
-    Change the number of ticks between scanning cycles when the plugin is
-    enabled. By default, a cycle happens every 6000 ticks (about 8 game days).
 ``autobutcher watch all|<race> [<race> ...]``
     Start watching the listed races. If they aren't already in your watchlist,
     then they will be added with the default target counts. If you specify the
@@ -64,13 +69,14 @@ Usage
 ``autobutcher forget all|<race> [<race> ...]``
     Unwatch the specified race(s) (or all races on your watchlist if ``all`` is
     given) and forget target settings for it/them.
-``autobutcher [list]``
-    Print status and current settings, including the watchlist. This is the
-    default command if autobutcher is run without parameters.
+``autobutcher now``
+    Process all livestock according to the current watchlist configuration,
+    even if the plugin is not currently enabled, and thus not doing automatic
+    periodic scans.
 ``autobutcher list_export``
     Print commands required to set the current settings in another fort.
 
-To see a list of all races, run this command:
+To see a list of all races, run this command::
 
     devel/query --table df.global.world.raws.creatures.all --search ^creature_id --maxdepth 1
 
@@ -104,8 +110,7 @@ fortress::
     enable autobutcher
     autobutcher target 2 2 2 2 DOG
     autobutcher target 1 1 2 2 CAT
-    autobutcher target 50 50 14 2 BIRD_GOOSE
+    autobutcher target 10 10 14 2 BIRD_GOOSE
     autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
     autobutcher target 5 5 6 2 PIG
     autobutcher target 0 0 0 0 new
-    autobutcher autowatch

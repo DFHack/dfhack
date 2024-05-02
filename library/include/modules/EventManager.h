@@ -1,6 +1,4 @@
 #pragma once
-#ifndef EVENT_MANAGER_H_INCLUDED
-#define EVENT_MANAGER_H_INCLUDED
 
 #include "Core.h"
 #include "Export.h"
@@ -9,11 +7,13 @@
 #include "Console.h"
 #include "DataDefs.h"
 
-#include "df/coord.h"
-#include "df/unit.h"
 #include "df/unit_inventory_item.h"
-#include "df/unit_wound.h"
-#include "df/construction.h"
+
+namespace df {
+    struct construction;
+    struct unit;
+    struct unit_wound;
+}
 
 namespace DFHack {
     namespace EventManager {
@@ -43,15 +43,17 @@ namespace DFHack {
         }
 
         struct EventHandler {
+            Plugin* plugin;
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq; //how often event is allowed to fire (in ticks) use 0 to always fire when possible
 
-            EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
-            }
+            EventHandler(Plugin* pluginIn, callback_t eventHandlerIn, int32_t freqIn)
+                : plugin(pluginIn), eventHandler(eventHandlerIn), freq(freqIn)
+            { }
 
             bool operator==(const EventHandler& handle) const {
-                return eventHandler == handle.eventHandler && freq == handle.freq;
+                return plugin == handle.plugin && eventHandler == handle.eventHandler && freq == handle.freq;
             }
             bool operator!=(const EventHandler& handle) const {
                 return !( *this == handle);
@@ -117,9 +119,9 @@ namespace DFHack {
             }
         };
 
-        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
-        DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
-        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, Plugin* plugin);
+        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler);
+        DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, bool absolute=false);
+        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler);
         DFHACK_EXPORT void unregisterAll(Plugin* plugin);
         void manageEvents(color_ostream& out);
         void onStateChange(color_ostream& out, state_change_event event);
@@ -128,35 +130,12 @@ namespace DFHack {
 
 namespace std {
     template <>
-    struct hash<df::coord> {
-        std::size_t operator()(const df::coord& c) const {
-            size_t r = 17;
-            const size_t m = 65537;
-            r = m*(r+c.x);
-            r = m*(r+c.y);
-            r = m*(r+c.z);
-            return r;
-        }
-    };
-    template <>
     struct hash<DFHack::EventManager::EventHandler> {
         std::size_t operator()(const DFHack::EventManager::EventHandler& h) const {
             size_t r = 17;
             const size_t m = 65537;
             r = m*(r+(intptr_t)h.eventHandler);
             r = m*(r+h.freq);
-            return r;
-        }
-    };
-    template <>
-    struct hash<df::construction> {
-        std::size_t operator()(const df::construction& construct) const {
-            auto &c = construct.pos;
-            size_t r = 17;
-            const size_t m = 65537;
-            r = m*(r+c.x);
-            r = m*(r+c.y);
-            r = m*(r+c.z);
             return r;
         }
     };
@@ -210,11 +189,3 @@ namespace std {
         }
     };
 }
-
-namespace df{
-    inline bool operator==(const df::construction &A, const df::construction &B){
-        return A.pos == B.pos;
-    }
-}
-
-#endif

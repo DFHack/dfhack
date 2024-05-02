@@ -2,6 +2,7 @@
 
 local _ENV = mkmodule('gui')
 
+local textures = require('gui.textures')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -9,13 +10,28 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0, write_to_lower=true}
+local function getInteriorTexpos()
+    if not dfhack.internal.getAddress('init') then return end
+    if dfhack.screen.inGraphicsMode() then
+        return df.global.init.texpos_border_interior
+    else
+        return df.global.init.classic_texpos_border_interior
+    end
+end
+
+CLEAR_PEN = to_pen{tile=getInteriorTexpos(), ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
+local function set_and_get_undo(field, is_set)
+    local prev_value = df.global.enabler[field]
+    df.global.enabler[field] = is_set and 1 or 0
+    return function() df.global.enabler[field] = prev_value end
+end
+
 local MOUSE_KEYS = {
-    _MOUSE_L = true,
-    _MOUSE_R = true,
+    _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
+    _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
@@ -26,13 +42,17 @@ local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
 FAKE_INPUT_KEYS._STRING = true
 
 function simulateInput(screen,...)
-    local keys = {}
+    local keys, enabled_mouse_keys = {}, {}
     local function push_key(arg)
         local kv = arg
         if type(arg) == 'string' then
             kv = df.interface_key[arg]
             if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
+            end
+            if MOUSE_KEYS[arg] then
+                df.global.enabler.tracking_on = 1
+                enabled_mouse_keys[arg] = true
             end
         end
         if type(kv) == 'number' then
@@ -56,7 +76,16 @@ function simulateInput(screen,...)
             end
         end
     end
+    local undo_fns = {}
+    for mk, fn in pairs(MOUSE_KEYS) do
+        if type(fn) == 'function' then
+            table.insert(undo_fns, fn(enabled_mouse_keys[mk]))
+        end
+    end
     dscreen._doSimulateInput(screen, keys)
+    for _, undo_fn in ipairs(undo_fns) do
+        undo_fn()
+    end
 end
 
 function mkdims_xy(x1,y1,x2,y2)
@@ -489,7 +518,15 @@ function View:getMousePos(view_rect)
 end
 
 function View:getMouseFramePos()
-    return self:getMousePos(ViewRect{rect=self.frame_rect})
+    if not self.frame_rect or not self.frame_parent_rect then return end
+    return self:getMousePos(ViewRect{
+        rect=mkdims_wh(
+            self.frame_rect.x1+self.frame_parent_rect.x1,
+            self.frame_rect.y1+self.frame_parent_rect.y1,
+            self.frame_rect.width,
+            self.frame_rect.height
+        )
+    })
 end
 
 function View:computeFrame(parent_rect)
@@ -629,7 +666,7 @@ end
 
 function Screen:renderParent()
     if self._native and self._native.parent then
-        self._native.parent:render()
+        self._native.parent:render(dfhack.getTickCount())
     else
         dscreen.clear()
     end
@@ -695,8 +732,6 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
-local zscreen_inhibit_mouse_l = false
-
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -708,8 +743,10 @@ ZScreen.ATTRS{
 }
 
 function ZScreen:preinit(args)
-    if args.initial_pause == nil then
-        args.initial_pause = DEFAULT_INITIAL_PAUSE
+    if self.ATTRS.initial_pause == nil then
+        args.initial_pause = DEFAULT_INITIAL_PAUSE or
+                self.ATTRS.pass_mouse_clicks == false or
+                self.ATTRS.force_pause
     end
 end
 
@@ -731,6 +768,7 @@ end
 
 local NO_LOGIC_SCREENS = {
     'viewscreen_loadgamest',
+    'viewscreen_adopt_regionst',
     'viewscreen_export_regionst',
     'viewscreen_choose_game_typest',
     'viewscreen_worldst',
@@ -745,6 +783,18 @@ end
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
     if self.force_pause and dfhack.isMapLoaded() then
+        if not df.global.pause_state and self.force_pause ~= 'blink' then
+            self.force_pause = 'blink'
+            local end_ms = dfhack.getTickCount() + 1000
+            local function blink_reset()
+                if dfhack.getTickCount() < end_ms then
+                    dfhack.timeout(10, 'frames', blink_reset)
+                else
+                    self.force_pause = true
+                end
+            end
+            blink_reset()
+        end
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
@@ -772,51 +822,36 @@ end
 function ZScreen:onInput(keys)
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
-        if (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN) and has_mouse then
+        if has_mouse and
+                (keys._MOUSE_L or keys._MOUSE_R or
+                 keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
+                 keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
         else
             self:sendInputToParent(keys)
-            return
+            return true
         end
     end
 
     if ZScreen.super.onInput(self, keys) then
-        -- ensure underlying DF screens don't also react to handled clicks
-        if keys._MOUSE_L_DOWN then
-            -- note we can't clear mouse_lbut here. otherwise we break dragging,
-            df.global.enabler.mouse_lbut_down = 0
-            zscreen_inhibit_mouse_l = true
-        end
-        if keys._MOUSE_R_DOWN then
-            df.global.enabler.mouse_rbut_down = 0
-        end
-        return
-    end
-
-    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
+        -- noop
+    elseif self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
         self:sendInputToParent(keys)
-        return
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
-        -- ensure underlying DF screens don't also react to the rclick
-        df.global.enabler.mouse_rbut_down = 0
-        df.global.enabler.mouse_rbut = 0
-        return
     else
-        if zscreen_inhibit_mouse_l then
-            if keys._MOUSE_L then
-                return
-            else
-                zscreen_inhibit_mouse_l = false
-            end
-        end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
-            for key in pairs(MOUSE_KEYS) do
-                if keys[key] then
-                    passit = true
-                    break
+            if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
+                    keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN then
+                passit = true
+            else
+                for key in pairs(MOUSE_KEYS) do
+                    if keys[key] then
+                        passit = true
+                        break
+                    end
                 end
             end
         end
@@ -826,8 +861,8 @@ function ZScreen:onInput(keys)
         if passit then
             self:sendInputToParent(keys)
         end
-        return
     end
+    return true
 end
 
 function ZScreen:raise()
@@ -855,15 +890,32 @@ end
 function ZScreen:onGetSelectedItem()
     return zscreen_get_any(self, 'Item')
 end
+function ZScreen:onGetSelectedJob()
+    return zscreen_get_any(self, 'Job')
+end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')
+end
+function ZScreen:onGetSelectedStockpile()
+    return zscreen_get_any(self, 'Stockpile')
+end
+function ZScreen:onGetSelectedCivZone()
+    return zscreen_get_any(self, 'CivZone')
 end
 function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
 end
 
---------------------------
--- Framed screen object --
+-- convenience subclass for modal dialogs
+ZScreenModal = defclass(ZScreenModal, ZScreen)
+ZScreenModal.ATTRS{
+    defocusable = false,
+    force_pause = true,
+    pass_movement_keys = false,
+    pass_mouse_clicks = false,
+}
+
+-- Framed screen object
 --------------------------
 
 -- Plain grey-colored frame.
@@ -877,57 +929,102 @@ GREY_FRAME = {
 -- The boundary used by the pre-steam DF screens.
 -- deprecated
 BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK }, -- ch=0xDB is "full block" (█)
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 local BASE_FRAME = {
-    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK }, -- ch=206 is "box drawings double vertical and horizontal" (╬)
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
-local function make_frame(name, double_line)
-    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
-    local tp = function(offset)
-        if texpos == -1 then return nil end
-        return texpos + offset
-    end
 
+local function make_frame(tp, double_line)
     local frame = copyall(BASE_FRAME)
-    frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
-    frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external horizontal/vertical bars
+    frame.t_frame_pen = to_pen{ tile=curry(tp, 2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=curry(tp, 8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=curry(tp, 16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=curry(tp, 10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external corners
+    frame.lt_frame_pen = to_pen{ tile=curry(tp, 1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=curry(tp, 15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=curry(tp, 3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=curry(tp, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal T-junctions
+    frame.tTi_frame_pen = to_pen{ tile=curry(tp, 21), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bTi_frame_pen = to_pen{ tile=curry(tp, 20), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lTi_frame_pen = to_pen{ tile=curry(tp, 19), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rTi_frame_pen = to_pen{ tile=curry(tp, 18), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external T-junctions
+    frame.tTe_frame_pen = to_pen{ tile=curry(tp, 11), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bTe_frame_pen = to_pen{ tile=curry(tp, 12), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lTe_frame_pen = to_pen{ tile=curry(tp, 13), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rTe_frame_pen = to_pen{ tile=curry(tp, 14), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal horizontal/vertical bars (and cross junction)
+    frame.v_frame_pen = to_pen{ tile=curry(tp, 5), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.h_frame_pen = to_pen{ tile=curry(tp, 6), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.x_frame_pen = to_pen{ tile=curry(tp, 4), ch=197, fg=COLOR_GREY, bg=COLOR_BLACK }
     return frame
 end
 
-WINDOW_FRAME = make_frame('Window', true)
-PANEL_FRAME = make_frame('Panel', false)
-MEDIUM_FRAME = make_frame('Medium', false)
-THIN_FRAME = make_frame('Thin', false)
+function FRAME_WINDOW(resizable)
+    local frame = make_frame(textures.tp_border_window, true)
+    if resizable then
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_window, 17), ch=217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    else
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=188, fg=COLOR_GREY, bg=COLOR_BLACK }
+    end
+    return frame
+end
+function FRAME_PANEL()
+    return make_frame(textures.tp_border_panel, false)
+end
+function FRAME_MEDIUM()
+    return make_frame(textures.tp_border_medium, false)
+end
+function FRAME_BOLD()
+    return make_frame(textures.tp_border_bold, true)
+end
+function FRAME_THIN()
+    return make_frame(textures.tp_border_thin, false)
+end
+function FRAME_INTERIOR()
+    local frame = make_frame(textures.tp_border_thin, false)
+    frame.signature_pen = false
+    return frame
+end
+function FRAME_INTERIOR_MEDIUM()
+    local frame = make_frame(textures.tp_border_medium, false)
+    frame.signature_pen = false
+    return frame
+end
 
 -- for compatibility with pre-steam code
-GREY_LINE_FRAME = WINDOW_FRAME
+GREY_LINE_FRAME = FRAME_PANEL
 
-function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
+-- for compatibility with deprecated frame naming scheme
+WINDOW_FRAME = FRAME_WINDOW
+PANEL_FRAME = FRAME_PANEL
+MEDIUM_FRAME = FRAME_MEDIUM
+BOLD_FRAME = FRAME_BOLD
+INTERIOR_FRAME = FRAME_INTERIOR
+INTERIOR_MEDIUM_FRAME = FRAME_INTERIOR_MEDIUM
+
+function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
+    if type(style) == 'function' then
+        style = style(resizable)
+    end
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    local rb_frame_pen = style.rb_frame_pen
-    if rb_frame_pen == WINDOW_FRAME.rb_frame_pen and not resizable then
-        rb_frame_pen = PANEL_FRAME.rb_frame_pen
-    end
-    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
+    dscreen.paintTile(style.rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
@@ -947,8 +1044,12 @@ function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     end
 
     if pause_forced then
+        local pause_label = ' PAUSE FORCED '
+        if pause_forced == 'blink' and blink_visible(100) then
+            pause_label = '              '
+        end
         dscreen.paintString(style.paused_pen or style.title_pen or pen,
-                            x1+2, y2, ' PAUSE FORCED ')
+                            x1+2, y2, pause_label)
     end
 end
 
@@ -983,4 +1084,15 @@ function FramedScreen:onRenderFrame(dc, rect)
     paint_frame(dc,rect,self.frame_style,self.frame_title)
 end
 
+function FramedScreen:onInput(keys)
+    FramedScreen.super.onInput(self, keys)
+    return true -- FramedScreens are modal
+end
+
+-- Inverts the brightness of the color, optionally taking a "bold" parameter,
+-- which you should include if you're reading the fg color of a pen.
+function invert_color(color, bold)
+    color = bold and (color + 8) or color
+    return (color + 8) % 16
+end
 return _ENV

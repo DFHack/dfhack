@@ -4,16 +4,19 @@
 Licenses
 ########
 
-DFHack is distributed under the Zlib license, with some MIT-
-and BSD-licensed components.  These licenses protect your right
-to use DFHack for any purpose, distribute copies, and so on.
+DFHack is distributed under the Zlib license, with some MIT- and BSD-licensed
+components.  These licenses protect your right to use DFHack for any purpose,
+distribute copies, and so on.
 
-The core, plugins, scripts, and other DFHack code all use the
-ZLib license unless noted otherwise.  By contributing to DFHack,
-authors release the contributed work under this license.
+The core, plugins, scripts, and other DFHack code all use the ZLib license
+unless noted otherwise.  By contributing to DFHack, authors release the
+contributed work under this license.
 
-DFHack also draws on several external packages.
-Their licenses are summarised here and reproduced below.
+Some graphic assets are derived from vanilla DF assets and used with permission
+from Bay12.
+
+DFHack also draws on several external packages. Their licenses are summarised
+here and reproduced below.
 
 =============== ============= =================================================
 Component       License       Copyright
@@ -31,7 +34,6 @@ luacov_         MIT           \(c\) 2007 - 2018 Hisham Muhammad
 luafilesystem_  MIT           \(c\) 2003-2014, Kepler Project
 lua-profiler_   MIT           \(c\) 2002,2003,2004 Pepperfish
 protobuf_       BSD 3-clause  \(c\) 2008, Google Inc.
-tinythread_     Zlib          \(c\) 2010, Marcus Geelnard
 tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
 UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 xlsxio_         MIT           \(c\) 2016-2020, Brecht Sanders
@@ -52,7 +54,6 @@ googletest_     BSD 3-Clause  \(c\) 2008, Google Inc.
 .. _luafilesystem: https://github.com/keplerproject/luafilesystem
 .. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
 .. _protobuf: https://github.com/google/protobuf
-.. _tinythread: http://tinythreadpp.bitsnbites.eu/
 .. _tinyxml: http://www.sourceforge.net/projects/tinyxml
 .. _UTF-8-decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa
 .. _xlsxio: https://github.com/brechtsanders/xlsxio

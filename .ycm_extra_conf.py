@@ -19,7 +19,6 @@ default_flags = [
     '-I','depends/md5',
     '-I','depends/jsoncpp/include',
     '-I','depends/tinyxml',
-    '-I','depends/tthread',
     '-I','depends/clsocket/src',
     '-x','c++',
     '-D','PROTOBUF_USE_DLLS',

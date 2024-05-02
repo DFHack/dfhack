@@ -32,7 +32,6 @@ distribution.
 #include "MemAccess.h"
 #include "Core.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
@@ -685,7 +684,8 @@ static int meta_new(lua_State *state)
 
     type_identity *id = get_object_identity(state, 1, "df.new()", true);
 
-    void *ptr;
+    void *ptr = nullptr;
+    std::string err_context;
 
     // Support arrays of primitive types
     if (argc == 2)
@@ -703,11 +703,22 @@ static int meta_new(lua_State *state)
     }
     else
     {
-        ptr = id->allocate();
+        try {
+            ptr = id->allocate();
+        }
+        catch (std::exception &e) {
+            if (e.what()) {
+                err_context = e.what();
+            }
+        }
     }
 
     if (!ptr)
-        luaL_error(state, "Cannot allocate %s", id->getFullName().c_str());
+        luaL_error(state, "Cannot allocate %s%s%s",
+            id->getFullName().c_str(),
+            err_context.empty() ? "" : ": ",
+            err_context.c_str()
+        );
 
     if (lua_isuserdata(state, 1))
     {
@@ -1658,6 +1669,7 @@ static void RenderType(lua_State *state, compound_identity *node)
 
         {
             RenderTypeChildren(state, node->getScopeChildren());
+            IndexStatics(state, ix_meta, ftable, (struct_identity*)node);
 
             lua_pushlightuserdata(state, node);
             lua_setfield(state, ftable, "_identity");

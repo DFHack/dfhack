@@ -29,46 +29,6 @@ SIDEBAR_MODE_KEYS = {
     [df.ui_sidebar_mode.ViewUnits]='D_VIEWUNIT',
 }
 
--- Sends ESC keycodes until we get to dwarfmode/Default and then enters the
--- specified sidebar mode with the corresponding keycode. If we don't get to
--- Default after max_esc presses of ESC (default value is 10), we throw an
--- error. The target sidebar mode must be a member of SIDEBAR_MODE_KEYS
-function enterSidebarMode(sidebar_mode, max_esc)
-    local navkey = SIDEBAR_MODE_KEYS[sidebar_mode]
-    if not navkey then
-        error(('Invalid or unsupported sidebar mode: %s (%s)')
-              :format(sidebar_mode, df.ui_sidebar_mode[sidebar_mode]))
-    end
-    local max_esc_num = tonumber(max_esc)
-    if max_esc and (not max_esc_num or max_esc_num <= 0) then
-        error(('max_esc must be a positive number: got %s')
-              :format(tostring(max_esc)))
-    end
-    local remaining_esc = max_esc_num or 10
-    local focus_string = ''
-    while remaining_esc > 0 do
-        local screen = dfhack.gui.getCurViewscreen(true)
-        focus_string = dfhack.gui.getFocusString(screen)
-        if df.global.plotinfo.main.mode == df.ui_sidebar_mode.Default and
-                focus_string == 'dwarfmode/Default' then
-            if #navkey > 0 then gui.simulateInput(screen, navkey) end
-            if navkey == 'D_DESIGNATE' then
-                -- if the z-level happens to be on the surface, the mode will be
-                -- set to DesignateChopTrees. we need an extra step to get to
-                -- DesignateMine
-                gui.simulateInput(dfhack.gui.getCurViewscreen(true),
-                                 'DESIGNATE_DIG')
-            end
-            return
-        end
-        gui.simulateInput(screen, 'LEAVESCREEN')
-        remaining_esc = remaining_esc - 1
-    end
-    error(('Unable to get into target sidebar mode (%s) from' ..
-           ' current UI viewscreen (%s).'):format(
-                    df.ui_sidebar_mode[sidebar_mode], focus_string))
-end
-
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
     return {
@@ -77,7 +37,7 @@ function getPanelLayout()
 end
 
 function getCursorPos()
-    if g_cursor.x ~= -30000 then
+    if g_cursor.x >= 0 then
         return copyall(g_cursor)
     end
 end
@@ -259,6 +219,7 @@ MOVEMENT_KEYS = {
     CURSOR_UPLEFT_FAST = { -1, -1, 0, true }, CURSOR_UPRIGHT_FAST = { 1, -1, 0, true },
     CURSOR_DOWNLEFT_FAST = { -1, 1, 0, true }, CURSOR_DOWNRIGHT_FAST = { 1, 1, 0, true },
     CURSOR_UP_Z = { 0, 0, 1 }, CURSOR_DOWN_Z = { 0, 0, -1 },
+    CURSOR_UP_Z_FAST = { 0, 0, 1, true }, CURSOR_DOWN_Z_FAST = { 0, 0, -1, true },
     CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
 }
 

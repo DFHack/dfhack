@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "PassiveSocket.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "Debug.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -79,12 +80,13 @@ namespace {
     struct BlockedException : std::exception {
         const char* what() const noexcept override
         {
-            return "Core has blocked all connection. This should have been catched.";
+            return "Core has blocked all connection. This should have been caught.";
         }
     };
 }
 
 namespace DFHack {
+    DBG_DECLARE(core, socket, DebugCategory::LINFO);
 
     struct BlockGuard {
         std::lock_guard<std::mutex> lock;
@@ -420,17 +422,20 @@ ServerMainImpl::ServerMainImpl(std::promise<bool> promise, int port) :
 
     Json::Value configJson;
 
-    std::ifstream inFile(filename, std::ios_base::in);
-
     bool allow_remote = false;
 
-    if (inFile.is_open())
-    {
-        inFile >> configJson;
-        inFile.close();
-
-        allow_remote = configJson.get("allow_remote", "false").asBool();
+    std::ifstream inFile(filename, std::ios_base::in);
+    try {
+        if (inFile.is_open())
+        {
+            inFile >> configJson;
+            allow_remote = configJson.get("allow_remote", "false").asBool();
+        }
+    } catch (const std::exception & e) {
+        std::cerr << "Error reading remote server config file: " << filename << ": " << e.what() << std::endl;
+        std::cerr << "Reverting to remote server config to defaults" << std::endl;
     }
+    inFile.close();
 
     // rewrite/normalize config file
     configJson["allow_remote"] = allow_remote;
@@ -470,19 +475,28 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
 {
     ServerMainImpl server{std::move(promise), port};
 
-    CActiveSocket *client = nullptr;
-
+    server.socket.SetBlocking();
     try {
-        while ((client = server.socket.Accept()) != NULL)
-        {
-            BlockGuard lock;
-            ServerConnection::Accepted(client);
-            client = nullptr;
+        while (server.socket.IsSocketValid()) {
+            if (std::unique_ptr<CActiveSocket> client{server.socket.Accept()}) {
+                BlockGuard lock;
+                ServerConnection::Accepted(client.release());
+            }
+            else switch (server.socket.GetSocketError()) {
+            case CSimpleSocket::SocketInvalidSocket:
+                WARN(socket).print("Listening socket invalid, shutting down RemoteServer\n");
+                server.socket.Close();
+                break;
+            case CSimpleSocket::SocketFirewallError:
+            case CSimpleSocket::SocketProtocolError:
+                WARN(socket).print("Connection failed: %s\n", server.socket.DescribeError());
+                break;
+            default:
+                break;
+            }
         }
-    } catch(BlockedException &) {
-        if (client)
-            client->Close();
-        delete client;
+    }
+    catch(BlockedException &) {
     }
 }
 

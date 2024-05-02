@@ -292,9 +292,9 @@ static void enableEvent(int evType,int freq)
     if (oldFreq != -1) {
         if (freq >= oldFreq)
             return;
-        EventManager::unregister(typeToEnable,EventManager::EventHandler(fun_ptr,oldFreq),plugin_self);
+        EventManager::unregister(typeToEnable,EventManager::EventHandler(plugin_self,fun_ptr,oldFreq));
     }
-    EventManager::registerListener(typeToEnable,EventManager::EventHandler(fun_ptr,freq),plugin_self);
+    EventManager::registerListener(typeToEnable,EventManager::EventHandler(plugin_self,fun_ptr,freq));
     enabledEventManagerEvents[typeToEnable] = freq;
 }
 DFHACK_PLUGIN_LUA_FUNCTIONS{

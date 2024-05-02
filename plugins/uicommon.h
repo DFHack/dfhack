@@ -196,17 +196,6 @@ static inline char get_string_input(const std::set<df::interface_key> *input)
  * Utility Functions
  */
 
-static inline df::building_stockpilest *get_selected_stockpile()
-{
-    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
-        df::global::plotinfo->main.mode != ui_sidebar_mode::QueryBuilding)
-    {
-        return nullptr;
-    }
-
-    return virtual_cast<df::building_stockpilest>(df::global::world->selected_building);
-}
-
 static inline bool can_trade()
 {
     if (df::global::plotinfo->caravans.size() == 0)

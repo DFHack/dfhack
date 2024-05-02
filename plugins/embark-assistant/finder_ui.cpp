@@ -1805,7 +1805,7 @@ void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::
         embark_assist::finder_ui::ui_setup(find_callback, max_inorganic);
     }
     if (!fileresult) {
-        Screen::show(dts::make_unique<ViewscreenFindUi>(), plugin_self);
+        Screen::show(std::make_unique<ViewscreenFindUi>(), plugin_self);
     }
     else
     {

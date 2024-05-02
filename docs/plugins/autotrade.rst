@@ -3,7 +3,7 @@ autotrade
 
 .. dfhack-tool::
     :summary: Quickly designate items to be traded.
-    :tags: fort productivity items stockpiles
+    :tags: untested fort productivity items stockpiles
     :no-command:
 
 When `enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for

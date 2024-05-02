@@ -3,7 +3,7 @@ embark-tools
 
 .. dfhack-tool::
     :summary: Extend the embark screen functionality.
-    :tags: embark fort interface
+    :tags: untested embark fort interface
 
 Usage
 -----

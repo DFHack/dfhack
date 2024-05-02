@@ -12,7 +12,7 @@
 
 using namespace DFHack;
 
-using Group = std::unordered_set<df::coord>;
+using Group = std::set<df::coord>;
 using Groups = std::vector<Group>;
 
 /* Used to build groups of adjacent channel designations/jobs
@@ -37,6 +37,12 @@ private:
 protected:
     void add(const df::coord &map_pos);
 public:
+    int debugGIndex(const df::coord &map_pos) const {
+        if (groups_map.count(map_pos)) {
+            return groups_map.find(map_pos)->second;
+        }
+        return -1;
+    }
     explicit ChannelGroups(ChannelJobs &jobs) : jobs(jobs) { groups.reserve(200); }
     void scan_one(const df::coord &map_pos);
     void scan(bool full_scan = false);

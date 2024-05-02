@@ -790,7 +790,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     offset_count++;
 
                     results.biome_index[l] = world_data->region_map[adjusted.x][adjusted.y].region_id;
-                    results.biome[l] = DFHack::Maps::GetBiomeTypeWithRef(adjusted.x, adjusted.y, k);
+                    results.biome[l] = DFHack::Maps::getBiomeTypeWithRef(adjusted.x, adjusted.y, k);
                     temperature = world_data->region_map[adjusted.x][adjusted.y].temperature;
                     negative = temperature < 0;
 

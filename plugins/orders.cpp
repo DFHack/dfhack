@@ -41,7 +41,7 @@ DFHACK_PLUGIN("orders");
 REQUIRE_GLOBAL(world);
 
 static const std::string ORDERS_DIR = "dfhack-config/orders";
-static const std::string ORDERS_LIBRARY_DIR = "dfhack-config/orders/library";
+static const std::string ORDERS_LIBRARY_DIR = "hack/data/orders";
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -84,6 +84,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "list")
     {
         return orders_list_command(out);
+    }
+
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
     }
 
     if (parameters[0] == "export" && parameters.size() == 2)
@@ -139,20 +144,9 @@ static command_result orders_list_command(color_ostream & out)
     // support subdirs so we can identify and ignore subdirs with ".json" names.
     // also listdir_recursive will alphabetize the list for us.
     std::map<std::string, bool> files;
-    if (0 < Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false))
-    {
-        out << COLOR_LIGHTRED << "Unable to list files in directory: " << ORDERS_DIR << std::endl;
-        return CR_FAILURE;
-    }
+    Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false);
 
-    if (files.empty())
-    {
-        out << COLOR_YELLOW << "No exported orders yet. Create manager orders and export them with 'orders export <name>', or copy pre-made orders .json files into " << ORDERS_DIR << "." << std::endl;
-        return CR_OK;
-    }
-
-    for (auto it : files)
-    {
+    for (auto it : files) {
         if (it.second)
             continue; // skip directories
         std::string name = it.first;

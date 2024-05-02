@@ -7,4 +7,4 @@ pathable
     :no-command:
 
 This plugin provides a Lua API, but no direct commands. See `pathable-api` for
-details.
+details and `gui/pathable` for the user interface.

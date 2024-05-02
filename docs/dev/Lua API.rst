@@ -950,20 +950,36 @@ Screens
   Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
   ignores screens already marked to be removed.
 
-* ``dfhack.gui.getFocusString(viewscreen)``
+* ``dfhack.gui.getFocusStrings(viewscreen)``
 
-  Returns a string representation of the current focus position
-  in the ui. The string has a "screen/foo/bar/baz..." format.
+  Returns a table of string representations of the current UI focuses.
+  The strings have a "screen/foo/bar/baz..." format e.g..::
+
+    [1] = "dwarfmode/Info/CREATURES/CITIZEN"
+    [2] = "dwardmode/Squads"
+
+* ``dfhack.gui.matchFocusString(focus_string[, viewscreen])``
+
+  Returns ``true`` if the given ``focus_string`` is found in the current
+  focus strings, or as a prefix to any of the focus strings, or ``false``
+  if no match is found. Matching is case insensitive. If ``viewscreen`` is
+  specified, gets the focus strings to match from the given viewscreen.
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
   Returns the focus string of the current viewscreen.
 
-* ``dfhack.gui.getViewscreenByType(type [, depth])``
+* ``dfhack.gui.getViewscreenByType(type[, depth])``
 
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
+
+* ``dfhack.gui.getDFViewscreen([skip_dismissed[, viewscreen]])``
+
+  Returns the topmost viewscreen not owned by DFHack. If ``skip_dismissed`` is
+  ``true``, ignores screens already marked to be removed. If ``viewscreen`` is
+  specified, starts the scan at the given viewscreen.
 
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1011,7 +1027,7 @@ Fortress mode
 
 * ``dfhack.gui.getDwarfmodeViewDims()``
 
-  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  Returns dimensions of the displayed map viewport. See ``getPanelLayout()``
   in the ``gui.dwarfmode`` module for a more Lua-friendly version.
 
 * ``dfhack.gui.resetDwarfmodeView([pause])``
@@ -1121,7 +1137,8 @@ Other
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to
-  the closest ground z-level below. Defaults to 0, unless overridden by plugins.
+  the closest rendered ground z-level below. Defaults to 0, unless overridden by
+  plugins.
 
 Job module
 ----------
@@ -1137,6 +1154,10 @@ Job module
 * ``dfhack.job.printItemDetails(jobitem,idx)``
 
   Prints info about the job item.
+
+* ``dfhack.job.removeJob(job)``
+
+  Cancels a job, cleans up all references to it, and removes it from the world.
 
 * ``dfhack.job.getGeneralRef(job, type)``
 
@@ -1401,6 +1422,11 @@ Units module
   argument is given, only units where ``filter(unit)`` returns true will be included.
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
+
+* ``dfhack.units.getCitizens([ignore_sanity])``
+
+  Returns a table (list) of all citizens, which you would otherwise have to loop over all
+  units in world and test against ``isCitizen()`` to discover.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1769,6 +1795,10 @@ Maps module
 
   Returns the biome info struct for the given global map region.
 
+  ``dfhack.maps.getBiomeType(region_coord2d)`` or ``getBiomeType(x,y)``
+
+  Returns the biome_type for the given global map region.
+
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
@@ -1788,7 +1818,7 @@ Maps module
 
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
-  Returns *x, y* for use with ``getRegionBiome``.
+  Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
 
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 
@@ -1919,9 +1949,11 @@ General
 
   Returns the number of tiles included by extents, or defval.
 
-* ``dfhack.buildings.containsTile(building, x, y[, room])``
+* ``dfhack.buildings.containsTile(building, x, y)``
 
-  Checks if the building contains the specified tile, either directly, or as room.
+  Checks if the building contains the specified tile. If the building contains extents,
+  then the extents are checked. Otherwise, returns whether the x and y map coordinates
+  are within the building's bounding box.
 
 * ``dfhack.buildings.hasSupport(pos,size)``
 
@@ -1987,6 +2019,11 @@ Low-level building creation functions:
 
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
+
+* ``dfhack.buildings.notifyCivzoneModified(building)``
+
+  Rebuilds the civzone <-> overlapping building association mapping.
+  Call after changing extents or modifying size in some fashion
 
 * ``dfhack.buildings.markedForRemoval(building)``
 
@@ -2161,7 +2198,14 @@ Functions:
 
 * ``dfhack.screen.getMousePos()``
 
-  Returns *x,y* of the tile the mouse is over.
+  Returns *x,y* of the UI interface tile the mouse is over, with the upper left
+  corner being ``0,0``. To get the map tile coordinate that the mouse is over,
+  see ``dfhack.gui.getMousePos()``.
+
+* ``dfhack.screen.getMousePixels()``
+
+  Returns *x,y* of the screen coordinates the mouse is over in pixels, with the
+  upper left corner being ``0,0``.
 
 * ``dfhack.screen.inGraphicsMode()``
 
@@ -2253,6 +2297,18 @@ a table with the following possible fields:
     Specifies that the tile should be shaded with *fg/bg*.
   ``tile_fg, tile_bg``
     If specified, overrides *tile_color* and supplies shading colors directly.
+  ``keep_lower``
+    If set to true, will not overwrite the background tile when filling in
+    the foreground tile.
+  ``write_to_lower``
+    If set to true, the specified ``tile`` will be written to the background
+    instead of the foreground.
+  ``top_of_text``
+    If set to true, the specified ``tile`` will have the top half of the specified
+    ``ch`` character superimposed over the lower half of the tile.
+  ``bottom_of_text``
+    If set to true, the specified ``tile`` will have the bottom half of the specified
+    ``ch`` character superimposed over the top half of the tile.
 
 Alternatively, it may be a pre-parsed native object with the following API:
 
@@ -2355,7 +2411,14 @@ Supported callbacks and fields are:
   where the above painting functions work correctly.
 
   If omitted, the screen is cleared; otherwise it should do that itself.
-  In order to make a see-through dialog, call ``self._native.parent:render()``.
+  In order to make a dialog where portions of the parent viewscreen are still
+  visible in the background, call ``screen:renderParent()``.
+
+  If artifacts are left on the parent even after this function is called, such
+  as when the window is dragged or is resized, any code can set
+  ``gui.Screen.request_full_screen_refresh`` to ``true``. Then when
+  ``screen.renderParent()`` is next called, it will do a full flush of the
+  graphics and clear the screen of artifacts.
 
 * ``function screen:onIdle()``
 
@@ -2377,13 +2440,13 @@ Supported callbacks and fields are:
   ``_STRING``
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
-  ``_MOUSE_L, _MOUSE_R``
-    If the left or right mouse button is being pressed.
+  ``_MOUSE_L, _MOUSE_R, _MOUSE_M``
+    If the left, right, and/or middle mouse button is being pressed.
 
-  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN``
-    If the left or right mouse button was just pressed.
+  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN, _MOUSE_M_DOWN``
+    If the left, right, and/or middle mouse button was just pressed.
 
-  If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+  If this method is omitted, the screen is dismissed on reception of the ``LEAVESCREEN`` key.
 
 * ``function screen:onGetSelectedUnit()``
 * ``function screen:onGetSelectedItem()``
@@ -2614,8 +2677,8 @@ and are only documented here for completeness:
 
   Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
-  the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
-  be searched after.
+  the default paths (e.g. ``dfhack-config/scripts``, ``hack/scripts``); otherwise,
+  it will be searched after.
 
   Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
   not exist or has already been registered).
@@ -3280,17 +3343,20 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+.. _helpdb:
+
 helpdb
 ======
 
 Unified interface for DFHack tool help text. Help text is read from the rendered
-text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
-script sources (for scripts) or the string passed to the ``PluginCommand``
+text in ``hack/docs/docs/tools``. If no rendered text exists, help is read from
+the script sources (for scripts) or the string passed to the ``PluginCommand``
 initializer (for plugins). See `documentation` for details on how DFHack's help
 system works.
 
-The database is lazy-loaded when an API method is called. It rechecks its help
-sources for updates if an API method has not been called in the last 60 seconds.
+The database is loaded when DFHack initializes, but can be explicitly refreshed
+with a call to ``helpdb.refresh()`` if docs are added/changed during a play
+session.
 
 Each entry has several properties associated with it:
 
@@ -3305,6 +3371,10 @@ Each entry has several properties associated with it:
 - Short help, a the ~54 character description string.
 - Long help, the entire contents of the associated help file.
 - A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.refresh()``
+
+  Scan for changes in available commands and their documentation.
 
 * ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
 
@@ -3632,14 +3702,19 @@ considered stable.
 Misc
 ----
 
-* ``USE_GRAPHICS``
-
-  Contains the value of ``dfhack.screen.inGraphicsMode()``, which cannot be
-  changed without restarting the game and thus is constant during the session.
-
 * ``CLEAR_PEN``
 
-  The black pen used to clear the screen.
+  The black pen used to clear the screen. In graphics mode, it will clear the
+  foreground and set the background to the standard black tile.
+
+* ``TRANSPARENT_PEN``
+
+  A pen that will clear all textures from the UI layer, making the tile transparent.
+
+* ``KEEP_LOWER_PEN``
+
+  A pen that will write tiles over existing background tiles instead of clearing
+  them.
 
 * ``simulateInput(screen, keys...)``
 
@@ -3906,8 +3981,13 @@ The class has the following methods:
 * ``view:getMousePos([view_rect])``
 
   Returns the mouse *x,y* in coordinates local to the given ViewRect (or
-  ``frame_body`` if no ViewRect is passed) if it is within its clip area,
-  or nothing otherwise.
+  ``frame_body`` if no ViewRect is passed) if it is within its clip area, or
+  nothing otherwise.
+
+* ``view:getMouseFramePos()``
+
+  Returns the mouse *x,y* in coordinates local to ``frame_rect`` if it is
+  within its clip area, or nothing otherwise.
 
 * ``view:updateLayout([parent_rect])``
 
@@ -3990,7 +4070,7 @@ The class has the following methods:
 Screen class
 ------------
 
-This is a View subclass intended for use as a stand-alone dialog or screen.
+This is a View subclass intended for use as a stand-alone modal dialog or screen.
 It adds the following methods:
 
 * ``screen:isShown()``
@@ -4058,6 +4138,142 @@ It adds the following methods:
 
   Defined as callbacks for native code.
 
+ZScreen class
+-------------
+
+A screen subclass that allows multi-layer interactivity. For example, a DFHack
+GUI tool implemented as a ZScreen can allow the player to interact with the
+underlying map, or even other DFHack ZScreen windows! That is, even when the
+DFHack tool window is visible, players will be able to use vanilla designation
+tools, select units, and scan/drag the map around.
+
+At most one ZScreen can have keyboard focus at a time. That ZScreen's widgets
+will have a chance to handle the input before anything else. If unhandled, the
+input skips all unfocused ZScreens under that ZScreen and is passed directly to
+the first non-ZScreen viewscreen. There are class attributes that can be set to
+control what kind of unhandled input is passed to the lower layers.
+
+If multiple ZScreens are visible and the player left or right clicks on a
+visible element of a non-focused ZScreen, that ZScreen will be given focus. This
+allows multiple DFHack GUI tools to be usable at the same time. If the mouse is
+clicked away from the ZScreen widgets, that ZScreen loses focus. If no ZScreen
+has focus, all input is passed directly through to the first underlying
+non-ZScreen viewscreen.
+
+For a ZScreen with keyboard focus, if :kbd:`Esc` or the right mouse button is
+pressed, and the ZScreen widgets don't otherwise handle them, then the ZScreen
+is dismissed.
+
+All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
+**must not override**. Instead, ZScreen subclasses should delegate all input
+processing to subviews. Consider using a `Window class`_ widget as your top
+level input processor.
+
+When rendering, the parent viewscreen is automatically rendered first, so
+subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
+(a world "tick" when playing the game) are also passed through, so the game
+progresses normally and can be paused/unpaused as normal by the player. Note
+that passing ``logic()`` calls through to the underlying map is required for
+allowing the player to drag the map with the mouse. ZScreen subclasses can set
+attributes that control whether the game is paused when the ZScreen is shown and
+whether the game is forced to continue being paused while the ZScreen is shown.
+If pausing is forced, child ``Window`` widgets will show a force-pause icon to
+indicate which tool is forcing the pausing.
+
+ZScreen provides the following functions:
+
+* ``zscreen:raise()``
+
+  Raises the ZScreen to the top of the viewscreen stack, gives it keyboard
+  focus, and returns a reference to ``self``. A common pattern is to check if a
+  tool dialog is already active when the tool command is run and raise the
+  existing dialog if it exists or show a new dialog if it doesn't. See the
+  sample code below for an example.
+
+* ``zscreen:isMouseOver()``
+
+  The default implementation iterates over the direct subviews of the ZScreen
+  subclass and sees if ``getMouseFramePos()`` returns a position for any of
+  them. Subclasses can override this function if that logic is not appropriate.
+
+* ``zscreen:hasFocus()``
+
+  Whether the ZScreen has keyboard focus. Subclasses will generally not need to
+  check this because they can assume if they are getting input, then they have
+  focus.
+
+ZScreen subclasses can set the following attributes:
+
+* ``defocusable`` (default: ``true``)
+
+  Whether the ZScreen loses keyboard focus when the player clicks on an area
+  of the screen other than the tool window. If the player clicks on a different
+  ZScreen window, focus still transfers to that other ZScreen.
+
+* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
+
+  Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``
+  defaults to ``true`` but can be set via running a command like::
+
+    :lua require('gui.widgets').DEFAULT_INITIAL_PAUSE = false
+
+* ``force_pause`` (default: ``false``)
+
+  Whether to ensure the game *stays* paused while the ZScreen is shown.
+
+* ``pass_pause`` (default: ``true``)
+
+  Whether to pass the pause key to the lower viewscreens if it is not handled
+  by this ZScreen.
+
+* ``pass_movement_keys`` (default: ``false``)
+
+  Whether to pass the map movement keys to the lower viewscreens if they ar not
+  handled by this ZScreen.
+
+* ``pass_mouse_clicks`` (default: ``true``)
+
+  Whether to pass mouse clicks to the lower viewscreens if they are not handled
+  by this ZScreen.
+
+Here is an example skeleton for a ZScreen tool dialog::
+
+    local gui = require('gui')
+    local widgets = require('gui.widgets')
+
+    MyWindow = defclass(MyWindow, widgets.Window)
+    MyWindow.ATTRS {
+        frame_title='My Window',
+        frame={w=50, h=45},
+        resizable=true, -- if resizing makes sense for your dialog
+        resize_min={w=50, h=20}, -- try to allow users to shrink your windows
+    }
+
+    function MyWindow:init()
+        self:addviews{
+          -- add subview widgets here
+        }
+    end
+
+    function MyWindow:onInput(keys)
+        -- if required
+    end
+
+    MyScreen = defclass(MyScreen, gui.ZScreen)
+    MyScreen.ATTRS {
+        focus_path='myscreen',
+        -- set pause and passthrough attributes as appropriate
+    }
+
+    function MyScreen:init()
+        self:addviews{MyWindow{}}
+    end
+
+    function MyScreen:onDismiss()
+        view = nil
+    end
+
+    view = view and view:raise() or MyScreen{}:show()
 
 FramedScreen class
 ------------------
@@ -4076,18 +4292,21 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``GREY_FRAME``
+* ``WINDOW_FRAME``
 
-  A plain grey-colored frame.
+  A frame suitable for a draggable, optionally resizable window.
 
-* ``BOUNDARY_FRAME``
+* ``PANEL_FRAME``
 
-  The same frame as used by the usual full-screen DF views, like dwarfmode.
+  A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``GREY_LINE_FRAME``
+* ``MEDIUM_FRAME``
 
-  A frame consisting of grey lines, similar to the one used by titan announcements.
+  A frame suitable for overlay widget panels.
 
+* ``THIN_FRAME``
+
+  A frame suitable for light accent elements.
 
 gui.widgets
 ===========
@@ -4143,6 +4362,8 @@ Base of all the widgets. Inherits from View and has the following attributes:
 * ``frame_background = pen``
 
   The pen to fill the outer frame with. Defaults to no fill.
+
+.. _panel:
 
 Panel class
 -----------
@@ -4274,6 +4495,13 @@ Subclass of Panel; automatically adjusts its own frame height and width to the
 minimum required to show its subviews. Pairs nicely with a parent Panel that has
 ``autoarrange_subviews`` enabled.
 
+It has the following attributes:
+
+:auto_height: Sets self.frame.h from the positions and height of its subviews
+              (default is ``true``).
+:auto_width: Sets self.frame.w from the positions and width of its subviews
+             (default is ``false``).
+
 Pages class
 -----------
 
@@ -4306,7 +4534,6 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
-:on_submit2: Shift-Enter key callback; if set the field will handle the key and call ``on_submit2(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
@@ -4327,30 +4554,46 @@ calling ``setFocus(true)`` on the field object.
 If an activation ``key`` is specified, the ``EditField`` will manage its own
 focus. It will start in the unfocused state, and pressing the activation key
 will acquire keyboard focus. Pressing the Enter key will release keyboard focus
-and then call the ``on_submit`` callback. Pressing the Escape key will also
-release keyboard focus, but first it will restore the text that was displayed
-before the ``EditField`` gained focus and then call the ``on_change`` callback.
+and then call the ``on_submit`` callback. Pressing the Escape key (or r-clicking
+with the mouse) will also release keyboard focus, but first it will restore the
+text that was displayed before the ``EditField`` gained focus and then call the
+``on_change`` callback.
 
 The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
 - Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
-- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
+- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+
+The ``EditField`` class also provides the following functions:
+
+* ``editfield:setCursor([cursor_pos])``
+
+  Sets the text insert cursor to the specified position. If ``cursor_pos`` is
+  not specified or is past the end of the current text string, the cursor will
+  be set to the end of the current input (that is, ``#editfield.text + 1``).
+
+* ``editfield:setText(text[, cursor_pos])``
+
+  Sets the input text string and, optionally, the cursor position. If the
+  cursor position is not specified, it sets it to the end of the string.
+
+* ``editfield:insert(text)``
+
+  Inserts the given text at the current cursor position.
 
 Scrollbar class
 ---------------
 
 This Widget subclass implements mouse-interactive scrollbars whose bar sizes
 represent the amount of content currently visible in an associated display
-widget (like a `Label class`_ or a `List class`_). By default they are styled
-like scrollbars used in the vanilla DF help screens, but they are configurable.
+widget (like a `Label class`_ or a `List class`_). They are styled like scrollbars
+used in vanilla DF.
 
 Scrollbars have the following attributes:
 
-:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
-:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
 :on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
   the callback will be called with one of the following string parameters: "up_large",
   "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will
@@ -4376,6 +4619,10 @@ scrollbar above or below the filled area will scroll by a larger amount in that
 direction. The amount of scrolling done in each case in determined by the
 associated widget, and after scrolling is complete, the associated widget must
 call ``scrollbar:update()`` with updated new display info.
+
+If the mouse wheel is scrolled while the mouse is over the Scrollbar widget's
+parent view, then the parent is scrolled accordingly. Holding :kbd:`Shift`
+while scrolling will result in faster movement.
 
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
@@ -4434,12 +4681,13 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.tile = pen``
 
-  Specifies a pen to paint as one tile before the main part of the token.
+  Specifies a pen or texture index to paint as one tile before the main part of
+  the token.
 
 * ``token.width = ...``
 
-  If specified either as a value or a callback, the text field is padded
-  or truncated to the specified number.
+  If specified either as a value or a callback, the text (or tile) field is
+  padded or truncated to the specified number.
 
 * ``token.pad_char = '?'``
 
@@ -4503,8 +4751,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
-  actually scrolled (negative for scrolling up).
+  ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
+  lines that were actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------
@@ -4560,6 +4808,16 @@ It has the following attributes:
 :on_activate: If specified, it is the callback that will be called whenever
     the hotkey is pressed or the label is clicked.
 
+The HotkeyLabel widget implements the following methods:
+
+* ``hotkeylabel:setLabel(label)``
+
+    Updates the label without altering the hotkey text.
+
+* ``hotkeylabel:setOnActivate(on_activate)``
+
+    Updates the on_activate callback.
+
 CycleHotkeyLabel class
 ----------------------
 
@@ -4569,12 +4827,15 @@ cycle through by pressing a specified hotkey or clicking on the text.
 It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key_back: Similar to ``key``, but will cycle backwards (optional)
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
-:options: A list of strings or tables of ``{label=string, value=string}``.
-    String options use the same string for the label and value.
+:options: A list of strings or tables of
+    ``{label=string, value=string[, pen=pen]}``. String options use the same
+    string for the label and value and the default pen. The optional ``pen``
+    element could be a color like ``COLOR_RED``.
 :initial_option: The value or numeric index of the initial option.
 :on_change: The callback to call when the selected option changes. It is called
     as ``on_change(new_option_value, old_option_value)``.
@@ -4584,9 +4845,16 @@ the ``option_idx`` instance variable.
 
 The CycleHotkeyLabel widget implements the following methods:
 
-* ``cyclehotkeylabel:cycle()``
+* ``cyclehotkeylabel:cycle([backwards])``
 
     Cycles the selected option and triggers the ``on_change`` callback.
+    If ``backwards`` is defined and is truthy, the cycle direction will be reversed
+
+* ``cyclehotkeylabel:setOption(value_or_index, call_on_change)``
+
+    Sets the current option to the option with the specified value or
+    index. If ``call_on_change`` is set to ``true``, then the ``on_change``
+    callback is triggered.
 
 * ``cyclehotkeylabel:getOptionLabel([option_idx])``
 
@@ -4598,11 +4866,18 @@ The CycleHotkeyLabel widget implements the following methods:
     Retrieves the option value at the given index, or the value of the
     currently selected option if no index is given.
 
+* ``cyclehotkeylabel:getOptionPen([option_idx])``
+
+    Retrieves the option pen at the given index, or the pen of the currently
+    selected option if no index is given. If an option was defined as just a
+    string, then this function will return ``nil`` for that option.
+
 ToggleHotkeyLabel
 -----------------
 
 This is a specialized subclass of CycleHotkeyLabel that has two options:
-``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``).
+``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
+``On`` option is rendered in green.
 
 List class
 ----------
@@ -4621,8 +4896,12 @@ It has the following attributes:
             with an empty list.
 :on_submit: Enter key or mouse click callback; if specified, the list reacts to the
             key/click and calls the callback as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key or shift-mouse click callback; if specified, the list
-             reacts to the key/click and calls it as ``on_submit2(index,choice)``.
+:on_submit2: Shift-click callback; if specified, the list reacts to the click and
+             calls the callback as ``on_submit2(index,choice)``.
+:on_double_click: Mouse double click callback; if specified, the list reacts to the
+            click and calls the callback as ``on_double_click(index,choice)``.
+:on_double_click2: Shift-double click callback; if specified, the list reacts to the click and
+             calls the callback as ``on_double_click2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -4689,6 +4968,7 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
+:case_sensitive: If true, matching is case sensitive. Defaults to true.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
@@ -5374,6 +5654,13 @@ sort
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
 
+tiletypes
+=========
+
+* ``bool tiletypes_setTile(pos, shape, material, special, variant)`` where
+  the parameters are enum values from ``df.tiletype_shape``,
+  ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
+
 .. _xlsxreader-api:
 
 xlsxreader
@@ -5455,11 +5742,11 @@ Scripts
    :local:
 
 Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
-are automatically made available as DFHack commands. The command corresponding to
-a script is simply the script's filename, relative to the scripts folder, with
-the extension omitted. For example:
+(or any other folder in your `script-paths`) are automatically made available as
+DFHack commands. The command corresponding to a script is simply the script's
+filename, relative to the scripts folder, with the extension omitted. For example:
 
-* :file:`hack/scripts/add-thought.lua` is invoked as ``add-thought``
+* :file:`dfhack-config/scripts/startup.lua` is invoked as ``startup``
 * :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
@@ -5475,12 +5762,6 @@ the extension omitted. For example:
       mods, not directly by end-users (as a rule of thumb: if someone other than
       a mod developer would want to run a script from the console, it should
       not be placed in this folder)
-
-Scripts can also be placed in other folders - by default, these include
-:file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
-folders can be added (for example, a copy of the
-:source-scripts:`scripts repository <>` for local development). See
-`script-paths` for more information on how to configure this behavior.
 
 Scripts are read from disk when run for the first time, or if they have changed
 since the last time they were run.
@@ -5509,7 +5790,7 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in :file:`hack/scripts/`, as if it were started from the
+  Run a Lua script in your `script-paths`, as if it were started from the
   DFHack command-line. The ``name`` argument should be the name of the script
   without its extension, as it would be used on the command line.
 
@@ -5525,9 +5806,9 @@ General script API
 
   Note that the ``dfhack.run_script()`` function allows Lua errors to propagate to the caller.
 
-  To run other types of commands (such as built-in commands, plugin commands, or
-  Ruby scripts), see ``dfhack.run_command()``. Note that this is slightly slower
-  than ``dfhack.run_script()`` for Lua scripts.
+  To run other types of commands (i.e. built-in commands or commands provided by plugins),
+  see ``dfhack.run_command()``. Note that this is slightly slower than ``dfhack.run_script()``
+  when running Lua scripts.
 
 * ``dfhack.script_help([name, [extension]])``
 
@@ -5551,8 +5832,8 @@ Importing scripts
 
   Loads a Lua script and returns its environment (i.e. a table of all global
   functions and variables). This is similar to the built-in ``require()``, but
-  searches all script paths for the first matching ``name.lua`` file instead
-  of searching the Lua library paths (like ``hack/lua``).
+  searches all `script-paths` for the first matching ``name.lua`` file instead
+  of searching the Lua library paths (like ``hack/lua/``).
 
   Most scripts can be made to support ``reqscript()`` without significant
   changes (in contrast, ``require()`` requires the use of ``mkmodule()`` and
@@ -5631,9 +5912,13 @@ Enabling and disabling scripts
 ==============================
 
 Scripts can choose to recognize the built-in ``enable`` and ``disable`` commands
-by including the following line anywhere in their file::
+by including the following line near the top of their file::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
+
+Note that enableable scripts must also be `modules <reqscript>` so their
+``isEnabled()`` functions can be called from outside the script.
 
 When the ``enable`` and ``disable`` commands are invoked, the ``dfhack_flags``
 table passed to the script will have the following fields set:
@@ -5648,7 +5933,8 @@ command.
 
 Example usage::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
 
     enabled = enabled or false
     function isEnabled()
@@ -5702,9 +5988,9 @@ all script modules.
 Save init script
 ================
 
-If a save directory contains a file called ``raw/init.lua``, it is
+If a save directory contains a file called ``init.lua``, it is
 automatically loaded and executed every time the save is loaded.
-The same applies to any files called ``raw/init.d/*.lua``. Every
+The same applies to any files called ``init.d/*.lua``. Every
 such script can define the following functions to be called by dfhack:
 
 * ``function onStateChange(op) ... end``

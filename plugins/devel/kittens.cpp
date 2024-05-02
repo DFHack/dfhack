@@ -33,7 +33,7 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("kittens");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
@@ -119,9 +119,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     }
     if(trackmenu_flg)
     {
-        if (last_menu != ui->main.mode)
+        if (last_menu != plotinfo->main.mode)
         {
-            last_menu = ui->main.mode;
+            last_menu = plotinfo->main.mode;
             out.print("Menu: %d\n",last_menu);
         }
     }
@@ -157,7 +157,7 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters)
     else
     {
         is_enabled = true;
-        last_menu = ui->main.mode;
+        last_menu = plotinfo->main.mode;
         out.print("Menu: %d\n",last_menu);
         trackmenu_flg = true;
         return CR_OK;

@@ -8,6 +8,7 @@ local utils = require('utils')
 
 local dscreen = dfhack.screen
 local getval = utils.getval
+local to_pen = dfhack.pen.parse
 
 local function show_view(view,vis)
     if view then
@@ -25,16 +26,13 @@ end
 
 STANDARDSCROLL = {
     STANDARDSCROLL_UP = -1,
+    KEYBOARD_CURSOR_UP = -1,
     STANDARDSCROLL_DOWN = 1,
+    KEYBOARD_CURSOR_DOWN = 1,
     STANDARDSCROLL_PAGEUP = '-page',
+    KEYBOARD_CURSOR_UP_FAST = '-page',
     STANDARDSCROLL_PAGEDOWN = '+page',
-}
-
-SECONDSCROLL = {
-    SECONDSCROLL_UP = -1,
-    SECONDSCROLL_DOWN = 1,
-    SECONDSCROLL_PAGEUP = '-page',
-    SECONDSCROLL_PAGEDOWN = '+page',
+    KEYBOARD_CURSOR_DOWN_FAST = '+page',
 }
 
 ------------
@@ -89,7 +87,7 @@ Panel.ATTRS {
 
 function Panel:init(args)
     if not self.drag_anchors then
-        self.drag_anchors = {title=true, frame=false, body=false}
+        self.drag_anchors = {title=true, frame=false, body=true}
     end
     if not self.resize_anchors then
         self.resize_anchors = {t=false, l=true, r=true, b=true}
@@ -275,8 +273,8 @@ end
 
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN then
-            Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+            Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
         end
@@ -301,12 +299,11 @@ function Panel:onInput(keys)
         end
         return true
     end
-    if self:inputToSubviews(keys) then
+    if Panel.super.onInput(self, keys) then
         return true
     end
     if not keys._MOUSE_L_DOWN then return end
-    local rect = self.frame_rect
-    local x,y = self:getMousePos(gui.ViewRect{rect=rect})
+    local x,y = self:getMouseFramePos()
     if not x then return end
 
     if self.resizable and y == 0 then
@@ -365,8 +362,10 @@ function Panel:setKeyboardDragEnabled(enabled)
         return
     end
     if enabled then
-        local kbd_get_pos = function() return {x=0, y=0} end
-        Panel_begin_drag(self, kbd_get_pos())
+        local kbd_get_pos = function()
+            return {x=self.frame_rect.x1, y=self.frame_rect.y1}
+        end
+        Panel_begin_drag(self)
         self.kbd_get_pos = kbd_get_pos
     else
         Panel_end_drag(self)
@@ -430,6 +429,20 @@ end
 
 function Panel:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
+    if self.frame then
+        if self.frame.t and self.frame.h and self.frame.t + self.frame.h > sh then
+            self.frame.t = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.b and self.frame.h and self.frame.b + self.frame.h > sh then
+            self.frame.b = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.l and self.frame.w and self.frame.l + self.frame.w > sw then
+            self.frame.l = math.max(0, sw - self.frame.w)
+        end
+        if self.frame.r and self.frame.w and self.frame.r + self.frame.w > sw then
+            self.frame.r = math.max(0, sw - self.frame.w)
+        end
+    end
     return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset,
                                   self.frame_style and 1 or 0)
 end
@@ -441,6 +454,9 @@ end
 -- if self.autoarrange_subviews is true, lay out visible subviews vertically,
 -- adding gaps between widgets according to self.autoarrange_gap.
 function Panel:postUpdateLayout()
+    -- don't leave artifacts behind on the parent screen when we move
+    gui.Screen.request_full_screen_refresh = true
+
     if not self.autoarrange_subviews then return end
 
     local gap = self.autoarrange_gap
@@ -462,10 +478,14 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
+    local inactive = self.parent_view and self.parent_view.hasFocus
+            and not self.parent_view:hasFocus()
+    local pause_forced = self.parent_view and self.parent_view.force_pause
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title, inactive,
+            pause_forced, self.resizable)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
-        local pen = dfhack.pen.parse{fg=COLOR_GREEN, bg=COLOR_BLACK}
+        local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
         dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
     end
     if self.drag_offset and not self.kbd_get_pos
@@ -481,7 +501,7 @@ end
 Window = defclass(Window, Panel)
 
 Window.ATTRS {
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
@@ -492,6 +512,11 @@ Window.ATTRS {
 -------------------
 
 ResizingPanel = defclass(ResizingPanel, Panel)
+
+ResizingPanel.ATTRS{
+    auto_height = true,
+    auto_width = false,
+}
 
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
@@ -513,6 +538,8 @@ function ResizingPanel:postUpdateLayout(frame_body)
     end
     if not self.frame then self.frame = {} end
     local oldw, oldh = self.frame.w, self.frame.h
+    if not self.auto_height then h = oldh end
+    if not self.auto_width then w = oldw end
     self.frame.w, self.frame.h = w, h
     if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
         self._updateLayoutGuard = true -- protect against infinite loops
@@ -622,7 +649,7 @@ function EditField:postUpdateLayout()
 end
 
 function EditField:onRenderBody(dc)
-    dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
+    dc:pen(self.text_pen or COLOR_LIGHTCYAN)
 
     local cursor_char = '_'
     if not getval(self.active) or not self.focus or gui.blink_visible(300) then
@@ -651,7 +678,12 @@ function EditField:onRenderBody(dc)
                                 end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
-    dc:string((' '):rep(dc.clip_x2 - dc.x))
+end
+
+function EditField:insert(text)
+    local old = self.text
+    self:setText(old:sub(1,self.cursor-1)..text..old:sub(self.cursor),
+                 self.cursor + #text)
 end
 
 function EditField:onInput(keys)
@@ -666,7 +698,7 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and keys.LEAVESCREEN then
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         local old = self.text
         self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then
@@ -676,22 +708,20 @@ function EditField:onInput(keys)
         return true
     end
 
-    if keys.SELECT then
+    if keys.SELECT or keys.CUSTOM_SHIFT_ENTER then
         if self.key then
             self:setFocus(false)
         end
-        if self.on_submit then
-            self.on_submit(self.text)
-            return true
-        end
-        return not not self.key
-    elseif keys.SEC_SELECT then
-        if self.key then
-            self:setFocus(false)
-        end
-        if self.on_submit2 then
-            self.on_submit2(self.text)
-            return true
+        if keys.CUSTOM_SHIFT_ENTER then
+            if self.on_submit2 then
+                self.on_submit2(self.text)
+                return true
+            end
+        else
+            if self.on_submit then
+                self.on_submit(self.text)
+                return true
+            end
         end
         return not not self.key
     elseif keys._MOUSE_L then
@@ -712,8 +742,7 @@ function EditField:onInput(keys)
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
-                             self.cursor + 1)
+                self:insert(cv)
             elseif self.on_char then
                 return self.modal
             end
@@ -722,25 +751,25 @@ function EditField:onInput(keys)
             self.on_change(self.text, old)
         end
         return true
-    elseif keys.CURSOR_LEFT then
+    elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
         return true
-    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (end of prev word)
+    elseif keys.CUSTOM_CTRL_B then -- back one word
         local _, prev_word_end = self.text:sub(1, self.cursor-1):
-                                                    find('.*[%w_%-][^%w_%-]')
+                                               find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
+    elseif keys.CUSTOM_CTRL_A then -- home
         self:setCursor(1)
         return true
-    elseif keys.CURSOR_RIGHT then
+    elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
-    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (beginning of next word)
+    elseif keys.CUSTOM_CTRL_F then -- forward one word
         local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
         self:setCursor(next_word_start)
         return true
-    elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
+    elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
         return true
     end
@@ -759,14 +788,12 @@ SCROLL_DELAY_MS = 20
 Scrollbar = defclass(Scrollbar, Widget)
 
 Scrollbar.ATTRS{
-    fg = COLOR_LIGHTGREEN,
-    bg = COLOR_CYAN,
     on_scroll = DEFAULT_NIL,
 }
 
 function Scrollbar:preinit(init_table)
     init_table.frame = init_table.frame or {}
-    init_table.frame.w = init_table.frame.w or 1
+    init_table.frame.w = init_table.frame.w or 2
 end
 
 function Scrollbar:init()
@@ -781,7 +808,7 @@ local function scrollbar_get_max_pos_and_height(scrollbar)
     local frame_body = scrollbar.frame_body
     local scrollbar_body_height = (frame_body and frame_body.height or 3) - 2
 
-    local height = math.max(1, math.floor(
+    local height = math.max(2, math.floor(
         (math.min(scrollbar.elems_per_page, scrollbar.num_elems) * scrollbar_body_height) /
         scrollbar.num_elems))
 
@@ -824,36 +851,110 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local UP_ARROW_CHAR = string.char(24)
-local DOWN_ARROW_CHAR = string.char(25)
-local NO_ARROW_CHAR = string.char(32)
-local BAR_CHAR = string.char(7)
-local BAR_BG_CHAR = string.char(179)
+local SBSO = 922 --Scroll Bar Spritesheet Offset / change this to point to a different spritesheet (ui themes, anyone? :p)
+local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=SBSO+0, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=SBSO+1, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+24, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_PEN = to_pen{tile=SBSO+25, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=SBSO+6, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=SBSO+7, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=SBSO+30, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=SBSO+31, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_PEN = to_pen{tile=SBSO+10, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN = to_pen{tile=SBSO+11, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=SBSO+22, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=SBSO+23, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_PEN = to_pen{tile=SBSO+18, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_PEN = to_pen{tile=SBSO+19, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=SBSO+42, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=SBSO+43, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_PEN = to_pen{tile=SBSO+26, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN = to_pen{tile=SBSO+27, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN = to_pen{tile=SBSO+38, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN = to_pen{tile=SBSO+39, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+2, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+3, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+14, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+15, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+8, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+9, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_HOVER_PEN = to_pen{tile=SBSO+32, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_HOVER_PEN = to_pen{tile=SBSO+33, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+34, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+35, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+46, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+47, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN = to_pen{tile=SBSO+20, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN = to_pen{tile=SBSO+21, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+44, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+45, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN = to_pen{tile=SBSO+28, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN = to_pen{tile=SBSO+29, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN = to_pen{tile=SBSO+40, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN = to_pen{tile=SBSO+41, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_LEFT_PEN = to_pen{tile=SBSO+12, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_RIGHT_PEN = to_pen{tile=SBSO+13, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
 
 function Scrollbar:onRenderBody(dc)
     -- don't draw if all elements are visible
     if not scrollbar_is_visible(self) then
         return
     end
-    -- render up arrow if we're not at the top
-    dc:seek(0, 0):char(
-        self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
+    -- determine which elements should be highlighted
+    local _,hover_y = self:getMousePos()
+    local hover_up, hover_down, hover_bar = false, false, false
+    if hover_y == 0 then
+        hover_up = true
+    elseif hover_y == dc.height-1 then
+        hover_down = true
+    elseif hover_y then
+        hover_bar = true
+    end
+    -- render up arrow
+    dc:seek(0, 0)
+    dc:char(nil, hover_up and SCROLLBAR_UP_LEFT_HOVER_PEN or SCROLLBAR_UP_LEFT_PEN)
+    dc:char(nil, hover_up and SCROLLBAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_UP_RIGHT_PEN)
     -- render scrollbar body
     local starty = self.bar_offset + 1
     local endy = self.bar_offset + self.bar_height
+    local midy = (starty + endy)/2
     for y=1,dc.height-2 do
         dc:seek(0, y)
         if y >= starty and y <= endy then
-            dc:char(BAR_CHAR, self.fg)
+            if y == starty and y <= midy - 1 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_UP_RIGHT_PEN)
+            elseif y == midy - 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN)
+            elseif y == midy + 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN)
+            elseif y == midy - 0.5 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN)
+            elseif y == midy + 0.5 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN)
+            elseif y == midy then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_RIGHT_PEN)
+            elseif y == endy and y >= midy + 1 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_DOWN_RIGHT_PEN)
+            else
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_LEFT_HOVER_PEN or SCROLLBAR_BAR_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_RIGHT_HOVER_PEN or SCROLLBAR_BAR_RIGHT_PEN)
+            end
         else
-            dc:char(BAR_BG_CHAR, self.bg)
+            dc:char(nil, SCROLLBAR_BAR_BG_LEFT_PEN)
+            dc:char(nil, SCROLLBAR_BAR_BG_RIGHT_PEN)
         end
     end
-    -- render down arrow if we're not at the bottom
-    local last_visible_el = self.top_elem + self.elems_per_page - 1
-    dc:seek(0, dc.height-1):char(
-        last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
-        self.fg, self.bg)
+    -- render down arrow
+    dc:seek(0, dc.height-1)
+    dc:char(nil, hover_down and SCROLLBAR_DOWN_LEFT_HOVER_PEN or SCROLLBAR_DOWN_LEFT_PEN)
+    dc:char(nil, hover_down and SCROLLBAR_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_DOWN_RIGHT_PEN)
     if not self.on_scroll then return end
     -- manage state for dragging and continuous scrolling
     if self.is_dragging then
@@ -877,10 +978,26 @@ function Scrollbar:onRenderBody(dc)
 end
 
 function Scrollbar:onInput(keys)
-    if not keys._MOUSE_L_DOWN or not self.on_scroll
-            or not scrollbar_is_visible(self) then
+    if not self.on_scroll or not scrollbar_is_visible(self) then
         return false
     end
+
+    if self.parent_view:getMousePos() then
+        if keys.CONTEXT_SCROLL_UP then
+            self.on_scroll('up_small')
+            return true
+        elseif keys.CONTEXT_SCROLL_DOWN then
+            self.on_scroll('down_small')
+            return true
+        elseif keys.CONTEXT_SCROLL_PAGEUP then
+            self.on_scroll('up_large')
+            return true
+        elseif keys.CONTEXT_SCROLL_PAGEDOWN then
+            self.on_scroll('down_large')
+            return true
+        end
+    end
+    if not keys._MOUSE_L_DOWN then return false end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil
@@ -988,13 +1105,18 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             if token.tile then
                 x = x + 1
                 if dc then
-                    dc:char(nil, token.tile)
+                    local tile_pen = tonumber(token.tile) and
+                            to_pen{tile=token.tile} or token.tile
+                    dc:char(nil, tile_pen)
+                    if token.width then
+                        dc:advance(token.width-1)
+                    end
                 end
             end
 
             if token.text or token.key then
                 local text = ''..(getval(token.text) or '')
-                local keypen = dfhack.pen.parse(token.key_pen or COLOR_LIGHTGREEN)
+                local keypen = to_pen(token.key_pen or COLOR_LIGHTGREEN)
 
                 if dc then
                     local tpen = getval(token.pen)
@@ -1027,6 +1149,9 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 end
 
                 if token.key then
+                    if type(token.key) == 'string' and not df.interface_key[token.key] then
+                        error('Invalid interface_key: ' .. token.key)
+                    end
                     local keystr = gui.getKeyDisplay(token.key)
                     local sep = token.key_sep or ''
 
@@ -1176,6 +1301,7 @@ end
 
 function Label:scroll(nlines)
     if not nlines then return end
+    local text_height = math.max(1, self:getTextHeight())
     if type(nlines) == 'string' then
         if nlines == '+page' then
             nlines = self.frame_body.height
@@ -1185,12 +1311,15 @@ function Label:scroll(nlines)
             nlines = math.ceil(self.frame_body.height/2)
         elseif nlines == '-halfpage' then
             nlines = -math.ceil(self.frame_body.height/2)
+        elseif nlines == 'home' then
+            nlines = 1 - self.start_line_num
+        elseif nlines == 'end' then
+            nlines = text_height
         else
             error(('unhandled scroll keyword: "%s"'):format(nlines))
         end
     end
     local n = self.start_line_num + nlines
-    local text_height = math.max(1, self:getTextHeight())
     n = math.min(n, text_height - self.frame_body.height + 1)
     n = math.max(n, 1)
     nlines = n - self.start_line_num
@@ -1241,10 +1370,14 @@ function WrappedLabel:getWrappedText(width)
     return text_to_wrap:wrap(width - self.indent)
 end
 
+function WrappedLabel:preUpdateLayout()
+    self.saved_start_line_num = self.start_line_num
+end
+
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
-    local wrapped_text = self:getWrappedText(self.frame_body.width-1)
+    local wrapped_text = self:getWrappedText(self.frame_body.width-3)
     if not wrapped_text then return end
     local text = {}
     for _,line in ipairs(wrapped_text:split(NEWLINE)) do
@@ -1253,6 +1386,7 @@ function WrappedLabel:postComputeFrame()
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+    self:scroll(self.saved_start_line_num - 1)
 end
 
 ------------------
@@ -1285,6 +1419,20 @@ HotkeyLabel.ATTRS{
 }
 
 function HotkeyLabel:init()
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setOnActivate(on_activate)
+    self.on_activate = on_activate
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setLabel(label)
+    self.label = label
+    self:initializeLabel()
+end
+
+function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
 end
@@ -1306,6 +1454,7 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
+    key_back=DEFAULT_NIL,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     options=DEFAULT_NIL,
@@ -1314,37 +1463,26 @@ CycleHotkeyLabel.ATTRS{
 }
 
 function CycleHotkeyLabel:init()
-    -- initialize option_idx
-    for i in ipairs(self.options) do
-        if self.initial_option == self:getOptionValue(i) then
-            self.option_idx = i
-            break
-        end
-    end
-    if not self.option_idx then
-        if self.options[self.initial_option] then
-            self.option_idx = self.initial_option
-        end
-    end
-    if not self.option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(self.initial_option))
-    end
+    self:setOption(self.initial_option)
 
     self:setText{
+        self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self:callback('cycle', true)} or {},
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        '  ',
-        {text=self:callback('getOptionLabel')},
+        ' ',
+        {text=self:callback('getOptionLabel'),
+         pen=self:callback('getOptionPen')},
     }
 end
 
-function CycleHotkeyLabel:cycle()
+function CycleHotkeyLabel:cycle(backwards)
     local old_option_idx = self.option_idx
-    if self.option_idx == #self.options then
+    if self.option_idx == #self.options and not backwards then
         self.option_idx = 1
+    elseif self.option_idx == 1 and backwards then
+        self.option_idx = #self.options
     else
-        self.option_idx = self.option_idx + 1
+        self.option_idx = self.option_idx + (not backwards and 1 or -1)
     end
     if self.on_change then
         self.on_change(self:getOptionValue(),
@@ -1352,22 +1490,52 @@ function CycleHotkeyLabel:cycle()
     end
 end
 
-function CycleHotkeyLabel:getOptionLabel(option_idx)
+function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
+    local option_idx = nil
+    for i in ipairs(self.options) do
+        if value_or_index == self:getOptionValue(i) then
+            option_idx = i
+            break
+        end
+    end
+    if not option_idx then
+        if self.options[value_or_index] then
+            option_idx = value_or_index
+        end
+    end
+    if not option_idx then
+        error(('cannot find option with value or index: "%s"')
+              :format(value_or_index))
+    end
+    local old_option_idx = self.option_idx
+    self.option_idx = option_idx
+    if call_on_change and self.on_change then
+        self.on_change(self:getOptionValue(),
+                       self:getOptionValue(old_option_idx))
+    end
+end
+
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
-        return option.label
+        return option[key]
     end
     return option
 end
 
+function CycleHotkeyLabel:getOptionLabel(option_idx)
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+end
+
 function CycleHotkeyLabel:getOptionValue(option_idx)
-    option_idx = option_idx or self.option_idx
-    local option = self.options[option_idx]
-    if type(option) == 'table' then
-        return option.value
-    end
-    return option
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'value')
+end
+
+function CycleHotkeyLabel:getOptionPen(option_idx)
+    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    if type(pen) == 'string' then return nil end
+    return pen
 end
 
 function CycleHotkeyLabel:onInput(keys)
@@ -1385,7 +1553,7 @@ end
 
 ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
 ToggleHotkeyLabel.ATTRS{
-    options={{label='On', value=true},
+    options={{label='On', value=true, pen=COLOR_GREEN},
              {label='Off', value=false}},
 }
 
@@ -1402,6 +1570,8 @@ List.ATTRS{
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
     on_submit2 = DEFAULT_NIL,
+    on_double_click = DEFAULT_NIL,
+    on_double_click2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -1422,6 +1592,8 @@ function List:init(info)
         self.choices = {}
         self.selected = 1
     end
+
+    self.last_select_click_ms = 0 -- used to track double-clicking on an item
 end
 
 function List:setChoices(choices, selected)
@@ -1474,13 +1646,16 @@ function List:getContentHeight()
     return #self.choices * self.row_height
 end
 
-function List:postComputeFrame(body)
-    self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    self:moveCursor(0)
-end
-
 local function update_list_scrollbar(list)
     list.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
+function List:postComputeFrame(body)
+    self.page_size = math.max(1, math.floor(body.height / self.row_height))
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    end
+    update_list_scrollbar(self)
 end
 
 function List:postUpdateLayout()
@@ -1619,12 +1794,24 @@ end
 function List:submit()
     if self.on_submit and #self.choices > 0 then
         self.on_submit(self:getSelected())
+        return true
     end
 end
 
 function List:submit2()
     if self.on_submit2 and #self.choices > 0 then
         self.on_submit2(self:getSelected())
+        return true
+    end
+end
+
+function List:double_click()
+    if #self.choices == 0 then return end
+    local cb = dfhack.internal.getModifiers().shift and
+            self.on_double_click2 or self.on_double_click
+    if cb then
+        cb(self:getSelected())
+        return true
     end
 end
 
@@ -1632,15 +1819,25 @@ function List:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
     end
-    if self.on_submit and keys.SELECT then
-        self:submit()
-        return true
-    elseif self.on_submit2 and keys.SEC_SELECT then
-        self:submit2()
-        return true
+    if keys.SELECT then
+        return self:submit()
+    elseif keys.CUSTOM_SHIFT_ENTER then
+        return self:submit2()
     elseif keys._MOUSE_L_DOWN then
         local idx = self:getIdxUnderMouse()
         if idx then
+            local now_ms = dfhack.getTickCount()
+            if idx ~= self:getSelected() then
+                self.last_select_click_ms = now_ms
+            else
+                if now_ms - self.last_select_click_ms <= DOUBLE_CLICK_MS then
+                    self.last_select_click_ms = 0
+                    if self:double_click() then return true end
+                else
+                    self.last_select_click_ms = now_ms
+                end
+            end
+
             self:setSelected(idx)
             if dfhack.internal.getModifiers().shift then
                 self:submit2()
@@ -1685,6 +1882,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
+    case_sensitive = true,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -1734,6 +1932,16 @@ function FilteredList:init(info)
     if info.on_submit2 then
         self.list.on_submit2 = function()
             return info.on_submit2(self:getSelected())
+        end
+    end
+    if info.on_double_click then
+        self.list.on_double_click = function()
+            return info.on_double_click(self:getSelected())
+        end
+    end
+    if info.on_double_click2 then
+        self.list.on_double_click2 = function()
+            return info.on_double_click2(self:getSelected())
         end
     end
     self.not_found = Label{
@@ -1835,11 +2043,17 @@ function FilteredList:setFilter(filter, pos)
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)
-                if key ~= '' and
-                        not search_key:match('%f[^%p\x00]'..key) and
+                if key ~= '' then
+                    if not self.case_sensitive then
+                        search_key = string.lower(search_key)
+                        key = string.lower(key)
+                    end
+
+                    if not search_key:match('%f[^%p\x00]'..key) and
                         not search_key:match('%f[^%s\x00]'..key) then
-                    ok = false
-                    break
+                            ok = false
+                            break
+                    end
                 end
             end
             if ok then

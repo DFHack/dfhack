@@ -321,7 +321,7 @@ end
 function pos2xyz(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y, pos.z
         end
     end
@@ -346,7 +346,7 @@ end
 function pos2xy(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y
         end
     end
@@ -657,16 +657,18 @@ function Script:get_flags()
         self.flags_mtime = mtime
         self._flags = {}
         local f = io.open(self.path)
-        local contents = f:read('*all')
-        f:close()
-        for line in contents:gmatch('%-%-@([^\n]+)') do
-            local chunk = load(line, self.path, 't', self._flags)
+        for line in f:lines() do
+            local at_tag = line:match('^%-%-@(.+)')
+            if not at_tag then goto continue end
+            local chunk = load(at_tag, self.path, 't', self._flags)
             if chunk then
                 chunk()
             else
                 dfhack.printerr('Parse error: ' .. line)
             end
+            ::continue::
         end
+        f:close()
     end
     return self._flags
 end
@@ -695,7 +697,19 @@ local valid_script_flags = {
     scripts = {required = false},
 }
 
+local warned_scripts = {}
+
 function dfhack.run_script(name,...)
+    if not warned_scripts[name] then
+        local helpdb = require('helpdb')
+        if helpdb.is_entry(name) and helpdb.get_entry_tags(name).untested then
+            warned_scripts[name] = true
+            dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
+            dfhack.printerr('It may not work as expected, or it may corrupt your game.')
+            qerror('Please run the command again to ignore this warning and proceed.')
+        end
+    end
+
     return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
@@ -859,7 +873,7 @@ end
 
 function dfhack.getSavePath()
     if dfhack.isWorldLoaded() then
-        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+        return dfhack.getDFPath() .. '/save/' .. df.global.world.cur_savegame.save_dir
     end
 end
 
@@ -893,14 +907,14 @@ if dfhack.is_core_context then
             local path = dfhack.getSavePath()
 
             if path and op == SC_WORLD_LOADED then
-                loadInitFile(path, path..'/raw/init.lua')
+                loadInitFile(path, path..'/init.lua')
 
-                local dirlist = dfhack.internal.getDir(path..'/raw/init.d/')
+                local dirlist = dfhack.internal.getDir(path..'/init.d/')
                 if dirlist then
                     table.sort(dirlist)
                     for i,name in ipairs(dirlist) do
                         if string.match(name,'%.lua$') then
-                            loadInitFile(path, path..'/raw/init.d/'..name)
+                            loadInitFile(path, path..'/init.d/'..name)
                         end
                     end
                 end

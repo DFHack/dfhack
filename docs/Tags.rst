@@ -14,7 +14,7 @@ for the tag assignment spreadsheet.
 "when" tags
 -----------
 - `adventure <adventure-tag-index>`: Tools that are useful while in adventure mode. Note that some tools only tagged with "fort" might also work in adventure mode, but not always in expected ways. Feel free to experiment, though!
-- `dfhack <dfhack-tag-index>`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. settings, saving, etc.)
+- `dfhack <dfhack-tag-index>`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. quicksave, etc.)
 - `embark <embark-tag-index>`: Tools that are useful while on the fort embark screen or while creating an adventurer.
 - `fort <fort-tag-index>`: Tools that are useful while in fort mode.
 - `legends <legends-tag-index>`: Tools that are useful while in legends mode.
@@ -46,3 +46,7 @@ for the tag assignment spreadsheet.
 - `stockpiles <stockpiles-tag-index>`: Tools that interact with stockpiles.
 - `units <units-tag-index>`: Tools that interact with units.
 - `workorders <workorders-tag-index>`: Tools that interact with workorders.
+
+"misc" tags
+-----------
+- `untested <untested-tag-index>`: Tools that are not yet tested with the current release.

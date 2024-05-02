@@ -26,7 +26,6 @@ static const string INVOKE_HOTKEYS_COMMAND = "hotkeys";
 static const std::string MENU_SCREEN_FOCUS_STRING = "dfhack/lua/hotkeys/menu";
 
 static bool valid = false; // whether the following two vars contain valid data
-static string current_focus;
 static map<string, string> current_bindings;
 static vector<string> sorted_keys;
 
@@ -38,14 +37,13 @@ static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
 }
 
 static int cleanupHotkeys(lua_State *) {
-    DEBUG(log).print("cleaning up old stub keybindings for %s\n", current_focus.c_str());
+    DEBUG(log).print("cleaning up old stub keybindings for: %s\n", join_strings(", ", Gui::getCurFocus(true)).c_str());
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
         DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
         Core::getInstance().ClearKeyBindings(keyspec);
     });
     valid = false;
-    current_focus = "";
     sorted_keys.clear();
     current_bindings.clear();
     return 0;
@@ -90,7 +88,6 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
 
     valid_keys.push_back("`");
 
-    current_focus = Gui::getFocusString(screen);
     for (int shifted = 0; shifted < 2; shifted++) {
         for (int alt = 0; alt < 2; alt++) {
             for (int ctrl = 0; ctrl < 2; ctrl++) {
@@ -112,7 +109,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
                             vector<string> tokens;
                             split_string(&tokens, *invoke_cmd, ":");
                             string focus = tokens[0].substr(1);
-                            if (prefix_matches(focus, current_focus)) {
+                            if(Gui::matchFocusString(focus)) {
                                 auto cmdline = trim(tokens[1]);
                                 add_binding_if_valid(sym, cmdline, screen, filtermenu);
                             }
@@ -145,8 +142,8 @@ static void list(color_ostream &out) {
     if (!valid)
         find_active_keybindings(Gui::getCurViewscreen(true), false);
 
-    out.print("Valid keybindings for the current screen (%s)\n",
-              current_focus.c_str());
+    out.print("Valid keybindings for the current focus:\n %s\n",
+              join_strings("\n", Gui::getCurFocus(true)).c_str());
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [&](const string &sym) {
         out.print("%s: %s\n", sym.c_str(), current_bindings[sym].c_str());
     });
@@ -158,7 +155,7 @@ static void list(color_ostream &out) {
 static bool invoke_command(color_ostream &out, const size_t index) {
     auto screen = Core::getTopViewscreen();
     if (sorted_keys.size() <= index ||
-            Gui::getFocusString(screen) != MENU_SCREEN_FOCUS_STRING)
+            !Gui::matchFocusString(MENU_SCREEN_FOCUS_STRING))
         return false;
 
     auto cmd = current_bindings[sorted_keys[index]];

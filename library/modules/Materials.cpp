@@ -42,7 +42,7 @@ using namespace std;
 #include "MiscUtils.h"
 
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/item.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
@@ -68,7 +68,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 bool MaterialInfo::decode(df::item *item)
 {
@@ -516,7 +516,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
+    TEST(non_economic, !inorganic || !(plotinfo && vector_get(plotinfo->economic_stone, index)));
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));

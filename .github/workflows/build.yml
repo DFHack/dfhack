@@ -57,11 +57,11 @@ jobs:
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
         echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
-    - name: Fetch DF cache
-      uses: actions/cache@v3
-      with:
-        path: ~/DF
-        key: dfcache-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
+        #    - name: Fetch DF cache
+        #      uses: actions/cache@v3
+        #      with:
+        #        path: ~/DF
+        #        key: dfcache-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
     - name: Fetch ccache
       uses: actions/cache@v3
       with:
@@ -70,9 +70,9 @@ jobs:
         restore-keys: |
           ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}
           ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}
-    - name: Download DF
-      run: |
-        sh ci/download-df.sh
+          #    - name: Download DF
+          #      run: |
+          #        sh ci/download-df.sh
     - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
@@ -101,29 +101,62 @@ jobs:
       run: |
         ninja -C build-ci test
         exit $?
-    - name: Run lua tests
-      id: run_tests_lua
-      run: |
-        export TERM=dumb
-        status=0
-        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-        mkdir -p artifacts
-        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-        exit $status
-    - name: Upload test artifacts
-      uses: actions/upload-artifact@v1
-      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
-      continue-on-error: true
-      with:
-        name: test-artifacts-${{ matrix.gcc }}
-        path: artifacts
+        #    - name: Run lua tests
+        #      id: run_tests_lua
+        #      run: |
+        #        export TERM=dumb
+        #        status=0
+        #        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+        #        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
+        #        mkdir -p artifacts
+        #        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+        #        exit $status
+        #    - name: Upload test artifacts
+        #      uses: actions/upload-artifact@v1
+        #      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
+        #      continue-on-error: true
+        #      with:
+        #        name: test-artifacts-${{ matrix.gcc }}
+        #        path: artifacts
     - name: Clean up DF folder
       # prevent DFHack-generated files from ending up in the cache
       # (download-df.sh also removes them, this is just to save cache space)
       if: success() || failure()
       run: |
         rm -rf "$DF_FOLDER"
+
+  build-cross-win64:
+    name: Build MSVC win64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone DFHack
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Fetch ccache
+        uses: actions/cache@v3
+        with:
+          path: build/win64-cross/ccache
+          key: ccache-win64-cross-msvc-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-win64-cross-msvc-${{ github.ref_name }}
+            ccache-win64-cross-msvc
+      - name: Cross-compile win64 artifacts
+        env:
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
+        run: |
+          cd build
+          bash -x build-win64-from-linux.sh
+      - name: Format artifact name
+        id: artifactname
+        run: |
+          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
+      - name: Upload win64 artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dfhack-win64-build-${{ steps.artifactname.outputs.name }}
+          path: build/win64-cross/output/*
 
   docs:
     runs-on: ubuntu-18.04

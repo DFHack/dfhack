@@ -3,7 +3,7 @@ strangemood
 
 .. dfhack-tool::
     :summary: Trigger a strange mood.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Usage
 -----

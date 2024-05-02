@@ -1,120 +1,158 @@
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
+#include "Debug.h"
 #include "PluginManager.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/building_nest_boxst.h"
-#include "df/building_type.h"
-#include "df/buildings_other_id.h"
-#include "df/global_objects.h"
-#include "df/item.h"
-#include "df/unit.h"
-#include "df/building.h"
-#include "df/items_other_id.h"
-#include "df/creature_raw.h"
-#include "modules/MapCache.h"
 #include "modules/Items.h"
+#include "modules/Job.h"
+#include "modules/Persistence.h"
+#include "modules/World.h"
 
+#include "df/world.h"
+#include "df/building_nest_boxst.h"
+#include "df/item.h"
+#include "df/item_eggst.h"
+#include "df/unit.h"
 
-using std::vector;
 using std::string;
-using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-
-static command_result nestboxes(color_ostream &out, vector <string> & parameters);
-
 DFHACK_PLUGIN("nestboxes");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-DFHACK_PLUGIN_IS_ENABLED(enabled);
+REQUIRE_GLOBAL(world);
 
-static void eggscan(color_ostream &out)
-{
-    CoreSuspender suspend;
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(nestboxes, config, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(nestboxes, cycle, DebugCategory::LINFO);
+}
 
-    for (df::building *build : world->buildings.other[df::buildings_other_id::NEST_BOX])
-    {
-        auto type = build->getType();
-        if (df::enums::building_type::NestBox == type)
-        {
-            bool fertile = false;
-            df::building_nest_boxst *nb = virtual_cast<df::building_nest_boxst>(build);
-            if (nb->claimed_by != -1)
-            {
-                df::unit* u = df::unit::find(nb->claimed_by);
-                if (u && u->pregnancy_timer > 0)
-                    fertile = true;
-            }
-            for (size_t j = 1; j < nb->contained_items.size(); j++)
-            {
-                df::item* item = nb->contained_items[j]->item;
-                if (item->flags.bits.forbid != fertile)
-                {
-                    item->flags.bits.forbid = fertile;
-                    out << item->getStackSize() << " eggs " << (fertile ? "forbidden" : "unforbidden.") << endl;
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
+
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+};
+
+static int get_config_val(PersistentDataItem &c, int index) {
+    if (!c.isValid())
+        return -1;
+    return c.ival(index);
+}
+static bool get_config_bool(PersistentDataItem &c, int index) {
+    return get_config_val(c, index) == 1;
+}
+static void set_config_val(PersistentDataItem &c, int index, int value) {
+    if (c.isValid())
+        c.ival(index) = value;
+}
+static void set_config_bool(PersistentDataItem &c, int index, bool value) {
+    set_config_val(c, index, value ? 1 : 0);
+}
+
+static const int32_t CYCLE_TICKS = 50; // need to react quickly when eggs are laid/unforbidden
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static void do_cycle(color_ostream &out);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(config,out).print("initializing %s\n", plugin_name);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(config,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out);
+    } else {
+        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(config,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+    }
+
+    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
+    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(config,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
+    return CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static void do_cycle(color_ostream &out) {
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
+        bool fertile = false;
+        if (nb->claimed_by != -1) {
+            df::unit *u = df::unit::find(nb->claimed_by);
+            if (u && u->pregnancy_timer > 0)
+                fertile = true;
+        }
+        for (auto &contained_item : nb->contained_items) {
+            auto *item = virtual_cast<df::item_eggst>(contained_item->item);
+            if (item && item->flags.bits.forbid != fertile) {
+                item->flags.bits.forbid = fertile;
+                if (fertile && item->flags.bits.in_job) {
+                    // cancel any job involving the egg
+                    df::specific_ref *sref = Items::getSpecificRef(
+                            item, df::specific_ref_type::JOB);
+                    if (sref && sref->data.job)
+                        Job::removeJob(sref->data.job);
                 }
+                out.print("%d eggs %s.\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
             }
         }
     }
-}
-
-
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    if (world && ui) {
-        commands.push_back(
-            PluginCommand(
-                "nestboxes",
-                "Protect fertile eggs incubating in a nestbox.",
-                nestboxes));
-    }
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onupdate(color_ostream &out)
-{
-    if (!enabled)
-        return CR_OK;
-
-    static unsigned cnt = 0;
-    if ((++cnt % 5) != 0)
-        return CR_OK;
-
-    eggscan(out);
-
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    enabled = enable;
-    return CR_OK;
-}
-
-static command_result nestboxes(color_ostream &out, vector <string> & parameters)
-{
-    CoreSuspender suspend;
-
-    if (parameters.size() == 1) {
-        if (parameters[0] == "enable")
-            enabled = true;
-        else if (parameters[0] == "disable")
-            enabled = false;
-        else
-            return CR_WRONG_USAGE;
-    } else {
-        out << "Plugin " << (enabled ? "enabled" : "disabled") << "." << endl;
-    }
-    return CR_OK;
 }

@@ -20,11 +20,11 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.19.2
+  rev: 0.21.0
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.3.1
+  rev: v1.4.2
   hooks:
     - id: forbid-tabs
       exclude_types:
@@ -39,6 +39,6 @@ repos:
       name: Check Authors.rst
       language: python
       entry: python3 ci/authors-rst.py
-      files: docs/Authors\.rst
+      files: docs/about/Authors\.rst
       pass_filenames: false
 exclude: '^(depends/|data/.*\.json$|.*\.diff$)'

@@ -24,7 +24,7 @@
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_item_ref.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/report.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
@@ -45,7 +45,7 @@ DFHACK_PLUGIN("add-spatter");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 typedef df::reaction_product_item_improvementst improvement_product;
 

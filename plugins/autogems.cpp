@@ -33,7 +33,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("autogems");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 typedef int32_t item_id;
@@ -242,7 +242,7 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
     bool in_menu() {
         // Determines whether we're looking at the Workshop Orders screen.
-        return ui->main.mode == ui_sidebar_mode::OrdersWorkshop;
+        return plotinfo->main.mode == ui_sidebar_mode::OrdersWorkshop;
     }
 
     bool handleInput(std::set<df::interface_key> *input) {
@@ -299,7 +299,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, render);
 
 bool read_config(color_ostream &out) {
-    std::string path = "data/save/" + World::ReadWorldFolder() + "/autogems.json";
+    std::string path = "save/" + World::ReadWorldFolder() + "/autogems.json";
     if (!Filesystem::isfile(path)) {
         // no need to require the config file to exist
         return true;

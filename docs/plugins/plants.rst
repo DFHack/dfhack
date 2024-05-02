@@ -5,7 +5,7 @@ plants
 
 .. dfhack-tool::
     :summary: Provides commands that interact with plants.
-    :tags: adventure fort armok map plants
+    :tags: untested adventure fort armok map plants
     :no-command:
 
 .. dfhack-command:: plant

@@ -61,8 +61,8 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    if((NOT MSVC) OR (MSVC_VERSION LESS 1900) OR (MSVC_VERSION GREATER 1919))
-        message(SEND_ERROR "MSVC 2015 or 2017 is required")
+    if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
+        message(SEND_ERROR "MSVC 2022 is required")
     endif()
 endif()
 
@@ -132,14 +132,8 @@ endif()
 find_package(Perl REQUIRED)
 
 # set up folder structures for IDE solutions
-# MSVC Express won't load solutions that use this. It also doesn't include MFC supported
-# Check for MFC!
-find_package(MFC QUIET)
-if(MFC_FOUND OR (NOT MSVC))
-    option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
-else()
-    option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
-endif()
+# checking for msvc express is meaningless now, all available editions of msvc support folder groupings
+option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
 
 if(CMAKE_USE_FOLDERS)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -195,9 +189,9 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.47.05")
-set(DFHACK_RELEASE "r8")
-set(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "50.07")
+set(DFHACK_RELEASE "alpha1")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -258,6 +252,7 @@ if(UNIX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i686")
     endif()
     string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    set(CMAKE_INSTALL_RPATH "hack")
 elseif(MSVC)
     # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
@@ -419,6 +414,7 @@ include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
+include_directories(depends/imgui)
 add_subdirectory(depends)
 
 # Testing with CTest
@@ -446,8 +442,6 @@ endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
-
-install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
 
 # build the plugins
 if(BUILD_PLUGINS)

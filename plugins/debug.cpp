@@ -43,7 +43,7 @@ namespace DFHack {
 DBG_DECLARE(debug,filter);
 DBG_DECLARE(debug,init);
 DBG_DECLARE(debug,command);
-DBG_DECLARE(debug,ui);
+DBG_DECLARE(debug,plotinfo);
 DBG_DECLARE(debug,example,DebugCategory::LINFO);
 }
 

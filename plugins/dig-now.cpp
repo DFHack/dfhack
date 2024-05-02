@@ -20,14 +20,14 @@
 #include <df/reaction_product_itemst.h>
 #include <df/tile_designation.h>
 #include <df/tile_occupancy.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/unit.h>
 #include <df/vermin.h>
 #include <df/world.h>
 #include <df/world_site.h>
 
 DFHACK_PLUGIN("dig-now");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 using namespace DFHack;
@@ -678,7 +678,7 @@ static void create_boulders(color_ostream &out,
     df::unit *unit = world->units.active[0];
     df::historical_entity *civ = df::historical_entity::find(unit->civ_id);
     df::world_site *site = World::isFortressMode() ?
-            df::world_site::find(ui->site_id) : NULL;
+            df::world_site::find(plotinfo->site_id) : NULL;
 
     std::vector<df::reaction_reagent *> in_reag;
     std::vector<df::item *> in_items;

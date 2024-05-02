@@ -27,7 +27,7 @@
 #include "modules/Maps.h"
 #include "modules/Units.h"
 #include "df/building_cagest.h"
-#include "df/ui_advmode.h"
+#include "df/adventurest.h"
 
 DFHACK_PLUGIN("stocks");
 #define PLUGIN_VERSION 0.13

@@ -3,7 +3,7 @@ dwarfvet
 
 .. dfhack-tool::
     :summary: Allows animals to be treated at animal hospitals.
-    :tags: fort gameplay animals
+    :tags: untested fort gameplay animals
 
 Annoyed that your dragons become useless after a minor injury? Well, with
 dwarfvet, injured animals will be treated at an animal hospital, which is simply

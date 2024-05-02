@@ -13,7 +13,7 @@ MessageBox = defclass(MessageBox, gui.FramedScreen)
 MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_inset = 1,
     -- new attrs
     on_accept = DEFAULT_NIL,
@@ -48,7 +48,7 @@ end
 function MessageBox:onRenderFrame(dc,rect)
     MessageBox.super.onRenderFrame(self,dc,rect)
     if self.on_accept then
-        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
+        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('SELECT')
     end
 end
 
@@ -59,19 +59,16 @@ function MessageBox:onDestroy()
 end
 
 function MessageBox:onInput(keys)
-    if keys.MENU_CONFIRM then
+    if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
-        if self.on_accept then
+        if keys.SELECT and self.on_accept then
             self.on_accept()
-        end
-    elseif keys.LEAVESCREEN or (keys.SELECT and not self.on_accept) then
-        self:dismiss()
-        if self.on_cancel then
+        elseif (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) and self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -132,14 +129,15 @@ function InputBox:onInput(keys)
         if self.on_input then
             self.on_input(self.subviews.edit.text)
         end
-    elseif keys.LEAVESCREEN then
+        return true
+    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -220,9 +218,9 @@ end
 
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
-    if self.select2_hint then
-        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
-    end
+    --if self.select2_hint then
+    --    dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
+    --end
 end
 
 function ListBox:getWantedFrameSize()
@@ -233,14 +231,14 @@ function ListBox:getWantedFrameSize()
 end
 
 function ListBox:onInput(keys)
-    if keys.LEAVESCREEN then
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

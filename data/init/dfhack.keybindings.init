@@ -16,22 +16,22 @@ keybinding add Ctrl-Shift-P "gui/launcher --minimal"
 # show hotkey popup menu
 keybinding add Ctrl-Shift-C hotkeys
 
+# control panel
+keybinding add Ctrl-Shift-E gui/control-panel
+
 # on-screen keyboard
 keybinding add Ctrl-Shift-K gui/cp437-table
 
-# an in-game init file editor
-keybinding add Alt-S@title|dwarfmode/Default|dungeonmode gui/settings-manager
+# customizable quick command list
+keybinding add Ctrl-Shift-A gui/quickcmd
 
 
 ######################
 # dwarfmode bindings #
 ######################
 
-# quicksave, only in main dwarfmode screen and menu page
-keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
-
-# toggle the display of water level as 1-7 tiles
-keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
+# quicksave
+keybinding add Ctrl-Alt-S@dwarfmode quicksave
 
 # designate the whole vein for digging
 keybinding add Ctrl-V@dwarfmode digv
@@ -44,126 +44,125 @@ keybinding add Ctrl-C spotclean
 keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
 # destroy items designated for dump in the selected tile
-keybinding add Ctrl-Shift-K@dwarfmode autodump-destroy-here
+keybinding add Ctrl-H@dwarfmode autodump-destroy-here
 
-# apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
+# apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
-keybinding add Alt-F@dwarfmode gui/quickfort
 
 # show information collected by dwarfmonitor
-keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
-keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
+#keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
+#keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
 
 # set the zone or cage under the cursor as the default
-keybinding add Alt-Shift-I@dwarfmode/Zones "zone set"
+#keybinding add Alt-Shift-I@dwarfmode/Zones "zone set"
 
 # Stocks plugin
-keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
+#keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
 # open an overview window summarising some stocks (dfstatus)
-keybinding add Ctrl-Shift-I@dwarfmode/Default|dfhack/lua/dfstatus gui/dfstatus
+#keybinding add Ctrl-Shift-I@dwarfmode/Default|dfhack/lua/dfstatus gui/dfstatus
 
 # change quantity of manager orders
-keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
+#keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
 
 # re-check manager orders
-keybinding add Alt-R@jobmanagement/Main workorder-recheck
+#keybinding add Alt-R@jobmanagement/Main workorder-recheck
 
 # set workorder item details (on workorder details screen press D again)
-keybinding add D@workquota_details gui/workorder-details
+#keybinding add D@workquota_details gui/workorder-details
 
 # view combat reports for the selected unit/corpse/spatter
-keybinding add Ctrl-Shift-R@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|workshop_profile view-unit-reports
+#keybinding add Ctrl-Shift-R@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|workshop_profile view-unit-reports
 
 # view extra unit information
-keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
+#keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
 
 # boost priority of jobs related to the selected entity
-keybinding add Alt-N@dwarfmode|job|joblist|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|textviewer|item|layer_assigntrade|tradegoods|store|assign_display_item|treasurelist do-job-now
+#keybinding add Alt-N@dwarfmode|job|joblist|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|textviewer|item|layer_assigntrade|tradegoods|store|assign_display_item|treasurelist do-job-now
 
 # export a Dwarf's preferences screen in BBCode to post to a forum
-keybinding add Ctrl-Shift-F@textviewer forum-dwarves
+#keybinding add Ctrl-Shift-F@textviewer forum-dwarves
 
 # q->stockpile - copy & paste stockpiles
-keybinding add Alt-P@dwarfmode/QueryBuilding/Some/Stockpile copystock
+#keybinding add Alt-P@dwarfmode/QueryBuilding/Some/Stockpile copystock
 
 # q->stockpile - load and save stockpile settings out of game
-keybinding add Alt-L@dwarfmode/QueryBuilding/Some/Stockpile "gui/stockpiles -load"
-keybinding add Alt-S@dwarfmode/QueryBuilding/Some/Stockpile "gui/stockpiles -save"
+#keybinding add Alt-L@dwarfmode/QueryBuilding/Some/Stockpile "gui/stockpiles -load"
+#keybinding add Alt-S@dwarfmode/QueryBuilding/Some/Stockpile "gui/stockpiles -save"
 
 # q->workshop - duplicate the selected job
-keybinding add Ctrl-D job-duplicate
+#keybinding add Ctrl-D job-duplicate
 
 # materials: q->workshop; b->select items
-keybinding add Shift-A "job-material ALUNITE"
-keybinding add Shift-M "job-material MICROCLINE"
-keybinding add Shift-D "job-material DACITE"
-keybinding add Shift-R "job-material RHYOLITE"
-keybinding add Shift-I "job-material CINNABAR"
-keybinding add Shift-B "job-material COBALTITE"
-keybinding add Shift-O "job-material OBSIDIAN"
-keybinding add Shift-T "job-material ORTHOCLASE"
-keybinding add Shift-G "job-material GLASS_GREEN"
+#keybinding add Shift-A "job-material ALUNITE"
+#keybinding add Shift-M "job-material MICROCLINE"
+#keybinding add Shift-D "job-material DACITE"
+#keybinding add Shift-R "job-material RHYOLITE"
+#keybinding add Shift-I "job-material CINNABAR"
+#keybinding add Shift-B "job-material COBALTITE"
+#keybinding add Shift-O "job-material OBSIDIAN"
+#keybinding add Shift-T "job-material ORTHOCLASE"
+#keybinding add Shift-G "job-material GLASS_GREEN"
 
 # sort units and items in the on-screen list
-keybinding add Alt-Shift-N "sort-units name" "sort-items description"
-keybinding add Alt-Shift-R "sort-units arrival"
-keybinding add Alt-Shift-T "sort-units profession" "sort-items type material"
-keybinding add Alt-Shift-Q "sort-units squad_position" "sort-items quality"
+#keybinding add Alt-Shift-N "sort-units name" "sort-items description"
+#keybinding add Alt-Shift-R "sort-units arrival"
+#keybinding add Alt-Shift-T "sort-units profession" "sort-items type material"
+#keybinding add Alt-Shift-Q "sort-units squad_position" "sort-items quality"
 
 # browse linked mechanisms
-keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
+#keybinding add Ctrl-M@dwarfmode/QueryBuilding/Some gui/mechanisms
 
 # browse rooms of same owner
-keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list
+#keybinding add Alt-R@dwarfmode/QueryBuilding/Some gui/room-list
 
 # interface for the liquids plugin - spawn water/magma/obsidian
-keybinding add Alt-L@dwarfmode/LookAround gui/liquids
+#keybinding add Alt-L@dwarfmode/LookAround gui/liquids
 
 # machine power sensitive pressure plate construction
-keybinding add Ctrl-Shift-M@dwarfmode/Build/Position/Trap gui/power-meter
+#keybinding add Ctrl-Shift-M@dwarfmode/Build/Position/Trap gui/power-meter
 
 # siege engine control
-keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
+#keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
 
 # military weapon auto-select
-keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
+#keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
 
 # military copy uniform
-keybinding add Ctrl-C@layer_military/Uniforms gui/clone-uniform
+#keybinding add Ctrl-C@layer_military/Uniforms gui/clone-uniform
 
 # minecart Guide path
-keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
+#keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 
 # workshop job details
-keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
+#keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
 # workflow front-end
-keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
-keybinding add Alt-W@overallstatus "gui/workflow status"
+#keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+#keybinding add Alt-W@overallstatus "gui/workflow status"
 # equivalent to the one above when gui/extended-status is enabled
-keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
+#keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
 
 # autobutcher front-end
-keybinding add Shift-B@pet/List/Unit gui/autobutcher
+#keybinding add Shift-B@pet/List/Unit gui/autobutcher
 
 # view pathable tiles from active cursor
-keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
+#keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
 
 # gui/rename script - rename units and buildings
-keybinding add Ctrl-Shift-N@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist gui/rename
-keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
+#keybinding add Ctrl-Shift-N@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist gui/rename
+#keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
 
 #####################
 # adv mode bindings #
 #####################
 
-keybinding add Ctrl-A@dungeonmode/ConversationSpeak adv-rumors
-keybinding add Ctrl-B@dungeonmode adv-bodyswap
-keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
-keybinding add Shift-O@dungeonmode gui/companion-order
-keybinding add Ctrl-T@dungeonmode gui/advfort
+#keybinding add Ctrl-A@dungeonmode/ConversationSpeak adv-rumors
+#keybinding add Ctrl-B@dungeonmode adv-bodyswap
+#keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
+#keybinding add Shift-O@dungeonmode gui/companion-order
+#keybinding add Ctrl-T@dungeonmode gui/advfort
 
 
 #########################
@@ -171,4 +170,4 @@ keybinding add Ctrl-T@dungeonmode gui/advfort
 #########################
 
 # export all information, or just the detailed maps (doesn't handle site maps)
-keybinding add Ctrl-A@legends "exportlegends all"
+#keybinding add Ctrl-A@legends "exportlegends all"

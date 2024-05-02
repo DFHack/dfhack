@@ -96,6 +96,7 @@ endif()
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks-windows.cpp
+    Hooks.cpp
     PlugLoad-windows.cpp
     Process-windows.cpp
 )
@@ -123,12 +124,14 @@ set(MODULE_HEADERS
     include/modules/Buildings.h
     include/modules/Burrows.h
     include/modules/Constructions.h
+    include/modules/DFSDL.h
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
     include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
+    include/modules/ImTuiImpl.h
     include/modules/Items.h
     include/modules/Job.h
     include/modules/Kitchen.h
@@ -140,6 +143,7 @@ set(MODULE_HEADERS
     include/modules/Random.h
     include/modules/Renderer.h
     include/modules/Screen.h
+    include/modules/Textures.h
     include/modules/Translation.h
     include/modules/Units.h
     include/modules/World.h
@@ -149,11 +153,13 @@ set(MODULE_SOURCES
     modules/Buildings.cpp
     modules/Burrows.cpp
     modules/Constructions.cpp
+    modules/DFSDL.cpp
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
     modules/Graphic.cpp
     modules/Gui.cpp
+    modules/ImTuiImpl.cpp
     modules/Items.cpp
     modules/Job.cpp
     modules/Kitchen.cpp
@@ -165,6 +171,7 @@ set(MODULE_SOURCES
     modules/Random.cpp
     modules/Renderer.cpp
     modules/Screen.cpp
+    modules/Textures.cpp
     modules/Translation.cpp
     modules/Units.cpp
     modules/World.cpp
@@ -374,6 +381,8 @@ if(WIN32)
 else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
+    add_library(dfhooks SHARED Hooks.cpp)
+    target_link_libraries(dfhooks dfhack)
 endif()
 
 # effectively disables debug builds...
@@ -399,7 +408,7 @@ if(APPLE)
     set_target_properties(dfhack PROPERTIES SOVERSION 1.0.0)
 endif()
 
-target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
+target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version imgui ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
@@ -422,6 +431,9 @@ if(UNIX)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
     endif()
+    install(TARGETS dfhooks
+        LIBRARY DESTINATION .
+        RUNTIME DESTINATION .)
 else()
     # On windows, copy the renamed SDL so DF can still run.
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll

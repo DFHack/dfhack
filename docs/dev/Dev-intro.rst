@@ -8,6 +8,7 @@ likely the most straightforward choice.
 
 Other pages that may be relevant include:
 
+- `building-dfhack-index`
 - `contributing`
 - `documentation`
 - `license`
@@ -15,6 +16,8 @@ Other pages that may be relevant include:
 
 .. contents:: Contents
     :local:
+
+.. _architectural-diagrams:
 
 Architecture diagrams
 ---------------------
@@ -27,6 +30,9 @@ together:
   :alt: DFHack logic injection diagram
   :target: https://drive.google.com/file/d/1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
   :align: center
+
+As seen in the diagram Dwarf Fortress utilizes the SDL library, this provides us with an easy to isolate
+injection point for DFHack.
 
 .. image:: https://drive.google.com/uc?export=download&id=1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
   :alt: DFHack tool call graph
@@ -62,10 +68,9 @@ Run `plug` at the DFHack prompt for a list of all plugins included in DFHack.
 Scripts
 -------
 
-DFHack scripts can currently be written in Lua or Ruby. The `Lua API <lua-api>`
-is more complete and currently better-documented, however. Referring to existing
-scripts as well as the API documentation can be helpful when developing new
-scripts.
+DFHack scripts are written in Lua, with a `well-documented library <lua-api>`.
+Referring to existing scripts as well as the API documentation can be helpful
+when developing new scripts.
 
 Scripts included in DFHack live in a separate
 :source-scripts:`scripts repository <>`. This can be found in the ``scripts``

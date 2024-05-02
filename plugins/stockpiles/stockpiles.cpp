@@ -21,7 +21,7 @@
 #include "df/world_data.h"
 
 #include "DataDefs.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/building_stockpilest.h"
 #include "df/stockpile_settings.h"
 #include "df/global_objects.h"
@@ -42,7 +42,7 @@ using namespace dfstockpiles;
 DFHACK_PLUGIN ( "stockpiles" );
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(selection_rect);
 
 using df::building_stockpilest;
@@ -59,7 +59,7 @@ static bool loadstock_guard ( df::viewscreen *top );
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands )
 {
-    if ( world && ui )
+    if ( world && plotinfo )
     {
         commands.push_back(PluginCommand(
             "copystock",
@@ -106,7 +106,7 @@ static bool copystock_guard ( df::viewscreen *top )
     if ( !Gui::dwarfmode_hotkey ( top ) )
         return false;
 
-    switch ( ui->main.mode )
+    switch ( plotinfo->main.mode )
     {
     case Stockpiles:
         return true;
@@ -123,10 +123,10 @@ static command_result copystock ( color_ostream &out, vector <string> & paramete
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
 
     // For convenience: when used in the stockpiles mode, switch to 'q'
-    if ( ui->main.mode == ui_sidebar_mode::Stockpiles )
+    if ( plotinfo->main.mode == ui_sidebar_mode::Stockpiles )
     {
         world->selected_building = NULL; // just in case it contains some kind of garbage
-        ui->main.mode = ui_sidebar_mode::QueryBuilding;
+        plotinfo->main.mode = ui_sidebar_mode::QueryBuilding;
         selection_rect->start_x = -30000;
 
         out << "Switched back to query building." << endl;
@@ -140,8 +140,8 @@ static command_result copystock ( color_ostream &out, vector <string> & paramete
         return CR_WRONG_USAGE;
     }
 
-    ui->stockpile.custom_settings = sp->settings;
-    ui->main.mode = ui_sidebar_mode::Stockpiles;
+    plotinfo->stockpile.custom_settings = sp->settings;
+    plotinfo->main.mode = ui_sidebar_mode::Stockpiles;
     world->selected_stockpile_type = stockpile_category::Custom;
 
     out << "Stockpile options copied." << endl;
@@ -156,7 +156,7 @@ static bool savestock_guard ( df::viewscreen *top )
     if ( !Gui::dwarfmode_hotkey ( top ) )
         return false;
 
-    switch ( ui->main.mode )
+    switch ( plotinfo->main.mode )
     {
     case Stockpiles:
         return true;
@@ -175,7 +175,7 @@ static bool loadstock_guard ( df::viewscreen *top )
     if ( !Gui::dwarfmode_hotkey ( top ) )
         return false;
 
-    switch ( ui->main.mode )
+    switch ( plotinfo->main.mode )
     {
     case Stockpiles:
         return true;

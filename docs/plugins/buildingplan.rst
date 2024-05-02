@@ -3,7 +3,7 @@ buildingplan
 
 .. dfhack-tool::
     :summary: Plan building construction before you have materials.
-    :tags: fort design buildings
+    :tags: untested fort design buildings
 
 This plugin adds a planning mode for building placement. You can then place
 furniture, constructions, and other buildings before the required materials are

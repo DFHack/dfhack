@@ -1,384 +1,500 @@
 // automatically chop trees
 
-#include "uicommon.h"
-#include "listcolumn.h"
-
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
+#include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
-#include "DataDefs.h"
 #include "TileTypes.h"
-
-#include "df/burrow.h"
-#include "df/item.h"
-#include "df/item_flags.h"
-#include "df/items_other_id.h"
-#include "df/job.h"
-#include "df/map_block.h"
-#include "df/material.h"
-#include "df/plant.h"
-#include "df/plant_tree_info.h"
-#include "df/plant_tree_tile.h"
-#include "df/plant_raw.h"
-#include "df/tile_dig_designation.h"
-#include "df/ui.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/world.h"
 
 #include "modules/Burrows.h"
 #include "modules/Designations.h"
-#include "modules/Gui.h"
-#include "modules/MapCache.h"
+#include "modules/Items.h"
 #include "modules/Maps.h"
-#include "modules/Screen.h"
+#include "modules/Persistence.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
-#include <set>
+#include "df/burrow.h"
+#include "df/item.h"
+#include "df/map_block.h"
+#include "df/plant.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
+#include "df/plotinfost.h"
+#include "df/world.h"
 
+#include <map>
+#include <unordered_map>
+
+using std::map;
+using std::multimap;
+using std::pair;
 using std::string;
+using std::unordered_map;
 using std::vector;
-using std::set;
+
 using namespace DFHack;
 using namespace df::enums;
 
-#define PLUGIN_VERSION 0.3
 DFHACK_PLUGIN("autochop");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
-static int get_log_count();
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(autochop, status, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(autochop, cycle, DebugCategory::LINFO);
+}
 
-static bool autochop_enabled = false;
-static int min_logs, max_logs;
-static const int LOG_CAP_MAX = 99999;
-static bool wait_for_threshold;
-struct Skip {
-    bool fruit_trees;
-    bool food_trees;
-    bool cook_trees;
-    operator int() {
-        return (fruit_trees ? 1 : 0) |
-                (food_trees ? 2 : 0) |
-                (cook_trees ? 4 : 0);
-    }
-    Skip &operator= (int in) {
-        // set all fields to false if they haven't been set in this save yet
-        if (in < 0)
-            in = 0;
-        fruit_trees = (in & 1);
-        food_trees = (in & 2);
-        cook_trees = (in & 4);
-        return *this;
-    }
-};
-static Skip skip;
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static const string BURROW_CONFIG_KEY_PREFIX = string(plugin_name) + "/burrow/";
+static PersistentDataItem config;
+static vector<PersistentDataItem> watched_burrows;
+static unordered_map<int, size_t> watched_burrows_indices;
 
-static PersistentDataItem config_autochop;
-
-struct WatchedBurrow
-{
-    int32_t id;
-    df::burrow *burrow;
-
-    WatchedBurrow(df::burrow *burrow) : burrow(burrow)
-    {
-        id = burrow->id;
-    }
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+    CONFIG_MAX_LOGS = 1,
+    CONFIG_MIN_LOGS = 2,
+    CONFIG_WAITING_FOR_MIN = 3,
 };
 
-class WatchedBurrows
-{
-public:
-    string getSerialisedIds()
-    {
-        validate();
-        stringstream burrow_ids;
-        bool append_started = false;
-        for (auto it = burrows.begin(); it != burrows.end(); it++)
-        {
-            if (append_started)
-                burrow_ids << " ";
-            burrow_ids << it->id;
-            append_started = true;
+enum BurrowConfigValues {
+    BURROW_CONFIG_ID = 0,
+    BURROW_CONFIG_CHOP = 1,
+    BURROW_CONFIG_CLEARCUT = 2,
+    BURROW_CONFIG_PROTECT_BREWABLE = 3,
+    BURROW_CONFIG_PROTECT_EDIBLE = 4,
+    BURROW_CONFIG_PROTECT_COOKABLE = 5,
+};
+
+static int get_config_val(PersistentDataItem &c, int index) {
+    if (!c.isValid())
+        return -1;
+    return c.ival(index);
+}
+static bool get_config_bool(PersistentDataItem &c, int index) {
+    return get_config_val(c, index) == 1;
+}
+static void set_config_val(PersistentDataItem &c, int index, int value) {
+    if (c.isValid())
+        c.ival(index) = value;
+}
+static void set_config_bool(PersistentDataItem &c, int index, bool value) {
+    set_config_val(c, index, value ? 1 : 0);
+}
+
+static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
+    if (watched_burrows_indices.count(id))
+        return watched_burrows[watched_burrows_indices[id]];
+    string keyname = BURROW_CONFIG_KEY_PREFIX + int_to_string(id);
+    DEBUG(status,out).print("creating new persistent key for burrow %d\n", id);
+    watched_burrows.emplace_back(World::GetPersistentData(keyname, NULL));
+    size_t idx = watched_burrows.size()-1;
+    watched_burrows_indices.emplace(id, idx);
+    return watched_burrows[idx];
+}
+static void remove_burrow_config(color_ostream &out, int id) {
+    if (!watched_burrows_indices.count(id))
+        return;
+    DEBUG(status,out).print("removing persistent key for burrow %d\n", id);
+    size_t idx = watched_burrows_indices[id];
+    World::DeletePersistentData(watched_burrows[idx]);
+    watched_burrows.erase(watched_burrows.begin()+idx);
+    watched_burrows_indices.erase(id);
+}
+static void validate_burrow_configs(color_ostream &out) {
+    for (int32_t idx = watched_burrows.size()-1; idx >=0; --idx) {
+        int id = get_config_val(watched_burrows[idx], BURROW_CONFIG_ID);
+        if (!df::burrow::find(id)) {
+            remove_burrow_config(out, id);
         }
+    }
+}
 
-        return burrow_ids.str();
+static const int32_t CYCLE_TICKS = 1200;
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static int32_t do_cycle(color_ostream &out, bool force_designate = false);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(status,out).print("initializing %s\n", plugin_name);
+
+    // provide a configuration interface for the plugin
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Auto-harvest trees when low on stockpiled logs.",
+        do_command));
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
     }
 
-    void clear()
-    {
-        burrows.clear();
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(status,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out, true);
+    } else {
+        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(status,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        set_config_val(config, CONFIG_MAX_LOGS, 200);
+        set_config_val(config, CONFIG_MIN_LOGS, 160);
+        set_config_bool(config, CONFIG_WAITING_FOR_MIN, false);
     }
 
-    void add(const int32_t id)
-    {
-        if (!isValidBurrow(id))
-            return;
-
-        WatchedBurrow wb(getBurrow(id));
-        burrows.push_back(wb);
+    // we have to copy our enabled flag into the global plugin variable, but
+    // all the other state we can directly read/modify from the persistent
+    // data structure.
+    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
+    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+    World::GetPersistentData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
+    watched_burrows_indices.clear();
+    const size_t num_watched_burrows = watched_burrows.size();
+    for (size_t idx = 0; idx < num_watched_burrows; ++idx) {
+        auto &c = watched_burrows[idx];
+        watched_burrows_indices.emplace(get_config_val(c, BURROW_CONFIG_ID), idx);
     }
+    validate_burrow_configs(out);
 
-    void add(const string burrow_ids)
-    {
-        istringstream iss(burrow_ids);
-        int id;
-        while (iss >> id)
-        {
-            add(id);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(status,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
         }
     }
+    return CR_OK;
+}
 
-    bool isValidPos(const df::coord &plant_pos)
-    {
-        validate();
-        if (!burrows.size())
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
+        int32_t designated = do_cycle(out);
+        if (0 < designated)
+            out.print("autochop: designated %d tree(s) for chopping\n", designated);
+    }
+    return CR_OK;
+}
+
+static bool call_autochop_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(status).print("calling autochop lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.autochop", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    bool show_help = false;
+    if (!call_autochop_lua(&out, "parse_commandline", parameters.size(), 1,
+            [&](lua_State *L) {
+                for (const string &param : parameters)
+                    Lua::Push(L, param);
+            },
+            [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
+        return CR_FAILURE;
+    }
+
+    return show_help ? CR_WRONG_USAGE : CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static bool is_accessible_item(df::item *item, const vector<df::unit *> &citizens) {
+    const df::coord pos = Items::getPosition(item);
+    for (auto &unit : citizens) {
+        if (Maps::canWalkBetween(Units::getPosition(unit), pos))
             return true;
-
-        for (auto it = burrows.begin(); it != burrows.end(); it++)
-        {
-            df::burrow *burrow = it->burrow;
-            if (Burrows::isAssignedTile(burrow, plant_pos))
-                return true;
-        }
-
-        return false;
     }
-
-    bool isBurrowWatched(const df::burrow *burrow)
-    {
-        validate();
-        for (auto it = burrows.begin(); it != burrows.end(); it++)
-        {
-            if (it->burrow == burrow)
-                return true;
-        }
-
-        return false;
-    }
-
-private:
-    static bool isValidBurrow(const int32_t id)
-    {
-        return getBurrow(id);
-    }
-
-    static df::burrow *getBurrow(const int32_t id)
-    {
-        return df::burrow::find(id);
-    }
-
-    void validate()
-    {
-        for (auto it = burrows.begin(); it != burrows.end();)
-        {
-            if (!isValidBurrow(it->id))
-                it = burrows.erase(it);
-            else
-                ++it;
-        }
-    }
-
-    vector<WatchedBurrow> burrows;
-};
-
-static WatchedBurrows watchedBurrows;
-
-static void save_config()
-{
-    config_autochop.val() = watchedBurrows.getSerialisedIds();
-    config_autochop.ival(0) = autochop_enabled;
-    config_autochop.ival(1) = min_logs;
-    config_autochop.ival(2) = max_logs;
-    config_autochop.ival(3) = wait_for_threshold;
-    config_autochop.ival(4) = skip;
+    return false;
 }
 
-static void initialize()
-{
-    watchedBurrows.clear();
-    autochop_enabled = false;
-    min_logs = 80;
-    max_logs = 100;
-    wait_for_threshold = false;
-    skip = 0;
-
-    config_autochop = World::GetPersistentData("autochop/config");
-    if (config_autochop.isValid())
-    {
-        watchedBurrows.add(config_autochop.val());
-        autochop_enabled = config_autochop.ival(0);
-        min_logs = config_autochop.ival(1);
-        max_logs = config_autochop.ival(2);
-        wait_for_threshold = config_autochop.ival(3);
-        skip = config_autochop.ival(4);
+// at least one member of the fort can reach a position adjacent to the given pos
+static bool is_accessible_tree(const df::coord &pos, const vector<df::unit *> &citizens) {
+    for (auto &unit : citizens) {
+        if (Maps::canWalkBetween(unit->pos, df::coord(pos.x-1, pos.y-1, pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x,   pos.y-1, pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x+1, pos.y-1, pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x-1, pos.y,   pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x+1, pos.y,   pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x-1, pos.y+1, pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x,   pos.y+1, pos.z))
+                || Maps::canWalkBetween(unit->pos, df::coord(pos.x+1, pos.y+1, pos.z)))
+            return true;
     }
-    else
-    {
-        config_autochop = World::AddPersistentData("autochop/config");
-        if (config_autochop.isValid())
-            save_config();
-    }
+    return false;
 }
 
-static bool skip_plant(const df::plant * plant, bool *restricted)
-{
-    if (restricted)
-        *restricted = false;
-
+static bool is_valid_tree(const df::plant *plant) {
     // Skip all non-trees immediately.
     if (plant->flags.bits.is_shrub)
-        return true;
+        return false;
 
     // Skip plants with invalid tile.
-    df::map_block *cur = Maps::getTileBlock(plant->pos);
-    if (!cur)
-        return true;
+    df::map_block *block = Maps::getTileBlock(plant->pos);
+    if (!block)
+        return false;
 
     int x = plant->pos.x % 16;
     int y = plant->pos.y % 16;
 
     // Skip all unrevealed plants.
-    if (cur->designation[x][y].bits.hidden)
-        return true;
+    if (block->designation[x][y].bits.hidden)
+        return false;
 
-    df::tiletype_material material = tileMaterial(cur->tiletype[x][y]);
-    if (material != tiletype_material::TREE)
-        return true;
+    if (tileMaterial(block->tiletype[x][y]) != tiletype_material::TREE)
+        return false;
 
+    return true;
+}
+
+static bool is_protected(const df::plant * plant, PersistentDataItem &c) {
     const df::plant_raw *plant_raw = df::plant_raw::find(plant->material);
 
-    // Skip fruit trees if set.
-    if (skip.fruit_trees && plant_raw->material_defs.type[plant_material_def::drink] != -1)
-    {
-        if (restricted)
-            *restricted = true;
+    bool protect_brewable = get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE);
+    bool protect_edible = get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE);
+    bool protect_cookable = get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE);
+
+    if (protect_brewable && plant_raw->material_defs.type[plant_material_def::drink] != -1)
         return true;
-    }
 
-    if (skip.food_trees || skip.cook_trees)
-    {
-        for (df::material * mat : plant_raw->material)
-        {
-            if (skip.food_trees && mat->flags.is_set(material_flags::EDIBLE_RAW))
-            {
-                if (restricted)
-                    *restricted = true;
+    if (protect_edible || protect_cookable) {
+        for (df::material * mat : plant_raw->material) {
+            if (protect_edible && mat->flags.is_set(material_flags::EDIBLE_RAW))
                 return true;
-            }
 
-            if (skip.cook_trees && mat->flags.is_set(material_flags::EDIBLE_COOKED))
-            {
-                if (restricted)
-                    *restricted = true;
+            if (protect_cookable && mat->flags.is_set(material_flags::EDIBLE_COOKED))
                 return true;
-            }
         }
     }
 
     return false;
 }
 
-static int estimate_logs(const df::plant *plant)
-{
+static int32_t estimate_logs(const df::plant *plant) {
+    if (!plant->tree_info)
+        return 0;
+
     //adapted from code by aljohnston112 @ github
     df::plant_tree_tile** tiles = plant->tree_info->body;
-    df::plant_tree_tile* tilesRow;
 
-    int trunks = 0;
+    if (!tiles)
+        return 0;
+
+    int32_t trunks = 0;
+    const int32_t area = plant->tree_info->dim_y * plant->tree_info->dim_x;
     for (int i = 0; i < plant->tree_info->body_height; i++) {
-        tilesRow = tiles[i];
-        for (int j = 0; j < plant->tree_info->dim_y*plant->tree_info->dim_x; j++) {
+        df::plant_tree_tile* tilesRow = tiles[i];
+        if (!tilesRow)
+            return 0; // tree data is corrupt; let's not touch it
+        for (int j = 0; j < area; j++)
             trunks += tilesRow[j].bits.trunk;
-        }
     }
 
     return trunks;
 }
 
-static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
-{
-    int count = 0;
-    int estimated_yield = get_log_count();
-    multimap<int, df::plant *, std::greater<int>> trees_by_size;
-
-    if (skipped)
-    {
-        *skipped = 0;
-    }
-
-    //get trees
-    for (auto plant : world->plants.all)
-    {
-        bool restricted = false;
-
-        if (skip_plant(plant, &restricted))
-        {
-            if (restricted && skipped)
-            {
-                ++*skipped;
-            }
-            continue;
-        }
-
-        trees_by_size.insert(pair<int, df::plant *>(estimate_logs(plant), plant));
-    }
-
-    //designate
-    for (auto & entry : trees_by_size)
-    {
-        const df::plant * plant = entry.second;
-
-        if ((estimated_yield >= max_logs) && chop)
-            break;
-
-        if (!count_only && !watchedBurrows.isValidPos(plant->pos))
+static void bucket_tree(df::plant *plant, bool designate_clearcut, bool *designated, bool *can_chop,
+        map<int32_t, int32_t> *tree_counts, map<int32_t, int32_t> *designated_tree_counts,
+        map<int, PersistentDataItem *> &clearcut_burrows,
+        map<int, PersistentDataItem *> &chop_burrows) {
+    for (auto &burrow : plotinfo->burrows.list) {
+        if (!Burrows::isAssignedTile(burrow, plant->pos))
             continue;
 
-        if (chop && !Designations::isPlantMarked(plant))
-        {
-            if (count_only)
-            {
-                if (Designations::canMarkPlant(plant))
-                    count++;
-            }
-            else
-            {
-                if (Designations::markPlant(plant))
-                {
-                    estimated_yield += entry.first;
-                    count++;
-                }
-            }
-        }
+        int id = burrow->id;
+        if (tree_counts)
+            ++(*tree_counts)[id];
 
-        if (!chop && Designations::isPlantMarked(plant))
-        {
-            if (count_only)
-            {
-                if (Designations::canUnmarkPlant(plant))
-                    count++;
+        if (*designated) {
+            if (designated_tree_counts)
+                ++(*designated_tree_counts)[id];
+        } else if (clearcut_burrows.count(id) && !is_protected(plant, *clearcut_burrows[id])) {
+            if (designate_clearcut && Designations::markPlant(plant)) {
+                *designated = true;
+                if (designated_tree_counts)
+                    ++(*designated_tree_counts)[id];
             }
-            else
-            {
-                if (Designations::unmarkPlant(plant))
-                    count++;
-            }
+        } else if (chop_burrows.count(id) && !is_protected(plant, *chop_burrows[id])) {
+            *can_chop = true;
         }
     }
 
-    return count;
+    if (!*designated && chop_burrows.empty())
+        *can_chop = true;
 }
 
-static bool is_valid_item(df::item *item)
-{
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
+static void bucket_watched_burrows(color_ostream & out,
+        map<int, PersistentDataItem *> &clearcut_burrows,
+        map<int, PersistentDataItem *> &chop_burrows) {
+    for (auto &c : watched_burrows) {
+        int id = get_config_val(c, BURROW_CONFIG_ID);
+        if (get_config_bool(c, BURROW_CONFIG_CLEARCUT))
+            clearcut_burrows.emplace(id, &c);
+        else if (get_config_bool(c, BURROW_CONFIG_CHOP))
+            chop_burrows.emplace(id, &c);
+    }
+}
+
+typedef multimap<int, df::plant *, std::greater<int>> TreesBySize;
+
+static int32_t scan_tree(color_ostream & out, df::plant *plant, int32_t *expected_yield,
+        TreesBySize *designatable_trees_by_size, bool designate_clearcut,
+        const vector<df::unit *> &citizens, int32_t *accessible_trees,
+        int32_t *inaccessible_trees, int32_t *designated_trees, int32_t *accessible_yield,
+        map<int32_t, int32_t> *tree_counts,
+        map<int32_t, int32_t> *designated_tree_counts,
+        map<int, PersistentDataItem *> &clearcut_burrows,
+        map<int, PersistentDataItem *> &chop_burrows) {
+    TRACE(cycle,out).print("  scanning tree at %d,%d,%d\n",
+                            plant->pos.x, plant->pos.y, plant->pos.z);
+
+    if (!is_valid_tree(plant))
+        return 0;
+
+    bool accessible = is_accessible_tree(plant->pos, citizens);
+    int32_t yield = estimate_logs(plant);
+
+    if (accessible) {
+        if (accessible_trees)
+            ++*accessible_trees;
+        if (accessible_yield)
+            *accessible_yield += yield;
+    } else {
+        if (inaccessible_trees)
+            ++*inaccessible_trees;
+    }
+
+    bool can_chop = false;
+    bool designated = Designations::isPlantMarked(plant);
+    bool was_designated = designated;
+    bucket_tree(plant, designate_clearcut, &designated, &can_chop, tree_counts,
+            designated_tree_counts, clearcut_burrows, chop_burrows);
+
+    int32_t ret = 0;
+    if (designated) {
+        if (!was_designated)
+            ret = 1;
+        if (designated_trees)
+            ++*designated_trees;
+        if (expected_yield)
+            *expected_yield += yield;
+    } else if (can_chop && accessible) {
+        if (designatable_trees_by_size)
+            designatable_trees_by_size->emplace(yield, plant);
+    }
+
+    return ret;
+}
+
+// returns the number of trees that were newly marked
+static int32_t scan_trees(color_ostream & out, int32_t *expected_yield,
+        TreesBySize *designatable_trees_by_size, bool designate_clearcut,
+        const vector<df::unit *> &citizens, int32_t *accessible_trees = NULL,
+        int32_t *inaccessible_trees = NULL, int32_t *designated_trees = NULL,
+        int32_t *accessible_yield = NULL,
+        map<int32_t, int32_t> *tree_counts = NULL,
+        map<int32_t, int32_t> *designated_tree_counts = NULL) {
+    TRACE(cycle,out).print("scanning trees\n");
+    int32_t newly_marked = 0;
+
+    if (accessible_trees)
+        *accessible_trees = 0;
+    if (inaccessible_trees)
+        *inaccessible_trees = 0;
+    if (designated_trees)
+        *designated_trees = 0;
+    if (expected_yield)
+        *expected_yield = 0;
+    if (accessible_yield)
+        *accessible_yield = 0;
+    if (tree_counts)
+        tree_counts->clear();
+    if (designated_tree_counts)
+        designated_tree_counts->clear();
+
+    map<int, PersistentDataItem *> clearcut_burrows, chop_burrows;
+    bucket_watched_burrows(out, clearcut_burrows, chop_burrows);
+
+    for (auto plant : world->plants.tree_dry)
+        newly_marked += scan_tree(out, plant, expected_yield, designatable_trees_by_size,
+                                  designate_clearcut, citizens, accessible_trees,
+                                  inaccessible_trees, designated_trees, accessible_yield,
+                                  tree_counts, designated_tree_counts,
+                                  clearcut_burrows, chop_burrows);
+    for (auto plant : world->plants.tree_wet)
+        newly_marked += scan_tree(out, plant, expected_yield, designatable_trees_by_size,
+                                  designate_clearcut, citizens, accessible_trees,
+                                  inaccessible_trees, designated_trees, accessible_yield,
+                                  tree_counts, designated_tree_counts,
+                                  clearcut_burrows, chop_burrows);
+
+    return newly_marked;
+}
+
+// TODO: does this actually catch anything above the bad_flag check?
+static bool is_valid_item(df::item *item) {
+    for (size_t i = 0; i < item->general_refs.size(); i++) {
         df::general_ref *ref = item->general_refs[i];
 
-        switch (ref->getType())
-        {
+        switch (ref->getType()) {
         case general_ref_type::CONTAINED_IN_ITEM:
             return false;
 
@@ -393,12 +509,10 @@ static bool is_valid_item(df::item *item)
         }
     }
 
-    for (size_t i = 0; i < item->specific_refs.size(); i++)
-    {
+    for (size_t i = 0; i < item->specific_refs.size(); i++) {
         df::specific_ref *ref = item->specific_refs[i];
 
-        if (ref->type == specific_ref_type::JOB)
-        {
+        if (ref->type == specific_ref_type::JOB) {
             // Ignore any items assigned to a job
             return false;
         }
@@ -407,544 +521,430 @@ static bool is_valid_item(df::item *item)
     return true;
 }
 
-static int get_log_count()
+struct BadFlags
 {
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
+    uint32_t whole;
 
-    // Pre-compute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact);
-    F(spider_web); F(owned); F(in_job);
-#undef F
-
-    size_t valid_count = 0;
-    for (size_t i = 0; i < items.size(); i++)
+    BadFlags()
     {
-        df::item *item = items[i];
+        df::item_flags flags;
+        #define F(x) flags.bits.x = true;
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(artifact);
+        F(in_job); F(owned); F(in_chest); F(removed);
+        F(encased); F(spider_web);
+        #undef F
+        whole = flags.whole;
+    }
+};
 
-        if (item->getType() != item_type::WOOD)
+static void scan_logs(color_ostream &out, int32_t *usable_logs,
+                      const vector<df::unit *> &citizens, int32_t *inaccessible_logs = NULL) {
+    static const BadFlags bad_flags;
+
+    TRACE(cycle,out).print("scanning logs\n");
+    if (usable_logs)
+        *usable_logs = 0;
+    if (inaccessible_logs)
+        *inaccessible_logs = 0;
+
+    for (auto &item : world->items.other[items_other_id::IN_PLAY]) {
+        TRACE(cycle,out).print("  scanning log %d\n", item->id);
+        if (item->flags.whole & bad_flags.whole)
             continue;
 
-        if (item->flags.whole & bad_flags.whole)
+        if (item->getType() != item_type::WOOD)
             continue;
 
         if (!is_valid_item(item))
             continue;
 
-        ++valid_count;
-    }
-
-    return valid_count;
-}
-
-static void set_threshold_check(bool state)
-{
-    wait_for_threshold = state;
-    save_config();
-}
-
-static void do_autochop()
-{
-    int log_count = get_log_count();
-    if (wait_for_threshold)
-    {
-        if (log_count < min_logs)
-        {
-            set_threshold_check(false);
-            do_chop_designation(true, false);
+        if (!is_accessible_item(item, citizens)) {
+            if (inaccessible_logs)
+                ++*inaccessible_logs;
+        } else if (usable_logs) {
+            ++*usable_logs;
         }
     }
+}
+
+static int32_t do_cycle(color_ostream &out, bool force_designate) {
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    validate_burrow_configs(out);
+
+    // scan trees and clearcut marked burrows
+    int32_t expected_yield;
+    TreesBySize designatable_trees_by_size;
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    int32_t newly_marked = scan_trees(out, &expected_yield,
+            &designatable_trees_by_size, true, citizens);
+
+    // check how many logs we have already
+    int32_t usable_logs;
+    scan_logs(out, &usable_logs, citizens);
+
+    if (get_config_bool(config, CONFIG_WAITING_FOR_MIN)
+            && usable_logs <= get_config_val(config, CONFIG_MIN_LOGS)) {
+        DEBUG(cycle,out).print("minimum threshold crossed\n");
+        set_config_bool(config, CONFIG_WAITING_FOR_MIN, false);
+    }
+    else if (!get_config_bool(config, CONFIG_WAITING_FOR_MIN)
+            && usable_logs > get_config_val(config, CONFIG_MAX_LOGS)) {
+        DEBUG(cycle,out).print("maximum threshold crossed\n");
+        set_config_bool(config, CONFIG_WAITING_FOR_MIN, true);
+    }
+
+    // if we already have designated enough, we're done
+    int32_t limit = force_designate || !get_config_bool(config, CONFIG_WAITING_FOR_MIN) ?
+        get_config_val(config, CONFIG_MAX_LOGS) :
+        get_config_val(config, CONFIG_MIN_LOGS);
+    if (usable_logs + expected_yield > limit) {
+        return newly_marked;
+    }
+
+    // designate until the expected yield gets us to our target or we run out
+    // of accessible trees
+    int32_t needed = get_config_val(config, CONFIG_MAX_LOGS) -
+            (usable_logs + expected_yield);
+    DEBUG(cycle,out).print("needed logs for this cycle: %d\n", needed);
+    for (auto & entry : designatable_trees_by_size) {
+        if (!Designations::markPlant(entry.second))
+            continue;
+        ++newly_marked;
+        needed -= entry.first;
+        if (needed <= 0) {
+            return newly_marked;
+        }
+    }
+    out.print("autochop: insufficient accessible trees to reach log target! Still need %d logs!\n",
+            needed);
+    return newly_marked;
+}
+
+/////////////////////////////////////////////////////
+// Lua API
+// core will already be suspended when coming in through here
+//
+
+static const char * get_protect_str(bool protect_brewable, bool protect_edible, bool protect_cookable) {
+    if (!protect_brewable && !protect_edible && !protect_cookable)
+        return "   ";
+    if (!protect_brewable && !protect_edible && protect_cookable)
+        return "  z";
+    if (!protect_brewable && protect_edible && !protect_cookable)
+        return " e ";
+    if (!protect_brewable && protect_edible && protect_cookable)
+        return " ez";
+    if (protect_brewable && !protect_edible && !protect_cookable)
+        return "b  ";
+    if (protect_brewable && !protect_edible && protect_cookable)
+        return "b z";
+    if (protect_brewable && protect_edible && !protect_cookable)
+        return "be ";
+    if (protect_brewable && protect_edible && protect_cookable)
+        return "bez";
+    return "";
+}
+
+static void autochop_printStatus(color_ostream &out) {
+    DEBUG(status,out).print("entering autochop_printStatus\n");
+    validate_burrow_configs(out);
+    out.print("autochop is %s\n\n", is_enabled ? "enabled" : "disabled");
+    out.print("  keeping log counts between %d and %d\n",
+            get_config_val(config, CONFIG_MIN_LOGS), get_config_val(config, CONFIG_MAX_LOGS));
+    if (get_config_bool(config, CONFIG_WAITING_FOR_MIN))
+        out.print("  currently waiting for min threshold to be crossed before designating more trees\n");
     else
-    {
-        if (log_count >= max_logs)
-        {
-            set_threshold_check(true);
-            do_chop_designation(false, false);
+        out.print("  currently designating trees until max threshold is crossed\n");
+    out.print("\n");
+
+    int32_t usable_logs, inaccessible_logs;
+    int32_t accessible_trees, inaccessible_trees;
+    int32_t designated_trees, expected_yield, accessible_yield;
+    map<int32_t, int32_t> tree_counts, designated_tree_counts;
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    scan_logs(out, &usable_logs, citizens, &inaccessible_logs);
+    scan_trees(out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
+            &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
+
+    out.print("summary:\n");
+    out.print("           accessible logs (usable stock): %d\n", usable_logs);
+    out.print("                        inaccessible logs: %d\n", inaccessible_logs);
+    out.print("                       total visible logs: %d\n", usable_logs + inaccessible_logs);
+    out.print("\n");
+    out.print("                         accessible trees: %d\n", accessible_trees);
+    out.print("                       inaccessible trees: %d\n", inaccessible_trees);
+    out.print("                      total visible trees: %d\n", accessible_trees + inaccessible_trees);
+    out.print("\n");
+    out.print("                         designated trees: %d\n", designated_trees);
+    out.print("      expected logs from designated trees: %d\n", expected_yield);
+    out.print("  expected logs from all accessible trees: %d\n", accessible_yield);
+    out.print("\n");
+    out.print("                    total trees harvested: %d\n", plotinfo->trees_removed);
+    out.print("\n");
+
+    if (!plotinfo->burrows.list.size()) {
+        out.print("no burrows defined\n");
+        return;
+    }
+
+    out.print("\n");
+
+    int name_width = 11;
+    for (auto &burrow : plotinfo->burrows.list) {
+        name_width = std::max(name_width, (int)burrow->name.size());
+    }
+    name_width = -name_width; // left justify
+
+    const char *fmt = "%*s  %4s  %4s  %8s  %5s  %6s  %7s\n";
+    out.print(fmt, name_width, "burrow name", " id ", "chop", "clearcut", "trees", "marked", "protect");
+    out.print(fmt, name_width, "-----------", "----", "----", "--------", "-----", "------", "-------");
+
+    for (auto &burrow : plotinfo->burrows.list) {
+        bool chop = false;
+        bool clearcut = false;
+        bool protect_brewable = false;
+        bool protect_edible = false;
+        bool protect_cookable = false;
+        if (watched_burrows_indices.count(burrow->id)) {
+            auto &c = watched_burrows[watched_burrows_indices[burrow->id]];
+            chop = get_config_bool(c, BURROW_CONFIG_CHOP);
+            clearcut = get_config_bool(c, BURROW_CONFIG_CLEARCUT);
+            protect_brewable = get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE);
+            protect_edible = get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE);
+            protect_cookable = get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE);
         }
-        else
-        {
-            do_chop_designation(true, false);
-        }
+        out.print(fmt, name_width, burrow->name.c_str(), int_to_string(burrow->id).c_str(),
+                chop ? "[x]" : "[ ]", clearcut ? "[x]" : "[ ]",
+                int_to_string(tree_counts[burrow->id]).c_str(),
+                int_to_string(designated_tree_counts[burrow->id]).c_str(),
+                get_protect_str(protect_brewable, protect_edible, protect_cookable));
     }
 }
 
-class ViewscreenAutochop : public dfhack_viewscreen
-{
-public:
-    ViewscreenAutochop():
-        selected_column(0),
-        current_log_count(0),
-        marked_tree_count(0),
-        skipped_tree_count(0)
-    {
-        edit_mode = EDIT_NONE;
-        burrows_column.multiselect = true;
-        burrows_column.setTitle("Burrows");
-        burrows_column.bottom_margin = 3;
-        burrows_column.allow_search = false;
-        burrows_column.text_clip_at = 30;
+static void autochop_designate(color_ostream &out) {
+    DEBUG(status,out).print("entering autochop_designate\n");
+    out.print("designated %d tree(s) for chopping\n", do_cycle(out, true));
+}
 
-        populateBurrowsColumn();
-        message.clear();
+static void autochop_undesignate(color_ostream &out) {
+    DEBUG(status,out).print("entering autochop_undesignate\n");
+    int32_t count = 0;
+    for (auto plant : world->plants.all) {
+        if (is_valid_tree(plant) && Designations::unmarkPlant(plant))
+            ++count;
     }
+    out.print("undesignated %d tree(s)\n", count);
+}
 
-    void populateBurrowsColumn()
-    {
-        selected_column = 0;
+static void autochop_setTargets(color_ostream &out, int32_t max_logs, int32_t min_logs) {
+    DEBUG(status,out).print("entering autochop_setTargets\n");
+    if (max_logs < min_logs || min_logs < 0) {
+        out.printerr("max and min must be at least 0 and max must be greater than min\n");
+        return;
+    }
+    set_config_val(config, CONFIG_MAX_LOGS, max_logs);
+    set_config_val(config, CONFIG_MIN_LOGS, min_logs);
 
-        burrows_column.clear();
+    // check limits and designate up to the new maximum
+    autochop_designate(out);
+}
 
-        for (df::burrow *burrow : ui->burrows.list)
-        {
-            string name = burrow->name;
-            if (name.empty())
-                name = "Burrow " + int_to_string(burrow->id + 1);
-            auto elem = ListEntry<df::burrow *>(name, burrow);
-            elem.selected = watchedBurrows.isBurrowWatched(burrow);
-            burrows_column.add(elem);
+static int autochop_getTargets(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering autochop_getTargets\n");
+    Lua::Push(L, get_config_val(config, CONFIG_MAX_LOGS));
+    Lua::Push(L, get_config_val(config, CONFIG_MIN_LOGS));
+    return 2;
+}
+
+static int autochop_getLogCounts(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering autochop_getNumLogs\n");
+    int32_t usable_logs, inaccessible_logs;
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    scan_logs(*out, &usable_logs, citizens, &inaccessible_logs);
+    Lua::Push(L, usable_logs);
+    Lua::Push(L, inaccessible_logs);
+    return 2;
+}
+
+static void push_burrow_config(lua_State *L, int id, bool chop = false,
+        bool clearcut = false, bool protect_brewable = false,
+        bool protect_edible = false, bool protect_cookable = false) {
+    map<string, int32_t> burrow_config;
+    burrow_config.emplace("id", id);
+    burrow_config.emplace("chop", chop);
+    burrow_config.emplace("clearcut", clearcut);
+    burrow_config.emplace("protect_brewable", protect_brewable);
+    burrow_config.emplace("protect_edible", protect_edible);
+    burrow_config.emplace("protect_cookable", protect_cookable);
+    Lua::Push(L, burrow_config);
+}
+
+static void push_burrow_config(lua_State *L, PersistentDataItem &c) {
+    push_burrow_config(L, get_config_val(c, BURROW_CONFIG_ID),
+            get_config_bool(c, BURROW_CONFIG_CHOP),
+            get_config_bool(c, BURROW_CONFIG_CLEARCUT),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
+}
+
+static void emplace_bulk_burrow_config(lua_State *L,  map<int32_t, map<string, int32_t>> &burrows, int id, bool chop = false,
+        bool clearcut = false, bool protect_brewable = false,
+        bool protect_edible = false, bool protect_cookable = false) {
+
+    map<string, int32_t> burrow_config;
+    burrow_config.emplace("id", id);
+    burrow_config.emplace("chop", chop);
+    burrow_config.emplace("clearcut", clearcut);
+    burrow_config.emplace("protect_brewable", protect_brewable);
+    burrow_config.emplace("protect_edible", protect_edible);
+    burrow_config.emplace("protect_cookable", protect_cookable);
+
+    burrows.emplace(id, burrow_config);
+}
+
+static void emplace_bulk_burrow_config(lua_State *L, map<int32_t, map<string, int32_t>> &burrows, PersistentDataItem &c) {
+    emplace_bulk_burrow_config(L, burrows, get_config_val(c, BURROW_CONFIG_ID),
+            get_config_bool(c, BURROW_CONFIG_CHOP),
+            get_config_bool(c, BURROW_CONFIG_CLEARCUT),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
+}
+
+static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering autochop_getTreeCountsAndBurrowConfigs\n");
+    validate_burrow_configs(*out);
+    int32_t accessible_trees, inaccessible_trees;
+    int32_t designated_trees, expected_yield, accessible_yield;
+    map<int32_t, int32_t> tree_counts, designated_tree_counts;
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens);
+    scan_trees(*out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
+            &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
+
+    map<string, int32_t> summary;
+
+    map<int32_t, map<string, int32_t>> burrow_config_map;
+
+    summary.emplace("accessible_trees", accessible_trees);
+    summary.emplace("inaccessible_trees", inaccessible_trees);
+    summary.emplace("designated_trees", designated_trees);
+    summary.emplace("expected_yield", expected_yield);
+    summary.emplace("accessible_yield", accessible_yield);
+    Lua::Push(L, summary);
+
+    Lua::Push(L, tree_counts);
+    Lua::Push(L, designated_tree_counts);
+
+    for (auto &burrow : plotinfo->burrows.list) {
+        int id = burrow->id;
+        if (watched_burrows_indices.count(id)) {
+            // push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
+            emplace_bulk_burrow_config(L, burrow_config_map, watched_burrows[watched_burrows_indices[id]]);
+        } else {
+            emplace_bulk_burrow_config(L, burrow_config_map, id);
         }
-
-        burrows_column.fixWidth();
-        burrows_column.filterDisplay();
-
-        current_log_count = get_log_count();
-        marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
     }
 
-    void change_min_logs(int delta)
-    {
-        if (!autochop_enabled)
-            return;
+    Lua::Push(L, burrow_config_map);
 
-        min_logs += delta;
-        if (min_logs < 0)
-            min_logs = 0;
-        if (min_logs > max_logs)
-            max_logs = min_logs;
-    }
+    return 4;
+}
 
-    void change_max_logs(int delta)
-    {
-        if (!autochop_enabled)
-            return;
+static int autochop_getBurrowConfig(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(status,*out).print("entering autochop_getBurrowConfig\n");
+    validate_burrow_configs(*out);
+    // param can be a name or an id
+    int id;
+    if (lua_isnumber(L, -1)) {
+        id = lua_tointeger(L, -1);
+        if (!df::burrow::find(id))
+            return 0;
+    } else {
+        const char * name = lua_tostring(L, -1);
+        if (!name)
+            return 0;
 
-        max_logs += delta;
-        if (max_logs < min_logs)
-            min_logs = max_logs;
-    }
-
-    void feed(set<df::interface_key> *input)
-    {
-        if (edit_mode != EDIT_NONE)
-        {
-            string entry = int_to_string(edit_mode == EDIT_MIN ? min_logs : max_logs);
-            if (input->count(interface_key::LEAVESCREEN) || input->count(interface_key::SELECT))
-            {
-                if (edit_mode == EDIT_MIN)
-                    max_logs = std::max(min_logs, max_logs);
-                else if (edit_mode == EDIT_MAX)
-                    min_logs = std::min(min_logs, max_logs);
-                edit_mode = EDIT_NONE;
-            }
-            else if (input->count(interface_key::STRING_A000))
-            {
-                if (!entry.empty())
-                    entry.erase(entry.size() - 1);
-            }
-            else if (entry.size() < 5)
-            {
-                for (auto k = input->begin(); k != input->end(); ++k)
-                {
-                    char ch = char(Screen::keyToChar(*k));
-                    if (ch >= '0' && ch <= '9')
-                        entry += ch;
-                }
-            }
-
-            switch (edit_mode)
-            {
-            case EDIT_MIN:
-                min_logs = string_to_int(entry);
+        string nameStr = name;
+        bool found = false;
+        for (auto &burrow : plotinfo->burrows.list) {
+            if (nameStr == burrow->name) {
+                id = burrow->id;
+                found = true;
                 break;
-            case EDIT_MAX:
-                max_logs = string_to_int(entry);
-                break;
-            default: break;
-            }
-
-            return;
-        }
-
-        bool key_processed = false;
-        message.clear();
-        switch (selected_column)
-        {
-        case 0:
-            key_processed = burrows_column.feed(input);
-            break;
-        }
-
-        if (key_processed)
-        {
-            if (input->count(interface_key::SELECT))
-                updateAutochopBurrows();
-            return;
-        }
-
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            save_config();
-            input->clear();
-            Screen::dismiss(this);
-            if (autochop_enabled)
-                do_autochop();
-            return;
-        }
-        else if  (input->count(interface_key::CUSTOM_A))
-        {
-            autochop_enabled = !autochop_enabled;
-        }
-        else if  (input->count(interface_key::CUSTOM_D))
-        {
-            int count = do_chop_designation(true, false);
-            message = "Trees marked for chop: " + int_to_string(count);
-            marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
-            if (skipped_tree_count)
-            {
-                message += ", skipped: " + int_to_string(skipped_tree_count);
             }
         }
-        else if  (input->count(interface_key::CUSTOM_U))
-        {
-            int count = do_chop_designation(false, false);
-            message = "Trees unmarked: " + int_to_string(count);
-            marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
-            if (skipped_tree_count)
-            {
-                message += ", skipped: " + int_to_string(skipped_tree_count);
-            }
-        }
-        else if  (input->count(interface_key::CUSTOM_N))
-        {
-            edit_mode = EDIT_MIN;
-        }
-        else if  (input->count(interface_key::CUSTOM_M))
-        {
-            edit_mode = EDIT_MAX;
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_N))
-        {
-            min_logs = LOG_CAP_MAX + 1;
-            max_logs = LOG_CAP_MAX + 1;
-        }
-        else if  (input->count(interface_key::CUSTOM_H))
-        {
-            change_min_logs(-1);
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_H))
-        {
-            change_min_logs(-10);
-        }
-        else if  (input->count(interface_key::CUSTOM_J))
-        {
-            change_min_logs(1);
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_J))
-        {
-            change_min_logs(10);
-        }
-        else if  (input->count(interface_key::CUSTOM_K))
-        {
-            change_max_logs(-1);
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_K))
-        {
-            change_max_logs(-10);
-        }
-        else if  (input->count(interface_key::CUSTOM_L))
-        {
-            change_max_logs(1);
-        }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_L))
-        {
-            change_max_logs(10);
-        }
-        else if  (input->count(interface_key::CUSTOM_F))
-        {
-            skip.fruit_trees = !skip.fruit_trees;
-        }
-        else if  (input->count(interface_key::CUSTOM_E))
-        {
-            skip.food_trees = !skip.food_trees;
-        }
-        else if  (input->count(interface_key::CUSTOM_C))
-        {
-            skip.cook_trees = !skip.cook_trees;
-        }
-        else if (enabler->tracking_on && enabler->mouse_lbut)
-        {
-            if (burrows_column.setHighlightByMouse())
-            {
-                selected_column = 0;
-            }
-
-            enabler->mouse_lbut = enabler->mouse_rbut = 0;
-        }
+        if (!found)
+            return 0;
     }
 
-    void render()
-    {
-        if (Screen::isDismissed(this))
-            return;
+    if (watched_burrows_indices.count(id)) {
+        push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
+    } else {
+        push_burrow_config(L, id);
+    }
+    return 1;
+}
 
-        dfhack_viewscreen::render();
+static void autochop_setBurrowConfig(color_ostream &out, int id, bool chop,
+        bool clearcut, bool protect_brewable, bool protect_edible,
+        bool protect_cookable) {
+    DEBUG(status,out).print("entering autochop_setBurrowConfig\n");
+    validate_burrow_configs(out);
 
-        Screen::clear();
-        Screen::drawBorder("  Autochop  ");
+    bool isInvalidBurrow = !df::burrow::find(id);
+    bool hasNoData = !chop && !clearcut && !protect_brewable && !protect_edible
+            && !protect_cookable;
 
-        burrows_column.display(selected_column == 0);
-
-        int32_t y = gps->dimy - 3;
-        int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
-        x += 3;
-        OutputString(COLOR_YELLOW, x, y, message);
-
-        y = 3;
-        int32_t left_margin = burrows_column.getMaxItemWidth() + 3;
-        x = left_margin;
-        if (burrows_column.getSelectedElems().size() > 0)
-        {
-            OutputString(COLOR_GREEN, x, y, "Will chop in selected burrows", true, left_margin);
-            ++y;
-        }
-        else
-        {
-            OutputString(COLOR_YELLOW, x, y, "Will chop from whole map", true, left_margin);
-            OutputString(COLOR_YELLOW, x, y, "Select from left to chop in specific burrows", true, left_margin);
-        }
-
-        ++y;
-
-        using namespace df::enums::interface_key;
-        OutputToggleString(x, y, "Autochop", CUSTOM_A, autochop_enabled, true, left_margin);
-        OutputHotkeyString(x, y, "Designate Now", CUSTOM_D, true, left_margin);
-        OutputHotkeyString(x, y, "Undesignate Now", CUSTOM_U, true, left_margin);
-        OutputHotkeyString(x, y, "Toggle Burrow", "Enter", true, left_margin);
-        if (autochop_enabled)
-        {
-            const struct {
-                const char *caption;
-                int count;
-                bool in_edit;
-                df::interface_key key;
-                df::interface_key skeys[4];
-            } rows[] = {
-                {"Min Logs: ", min_logs, edit_mode == EDIT_MIN, CUSTOM_N, {CUSTOM_H, CUSTOM_J, CUSTOM_SHIFT_H, CUSTOM_SHIFT_J}},
-                {"Max Logs: ", max_logs, edit_mode == EDIT_MAX, CUSTOM_M, {CUSTOM_K, CUSTOM_L, CUSTOM_SHIFT_K, CUSTOM_SHIFT_L}}
-            };
-            for (size_t i = 0; i < sizeof(rows) / sizeof(rows[0]); ++i)
-            {
-                auto row = rows[i];
-                OutputHotkeyString(x, y, row.caption, row.key);
-                auto prev_x = x;
-                if (row.in_edit)
-                    OutputString(COLOR_LIGHTCYAN, x, y, int_to_string(row.count) + "_");
-                else if (row.count <= LOG_CAP_MAX)
-                    OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(row.count));
-                else
-                    OutputString(COLOR_LIGHTBLUE, x, y, "Unlimited");
-                if (edit_mode == EDIT_NONE)
-                {
-                    x = std::max(x, prev_x + 10);
-                    for (size_t j = 0; j < sizeof(row.skeys) / sizeof(row.skeys[0]); ++j)
-                        OutputString(COLOR_LIGHTGREEN, x, y, DFHack::Screen::getKeyDisplay(row.skeys[j]));
-                    OutputString(COLOR_WHITE, x, y, ": Step");
-                }
-                OutputString(COLOR_WHITE, x, y, "", true, left_margin);
-            }
-            OutputHotkeyString(x, y, "No limit", CUSTOM_SHIFT_N, true, left_margin);
-            OutputToggleString(x, y, "Skip Fruit Trees", CUSTOM_F, skip.fruit_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Edible Product Trees", CUSTOM_E, skip.food_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Cookable Product Trees", CUSTOM_C, skip.cook_trees, true, left_margin);
-        }
-
-        ++y;
-        OutputString(COLOR_BROWN, x, y, "Current Counts", true, left_margin);
-        OutputString(COLOR_WHITE, x, y, "Current Logs: ");
-        OutputString(COLOR_GREEN, x, y, int_to_string(current_log_count), true, left_margin);
-        OutputString(COLOR_WHITE, x, y, "Marked Trees: ");
-        OutputString(COLOR_GREEN, x, y, int_to_string(marked_tree_count), true, left_margin);
+    if (isInvalidBurrow || hasNoData) {
+        remove_burrow_config(out, id);
+        return;
     }
 
-    std::string getFocusString() { return "autochop"; }
+    PersistentDataItem &c = ensure_burrow_config(out, id);
+    set_config_val(c, BURROW_CONFIG_ID, id);
+    set_config_bool(c, BURROW_CONFIG_CHOP, chop);
+    set_config_bool(c, BURROW_CONFIG_CLEARCUT, clearcut);
+    set_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE, protect_brewable);
+    set_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE, protect_edible);
+    set_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE, protect_cookable);
+}
 
-    void updateAutochopBurrows()
-    {
-        watchedBurrows.clear();
-        vector<df::burrow *> v = burrows_column.getSelectedElems();
-        for_each_<df::burrow *>(v, [] (df::burrow *b) { watchedBurrows.add(b->id); });
-    }
-
-private:
-    ListColumn<df::burrow *> burrows_column;
-    int selected_column;
-    int current_log_count;
-    int marked_tree_count;
-    int skipped_tree_count;
-    MapExtras::MapCache mcache;
-    string message;
-    enum { EDIT_NONE, EDIT_MIN, EDIT_MAX } edit_mode;
-
-    void validateColumn()
-    {
-        set_to_limit(selected_column, 0);
-    }
-
-    void resize(int32_t x, int32_t y)
-    {
-        dfhack_viewscreen::resize(x, y);
-        burrows_column.resize();
-    }
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(autochop_printStatus),
+    DFHACK_LUA_FUNCTION(autochop_designate),
+    DFHACK_LUA_FUNCTION(autochop_undesignate),
+    DFHACK_LUA_FUNCTION(autochop_setTargets),
+    DFHACK_LUA_FUNCTION(autochop_setBurrowConfig),
+    DFHACK_LUA_END
 };
 
-struct autochop_hook : public df::viewscreen_dwarfmodest
-{
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    bool isInDesignationMenu()
-    {
-        using namespace df::enums::ui_sidebar_mode;
-        return (ui->main.mode == DesignateChopTrees);
-    }
-
-    void sendKey(const df::interface_key &key)
-    {
-        set<df::interface_key> tmp;
-        tmp.insert(key);
-        INTERPOSE_NEXT(feed)(&tmp);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (isInDesignationMenu() && input->count(interface_key::CUSTOM_C))
-        {
-            sendKey(interface_key::LEAVESCREEN);
-            Screen::show(dts::make_unique<ViewscreenAutochop>(), plugin_self);
-        }
-        else
-        {
-            INTERPOSE_NEXT(feed)(input);
-        }
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-
-        auto dims = Gui::getDwarfmodeViewDims();
-        if (dims.menu_x1 <= 0)
-            return;
-
-        if (!isInDesignationMenu())
-            return;
-
-        int left_margin = dims.menu_x1 + 1;
-        int x = left_margin;
-        int y = 26;
-        OutputHotkeyString(x, y, "Autochop Dashboard", "c");
-    }
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(autochop_getTargets),
+    DFHACK_LUA_COMMAND(autochop_getLogCounts),
+    DFHACK_LUA_COMMAND(autochop_getBurrowConfig),
+    DFHACK_LUA_COMMAND(autochop_getTreeCountsAndBurrowConfigs),
+    DFHACK_LUA_END
 };
-
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, feed, 100);
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, render, 100);
-
-
-command_result df_autochop (color_ostream &out, vector <string> & parameters)
-{
-    for (size_t i = 0; i < parameters.size(); i++)
-    {
-        if (parameters[i] == "help" || parameters[i] == "?")
-            return CR_WRONG_USAGE;
-        if (parameters[i] == "debug")
-            save_config();
-        else
-            return CR_WRONG_USAGE;
-    }
-    if (Maps::IsValid())
-        Screen::show(dts::make_unique<ViewscreenAutochop>(), plugin_self);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onupdate (color_ostream &out)
-{
-    if (!autochop_enabled)
-        return CR_OK;
-
-    if(!Maps::IsValid())
-        return CR_OK;
-
-    if (DFHack::World::ReadPauseState())
-        return CR_OK;
-
-    if (world->frame_counter % 1200 != 0) // Check every day
-        return CR_OK;
-
-    do_autochop();
-
-    return CR_OK;
-}
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    if (!gps)
-        return CR_FAILURE;
-
-    if (enable != is_enabled)
-    {
-        if (!INTERPOSE_HOOK(autochop_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(autochop_hook, render).apply(enable))
-            return CR_FAILURE;
-
-        is_enabled = enable;
-        initialize();
-    }
-
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand(
-        "autochop",
-        "Auto-harvest trees when low on stockpiled logs.",
-        df_autochop));
-
-    initialize();
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_MAP_LOADED:
-        initialize();
-        break;
-    default:
-        break;
-    }
-
-    return CR_OK;
-}

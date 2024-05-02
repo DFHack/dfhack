@@ -26,7 +26,7 @@ DFHACK_PLUGIN("trackstop");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 /*
@@ -44,7 +44,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_trapst *get_selected_trackstop() {
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (plotinfo->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
@@ -200,7 +200,7 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_rollersst *get_selected_roller() {
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (plotinfo->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }

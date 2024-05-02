@@ -33,9 +33,10 @@ distribution.
 
 #include "DataDefs.h"
 #include "df/init.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/announcement_type.h"
 #include "df/announcement_flags.h"
+#include "df/building_stockpilest.h"
 #include "df/report_init.h"
 #include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
@@ -65,7 +66,9 @@ namespace DFHack
      */
     namespace Gui
     {
-        DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
+        DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
+        DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
+
 
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
@@ -107,6 +110,10 @@ namespace DFHack
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
 
+        DFHACK_EXPORT bool any_stockpile_hotkey(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getAnyStockpile(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getSelectedStockpile(color_ostream& out, bool quiet = false);
+
         // A plant is selected, e.g. via 'k'
         DFHACK_EXPORT bool any_plant_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::plant *getAnyPlant(df::viewscreen *top);
@@ -143,13 +150,10 @@ namespace DFHack
         static const int MENU_WIDTH = 30;
 
         struct DwarfmodeDims {
-            int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
-            int y1, y2;
+            int map_x1, map_x2;
             int map_y1, map_y2;
-            bool menu_on, area_on, menu_forced;
 
             rect2d map() { return mkrect_xy(map_x1, map_y1, map_x2, map_y2); }
-            rect2d menu() { return mkrect_xy(menu_x1, y1, menu_x2, y2); }
         };
 
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
@@ -184,6 +188,9 @@ namespace DFHack
 
         DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
 
+        /// Get the top-most underlying DF viewscreen (not owned by DFHack)
+        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);
+
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match
         template <typename T>
@@ -191,24 +198,12 @@ namespace DFHack
             return strict_virtual_cast<T>(getViewscreenByIdentity(T::_identity, n));
         }
 
-        inline std::string getCurFocus(bool skip_dismissed = false) {
-            return getFocusString(getCurViewscreen(skip_dismissed));
+        inline std::vector<std::string> getCurFocus(bool skip_dismissed = false) {
+            return getFocusStrings(getCurViewscreen(skip_dismissed));
         }
 
         /// get the size of the window buffer
         DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);
-
-        /**
-         *Menu width:
-         *3:3 - menu and area map closed
-         *2:3 - menu open single width
-         *1:3 - menu open double width
-         *1:2 - menu and area map open
-         *2:2 - area map open
-         */
-
-        DFHACK_EXPORT bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
-        DFHACK_EXPORT bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
 
         namespace Hooks {
             GUI_HOOK_DECLARE(depth_at, int, (int32_t x, int32_t y));

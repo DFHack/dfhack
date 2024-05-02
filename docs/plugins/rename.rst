@@ -3,7 +3,7 @@ rename
 
 .. dfhack-tool::
     :summary: Easily rename things.
-    :tags: adventure fort productivity buildings stockpiles units
+    :tags: untested adventure fort productivity buildings stockpiles units
 
 Use `gui/rename` for an in-game interface.
 

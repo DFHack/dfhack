@@ -25,7 +25,7 @@
 #include "df/job_type.h"
 #include "df/reaction_product_itemst.h"
 #include "df/reaction_reagent.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/world.h"
@@ -252,7 +252,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             vector<df::item*> in_items;
             prod->produce(firstInvader, &out_products, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
                 0, df::historical_entity::find(firstInvader->civ_id),
-                df::world_site::find(df::global::ui->site_id), NULL);
+                df::world_site::find(df::global::plotinfo->site_id), NULL);
 
             if ( out_items.size() != 1 ) {
                 out.print("%s, %d: wrong size: %zu.\n", __FILE__, __LINE__, out_items.size());

@@ -3,7 +3,7 @@ follow
 
 .. dfhack-tool::
     :summary: Make the screen follow the selected unit.
-    :tags: fort interface units
+    :tags: untested fort interface units
 
 Once you exit from the current menu or cursor mode, the screen will stay
 centered on the unit. Handy for watching dwarves running around. Deactivated by

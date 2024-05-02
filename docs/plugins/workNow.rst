@@ -3,7 +3,7 @@ workNow
 
 .. dfhack-tool::
     :summary: Reduce the time that dwarves idle after completing a job.
-    :tags: fort auto labors
+    :tags: untested fort auto labors
 
 After finishing a job, dwarves will wander away for a while before picking up a
 new job. This plugin will automatically poke the game to assign dwarves to new

@@ -19,7 +19,7 @@
 
 #include "df/activity_event.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/graphic.h"
 #include "df/enabler.h"
 #include "df/viewscreen_unitlistst.h"
@@ -49,7 +49,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("manipulator");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
@@ -1972,9 +1972,9 @@ void viewscreen_unitlaborsst::render()
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if ((profession != profession::NONE) && (ui->race_id != -1))
+        if ((profession != profession::NONE) && (plotinfo->race_id != -1))
         {
-            auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
+            auto graphics = world->raws.creatures.all[plotinfo->race_id]->graphics;
             Screen::paintTile(
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],

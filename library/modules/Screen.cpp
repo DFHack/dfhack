@@ -31,9 +31,11 @@ distribution.
 #include <set>
 using namespace std;
 
+#include "modules/ImTuiImpl.h"
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
+#include "Debug.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -49,10 +51,11 @@ using namespace DFHack;
 
 #include "DataDefs.h"
 #include "df/init.h"
-#include "df/texture_handler.h"
-#include "df/tile_page.h"
+#include "df/texture_handlerst.h"
+#include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic_viewportst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -72,18 +75,29 @@ using Screen::PenArray;
 
 using std::string;
 
+namespace DFHack {
+    DBG_DECLARE(core, screen, DebugCategory::LINFO);
+}
+
+
 /*
  * Screen painting API.
  */
 
-// returns text grid coordinates, even if the game map is scaled differently
+// returns ui grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
-    if (!enabler || !enabler->renderer->get_mouse_coords(&x, &y)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(x, y);
+    return df::coord2d(gps->mouse_x, gps->mouse_y);
+}
+
+// returns the screen pixel coordinates
+df::coord2d Screen::getMousePixels()
+{
+    if (!gps)
+        return df::coord2d(-1, -1);
+    return df::coord2d(gps->precise_mouse_x, gps->precise_mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -102,23 +116,112 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
-{
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+static bool doSetTile_map(const Pen &pen, int x, int y) {
+    auto &vp = gps->main_viewport;
+
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
         return false;
 
-    int index = ((x * gps->dimy) + y);
-    auto screen = gps->screen + index*4;
-    screen[0] = uint8_t(pen.ch);
-    screen[1] = uint8_t(pen.fg) & 15;
-    screen[2] = uint8_t(pen.bg) & 15;
-    screen[3] = uint8_t(pen.bold) & 1;
-    gps->screentexpos[index] = pen.tile;
-    gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
-    gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
-    gps->screentexpos_cf[index] = pen.tile_fg;
-    gps->screentexpos_cbr[index] = pen.tile_bg;
+    size_t max_index = vp->dim_x * vp->dim_y - 1;
+    size_t index = (x * vp->dim_y) + y;
+
+    if (index > max_index)
+        return false;
+
+    long texpos = pen.tile;
+    if (!texpos && pen.ch)
+        texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
+    if (texpos)
+        vp->screentexpos_interface[index] = texpos;
+    return true;
+}
+
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
+{
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doSetTile_map(pen, x, y);
+
+    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+        return false;
+
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
+        return false;
+
+    long *texpos = &gps->screentexpos[index];
+    long *texpos_lower = &gps->screentexpos_lower[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
+    // don't appear corrupted
+    uint32_t flag_mask = 0x4;
+    if (pen.write_to_lower)
+        flag_mask |= 0x18;
+
+    *screen = 0;
+    *texpos = 0;
+    if (!pen.keep_lower)
+        *texpos_lower = 0;
+    gps->screentexpos_anchored[index] = 0;
+    *flag &= flag_mask;
+
+    if (gps->top_in_use) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        texpos_lower = &gps->screentexpos_top_lower[index];
+        flag = &gps->screentexpos_top_flag[index];
+
+        *screen = 0;
+        *texpos = 0;
+        if (!pen.keep_lower)
+            *texpos_lower = 0;
+        gps->screentexpos_top_anchored[index] = 0;
+        *flag &= flag_mask;
+    }
+
+    uint8_t fg = pen.fg | (pen.bold << 3);
+    uint8_t bg = pen.bg;
+
+    if (pen.tile_mode == Screen::Pen::CharColor)
+        *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
+    else if (pen.tile_mode == Screen::Pen::TileColor) {
+        *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
+        if (pen.tile_fg)
+            fg = pen.tile_fg;
+        if (pen.tile_bg)
+            bg = pen.tile_bg;
+    }
+
+    if (pen.tile && use_graphics) {
+        if (pen.write_to_lower)
+            *texpos_lower = pen.tile;
+        else
+            *texpos = pen.tile;
+
+        if (pen.top_of_text || pen.bottom_of_text) {
+            screen[0] = uint8_t(pen.ch);
+            if (pen.top_of_text)
+                *flag |= 0x8;
+            if (pen.bottom_of_text)
+                *flag |= 0x10;
+        }
+    } else if (pen.ch) {
+        screen[0] = uint8_t(pen.ch);
+        *texpos_lower = 909; // basic black background
+    }
+
+    auto rgb_fg = &gps->uccolor[fg][0];
+    auto rgb_bg = &gps->uccolor[bg][0];
+    screen[1] = rgb_fg[0];
+    screen[2] = rgb_fg[1];
+    screen[3] = rgb_fg[2];
+    screen[4] = rgb_bg[0];
+    screen[5] = rgb_bg[1];
+    screen[6] = rgb_bg[2];
 
     return true;
 }
@@ -137,37 +240,88 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
     return true;
 }
 
-static Pen doGetTile_default(int x, int y, bool map)
-{
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return Pen(0,0,0,-1);
+static Pen doGetTile_map(int x, int y) {
+    auto &vp = gps->main_viewport;
 
-    int index = x*dim.y + y;
-    auto screen = gps->screen + index*4;
-    if (screen[3] & 0x80)
-        return Pen(0,0,0,-1);
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return Pen(0, 0, 0, -1);
 
-    Pen pen(
-        screen[0], screen[1], screen[2], screen[3]?true:false,
-        gps->screentexpos[index]
-    );
+    size_t max_index = vp->dim_x * vp->dim_y - 1;
+    size_t index = (x * vp->dim_y) + y;
 
-    if (pen.tile)
-    {
-        if (gps->screentexpos_grayscale[index])
-        {
-            pen.tile_mode = Screen::Pen::TileColor;
-            pen.tile_fg = gps->screentexpos_cf[index];
-            pen.tile_bg = gps->screentexpos_cbr[index];
-        }
-        else if (gps->screentexpos_addcolor[index])
-        {
-            pen.tile_mode = Screen::Pen::CharColor;
+    if (index < 0 || index > max_index)
+        return Pen(0, 0, 0, -1);
+
+    int tile = vp->screentexpos[index];
+    if (tile == 0)
+        tile = vp->screentexpos_item[index];
+    if (tile == 0)
+        tile = vp->screentexpos_building_one[index];
+    if (tile == 0)
+        tile = vp->screentexpos_background_two[index];
+    if (tile == 0)
+        tile = vp->screentexpos_background[index];
+
+    char ch = 0;
+    uint8_t fg = 0;
+    uint8_t bg = 0;
+    return Pen(ch, fg, bg, tile, false);
+}
+
+static uint8_t to_16_bit_color(uint8_t  *rgb) {
+    for (uint8_t c = 0; c < 16; ++c) {
+        if (rgb[0] == gps->uccolor[c][0] &&
+                rgb[1] == gps->uccolor[c][1] &&
+                rgb[2] == gps->uccolor[c][2]) {
+            return c;
         }
     }
+    return 0;
+}
 
-    return pen;
+static Pen doGetTile_default(int x, int y, bool map) {
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doGetTile_map(x, y);
+
+    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+        return Pen(0, 0, 0, -1);
+
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
+        return Pen(0, 0, 0, -1);
+
+    long *texpos = &gps->screentexpos[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    if (gps->top_in_use &&
+            (gps->screen_top[index * 8] ||
+             (use_graphics && gps->screentexpos_top[index]))) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        flag = &gps->screentexpos_top_flag[index];
+    }
+
+    char ch = *screen;
+    uint8_t fg = to_16_bit_color(&screen[1]);
+    uint8_t bg = to_16_bit_color(&screen[4]);
+    int tile = 0;
+    if (use_graphics)
+        tile = *texpos;
+
+    if (*flag & 1) {
+        // TileColor
+        return Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
+    } else if (*flag & 2) {
+        // CharColor
+        return Pen(ch, fg, bg, tile, true);
+    }
+
+    // AsIs
+    return Pen(ch, fg, bg, tile, false);
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
@@ -379,46 +533,56 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     return false;
 }
 
+void Screen::raise(df::viewscreen *screen) {
+    Hide swapper(screen, Screen::Hide::RESTORE_AT_TOP);
+}
+
 namespace DFHack { namespace Screen {
 
 Hide::Hide(df::viewscreen* screen, int flags) :
-    screen{screen}, flags{flags}
-{
-    extract(screen);
+    screen{screen}, prev_parent{nullptr}, flags{flags} {
+    if (!screen)
+        return;
+
+    // don't extract a screen that's not even in the stack
+    if (screen->parent)
+        extract();
 }
 
-Hide::~Hide()
-{
+Hide::~Hide() {
     if (screen)
-        merge(screen);
+        merge();
 }
 
-void Hide::extract(df::viewscreen* a)
-{
-    df::viewscreen* ap = a->parent;
-    df::viewscreen* ac = a->child;
+void Hide::extract() {
+    prev_parent = screen->parent;
+    df::viewscreen *prev_child = screen->child;
 
-    ap->child = ac;
-    if (ac) ac->parent = ap;
-    else Core::getInstance().top_viewscreen = ap;
+    screen->parent = nullptr;
+    screen->child = nullptr;
+
+    prev_parent->child = prev_child;
+    if (prev_child) prev_child->parent = prev_parent;
+    else Core::getInstance().top_viewscreen = prev_parent;
 }
 
-void Hide::merge(df::viewscreen* a)
-{
-    if (flags & RESTORE_AT_TOP) {
-        a->parent = NULL;
-        a->child = NULL;
-        Screen::show(std::unique_ptr<df::viewscreen>(a));
+void Hide::merge() {
+    if (screen->parent) {
+        // we're somehow back on the stack; do nothing
         return;
     }
 
-    df::viewscreen* ap = a->parent;
-    df::viewscreen* ac = a->parent->child;
+    if (flags & RESTORE_AT_TOP) {
+        Screen::show(std::unique_ptr<df::viewscreen>(screen));
+        return;
+    }
 
-    ap->child = a;
-    a->child = ac;
-    if (ac) ac->parent = a;
-    else Core::getInstance().top_viewscreen = a;
+    df::viewscreen* new_child = prev_parent->child;
+
+    prev_parent->child = screen;
+    screen->child = new_child;
+    if (new_child) new_child->parent = screen;
+    else Core::getInstance().top_viewscreen = screen;
 }
 } }
 
@@ -565,6 +729,21 @@ void dfhack_viewscreen::logic()
 
     // Various stuff works poorly unless always repainting
     Screen::invalidate();
+
+    // if the DF screen immediately beneath the DFHack viewscreens is waiting to
+    // be dismissed, raise it to the top so DF never gets stuck
+    auto *p = parent;
+    while (p) {
+        bool is_df_screen = !is_instance(p);
+        auto *next_p = p->parent;
+        if (is_df_screen && Screen::isDismissed(p)) {
+            DEBUG(screen).print("raising dismissed DF viewscreen %p\n", p);
+            Screen::raise(p);
+        }
+        if (is_df_screen)
+            break;
+        p = next_p;
+    }
 }
 
 void dfhack_viewscreen::render()
@@ -577,11 +756,13 @@ bool dfhack_viewscreen::key_conflict(df::interface_key key)
     if (key == interface_key::OPTIONS)
         return true;
 
+/* TODO: understand how this changes for v50
     if (text_input_mode)
     {
         if (key == interface_key::HELP || key == interface_key::MOVIES)
             return true;
     }
+*/
 
     return false;
 }
@@ -653,6 +834,13 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
     auto self = get_self(L);
     if (!self) return 0;
 
+    if (!Screen::isDismissed(self)) {
+        WARN(screen).print("DFHack screen was destroyed before it was dismissed\n");
+        WARN(screen).print("Please tell the DFHack team which DF screen you were just viewing\n");
+        // run skipped onDismiss cleanup logic
+        Screen::dismiss(self);
+    }
+
     lua_pushnil(L);
     lua_rawsetp(L, LUA_REGISTRYINDEX, self);
 
@@ -677,6 +865,9 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
     lua_pop(L, 1);
     lua_getfield(L, idx, "allow_options");
     allow_options = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, idx, "defocused");
+    defocused = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, idx, "focus_path");
@@ -769,11 +960,15 @@ dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
     lua_rawsetp(L, LUA_REGISTRYINDEX, this);
 
     update_focus(L, table_idx);
+
+    ImTuiInterop::viewscreen::register_viewscreen(this);
 }
 
 dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 {
     safe_call_lua(do_destroy, 0, 0);
+
+    ImTuiInterop::viewscreen::unregister_viewscreen(this);
 }
 
 void dfhack_lua_viewscreen::render()
@@ -785,9 +980,13 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
+    int id = ImTuiInterop::viewscreen::on_render_start(this);
+
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
+
+    ImTuiInterop::viewscreen::on_render_end(this, id);
 }
 
 void dfhack_lua_viewscreen::logic()
@@ -830,8 +1029,13 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
+    ImTuiInterop::viewscreen::on_feed_start(this, keys);
+
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+
+    if(ImTuiInterop::viewscreen::on_feed_end(keys))
+        parent->feed(keys);
 }
 
 void dfhack_lua_viewscreen::onShow()
@@ -844,6 +1048,8 @@ void dfhack_lua_viewscreen::onDismiss()
 {
     lua_pushstring(Lua::Core::State, "onDismiss");
     safe_call_lua(do_notify, 1, 0);
+
+    ImTuiInterop::viewscreen::on_dismiss();
 }
 
 df::unit *dfhack_lua_viewscreen::getSelectedUnit()
@@ -894,6 +1100,7 @@ using df::identity_traits;
 #define CUR_STRUCT dfhack_viewscreen
 static const struct_field_info dfhack_viewscreen_fields[] = {
     { METHOD(OBJ_METHOD, is_lua_screen), 0, 0 },
+    { METHOD(OBJ_METHOD, isFocused), 0, 0 },
     { METHOD(OBJ_METHOD, getFocusString), 0, 0 },
     { METHOD(OBJ_METHOD, onShow), 0, 0 },
     { METHOD(OBJ_METHOD, onDismiss), 0, 0 },

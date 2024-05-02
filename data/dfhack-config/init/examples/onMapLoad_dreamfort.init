@@ -1,0 +1,76 @@
+# This dfhack config file automates common tasks for your forts.
+# It was written for the Dreamfort set of quickfort blueprints, but the
+# configuration here is useful for any fort! Copy this file to your
+# dfhack-config/init directory to use. Feed free to edit or override
+# to your liking.
+
+# Uncomment this next line if you want buildingplan (and quickfort) to use only
+# blocks (not bars or logs) for constructions and workshops. If you do
+# uncomment, be sure to bring some blocks with you for starting workshops!
+#on-new-fortress buildingplan set boulders false; buildingplan set logs false
+
+# Disable cooking of useful item types when you start a new fortress.
+on-new-fortress ban-cooking all
+
+# Show a warning dialog when units are starving
+repeat -name warn-starving -time 10 -timeUnits days -command [ warn-starving ]
+
+# Force dwarves to drop tattered clothing instead of clinging to the scraps
+repeat -name cleanowned -time 1 -timeUnits months -command [ cleanowned X ]
+
+# Automatically enqueue orders to shear and milk animals
+repeat -name autoShearCreature -time 14 -timeUnits days -command [ workorder ShearCreature ]
+repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":2,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}" ]
+
+# Fulfill high-volume orders before slower once-daily orders
+repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
+
+# Manages crop assignment for farm plots
+enable autofarm
+autofarm default 30
+autofarm threshold 150 GRASS_TAIL_PIG
+
+# allows you to configure a stockpile to automatically mark items for melting
+enable automelt
+
+# creates manager orders to produce replacements for worn clothing
+enable tailor
+
+# auto-assigns nesting birds to nestbox zones and protects fertile eggs from
+# being gathered and eaten
+enable autonestbox nestboxes
+
+# manages seed stocks
+enable seedwatch
+seedwatch all 30
+
+# ensures important tasks get assigned to workers.
+# otherwise many job types can get ignored in busy forts.
+on-new-fortress prioritize -aq defaults
+
+# autobutcher settings are saved in the savegame, so we only need to set them once.
+# this way, any custom settings you set during gameplay are not overwritten
+#
+# feel free to change this to "target 0 0 0 0" if you don't expect to want to raise
+# any animals not listed here -- you can always change it anytime during the game
+# later if you change your mind.
+on-new-fortress enable autobutcher
+on-new-fortress autobutcher target 2 2 2 2 new
+# dogs and cats. You should raise the limits for dogs if you will be training them
+# for hunting or war.
+on-new-fortress autobutcher target 2 2 2 2 DOG
+on-new-fortress autobutcher target 1 1 2 2 CAT
+# geese are our primary source of bones and leather. let the younglings grow up
+# before we butcher so we get adult-scale products from them. BIRD_PEAFOWL_BLUE,
+# BIRD_CHICKEN, and BIRD_TURKEY are also viable. feel free to change this to
+# your bird of choice.
+on-new-fortress autobutcher target 50 50 14 2 BIRD_GOOSE
+# alpaca, sheep, and llamas give wool. we need to keep these numbers low, though, or
+# else risk running out of grass for grazing.
+on-new-fortress autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
+# pigs give milk and meat and are zero-maintenance.
+on-new-fortress autobutcher target 5 5 6 2 PIG
+# immediately butcher all unprofitable animals
+on-new-fortress autobutcher target 0 0 0 0 HORSE YAK DONKEY WATER_BUFFALO GOAT CAVY BIRD_DUCK BIRD_GUINEAFOWL
+# watch for new animals
+on-new-fortress autobutcher autowatch

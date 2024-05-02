@@ -850,6 +850,7 @@ static const char * get_tile_build(const df::coord &pos,
     return add_expansion_syntax(ctx, keys);
 }
 
+/* TODO: understand how this changes for v50
 static const char * get_place_keys(const tile_context &ctx) {
     df::building_stockpilest* sp =
             virtual_cast<df::building_stockpilest>(ctx.b);
@@ -1086,6 +1087,7 @@ static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
     str << "r{+ " << (max_dim - 3) << "}&";
     return cache(str);
 }
+*/
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
@@ -1326,6 +1328,7 @@ static bool do_transform(color_ostream &out,
                   get_tile_construct, ensure_building);
     add_processor(processors, opts, "build", "build", opts.build,
                   get_tile_build, ensure_building);
+/* TODO: understand how this changes for v50
     add_processor(processors, opts, "place", "place", opts.place,
                   get_tile_place, ensure_building);
     add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
@@ -1333,6 +1336,14 @@ static bool do_transform(color_ostream &out,
                   get_tile_query, ensure_building);
     add_processor(processors, opts, "query", "rooms", opts.rooms,
                   get_tile_rooms, ensure_building);
+*/  if (opts.place)
+        out.printerr("'place' blueprints are not yet supported for the current version of DF\n");
+    if (opts.zone)
+        out.printerr("'zone' blueprints are not yet supported for the current version of DF\n");
+    if (opts.query)
+        out.printerr("'query' blueprints are not yet supported for the current version of DF\n");
+    if (opts.rooms)
+        out.printerr("'rooms' blueprints are not yet supported for the current version of DF\n");
 
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");

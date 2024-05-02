@@ -42,13 +42,13 @@ class DebugCategory;
 /*!
  * \brief Container holding all registered runtime debug categories
  * Singleton DebugManager is a minor extension to std::vector that allows signal
- * callbacks to be attached from ui code that manages.
+ * callbacks to be attached from plotinfo code that manages.
  *
  * To avoid parallel plugin unload causing issues access to DebugManager must be
  * protected by mutex. The access mutex will be taken when
  * DFHack::DebugCategory::~DebugCategory performs unregister calls to
  * DFHack::DebugManager. The mutex will protect from memory disappearing while
- * ui code is accessing or changing the runtime state.
+ * plotinfo code is accessing or changing the runtime state.
  *
  * Signal emitting happens from a locked contexts. Taking the
  * DFHack::DebugManager::access_mutex_ in a signal callback will results to a

@@ -152,10 +152,9 @@
 				"condition" : "AtLeast",
 				"flags" : 
 				[
-					"empty",
-					"bag"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 10
 			},
 			{

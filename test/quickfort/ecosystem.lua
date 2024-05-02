@@ -397,7 +397,7 @@ function extra_fns.gui_quantum(pos)
     local vehicles = assign_minecarts.get_free_vehicles()
     local confirm_state = confirm.isEnabled()
     local confirm_conf = confirm.get_conf_data()
-    local routes = df.global.ui.hauling.routes
+    local routes = df.global.plotinfo.hauling.routes
     local num_routes = #routes
     local next_order_id = df.global.world.manager_order_next_id
 

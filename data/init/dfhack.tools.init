@@ -9,7 +9,7 @@
 ############################
 
 # stabilize the cursor of dwarfmode when switching menus
-tweak stable-cursor
+#tweak stable-cursor
 
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
@@ -18,114 +18,122 @@ tweak stable-cursor
 
 # make reactions requiring containers usable in advmode - the issue is
 # that the screen asks for those reagents to be selected directly
-tweak advmode-contained
+#tweak advmode-contained
 
 # support Shift-Enter in Trade and Move Goods to Depot screens for faster
 # selection; it selects the current item or stack and scrolls down one line
-tweak fast-trade
+#tweak fast-trade
 
 # stop the right list in military->positions from resetting to top all the time
-tweak military-stable-assign
+#tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
-tweak military-color-assigned
+#tweak military-color-assigned
 
 # make crafted cloth items wear out with time like in old versions (bug 6003)
-tweak craft-age-wear
+#tweak craft-age-wear
 
 # stop adamantine clothing from wearing out (bug 6481)
 #tweak adamantine-cloth-wear
 
 # Add "Select all" and "Deselect all" options to farm plot menus
-tweak farm-plot-select
+#tweak farm-plot-select
 
 # Add Shift-Left/Right controls to import agreement screen
-tweak import-priority-category
+#tweak import-priority-category
 
 # Fixes a crash in the work order contition material list (bug 9905).
-tweak condition-material
+#tweak condition-material
 
 # Adds an option to clear currently-bound hotkeys
-tweak hotkey-clear
+#tweak hotkey-clear
 
 # Allows lowercase letters in embark profile names, and allows exiting the name prompt without saving
-tweak embark-profile-name
+#tweak embark-profile-name
 
 # Reduce performance impact of temperature changes
-tweak fast-heat 100
+#tweak fast-heat 100
 
 # Misc. UI tweaks
-tweak block-labors              # Prevents labors that can't be used from being toggled
-tweak burrow-name-cancel
-tweak cage-butcher
-tweak civ-view-agreement
-tweak do-job-now
-tweak eggs-fertile
-tweak fps-min
-tweak hide-priority
-tweak kitchen-prefs-all
-tweak kitchen-prefs-empty
-tweak max-wheelbarrow
-tweak partial-items
-tweak shift-8-scroll
-tweak stone-status-all
-tweak title-start-rename
-tweak tradereq-pet-gender
+#tweak block-labors              # Prevents labors that can't be used from being toggled
+#tweak burrow-name-cancel
+#tweak cage-butcher
+#tweak civ-view-agreement
+#tweak do-job-now
+#tweak eggs-fertile
+#tweak fps-min
+#tweak hide-priority
+#tweak kitchen-prefs-all
+#tweak kitchen-prefs-empty
+#tweak max-wheelbarrow
+#tweak partial-items
+#tweak shift-8-scroll
+#tweak stone-status-all
+#tweak title-start-rename
+#tweak tradereq-pet-gender
 
 ###########################
 # Globally acting plugins #
 ###########################
 
 # Display DFHack version on title screen
-enable title-version
+#enable title-version
+
+# Allow DFHack tools to overlay functionality and information on the DF screen
+enable overlay
+
+# Allow buildings to be placed now and built later when materials are available
+enable buildingplan
+
+#Allow designated stockpiles to automatically mark items for melting
+enable automelt
 
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
-enable manipulator
+#enable manipulator
 
 # Search tool in various screens (by falconne)
-enable search
+#enable search
 
 # Improved build material selection interface (by falconne)
-enable automaterial
+#enable automaterial
 
 # Other interface improvement tools
 enable \
- overlay \
- confirm \
- dwarfmonitor \
- mousequery \
- autogems \
- autodump \
- automelt \
- autotrade \
- buildingplan \
- trackstop \
- zone \
- stocks \
- autochop \
- stockpiles
+ confirm
+# dwarfmonitor \
+# mousequery \
+# autogems \
+# autodump \
+# automelt \
+# autotrade \
+# buildingplan \
+# trackstop \
+# zone \
+# stocks \
+# autochop \
+# stockpiles
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.
 # You cannot extend a commented line.
 # You can comment out the extension of a line.
 
 # enable mouse controls and sand indicator in embark screen
-embark-tools enable sticky sand mouse
+#embark-tools enable sticky sand mouse
 
 # enable option to enter embark assistant
-enable embark-assistant
+#enable embark-assistant
 
 ###########
 # Scripts #
 ###########
 
 # write extra information to the gamelog
-modtools/extra-gamelog enable
+#modtools/extra-gamelog enable
 
 # extended status screen (bedrooms page)
-enable gui/extended-status
+#enable gui/extended-status
 
 # add information to item viewscreens
-view-item-info enable
+#view-item-info enable
 
 # a replacement for the "load game" screen
-gui/load-screen enable
+#gui/load-screen enable

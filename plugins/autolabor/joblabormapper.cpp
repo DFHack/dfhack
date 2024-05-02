@@ -56,7 +56,7 @@ using std::string;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::world;
 
 #include "labormanager.h"

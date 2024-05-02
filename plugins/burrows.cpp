@@ -17,7 +17,7 @@
 #include "TileTypes.h"
 
 #include "DataDefs.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 #include "df/unit.h"
 #include "df/burrow.h"
@@ -38,7 +38,7 @@ using namespace df::enums;
 using namespace dfproto;
 
 DFHACK_PLUGIN("burrows");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gamemode);
 
@@ -102,11 +102,11 @@ DEFINE_LUA_EVENT_1(onBurrowRename, handle_burrow_rename, df::burrow*);
 
 static void detect_burrow_renames(color_ostream &out)
 {
-    if (ui->main.mode == ui_sidebar_mode::Burrows &&
-        ui->burrows.in_edit_name_mode &&
-        ui->burrows.sel_id >= 0)
+    if (plotinfo->main.mode == ui_sidebar_mode::Burrows &&
+        plotinfo->burrows.in_edit_name_mode &&
+        plotinfo->burrows.sel_id >= 0)
     {
-        name_burrow_id = ui->burrows.sel_id;
+        name_burrow_id = plotinfo->burrows.sel_id;
     }
     else if (name_burrow_id >= 0)
     {
@@ -222,7 +222,7 @@ static std::map<std::string,int> name_lookup;
 
 static void parse_names()
 {
-    auto &list = ui->burrows.list;
+    auto &list = plotinfo->burrows.list;
 
     grow_burrows.clear();
     name_lookup.clear();

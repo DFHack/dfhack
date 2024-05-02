@@ -12,7 +12,7 @@
 
 // DF data structure definition headers
 #include "DataDefs.h"
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_soul.h>
@@ -32,8 +32,10 @@
 #include <df/building_tradedepotst.h>
 #include <df/building_stockpilest.h>
 #include <df/items_other_id.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/activity_info.h>
+#include <df/global_objects.h>
+#include <df/gamest.h>
 
 #include <MiscUtils.h>
 
@@ -47,8 +49,9 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("autolabor");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(game);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -172,9 +175,9 @@ static const struct labor_default default_labor_infos[] = {
     /* CLEAN */                 {HAULERS, false, 1, 200, 0},
     /* CUTWOOD */               {AUTOMATIC, true, 1, 200, 0},
     /* CARPENTER */             {AUTOMATIC, false, 1, 200, 0},
-    /* DETAIL */                {AUTOMATIC, false, 1, 200, 0},
+    /* STONECUTTER */           {AUTOMATIC, false, 1, 200, 0},
+    /* STONE_CARVER */          {AUTOMATIC, false, 1, 200, 0},
     /* MASON */                 {AUTOMATIC, false, 1, 200, 0},
-    /* ARCHITECT */             {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALTRAIN */           {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALCARE */            {AUTOMATIC, false, 1, 200, 0},
     /* DIAGNOSE */              {AUTOMATIC, false, 1, 200, 0},
@@ -242,7 +245,18 @@ static const struct labor_default default_labor_infos[] = {
     /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0},
     /* PAPERMAKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0}
+    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0},
+    /* ANON_LABOR_83 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_84 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_85 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_86 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_87 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_88 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_89 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_90 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_91 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_92 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_93 */         {DISABLE, false, 0, 0, 0},
 };
 
 static const int responsibility_penalties[] = {
@@ -399,6 +413,8 @@ static void enable_plugin(color_ostream &out)
 
     cleanup_state();
     init_state();
+
+    df::global::game->external_flag |= 1; // shut down DF's work detail system
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -711,15 +727,18 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    static int step_count = 0;
+    static int last_run = 0;
+    static const int run_frequency = 60;
+
     if(!world || !world->map.block_index || !enable_autolabor)
     {
         return CR_OK;
     }
 
-    if (++step_count < 60)
+    if (world->frame_counter - last_run <= run_frequency)
         return CR_OK;
-    step_count = 0;
+
+    last_run = world->frame_counter;
 
     std::vector<df::unit *> dwarfs;
 
@@ -813,7 +832,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // identify dwarfs who are needed for meetings and mark them for exclusion
 
-        for (auto& act : ui->activities)
+        for (auto& act : plotinfo->activities)
         {
             if (!act) continue;
             bool p1 = act->unit_actor == dwarfs[dwarf];
@@ -1064,6 +1083,8 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
     {
         enable_autolabor = false;
         setOptionEnabled(CF_ENABLED, false);
+
+        df::global::game->external_flag &= ~1; // reenable DF's work detail system
 
         out << "Autolabor is disabled." << std::endl;
     }

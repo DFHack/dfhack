@@ -21,7 +21,7 @@
 #include "DataDefs.h"
 #include <VTableInterpose.h>
 #include "../uicommon.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
@@ -36,8 +36,8 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_kitchenprefst.h"
 #include "df/viewscreen_layer_unit_actionst.h"
-#include "df/ui_build_selector.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/buildreq.h"
+#include "df/gamest.h"
 #include "df/building_trapst.h"
 #include "df/building_workshopst.h"
 #include "df/item_actual.h"
@@ -78,7 +78,7 @@
 #include "tweaks/block-labors.h"
 #include "tweaks/burrow-name-cancel.h"
 #include "tweaks/cage-butcher.h"
-#include "tweaks/civ-agreement-ui.h"
+#include "tweaks/civ-agreement-plotinfo.h"
 #include "tweaks/condition-material.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/do-job-now.h"
@@ -117,14 +117,14 @@ DFHACK_PLUGIN("tweak");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(enabler);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_in_resize);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_look_cursor);
 REQUIRE_GLOBAL(ui_menu_width);
-REQUIRE_GLOBAL(ui_sidebar_menus);
+REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(ui_unit_view_mode);
 REQUIRE_GLOBAL(ui_workshop_in_add);
 REQUIRE_GLOBAL(world);
@@ -449,7 +449,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         // if it happens that the player has 'foreign' units of the same race
         // (vanilla df: dwarves not from mountainhome) on his map, just grab them
         if(!Units::isOwnCiv(unit))
-            unit->civ_id = ui->civ_id;
+            unit->civ_id = plotinfo->civ_id;
 
         return fix_clothing_ownership(out, unit);
     }
@@ -468,7 +468,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if(Units::isForest(unit))
             unit->flags1.bits.forest = 0;
         if(!Units::isOwnCiv(unit))
-            unit->civ_id = ui->civ_id;
+            unit->civ_id = plotinfo->civ_id;
         if(unit->profession == df::profession::MERCHANT)
             unit->profession = df::profession::TRADER;
         if(unit->profession2 == df::profession::MERCHANT)

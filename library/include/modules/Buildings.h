@@ -151,9 +151,11 @@ DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
 DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
 
 /**
- * Checks if the building contains the specified tile.
+ * Checks if the building contains the specified tile. If the building has
+ * extents, returns whether tile is included within the extents. The x and y in
+ * tile are the map coordinates without the z component.
  */
-DFHACK_EXPORT bool containsTile(df::building *bld, df::coord2d tile, bool room = false);
+DFHACK_EXPORT bool containsTile(df::building *bld, df::coord2d tile);
 
 /**
  * Checks if the area has support from the terrain.
@@ -201,6 +203,11 @@ DFHACK_EXPORT bool deconstruct(df::building *bld);
  * Determines whether this building is marked for removal.
  */
 DFHACK_EXPORT bool markedForRemoval(df::building *bld);
+
+/**
+ * Rebuilds a civzones building associations after it has been modified
+*/
+DFHACK_EXPORT void notifyCivzoneModified(df::building* bld);
 
 void updateBuildings(color_ostream& out, void* ptr);
 void clearBuildings(color_ostream& out);
@@ -268,7 +275,6 @@ DFHACK_EXPORT bool isActivityZone(df::building * building);
 DFHACK_EXPORT bool isPenPasture(df::building * building);
 DFHACK_EXPORT bool isPitPond(df::building * building);
 DFHACK_EXPORT bool isActive(df::building * building);
-DFHACK_EXPORT bool isHospital(df::building * building);
 DFHACK_EXPORT bool isAnimalTraining(df::building * building);
 
 DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);

@@ -6,7 +6,7 @@
 #include "df/building_type.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/job_item.h"
-#include "df/ui_build_selector.h"
+#include "df/buildreq.h"
 
 #include "modules/Buildings.h"
 #include "modules/Gui.h"

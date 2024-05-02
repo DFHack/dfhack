@@ -43,7 +43,7 @@ using namespace std;
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/building.h"
 #include "df/job.h"
@@ -593,17 +593,17 @@ std::string Job::getName(df::job *job)
 
     std::string desc;
     auto button = df::allocate<df::interface_button_building_new_jobst>();
-    button->reaction_name = job->reaction_name;
-    button->hist_figure_id = job->hist_figure_id;
-    button->job_type = job->job_type;
-    button->item_type = job->item_type;
-    button->item_subtype = job->item_subtype;
-    button->mat_type = job->mat_type;
-    button->mat_index = job->mat_index;
-    button->item_category = job->item_category;
-    button->material_category = job->material_category;
+    button->mstring = job->reaction_name;
+    button->spec_id = job->hist_figure_id;
+    button->jobtype = job->job_type;
+    button->itemtype = job->item_type;
+    button->subtype = job->item_subtype;
+    button->material = job->mat_type;
+    button->matgloss = job->mat_index;
+    button->specflag = job->item_category;
+    button->job_item_flag = job->material_category;
 
-    button->getLabel(&desc);
+    button->text(&desc);
     delete button;
 
     return desc;

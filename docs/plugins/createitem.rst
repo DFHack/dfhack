@@ -3,7 +3,7 @@ createitem
 
 .. dfhack-tool::
     :summary: Create arbitrary items.
-    :tags: adventure fort armok items
+    :tags: untested adventure fort armok items
 
 You can create new items of any type and made of any material. A unit must be
 selected in-game to use this command. By default, items created are spawned at

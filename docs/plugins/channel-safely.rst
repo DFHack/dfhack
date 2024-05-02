@@ -52,18 +52,17 @@ Commands
 --------
 
 :runonce:           Run the safety procedures once to set the marker mode of designations.
-:rebuild:           Rebuild the designation group data. Intended for to be used in the event
-                    the marker mode isn't being set correctly (mostly for debugging).
+:rebuild:           Rebuild the designation group data. You should also read Troubleshooting.
 
 Features
 --------
 
 :require-vision:    Toggle whether the dwarves need vision of a tile before channeling to it can be deemed unsafe. (default: enabled)
-:monitor:           Toggle whether to monitor the conditions of active digs. (default: disabled)
+:risk-averse:       Toggles whether to use cave-in prevention. Designations are activated in stages
+                    and their priorities along edges are modified. (default: enabled)
+:monitoring:        Toggle whether to monitor the conditions of active digs. (default: disabled)
 :resurrect:         Toggle whether to resurrect units involved in cave-ins, and if monitor is enabled
                     units who die while digging. (default: disabled)
-:insta-dig:         Toggle whether to use insta-digging on unreachable designations.
-                    Runs on the refresh cycles. (default: disabled)
 
 Settings
 --------
@@ -74,3 +73,13 @@ Settings
 :ignore-threshold:  Sets the priority threshold below which designations are processed. You can set to 1 or 0 to
                     effectively disable the scanning. (default: 5)
 :fall-threshold:    Sets the fall threshold beyond which is considered unsafe. (default: 1)
+
+Troubleshooting
+---------------
+
+If designations aren't switching correctly, try putting the designations into marker mode.
+Then press . (next) or resume. If you're debugging code you'll want these::
+
+    debugfilter set Info channel manager
+    debugfilter set Debug channel plugin
+    debugfilter set Trace channel group

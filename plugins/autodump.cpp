@@ -1,5 +1,24 @@
 // Quick Dumper : Moves items marked as "dump" to cursor
 // FIXME: local item cache in map blocks needs to be fixed after teleporting items
+
+#include "Core.h"
+#include "Console.h"
+#include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "modules/Maps.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/Materials.h"
+#include "modules/MapCache.h"
+
+#include "df/item.h"
+#include "df/world.h"
+#include "df/general_ref.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/building_stockpilest.h"
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -8,26 +27,8 @@
 #include <string>
 #include <algorithm>
 #include <set>
+
 using namespace std;
-
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
-#include "PluginManager.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "modules/Items.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
-
-#include "DataDefs.h"
-#include "df/item.h"
-#include "df/world.h"
-#include "df/general_ref.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/building_stockpilest.h"
-#include "uicommon.h"
-
 using namespace DFHack;
 using namespace df::enums;
 
@@ -40,6 +41,7 @@ DFHACK_PLUGIN("autodump");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 
+/* TODO: merge with stockpiles plugin
 // Stockpile interface START
 static const string PERSISTENCE_KEY = "autodump/stockpiles";
 
@@ -267,6 +269,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 }
 
 // Stockpile interface END
+*/
 
 command_result df_autodump(color_ostream &out, vector <string> & parameters);
 command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters);
@@ -276,11 +279,12 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 {
     commands.push_back(PluginCommand(
         "autodump",
-        "Teleport items marked for dumping to the cursor.",
-        df_autodump));
+        "Teleport items marked for dumping to the keyboard cursor.",
+        df_autodump,
+        Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
         "autodump-destroy-here",
-        "Destroy items marked for dumping under cursor.",
+        "Destroy items marked for dumping under the keyboard cursor.",
         df_autodump_destroy_here,
         Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
@@ -329,7 +333,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         return CR_WRONG_USAGE;
     }
 
-    //DFHack::VersionInfo *mem = Core::getInstance().vinfo;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -340,16 +343,14 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     MapCache MC;
     int dumped_total = 0;
 
-    int cx, cy, cz;
-    DFCoord pos_cursor;
+    df::coord pos_cursor;
     if(!destroy || here)
     {
-        if (!Gui::getCursorCoords(cx,cy,cz))
-        {
-            out.printerr("Cursor position not found. Please enable the cursor.\n");
+        pos_cursor = Gui::getCursorPos();
+        if (!pos_cursor.isValid()) {
+            out.printerr("Keyboard cursor must be over a suitable map tile.\n");
             return CR_FAILURE;
         }
-        pos_cursor = DFCoord(cx,cy,cz);
     }
     if (!destroy)
     {
@@ -441,12 +442,13 @@ command_result df_autodump(color_ostream &out, vector <string> & parameters)
 
 command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
     vector<string> args;
     args.push_back("destroy-here");
+
+    CoreSuspender suspend;
 
     return autodump_main(out, args);
 }
@@ -456,9 +458,10 @@ static int last_frame = 0;
 
 command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
 
     df::item *item = Gui::getSelectedItem(out);
     if (!item)

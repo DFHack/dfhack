@@ -24,7 +24,7 @@ function foreach_module_script(cb)
     end
 end
 
-local enabled_map = {}
+local enabled_map = nil
 
 local function process_script(env_name, env)
     local global_name = 'isEnabled'
@@ -44,12 +44,16 @@ function reload()
     foreach_module_script(process_script)
 end
 
+local function ensure_loaded()
+    if not enabled_map then
+        reload()
+    end
+end
+
 function list()
-    -- call reload every time we list to make sure we get scripts that have
-    -- just been added
-    reload()
+    ensure_loaded()
     for name,fn in pairs(enabled_map) do
-        print(('%20s\t%-3s'):format(name..':', fn() and 'on' or 'off'))
+        print(('%21s  %-3s'):format(name..':', fn() and 'on' or 'off'))
     end
 end
 

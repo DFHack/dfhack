@@ -84,6 +84,11 @@ namespace DFHack
             } tile_mode;
             int8_t tile_fg, tile_bg;
 
+            bool write_to_lower = false;
+            bool keep_lower = false;
+            bool top_of_text = false;
+            bool bottom_of_text = false;
+
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }
 
@@ -178,6 +183,7 @@ namespace DFHack
         };
 
         DFHACK_EXPORT df::coord2d getMousePos();
+        DFHACK_EXPORT df::coord2d getMousePixels();
         DFHACK_EXPORT df::coord2d getWindowSize();
 
         inline rect2d getScreenRect() {
@@ -221,6 +227,7 @@ namespace DFHack
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
+        DFHACK_EXPORT void raise(df::viewscreen *screen);
 
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
@@ -313,9 +320,10 @@ namespace DFHack
 
             static const int RESTORE_AT_TOP = 0x1;
         private:
-            void extract(df::viewscreen*);
-            void merge(df::viewscreen*);
+            void extract();
+            void merge();
             df::viewscreen* screen;
+            df::viewscreen* prev_parent;
             int flags;
         };
     }
@@ -336,12 +344,14 @@ namespace DFHack
 
         virtual void logic();
         virtual void render();
+        virtual void resize(int w, int h) { return; }
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);
 
         virtual bool is_lua_screen() { return false; }
 
+        virtual bool isFocused() { return true; }
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
@@ -356,6 +366,7 @@ namespace DFHack
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
         std::string focus;
+        bool defocused = false;
 
         void update_focus(lua_State *L, int idx);
 
@@ -375,6 +386,7 @@ namespace DFHack
         static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
 
         virtual bool is_lua_screen() { return true; }
+        virtual bool isFocused() { return !defocused; }
         virtual std::string getFocusString() { return focus; }
 
         virtual void render();

@@ -59,8 +59,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "LuaTools.h"
 
 #include "DataDefs.h"
-#include "df/ui.h"
-#include "df/ui_advmode.h"
+#include "df/plotinfost.h"
+#include "df/adventurest.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/unit.h"
@@ -375,11 +375,11 @@ static command_result GetDFVersion(color_ostream &stream,
 static command_result GetWorldInfo(color_ostream &stream,
                                    const EmptyMessage *, GetWorldInfoOut *out)
 {
-    using df::global::ui;
-    using df::global::ui_advmode;
+    using df::global::plotinfo;
+    using df::global::adventure;
     using df::global::world;
 
-    if (!ui || !world || !Core::getInstance().isWorldLoaded())
+    if (!plotinfo || !world || !Core::getInstance().isWorldLoaded())
         return CR_NOT_FOUND;
 
     df::game_type gt = game_type::DWARF_MAIN;
@@ -397,10 +397,10 @@ static command_result GetWorldInfo(color_ostream &stream,
     case game_type::DWARF_RECLAIM:
     case game_type::DWARF_UNRETIRE:
         out->set_mode(GetWorldInfoOut::MODE_DWARF);
-        out->set_civ_id(ui->civ_id);
-        out->set_site_id(ui->site_id);
-        out->set_group_id(ui->group_id);
-        out->set_race_id(ui->race_id);
+        out->set_civ_id(plotinfo->civ_id);
+        out->set_site_id(plotinfo->site_id);
+        out->set_group_id(plotinfo->group_id);
+        out->set_race_id(plotinfo->race_id);
         break;
 
     case game_type::ADVENTURE_MAIN:
@@ -410,10 +410,10 @@ static command_result GetWorldInfo(color_ostream &stream,
         if (auto unit = vector_get(world->units.active, 0))
             out->set_player_unit_id(unit->id);
 
-        if (!ui_advmode)
+        if (!adventure)
             break;
 
-        if (auto nemesis = vector_get(world->nemesis.all, ui_advmode->player_id))
+        if (auto nemesis = vector_get(world->nemesis.all, adventure->player_id))
         {
             if (nemesis->figure)
                 out->set_player_histfig_id(nemesis->figure->id);
@@ -613,7 +613,7 @@ static command_result ListUnits(color_ostream &stream,
 static command_result ListSquads(color_ostream &stream,
                                  const ListSquadsIn *in, ListSquadsOut *out)
 {
-    auto entity = df::historical_entity::find(df::global::ui->group_id);
+    auto entity = df::historical_entity::find(df::global::plotinfo->group_id);
     if (!entity)
         return CR_NOT_FOUND;
 

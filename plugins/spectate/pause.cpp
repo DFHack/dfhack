@@ -4,7 +4,7 @@
 #include <df/viewscreen_dwarfmodest.h>
 #include <df/announcements.h>
 #include <df/d_init.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 
 #include <algorithm>
 
@@ -25,12 +25,12 @@ namespace pausing {
     bool locked_states[announcement_flag_arr_size]; // locked state (re-applied each frame)
     bool allow_player_pause = true; // toggles player pause ability
 
-    using df::global::ui;
+    using df::global::plotinfo;
     using namespace df::enums;
     struct player_pause_hook : df::viewscreen_dwarfmodest {
         typedef df::viewscreen_dwarfmodest interpose_base;
         DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input)) {
-            if ((ui->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
+            if ((plotinfo->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
                 input->erase(interface_key::D_PAUSE);
             }
             INTERPOSE_NEXT(feed)(input);

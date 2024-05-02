@@ -1,6 +1,6 @@
 #include "df/viewscreen_dwarfmodest.h"
 
-using df::global::ui;
+using df::global::plotinfo;
 
 struct hotkey_clear_hook : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -8,7 +8,7 @@ struct hotkey_clear_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-        if (ui->main.mode == df::ui_sidebar_mode::Hotkeys)
+        if (plotinfo->main.mode == df::ui_sidebar_mode::Hotkeys)
         {
             auto dims = Gui::getDwarfmodeViewDims();
             int x = dims.menu_x1 + 1, y = 19;
@@ -18,11 +18,11 @@ struct hotkey_clear_hook : df::viewscreen_dwarfmodest {
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (ui->main.mode == df::ui_sidebar_mode::Hotkeys &&
+        if (plotinfo->main.mode == df::ui_sidebar_mode::Hotkeys &&
             input->count(df::interface_key::CUSTOM_C) &&
-            !ui->main.in_rename_hotkey)
+            !plotinfo->main.in_rename_hotkey)
         {
-            auto &hotkey = ui->main.hotkeys[ui->main.selected_hotkey];
+            auto &hotkey = plotinfo->main.hotkeys[plotinfo->main.selected_hotkey];
             hotkey.name = "";
             hotkey.cmd = df::ui_hotkey::T_cmd::None;
             hotkey.x = 0;

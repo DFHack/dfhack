@@ -258,8 +258,8 @@ function BuildingDialog:onSubmitItem(idx, item)
 end
 
 function BuildingDialog:onInput(keys)
-    if keys.LEAVESCREEN or keys.LEAVESCREEN_ALL then
-        if self.subviews.back.visible and not keys.LEAVESCREEN_ALL then
+    if keys.LEAVESCREEN then
+        if self.subviews.back.visible then
             self:onGoBack()
         else
             self:dismiss()
@@ -267,9 +267,9 @@ function BuildingDialog:onInput(keys)
                 self.on_cancel()
             end
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    self:inputToSubviews(keys)
 end
 
 function showBuildingPrompt(title, prompt, on_select, on_cancel, build_filter)

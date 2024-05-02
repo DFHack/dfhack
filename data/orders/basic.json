@@ -256,10 +256,9 @@
 				"condition" : "AtLeast",
 				"flags" : 
 				[
-					"empty",
-					"bag"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 5
 			}
 		],
@@ -310,10 +309,9 @@
 				"condition" : "AtLeast",
 				"flags" : 
 				[
-					"empty",
-					"bag"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 5
 			}
 		],
@@ -725,6 +723,10 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
 				"item_subtype" : "ITEM_TOOL_MINECART",
 				"item_type" : "TOOL",
 				"value" : 2
@@ -844,14 +846,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"leather"
@@ -880,14 +881,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"silk"
@@ -916,14 +916,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"cloth"
@@ -952,14 +951,13 @@
 				"condition" : "AtMost",
 				"flags" : 
 				[
-					"empty",
-					"sewn_imageless"
+					"empty"
 				],
-				"item_type" : "BOX",
+				"item_type" : "BAG",
 				"value" : 30
 			}
 		],
-		"job" : "ConstructChest",
+		"job" : "ConstructBag",
 		"material_category" : 
 		[
 			"yarn"
@@ -1137,8 +1135,11 @@
 			},
 			{
 				"condition" : "AtMost",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 5
 			}
 		],
@@ -1166,8 +1167,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 3
 			},
 			{
@@ -1200,8 +1204,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_OIL",
 				"value" : 3
 			},
 			{

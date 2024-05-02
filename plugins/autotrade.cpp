@@ -15,7 +15,7 @@
 #include "df/job.h"
 #include "df/job_item_ref.h"
 #include "modules/Job.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/mandate.h"
 #include "modules/Maps.h"
 
@@ -25,7 +25,7 @@ DFHACK_PLUGIN("autotrade");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 static const string PERSISTENCE_KEY = "autotrade/stockpiles";
 

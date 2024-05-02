@@ -89,7 +89,7 @@
 #endif
 #include "df/tissue.h"
 #include "df/tissue_style_raw.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
@@ -135,9 +135,9 @@ using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(gamemode);
-REQUIRE_GLOBAL(ui_advmode);
+REQUIRE_GLOBAL(adventure);
 #endif
 
 // Here go all the command declarations...
@@ -319,14 +319,14 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
 
 void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 {
-    if (!df::global::enabler)
+    if (!df::global::gps)
         return;
 
-    auto enabler = df::global::enabler;
+    auto gps = df::global::gps;
 
-    out->set_red((int)(enabler->ccolor[index][0] * 255));
-    out->set_green((int)(enabler->ccolor[index][1] * 255));
-    out->set_blue((int)(enabler->ccolor[index][2] * 255));
+    out->set_red(gps->uccolor[index][0]);
+    out->set_green(gps->uccolor[index][1]);
+    out->set_blue(gps->uccolor[index][2]);
 }
 
 void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
@@ -859,31 +859,6 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             }
         }
     }
-    //for (size_t i = 0; i < history->figures.size(); i++)
-    //{
-    //    df::historical_figure * figure = history->figures[i];
-    //    if (figure->race < 0)
-    //        continue;
-    //    df::creature_raw * creature = raws->creatures.all[figure->race];
-    //    for (int j = 0; j < creature->material.size(); j++)
-    //    {
-    //        mat.decode(j + MaterialInfo::FIGURE_BASE, i);
-    //        MaterialDefinition *mat_def = out->add_material_list();
-    //        mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
-    //        mat_def->mutable_mat_pair()->set_mat_index(i);
-    //        stringstream id;
-    //        id << "HF" << i << mat.getToken();
-    //        mat_def->set_id(id.str());
-    //        mat_def->set_name(mat.toString()); //find the name at cave temperature;
-    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->descriptors.colors.size())
-    //        {
-    //            df::descriptor_color *color = raws->descriptors.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
-    //            mat_def->mutable_state_color()->set_red(color->red * 255);
-    //            mat_def->mutable_state_color()->set_green(color->green * 255);
-    //            mat_def->mutable_state_color()->set_blue(color->blue * 255);
-    //        }
-    //    }
-    //}
     for (size_t i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];
@@ -1854,18 +1829,19 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     Gui::getViewCoords(x, y, z);
     Gui::getCursorCoords(cx, cy, cz);
 
-#if DF_VERSION_INT > 34011
-    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    if (embark)
-    {
-        df::embark_location location = embark->location;
-        df::world_data * data = df::global::world->world_data;
-        if (data && data->region_map)
-        {
-            z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
-        }
-    }
-#endif
+    //FIXME: Get get this info from the new embark screen.
+//#if DF_VERSION_INT > 34011
+//    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+//    if (embark)
+//    {
+//        df::embark_location location = embark->location;
+//        df::world_data * data = df::global::world->world_data;
+//        if (data && data->region_map)
+//        {
+//            z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+//        }
+//    }
+//#endif
 
     auto dims = Gui::getDwarfmodeViewDims();
 
@@ -1887,8 +1863,8 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     if (gamemode && *gamemode == GameMode::ADVENTURE)
         out->set_follow_unit_id(world->units.active[0]->id);
     else
-        out->set_follow_unit_id(ui->follow_unit);
-    out->set_follow_item_id(ui->follow_item);
+        out->set_follow_unit_id(plotinfo->follow_unit);
+    out->set_follow_item_id(plotinfo->follow_item);
     return CR_OK;
 }
 
@@ -1915,22 +1891,23 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 DFCoord GetMapCenter()
 {
     DFCoord output;
-#if DF_VERSION_INT > 34011
-    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    if (embark)
-    {
-        df::embark_location location = embark->location;
-        output.x = (location.region_pos.x * 16) + 8;
-        output.y = (location.region_pos.y * 16) + 8;
-        output.z = 100;
-        df::world_data * data = df::global::world->world_data;
-        if (data && data->region_map)
-        {
-            output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
-        }
-    }
-    else
-#endif
+//FIXME: Does this even still exist?
+//#if DF_VERSION_INT > 34011
+//    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+//    if (embark)
+//    {
+//        df::embark_location location = embark->location;
+//        output.x = (location.region_pos.x * 16) + 8;
+//        output.y = (location.region_pos.y * 16) + 8;
+//        output.z = 100;
+//        df::world_data * data = df::global::world->world_data;
+//        if (data && data->region_map)
+//        {
+//            output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+//        }
+//    }
+//    else
+//#endif
         if (Maps::IsValid())
         {
             int x, y, z;

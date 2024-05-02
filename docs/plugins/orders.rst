@@ -8,7 +8,7 @@ orders
 Usage
 -----
 
-``orders orders list``
+``orders list``
     Shows the list of previously exported orders, including the orders library.
 ``orders export <name>``
     Saves all the current manager orders in a file.
@@ -23,7 +23,7 @@ Usage
     one-time orders first, then yearly, seasonally, monthly, and finally, daily.
 
 You can keep your orders automatically sorted by adding the following command to
-your ``onMapLoad.init`` file::
+your ``dfhack-config/init/onMapLoad.init`` file::
 
     repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
@@ -39,6 +39,17 @@ Examples
 ``orders import library/basic``
     Import manager orders from the library that keep your fort stocked with
     basic essentials.
+
+Overlay
+-------
+
+Orders plugin functionality is directly available when the manager orders screen
+is open via an `overlay` widget. There are hotkeys assigned to export, import,
+sort, and clear. You can also click on the hotkey hints as if they were buttons.
+Clearing will ask for confirmation before acting.
+
+If you want to change where the hotkey hints appear, you can move them via
+`gui/overlay`.
 
 The orders library
 ------------------
@@ -95,7 +106,7 @@ produces weapons and armor:
 - smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
   their dependencies)
 - bronze/bismuth bronze/copper bolts
-- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+- silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
   with checks to ensure only the best available materials are being used
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
@@ -105,6 +116,16 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 ``automelt`` on, though!
 
 This file should only be imported, of course, if you need to equip a military.
+
+:source:`library/military_include_artifact_materials <data/orders/military_include_artifact_materials.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As above, but this collection will also allow creation of platinum blunt weapons.
+Normally these are only created by artifact moods, work orders can't be created
+manually for them.
+
+- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+  with checks to ensure only the best available materials are being used
 
 :source:`library/smelting <data/orders/smelting.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

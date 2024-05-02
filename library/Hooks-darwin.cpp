@@ -279,9 +279,8 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
 {
     // reroute stderr
     fprintf(stderr,"dfhack: attempting to hook in\n");
-    freopen("stderr.log", "w", stderr);
     // we don't reroute stdout until  we figure out if this should be done at all
-    // See: Console-linux.cpp
+    // See: Console-posix.cpp
 
     // find real functions
     fprintf(stderr,"dfhack: saving real SDL functions\n");

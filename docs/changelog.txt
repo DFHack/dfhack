@@ -36,24 +36,166 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+-@ `nestboxes`: fixed bug causing nestboxes themselves to be forbidden, which prevented citizens from using them to lay eggs. Now only eggs are forbidden.
 
 ## Misc Improvements
 
 ## Documentation
-- `overlay-dev-guide`: added troubleshooting tips and common development workflows
-- added DFHack architecture diagrams to the dev intro
 
 ## API
 
 ## Lua
+
+## Removed
+
+# 50.07-alpha1
+
+## Fixes
+- ``Units::isFortControlled``: Account for agitated wildlife
+-@ Fix right click sometimes closing both a DFHack window and a vanilla panel
+- Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
+- `channel-safely`: fixed bug resulting in marker mode never being set for any designation
+-@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+-@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+- `nestboxes`: now cancels any in-progress hauling jobs when it protects a fertile egg
+-@ Fix persisted data not being written on manual save
+- `nestboxes`: now scans for eggs more frequently and cancels any in-progress hauling jobs when it protects a fertile egg
+
+## Misc Improvements
+-@ `automelt`: is now more resistent to vanilla savegame corruption
+-@ `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+- `misery`: now persists state with the fort
+-@ `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
+- `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
+-@ `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
+-@ `clean`: new hotkey for `spotclean`: Ctrl-C
+- `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
+- `autobutcher`: now immediately loads races available at game start into the watchlist
+-@ replaced DFHack logo used for the hover hotspot with a crisper image
+-@ `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
+- `stonesense`: added an ``INVERT_MOUSE_Z`` option to invert the mouse wheel direction
+
+## Documentation
+
+## API
+
+## Lua
+- `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
+- ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
+- ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
+- ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
+
+# 50.05-alpha3.1
+
+## Fixes
+-@ `seedwatch`: fix parameter parsing when setting targets
+
+# 50.05-alpha3
+
+## New Plugins
+- `autoslab`: automatically create work orders to engrave slabs for ghostly dwarves
+
+## Fixes
+-@ DF screens can no longer get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "PAUSE FORCED" indicator will appear on these DFHack windows to indicate what is happening.
+-@ allow launcher tools to launch themselves without hanging the game
+-@ fix issues with clicks "passing through" some DFHack window elements to the screen below
+- `getplants`: trees are now designated correctly
+- `autoclothing`: fixed a crash that can happen when units are holding invalid items.
+-@ `orders`: fix orders in library/basic that create bags
+- `orders`: library/military now sticks to vanilla rules and does not add orders for normally-mood-only platinum weapons. A new library orders file ``library/military_include_artifact_materials`` is now offered as an alternate ``library/military`` set of orders that still includes the platinum weapons.
+- `autochop`: fixed a crash when processing trees with corrupt data structures (e.g. when a trunk tile fails to fall when the rest of the tree is chopped down)
+
+## Misc Improvements
+-@ DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
+- `getplants`: ID values will now be accepted regardless of case
+-@ Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
+-@ New borders for DFHack tool windows -- tell us what you think!
+-@ `autoclothing`: merged the two separate reports into the same command.
+- `automelt`: stockpile configuration can now be set from the commandline
+- `channel-safely`: new monitoring for cave-in prevention
+-@ `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
+- `gui/control-panel`: new global hotkey for quick access: Ctrl-Shift-E
+-@ `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+- `nestboxes`: now saves enabled state in your savegame
+- `gui/launcher`: sped up initialization time for faster window appearance
+- `orders`: orders plugin functionality is now accessible via an `overlay` widget when the manager orders screen is open
+- `gui/quickcmd`: now has its own global keybinding for your convenience: Ctrl-Shift-A
+- `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
+-@ `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
+
+## Documentation
+- `compile`: instructions added for cross-compiling DFHack for Windows from a Linux Docker builder
+-@ Quickstart guide has been updated with info on new window behavior and how to use the control panel
+
+## API
+- ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
+- ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
+- ``Screen::Pen``: now accepts ``top_of_text`` and ``bottom_of_text`` properties to support offset text in graphics mode
+- `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
+- ``Lua::Push``: now supports ``std::unordered_map``
+
+## Lua
+- `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
+- `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher` and anything else that displays help text.
+- ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
+- ``widgets.List``: new callbacks for double click and shift double click
+- ``dfhack.units.getCitizens()``: gets a list of citizens
+-@ ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
+- ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
+- `tiletypes`: now has a Lua API! ``tiletypes_setTile``
+
+## Removed
+- `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system
+
+# 50.05-alpha2
+
+## Fixes
+- `autofarm`: don't duplicate status line entries for crops with no current supply
+-@ `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
+- `tailor`: now respects the setting of the "used dyed clothing" standing order toggle
+
+# 50.05-alpha1
+
+## Fixes
+- ``widgets.WrappedLabel``: no longer resets scroll position when window is moved or resized
+
+## Misc Improvements
+- Scrollable widgets now react to mouse wheel events when the mouse is over the widget
+- the ``dfhack-config/scripts/`` folder is now searched for scripts by default
+- `hotkeys`: overlay hotspot widget now shows the DFHack logo in graphics mode and "DFHack" in text mode
+- `script-paths`: removed "raw" directories from default script paths. now the default locations to search for scripts are ``dfhack-config/scripts``, ``save/*/scripts``, and ``hack/scripts``
+- ``init.d``: directories have moved from the ``raw`` subfolder (which no longer exists) to the root of the main DF folder or a savegame folder
+
+## Documentation
+- `overlay-dev-guide`: added troubleshooting tips and common development workflows
+- added DFHack architecture diagrams to the dev intro
+- added DFHack Quickstart guide
+
+## API
+- ``Gui::getDwarfmodeDims``: now only returns map viewport dimensions; menu dimensions are obsolete
+- ``Gui::getDFViewscreen``: returns the topmost underlying DF viewscreen
+- ``Screen::Pen``: now accepts ``keep_lower`` and ``write_to_lower`` properties to support foreground and background textures in graphics mode
+
+## Lua
+- Removed ``os.execute()`` and ``io.popen()`` built-in functions
 - ``gui.View``: ``visible`` and ``active`` can now be functions that return a boolean
 - ``widgets.Panel``: new attributes to control window dragging and resizing with mouse or keyboard
 - ``widgets.Window``: Panel subclass with attributes preset for top-level windows
-
-## Internals
+- ``widgets.CycleHotkeyLabel``: now supports rendering option labels in the color of your choice
+- ``widgets.CycleHotkeyLabel``: new functions ``setOption()`` and ``getOptionPen()``
+- ``widgets.ToggleHotkeyLabel``: now renders the ``On`` option in green text
+- ``widgets.Label``: tiles can now have an associated width
+- `overlay`: ``OverlayWidget`` now inherits from ``Panel`` instead of ``Widget`` to get all the frame and mouse integration goodies
+- ``dfhack.gui.getDFViewscreen()``: returns the topmost underlying DF viewscreen
+- ``gui.ZScreen``: Screen subclass that implements window raising, multi-viewscreen input handling, and viewscreen event pass-through so the underlying map can be interacted with and dragged around while DFHack screens are visible
+- ``gui.View``: new function ``view:getMouseFramePos()`` for detecting whether the mouse is within (or over) the exterior frame of a view
+- ``gui.CLEAR_PEN``: now clears the background and foreground and writes to the background (before it would always write to the foreground)
+- ``gui.KEEP_LOWER_PEN``: a general use pen that writes associated tiles to the foreground while keeping the existing background
 
 ## Removed
 - ``fix-job-postings`` from the `workflow` plugin is now obsolete since affected savegames can no longer be loaded
+- Ruby is no longer a supported DFHack scripting language
 
 # 0.47.05-r8
 

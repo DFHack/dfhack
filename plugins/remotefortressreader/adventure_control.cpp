@@ -7,7 +7,7 @@
 #include "df/adventure_movement_hold_itemst.h"
 #include "df/adventure_movement_hold_tilest.h"
 #include "df/adventure_movement_optionst.h"
-#include "df/ui_advmode.h"
+#include "df/adventurest.h"
 #include "df/viewscreen.h"
 
 #include "modules/Gui.h"
@@ -39,10 +39,11 @@ void SetCoord(df::coord in, RemoteFortressReader::Coord *out)
 
 command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParams *in)
 {
+/* Removed for v50 which has no adventure mode.
     auto viewScreen = getCurViewscreen();
     if (!in->has_direction())
         return CR_WRONG_USAGE;
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
     auto dir = in->direction();
     switch (dir.x())
@@ -186,14 +187,15 @@ command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParam
         }
         break;
     }
-    return CR_OK;
+*/    return CR_OK;
 }
 
 command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParams *in)
 {
-    if (!in->has_direction())
+/* Removed for v50 which has no adventure mode.
+        if (!in->has_direction())
         return CR_WRONG_USAGE;
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
     auto dir = in->direction();
     keyQueue.push(interface_key::A_JUMP);
@@ -228,12 +230,14 @@ command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParam
         }
     }
     keyQueue.push(interface_key::SELECT);
+*/
     return CR_OK;
 }
 
 command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, MenuContents *out)
 {
-    auto advUi = df::global::ui_advmode;
+/* Removed for v50 which has no adventure mode.
+        auto advUi = df::global::adventure;
 
     if (advUi == NULL)
         return CR_FAILURE;
@@ -272,13 +276,14 @@ command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, 
     default:
         break;
     }
-
+*/
     return CR_OK;
 }
 
 command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfproto::IntMessage *in)
 {
-    if (!(df::global::ui_advmode->menu == ui_advmode_menu::MoveCarefully))
+    /* Removed for v50 which has no adventure mode.
+    if (!(df::global::adventure->menu == ui_advmode_menu::MoveCarefully))
         return CR_OK;
     int choice = in->value();
     int page = choice / 5;
@@ -288,12 +293,14 @@ command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfprot
         keyQueue.push(interface_key::SECONDSCROLL_PAGEDOWN);
     }
     keyQueue.push((interface_key::interface_key)(interface_key::OPTION1 + select));
+*/
     return CR_OK;
 }
 
 command_result MiscMoveCommand(DFHack::color_ostream &stream, const MiscMoveParams *in)
 {
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    /* Removed for v50 which has no adventure mode.
+        if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
 
     auto type = in->type();
@@ -312,6 +319,6 @@ command_result MiscMoveCommand(DFHack::color_ostream &stream, const MiscMovePara
     default:
         break;
     }
-
+*/
     return CR_OK;
 }

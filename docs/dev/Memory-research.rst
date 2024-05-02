@@ -50,7 +50,7 @@ Plugins
 
 There are a few development plugins useful for low-level memory research. They
 are not built by default, but can be built by setting the ``BUILD_DEVEL``
-`CMake option <compile-build-options>`. These include:
+`CMake option <build-options>`. These include:
 
 - ``check-structures-sanity``, which performs sanity checks on the given DF
   object. Note that this will crash in several cases, some intentional, so using
@@ -85,7 +85,7 @@ You should not count on DF being stable when using this.
 
 DFHack's implementation of sizecheck is currently only tested on Linux, although
 it probably also works on macOS. It can be built with the ``BUILD_SIZECHECK``
-`CMake option <compile-build-options>`, which produces a ``libsizecheck``
+`CMake option <build-options>`, which produces a ``libsizecheck``
 library installed in the ``hack`` folder. On Linux, passing ``--sc`` as the
 first argument to the ``dfhack`` launcher script will load this library on
 startup. On other platforms, or when passing a different argument to the

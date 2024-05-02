@@ -6,7 +6,7 @@
 
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 
 #include "DataIdentity.h"
 

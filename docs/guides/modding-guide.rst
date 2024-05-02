@@ -60,8 +60,8 @@ For scripts with the same name, the `order of precedence <script-paths>` will
 be:
 
 1. ``own-scripts/``
-2. ``data/save/*/raw/scripts/``
-3. ``raw/scripts/``
+2. ``dfhack-config/scripts/``
+3. ``save/*/scripts/``
 4. ``hack/scripts/``
 
 The structure of the game
@@ -358,7 +358,7 @@ names for the mod folders within it. In the example below, we'll use a mod ID of
 ``example-mod`` mod will be developed in the ``/path/to/mymods/example-mod/``
 directory and has a basic structure that looks like this::
 
-    raw/init.d/example-mod.lua
+    init.d/example-mod.lua
     raw/objects/...
     raw/scripts/example-mod.lua
     raw/scripts/example-mod/...
@@ -366,13 +366,13 @@ directory and has a basic structure that looks like this::
 
 Let's go through that line by line.
 
-* A short (one-line) script in ``raw/init.d/`` to initialise your
+* A short (one-line) script in ``init.d/`` to initialise your
   mod when a save is loaded.
 * Modifications to the game raws (potentially with custom raw tokens) go in
   ``raw/objects/``.
-* A control script in ``raw/scripts/`` that handles enabling and disabling your
+* A control script in ``scripts/`` that handles enabling and disabling your
   mod.
-* A subfolder for your mod under ``raw/scripts/`` will contain all the internal
+* A subfolder for your mod under ``scripts/`` will contain all the internal
   scripts and/or modules used by your mod.
 
 It is a good idea to use a version control system to organize changes to your
@@ -384,10 +384,10 @@ Unless you want to install your ``raw/`` folder into your DF game folder every
 time you make a change to your scripts, you should add your development scripts
 directory to your script paths in ``dfhack-config/script-paths.txt``::
 
-    +/path/to/mymods/example-mod/raw/scripts/
+    +/path/to/mymods/example-mod/scripts/
 
 Ok, you're all set up! Now, let's take a look at an example
-``raw/scripts/example-mod.lua`` file::
+``scripts/example-mod.lua`` file::
 
     -- main setup and teardown for example-mod
     -- this next line indicates that the script supports the "enable"
@@ -474,7 +474,7 @@ Ok, you're all set up! Now, let's take a look at an example
 
 You can call ``enable example-mod`` and ``disable example-mod`` yourself while
 developing, but for end users you can start your mod automatically from
-``raw/init.d/example-mod.lua``::
+``init.d/example-mod.lua``::
 
     dfhack.run_command('enable example-mod')
 

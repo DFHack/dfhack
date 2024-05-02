@@ -9,14 +9,13 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "uicommon.h"
 
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 
-#include "df/ui_sidebar_menus.h"
+#include "df/gamest.h"
 
 using std::vector;
 using std::string;
@@ -33,7 +32,7 @@ command_result digcircle (color_ostream &out, vector <string> & parameters);
 command_result digtype (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("dig");
-REQUIRE_GLOBAL(ui_sidebar_menus);
+REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(window_z);
 
@@ -213,7 +212,7 @@ bool lineY (MapExtras::MapCache & MCache,
 
 int32_t parse_priority(color_ostream &out, vector<string> &parameters)
 {
-    int32_t default_priority = ui_sidebar_menus->designation.priority;
+    int32_t default_priority = game->main_interface.designation.priority;
 
     for (auto it = parameters.begin(); it != parameters.end(); ++it)
     {

@@ -3,7 +3,7 @@ changeitem
 
 .. dfhack-tool::
     :summary: Change item material or base quality.
-    :tags: adventure fort armok items
+    :tags: untested adventure fort armok items
 
 By default, a change is only allowed if the existing and desired item materials
 are of the same subtype (for example wood -> wood, stone -> stone, etc). But

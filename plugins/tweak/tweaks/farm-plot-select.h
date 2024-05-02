@@ -4,7 +4,7 @@
 
 using namespace df::enums;
 
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_building_item_cursor;
 using df::global::world;
 
@@ -13,7 +13,7 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
 
     df::building_farmplotst* getFarmPlot()
     {
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding)
+        if (plotinfo->main.mode != ui_sidebar_mode::QueryBuilding)
             return NULL;
         VIRTUAL_CAST_VAR(farm_plot, df::building_farmplotst, world->selected_building);
         return farm_plot;
@@ -44,12 +44,12 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
         return false;
     }
 
-    inline int32_t getSelectedCropId() { return ui->selected_farm_crops[*ui_building_item_cursor]; }
+    inline int32_t getSelectedCropId() { return plotinfo->selected_farm_crops[*ui_building_item_cursor]; }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         df::building_farmplotst* farm_plot = getFarmPlot();
-        if (farm_plot && ui->selected_farm_crops.size() > 0)
+        if (farm_plot && plotinfo->selected_farm_crops.size() > 0)
         {
             if (input->count(interface_key::SELECT_ALL))
             {
@@ -77,7 +77,7 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     {
         INTERPOSE_NEXT(render)();
         auto farm_plot = getFarmPlot();
-        if (!farm_plot || !ui->selected_farm_crops.size())
+        if (!farm_plot || !plotinfo->selected_farm_crops.size())
             return;
         if (farm_plot->getBuildStage() != farm_plot->getMaxBuildStage())
             return;

@@ -47,7 +47,7 @@
 #include "df/tiletype_material.h"
 #include "df/tiletype_shape.h"
 #include "df/tiletype_shape_basic.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/world.h"

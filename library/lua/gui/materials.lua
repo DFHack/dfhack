@@ -255,8 +255,8 @@ function MaterialDialog:onSubmitItem(idx, item)
 end
 
 function MaterialDialog:onInput(keys)
-    if keys.LEAVESCREEN or keys.LEAVESCREEN_ALL then
-        if self.subviews.back.visible and not keys.LEAVESCREEN_ALL then
+    if keys.LEAVESCREEN then
+        if self.subviews.back.visible then
             self:onGoBack()
         else
             self:dismiss()
@@ -264,9 +264,9 @@ function MaterialDialog:onInput(keys)
                 self.on_cancel()
             end
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showMaterialPrompt(title, prompt, on_select, on_cancel, mat_filter)

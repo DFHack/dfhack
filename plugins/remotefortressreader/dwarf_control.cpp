@@ -1,3 +1,4 @@
+
 #include "dwarf_control.h"
 #include "DataDefs.h"
 #include "df_version_int.h"
@@ -10,11 +11,9 @@
 #include "df/building_def_workshopst.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
-#include "df/interface_button_construction_building_selectorst.h"
-#include "df/interface_button_construction_category_selectorst.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
+#include "df/gamest.h"
 #include "df/viewscreen.h"
 #include "df/world.h"
 
@@ -233,7 +232,8 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
 
 void CopyBuildMenu(DwarfControl::SidebarState * out)
 {
-    auto menus = df::global::ui_sidebar_menus;
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
+    auto menus = df::global::game;
     auto build_selector = df::global::ui_build_selector;
     if (build_selector->building_type == -1)
         for (size_t i = 0; i < menus->building.choices_visible.size(); i++)
@@ -299,13 +299,15 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
                 send_selector->add_tiles(build_selector->tiles[x][y]);
             }
     }
+    */
 }
 
 command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
 {
-    auto ui = df::global::ui;
-    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)ui->main.mode);
-    auto mode = ui->main.mode;
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
+    auto plotinfo = df::global::plotinfo;
+    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)plotinfo->main.mode);
+    auto mode = plotinfo->main.mode;
     switch (mode)
     {
     case ui_sidebar_mode::Default:
@@ -422,30 +424,32 @@ command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMe
     default:
         break;
     }
+    */
     return CR_OK;
 }
 
 command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarCommand *in)
 {
-    auto ui = df::global::ui;
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
+    auto plotinfo = df::global::plotinfo;
     if (in->has_mode())
     {
         ui_sidebar_mode::ui_sidebar_mode set_mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
-        if (ui->main.mode != set_mode)
+        if (plotinfo->main.mode != set_mode)
         {
-            ui->main.mode = ui_sidebar_mode::Default;
+            plotinfo->main.mode = ui_sidebar_mode::Default;
             switch (set_mode)
             {
             case ui_sidebar_mode::Build:
                 keyQueue.push(interface_key::D_BUILDING);
                 break;
             default:
-                ui->main.mode = set_mode;
+                plotinfo->main.mode = set_mode;
                 break;
             }
         }
     }
-    switch (ui->main.mode)
+    switch (plotinfo->main.mode)
     {
     case ui_sidebar_mode::Build:
         if (in->has_action())
@@ -454,7 +458,7 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
             if (in->has_menu_index())
                 index = in->menu_index();
             if(ui_build_selector->building_type == -1)
-                df::global::ui_sidebar_menus->building.cursor = index;
+                df::global::game->building.cursor = index;
             if (ui_build_selector->stage == 2)
             {
                 ui_build_selector->sel_index = index;
@@ -489,5 +493,6 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
             break;
         }
     }
+    */
     return CR_OK;
 }

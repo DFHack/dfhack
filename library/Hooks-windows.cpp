@@ -664,6 +664,13 @@ DFhackCExport void SDL_DestroySemaphore(void *sem)
     _SDL_DestroySemaphore(sem);
 }
 
+static vPtr (*_SDL_ListModes)(vPtr format, uint32_t flags) = 0;
+DFhackCExport vPtr SDL_ListModes(vPtr format, uint32_t flags)
+{
+    InitSDLPointers();
+    return _SDL_ListModes(format, flags);
+}
+
 static uint8_t (*_SDL_GetAppState)(void) = 0;
 DFhackCExport uint8_t SDL_GetAppState(void)
 {
@@ -816,6 +823,9 @@ void FirstCall()
     // new in DF 0.43.05
     _SDL_getenv = (char* (*)(const char*))GetProcAddress(realSDLlib,"SDL_getenv");
     _SDL_strlcat = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcat");
+
+    // new in DF v50.01
+    _SDL_ListModes = (void *(*)(void*, uint32_t))GetProcAddress(realSDLlib,"SDL_ListModes");
 
     _SDL_EnableUNICODE(1);
 

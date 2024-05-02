@@ -3,7 +3,7 @@ workflow
 
 .. dfhack-tool::
     :summary: Manage automated item production rules.
-    :tags: fort auto jobs
+    :tags: untested fort auto jobs
 
 Manage repeat jobs according to stock levels. `gui/workflow` provides a simple
 front-end integrated in the game UI.

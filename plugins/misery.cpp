@@ -1,86 +1,206 @@
 #include <algorithm>
-#include <map>
 #include <string>
 #include <vector>
 
-#include "DataDefs.h"
-#include "Export.h"
-#include "PluginManager.h"
-
-#include "modules/Units.h"
-
 #include "df/emotion_type.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_personality.h"
 #include "df/unit_soul.h"
 #include "df/unit_thought_type.h"
 #include "df/world.h"
 
-using namespace std;
+#include "modules/Persistence.h"
+#include "modules/Units.h"
+#include "modules/World.h"
+
+#include "Core.h"
+#include "Debug.h"
+#include "LuaTools.h"
+#include "PluginManager.h"
+
+using std::string;
+using std::vector;
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("misery");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(cur_year);
 REQUIRE_GLOBAL(cur_year_tick);
+REQUIRE_GLOBAL(world);
 
-typedef df::unit_personality::T_emotions Emotion;
+namespace DFHack {
+    DBG_DECLARE(misery, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(misery, config, DebugCategory::LINFO);
+}
 
-static int factor = 1;
-static int tick = 0;
-const int INTERVAL = 1000;
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
 
-command_result misery(color_ostream& out, vector<string>& parameters);
-void add_misery(df::unit *unit);
-void clear_misery(df::unit *unit);
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+    CONFIG_FACTOR = 1,
+};
+
+static int get_config_val(PersistentDataItem &c, int index) {
+    if (!c.isValid())
+        return -1;
+    return c.ival(index);
+}
+static bool get_config_bool(PersistentDataItem &c, int index) {
+    return get_config_val(c, index) == 1;
+}
+static void set_config_val(PersistentDataItem &c, int index, int value) {
+    if (c.isValid())
+        c.ival(index) = value;
+}
+static void set_config_bool(PersistentDataItem &c, int index, bool value) {
+    set_config_val(c, index, value ? 1 : 0);
+}
+
+static const int32_t CYCLE_TICKS = 1200; // one day
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static void do_cycle(color_ostream &out);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(config,out).print("initializing %s\n", plugin_name);
+
+    // provide a configuration interface for the plugin
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Increase the intensity of negative dwarven thoughts.",
+        do_command));
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(config,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out);
+    } else {
+        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(config,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        set_config_val(config, CONFIG_FACTOR, 2);
+    }
+
+    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
+    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(config,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
+    return CR_OK;
+}
+
+static bool call_misery_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(config).print("calling misery lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return Lua::CallLuaModuleFunction(*out, L, "plugins.misery", fn_name,
+            nargs, nres,
+            std::forward<Lua::LuaLambda&&>(args_lambda),
+            std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
+
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    bool show_help = false;
+    if (!call_misery_lua(&out, "parse_commandline", parameters.size(), 1,
+            [&](lua_State *L) {
+                for (const string &param : parameters)
+                    Lua::Push(L, param);
+            },
+            [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
+        return CR_FAILURE;
+    }
+
+    return show_help ? CR_WRONG_USAGE : CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
 
 const int FAKE_EMOTION_FLAG = (1 << 30);
 const int STRENGTH_MULTIPLIER = 100;
 
-bool is_valid_unit (df::unit *unit) {
-    if (!Units::isOwnRace(unit) || !Units::isOwnCiv(unit))
-        return false;
-    if (!Units::isActive(unit))
-        return false;
-    return true;
-}
+typedef df::unit_personality::T_emotions Emotion;
 
-inline bool is_fake_emotion (Emotion *e) {
+static bool is_fake_emotion(Emotion *e) {
     return e->flags.whole & FAKE_EMOTION_FLAG;
 }
 
-void add_misery (df::unit *unit) {
-    // Add a fake miserable thought
-    // Remove any fake ones that already exist
-    if (!unit || !unit->status.current_soul)
-        return;
-    clear_misery(unit);
-    auto &emotions = unit->status.current_soul->personality.emotions;
-    Emotion *e = new Emotion;
-    e->type = df::emotion_type::MISERY;
-    e->thought = df::unit_thought_type::SoapyBath;
-    e->flags.whole |= FAKE_EMOTION_FLAG;
-    emotions.push_back(e);
-
-    for (Emotion *e : emotions) {
-        if (is_fake_emotion(e)) {
-            e->year = *cur_year;
-            e->year_tick = *cur_year_tick;
-            e->strength = STRENGTH_MULTIPLIER * factor;
-            e->severity = STRENGTH_MULTIPLIER * factor;
-        }
-    }
-}
-
-void clear_misery (df::unit *unit) {
+static void clear_misery(df::unit *unit) {
     if (!unit || !unit->status.current_soul)
         return;
     auto &emotions = unit->status.current_soul->personality.emotions;
-    auto it = remove_if(emotions.begin(), emotions.end(), [](Emotion *e) {
+    auto it = std::remove_if(emotions.begin(), emotions.end(), [](Emotion *e) {
         if (is_fake_emotion(e)) {
             delete e;
             return true;
@@ -89,107 +209,67 @@ void clear_misery (df::unit *unit) {
     });
     emotions.erase(it, emotions.end());
 }
+// clears fake negative thoughts then runs the given lambda
+static void affect_units(
+        std::function<void(df::unit *)> &&process_unit = [](df::unit *){}) {
+    for (auto unit : world->units.active) {
+        if (!Units::isCitizen(unit) || !unit->status.current_soul)
+            continue;
 
-DFhackCExport command_result plugin_shutdown(color_ostream& out) {
-    factor = 0;
-    return CR_OK;
+        clear_misery(unit);
+        std::forward<std::function<void(df::unit *)> &&>(process_unit)(unit);
+    }
 }
 
-DFhackCExport command_result plugin_onupdate(color_ostream& out) {
-    static bool wasLoaded = false;
-    if ( factor == 0 || !world || !world->map.block_index ) {
-        if ( wasLoaded ) {
-            //we just unloaded the game: clear all data
-            factor = 0;
-            is_enabled = false;
-            wasLoaded = false;
-        }
-        return CR_OK;
-    }
+static void do_cycle(color_ostream &out) {
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
 
-    if ( !wasLoaded ) {
-        wasLoaded = true;
-    }
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
-    if ( tick < INTERVAL ) {
-        tick++;
-        return CR_OK;
-    }
-    tick = 0;
+    int strength = STRENGTH_MULTIPLIER * get_config_val(config, CONFIG_FACTOR);
 
-    //TODO: consider units.active
-    for (df::unit *unit : world->units.all) {
-        if (is_valid_unit(unit)) {
-            add_misery(unit);
-        }
-    }
-
-    return CR_OK;
+    affect_units([&](df::unit *unit) {
+        Emotion *e = new Emotion;
+        e->type = df::emotion_type::MISERY;
+        e->thought = df::unit_thought_type::SoapyBath;
+        e->flags.whole |= FAKE_EMOTION_FLAG;
+        e->year = *cur_year;
+        e->year_tick = *cur_year_tick;
+        e->strength = strength;
+        e->severity = strength;
+        unit->status.current_soul->personality.emotions.push_back(e);
+    });
 }
 
-DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "misery",
-        "Increase the intensity of negative dwarven thoughts.",
-        misery));
-    return CR_OK;
+/////////////////////////////////////////////////////
+// Lua API
+//
+
+static void misery_clear(color_ostream &out) {
+    DEBUG(config,out).print("entering misery_clear\n");
+    affect_units();
 }
 
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    if (enable != is_enabled)
-    {
-        is_enabled = enable;
-        factor = enable ? 1 : 0;
-        tick = INTERVAL;
+static void misery_setFactor(color_ostream &out, int32_t factor) {
+    DEBUG(config,out).print("entering misery_setFactor\n");
+    if (1 >= factor) {
+        out.printerr("factor must be at least 2\n");
+        return;
     }
-
-    return CR_OK;
+    set_config_val(config, CONFIG_FACTOR, factor);
+    if (is_enabled)
+        do_cycle(out);
 }
 
-command_result misery(color_ostream &out, vector<string>& parameters) {
-    if ( !world || !world->map.block_index ) {
-        out.printerr("misery can only be enabled in fortress mode with a fully-loaded game.\n");
-        return CR_FAILURE;
-    }
-
-    if ( parameters.size() < 1 || parameters.size() > 2 ) {
-        return CR_WRONG_USAGE;
-    }
-
-    if ( parameters[0] == "disable" ) {
-        if ( parameters.size() > 1 ) {
-            return CR_WRONG_USAGE;
-        }
-        factor = 0;
-        is_enabled = false;
-        return CR_OK;
-    } else if ( parameters[0] == "enable" ) {
-        is_enabled = true;
-        factor = 1;
-        if ( parameters.size() == 2 ) {
-            int a = atoi(parameters[1].c_str());
-            if ( a < 1 ) {
-                out.printerr("Second argument must be a positive integer.\n");
-                return CR_WRONG_USAGE;
-            }
-            factor = a;
-        }
-        tick = INTERVAL;
-    } else if ( parameters[0] == "clear" ) {
-        for (df::unit *unit : world->units.all) {
-            if (is_valid_unit(unit)) {
-                clear_misery(unit);
-            }
-        }
-    } else {
-        int a = atoi(parameters[0].c_str());
-        if ( a < 0 ) {
-            return CR_WRONG_USAGE;
-        }
-        factor = a;
-        is_enabled = factor > 0;
-    }
-
-    return CR_OK;
+static int misery_getFactor(color_ostream &out) {
+    DEBUG(config,out).print("entering tailor_getFactor\n");
+    return get_config_val(config, CONFIG_FACTOR);
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(misery_clear),
+    DFHACK_LUA_FUNCTION(misery_setFactor),
+    DFHACK_LUA_FUNCTION(misery_getFactor),
+    DFHACK_LUA_END
+};

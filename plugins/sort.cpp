@@ -11,7 +11,7 @@
 #include "LuaTools.h"
 
 #include "DataDefs.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
@@ -38,7 +38,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("sort");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_item_cursor);
@@ -379,11 +379,11 @@ DEFINE_SORT_HANDLER(unit_sorters, dwarfmode, "/Burrows/AddUnits", screen)
 {
     PARSE_SPEC("units", parameters);
 
-    if (compute_order(*pout, L, top, &order, ui->burrows.list_units))
+    if (compute_order(*pout, L, top, &order, plotinfo->burrows.list_units))
     {
-        reorder_cursor(&ui->burrows.unit_cursor_pos, order);
-        reorder_vector(&ui->burrows.list_units, order);
-        reorder_vector(&ui->burrows.sel_units, order);
+        reorder_cursor(&plotinfo->burrows.unit_cursor_pos, order);
+        reorder_vector(&plotinfo->burrows.list_units, order);
+        reorder_vector(&plotinfo->burrows.sel_units, order);
     }
 }
 

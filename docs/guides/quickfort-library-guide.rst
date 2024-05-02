@@ -33,8 +33,8 @@ and bedrooms for hundreds of dwarves. It also comes with manager work orders to
 automate basic fort needs, such as food, booze, and item production. It can
 function by itself or as the core of a larger, more ambitious fortress. Read the
 high-level walkthrough by running ``quickfort run library/dreamfort.csv`` and
-list the walkthroughs for the individual levels by running ``quickfort list -l
-dreamfort -m notes`` or ``gui/quickfort dreamfort notes``.
+list the walkthroughs for the individual levels by running ``quickfort list
+dreamfort notes`` or ``gui/quickfort dreamfort notes``.
 
 Dreamfort blueprints are available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.

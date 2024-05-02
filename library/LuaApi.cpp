@@ -115,6 +115,7 @@ distribution.
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
+using std::string;
 
 using Screen::Pen;
 using Random::MersenneRNG;
@@ -122,7 +123,7 @@ using Random::PerlinNoise1D;
 using Random::PerlinNoise2D;
 using Random::PerlinNoise3D;
 
-void dfhack_printerr(lua_State *S, const std::string &str);
+void dfhack_printerr(lua_State *S, const string &str);
 
 static df::coord2d CheckCoordXY(lua_State *state, int base, bool vararg = false)
 {
@@ -288,7 +289,7 @@ static int dfhack_persistent_get_data_string(lua_State *L, get_data_fn get_data)
     return 1;
 }
 
-typedef PersistentDataItem (*raw_get_data_fn)(const std::string &, bool);
+typedef PersistentDataItem (*raw_get_data_fn)(const string &, bool);
 
 static int dfhack_persistent_save_data_string(lua_State *L, raw_get_data_fn get_data) {
     CoreSuspender suspend;
@@ -429,7 +430,7 @@ static int dfhack_matinfo_find(lua_State *state)
         info.find(luaL_checkstring(state, 1));
     else
     {
-        std::vector<std::string> tokens;
+        std::vector<string> tokens;
 
         for (int i = 1; i <= argc; i++)
             tokens.push_back(luaL_checkstring(state, i));
@@ -1249,10 +1250,10 @@ static void OpenRandom(lua_State *state)
 * Commandline history repository *
 **********************************/
 
-static std::map<std::string, CommandHistory> commandHistories;
+static std::map<string, CommandHistory> commandHistories;
 
-static CommandHistory * ensureCommandHistory(std::string id,
-                                             std::string src_file) {
+static CommandHistory * ensureCommandHistory(string id,
+                                             string src_file) {
     if (!commandHistories.count(id)) {
         commandHistories[id].load(src_file.c_str());
     }
@@ -1261,16 +1262,16 @@ static CommandHistory * ensureCommandHistory(std::string id,
 
 static int getCommandHistory(lua_State *state)
 {
-    std::string id = luaL_checkstring(state, 1);
-    std::string src_file = luaL_checkstring(state, 2);
-    std::vector<std::string> entries;
+    string id = luaL_checkstring(state, 1);
+    string src_file = luaL_checkstring(state, 2);
+    std::vector<string> entries;
     ensureCommandHistory(id, src_file)->getEntries(entries);
     Lua::PushVector(state, entries);
     return 1;
 }
 
-static void addCommandToHistory(std::string id, std::string src_file,
-                                std::string command) {
+static void addCommandToHistory(string id, string src_file,
+                                string command) {
     CommandHistory *history = ensureCommandHistory(id, src_file);
     history->add(command);
     history->save(src_file.c_str());
@@ -1304,7 +1305,7 @@ static void OpenModule(lua_State *state, const char *mname, const luaL_Reg *reg2
 
 /***** DFHack module *****/
 
-static std::string getOSType()
+static string getOSType()
 {
     switch (Core::getInstance().vinfo->getOS())
     {
@@ -1327,28 +1328,28 @@ static int getArchitecture()
     return sizeof(void*) * 8;
 }
 
-static std::string getArchitectureName()
+static string getArchitectureName()
 {
     return getArchitecture() == 64 ? "x86_64" : "x86";
 }
 
-static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
+static string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
-static std::string getDFPath() { return Core::getInstance().p->getPath(); }
-static std::string getHackPath() { return Core::getInstance().getHackPath(); }
+static string getDFPath() { return Core::getInstance().p->getPath(); }
+static string getHackPath() { return Core::getInstance().getHackPath(); }
 
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 static bool isSiteLoaded() { return World::IsSiteLoaded(); }
 
-static std::string df2utf(std::string s) { return DF2UTF(s); }
-static std::string utf2df(std::string s) { return UTF2DF(s); }
-static std::string df2console(color_ostream &out, std::string s) { return DF2CONSOLE(out, s); }
-static std::string upperCp437(std::string s) { return toUpper_cp437(s); }
-static std::string lowerCp437(std::string s) { return toLower_cp437(s); }
-static std::string toSearchNormalized(std::string s) { return to_search_normalized(s); }
-static std::string capitalizeStringWords(std::string s) { return capitalize_string_words(s); }
+static string df2utf(string s) { return DF2UTF(s); }
+static string utf2df(string s) { return UTF2DF(s); }
+static string df2console(color_ostream &out, string s) { return DF2CONSOLE(out, s); }
+static string upperCp437(string s) { return toUpper_cp437(s); }
+static string lowerCp437(string s) { return toLower_cp437(s); }
+static string toSearchNormalized(string s) { return to_search_normalized(s); }
+static string capitalizeStringWords(string s) { return capitalize_string_words(s); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1447,14 +1448,14 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
 
 static int gui_getFocusStrings(lua_State *state) {
     df::viewscreen *r = Lua::GetDFObject<df::viewscreen>(state, 1);
-    std::vector<std::string> focusStrings = Gui::getFocusStrings(r);
+    std::vector<string> focusStrings = Gui::getFocusStrings(r);
     Lua::PushVector(state, focusStrings);
     return 1;
 }
 
 static int gui_getCurFocus(lua_State *state) {
     bool skip_dismissed = lua_toboolean(state, 1);
-    std::vector<std::string> cur_focus = Gui::getCurFocus(skip_dismissed);
+    std::vector<string> cur_focus = Gui::getCurFocus(skip_dismissed);
     Lua::PushVector(state, cur_focus);
     return 1;
 }
@@ -1469,7 +1470,7 @@ static int gui_makeAnnouncement(lua_State *state)
     auto type = (df::announcement_type)lua_tointeger(state, 1);
     df::announcement_flags *mode = Lua::CheckDFObject<df::announcement_flags>(state, 2);
     Lua::CheckDFAssign(state, &pos, 3);
-    std::string message = luaL_checkstring(state, 4);
+    string message = luaL_checkstring(state, 4);
 
     switch (lua_gettop(state))
     {
@@ -1504,7 +1505,7 @@ static int gui_showAnnouncement(lua_State *state)
     int color = 0;
     bool bright = false;
 
-    std::string message = luaL_checkstring(state, 1);
+    string message = luaL_checkstring(state, 1);
 
     switch (lua_gettop(state))
     {
@@ -1541,7 +1542,7 @@ static int gui_showZoomAnnouncement(lua_State *state)
 
     auto type = (df::announcement_type)lua_tointeger(state, 1);
     Lua::CheckDFAssign(state, &pos, 2);
-    std::string message = luaL_checkstring(state, 3);
+    string message = luaL_checkstring(state, 3);
 
     switch (lua_gettop(state))
     {
@@ -1575,7 +1576,7 @@ static int gui_showPopupAnnouncement(lua_State *state)
     int color = 0;
     bool bright = false;
 
-    std::string message = luaL_checkstring(state, 1);
+    string message = luaL_checkstring(state, 1);
 
     switch (lua_gettop(state))
     {
@@ -1613,7 +1614,7 @@ static int gui_showAutoAnnouncement(lua_State *state)
 
     auto type = (df::announcement_type)lua_tointeger(state, 1);
     Lua::CheckDFAssign(state, &pos, 2);
-    std::string message = luaL_checkstring(state, 3);
+    string message = luaL_checkstring(state, 3);
 
     switch (lua_gettop(state))
     {
@@ -1659,7 +1660,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
 
     if (r)
     {
-        std::string message = luaL_checkstring(state, 2);
+        string message = luaL_checkstring(state, 2);
         rv = Gui::autoDFAnnouncement(*r, message);
     }
     else
@@ -1671,7 +1672,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
 
         auto type = (df::announcement_type)lua_tointeger(state, 1);
         Lua::CheckDFAssign(state, &pos, 2);
-        std::string message = luaL_checkstring(state, 3);
+        string message = luaL_checkstring(state, 3);
 
         switch (lua_gettop(state))
         {
@@ -1902,7 +1903,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 static int textures_loadTileset(lua_State *state)
 {
-    std::string file = luaL_checkstring(state, 1);
+    string file = luaL_checkstring(state, 1);
     auto tile_w = luaL_checkint(state, 2);
     auto tile_h = luaL_checkint(state, 3);
     bool reserved = lua_isboolean(state, 4) ? lua_toboolean(state, 4) : false;
@@ -2180,7 +2181,7 @@ static int units_getCitizens(lua_State *L) {
 }
 
 static int units_getUnitsByNobleRole(lua_State *L) {
-    std::string role_name = luaL_checkstring(L, -1);
+    string role_name = luaL_checkstring(L, -1);
     std::vector<df::unit *> units;
     Units::getUnitsByNobleRole(units, role_name);
     Lua::PushVector(L, units);
@@ -2259,14 +2260,14 @@ static df::proj_itemst *items_makeProjectile(df::item *item)
     return Items::makeProjectile(mc, item);
 }
 
-static int16_t items_findType(std::string token)
+static int16_t items_findType(string token)
 {
     DFHack::ItemTypeInfo result;
     result.find(token);
     return result.type;
 }
 
-static int32_t items_findSubtype(std::string token)
+static int32_t items_findSubtype(string token)
 {
     DFHack::ItemTypeInfo result;
     result.find(token);
@@ -2918,7 +2919,7 @@ static int screen_doSimulateInput(lua_State *L)
     }
 
     // if we're injecting a text keybinding, ensure it is reflected in the enabler text buffer
-    std::string prev_input;
+    string prev_input;
     if (str) {
         prev_input = (const char *)&df::global::enabler->last_text_input[0];
         df::global::enabler->last_text_input[0] = str;
@@ -3018,8 +3019,8 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
 static int filesystem_listdir(lua_State *L)
 {
     luaL_checktype(L,1,LUA_TSTRING);
-    std::string dir=lua_tostring(L,1);
-    std::vector<std::string> files;
+    string dir=lua_tostring(L,1);
+    std::vector<string> files;
     int err = DFHack::Filesystem::listdir(dir, files);
     if (err)
     {
@@ -3041,14 +3042,14 @@ static int filesystem_listdir(lua_State *L)
 static int filesystem_listdir_recursive(lua_State *L)
 {
     luaL_checktype(L,1,LUA_TSTRING);
-    std::string dir=lua_tostring(L,1);
+    string dir=lua_tostring(L,1);
     int depth = 10;
     if (lua_gettop(L) >= 2 && !lua_isnil(L, 2))
         depth = luaL_checkint(L, 2);
     bool include_prefix = true;
     if (lua_gettop(L) >= 3 && !lua_isnil(L, 3))
         include_prefix = lua_toboolean(L, 3);
-    std::map<std::string, bool> files;
+    std::map<string, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
     if (err != 0 && err != -1) {
         lua_pushnil(L);
@@ -3148,8 +3149,8 @@ static md5wrapper md5_wrap;
 static uintptr_t getImageBase() { return Core::getInstance().p->getBase(); }
 static intptr_t getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 static int8_t getModstate() { return Core::getInstance().getModstate(); }
-static std::string internal_strerror(int n) { return strerror(n); }
-static std::string internal_md5(std::string s) { return md5_wrap.getHashFromString(s); }
+static string internal_strerror(int n) { return strerror(n); }
+static string internal_md5(string s) { return md5_wrap.getHashFromString(s); }
 
 struct heap_pointer_info
 {
@@ -3322,6 +3323,11 @@ static void resetPerfCounters(bool ignorePauseState) {
     counters.reset(ignorePauseState);
 }
 
+static void recordRepeatRuntime(string name, uint32_t start_ms) {
+    auto & counters = Core::getInstance().perf_counters;
+    counters.incCounter(counters.update_lua_per_repeat[name.c_str()], start_ms);
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3340,6 +3346,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(setClipboardTextCp437),
     WRAP(setClipboardTextCp437Multiline),
     WRAP(resetPerfCounters),
+    WRAP(recordRepeatRuntime),
     { NULL, NULL }
 };
 
@@ -3374,7 +3381,7 @@ static int internal_getAddress(lua_State *L)
 
 static int internal_setAddress(lua_State *L)
 {
-    std::string name = luaL_checkstring(L, 1);
+    string name = luaL_checkstring(L, 1);
     uintptr_t addr = (uintptr_t)checkaddr(L, 2, true);
     internal_getAddress(L);
 
@@ -3634,9 +3641,9 @@ static int internal_diffscan(lua_State *L)
 
 static int internal_cxxDemangle(lua_State *L)
 {
-    std::string mangled = luaL_checkstring(L, 1);
-    std::string status;
-    std::string demangled = cxx_demangle(mangled, &status);
+    string mangled = luaL_checkstring(L, 1);
+    string status;
+    string demangled = cxx_demangle(mangled, &status);
     if (demangled.length())
     {
         lua_pushstring(L, demangled.c_str());
@@ -3677,8 +3684,8 @@ static int internal_runCommand(lua_State *L)
 
     if (type_1 == LUA_TTABLE)
     {
-        std::string command = "";
-        std::vector<std::string> args;
+        string command = "";
+        std::vector<string> args;
         lua_pushnil(L);   // first key
         while (lua_next(L, 1) != 0)
         {
@@ -3693,7 +3700,7 @@ static int internal_runCommand(lua_State *L)
     }
     else if (type_1 == LUA_TSTRING)
     {
-        std::string command = lua_tostring(L, 1);
+        string command = lua_tostring(L, 1);
         CoreSuspender suspend;
         res = Core::getInstance().runCommand(*out, command);
     }
@@ -3715,7 +3722,7 @@ static int internal_runCommand(lua_State *L)
         for (auto iter = fragments.begin(); iter != fragments.end(); iter++, i++)
         {
             int color = iter->first;
-            std::string output = iter->second;
+            string output = iter->second;
             lua_createtable(L, 2, 0);
             lua_pushinteger(L, color);
             lua_rawseti(L, -2, 1);
@@ -3764,7 +3771,7 @@ static int internal_getScriptPaths(lua_State *L)
 {
     int i = 1;
     lua_newtable(L);
-    std::vector<std::string> paths;
+    std::vector<string> paths;
     Core::getInstance().getScriptPaths(&paths);
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
@@ -3778,7 +3785,7 @@ static int internal_getScriptPaths(lua_State *L)
 static int internal_findScript(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    std::string path = Core::getInstance().findScript(name);
+    string path = Core::getInstance().findScript(name);
     if (path.size())
         lua_pushstring(L, path.c_str());
     else
@@ -3854,7 +3861,7 @@ static int internal_getCommandHelp(lua_State *L)
         return 1;
     }
 
-    std::string help = pc->description;
+    string help = pc->description;
     if (help.size() && help[help.size()-1] != '.')
         help += ".";
     if (pc->usage.size())
@@ -3872,7 +3879,7 @@ static int internal_getCommandDescription(lua_State *L)
         return 1;
     }
 
-    std::string help = pc->description;
+    string help = pc->description;
     if (help.size() && help[help.size()-1] != '.')
         help += ".";
     lua_pushstring(L, help.c_str());
@@ -3898,8 +3905,8 @@ static int internal_md5file(lua_State *L)
     if (lua_toboolean(L, 2))
         first_kb_raw = new char[1024];
 
-    std::string hash = md5_wrap.getHashFromFile(s, len, first_kb_raw);
-    bool err = (hash.find("file") != std::string::npos);
+    string hash = md5_wrap.getHashFromFile(s, len, first_kb_raw);
+    bool err = (hash.find("file") != string::npos);
 
     if (first_kb_raw)
     {
@@ -3970,8 +3977,8 @@ static std::map<const char *, T> translate_event_types(const std::unordered_map<
     return out_map;
 }
 
-static std::map<const char *, std::map<std::string, uint32_t>> mapify(std::map<const char *, std::unordered_map<std::string, uint32_t>> in_map) {
-    std::map<const char *, std::map<std::string, uint32_t>> out_map;
+static std::map<const char *, std::map<string, uint32_t>> mapify(std::map<const char *, std::unordered_map<string, uint32_t>> in_map) {
+    std::map<const char *, std::map<string, uint32_t>> out_map;
     for (auto [k, v] : in_map)
         out_map[k].insert(v.begin(), v.end());
     return out_map;
@@ -3999,8 +4006,9 @@ static int internal_getPerfCounters(lua_State *L) {
     Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
     Lua::Push(L, counters.update_per_plugin);
     Lua::Push(L, counters.state_change_per_plugin);
+    Lua::Push(L, counters.update_lua_per_repeat);
     Lua::Push(L, counters.overlay_per_widget);
-    return 6;
+    return 7;
 }
 
 static const luaL_Reg dfhack_internal_funcs[] = {

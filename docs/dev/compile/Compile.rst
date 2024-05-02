@@ -102,10 +102,7 @@ be sure you've read the section about getting the code.
 
 Linux
 =====
-On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
 
-Build
------
 Building is fairly straightforward. Enter the ``build`` folder (or create an
 empty folder in the DFHack directory to use instead) and start the build like this::
 
@@ -191,6 +188,10 @@ experience by providing more scrollback and larger window sizes.
 
 macOS
 =====
+
+NOTE: this section is currently outdated. Once DF itself can build on macOS
+again, we will match DF's build environment and update the instructions here.
+
 DFHack functions similarly on macOS and Linux, and the majority of the
 information above regarding the build process (CMake and Ninja) applies here
 as well.

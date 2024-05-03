@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- DFHack and the Dwarf Fortress translation project can now both be run at the same time
 
 ## Fixes
 - `zone`: fix display of distance from cage for small pets in assignment dialog
@@ -71,6 +72,7 @@ Template for new versions:
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
 - `stockpiles`: import and export "desired items" configuration for route stops
+- New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
 
 ## Documentation
 - Quickfort Blueprint Library: embed demo video for pump stack blueprint

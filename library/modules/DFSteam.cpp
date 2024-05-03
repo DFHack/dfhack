@@ -5,6 +5,8 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "df/gamest.h"
+
 namespace DFHack
 {
     DBG_DECLARE(core, dfsteam, DebugCategory::LINFO);
@@ -220,6 +222,12 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
             !g_SteamInternal_FindOrCreateUserInterface ||
             !g_SteamAPI_ISteamApps_BIsAppInstalled) {
         DEBUG(dfsteam, out).print("required Steam API calls are unavailable\n");
+        return;
+    }
+
+    const std::string & cmdline = df::global::game->command_line.original;
+    if (cmdline.find("--nosteam-dfhack") != std::string::npos) {
+        WARN(dfsteam, out).print("--nosteam-dfhack specified on commandline; not launching DFHack coprocess\n");
         return;
     }
 

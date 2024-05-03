@@ -65,28 +65,28 @@ Template for new versions:
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
-- `regrass`: Can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
-- `regrass`: Can now restrict regrass effect to specified tile, block, cuboid, or z-levels
-- `regrass`: Can now add grass in map blocks where there hasn't been any, force specific grass type
-- `createitem`: refactored to use ``Items::createItem()`` API function
+- `regrass`: can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
+- `regrass`: can now restrict regrass effect to specified tile, block, cuboid, or z-levels
+- `regrass`: can now add grass in map blocks where there hasn't been any, force specific grass type
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
-- `stockpiles`: import and export "desired items" configuration for route stops
+- `stockpiles`: support import and export "desired items" configuration for route stops
 - New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
 
 ## Documentation
-- Quickfort Blueprint Library: embed demo video for pump stack blueprint
-- Update compilation and dependency requirements and procedures
+- Quickfort Blueprint Library: add demo video for pump stack blueprint
+- Update docs for dependency requirements and compilation procedures
 
 ## API
 - ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
 - ``Items::createItem``: now returns a list of item pointers rather than a single ID, moved creator parameter to beginning, added growth_print and no_floor parameters at end
 - ``World::getAdventurer``: returns current adventurer unit
-- ``World::ReadPauseState``: now returns true when the game is effectively paused due to a large panel obscuring the map
+- ``World::ReadPauseState``: now returns true when the game is effectively paused due to a large panel obscuring the map. this aligns the return value with the visual state of the pause button when in fort mode.
 
 ## Lua
 - ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
 - ``dfhack.world.getAdventurer``: returns current adventurer unit
+- ``dfhack.items.createItem``: return value and parameters have changed as per C++ API
 
 ## Removed
 

@@ -64,8 +64,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         reset();
         if (enable) {
             init_diggers(out);
-            EventManager::registerListener(EventManager::EventType::JOB_STARTED, EventManager::EventHandler(jobStartedHandler, 0), plugin_self);
-            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, EventManager::EventHandler(jobCompletedHandler, 0), plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_STARTED, EventManager::EventHandler(plugin_self, jobStartedHandler, 0));
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, EventManager::EventHandler(plugin_self, jobCompletedHandler, 0));
         } else {
             EventManager::unregisterAll(plugin_self);
         }
@@ -88,26 +88,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-static bool call_burrow_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(status).print("calling %s lua function: '%s'\n", plugin_name, fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.burrow", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
@@ -117,12 +97,8 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 
     bool show_help = false;
-    if (!call_burrow_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.burrow", "parse_commandline", parameters,
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;

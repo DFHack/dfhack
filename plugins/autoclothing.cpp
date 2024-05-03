@@ -814,27 +814,27 @@ static void generate_control(color_ostream& out)
     {
         if (missingArmor.size())
         {
-            out << "Following units need new bodywear:" << endl;
+            out << "The following units need new bodywear:" << endl;
             list_unit_counts(out, missingArmor);
         }
         if (missingShoes.size())
         {
-            out << "Following units need new shoes:" << endl;
+            out << "The following units need new shoes:" << endl;
             list_unit_counts(out, missingShoes);
         }
         if (missingHelms.size())
         {
-            out << "Following units need new headwear:" << endl;
+            out << "The following units need new headwear:" << endl;
             list_unit_counts(out, missingHelms);
         }
         if (missingGloves.size())
         {
-            out << "Following units need new handwear:" << endl;
+            out << "The following units need new handwear:" << endl;
             list_unit_counts(out, missingGloves);
         }
         if (missingPants.size())
         {
-            out << "Following units need new legwear:" << endl;
+            out << "The following units need new legwear:" << endl;
             list_unit_counts(out, missingPants);
         }
     }

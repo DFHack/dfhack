@@ -378,6 +378,20 @@ private:
         return walkable(pos);
     }
 
+    // check if the tile is suitable to stand on and build, or is planned to become one
+    static bool isPotentialSuitableAccess (coord pos) {
+        if (isSuitableAccess(pos))
+            return true;
+
+        // if a wall is being constructed below, the tile will be suitable
+        auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
+        if (below && below->getType() == df::building_type::Construction &&
+            below->getSubtype() == construction_type::Wall)
+            return true;
+
+        return false;
+    }
+
     static bool tileHasSupportWall(coord pos) {
         auto tile_type = Maps::getTileType(pos);
         if (tile_type) {
@@ -452,8 +466,10 @@ private:
             return false; // not building a blocking construction, no risk
 
         coord pos(building->centerx,building->centery,building->z);
-        if (!isSuitableAccess(pos))
-            return false; // construction is on a non-walkable tile, can't block
+        if (!isPotentialSuitableAccess(pos))
+            // construction is on a tile that is not usable to build, and will not
+            // become one, can't block
+            return false;
 
         auto risk = riskOfStuckConstructionAt(pos);
         TRACE(cycle,out).print("  risk is %d\n", risk);
@@ -522,8 +538,9 @@ private:
 
             df::building* exit = nullptr;
             for (auto npos : neighbors | transform(around(pos))) {
-                if (!isSuitableAccess(npos))
-                    continue; // non walkable neighbour, not an exit
+                if (!isPotentialSuitableAccess(npos))
+                    // non walkable neighbour, nor planned to become one, not an exit
+                    continue;
 
                 auto impassiblePlan = plannedImpassibleAt(npos);
                 if (!impassiblePlan)
@@ -735,7 +752,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     suspendmanager_instance = std::make_unique<SuspendManager>();
-    eventhandler_instance = std::make_unique<EventManager::EventHandler>(jobCompletedHandler,1);
+    eventhandler_instance = std::make_unique<EventManager::EventHandler>(plugin_self,jobCompletedHandler,1);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -763,12 +780,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
-            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
             do_cycle(out);
         } else {
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
         }
 
     } else {
@@ -804,8 +821,8 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
                             suspendmanager_instance->prevent_blocking ? "true" : "false");
     if(is_enabled) {
         DEBUG(control,out).print("registering job event handlers\n");
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-        EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+        EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
         do_cycle(out);
     }
 

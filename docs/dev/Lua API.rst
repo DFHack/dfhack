@@ -284,6 +284,10 @@ Numerical indices correspond to the shift value,
 and if a subfield occupies multiple bits, the
 ``ipairs`` order would have a gap.
 
+Additionally, bitfields have a ``whole`` property,
+which returns the value of the bitfield as an
+integer.
+
 Since currently there is no API to allocate a bitfield
 object fully in GC-managed lua heap, consider using the
 lua table assignment feature outlined below in order to
@@ -1811,6 +1815,12 @@ Items module
   Returns the string description of the item, as produced by the ``getItemDescription``
   method. If decorate is true, also adds markings for quality and improvements.
 
+* ``dfhack.items.getReadableDescription(item)``
+
+  Returns a string generally fit to usefully describe the item to the player.
+  When the item description appears anywhere in a script output or in the UI,
+  this is usually the string you should use.
+
 * ``dfhack.items.getGeneralRef(item, type)``
 
   Searches for a general_ref with the given type.
@@ -1907,7 +1917,7 @@ Items module
   Returns whether a caravan will pay extra for the given item. If caravan_state
   is not given, checks all active caravans.
 
-* ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
+* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
 
   Creates an item, similar to the `createitem` plugin.
 
@@ -2015,6 +2025,10 @@ World module
 
   Returns the currently loaded ``df.world_site`` or ``nil`` if no site is
   loaded.
+
+* ``dfhack.world.getAdventurer()``
+
+  Returns the current adventurer unit (if in adventure mode).
 
 .. _lua-maps:
 
@@ -3138,6 +3152,11 @@ and are only documented here for completeness:
 * ``dfhack.internal.setClipboardTextCp437(text)``
 
   Sets the system clipboard text from a CP437 string.
+
+* ``dfhack.internal.setClipboardTextCp437Multiline(text)``
+
+  Sets the system clipboard text from a CP437 string. Character 0x10 is
+  interpreted as a newline instead of the usual CP437 glyph.
 
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
@@ -4719,9 +4738,9 @@ Here is an example skeleton for a ZScreen tool window::
     end
 
     -- implement if you need to handle custom input
-    function MyWindow:onInput(keys)
-        return MyWindow.super.onInput(self, keys)
-    end
+    --function MyWindow:onInput(keys)
+    --    return MyWindow.super.onInput(self, keys)
+    --end
 
     MyScreen = defclass(MyScreen, gui.ZScreen)
     MyScreen.ATTRS {

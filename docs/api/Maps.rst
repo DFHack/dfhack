@@ -7,7 +7,7 @@ Maps API
 DFHack offers several ways to access and manipulate map data.
 
 * C++: the ``Maps`` and ``MapCache`` modules
-* Lua: the `dfhack.maps module <lua-maps>`_
+* Lua: the `dfhack.maps module<lua-maps>`
 * All languages: the ``map`` field of the ``world`` global contains raw map data
   when the world is loaded.
 

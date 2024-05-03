@@ -83,6 +83,15 @@ To download a development build from GitHub:
 You can extract this package the same as if you are doing a manual install (see
 the next section).
 
+Older releases
+--------------
+
+If you are downloading DFHack for very old versions of DF, the binaries for
+0.40.15-r1 to 0.34.11-r4 are on DFFD_. Even older versions are available here_.
+
+.. _DFFD: https://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
+.. _here: https://dethware.org/dfhack/download
+
 Installing DFHack
 =================
 

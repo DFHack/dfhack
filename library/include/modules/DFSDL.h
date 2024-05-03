@@ -64,4 +64,7 @@ DFHACK_EXPORT int DFSDL_SetClipboardText(const char *text);
 DFHACK_EXPORT std::string getClipboardTextCp437();
 DFHACK_EXPORT bool setClipboardTextCp437(std::string text);
 
+// interprets 0xa as newline instead of usual CP437 char
+DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
+
 }

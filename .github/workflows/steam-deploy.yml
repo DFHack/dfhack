@@ -4,20 +4,14 @@ on:
   push:
     tags:
     - '*-r*'
-
   workflow_dispatch:
     inputs:
-      ref:
-        description: Branch or commit hash
-        type: string
-        required: true
-        default: develop
       version:
         description: Version or build description
         type: string
         required: true
-      release_channel:
-        description: Steam release channel
+      steam_branch:
+        description: Steam release branch
         type: string
         required: true
         default: staging
@@ -28,7 +22,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: common-depot
-      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.ref }}
       platform-files: false
       docs: true
       html: false
@@ -40,7 +34,7 @@ jobs:
     uses: ./.github/workflows/build-windows.yml
     with:
       artifact-name: win64-depot
-      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.ref }}
       cache-id: release
       cache-readonly: true
       common-files: false
@@ -53,7 +47,7 @@ jobs:
     uses: ./.github/workflows/build-linux.yml
     with:
       artifact-name: linux64-depot
-      dfhack_ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
+      dfhack_ref: ${{ github.ref }}
       cache-id: release
       cache-readonly: true
       common-files: false
@@ -91,4 +85,4 @@ jobs:
         depot1Path: common-depot
         depot2Path: win64-depot
         depot3Path: linux64-depot
-        releaseBranch: ${{ github.event.inputs && github.event.inputs.release_channel || 'staging' }}
+        releaseBranch: ${{ github.event.inputs && github.event.inputs.steam_branch || 'staging' }}

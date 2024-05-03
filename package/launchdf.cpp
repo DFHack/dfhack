@@ -247,7 +247,7 @@ int main(int argc, char* argv[]) {
     bool nowait = false;
 #ifdef WIN32
     std::wstring cmdline(lpCmdLine);
-    if (cmdline.find(L"--nowait") != cmdline::npos)
+    if (cmdline.find(L"--nowait") != std::wstring::npos)
         nowait = true;
 #else
     for (int idx = 0; idx < argc; ++idx) {

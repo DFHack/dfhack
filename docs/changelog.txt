@@ -58,7 +58,6 @@ Template for new versions:
 
 ## Fixes
 - `zone`: fix display of distance from cage for small pets in assignment dialog
-- `modtools/create-item`: now functions properly when the ``reaction-gloves`` tweak is active
 - `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
 - `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
 - `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
@@ -72,6 +71,7 @@ Template for new versions:
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
 - `stockpiles`: support import and export "desired items" configuration for route stops
 - New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
+- `markdown`: new keybinding for triggering text export: Ctrl-t
 
 ## Documentation
 - Quickfort Blueprint Library: add demo video for pump stack blueprint

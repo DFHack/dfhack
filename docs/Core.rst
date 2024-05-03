@@ -349,7 +349,7 @@ whether you run Dwarf Fortress from its own app or DFHack's.
   settings that get backed up to the cloud will always be out of sync. The stub
   launcher normally downloads updated settings from Steam Cloud Save when DF
   launches, and then backs up changed settings when DF exits. If this option is
-  used, then your settings  will still be reconciled when DF launches, but
+  used, then your settings will still be reconciled when DF launches, but
   changes made during your play session will not be saved when DF exits. Please
   use with caution -- you may lose data.
 

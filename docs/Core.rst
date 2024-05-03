@@ -310,19 +310,48 @@ Commandline options
 ===================
 
 In addition to `Using an OS terminal`_ to execute commands on startup, DFHack
-also recognizes a single commandline option that can be specified on the
-commandline:
+also recognizes a few commandline options.
 
-- ``--disable-dfhack``: If this option is passed on the Dwarf Fortress
-  commandline, then DFHack will be disabled for the session. You will have to
-  restart Dwarf Fortress without specifying this option in order to use DFHack.
-  If you are launching Dwarf Fortress from Steam, you can enter the option in
-  the "Launch Options" text box in the properties for the Dwarf Fortress app.
-  Note that if you do this, DFHack will be disabled regardless of whether you
-  run Dwarf Fortress from its own app or DFHack's. You will have to clear the
-  DF Launch Options in order to use DFHack again. Note that even if DFHack is
-  disabled, :file:`stdout.txt` and :file:`stderr.txt` will still be redirected
-  to :file:`stdout.log` and :file:`stderr.log`, respectively.
+Options passed to Dwarf Fortress
+--------------------------------
+
+These options can be passed to Dwarf Fortress and will be intercepted by
+DFHack. If you are launching Dwarf Fortress from Steam, you can set your
+options in the "Launch Options" text box in the properties for the Dwarf
+Fortress app (**NOT the DFHack app**). Note that these launch options will be
+used regardless of whether you run Dwarf Fortress from its own app or DFHack's.
+
+- ``--disable-dfhack``: If set, then DFHack will be disabled for the session.
+  You will have to restart Dwarf Fortress without specifying this option in
+  order to use DFHack. Note that even if DFHack is disabled, :file:`stdout.txt`
+  and :file:`stderr.txt` will still be redirected to :file:`stdout.log` and
+  :file:`stderr.log`, respectively.
+
+- ``--nosteam-dfhack``: If set, then the DFHack stub launcher will not execute
+  when you launch DF from its own app in the Steam client. This will prevent
+  your settings from being restored or backed up with Steam Cloud Save. This is
+  probably not what you want. If you want to just not have the DFHack playtime
+  counted towards your hours, see the DFHack stub launcher ``--nowait`` option
+  below.
+
+Options passed to the DFHack Steam stub launcher
+------------------------------------------------
+
+These options can be passed to the DFHack stub launcher that executes when you
+run the DFHack app from the Steam client. You can set your options in the
+"Launch Options" text box in the properties for the DFHack app (**NOT the Dwarf
+Fortress app**). Note that these launch options will be used regardless of
+whether you run Dwarf Fortress from its own app or DFHack's.
+
+- ``--nowait``: If set, the DFHack stub launcher will not wait for DF to exit
+  before exiting itself. This may be desired by players who do not want their
+  playtime "double counted". However, using this option means that your DFHack
+  settings that get backed up to the cloud will always be out of sync. The stub
+  launcher normally downloads updated settings from Steam Cloud Save when DF
+  launches, and then backs up changed settings when DF exits. If this option is
+  used, then your settings  will still be reconciled when DF launches, but
+  changes made during your play session will not be saved when DF exits. Please
+  use with caution -- you may lose data.
 
 .. _env-vars:
 

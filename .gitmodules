@@ -31,3 +31,6 @@
 [submodule "depends/googletest"]
 	path = depends/googletest
 	url = ../../google/googletest.git
+[submodule "depends/dfhooks"]
+	path = depends/dfhooks
+	url = ../../DFHack/dfhooks

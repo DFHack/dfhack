@@ -777,19 +777,18 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
     if (!mbc)
         return NULL;
 
-    for (size_t i = 0; i < mbc->plants.size(); i++)
+    for (auto plant : mbc->plants)
     {
-        df::plant *p = mbc->plants[i];
-        if (p->pos.x == x && p->pos.y == y && p->pos.z == z)
-            return p;
+        if (plant->pos.x == x && plant->pos.y == y && plant->pos.z == z)
+            return plant;
 
-        df::plant_tree_info *t = p->tree_info;
+        auto &t = plant->tree_info;
         if (!t)
             continue;
 
-        int32_t x_index = (t->dim_x / 2) - (p->pos.x % 48) + (x % 48);
-        int32_t y_index = (t->dim_y / 2) - (p->pos.y % 48) + (y % 48);
-        int32_t z_dis = z - p->pos.z;
+        int32_t x_index = (t->dim_x / 2) - (plant->pos.x % 48) + (x % 48);
+        int32_t y_index = (t->dim_y / 2) - (plant->pos.y % 48) + (y % 48);
+        int32_t z_dis = z - plant->pos.z;
         if (x_index < 0 || x_index >= t->dim_x || y_index < 0 || y_index >= t->dim_y || z_dis >= t->body_height)
             continue;
 
@@ -797,11 +796,11 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
         {
             if (z_dis < -(t->roots_depth))
                 continue;
-            else if ((t->roots[-1 - z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0) //any non-blocked tree_tile
-                return p;
+            else if ((t->roots[-1 - z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0) // Any non-blocked tree_tile
+                return plant;
         }
         else if ((t->body[z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0)
-            return p;
+            return plant;
     }
 
     return NULL;

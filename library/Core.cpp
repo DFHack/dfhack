@@ -147,6 +147,22 @@ struct Core::Private
     bool was_load_save{false};
 };
 
+void PerfCounters::reset(bool ignorePauseState) {
+    *this = {};
+    ignore_pause_state = ignorePauseState;
+    baseline_elapsed_ms = Core::getInstance().p->getTickCount();
+}
+
+void PerfCounters::incCounter(uint32_t &counter, uint32_t baseline_ms) {
+    if (!ignore_pause_state && World::ReadPauseState())
+        return;
+    counter += Core::getInstance().p->getTickCount() - baseline_ms;
+}
+
+bool PerfCounters::getIgnorePauseState() {
+    return ignore_pause_state;
+}
+
 struct CommandDepthCounter
 {
     static const int MAX_DEPTH = 20;
@@ -534,11 +550,8 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     std::vector<std::string> mod_script_paths;
-    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
-            Lua::DEFAULT_LUA_LAMBDA,
+    Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
                 Lua::GetVector(L, mod_script_paths);
             });
@@ -833,9 +846,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 );
             }
 
-            auto L = Lua::Core::State;
-            Lua::StackUnwinder top(L);
-            Lua::CallLuaModuleFunction(con, L, "script-manager", "list");
+            Lua::CallLuaModuleFunction(con, "script-manager", "list");
         }
     }
     else if (first == "ls" || first == "dir")
@@ -1323,7 +1334,6 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     // show the terminal if requested
     auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -1572,6 +1582,8 @@ bool Core::InitMainThread() {
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    perf_counters.reset();
 
     return true;
 }
@@ -1956,13 +1968,11 @@ void Core::doUpdate(color_ostream &out)
     if (vs_changed)
         onStateChange(out, SC_VIEWSCREEN_CHANGED);
 
-    if (df::global::pause_state)
+    bool paused = World::ReadPauseState();
+    if (paused != last_pause_state)
     {
-        if (*df::global::pause_state != last_pause_state)
-        {
-            onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
-            last_pause_state = *df::global::pause_state;
-        }
+        onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
+        last_pause_state = paused;
     }
 
     // Execute per-frame handlers
@@ -1996,7 +2006,9 @@ int Core::Update()
                 return -1;
         }
 
+        uint32_t start_ms = p->getTickCount();
         doUpdate(out);
+        perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
 
     // Let all commands run that require CoreSuspender
@@ -2016,21 +2028,26 @@ void Core::onUpdate(color_ostream &out)
 {
     Gui::clearFocusStringCache();
 
+    uint32_t step_start_ms = p->getTickCount();
     EventManager::manageEvents(out);
+    perf_counters.incCounter(perf_counters.update_event_manager_ms, step_start_ms);
 
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
         buildings_onUpdate(out);
 
     // notify all the plugins that a game tick is finished
+    step_start_ms = p->getTickCount();
     plug_mgr->OnUpdate(out);
+    perf_counters.incCounter(perf_counters.update_plugin_ms, step_start_ms);
 
     // process timers in lua
+    step_start_ms = p->getTickCount();
     Lua::Core::onUpdate(out);
+    perf_counters.incCounter(perf_counters.update_lua_ms, step_start_ms);
 }
 
 void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
-    //DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
     std::vector<std::string> files;
     DFHack::Filesystem::listdir(folder, files);
     for ( size_t a = 0; a < files.size(); a++ ) {
@@ -2178,23 +2195,19 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_CORE_INITIALIZED:
     {
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "helpdb", "refresh");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
         break;
     }
     case SC_WORLD_LOADED:
     {
+        perf_counters.reset();
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
-            [](lua_State* L) {
-                Lua::Push(L, true);
-            });
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2235,6 +2248,16 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         if (World::IsSiteLoaded())
             plug_mgr->doLoadSiteData(out);
         break;
+    case SC_PAUSED:
+        if (!perf_counters.getIgnorePauseState()) {
+            perf_counters.elapsed_ms += p->getTickCount() - perf_counters.baseline_elapsed_ms;
+            perf_counters.baseline_elapsed_ms = 0;
+        }
+        break;
+    case SC_UNPAUSED:
+        if (!perf_counters.getIgnorePauseState())
+            perf_counters.baseline_elapsed_ms = p->getTickCount();
+        break;
     default:
         break;
     }
@@ -2253,9 +2276,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     {
         Persistence::Internal::clear(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
     }
 }
 
@@ -2361,7 +2382,14 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 // returns true if the event is handled
-bool Core::DFH_SDL_Event(SDL_Event* ev)
+bool Core::DFH_SDL_Event(SDL_Event* ev) {
+    uint32_t start_ms = p->getTickCount();
+    bool ret = doSdlInputEvent(ev);
+    perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
+    return ret;
+}
+
+bool Core::doSdlInputEvent(SDL_Event* ev)
 {
     static std::map<int, bool> hotkey_states;
 

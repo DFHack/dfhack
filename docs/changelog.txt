@@ -55,20 +55,59 @@ Template for new versions:
 
 ## New Features
 - `buildingplan`: add panel for saving/restoring filters to the planner overlay.
+- DFHack and the Dwarf Fortress translation project can now both be run at the same time
+
+## Fixes
+- `zone`: fix display of distance from cage for small pets in assignment dialog
+- `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
+- `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
+- `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
+
+## Misc Improvements
+- `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
+- `regrass`: can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
+- `regrass`: can now restrict regrass effect to specified tile, block, cuboid, or z-levels
+- `regrass`: can now add grass in map blocks where there hasn't been any, force specific grass type
+- `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
+- `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
+- `stockpiles`: support import and export "desired items" configuration for route stops
+- New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
+- `markdown`: new keybinding for triggering text export: Ctrl-t
+
+## Documentation
+- Quickfort Blueprint Library: add demo video for pump stack blueprint
+- Update docs for dependency requirements and compilation procedures
+
+## API
+- ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
+- ``Items::createItem``: now returns a list of item pointers rather than a single ID, moved creator parameter to beginning, added growth_print and no_floor parameters at end
+- ``World::getAdventurer``: returns current adventurer unit
+- ``World::ReadPauseState``: now returns true when the game is effectively paused due to a large panel obscuring the map. this aligns the return value with the visual state of the pause button when in fort mode.
+
+## Lua
+- ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
+- ``dfhack.world.getAdventurer``: returns current adventurer unit
+- ``dfhack.items.createItem``: return value and parameters have changed as per C++ API
+
+## Removed
+
+# 50.13-r1.1
+
+## Documentation
+- Update docs on release procedures and symbol generation
+
+# 50.13-r1
 
 ## Fixes
 - Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: act on selected unit only if a unit is selected
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
 
 ## Misc Improvements
 - `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
 
 ## Documentation
-
-## API
-
-## Lua
-
-## Removed
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
 
 # 50.12-r3
 

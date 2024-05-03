@@ -13,8 +13,8 @@ local function process_args(opts, args)
         })
 end
 
-function parse_commandline(opts, ...)
-    local positionals = process_args(opts, {...})
+function parse_commandline(opts, args)
+    local positionals = process_args(opts, args)
 
     if opts.help then return end
 

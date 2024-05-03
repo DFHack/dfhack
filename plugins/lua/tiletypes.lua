@@ -7,8 +7,8 @@ local function parse_cursor(opts, arg)
     utils.assign(opts.cursor, argparse.coords(arg))
 end
 
-function parse_commandline(opts, ...)
-    local positionals = argparse.processArgsGetopt({...}, {
+function parse_commandline(opts, args)
+    local positionals = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(arg) parse_cursor(opts, arg) end},
             {'h', 'help', handler=function() opts.help = true end},

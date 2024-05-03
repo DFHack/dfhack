@@ -11,8 +11,11 @@
 
 #include <string>
 
-const uint32 DFHACK_STEAM_APPID = 2346660;
-const uint32 DF_STEAM_APPID = 975370;
+#define xstr(s) str(s)
+#define str(s) #s
+
+#define DFHACK_STEAM_APPID 2346660
+#define DF_STEAM_APPID 975370
 
 #ifdef WIN32
 
@@ -28,7 +31,7 @@ static BOOL is_running_on_wine() {
 }
 
 static LPCWSTR launch_via_steam_posix() {
-    const char* argv[] = { "/bin/sh", "-c", "\"steam -applaunch 975370\"", NULL };
+    const char* argv[] = { "/bin/sh", "-c", "\"steam -applaunch " xstr(DF_STEAM_APPID) "\"", NULL };
 
     // does not return on success
     _execv(argv[0], argv);
@@ -53,7 +56,7 @@ static LPCWSTR launch_via_steam() {
     if (retCode != ERROR_SUCCESS)
         return L"Could not find Steam client executable";
 
-    WCHAR commandLine[1024] = L"steam.exe -applaunch 975370";
+    WCHAR commandLine[1024] = L"steam.exe -applaunch " xstr(DF_STEAM_APPID);
 
     BOOL res = CreateProcessW(steamPath, commandLine,
         NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -64,15 +67,15 @@ static LPCWSTR launch_via_steam() {
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         return NULL;
-    } else {
-        return L"Could not launch Dwarf Fortress";
     }
+
+    return L"Could not launch Dwarf Fortress";
 }
 
 #else
 
 static const char * launch_via_steam() {
-    static const char * command = "steam -applaunch 975370";
+    static const char * command = "steam -applaunch " xstr(DF_STEAM_APPID);
     if (system(command) != 0)
         return "failed to launch DF via steam";
     return NULL;
@@ -93,8 +96,7 @@ static LPCWSTR launch_direct() {
     BOOL res = CreateProcessW(L"Dwarf Fortress.exe",
             NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 
-    if (res)
-    {
+    if (res) {
         WaitForSingleObject(pi.hProcess, INFINITE);
 
         CloseHandle(pi.hProcess);
@@ -177,11 +179,14 @@ DWORD findDwarfFortressProcess() {
     return -1;
 }
 
-bool waitForDF() {
+bool waitForDF(bool nowait) {
     DWORD df_pid = findDwarfFortressProcess();
 
     if (df_pid == -1)
         return false;
+
+    if (nowait)
+        return true;
 
     HANDLE hDF = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, df_pid);
 
@@ -213,15 +218,18 @@ static pid_t findDwarfFortressProcess() {
     return strtoul(buf, NULL, 10);
 }
 
-bool waitForDF() {
+bool waitForDF(bool nowait) {
     pid_t df_pid = findDwarfFortressProcess();
 
     if (df_pid <= 0)
         return false;
 
-    char path[64];
-    snprintf(path, 64, "tail --pid=%i -f /dev/null", df_pid);
-    return 0 == system(path);
+    if (nowait)
+        return true;
+
+    char cmd[64];
+    snprintf(cmd, 64, "tail --pid=%i -f /dev/null", df_pid);
+    return 0 == system(cmd);
 }
 
 #endif
@@ -236,7 +244,19 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    if (waitForDF())
+    bool nowait = false;
+#ifdef WIN32
+    std::wstring cmdline(lpCmdLine);
+    if (cmdline.find(L"--nowait") != std::wstring::npos)
+        nowait = true;
+#else
+    for (int idx = 0; idx < argc; ++idx) {
+        if (strcmp(argv[idx], "--nowait") == 0)
+            nowait = true;
+    }
+#endif
+
+    if (waitForDF(nowait))
         exit(0);
 
     if (!SteamAPI_Init()) {
@@ -290,14 +310,11 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    if (waitForDF())
-        exit(0);
-
     if (!wrap_launch(launch_via_steam))
         exit(1);
 
     int counter = 0;
-    while (!waitForDF()) {
+    while (!waitForDF(nowait)) {
         if (counter++ > 60) {
 #ifdef WIN32
             MessageBoxW(NULL, L"Dwarf Fortress took too long to launch, aborting", NULL, 0);

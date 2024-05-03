@@ -87,24 +87,6 @@ static void describeTile(color_ostream &out, df::tiletype tiletype) {
     out.print("\n");
 }
 
-static bool call_probe_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.probe", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result df_probe(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
 
@@ -126,9 +108,11 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     df::coord cursor;
 
     if (parameters.size())
-        call_probe_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L){ for (auto & param : parameters) Lua::Push(L, param); },
-            [&](lua_State *L){ if (!lua_isnil(L, -1)) Lua::CheckDFAssign(L, &cursor, -1); });
+        Lua::CallLuaModuleFunction(out, "plugins.probe", "parse_commandline", parameters,
+            1,  [&](lua_State *L){
+                if (!lua_isnil(L, -1))
+                    Lua::CheckDFAssign(L, &cursor, -1);
+            });
 
     if (!Maps::isValidTilePos(cursor)) {
         if (!Gui::getCursorCoords(cursor)) {

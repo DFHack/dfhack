@@ -1,6 +1,7 @@
 #include "check-structures-sanity.h"
 
 #include <cinttypes>
+#include <queue>
 
 #include "df/large_integer.h"
 
@@ -377,13 +378,13 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     {
         // TODO: check DfArray
     }
-    else if (base_container.starts_with("map<"))
+    else if (base_container.starts_with("map<") || base_container.starts_with("set<"))
     {
-        // TODO: check map
+        check_stl_map(item, identity);
     }
-    else if (base_container.starts_with("unordered_map<"))
+    else if (base_container.starts_with("unordered_map<") || base_container.starts_with("unordered_set<"))
     {
-        // TODO: check unordered_map
+        check_stl_unordered_map(item, identity);
     }
     else
     {
@@ -901,6 +902,176 @@ void Checker::check_stl_string(const QueueItem & item)
         FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
     }
 }
+
+void Checker::check_stl_map(const QueueItem & item, container_identity *identity)
+{
+#ifndef WIN32
+    const static CheckedStructure cs(identity, 0, nullptr, true);
+
+    struct rb_tree_node_base {
+        enum { COLOR_RED = false, COLOR_BLACK = true } color;
+        rb_tree_node_base *parent;
+        rb_tree_node_base *left;
+        rb_tree_node_base *right;
+    };
+
+    struct rb_tree_node : public rb_tree_node_base {
+        union {
+            int8_t data_i8;
+            int16_t data_i16;
+            int32_t data_i32;
+            int64_t data_i64;
+            int64_t data_i64s[4];
+        };
+    };
+
+    struct map_data
+    {
+        struct {} compare;
+        rb_tree_node_base header;
+        size_t node_count;
+    };
+
+    auto map = reinterpret_cast<const map_data*>(item.ptr);
+
+    if (!is_valid_dereference(QueueItem(item, "", map), 1)) {
+        FAIL("invalid map pointer: " << map);
+        return;
+    }
+    if (!map->header.parent && map->header.left == &map->header && map->header.right == &map->header) {
+        // empty map
+        return;
+    }
+    if (!is_valid_dereference(QueueItem(item, "parent", map->header.parent), 1)) {
+        FAIL("invalid map initial parent pointer: " << map->header.parent);
+        return;
+    }
+
+    struct search_queue_entry {
+        const rb_tree_node_base *node;
+        const rb_tree_node_base *parent;
+        QueueItem item;
+    };
+
+    std::queue<search_queue_entry> search_queue;
+    // search_queue.push(search_queue_entry{&map->header, nullptr, QueueItem(item, "header", item.ptr)});
+    search_queue.push(search_queue_entry{map->header.parent, nullptr, QueueItem(item, "header.parent", item.ptr)});
+    size_t num_visited_nodes = 0;
+    std::unordered_map<const rb_tree_node_base*, std::string> visited_nodes_paths;
+    while (!search_queue.empty()) {
+        const search_queue_entry entry = search_queue.front();
+        const QueueItem &item          = entry.item;
+        search_queue.pop();
+        num_visited_nodes++;
+
+        auto insert_result = visited_nodes_paths.insert(decltype(visited_nodes_paths)::value_type(entry.node, entry.item.path));
+        if (!insert_result.second) {
+            FAIL("cycle detected: node already visited at " << insert_result.first->second);
+            break;
+        }
+
+        if (!is_valid_dereference(item, 1)) {
+            FAIL("invalid node pointer: " << item.ptr);
+            continue;
+        }
+
+        if (entry.node->color != rb_tree_node_base::COLOR_RED && entry.node->color != rb_tree_node_base::COLOR_BLACK) {
+            FAIL("invalid map node color: " << int(entry.node->color));
+        }
+
+        if (entry.parent && entry.node->parent != entry.parent) {
+            FAIL("mismatched parent pointer: " << entry.node->parent);
+        }
+
+        if (entry.node->left) {
+            search_queue.push(search_queue_entry{entry.node->left, entry.node, QueueItem(item, "left", entry.node->left)});
+        }
+        if (entry.node->right) {
+            search_queue.push(search_queue_entry{entry.node->right, entry.node, QueueItem(item, "right", entry.node->right)});
+        }
+    }
+
+    // if (map->header.color != rb_tree_node_base::COLOR_RED && map->header.color != rb_tree_node_base::COLOR_BLACK) {
+    //     FAIL("invalid RB color: " << int(map->header.color));
+    // }
+
+    if (map->node_count != num_visited_nodes) {
+        FAIL("invalid map size (" << map->node_count << "): counted " << num_visited_nodes << " nodes");
+        // UNEXPECTED;
+    }
+
+#endif
+}
+
+void Checker::check_stl_unordered_map(const QueueItem & item, container_identity *identity)
+{
+#ifndef WIN32
+    const static CheckedStructure cs(identity, 0, nullptr, true);
+
+    struct hash_node_base
+    {
+        hash_node_base *next;
+    };
+
+    struct prime_rehash_policy
+    {
+        float max_load_factor;
+        size_t next_resize;
+    };
+
+    struct unordered_map_data
+    {
+        hash_node_base *buckets;    // default: &single_bucket
+        size_t bucket_count;        // default: 1
+        hash_node_base before_begin;
+        size_t element_count;       // default: 0
+        prime_rehash_policy rehash_policy;
+        hash_node_base *single_bucket;
+    };
+
+    auto umap = reinterpret_cast<const unordered_map_data*>(item.ptr);
+
+    if (!is_valid_dereference(QueueItem(item, "", umap), 1)) {
+        FAIL("invalid unordered_map pointer: " << umap);
+        return;
+    }
+
+    out << umap->rehash_policy.max_load_factor << std::endl;
+
+    #define check_ptr_field(field, expect_null) \
+        do { \
+            if (((expect_null) && umap->field != nullptr) || (!(expect_null) && !is_valid_dereference(QueueItem(item, #field, umap->field), 1))) { \
+                FAIL("invalid unordered_map::" #field " pointer: " << umap->field); \
+            } \
+        } while (0)
+    check_ptr_field(buckets, false);
+    check_ptr_field(before_begin.next, umap->element_count == 0);
+    // check_ptr_field(single_bucket, umap->element_count == 0);  // never set to non-null?
+    #undef check_ptr_field
+
+    if (umap->bucket_count > (1 << 24)) {
+        FAIL("unreasonable unordered_map element count: " << umap->bucket_count);
+        return;
+    }
+    size_t num_elements = 0;
+    for (size_t i = 0; i < umap->bucket_count; i++) {
+        size_t num_bucket_elements = 0;
+        for (hash_node_base *node = umap->buckets[i].next; node != nullptr; node = node->next) {
+            if (!is_valid_dereference(QueueItem(item, "", node), sizeof(hash_node_base))) {
+                FAIL("invalid node pointer in bucket " << i << ": " << node);
+                break;
+            }
+            if (node != umap->buckets[i].next) num_bucket_elements++;
+        }
+        num_elements += num_bucket_elements;
+    }
+
+    if (num_elements != umap->element_count) {
+        FAIL("invalid unordered_map size (" << umap->element_count << "): counted " << num_elements << " nodes");
+    }
+#endif
+}
+
 void Checker::check_possible_pointer(const QueueItem & item, const CheckedStructure & cs)
 {
     if (sizes && maybepointer && uintptr_t(item.ptr) % sizeof(void *) == 0)

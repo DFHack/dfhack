@@ -168,6 +168,14 @@ Note the :kbd:`#` symbols at the right end of each row and below the last row.
 These are completely optional, but can be helpful to make the row and column
 positions clear.
 
+In general, any cell that contains text that starts with a :kbd:`#` is
+interpreted as a comment and is ignored by `quickfort`. You can use this to
+leave notes for yourself inside of a blueprint. Take care to start your comment
+with a space after the ``#`` to avoid accidentally starting a modeline if your
+comment happens to be in the first column and happens to start with a modeline
+keyword. For example, ``#dig this area out`` is an accidental modeline that
+will cause problems. However, ``# dig this area out`` is a safe comment.
+
 Once the dwarves have that dug out, let's zone it as a bedroom::
 
     #zone
@@ -230,7 +238,8 @@ stockpile to accept only booze. You can use presets (along with other options
 that we'll go over later) to configure stockpiles however you want, directly
 from the ``#place`` blueprint.
 
-And that's it! You now have a series of blueprints that you can "stamp" across your fort to quickly build new bedrooms.
+And that's it! You now have a series of blueprints that you can "stamp" across
+your fort to quickly build new bedrooms.
 
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -330,7 +339,8 @@ whole object. You can even split properties up among multiple cells if that is
 more convenient. If you are using expansion syntax, the expansion part always
 goes last.
 
-Here's an example of a seed stockpile that is configured to take from a seed feeder stockpile::
+Here's an example of a seed stockpile that is configured to take from a seed
+feeder stockpile::
 
     #place
     f{name=Seeds links_only=true}:=seeds(3x2)
@@ -658,7 +668,10 @@ or from different corners of the same rectangle::
     n{name="Main pasture"}(10x2)
     t{name="Pet training area"}(10x-2)
 
-and you can use this technique to achieve partial overlap, of course. The only configuration that can't be specified in a single blueprint is multiple non-rectangular zones that are partially overlapping. You will have to use multiple ``#zone`` blueprints to achieve that.
+and you can use this technique to achieve partial overlap, of course. The only
+configuration that can't be specified in a single blueprint is multiple
+non-rectangular zones that are partially overlapping. You will have to use
+multiple ``#zone`` blueprints to achieve that.
 
 You can also use labels (see `Label syntax`_ above) to separate adjacent
 non-rectangular zones that happen to be of the same type or to combine
@@ -691,7 +704,10 @@ Note that the label ("bigpub" in this case) will never appear in-game. It is onl
 Stockpile designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just like zones, stockpiles can have properties like names or lists of other stockpiles to take from. Unlike zones, stockpiles can have configuration specifiers for exactly what types of items to accept. The full syntax looks like this::
+Just like zones, stockpiles can have properties like names or lists of other
+stockpiles to take from. Unlike zones, stockpiles can have configuration
+specifiers for exactly what types of items to accept. The full syntax looks
+like this::
 
     types/label{properties}:configuration(expansion)
 
@@ -702,7 +718,9 @@ familiar with `Property syntax`_, `Label syntax`_, and
 Stockpile types
 ~~~~~~~~~~~~~~~
 
-The type of stockpile corresponds to the category of items it accepts. Some types will cause the stockpile to accept bins or barrels. See the full list in the `#place mode reference`_.
+The type of stockpile corresponds to the category of items it accepts. Some
+types will cause the stockpile to accept bins or barrels. See the full list in
+the `#place mode reference`_.
 
 It is very common to have stockpiles that accept multiple categories of items.
 Although it is perfectly valid to declare a single-purpose stockpile,
@@ -714,7 +732,8 @@ could write::
     yr(20x10)
 
 The order of the individual letters doesn't matter. If you want to configure the
-stockpile from scratch, you can place unconfigured "custom" stockpiles with (:kbd:`c`).
+stockpile from scratch, you can place unconfigured "custom" stockpiles with
+(:kbd:`c`).
 
 .. _quickfort-place-containers:
 
@@ -730,7 +749,7 @@ supported. You can also set them all at once with the ``containers`` alias (it
 usually just makes sense to set this to 0 when you don't want any containers of
 any type). For example::
 
-    #place a stone stockpile with 5 wheelbarrows
+    #place a stone stockpile with five wheelbarrows
     s{wheelbarrows=5}(3x3)
 
     #place a bar, ammo, weapon, and armor stockpile with 20 bins
@@ -742,6 +761,27 @@ any type). For example::
 That last one could have equivalently used ``bins=0``, but sometimes you just
 don't want to have to think about which stockpile types take which type of
 container.
+
+The container settings also have a shorthand form. If you add a number after a
+type symbol, you can set the relevant container count. The first example above
+could equivalently be written as::
+
+    #place a stone stockpile with five wheelbarrows
+    s5(3x3)
+
+It sets the count for wheelbarrows specifically because the container
+associated with stone stockpiles is wheelbarrows.
+
+If a stockpile has multiple types, it is the just the previous type symbol that
+matters. ``s5e`` (stone and gems) would still set wheelbarrows only since the
+``5`` comes directly after the ``s``. ``se5`` would set bins and not
+wheelbarrows since the ``5`` would affect the container type associated with
+gem stockpiles: bins.
+
+If the number follows a type symbol that does not have a specific container
+type associated with it, then the container type defaults to wheelbarrows. This
+allows you to easily add wheelbarrows to furniture and corpse stockpiles, where
+having wheelbarrows is useful, but not added by default by the game.
 
 If the specified number exceeds the number of available stockpile tiles, the
 number of available tiles is used. For wheelbarrows, that limit is reduced by 1
@@ -779,7 +819,8 @@ For example, a blueprint like::
     #place
     f:=booze(5x4)
 
-would be equivalent to creating a 5x4 food stockpile in the UI, then selecting it and running this command::
+would be equivalent to creating a 5x4 food stockpile in the UI, then selecting
+it and running this command::
 
     stockpiles import --mode=set booze
 
@@ -1003,7 +1044,8 @@ should contain information about where to position the cursor. If the start
 position is ``1;1``, you can omit the numbers and just add a comment describing
 where to put the cursor. This is also useful for meta blueprints that don't
 actually care where the cursor is, but that refer to other blueprints that have
-fully-specified ``start()`` markers. For example, a meta blueprint that refers to the ``stonew`` blueprint above could look like this::
+fully-specified ``start()`` markers. For example, a meta blueprint that refers
+to the ``stonew`` blueprint above could look like this::
 
     #meta start(center of workshop) a stonecutter workshop
     /stonew
@@ -1217,7 +1259,8 @@ You can then hide the blueprints that you now manage with the meta blueprint
 from the blueprint selection lists by adding a ``hidden()`` marker to their
 modelines. That way, the blueprint lists won't be cluttered by blueprints that
 you don't need to run directly. If you ever *do* need to access the meta-managed
-blueprints individually, you can still see them by toggling the "Hidden" setting in the `gui/quickfort` load dialog or with ``quickfort list --hidden``.
+blueprints individually, you can still see them by toggling the "Hidden"
+setting in the `gui/quickfort` load dialog or with ``quickfort list --hidden``.
 
 Meta markers
 ````````````

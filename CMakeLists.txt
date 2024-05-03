@@ -7,8 +7,8 @@ cmake_policy(SET CMP0074 NEW)
 project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.12")
-set(DFHACK_RELEASE "r3")
+set(DF_VERSION "50.13")
+set(DFHACK_RELEASE "r1.1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -181,6 +181,7 @@ endif()
 # make sure all the necessary submodules have been set up
 if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/scripts/CMakeLists.txt
+    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/dfhooks/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/jsoncpp-sub/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt

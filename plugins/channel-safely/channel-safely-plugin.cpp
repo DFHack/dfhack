@@ -533,12 +533,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable && !enabled) {
         // register events to check jobs / update tracking
-        EM::EventHandler jobStartHandler(CSP::JobStartedEvent, 0);
-        EM::EventHandler jobCompletionHandler(CSP::JobCompletedEvent, 0);
-        EM::EventHandler reportHandler(CSP::NewReportEvent, 0);
-        EM::registerListener(EventType::REPORT, reportHandler, plugin_self);
-        EM::registerListener(EventType::JOB_STARTED, jobStartHandler, plugin_self);
-        EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+        EM::EventHandler jobStartHandler(plugin_self,CSP::JobStartedEvent, 0);
+        EM::EventHandler jobCompletionHandler(plugin_self,CSP::JobCompletedEvent, 0);
+        EM::EventHandler reportHandler(plugin_self,CSP::NewReportEvent, 0);
+        EM::registerListener(EventType::REPORT, reportHandler);
+        EM::registerListener(EventType::JOB_STARTED, jobStartHandler);
+        EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler);
         // manage designations to start off (first time building groups [very important])
         out.print("channel-safely: enabled!\n");
         CSP::UnpauseEvent(true);

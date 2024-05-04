@@ -153,6 +153,8 @@ DFHACK_EXPORT std::string getBookTitle(df::item *item);
 /// Returns the description string of the item.
 DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool decorate = false);
 
+DFHACK_EXPORT std::string getReadableDescription(df::item *item);
+
 DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
 DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
@@ -172,7 +174,7 @@ DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int1
 /// Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given
 DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
-DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* creator);
+DFHACK_EXPORT bool createItem(std::vector<df::item *> &out_items, df::unit* creator, df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool no_floor = false);
 
 /// Returns true if the item is free from mandates, or false if mandates prevent trading the item
 DFHACK_EXPORT bool checkMandates(df::item *item);

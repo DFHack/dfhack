@@ -25,6 +25,10 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 # customizable quick command list
 keybinding add Ctrl-Shift-A gui/quickcmd
 
+# save the description of a selected unit or item to the `markdown_{YourWorldName}.md` file
+# in the game root directory
+keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeonmode/ViewSheets/UNIT|dungeonmode/ViewSheets/ITEM markdown
+
 
 ###################
 # embark bindings #
@@ -180,6 +184,7 @@ keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
 #keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
 #keybinding add Shift-O@dungeonmode gui/companion-order
 #keybinding add Ctrl-T@dungeonmode gui/advfort
+keybinding add Ctrl-T@dungeonmode/Default flashstep
 
 
 #########################

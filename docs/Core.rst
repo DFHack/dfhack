@@ -310,19 +310,48 @@ Commandline options
 ===================
 
 In addition to `Using an OS terminal`_ to execute commands on startup, DFHack
-also recognizes a single commandline option that can be specified on the
-commandline:
+also recognizes a few commandline options.
 
-- ``--disable-dfhack``: If this option is passed on the Dwarf Fortress
-  commandline, then DFHack will be disabled for the session. You will have to
-  restart Dwarf Fortress without specifying this option in order to use DFHack.
-  If you are launching Dwarf Fortress from Steam, you can enter the option in
-  the "Launch Options" text box in the properties for the Dwarf Fortress app.
-  Note that if you do this, DFHack will be disabled regardless of whether you
-  run Dwarf Fortress from its own app or DFHack's. You will have to clear the
-  DF Launch Options in order to use DFHack again. Note that even if DFHack is
-  disabled, :file:`stdout.txt` and :file:`stderr.txt` will still be redirected
-  to :file:`stdout.log` and :file:`stderr.log`, respectively.
+Options passed to Dwarf Fortress
+--------------------------------
+
+These options can be passed to Dwarf Fortress and will be intercepted by
+DFHack. If you are launching Dwarf Fortress from Steam, you can set your
+options in the "Launch Options" text box in the properties for the Dwarf
+Fortress app (**NOT the DFHack app**). Note that these launch options will be
+used regardless of whether you run Dwarf Fortress from its own app or DFHack's.
+
+- ``--disable-dfhack``: If set, then DFHack will be disabled for the session.
+  You will have to restart Dwarf Fortress without specifying this option in
+  order to use DFHack. Note that even if DFHack is disabled, :file:`stdout.txt`
+  and :file:`stderr.txt` will still be redirected to :file:`stdout.log` and
+  :file:`stderr.log`, respectively.
+
+- ``--nosteam-dfhack``: If set, then the DFHack stub launcher will not execute
+  when you launch DF from its own app in the Steam client. This will prevent
+  your settings from being restored or backed up with Steam Cloud Save. This is
+  probably not what you want. If you want to just not have the DFHack playtime
+  counted towards your hours, see the DFHack stub launcher ``--nowait`` option
+  below.
+
+Options passed to the DFHack Steam stub launcher
+------------------------------------------------
+
+These options can be passed to the DFHack stub launcher that executes when you
+run the DFHack app from the Steam client. You can set your options in the
+"Launch Options" text box in the properties for the DFHack app (**NOT the Dwarf
+Fortress app**). Note that these launch options will be used regardless of
+whether you run Dwarf Fortress from its own app or DFHack's.
+
+- ``--nowait``: If set, the DFHack stub launcher will not wait for DF to exit
+  before exiting itself. This may be desired by players who do not want their
+  playtime "double counted". However, using this option means that your DFHack
+  settings that get backed up to the cloud will always be out of sync. The stub
+  launcher normally downloads updated settings from Steam Cloud Save when DF
+  launches, and then backs up changed settings when DF exits. If this option is
+  used, then your settings will still be reconciled when DF launches, but
+  changes made during your play session will not be saved when DF exits. Please
+  use with caution -- you may lose data.
 
 .. _env-vars:
 
@@ -394,18 +423,34 @@ restarting DF.
 
 - ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
 
-Miscellaneous notes
-===================
-This section is for odd but important notes that don't fit anywhere else.
+Performance monitoring
+======================
 
-* If a DF :kbd:`H` hotkey is named with a DFHack command, pressing
-  the corresponding :kbd:`Fx` button will run that command, instead of
-  zooming to the set location.
-  *This feature will be removed in a future version.*  (see :issue:`731`)
+Though DFHack tools are generally performant, they do take some amount of time
+to run. DFHack tracks its impact on DF game speed so the DFHack team can be
+aware of (and fix) tools that are taking more than their fair share of
+processing time.
 
-* The binaries for 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
-  Older versions are available here_.
-  *These files will eventually be migrated to GitHub.*  (see :issue:`473`)
+The target threshold for DFHack CPU utilization during unpaused gameplay with
+all overlays and automation tools enabled is 10%. This is about the level where
+players would notice the impact. In general, DFHack will have even less impact
+for most players, since it is not common for every single DFHack tool to be
+enabled at once.
 
-  .. _DFFD: https://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
-  .. _here: https://dethware.org/dfhack/download
+DFHack will record a performance report with the savegame files named
+``dfhack-perf-counters.dat``. The report contains measurements from when the
+game was loaded to the time when it was saved. By default, only unpaused time is
+measured (since processing done while the game is paused doesn't slow anything
+down from the player's perspective). You can display a live report at any time
+by running::
+
+    :lua require('script-manager').print_timers()
+
+You can reset the timers to start a new measurement session by running::
+
+    :lua dfhack.internal.resetPerfCounters()
+
+If you want to record performance over all elapsed time, not just unpaused
+time, then instead run::
+
+    :lua dfhack.internal.resetPerfCounters(true)

@@ -29,7 +29,7 @@ enum ConfigValues {
 static command_result work_now(color_ostream& out, vector<string>& parameters);
 
 static void jobCompletedHandler(color_ostream& out, void* ptr);
-EventManager::EventHandler handler(jobCompletedHandler,1);
+EventManager::EventHandler handler(plugin_self,jobCompletedHandler,1);
 
 DFhackCExport command_result plugin_init(color_ostream& out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
@@ -41,7 +41,7 @@ DFhackCExport command_result plugin_init(color_ostream& out, std::vector<PluginC
 }
 
 static void cleanup() {
-    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, handler, plugin_self);
+    EventManager::unregister(EventManager::EventType::JOB_COMPLETED, handler);
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -56,7 +56,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
-            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handler, plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, handler);
         else
             cleanup();
     } else {

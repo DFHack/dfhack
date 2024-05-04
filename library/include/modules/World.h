@@ -88,6 +88,8 @@ namespace DFHack
         DFHACK_EXPORT bool isArena(df::game_type t = (df::game_type)-1);
         DFHACK_EXPORT bool isLegends(df::game_type t = (df::game_type)-1);
 
+        DFHACK_EXPORT df::unit * getAdventurer();
+
         DFHACK_EXPORT int32_t GetCurrentSiteId();
         DFHACK_EXPORT bool IsSiteLoaded();
 

@@ -21,27 +21,12 @@ function get_automaterial_selection(building_type)
     return tracker.list[#tracker.list]
 end
 
-local function get_artifact_name(item)
-    local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.IS_ARTIFACT)
-    if not gref then return end
-    local artifact = df.artifact_record.find(gref.artifact_id)
-    if not artifact then return end
-    return dfhack.TranslateName(artifact.name)
-end
-
 function get_item_description(item_id, item, safety_label)
     item = item or df.item.find(item_id)
     if not item then
         return ('No %s safe mechanisms available'):format(safety_label:lower())
     end
-    local desc = item.flags.artifact and get_artifact_name(item) or
-        dfhack.items.getDescription(item, 0, true)
-    local wear_level = item:getWear()
-    if wear_level == 1 then desc = ('x%sx'):format(desc)
-    elseif wear_level == 2 then desc = ('X%sX'):format(desc)
-    elseif wear_level == 3 then desc = ('XX%sXX'):format(desc)
-    end
-    return desc
+    return dfhack.items.getReadableDescription(item)
 end
 
 local function sort_by_type(a, b)

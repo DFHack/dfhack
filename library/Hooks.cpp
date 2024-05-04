@@ -5,6 +5,8 @@
 
 static bool disabled = false;
 
+DFhackCExport const int32_t dfhooks_priority = 100;
+
 // called from the main thread before the simulation thread is started
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {

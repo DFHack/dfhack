@@ -752,7 +752,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     suspendmanager_instance = std::make_unique<SuspendManager>();
-    eventhandler_instance = std::make_unique<EventManager::EventHandler>(jobCompletedHandler,1);
+    eventhandler_instance = std::make_unique<EventManager::EventHandler>(plugin_self,jobCompletedHandler,1);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -780,12 +780,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
-            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
+            EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
             do_cycle(out);
         } else {
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
         }
 
     } else {
@@ -821,8 +821,8 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
                             suspendmanager_instance->prevent_blocking ? "true" : "false");
     if(is_enabled) {
         DEBUG(control,out).print("registering job event handlers\n");
-        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance, plugin_self);
-        EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance, plugin_self);
+        EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+        EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
         do_cycle(out);
     }
 

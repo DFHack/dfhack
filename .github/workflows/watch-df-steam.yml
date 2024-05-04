@@ -6,6 +6,7 @@ on:
 
 jobs:
   check-steam:
+    if: github.repository == 'DFHack/dfhack'
     name: Check DF ${{ matrix.df_steam_branch }} branch
     runs-on: ubuntu-latest
     strategy:
@@ -34,6 +35,11 @@ jobs:
     - name: Setup steamcmd
       id: steamcmd
       uses: CyberAndrii/setup-steamcmd@v1
+      continue-on-error: true
+    - name: Setup steamcmd (retry)
+      id: steamcmd2
+      uses: CyberAndrii/setup-steamcmd@v1
+      if: steps.steamcmd.outcome == 'failure'
     - name: Fetch state
       uses: actions/cache/restore@v4
       with:
@@ -53,7 +59,7 @@ jobs:
       with:
         timeout_minutes: 2
         command: |
-          timestamp=$(${{ steps.steamcmd.outputs.executable }} \
+          timestamp=$(${{ steps.steamcmd.outputs.executable || steps.steamcmd2.outputs.executable }} \
             +@ShutdownOnFailedCommand 1 \
             +login $STEAM_USERNAME \
             +app_info_request 975370 \

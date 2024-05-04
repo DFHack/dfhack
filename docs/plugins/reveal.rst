@@ -19,8 +19,7 @@ reveal
 .. dfhack-command:: revflood
    :summary: Hide everything, then reveal tiles with a path to a unit.
 
-This reveals all z-layers in fort mode. It also works in adventure mode, but any
-of its effects are negated once you move.
+This reveals all z-layers in fort and adventure mode. The effect persists until you run `unreveal`..
 
 In graphics mode, solid tiles that are not adjacent to open space will not be
 rendered, but they can still be examined by hovering over them with the mouse.
@@ -57,8 +56,8 @@ Usage
     were revealed. Note that tiles behind constructed walls are also revealed
     as a workaround for :bug:`1871`.
 
-Note
-----
+Caveats
+-------
 
 Sometimes, the map generates secret hollows adjacent to caverns in such a way
 that the ceiling of the hollow collapses on the first tick of the embark,
@@ -67,3 +66,6 @@ be triggered as soon as the cavern is discovered and that tile is unhidden.
 This would happen anyway even if you don't use `reveal`, but be aware that it
 is possible to trigger *some* events when you run `reveal`, even without the
 ``hell`` option.
+
+When running `unreveal` to restore the map in adventure mode, the vision cone
+for the adventurer isn't fully restored until the adventurer takes a step.

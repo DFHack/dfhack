@@ -43,6 +43,7 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/adventurest.h"
 #include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
@@ -853,6 +854,42 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
 
         focusStrings.push_back(newFocusString);
     }
+    if (game->main_interface.adventure.aim_projectile.open) {
+        focusStrings.push_back(baseFocus + "/AimProjectile");
+    }
+    if (game->main_interface.adventure.announcements.open) {
+        focusStrings.push_back(baseFocus + "/Announcements");
+    }
+    if (game->main_interface.adventure.attack.open) {
+        focusStrings.push_back(baseFocus + "/Attack");
+    }
+    if (game->main_interface.adventure.combat_pref.open) {
+        focusStrings.push_back(baseFocus + "/CombatPref");
+    }
+    if (game->main_interface.adventure.companions.open) {
+        focusStrings.push_back(baseFocus + "/Companions");
+    }
+    if (game->main_interface.adventure.conversation.open) {
+        focusStrings.push_back(baseFocus + "/Conversation");
+    }
+    if (game->main_interface.adventure.inventory.open) {
+        focusStrings.push_back(baseFocus + "/Inventory");
+    }
+    if (game->main_interface.adventure.jump.open) {
+        focusStrings.push_back(baseFocus + "/Jump");
+    }
+    if (game->main_interface.adventure.movement_options.open) {
+        focusStrings.push_back(baseFocus + "/MovementOptions");
+    }
+    if (game->main_interface.adventure.option_list.open) {
+        focusStrings.push_back(baseFocus + "/OptionList");
+    }
+    if (game->main_interface.adventure.perform.open) {
+        focusStrings.push_back(baseFocus + "/Perform");
+    }
+    if (game->main_interface.adventure.sleep.open) {
+        focusStrings.push_back(baseFocus + "/Sleep");
+    }
     if (game->main_interface.squad_equipment.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadEquipment";
@@ -906,7 +943,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
     add_main_interface_focus_strings(baseFocus, focusStrings);
 
     if (!focusStrings.size()) {
-        focusStrings.push_back(baseFocus + "/Default");
+        focusStrings.push_back(baseFocus + '/' + enum_item_key(df::global::adventure->menu));
     }
 }
 

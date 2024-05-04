@@ -184,6 +184,7 @@ keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
 #keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
 #keybinding add Shift-O@dungeonmode gui/companion-order
 #keybinding add Ctrl-T@dungeonmode gui/advfort
+keybinding add Ctrl-T@dungeonmode flashstep
 
 
 #########################

@@ -68,5 +68,5 @@ This would happen anyway even if you don't use `reveal`, but be aware that it
 is possible to trigger *some* events when you run `reveal`, even without the
 ``hell`` option.
 
-When running `unreveal` to restore the map in adventure mode, the vision cone
+When running ``unreveal`` to restore the map in adventure mode, the vision cone
 for the adventurer isn't fully restored until the adventurer takes a step.

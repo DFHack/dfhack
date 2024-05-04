@@ -88,6 +88,7 @@ distribution.
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
@@ -319,15 +320,9 @@ static void add_profile_tab_focus_string(
     focusStrings.push_back(fs);
 }
 
-DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
-{
+static void add_main_interface_focus_strings(const string &baseFocus, vector<string> &focusStrings) {
     std::string newFocusString;
 
-    if (df::global::gametype && !World::isFortressMode()) {
-        newFocusString = baseFocus;
-        newFocusString += '/' + enum_item_key(*df::global::gametype);
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.main_designation_selected != -1) {
         newFocusString = baseFocus;
         newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
@@ -579,7 +574,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         focusStrings.push_back(newFocusString);
     }
 
-    if(game->main_interface.bottom_mode_selected != -1) {
+    if (game->main_interface.bottom_mode_selected != -1) {
         newFocusString = baseFocus;
 
         switch(game->main_interface.bottom_mode_selected) {
@@ -874,6 +869,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
+{
+    std::string newFocusString;
+
+    if (df::global::gametype && !World::isFortressMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    add_main_interface_focus_strings(baseFocus, focusStrings);
 
     if (!focusStrings.size()) {
         focusStrings.push_back(baseFocus + "/Default");
@@ -887,17 +894,21 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
 }
 
-/* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
-    using df::global::adventure;
+    std::string newFocusString;
 
-    if (!adventure)
-        return;
+    if (df::global::gametype && !World::isAdventureMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    add_main_interface_focus_strings(baseFocus, focusStrings);
 
-    focus += '/' + enum_item_key(adventure->menu);
+    if (!focusStrings.size()) {
+        focusStrings.push_back(baseFocus + "/Default");
+    }
 }
-*/
 
 static std::unordered_map<df::viewscreen *, vector<string>> cached_focus_strings;
 

@@ -181,6 +181,7 @@ endif()
 # make sure all the necessary submodules have been set up
 if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/scripts/CMakeLists.txt
+    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/dfhooks/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/jsoncpp-sub/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt

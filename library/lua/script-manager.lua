@@ -215,8 +215,8 @@ local function print_sorted_timers(in_timers, width, rel1_ms, desc1, rel2_ms, de
 end
 
 function print_timers()
-    local summary, em_per_event, em_per_plugin_per_event, update_per_plugin, state_change_per_plugin, overlay_per_widget =
-        dfhack.internal.getPerfCounters()
+    local summary, em_per_event, em_per_plugin_per_event, update_per_plugin, state_change_per_plugin,
+        update_lua_per_repeat, overlay_per_widget = dfhack.internal.getPerfCounters()
 
     local elapsed = summary.elapsed_ms
     local total_update_time = summary.total_update_ms
@@ -290,6 +290,15 @@ function print_timers()
         print('-----------------------')
         print()
         print_sorted_timers(state_change_per_plugin, 25, summary.update_plugin_ms, 'update', elapsed, 'elapsed')
+    end
+
+    if summary.update_lua_ms > 0 then
+        print()
+        print()
+        print('Lua timer details')
+        print('-----------------')
+        print()
+        print_sorted_timers(update_lua_per_repeat, 45, summary.update_lua_ms, 'lua timers', elapsed, 'elapsed')
     end
 
     if total_overlay_time > 0 then

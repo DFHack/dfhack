@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- Updated for adventure mode: `reveal`
 
 ## New Features
 - DFHack and the Dwarf Fortress translation project can now both be run at the same time

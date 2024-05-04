@@ -28,10 +28,36 @@ DFHACK_PLUGIN_IS_ENABLED(is_active);
 REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(world);
 
+struct hideblock {
+    df::coord c;
+    uint8_t hiddens[16][16];
+};
+
+std::unordered_set<df::coord> trigger_cache;
+static vector<hideblock> hidesaved;
+
+enum revealstate {
+    NOT_REVEALED,
+    REVEALED,
+    SAFE_REVEALED,
+    DEMON_REVEALED
+};
+
+static revealstate revealed = NOT_REVEALED;
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last reveal
+
+static void reset_state() {
+    is_active = false;
+    trigger_cache.clear();
+    hidesaved.clear();
+    revealed = NOT_REVEALED;
+    cycle_timestamp = 0;
+}
+
 /*
  * Anything that might reveal Hell or trigger gemstone pillar events is unsafe.
  */
-bool isSafe(df::coord c, const std::unordered_set<df::coord> & trigger_cache) {
+bool isSafe(df::coord c) {
     // convert to block coordinates
     c.x >>= 4;
     c.y >>= 4;
@@ -44,11 +70,12 @@ bool isSafe(df::coord c, const std::unordered_set<df::coord> & trigger_cache) {
     t_feature global_feature;
     // get features of block
     // error -> obviously not safe to manipulate
-    if(!Maps::ReadFeatures(c.x,c.y,c.z,&local_feature,&global_feature))
+    if(!Maps::ReadFeatures(c.x, c.y, c.z, &local_feature, &global_feature))
         return false;
 
     // Adamantine tubes and temples lead to Hell
-    if (local_feature.type == df::feature_type::deep_special_tube || local_feature.type == df::feature_type::deep_surface_portal)
+    if (local_feature.type == df::feature_type::deep_special_tube ||
+            local_feature.type == df::feature_type::deep_surface_portal)
         return false;
     // And Hell *is* Hell.
     if (global_feature.type == df::feature_type::underworld_from_layer)
@@ -57,33 +84,12 @@ bool isSafe(df::coord c, const std::unordered_set<df::coord> & trigger_cache) {
     return true;
 }
 
-struct hideblock {
-    df::coord c;
-    uint8_t hiddens [16][16];
-};
-
-static vector<hideblock> hidesaved;
-
-enum revealstate {
-    NOT_REVEALED,
-    REVEALED,
-    SAFE_REVEALED,
-    DEMON_REVEALED
-};
-
-static revealstate revealed = NOT_REVEALED;
-
-static void reset_state() {
-    hidesaved.clear();
-    revealed = NOT_REVEALED;
-    is_active = false;
-}
-
 static void update_minimap() {
     game->minimap.update = 1;
     game->minimap.mustmake = 1;
 }
 
+static void do_reveal_adventure(color_ostream &out, bool no_hell, bool incremental);
 command_result reveal(color_ostream &out, vector<string> & params);
 command_result unreveal(color_ostream &out, vector<string> & params);
 command_result revtoggle(color_ostream &out, vector<string> & params);
@@ -115,11 +121,18 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    World::SetPauseState(true);
+    if (World::isAdventureMode()) {
+        if (cycle_timestamp < world->frame_counter) {
+            cycle_timestamp = world->frame_counter;
+            do_reveal_adventure(out, revealed == SAFE_REVEALED, true);
+        }
+    } else {
+        World::SetPauseState(true);
+    }
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out ) {
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     reset_state();
     return CR_OK;
 }
@@ -130,26 +143,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-void revealAdventure(color_ostream &out, const std::unordered_set<df::coord> & trigger_cache) {
-    for (auto & block : world->map.map_blocks) {
-        // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-        if (!isSafe(block->map_pos, trigger_cache))
-            continue;
-        designations40d & designations = block->designation;
-        // for each tile in block
-        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-        {
-            // set to revealed
-            designations[x][y].bits.hidden = 0;
-            // and visible
-            designations[x][y].bits.pile = 1;
-        }
-    }
-    update_minimap();
-    out.print("Local map revealed.\n");
-}
-
-static void cache_tiles(const df::coord_path & tiles, std::unordered_set<df::coord> & trigger_cache) {
+static void cache_tiles(const df::coord_path & tiles) {
     size_t num_tiles = tiles.size();
     for (size_t idx = 0; idx < num_tiles; ++idx) {
         df::coord pos = tiles[idx];
@@ -159,13 +153,75 @@ static void cache_tiles(const df::coord_path & tiles, std::unordered_set<df::coo
     }
 }
 
-static void initialize_trigger_cache(std::unordered_set<df::coord> & trigger_cache) {
+static void initialize_trigger_cache() {
     for (auto & horror : world->encased_horrors)
-        cache_tiles(horror->tiles, trigger_cache);
+        cache_tiles(horror->tiles);
     for (auto & hollow : world->deep_vein_hollows)
-        cache_tiles(hollow->tiles, trigger_cache);
+        cache_tiles(hollow->tiles);
     for (auto & treasure : world->divine_treasures)
-        cache_tiles(treasure->tiles, trigger_cache);
+        cache_tiles(treasure->tiles);
+}
+
+// identify blocks that have tiles within the box that contains the unit's
+// 26 tile radius vision cylinder
+static bool is_vision_block(const df::coord & upos, const df::coord & bpos, int offset = 0) {
+    const int radius = 27 + offset;
+
+    int ux1, ux2, uy1, uy2;
+    ux1 = upos.x - radius;
+    ux2 = upos.x + radius;
+    uy1 = upos.y - radius;
+    uy2 = upos.y + radius;
+
+    int bx1, bx2, by1, by2;
+    bx1 = bpos.x;
+    bx2 = bpos.x + 15;
+    by1 = bpos.y;
+    by2 = bpos.y + 15;
+
+    int clip_x1, clip_x2, clip_y1, clip_y2;
+    clip_x1 = std::max(ux1, bx1);
+    clip_y1 = std::max(uy1, by1);
+    clip_x2 = std::min(ux2, bx2);
+    clip_y2 = std::min(uy2, by2);
+
+    return clip_x1 <= clip_x2 && clip_y1 <= clip_y2;
+}
+
+static void do_reveal_adventure(color_ostream &out, bool no_hell, bool incremental = false) {
+    df::coord pos;
+    if (auto unit = World::getAdventurer())
+        pos = Units::getPosition(unit);
+    for (auto & block : world->map.map_blocks) {
+        if (incremental && !is_vision_block(pos, block->map_pos))
+            continue;
+        if (no_hell && !isSafe(block->map_pos))
+            continue;
+        designations40d & designations = block->designation;
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+            designations[x][y].bits.hidden = 0;
+            // set "lit" property (named "pile" because of how it is used in fort mode)
+            designations[x][y].bits.pile = 1;
+        }
+    }
+}
+
+static void do_reveal_fort(color_ostream &out, bool no_hell) {
+    hidesaved.reserve(world->map.map_blocks.size());
+    for (auto & block : world->map.map_blocks) {
+        if (no_hell && !isSafe(block->map_pos))
+            continue;
+        hidesaved.emplace_back();
+        hideblock *hb = &hidesaved.back();
+        hb->c = block->map_pos;
+        designations40d & designations = block->designation;
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+            // save state of tile and set to revealed
+            hb->hiddens[x][y] = designations[x][y].bits.hidden;
+            designations[x][y].bits.hidden = 0;
+        }
+    }
+    update_minimap();
 }
 
 command_result reveal(color_ostream &out, vector<string> & params) {
@@ -197,35 +253,32 @@ command_result reveal(color_ostream &out, vector<string> & params) {
         return CR_FAILURE;
     }
 
-    size_t initial_buckets = 2 * (world->encased_horrors.size() + world->divine_treasures.size() + world->deep_vein_hollows.size());
-    std::unordered_set<df::coord> trigger_cache(initial_buckets);
-    initialize_trigger_cache(trigger_cache);
-
-    if (World::isAdventureMode()) {
-        revealAdventure(out, trigger_cache);
-        return CR_OK;
-    } else if (!World::isFortressMode()) {
-        out.printerr("Can only reveal in adventure or fortress mode.\n");
-        return CR_FAILURE;
+    if (no_hell) {
+        size_t initial_buckets = 2 * (world->encased_horrors.size() + world->divine_treasures.size() + world->deep_vein_hollows.size());
+        trigger_cache.reserve(initial_buckets);
+        initialize_trigger_cache();
     }
 
-    hidesaved.reserve(world->map.map_blocks.size());
-    for (auto & block : world->map.map_blocks) {
-        // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-        if (no_hell && !isSafe(block->map_pos, trigger_cache))
-            continue;
-        hideblock hb;
-        hb.c = block->map_pos;
-        designations40d & designations = block->designation;
-        // for each tile in block
-        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-        {
-            // save hidden state of tile
-            hb.hiddens[x][y] = designations[x][y].bits.hidden;
-            // set to revealed
-            designations[x][y].bits.hidden = 0;
+    out.print("Map revealed.\n\n");
+    if (World::isAdventureMode()) {
+        do_reveal_adventure(out, no_hell);
+        is_active = true;
+    } else if (World::isFortressMode()) {
+        do_reveal_fort(out, no_hell);
+
+        if (Screen::inGraphicsMode()) {
+            out.print("Note that in graphics mode, tiles that are not adjacent to open\n"
+                    "space will not render but can still be examined by hovering over\n"
+                    "them with the mouse. Switching to text mode (in the game settings)\n"
+                    "will allow the display of the revealed tiles.\n\n");
         }
-        hidesaved.push_back(hb);
+
+        if (pause)
+            out.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n\n");
+        out.print("Run 'unreveal' to revert to previous state.\n");
+    } else {
+        out.printerr("Can only reveal in adventure or fortress mode.\n");
+        return CR_FAILURE;
     }
 
     if (no_hell)
@@ -234,25 +287,13 @@ command_result reveal(color_ostream &out, vector<string> & params) {
         if (pause) {
             revealed = REVEALED;
             is_active = true;
-            World::SetPauseState(true);
+            if (World::isFortressMode())
+                World::SetPauseState(true);
         }
         else
             revealed = DEMON_REVEALED;
     }
 
-    update_minimap();
-
-    out.print("Map revealed.\n\n");
-    if (Screen::inGraphicsMode()) {
-        out.print("Note that in graphics mode, tiles that are not adjacent to open\n"
-                  "space will not render but can still be examined by hovering over\n"
-                  "them with the mouse. Switching to text mode (in the game settings)\n"
-                  "will allow the display of the revealed tiles.\n\n");
-    }
-
-    if (pause)
-        out.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n\n");
-    out.print("Run 'unreveal' to revert to previous state.\n");
     return CR_OK;
 }
 
@@ -274,21 +315,31 @@ command_result unreveal(color_ostream &out, vector<string> & params) {
         return CR_FAILURE;
     }
 
-    if (!World::isFortressMode()) {
-        out.printerr("Can only unreveal in fortress mode.\n");
-        return CR_FAILURE;
-    }
-
-    for (auto & hb : hidesaved) {
-        df::map_block * b = Maps::getTileBlock(hb.c.x, hb.c.y, hb.c.z);
-        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-        {
-            b->designation[x][y].bits.hidden = hb.hiddens[x][y];
+    if (World::isAdventureMode()) {
+        auto unit = World::getAdventurer();
+        df::coord upos;
+        if (unit)
+            upos = Units::getPosition(unit);
+        for (auto & block : world->map.map_blocks) {
+            if (unit && is_vision_block(upos, block->map_pos, -1) && upos.z == block->map_pos.z)
+                continue;
+            designations40d & designations = block->designation;
+            for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+                designations[x][y].bits.hidden = 1;
+                designations[x][y].bits.pile = 0;
+            }
         }
+    } else {
+        for (auto & hb : hidesaved) {
+            df::map_block * b = Maps::getTileBlock(hb.c.x, hb.c.y, hb.c.z);
+            for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+                b->designation[x][y].bits.hidden = hb.hiddens[x][y];
+            }
+        }
+        update_minimap();
     }
 
     reset_state();
-    update_minimap();
 
     out.print("Map hidden!\n");
     return CR_OK;

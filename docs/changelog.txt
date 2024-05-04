@@ -76,7 +76,7 @@ Template for new versions:
 - `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state)
 
 ## Documentation
-- Quickfort Blueprint Library: add demo video for pump stack blueprint
+- Quickfort Blueprint Library: add demo videos for pump stack and light aquifer tap blueprints
 - Update docs for dependency requirements and compilation procedures
 
 ## API

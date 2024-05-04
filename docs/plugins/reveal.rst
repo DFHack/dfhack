@@ -19,7 +19,8 @@ reveal
 .. dfhack-command:: revflood
    :summary: Hide everything, then reveal tiles with a path to a unit.
 
-This reveals all z-layers in fort and adventure mode. The effect persists until you run `unreveal`..
+This reveals all z-layers in fort and adventure mode. The effect persists until
+you run ``unreveal``.
 
 In graphics mode, solid tiles that are not adjacent to open space will not be
 rendered, but they can still be examined by hovering over them with the mouse.

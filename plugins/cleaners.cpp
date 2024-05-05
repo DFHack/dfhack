@@ -101,8 +101,7 @@ command_result cleanitems (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_items = 0, cleaned_total = 0;
-    for (auto i : world->items.all)
-    {
+    for (auto i : world->items.other.IN_PLAY) {
         // currently, all item classes extend item_actual, so this should be safe
         df::item_actual *item = virtual_cast<df::item_actual>(i);
         if (item && item->contaminants && item->contaminants->size())

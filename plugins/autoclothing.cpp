@@ -609,7 +609,7 @@ static void find_needed_clothing_items()
 
 static void remove_available_clothing()
 {
-    for (auto& item : world->items.all)
+    for (auto& item : world->items.other.IN_PLAY)
     {
         //skip any owned items.
         if (getOwner(item))

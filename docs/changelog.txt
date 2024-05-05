@@ -62,6 +62,7 @@ Template for new versions:
 - `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
 - `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
 - `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
+- `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile

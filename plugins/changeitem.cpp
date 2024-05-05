@@ -230,11 +230,8 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
         }
 
         // iterate over all items, process those where pos = pos_cursor
-        size_t numItems = world->items.all.size();
-        for(size_t i=0; i< numItems; i++)
-        {
-            df::item * item = world->items.all[i];
-            DFCoord pos_item(item->pos.x, item->pos.y, item->pos.z);
+        for (auto item : world->items.other.IN_PLAY) {
+            auto pos_item = Items::getPosition(item);
 
             if (pos_item != pos_cursor)
                 continue;

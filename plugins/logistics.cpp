@@ -484,7 +484,7 @@ static void train_partials(color_ostream& out, int32_t& train_count) {
             Units::isWar(unit) ||
             Units::isHunter(unit) ||
             Units::isMarkedForTraining(unit) ||
-            !Units::isTrained(unit))
+            !Units::isFortControlled(unit))
             continue;
 
         if (Units::assignTrainer(unit)) {

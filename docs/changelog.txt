@@ -64,6 +64,7 @@ Template for new versions:
 - `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
 - `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
 - `logistics`: also add trainers to semi-wild pets when autoretrain is enabled
+- `suspendmanager`: fully suspend unbuildable deadends
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile

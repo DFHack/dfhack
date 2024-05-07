@@ -16,6 +16,7 @@ config = config or json.open('dfhack-config/buildingplan.json')
 local uibs = df.global.buildreq
 
 reset_counts_flag = false
+editing_filters_flag = false
 
 local function get_cur_filters()
     return dfhack.buildings.getFiltersByType({}, uibs.building_type,
@@ -516,6 +517,7 @@ function QuickFilter:onInput(keys)
         if self.renaming then
             self.subviews.edit_field:setFocus(false)
             self.renaming = false
+            editing_filters_flag = false
             return true
         else
             return false
@@ -525,9 +527,12 @@ function QuickFilter:onInput(keys)
 end
 
 function QuickFilter:on_click()
-    if dfhack.internal.getModifiers().shift and self:slot_used() then
+    if dfhack.internal.getModifiers().shift and
+        self:slot_used() and not editing_filters_flag
+    then
         self.subviews.edit_field:setText(self:get_label_text())
         self.renaming = true
+        editing_filters_flag = true
         self.subviews.edit_field:setFocus(true)
     else
         self.on_click_fn(self.idx) -- save/apply filter based on selected ItemLine
@@ -560,6 +565,7 @@ function QuickFilter:submit_name(text)
     quick_filters[self.idx].label = compress(text, item_filter_chars+2)
     dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, quick_filters)
     self.renaming = false
+    editing_filters_flag = false
 end
 --------------------------------
 -- PlannerOverlay
@@ -987,7 +993,7 @@ function PlannerOverlay:save_restore_filter(slot)
         local label = filter_string(mats, cats, item_filter_chars)
         local enabled_mats = {}
         for mat, props in pairs(mats) do
-            if props.enabled == "true" then
+            if props.enabled == "true" and cats[props.category] then
                 table.insert(enabled_mats, mat)
             end
         end

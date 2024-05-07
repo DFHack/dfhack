@@ -3,9 +3,15 @@ name: Package
 on:
   workflow_call:
     inputs:
+      dfhack_repo:
+        type: string
       dfhack_ref:
         type: string
+      scripts_repo:
+        type: string
       scripts_ref:
+        type: string
+      structures_repo:
         type: string
       structures_ref:
         type: string
@@ -18,14 +24,25 @@ on:
       launchdf:
         type: boolean
         default: false
+      include_windows:
+        type: boolean
+        default: true
+      include_linux:
+        type: boolean
+        default: true
+
 
 jobs:
   package-win64:
     name: Windows
     uses: ./.github/workflows/build-windows.yml
+    if: inputs.include_windows
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: dfhack-windows64-build
       append-date-and-hash: ${{ inputs.append-date-and-hash }}
@@ -33,15 +50,20 @@ jobs:
       cache-readonly: ${{ inputs.cache-readonly }}
       stonesense: true
       docs: true
+      html: false
       launchdf: ${{ inputs.launchdf }}
     secrets: inherit
 
   package-linux:
     name: Linux
     uses: ./.github/workflows/build-linux.yml
+    if: inputs.include_linux
     with:
+      dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
+      scripts_repo: ${{ inputs.scripts_repo }}
       scripts_ref: ${{ inputs.scripts_ref }}
+      structures_repo: ${{ inputs.structures_repo }}
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: dfhack-linux64-build
       append-date-and-hash: ${{ inputs.append-date-and-hash }}
@@ -49,4 +71,6 @@ jobs:
       cache-readonly: ${{ inputs.cache-readonly }}
       stonesense: true
       docs: true
+      html: false
+      launchdf: ${{ inputs.launchdf }}
     secrets: inherit

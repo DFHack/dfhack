@@ -168,6 +168,14 @@ Note the :kbd:`#` symbols at the right end of each row and below the last row.
 These are completely optional, but can be helpful to make the row and column
 positions clear.
 
+In general, any cell that contains text that starts with a :kbd:`#` is
+interpreted as a comment and is ignored by `quickfort`. You can use this to
+leave notes for yourself inside of a blueprint. Take care to start your comment
+with a space after the ``#`` to avoid accidentally starting a modeline if your
+comment happens to be in the first column and happens to start with a modeline
+keyword. For example, ``#dig this area out`` is an accidental modeline that
+will cause problems. However, ``# dig this area out`` is a safe comment.
+
 Once the dwarves have that dug out, let's zone it as a bedroom::
 
     #zone
@@ -230,7 +238,8 @@ stockpile to accept only booze. You can use presets (along with other options
 that we'll go over later) to configure stockpiles however you want, directly
 from the ``#place`` blueprint.
 
-And that's it! You now have a series of blueprints that you can "stamp" across your fort to quickly build new bedrooms.
+And that's it! You now have a series of blueprints that you can "stamp" across
+your fort to quickly build new bedrooms.
 
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -330,7 +339,8 @@ whole object. You can even split properties up among multiple cells if that is
 more convenient. If you are using expansion syntax, the expansion part always
 goes last.
 
-Here's an example of a seed stockpile that is configured to take from a seed feeder stockpile::
+Here's an example of a seed stockpile that is configured to take from a seed
+feeder stockpile::
 
     #place
     f{name=Seeds links_only=true}:=seeds(3x2)
@@ -440,7 +450,11 @@ You can go up or down multiple levels by adding a number after the ``<`` or
 ---------
 
 ``#dig`` blueprints are normally the first step in any design. They define the
-boundaries and layouts for the blueprints for later stages of construction. Despite their name, ``#dig`` blueprints are for more than just digging. They also handle smoothing, carving, traffic designations, and marking items on the ground for dumping, forbidding, or other similar tags. See the full list of supported designations in the `#dig mode reference`_.
+boundaries and layouts for the blueprints for later stages of construction.
+Despite their name, ``#dig`` blueprints are for more than just digging. They
+also handle smoothing, carving, traffic designations, and marking items on the
+ground for dumping, forbidding, or other similar tags. See the full list of
+supported designations in the `#dig mode reference`_.
 
 .. _quickfort-dig-priorities:
 
@@ -448,9 +462,9 @@ Dig priorities
 ~~~~~~~~~~~~~~
 
 DF designation priorities are supported in ``#dig`` blueprints. The full syntax
-is ``[symbol][number][expansion]``, where if the ``symbol`` is not specified,
-``d`` is assumed, and if ``number`` is not specified, ``4`` is assumed (the
-default priority). So all of these blueprints are equivalent::
+is ``[markers][symbol][number][expansion]``, where if the ``symbol`` is not
+specified, ``d`` is assumed, and if ``number`` is not specified, ``4`` is
+assumed (the default priority). So all of these blueprints are equivalent::
 
     #dig dig the interior of the room at high priority
     d  d  d  d  d  #
@@ -476,35 +490,57 @@ default priority). So all of these blueprints are equivalent::
     4  4  4  4  4  #
     #  #  #  #  #  #
 
-Marker mode
+At least one of the symbol and the priority number must be specified.
+
+Dig markers
 ~~~~~~~~~~~
 
-Marker mode is useful for when you want to plan out your digging, but you don't
-want to dig everything just yet. In ``#dig`` mode, you can add a :kbd:`m` before
-any other designation letter to indicate that the tile should be designated in
-marker mode. For example, to dig out the perimeter of a room, but leave the
-center of the room marked for digging later::
+There are three types of markers you can apply to dig designated tiles. You can
+apply multiple markers to the same tile by including multiple marker prefixes.
+For example, a tile that is in blueprint mode and that is also marked for warm
+and damp dig would be written as::
 
     #dig
-    d  d  d  d d #
-    d md md md d #
-    d md md md d #
-    d md md md d #
-    d  d  d  d d #
-    #  #  #  # # #
+    mbmwmdd
 
-Then you can use DF's "Toggle Standard/Marking" icons (DF calls them
-"blueprints", but hopefully that won't get too confusing in this context) to
-convert the center tiles to regular designations at your leisure.
+Blueprint marker
+````````````````
 
-To apply an entire dig blueprint in marker mode, regardless of what the
-blueprint itself says, you can set the global quickfort setting
+"Blueprint" markers are useful for when you want to plan out your digging, but
+you don't want to dig everything just yet. Here, "blueprint" refers to the
+vanilla UI "blueprint mode" vs. "standard mode" buttons. You can use DF's
+"Change blueprints to standard selections" button to convert the "blueprint"
+marked tiles to regular designations.
+
+For example, to dig out the perimeter of a room, but leave the center of the
+room marked for digging later::
+
+    #dig
+    d   d   d   d d #
+    d mbd mbd mbd d #
+    d mbd mbd mbd d #
+    d mbd mbd mbd d #
+    d   d   d   d d #
+    #   #   #   # # #
+
+To apply an entire dig blueprint in blueprint marker mode, regardless of what
+the blueprint itself says, you can set the global quickfort setting
 ``force_marker_mode`` to ``true`` before you apply the blueprint by running
 ``quickfort set force_marker_mode true``.
 
 Note that the state of the in-game vanilla button that you use to draw
 designations in either Standard or "Blueprint" mode does not have any effect on
 `quickfort`.
+
+Warm and damp dig markers
+`````````````````````````
+
+Warm and damp dig markers allow digging to continue uninterrupted through warm
+or damp tiles. These markers are useful to include in blueprints that are
+expected to be applied near magma or in damp/aquifer layers. See the `dig` tool
+for more info on warm and damp dig.
+
+The prefix for warm dig is ``mw`` and the prefix for damp dig is ``md``.
 
 Carved minecart tracks
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -632,7 +668,10 @@ or from different corners of the same rectangle::
     n{name="Main pasture"}(10x2)
     t{name="Pet training area"}(10x-2)
 
-and you can use this technique to achieve partial overlap, of course. The only configuration that can't be specified in a single blueprint is multiple non-rectangular zones that are partially overlapping. You will have to use multiple ``#zone`` blueprints to achieve that.
+and you can use this technique to achieve partial overlap, of course. The only
+configuration that can't be specified in a single blueprint is multiple
+non-rectangular zones that are partially overlapping. You will have to use
+multiple ``#zone`` blueprints to achieve that.
 
 You can also use labels (see `Label syntax`_ above) to separate adjacent
 non-rectangular zones that happen to be of the same type or to combine
@@ -665,7 +704,10 @@ Note that the label ("bigpub" in this case) will never appear in-game. It is onl
 Stockpile designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just like zones, stockpiles can have properties like names or lists of other stockpiles to take from. Unlike zones, stockpiles can have configuration specifiers for exactly what types of items to accept. The full syntax looks like this::
+Just like zones, stockpiles can have properties like names or lists of other
+stockpiles to take from. Unlike zones, stockpiles can have configuration
+specifiers for exactly what types of items to accept. The full syntax looks
+like this::
 
     types/label{properties}:configuration(expansion)
 
@@ -676,7 +718,9 @@ familiar with `Property syntax`_, `Label syntax`_, and
 Stockpile types
 ~~~~~~~~~~~~~~~
 
-The type of stockpile corresponds to the category of items it accepts. Some types will cause the stockpile to accept bins or barrels. See the full list in the `#place mode reference`_.
+The type of stockpile corresponds to the category of items it accepts. Some
+types will cause the stockpile to accept bins or barrels. See the full list in
+the `#place mode reference`_.
 
 It is very common to have stockpiles that accept multiple categories of items.
 Although it is perfectly valid to declare a single-purpose stockpile,
@@ -688,7 +732,8 @@ could write::
     yr(20x10)
 
 The order of the individual letters doesn't matter. If you want to configure the
-stockpile from scratch, you can place unconfigured "custom" stockpiles with (:kbd:`c`).
+stockpile from scratch, you can place unconfigured "custom" stockpiles with
+(:kbd:`c`).
 
 .. _quickfort-place-containers:
 
@@ -704,7 +749,7 @@ supported. You can also set them all at once with the ``containers`` alias (it
 usually just makes sense to set this to 0 when you don't want any containers of
 any type). For example::
 
-    #place a stone stockpile with 5 wheelbarrows
+    #place a stone stockpile with five wheelbarrows
     s{wheelbarrows=5}(3x3)
 
     #place a bar, ammo, weapon, and armor stockpile with 20 bins
@@ -716,6 +761,27 @@ any type). For example::
 That last one could have equivalently used ``bins=0``, but sometimes you just
 don't want to have to think about which stockpile types take which type of
 container.
+
+The container settings also have a shorthand form. If you add a number after a
+type symbol, you can set the relevant container count. The first example above
+could equivalently be written as::
+
+    #place a stone stockpile with five wheelbarrows
+    s5(3x3)
+
+It sets the count for wheelbarrows specifically because the container
+associated with stone stockpiles is wheelbarrows.
+
+If a stockpile has multiple types, it is the just the previous type symbol that
+matters. ``s5e`` (stone and gems) would still set wheelbarrows only since the
+``5`` comes directly after the ``s``. ``se5`` would set bins and not
+wheelbarrows since the ``5`` would affect the container type associated with
+gem stockpiles: bins.
+
+If the number follows a type symbol that does not have a specific container
+type associated with it, then the container type defaults to wheelbarrows. This
+allows you to easily add wheelbarrows to furniture and corpse stockpiles, where
+having wheelbarrows is useful, but not added by default by the game.
 
 If the specified number exceeds the number of available stockpile tiles, the
 number of available tiles is used. For wheelbarrows, that limit is reduced by 1
@@ -753,7 +819,8 @@ For example, a blueprint like::
     #place
     f:=booze(5x4)
 
-would be equivalent to creating a 5x4 food stockpile in the UI, then selecting it and running this command::
+would be equivalent to creating a 5x4 food stockpile in the UI, then selecting
+it and running this command::
 
     stockpiles import --mode=set booze
 
@@ -793,13 +860,13 @@ routes.
 Building designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Other than names, most buildings do not have any extra properties. See the
-`#build mode reference`_ for those that do.
-
-The syntax otherwise looks just like stockpiles, except that it only makes
-sense to have a single symbol to indicate what to build on that tile::
+The syntax is very similar to the syntax for stockpiles, except that it only
+makes sense to have a single symbol to indicate what to build on that tile::
 
     symbol{properties}:configuration(expansion)
+
+See the `#build mode reference`_ for properties that you can specify for each
+building type.
 
 Here's an example of a simple 5x5 square of flooring::
 
@@ -810,6 +877,11 @@ or a named Jeweler's workshop that takes from specific stockpiles::
 
     #build
     wj{name="Encrusting center" take_from="Furniture,Gem storage"}
+
+or a forge that specializes in high-quality armor::
+
+    #build
+    wf{name=Armorer labors=Armoring min_skill=Master}
 
 The ``:configuration`` part is only relevant for hauling routes, which we'll go
 over in the next section.
@@ -972,7 +1044,8 @@ should contain information about where to position the cursor. If the start
 position is ``1;1``, you can omit the numbers and just add a comment describing
 where to put the cursor. This is also useful for meta blueprints that don't
 actually care where the cursor is, but that refer to other blueprints that have
-fully-specified ``start()`` markers. For example, a meta blueprint that refers to the ``stonew`` blueprint above could look like this::
+fully-specified ``start()`` markers. For example, a meta blueprint that refers
+to the ``stonew`` blueprint above could look like this::
 
     #meta start(center of workshop) a stonecutter workshop
     /stonew
@@ -1186,7 +1259,8 @@ You can then hide the blueprints that you now manage with the meta blueprint
 from the blueprint selection lists by adding a ``hidden()`` marker to their
 modelines. That way, the blueprint lists won't be cluttered by blueprints that
 you don't need to run directly. If you ever *do* need to access the meta-managed
-blueprints individually, you can still see them by toggling the "Hidden" setting in the `gui/quickfort` load dialog or with ``quickfort list --hidden``.
+blueprints individually, you can still see them by toggling the "Hidden"
+setting in the `gui/quickfort` load dialog or with ``quickfort list --hidden``.
 
 Meta markers
 ````````````
@@ -1508,7 +1582,7 @@ The surface_ level: how to manage complexity
 
 .. _surface: https://docs.google.com/spreadsheets/d/17HfnCJY4WDPlLdiLuUNc0gwyf6BiSdayndjvFYXzS7c
 
-.. image:: https://drive.google.com/uc?export=download&id=1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
+.. image:: https://lh3.googleusercontent.com/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :alt: Annotated screenshot of the dreamfort surface level
   :target: https://drive.google.com/file/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :align: center
@@ -1606,7 +1680,7 @@ The farming_ level: fun with stockpiles
 
 .. _farming: https://docs.google.com/spreadsheets/d/1RZ67upSpQx7hX-AkqiFXVJl8o5GGdDX1WDOJNz-wOiA
 
-.. image:: https://drive.google.com/uc?export=download&id=1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
+.. image:: https://lh3.googleusercontent.com/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :alt: Annotated screenshot of the dreamfort farming level
   :target: https://drive.google.com/file/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :align: center
@@ -1649,7 +1723,7 @@ The industry_ level: advanced linking
 
 .. _industry: https://docs.google.com/spreadsheets/d/16nzXGrznQmtkrmQv7FeKsVYnv8SSA7eBl1M-97NmuQk
 
-.. image:: https://drive.google.com/uc?export=download&id=1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
+.. image:: https://lh3.googleusercontent.com/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :alt: Annotated screenshot of the dreamfort industry level
   :target: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :align: center
@@ -1688,7 +1762,7 @@ The services_ level: handling multi-level dig blueprints
 
 .. _services: https://docs.google.com/spreadsheets/d/1xu8vNKGlGDN9L3MVB4qp2Ytef9oAWvuET6RkuZXmCaE
 
-.. image:: https://drive.google.com/uc?export=download&id=1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
+.. image:: https://lh3.googleusercontent.com/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :alt: Annotated screenshot of the dreamfort services level
   :target: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :align: center
@@ -1725,7 +1799,7 @@ The guildhall_ level: avoiding smoothing issues
 
 .. _guildhall: https://docs.google.com/spreadsheets/d/1DltZIHkw7zpNiQdSvXLcHdbwdttPwl35pVpBUYy90TA
 
-.. image:: https://drive.google.com/uc?export=download&id=1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
+.. image:: https://lh3.googleusercontent.com/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :alt: Annotated screenshot of the dreamfort guildhall level
   :target: https://drive.google.com/file/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :align: center
@@ -1751,7 +1825,7 @@ The suites_ level: balance of flexibility
 
 .. _suites: https://docs.google.com/spreadsheets/d/1pZ5mnYzzYLSni-LA3rfHZ6dFX8n7rTW088iBwsCI7N4
 
-.. image:: https://drive.google.com/uc?export=download&id=16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
+.. image:: https://lh3.googleusercontent.com/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :alt: Annotated screenshot of the dreamfort noble suites
   :target: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :align: center
@@ -1791,12 +1865,12 @@ The beds_ and crypt_ levels: copy and paste and repeat
 
 .. _crypt: https://docs.google.com/spreadsheets/d/1yTr48EFgXIoswhzL2RXpzUBvY8Sa-XKEacf6zXriZvM
 
-.. image:: https://drive.google.com/uc?export=download&id=16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
+.. image:: https://lh3.googleusercontent.com/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :alt: Annotated screenshot of the dreamfort apartments
   :target: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :align: center
 
-.. image:: https://drive.google.com/uc?export=download&id=16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
+.. image:: https://lh3.googleusercontent.com/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :alt: Annotated screenshot of the dreamfort crypt
   :target: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :align: center
@@ -1904,10 +1978,23 @@ Symbol         Meaning
 =============  =======
 
 You can carve a track over an existing natural ramp to allow a minecart to
-safely traverse z-levels. You can write  ``trackramp<dir>`` instead of
+safely traverse z-levels. You can write ``trackramp<dir>`` instead of
 ``track<dir>`` (e.g. ``trackrampSW``) for clarity in blueprints where this is
 the intention. The actual designation produced by ``track<dir>`` and
 ``trackramp<dir>`` is identical.
+
+Any of the symbols can be prefixed by any number of marker specifications:
+
+=============  =======
+Marker         Meaning
+=============  =======
+mb             "blueprint" mode
+mw             warm dig
+md             damp dig
+=============  =======
+
+For example, a 10x10 block of standard dig tiles with warm + damp markers would
+be ``mwmdd(10x10)``.
 
 #zone mode reference
 ~~~~~~~~~~~~~~~~~~~~
@@ -2057,14 +2144,49 @@ apply in a different fort.
 #build mode reference
 ~~~~~~~~~~~~~~~~~~~~~
 
-In addition to the type-specific properties listed below, all building types
-accept the ``name`` property.
+In addition to the type-specific properties listed in the symbol table below,
+all building types accept the ``name`` property.
 
-Moreover, all workshops and furnaces accept the ``max_general_orders``
-property, which sets the maximum number of general workorders that the building
-can accept, and the ``take_from`` and ``give_to`` properties, which are
-comma-separated lists of names or building ids (the same as the correponding
-stockpile properties above).
+Moreover, all workshops and furnaces (both called "workshops" below) accept the
+following "profile" properties:
+
+======================  ===========
+Property                Description
+======================  ===========
+``max_general_orders``  the maximum number of general workorders that the
+                        workshop will accept
+``take_from``           comma-separated list of names or building ids of
+                        stockpiles that the workshop takes from
+``give_to``             comma-separated list of names or building ids of
+                        stockpiles that the workshop gives to
+``labor``               comma-separated list of labors that should be enabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be disabled.
+``labor_mask``          comma-separated list of labors that should be disabled
+                        for the workshop. all unlisted labors for the workshop
+                        will be left enabled. if both the ``labor`` and
+                        ``labor_mask`` properties are specified, the ``labor``
+                        property takes precedence.
+``min_skill``           the minimum skill rating for units that perform jobs at
+                        the workshop
+``max_skill``           the maximum skill rating for units that perform jobs at
+                        the workshop
+======================  ===========
+
+For the ``labor`` and ``labor_mask`` properties, you can use either the labor
+ID or the readable caption string. You can see both options by running::
+
+    :lua for idx,name in ipairs(df.unit_labor) do cap=df.unit_labor.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
+
+For example, you can specify either ``BONE_CARVE`` or ``"Bone Carving"`` (it
+contains a space -- don't forget the surrounding quotes!) to indicate the bone
+carving labor.
+
+Likewise, for the ``min_skill`` and ``max_skill`` properties, you can specify
+either the skill rating ID or the readable caption string. You can see both
+options by running::
+
+    :lua for idx,name in ipairs(df.skill_rating) do cap=df.skill_rating.attrs[idx].caption if cap then print(('%22s %25s'):format(name, cap)) end end
 
 ================= ============================= ==========
 Symbol            Type                          Properties

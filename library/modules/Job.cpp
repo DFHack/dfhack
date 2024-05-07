@@ -25,35 +25,35 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <cassert>
-using namespace std;
-
 #include "Core.h"
 #include "Error.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 #include "Types.h"
+#include "DataDefs.h"
 
 #include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/plotinfost.h"
-#include "df/unit.h"
 #include "df/building.h"
-#include "df/job.h"
-#include "df/job_item.h"
-#include "df/job_list_link.h"
-#include "df/specific_ref.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/interface_button_building_new_jobst.h"
+#include "df/item.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/job_list_link.h"
+#include "df/plotinfost.h"
+#include "df/specific_ref.h"
+#include "df/unit.h"
+#include "df/world.h"
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cassert>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -165,6 +165,8 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 
 void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int idx)
 {
+    using std::endl;
+
     CHECK_NULL_POINTER(item);
 
     ItemTypeInfo info(item);
@@ -201,6 +203,8 @@ void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int i
 
 void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
+    using std::endl;
+
     CHECK_NULL_POINTER(job);
 
     out.color(job->flags.bits.suspend ? COLOR_DARKGREY : COLOR_GREY);
@@ -361,26 +365,9 @@ bool DFHack::Job::removeJob(df::job* job) {
     CHECK_NULL_POINTER(job);
 
     // cancel_job below does not clean up all refs, so we have to do some work
-
-    // manually handle DESTROY_BUILDING jobs (cancel_job doesn't handle them)
-    if (job->job_type == df::job_type::DestroyBuilding) {
-        for (auto &genRef : job->general_refs) {
-            disconnectJobGeneralRef(job, genRef);
-            if (genRef) delete genRef;
-        }
-        job->general_refs.resize(0);
-
-        // remove the job from the world
-        job->list_link->prev->next = job->list_link->next;
-        delete job->list_link;
-        delete job;
-        return true;
-    }
-
-    // clean up item refs and delete them
     for (auto &item_ref : job->items) {
-       disconnectJobItem(job, item_ref);
-       if (item_ref) delete item_ref;
+        disconnectJobItem(job, item_ref);
+        if (item_ref) delete item_ref;
     }
     job->items.resize(0);
 

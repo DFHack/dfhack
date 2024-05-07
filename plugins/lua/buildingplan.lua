@@ -17,6 +17,7 @@ local inspector = require('plugins.buildingplan.inspectoroverlay')
 local mechanisms = require('plugins.buildingplan.mechanisms')
 local pens = require('plugins.buildingplan.pens')
 local planner = require('plugins.buildingplan.planneroverlay')
+local unlink_mechanisms = require('plugins.buildingplan.unlink_mechanisms')
 require('dfhack.buildings')
 
 local function process_args(opts, args)
@@ -53,8 +54,7 @@ function parse_commandline(...)
 end
 
 function is_suspendmanager_enabled()
-    local ok, sm = pcall(reqscript, 'suspendmanager')
-    return ok and sm.isEnabled()
+    return require('plugins.suspendmanager').isEnabled()
 end
 
 function get_num_filters(btype, subtype, custom)
@@ -136,6 +136,7 @@ function reload_modules()
     reload('plugins.buildingplan.planneroverlay')
     reload('plugins.buildingplan.inspectoroverlay')
     reload('plugins.buildingplan.mechanisms')
+    reload('plugins.buildingplan.unlink_mechanisms')
     reload('plugins.buildingplan')
 end
 
@@ -143,6 +144,8 @@ OVERLAY_WIDGETS = {
     planner=planner.PlannerOverlay,
     inspector=inspector.InspectorOverlay,
     mechanisms=mechanisms.MechanismOverlay,
+    mechanism_free=unlink_mechanisms.MechItemOverlay,
+    mechanism_unlink=unlink_mechanisms.MechLinkOverlay,
 }
 
 return _ENV

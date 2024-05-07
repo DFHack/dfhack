@@ -3,7 +3,7 @@ channel-safely
 
 .. dfhack-tool::
     :summary: Auto-manage channel designations to keep dwarves safe.
-    :tags: fort auto
+    :tags: unavailable
 
 Multi-level channel projects can be dangerous, and managing the safety of your
 dwarves throughout the completion of such projects can be difficult and time

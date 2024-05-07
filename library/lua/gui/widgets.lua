@@ -58,6 +58,73 @@ function Widget:onRenderFrame(dc, rect)
     end
 end
 
+-------------
+-- Divider --
+-------------
+
+Divider = defclass(Divider, Widget)
+Divider.ATTRS{
+    frame_style=gui.FRAME_THIN,
+    interior=false,
+    frame_style_t=DEFAULT_NIL,
+    interior_t=DEFAULT_NIL,
+    frame_style_b=DEFAULT_NIL,
+    interior_b=DEFAULT_NIL,
+    frame_style_l=DEFAULT_NIL,
+    interior_l=DEFAULT_NIL,
+    frame_style_r=DEFAULT_NIL,
+    interior_r=DEFAULT_NIL,
+}
+
+local function divider_get_val(self, base_name, edge_name)
+    local val = self[base_name..'_'..edge_name]
+    if val ~= nil then return val end
+    return self[base_name]
+end
+
+local function divider_get_junction_pen(self, edge_name)
+    local interior = divider_get_val(self, 'interior', edge_name)
+    local pen_name = ('%sT%s_frame_pen'):format(edge_name, interior and 'i' or 'e')
+    local frame_style = divider_get_val(self, 'frame_style', edge_name)
+    if type(frame_style) == 'function' then
+        frame_style = frame_style()
+    end
+    return frame_style[pen_name]
+end
+
+function Divider:onRenderBody(dc)
+    local rect, style = self.frame_rect, self.frame_style
+    if type(style) == 'function' then
+        style = style()
+    end
+
+    if rect.height == 1 and rect.width == 1 then
+        dc:seek(0, 0):char(nil, style.x_frame_pen)
+    elseif rect.width == 1 then
+        local fill_start, fill_end = 0, rect.height-1
+        if self.frame_style_t ~= false then
+            fill_start = 1
+            dc:seek(0, 0):char(nil, divider_get_junction_pen(self, 't'))
+        end
+        if self.frame_style_b ~= false then
+            fill_end = rect.height-2
+            dc:seek(0, rect.height-1):char(nil, divider_get_junction_pen(self, 'b'))
+        end
+        dc:fill(0, fill_start, 0, fill_end, style.v_frame_pen)
+    else
+        local fill_start, fill_end = 0, rect.width-1
+        if self.frame_style_l ~= false then
+            fill_start = 1
+            dc:seek(0, 0):char(nil, divider_get_junction_pen(self, 'l'))
+        end
+        if self.frame_style_r ~= false then
+            fill_end = rect.width-2
+            dc:seek(rect.width-1, 0):char(nil, divider_get_junction_pen(self, 'r'))
+        end
+        dc:fill(fill_start, 0, fill_end, 0, style.h_frame_pen)
+    end
+end
+
 -----------
 -- Panel --
 -----------
@@ -469,7 +536,6 @@ function Panel:postUpdateLayout()
         end
         ::continue::
     end
-    self.frame_rect.height = y
 
     -- let widgets adjust to their new positions
     self:updateSubviewLayout()
@@ -724,11 +790,11 @@ function EditField:onInput(keys)
         return true
     end
 
-    if keys.SELECT or keys.CUSTOM_SHIFT_ENTER then
+    if keys.SELECT or keys.SELECT_ALL then
         if self.key then
             self:setFocus(false)
         end
-        if keys.CUSTOM_SHIFT_ENTER then
+        if keys.SELECT_ALL then
             if self.on_submit2 then
                 self.on_submit2(self.text)
                 return true
@@ -1126,6 +1192,7 @@ local function make_hpen(pen, hpen)
 end
 
 function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
+    pen, dpen, hpen = getval(pen), getval(dpen), getval(hpen)
     local width = 0
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]
@@ -1512,6 +1579,7 @@ end
 HelpButton = defclass(HelpButton, Panel)
 
 HelpButton.ATTRS{
+    frame={t=0, r=1, w=3, h=1},
     command=DEFAULT_NIL,
 }
 
@@ -1524,13 +1592,10 @@ local help_pen_center = to_pen{
 local configure_pen_center = dfhack.pen.parse{
     tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
 
-function HelpButton:preinit(init_table)
-    init_table.frame = init_table.frame or {}
-    init_table.frame.h = init_table.frame.h or 1
-    init_table.frame.w = init_table.frame.w or 3
-end
-
 function HelpButton:init()
+    self.frame.w = self.frame.w or 3
+    self.frame.h = self.frame.h or 1
+
     local command = self.command .. ' '
 
     self:addviews{
@@ -2031,7 +2096,7 @@ function List:onInput(keys)
     end
     if keys.SELECT then
         return self:submit()
-    elseif keys.CUSTOM_SHIFT_ENTER then
+    elseif keys.SELECT_ALL then
         return self:submit2()
     elseif keys._MOUSE_L then
         local idx = self:getIdxUnderMouse()

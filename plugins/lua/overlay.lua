@@ -413,7 +413,9 @@ end
 local function detect_frame_change(widget, fn)
     local frame = widget.frame
     local w, h = frame.w, frame.h
+    local now_ms = dfhack.getTickCount()
     local ret = fn()
+    record_widget_runtime(widget.name, now_ms)
     if w ~= frame.w or h ~= frame.h then
         widget:updateLayout()
     end
@@ -439,6 +441,7 @@ local function do_update(name, db_entry, now_ms, vs)
     then
         return
     end
+    if not utils.getval(w.active) then return end
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         if register_trigger_lock_screen(w:overlay_trigger(), name) then
@@ -497,10 +500,14 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.active) or not utils.getval(w.visible) then
+            goto skip
+        end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
+        ::skip::
     end
     return false
 end
@@ -519,9 +526,11 @@ local function _render_viewscreen_widgets(vs_name, vs, dc)
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
+        if not utils.getval(w.visible) then goto skip end
         if not vs or matches_focus_strings(db_entry, vs_name, vs) then
             detect_frame_change(w, function() w:render(dc) end)
         end
+        ::skip::
     end
     return dc
 end
@@ -553,6 +562,7 @@ end
 OverlayWidget = defclass(OverlayWidget, widgets.Panel)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
+    desc=DEFAULT_NIL, -- add a short description (<100 chars); displays in control panel
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
     default_enabled=false, -- initial enabled state if not in config
     overlay_only=false, -- true if there is no widget to reposition
@@ -581,6 +591,7 @@ end
 
 TitleVersionOverlay = defclass(TitleVersionOverlay, OverlayWidget)
 TitleVersionOverlay.ATTRS{
+    desc='Show DFHack version number and quick links on the DF title page.',
     default_pos={x=11, y=1},
     version=2,
     default_enabled=true,

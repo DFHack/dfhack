@@ -10,13 +10,6 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
-.. _workorder-recheck:
-
-workorder-recheck
-=================
-Tool to set 'Checking' status of the selected work order, allowing conditions to be
-reevaluated. Merged into `orders`.
-
 .. _autohauler:
 
 autohauler
@@ -117,6 +110,19 @@ existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
 
+.. _drain-aquifer:
+
+drain-aquifer
+=============
+Replaced by `aquifer` and `gui/aquifer`.
+
+.. _embark-tools:
+
+embark-tools
+============
+Replaced by `gui/embark-anywhere`. Other functionality was replaced by the DF
+v50 UI.
+
 .. _fix-armory:
 
 fix-armory
@@ -179,6 +185,12 @@ gui/automelt
 ============
 Replaced by the `stockpiles` overlay and the gui for `logistics`.
 
+.. _gui/create-tree:
+
+gui/create-tree
+===============
+Replaced by `gui/sandbox`.
+
 .. _gui/dig:
 
 gui/dig
@@ -190,6 +202,12 @@ Renamed to gui/design
 gui/hack-wish
 =============
 Replaced by `gui/create-item`.
+
+.. _gui/manager-quantity:
+
+gui/manager-quantity
+====================
+Ability to modify manager order quantities has been added to the vanilla UI.
 
 .. _gui/mechanisms:
 
@@ -210,6 +228,18 @@ longer necessary.
 masspit
 =======
 Replaced with a GUI version: `gui/masspit`.
+
+.. _mousequery:
+
+mousequery
+==========
+Functionality superseded by vanilla v50 interface.
+
+.. _petcapRemover:
+
+petcapRemover
+=============
+Renamed to `pet-uncapper`.
 
 .. _resume:
 
@@ -251,8 +281,33 @@ title-version
 =============
 Replaced with an `overlay`.
 
+.. _unsuspend:
+
+unsuspend
+=========
+Merged into `suspendmanager`.
+
+.. _warn-starving:
+
+warn-starving
+=============
+Functionality was merged into `gui/notify`.
+
+.. _warn-stealers:
+
+warn-stealers
+=============
+Functionality was merged into `gui/notify`.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees
 ================
 The corresponding DF :bug:`9252` was fixed in DF 0.44.01.
+
+.. _workorder-recheck:
+
+workorder-recheck
+=================
+Tool to set 'Checking' status of the selected work order, allowing conditions
+to be reevaluated. Merged into `orders`.

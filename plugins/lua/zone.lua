@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.zone')
 
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -30,6 +31,7 @@ end
 --
 
 local STATUS_COL_WIDTH = 18
+local DIST_COL_WIDTH = 5
 local DISPOSITION_COL_WIDTH = 18
 local GENDER_COL_WIDTH = 6
 local SLIDER_LABEL_WIDTH = math.max(STATUS_COL_WIDTH, DISPOSITION_COL_WIDTH) + 4
@@ -45,6 +47,7 @@ AssignAnimal.ATTRS {
     status=DEFAULT_NIL,
     status_revmap=DEFAULT_NIL,
     get_status=DEFAULT_NIL,
+    get_distance=DEFAULT_NIL,
     get_allow_vermin=DEFAULT_NIL,
     get_multi_select=DEFAULT_NIL,
     attach=DEFAULT_NIL,
@@ -70,6 +73,22 @@ local function sort_by_race_asc(a, b)
     return a.data.race > b.data.race
 end
 
+local function sort_by_dist_desc(a, b)
+    local adist, bdist = a.data.dist_fn(), b.data.dist_fn()
+    if adist == bdist then
+        return sort_by_race_desc(a, b)
+    end
+    return adist < bdist
+end
+
+local function sort_by_dist_asc(a, b)
+    local adist, bdist = a.data.dist_fn(), b.data.dist_fn()
+    if adist == bdist then
+        return sort_by_race_desc(a, b)
+    end
+    return adist > bdist
+end
+
 local function sort_by_name_desc(a, b)
     if a.search_key == b.search_key then
         return sort_by_race_desc(a, b)
@@ -86,14 +105,24 @@ end
 
 local function sort_by_gender_desc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_by_race_desc(a, b)
+        local ag = a.data.gelded or false
+        local bg = b.data.gelded or false
+        if ag == bg then
+            return sort_by_race_desc(a, b)
+        end
+        return bg
     end
     return a.data.gender < b.data.gender
 end
 
 local function sort_by_gender_asc(a, b)
     if a.data.gender == b.data.gender then
-        return sort_by_race_desc(a, b)
+        local ag = a.data.gelded or false
+        local bg = b.data.gelded or false
+        if ag == bg then
+            return sort_by_race_desc(a, b)
+        end
+        return ag
     end
     return a.data.gender > b.data.gender
 end
@@ -148,14 +177,16 @@ function AssignAnimal:init()
             options={
                 {label='status'..CH_DN, value=sort_by_status_desc},
                 {label='status'..CH_UP, value=sort_by_status_asc},
+                {label='dist'..CH_DN, value=sort_by_dist_desc},
+                {label='dist'..CH_UP, value=sort_by_dist_asc},
                 {label='disposition'..CH_DN, value=sort_by_disposition_desc},
                 {label='disposition'..CH_UP, value=sort_by_disposition_asc},
                 {label='gender'..CH_DN, value=sort_by_gender_desc},
                 {label='gender'..CH_UP, value=sort_by_gender_asc},
-                {label='race'..CH_DN, value=sort_by_race_desc},
-                {label='race'..CH_UP, value=sort_by_race_asc},
                 {label='name'..CH_DN, value=sort_by_name_desc},
                 {label='name'..CH_UP, value=sort_by_name_asc},
+                {label='race'..CH_DN, value=sort_by_race_desc},
+                {label='race'..CH_UP, value=sort_by_race_asc},
             },
             initial_option=sort_by_status_desc,
             on_change=self:callback('refresh_list', 'sort'),
@@ -164,7 +195,7 @@ function AssignAnimal:init()
             view_id='search',
             frame={l=35, t=0},
             label_text='Search: ',
-            on_char=function(ch) return ch:match('[%l -]') end,
+            on_char=function(ch, text) return ch == ' ' and text:match('%S$') or ch:match('[%l-]') end,
         },
         widgets.Panel{
             frame={t=2, l=0, w=SLIDER_WIDTH, h=4},
@@ -265,7 +296,7 @@ function AssignAnimal:init()
             },
         },
         widgets.Panel{
-            frame={t=3, l=SLIDER_WIDTH+2, r=0, h=3},
+            frame={t=3, l=SLIDER_WIDTH+2, r=0, h=5},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='egg',
@@ -295,6 +326,20 @@ function AssignAnimal:init()
                     initial_option='include',
                     on_change=function() self:refresh_list() end,
                 },
+                widgets.CycleHotkeyLabel{
+                    view_id='juvenile',
+                    frame={l=0, t=4, w=22},
+                    key_back='CUSTOM_SHIFT_U',
+                    key='CUSTOM_SHIFT_I',
+                    label='Juveniles:',
+                    options={
+                        {label='Include', value='include', pen=COLOR_GREEN},
+                        {label='Only', value='only', pen=COLOR_YELLOW},
+                        {label='Exclude', value='exclude', pen=COLOR_RED},
+                    },
+                    initial_option='include',
+                    on_change=function() self:refresh_list() end,
+                },
             },
         },
         widgets.Panel{
@@ -314,8 +359,19 @@ function AssignAnimal:init()
                     on_change=self:callback('refresh_list', 'sort_status'),
                 },
                 widgets.CycleHotkeyLabel{
+                    view_id='sort_dist',
+                    frame={t=0, l=STATUS_COL_WIDTH+2, w=5},
+                    options={
+                        {label='dist', value=sort_noop},
+                        {label='dist'..CH_DN, value=sort_by_dist_desc},
+                        {label='dist'..CH_UP, value=sort_by_dist_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_dist'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_disposition',
-                    frame={t=0, l=STATUS_COL_WIDTH+2, w=12},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2, w=12},
                     options={
                         {label='disposition', value=sort_noop},
                         {label='disposition'..CH_DN, value=sort_by_disposition_desc},
@@ -326,7 +382,7 @@ function AssignAnimal:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_gender',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2, w=7},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2, w=7},
                     options={
                         {label='gender', value=sort_noop},
                         {label='gender'..CH_DN, value=sort_by_gender_desc},
@@ -336,19 +392,8 @@ function AssignAnimal:init()
                     on_change=self:callback('refresh_list', 'sort_gender'),
                 },
                 widgets.CycleHotkeyLabel{
-                    view_id='sort_race',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2, w=5},
-                    options={
-                        {label='race', value=sort_noop},
-                        {label='race'..CH_DN, value=sort_by_race_desc},
-                        {label='race'..CH_UP, value=sort_by_race_asc},
-                    },
-                    option_gap=0,
-                    on_change=self:callback('refresh_list', 'sort_race'),
-                },
-                widgets.CycleHotkeyLabel{
                     view_id='sort_name',
-                    frame={t=0, l=STATUS_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2+7, w=5},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..CH_DN, value=sort_by_name_desc},
@@ -356,6 +401,17 @@ function AssignAnimal:init()
                     },
                     option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_name'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_race',
+                    frame={t=0, l=STATUS_COL_WIDTH+2+DIST_COL_WIDTH+2+DISPOSITION_COL_WIDTH+2+GENDER_COL_WIDTH+2+7, w=5},
+                    options={
+                        {label='race', value=sort_noop},
+                        {label='race'..CH_DN, value=sort_by_race_desc},
+                        {label='race'..CH_UP, value=sort_by_race_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_race'),
                 },
                 widgets.FilteredList{
                     view_id='list',
@@ -373,6 +429,13 @@ function AssignAnimal:init()
             on_activate=self:callback('toggle_visible'),
             visible=self.get_multi_select,
             auto_width=true,
+        },
+        widgets.Label{
+            frame={l=30, b=2+(can_assign_pets and 0 or 1)},
+            text={
+                {text=self:callback('get_num_assigned_here'), pen=COLOR_YELLOW},
+                ' creature(s) assigned here.'
+            },
         },
         widgets.WrappedLabel{
             frame={b=0, l=0, r=0},
@@ -393,6 +456,16 @@ function AssignAnimal:init()
     self.subviews.list:setChoices(self:get_choices())
 end
 
+function AssignAnimal:get_num_assigned_here()
+    local count = 0
+    for _,choice in ipairs(self.subviews.list:getChoices()) do
+        if choice.data.status == 1 then
+            count = count + 1
+        end
+    end
+    return count
+end
+
 function AssignAnimal:refresh_list(sort_widget, sort_fn)
     sort_widget = sort_widget or 'sort'
     sort_fn = sort_fn or self.subviews.sort:getOptionValue()
@@ -400,7 +473,7 @@ function AssignAnimal:refresh_list(sort_widget, sort_fn)
         self.subviews[sort_widget]:cycle()
         return
     end
-    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_disposition', 'sort_gender', 'sort_race', 'sort_name'} do
+    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_dist', 'sort_disposition', 'sort_gender', 'sort_race', 'sort_name'} do
         self.subviews[widget_name]:setOption(sort_fn)
     end
     local list = self.subviews.list
@@ -432,8 +505,10 @@ function AssignAnimal:make_choice_text(data)
     elseif data.gender == df.pronoun_type.he then
         gender_ch = CH_MALE
     end
+    gender_ch = string.format(data.gelded and 'x%sx' or ' %s ', gender_ch)
     return {
         {width=STATUS_COL_WIDTH, text=function() return self.status[self.status_revmap[data.status]].label end},
+        {gap=2, width=DIST_COL_WIDTH, text=data.dist_fn},
         {gap=2, width=DISPOSITION_COL_WIDTH, text=function() return DISPOSITION[DISPOSITION_REVMAP[data.disposition]].label end},
         {gap=2, width=GENDER_COL_WIDTH, text=gender_ch},
         {gap=2, text=data.desc},
@@ -547,15 +622,22 @@ function AssignAnimal:cache_choices()
     for _, unit in ipairs(df.global.world.units.active) do
         if not is_assignable_unit(unit) then goto continue end
         local raw = df.creature_raw.find(unit.race)
+        local desc = dfhack.units.getReadableName(unit)
+        if #unit.custom_profession > 0 then
+            desc = unit.custom_profession .. ', ' .. desc
+        end
         local data = {
             unit=unit,
-            desc=dfhack.units.getReadableName(unit),
+            desc=desc,
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.units.getPosition(unit))),
             gender=unit.sex,
             race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
             disposition=get_unit_disposition(unit),
             egg=dfhack.units.isEggLayerRace(unit),
             graze=dfhack.units.isGrazer(unit),
+            juvenile=not dfhack.units.isAdult(unit),
+            gelded=dfhack.units.isGelded(unit),
         }
         local choice = {
             search_key=make_search_key(data.desc, raw),
@@ -571,6 +653,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=vermin,
             desc=get_vermin_desc(vermin, raw),
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.items.getPosition(vermin))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(vermin, bld_assignments),
@@ -590,6 +673,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=small_pet,
             desc=get_small_pet_desc(raw),
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.items.getPosition(small_pet))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(small_pet, bld_assignments),
@@ -608,6 +692,12 @@ function AssignAnimal:cache_choices()
     return choices
 end
 
+function matches_filter(filter, value)
+    if filter == 'only' and not value then return false end
+    if filter == 'exclude' and value then return false end
+    return true
+end
+
 function AssignAnimal:get_choices()
     local raw_choices = self:cache_choices()
     local show_vermin = self.get_allow_vermin()
@@ -617,6 +707,7 @@ function AssignAnimal:get_choices()
     local max_disposition = self.subviews.max_disposition:getOptionValue()
     local egg = self.subviews.egg:getOptionValue()
     local graze = self.subviews.graze:getOptionValue()
+    local juvenile = self.subviews.juvenile:getOptionValue()
     local choices = {}
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
@@ -625,10 +716,9 @@ function AssignAnimal:get_choices()
         if max_status < data.status then goto continue end
         if min_disposition > data.disposition then goto continue end
         if max_disposition < data.disposition then goto continue end
-        if egg == 'only' and not data.egg then goto continue end
-        if egg == 'exclude' and data.egg then goto continue end
-        if graze == 'only' and not data.graze then goto continue end
-        if graze == 'exclude' and data.graze then goto continue end
+        if not matches_filter(egg, data.egg) then goto continue end
+        if not matches_filter(graze, data.graze) then goto continue end
+        if not matches_filter(juvenile, data.juvenile) then goto continue end
         table.insert(choices, choice)
         ::continue::
     end
@@ -776,6 +866,7 @@ AssignAnimalScreen.ATTRS {
     status=DEFAULT_NIL,
     status_revmap=DEFAULT_NIL,
     get_status=DEFAULT_NIL,
+    get_distance=DEFAULT_NIL,
     get_allow_vermin=DEFAULT_NIL,
     get_multi_select=DEFAULT_NIL,
     attach=DEFAULT_NIL,
@@ -789,6 +880,7 @@ function AssignAnimalScreen:init()
             status=self.status,
             status_revmap=self.status_revmap,
             get_status=self.get_status,
+            get_distance=self.get_distance,
             get_allow_vermin=self.get_allow_vermin,
             get_multi_select=self.get_multi_select,
             attach=self.attach,
@@ -835,6 +927,7 @@ end
 
 PasturePondOverlay = defclass(PasturePondOverlay, overlay.OverlayWidget)
 PasturePondOverlay.ATTRS{
+    desc='Adds a link to launch the animal assignment UI to pastures and ponds.',
     default_pos={x=7,y=13},
     default_enabled=true,
     viewscreens={'dwarfmode/Zone/Some/Pen', 'dwarfmode/Zone/Some/Pond'},
@@ -871,7 +964,7 @@ local PASTURE_STATUS = {
     PITTED={label='In other pit/pond', value=3},
     RESTRAINED={label='On restraint', value=4},
     BUILT_CAGE={label='In built cage', value=5},
-    ITEM_CAGE={label='In stockpiled cage', value=6},
+    ITEM_CAGE={label='In loose cage', value=6},
     ROAMING={label='Roaming', value=7},
 }
 local PASTURE_STATUS_REVMAP = {}
@@ -916,12 +1009,20 @@ local function get_zone_status(unit_or_vermin, bld_assignments)
     return PASTURE_STATUS.ROAMING.value
 end
 
+local function get_zone_distance(pos)
+    local zone = df.global.game.main_interface.civzone.cur_bld
+    if not zone then return 0 end
+    if zone.z == pos.z and dfhack.buildings.containsTile(zone, pos.x, pos.y) then return 0 end
+    return math.max(math.abs(zone.centerx - pos.x), math.abs(zone.centery - pos.y)) + math.abs(zone.z - pos.z)
+end
+
 local function show_pasture_pond_screen()
     return AssignAnimalScreen{
         is_valid_ui_state=is_valid_zone,
         status=PASTURE_STATUS,
         status_revmap=PASTURE_STATUS_REVMAP,
         get_status=get_zone_status,
+        get_distance=get_zone_distance,
         get_allow_vermin=is_pit_selected,
         get_multi_select=function() return true end,
         attach=attach_to_zone,
@@ -952,6 +1053,7 @@ end
 
 CageChainOverlay = defclass(CageChainOverlay, overlay.OverlayWidget)
 CageChainOverlay.ATTRS{
+    desc='Adds a link to launch the animal assignment UI to cages and chains.',
     default_pos={x=-40,y=34},
     default_enabled=true,
     viewscreens={'dwarfmode/ViewSheets/BUILDING/Cage', 'dwarfmode/ViewSheets/BUILDING/Chain'},
@@ -1058,12 +1160,19 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     return CAGE_STATUS.ROAMING.value
 end
 
+local function get_cage_distance(pos)
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld then return 0 end
+    return math.max(math.abs(bld.centerx - pos.x), math.abs(bld.centery - pos.y)) + math.abs(bld.z - pos.z)
+end
+
 local function show_cage_chain_screen()
     return AssignAnimalScreen{
         is_valid_ui_state=is_valid_building,
         status=CAGE_STATUS,
         status_revmap=CAGE_STATUS_REVMAP,
         get_status=get_cage_status,
+        get_distance=get_cage_distance,
         get_allow_vermin=is_cage_selected,
         get_multi_select=is_cage_selected,
         attach=attach_to_building,
@@ -1084,9 +1193,299 @@ function CageChainOverlay:init()
     }
 end
 
+-- ---------------------
+-- RetireLocationOverlay
+--
+
+local mi = df.global.game.main_interface
+
+local function location_details_is_on_top()
+    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator') and
+        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector')
+end
+
+RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)
+RetireLocationOverlay.ATTRS{
+    desc='Adds a button to retire unneeded locations to the location details screen.',
+    default_pos={x=-39,y=6},
+    default_enabled=true,
+    viewscreens='dwarfmode/LocationDetails',
+    frame={w=25, h=3},
+}
+
+function RetireLocationOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            frame_background=gui.CLEAR_PEN,
+            frame_style=gui.FRAME_MEDIUM,
+            visible=location_details_is_on_top,
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={t=0, l=0},
+                    label='Retire location',
+                    key='CUSTOM_CTRL_D',
+                    on_activate=self:callback('confirm_retire'),
+                },
+            },
+        },
+    }
+end
+
+local function retire(location)
+    location.flags.DOES_NOT_EXIST = true
+    for idx, loc in ipairs(mi.location_selector.valid_ab) do
+        if loc.id == location.id then
+            mi.location_selector.valid_ab:erase(idx)
+            break
+        end
+    end
+    local occupations = df.global.world.occupations.all
+    for idx = #occupations-1,0,-1 do
+        local occupation = occupations[idx]
+        if occupation.site_id == location.site_id and
+            occupation.location_id == location.id
+        then
+            occupations:erase(idx)
+        end
+    end
+    mi.location_details.open = false
+end
+
+function RetireLocationOverlay:confirm_retire()
+    local details = mi.location_details
+    local location = details.selected_ab
+    local num_occupations, num_zones = 0, 0
+    for _, occupation in ipairs(location.occupations) do
+        if occupation.histfig_id ~= -1 then
+            num_occupations = num_occupations + 1
+        end
+    end
+    for _, zone_id in ipairs(location.contents.building_ids) do
+        -- there can be dangling references in this list; only count
+        -- "attached" zones that actually exist
+        if df.building.find(zone_id) then
+            num_zones = num_zones + 1
+        end
+    end
+    if num_occupations + num_zones > 0 then
+        local messages = {'Cannot retire location! Please:', ''}
+        if num_occupations > 0 then
+            table.insert(messages, ('- unassign %d location occupation(s)'):format(num_occupations))
+        end
+        if num_zones > 0 then
+            table.insert(messages, ('- detach this location from %d zone(s)'):format(num_zones))
+        end
+        table.insert(messages, '')
+        table.insert(messages, 'and try again')
+        dialogs.showMessage('Location in use', table.concat(messages, NEWLINE))
+        return
+    end
+    dialogs.showYesNoPrompt('Confirm retire location',
+        'Are you sure you want to retire this location?'..NEWLINE..'You won\'t be able to use it again.',
+        COLOR_WHITE,
+        curry(retire, location))
+end
+
+-- -------------------
+-- AnimalActionsWidget
+--
+
+local function isFortAnimal(unit)
+    return dfhack.units.isFortControlled(unit)
+        and dfhack.units.isAlive(unit)
+        and dfhack.units.isAnimal(unit)
+end
+
+local function isCagedWildAnimal(unit)
+    return dfhack.units.isTamable(unit)
+        and unit.flags1.caged
+        and not unit.flags1.tame
+end
+
+-- Make sure an animal unit of your civ is selected
+local function check_valid_unit()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return unit and (isFortAnimal(unit) or isCagedWildAnimal(unit))
+end
+
+local function is_geldable()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return unit and dfhack.units.isGeldable(unit) and dfhack.units.isFortControlled(unit) and not dfhack.units.isGelded(unit)
+end
+
+local function is_not_pet()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return not unit or not dfhack.units.isPet(unit) and dfhack.units.isFortControlled(unit)
+end
+
+local function is_avail_adoption()
+    local unit = dfhack.gui.getSelectedUnit(true)
+    if not unit then return false end
+
+    if dfhack.units.isPet(unit) then return false end
+
+    local raw = df.creature_raw.find(unit.race)
+    if not raw then return false end
+
+    if not dfhack.units.isFortControlled(unit) then return false end
+
+    -- cats adopt owners; owners can't adopt cats
+    return raw.creature_id ~= 'CAT'
+end
+
+local function is_tamable()
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    return dfhack.units.isTamable(unit) and not dfhack.units.isDomesticated(unit)
+end
+
+AnimalActionsWidget=defclass(AnimalActionsWidget, overlay.OverlayWidget)
+AnimalActionsWidget.ATTRS {
+    desc="Add options to tamed animals view sheet.",
+    default_pos={x=-41,y=37},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/UNIT/Overview',
+    frame={w=25, h=6},
+}
+
+-- The above function already handles checking if valid unit
+-- so just set slaughter flag
+function AnimalActionsWidget:set_slaughter_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    -- emulate vanilla game behavior by only being able to have
+    -- 1 set at a time
+    if option then
+        self:set_geld_flag(false)
+        self:set_adoption_flag(false)
+    end
+
+    unit.flags2.slaughter = option
+end
+
+-- set units marked for gelding flag
+function AnimalActionsWidget:set_geld_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        self:set_slaughter_flag(false)
+    end
+
+    unit.flags3.marked_for_gelding = option
+end
+
+-- set available for adoption flag
+function AnimalActionsWidget:set_adoption_flag(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        self:set_slaughter_flag(false)
+    end
+
+    unit.flags3.available_for_adoption = option
+end
+
+-- Assign any trainer
+function AnimalActionsWidget:set_tame(option)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if not unit then return end
+
+    if option then
+        dfhack.units.assignTrainer(unit)
+    else
+        dfhack.units.unassignTrainer(unit)
+    end
+end
+
+-- Use render to set On/Off dynamically for each unit
+function AnimalActionsWidget:render(dc)
+    local unit = dfhack.gui.getSelectedUnit(true)
+
+    if unit then
+        self.subviews.butcher_animal:setOption(dfhack.units.isMarkedForSlaughter(unit))
+        self.subviews.geld_animal:setOption(dfhack.units.isMarkedForGelding(unit))
+        self.subviews.adopt_animal:setOption(dfhack.units.isAvailableForAdoption(unit))
+        self.subviews.tame_animal:setOption(dfhack.units.isMarkedForTraining(unit))
+    end
+
+    AnimalActionsWidget.super.render(self, dc)
+end
+
+function AnimalActionsWidget:init()
+    self:addviews{
+        widgets.Panel{
+            frame_background=gui.CLEAR_PEN,
+            frame_style=gui.FRAME_MEDIUM,
+            visible=check_valid_unit,
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    frame={t=0,l=0},
+                    label='Butcher    ',
+                    key='CUSTOM_CTRL_B',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='butcher_animal',
+                    enabled=is_not_pet,
+                    on_change=self:callback('set_slaughter_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=1,l=0},
+                    label='Geld       ',
+                    key='CUSTOM_CTRL_G',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='geld_animal',
+                    enabled=is_geldable,
+                    on_change=self:callback('set_geld_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=2,l=0},
+                    label='Adopt      ',
+                    key='CUSTOM_CTRL_A',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='adopt_animal',
+                    enabled=is_avail_adoption,
+                    on_change=self:callback('set_adoption_flag'),
+                },
+                widgets.ToggleHotkeyLabel{
+                    frame={t=3,l=0},
+                    label='Has Trainer',
+                    key='CUSTOM_CTRL_T',
+                    options={
+                        {label='No', value=false, pen=COLOR_WHITE},
+                        {label='Yes', value=true, pen=COLOR_YELLOW},
+                    },
+                    view_id='tame_animal',
+                    enabled=is_tamable,
+                    on_change=self:callback('set_tame'),
+                },
+            },
+        },
+    }
+end
+
 OVERLAY_WIDGETS = {
     pasturepond=PasturePondOverlay,
     cagechain=CageChainOverlay,
+    retirelocation=RetireLocationOverlay,
+    animal_actions=AnimalActionsWidget,
 }
 
 return _ENV

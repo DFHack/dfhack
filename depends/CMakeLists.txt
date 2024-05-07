@@ -1,4 +1,7 @@
 # list depends here.
+add_subdirectory(dfhooks)
+install(TARGETS dfhooks LIBRARY DESTINATION . RUNTIME DESTINATION .)
+
 add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
@@ -25,7 +28,6 @@ if(NOT TinyXML_FOUND)
     add_subdirectory(tinyxml)
 endif()
 
-add_subdirectory(tthread)
 option(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
 option(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" OFF)
 option(JSONCPP_BUILD_SHARED_LIBS "Build jsoncpp_lib as a shared library." OFF)

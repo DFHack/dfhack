@@ -2,8 +2,16 @@
  * Tailor plugin. Automatically manages keeping your dorfs clothed.
  */
 
-#include <string>
-#include <vector>
+#include "Core.h"
+#include "Debug.h"
+#include "LuaTools.h"
+#include "PluginManager.h"
+
+#include "modules/Materials.h"
+#include "modules/Persistence.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
 #include "df/creature_raw.h"
 #include "df/historical_entity.h"
@@ -16,19 +24,10 @@
 #include "df/itemdef_shoesst.h"
 #include "df/items_other_id.h"
 #include "df/manager_order.h"
+#include "df/material.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
-
-#include "Core.h"
-#include "Debug.h"
-#include "LuaTools.h"
-#include "PluginManager.h"
-
-#include "modules/Materials.h"
-#include "modules/Persistence.h"
-#include "modules/Translation.h"
-#include "modules/Units.h"
-#include "modules/World.h"
 
 using std::string;
 using std::vector;
@@ -43,8 +42,8 @@ REQUIRE_GLOBAL(standing_orders_use_dyed_cloth);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
+    DBG_DECLARE(tailor, control, DebugCategory::LINFO);
     DBG_DECLARE(tailor, cycle, DebugCategory::LINFO);
-    DBG_DECLARE(tailor, config, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -57,25 +56,10 @@ enum ConfigValues {
     CONFIG_YARN_IDX = 3,
     CONFIG_LEATHER_IDX = 4,
     CONFIG_ADAMANTINE_IDX = 5,
+    CONFIG_CONFISCATE = 6
 };
 
-static int get_config_val(PersistentDataItem &c, int index) {
-    if (!c.isValid())
-        return -1;
-    return c.ival(index);
-}
-static bool get_config_bool(PersistentDataItem &c, int index) {
-    return get_config_val(c, index) == 1;
-}
-static void set_config_val(PersistentDataItem &c, int index, int value) {
-    if (c.isValid())
-        c.ival(index) = value;
-}
-static void set_config_bool(PersistentDataItem &c, int index, bool value) {
-    set_config_val(c, index, value ? 1 : 0);
-}
-
-static const int32_t CYCLE_TICKS = 1200; // one day
+static const int32_t CYCLE_TICKS = 1231; // one day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 // ah, if only STL had a bimap
@@ -125,7 +109,6 @@ static const MatType
 
 static const std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER, M_ADAMANTINE };
 static const std::list<MatType> default_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER }; // adamantine not included by default
-static std::list<MatType> material_order = default_materials;
 
 static struct BadFlags {
     uint32_t whole;
@@ -136,8 +119,7 @@ static struct BadFlags {
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction); F(owned);
-        F(in_chest); F(removed); F(encased);
-        F(spider_web);
+        F(removed); F(encased); F(spider_web);
         #undef F
         whole = flags.whole;
     }
@@ -157,14 +139,38 @@ private:
     std::map<MatType, int> supply;
     std::map<MatType, int> reserves;
 
+    std::list<MatType> material_order = default_materials;
+
     int default_reserve = 10;
 
-    bool inventory_sanity_checking = false;
+    bool confiscate = true;
 
 public:
-    void set_debug_flag(bool f)
+    void set_confiscate(bool f){ confiscate = f; }
+
+    bool get_confiscate() { return confiscate; }
+
+    void sync_material_order()
     {
-        inventory_sanity_checking = f;
+        material_order.clear();
+        for (size_t i = 0; i < all_materials.size(); ++i) {
+            if (i == (size_t)config.get_int(CONFIG_SILK_IDX))
+                material_order.push_back(M_SILK);
+            else if (i == (size_t)config.get_int(CONFIG_CLOTH_IDX))
+                material_order.push_back(M_CLOTH);
+            else if (i == (size_t)config.get_int(CONFIG_YARN_IDX))
+                material_order.push_back(M_YARN);
+            else if (i == (size_t)config.get_int(CONFIG_LEATHER_IDX))
+                material_order.push_back(M_LEATHER);
+            else if (i == (size_t)config.get_int(CONFIG_ADAMANTINE_IDX))
+                material_order.push_back(M_ADAMANTINE);
+        }
+        if (!material_order.size())
+            std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
+    }
+
+    std::list<MatType> get_material_order() {
+        return material_order;
     }
 
     void reset()
@@ -260,53 +266,52 @@ public:
 
     void scan_replacements()
     {
-        for (auto u : world->units.active)
-        {
-            if (!Units::isOwnCiv(u) ||
-                !Units::isOwnGroup(u) ||
-                !Units::isActive(u) ||
-                Units::isBaby(u) ||
+        for (auto u : Units::citizensRange(world->units.active)) {
+            if (Units::isBaby(u) ||
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
                 continue; // skip units we don't control or that can't wear clothes
 
-            std::set <df::item_type> wearing;
+            std::set <df::item_type> equipped;
             std::set <df::item_type> ordered;
-            std::deque<df::item*> worn;
+            std::deque<df::item*> damaged;
 
             for (auto inv : u->inventory)
             {
                 if (inv->mode != df::unit_inventory_item::Worn)
                     continue;
+                // skip non-clothing
+                if (!inv->item->isClothing())
+                    continue;
                 if (inv->item->getWear() > 0)
-                    worn.push_back(inv->item);
+                    damaged.push_back(inv->item);
                 else
-                    wearing.insert(inv->item->getType());
+                    equipped.insert(inv->item->getType());
             }
 
             int usize = world->raws.creatures.all[u->race]->adultsize;
             sizes[usize] = u->race;
 
-            for (auto w : worn)
+            for (auto w : damaged)
             {
+                // skip armor
+                if (w->getEffectiveArmorLevel() > 0)
+                    continue;
+
                 auto ty = w->getType();
 
-                int isize = world->raws.creatures.all[w->getMakerRace()]->adultsize;
+                auto makerRace = w->getMakerRace();
+                if (makerRace < 0 || makerRace >= (int16_t) world->raws.creatures.all.size())
+                    continue;
+
+                int isize = world->raws.creatures.all[makerRace]->adultsize;
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (wearing.count(ty) == 0)
+                if (equipped.count(ty) == 0)
                 {
-                    if (available[std::make_pair(ty, usize)] > 0)
+                    if (ordered.count(ty) == 0)
                     {
-                        available[std::make_pair(ty, usize)] -= 1;
-                        DEBUG(cycle).print("tailor: allocating a %s (size %d) to %s\n",
-                            ENUM_KEY_STR(item_type, ty).c_str(), usize,
-                            DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str());
-                        wearing.insert(ty);
-                    }
-                    else if (ordered.count(ty) == 0)
-                    {
-                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement, but none available\n",
+                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement\n",
                                             DF2CONSOLE(description).c_str(), isize,
                                             DF2CONSOLE(Translation::TranslateName(&u->name, false)).c_str(), usize);
                         needed[std::make_pair(ty, usize)] += 1;
@@ -314,7 +319,7 @@ public:
                     }
                 }
 
-                if (wearing.count(ty) > 0)
+                if (confiscate && equipped.count(ty) > 0)
                 {
                     if (w->flags.bits.owned)
                     {
@@ -336,7 +341,7 @@ public:
 
             for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
             {
-                if (wearing.count(ty) == 0 && ordered.count(ty) == 0)
+                if (equipped.count(ty) == 0 && ordered.count(ty) == 0)
                 {
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
@@ -357,6 +362,9 @@ public:
             df::item_type ty = a.first.first;
             int size = a.first.second;
             int count = a.second;
+
+            // decrease "need" by "available"
+            count -= available[std::make_pair(ty, size)];
 
             if (count <= 0)
                 continue;
@@ -611,7 +619,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static int do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(config,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     tailor_instance = std::make_unique<Tailor>();
 
@@ -625,20 +633,20 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(config,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     } else {
-        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -646,45 +654,37 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     tailor_instance.release();
 
     return CR_OK;
 }
 
-static void set_material_order() {
-    material_order.clear();
-    for (size_t i = 0; i < all_materials.size(); ++i) {
-        if (i == (size_t)get_config_val(config, CONFIG_SILK_IDX))
-            material_order.push_back(M_SILK);
-        else if (i == (size_t)get_config_val(config, CONFIG_CLOTH_IDX))
-            material_order.push_back(M_CLOTH);
-        else if (i == (size_t)get_config_val(config, CONFIG_YARN_IDX))
-            material_order.push_back(M_YARN);
-        else if (i == (size_t)get_config_val(config, CONFIG_LEATHER_IDX))
-            material_order.push_back(M_LEATHER);
-        else if (i == (size_t)get_config_val(config, CONFIG_ADAMANTINE_IDX))
-            material_order.push_back(M_ADAMANTINE);
-    }
-    if (!material_order.size())
-        std::copy(default_materials.begin(), default_materials.end(), std::back_inserter(material_order));
-}
 
-DFhackCExport command_result plugin_load_data (color_ostream &out) {
+
+DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_CONFISCATE, true);
     }
-
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+    // transition existing saves to CONFIG_CONFISCATE=true
+    if (config.get_int(CONFIG_CONFISCATE) < 0) {
+        DEBUG(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
+        config.set_bool(CONFIG_CONFISCATE, true);
+    }
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
-    set_material_order();
+    tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
+    DEBUG(control,out).print("loading persisted confiscation state: %s\n",
+                            tailor_instance->get_confiscate() ? "true" : "false");
+    tailor_instance->sync_material_order();
 
     return CR_OK;
 }
@@ -692,7 +692,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -709,40 +709,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool call_tailor_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(config).print("calling tailor lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.tailor", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     bool show_help = false;
-    if (!call_tailor_lua(&out, "parse_commandline", parameters.size(), 1,
-            [&](lua_State *L) {
-                for (const string &param : parameters)
-                    Lua::Push(L, param);
-            },
+    if (!Lua::CallLuaModuleFunction(out, "plugins.tailor", "parse_commandline", parameters, 1,
             [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
@@ -770,7 +746,7 @@ static int do_cycle(color_ostream &out) {
 //
 
 static void tailor_doCycle(color_ostream &out) {
-    DEBUG(config,out).print("entering tailor_doCycle\n");
+    DEBUG(control,out).print("entering tailor_doCycle\n");
     out.print("ordered %d items of clothing\n", do_cycle(out));
 }
 
@@ -778,43 +754,48 @@ static void tailor_doCycle(color_ostream &out) {
 static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
                         int32_t clothIdx, int32_t yarnIdx, int32_t leatherIdx,
                         int32_t adamantineIdx) {
-    DEBUG(config,out).print("entering tailor_setMaterialPreferences\n");
+    DEBUG(control,out).print("entering tailor_setMaterialPreferences\n");
 
     // it doesn't really matter if these are invalid. set_material_order will do
     // the right thing.
-    set_config_val(config, CONFIG_SILK_IDX, silkIdx - 1);
-    set_config_val(config, CONFIG_CLOTH_IDX, clothIdx - 1);
-    set_config_val(config, CONFIG_YARN_IDX, yarnIdx - 1);
-    set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx - 1);
-    set_config_val(config, CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
+    config.set_int(CONFIG_SILK_IDX, silkIdx - 1);
+    config.set_int(CONFIG_CLOTH_IDX, clothIdx - 1);
+    config.set_int(CONFIG_YARN_IDX, yarnIdx - 1);
+    config.set_int(CONFIG_LEATHER_IDX, leatherIdx - 1);
+    config.set_int(CONFIG_ADAMANTINE_IDX, adamantineIdx - 1);
 
-    set_material_order();
+    tailor_instance->sync_material_order();
+}
+
+static void tailor_setConfiscate(color_ostream& out, bool enable)
+{
+    DEBUG(control,out).print("%s confiscation of tattered clothing \n", enable ? "enabling" : "disabling");
+    config.set_bool(CONFIG_CONFISCATE, enable);
+    tailor_instance->set_confiscate(enable);
+}
+
+static bool tailor_getConfiscate(color_ostream& out)
+{
+    return tailor_instance->get_confiscate();
 }
 
 static int tailor_getMaterialPreferences(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(config,*out).print("entering tailor_getMaterialPreferences\n");
+    DEBUG(control,*out).print("entering tailor_getMaterialPreferences\n");
     vector<string> names;
-    for (const auto& m : material_order)
+    for (const auto& m : tailor_instance->get_material_order())
         names.emplace_back(m.name);
     Lua::PushVector(L, names);
     return 1;
 }
 
-static void tailor_setDebugFlag(color_ostream& out, bool enable)
-{
-    DEBUG(config, out).print("entering tailor_setDebugFlag\n");
-
-    tailor_instance->set_debug_flag(enable);
-
-}
-
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_doCycle),
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
-    DFHACK_LUA_FUNCTION(tailor_setDebugFlag),
+    DFHACK_LUA_FUNCTION(tailor_setConfiscate),
+    DFHACK_LUA_FUNCTION(tailor_getConfiscate),
     DFHACK_LUA_END
 };
 

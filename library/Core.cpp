@@ -24,18 +24,6 @@ distribution.
 
 #include "Internal.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <cstdio>
-#include <cstring>
-#include <iterator>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
-#include <cstdarg>
-
 #include "Error.h"
 #include "MemAccess.h"
 #include "Core.h"
@@ -48,6 +36,12 @@ distribution.
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "RemoteServer.h"
+#include "RemoteTools.h"
+#include "LuaTools.h"
+#include "DFHackVersion.h"
+#include "md5wrapper.h"
+
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
@@ -56,24 +50,19 @@ distribution.
 #include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
-#include "RemoteServer.h"
-#include "RemoteTools.h"
-#include "LuaTools.h"
-#include "DFHackVersion.h"
 
-using namespace DFHack;
-
-#include "df/plotinfost.h"
+#include "df/init.h"
 #include "df/gamest.h"
-#include "df/world.h"
-#include "df/world_data.h"
+#include "df/graphic.h"
 #include "df/interfacest.h"
+#include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include <df/graphic.h>
+#include "df/world.h"
+#include "df/world_data.h"
 
 #include <stdio.h>
 #include <iomanip>
@@ -82,14 +71,24 @@ using namespace DFHack;
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "md5wrapper.h"
-
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cstdio>
+#include <cstring>
+#include <iterator>
+#include <sstream>
+#include <forward_list>
+#include <type_traits>
+#include <cstdarg>
 #include <SDL_events.h>
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
 #endif
 
+using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
@@ -147,6 +146,22 @@ struct Core::Private
     bool last_manual_save_request{false};
     bool was_load_save{false};
 };
+
+void PerfCounters::reset(bool ignorePauseState) {
+    *this = {};
+    ignore_pause_state = ignorePauseState;
+    baseline_elapsed_ms = Core::getInstance().p->getTickCount();
+}
+
+void PerfCounters::incCounter(uint32_t &counter, uint32_t baseline_ms) {
+    if (!ignore_pause_state && World::ReadPauseState())
+        return;
+    counter += Core::getInstance().p->getTickCount() - baseline_ms;
+}
+
+bool PerfCounters::getIgnorePauseState() {
+    return ignore_pause_state;
+}
 
 struct CommandDepthCounter
 {
@@ -535,11 +550,8 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     std::vector<std::string> mod_script_paths;
-    Lua::CallLuaModuleFunction(out, L, "script-manager", "get_mod_script_paths", 0, 1,
-            Lua::DEFAULT_LUA_LAMBDA,
+    Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
                 Lua::GetVector(L, mod_script_paths);
             });
@@ -834,9 +846,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 );
             }
 
-            auto L = Lua::Core::State;
-            Lua::StackUnwinder top(L);
-            Lua::CallLuaModuleFunction(con, L, "script-manager", "list");
+            Lua::CallLuaModuleFunction(con, "script-manager", "list");
         }
     }
     else if (first == "ls" || first == "dir")
@@ -1270,8 +1280,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 bool Core::loadScriptFile(color_ostream &out, std::string fname, bool silent)
 {
     if(!silent) {
-        INFO(script,out) << "Loading script: " << fname << std::endl;
-        std::cerr << "Loading script: " << fname << std::endl;
+        INFO(script,out) << "Running script: " << fname << std::endl;
+        std::cerr << "Running script: " << fname << std::endl;
     }
     std::ifstream script(fname.c_str());
     if ( !script.good() )
@@ -1324,7 +1334,6 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     // show the terminal if requested
     auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -1573,6 +1582,8 @@ bool Core::InitMainThread() {
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    perf_counters.reset();
 
     return true;
 }
@@ -1909,7 +1920,8 @@ void Core::doUpdate(color_ostream &out)
         (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
-        doSaveData(out);
+        plug_mgr->doSaveData(out);
+        Persistence::Internal::save(out);
     }
 
     // detect if the game was loaded or unloaded in the meantime
@@ -1956,13 +1968,11 @@ void Core::doUpdate(color_ostream &out)
     if (vs_changed)
         onStateChange(out, SC_VIEWSCREEN_CHANGED);
 
-    if (df::global::pause_state)
+    bool paused = World::ReadPauseState();
+    if (paused != last_pause_state)
     {
-        if (*df::global::pause_state != last_pause_state)
-        {
-            onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
-            last_pause_state = *df::global::pause_state;
-        }
+        onStateChange(out, last_pause_state ? SC_UNPAUSED : SC_PAUSED);
+        last_pause_state = paused;
     }
 
     // Execute per-frame handlers
@@ -1996,7 +2006,9 @@ int Core::Update()
                 return -1;
         }
 
+        uint32_t start_ms = p->getTickCount();
         doUpdate(out);
+        perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
 
     // Let all commands run that require CoreSuspender
@@ -2014,21 +2026,28 @@ static int buildings_timer = 0;
 
 void Core::onUpdate(color_ostream &out)
 {
+    Gui::clearFocusStringCache();
+
+    uint32_t step_start_ms = p->getTickCount();
     EventManager::manageEvents(out);
+    perf_counters.incCounter(perf_counters.update_event_manager_ms, step_start_ms);
 
     // convert building reagents
     if (buildings_do_onupdate && (++buildings_timer & 1))
         buildings_onUpdate(out);
 
     // notify all the plugins that a game tick is finished
+    step_start_ms = p->getTickCount();
     plug_mgr->OnUpdate(out);
+    perf_counters.incCounter(perf_counters.update_plugin_ms, step_start_ms);
 
     // process timers in lua
+    step_start_ms = p->getTickCount();
     Lua::Core::onUpdate(out);
+    perf_counters.incCounter(perf_counters.update_lua_ms, step_start_ms);
 }
 
 void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
-    //DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
     std::vector<std::string> files;
     DFHack::Filesystem::listdir(folder, files);
     for ( size_t a = 0; a < files.size(); a++ ) {
@@ -2176,26 +2195,19 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_CORE_INITIALIZED:
     {
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "helpdb", "refresh");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
         break;
     }
     case SC_WORLD_LOADED:
     {
+        perf_counters.reset();
+        Persistence::Internal::load(out);
+        plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload", 1, 0,
-            [](lua_State* L) {
-                Lua::Push(L, true);
-            });
-        // fallthrough
-    }
-    case SC_WORLD_UNLOADED:
-    case SC_MAP_LOADED:
-    case SC_MAP_UNLOADED:
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
         {
             std::string save_dir = "save/" + world->cur_savegame.save_dir;
@@ -2225,20 +2237,29 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        if (Version::is_prerelease())
+        {
+            runCommand(out, "gui/prerelease-warning");
+            std::cerr << "loaded world in prerelease build" << std::endl;
+        }
+        break;
+    }
+    case SC_MAP_LOADED:
+        if (World::IsSiteLoaded())
+            plug_mgr->doLoadSiteData(out);
+        break;
+    case SC_PAUSED:
+        if (!perf_counters.getIgnorePauseState()) {
+            perf_counters.elapsed_ms += p->getTickCount() - perf_counters.baseline_elapsed_ms;
+            perf_counters.baseline_elapsed_ms = 0;
+        }
+        break;
+    case SC_UNPAUSED:
+        if (!perf_counters.getIgnorePauseState())
+            perf_counters.baseline_elapsed_ms = p->getTickCount();
         break;
     default:
         break;
-    }
-
-    if (event == SC_WORLD_LOADED && Version::is_prerelease())
-    {
-        runCommand(out, "gui/prerelease-warning");
-        std::cerr << "loaded map in prerelease build" << std::endl;
-    }
-
-    if (event == SC_WORLD_LOADED)
-    {
-        doLoadData(out);
     }
 
     EventManager::onStateChange(out, event);
@@ -2253,24 +2274,10 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     if (event == SC_WORLD_UNLOADED)
     {
-        Persistence::Internal::clear();
+        Persistence::Internal::clear(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        Lua::CallLuaModuleFunction(con, "script-manager", "reload");
     }
-}
-
-void Core::doSaveData(color_ostream &out)
-{
-    plug_mgr->doSaveData(out);
-    Persistence::Internal::save();
-}
-
-void Core::doLoadData(color_ostream &out)
-{
-    Persistence::Internal::load();
-    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )
@@ -2375,7 +2382,14 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 // returns true if the event is handled
-bool Core::DFH_SDL_Event(SDL_Event* ev)
+bool Core::DFH_SDL_Event(SDL_Event* ev) {
+    uint32_t start_ms = p->getTickCount();
+    bool ret = doSdlInputEvent(ev);
+    perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
+    return ret;
+}
+
+bool Core::doSdlInputEvent(SDL_Event* ev)
 {
     static std::map<int, bool> hotkey_states;
 
@@ -2404,8 +2418,7 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
-            bool handled = SelectHotkey(sym, modstate);
-            if (handled) {
+            if (SelectHotkey(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
@@ -2421,8 +2434,16 @@ bool Core::DFH_SDL_Event(SDL_Event* ev)
             DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
             hotkey_states[sym] = false;
         }
-    }
-    else if (ev->type == SDL_TEXTINPUT) {
+    } else if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        auto &but = ev->button;
+        DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
+        // don't mess with the first three buttons, which are critical elements of DF's control scheme
+        if (but.button > 3) {
+            SDL_Keycode sym = SDLK_F13 + but.button - 4;
+            if (sym <= SDLK_F24 && SelectHotkey(sym, modstate))
+                return suppress_duplicate_keyboard_events;
+        }
+    } else if (ev->type == SDL_TEXTINPUT) {
         auto &te = ev->text;
         DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
             te.text,
@@ -2562,6 +2583,12 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
         return true;
     } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
         *psym = SDLK_F10 + (keyspec[2]-'0');
+        return true;
+    } else if (keyspec.size() == 6 && keyspec.substr(0, 5) == "MOUSE" && keyspec[5] >= '4' && keyspec[5] <= '9') {
+        *psym = SDLK_F13 + (keyspec[5]-'4');
+        return true;
+    } else if (keyspec.size() == 7 && keyspec.substr(0, 6) == "MOUSE1" && keyspec[5] >= '0' && keyspec[5] <= '5') {
+        *psym = SDLK_F19 + (keyspec[5]-'0');
         return true;
     } else if (keyspec == "Enter") {
         *psym = SDLK_RETURN;

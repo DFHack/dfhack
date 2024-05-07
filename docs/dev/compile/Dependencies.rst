@@ -4,55 +4,57 @@
 Dependencies
 ############
 
-The most immediate consideration is of course that DFHack is meant to be installed into an **existing DF folder**.
-So it is prudent that one is ready.
+DFHack is meant to be installed into an **existing DF folder**, so ensure that
+one is ready.
 
 .. contents:: Contents
   :local:
   :depth: 2
 
-Build Dependencies
-------------------
+Overview of Dependencies
+========================
 
-..
-    DFHack is quite large, so I've attempted to
-    leave some sort of bread crumbs for each
-    mentionable aspect.
+This section provides an overview of system dependencies that DFHack relies on.
+See the platform-specific sections later in this document for specifics on how
+to install these dependencies.
 
-Many of DFHack's build dependencies are included in the repository as git submodules,
-however there are some system dependencies as well. They are as follows:
+DFHack also has several dependencies on libraries that are included in the
+repository as Git submodules, which require no further action to install.
 
-System packages:
+System dependencies
+-------------------
 
-* SDL (libsdl 1.2, not sdl2).
-* cmake
-* Perl
-* Python
 
+* CMake (v3.21 or newer is recommended)
+* build system (e.g. gcc & ninja, or Visual Studio)
+* Perl 5 (for code generation)
+  * XML::LibXML
+  * XML::LibXSLT
+* Python 3 (for `documentation <documentation>`)
   * Sphinx
-* git (required for `contributions <https://github.com/DFHack/dfhack/pulls>`_)
-* ccache (**optional**, but recommended to improve build times)
+* Git (required for `contributions <https://github.com/DFHack/dfhack/pulls>`_)
+* ccache (**optional**, but strongly recommended to improve build times)
 * OpenGL headers (**optional**: to build `stonesense`)
 * zlib (compression library used for `xlsxreader-api` -> `quickfort`)
-* build system (e.g. gcc & ninja, or Visual Studio)
 
-..
-    maybe the below should be talked about next to the bullet point??
-
-**SDL** is used as an injection point which you can see more about in DFHack's `architectural <architectural-diagrams>` documentation & diagrams.
-
-Perl packages:
+Perl packages
+-------------
 
 * XML::LibXML
 * XML::LibXSLT
 
-These perl packages are used in code generation. DFHack has many structures that are reverse engineered, we use xml
-files to define and update these structures. Then during the configuration process [running cmake] these xml files are
-used to generate C++ source code to define these structures for use in plugins and scripts.
+The Perl packages are used in code generation. DF memory structures are
+represented as XML in DFHack's source tree. During the configuration process
+(cmake) the xml files are converted into C++ headers and Lua wrappers for use
+by plugins and scripts.
 
+Python packages
+---------------
 
-Installing
-----------
+* Sphinx (required to build the `documentation <documentation>`)
+
+Installing Dependencies
+=======================
 
 .. contents::
   :local:
@@ -61,11 +63,11 @@ Installing
 .. _linux-dependency-instructions:
 
 Linux
-=====
+-----
 
 Here are some package install commands for various distributions:
 
-* On Arch linux::
+* On Arch Linux::
 
     pacman -Sy gcc cmake ccmake ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
 
@@ -74,26 +76,28 @@ Here are some package install commands for various distributions:
 
 * On Ubuntu::
 
-    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl2-dev libxml-libxml-perl libxml-libxslt-perl
 
   * Other Debian-based distributions should have similar requirements.
 
 * On Fedora::
 
-    yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
+    yum install gcc-c++ cmake ninja-build git zlib-devel SDL2-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
 
-To build DFHack, you need GCC 4.8 or newer. GCC 4.8 has the benefit of avoiding
-`libstdc++ compatibility issues <linux-incompatible-libstdcxx>`, but can be hard
-to obtain on modern distributions, and working around these issues is done
-automatically by the ``dfhack`` launcher script. As long as your system-provided
-GCC is new enough, it should work. Note that extremely new GCC versions may not
-have been used to build DFHack yet, so if you run into issues with these, please
-let us know (e.g. by opening a GitHub issue).
+To build DFHack, you need GCC 10 or newer. Note that extremely new GCC versions
+may not have been used to build DFHack yet, so if you run into issues with
+these, please let us know (e.g. by opening a GitHub issue).
+
+Distributing binaries compiled with newer GCC versions may result in
+compatibility issues for players with older GCC versions. This is why DFHack
+builds distributables with GCC 10, which is the same GCC version that DF itself
+is compiled with.
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to
-also get ``ccmake`` on distributions that split the cmake package into multiple
-parts. As mentioned above, ``ninja`` is recommended (many distributions call
-this package ``ninja-build``).
+also get ``ccmake`` (the interactive configuration interface) on distributions
+that split the cmake package into multiple parts. As mentioned above, ``ninja``
+is recommended as the build system (many distributions call this package
+``ninja-build``), but ``make`` also works.
 
 You will need pthread; most systems should have this already. Note that older
 CMake versions may have trouble detecting pthread, so if you run into
@@ -101,66 +105,20 @@ pthread-related errors and pthread is installed, you may need to upgrade CMake,
 either by downloading it from `cmake.org <https://cmake.org/download/>`_ or
 through your package manager, if possible.
 
-Building 32-bit Binaries
-~~~~~~~~~~~~~~~~~~~~~~~~
-If you want to compile 32-bit DFHack on 64-bit distributions, you'll need the
-multilib development tools and libraries:
-
-* ``gcc-multilib`` and ``g++-multilib``
-* If you have installed a non-default version of GCC - for example, GCC 4.8 on a
-  distribution that defaults to 5.x - you may need to add the version number to
-  the multilib packages.
-
-  * For example, ``gcc-4.8-multilib`` and ``g++-4.8-multilib`` if installing for GCC 4.8
-    on a system that uses a later GCC version.
-  * This is definitely required on Ubuntu/Debian, check if using a different distribution.
-
-* ``zlib1g-dev:i386`` (or a similar i386 zlib-dev package)
-
-Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on
-Debian) will typically *not* work, as it depends on several other 32-bit
-libraries that conflict with system libraries. Alternatively, you might be able
-to use ``lxc`` to
-:forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
-
-.. _linux-incompatible-libstdcxx:
-
-Incompatible libstdc++
-~~~~~~~~~~~~~~~~~~~~~~
-When compiling DFHack yourself, it builds against your system libstdc++. When
-Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
-comes from GCC 4.8 and is incompatible with code compiled with newer GCC
-versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
-to fix this by automatically removing the DF-provided libstdc++ on startup.
-In rare cases, this may fail and cause errors such as:
-
-.. code-block:: text
-
-   ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
-       `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
-
-The easiest way to fix this is generally removing the libstdc++ shipped with
-DF, which causes DF to use your system libstdc++ instead::
-
-    cd /path/to/DF/
-    rm libs/libstdc++.so.6
-
-Note that distributing binaries compiled with newer GCC versions may result in
-the opposite compatibility issue: users with *older* GCC versions may encounter
-similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
-you are planning on distributing binaries to other users, we recommend using an
-older GCC (but still at least 4.8) version if possible.
-
 .. _windows-dependency-instructions:
 
 Windows
-=======
+-------
 
 DFHack must be built with the Microsoft Visual C++ 2022 toolchain (aka MSVC v143)
 for ABI compatibility with Dwarf Fortress v50.
 
-With Choco
-~~~~~~~~~~
+.. contents::
+    :local:
+    :depth: 1
+
+With Chocolatey
+~~~~~~~~~~~~~~~
 Many of the dependencies are simple enough to download and install via the
 `chocolatey`_ package manager on the command line.
 
@@ -188,8 +146,10 @@ the existing install.
 Manually
 ~~~~~~~~
 If you prefer to install manually rather than using Chocolatey, details and
-requirements are as below. If you do install manually, please ensure you
-have all **executables searchable in your PATH variable**.
+requirements are as below. If you do install manually, **ensure that your PATH
+variable is updated** to include the install locations for all tools. This can
+be edited from ``Control Panel -> System -> Advanced System Settings ->
+Environment Variables``.
 
 .. contents::
   :local:
@@ -197,22 +157,18 @@ have all **executables searchable in your PATH variable**.
 
 CMake
 ^^^^^
-You can get the win32 installer version from
-`the official site <https://cmake.org/download/>`_.
+You can get the Windows installer from `the official site <https://cmake.org/download/>`_.
 It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.
 
 Perl / Strawberry Perl
 ^^^^^^^^^^^^^^^^^^^^^^
-For the code generation stage of the build process, you'll need Perl 5 with
-**XML::LibXML** and **XML::LibXSLT**. `Strawberry Perl <http://strawberryperl.com>`_ is
-recommended as it includes all of the required packages in a single easy
-install.
+For the code generation stage of the build process, you'll need Perl 5 with the
+``XML::LibXML`` and ``XML::LibXSLT`` packages installed.
+`Strawberry Perl <http://strawberryperl.com>`_ is recommended as it includes all
+of the required packages in a single easy install.
 
-After install, ensure Perl is in your user's PATH. This can be edited from
-``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
-
-The following directories must be in your PATH, in this order:
+After install, ensure Perl is in your user's PATH. The following directories must be in your PATH, in this order:
 
 * ``<path to perl>\c\bin``
 * ``<path to perl>\perl\site\bin``
@@ -228,7 +184,7 @@ install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Python
 ^^^^^^
-See the `Python`_ website.
+See the `Python`_ website. Any supported version of Python 3 will work.
 
 .. _Python: https://www.python.org/downloads/
 
@@ -271,9 +227,12 @@ When installing, select the "Desktop Development with C++" workload and ensure t
 .. _mac-dependency-instructions:
 
 macOS
-=====
+-----
 
-DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
+NOTE: this section is currently outdated. Once DF itself can build on macOS
+again, we will match DF's build environment and update the instructions here.
+
+DFHack is easiest to build on macOS with exactly GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
 
@@ -309,29 +268,36 @@ and your build will likely not be redistributable.
 
 #. Install Perl dependencies
 
-  * Using system Perl
+    * Using system Perl
 
-    * ``sudo cpan``
+      * ``sudo cpan``
 
-      If this is the first time you've run cpan, you will need to go through the setup
-      process. Just stick with the defaults for everything and you'll be fine.
+        If this is the first time you've run cpan, you will need to go through the setup
+        process. Just stick with the defaults for everything and you'll be fine.
 
-      If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
-      You'll need to open a separate Terminal window and run::
+        If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
+        You'll need to open a separate Terminal window and run::
 
-        sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
+          sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
 
-    * ``install XML::LibXML``
-    * ``install XML::LibXSLT``
+      * ``install XML::LibXML``
+      * ``install XML::LibXSLT``
 
-  * In a separate, local Perl install
+    * In a separate, local Perl install
 
-    Rather than using system Perl, you might also want to consider
-    the Perl manager, `Perlbrew <https://perlbrew.pl>`_.
+      Rather than using system Perl, you might also want to consider
+      the Perl manager, `Perlbrew <https://perlbrew.pl>`_.
 
-    This manages Perl 5 locally under ``~/perl5/``, providing an easy
-    way to install Perl and run CPAN against it without ``sudo``.
-    It can maintain multiple Perl installs and being local has the
-    benefit of easy migration and insulation from OS issues and upgrades.
+      This manages Perl 5 locally under ``~/perl5/``, providing an easy
+      way to install Perl and run CPAN against it without ``sudo``.
+      It can maintain multiple Perl installs and being local has the
+      benefit of easy migration and insulation from OS issues and upgrades.
 
-    See https://perlbrew.pl/ for more details.
+      See https://perlbrew.pl/ for more details.
+
+#. Install Python dependencies
+
+    * You can choose to use a system Python 3 installation or any supported
+      version of Python 3 from `python.org <https://www.python.org/downloads/>`__.
+
+    * Install `Sphinx`_

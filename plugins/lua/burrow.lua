@@ -52,10 +52,11 @@ end
 
 BurrowDesignationOverlay = defclass(BurrowDesignationOverlay, overlay.OverlayWidget)
 BurrowDesignationOverlay.ATTRS{
+    desc='Adds flood fill and 3D box select functionality to burrow designations.',
     default_pos={x=6,y=9},
     viewscreens='dwarfmode/Burrow/Paint',
     default_enabled=true,
-    frame={w=54, h=1},
+    frame={w=53, h=1},
 }
 
 function BurrowDesignationOverlay:init()
@@ -63,20 +64,16 @@ function BurrowDesignationOverlay:init()
         widgets.BannerPanel{
             frame={t=0, l=0},
             subviews={
-                widgets.Label{
-                    frame={t=0, l=1},
-                    text='Double-click to fill. Shift double-click to 3D fill.',
-                    auto_width=true,
-                    visible=function() return not is_choosing_area() end,
-                },
-                widgets.Label{
-                    frame={t=0, l=1},
-                    text_pen=COLOR_DARKGREY,
-                    text={
-                        '3D box select enabled: ',
-                        {text=function() return ('%dx%dx%d'):format(get_cur_area_dims()) end},
+                widgets.CycleHotkeyLabel{
+                    view_id='fill',
+                    frame={t=0, l=1, r=1},
+                    key='CUSTOM_CTRL_F',
+                    label='Flood fill on double click:',
+                    options={
+                        {label='Off', value='off', pen=COLOR_RED},
+                        {label='2D fill enabled', value='2d', pen=COLOR_GREEN},
+                        {label='3D fill enabled', value='3d', pen=COLOR_LIGHTGREEN},
                     },
-                    visible=is_choosing_area,
                 },
             },
         },
@@ -93,15 +90,6 @@ local function flood_fill(pos, erasing, do_3d, painting_burrow)
     reset_selection_rect()
 end
 
-local function box_fill(bounds, erasing, painting_burrow)
-    if bounds.z1 == bounds.z2 then return end
-    if erasing then
-        burrow_tiles_box_remove(painting_burrow, bounds)
-    else
-        burrow_tiles_box_add(painting_burrow, bounds)
-    end
-end
-
 function BurrowDesignationOverlay:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
@@ -111,21 +99,23 @@ function BurrowDesignationOverlay:onInput(keys)
     elseif keys._MOUSE_L then
         local pos = dfhack.gui.getMousePos(true)
         if pos then
+            local fill = self.subviews.fill:getOptionValue()
             local now_ms = dfhack.getTickCount()
             if not same_xyz(pos, self.saved_pos) then
                 self.last_click_ms = now_ms
                 self.saved_pos = pos
-            else
+            elseif fill ~= 'off' then
                 if now_ms - self.last_click_ms <= widgets.DOUBLE_CLICK_MS then
                     self.last_click_ms = 0
-                    self.pending_fn = curry(flood_fill, pos, if_burrow.erasing, dfhack.internal.getModifiers().shift)
+                    local do_3d = fill == '3d'
+                    self.pending_fn = curry(flood_fill, pos, if_burrow.erasing, do_3d)
                     return
                 else
                     self.last_click_ms = now_ms
                 end
             end
             if is_choosing_area(pos) then
-                self.pending_fn = curry(box_fill, get_bounds(pos), if_burrow.erasing)
+                self.last_click_ms = 0
                 return
             end
         end

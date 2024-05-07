@@ -30,6 +30,9 @@ distribution.
 
 #include "modules/Filesystem.h"
 
+#include "df/general_ref.h"
+#include "df/specific_ref.h"
+
 #ifndef LINUX_BUILD
     #include <Windows.h>
     #include "wdirent.h"

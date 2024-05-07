@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "VTableInterpose.h"
+
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
@@ -68,12 +69,12 @@ static int32_t eventLastTick[EventType::EVENT_MAX];
 
 static const int32_t ticksPerYear = 403200;
 
-void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
-    handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
+void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler) {
+    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
+    handlers[e].insert(pair<Plugin*, EventHandler>(handler.plugin, handler));
 }
 
-int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute) {
+int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, bool absolute) {
     if ( !absolute ) {
         df::world* world = df::global::world;
         if ( world ) {
@@ -85,8 +86,8 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
-    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, plugin->getName().c_str());
-    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str());
+    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(handler.plugin,handler));
     return when;
 }
 
@@ -102,16 +103,16 @@ static void removeFromTickQueue(EventHandler getRidOf) {
     }
 }
 
-void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    for ( auto i = handlers[e].find(plugin); i != handlers[e].end(); ) {
-        if ( (*i).first != plugin )
+void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handler) {
+    for ( auto i = handlers[e].find(handler.plugin); i != handlers[e].end(); ) {
+        if ( (*i).first != handler.plugin )
             break;
         EventHandler &handle = (*i).second;
         if ( handle != handler ) {
             i++;
             continue;
         }
-        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
+        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
         i = handlers[e].erase(i);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
@@ -119,7 +120,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
-    DEBUG(log).print("unregistering all handlers for plugin %s\n", plugin->getName().c_str());
+    DEBUG(log).print("unregistering all handlers for plugin %s\n", !plugin ? "<null>" : plugin->getName().c_str());
     for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;
@@ -225,6 +226,15 @@ static int32_t nextItem;
 static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
 
+namespace std {
+    template <>
+    struct hash<df::construction> {
+        std::size_t operator()(const df::construction& construct) const {
+            return construct();
+        }
+    };
+}
+
 //construction
 static unordered_set<df::construction> constructions;
 static bool gameLoaded;
@@ -237,14 +247,14 @@ static int32_t nextInvasion;
 
 //equipment change
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
-static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
+static unordered_map<int32_t, vector<InventoryItem>> equipmentLog;
 
 //report
 static int32_t lastReport;
 
 //unit attack
 static int32_t lastReportUnitAttack;
-static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static std::map<int32_t,std::vector<int32_t>> reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
 //interaction
@@ -259,6 +269,15 @@ struct hash_pair {
     }
 };
 
+static void run_handler(color_ostream& out, EventType::EventType eventType, const EventHandler & handle, void * arg) {
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
+    uint32_t start_ms = core.p->getTickCount();
+    const char * plugin_name = !handle.plugin ? "<null>" : handle.plugin->getName().c_str();
+    handle.eventHandler(out, arg);
+    counters.incCounter(counters.event_manager_event_per_plugin_ms[eventType][plugin_name], start_ms);
+}
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
@@ -266,8 +285,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     if ( !doOnce ) {
         //TODO: put this somewhere else
         doOnce = true;
-        EventHandler buildingHandler(Buildings::updateBuildings, 100);
-        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, nullptr);
+        EventHandler buildingHandler(nullptr, Buildings::updateBuildings, 100);
+        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
@@ -292,7 +311,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for map unloaded state change event\n");
-            handle.eventHandler(out, nullptr);
+            run_handler(out, EventType::UNLOAD, handle, nullptr);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -384,6 +403,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     TRACE(log,out).print("processing events at tick %d\n", tick);
 
+    auto &core = Core::getInstance();
+    auto &counters = core.perf_counters;
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
         if ( handlers[a].empty() )
             continue;
@@ -398,8 +419,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
 
+        uint32_t start_ms = core.p->getTickCount();
         eventManager[a](out);
         eventLastTick[a] = tick;
+        counters.incCounter(counters.event_manager_event_total_ms[a], start_ms);
     }
 }
 
@@ -414,7 +437,7 @@ static void manageTickEvent(color_ostream& out) {
         EventHandler &handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
         DEBUG(log,out).print("calling handler for tick event\n");
-        handle.eventHandler(out, (void*)intptr_t(tick));
+        run_handler(out, EventType::TICK, handle, (void*)intptr_t(tick));
         toRemove.insert(handle);
     }
     if ( toRemove.empty() )
@@ -454,7 +477,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
             continue;
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for job initiated event\n");
-            handle.eventHandler(out, (void*)link->item);
+            run_handler(out, EventType::JOB_INITIATED, handle, (void*)link->item);
         }
     }
 
@@ -480,7 +503,7 @@ static void manageJobStartedEvent(color_ostream& out) {
         if (!startedJobs.count(j_id)) {
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for job started event\n");
-                handle.eventHandler(out, job);
+                run_handler(out, EventType::JOB_STARTED, handle, job);
             }
         }
     }
@@ -593,7 +616,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
             //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for repeated job completed event\n");
-                handle.eventHandler(out, (void*) &job0);
+                run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
             }
             continue;
         }
@@ -605,7 +628,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for job completed event\n");
-            handle.eventHandler(out, (void*) &job0);
+            run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
         }
     }
 
@@ -643,7 +666,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     for (int32_t unit_id : new_active_unit_ids) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for new unit event\n");
-            handle.eventHandler(out, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
+            run_handler(out, EventType::UNIT_NEW_ACTIVE, handle, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
         }
     }
 }
@@ -671,7 +694,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
     for (int32_t unit_id : dead_unit_ids) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for unit death event\n");
-            handle.eventHandler(out, (void*)intptr_t(unit_id));
+            run_handler(out, EventType::UNIT_DEATH, handle, (void*)intptr_t(unit_id));
         }
     }
 }
@@ -714,7 +737,7 @@ static void manageItemCreationEvent(color_ostream& out) {
     for (int32_t item_id : created_items) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for item created event\n");
-            handle.eventHandler(out, (void*)intptr_t(item_id));
+            run_handler(out, EventType::ITEM_CREATED, handle, (void*)intptr_t(item_id));
         }
     }
 
@@ -757,7 +780,7 @@ static void manageBuildingEvent(color_ostream& out) {
 
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for destroyed building event\n");
-            handle.eventHandler(out, (void*)intptr_t(id));
+            run_handler(out, EventType::BUILDING, handle, (void*)intptr_t(id));
         }
         it = buildings.erase(it);
     }
@@ -766,7 +789,7 @@ static void manageBuildingEvent(color_ostream& out) {
     std::for_each(new_buildings.begin(), new_buildings.end(), [&](int32_t building){
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for created building event\n");
-            handle.eventHandler(out, (void*)intptr_t(building));
+            run_handler(out, EventType::BUILDING, handle, (void*)intptr_t(building));
         }
     });
 }
@@ -803,7 +826,7 @@ static void manageConstructionEvent(color_ostream& out) {
         // handle construction removed event
         for (const auto &[_,handle]: copy) {
             DEBUG(log,out).print("calling handler for destroyed construction event\n");
-            handle.eventHandler(out, (void*) &construction);
+            run_handler(out, EventType::CONSTRUCTION, handle, (void*) &construction);
         }
     }
 
@@ -811,7 +834,7 @@ static void manageConstructionEvent(color_ostream& out) {
     for (auto& construction : new_constructions) {
         for (const auto &[_,handle]: copy) {
             DEBUG(log,out).print("calling handler for created construction event\n");
-            handle.eventHandler(out, (void*) &construction);
+            run_handler(out, EventType::CONSTRUCTION, handle, (void*) &construction);
         }
     }
 }
@@ -843,7 +866,7 @@ static void manageSyndromeEvent(color_ostream& out) {
     for (auto& data : new_syndrome_data) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for syndrome event\n");
-            handle.eventHandler(out, (void*)&data);
+            run_handler(out, EventType::SYNDROME, handle, (void*)&data);
         }
     }
 
@@ -861,7 +884,7 @@ static void manageInvasionEvent(color_ostream& out) {
 
     for (auto &[_,handle] : copy) {
         DEBUG(log,out).print("calling handler for invasion event\n");
-        handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
+        run_handler(out, EventType::INVASION, handle, (void*)intptr_t(nextInvasion-1));
     }
 }
 
@@ -952,19 +975,19 @@ static void manageEquipmentEvent(color_ostream& out) {
     std::for_each(equipment_pickups.begin(), equipment_pickups.end(), [&](InventoryChangeData& data) {
         for (auto &[_, handle] : copy) {
             DEBUG(log,out).print("calling handler for new item equipped inventory change event\n");
-            handle.eventHandler(out, (void*) &data);
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
         }
     });
     std::for_each(equipment_drops.begin(), equipment_drops.end(), [&](InventoryChangeData& data) {
         for (auto &[_, handle] : copy) {
             DEBUG(log,out).print("calling handler for dropped item inventory change event\n");
-            handle.eventHandler(out, (void*) &data);
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
         }
     });
     std::for_each(equipment_changes.begin(), equipment_changes.end(), [&](InventoryChangeData& data) {
         for (auto &[_, handle] : copy) {
             DEBUG(log,out).print("calling handler for inventory change event\n");
-            handle.eventHandler(out, (void*) &data);
+            run_handler(out, EventType::INVENTORY_CHANGE, handle, (void*) &data);
         }
     });
 
@@ -1011,7 +1034,7 @@ static void manageReportEvent(color_ostream& out) {
         df::report* report = reports[idx];
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for report event\n");
-            handle.eventHandler(out, (void*)intptr_t(report->id));
+            run_handler(out, EventType::REPORT, handle, (void*)intptr_t(report->id));
         }
         lastReport = report->id;
     }
@@ -1088,7 +1111,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             already_done.emplace(unit1->id, unit2->id);
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit1 attack unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1100,7 +1123,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             already_done.emplace(unit1->id, unit2->id);
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit2 attack unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1112,7 +1135,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             already_done.emplace(unit1->id, unit2->id);
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit1 killed unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1124,7 +1147,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             already_done.emplace(unit1->id, unit2->id);
             for (auto &[_,handle] : copy) {
                 DEBUG(log,out).print("calling handler for unit2 killed unit attack event\n");
-                handle.eventHandler(out, (void*)&data);
+                run_handler(out, EventType::UNIT_ATTACK, handle, (void*)&data);
             }
         }
 
@@ -1382,7 +1405,7 @@ static void manageInteractionEvent(color_ostream& out) {
         //fire event
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for interaction event\n");
-            handle.eventHandler(out, (void*)&data);
+            run_handler(out, EventType::INTERACTION, handle, (void*)&data);
         }
         //TODO: deduce attacker from latest defend event first
     }

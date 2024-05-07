@@ -194,19 +194,70 @@ After you have a pattern set, you can use ``expdig`` to apply it again.
 Overlay
 -------
 
-This tool also provides two overlays that are managed by the `overlay`
-framework. Both have no effect when in graphics mode, but when in ASCII mode,
-they display useful highlights that are otherwise missing from the ASCII mode
-interface.
+This tool also provides three overlays that are managed by the `overlay`
+framework.
 
-The ``dig.asciiwarmdamp`` overlay highlights warm tiles red and damp tiles in
-blue. Box selection characters and the keyboard cursor will also
-change color as appropriate when over the warm or damp tile.
+asciicarve
+~~~~~~~~~~
 
-The ``dig.asciicarve`` overlay highlights tiles that are designated for
-smoothing, engraving, track carving, or fortification carving. The designations
-blink so you can still see what is underneath them.
+The ``dig.asciicarve`` overlay makes carving designations visible in ASCII
+mode. It highlights tiles that are designated for smoothing, engraving, track
+carving, or fortification carving. The designations blink (slowly) so you can
+still see what is underneath them.
 
-Note that due to the limitations of the ASCII mode screen buffer, the
-designation highlights may show through other interface elements that overlap
-the designated area.
+Due to the limitations of the ASCII mode screen buffer, the designation
+highlights may show through other interface elements that overlap the
+designated area.
+
+warmdamptoolbar
+~~~~~~~~~~~~~~~
+
+The ``dig.warmdamptoolbar`` overlay adds a button to the toolbar at the bottom
+of the screen when mining mode is active. It allows you to turn on warm or damp
+dig mode. Tiles designated for digging while warm and/or damp dig mode is
+enabled will be marked with a special symbol in graphics mode or color pattern
+in ASCII mode. The digging designations for these tiles are protected from
+cancellation due to warmth or dampness (respectively). This is very useful when
+digging beneath a lake or just above a magma flow.
+
+If you also have one of the vanilla autodig modes enabled, the warm/damp dig
+marker will be propagated along with the autodig designation. This allows you
+to, for example, easily autodig a mineral vein that goes through a light
+aquifer.
+
+If you have already designated a z-level when you realize you need warm or damp
+dig protection (e.g. you have run into a light aquifer and want to continue
+digging), the toolbar button gives you a shortcut to add the warm or damp dig
+marker to all designated tiles on the current z-level. Note that it only
+affects tiles that are not yet revealed since revealed tiles don't benefit from
+the warm or damp dig designations.
+
+Click on the new mining toolbar icon or hit :kbd:`Ctrl`:kbd:`D` to bring up the
+configuration submenu.
+
+warmdamp
+~~~~~~~~
+
+The ``dig.warmdamp`` overlay makes a number of tile properties visible when in
+mining or smoothing mode:
+
+- In ASCII mode, it highlights warm tiles red and damp tiles in light blue. Box
+  selection characters and the keyboard cursor will also change color as
+  appropriate when over a warm or damp tile. These can show through UI elements
+  that happen to overlap the highlighted areas, just like the ``asciicarve``
+  overlay.
+- The tiles marked with warm and/or damp dig from the ``warmdamptoolbar`` get
+  badges (in graphics mode) or distinctive color patterns (in ASCII mode)
+  showing their status.
+- In graphics mode, the "water drop" signifying a damp tile will no longer
+  disappear when the tile is being box selected for applying a designation.
+- Aquifer tiles are shown with icons distinct from "just damp" tiles. In
+  graphics mode, light aquifer tiles have a "two drip" icon and heavy aquifer
+  tiles have three drips. In ASCII mode, light aquifer tiles blink slowly in
+  blue and heavy aquifer tiles blink faster in blue.
+- The warm/damp/aquifer status will be shown for tiles that are visible from
+  the bottom. For example, if you dig out the layer underneath an aquifer and
+  notice dripping, entering mining mode and looking at the tiles above will
+  show their status, even if the tiles are otherwise unrevealed. This feature
+  was added with the rationale that if the dwarves can see the effects of the
+  tiles above them, the player should be able to as well.

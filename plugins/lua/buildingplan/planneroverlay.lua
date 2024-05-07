@@ -91,6 +91,11 @@ local function get_cur_area_dims(bounds)
             bounds.z2 - bounds.z1 + 1
 end
 
+local function get_selected_volume(bounds)
+    local w, h, depth = get_cur_area_dims(bounds)
+    return w * h * depth
+end
+
 local function is_pressure_plate()
     return uibs.building_type == df.building_type.Trap
             and uibs.building_subtype == df.trap_type.PressurePlate
@@ -109,10 +114,38 @@ local function is_weapon_or_spike_trap()
     return is_weapon_trap() or is_spike_trap()
 end
 
+local function is_construction()
+    return uibs.building_type == df.building_type.Construction
+end
+
+local function tile_is_construction(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if not tt then return false end
+    if df.tiletype.attrs[tt].material ~= df.tiletype_material.CONSTRUCTION then
+        return false
+    end
+    local construction = df.construction.find(pos)
+    return construction and not construction.flags.top_of_wall
+end
+
+local ONE_BY_ONE = xy2pos(1, 1)
+
+local function can_reconstruct(bounds)
+    return get_selected_volume(bounds) == 1 or require('plugins.buildingplan').getGlobalSettings().reconstruct
+end
+
+local function can_place_construction(reconstruct, pos)
+    return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and (reconstruct or not tile_is_construction(pos))
+end
+
+local function is_interior(bounds, x, y)
+    return x ~= bounds.x1 and x ~= bounds.x2 and
+        y ~= bounds.y1 and y ~= bounds.y2
+end
+
 -- adjusted from CycleHotkeyLabel on the planner panel
 local weapon_quantity = 1
 
--- TODO: this should account for erroring constructions
 local function get_quantity(filter, hollow, bounds)
     if is_pressure_plate() then
         local flags = uibs.plate_info.flags
@@ -122,14 +155,28 @@ local function get_quantity(filter, hollow, bounds)
         return weapon_quantity
     end
     local quantity = filter.quantity or 1
+    bounds = bounds or get_selected_bounds()
     local dimx, dimy, dimz = get_cur_area_dims(bounds)
     if quantity < 1 then
         return (((dimx * dimy) // 4) + 1) * dimz
     end
-    if hollow and dimx > 2 and dimy > 2 then
-        return quantity * (2*dimx + 2*dimy - 4) * dimz
+    if bounds and is_construction() then
+        local reconstruct = can_reconstruct(bounds)
+        local count = 0
+        for z = bounds.z1, bounds.z2 do
+            for y = bounds.y1, bounds.y2 do
+                for x = bounds.x1, bounds.x2 do
+                    if hollow and is_interior(bounds, x, y) then goto continue end
+                    if can_place_construction(reconstruct, xyz2pos(x, y, z)) then
+                        count = count + 1
+                    end
+                    ::continue::
+                end
+            end
+        end
+        return quantity * count
     end
-    return quantity * dimx * dimy * dimz
+    return quantity * get_selected_volume(bounds)
 end
 
 local function cur_building_has_no_area()
@@ -139,10 +186,6 @@ local function cur_building_has_no_area()
     -- this works because all variable-size buildings have either no item
     -- filters or a quantity of -1 for their first (and only) item
     return filters and filters[1] and (not filters[1].quantity or filters[1].quantity > 0)
-end
-
-local function is_construction()
-    return uibs.building_type == df.building_type.Construction
 end
 
 local function is_tutorial_open()
@@ -220,9 +263,24 @@ local function is_over_options_panel()
     return v:getMousePos()
 end
 
+local function compress(str, len)
+    if #str <= len then
+        return str
+    else
+        local no_vowels = str:gsub('[aeiou]','')
+        if #no_vowels <= len then
+            return no_vowels
+        else
+            return no_vowels:sub(1,len-3)..'...'
+        end
+    end
+end
 --------------------------------
 -- ItemLine
 --
+
+-- number of characters for item filter summary (excluding surrounding [ ])
+local item_filter_chars = 17
 
 ItemLine = defclass(ItemLine, widgets.Panel)
 ItemLine.ATTRS{
@@ -259,13 +317,17 @@ function ItemLine:init()
             frame={t=0, l=28},
             text={
                 {text=self:callback('get_filter_text'),
-                 pen=function() return gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
+                 width=item_filter_chars+2,
+                 rjustify=true,
+                 pen=function() return
+                         self:is_impossible() and COLOR_RED or
+                         gui.invert_color(COLOR_LIGHTCYAN, self.is_selected_fn()) end},
             },
             auto_width=true,
             on_click=function() self.on_filter(self.idx) end,
         },
         widgets.Label{
-            frame={t=0, l=42},
+            frame={t=0, l=47},
             text='[clear]',
             text_pen=COLOR_LIGHTRED,
             auto_width=true,
@@ -325,8 +387,53 @@ function ItemLine:has_filter()
 end
 
 function ItemLine:get_filter_text()
-    -- TODO: make this show the filter's materials instead of "edit filters"
-    return self:has_filter() and '[edit filters]' or '[any material]'
+    local buildingplan = require('plugins.buildingplan')
+    if not buildingplan.hasFilter(
+            uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    then
+        return '[any material]'
+    end
+    local mats = buildingplan.getMaterialFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    local cats = buildingplan.getMaterialMaskFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+    local enabled_mat_names = {}
+    local enabled_cat_names = {}
+    for name, props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if enabled then table.insert(enabled_mat_names, name) end
+    end
+    if #enabled_mat_names == 1 then
+        return '['..compress(enabled_mat_names[1], item_filter_chars)..']'
+    elseif #enabled_mat_names > 1 then
+        for cat, _ in pairs(cats) do
+            if cat ~= 'unset' and cats[cat] then
+                table.insert(enabled_cat_names, cat)
+            end
+        end
+        if #enabled_cat_names == 1 then
+            return '[' .. enabled_cat_names[1]:gsub("^%l", string.upper) .. ']'
+        else
+            return '['..#enabled_cat_names..' mat. categories]'
+        end
+    else
+        -- can result from selecting wood and then toggling "fire safe" etc.
+        return '[impossible filter]'
+    end
+end
+
+-- short circuit version of the '[impossible filter]' case above
+function ItemLine:is_impossible()
+    local buildingplan = require('plugins.buildingplan')
+    local mats = buildingplan.getMaterialFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx-1)
+    local cats = buildingplan.getMaterialMaskFilter(
+        uibs.building_type, uibs.building_subtype, uibs.custom_type, self.idx - 1)
+     for _,props in pairs(mats) do
+        local enabled = props.enabled == 'true' and cats[props.category]
+        if enabled then return false end
+    end
+    return true
 end
 
 function ItemLine:reduce_quantity(used_quantity)
@@ -351,6 +458,7 @@ end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
+    desc='Shows the building planner interface panel when building buildings.',
     default_pos={x=5,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
@@ -364,7 +472,7 @@ function PlannerOverlay:init()
     local main_panel = widgets.Panel{
         view_id='main',
         frame={t=1, l=0, r=0, h=14},
-        frame_style=gui.INTERIOR_MEDIUM_FRAME,
+        frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
     }
@@ -550,8 +658,8 @@ function PlannerOverlay:init()
                 },
                 widgets.HotkeyLabel{
                     frame={b=0, l=1, w=22},
-                    key='CUSTOM_X',
-                    label='Clear filter',
+                    key='CUSTOM_CTRL_D',
+                    label='Delete filter',
                     on_activate=function() self:clear_filter(self.selected) end,
                     enabled=function()
                         return buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, self.selected - 1)
@@ -598,10 +706,9 @@ function PlannerOverlay:init()
         },
     }
 
-    local divider_widget = widgets.Panel{
-        view_id='divider',
+    local divider_widget = widgets.Divider{
         frame={t=10, l=0, r=0, h=1},
-        on_render=self:callback('draw_divider_h'),
+        frame_style=gui.FRAME_INTERIOR_MEDIUM,
         visible=self:callback('is_not_minimized'),
     }
 
@@ -684,20 +791,6 @@ function PlannerOverlay:toggle_minimized()
     self.state.minimized = not self.state.minimized
     config:write()
     self:reset()
-end
-
-function PlannerOverlay:draw_divider_h(dc)
-    local x2 = dc.width -1
-    for x=0,x2 do
-        dc:seek(x, 0)
-        if x == 0 then
-            dc:char(nil, pens.HORI_LEFT_PEN)
-        elseif x == x2 then
-            dc:char(nil, pens.HORI_RIGHT_PEN)
-        else
-            dc:char(nil, pens.HORI_MID_PEN)
-        end
-    end
 end
 
 function PlannerOverlay:reset()
@@ -878,7 +971,7 @@ function PlannerOverlay:onInput(keys)
             end
        end
    end
-   return keys._MOUSE_L_DOWN or keys.SELECT
+   return keys._MOUSE_L or keys.SELECT
 end
 
 function PlannerOverlay:render(dc)
@@ -886,8 +979,6 @@ function PlannerOverlay:render(dc)
     self.subviews.errors:updateLayout()
     PlannerOverlay.super.render(self, dc)
 end
-
-local ONE_BY_ONE = xy2pos(1, 1)
 
 function PlannerOverlay:onRenderFrame(dc, rect)
     PlannerOverlay.super.onRenderFrame(self, dc, rect)
@@ -913,11 +1004,15 @@ function PlannerOverlay:onRenderFrame(dc, rect)
     local hollow = self.subviews.hollow:getOptionValue()
     local default_pen = (self.saved_selection_pos or #uibs.errors == 0) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
 
-    local get_pen_fn = is_construction() and function(pos)
-        return dfhack.buildings.checkFreeTiles(pos, ONE_BY_ONE) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
-    end or function()
-        return default_pen
-    end
+    -- always allow reconstruction if it's a 1x1x1 selection (meaning the player selected that spot specifically)
+    local reconstruct = can_reconstruct(bounds)
+
+    local get_pen_fn = is_construction() and
+        function(pos)
+            return can_place_construction(reconstruct, pos) and pens.GOOD_TILE_PEN or pens.BAD_TILE_PEN
+        end or function()
+            return default_pen
+        end
 
     local function get_overlay_pen(pos)
         if not hollow then return get_pen_fn(pos) end
@@ -971,11 +1066,15 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
     elseif is_weapon_trap() then
         filters[2].quantity = get_quantity(filters[2])
     end
+    local reconstruct = can_reconstruct(pd)
     for z=pd.z1,pd.z2 do for y=pd.y1,pd.y2 do for x=pd.x1,pd.x2 do
-        if hollow and x ~= pd.x1 and x ~= pd.x2 and y ~= pd.y1 and y ~= pd.y2 then
+        if hollow and is_interior(pd, x, y) then
             goto continue
         end
         local pos = xyz2pos(x, y, z)
+        if is_construction() and not can_place_construction(reconstruct, pos) then
+            goto continue
+        end
         if is_stairs() then
             subtype = self:get_stairs_subtype(pos, pd)
         end
@@ -990,7 +1089,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         -- assign fields for the types that need them. we can't pass them all in
         -- to the call to constructBuilding since attempting to assign unrelated
         -- fields to building types that don't support them causes errors.
-        for k,v in pairs(bld) do
+        for k in pairs(bld) do
             if k == 'friction' then bld.friction = uibs.friction end
             if k == 'use_dump' then bld.use_dump = uibs.use_dump end
             if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end

@@ -7,6 +7,9 @@ local widgets = require('gui.widgets')
 local uibs = df.global.buildreq
 local to_pen = dfhack.pen.parse
 
+-- persist hiding of unavailable materials between invocations
+hide_unavailable = hide_unavailable or false
+
 local function get_cur_filters()
     return dfhack.buildings.getFiltersByType({}, uibs.building_type,
             uibs.building_subtype, uibs.custom_type)
@@ -78,8 +81,8 @@ function QualityAndMaterialsPage:init()
                     label='Sort by:',
                     key='CUSTOM_SHIFT_R',
                     options={
+                        {label='available', value=mat_sort_by_quantity},
                         {label='name', value=mat_sort_by_name},
-                        {label='available', value=mat_sort_by_quantity}
                     },
                     on_change=function() self.dirty = true end,
                 },
@@ -88,8 +91,11 @@ function QualityAndMaterialsPage:init()
                     frame={l=0, t=4, w=24},
                     label='Hide unavailable:',
                     key='CUSTOM_SHIFT_H',
-                    initial_option=false,
-                    on_change=function() self.dirty = true end,
+                    initial_option=hide_unavailable,
+                    on_change=function(val)
+                        hide_unavailable = val
+                        self.dirty = true
+                    end,
                 },
                 widgets.EditField{
                     view_id='search',
@@ -130,10 +136,9 @@ function QualityAndMaterialsPage:init()
                 },
             },
         },
-        widgets.Panel{
-            view_id='divider',
+        widgets.Divider{
             frame={l=TYPE_COL_WIDTH-1, t=HEADER_HEIGHT, b=FOOTER_HEIGHT+QUALITY_HEIGHT, w=1},
-            on_render=self:callback('draw_divider'),
+            frame_style=gui.INTERIOR_FRAME,
         },
         widgets.Panel{
             view_id='quality_panel',
@@ -232,9 +237,9 @@ function QualityAndMaterialsPage:init()
                 },
                 widgets.HotkeyLabel{
                     frame={l=30, t=2},
-                    label='Reset filter',
+                    label='Delete filter',
                     auto_width=true,
-                    key='CUSTOM_SHIFT_X',
+                    key='CUSTOM_CTRL_D',
                     on_activate=self:callback('clear_filter'),
                 },
             },
@@ -437,20 +442,6 @@ function QualityAndMaterialsPage:set_max_quality(idx)
     self.dirty = true
 end
 
-function QualityAndMaterialsPage:draw_divider(dc)
-    local y2 = dc.height - 1
-    for y=0,y2 do
-        dc:seek(0, y)
-        if y == 0 then
-            dc:char(nil, pens.VERT_TOP_PEN)
-        elseif y == y2 then
-            dc:char(nil, pens.VERT_BOT_PEN)
-        else
-            dc:char(nil, pens.VERT_MID_PEN)
-        end
-    end
-end
-
 function QualityAndMaterialsPage:onRenderFrame(dc, rect)
     QualityAndMaterialsPage.super.onRenderFrame(self, dc, rect)
     if self.dirty then
@@ -510,6 +501,23 @@ function GlobalSettingsPage:init()
             label_width=8,
             on_change=self:callback('update_setting', 'bars'),
         },
+        widgets.Panel{
+            frame={h=1},
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='reconstruct',
+            frame={l=0},
+            key='CUSTOM_M',
+            label='Multi-rebuild',
+            on_change=self:callback('update_setting', 'reconstruct'),
+        },
+        widgets.Label{
+            text={
+                '  Plan constructions on tiles with existing', NEWLINE,
+                '  constructed floors/ramps when using box select.'
+            },
+            text_pen=COLOR_GRAY,
+        },
     }
 
     self:init_settings()
@@ -522,6 +530,7 @@ function GlobalSettingsPage:init_settings()
     subviews.logs:setOption(settings.logs)
     subviews.boulders:setOption(settings.boulders)
     subviews.bars:setOption(settings.bars)
+    subviews.reconstruct:setOption(settings.reconstruct)
 end
 
 function GlobalSettingsPage:update_setting(setting, val)

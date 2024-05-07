@@ -2,6 +2,7 @@ local _ENV = mkmodule('plugins.sort.places')
 
 local sortoverlay = require('plugins.sort.sortoverlay')
 local locationselector = require('plugins.sort.locationselector')
+local info_overlay = require('plugins.sort.info')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
@@ -48,7 +49,6 @@ local function get_default_zone_name(zone_type)
 end
 
 local function get_zone_search_key(zone)
-    local site = df.global.world.world_data.active_site[0]
     local result = {}
 
     -- allow zones to be searchable by their name
@@ -67,7 +67,8 @@ local function get_zone_search_key(zone)
     if zone.location_id == -1 then -- zone is NOT a special location and we don't need to do anything special for type searching
         table.insert(result, df.civzone_type[zone.type]);
     else -- zone is a special location and we need to get its type from world data
-        local building, success = utils.binsearch(site.buildings, zone.location_id, 'id')
+        local site = dfhack.world.getCurrentSite() or {}
+        local building, success = utils.binsearch(site.buildings or {}, zone.location_id, 'id')
 
         if success and building.name then
             table.insert(result, language_name_types[building.name.type] or '')
@@ -86,11 +87,11 @@ local function get_zone_search_key(zone)
 end
 
 local function get_location_search_key(zone)
-    local site = df.global.world.world_data.active_site[0]
+    local site = dfhack.world.getCurrentSite() or {}
     local result = {}
 
     -- get language_name and type (we dont need user-given zone name because it does not appear on this page)
-    local building, success = utils.binsearch(site.buildings, zone.location_id, 'id')
+    local building, success = utils.binsearch(site.buildings or {}, zone.location_id, 'id')
     if success and building.name then
         table.insert(result, language_name_types[building.name.type] or '')
         if building.name.has_name then
@@ -110,12 +111,43 @@ local function get_location_search_key(zone)
     return table.concat(result, ' ')
 end
 
+local function get_stockpile_search_key(stockpile)
+    if #stockpile.name ~= 0 then return stockpile.name
+    else return ('Stockpile #%s'):format(stockpile.stockpile_number) end
+end
+
+local function get_workshop_search_key(workshop)
+    local result = {}
+    for _, unit_id in ipairs(workshop.profile.permitted_workers) do
+        local unit = df.unit.find(unit_id)
+        if unit then table.insert(result, sortoverlay.get_unit_search_key(unit)) end
+    end
+
+    table.insert(result, workshop.name)
+    table.insert(result, df.workshop_type.attrs[workshop.type].name or '')
+    table.insert(result, df.workshop_type[workshop.type])
+
+    return table.concat(result, ' ')
+end
+
+local function get_farmplot_search_key(farmplot)
+    local result = {}
+
+    if #farmplot.name ~= 0 then table.insert(result, farmplot.name) else table.insert(result, 'Farm Plot') end
+
+    local plant = df.plant_raw.find(farmplot.plant_id[farmplot.last_season])
+    if plant then table.insert(result, plant.name_plural) end
+
+    return table.concat(result, ' ')
+end
+
 -- ----------------------
 -- PlacesOverlay
 --
 
 PlacesOverlay = defclass(PlacesOverlay, sortoverlay.SortOverlay)
 PlacesOverlay.ATTRS{
+    desc='Adds search functionality to the places overview screens.',
     default_pos={x=71, y=9},
     viewscreens='dwarfmode/Info',
     frame={w=40, h=6}
@@ -124,6 +156,7 @@ PlacesOverlay.ATTRS{
 function PlacesOverlay:init()
     self:addviews{
         widgets.BannerPanel{
+            view_id='panel',
             frame={l=0, t=0, r=0, h=1},
             visible=self:callback('get_key'),
             subviews={
@@ -140,17 +173,30 @@ function PlacesOverlay:init()
 
     self:register_handler('ZONES', buildings.list[df.buildings_mode_type.ZONES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_zone_search_key}))
     self:register_handler('LOCATIONS', buildings.list[df.buildings_mode_type.LOCATIONS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_location_search_key}))
+    self:register_handler('STOCKPILES', buildings.list[df.buildings_mode_type.STOCKPILES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_stockpile_search_key}))
+    self:register_handler('WORKSHOPS', buildings.list[df.buildings_mode_type.WORKSHOPS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_workshop_search_key}))
+    self:register_handler('FARMPLOTS', buildings.list[df.buildings_mode_type.FARMPLOTS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_farmplot_search_key}))
 end
 
 function PlacesOverlay:get_key()
     if info.current_mode == df.info_interface_mode_type.BUILDINGS then
-        -- TODO: Replace nested if with 'return df.buildings_mode_type[buildings.mode]' once other handlers are written
-        -- Not there right now so it doesn't render a search bar on unsupported Places subpages
-        if buildings.mode == df.buildings_mode_type.ZONES then
-            return 'ZONES'
-        elseif buildings.mode == df.buildings_mode_type.LOCATIONS then
-            return 'LOCATIONS'
-        end
+        return df.buildings_mode_type[buildings.mode]
+    end
+end
+
+function PlacesOverlay:updateFrames()
+    local ret = info_overlay.resize_overlay(self)
+    local l, t = info_overlay.get_panel_offsets()
+    local frame = self.subviews.panel.frame
+    if frame.l == l and frame.t == t then return ret end
+    frame.l, frame.t = l, t
+    return true
+end
+
+function PlacesOverlay:onRenderBody(dc)
+    PlacesOverlay.super.onRenderBody(self, dc)
+    if self:updateFrames() then
+        self:updateLayout()
     end
 end
 

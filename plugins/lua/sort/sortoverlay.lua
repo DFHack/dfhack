@@ -27,8 +27,8 @@ SortOverlay.ATTRS{
     default_enabled=true,
     hotspot=true,
     overlay_onupdate_max_freq_seconds=0,
-    -- subclasses expected to provide default_pos, viewscreens (single string), and frame
-    -- viewscreens should be the top-level scope within which the search widget state is maintained
+    -- subclasses expected to provide default_pos, viewscreens, and frame
+    -- viewscreens should be the top-level scope(s) within which the search widget state is maintained
     -- once the player leaves that scope, widget state will be reset
 }
 
@@ -46,19 +46,45 @@ function SortOverlay:register_handler(key, vec, search_fn, cleanup_fn)
     }
 end
 
+local function do_cleanup(handlers, key, data)
+    if not key or not data then return end
+    local cleanup_fn = safe_index(handlers, key, 'cleanup_fn')
+    if cleanup_fn then
+        cleanup_fn(data)
+    end
+    data.saved_original = nil
+end
+
+local function get_scope(scopes)
+    if type(scopes) == 'string' then scopes = {scopes} end
+    local scr = dfhack.gui.getDFViewscreen(true)
+    for _,scope in ipairs(scopes) do
+        if dfhack.gui.matchFocusString(scope, scr) then
+            return scope
+        end
+    end
+end
+
+function SortOverlay:has_exited_scope()
+    local cur_scope = get_scope(self.viewscreens)
+    local ret = self.cur_scope and self.cur_scope ~= cur_scope
+    self.cur_scope = cur_scope
+    return ret
+end
+
 -- handles reset and clean up when the player exits the handled scope
 function SortOverlay:overlay_onupdate()
-    if self.overlay_onupdate_max_freq_seconds == 0 and
-        not dfhack.gui.matchFocusString(self.viewscreens, dfhack.gui.getDFViewscreen(true))
-    then
+    if self.overlay_onupdate_max_freq_seconds ~= 0 then return end
+    if self:has_exited_scope() then
         for key,data in pairs(self.state) do
-            local cleanup_fn = safe_index(self.handlers, key, 'cleanup_fn')
-            if cleanup_fn then
-                cleanup_fn(data)
+            if type(data) == 'table' then
+                do_cleanup(self.handlers, key, data)
             end
         end
         self:reset()
-        self.overlay_onupdate_max_freq_seconds = 300
+        if self.cur_scope then
+            self.overlay_onupdate_max_freq_seconds = 300
+        end
     end
 end
 
@@ -76,25 +102,39 @@ end
 
 -- handles saving/restoring search strings when the player moves between different contexts
 function SortOverlay:onRenderBody(dc)
-    if next(self.state) then
-        local key = self:get_key()
-        if self.state.cur_key ~= key then
-            self.state.cur_key = key
-            local prev_text = key and ensure_key(self.state, key).prev_text or ''
-            self.subviews.search:setText(prev_text)
-            self:do_search(self.subviews.search.text, true)
-        end
+    local key, group = self:get_key()
+    if self.state.cur_group ~= group then
+        self.state.cur_group = group
+        do_cleanup(self.handlers, self.state.cur_key, self.state[self.state.cur_key])
+    end
+    if self.state.cur_key ~= key then
+        self.state.cur_key = key
+        local prev_text = key and ensure_key(self.state, key).prev_text or ''
+        self.subviews.search:setText(prev_text)
+        self:do_search(self.subviews.search.text, true)
     end
     self.overlay_onupdate_max_freq_seconds = 0
     SortOverlay.super.onRenderBody(self, dc)
 end
 
+local function is_mouse_key(keys)
+    return keys._MOUSE_L
+        or keys._MOUSE_R
+        or keys._MOUSE_M
+        or keys.CONTEXT_SCROLL_UP
+        or keys.CONTEXT_SCROLL_DOWN
+        or keys.CONTEXT_SCROLL_PAGEUP
+        or keys.CONTEXT_SCROLL_PAGEDOWN
+end
+
 function SortOverlay:onInput(keys)
-    if keys._MOUSE_R and self.subviews.search.focus and self:get_key() then
+    local key = self:get_key()
+    if keys._MOUSE_R and self.subviews.search.focus and key then
         self.subviews.search:setFocus(false)
         return true
     end
-    return SortOverlay.super.onInput(self, keys)
+    return key and (SortOverlay.super.onInput(self, keys) or
+        (self.subviews.search.focus and not is_mouse_key(keys)))
 end
 
 function SortOverlay:do_search(text, force_full_search)
@@ -109,7 +149,7 @@ function SortOverlay:do_search(text, force_full_search)
     if not key then return end
     local prev_text = ensure_key(self.state, key).prev_text
     -- some screens reset their contents between context switches; regardless,
-    -- a switch back to the context should results in an incremental search
+    -- a switch back to the context should result in an incremental search
     local incremental = not force_full_search and prev_text and text:startswith(prev_text)
     local handler = self.handlers[key]
     handler.search_fn(handler.vec, self.state[key], text, incremental)

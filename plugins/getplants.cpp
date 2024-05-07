@@ -2,8 +2,14 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "modules/Designations.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+
 #include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/material.h"
+#include "df/material_flags.h"
 #include "df/plant.h"
 #include "df/plant_growth.h"
 #include "df/plant_raw.h"
@@ -13,10 +19,6 @@
 #include "df/world_data.h"
 #include "df/world_object_data.h"
 #include "df/world_site.h"
-
-#include "modules/Designations.h"
-#include "modules/Maps.h"
-#include "modules/Materials.h"
 
 using std::string;
 using std::vector;
@@ -74,6 +76,7 @@ enum class selectability {
 //  result in the plants not being usable for farming or even collectable at all).
 
 selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bool farming) {
+    TRACE(log, out).print("analyzing %s\n", plant->id.c_str());
     const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type[plant_material_def::basic_mat], plant->material_defs.idx[plant_material_def::basic_mat]);
     bool outOfSeason = false;
     selectability result = selectability::Nonselectable;
@@ -96,8 +99,10 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
         return selectability::Nonselectable;
     }
 
-    if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
-        basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)) {
+    if (basic_mat.isValid() &&
+        (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
+         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)))
+    {
         DEBUG(log, out).print("%s is edible\n", plant->id.c_str());
         if (farming) {
             if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW)) {
@@ -123,8 +128,10 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
         }
     }
 
-    if (basic_mat.material->reaction_product.id.size() > 0 ||
-        basic_mat.material->reaction_class.size() > 0) {
+    if (basic_mat.isValid() &&
+        (basic_mat.material->reaction_product.id.size() > 0 ||
+         basic_mat.material->reaction_class.size() > 0))
+    {
         DEBUG(log, out).print("%s has a reaction\n", plant->id.c_str());
         if (farming) {
             result = selectability::Selectable;
@@ -363,7 +370,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             }
         }
         else
-            plantNames.insert(toUpper(parameters[i]));
+            plantNames.insert(toUpper_cp437(parameters[i]));
     }
     if (treesonly && shrubsonly) {
         out.printerr("Cannot specify both -t and -s at the same time!\n");

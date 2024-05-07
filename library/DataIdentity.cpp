@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <variant>
 
 #include "DataFuncs.h"
 #include "DataIdentity.h"
@@ -17,9 +18,9 @@ namespace df {
     category##_identity<type> identity_traits<type>::identity(name);
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
-#define OPAQUE_IDENTITY_TRAITS_NAME(type, name) \
-    opaque_identity identity_traits<type >::identity(sizeof(type), allocator_noassign_fn<type >, name)
-#define STL_OPAQUE_IDENTITY_TRAITS(type) OPAQUE_IDENTITY_TRAITS_NAME(std::type, #type)
+#define OPAQUE_IDENTITY_TRAITS_NAME(name, ...) \
+    opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_noassign_fn<__VA_ARGS__ >, name)
+#define OPAQUE_IDENTITY_TRAITS(...) OPAQUE_IDENTITY_TRAITS_NAME(#__VA_ARGS__, __VA_ARGS__ )
 
     INTEGER_IDENTITY_TRAITS(char,               "char");
     INTEGER_IDENTITY_TRAITS(signed char,        "int8_t");
@@ -44,12 +45,17 @@ namespace df {
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     bit_array_identity identity_traits<BitArray<int> >::identity;
 
-    STL_OPAQUE_IDENTITY_TRAITS(condition_variable);
-    STL_OPAQUE_IDENTITY_TRAITS(fstream);
-    STL_OPAQUE_IDENTITY_TRAITS(mutex);
-    STL_OPAQUE_IDENTITY_TRAITS(future<void>);
-    STL_OPAQUE_IDENTITY_TRAITS(function<void()>);
-    STL_OPAQUE_IDENTITY_TRAITS(optional<std::function<void()> >);
+    OPAQUE_IDENTITY_TRAITS(std::condition_variable);
+    OPAQUE_IDENTITY_TRAITS(std::fstream);
+    OPAQUE_IDENTITY_TRAITS(std::mutex);
+    OPAQUE_IDENTITY_TRAITS(std::future<void>);
+    OPAQUE_IDENTITY_TRAITS(std::function<void()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<bool()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<int*()>);
+    OPAQUE_IDENTITY_TRAITS(std::function<std::string()>);
+    OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
+    OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
+    OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
 
     buffer_container_identity buffer_container_identity::base_instance;
 }

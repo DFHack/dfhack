@@ -10,7 +10,16 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=dfhack.internal.getAddress('init') and df.global.init.texpos_border_interior, ch=32, fg=0, bg=0, write_to_lower=true}
+local function getInteriorTexpos()
+    if not dfhack.internal.getAddress('init') then return end
+    if dfhack.screen.inGraphicsMode() then
+        return df.global.init.texpos_border_interior
+    else
+        return df.global.init.classic_texpos_border_interior
+    end
+end
+
+CLEAR_PEN = to_pen{tile=getInteriorTexpos(), ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
@@ -509,7 +518,15 @@ function View:getMousePos(view_rect)
 end
 
 function View:getMouseFramePos()
-    return self:getMousePos(ViewRect{rect=self.frame_rect})
+    if not self.frame_rect or not self.frame_parent_rect then return end
+    return self:getMousePos(ViewRect{
+        rect=mkdims_wh(
+            self.frame_rect.x1+self.frame_parent_rect.x1,
+            self.frame_rect.y1+self.frame_parent_rect.y1,
+            self.frame_rect.width,
+            self.frame_rect.height
+        )
+    })
 end
 
 function View:computeFrame(parent_rect)
@@ -649,7 +666,7 @@ end
 
 function Screen:renderParent()
     if self._native and self._native.parent then
-        self._native.parent:render()
+        self._native.parent:render(dfhack.getTickCount())
     else
         dscreen.clear()
     end
@@ -728,7 +745,8 @@ ZScreen.ATTRS{
 function ZScreen:preinit(args)
     if self.ATTRS.initial_pause == nil then
         args.initial_pause = DEFAULT_INITIAL_PAUSE or
-                (self.ATTRS.pass_mouse_clicks == false)
+                self.ATTRS.pass_mouse_clicks == false or
+                self.ATTRS.force_pause
     end
 end
 
@@ -765,6 +783,18 @@ end
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
     if self.force_pause and dfhack.isMapLoaded() then
+        if not df.global.pause_state and self.force_pause ~= 'blink' then
+            self.force_pause = 'blink'
+            local end_ms = dfhack.getTickCount() + 1000
+            local function blink_reset()
+                if dfhack.getTickCount() < end_ms then
+                    dfhack.timeout(10, 'frames', blink_reset)
+                else
+                    self.force_pause = true
+                end
+            end
+            blink_reset()
+        end
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
@@ -860,6 +890,9 @@ end
 function ZScreen:onGetSelectedItem()
     return zscreen_get_any(self, 'Item')
 end
+function ZScreen:onGetSelectedJob()
+    return zscreen_get_any(self, 'Job')
+end
 function ZScreen:onGetSelectedBuilding()
     return zscreen_get_any(self, 'Building')
 end
@@ -878,7 +911,6 @@ ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,
     force_pause = true,
-    pass_pause = false,
     pass_movement_keys = false,
     pass_mouse_clicks = false,
 }
@@ -897,13 +929,13 @@ GREY_FRAME = {
 -- The boundary used by the pre-steam DF screens.
 -- deprecated
 BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK }, -- ch=0xDB is "full block" (█)
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 local BASE_FRAME = {
-    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK }, -- ch=206 is "box drawings double vertical and horizontal" (╬)
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
@@ -913,21 +945,39 @@ local BASE_FRAME = {
 
 local function make_frame(tp, double_line)
     local frame = copyall(BASE_FRAME)
+    -- external horizontal/vertical bars
     frame.t_frame_pen = to_pen{ tile=curry(tp, 2), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.l_frame_pen = to_pen{ tile=curry(tp, 8), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.b_frame_pen = to_pen{ tile=curry(tp, 16), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.r_frame_pen = to_pen{ tile=curry(tp, 10), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external corners
     frame.lt_frame_pen = to_pen{ tile=curry(tp, 1), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.lb_frame_pen = to_pen{ tile=curry(tp, 15), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.rt_frame_pen = to_pen{ tile=curry(tp, 3), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
     frame.rb_frame_pen = to_pen{ tile=curry(tp, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal T-junctions
+    frame.tTi_frame_pen = to_pen{ tile=curry(tp, 21), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bTi_frame_pen = to_pen{ tile=curry(tp, 20), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lTi_frame_pen = to_pen{ tile=curry(tp, 19), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rTi_frame_pen = to_pen{ tile=curry(tp, 18), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- external T-junctions
+    frame.tTe_frame_pen = to_pen{ tile=curry(tp, 11), ch=double_line and 203 or 194, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.bTe_frame_pen = to_pen{ tile=curry(tp, 12), ch=double_line and 202 or 193, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lTe_frame_pen = to_pen{ tile=curry(tp, 13), ch=double_line and 204 or 195, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rTe_frame_pen = to_pen{ tile=curry(tp, 14), ch=double_line and 185 or 180, fg=COLOR_GREY, bg=COLOR_BLACK }
+    -- internal horizontal/vertical bars (and cross junction)
+    frame.v_frame_pen = to_pen{ tile=curry(tp, 5), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.h_frame_pen = to_pen{ tile=curry(tp, 6), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.x_frame_pen = to_pen{ tile=curry(tp, 4), ch=197, fg=COLOR_GREY, bg=COLOR_BLACK }
     return frame
 end
 
 function FRAME_WINDOW(resizable)
     local frame = make_frame(textures.tp_border_window, true)
-    if not resizable then
-        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    if resizable then
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_window, 17), ch=217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    else
+        frame.rb_frame_pen = to_pen{ tile=curry(textures.tp_border_panel, 17), ch=188, fg=COLOR_GREY, bg=COLOR_BLACK }
     end
     return frame
 end
@@ -994,8 +1044,12 @@ function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
     end
 
     if pause_forced then
+        local pause_label = ' PAUSE FORCED '
+        if pause_forced == 'blink' and blink_visible(100) then
+            pause_label = '              '
+        end
         dscreen.paintString(style.paused_pen or style.title_pen or pen,
-                            x1+2, y2, ' PAUSE FORCED ')
+                            x1+2, y2, pause_label)
     end
 end
 

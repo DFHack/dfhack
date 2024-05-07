@@ -1,6 +1,15 @@
 // When displaying the names of partially-consumed items, show the percentage remaining
 // Potentially useful for revealing why random pieces of cloth or thread aren't suitable for jobs
 
+#include "df/item_barst.h"
+#include "df/item_clothst.h"
+#include "df/item_drinkst.h"
+#include "df/item_globst.h"
+#include "df/item_liquid_miscst.h"
+#include "df/item_powder_miscst.h"
+#include "df/item_sheetst.h"
+#include "df/item_threadst.h"
+
 #define DEFINE_PARTIAL_ITEM_TWEAK(TYPE, DIM) \
 struct partial_items_hook_##TYPE : df::item_##TYPE##st { \
     typedef df::item_##TYPE##st interpose_base; \

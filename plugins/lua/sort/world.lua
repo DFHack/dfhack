@@ -9,6 +9,7 @@ local widgets = require('gui.widgets')
 
 WorldOverlay = defclass(WorldOverlay, sortoverlay.SortOverlay)
 WorldOverlay.ATTRS{
+    desc='Adds search functionality to the artifact list on the world raid screen.',
     default_pos={x=-18, y=2},
     viewscreens='world/ARTIFACTS',
     frame={w=40, h=1},
@@ -44,6 +45,7 @@ end
 
 local function cleanup_artifact_vectors(data)
     local vs_world = dfhack.gui.getDFViewscreen(true)
+    if not df.viewscreen_worldst:is_instance(vs_world) then return end
     vs_world.artifact:assign(data.saved_original)
     vs_world.artifact:resize(data.saved_original_size)
     vs_world.artifact_arl:assign(data.saved_flags)

@@ -8,7 +8,9 @@
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 
+#include "df/building_actual.h"
 #include "df/building_design.h"
+#include "df/general_ref.h"
 #include "df/item.h"
 #include "df/item_slabst.h"
 #include "df/job.h"
@@ -35,8 +37,7 @@ struct BadFlags {
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction); F(in_job);
-        F(owned); F(in_chest); F(removed); F(encased);
-        F(spider_web);
+        F(owned); F(removed); F(encased); F(spider_web);
         #undef F
         whole = flags.whole;
     }
@@ -70,12 +71,20 @@ static bool isUnusableBar(color_ostream& out, df::item* item) {
     return ok.bits.soap;
 }
 
+static bool isInWheelbarrow(color_ostream& out, df::item* item) {
+    auto container = Items::getContainer(item);
+    if (!container || container->getType() != df::item_type::TOOL)
+        return false;
+    return container->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING);
+}
+
 bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile()
         && isAccessible(out, item)
-        && !isUnusableBar(out, item);
+        && !isUnusableBar(out, item)
+        && !isInWheelbarrow(out, item);
 }
 
 bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {
@@ -220,84 +229,126 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
     return NULL;
 }
 
+
+static int distance(df::coord pos1, df::coord pos2) {
+    return std::max(abs(pos1.x - pos2.x), abs(pos1.y - pos2.y)) + abs(pos1.z - pos2.z);
+}
+
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
         map<string, Bucket> &buckets,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings,
         bool unsuspend_on_finalize) {
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
-    auto item_vector = df::global::world->items.other[other_id];
+    const auto item_vector = df::global::world->items.other[other_id];
+
     DEBUG(cycle,out).print("matching %zu item(s) in vector %s against %zu filter bucket(s)\n",
           item_vector.size(),
           ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
           buckets.size());
-    for (auto item_it = item_vector.rbegin();
-            item_it != item_vector.rend();
-            ++item_it) {
-        auto item = *item_it;
-        if (!itemPassesScreen(out, item))
-            continue;
-        for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
-            TRACE(cycle,out).print("scanning bucket: %s/%s\n",
-                    ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(), bucket_it->first.c_str());
-            auto & task_queue = bucket_it->second;
-            auto bld = popInvalidTasks(out, task_queue, planned_buildings);
-            if (!bld) {
-                DEBUG(cycle,out).print("removing empty bucket: %s/%s; %zu bucket(s) left\n",
-                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                      bucket_it->first.c_str(),
-                      buckets.size() - 1);
-                bucket_it = buckets.erase(bucket_it);
-                continue;
-            }
+
+    //  items we might want to attach (and their positions)
+    std::vector<df::item*> available;
+    for (auto item : item_vector) {
+        if (itemPassesScreen(out, item))
+            available.emplace_back(item);
+    }
+    std::vector<std::pair<df::coord, df::item*>> matching;
+    size_t num_matching = 0;
+
+    DEBUG(cycle,out).print("%zu items available for assignment\n", available.size());
+
+    for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
+
+        TRACE(cycle,out).print("scanning bucket: %s/%s\n",
+              ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(), bucket_it->first.c_str());
+
+        auto & task_queue = bucket_it->second;
+        bool first_task = true;
+
+        while (auto bld = popInvalidTasks(out, task_queue, planned_buildings)){
             auto & task = task_queue.front();
+
             auto id = task.first;
             auto job = bld->jobs[0];
-            auto & jitems = job->job_items;
+            auto &jitems = job->job_items;
             const size_t num_filters = jitems.size();
-            auto filter_idx = task.second;
+            const int filter_idx = task.second;
             const int rev_filter_idx = num_filters - (filter_idx+1);
             auto &pb = planned_buildings.at(id);
-            if (matchesFilters(item, jitems[filter_idx], pb.heat_safety,
-                        pb.item_filters[rev_filter_idx], pb.specials)
-                    && Job::attachJobItem(job, item,
-                        df::job_item_ref::Hauled, filter_idx))
-            {
+
+            // first task of the bucket: filter/count available items
+            if (first_task) {
+                matching.clear();
+                for(auto item : available)
+                    if (!item->flags.bits.in_job &&
+                        matchesFilters(item,
+                                       jitems[filter_idx],
+                                       pb.heat_safety,
+                                       pb.item_filters[rev_filter_idx],
+                                       pb.specials))
+                        matching.emplace_back(Items::getPosition(item),item);
+
+                num_matching = matching.size();
+                first_task = false;
+                TRACE(cycle,out).print("first task in bucket: found %zu matching items\n",
+                                        num_matching);
+            }
+            // every task: find and attach closest matching item (if any)
+            if (num_matching == 0)
+                break; // no more items for this bucket, go to next bucket.
+
+            auto jpos = job->pos;
+            std::pair<df::coord, df::item*> *closest = nullptr;
+            for (auto &p : matching) {
+                if (p.second && (closest == nullptr || distance(jpos, p.first) < distance(jpos, closest->first)))
+                    closest = &p;
+            }
+            auto item = closest->second; // some item must be closest.
+
+            if (Job::attachJobItem(job, item, df::job_item_ref::Hauled, filter_idx)) {
                 MaterialInfo material;
                 material.decode(item);
                 ItemTypeInfo item_type;
                 item_type.decode(item);
-                DEBUG(cycle,out).print("attached %s %s to filter %d for %s(%d): %s/%s\n",
+                DEBUG(cycle,out).print("attached %s %s (distance %d) to filter %d for %s(%d): %s/%s\n",
                       material.toString().c_str(),
                       item_type.toString().c_str(),
+                      distance(closest->first, jpos),
                       filter_idx,
                       ENUM_KEY_STR(building_type, bld->getType()).c_str(),
                       id,
                       ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
                       bucket_it->first.c_str());
+                // clean up fulfilled task
+                task_queue.pop_front();
                 // keep quantity aligned with the actual number of remaining
                 // items so if buildingplan is turned off, the building will
                 // be completed with the correct number of items.
                 --jitems[filter_idx]->quantity;
-                task_queue.pop_front();
+                // null the item* component in vector of matching items
+                // ensures we don't try to attach this item to another job
+                closest->second = nullptr;
+                --num_matching;
+                // try to finalize building
                 if (isJobReady(out, jitems)) {
                     finalizeBuilding(out, bld, unsuspend_on_finalize);
                     planned_buildings.at(id).remove(out);
                 }
-                if (task_queue.empty()) {
-                    DEBUG(cycle,out).print(
-                        "removing empty item bucket: %s/%s; %zu left\n",
-                        ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                        bucket_it->first.c_str(),
-                        buckets.size() - 1);
-                    buckets.erase(bucket_it);
-                }
-                // we found a home for this item; no need to look further
-                break;
+            } else {
+                WARN(cycle,out).print("failed to attach job item");
             }
+        } // no more items or no more tasks
+
+        if (task_queue.empty()) {
+            DEBUG(cycle,out).print(
+                "removing empty item bucket: %s/%s; %zu left\n",
+                ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                                   bucket_it->first.c_str(),
+                                   buckets.size() - 1);
+            bucket_it = buckets.erase(bucket_it);
+        } else {
             ++bucket_it;
         }
-        if (buckets.empty())
-            break;
     }
 }
 

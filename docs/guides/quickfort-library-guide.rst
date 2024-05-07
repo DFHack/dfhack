@@ -56,7 +56,7 @@ for a slideshow).
 Surface level
 `````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
+.. image:: https://lh3.googleusercontent.com/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :alt: Annotated screenshot of the dreamfort surface level
   :target: https://drive.google.com/file/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
   :align: center
@@ -64,7 +64,7 @@ Surface level
 Farming level
 `````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
+.. image:: https://lh3.googleusercontent.com/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :alt: Annotated screenshot of the dreamfort farming level
   :target: https://drive.google.com/file/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
   :align: center
@@ -72,7 +72,7 @@ Farming level
 Industry level
 ``````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
+.. image:: https://lh3.googleusercontent.com/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :alt: Annotated screenshot of the dreamfort industry level
   :target: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :align: center
@@ -80,14 +80,14 @@ Industry level
 Services levels (4 deep)
 ````````````````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
+.. image:: https://lh3.googleusercontent.com/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :alt: Annotated screenshot of the dreamfort services level
   :target: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :align: center
 
 Services waterway:
 
-.. image:: https://drive.google.com/uc?export=download&id=1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
+.. image:: https://lh3.googleusercontent.com/d/1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
   :alt: Annotated screenshot of the dreamfort waterway
   :target: https://drive.google.com/file/d/1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
   :align: center
@@ -97,14 +97,14 @@ Services waterway:
 If you are routing water to fill the cisterns, you can do it like this (1
 z-level below the preceding screenshot)
 
-.. image:: https://drive.google.com/uc?export=download&id=1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
+.. image:: https://lh3.googleusercontent.com/d/1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
   :alt: Annotated screenshot of an example aqueduct addition to the dreamfort cisterns
   :target: https://drive.google.com/file/d/1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
   :align: center
 
 Cistern drain (keep open while you're digging out the aquifer tap):
 
-.. image:: https://drive.google.com/uc?export=download&id=1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
+.. image:: https://lh3.googleusercontent.com/d/1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
   :alt: Annotated screenshot of an example drainage addition to the dreamfort cisterns
   :target: https://drive.google.com/file/d/1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
   :align: center
@@ -112,7 +112,7 @@ Cistern drain (keep open while you're digging out the aquifer tap):
 Guildhall level
 ```````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
+.. image:: https://lh3.googleusercontent.com/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :alt: Annotated screenshot of the dreamfort guildhall level
   :target: https://drive.google.com/file/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
   :align: center
@@ -120,7 +120,7 @@ Guildhall level
 Noble suites
 ````````````
 
-.. image:: https://drive.google.com/uc?export=download&id=16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
+.. image:: https://lh3.googleusercontent.com/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :alt: Annotated screenshot of the dreamfort noble suites
   :target: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
   :align: center
@@ -128,7 +128,7 @@ Noble suites
 Apartments
 ``````````
 
-.. image:: https://drive.google.com/uc?export=download&id=16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
+.. image:: https://lh3.googleusercontent.com/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :alt: Annotated screenshot of the dreamfort apartments
   :target: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
   :align: center
@@ -136,7 +136,7 @@ Apartments
 Crypt
 `````
 
-.. image:: https://drive.google.com/uc?export=download&id=16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
+.. image:: https://lh3.googleusercontent.com/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :alt: Annotated screenshot of the dreamfort crypt
   :target: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :align: center
@@ -214,18 +214,18 @@ Light aquifer tap
 The aquifer tap helps you create a safe, everlasting source of fresh water from
 a light aquifer. See the step-by-step guide, including information on how to
 create a drainage system so your dwarves don't drown when digging the tap, by
-running the ``library/aquifer_tap.csv`` ``/help`` blueprint.
+running the ``library/aquifer_tap.csv`` ``/help`` blueprint. Alternately, view
+the demo video below.
 
 You can see how to nullify the water pressure (so you don't flood your fort) in
 the Dreamfort cistern screenshot above: `Services levels (4 deep)`_.
 
+.. raw:: html
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/hF3_fjLc_EU?si=BBn7g31KSYfV_CF2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__.
-
-.. image:: https://drive.google.com/uc?export=download&id=11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
-  :alt: Annotated screenshot of the aquifer tap
-  :target: https://drive.google.com/file/d/11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
-  :align: center
 
 Post-embark
 ~~~~~~~~~~~
@@ -240,7 +240,11 @@ Pump stack
 
 The pump stack blueprints help you move water and magma up to more convenient
 locations in your fort. See the step-by-step guide for using it by running the
-``library/pump_stack.csv`` ``/help`` blueprint.
+``library/pump_stack.csv`` ``/help`` blueprint or by viewing the demo video:
+
+.. raw:: html
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/SkzgOjN6jxg?si=y53ZBsx0BWyIX_Hh" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__.

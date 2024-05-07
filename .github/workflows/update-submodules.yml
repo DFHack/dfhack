@@ -4,11 +4,6 @@ on:
   schedule:
   - cron: '0 7 * * *'
   workflow_dispatch:
-    inputs:
-      branch:
-        description: DFHack branch to update
-        required: false
-        default: develop
 
 jobs:
   run:
@@ -16,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone DFHack
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.event.inputs.branch }}
+        ref: ${{ github.ref }}
         submodules: true
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
     - name: Update submodules

@@ -21,7 +21,8 @@ Menu overlay widget
 
 The in-game hotkeys menu is registered with the `overlay` framework and appears
 as a DFHack logo in the upper-left corner of the screen. You can bring up the
-menu by clicking on the logo or by hitting the global :kbd:`Ctrl`:kbd:`Shift`:kbd:`c` hotkey. You can select a command to run from
+menu by clicking on the logo or by hitting the global
+:kbd:`Ctrl`:kbd:`Shift`:kbd:`C` hotkey. You can select a command to run from
 the list by clicking on it with the mouse or by using the keyboard to select a
 command with the arrow keys and hitting :kbd:`Enter`.
 

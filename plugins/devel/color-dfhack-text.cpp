@@ -7,6 +7,8 @@
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 
+#include "df/graphic.h"
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("color-dfhack-text");
@@ -19,9 +21,9 @@ struct {
     uint8_t tick;
 } config;
 
-bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, color_text_hook, color_text_tile);
-bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     Screen::Pen pen2 = pen;
     uint8_t color = config.flicker ? config.tick % 8 : config.color;
@@ -37,27 +39,27 @@ bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
         pen2.bg = color;
         pen2.bold = true;
     }
-    return color_text_hook.next()(pen2, x, y, map);
+    return color_text_hook.next()(pen2, x, y, map, texpos_field);
 }
 
-bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, aaaaa_set_tile_hook, aaaaa_set_tile);
-bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     Screen::Pen pen2 = pen;
     if ((pen.ch >= 'A' && pen.ch <= 'Z') || (pen.ch >= '0' && pen.ch <= '9'))
         pen2.ch = 'A';
     else if (pen.ch >= 'a' && pen.ch <= 'z')
         pen2.ch = 'a';
-    return aaaaa_set_tile_hook.next()(pen2, x, y, map);
+    return aaaaa_set_tile_hook.next()(pen2, x, y, map, texpos_field);
 }
 
-bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, shift_set_tile_hook, shift_set_tile);
-bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
     x = (x + 1) % gps->dimx;
-    return shift_set_tile_hook.next()(pen, x, y, map);
+    return shift_set_tile_hook.next()(pen, x, y, map, texpos_field);
 }
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
@@ -78,10 +80,10 @@ command_result color(color_ostream &out, std::vector<std::string> &params)
         return plugin_enable(out, true);
     for (auto it = params.begin(); it != params.end(); ++it)
     {
-        std::string p = toLower(*it);
+        std::string p = toLower_cp437(*it);
         if (!p.size())
             continue;
-        #define CHECK_COLOR(color_name) else if (p == toLower(std::string(#color_name))) \
+        #define CHECK_COLOR(color_name) else if (p == toLower_cp437(std::string(#color_name))) \
             { config.flicker = false; config.color = COLOR_##color_name % 8; plugin_enable(out, true); }
         CHECK_COLOR(RED)
         CHECK_COLOR(GREEN)

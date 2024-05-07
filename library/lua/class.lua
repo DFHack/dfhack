@@ -15,6 +15,10 @@ reserved_names = { super = true, ATTRS = true }
 attrs_meta = attrs_meta or {}
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
+---@generic T: table
+---@param class? T
+---@param parent? table
+---@return table|T
 function defclass(class,parent)
     class = class or {}
 
@@ -39,6 +43,10 @@ function defclass(class,parent)
 end
 
 -- An instance uses the class as metatable
+---@generic T: table
+---@param class table
+---@param table? T
+---@return table|T
 function mkinstance(class,table)
     table = table or {}
     setmetatable(table, class)

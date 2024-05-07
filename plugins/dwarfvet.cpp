@@ -41,7 +41,7 @@ REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(dwarfvet, status, DebugCategory::LINFO);
+    DBG_DECLARE(dwarfvet, control, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(dwarfvet, cycle, DebugCategory::LINFO);
 }
@@ -51,21 +51,6 @@ static PersistentDataItem config;
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
 };
-static int get_config_val(int index) {
-    if (!config.isValid())
-        return -1;
-    return config.ival(index);
-}
-static bool get_config_bool(int index) {
-    return get_config_val(index) == 1;
-}
-static void set_config_val(int index, int value) {
-    if (config.isValid())
-        config.ival(index) = value;
-}
-static void set_config_bool(int index, bool value) {
-    set_config_val(index, value ? 1 : 0);
-}
 
 static const int32_t CYCLE_TICKS = 2459; // a prime number that's around 2 days
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
@@ -82,36 +67,36 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginComma
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(status,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     } else {
-        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load_data(color_ostream &out) {
+DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     cycle_timestamp = 0;
-    config = World::GetPersistentData(CONFIG_KEY);
+    config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        DEBUG(control,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
-    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
     return CR_OK;
 }
@@ -119,7 +104,7 @@ DFhackCExport command_result plugin_load_data(color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(status,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -133,40 +118,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool call_dwarfvet_lua(color_ostream *out, const char *fn_name,
-        int nargs = 0, int nres = 0,
-        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
-        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(status).print("calling dwarfvet lua function: '%s'\n", fn_name);
-
-    CoreSuspender guard;
-
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!out)
-        out = &Core::getInstance().getConsole();
-
-    return Lua::CallLuaModuleFunction(*out, L, "plugins.dwarfvet", fn_name,
-            nargs, nres,
-            std::forward<Lua::LuaLambda&&>(args_lambda),
-            std::forward<Lua::LuaLambda&&>(res_lambda));
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     bool show_help = false;
-    if (!call_dwarfvet_lua(&out, "parse_commandline", 1, 1,
-            [&](lua_State *L) {
-                Lua::PushVector(L, parameters);
-            },
-            [&](lua_State *L) {
+    if (!Lua::CallLuaModuleFunction(out, "plugins.dwarfvet", "parse_commandline", make_tuple(parameters),
+            1, [&](lua_State *L) {
                 show_help = !lua_toboolean(L, -1);
             })) {
         return CR_FAILURE;
@@ -180,7 +142,7 @@ static void dwarfvet_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
 
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
-    call_dwarfvet_lua(&out, "checkup");
+    Lua::CallLuaModuleFunction(out, "plugins.dwarfvet", "checkup");
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

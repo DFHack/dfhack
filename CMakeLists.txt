@@ -7,12 +7,12 @@ cmake_policy(SET CMP0074 NEW)
 project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.11")
-set(DFHACK_RELEASE "r2")
+set(DF_VERSION "50.13")
+set(DFHACK_RELEASE "r1.1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
-set(DFHACK_ABI_VERSION 1)
+set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
 # Set up build types
@@ -62,9 +62,9 @@ endif()
 
 if(WIN32)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1937 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1937))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1937 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1939 is required.")
+    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1939))
+        message(SEND_ERROR "MSVC 2022 version 1930 to 1939 is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 
@@ -181,6 +181,7 @@ endif()
 # make sure all the necessary submodules have been set up
 if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/scripts/CMakeLists.txt
+    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/dfhooks/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/jsoncpp-sub/CMakeLists.txt
     OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt
@@ -289,21 +290,28 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
+set(USE_SYSTEM_SDL2 OFF CACHE BOOL "Set to ON to use the system SDL2 headers.")
+
 if(BUILD_LIBRARY)
-    # Download SDL release and extract into depends in the build dir
-    # all we need are the header files (including generated headers), so the same release package
-    # will work for all platforms
-    # (the above statement is untested for OSX)
-    set(SDL_VERSION 2.26.2)
-    set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
-    set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
-    set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
-    download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
-        ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
-        ${SDL_ZIP_MD5})
-    file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
-        DESTINATION ${SDL_ZIP_PATH})
-    include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+    if(USE_SYSTEM_SDL2)
+        find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+        include_directories(${SDL2_INCLUDE_DIRS})
+    else()
+        # Download SDL release and extract into depends in the build dir
+        # all we need are the header files (including generated headers), so the same release package
+        # will work for all platforms
+        # (the above statement is untested for OSX)
+        set(SDL_VERSION 2.26.2)
+        set(SDL_ZIP_MD5 574daf26d48de753d0b1e19823c9d8bb)
+        set(SDL_ZIP_FILE SDL2-devel-${SDL_VERSION}-VC.zip)
+        set(SDL_ZIP_PATH ${dfhack_SOURCE_DIR}/depends/SDL2/)
+        download_file("https://github.com/libsdl-org/SDL/releases/download/release-${SDL_VERSION}/${SDL_ZIP_FILE}"
+            ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+            ${SDL_ZIP_MD5})
+        file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
+            DESTINATION ${SDL_ZIP_PATH})
+        include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+    endif()
 endif()
 
 if(APPLE)
@@ -384,7 +392,6 @@ else()
 endif()
 
 include_directories(depends/lodepng)
-include_directories(depends/tthread)
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
 
@@ -603,4 +610,4 @@ if(BUILD_LIBRARY AND BUILD_SIZECHECK)
     add_dependencies(dfhack sizecheck)
 endif()
 
-add_subdirectory(package/windows)
+add_subdirectory(package)

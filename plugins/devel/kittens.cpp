@@ -19,6 +19,7 @@
 
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 
 // for MSVC alignas(64) issues

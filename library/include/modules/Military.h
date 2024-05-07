@@ -3,7 +3,11 @@
 #include "Export.h"
 #include "DataDefs.h"
 
-#include "df/squad.h"
+namespace df {
+    struct squad;
+
+    union squad_use_flags;
+}
 
 namespace DFHack
 {

@@ -45,8 +45,8 @@ local function process_races(opts, races, start_idx)
     end
 end
 
-function parse_commandline(opts, ...)
-    local positionals = process_args(opts, {...})
+function parse_commandline(opts, args)
+    local positionals = process_args(opts, args)
 
     local command = positionals[1]
     if command then opts.command = command end
@@ -65,13 +65,6 @@ function parse_commandline(opts, ...)
         opts.fa = check_nonnegative_int(positionals[4])
         opts.ma = check_nonnegative_int(positionals[5])
         process_races(opts, positionals, 6)
-    elseif command == 'ticks' then
-        local ticks = tonumber(positionals[2])
-        if not is_positive_int(ticks) then
-            qerror('number of ticks must be a positive integer: ' .. ticks)
-        else
-            opts.ticks = ticks
-        end
     else
         qerror(('unrecognized command: "%s"'):format(command))
     end

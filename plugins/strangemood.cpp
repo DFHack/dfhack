@@ -5,6 +5,7 @@
 #include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
+
 #include "modules/Gui.h"
 #include "modules/Units.h"
 #include "modules/Items.h"
@@ -20,9 +21,14 @@
 #include "df/entity_raw.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/historical_entity.h"
+#include "df/inorganic_raw.h"
+#include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/language_word.h"
 #include "df/map_block.h"
+#include "df/material.h"
+#include "df/mood_stage_type.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_preference.h"
@@ -98,6 +104,8 @@ df::job_skill getMoodSkill (df::unit *unit)
         case job_skill::BONECARVE:
         case job_skill::BOWYER:
         case job_skill::MECHANICS:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             if (skill->rating > level)
             {
                 skills.clear();
@@ -401,10 +409,11 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
 
     // Also, make sure there isn't a mood already running
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    vector<df::unit *> citizens;
+    Units::getCitizens(citizens, true);
+    for (auto cur : citizens)
     {
-        df::unit *cur = world->units.active[i];
-        if (Units::isCitizen(cur) && cur->flags1.bits.has_mood)
+        if (cur->flags1.bits.has_mood)
         {
             plotinfo->mood_cooldown = 1000;
             out.printerr("A strange mood is already in progress!\n");
@@ -415,9 +424,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // See which units are eligible to enter moods
     vector<df::unit *> moodable_units;
     bool mood_available = false;
-    for (size_t i = 0; i < world->units.active.size(); i++)
+    for (auto cur : citizens)
     {
-        df::unit *cur = world->units.active[i];
         if (!isUnitMoodable(cur))
             continue;
         if (!cur->flags1.bits.had_mood)
@@ -500,7 +508,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             case profession::CARPENTER:
             case profession::BOWYER:
             case profession::STONEWORKER:
-            case profession::MASON:
+            case profession::STONE_CARVER:
                 for (int j = 0; j < 5; j++)
                     tickets.push_back(i);
                 break;
@@ -549,9 +557,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (type == mood_type::None)
     {
         if (soul && (
-            (soul->personality.stress >= 500000) ||
-            (soul->personality.stress >= 250000 && !rng.df_trandom(2)) ||
-            (soul->personality.stress >= 100000 && !rng.df_trandom(10))
+            (soul->personality.longterm_stress >= 100000) ||
+            (soul->personality.longterm_stress >= 50000 && !rng.df_trandom(2)) ||
+            (soul->personality.longterm_stress >= 20000 && !rng.df_trandom(10))
             ))
         {
             switch (rng.df_trandom(2))
@@ -634,6 +642,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         {
         case job_skill::MINING:
         case job_skill::MASONRY:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             job->job_type = job_type::StrangeMoodMason;
             break;
         case job_skill::CARPENTRY:
@@ -753,6 +763,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
         case job_skill::MECHANICS:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             job->job_items.push_back(item = new df::job_item());
             item->item_type = item_type::BOULDER;
             item->quantity = base_item_count;
@@ -1043,6 +1055,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::ENGRAVE_STONE:
         case job_skill::MASONRY:
         case job_skill::STONECRAFT:
+        case job_skill::CUT_STONE:
+        case job_skill::CARVE_STONE:
             avoid_type = item_type::BLOCKS;
             break;
         case job_skill::CARPENTRY:
@@ -1227,7 +1241,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }
-    unit->unk_18e = 0;
+    unit->moodstage = df::mood_stage_type::INITIAL;
     return CR_OK;
 }
 

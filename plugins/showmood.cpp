@@ -120,7 +120,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 out.print("claim a Carpenter's Workshop");
                 break;
             case job_type::StrangeMoodMason:
-                out.print("claim a Mason's Workshop");
+                out.print("claim a Stoneworker's Workshop");
                 break;
             case job_type::StrangeMoodBowyer:
                 out.print("claim a Boywer's Workshop");

@@ -123,7 +123,11 @@ case "$1" in
     ret=$?
     ;;
   *)
-    setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@"
+    TARGET=./dwarfort
+    if [ "$SteamAppId" = 2346660 ]; then
+      TARGET=hack/launchdf
+    fi
+    setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" $TARGET "$@"
     ret=$?
     ;;
 esac

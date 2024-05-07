@@ -1,118 +1,72 @@
-// Just show some position data
-
-#include <climits>
-#include <cstdio>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-using namespace std;
-
-#include "Console.h"
-#include "Core.h"
-#include "Export.h"
-#include "MiscUtils.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
+#include "TileTypes.h"
 
-#include "modules/Buildings.h"
 #include "modules/Gui.h"
+#include "modules/Materials.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
-#include "modules/Materials.h"
-#include "modules/Units.h"
 
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_world_constructionst.h"
+#include "df/building.h"
 #include "df/building_def.h"
 #include "df/building_nest_boxst.h"
+#include "df/civzone_type.h"
+#include "df/construction_type.h"
+#include "df/furnace_type.h"
+#include "df/item.h"
+#include "df/map_block.h"
 #include "df/region_map_entry.h"
+#include "df/shop_type.h"
+#include "df/siegeengine_type.h"
+#include "df/tiletype.h"
+#include "df/trap_type.h"
+#include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/workshop_type.h"
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/world_raws.h"
 
 using std::vector;
 using std::string;
 using namespace DFHack;
-using namespace df::enums;
 
 DFHACK_PLUGIN("probe");
+
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(cursor);
 
-command_result df_probe (color_ostream &out, vector <string> & parameters);
-command_result df_cprobe (color_ostream &out, vector <string> & parameters);
-command_result df_bprobe (color_ostream &out, vector <string> & parameters);
-
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
-    commands.push_back(PluginCommand("probe",
-                                     "Display information about the selected tile.",
-                                     df_probe));
-    commands.push_back(PluginCommand("cprobe",
-                                     "Display information about the selected creature.",
-                                     df_cprobe));
-    commands.push_back(PluginCommand("bprobe",
-                                     "Display information about the selected building.",
-                                     df_bprobe));
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
-    return CR_OK;
-}
-
-command_result df_cprobe (color_ostream &out, vector <string> & parameters)
-{
+static command_result df_cprobe(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
-    int32_t cursorX, cursorY, cursorZ;
-    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
-    if(cursorX == -30000)
-    {
-        out.printerr("No cursor; place cursor over creature to probe.\n");
-    }
-    else
-    {
-        for(size_t i = 0; i < world->units.all.size(); i++)
-        {
-            df::unit * unit = world->units.all[i];
-            if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
-            {
-                out.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
 
-                for(size_t j=0; j<unit->inventory.size(); j++)
-                {
-                    df::unit_inventory_item* inv_item = unit->inventory[j];
-                    df::item* item = inv_item->item;
-                    if(inv_item->mode == df::unit_inventory_item::T_mode::Worn)
-                    {
-                        out << "   wears item: #" << item->id;
-                        if(item->flags.bits.owned)
-                            out << " (owned)";
-                        else
-                            out << " (not owned)";
-                        if(item->getEffectiveArmorLevel() != 0)
-                            out << ", armor";
-                        out << endl;
-                    }
-                }
+    auto unit = Gui::getSelectedUnit(out);
+    if (!unit)
+        return CR_FAILURE;
 
-                // don't leave loop, there may be more than 1 creature at the cursor position
-                //break;
-            }
+    out.print("Creature %d, race %d (0x%x), civ %d (0x%x)\n",
+        unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
+
+    for (auto inv_item : unit->inventory) {
+        df::item* item = inv_item->item;
+        if (inv_item->mode == df::unit_inventory_item::T_mode::Worn) {
+            out << "   wears item: #" << item->id;
+            if (item->flags.bits.owned)
+                out << " (owned)";
+            else
+                out << " (not owned)";
+            if (item->getEffectiveArmorLevel() != 0)
+                out << ", armor";
+            out << std::endl;
         }
     }
+
     return CR_OK;
 }
 
-void describeTile(color_ostream &out, df::tiletype tiletype)
-{
+static void describeTile(color_ostream &out, df::tiletype tiletype) {
     out.print("%d", tiletype);
-    if(tileName(tiletype))
-        out.print(" = %s",tileName(tiletype));
+    if (tileName(tiletype))
+        out.print(" = %s", tileName(tiletype));
     out.print(" (%s)", ENUM_KEY_STR(tiletype, tiletype).c_str());
     out.print("\n");
 
@@ -133,90 +87,59 @@ void describeTile(color_ostream &out, df::tiletype tiletype)
     out.print("\n");
 }
 
-command_result df_probe (color_ostream &out, vector <string> & parameters)
-{
-    //bool showBlock, showDesig, showOccup, showTile, showMisc;
-
-    /*
-    if (!parseOptions(parameters, showBlock, showDesig, showOccup,
-                      showTile, showMisc))
-    {
-        out.printerr("Unknown parameters!\n");
-        return CR_FAILURE;
-    }
-    */
-
+static command_result df_probe(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
 
     DFHack::Materials *Materials = Core::getInstance().getMaterials();
 
-    std::vector<t_matglossInorganic> inorganic;
+    vector<t_matglossInorganic> inorganic;
     bool hasmats = Materials->CopyInorganicMaterials(inorganic);
 
-    if (!Maps::IsValid())
-    {
+    if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
+
     MapExtras::MapCache mc;
 
     int32_t regionX, regionY, regionZ;
     Maps::getPosition(regionX,regionY,regionZ);
 
-    int32_t cursorX, cursorY, cursorZ;
-    Gui::getCursorCoords(cursorX,cursorY,cursorZ);
-    if(cursorX == -30000)
-    {
-        out.printerr("No cursor; place cursor over tile to probe.\n");
-        return CR_FAILURE;
-    }
-    DFCoord cursor (cursorX,cursorY,cursorZ);
+    df::coord cursor;
 
-    uint32_t blockX = cursorX / 16;
-    uint32_t tileX = cursorX % 16;
-    uint32_t blockY = cursorY / 16;
-    uint32_t tileY = cursorY % 16;
+    if (parameters.size())
+        Lua::CallLuaModuleFunction(out, "plugins.probe", "parse_commandline", parameters,
+            1,  [&](lua_State *L){
+                if (!lua_isnil(L, -1))
+                    Lua::CheckDFAssign(L, &cursor, -1);
+            });
+
+    if (!Maps::isValidTilePos(cursor)) {
+        if (!Gui::getCursorCoords(cursor)) {
+            out.printerr("No cursor; place cursor over tile to probe.\n");
+            return CR_FAILURE;
+        }
+    }
+
+    uint32_t blockX = cursor.x / 16;
+    uint32_t tileX = cursor.x % 16;
+    uint32_t blockY = cursor.y / 16;
+    uint32_t tileY = cursor.y % 16;
 
     MapExtras::Block * b = mc.BlockAt(cursor/16);
-    if(!b || !b->is_valid())
-    {
+    if (!b || !b->is_valid()) {
         out.printerr("No data.\n");
         return CR_OK;
     }
 
     auto &block = *b->getRaw();
     out.print("block addr: %p\n\n", &block);
-/*
-    if (showBlock)
-    {
-        out.print("block flags:\n");
-        print_bits<uint32_t>(block.blockflags.whole,out);
-        out.print("\n\n");
-    }
-*/
+
     df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
     df::tile_occupancy &occ = block.occupancy[tileX][tileY];
     uint8_t fog_of_war = block.fog_of_war[tileX][tileY];
-/*
-    if(showDesig)
-    {
-        out.print("designation\n");
-        print_bits<uint32_t>(block.designation[tileX][tileY].whole,
-                                out);
-        out.print("\n\n");
-    }
 
-    if(showOccup)
-    {
-        out.print("occupancy\n");
-        print_bits<uint32_t>(block.occupancy[tileX][tileY].whole,
-                                out);
-        out.print("\n\n");
-    }
-*/
-
-    // tiletype
     out.print("tiletype: ");
     describeTile(out, tiletype);
     out.print("static: ");
@@ -224,8 +147,8 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out.print("base: ");
     describeTile(out, mc.baseTiletypeAt(cursor));
 
-    out.print("temperature1: %d U\n",mc.temperature1At(cursor));
-    out.print("temperature2: %d U\n",mc.temperature2At(cursor));
+    out.print("temperature1: %d U\n", mc.temperature1At(cursor));
+    out.print("temperature2: %d U\n", mc.temperature2At(cursor));
 
     int offset = block.region_offset[des.bits.biome];
     int bx = clip_range(block.region_pos.x + (offset % 3) - 1, 0, world->world_data->world_width-1);
@@ -239,7 +162,11 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     int eindex = evi > 65 ? 2 : evi < 33 ? 0 : 1;
     int surr = sindex + eindex * 3;
 
-    const char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
+    const char* surroundings[] = {
+        "Serene", "Mirthful", "Joyous Wilds",
+        "Calm", "Wilderness", "Untamed Wilds",
+        "Sinister", "Haunted", "Terrifying"
+    };
 
     // biome, geolayer
     out << "biome: " << des.bits.biome << " (" <<
@@ -250,21 +177,19 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
     int16_t base_rock = mc.layerMaterialAt(cursor);
-    if(base_rock != -1)
-    {
-        out << "Layer material: " << dec << base_rock;
+    if (base_rock != -1) {
+        out << "Layer material: " << std::dec << base_rock;
         if(hasmats)
             out << " / " << inorganic[base_rock].id
                 << " / "
                 << inorganic[base_rock].name
-                << endl;
+                << std::endl;
         else
-            out << endl;
+            out << std::endl;
     }
     int16_t vein_rock = mc.veinMaterialAt(cursor);
-    if(vein_rock != -1)
-    {
-        out << "Vein material (final): " << dec << vein_rock;
+    if (vein_rock != -1) {
+        out << "Vein material (final): " << std::dec << vein_rock;
         if(hasmats)
             out << " / " << inorganic[vein_rock].id
                 << " / "
@@ -272,36 +197,35 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
                 << " ("
                 << ENUM_KEY_STR(inclusion_type,b->veinTypeAt(cursor))
                 << ")"
-                << endl;
+                << std::endl;
         else
-            out << endl;
+            out << std::endl;
     }
     MaterialInfo minfo(mc.baseMaterialAt(cursor));
     if (minfo.isValid())
-        out << "Base material: " << minfo.getToken() << " / " << minfo.toString() << endl;
+        out << "Base material: " << minfo.getToken() << " / " << minfo.toString() << std::endl;
     minfo.decode(mc.staticMaterialAt(cursor));
     if (minfo.isValid())
-        out << "Static material: " << minfo.getToken() << " / " << minfo.toString() << endl;
+        out << "Static material: " << minfo.getToken() << " / " << minfo.toString() << std::endl;
     // liquids
-    if(des.bits.flow_size)
-    {
+    if (des.bits.flow_size) {
         if(des.bits.liquid_type == tile_liquid::Magma)
             out <<"magma: ";
         else out <<"water: ";
         out << des.bits.flow_size << std::endl;
     }
-    if(des.bits.flow_forbid)
+    if (des.bits.flow_forbid)
         out << "flow forbid" << std::endl;
-    if(des.bits.pile)
+    if (des.bits.pile)
         out << "stockpile?" << std::endl;
-    if(des.bits.rained)
+    if (des.bits.rained)
         out << "rained?" << std::endl;
-    if(des.bits.smooth)
+    if (des.bits.smooth)
         out << "smooth?" << std::endl;
-    if(des.bits.water_salt)
-        out << "salty" << endl;
-    if(des.bits.water_stagnant)
-        out << "stagnant" << endl;
+    if (des.bits.water_salt)
+        out << "salty" << std::endl;
+    if (des.bits.water_stagnant)
+        out << "stagnant" << std::endl;
 
     #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
 
@@ -346,46 +270,40 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out.print(" %s\n", sa_feature(global.type));
     }
     out << "local feature idx: " << block.local_feature
-        << endl;
+        << std::endl;
     out << "global feature idx: " << block.global_feature
-        << endl;
-    out << endl;
+        << std::endl;
+    out << std::endl;
 
-    out << "Occupancy:" << endl;
+    out << "Occupancy:" << std::endl;
     out.print("%-16s= %s\n", "building", enum_item_key(occ.bits.building).c_str());
     PRINT_FLAG(occ, unit);
     PRINT_FLAG(occ, unit_grounded);
     PRINT_FLAG(occ, item);
     PRINT_FLAG(occ, moss);
-    out << endl;
+    out << std::endl;
 
-    if(block.occupancy[tileX][tileY].bits.no_grow)
-        out << "no grow" << endl;
+    if (block.occupancy[tileX][tileY].bits.no_grow)
+        out << "no grow" << std::endl;
 
-    for(size_t e=0; e<block.block_events.size(); e++)
-    {
-        df::block_square_event * blev = block.block_events[e];
+    for (auto blev : block.block_events) {
         df::block_square_event_type blevtype = blev->getType();
-        switch(blevtype)
-        {
+        switch(blevtype) {
         case df::block_square_event_type::grass:
-            {
-                df::block_square_event_grassst * gr_ev = (df::block_square_event_grassst *)blev;
-                if(gr_ev->amount[tileX][tileY] > 0)
-                {
-                    out << "amount of grass: " << (int)gr_ev->amount[tileX][tileY] << endl;
-                }
-                break;
-            }
+        {
+            auto gr_ev = (df::block_square_event_grassst *)blev;
+            if (gr_ev->amount[tileX][tileY] > 0)
+                out << "amount of grass: " << (int)gr_ev->amount[tileX][tileY] << std::endl;
+            break;
+        }
         case df::block_square_event_type::world_construction:
-            {
-                df::block_square_event_world_constructionst * co_ev = (df::block_square_event_world_constructionst*)blev;
-                uint16_t bits = co_ev->tile_bitmask[tileY];
-                out << "construction bits: " << bits << endl;
-                break;
-            }
+        {
+            auto co_ev = (df::block_square_event_world_constructionst *)blev;
+            uint16_t bits = co_ev->tile_bitmask[tileY];
+            out << "construction bits: " << bits << std::endl;
+            break;
+        }
         default:
-            //out << "unhandled block event type!" << endl;
             break;
         }
     }
@@ -394,94 +312,113 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-command_result df_bprobe (color_ostream &out, vector <string> & parameters)
-{
+union Subtype {
+    int16_t subtype;
+    df::civzone_type civzone_type;
+    df::furnace_type furnace_type;
+    df::workshop_type workshop_type;
+    df::construction_type construction_type;
+    df::shop_type shop_type;
+    df::siegeengine_type siegeengine_type;
+    df::trap_type trap_type;
+};
+
+static command_result df_bprobe(color_ostream &out, vector<string> & parameters) {
     CoreSuspender suspend;
 
-    if(cursor->x == -30000)
-    {
-        out.printerr("No cursor; place cursor over tile to probe.\n");
+    auto bld = Gui::getSelectedBuilding(out);
+    if (!bld)
         return CR_FAILURE;
-    }
 
-    for (size_t i = 0; i < world->buildings.all.size(); i++)
+    string name;
+    bld->getName(&name);
+
+    auto bld_type = bld->getType();
+    Subtype subtype{bld->getSubtype()};
+    int32_t custom = bld->getCustomType();
+
+    out.print("Building %i, \"%s\", type %s (%i)",
+                bld->id,
+                name.c_str(),
+                ENUM_KEY_STR(building_type, bld_type).c_str(),
+                bld_type);
+
+
+    switch (bld_type) {
+    case df::building_type::Civzone:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(civzone_type, subtype.civzone_type).c_str(),
+                    subtype.subtype);
+        break;
+    case df::building_type::Furnace:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(furnace_type, subtype.furnace_type).c_str(),
+                    subtype.subtype);
+        if (subtype.furnace_type == df::furnace_type::Custom)
+            out.print(", custom type %s (%i)",
+                        world->raws.buildings.all[custom]->code.c_str(),
+                        custom);
+        break;
+    case df::building_type::Workshop:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(workshop_type, subtype.workshop_type).c_str(),
+                    subtype.subtype);
+        if (subtype.workshop_type == df::workshop_type::Custom)
+            out.print(", custom type %s (%i)",
+                        world->raws.buildings.all[custom]->code.c_str(),
+                        custom);
+        break;
+    case df::building_type::Construction:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(construction_type, subtype.construction_type).c_str(),
+                    subtype.subtype);
+        break;
+    case df::building_type::Shop:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(shop_type, subtype.shop_type).c_str(),
+                    subtype.subtype);
+        break;
+    case df::building_type::SiegeEngine:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(siegeengine_type, subtype.siegeengine_type).c_str(),
+                    subtype.subtype);
+        break;
+    case df::building_type::Trap:
+        out.print(", subtype %s (%i)",
+                    ENUM_KEY_STR(trap_type, subtype.trap_type).c_str(),
+                    subtype.subtype);
+        break;
+    case df::building_type::NestBox:
     {
-        Buildings::t_building building;
-        if (!Buildings::Read(i, building))
-            continue;
-        if (int32_t(building.x1) > cursor->x || cursor->x > int32_t(building.x2) ||
-            int32_t(building.y1) > cursor->y || cursor->y > int32_t(building.y2) ||
-            int32_t(building.z) != cursor->z)
-            continue;
-        string name;
-        building.origin->getName(&name);
-        out.print("Building %i - \"%s\" - type %s (%i)",
-                  building.origin->id,
-                  name.c_str(),
-                  ENUM_KEY_STR(building_type, building.type).c_str(),
-                  building.type);
-
-        switch (building.type)
-        {
-        case building_type::Civzone:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(civzone_type, building.civzone_type).c_str(),
-                      building.civzone_type);
-            break;
-        case building_type::Furnace:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(furnace_type, building.furnace_type).c_str(),
-                      building.furnace_type);
-            if (building.furnace_type == furnace_type::Custom)
-                out.print(", custom type %s (%i)",
-                          world->raws.buildings.all[building.custom_type]->code.c_str(),
-                          building.custom_type);
-            break;
-        case building_type::Workshop:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(workshop_type, building.workshop_type).c_str(),
-                      building.workshop_type);
-            if (building.workshop_type == workshop_type::Custom)
-                out.print(", custom type %s (%i)",
-                          world->raws.buildings.all[building.custom_type]->code.c_str(),
-                          building.custom_type);
-            break;
-        case building_type::Construction:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(construction_type, building.construction_type).c_str(),
-                      building.construction_type);
-            break;
-        case building_type::Shop:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(shop_type, building.shop_type).c_str(),
-                      building.shop_type);
-            break;
-        case building_type::SiegeEngine:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(siegeengine_type, building.siegeengine_type).c_str(),
-                      building.siegeengine_type);
-            break;
-        case building_type::Trap:
-            out.print(", subtype %s (%i)",
-                      ENUM_KEY_STR(trap_type, building.trap_type).c_str(),
-                      building.trap_type);
-            break;
-        case building_type::NestBox:
-            {
-                df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building.origin;
-                out.print(", claimed:(%i), items:%zu", nestbox->claimed_by, nestbox->contained_items.size());
-                break;
-            }
-        default:
-            if (building.subtype != -1)
-                out.print(", subtype %i", building.subtype);
-            break;
-        }
-        if(building.origin->relations.size())  //Connected to rooms.
-            out << ", " << building.origin->relations.size() << " rooms";
-        if(building.origin->getBuildStage()!=building.origin->getMaxBuildStage())
-            out << ", in construction";
-        out.print("\n");
+        df::building_nest_boxst* nestbox = virtual_cast<df::building_nest_boxst>(bld);
+        if (nestbox)
+            out.print(", claimed:(%i), items:%zu", nestbox->claimed_by, nestbox->contained_items.size());
+        break;
     }
+    default:
+        if (subtype.subtype != -1)
+            out.print(", subtype %i", subtype.subtype);
+        break;
+    }
+
+    if (bld->relations.size())  //Connected to rooms.
+        out << ", " << bld->relations.size() << " rooms";
+    if (bld->getBuildStage() != bld->getMaxBuildStage())
+        out << ", in construction";
+    out.print("\n");
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands){
+    commands.push_back(PluginCommand("cprobe",
+                                     "Display low-level properties of the selected unit.",
+                                     df_cprobe));
+    commands.push_back(PluginCommand("probe",
+                                     "Display low-level properties of the selected tile.",
+                                     df_probe));
+    commands.push_back(PluginCommand("bprobe",
+                                     "Display low-level properties of the selected building.",
+                                     df_bprobe));
     return CR_OK;
 }

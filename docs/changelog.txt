@@ -52,12 +52,368 @@ Template for new versions:
 # Future
 
 ## New Tools
+- Updated for adventure mode: `reveal`
+
+## New Features
+- DFHack and the Dwarf Fortress translation project can now both be run at the same time
+
+## Fixes
+- `zone`: fix display of distance from cage for small pets in assignment dialog
+- `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
+- `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
+- `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
+- `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
+- `logistics`: also add trainers to semi-wild pets when autoretrain is enabled
+
+## Misc Improvements
+- `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
+- `regrass`: can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
+- `regrass`: can now restrict regrass effect to specified tile, block, cuboid, or z-levels
+- `regrass`: can now add grass in map blocks where there hasn't been any, force specific grass type
+- `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
+- `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
+- `stockpiles`: support import and export "desired items" configuration for route stops
+- New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
+- `markdown`: new keybinding for triggering text export: Ctrl-t (when unit or item is selected)
+- `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state)
+- Dreamfort: move wells on services level so drunken dwarves are less likely to fall in
+
+## Documentation
+- Quickfort Blueprint Library: add demo videos for pump stack and light aquifer tap blueprints
+- Update docs for dependency requirements and compilation procedures
+
+## API
+- ``dfhack.items.getReadableDescription()``: easy API for getting a human-readable item description with useful annotations and information (like tattered markers or who is in a cage)
+- ``Items::createItem``: now returns a list of item pointers rather than a single ID, moved creator parameter to beginning, added growth_print and no_floor parameters at end
+- ``World::getAdventurer``: returns current adventurer unit
+- ``World::ReadPauseState``: now returns true when the game is effectively paused due to a large panel obscuring the map. this aligns the return value with the visual state of the pause button when in fort mode.
+
+## Lua
+- ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
+- ``dfhack.world.getAdventurer``: returns current adventurer unit
+- ``dfhack.items.createItem``: return value and parameters have changed as per C++ API
+
+## Removed
+
+# 50.13-r1.1
+
+## Documentation
+- Update docs on release procedures and symbol generation
+
+# 50.13-r1
+
+## Fixes
+- Fixed misidentification of visitors from your own civ as residents; affects all tools that iterate through citizens/residents
+- `cursecheck`: act on selected unit only if a unit is selected
+- Fixed incorrect DFHack background window texture when DF is started in ascii mode and subsequently switched to graphics mode
+
+## Misc Improvements
+- `suspendmanager`: Account for walls planned on the z-layer below when determining accessibility to a job
+
+## Documentation
+- `autoclothing`: add section comparing ``autoclothing`` and `tailor` to guide players choosing which to enable
+
+# 50.12-r3
+
+## New Tools
+- `aquifer`: commandline tool for creating, draining, and modifying aquifers
+
+## New Features
+- `buildingplan`: add overlays for unlinking and freeing mechanisms from buildings
+- `dig`: designate tiles for damp or warm dig, which allows you to dig through damp or warm tiles without designations being canceled
+- `dig`: damp and warm tile icons now remain visible when included in the designation selection box (graphics mode)
+- `dig`: aquifer tiles are now visually distinct from "just damp" tiles (graphics and ascii modes)
+- `dig`: light aquifer tiles are now visually distinct from heavy aquifer tiles (graphics and ascii modes)
+- `dig`: autodig designations that are marked for damp/warm dig propagate the damp/warm tag when expanding to newly exposed tiles
+- `blueprint`: designations and active dig jobs are now captured in generated blueprints
+- `blueprint`: warm/damp dig markers are captured in generated blueprints
+
+## Fixes
+- fix behavior of Linux Steam launcher on systems that don't support the inotify API
+- fix rendering of resize "notch" in lower right corner of resizable windows in ascii mode
+- `quickfort`: stockpiles can now be placed even if there is water covering the tile, as per vanilla behavior
+- `suspendmanager`: prevent cancellation spam when an item is preventing a building from being completed
+- `stonesense`: fix a crash with buildings made of unusual materials (such as campsite tents made out of organic "walls")
+
+## Misc Improvements
+- `tailor`: allow turning off automatic confiscation of tattered clothing
+- aquifer_tap blueprint: now designates in damp dig mode for uninterrupted digging in a light aquifer
+- pump_stack blueprint: now designates in warm and damp dig mode for uninterrupted digging through warm and damp tiles
+- `keybinding`: you can now assign keybindings to mouse buttons (if your mouse has more than the three buttons already used by DF)
+
+## Documentation
+- Lua API: documented existing ``enum:next_item(index)`` function
+
+## API
+- ``Units::citizensRange``: c++-20 std::range filter for citizen units
+- ``Units::forCitizens``: iterator callback function for citizen units
+- ``Units::paintTile``, ``Units::readTile``: now takes an optional field specification for reading and writing to specific map compositing layers
+- ``Buildings::checkFreeTiles``: now takes a ``allow_flow`` parameter to control whether water- or magma-filled tiles are valid
+
+## Lua
+- ``dfhack.gui.matchFocusString``: focus string matching is now case sensitive (for performance reasons)
+
+# 50.12-r2.1
+
+## Fixes
+- `orders`: don't intercept keyboard input for setting skill or labor restrictions on workshop workers tab when the player is setting the building nickname
+
+# 50.12-r2
+
+## New Features
+- `stocks`: add button/hotkey for removing empty categories from the stocks list
+- `sort`: updated and reinstated military status/squad membership/burrow membership filter for work animal assignment screen
+- `logistics`: ``autoretrain`` will automatically assign trainers to your partially-trained (but not yet domesticated) livestock. this prevents children of partially-trained parents from reverting to wild if you don't notice they were born
+- `orders`: add overlay for configuring labor and skill level restrictions for workshops
+
+## Fixes
+- `autochop`: fix underestimation of log yield for cavern mushrooms
+- `gui/notify`: prevent notification overlay from showing up in arena mode
+- `logistics`: don't melt/trade/dump empty containers that happen to be sitting on the stockpile unless the stockpile accepts those item types
+- `gui/launcher`: fix detection on Shift-Enter for running commands and autoclosing the launcher
+- `logistics`: don't send autotrade items to forbidden depots
+- `autoclothing`: don't produce clothes for dead units
+- `caravan`: fix trade price calculations when the same item was requested for both import and export
+
+## Misc Improvements
+- `autobutcher`: prefer butchering partially trained animals and save fully domesticated animals to assist in wildlife domestication programs
+- `autodump`: can now teleport items loosely stored in buildings (clutter)
+- When launched from the Steam client on Linux, both Dwarf Fortress and DFHack will be shown as "Running". This ensures that DF has proper accounting for Linux player usage.
+- `suspendmanager`: improve performance when there are many active jobs
+- `clean`: protect farm plots when cleaning mud
+- `tweak`: add ``quiet`` option for silent enablement and disablement of tweaks
+- `gui/teleport`: add global Ctrl-Shift-T keybinding (only avaiable when DFHack mortal mode is disabled)
+- Dreamfort: the four Craftsdwarf's workshops on the industry level are now specialized for Stonecrafting, Woodcrafting, Bone Carving, and miscellaneous tasks, respectively
+- `dwarfvet`: automatically unassign animals from pastures when they need treatment so they can make their way to the hospital. reassign them to their original pasture when treatment is complete.
+- `dwarfvet`: ignore animals assigned to cages or restraints
+- Many tools that previously only worked for citizens or only for dwarves now work for all citizens and residents, e.g. `fastdwarf`, `rejuvenate`, etc.
+- `buildingplan`: remember player preference for whether unavailable materials should be hidden in the filter selection dialog
+- `buildingplan`: sort by available quantity by default int he filter selection dialog
+- Dreamfort: update embark profile recommendations and example embark profile
+
+## Documentation
+- `overlay-dev-guide`: updated examples and troubleshooting steps
+- `introduction`: refresh getting started content
+- `quickstart`: refresh quickstart guide
+
+## API
+- ``Units::isForgottenBeast``: property check for forgotten beasts
+- ``Units::isGreatDanger``: now includes forgotten beasts
+- ``Units::isResident``: property check for residents (as opposed to citizens)
+- ``Units::getCitizens``: now includes residents by default
+
+## Lua
+- ``widgets.Label``: ``*pen`` attributes can now either be a pen or a function that dynamically returns a pen
+- `helpdb`: ``search_entries`` now returns a match if *all* filters in the ``include`` list are matched. previous behavior was to match if *any* ``include`` filter matched.
+- ``matinfo.decode``: now directly handles plant objects
+- ``dfhack.units.isForgottenBeast``: make new units method available to Lua
+- ``dfhack.units.getCitizens``: now includes residents by default
+
+# 50.12-r1.1
+
+## Fixes
+- `sort`: fix crash when assigning work animals to units
+
+## Removed
+- offline HTML rendered docs are no longer distributed with DFHack since they are randomly triggering Windows Defender antivirus heuristics. If you want to download DFHack docs for offline browsing, you can still get them from the Downloads link at https://dfhack.org/docs
+
+# 50.12-r1
+
+## Misc Improvements
+- `sort`: squad assignment overlay rewritten for compatiblity with new vanilla data structures and screen layouts
+
+## Fixes
+- `gui/design`: no longer comes up when Ctrl-D is pressed but other DFHack windows have focus
+
+## API
+
+- ``Gui::getWidget``: retrieve a vanilla DF widget by name or index
+
+## Lua
+
+- ``dfhack.gui.getWidget``: retrieve a vanilla DF widget by hierarchy path, with each step specified by a widget name or index
+- ``dfhack.gui.getWidgetChildren``: retrieve a list of child widgets for a given widget container
+
+## Removed
+- `burrow`: removed overlay 3D box select since it is now provided by the vanilla UI
+- `sort`: removed Search widgets for screens that now have vanilla search
+
+# 50.11-r7
+
+## New Tools
+- `tweak`: (reinstated) a collection of small bugfixes and gameplay tweaks
+- `pet-uncapper`: (reinstated, renamed from ``petcapRemover``) allow pets to breed beyond the default population cap of 50
+
+## New Features
+- `cleanowned`: Add a "nodump" option to allow for confiscating items without dumping
+- `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
+
+## Fixes
+- `dig`: overlay that shows damp designations in ASCII mode now propertly highlights tiles that are damp because of an aquifer in the layer above
+- `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
+- ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
+- ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
+- `warn-stranded`: don't complain about units that aren't on the map (e.g.  soldiers out on raids)
+- `autoclothing`: Fix enabled behavior
+- ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: don't display popup for all announcement types
+- ``gui.View:getMouseFramePos``: function now detects the correct coordinates even when the widget is nested within other frames
+- `strangemood`: correctly recognize Stonecutter and Stone Carver as moodable skills, move the Mason's boosted mood chance to the Stone Carver, and select Fell/Macabre based on long-term stress
+
+## Misc Improvements
+- `autonestbox`: assign egg layers to the nestbox they have chosen if they have already chosen a nestbox
+- `regrass`: also regrow depleted cavern moss
+- `probe`: act on the selected building/unit instead of requiring placement of the keyboard cursor for ``bprobe`` and ``cprobe``
+- `buildingplan`: use closest matching item rather than newest matching item
+- `zone`: animal assignment dialog now shows distance to pasture/cage and allows sorting by distance
+- `zone`: animal assignment dialog shows number of creatures assigned to this pasture/cage/etc.
+
+## API
+- Gui module Announcement functions now use DF's new announcement alert system
+- ``Gui::addCombatReport``, ``Gui::addCombatReportAuto``: add versions that take ``report *`` instead of report vector index
+- ``Gui::MTB_clean``, ``Gui::MTB_parse``, ``Gui::MTB_set_width``: new functions for manipulating ``markup_text_boxst``
+- ``toupper_cp437(char)``, ``tolower_cp437(char)``: new ``MiscUtils`` functions, return a char with case changed, respecting CP437
+- ``toUpper``, ``toLower``: ``MiscUtils`` functions renamed to ``toUpper_cp437`` and ``toLower_cp437``, CP437 compliant
+- Gui focus strings will now include ``dwarfmode/Default`` if the only other panel open is the Squads panel
+- ``Gui::revealInDwarfmodeMap``: unfollow any currently followed units/items so the viewport doesn't just jump back to where it was
+
+## Lua
+- Overlay framework now respects ``active`` and ``visible`` widget attributes
+- ``dfhack.gui`` announcement functions use default arguments when omitted
+- ``dfhack.units.getCitizens`` now only returns units that are on the map
+- ``dfhack.upperCp437(string)``, ``dfhack.lowerCp437(string)``: new functions, return string with all chars changed, respecting CP437 code page
+
+# 50.11-r6
+
+## New Features
+- `zone`: Add overlay for toggling butchering/gelding/adoption/taming options in animal "Overview" tabs
+
+## Fixes
+- `dig-now`: remove diagonal ramps rendered unusable by digging
+- `dig-now`: fix error propagating "light" and "outside" properties to newly exposed tiles when piercing the surface
+- `sort`: fix potential crash when switching between certain info tabs
+- `suspendmanager`: overlays for suspended building info panels no longer disappear when another window has focus
+
+## Misc Improvements
+- `reveal`: automatically reset saved map state when a new save is loaded
+- `autonestbox`: don't automatically assign partially trained egg-layers to nestboxes if they don't have an ongoing trainer assigned since they might revert to wild
+- `buildingplan`: replace ``[edit filters]`` button in planner overlay with abbreviated filter information
+
+## API
+- ``Units::assignTrainer``: assign a trainer to a trainable animal
+- ``Units::unassignTrainer``: unassign a trainer from an animal
+- ``Gui::getAnyWorkshopJob``: get the first job associated with the selected workshop
+- ``Gui::getAnyJob``: get the job associated with the selected game element (item, unit, workshop, etc.)
+
+## Lua
+- ``dfhack.units.isTamable``: return false for invaders to match vanilla logic
+- ``dfhack.units.assignTrainer``: expose API to Lua
+- ``dfhack.units.unassignTrainer``: expose API to Lua
+- ``dfhack.gui.getAnyWorkshopJob``: expose API to Lua
+- ``dfhack.gui.getAnyJob``: expose API to Lua
+
+## Removed
+- ``nopause``: functionality has moved to `spectate`
+
+# 50.11-r5
+
+## New Tools
+- `gui/embark-anywhere`: new keybinding (active when choosing an embark site): Ctrl-A
+
+## New Features
+- `sort`: search and sort for the "choose unit to elevate to the barony" screen. units are sorted by the number of item preferences they have and the units are annotated with the items that they have preferences for
+- `zone`: add button to location details page for retiring unused locations
+- `gui/mass-remove`: new global keybinding: Ctrl-M while on the fort map
+
+## Fixes
+- `reveal`: now avoids revealing blocks that contain divine treasures, encased horrors, and deep vein hollows (so the surprise triggers are not triggered prematurely)
+- `sort`: fix mouse clicks falling through the squad assignment overlay panel when clicking on the panel but not on a clickable widget
+- `sort`: fix potential crash when removing jobs directly from the Tasks info screen
+- `misery`: fix error when changing the misery factor
+- When passing map movement keys through to the map from DFHack tool windows, also pass fast z movements (shift-scroll by default)
+- `getplants`: fix crash when processing mod-added plants with invalid materials
+- Dreamfort: fix holes in the "Inside+" burrow on the farming level (burrow autoexpand is interrupted by the pre-dug miasma vents to the surface)
+- ``Maps::getBiomeType``, ``Maps::getBiomeTypeWithRef``: fix identification of tropical oceans
+- DFHack tabs (e.g. in `gui/control-panel`) are now rendered correctly when there are certain vanilla screen elements behind them
+- `buildingplan`: when you save a game and load it again, newly planned buildings are now correctly placed in line after existing planned buildings of the same type
+- `buildingplan`: treat items in wheelbarrows as unavailable, just as vanilla DF does. Make sure the `fix/empty-wheelbarrows` fix is enabled so those items aren't permanently unavailable!
+- `buildingplan`: show correct number of materials required when laying down areas of constructions and some of those constructions are on invalid tiles
+- `stonesense`: fix crash in cleanup code after mega screenshot (Ctrl-F5) completes; however, the mega screenshot will still make stonesense unresponsive. close and open the stonesense window to continue using it.
+- `gui/design`: fix incorrect highlight when box selecting area in ASCII mode
+- `fastdwarf`: prevent units from teleporting to inaccessible areas when in teledwarf mode
+- `fastdwarf`: allow units to meander and satisfy needs when they have no current job and teledwarf mode is enabled
+
+## Misc Improvements
+- `autochop`: better error output when target burrows are not specified on the commandline
+- `autoclothing` : now does not consider worn (x) clothing as usable/available; reduces overproduction when using `tailor` at same time
+- `buildingplan`: add option for preventing constructions from being planned on top of existing constructions (e.g. don't build floors on top of floors)
+- `burrow`: flood fill now requires an explicit toggle before it is enabled to help prevent accidental flood fills
+- wherever units are listed in DFHack tools, properties like "agitated" or (-trained-) are now shown
+- `work-now`: now saves its enabled status with the fort
+- `fastdwarf`: now saves its state with the fort
+- `zone`: add include/only/exclude filter for juveniles to the pasture/pit/cage/restraint assignment screen
+- The "PAUSE FORCED" badge will blink briefly to draw attention if the player attempts to unpause when a DFHack tool window requires the game to be paused
+- `sort`: add "Toggle all filters" hotkey button to the squad assignment panel
+- `sort`: rename "Weak mental fortitude" filter to "Dislikes combat", which should be more understandable
+- Dreamfort: put more chairs adjacent to each other to make the tavern more "social"
+- `zone`: show geld status and custom profession (if set, it's the lower editable line in creature description) in pasture/pit/cage/restraint assignment screen
+- `orders`: reduce prepared meal target and raise booze target in ``basic`` importable orders in the orders library
+
+## Documentation
+- `installing`: Add installation instructions for wineskin on Mac
+- UTF-8 text in tool docs is now properly displayed in-game in `gui/launcher` (assuming that it can be converted to cp-437)
+- `modding-guide`: Add examples for script-only and blueprint-only mods that you can upload to DF's Steam Workshop
+- DFHack developer's guide updated, with refreshed `architectural-diagrams`
+
+## API
+- ``random_index``, ``vector_get_random``: new ``MiscUtils`` functions, for getting a random entry in a vector
+- ``capitalize_string_words``: new ``MiscUtils`` function, returns string with all words capitalized
+- ``grab_token_string_pos``: new ``MiscUtils`` function, used for parsing tokens
+- ``Items``: add item melting logic ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)``
+- ``World``: ``GetCurrentSiteId()`` returns the loaded fort site ID (or -1 if no site is loaded)
+- ``World``: ``IsSiteLoaded()`` check to detect if a site (e.g. a player fort) is active (as opposed to the world or a map)
+- ``World``: ``AddPersistentData`` and related functions replaced with ``AddPersistentSiteData`` and ``AddPersistentWorldData`` equivalents
+- New plugin API for saving and loading persistent data. See plugins/examples/skeleton.cpp and plugins/examples/persistent_per_save_example.cpp for details
+- Plugin ABI (binary interface) version bump! Any external plugins must be recompiled against this version of DFHack source code in order to load.
+- ``Persistence``: persistent keys are now namespaced by an entity_id (e.g. a player fort site ID)
+- ``Persistence``: data is now stored one file per entity ID (plus one for the global world) in the DF savegame directory
+- ``Units.isDanger``: now returns true for agitated wildlife
+- ``Constructions::designateRemove``: no longer designates the non-removable "pseudo" construtions that represent the top of walls
+
+## Lua
+- ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
+- ``widgets.Divider``: linear divider to split an existing frame; configurable T-junction edges and frame style matching
+- ``dfhack.persistent``: new, table-driven API for easier world- and site-associated persistent storage. See the Lua API docs for details.
+- ``dfhack.isSiteLoaded``: returns whether a site (e.g. a player fort) is loaded
+- ``dfhack.items``: access to ``canMelt(item)``, ``markForMelting(item)``, and ``cancelMelting(item)`` from ``Items`` module
+- ``dfhack.world.getCurrentSite``: returns the ``df.world_site`` instance of the currently loaded fort
+
+## Removed
+- ``persist-table``: replaced by new ``dfhack.persistent`` API
+- `channel-safely`: (temporarily) removed due to stability issues with the underlying DF API
+
+# 50.11-r4
+
+## Fixes
+- `buildingplan`: fix choosing the wrong mechanism (or something that isn't a mechanism) when linking a lever and manually choosing a mechanism, but then canceling the selection
+- RemoteServer: don't shut down the socket prematurely, allowing continuing connections from, for example, dfhack-run
+- `sort`: fix potential crash when exiting and re-entering a creatures subtab with a search active
+- `sort`: prevent keyboard keys from affecting the UI when search is active and multiple keys are hit at once
+- `tailor`: fix corner case where existing stock was being ignored, leading to over-ordering
+
+## Misc Improvements
+- `buildingplan`: save magma safe mechanisms for when magma safety is requested when linking levers and pressure plates to targets
+- `buildingplan`: when choosing mechanisms for linking levers/pressure plates, filter out unreachable mechanisms
+- `sort`: when searching on the Tasks tab, also search the names of the things the task is associated with, such as the name of the stockpile that an item will be stored in
+
+# 50.11-r3
+
+## New Tools
 - `burrow`: (reinstated) automatically expand burrows as you dig
 
 ## New Features
 - `prospect`: can now give you an estimate of resources from the embark screen. hover the mouse over a potential embark area and run `prospect`.
 - `burrow`: integrated 3d box fill and 2d/3d flood fill extensions for burrow painting mode
-- `buildingplan`: allow specific mechanisms to be selected when linking levers
+- `buildingplan`: allow specific mechanisms to be selected when linking levers or pressure plates
 - `sort`: military and burrow membership filters for the burrow assignment screen
 
 ## Fixes
@@ -65,17 +421,21 @@ Template for new versions:
 - `caravan`: price of vermin swarms correctly adjusted down. a stack of 10000 bees is worth 10, not 10000
 - `sort`: when filtering out already-established temples in the location assignment screen, also filter out the "No specific deity" option if a non-denominational temple has already been established
 - RemoteServer: continue to accept connections as long as the listening socket is valid instead of closing the socket after the first disconnect
+- `buildingplan`: overlay and filter editor gui now uses ctrl-d to delete the filter to avoid conflict with increasing the filter's minimum quality (shift-x)
+- `tailor`: fix crash on Linux where scanned unit is wearing damaged non-clothing (e.g. a crown)
 
 ## Misc Improvements
 - `buildingplan`: display how many items are available on the planner panel
-- `buildingplan`: clarify interface when building single-tile staircases
+- `buildingplan`: make it easier to build single-tile staircases of any shape (up, down, or up/down)
 - `sort`: allow searching by profession on the squad assignment page
+- `sort`: add search for places screens
 - `sort`: add search for work animal assignment screen; allow filtering by miltary/squad/civilian/burrow
-- `sort`: on the squad assignment screen, make effectiveness and potential ratings use the same scale so effectiveness is always less than or equal to potential for a unit and so you can tell when units are approaching their maximum potential
+- `sort`: on the squad assignment screen, make effectiveness and potential ratings use the same scale so effectiveness is always less than or equal to potential for a given unit. this way you can also tell when units are approaching their maximum potential
 - `sort`: new overlay on the animal assignment screen that shows how many work animals each visible unit already has assigned to them
 - `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
 
 ## Documentation
+- Document the Lua API for the ``dfhack.world`` module
 
 ## API
 - ``Gui::revealInDwarfmodeMap``: gained ``highlight`` parameter to control setting the tile highlight on the zoom target
@@ -91,8 +451,6 @@ Template for new versions:
 - ``dfhack.gui.getMousePos``: support new optional ``allow_out_of_bounds`` parameter
 - ``gui.FRAME_THIN``: a panel frame suitable for floating tooltips
 - ``dfhack.buildings.completebuild``: expose new module API
-
-## Removed
 
 # 50.11-r2
 

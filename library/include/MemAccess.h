@@ -51,6 +51,7 @@ namespace DFHack
      */
     struct DFHACK_EXPORT t_memrange
     {
+        void * base;
         void * start;
         void * end;
         // memory range name (if any)
@@ -69,7 +70,6 @@ namespace DFHack
             return false;
         }
         bool valid;
-        uint8_t * buffer;
     };
 
     /**
@@ -244,8 +244,9 @@ namespace DFHack
             {
                 return identified;
             };
+
             /// get virtual memory ranges of the process (what is mapped where)
-            void getMemRanges(std::vector<t_memrange> & ranges );
+            static void getMemRanges(std::vector<t_memrange> & ranges);
 
             /// get the symbol table extension of this process
             std::shared_ptr<DFHack::VersionInfo> getDescriptor()

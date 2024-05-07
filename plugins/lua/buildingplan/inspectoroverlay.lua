@@ -63,11 +63,12 @@ end
 
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
 InspectorOverlay.ATTRS{
+    desc='Adds information to planned buildings about what materials are still needed.',
     default_pos={x=-41,y=14},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
     frame={w=30, h=15},
-    frame_style=gui.MEDIUM_FRAME,
+    frame_style=gui.FRAME_MEDIUM,
     frame_background=gui.CLEAR_PEN,
 }
 

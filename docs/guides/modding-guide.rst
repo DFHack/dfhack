@@ -56,12 +56,13 @@ Let's go through that line by line.
 - The :file:`info.txt` file contains metadata about your mod that DF will
     display in-game. You can read more about this file in the
     `Official DF Modding Guide <https://bay12games.com/dwarves/modding_guide.html>`__.
-- Modifications to the game raws (potentially with custom raw tokens) go in
-    the :file:`graphics/` and :file:`objects/` folders. You can read more about
-    the files that go in these directories on the :wiki:`Modding` wiki page.
+- Modifications to the game raws (potentially with
+    `custom raw tokens <custom-raw-tokens>`) go in the :file:`graphics/` and
+    :file:`objects/` folders. You can read more about the files that go in
+    these directories on the :wiki:`Modding` wiki page.
 - Any `quickfort` blueprints included with your mod go in the
     :file:`blueprints` folder. Note that your mod can *just* be blueprints and
-    nothing else if you like.
+    the :file:`info.txt` file if you like. See the next section for an example.
 - A control script in :file:`scripts_modactive/` directory that handles
     system-level event hooks (e.g. reloading state when a world is loaded),
     registering `overlays <overlay-dev-guide>`, and
@@ -86,6 +87,31 @@ in or install them from the
 `Steam Workshop <https://steamcommunity.com/app/975370/workshop/>`__, and in
 :file:`data/installed_mods/` when the mod is selected as "active" for the first
 time.
+
+What if I just want to distribute quickfort blueprints?
+-------------------------------------------------------
+
+For this, all you need is :file:`info.txt` and your blueprints.
+
+Your :file:`info.txt` could look something like this::
+
+    [ID:drooble_blueprints]
+    [NUMERIC_VERSION:1]
+    [DISPLAYED_VERSION:1.0.0]
+    [EARLIEST_COMPATIBLE_NUMERIC_VERSION:1]
+    [EARLIEST_COMPATIBLE_DISPLAYED_VERSION:1.0.0]
+    [AUTHOR:Drooble]
+    [NAME:Drooble's blueprints]
+    [DESCRIPTION:Useful quickfort blueprints for any occasion.]
+    [STEAM_TITLE:Drooble's blueprints]
+    [STEAM_DESCRIPTION:Useful quickfort blueprints for any occasion.]
+    [STEAM_TAG:dfhack]
+    [STEAM_TAG:quickfort]
+    [STEAM_TAG:blueprints]
+
+and your blueprints, which could be .csv or .xlsx files, would go in a
+``blueprints/`` subdirectory. If you add blueprint file named
+``blueprints/bedrooms.csv``, then it will be shown to players as ``drooble_blueprints/bedrooms.csv`` in `quickfort` and `gui/quickfort`. The "drooble_blueprints" prefix comes from the mod ID specified in ``info.txt``.
 
 What if I just want to distribute a simple script?
 --------------------------------------------------

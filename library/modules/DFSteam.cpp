@@ -5,9 +5,11 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "df/gamest.h"
+
 namespace DFHack
 {
-DBG_DECLARE(core, dfsteam, DebugCategory::LINFO);
+    DBG_DECLARE(core, dfsteam, DebugCategory::LINFO);
 }
 
 using namespace DFHack;
@@ -18,8 +20,8 @@ static bool g_steam_initialized = false;
 static DFLibrary* g_steam_handle = nullptr;
 static const std::vector<std::string> STEAM_LIBS {
     "steam_api64.dll",
-        "steam_api", // TODO: validate this on OSX
-        "libsteam_api.so" // TODO: validate this on Linux
+    "libsteam_api.so",
+    "steam_api"  // TODO: validate this on OSX
 };
 
 bool (*g_SteamAPI_Init)() = nullptr;
@@ -28,7 +30,6 @@ int (*g_SteamAPI_GetHSteamUser)() = nullptr;
 bool (*g_SteamAPI_RestartAppIfNecessary)(uint32_t unOwnAppID) = nullptr;
 void* (*g_SteamInternal_FindOrCreateUserInterface)(int, const char*) = nullptr;
 bool (*g_SteamAPI_ISteamApps_BIsAppInstalled)(void *iSteamApps, uint32_t appID) = nullptr;
-
 
 static void bind_all(color_ostream& out, DFLibrary* handle) {
 #define bind(name) \
@@ -94,9 +95,11 @@ void DFSteam::cleanup(color_ostream& out) {
 }
 
 #ifdef WIN32
+
 #include <process.h>
 #include <windows.h>
 #include <TlHelp32.h>
+
 static bool is_running_on_wine() {
     typedef const char* (CDECL wine_get_version)(void);
     static wine_get_version* pwine_get_version;
@@ -161,11 +164,56 @@ static bool launchDFHack(color_ostream& out) {
 
     return !!res;
 }
+
 #else
-static bool launchDFHack(color_ostream& out) {
-    // TODO once we have a non-Windows build to work with
-    return false;
+
+#include <unistd.h>
+
+static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
+    char buf[512];
+    std::string command = "pidof -s ";
+    command += name;
+    FILE *cmd_pipe = popen(command.c_str(), "r");
+    if (!cmd_pipe) {
+        WARN(dfsteam, out).print("failed to exec '%s' (error: %d)\n",
+            command.c_str(), errno);
+        return false;
+    }
+
+    bool found = fgets(buf, 512, cmd_pipe) != NULL;
+    pclose(cmd_pipe);
+
+    pid = 0;
+    if (found)
+        pid = strtoul(buf, NULL, 10);
+    return true;
 }
+
+static bool launchDFHack(color_ostream& out) {
+    pid_t pid;
+    if (!findProcess(out, "launchdf", pid))
+        return false;
+    if (pid != 0) {
+        DEBUG(dfsteam, out).print("launchdf already running\n");
+        return true;
+    }
+
+    pid = fork();
+    if (pid == -1) {
+        WARN(dfsteam, out).print("failed to fork (error: %d)\n", errno);
+        return false;
+    } else if (pid == 0) {
+        // child process
+        static const char * command = "hack/launchdf";
+        unsetenv("SteamAppId");
+        execl(command, command, NULL);
+        _exit(EXIT_FAILURE);
+    }
+
+    // parent process
+    return true;
+}
+
 #endif
 
 void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
@@ -174,6 +222,12 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
             !g_SteamInternal_FindOrCreateUserInterface ||
             !g_SteamAPI_ISteamApps_BIsAppInstalled) {
         DEBUG(dfsteam, out).print("required Steam API calls are unavailable\n");
+        return;
+    }
+
+    const std::string & cmdline = df::global::game->command_line.original;
+    if (cmdline.find("--nosteam-dfhack") != std::string::npos) {
+        WARN(dfsteam, out).print("--nosteam-dfhack specified on commandline; not launching DFHack coprocess\n");
         return;
     }
 

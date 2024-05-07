@@ -25,20 +25,23 @@ distribution.
 #pragma once
 
 #include "Pragma.h"
+
+#include "Console.h"
 #include "Export.h"
 #include "Hooks.h"
-#include <vector>
-#include <stack>
-#include <map>
-#include <memory>
-#include <stdint.h>
-#include "Console.h"
+
 #include "modules/Graphic.h"
 
 #include <atomic>
 #include <condition_variable>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <stack>
 #include <thread>
+#include <unordered_map>
+#include <vector>
+#include <stdint.h>
 
 #define DFH_MOD_SHIFT 1
 #define DFH_MOD_CTRL 2
@@ -95,6 +98,34 @@ namespace DFHack
         SC_BEGIN_UNLOAD = 6,
         SC_PAUSED = 7,
         SC_UNPAUSED = 8
+    };
+
+    class DFHACK_EXPORT PerfCounters
+    {
+    public:
+        uint32_t baseline_elapsed_ms;
+        uint32_t elapsed_ms;
+        uint32_t total_update_ms;
+        uint32_t update_event_manager_ms;
+        uint32_t update_plugin_ms;
+        uint32_t update_lua_ms;
+        uint32_t total_keybinding_ms;
+        uint32_t total_overlay_ms;
+        std::unordered_map<int32_t, uint32_t> event_manager_event_total_ms;
+        std::unordered_map<int32_t, std::unordered_map<std::string, uint32_t>> event_manager_event_per_plugin_ms;
+        std::unordered_map<std::string, uint32_t> update_per_plugin;
+        std::unordered_map<std::string, uint32_t> state_change_per_plugin;
+        std::unordered_map<std::string, uint32_t> update_lua_per_repeat;
+        std::unordered_map<std::string, uint32_t> overlay_per_widget;
+
+        void reset(bool ignorePauseState = false);
+        bool getIgnorePauseState();
+
+        // noop if game is paused and getIgnorePauseState() returns false
+        void incCounter(uint32_t &perf_counter, uint32_t baseline_ms);
+
+    private:
+        bool ignore_pause_state = false;
     };
 
     class DFHACK_EXPORT StateChangeScript
@@ -194,6 +225,8 @@ namespace DFHack
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
+        PerfCounters perf_counters;
+
     private:
         DFHack::Console con;
 
@@ -211,12 +244,11 @@ namespace DFHack
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 
+        bool doSdlInputEvent(SDL_Event* event);
         void doUpdate(color_ostream &out);
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
-        void doSaveData(color_ostream &out);
-        void doLoadData(color_ostream &out);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement

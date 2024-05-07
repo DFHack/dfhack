@@ -1,7 +1,10 @@
 local _ENV = mkmodule('plugins.logistics')
 
 local argparse = require('argparse')
+local gui = require('gui')
+local overlay = require('plugins.overlay')
 local utils = require('utils')
+local widgets = require('gui.widgets')
 
 local function make_stat(name, stockpile_number, stats, configs)
     return {
@@ -67,14 +70,18 @@ local function print_status()
     print(('logistics is %sactively monitoring stockpiles and marking items')
             :format(isEnabled() and '' or 'not '))
 
-    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+    if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() or not dfhack.isSiteLoaded() then
         return
     end
+
+    print()
+    print(('%sutoretraining partially trained animals'):format(
+        logistics_getFeature('autoretrain') and 'A' or 'Not a'))
 
     local data = getStockpileData()
     print()
     if not data[1] then
-        print 'No stockpiles defined -- go make some!'
+        print 'No stockpiles configured'
     else
         print_stockpile_data(data)
     end
@@ -127,6 +134,12 @@ local function do_clear_stockpile_config(all, opts)
     end)
 end
 
+local function do_set_feature(enabled, feature)
+    if not logistics_setFeature(enabled, feature) then
+        qerror(('unknown feature: "%s"'):format(feature))
+    end
+end
+
 local function process_args(opts, args)
     if args[1] == 'help' then
         opts.help = true
@@ -157,11 +170,69 @@ function parse_commandline(args)
         do_add_stockpile_config(utils.invert(positionals), opts)
     elseif command == 'clear' then
         do_clear_stockpile_config(utils.invert(positionals).all, opts)
+    elseif command == 'enable' or command == 'disable' then
+        do_set_feature(command == 'enable', positionals[1])
     else
         return false
     end
 
     return true
 end
+
+---------------------------------
+-- AutoretrainOverlay
+--
+
+AutoretrainOverlay = defclass(AutoretrainOverlay, overlay.OverlayWidget)
+AutoretrainOverlay.ATTRS{
+    desc='Adds toggle to pets screen for autoretraining partially trained pets.',
+    default_pos={x=51, y=-4},
+    default_enabled=true,
+    viewscreens='dwarfmode/Info/CREATURES/PET',
+    frame={w=36, h=5},
+    frame_inset={l=0, r=0, t=2, b=0},
+}
+
+local function refresh_list()
+    local pet_list = dfhack.gui.getWidget(
+        df.global.game.main_interface.info.creatures, 'Tabs', 'Pets/Livestock', 0, 0)
+    if pet_list then
+        pet_list.sort_flags.NEEDS_RESORTED = true
+    end
+end
+
+function AutoretrainOverlay:init()
+    local panel = widgets.Panel{
+        frame={t=0, h=3},
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        subviews={
+            widgets.ToggleHotkeyLabel{
+                view_id='toggle',
+                key='CUSTOM_CTRL_A',
+                label='Autoretrain livestock:',
+                on_change=function(val)
+                    logistics_setFeature(val, 'autoretrain')
+                    if (val) then refresh_list() end
+                end,
+            },
+        },
+    }
+    self:addviews{
+        panel,
+        widgets.HelpButton{command='logistics'},
+    }
+end
+
+function AutoretrainOverlay:render(dc)
+    self.subviews.toggle:setOption(logistics_getFeature('autoretrain'))
+    AutoretrainOverlay.super.render(self, dc)
+end
+
+function AutoretrainOverlay:preUpdateLayout(parent_rect)
+    self.frame_inset.t = parent_rect.width >= 143 and 0 or 2
+end
+
+OVERLAY_WIDGETS = {autoretrain=AutoretrainOverlay}
 
 return _ENV

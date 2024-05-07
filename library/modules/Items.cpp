@@ -23,28 +23,24 @@ distribution.
 */
 
 #include "Core.h"
+#include "Debug.h"
 #include "Error.h"
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
 #include "Types.h"
 #include "VersionInfo.h"
-
-#include <cstdio>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <set>
-using namespace std;
-
 #include "ModuleFactory.h"
+
 #include "modules/Job.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
+#include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
+#include "df/artifact_record.h"
 #include "df/body_part_raw.h"
 #include "df/body_part_template_flags.h"
 #include "df/building.h"
@@ -70,6 +66,7 @@ using namespace std;
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_bookst.h"
+#include "df/item_plant_growthst.h"
 #include "df/item_toolst.h"
 #include "df/item_type.h"
 #include "df/itemdef_ammost.h"
@@ -92,6 +89,7 @@ using namespace std;
 #include "df/job_item.h"
 #include "df/mandate.h"
 #include "df/map_block.h"
+#include "df/material.h"
 #include "df/proj_itemst.h"
 #include "df/proj_list_link.h"
 #include "df/reaction_product_itemst.h"
@@ -107,12 +105,25 @@ using namespace std;
 #include "df/world_site.h"
 #include "df/written_content.h"
 
+#include <cstdio>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <set>
+
+using std::string;
+using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 using df::global::ui_selected_unit;
 using df::global::proj_next_id;
+
+namespace DFHack {
+    DBG_DECLARE(core, items, DebugCategory::LINFO);
+}
 
 #define ITEMDEF_VECTORS \
     ITEM(WEAPON, weapons, itemdef_weaponst) \
@@ -213,7 +224,7 @@ ITEMDEF_VECTORS
     if (name)
         return name;
 
-    return toLower(ENUM_KEY_STR(item_type, type));
+    return toLower_cp437(ENUM_KEY_STR(item_type, type));
 }
 
 bool ItemTypeInfo::find(const std::string &token)
@@ -508,28 +519,6 @@ df::item * Items::findItemByID(int32_t id)
     if (id < 0)
         return 0;
     return df::item::find(id);
-}
-
-bool Items::copyItem(df::item * itembase, DFHack::dfh_item &item)
-{
-    if(!itembase)
-        return false;
-    df::item * itreal = (df::item *) itembase;
-    item.origin = itembase;
-    item.x = itreal->pos.x;
-    item.y = itreal->pos.y;
-    item.z = itreal->pos.z;
-    item.id = itreal->id;
-    item.age = itreal->age;
-    item.flags = itreal->flags;
-    item.matdesc.item_type = itreal->getType();
-    item.matdesc.item_subtype = itreal->getSubtype();
-    item.matdesc.mat_type = itreal->getMaterial();
-    item.matdesc.mat_index = itreal->getMaterialIndex();
-    item.wear_level = itreal->getWear();
-    item.quality = itreal->getQuality();
-    item.quantity = itreal->getStackSize();
-    return true;
 }
 
 df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type)
@@ -851,6 +840,58 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
     return tmp;
 }
 
+static df::artifact_record* get_artifact(df::item *item) {
+    if (!item->flags.bits.artifact)
+        return NULL;
+    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::IS_ARTIFACT))
+        return gref->getArtifact();
+    return NULL;
+}
+
+static string get_item_type_str(df::item *item) {
+    ItemTypeInfo iti;
+    iti.decode(item);
+    auto str = capitalize_string_words(iti.toString());
+    if (str == "Trapparts")
+        str = "Mechanism";
+    return str;
+}
+
+static string get_base_desc(df::item *item) {
+    if (auto name = Items::getBookTitle(item); name.size())
+        return name;
+    if (auto artifact = get_artifact(item)) {
+        return Translation::TranslateName(&artifact->name, false) + ", " + Translation::TranslateName(&artifact->name) + " (" + get_item_type_str(item) + ")";
+    }
+    return Items::getDescription(item, 0, true);
+}
+
+string Items::getReadableDescription(df::item *item) {
+    CHECK_NULL_POINTER(item);
+
+    auto desc = get_base_desc(item);
+
+    switch (item->getWear()) {
+    case 1: desc = "x" + desc + "x"; break;
+    case 2: desc = "X" + desc + "X"; break;
+    case 3: desc = "XX" + desc + "XX"; break;
+    default:
+        break;
+    }
+
+    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT)) {
+        if (auto unit = gref->getUnit()) {
+            auto str = " [" + Units::getReadableName(unit);
+            if (Units::isInvader(unit) || Units::isOpposedToLife(unit))
+                str += " (hostile)";
+            str += "]";
+            return desc + str;
+        }
+    }
+
+    return desc;
+}
+
 static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item)
 {
     if (inv_item->mode == df::unit_inventory_item::Worn ||
@@ -872,31 +913,52 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     if (item->world_data_id != -1)
         return false;
 
+    bool building_clutter = false;
     for (size_t i = 0; i < item->general_refs.size(); i++)
     {
         df::general_ref *ref = item->general_refs[i];
 
         switch (ref->getType())
         {
-        case general_ref_type::BUILDING_HOLDER:
-        case general_ref_type::BUILDING_CAGED:
-        case general_ref_type::BUILDING_TRIGGER:
-        case general_ref_type::BUILDING_TRIGGERTARGET:
-        case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
-            return false;
+            case general_ref_type::BUILDING_HOLDER:
+                if (item->flags.bits.in_building)
+                    return false;
+                building_clutter = true;
+                break;
+            case general_ref_type::BUILDING_CAGED:
+            case general_ref_type::BUILDING_TRIGGER:
+            case general_ref_type::BUILDING_TRIGGERTARGET:
+            case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
+                return false;
 
-        default:
-            continue;
+            default:
+                continue;
         }
     }
 
-    if (auto *ref =
-            virtual_cast<df::general_ref_projectile>(
-                Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
+    if (building_clutter)
+    {
+        auto building = virtual_cast<df::building_actual>(Items::getHolderBuilding(item));
+        if (building)
+        {
+            for (size_t i = 0; i < building->contained_items.size(); i++)
+            {
+                auto ci = building->contained_items[i];
+                if (ci->item == item)
+                {
+                    DFHack::removeRef(item->general_refs, general_ref_type::BUILDING_HOLDER, building->id);
+                    vector_erase_at(building->contained_items, i);
+                    delete ci;
+                    return true;
+                }
+            }
+        }
+    }
+
+    if (auto *ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
     {
         return linked_list_remove(&world->proj_list, ref->projectile_id) &&
-            DFHack::removeRef(item->general_refs,
-                              general_ref_type::PROJECTILE, ref->getID());
+            DFHack::removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
     }
 
     if (item->flags.bits.on_ground)
@@ -1056,7 +1118,7 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
 }
 
 bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
-    int16_t use_mode, bool force_in_building)
+    df::building_item_role_type use_mode, bool force_in_building)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);
@@ -2021,10 +2083,14 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
 
     // modify buy/sell prices
     if (caravan) {
-        value *= get_buy_request_multiplier(item, caravan->buy_prices);
-        value >>= 7;
-        value *= get_sell_request_multiplier(item, caravan);
-        value >>= 7;
+        int32_t buy_multiplier = get_buy_request_multiplier(item, caravan->buy_prices);
+        if (buy_multiplier == DEFAULT_AGREEMENT_MULTIPLIER) {
+            value *= get_sell_request_multiplier(item, caravan);;
+            value >>= 7;
+        } else {
+            value *= buy_multiplier;
+            value >>= 7;
+        }
     }
 
     // Boost value from stack size
@@ -2078,12 +2144,13 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     return value;
 }
 
-int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
+bool Items::createItem(std::vector<df::item *> &out_items, df::unit* unit, df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print, bool no_floor) {
     //based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
-    df::map_block* block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
+    df::coord pos = Units::getPosition(unit);
+    df::map_block* block = Maps::getTileBlock(pos);
     CHECK_NULL_POINTER(block);
-    df::reaction_product_itemst* prod = df::allocate<df::reaction_product_itemst>();
+    auto prod = df::allocate<df::reaction_product_itemst>();
     prod->item_type = item_type;
     prod->item_subtype = item_subtype;
     prod->mat_type = mat_type;
@@ -2110,23 +2177,29 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
 
     //makeItem
     vector<df::reaction_product*> out_products;
-    vector<df::item*> out_items;
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
 
-    df::enums::game_type::game_type type = *df::global::gametype;
+    out_items.clear();
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             0, df::historical_entity::find(unit->civ_id),
-            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::plotinfo->site_id) : NULL,
+            World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL,
             NULL);
-    if ( out_items.size() != 1 )
-        return -1;
+    delete prod;
+
+    DEBUG(items).print("produced %zd items\n", out_items.size());
 
     for (size_t a = 0; a < out_items.size(); a++ ) {
-        out_items[a]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        // Plant growths need a valid "growth print", otherwise they behave oddly
+        auto growth = virtual_cast<df::item_plant_growthst>(out_items[a]);
+        if (growth)
+            growth->growth_print = growth_print;
+
+        if (!no_floor)
+            out_items[a]->moveToGround(pos.x, pos.y, pos.z);
     }
 
-    return out_items[0]->id;
+    return out_items.size() != 0;
 }
 
 /*
@@ -2270,6 +2343,83 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     return true;
 }
 
+// When called with game_ui = true, this is equivalent to bay12's itemst::meltable()
+// (i.e., returning true if and only if the item has a "designate for melting" button in game)
+bool Items::canMelt(df::item *item, bool game_ui)
+{
+    CHECK_NULL_POINTER(item);
+
+    MaterialInfo mat(item);
+    if (mat.getCraftClass() != df::craft_material_class::Metal)
+        return false;
+
+    switch(item->getType()) {
+        // these are not meltable, even if made from metal
+        case item_type::CORPSE:
+        case item_type::CORPSEPIECE:
+        case item_type::REMAINS:
+        case item_type::FISH:
+        case item_type::FISH_RAW:
+        case item_type::VERMIN:
+        case item_type::PET:
+        case item_type::FOOD:
+        case item_type::EGG:
+            return false;
+        default:
+            break;
+    }
+
+    if (item->flags.bits.artifact)
+        return false;
+
+    // ignore checks below, when asked to behave like itemst::meltable()
+    if (game_ui) return true;
+
+    if (item->getType() == item_type::BAR)
+        return false;
+
+    // do not melt nonempty containers and items in unit inventories
+    for (auto &g : item->general_refs) {
+        switch (g->getType()) {
+            case df::general_ref_type::CONTAINS_ITEM:
+            case df::general_ref_type::UNIT_HOLDER:
+            case df::general_ref_type::CONTAINS_UNIT:
+                return false;
+            case df::general_ref_type::CONTAINED_IN_ITEM:
+            {
+                df::item *c = g->getItem();
+                for (auto &gg : c->general_refs) {
+                    if (gg->getType() == df::general_ref_type::UNIT_HOLDER)
+                        return false;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    return true;
+};
+
+bool Items::markForMelting(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    if (item->flags.bits.melt || !canMelt(item,true)) return false;
+    insert_into_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item);
+    item->flags.bits.melt = 1;
+    return true;
+}
+
+bool Items::cancelMelting(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    if (!item->flags.bits.melt) return false;
+    erase_from_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item->id);
+    item->flags.bits.melt = 0;
+    return true;
+}
+
 bool Items::isRouteVehicle(df::item *item)
 {
     CHECK_NULL_POINTER(item);
@@ -2320,11 +2470,8 @@ int32_t Items::getCapacity(df::item* item)
     case df::enums::item_type::QUIVER:
         return 1200;
     case df::enums::item_type::TOOL:
-        {
-            auto tool = virtual_cast<df::item_toolst>(item);
-            if (tool)
-                return tool->subtype->container_capacity;
-        }
+        if (auto tool = virtual_cast<df::item_toolst>(item))
+            return tool->subtype->container_capacity;
         // fall through
     default:
         ; // fall through to default exit

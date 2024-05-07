@@ -29,9 +29,9 @@ jobs:
       contents: write
     steps:
     - name: Install doc dependencies
-      run: pip install 'sphinx<4.4.0'
+      run: pip install 'sphinx'
     - name: Clone DFHack
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs && github.event.inputs.ref || github.event.ref }}
         submodules: true
@@ -49,11 +49,11 @@ jobs:
         TOKEN_LINE=$(grep -Fhne '%RELEASE_NOTES%' .github/release_template.md | sed 's/:.*//')
         head -n $((TOKEN_LINE - 1)) .github/release_template.md > release_body.md
         CHANGELOG_LINES=$(wc -l <$CHANGELOG_FILE)
-        tail -n $((CHANGELOG_LINES - 4)) $CHANGELOG_FILE >> release_body.md
+        tail -n $((CHANGELOG_LINES - 3)) $CHANGELOG_FILE >> release_body.md
         tail -n 1 .github/release_template.md >> release_body.md
         cat release_body.md
     - name: Stage release
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
     - name: Prep artifacts
       run: |
         mkdir artifacts

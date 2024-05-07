@@ -92,7 +92,7 @@ command_result cmd_fix_unit_occupancy (color_ostream &out, std::vector <std::str
 
 unsigned fix_unit_occupancy (color_ostream &out, uo_opts &opts)
 {
-    if (!Core::getInstance().isWorldLoaded())
+    if (!Core::getInstance().isMapLoaded())
         return 0;
 
     if (!World::isFortressMode() && !opts.use_cursor)

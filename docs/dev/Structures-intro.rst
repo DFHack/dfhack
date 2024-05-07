@@ -23,11 +23,10 @@ fixes and additions to global addresses possible without recompiling DFHack.
 In an installed copy of DFHack, this file can be found at the root of the
 ``hack`` folder.
 
-The following pages contain more detailed information about various aspects
-of DF-structures:
+Please see the following page for detailed information about the syntax of the
+df-structures XML files:
 
 .. toctree::
    :titlesonly:
 
    /library/xml/SYNTAX
-   /library/xml/how-to-update

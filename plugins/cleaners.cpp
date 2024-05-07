@@ -1,18 +1,14 @@
-#include "Core.h"
-#include "Console.h"
-#include "DataDefs.h"
-#include "Export.h"
 #include "PluginManager.h"
 
+#include "modules/Buildings.h"
 #include "modules/Maps.h"
 
 #include "df/block_square_event.h"
 #include "df/block_square_event_material_spatterst.h"
+#include "df/building.h"
 #include "df/builtin_mats.h"
-#include "df/global_objects.h"
 #include "df/item_actual.h"
 #include "df/map_block.h"
-#include "df/matter_state.h"
 #include "df/plant.h"
 #include "df/spatter.h"
 #include "df/unit.h"
@@ -27,13 +23,21 @@ DFHACK_PLUGIN("cleaners");
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
 
+static void clean_mud_safely(df::block_square_event_material_spatterst *spatter,
+    const df::coord &block_pos, const df::coord &offset)
+{
+    df::coord pos = block_pos + offset;
+    auto bld = Buildings::findAtTile(pos);
+    if (!bld || bld->getType() != building_type::FarmPlot)
+        spatter->amount[offset.x][offset.y] = 0;
+}
+
 command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spatter)
 {
     // Invoked from clean(), already suspended
-    int num_blocks = 0, blocks_total = world->map.map_blocks.size();
-    for (int i = 0; i < blocks_total; i++)
+    int num_blocks = 0;
+    for (auto block : world->map.map_blocks)
     {
-        df::map_block *block = world->map.map_blocks[i];
         bool cleaned = false;
         for(int x = 0; x < 16; x++)
         {
@@ -61,6 +65,16 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spat
                     && spatter->mat_type == builtin_mats::MUD
                     && spatter->mat_state == (short)matter_state::Solid)
                     continue;
+                // save the farm plots
+                if(mud
+                    && spatter->mat_type == builtin_mats::MUD
+                    && spatter->mat_state == (short)matter_state::Solid)
+                {
+                    for (size_t x = 0; x < 16; ++x)
+                        for (size_t y = 0; y < 16; ++y)
+                            clean_mud_safely(spatter, block->map_pos, df::coord(x, y, 0));
+                    continue;
+                }
             }
             else if (evt->getType() == block_square_event_type::item_spatter)
             {
@@ -79,7 +93,7 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spat
     }
 
     if(num_blocks)
-        out.print("Cleaned %d of %d map blocks.\n", num_blocks, blocks_total);
+        out.print("Cleaned %d of %zd map blocks.\n", num_blocks, world->map.map_blocks.size());
     return CR_OK;
 }
 
@@ -87,11 +101,10 @@ command_result cleanitems (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_items = 0, cleaned_total = 0;
-    for (size_t i = 0; i < world->items.all.size(); i++)
-    {
+    for (auto i : world->items.other.IN_PLAY) {
         // currently, all item classes extend item_actual, so this should be safe
-        df::item_actual *item = (df::item_actual *)world->items.all[i];
-        if (item->contaminants && item->contaminants->size())
+        df::item_actual *item = virtual_cast<df::item_actual>(i);
+        if (item && item->contaminants && item->contaminants->size())
         {
             std::vector<df::spatter*> saved;
             for (size_t j = 0; j < item->contaminants->size(); j++)
@@ -116,9 +129,8 @@ command_result cleanunits (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_units = 0, cleaned_total = 0;
-    for (size_t i = 0; i < world->units.all.size(); i++)
+    for (auto unit : world->units.active)
     {
-        df::unit *unit = world->units.all[i];
         if (unit->body.spatters.size())
         {
             for (size_t j = 0; j < unit->body.spatters.size(); j++)
@@ -137,10 +149,8 @@ command_result cleanplants (color_ostream &out)
 {
     // Invoked from clean(), already suspended
     int cleaned_plants = 0, cleaned_total = 0;
-    for (size_t i = 0; i < world->plants.all.size(); i++)
+    for (auto plant : world->plants.all)
     {
-        df::plant *plant = world->plants.all[i];
-
         if (plant->contaminants.size())
         {
             for (size_t j = 0; j < plant->contaminants.size(); j++)
@@ -158,7 +168,7 @@ command_result cleanplants (color_ostream &out)
 command_result spotclean (color_ostream &out, vector <string> & parameters)
 {
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
-    if (cursor->x == -30000)
+    if (cursor->x < 0)
     {
         out.printerr("The cursor is not active.\n");
         return CR_WRONG_USAGE;
@@ -175,14 +185,13 @@ command_result spotclean (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    for (size_t i = 0; i < block->block_events.size(); i++)
+    for (auto evt : block->block_events)
     {
-        df::block_square_event *evt = block->block_events[i];
         if (evt->getType() != block_square_event_type::material_spatter)
             continue;
         // type verified - recast to subclass
         df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
-        spatter->amount[cursor->x % 16][cursor->y % 16] = 0;
+        clean_mud_safely(spatter, block->map_pos, df::coord(cursor->x % 16, cursor->y % 16, 0));
     }
     return CR_OK;
 }

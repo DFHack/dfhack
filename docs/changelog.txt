@@ -80,6 +80,7 @@ Template for new versions:
 - `markdown`: new keybinding for triggering text export: Ctrl-t (when unit or item is selected)
 - `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state)
 - Dreamfort: move wells on services level so drunken dwarves are less likely to fall in
+- `unretire-anyone`: new keybinding for adding a historical figure to the adventurer selection list in the adventure mode setup screen: Ctrl-a
 
 ## Documentation
 - Quickfort Blueprint Library: add demo videos for pump stack and light aquifer tap blueprints

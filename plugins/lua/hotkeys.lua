@@ -27,28 +27,7 @@ end
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    desc='Shows the DFHack logo context menu button.',
-    default_pos={x=5,y=1},
     default_enabled=true,
-    version=2,
-    viewscreens={
-        'adopt_region',
-        'choose_game_type',
-        -- 'choose_start_site', -- conflicts with vanilla panel layouts
-        'dwarfmode',
-        'export_region',
-        'game_cleaner',
-        'initial_prep',
-        -- 'legends', -- conflicts with vanilla export button and info text
-        -- 'loadgame', -- disable temporarily while we get texture reloading sorted
-        -- 'new_arena', -- conflicts with vanilla panel layouts
-        -- 'new_region', -- conflicts with vanilla panel layouts
-        'savegame',
-        'setupdwarfgame',
-        'title/Default',
-        'update_region',
-        'world'
-    },
     frame={w=4, h=3}
 }
 
@@ -84,7 +63,7 @@ function HotspotMenuWidget:init()
                 get_tile_token(5, 179), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, 179), NEWLINE,
                 get_tile_token(9, 179), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, 179),
             },
-            on_click=function() dfhack.run_command('hotkeys') end,
+            on_click=function() dfhack.run_command{'hotkeys', 'menu', self.name} end,
         },
     }
 end
@@ -93,8 +72,51 @@ function HotspotMenuWidget:overlay_trigger()
     return MenuScreen{hotspot=self}:show()
 end
 
+DwarfHotspotMenuWidget = defclass(DwarfHotspotMenuWidget, HotspotMenuWidget)
+DwarfHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button in non-adventure mode screens.',
+    default_pos={x=5,y=1},
+    version=2,
+    viewscreens={
+        'adopt_region',
+        'choose_game_type',
+        -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'dwarfmode',
+        'export_region',
+        'game_cleaner',
+        'initial_prep',
+        -- 'legends', -- conflicts with vanilla export button and info text
+        -- 'loadgame', -- disable temporarily while we get texture reloading sorted
+        -- 'new_arena', -- conflicts with vanilla panel layouts
+        -- 'new_region', -- conflicts with vanilla panel layouts
+        'savegame',
+        'setupdwarfgame',
+        'title/Default',
+        'update_region',
+        'world'
+    },
+}
+
+DungeonHotspotMenuWidget = defclass(DungeonHotspotMenuWidget, HotspotMenuWidget)
+DungeonHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button in adventure mode screens.',
+    default_pos={x=5,y=-13},
+    viewscreens={
+        -- 'adventure_log', -- need to verify compatibility
+        -- 'barter', -- need to verify compatibility
+        -- 'dungeon_monsterstatus', -- need to verify compatibility
+        'dungeonmode',
+        -- 'layer_unit_action', -- need to verify compatibility
+        -- 'layer_unit_health', -- need to verify compatibility
+        -- 'setupadventure', -- need to verify compatibility
+    },
+}
+
 -- register the menu hotspot with the overlay
-OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
+OVERLAY_WIDGETS = {
+    menu=DwarfHotspotMenuWidget,
+    adventuremenu=DungeonHotspotMenuWidget,
+}
 
 -- ---- --
 -- Menu --

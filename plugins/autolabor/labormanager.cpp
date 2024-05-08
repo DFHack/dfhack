@@ -846,11 +846,7 @@ private:
         F(in_building); F(construction);
 #undef F
 
-        auto& v = world->items.all;
-        for (auto i = v.begin(); i != v.end(); i++)
-        {
-            df::item* item = *i;
-
+        for (auto item : world->items.other.IN_PLAY) {
             if (item->flags.bits.dump && !labor_infos[df::unit_labor::HAUL_REFUSE].is_unmanaged())
                 labor_needed[df::unit_labor::HAUL_REFUSE]++;
 

@@ -80,9 +80,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    for (std::size_t i=0; i < world->items.all.size(); i++)
-    {
-        df::item * item = world->items.all[i];
+    for (auto item : world->items.other.IN_PLAY) {
         bool confiscate = false;
         bool dump = false;
 

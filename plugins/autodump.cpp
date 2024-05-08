@@ -107,7 +107,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    size_t numItems = world->items.all.size();
 
     MapCache MC;
     int dumped_total = 0;
@@ -140,9 +139,7 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     }
 
     // proceed with the dumpification operation
-    for(size_t i=0; i< numItems; i++)
-    {
-        df::item * itm = world->items.all[i];
+    for (auto itm : world->items.other.IN_PLAY) {
         DFCoord pos_item(itm->pos.x, itm->pos.y, itm->pos.z);
 
         // only dump valid stuff marked for dumping

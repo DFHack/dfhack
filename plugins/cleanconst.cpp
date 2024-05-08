@@ -28,14 +28,11 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    size_t numItems = world->items.all.size();
 
     int cleaned_total = 0;
 
     // proceed with the cleanup operation
-    for (size_t i = 0; i < numItems; i++)
-    {
-        df::item *item = world->items.all[i];
+    for (auto item : world->items.other.IN_PLAY) {
         // only process items marked as "in construction"
         if (!item->flags.bits.construction)
             continue;

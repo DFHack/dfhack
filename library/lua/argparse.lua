@@ -7,7 +7,7 @@ local getopt = require('3rdparty.alt_getopt')
 ---@nodiscard
 ---@param args string[] Most commonly `{ ... }`
 ---@param validArgs table<string, integer> Use `utils.invert`
----@return table<string, string[]|nil>
+---@return table<string, string|string[]>
 function processArgs(args, validArgs)
     local result = {}
     local argName
@@ -168,22 +168,23 @@ end
 ---@param list_length? integer
 ---@return integer[]
 function numberList(arg, arg_name, list_length)
-    ---@type integer[]
     local strings = stringList(arg, arg_name, list_length)
+    ---@type integer[]
+    local numbers = {}
     for i,str in ipairs(strings) do
         local num = tonumber(str)
         if not num then
             arg_error(arg_name, 'invalid number: "%s"', str)
         end
-        strings[i] = num
+        numbers[i] = num
     end
-    return strings
+    return numbers
 end
 
 ---@nodiscard
----@param arg integer
+---@param arg string|integer
 ---@param arg_name? string
----@return number
+---@return integer
 function positiveInt(arg, arg_name)
     local val = tonumber(arg)
     if not val or val <= 0 or val ~= math.floor(val) then
@@ -194,9 +195,9 @@ function positiveInt(arg, arg_name)
 end
 
 ---@nodiscard
----@param arg integer
+---@param arg string|integer
 ---@param arg_name? string
----@return number
+---@return integer
 function nonnegativeInt(arg, arg_name)
     local val = tonumber(arg)
     if not val or val < 0 or val ~= math.floor(val) then
@@ -210,7 +211,7 @@ end
 ---@param arg string|'here'
 ---@param arg_name? string
 ---@param skip_validation? boolean
----@return global.T_cursor|coord
+---@return df.coord
 function coords(arg, arg_name, skip_validation)
     if arg == 'here' then
         local guidm = require('gui.dwarfmode')  -- globals may not be available yet

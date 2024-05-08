@@ -183,9 +183,10 @@ end
 ---@param args string[]
 ---@param sh_opts string
 ---@param long_opts string[]
----@return table
+---@return table<string, string|integer>
 ---@return string[]
 function get_opts(args, sh_opts, long_opts)
+    ---@type table<string, string|integer>
     local ret = {}
 
     local opts,optargs,nonoptions = get_ordered_opts(args, sh_opts, long_opts)

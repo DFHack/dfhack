@@ -74,11 +74,9 @@ jobs:
           rm ${name}-depot.tar.bz2
           cd ..
         done
-    - name: Setup steamcmd
-      uses: CyberAndrii/setup-steamcmd@v1
-    - name: Steam auth
+    - uses: CyberAndrii/steam-totp@v1
+      name: Generate TOTP
       id: steam-totp
-      uses: CyberAndrii/steam-totp@v1
       with:
         shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
     - name: Steam deploy

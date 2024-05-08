@@ -66,6 +66,7 @@ Template for new versions:
 - `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
 - `logistics`: also add trainers to semi-wild pets when autoretrain is enabled
 - `suspendmanager`: fully suspend unbuildable deadends
+- `prospect`: output large numbers "normally", not in scientific notation
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile

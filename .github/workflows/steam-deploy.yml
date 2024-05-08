@@ -74,16 +74,11 @@ jobs:
           rm ${name}-depot.tar.bz2
           cd ..
         done
-    - uses: CyberAndrii/steam-totp@v1
-      name: Generate TOTP
-      id: steam-totp
-      with:
-        shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
     - name: Steam deploy
       uses: game-ci/steam-deploy@v3
       with:
         username: ${{ secrets.STEAM_USERNAME }}
-        totp: ${{ steps.steam-totp.outputs.code }}
+        configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
         appId: 2346660
         buildDescription: ${{ github.event.inputs && github.event.inputs.version || github.ref_name }}
         rootPath: .

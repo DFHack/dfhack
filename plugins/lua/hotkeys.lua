@@ -79,7 +79,7 @@ end
 DwarfHotspotMenuWidget = defclass(DwarfHotspotMenuWidget, HotspotMenuWidget)
 DwarfHotspotMenuWidget.ATTRS{
     desc='Shows the DFHack logo context menu button on most screens.',
-    default_pos={x=5,y=1},
+    default_pos={x=5, y=1},
     version=2,
     viewscreens={
         'adopt_region',
@@ -100,7 +100,7 @@ DwarfHotspotMenuWidget.ATTRS{
 EmbarkHotspotMenuWidget = defclass(EmbarkHotspotMenuWidget, HotspotMenuWidget)
 EmbarkHotspotMenuWidget.ATTRS{
     desc='Shows the DFHack logo context menu button on the embark and new game screens.',
-    default_pos={x=2,y=-2},
+    default_pos={x=2, y=-2},
     viewscreens={
         'choose_start_site',
         'new_arena',
@@ -111,7 +111,7 @@ EmbarkHotspotMenuWidget.ATTRS{
 LegendsHotspotMenuWidget = defclass(LegendsHotspotMenuWidget, HotspotMenuWidget)
 LegendsHotspotMenuWidget.ATTRS{
     desc='Shows the DFHack logo context menu button on the legends screen.',
-    default_pos={x=19,y=1},
+    default_pos={x=19, y=1},
     viewscreens={
         'legends',
     },
@@ -119,8 +119,8 @@ LegendsHotspotMenuWidget.ATTRS{
 
 DungeonHotspotMenuWidget = defclass(DungeonHotspotMenuWidget, HotspotMenuWidget)
 DungeonHotspotMenuWidget.ATTRS{
-    desc='Shows the DFHack logo context menu button in adventure mode screens.',
-    default_pos={x=5,y=-13},
+    desc='Shows the DFHack logo context menu button on adventure mode screens.',
+    default_pos={x=5, y=-13},
     viewscreens={
         -- 'adventure_log', -- need to verify compatibility
         -- 'barter', -- need to verify compatibility
@@ -128,7 +128,15 @@ DungeonHotspotMenuWidget.ATTRS{
         'dungeonmode',
         -- 'layer_unit_action', -- need to verify compatibility
         -- 'layer_unit_health', -- need to verify compatibility
-        -- 'setupadventure', -- need to verify compatibility
+    },
+}
+
+NewAdventureHotspotMenuWidget = defclass(NewAdventureHotspotMenuWidget, HotspotMenuWidget)
+NewAdventureHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button on the new adventure screen.',
+    default_pos={x=-2, y=10},
+    viewscreens={
+        'setupadventure',
     },
 }
 
@@ -138,6 +146,7 @@ OVERLAY_WIDGETS = {
     embarkmenu=EmbarkHotspotMenuWidget,
     legendsmenu=LegendsHotspotMenuWidget,
     adventuremenu=DungeonHotspotMenuWidget,
+    newadventuremenu=NewAdventureHotspotMenuWidget,
 }
 
 -- ---- --

@@ -583,6 +583,15 @@ function invert(tab)
     return result
 end
 
+function tabulate(fun, start, stop, step)
+    local step = step or 1
+    local result = {}
+    for i = start, stop, step do
+        table.insert(result, fun(i))
+    end
+    return result
+end
+
 -- processArgs() and processArgsGetopt() have been moved to argparse.lua.
 -- The 'require' statements are within the functions to avoid adding hard
 -- dependencies to utils.lua (which could lead to circular dependency issues).

@@ -55,6 +55,7 @@ Template for new versions:
 - Updated for adventure mode: `reveal`
 
 ## New Features
+- `buildingplan`: add panel for saving/restoring filters to the planner overlay.
 - DFHack and the Dwarf Fortress translation project can now both be run at the same time
 
 ## Fixes

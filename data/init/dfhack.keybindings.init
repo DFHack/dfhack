@@ -179,6 +179,8 @@ keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
 # adv mode bindings #
 #####################
 
+keybinding add Ctrl-A@setupadventure unretire-anyone
+
 #keybinding add Ctrl-A@dungeonmode/ConversationSpeak adv-rumors
 #keybinding add Ctrl-B@dungeonmode adv-bodyswap
 #keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"

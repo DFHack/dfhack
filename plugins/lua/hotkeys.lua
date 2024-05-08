@@ -72,23 +72,23 @@ function HotspotMenuWidget:overlay_trigger()
     return MenuScreen{hotspot=self}:show()
 end
 
+----------------------
+-- specializations
+--
+
 DwarfHotspotMenuWidget = defclass(DwarfHotspotMenuWidget, HotspotMenuWidget)
 DwarfHotspotMenuWidget.ATTRS{
-    desc='Shows the DFHack logo context menu button in non-adventure mode screens.',
-    default_pos={x=5,y=1},
+    desc='Shows the DFHack logo context menu button on most screens.',
+    default_pos={x=5, y=1},
     version=2,
     viewscreens={
         'adopt_region',
         'choose_game_type',
-        -- 'choose_start_site', -- conflicts with vanilla panel layouts
         'dwarfmode',
         'export_region',
         'game_cleaner',
         'initial_prep',
-        -- 'legends', -- conflicts with vanilla export button and info text
-        -- 'loadgame', -- disable temporarily while we get texture reloading sorted
-        -- 'new_arena', -- conflicts with vanilla panel layouts
-        -- 'new_region', -- conflicts with vanilla panel layouts
+        'loadgame',
         'savegame',
         'setupdwarfgame',
         'title/Default',
@@ -97,10 +97,30 @@ DwarfHotspotMenuWidget.ATTRS{
     },
 }
 
+EmbarkHotspotMenuWidget = defclass(EmbarkHotspotMenuWidget, HotspotMenuWidget)
+EmbarkHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button on the embark and new game screens.',
+    default_pos={x=2, y=-2},
+    viewscreens={
+        'choose_start_site',
+        'new_arena',
+        'new_region',
+    },
+}
+
+LegendsHotspotMenuWidget = defclass(LegendsHotspotMenuWidget, HotspotMenuWidget)
+LegendsHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button on the legends screen.',
+    default_pos={x=19, y=1},
+    viewscreens={
+        'legends',
+    },
+}
+
 DungeonHotspotMenuWidget = defclass(DungeonHotspotMenuWidget, HotspotMenuWidget)
 DungeonHotspotMenuWidget.ATTRS{
-    desc='Shows the DFHack logo context menu button in adventure mode screens.',
-    default_pos={x=5,y=-13},
+    desc='Shows the DFHack logo context menu button on adventure mode screens.',
+    default_pos={x=5, y=-13},
     viewscreens={
         -- 'adventure_log', -- need to verify compatibility
         -- 'barter', -- need to verify compatibility
@@ -108,14 +128,25 @@ DungeonHotspotMenuWidget.ATTRS{
         'dungeonmode',
         -- 'layer_unit_action', -- need to verify compatibility
         -- 'layer_unit_health', -- need to verify compatibility
-        -- 'setupadventure', -- need to verify compatibility
+    },
+}
+
+NewAdventureHotspotMenuWidget = defclass(NewAdventureHotspotMenuWidget, HotspotMenuWidget)
+NewAdventureHotspotMenuWidget.ATTRS{
+    desc='Shows the DFHack logo context menu button on the new adventure screen.',
+    default_pos={x=-2, y=10},
+    viewscreens={
+        'setupadventure',
     },
 }
 
 -- register the menu hotspot with the overlay
 OVERLAY_WIDGETS = {
     menu=DwarfHotspotMenuWidget,
+    embarkmenu=EmbarkHotspotMenuWidget,
+    legendsmenu=LegendsHotspotMenuWidget,
     adventuremenu=DungeonHotspotMenuWidget,
+    newadventuremenu=NewAdventureHotspotMenuWidget,
 }
 
 -- ---- --

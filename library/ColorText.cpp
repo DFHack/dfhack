@@ -196,6 +196,7 @@ void color_ostream_proxy::flush_proxy()
             target->add_text(it->first, it->second);
 
         target->end_batch();
+        target->flush_proxy();
     }
 
     buffer.clear();

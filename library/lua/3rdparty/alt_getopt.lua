@@ -164,8 +164,8 @@ function get_opts(args, sh_opts, long_opts)
 
     local opts,optargs,nonoptions = get_ordered_opts(args, sh_opts, long_opts)
     for i,v in ipairs(opts) do
-        if optarg[i] then
-            ret[v] = optarg[i]
+        if optargs[i] then
+            ret[v] = optargs[i]
         else
             ret[v] = 1
         end

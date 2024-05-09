@@ -575,6 +575,9 @@ function normalizePath(path)
     return path:gsub(PLATFORM_SLASH, '/'):gsub('/+', '/')
 end
 
+---@nodiscard
+---@param tab table
+---@return table<string, integer>
 function invert(tab)
     local result = {}
     for k,v in pairs(tab) do
@@ -595,9 +598,16 @@ end
 -- processArgs() and processArgsGetopt() have been moved to argparse.lua.
 -- The 'require' statements are within the functions to avoid adding hard
 -- dependencies to utils.lua (which could lead to circular dependency issues).
+---@nodiscard
+---@param args string[] Most commonly `{ ... }`
+---@param validArgs table<string, integer> Use `utils.invert`
+---@return table<string, string|string[]|nil>
 function processArgs(args, validArgs)
     return require('argparse').processArgs(args, validArgs)
 end
+---@param args string[] Most commonly `{ ... }`
+---@param optionActions argparse.OptionAction[]
+---@return nil
 function processArgsGetopt(args, optionActions)
     return require('argparse').processArgsGetopt(args, optionActions)
 end

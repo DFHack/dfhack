@@ -149,7 +149,7 @@ end
 ---@nodiscard
 ---@param module string
 ---@param env? table|metatable
----@return table pkg
+---@return _G pkg
 function mkmodule(module,env)
     -- Verify that the module name is correct
     local _, rq_modname = find_required_module_arg()
@@ -199,6 +199,7 @@ function rawset_default(target,source)
     end
 end
 
+---@type any
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
 ---@generic T: table
@@ -376,7 +377,7 @@ function printall_recurse(value, seen)
 end
 
 ---@generic T
----@param table `T`
+---@param table T
 ---@return T
 function copyall(table)
     local rv = {}
@@ -384,7 +385,7 @@ function copyall(table)
     return rv
 end
 
----@param pos coord
+---@param pos df.coord
 ---@return number? x
 ---@return number? y
 ---@return number? z
@@ -401,7 +402,7 @@ end
 ---@param x number
 ---@param y number
 ---@param z number
----@return coord
+---@return df.coord
 function xyz2pos(x,y,z)
     if x then
         return {x=x,y=y,z=z}
@@ -411,15 +412,15 @@ function xyz2pos(x,y,z)
 end
 
 ---@nodiscard
----@param a coord
----@param b coord
+---@param a df.coord
+---@param b df.coord
 ---@return boolean
 function same_xyz(a,b)
     return a and b and a.x == b.x and a.y == b.y and a.z == b.z
 end
 
 ---@nodiscard
----@param path coord_path
+---@param path df.coord_path
 ---@param i number
 ---@return number x
 ---@return number y
@@ -429,7 +430,7 @@ function get_path_xyz(path,i)
 end
 
 ---@nodiscard
----@param pos coord|coord2d
+---@param pos df.coord|df.coord2d
 ---@return number? x
 ---@return number? y
 function pos2xy(pos)
@@ -444,7 +445,7 @@ end
 ---@nodiscard
 ---@param x number
 ---@param y number
----@return coord2d
+---@return df.coord2d
 function xy2pos(x,y)
     if x then
         return {x=x,y=y}
@@ -454,15 +455,15 @@ function xy2pos(x,y)
 end
 
 ---@nodiscard
----@param a coord|coord2d
----@param b coord|coord2d
+---@param a df.coord|df.coord2d
+---@param b df.coord|df.coord2d
 ---@return boolean
 function same_xy(a,b)
     return a and b and a.x == b.x and a.y == b.y
 end
 
 ---@nodiscard
----@param path coord_path|coord2d_path
+---@param path df.coord_path|df.coord2d_path
 ---@param i number
 ---@return integer x
 ---@return integer y

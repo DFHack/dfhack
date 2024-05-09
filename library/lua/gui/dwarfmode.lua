@@ -36,6 +36,7 @@ function getPanelLayout()
     }
 end
 
+---@return df.coord|nil
 function getCursorPos()
     if g_cursor.x >= 0 then
         return copyall(g_cursor)

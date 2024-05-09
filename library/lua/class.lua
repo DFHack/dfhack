@@ -3,6 +3,8 @@
 local _ENV = mkmodule('class')
 
 -- Metatable template for a class
+---@class class.class_obj
+---@overload fun(init_table: table): self
 class_obj = class_obj or {}
 
 -- Methods shared by all classes
@@ -10,15 +12,17 @@ class_obj = class_obj or {}
 common_methods = common_methods or {}
 
 -- Forbidden names for class fields and methods.
+---@class class.reserved_names
 reserved_names = { super = true, ATTRS = true }
 
 -- Attribute table metatable
+---@class class.attrs_meta
 attrs_meta = attrs_meta or {}
 
----@class dfhack.class: class.common_methods
+---@class dfhack.class: class.common_methods, class.class_obj
 ---@field super any
 ---@field ATTRS fun(attributes: table)
----@overload fun(attributes: table)
+---@overload fun(attributes: table): self
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
 ---@generic T: table
@@ -147,28 +151,42 @@ end
 
 -- Common methods for all instances:
 
+---@param method function
+---@param ... unknown
+---@return unknown
 function common_methods:callback(method, ...)
     return dfhack.curry(self[method], self, ...)
 end
 
+---@param field string
+---@return function
 function common_methods:cb_getfield(field)
     return function() return self[field] end
 end
 
+---@param field string
+---@return function
 function common_methods:cb_setfield(field)
     return function(val) self[field] = val end
 end
 
+---@param data table
 function common_methods:assign(data)
     for k,v in pairs(data) do
         self[k] = v
     end
 end
 
+---@param method function
+---@param ... unknown
+---@return nil
 function common_methods:invoke_before(method, ...)
     return invoke_before_rec(self, getmetatable(self), method, ...)
 end
 
+---@param method function
+---@param ... unknown
+---@return nil
 function common_methods:invoke_after(method, ...)
     return invoke_after_rec(self, getmetatable(self), method, ...)
 end

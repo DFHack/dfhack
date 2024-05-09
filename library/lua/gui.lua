@@ -179,10 +179,19 @@ end
 -- Clipped view rectangle object --
 -----------------------------------
 
----@class gui.ViewRect: dfhack.class
+---@class gui.ViewRectAttrs
+---@field rect? any
+---@field clip_rect? any
+---@field view_rect? any
+---@field clip_view? any
+
+---@class gui.ViewRect: dfhack.class, gui.ViewRectAttrs
+---@field super nil
+---@field ATTRS fun(attributes: gui.ViewRectAttrs)
+---@overload fun(attributes: gui.ViewRectAttrs)
 ViewRect = defclass(ViewRect, nil)
 
----@param args gui.ZScreenAttrs
+---@param args gui.ViewRectAttrs
 function ViewRect:init(args)
     if args.view_rect then
         self:assign(args.view_rect)

@@ -6,6 +6,7 @@ local _ENV = mkmodule('class')
 class_obj = class_obj or {}
 
 -- Methods shared by all classes
+---@class class.common_methods
 common_methods = common_methods or {}
 
 -- Forbidden names for class fields and methods.
@@ -13,6 +14,11 @@ reserved_names = { super = true, ATTRS = true }
 
 -- Attribute table metatable
 attrs_meta = attrs_meta or {}
+
+---@class dfhack.class: class.common_methods
+---@field super any
+---@field ATTRS fun(attributes: table)
+---@overload fun(attributes: table)
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
 ---@generic T: table

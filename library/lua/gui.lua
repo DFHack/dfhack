@@ -29,6 +29,7 @@ local function set_and_get_undo(field, is_set)
     return function() df.global.enabler[field] = prev_value end
 end
 
+---@enum gui.MOUSE_KEYS
 local MOUSE_KEYS = {
     _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
     _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
@@ -178,8 +179,10 @@ end
 -- Clipped view rectangle object --
 -----------------------------------
 
+---@class gui.ViewRect: dfhack.class
 ViewRect = defclass(ViewRect, nil)
 
+---@param args gui.ZScreenAttrs
 function ViewRect:init(args)
     if args.view_rect then
         self:assign(args.view_rect)
@@ -251,7 +254,7 @@ end
 -- Clipped painter object --
 ----------------------------
 
----@class Painter
+---@class gui.Painter: gui.ViewRect
 Painter = defclass(Painter, ViewRect)
 
 function Painter:init(args)
@@ -407,6 +410,16 @@ end
 -- Abstract view object --
 --------------------------
 
+---@class gui.ViewAttrs
+---@field active any
+---@field visible any
+---@field view_id any
+---@field on_focus any
+---@field on_unfocus any
+
+---@class gui.View: gui.ViewAttrs
+---@field super nil
+---@field ATTRS fun(attributes: gui.ViewAttrs)
 View = defclass(View)
 
 View.ATTRS {
@@ -642,6 +655,7 @@ end
 -- Base screen object --
 ------------------------
 
+---@class gui.Screen: gui.View
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
@@ -733,6 +747,17 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
+---@class gui.ZScreenAttrs
+---@field defocusable any
+---@field initial_pause any
+---@field force_pause any
+---@field pass_pause any
+---@field pass_movement_keys any
+---@field pass_mouse_clicks any
+
+---@class gui.ZScreen: gui.Screen, gui.ZScreenAttrs
+---@field super gui.Screen
+---@field ATTRS fun(attributes: gui.ZScreenAttrs)
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -907,7 +932,16 @@ function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
 end
 
+---@class gui.ZScreenModalAttrs: gui.ZScreenAttrs
+---@field defocusable? boolean
+---@field force_pause? boolean
+---@field pass_movement_keys? boolean
+---@field pass_mouse_clicks? boolean
+
 -- convenience subclass for modal dialogs
+---@class gui.ZScreenModal: gui.ZScreen
+---@field super gui.ZScreen
+---@field ATTRS gui.ZScreenModalAttrs
 ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,
@@ -935,6 +969,7 @@ BOUNDARY_FRAME = {
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
+---@class gui.Frame
 local BASE_FRAME = {
     frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK }, -- ch=206 is "box drawings double vertical and horizontal" (╬)
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
@@ -1054,6 +1089,17 @@ function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
     end
 end
 
+---@class gui.FramedScreenAttrs
+---@field frame_style any
+---@field frame_title any
+---@field frame_width any
+---@field frame_height any
+---@field frame_inset any
+---@field frame_background any
+
+---@class gui.FramedScreen: gui.Screen, gui.FramedScreenAttrs
+---@field super gui.Screen
+---@field ATTRS fun(attributes: gui.FramedScreenAttrs)
 FramedScreen = defclass(FramedScreen, Screen)
 
 FramedScreen.ATTRS{
@@ -1096,4 +1142,5 @@ function invert_color(color, bold)
     color = bold and (color + 8) or color
     return (color + 8) % 16
 end
+
 return _ENV

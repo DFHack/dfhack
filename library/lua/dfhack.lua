@@ -149,7 +149,7 @@ end
 ---@nodiscard
 ---@param module string
 ---@param env? table|metatable
----@return table pkg
+---@return _G pkg
 function mkmodule(module,env)
     -- Verify that the module name is correct
     local _, rq_modname = find_required_module_arg()
@@ -199,6 +199,7 @@ function rawset_default(target,source)
     end
 end
 
+---@type any
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
 ---@generic T: table

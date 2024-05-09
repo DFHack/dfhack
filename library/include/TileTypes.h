@@ -306,7 +306,7 @@ namespace DFHack
      * zilpin: Find the first tile entry which matches the given search criteria.
      * All parameters are optional.
      * To omit, specify NONE for that type
-     * For tile directions, pass NULL to omit.
+     * For tile directions, pass nullptr to omit.
      * @return matching index in tileTypeTable, or 0 if none found.
      */
     inline

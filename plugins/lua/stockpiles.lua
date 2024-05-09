@@ -84,12 +84,14 @@ end
 
 local included_elements = {containers=1, general=2, categories=4, types=8}
 
-function export_stockpile(name, opts)
+function export_settings(name, opts)
+    opts = opts or {}
+
     assert_safe_name(name)
-    name = STOCKPILES_DIR .. '/' .. name
+    local fname = STOCKPILES_DIR .. '/' .. name
 
     local includedElements = 0
-    for _, inc in ipairs(opts.includes) do
+    for _, inc in ipairs(opts.includes or {}) do
         includedElements = includedElements | included_elements[inc]
     end
 
@@ -97,7 +99,11 @@ function export_stockpile(name, opts)
         for _, v in pairs(included_elements) do includedElements = includedElements | v end
     end
 
-    stockpiles_export(name, get_sp_id(opts), includedElements)
+    if opts.route_id then
+        stockpiles_route_export(fname, opts.route_id, opts.stop_id, includedElements)
+    else
+        stockpiles_export(fname, get_sp_id(opts), includedElements)
+    end
 end
 
 local function normalize_name(name)
@@ -113,14 +119,16 @@ local function normalize_name(name)
     return STOCKPILES_LIBRARY_DIR .. '/' .. name
 end
 
-function import_stockpile(name, opts)
-    name = normalize_name(name)
-    stockpiles_import(name, get_sp_id(opts), opts.mode, table.concat(opts.filters or {}, ','))
-end
-
-function import_route(name, route_id, stop_id, mode, filters)
-    name = normalize_name(name)
-    stockpiles_route_import(name, route_id, stop_id, mode, table.concat(filters or {}, ','))
+function import_settings(name, opts)
+    local fname = normalize_name(name)
+    opts = opts or {}
+    local mode = opts.mode or 'set'
+    local filters = table.concat(opts.filters or {}, ',')
+    if opts.route_id then
+        stockpiles_route_import(fname, opts.route_id, opts.stop_id, mode, filters)
+    else
+        stockpiles_import(fname, get_sp_id(opts), mode, filters)
+    end
 end
 
 local function parse_include(arg)
@@ -138,6 +146,53 @@ local function parse_mode(arg)
     return arg
 end
 
+local function parse_stockpile_opt(id_or_name)
+    if tonumber(id_or_name) then
+        return argparse.nonnegativeInt(id_or_name, 'stockpile')
+    end
+    for _, sp in ipairs(df.global.world.buildings.other.STOCKPILE) do
+        if sp.name == id_or_name then
+            return sp.id
+        end
+    end
+    qerror('could not find stockpile with name: ' .. tostring(id_or_name))
+end
+
+local function get_route(id_or_name)
+    local id = tonumber(id_or_name)
+    if id then
+        return df.hauling_route.find(id)
+    end
+    for _, route in ipairs(df.global.plotinfo.hauling.routes) do
+        if route.name == id_or_name then
+            return route
+        end
+    end
+    qerror('could not find route with name: ' .. tostring(id_or_name))
+end
+
+local function get_stop_id(route, id_or_name)
+    local id = tonumber(id_or_name)
+    if tonumber(id_or_name) then
+        return argparse.nonnegativeInt(id_or_name, 'stop id')
+    end
+    if not id_or_name and #route.stops > 0 then
+        return route.stops[0].id
+    end
+    for _, stop in ipairs(route.stops) do
+        if stop.name == id_or_name then
+            return stop.id
+        end
+    end
+    qerror('could not find stop with name: ' .. tostring(id_or_name))
+end
+
+local function parse_route_opt(arg)
+    local ids = argparse.stringList(arg, 'route') or {}
+    local route = get_route(ids[1])
+    return route.id, get_stop_id(route, ids[2])
+end
+
 local function process_args(opts, args)
     if args[1] == 'help' then
         opts.help = true
@@ -149,41 +204,17 @@ local function process_args(opts, args)
     opts.filters = {}
 
     return argparse.processArgsGetopt(args, {
-        {
-            'h',
-            'help',
-            handler=function()
-                opts.help = true
-            end,
-        }, {
-            'm',
-            'mode',
-            hasArg=true,
-            handler=function(arg)
-                opts.mode = parse_mode(arg)
-            end,
-        }, {
-            'f',
-            'filter',
-            hasArg=true,
-            handler=function(arg)
-                opts.filters = argparse.stringList(arg)
-            end,
-        }, {
-            'i',
-            'include',
-            hasArg=true,
-            handler=function(arg)
-                opts.includes = parse_include(arg)
-            end,
-        }, {
-            's',
-            'stockpile',
-            hasArg=true,
-            handler=function(arg)
-                opts.id = argparse.nonnegativeInt(arg, 'stockpile')
-            end,
-        },
+        {'h', 'help', handler=function() opts.help = true end},
+        {'m', 'mode', hasArg=true,
+         handler=function(arg) opts.mode = parse_mode(arg) end},
+        {'f', 'filter', hasArg=true,
+         handler=function(arg) opts.filters = argparse.stringList(arg) end},
+        {'i', 'include', hasArg=true,
+         handler=function(arg) opts.includes = parse_include(arg) end},
+        {'s', 'stockpile', hasArg=true,
+         handler=function(arg) opts.id = parse_stockpile_opt(arg) end},
+        {'r', 'route', hasArg=true,
+         handler=function(arg) opts.route_id, opts.stop_id = parse_route_opt(arg) end},
     })
 end
 
@@ -199,9 +230,9 @@ function parse_commandline(args)
     elseif command == 'list' then
         list_settings_files(positionals)
     elseif command == 'export' then
-        export_stockpile(positionals[1], opts)
+        export_settings(positionals[1], opts)
     elseif command == 'import' then
-        import_stockpile(positionals[1], opts)
+        import_settings(positionals[1], opts)
     else
         return false
     end

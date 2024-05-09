@@ -25,6 +25,7 @@ distribution.
 #include "Core.h"
 #include "Debug.h"
 #include "Internal.h"
+#include "LuaTools.h"
 
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
@@ -197,6 +198,12 @@ void Persistence::Internal::save(color_ostream& out) {
             "world" : "entity-" + int_to_string(entity_id);
         auto file = std::ofstream(getSaveFilePath("current", name));
         file << json;
+    }
+
+    {
+        auto file = std::ofstream(getSaveFilePath("current", "perf-counters"));
+        color_ostream_wrapper wrapper(file);
+        Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
 }
 

@@ -110,7 +110,7 @@ static void do_enable(bool enable) {
         DEBUG(log).print("%s\n", is_enabled ? "enabled" : "disabled");
         if (enable) {
             EventManager::registerListener(EventManager::EventType::JOB_STARTED,
-                EventManager::EventHandler(unhide_surrounding_tagged_tiles, 0), plugin_self);
+                EventManager::EventHandler(plugin_self, unhide_surrounding_tagged_tiles, 0));
         } else {
             EventManager::unregisterAll(plugin_self);
         }
@@ -2002,6 +2002,9 @@ static void toggle_cur_level(color_ostream &out, PersistentDataItem &config) {
         df::tile_bitmask *mask = NULL;
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
             df::coord pos = block_pos + df::coord(x, y, 0);
+            if (!block->designation[x % 16][y % 16].bits.hidden)
+                continue;
+
             if (dig_jobs.contains(pos)) {
                 z_jobs.emplace(dig_jobs[pos]);
                 continue;
@@ -2043,6 +2046,8 @@ static int getCurLevelDesignatedCount(color_ostream &out) {
 
         const auto & block_pos = block->map_pos;
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++) {
+            if (!block->designation[x % 16][y % 16].bits.hidden)
+                continue;
             df::coord pos = block_pos + df::coord(x, y, 0);
             if (block->designation[x][y].bits.dig || dig_jobs.contains(pos))
                 ++count;
@@ -2198,7 +2203,7 @@ static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = fals
                 }
             }
 
-            if (!aquifer_mode && !Maps::isTileVisible(pos)) {
+            if (!aquifer_mode && !Maps::isTileVisible(pos) && !Maps::isTileVisible(pos-1)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
             }

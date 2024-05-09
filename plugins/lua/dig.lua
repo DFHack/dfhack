@@ -29,7 +29,8 @@ WarmDampDigConfig.ATTRS {
 }
 
 function WarmDampDigConfig:init()
-    local dcount = getCurLevelDesignatedCount()
+    self.dcount = getCurLevelDesignatedCount()
+    self.z = df.global.window_z
 
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
@@ -66,7 +67,9 @@ function WarmDampDigConfig:init()
             widgets.Label{
                 text={
                     'Mark/unmark ',
-                    {text=dcount, pen=COLOR_YELLOW}, (' tile%s'):format(dcount == 1 and '' or 's'), NEWLINE,
+                    {text=function() return self.dcount end, pen=COLOR_YELLOW},
+                    {text=function() return (' tile%s'):format(self.dcount == 1 and '' or 's') end},
+                    NEWLINE,
                     'currently designated on', NEWLINE,
                     'this level for:'
                 },
@@ -92,6 +95,10 @@ end
 function WarmDampDigConfig:render(dc)
     self.subviews.damp:setOption(getDampPaintEnabled())
     self.subviews.warm:setOption(getWarmPaintEnabled())
+    if df.global.window_z ~= self.z then
+        self.dcount = getCurLevelDesignatedCount()
+        self.z = df.global.window_z
+    end
     WarmDampDigConfig.super.render(self, dc)
 end
 
@@ -261,6 +268,10 @@ WarmDampOverlay.ATTRS{
         'dwarfmode/Designate/DIG_FROM_MARKER',
         'dwarfmode/Designate/DIG_TO_MARKER',
         'dwarfmode/Designate/ERASE',
+        'dwarfmode/Designate/SMOOTH',
+        'dwarfmode/Designate/ENGRAVE',
+        'dwarfmode/Designate/TRACK',
+        'dwarfmode/Designate/FORTIFY',
     },
     default_enabled=true,
     overlay_only=true,

@@ -1,4 +1,7 @@
 # list depends here.
+add_subdirectory(dfhooks)
+install(TARGETS dfhooks LIBRARY DESTINATION . RUNTIME DESTINATION .)
+
 add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)

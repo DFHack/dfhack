@@ -74,17 +74,19 @@ local function sort_by_race_asc(a, b)
 end
 
 local function sort_by_dist_desc(a, b)
-    if a.data.dist == b.data.dist then
+    local adist, bdist = a.data.dist_fn(), b.data.dist_fn()
+    if adist == bdist then
         return sort_by_race_desc(a, b)
     end
-    return a.data.dist < b.data.dist
+    return adist < bdist
 end
 
 local function sort_by_dist_asc(a, b)
-    if a.data.dist == b.data.dist then
+    local adist, bdist = a.data.dist_fn(), b.data.dist_fn()
+    if adist == bdist then
         return sort_by_race_desc(a, b)
     end
-    return a.data.dist > b.data.dist
+    return adist > bdist
 end
 
 local function sort_by_name_desc(a, b)
@@ -506,7 +508,7 @@ function AssignAnimal:make_choice_text(data)
     gender_ch = string.format(data.gelded and 'x%sx' or ' %s ', gender_ch)
     return {
         {width=STATUS_COL_WIDTH, text=function() return self.status[self.status_revmap[data.status]].label end},
-        {gap=2, width=DIST_COL_WIDTH, text=data.dist},
+        {gap=2, width=DIST_COL_WIDTH, text=data.dist_fn},
         {gap=2, width=DISPOSITION_COL_WIDTH, text=function() return DISPOSITION[DISPOSITION_REVMAP[data.disposition]].label end},
         {gap=2, width=GENDER_COL_WIDTH, text=gender_ch},
         {gap=2, text=data.desc},
@@ -627,7 +629,7 @@ function AssignAnimal:cache_choices()
         local data = {
             unit=unit,
             desc=desc,
-            dist=self.get_distance(xyz2pos(dfhack.units.getPosition(unit))),
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.units.getPosition(unit))),
             gender=unit.sex,
             race=raw and raw.creature_id or '',
             status=self.get_status(unit, bld_assignments),
@@ -651,7 +653,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=vermin,
             desc=get_vermin_desc(vermin, raw),
-            dist=self.get_distance(xyz2pos(dfhack.items.getPosition(vermin))),
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.items.getPosition(vermin))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(vermin, bld_assignments),
@@ -671,6 +673,7 @@ function AssignAnimal:cache_choices()
         local data = {
             vermin=small_pet,
             desc=get_small_pet_desc(raw),
+            dist_fn=curry(self.get_distance, xyz2pos(dfhack.items.getPosition(small_pet))),
             gender=df.pronoun_type.it,
             race=raw and raw.creature_id or '',
             status=self.get_status(small_pet, bld_assignments),

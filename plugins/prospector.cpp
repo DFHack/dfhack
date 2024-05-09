@@ -812,7 +812,7 @@ static command_result map_prospector(color_ostream &con,
         con << "Base materials:" << std::endl;
         for (it = baseMats.begin(); it != baseMats.end(); ++it)
         {
-            con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
+            con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << int(it->second.count) << std::endl;
         }
         con << std::endl;
     }

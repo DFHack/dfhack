@@ -214,18 +214,18 @@ Light aquifer tap
 The aquifer tap helps you create a safe, everlasting source of fresh water from
 a light aquifer. See the step-by-step guide, including information on how to
 create a drainage system so your dwarves don't drown when digging the tap, by
-running the ``library/aquifer_tap.csv`` ``/help`` blueprint.
+running the ``library/aquifer_tap.csv`` ``/help`` blueprint. Alternately, view
+the demo video below.
 
 You can see how to nullify the water pressure (so you don't flood your fort) in
 the Dreamfort cistern screenshot above: `Services levels (4 deep)`_.
 
+.. raw:: html
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/hF3_fjLc_EU?si=BBn7g31KSYfV_CF2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__.
-
-.. image:: https://lh3.googleusercontent.com/d/11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
-  :alt: Annotated screenshot of the aquifer tap
-  :target: https://drive.google.com/file/d/11bzEF615QTyTNbN8A8M4UYi1YWtqPuCf
-  :align: center
 
 Post-embark
 ~~~~~~~~~~~
@@ -240,7 +240,11 @@ Pump stack
 
 The pump stack blueprints help you move water and magma up to more convenient
 locations in your fort. See the step-by-step guide for using it by running the
-``library/pump_stack.csv`` ``/help`` blueprint.
+``library/pump_stack.csv`` ``/help`` blueprint or by viewing the demo video:
+
+.. raw:: html
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/SkzgOjN6jxg?si=y53ZBsx0BWyIX_Hh" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 The blueprint spreadsheet is also available
 `online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__.

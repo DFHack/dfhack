@@ -375,14 +375,14 @@ add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
 if(WIN32)
-    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks" )
+    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks_dfhack" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
-    add_library(dfhooks SHARED Hooks.cpp)
-    target_link_libraries(dfhooks dfhack)
+    add_library(dfhooks_dfhack SHARED Hooks.cpp)
+    target_link_libraries(dfhooks_dfhack dfhack)
 endif()
 
 # effectively disables debug builds...
@@ -431,7 +431,7 @@ if(UNIX)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
     endif()
-    install(TARGETS dfhooks
+    install(TARGETS dfhooks_dfhack
         LIBRARY DESTINATION .
         RUNTIME DESTINATION .)
 endif()

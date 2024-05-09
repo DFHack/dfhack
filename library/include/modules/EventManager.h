@@ -43,15 +43,17 @@ namespace DFHack {
         }
 
         struct EventHandler {
+            Plugin* plugin;
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq; //how often event is allowed to fire (in ticks) use 0 to always fire when possible
 
-            EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
-            }
+            EventHandler(Plugin* pluginIn, callback_t eventHandlerIn, int32_t freqIn)
+                : plugin(pluginIn), eventHandler(eventHandlerIn), freq(freqIn)
+            { }
 
             bool operator==(const EventHandler& handle) const {
-                return eventHandler == handle.eventHandler && freq == handle.freq;
+                return plugin == handle.plugin && eventHandler == handle.eventHandler && freq == handle.freq;
             }
             bool operator!=(const EventHandler& handle) const {
                 return !( *this == handle);
@@ -117,9 +119,9 @@ namespace DFHack {
             }
         };
 
-        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
-        DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
-        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, Plugin* plugin);
+        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler);
+        DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, bool absolute=false);
+        DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler);
         DFHACK_EXPORT void unregisterAll(Plugin* plugin);
         void manageEvents(color_ostream& out);
         void onStateChange(color_ostream& out, state_change_event event);

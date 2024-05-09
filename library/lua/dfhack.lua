@@ -149,7 +149,7 @@ end
 ---@nodiscard
 ---@param module string
 ---@param env? table|metatable
----@return table pkg
+---@return _G pkg
 function mkmodule(module,env)
     -- Verify that the module name is correct
     local _, rq_modname = find_required_module_arg()

@@ -199,6 +199,7 @@ function rawset_default(target,source)
     end
 end
 
+---@type any
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
 ---@generic T: table

@@ -1438,7 +1438,7 @@ end
 ---@field text string|fun(): string
 ---@field gap? integer
 ---@field tile? any pen
----@field htile? any pen 
+---@field htile? any pen
 ---@field width? integer|fun(): integer
 ---@field pad_char? string
 ---@field key? string

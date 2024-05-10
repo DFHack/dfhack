@@ -208,7 +208,7 @@ end
 -- Clipped view rectangle object --
 -----------------------------------
 
----@alias gui.dimension { x1: integer, y1: integer, x2: integer, y2: integer, width: integer, height: integer } 
+---@alias gui.dimension { x1: integer, y1: integer, x2: integer, y2: integer, width: integer, height: integer }
 
 ---@class gui.ViewRectAttrs
 ---@field rect? gui.dimension
@@ -429,7 +429,7 @@ function Painter:seek(x,y)
     return self
 end
 
----@param dx? integer 
+---@param dx? integer
 ---@param dy? integer
 ---@return self
 function Painter:advance(dx,dy)

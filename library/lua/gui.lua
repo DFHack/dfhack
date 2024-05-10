@@ -340,8 +340,7 @@ end
 ---@field super gui.ViewRect
 ---@field ATTRS fun(attributes: gui.PainterAttrs)
 ---@overload fun(attributes: gui.PainterAttrs): self
-local Painter
--- Painter = defclass(Painter, ViewRect)
+Painter = defclass(Painter, ViewRect)
 
 ---@param self gui.Painter
 ---@param args gui.PainterAttrs

@@ -46,6 +46,27 @@ COLOR_WHITE = 15
 COLOR_GRAY = COLOR_GREY
 COLOR_DARKGRAY = COLOR_DARKGREY
 
+---@alias dfhack.color
+---| `COLOR_RESET` `
+---| `COLOR_BLACK`
+---| `COLOR_BLUE`
+---| `COLOR_GREEN`
+---| `COLOR_CYAN`
+---| `COLOR_RED`
+---| `COLOR_MAGENTA`
+---| `COLOR_BROWN`
+---| `COLOR_GREY`
+---| `COLOR_DARKGREY`
+---| `COLOR_LIGHTBLUE`
+---| `COLOR_LIGHTGREEN`
+---| `COLOR_LIGHTCYAN`
+---| `COLOR_LIGHTRED`
+---| `COLOR_LIGHTMAGENTA`
+---| `COLOR_YELLOW`
+---| `COLOR_WHITE`
+---| `COLOR_GRAY`
+---| `COLOR_DARKGRAY`
+
 -- Events
 
 if dfhack.is_core_context then

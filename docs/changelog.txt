@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `suspendmanager`: stop suspending single tile stair constructions
 
 ## Misc Improvements
 

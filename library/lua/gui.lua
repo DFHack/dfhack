@@ -9,7 +9,7 @@ local dscreen = dfhack.screen
 local getval = utils.getval
 
 ---@class dfhack.pen
----@field ch? string
+---@field ch? integer|string
 ---@field fg? dfhack.color
 ---@field bg? dfhack.color
 ---@field bold? boolean
@@ -208,13 +208,15 @@ end
 -- Clipped view rectangle object --
 -----------------------------------
 
----@alias gui.dimension { x1: integer, y1: integer, x2: integer, y2: integer, width: integer, height: integer }
+---@class gui.dimension
+---@field x1 integer
+---@field y1 integer
+---@field x2 integer
+---@field y2 integer
+---@field width integer
+---@field height integer
 
 ---@class gui.ViewRectAttrs
----@field rect? gui.dimension
----@field clip_rect? gui.dimension
----@field view_rect? gui.ViewRect
----@field clip_view? gui.ViewRect
 ---@field clip_x1? integer
 ---@field clip_y1? integer
 ---@field clip_x2? integer
@@ -225,14 +227,20 @@ end
 ---@field y2? integer
 ---@field width? integer
 ---@field height? integer
+---@field ATTRS gui.ViewRectAttrs|fun(attributes: gui.ViewRectAttrs)
+
+---@class gui.ViewRectInitArgs
+---@field rect? gui.dimension
+---@field clip_rect? gui.dimension
+---@field view_rect? gui.ViewRect
+---@field clip_view? gui.ViewRect
 
 ---@class gui.ViewRect: dfhack.class, gui.ViewRectAttrs
----@field ATTRS fun(attributes: gui.ViewRectAttrs)
----@overload fun(attributes: gui.ViewRectAttrs): self
+---@overload fun(attributes: gui.ViewRectInitArgs|gui.ViewRectAttrs): self
 ViewRect = defclass(ViewRect, nil)
 
 ---@param self gui.ViewRect
----@param args gui.ViewRectAttrs
+---@param args gui.ViewRectInitArgs
 function ViewRect:init(args)
     if args.view_rect then
         self:assign(args.view_rect)
@@ -328,18 +336,20 @@ end
 ----------------------------
 
 ---@class gui.PainterAttrs: gui.ViewRectAttrs
----@field pen? dfhack.pen
----@field key_pen? dfhack.pen
 ---@field cur_pen? dfhack.pen
 ---@field cur_key_pen? dfhack.pen
 ---@field to_map? boolean
 ---@field x? integer
 ---@field y? integer
+---@field ATTRS gui.PainterAttrs|fun(attributes: gui.PainterAttrs)
+
+---@class gui.PainterInitArgs
+---@field pen? dfhack.pen|dfhack.color
+---@field key_pen? dfhack.pen|dfhack.color
 
 ---@class gui.Painter: gui.ViewRect, gui.PainterAttrs
 ---@field super gui.ViewRect
----@field ATTRS fun(attributes: gui.PainterAttrs)
----@overload fun(attributes: gui.PainterAttrs): self
+---@overload fun(attributes: gui.PainterInitArgs|gui.PainterAttrs): self
 Painter = defclass(Painter, ViewRect)
 
 ---@param self gui.Painter
@@ -470,7 +480,7 @@ function Painter:key_pen(pen,...)
     return self
 end
 
----@param to_map boolean
+---@param to_map boolean If set to true, the painter will paint to the fortress/adventure map buffer and not the UI buffer.
 ---@return self
 function Painter:map(to_map)
     self.to_map = to_map
@@ -487,7 +497,7 @@ end
 ---@param y1 integer
 ---@param x2 integer
 ---@param y2 integer
----@param pen dfhack.pen
+---@param pen dfhack.pen|dfhack.color
 ---@param bg dfhack.color
 ---@param bold boolean
 ---@return self
@@ -577,15 +587,16 @@ end
 --------------------------
 
 ---@class gui.ViewAttrs
----@field active any
----@field visible any
----@field view_id any
----@field on_focus any
----@field on_unfocus any
+---@field active? dfhack.truthy
+---@field visible? dfhack.truthy
+---@field view_id? string
+---@field on_focus? function
+---@field on_unfocus? function
 
 ---@class gui.View: gui.ViewAttrs
 ---@field super nil
----@field ATTRS fun(attributes: gui.ViewAttrs)
+---@field ATTRS gui.ViewAttrs|fun(attributes: gui.ViewAttrs)
+---@overload fun(attributes: gui.ViewAttrs): self
 View = defclass(View)
 
 View.ATTRS {
@@ -914,16 +925,16 @@ end
 DEFAULT_INITIAL_PAUSE = true
 
 ---@class gui.ZScreenAttrs
----@field defocusable any
----@field initial_pause any
----@field force_pause any
----@field pass_pause any
----@field pass_movement_keys any
----@field pass_mouse_clicks any
+---@field defocusable? boolean
+---@field initial_pause? boolean
+---@field force_pause? boolean
+---@field pass_pause? boolean
+---@field pass_movement_keys? boolean
+---@field pass_mouse_clicks? boolean
 
 ---@class gui.ZScreen: gui.Screen, gui.ZScreenAttrs
 ---@field super gui.Screen
----@field ATTRS fun(attributes: gui.ZScreenAttrs)
+---@field ATTRS gui.ZScreenAttrs|fun(attributes: gui.ZScreenAttrs)
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -934,6 +945,8 @@ ZScreen.ATTRS{
     pass_mouse_clicks=true,
 }
 
+---@param self gui.ZScreen
+---@param args gui.ZScreenAttrs
 function ZScreen:preinit(args)
     if self.ATTRS.initial_pause == nil then
         args.initial_pause = DEFAULT_INITIAL_PAUSE or
@@ -1099,15 +1112,11 @@ function ZScreen:onGetSelectedPlant()
 end
 
 ---@class gui.ZScreenModalAttrs: gui.ZScreenAttrs
----@field defocusable? boolean
----@field force_pause? boolean
----@field pass_movement_keys? boolean
----@field pass_mouse_clicks? boolean
 
 -- convenience subclass for modal dialogs
----@class gui.ZScreenModal: gui.ZScreen
+---@class gui.ZScreenModal: gui.ZScreen, gui.ZScreenModalAttrs
 ---@field super gui.ZScreen
----@field ATTRS gui.ZScreenModalAttrs
+---@field ATTRS gui.ZScreenModalAttrs|fun(attributes: gui.ZScreenModalAttrs)
 ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,
@@ -1255,18 +1264,12 @@ function paint_frame(dc, rect, style, title, inactive, pause_forced, resizable)
     end
 end
 
----@class gui.FramedScreenAttrs
----@field frame_style any
----@field frame_title any
----@field frame_width any
----@field frame_height any
----@field frame_inset any
----@field frame_background any
-
----@class gui.FramedScreen: gui.Screen, gui.FramedScreenAttrs
----@field super gui.Screen
----@field ATTRS fun(attributes: gui.FramedScreenAttrs)
----@overload fun(attributes: gui.FramedScreenAttrs): self
+-- This class is **deprecated** and should not be used, use `gui.ZScreen`
+-- instead.
+-- 
+---@see gui.ZScreen
+---@deprecated
+---@class gui.FramedScreen
 FramedScreen = defclass(FramedScreen, Screen)
 
 FramedScreen.ATTRS{
@@ -1305,6 +1308,10 @@ end
 
 -- Inverts the brightness of the color, optionally taking a "bold" parameter,
 -- which you should include if you're reading the fg color of a pen.
+---@nodiscard
+---@param color dfhack.color
+---@param bold? boolean
+---@return dfhack.color
 function invert_color(color, bold)
     color = bold and (color + 8) or color
     return (color + 8) % 16

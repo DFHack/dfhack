@@ -16,12 +16,13 @@ common_methods = common_methods or {}
 reserved_names = { super = true, ATTRS = true }
 
 -- Attribute table metatable
----@class class.attrs_meta
+---@class class.attrs_meta: table
+---@overload fun(attributes: table)
 attrs_meta = attrs_meta or {}
 
 ---@class dfhack.class: class.common_methods, class.class_obj
 ---@field super any
----@field ATTRS fun(attributes: table)
+---@field ATTRS class.attrs_meta|fun(attributes: class.attrs_meta)
 ---@overload fun(attributes: table): self
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
@@ -151,7 +152,7 @@ end
 
 -- Common methods for all instances:
 
----@param method function
+---@param method string
 ---@param ... unknown
 ---@return unknown
 function common_methods:callback(method, ...)
@@ -179,14 +180,14 @@ end
 
 ---@param method function
 ---@param ... unknown
----@return nil
+---@return unknown
 function common_methods:invoke_before(method, ...)
     return invoke_before_rec(self, getmetatable(self), method, ...)
 end
 
 ---@param method function
 ---@param ... unknown
----@return nil
+---@return unknown
 function common_methods:invoke_after(method, ...)
     return invoke_after_rec(self, getmetatable(self), method, ...)
 end

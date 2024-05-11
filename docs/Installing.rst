@@ -41,6 +41,13 @@ On Steam, note that DFHack is a separate app, not a DF Steam Workshop mod. You
 can run DF with DFHack by launching either the DFHack app or the original Dwarf
 Fortress app.
 
+Even if you have a non-Steam version of DF (i.e. Itch or Classic), you can
+still install DFHack from Steam to get the benefits of automatic updates and
+Steam cloud backups. In this case, install DFHack from Steam and then move your
+DF installation into the Steam-created ``Dwarf Fortress`` directory. You have
+to run DF via the DFHack app in the Steam client in order to benefit from the
+Steam cloud backup features.
+
 If you download from GitHub, downloads are available at the bottom of the
 release notes for each release, under a section named "Assets" (which you may
 have to expand). The name of the file indicates which DF version, platform, and

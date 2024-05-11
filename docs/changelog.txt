@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
 
 ## Fixes
 

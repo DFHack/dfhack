@@ -62,6 +62,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
 
 ## API
 

@@ -515,7 +515,7 @@ function StockpilesOverlay:init()
                         option_gap=-1,
                         options={{label='Forbid', value='noforbid'},
                                 {label='Forbid', value='forbid', pen=COLOR_LIGHTRED},
-                                {label='Unforbid', value='unforbid', pen=COLOR_LIGHTBLUE}},
+                                {label='Claim', value='claim', pen=COLOR_LIGHTBLUE}},
                         initial_option='noforbid',
                         on_change=self:callback('toggleLogisticsFeature'),
                     },
@@ -568,7 +568,7 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
     if (feature == 'noforbid') then config.forbid = 0
     elseif (feature == 'forbid') then config.forbid = 1
-    elseif (feature == 'unforbid') then config.forbid = 2
+    elseif (feature == 'claim') then config.forbid = 2
     end
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,

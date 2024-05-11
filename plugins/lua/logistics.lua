@@ -33,7 +33,7 @@ function getStockpileData()
             dump=make_stat('dump', stockpile_number, stats, configs),
             train=make_stat('train', stockpile_number, stats, configs),
             forbid=make_stat('forbid', stockpile_number, stats, configs),
-            unforbid=make_stat('unforbid', stockpile_number, stats, configs),
+            claim=make_stat('claim', stockpile_number, stats, configs),
             melt_masterworks=configs[stockpile_number] and configs[stockpile_number].melt_masterworks == 'true',
         })
     end
@@ -78,7 +78,7 @@ local function print_stockpile_data(data)
                 get_enab(sp.dump), get_dstat(sp.dump),
                 get_enab(sp.train), get_dstat(sp.train),
                 get_dstat(sp.forbid),
-                get_enab(sp.unforbid) .. '  ' .. get_enab(sp.forbid) .. '  '))
+                get_enab(sp.claim) .. '  ' .. get_enab(sp.forbid) .. '  '))
     end
     if has_melt_mastworks then
         print()
@@ -87,7 +87,7 @@ local function print_stockpile_data(data)
 end
 
 local function print_status()
-    print(('logistics is %sactively monitoring stockpiles and marking items')
+    print(('logistics is %sactively monitoring stockpiles and designating items')
             :format(isEnabled() and '' or 'not '))
 
     if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() or not dfhack.isSiteLoaded() then
@@ -108,12 +108,12 @@ local function print_status()
 
     local global_stats = logistics_getGlobalCounts()
     print()
-    print(('Total items marked for melting: %5d'):format(global_stats.total_melt))
-    print(('Total items marked for trading: %5d'):format(global_stats.total_trade))
-    print(('Total items marked for dumping: %5d'):format(global_stats.total_dump))
-    print(('Total items marked forbidden: %7d'):format(global_stats.total_forbid))
-    print(('Total items unforbidden: %12d'):format(global_stats.total_unforbid))
-    print(('Total animals marked for training: %2d'):format(global_stats.total_train))
+    print(('Total items designated for melting: %5d'):format(global_stats.total_melt))
+    print(('Total items designated for trading: %5d'):format(global_stats.total_trade))
+    print(('Total items designated for dumping: %5d'):format(global_stats.total_dump))
+    print(('Total items designated forbidden: %7d'):format(global_stats.total_forbid))
+    print(('Total items unforbidden: %12d'):format(global_stats.total_claim))
+    print(('Total animals designated for training: %2d'):format(global_stats.total_train))
 end
 
 local function for_stockpiles(opts, fn)
@@ -136,7 +136,7 @@ local function do_add_stockpile_config(features, opts)
         else
             for _,config in ipairs(configs) do
                 if (features.forbid) then config.forbid = 1
-                elseif (features.unforbid) then config.forbid = 2
+                elseif (features.claim) then config.forbid = 2
                 end
                 logistics_setStockpileConfig(config.stockpile_number,
                         features.melt or config.melt == 1,

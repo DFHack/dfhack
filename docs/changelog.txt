@@ -52,6 +52,25 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- `logistics`: new ability to automaticly forbid or claim items brought to a stockpile (or a dump within a stockpile)
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r2
+
+## New Tools
 - Updated for adventure mode: `reveal`
 
 ## New Features
@@ -73,7 +92,6 @@ Template for new versions:
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
 - `stockpiles`: support import and export "desired items" configuration for route stops
-- `logistics`: now supports auto-forbid and unforbid of stockpile items
 - New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
 - `markdown`: new keybinding for triggering text export: Ctrl-t (when unit or item is selected)
 - `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state)

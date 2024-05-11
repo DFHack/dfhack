@@ -358,9 +358,9 @@ public:
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
+        if (item->flags.bits.forbid) return false;
         auto unit = get_caged_unit(item);
-        return !item->flags.bits.forbid &&
-                unit &&
+        return unit &&
                 Units::isTamable(unit) &&
                 !Units::isDomesticated(unit) &&
                 !Units::isMarkedForTraining(unit);

@@ -15,6 +15,16 @@ local dfhack = dfhack
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
+-- Types
+
+---@alias dfhack.truthy
+---| boolean
+---| string Not an empty string ""
+---| integer Not 0
+---| table
+---| function
+---| fun(...): boolean|string|integer|table|function
+
 CR_LINK_FAILURE = -3
 CR_NEEDS_CONSOLE = -2
 CR_NOT_IMPLEMENTED = -1
@@ -47,7 +57,7 @@ COLOR_GRAY = COLOR_GREY
 COLOR_DARKGRAY = COLOR_DARKGREY
 
 ---@alias dfhack.color
----| `COLOR_RESET` `
+---| `COLOR_RESET`
 ---| `COLOR_BLACK`
 ---| `COLOR_BLUE`
 ---| `COLOR_GREEN`

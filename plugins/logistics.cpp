@@ -94,7 +94,7 @@ static void do_cycle(color_ostream& out,
         int32_t& melt_count, int32_t& trade_count,
         int32_t& dump_count, int32_t& train_count,
         int32_t& forbid_count, int32_t& claim_count);
-static void logistics_cycle(color_ostream &out);
+static void logistics_cycle(color_ostream &out, bool quiet);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     DEBUG(control, out).print("initializing %s\n", plugin_name);
@@ -190,7 +190,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
-        logistics_cycle(out);
+        logistics_cycle(out, true);
     }
     return CR_OK;
 }
@@ -667,22 +667,22 @@ static int logistics_getStockpileData(lua_State *L) {
     return 2;
 }
 
-static void logistics_cycle(color_ostream &out) {
-    DEBUG(control, out).print("entering logistics_cycle\n");
+static void logistics_cycle(color_ostream &out, bool quiet = false) {
+    DEBUG(control, out).print("entering logistics_cycle%s\n", quiet ? " (quiet)" : "");
     int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0, forbid_count = 0, claim_count = 0;
     do_cycle(out, melt_count, trade_count, dump_count, forbid_count, claim_count, train_count);
-    if (0 < melt_count)
-        out.print("logistics: designated %d item%c for melting\n", melt_count, (melt_count == 1) ? '\0' : 's');
-    if (0 < trade_count)
-        out.print("logistics: designated %d item%c for trading\n", trade_count, (trade_count == 1) ? '\0' : 's');
-    if (0 < dump_count)
-        out.print("logistics: designated %d item%c for dumping\n", dump_count, (dump_count == 1) ? '\0' : 's');
-    if (0 < train_count)
-        out.print("logistics: designated %d animal%c for training\n", train_count, (train_count == 1) ? '\0' : 's');
-    if (0 < forbid_count)
-        out.print("logistics: designated %d item%c forbidden\n", forbid_count, (forbid_count == 1) ? '\0' : 's');
-    if (0 < claim_count)
-        out.print("logistics: claimed %d forbidden item%c\n", claim_count, (claim_count == 1) ? '\0' : 's');
+    if (0 < melt_count || !quiet)
+        out.print("logistics: designated %d item%s for melting\n", melt_count, (melt_count == 1) ? "" : "s");
+    if (0 < trade_count || !quiet)
+        out.print("logistics: designated %d item%s for trading\n", trade_count, (trade_count == 1) ? "" : "s");
+    if (0 < dump_count || !quiet)
+        out.print("logistics: designated %d item%s for dumping\n", dump_count, (dump_count == 1) ? "" : "s");
+    if (0 < train_count || !quiet)
+        out.print("logistics: designated %d animal%s for training\n", train_count, (train_count == 1) ? "" : "s");
+    if (0 < forbid_count || !quiet)
+        out.print("logistics: designated %d item%s forbidden\n", forbid_count, (forbid_count == 1) ? "" : "s");
+    if (0 < claim_count || !quiet)
+        out.print("logistics: claimed %d forbidden item%s\n", claim_count, (claim_count == 1) ? "" : "s");
 }
 
 static void find_stockpiles(lua_State *L, int idx,
@@ -841,7 +841,7 @@ static bool logistics_setFeature(color_ostream &out, bool enabled, string featur
         return false;
     config.set_bool(CONFIG_TRAIN_PARTIAL, enabled);
     if (is_enabled && enabled)
-        logistics_cycle(out);
+        logistics_cycle(out, false);
     return true;
 }
 

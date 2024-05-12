@@ -19,8 +19,8 @@ local _ENV = base_env
 
 ---@alias dfhack.truthy
 ---| boolean
+---| integer
 ---| string Not an empty string ""
----| integer Not 0
 ---| table
 ---| function
 ---| fun(...): boolean|string|integer|table|function
@@ -233,18 +233,21 @@ end
 ---@type any
 DEFAULT_NIL = DEFAULT_NIL or {} -- Unique token
 
----@generic T: table
+-- Create or updates a class; a class has metamethods and thus own metatable.
+---@nodiscard
+---@generic T: dfhack.class
 ---@param class? T
 ---@param parent? table
----@return table|T
+---@return T
 function defclass(class,parent)
     return require('class').defclass(class,parent)
 end
 
----@generic T: table
----@param class table
----@param table? T
----@return table|T
+-- An instance uses the class as metatable
+---@generic T: dfhack.class
+---@param class T
+---@param table? table
+---@return T
 function mkinstance(class,table)
     return require('class').mkinstance(class,table)
 end

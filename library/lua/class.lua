@@ -23,13 +23,12 @@ attrs_meta = attrs_meta or {}
 ---@class dfhack.class: class.common_methods, class.class_obj
 ---@field super any
 ---@field ATTRS class.attrs_meta|fun(attributes: class.attrs_meta)
----@overload fun(attributes: table): self
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
----@generic T: table
+---@generic T: dfhack.class
 ---@param class? T
 ---@param parent? table
----@return table|T
+---@return T
 function defclass(class,parent)
     class = class or {}
 
@@ -54,10 +53,10 @@ function defclass(class,parent)
 end
 
 -- An instance uses the class as metatable
----@generic T: table
----@param class table
----@param table? T
----@return table|T
+---@generic T: dfhack.class
+---@param class T
+---@param table? table
+---@return T
 function mkinstance(class,table)
     table = table or {}
     setmetatable(table, class)

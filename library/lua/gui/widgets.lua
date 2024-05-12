@@ -62,9 +62,9 @@ STANDARDSCROLL = {
 ---@field y? integer Top/bottom margin (if `t` and/or `b` are ommited)
 
 ---@class (exact) widgets.WidgetAttrs
----@field frame widgets.WidgetFrame
----@field frame_inset widgets.WidgetInset|integer
----@field frame_background any Pen
+---@field frame? widgets.WidgetFrame
+---@field frame_inset? widgets.WidgetInset|integer
+---@field frame_background? dfhack.pen Pen
 
 ---@class widgets.Widget: widgets.WidgetAttrs
 ---@field super View
@@ -185,7 +185,7 @@ DOUBLE_CLICK_MS = 500
 ---@field subviews? View[]
 ---@field frame_style? fun(): gui.Frame
 ---@field frame_title? string
----@field on_render? fun(painter: Painter) Called from `onRenderBody`.
+---@field on_render? fun(painter: gui.Painter) Called from `onRenderBody`.
 ---@field on_layout? fun(frame_body: any) Called from `postComputeFrame`.
 ---@field draggable? boolean
 ---@field drag_anchors? { title: boolean, frame: boolean, body: boolean }

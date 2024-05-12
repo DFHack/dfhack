@@ -593,7 +593,7 @@ end
 ---@field on_focus? function
 ---@field on_unfocus? function
 
----@class gui.View: gui.ViewAttrs
+---@class gui.View: dfhack.class, gui.ViewAttrs
 ---@field super nil
 ---@field ATTRS gui.ViewAttrs|fun(attributes: gui.ViewAttrs)
 ---@overload fun(attributes: gui.ViewAttrs): self

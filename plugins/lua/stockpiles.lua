@@ -513,11 +513,11 @@ function StockpilesOverlay:init()
                         frame={t=2, l=0, w=16},
                         key='CUSTOM_CTRL_F',
                         option_gap=-1,
-                        options={{label='Forbid', value='noforbid'},
-                                {label='Forbid', value='forbid', pen=COLOR_LIGHTRED},
-                                {label='Claim', value='claim', pen=COLOR_LIGHTBLUE}},
-                        initial_option='noforbid',
-                        on_change=self:callback('toggleLogisticsFeature'),
+                        options={{label='Forbid', value=0},
+                                {label='Forbid', value=1, pen=COLOR_LIGHTRED},
+                                {label='Claim', value=2, pen=COLOR_LIGHTBLUE}},
+                        initial_option=0,
+                        on_change=self:callback('toggleLogisticsFeature', 'forbid'),
                     },
                 },
             },
@@ -555,7 +555,7 @@ function StockpilesOverlay:onRenderFrame()
         self.subviews.melt:setOption(config.melt == 1)
         self.subviews.trade:setOption(config.trade == 1)
         self.subviews.dump:setOption(config.dump == 1)
-        self.subviews.forbid:setOption(config.forbid+1)
+        self.subviews.forbid:setOption(config.forbid)
         self.subviews.train:setOption(config.train == 1)
         self.cur_stockpile = sp
     end
@@ -566,15 +566,11 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     local sp = dfhack.gui.getSelectedStockpile(true)
     if not sp then return end
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
-    if (feature == 'noforbid') then config.forbid = 0
-    elseif (feature == 'forbid') then config.forbid = 1
-    elseif (feature == 'claim') then config.forbid = 2
-    end
     -- logical xor
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
             (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1),
-            config.forbid, config.melt_masterworks == 1)
+            self.subviews.forbid:getOptionValue(), config.melt_masterworks == 1)
 end
 
 function StockpilesOverlay:on_custom_config(custom)

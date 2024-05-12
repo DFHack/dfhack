@@ -25,6 +25,14 @@ attrs_meta = attrs_meta or {}
 ---@field ATTRS class.attrs_meta|fun(attributes: class.attrs_meta)
 
 -- Create or updates a class; a class has metamethods and thus own metatable.
+--
+-- When defining a new class type with annotations, follow this pattern:
+--
+--    ---@class moduleName.ClassName: dfhack.class, moduleName.ParentClass?
+--    ---@field super moduleName.ParentClass
+--    ---@field ATTRS moduleName.ClassNameAttrs|fun(attributes: moduleName.ClassNameAttrs)
+--    ---@overload fun(init_table: moduleName.ClassNameAttrs): self
+--    ClassName = defclass(ClassName, ParentClass)
 ---@generic T: dfhack.class
 ---@param class? T
 ---@param parent? table

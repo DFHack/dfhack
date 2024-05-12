@@ -227,7 +227,6 @@ end
 ---@field y2? integer
 ---@field width? integer
 ---@field height? integer
----@field ATTRS gui.ViewRectAttrs|fun(attributes: gui.ViewRectAttrs)
 
 ---@class gui.ViewRectInitArgs
 ---@field rect? gui.dimension
@@ -236,6 +235,8 @@ end
 ---@field clip_view? gui.ViewRect
 
 ---@class gui.ViewRect: dfhack.class, gui.ViewRectAttrs
+---@field super dfhack.class
+---@field ATTRS gui.ViewRectAttrs|fun(attributes: gui.ViewRectAttrs)
 ---@overload fun(attributes: gui.ViewRectInitArgs|gui.ViewRectAttrs): self
 ViewRect = defclass(ViewRect, nil)
 
@@ -341,7 +342,6 @@ end
 ---@field to_map? boolean
 ---@field x? integer
 ---@field y? integer
----@field ATTRS gui.PainterAttrs|fun(attributes: gui.PainterAttrs)
 
 ---@class gui.PainterInitArgs
 ---@field pen? dfhack.pen|dfhack.color
@@ -349,6 +349,7 @@ end
 
 ---@class gui.Painter: gui.ViewRect, gui.PainterAttrs
 ---@field super gui.ViewRect
+---@field ATTRS gui.PainterAttrs|fun(attributes: gui.PainterAttrs)
 ---@overload fun(attributes: gui.PainterInitArgs|gui.PainterAttrs): self
 Painter = defclass(Painter, ViewRect)
 
@@ -498,10 +499,10 @@ end
 ---@param x2 integer
 ---@param y2 integer
 ---@param pen dfhack.pen|dfhack.color
----@param bg dfhack.color
----@param bold boolean
+---@param bg? dfhack.color
+---@param bold? boolean
 ---@return self
----@overload fun(rect: gui.dimension, pen: dfhack.pen, bg: dfhack.color, bold: boolean): self
+---@overload fun(rect: gui.dimension, pen: dfhack.pen, bg?: dfhack.color, bold?: boolean): self
 function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
     if type(x1) == 'table' then
         x1, y1, x2, y2, pen, bg, bold = x1.x1, x1.y1, x1.x2, x1.y2, y1, x2, y2
@@ -594,7 +595,7 @@ end
 ---@field on_unfocus? function
 
 ---@class gui.View: dfhack.class, gui.ViewAttrs
----@field super nil
+---@field super dfhack.class
 ---@field ATTRS gui.ViewAttrs|fun(attributes: gui.ViewAttrs)
 ---@overload fun(attributes: gui.ViewAttrs): self
 View = defclass(View)
@@ -832,7 +833,12 @@ end
 -- Base screen object --
 ------------------------
 
----@class gui.Screen: gui.View
+---@class gui.ScreenAttrs: gui.ViewAttrs
+
+---@class gui.Screen: gui.View, gui.ScreenAttrs
+---@field super gui.View
+---@field ATTRS gui.ScreenAttrs|fun(attributes: gui.ScreenAttrs)
+---@overload fun(init_table: gui.ScreenAttrs): self
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
@@ -935,6 +941,7 @@ DEFAULT_INITIAL_PAUSE = true
 ---@class gui.ZScreen: gui.Screen, gui.ZScreenAttrs
 ---@field super gui.Screen
 ---@field ATTRS gui.ZScreenAttrs|fun(attributes: gui.ZScreenAttrs)
+---@overload fun(init_table: gui.ZScreenAttrs): self
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,

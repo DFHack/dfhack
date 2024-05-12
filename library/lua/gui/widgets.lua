@@ -10,7 +10,7 @@ local utils = require('utils')
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
 
----@param view table
+---@param view gui.View
 ---@param vis boolean
 local function show_view(view,vis)
     if view then
@@ -46,12 +46,12 @@ STANDARDSCROLL = {
 ------------
 
 ---@class (exact) widgets.WidgetFrame
----@field l? integer Gap between the left edges of the frame and the parent.
----@field t? integer Gap between the top edges of the frame and the parent.
----@field r? integer Gap between the right edges of the frame and the parent.
----@field b? integer Gap between the bottom edges of the frame and the parent.
----@field w? integer Maximum width
----@field h? integer Maximum height
+---@field l? integer Gap between the left edge of the frame and the parent.
+---@field t? integer Gap between the top edge of the frame and the parent.
+---@field r? integer Gap between the right edge of the frame and the parent.
+---@field b? integer Gap between the bottom edge of the frame and the parent.
+---@field w? integer Desired width
+---@field h? integer Desired height
 
 ---@class (exact) widgets.WidgetInset
 ---@field l? integer Left margin
@@ -61,14 +61,15 @@ STANDARDSCROLL = {
 ---@field x? integer Left/right margin (if `l` and/or `r` are ommited)
 ---@field y? integer Top/bottom margin (if `t` and/or `b` are ommited)
 
----@class (exact) widgets.WidgetAttrs
+---@class (exact) widgets.WidgetAttrs: gui.ViewAttrs
 ---@field frame? widgets.WidgetFrame
 ---@field frame_inset? widgets.WidgetInset|integer
----@field frame_background? dfhack.pen Pen
+---@field frame_background? dfhack.pen
 
----@class widgets.Widget: widgets.WidgetAttrs
----@field super View
----@field ATTRS fun(attributes: widgets.WidgetAttrs)
+---@class widgets.Widget: gui.View, widgets.WidgetAttrs
+---@field super gui.View
+---@field ATTRS widgets.WidgetAttrs|fun(attributes: widgets.WidgetAttrs)
+---@overload fun(init_table: widgets.WidgetAttrs): self
 Widget = defclass(Widget, gui.View)
 
 Widget.ATTRS {
@@ -84,7 +85,7 @@ function Widget:computeFrame(parent_rect)
     return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset)
 end
 
----@param dc Painter
+---@param dc gui.Painter
 ---@param rect { x1: integer, y1: integer, x2: integer, y2: integer }
 function Widget:onRenderFrame(dc, rect)
     if self.frame_background then
@@ -97,20 +98,21 @@ end
 -------------
 
 ---@class widgets.DividerAttrs: widgets.WidgetAttrs
----@field frame_style fun(): gui.Frame
----@field interior boolean
----@field frame_style_t boolean|fun(): gui.Frame
----@field frame_style_b boolean|fun(): gui.Frame
----@field frame_style_l boolean|fun(): gui.Frame
----@field frame_style_r boolean|fun(): gui.Frame
----@field interior_t boolean
----@field interior_b boolean
----@field interior_l boolean
----@field interior_r boolean
+---@field frame_style? gui.Frame|fun(): gui.Frame
+---@field interior? boolean
+---@field frame_style_t? `false`|gui.Frame|fun(): gui.Frame
+---@field frame_style_b? `false`|fun(): gui.Frame
+---@field frame_style_l? `false`|fun(): gui.Frame
+---@field frame_style_r? `false`|fun(): gui.Frame
+---@field interior_t? boolean
+---@field interior_b? boolean
+---@field interior_l? boolean
+---@field interior_r? boolean
 
----@class widgets.Divider: widgets.DividerAttrs, widgets.Widget
+---@class widgets.Divider:  widgets.Widget, widgets.DividerAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.DividerAttrs)
+---@field ATTRS widgets.DividerAttrs|fun(attributes: widgets.DividerAttrs)
+---@overload fun(init_table: widgets.DividerAttrs): self
 Divider = defclass(Divider, Widget)
 
 Divider.ATTRS{
@@ -142,6 +144,7 @@ local function divider_get_junction_pen(self, edge_name)
     return frame_style[pen_name]
 end
 
+---@param dc gui.Painter
 function Divider:onRenderBody(dc)
     local rect, style = self.frame_rect, self.frame_style
     if type(style) == 'function' then
@@ -182,8 +185,8 @@ end
 DOUBLE_CLICK_MS = 500
 
 ---@class widgets.PanelAttrs: widgets.WidgetAttrs
----@field subviews? View[]
----@field frame_style? fun(): gui.Frame
+---@field subviews? gui.View[]
+---@field frame_style? gui.Frame|fun(): gui.Frame
 ---@field frame_title? string
 ---@field on_render? fun(painter: gui.Painter) Called from `onRenderBody`.
 ---@field on_layout? fun(frame_body: any) Called from `postComputeFrame`.
@@ -201,7 +204,9 @@ DOUBLE_CLICK_MS = 500
 ---@field autoarrange_gap? integer
 
 ---@class widgets.Panel: widgets.Widget, widgets.PanelAttrs
----@field ATTRS fun(ATTRS: widgets.PanelAttrs)
+---@field super widgets.Widget
+---@field ATTRS widgets.PanelAttrs|fun(ATTRS: widgets.PanelAttrs)
+---@overload fun(init_table: widgets.PanelAttrs): self
 Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
@@ -420,7 +425,7 @@ end
 ---| '_MOUSE_M'
 ---| '_MOUSE_M_DOWN'
 
----@param keys table<string|widgets.Keys, boolean>
+---@param keys table<string|integer|widgets.Keys, boolean>
 ---@return boolean|nil
 function Panel:onInput(keys)
     if self.kbd_get_pos then
@@ -665,9 +670,12 @@ end
 -- Window --
 ------------
 
----@class widgets.Window: widgets.Panel
+---@class widgets.WindowAttrs: widgets.PanelAttrs
+
+---@class widgets.Window: widgets.Panel, widgets.WindowAttrs
 ---@field super widgets.Panel
----@field ATTRS fun(attributes: widgets.PanelAttrs)
+---@field ATTRS widgets.WindowAttrs|fun(attributes: widgets.WindowAttrs)
+---@overload fun(init_table: widgets.WindowAttrs): self
 Window = defclass(Window, Panel)
 
 Window.ATTRS {
@@ -687,7 +695,8 @@ Window.ATTRS {
 
 ---@class widgets.ResizingPanel: widgets.Panel, widgets.ResizingPanelAttrs
 ---@field super widgets.Panel
----@field ATTRS widgets.ResizingPanelAttrs
+---@field ATTRS widgets.ResizingPanelAttrs|fun(attributes: widgets.ResizingPanelAttrs)
+---@overload fun(init_table: widgets.ResizingPanelAttrs): self
 ResizingPanel = defclass(ResizingPanel, Panel)
 
 ResizingPanel.ATTRS{
@@ -730,9 +739,12 @@ end
 -----------
 
 ---@class widgets.PagesAttrs: widgets.PanelAttrs
+---@field selected? integer|string
 
----@class widgets.Pages: widgets.Panel, widgets.PanelAttrs
----@overload fun(attributes: widgets.PagesAttrs)
+---@class widgets.Pages: widgets.Panel, widgets.PagesAttrs
+---@field super widgets.Panel
+---@field ATTRS widgets.PagesAttrs|fun(attributes: widgets.PagesAttrs)
+---@overload fun(attributes: widgets.PagesAttrs): self
 Pages = defclass(Pages, Panel)
 
 ---@param args widgets.PagesAttrs
@@ -781,6 +793,7 @@ end
 ---@class widgets.EditField: widgets.Widget, widgets.EditFieldAttrs
 ---@field super widgets.Widget
 ---@field ATTRS fun(attributes: widgets.EditFieldAttrs)
+---@overload fun(attributes: widgets.EditFieldAttrs): self
 EditField = defclass(EditField, Widget)
 
 EditField.ATTRS{
@@ -985,10 +998,12 @@ SCROLL_INITIAL_DELAY_MS = 300
 SCROLL_DELAY_MS = 20
 
 ---@class widgets.ScrollbarAttrs: widgets.WidgetAttrs
+---@field on_scroll? fun(new_top_elem?: integer)
 
 ---@class widgets.Scrollbar: widgets.Widget, widgets.ScrollbarAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.ScrollbarAttrs)
+---@field ATTRS widgets.ScrollbarAttrs|fun(attributes: widgets.ScrollbarAttrs)
+---@overload fun(attributes: widgets.ScrollbarAttrs): self
 Scrollbar = defclass(Scrollbar, Widget)
 
 Scrollbar.ATTRS{
@@ -1305,6 +1320,15 @@ local function make_hpen(pen, hpen)
     return hpen_parsed
 end
 
+---@param obj any
+---@param dc gui.Painter
+---@param x0 integer
+---@param y0 integer
+---@param pen dfhack.pen|dfhack.color|fun(): dfhack.pen|dfhack.color
+---@param dpen dfhack.pen|dfhack.color|fun(): dfhack.pen|dfhack.color
+---@param disabled boolean
+---@param hpen dfhack.pen|dfhack.color|fun(): dfhack.pen|dfhack.color
+---@param hovered boolean
 function render_text(obj,dc,x0,y0,pen,dpen,disabled,hpen,hovered)
     pen, dpen, hpen = getval(pen), getval(dpen), getval(hpen)
     local width = 0
@@ -1437,28 +1461,28 @@ end
 ---@class widgets.LabelToken
 ---@field text string|fun(): string
 ---@field gap? integer
----@field tile? any pen
----@field htile? any pen
+---@field tile? integer|dfhack.pen
+---@field htile? integer|dfhack.pen
 ---@field width? integer|fun(): integer
 ---@field pad_char? string
 ---@field key? string
 ---@field key_sep? string
 ---@field disabled? boolean|fun(): boolean
 ---@field enabled? boolean|fun(): boolean
----@field pen? pen
----@field dpen? pen
----@field hpen? pen
----@field on_activiate? function
+---@field pen? dfhack.color|dfhack.pen
+---@field dpen? dfhack.color|dfhack.pen
+---@field hpen? dfhack.color|dfhack.pen
+---@field on_activiate? fun()
 ---@field id? string
----@field line? any
----@field x1? any
----@field x2? any
+---@field line? any Internal use only
+---@field x1? any Internal use only
+---@field x2? any Internal use only
 
 ---@class widgets.LabelAttrs: widgets.WidgetAttrs
 ---@field text string|widgets.LabelToken[]
----@field text_pen? any
----@field text_dpen? any
----@field text_hpen? any
+---@field text_pen? dfhack.color|dfhack.pen
+---@field text_dpen? dfhack.color|dfhack.pen
+---@field text_hpen? dfhack.color|dfhack.pen
 ---@field disabled? boolean|fun(): boolean
 ---@field enabled? boolean|fun(): boolean
 ---@field auto_height? boolean
@@ -1469,8 +1493,8 @@ end
 
 ---@class widgets.Label: widgets.Widget, widgets.LabelAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.LabelAttrs)
----@overload fun(attributes: widgets.LabelAttrs)
+---@field ATTRS widgets.LabelAttrs|fun(attributes: widgets.LabelAttrs)
+---@overload fun(attributes: widgets.LabelAttrs): self
 Label = defclass(Label, Widget)
 
 Label.ATTRS{
@@ -1626,10 +1650,13 @@ end
 ------------------
 
 ---@class widgets.WrappedLabelAttrs: widgets.LabelAttrs
+---@field text_to_wrap? string|string[]|fun(): string|string[]
+---@field indent? integer
 
 ---@class widgets.WrappedLabel: widgets.Label, widgets.WrappedLabelAttrs
 ---@field super widgets.Label
 ---@field ATTRS fun(attributes: widgets.WrappedLabelAttrs)
+---@overload fun(attributes: widgets.WrappedLabelAttrs): self
 WrappedLabel = defclass(WrappedLabel, Label)
 
 WrappedLabel.ATTRS{
@@ -1671,10 +1698,12 @@ end
 ------------------
 
 ---@class widgets.TooltipLabelAttrs: widgets.WrappedLabelAttrs
+---@field show_tooltip? boolean|fun(): boolean
 
 ---@class widgets.TooltipLabel: widgets.WrappedLabel, widgets.TooltipLabelAttrs
 ---@field super widgets.WrappedLabel
 ---@field ATTRS fun(attributes: widgets.TooltipLabelAttrs)
+---@overload fun(attributes: widgets.TooltipLabelAttrs): self
 TooltipLabel = defclass(TooltipLabel, WrappedLabel)
 
 TooltipLabel.ATTRS{
@@ -1692,10 +1721,15 @@ end
 -----------------
 
 ---@class widgets.HotkeyLabelAttrs: widgets.LabelAttrs
+---@field key? string
+---@field key_sep? string
+---@field label? string|fun(): string
+---@field on_activate? function
 
 ---@class widgets.HotkeyLabel: widgets.Label, widgets.HotkeyLabelAttrs
 ---@field super widgets.Label
----@field ATTRS fun(attributes: widgets.HotkeyLabelAttrs)
+---@field ATTRS widgets.HotkeyLabelAttrs|fun(attributes: widgets.HotkeyLabelAttrs)
+---@overload fun(attributes: widgets.HotkeyLabelAttrs): self
 HotkeyLabel = defclass(HotkeyLabel, Label)
 
 HotkeyLabel.ATTRS{
@@ -1744,10 +1778,12 @@ end
 ----------------
 
 ---@class widgets.HelpButtonAttrs: widgets.PanelAttrs
+---@field command? string
 
 ---@class widgets.HelpButton: widgets.Panel, widgets.HelpButtonAttrs
 ---@field super widgets.Panel
----@field ATTRS fun(attributes: widgets.HelpButtonAttrs)
+---@field ATTRS widgets.HelpButtonAttrs|fun(attributes: widgets.HelpButtonAttrs)
+---@overload fun(attributes: widgets.HelpButtonAttrs): self
 HelpButton = defclass(HelpButton, Panel)
 
 HelpButton.ATTRS{
@@ -1788,10 +1824,12 @@ end
 ---------------------
 
 ---@class widgets.ConfigureButtonAttrs: widgets.PanelAttrs
+---@field on_click? function
 
 ---@class widgets.ConfigureButton: widgets.Panel, widgets.ConfigureButtonAttrs
----@field super widgets.ConfigureButton
----@field ATTRS fun(attributes: widgets.ConfigureButtonAttrs)
+---@field super widgets.Panel
+---@field ATTRS widgets.ConfigureButtonAttrs|fun(attributes: widgets.ConfigureButtonAttrs)
+---@overload fun(attributes: widgets.ConfigureButtonAttrs): self
 ConfigureButton = defclass(ConfigureButton, Panel)
 
 ConfigureButton.ATTRS{
@@ -1825,8 +1863,9 @@ end
 ---@class widgets.BannerPanelAttrs: widgets.PanelAttrs
 
 ---@class widgets.BannerPanel: widgets.Panel, widgets.BannerPanelAttrs
----@field super widgets.BannerPanel
----@field ATTRS fun(attributes: widgets.BannerPanelAttrs)
+---@field super widgets.Panel
+---@field ATTRS widgets.BannerPanelAttrs|fun(attributes: widgets.BannerPanelAttrs)
+---@overload fun(attributes: widgets.BannerPanelAttrs): self
 BannerPanel = defclass(BannerPanel, Panel)
 
 function BannerPanel:onRenderBody(dc)
@@ -1846,6 +1885,7 @@ end
 ---@class widgets.TextButton: widgets.BannerPanel, widgets.TextButtonAttrs
 ---@field super widgets.BannerPanel
 ---@field ATTRS fun(attributes: widgets.TextButtonAttrs)
+---@overload fun(init_table: widgets.HotkeyLabelAttrs|widgets.BannerPanelAttrs): self
 TextButton = defclass(TextButton, BannerPanel)
 
 function TextButton:init(info)
@@ -1880,10 +1920,19 @@ end
 
 ---@class widgets.CycleHotkeyLabelAttrs: widgets.LabelAttrs
 ---@field key? any
+---@field key_back? any
+---@field label? any
+---@field label_width? any
+---@field label_below? any
+---@field option_gap? any
+---@field options? any
+---@field initial_option? any
+---@field on_change? any
 
 ---@class widgets.CycleHotkeyLabel: widgets.Label, widgets.CycleHotkeyLabelAttrs
 ---@field super widgets.Label
----@field ATTRS fun(attributes: widgets.CycleHotkeyLabelAttrs)
+---@field ATTRS widgets.CycleHotkeyLabelAttrs|fun(attributes: widgets.CycleHotkeyLabelAttrs)
+---@overload fun()
 CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 
 CycleHotkeyLabel.ATTRS{
@@ -2001,8 +2050,9 @@ end
 ---@field options? any
 
 ---@class widgets.ToggleHotkeyLabel: widgets.CycleHotkeyLabel, widgets.ToggleHotkeyLabelAttrs
----@field super widgets.CycleHotkeylabel
----@field ATTRS fun(attributes: widgets.ToggleHotkeyLabelAttrs)
+---@field super widgets.CycleHotkeyLabel
+---@field ATTRS widgets.ToggleHotkeyLabelAttrs|fun(attributes: widgets.ToggleHotkeyLabelAttrs)
+---@overload fun()
 ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
 ToggleHotkeyLabel.ATTRS{
     options={{label='On', value=true, pen=COLOR_GREEN},
@@ -2014,11 +2064,26 @@ ToggleHotkeyLabel.ATTRS{
 ----------
 
 ---@class widgets.ListAttrs: widgets.WidgetAttrs
+---@field choices? any
+---@field selected? any
 ---@field text_pen? any
+---@field text_hpen? any
+---@field cursor_pen? any
+---@field inactive_pen? any
+---@field icon_pen? any
+---@field on_select? any
+---@field on_submit? any
+---@field on_submit2? any
+---@field on_double_click? any
+---@field on_double_click2? any
+---@field row_height? any
+---@field icon_width? any
+---@field scroll_keys? any
 
 ---@class widgets.List: widgets.Widget, widgets.ListAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.ListAttrs)
+---@field ATTRS widgets.ListAttrs|fun(attributes: widgets.ListAttrs)
+---@overload fun(): self
 List = defclass(List, Widget)
 
 List.ATTRS{
@@ -2368,7 +2433,8 @@ end
 
 ---@class widgets.FilteredList: widgets.Widget, widgets.FilteredListAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.FilteredListAttrs)
+---@field ATTRS widgets.FilteredListAttrs|fun(attributes: widgets.FilteredListAttrs)
+---@overload fun(): self
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
@@ -2604,7 +2670,8 @@ local DEFAULT_INACTIVE_TAB_PENS = {
 
 ---@class widgets.Tab: widgets.Widget, widgets.TabAttrs
 ---@field super widgets.Widget
----@field ATTRS fun(attributes: widgets.TabAttrs)
+---@field ATTRS widgets.TabAttrs|fun(attributes: widgets.TabAttrs)
+---@overload fun(): self
 Tab = defclass(Tabs, Widget)
 Tab.ATTRS{
     id=DEFAULT_NIL,
@@ -2672,7 +2739,8 @@ end
 
 ---@class widgets.TabBar: widgets.ResizingPanel, widgets.TabBarAttrs
 ---@field super widgets.ResizingPanel
----@field ATTRS fun(attribute: widgets.TabBarAttrs)
+---@field ATTRS widgets.TabBarAttrs|fun(attribute: widgets.TabBarAttrs)
+---@overload fun(): self
 TabBar = defclass(TabBar, ResizingPanel)
 TabBar.ATTRS{
     labels=DEFAULT_NIL,
@@ -2749,6 +2817,8 @@ end
 
 ---@class widgets.RangeSlider: widgets.Widget, widgets.RangeSliderAttrs
 ---@field super widgets.Widget
+---@field ATTRS widgets.RangeSliderAttrs|fun(attributes: widgets.RangeSliderAttrs)
+---@overload fun(): self
 RangeSlider = defclass(RangeSlider, Widget)
 RangeSlider.ATTRS{
     num_stops=DEFAULT_NIL,

@@ -8,7 +8,7 @@ local widgets = require('gui.widgets')
 
 local function make_stat(name, stockpile_number, stats, configs)
     return {
-        enabled=configs[stockpile_number] and configs[stockpile_number][name] == 'true',
+        enabled=(configs[stockpile_number] ~= nil) and (configs[stockpile_number][name] == 'true'),
         designated=stats[name..'_designated'][stockpile_number] or 0,
         can_designate=stats[name..'_can_designate'][stockpile_number] or 0,
     }
@@ -34,7 +34,7 @@ function getStockpileData()
             train=make_stat('train', stockpile_number, stats, configs),
             forbid=make_stat('forbid', stockpile_number, stats, configs),
             claim=make_stat('claim', stockpile_number, stats, configs),
-            melt_masterworks=configs[stockpile_number] and configs[stockpile_number].melt_masterworks == 'true',
+            melt_masterworks=(configs[stockpile_number] ~= nil) and (configs[stockpile_number].melt_masterworks == 'true'),
         })
     end
     table.sort(data, function(a, b) return a.sort_key < b.sort_key end)

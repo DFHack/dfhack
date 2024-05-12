@@ -744,7 +744,7 @@ end
 ---@nodiscard
 ---@return world_site|nil
 function dfhack.world.getCurrentSite()
-    return df.world_site.find(df.global.plotinfo.site_id)
+    return df.world_site.find(dfhack.world.GetCurrentSiteId())
 end
 
 ---@nodiscard

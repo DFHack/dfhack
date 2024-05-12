@@ -558,9 +558,11 @@ private:
 
             if (!exit) {
                 // there is no exit at all
-                // suspend the current construction job to leave the entire plan suspended
+                if (isImpassable(building)) {
+                    // suspend the current construction job to leave the entire plan suspended
+                    suspensions[job->id] = Reason::DEADEND;
+                }
                 // and stop here
-                suspensions[job->id] = Reason::DEADEND;
                 return;
             }
 

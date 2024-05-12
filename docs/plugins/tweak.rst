@@ -53,6 +53,8 @@ Commands
     Names filled waterskins, flasks, and vials according to their contents,
     the same way other containers such as barrels, bins, and cages are named.
     (:bug:`4914`)
+``named-codices``
+    Displays titles for books instead of the default material description.
 ``partial-items``
     Displays percentages on partially-consumed items such as hospital cloth.
 ``reaction-gloves``

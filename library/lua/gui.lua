@@ -1273,7 +1273,7 @@ end
 
 -- This class is **deprecated** and should not be used, use `gui.ZScreen`
 -- instead.
--- 
+--
 ---@see gui.ZScreen
 ---@deprecated
 ---@class gui.FramedScreen

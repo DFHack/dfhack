@@ -3,7 +3,7 @@ local _ENV = mkmodule('utils')
 local df = df
 
 ---@generic T
----@param obj fun(...): T
+---@param obj T|fun(...): T
 ---@param ... unknown
 ---@return T
 function getval(obj, ...)

@@ -79,7 +79,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginComma
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
@@ -393,7 +393,7 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

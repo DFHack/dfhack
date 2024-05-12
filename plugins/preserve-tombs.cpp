@@ -54,7 +54,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot use %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
@@ -88,7 +88,7 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
 EventManager::EventHandler assign_tomb_handler(plugin_self, onUnitDeath, 0);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

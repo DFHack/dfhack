@@ -93,7 +93,7 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_list_command(out);
     }
 
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

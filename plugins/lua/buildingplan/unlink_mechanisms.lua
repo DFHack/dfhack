@@ -112,8 +112,7 @@ end
 
 local sheet = df.global.game.main_interface.view_sheets
 
-local valid_build =
-{
+local valid_build = {
     "Trap/Lever",
     "Trap/PressurePlate",
     "Trap/TrackStop",

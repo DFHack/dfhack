@@ -25,6 +25,7 @@ distribution.
 
 #include "Internal.h"
 
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/adventurest.h"
@@ -34,6 +35,8 @@ distribution.
 #include "df/nemesis_record.h"
 #include "df/plotinfost.h"
 #include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_site.h"
 
 using std::string;
 
@@ -198,7 +201,24 @@ df::unit * World::getAdventurer() {
 int32_t World::GetCurrentSiteId() {
     if (!plotinfo)
         return -1;
-    return plotinfo->site_id;
+    if (isFortressMode())
+        return plotinfo->site_id;
+    if (isAdventureMode() && world && world->world_data) {
+        if (auto adv = getAdventurer()) {
+            auto & world_map = world->map;
+            auto adv_pos = Units::getPosition(adv);
+            df::coord2d rgn_pos(world_map.region_x + adv_pos.x/48, world_map.region_y + adv_pos.y/48);
+            for (auto site : world->world_data->sites) {
+                df::coord2d rgn_base(site->pos.x*16, site->pos.y*16);
+                if (rgn_pos.x >= rgn_base.x+site->rgn_min_x && rgn_pos.x <= rgn_base.x+site->rgn_max_x
+                    && rgn_pos.y >= rgn_base.y+site->rgn_min_y && rgn_pos.y <= rgn_base.y+site->rgn_max_y)
+                {
+                    return site->id;
+                }
+            }
+        }
+    }
+    return -1;
 }
 
 bool World::IsSiteLoaded() {

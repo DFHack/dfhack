@@ -54,12 +54,15 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
 
 ## Fixes
+- `suspendmanager`: stop suspending single tile stair constructions
 
 ## Misc Improvements
 
 ## Documentation
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
 
 ## API
 

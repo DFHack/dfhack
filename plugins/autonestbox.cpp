@@ -61,7 +61,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
@@ -139,7 +139,7 @@ struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df:
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

@@ -28,11 +28,9 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "df/adventurest.h"
 #include "df/block_square_event_world_constructionst.h"
 #include "df/gamest.h"
 #include "df/map_block.h"
-#include "df/nemesis_record.h"
 #include "df/plotinfost.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -187,15 +185,10 @@ bool World::isLegends(df::game_type t)
 }
 
 df::unit * World::getAdventurer() {
-    using df::global::adventure;
-
-    if (!isAdventureMode() || !adventure)
+    if (!isAdventureMode() || !world)
         return NULL;
 
-    if (auto nem = df::nemesis_record::find(adventure->player_id))
-        return nem->unit;
-
-    return NULL;
+    return world->units.adv_unit;
 }
 
 int32_t World::GetCurrentSiteId() {

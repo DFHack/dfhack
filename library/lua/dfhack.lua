@@ -18,12 +18,12 @@ local _ENV = base_env
 -- Types
 
 ---@alias dfhack.truthy
----| boolean
+---| `true`
 ---| integer
 ---| string Not an empty string ""
 ---| table
 ---| function
----| fun(...): boolean|string|integer|table|function
+---| fun(...): `true`|string|integer|table|function
 
 CR_LINK_FAILURE = -3
 CR_NEEDS_CONSOLE = -2

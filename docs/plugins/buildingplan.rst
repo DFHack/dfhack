@@ -162,6 +162,17 @@ that it is perfectly fine to choose materials that currently show zero quantity.
 `buildingplan` will patiently wait for items made of materials you have
 selected to become available.
 
+You can save up to 10 filters to the favorites panel, which can be useful if you
+find yourself frequently switching between a small number of material filters
+(e.g. when using differently coloured stones for different parts of the fort).
+The panel can be accessed by pressing :kbd:`Ctrl`:kbd:`f`. Clicking on an empty
+slot stores the filter for the currently selected item type to the respective
+slot. Clicking on a slot with a filter restores that filter to the currently
+selected item type. Alternatively you can navigate to a slot using
+:kbd:`x`/:kbd:`X` and press :kbd:`y` to save or restore a filter. You can free a
+slot by clicking the "[x]", and you can edit the label of a saved filter by
+shift-clicking the label.
+
 Choosing specific items
 +++++++++++++++++++++++
 

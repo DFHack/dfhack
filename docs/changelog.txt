@@ -74,28 +74,33 @@ Template for new versions:
 - Updated for adventure mode: `reveal`
 
 ## New Features
+- `buildingplan`: quick material filter favorites on main planner panel
 - DFHack and the Dwarf Fortress translation project can now both be run at the same time
 
 ## Fixes
-- `zone`: fix display of distance from cage for small pets in assignment dialog
-- `blueprint`: correctly record stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
+- `zone`: fix display of distance from cage/pit for small pets in assignment dialog
+- `blueprint`: correctly define stockpile boundaries in recorded stockpile ("place") blueprints when there are adjacent non-rectangular stockpiles of identical types
 - `dig`: refresh count of tiles that will be modified by "mark all designated tiles on this z-level for warm/damp dig" when the z-level changes
 - `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
 - `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
-- `logistics`: also add trainers to semi-wild pets when autoretrain is enabled
+- `logistics`: include semi-wild pets when autoretrain is enabled
+- `suspendmanager`: fully suspend unbuildable dead ends (e.g. buildling second level of a wall when the wall top is only accessible via ramp, causing the planned wall to be pathable but not buildable)
+- `prospect`: don't use scientific notation for representing large numbers
 
 ## Misc Improvements
 - `caravan`: display who is in the cages you are selecting for trade and whether they are hostile
 - `regrass`: can now add grass to stairs, ramps, ashes, buildings, muddy stone, shrubs, and trees
-- `regrass`: can now restrict regrass effect to specified tile, block, cuboid, or z-levels
-- `regrass`: can now add grass in map blocks where there hasn't been any, force specific grass type
+- `regrass`: can now restrict area of effect to specified tile, block, cuboid, or z-levels
+- `regrass`: can now add grass in map blocks where there hasn't been any
+- `regrass`: can now choose specific grass type
 - `dig`: warm/damp/aquifer status will now be shown in mining mode for tiles that your dwarves can see from the level below
 - `dig`: warm/damp/aquifer status will now be shown when in smoothing/engraving modes
 - `stockpiles`: support import and export "desired items" configuration for route stops
 - New commandline options for controlling the Cloud Save coprocess when launching from Steam. See the `dfhack-core` documentation for details.
 - `markdown`: new keybinding for triggering text export: Ctrl-t (when unit or item is selected)
-- `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state)
-- Dreamfort: move wells on services level so drunken dwarves are less likely to fall in
+- `flashstep`: new keybinding for teleporting adventurer to the mouse cursor: Ctrl-t (when adventure map is in the default state and mortal mode is disabled in DFHack preferences)
+- Dreamfort: move wells on services level so brawling drunken tavern patrons are less likely to fall in
+- `unretire-anyone`: new keybinding for adding a historical figure to the adventurer selection list in the adventure mode setup screen: Ctrl-a
 
 ## Documentation
 - Quickfort Blueprint Library: add demo videos for pump stack and light aquifer tap blueprints
@@ -111,8 +116,6 @@ Template for new versions:
 - ``dfhack.internal.setClipboardTextCp437Multiline``: for copying multiline text to the system clipboard
 - ``dfhack.world.getAdventurer``: returns current adventurer unit
 - ``dfhack.items.createItem``: return value and parameters have changed as per C++ API
-
-## Removed
 
 # 50.13-r1.1
 

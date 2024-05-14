@@ -21,7 +21,9 @@ using std::vector;
 
 using namespace DFHack;
 
-static const string INVOKE_MENU_COMMAND = "overlay trigger hotkeys.menu";
+static const string INVOKE_MENU_BASE_COMMAND = "overlay trigger ";
+static const string INVOKE_MENU_PREFIX = INVOKE_MENU_BASE_COMMAND + "hotkeys.";
+static const string INVOKE_MENU_DEFAULT_COMMAND = INVOKE_MENU_BASE_COMMAND + "hotkeys.menu";
 static const string INVOKE_HOTKEYS_COMMAND = "hotkeys";
 static const std::string MENU_SCREEN_FOCUS_STRING = "dfhack/lua/hotkeys/menu";
 
@@ -64,7 +66,7 @@ static void add_binding_if_valid(color_ostream &out, const string &sym, const st
     if (!can_invoke(cmdline, screen))
         return;
 
-    if (filtermenu && (cmdline == INVOKE_MENU_COMMAND ||
+    if (filtermenu && (cmdline.starts_with(INVOKE_MENU_PREFIX) ||
                        cmdline == INVOKE_HOTKEYS_COMMAND)) {
         DEBUG(log).print("filtering out hotkey menu keybinding\n");
         return;
@@ -191,8 +193,12 @@ static bool invoke_command(color_ostream &out, const size_t index) {
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
     if (!parameters.size()) {
-        DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_COMMAND.c_str());
-        return Core::getInstance().runCommand(out, INVOKE_MENU_COMMAND );
+        DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_DEFAULT_COMMAND.c_str());
+        return Core::getInstance().runCommand(out, INVOKE_MENU_DEFAULT_COMMAND );
+    } else if (parameters.size() == 2 && parameters[0] == "menu") {
+        string cmd = INVOKE_MENU_BASE_COMMAND + parameters[1];
+        DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+        return Core::getInstance().runCommand(out, cmd);
     }
 
     CoreSuspender guard;

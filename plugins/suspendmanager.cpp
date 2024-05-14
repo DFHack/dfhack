@@ -556,7 +556,13 @@ private:
                 exit = impassiblePlan;
             }
 
-            if (!exit) return;
+            if (!exit) {
+                // there is no exit at all
+                // suspend the current construction job to leave the entire plan suspended
+                // and stop here
+                suspensions[job->id] = Reason::DEADEND;
+                return;
+            }
 
             // exit is the single exit point of this corridor, suspend its construction job...
             for (auto exit_job : exit->jobs) {

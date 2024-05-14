@@ -3439,6 +3439,16 @@ utils
 
   Returns a lua sequence of numbers in start..end.
 
+* ``utils.invert(table)``
+
+  Returns a table where keys and values are reversed (i.e., a table containing a
+  ``value = key`` entry for every ``key = value`` entry in the argument).
+
+* ``utils.tabulate(fun, start, stop[, step])``
+
+  For numbers ``start``, ``stop`` and ``step``, with ``step`` defaulting to 1,
+  returns a lua sequence ``{ fun(start), fun(start+step), ... , fun(stop) }``.
+
 * ``utils.make_sort_order(data, ordering)``
 
   Computes a sorted permutation of objects in data, as a table of integer

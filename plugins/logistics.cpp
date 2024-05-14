@@ -670,7 +670,7 @@ static int logistics_getStockpileData(lua_State *L) {
 static void logistics_cycle(color_ostream &out, bool quiet = false) {
     DEBUG(control, out).print("entering logistics_cycle%s\n", quiet ? " (quiet)" : "");
     int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0, forbid_count = 0, claim_count = 0;
-    do_cycle(out, melt_count, trade_count, dump_count, forbid_count, claim_count, train_count);
+    do_cycle(out, melt_count, trade_count, dump_count, train_count, forbid_count, claim_count);
     if (0 < melt_count || !quiet)
         out.print("logistics: designated %d item%s for melting\n", melt_count, (melt_count == 1) ? "" : "s");
     if (0 < trade_count || !quiet)
@@ -809,6 +809,13 @@ static int logistics_getGlobalCounts(lua_State *L) {
     size_t num_forbid = 0;
     size_t num_claim = 0;
     for (auto item : world->items.other.IN_PLAY) {
+        if (item->flags.bits.construction ||
+                item->flags.bits.garbage_collect ||
+                item->flags.bits.in_building ||
+                item->flags.bits.hostile ||
+                item->flags.bits.on_fire ||
+                item->flags.bits.trader)
+            continue;
         if (item->flags.bits.dump)
             ++num_dump;
         if (item->flags.bits.forbid)

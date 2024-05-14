@@ -2424,7 +2424,7 @@ end
 function List:submit2()
     if self.on_submit2 and #self.choices > 0 then
         self.on_submit2(self:getSelected())
-        return true    
+        return true
     end
 end
 

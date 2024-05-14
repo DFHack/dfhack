@@ -217,18 +217,18 @@ end
 ---@field height integer
 
 ---@class gui.ViewRectAttrs
----@field clip_x1? integer
----@field clip_y1? integer
----@field clip_x2? integer
----@field clip_y2? integer
----@field x1? integer
----@field y1? integer
----@field x2? integer
----@field y2? integer
----@field width? integer
----@field height? integer
+---@field clip_x1 integer
+---@field clip_y1 integer
+---@field clip_x2 integer
+---@field clip_y2 integer
+---@field x1 integer
+---@field y1 integer
+---@field x2 integer
+---@field y2 integer
+---@field width integer
+---@field height integer
 
----@class gui.ViewRectInitArgs
+---@class gui.ViewRectInitTable: gui.ViewRectAttrs
 ---@field rect? gui.dimension
 ---@field clip_rect? gui.dimension
 ---@field view_rect? gui.ViewRect
@@ -237,7 +237,7 @@ end
 ---@class gui.ViewRect: dfhack.class, gui.ViewRectAttrs
 ---@field super dfhack.class
 ---@field ATTRS gui.ViewRectAttrs|fun(attributes: gui.ViewRectAttrs)
----@overload fun(attributes: gui.ViewRectInitArgs|gui.ViewRectAttrs): self
+---@overload fun(init_table: gui.ViewRectInitTable): self
 ViewRect = defclass(ViewRect, nil)
 
 ---@param self gui.ViewRect
@@ -337,20 +337,20 @@ end
 ----------------------------
 
 ---@class gui.PainterAttrs: gui.ViewRectAttrs
----@field cur_pen? dfhack.pen
----@field cur_key_pen? dfhack.pen
----@field to_map? boolean
----@field x? integer
----@field y? integer
+---@field cur_pen dfhack.pen
+---@field cur_key_pen dfhack.pen
+---@field to_map boolean
+---@field x integer
+---@field y integer
 
----@class gui.PainterInitArgs
+---@class gui.PainterInitTable: gui.PainterAttrs
 ---@field pen? dfhack.pen|dfhack.color
 ---@field key_pen? dfhack.pen|dfhack.color
 
 ---@class gui.Painter: gui.ViewRect, gui.PainterAttrs
 ---@field super gui.ViewRect
 ---@field ATTRS gui.PainterAttrs|fun(attributes: gui.PainterAttrs)
----@overload fun(attributes: gui.PainterInitArgs|gui.PainterAttrs): self
+---@overload fun(attributes: gui.PainterInitTable): self
 Painter = defclass(Painter, ViewRect)
 
 ---@param self gui.Painter
@@ -588,16 +588,22 @@ end
 --------------------------
 
 ---@class gui.ViewAttrs
----@field active? dfhack.truthy
----@field visible? dfhack.truthy
+---@field subviews gui.View[]
+---@field parent_view? gui.View
+---@field focus_group gui.View[]
+---@field focus boolean
+---@field active dfhack.truthy
+---@field visible dfhack.truthy
 ---@field view_id? string
 ---@field on_focus? function
 ---@field on_unfocus? function
 
+---@class gui.ViewInitTable: gui.ViewAttrs
+
 ---@class gui.View: dfhack.class, gui.ViewAttrs
 ---@field super dfhack.class
 ---@field ATTRS gui.ViewAttrs|fun(attributes: gui.ViewAttrs)
----@overload fun(attributes: gui.ViewAttrs): self
+---@overload fun(attributes: gui.ViewInitTable): self
 View = defclass(View)
 
 View.ATTRS {
@@ -835,10 +841,12 @@ end
 
 ---@class gui.ScreenAttrs: gui.ViewAttrs
 
+---@class gui.ScreenInitTable: gui.ScreenAttrs
+
 ---@class gui.Screen: gui.View, gui.ScreenAttrs
 ---@field super gui.View
 ---@field ATTRS gui.ScreenAttrs|fun(attributes: gui.ScreenAttrs)
----@overload fun(init_table: gui.ScreenAttrs): self
+---@overload fun(init_table: gui.ScreenInitTable): self
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
@@ -931,12 +939,15 @@ end
 DEFAULT_INITIAL_PAUSE = true
 
 ---@class gui.ZScreenAttrs
----@field defocusable? boolean
+---@field defocusable boolean
+---@field defocused boolean
+---@field force_pause boolean
+---@field pass_pause boolean
+---@field pass_movement_keys boolean
+---@field pass_mouse_clicks boolean
+
+---@class gui.ZScreenInitTable: gui.ZScreenAttrs
 ---@field initial_pause? boolean
----@field force_pause? boolean
----@field pass_pause? boolean
----@field pass_movement_keys? boolean
----@field pass_mouse_clicks? boolean
 
 ---@class gui.ZScreen: gui.Screen, gui.ZScreenAttrs
 ---@field super gui.Screen
@@ -1021,11 +1032,13 @@ function ZScreen:onIdle()
     end
 end
 
+---@param dc gui.Painter
 function ZScreen:render(dc)
     self:renderParent()
     ZScreen.super.render(self, dc)
 end
 
+---@return boolean
 function ZScreen:hasFocus()
     return not self.defocused
             and dfhack.gui.getCurViewscreen(true) == self._native
@@ -1120,10 +1133,13 @@ end
 
 ---@class gui.ZScreenModalAttrs: gui.ZScreenAttrs
 
+---@class gui.ZScreenModalInitTable: gui.ZScreenModalAttrs
+
 -- convenience subclass for modal dialogs
 ---@class gui.ZScreenModal: gui.ZScreen, gui.ZScreenModalAttrs
 ---@field super gui.ZScreen
 ---@field ATTRS gui.ZScreenModalAttrs|fun(attributes: gui.ZScreenModalAttrs)
+---@overload fun(init_table: gui.ZScreenModalInitTable): self
 ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,

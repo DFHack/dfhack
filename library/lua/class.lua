@@ -31,7 +31,7 @@ attrs_meta = attrs_meta or {}
 --    ---@class moduleName.ClassName: dfhack.class, moduleName.ParentClass?
 --    ---@field super moduleName.ParentClass
 --    ---@field ATTRS moduleName.ClassNameAttrs|fun(attributes: moduleName.ClassNameAttrs)
---    ---@overload fun(init_table: moduleName.ClassNameAttrs): self
+--    ---@overload fun(init_table: moduleName.ClassNameInitTable): self
 --    ClassName = defclass(ClassName, ParentClass)
 ---@generic T: dfhack.class
 ---@param class? T

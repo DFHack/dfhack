@@ -207,7 +207,7 @@ namespace DFHack
     private:
         using T = C::value_type;
     public:
-        generic_container_identity() : container_identity(sizeof(T), &df::allocator_fn<T>, df::identity_traits<T>::get()) {};
+        generic_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get()) {};
         std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
         virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
@@ -231,7 +231,7 @@ namespace DFHack
         using KT = C::key_type;
         using T = C::mapped_type;
     public:
-        generic_assoc_container_identity() : container_identity(sizeof(T), &df::allocator_fn<T>, df::identity_traits<T>::get(), df::identity_traits<KT>::get()) {};
+        generic_assoc_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get(), df::identity_traits<KT>::get()) {};
         std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { return false; }
         virtual bool erase(void* ptr, int size) { return false; }
@@ -254,7 +254,7 @@ namespace DFHack
     private:
         using KT = C::key_type;
     public:
-        generic_set_container_identity() : container_identity(sizeof(KT), &df::allocator_fn<KT>, df::identity_traits<KT>::get()) {};
+        generic_set_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<KT>::get()) {};
         std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { return false; }
         virtual bool erase(void* ptr, int size) { return false; }

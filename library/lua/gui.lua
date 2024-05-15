@@ -463,6 +463,7 @@ end
 ---@param pen dfhack.pen
 ---@param ... any
 ---@return self
+---@overload fun(pen: dfhack.color, ...: any): self
 function Painter:pen(pen,...)
     self.cur_pen = to_pen(self.cur_pen, pen, ...)
     return self
@@ -480,6 +481,7 @@ end
 ---@param pen dfhack.pen
 ---@param ... any
 ---@return self
+---@overload fun(pen: dfhack.color, ...: any): self
 function Painter:key_pen(pen,...)
     self.cur_key_pen = to_pen(self.cur_key_pen, pen, ...)
     return self

@@ -828,7 +828,7 @@ end
 ---@class widgets.EditField: widgets.Widget, widgets.EditField.attrs
 ---@field super widgets.Widget
 ---@field ATTRS widgets.EditField.attrs|fun(attributes: widgets.EditField.attrs.partial)
----@overload fun(init_table: widgets.EditField.attrs): self
+---@overload fun(init_table: widgets.EditField.attrs.partial): self
 EditField = defclass(EditField, Widget)
 
 EditField.ATTRS{
@@ -1929,7 +1929,7 @@ end
 -- TextButton --
 ----------------
 
----@class widgets.TextButton.initTable: widgets.BannerPanel.attrs, widgets.HotkeyLabel.attrs.partial
+---@class widgets.TextButton.initTable: widgets.Panel.attrs.partial, widgets.HotkeyLabel.attrs.partial
 
 ---@class widgets.TextButton: widgets.BannerPanel
 ---@field super widgets.BannerPanel
@@ -2503,7 +2503,7 @@ end
 
 ---@class widgets.FilteredList.attrs.partial: widgets.FilteredList.attrs
 
----@class widgets.FilteredList.initTable: widgets.FilteredList.attrs.partial, widgets.List.attrs.partial, widgets.EditField.initTable
+---@class widgets.FilteredList.initTable: widgets.FilteredList.attrs.partial, widgets.List.attrs.partial, widgets.EditField.attrs.partial
 ---@field not_found_label? string
 
 ---@class widgets.FilteredList: widgets.Widget, widgets.FilteredList.attrs

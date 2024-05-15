@@ -6,15 +6,22 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local function make_stat(name, stockpile_number, stats, configs)
-    return {
+-------------------------------------
+-- logistics status console output
+--
+
+local function make_stat(name, stockpile_number, stats, configs) --todo: add totals?
+    local stat = {
         enabled=(configs[stockpile_number] ~= nil) and (configs[stockpile_number][name] == 'true'),
         designated=stats[name..'_designated'][stockpile_number] or 0,
         can_designate=stats[name..'_can_designate'][stockpile_number] or 0,
+        designatable=nil,
     }
+    stat.designatable = stat.designated + stat.can_designate
+    return stat
 end
 
-function getStockpileData()
+function getStockpileData() --todo: stockpile totals?
     local stats, configs = logistics_getStockpileData()
     local data = {}
     for _,bld in ipairs(df.global.world.buildings.other.STOCKPILE) do
@@ -70,15 +77,22 @@ local function print_stockpile_data(data)
             uline(6), uline(11))) -- forbid
     local has_melt_mastworks, has_claim_enabled = false, false
     local function get_enab(stats, ch) return ('  [%s]'):format(stats.enabled and (ch or 'x') or ' ') end
-    local function get_dstat(stats) return ('%4d / %-4d'):format(stats.designated, stats.designated + stats.can_designate) end
-    local sp_totals = {
-            melt_e = 0, melt_d = 0, melt_dable = 0,
-            trade_e = 0, trade_d = 0, trade_dable = 0,
-            dump_e = 0, dump_d = 0, dump_dable = 0,
-            train_e = 0, train_d = 0, train_dable = 0,
-            forbid_e = 0, forbid_d = 0, forbid_dable = 0}
+    local function get_dstat(stats) return ('%4d / %-4d'):format(stats.designated, stats.designatable) end
+    local stockpiled_totals = { 
+            melt = {enabled_count = 0, designated = 0, designatable = 0},
+            trade = {enabled_count = 0, designated = 0, designatable = 0},
+            dump = {enabled_count = 0, designated = 0, designatable = 0},
+            train = {enabled_count = 0, designated = 0, designatable = 0},
+            forbid = {enabled_count = 0, designated = 0, designatable = 0},
+            claim = {enabled_count = 0}}
+    local function inc_totals(total, sp)
+        if sp.enabled then total.enabled_count = total.enabled_count + 1 end
+        total.designated = total.designated + sp.designated
+        total.designatable = total.designatable + sp.designatable
+    end
+
     for _,sp in ipairs(data) do
-        if (sp.melt_masterworks ~= nil) then has_melt_mastworks = has_melt_mastworks or sp.melt_masterworks end -- TODO: initialize sp.melt_masterworks in logistics.cpp
+        has_melt_mastworks = has_melt_mastworks or sp.melt_masterworks
         has_claim_enabled = has_claim_enabled or sp.claim.enabled
         local forbid_or_claim = (sp.claim.enabled and sp.claim) or (sp.forbid.enabled and sp.forbid) or sp.forbid
         print(fmt:format(sp.stockpile_number, sp.name,
@@ -87,20 +101,19 @@ local function print_stockpile_data(data)
                 get_enab(sp.dump,'d'), get_dstat(sp.dump),
                 get_enab(sp.train,'a'), get_dstat(sp.train),
                 get_enab(forbid_or_claim, (sp.claim.enabled and 'C') or (sp.forbid.enabled and 'f')), get_dstat(sp.forbid)))
-        sp_totals.melt_d = sp_totals.melt_d + sp.melt.designated
-        sp_totals.melt_dable = sp_totals.melt_dable + sp.melt.designated + sp.melt.can_designate
-        if sp.trade.enabled then sp_totals.trade_e = sp_totals.trade_e + 1 end
-        sp_totals.trade_d = sp_totals.trade_d + sp.trade.designated
-        sp_totals.trade_dable = sp_totals.trade_dable + sp.trade.designated + sp.trade.can_designate
-        if sp.dump.enabled then sp_totals.dump_e = sp_totals.dump_e + 1 end
-        sp_totals.dump_d = sp_totals.dump_d + sp.dump.designated
-        sp_totals.dump_dable = sp_totals.dump_dable + sp.dump.designated + sp.dump.can_designate
-        if sp.train.enabled then sp_totals.train_e = sp_totals.train_e + 1 end
-        sp_totals.train_d = sp_totals.train_d + sp.train.designated
-        sp_totals.train_dable = sp_totals.train_dable + sp.train.designated + sp.train.can_designate
-        if sp.forbid.enabled or sp.claim.enabled then sp_totals.forbid_e = sp_totals.forbid_e + 1 end
-        sp_totals.forbid_d = sp_totals.forbid_d + sp.forbid.designated
-        sp_totals.forbid_dable = sp_totals.forbid_dable + sp.forbid.designated + sp.forbid.can_designate
+
+        inc_totals(stockpiled_totals.melt, sp.melt)
+        inc_totals(stockpiled_totals.trade, sp.trade)
+        if sp.dump.enabled then stockpiled_totals.dump.enabled_count = stockpiled_totals.dump.enabled_count + 1 end
+        stockpiled_totals.dump.designated = stockpiled_totals.dump.designated + sp.dump.designated
+        stockpiled_totals.dump.designatable = stockpiled_totals.dump.designatable + sp.dump.designatable
+        if sp.train.enabled then stockpiled_totals.train.enabled_count = stockpiled_totals.train.enabled_count + 1 end
+        stockpiled_totals.train.designated = stockpiled_totals.train.designated + sp.train.designated
+        stockpiled_totals.train.designatable = stockpiled_totals.train.designatable + sp.train.designatable
+        if sp.forbid.enabled then stockpiled_totals.forbid.enabled_count = stockpiled_totals.forbid.enabled_count + 1 end
+        stockpiled_totals.forbid.designated = stockpiled_totals.forbid.designated + sp.forbid.designated
+        stockpiled_totals.forbid.designatable = stockpiled_totals.forbid.designatable + sp.forbid.designatable
+        if sp.claim.enabled then stockpiled_totals.claim.enabled_count = stockpiled_totals.claim.enabled_count + 1 end
     end
     print(fmt:format(
             uline(6), uline(name_len),
@@ -111,11 +124,11 @@ local function print_stockpile_data(data)
             uline(6), uline(11))) -- forbid
     local function get_sp_totals(d, dable) return ('%4d / %-4d'):format(d, dable) end
     print(fmt:format('', 'Stockpiled Item Totals',
-            '', get_sp_totals(sp_totals.melt_d, sp_totals.melt_dable),
-            '', get_sp_totals(sp_totals.trade_d, sp_totals.trade_dable),
-            '', get_sp_totals(sp_totals.dump_d, sp_totals.dump_dable),
-            '', get_sp_totals(sp_totals.train_d, sp_totals.train_dable),
-            '', get_sp_totals(sp_totals.forbid_d, sp_totals.forbid_dable)))
+            '', get_sp_totals(stockpiled_totals.melt.designated, stockpiled_totals.melt.designatable),
+            '', get_sp_totals(stockpiled_totals.trade.designated, stockpiled_totals.trade.designatable),
+            '', get_sp_totals(stockpiled_totals.dump.designated, stockpiled_totals.dump.designatable),
+            '', get_sp_totals(stockpiled_totals.train.designated, stockpiled_totals.train.designatable),
+            '', get_sp_totals(stockpiled_totals.forbid.designated, stockpiled_totals.forbid.designatable)))
     print(uline(name_len) .. uline(105))
     if has_melt_mastworks or has_claim_enabled then
         print()
@@ -128,21 +141,25 @@ local function print_status()
     print('logistics status')
     print((' - %sactively monitoring stockpiles and designating items')
             :format(isEnabled() and '' or 'not '))
-
     if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() or not dfhack.isSiteLoaded() then
         return
     end
-
-    print((' - %sautoretraining partially trained animals'):format(
-        logistics_getFeature('autoretrain') and '' or 'not '))
+    print((' - %sautoretraining partially trained animals')
+            :format(logistics_getFeature('autoretrain') and '' or 'not '))
+    print()
 
     local data = getStockpileData()
-    print()
     if not data[1] then
         print 'No stockpiles configured'
     else
         print_stockpile_data(data)
     end
+
+    -- local item_script = reqscript('item')
+    -- local item_script_stats = {forbidden = 0, melt = 0, dump = 0}
+    -- local conditions = {}
+    -- item_script.condition_reachable(conditions)
+    -- item_script_stats = item_script.execute('count', conditions, options)
 
     local global_stats = logistics_getGlobalCounts()
     print()
@@ -154,6 +171,10 @@ local function print_status()
     print((' - Forbidden items             : %5d'):format(global_stats.total_forbid)) -- TODO: this should exclude unreachable items and buildings
     print((' - All (unforbidden) items     : %5d'):format(global_stats.total_claim))  -- TODO: same ^^
 end
+
+--------------------------
+-- configure stockpiles
+--
 
 local function for_stockpiles(opts, fn)
     if not opts.sp then
@@ -204,6 +225,10 @@ local function do_set_feature(enabled, feature)
         qerror(('unknown feature: "%s"'):format(feature))
     end
 end
+
+------------------
+-- command line
+--
 
 local function process_args(opts, args)
     if args[1] == 'help' then

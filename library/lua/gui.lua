@@ -216,7 +216,7 @@ end
 ---@field width integer
 ---@field height integer
 
----@class gui.ViewRectAttrs
+---@class gui.ViewRect.attrs
 ---@field clip_x1 integer
 ---@field clip_y1 integer
 ---@field clip_x2 integer
@@ -228,20 +228,22 @@ end
 ---@field width integer
 ---@field height integer
 
----@class gui.ViewRectInitTable: gui.ViewRectAttrs
+---@class gui.ViewRect.attrs.partial: gui.ViewRect.attrs
+
+---@class gui.ViewRect.initTable: gui.ViewRect.attrs.partial
 ---@field rect? gui.dimension
 ---@field clip_rect? gui.dimension
 ---@field view_rect? gui.ViewRect
 ---@field clip_view? gui.ViewRect
 
----@class gui.ViewRect: dfhack.class, gui.ViewRectAttrs
+---@class gui.ViewRect: dfhack.class, gui.ViewRect.attrs
 ---@field super dfhack.class
----@field ATTRS gui.ViewRectAttrs|fun(attributes: gui.ViewRectAttrs)
----@overload fun(init_table: gui.ViewRectInitTable): self
+---@field ATTRS gui.ViewRect.attrs|fun(attributes: gui.ViewRect.attrs.partial)
+---@overload fun(init_table: gui.ViewRect.initTable): self
 ViewRect = defclass(ViewRect, nil)
 
 ---@param self gui.ViewRect
----@param args gui.ViewRectInitArgs
+---@param args gui.ViewRect.initTable
 function ViewRect:init(args)
     if args.view_rect then
         self:assign(args.view_rect)
@@ -336,25 +338,27 @@ end
 -- Clipped painter object --
 ----------------------------
 
----@class gui.PainterAttrs: gui.ViewRectAttrs
+---@class gui.Painter.attrs: gui.ViewRect.attrs
 ---@field cur_pen dfhack.pen
 ---@field cur_key_pen dfhack.pen
 ---@field to_map boolean
 ---@field x integer
 ---@field y integer
 
----@class gui.PainterInitTable: gui.PainterAttrs
+---@class gui.Painter.attrs.partial: gui.Painter.attrs
+
+---@class gui.Painter.initTable: gui.Painter.attrs.partial
 ---@field pen? dfhack.pen|dfhack.color
 ---@field key_pen? dfhack.pen|dfhack.color
 
----@class gui.Painter: gui.ViewRect, gui.PainterAttrs
+---@class gui.Painter: gui.ViewRect, gui.Painter.attrs
 ---@field super gui.ViewRect
----@field ATTRS gui.PainterAttrs|fun(attributes: gui.PainterAttrs)
----@overload fun(attributes: gui.PainterInitTable): self
+---@field ATTRS gui.Painter.attrs|fun(attributes: gui.Painter.attrs.partial)
+---@overload fun(attributes: gui.Painter.initTable): self
 Painter = defclass(Painter, ViewRect)
 
 ---@param self gui.Painter
----@param args gui.PainterAttrs
+---@param args gui.Painter.initTable
 function Painter:init(args)
     self.x = self.x1
     self.y = self.y1
@@ -587,23 +591,31 @@ end
 -- Abstract view object --
 --------------------------
 
----@class gui.ViewAttrs
+---@class gui.View.focus_group
+---@field cur? gui.View[]
+---@field [integer] gui.View
+
+---@class gui.View.attrs
 ---@field subviews gui.View[]
 ---@field parent_view? gui.View
----@field focus_group gui.View[]
+---@field focus_group gui.View.focus_group
+---@field focus_path? string
 ---@field focus boolean
----@field active dfhack.truthy
----@field visible dfhack.truthy
+---@field active boolean|fun(): boolean
+---@field visible boolean|fun(): boolean
 ---@field view_id? string
 ---@field on_focus? function
 ---@field on_unfocus? function
+---@field frame_parent_rect gui.ViewRect
+---@field frame_rect gui.ViewRect
+---@field frame_body gui.ViewRect
 
----@class gui.ViewInitTable: gui.ViewAttrs
+---@class gui.View.attrs.partial: gui.ViewAttrs
 
----@class gui.View: dfhack.class, gui.ViewAttrs
+---@class gui.View: dfhack.class, gui.View.attrs
 ---@field super dfhack.class
----@field ATTRS gui.ViewAttrs|fun(attributes: gui.ViewAttrs)
----@overload fun(attributes: gui.ViewInitTable): self
+---@field ATTRS gui.View.attrs|fun(attributes: gui.View.attrs.partial)
+---@overload fun(init_table: gui.View.attrs.partial): self
 View = defclass(View)
 
 View.ATTRS {
@@ -627,6 +639,8 @@ local function inherit_focus_group(view, focus_group)
     view.focus_group = focus_group
 end
 
+---@param self gui.View
+---@param list gui.View[]
 function View:addviews(list)
     if not list then return end
 
@@ -681,6 +695,8 @@ function View:getPreferredFocusState()
     return false
 end
 
+---@param self gui.View
+---@param focus boolean
 function View:setFocus(focus)
     if focus then
         if self.focus then return end -- nothing to do if we already have focus
@@ -702,11 +718,18 @@ function View:setFocus(focus)
     end
 end
 
+---@param self gui.View
+---@return integer width
+---@return integer height
 function View:getWindowSize()
     local rect = self.frame_body
     return rect.width, rect.height
 end
 
+---@param self gui.View
+---@param view_rect? gui.ViewRect
+---@return integer x
+---@return integer y
 function View:getMousePos(view_rect)
     local rect = view_rect or self.frame_body
     local x,y = dscreen.getMousePos()
@@ -839,14 +862,16 @@ end
 -- Base screen object --
 ------------------------
 
----@class gui.ScreenAttrs: gui.ViewAttrs
+---@class gui.Screen.attrs: gui.View.attrs
+---@field text_input_mode boolean
+---@field request_full_screen_refresh boolean
 
----@class gui.ScreenInitTable: gui.ScreenAttrs
+---@class gui.Screen.attrs.partial: gui.Screen.attrs
 
----@class gui.Screen: gui.View, gui.ScreenAttrs
+---@class gui.Screen: gui.View, gui.Screen.attrs
 ---@field super gui.View
----@field ATTRS gui.ScreenAttrs|fun(attributes: gui.ScreenAttrs)
----@overload fun(init_table: gui.ScreenInitTable): self
+---@field ATTRS gui.Screen.attrs|fun(attributes: gui.Screen.attrs.partial)
+---@overload fun(init_table: gui.Screen.attrs.partial): self
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
@@ -858,10 +883,12 @@ end
 
 Screen.isDismissed = dscreen.isDismissed
 
+---@return boolean
 function Screen:isShown()
     return self._native ~= nil
 end
 
+---@return boolean
 function Screen:isActive()
     return self:isShown() and not self:isDismissed()
 end
@@ -938,21 +965,23 @@ end
 
 DEFAULT_INITIAL_PAUSE = true
 
----@class gui.ZScreenAttrs
+---@class gui.ZScreen.attrs
 ---@field defocusable boolean
+---@field initial_pause boolean
 ---@field defocused boolean
 ---@field force_pause boolean
 ---@field pass_pause boolean
 ---@field pass_movement_keys boolean
 ---@field pass_mouse_clicks boolean
 
----@class gui.ZScreenInitTable: gui.ZScreenAttrs
----@field initial_pause? boolean
+---@class gui.ZScreen.attrs.partial: gui.ZScreen.attrs
 
----@class gui.ZScreen: gui.Screen, gui.ZScreenAttrs
+---@class gui.ZScreen.initTable: gui.ZScreen.attrs.partial
+
+---@class gui.ZScreen: gui.Screen, gui.ZScreen.attrs
 ---@field super gui.Screen
----@field ATTRS gui.ZScreenAttrs|fun(attributes: gui.ZScreenAttrs)
----@overload fun(init_table: gui.ZScreenAttrs): self
+---@field ATTRS gui.ZScreen.attrs|fun(attributes: gui.ZScreen.attrs.partial)
+---@overload fun(init_table: gui.ZScreen.initTable): self
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
@@ -964,7 +993,7 @@ ZScreen.ATTRS{
 }
 
 ---@param self gui.ZScreen
----@param args gui.ZScreenAttrs
+---@param args gui.ZScreen.initTable
 function ZScreen:preinit(args)
     if self.ATTRS.initial_pause == nil then
         args.initial_pause = DEFAULT_INITIAL_PAUSE or
@@ -1131,15 +1160,9 @@ function ZScreen:onGetSelectedPlant()
     return zscreen_get_any(self, 'Plant')
 end
 
----@class gui.ZScreenModalAttrs: gui.ZScreenAttrs
-
----@class gui.ZScreenModalInitTable: gui.ZScreenModalAttrs
-
 -- convenience subclass for modal dialogs
----@class gui.ZScreenModal: gui.ZScreen, gui.ZScreenModalAttrs
+---@class gui.ZScreenModal: gui.ZScreen
 ---@field super gui.ZScreen
----@field ATTRS gui.ZScreenModalAttrs|fun(attributes: gui.ZScreenModalAttrs)
----@overload fun(init_table: gui.ZScreenModalInitTable): self
 ZScreenModal = defclass(ZScreenModal, ZScreen)
 ZScreenModal.ATTRS{
     defocusable = false,

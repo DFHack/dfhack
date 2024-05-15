@@ -208,7 +208,8 @@ namespace DFHack
         using T = C::value_type;
     public:
         generic_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get()) {};
-        std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
+        // this is just going to be generic "container", doing something more interesting requires parsing typeid which is nonportable
+        std::string getFullName(type_identity* item) { return "container" + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
         virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
         virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }
@@ -216,6 +217,8 @@ namespace DFHack
         virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
         virtual void* item_pointer(type_identity* item, void* ptr, int idx) { return &(*(C*)ptr)[idx]; }
     };
+
+#undef realname
 
     template <typename C>
     concept isAssocContainer = requires (C c, C::iterator i, C::key_type k) {
@@ -232,7 +235,7 @@ namespace DFHack
         using T = C::mapped_type;
     public:
         generic_assoc_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get(), df::identity_traits<KT>::get()) {};
-        std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
+        std::string getFullName(type_identity* item) { return "map" + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { return false; }
         virtual bool erase(void* ptr, int size) { return false; }
     protected:
@@ -255,7 +258,7 @@ namespace DFHack
         using KT = C::key_type;
     public:
         generic_set_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<KT>::get()) {};
-        std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
+        std::string getFullName(type_identity* item) { return "set" + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { return false; }
         virtual bool erase(void* ptr, int size) { return false; }
         virtual bool is_readonly() { return true; }

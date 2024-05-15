@@ -211,6 +211,7 @@ namespace DFHack
         std::string getFullName(type_identity* item) { return typeid(C).name() + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
         virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
+        virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }
     protected:
         virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
         virtual void* item_pointer(type_identity* item, void* ptr, int idx) { return &(*(C*)ptr)[idx]; }

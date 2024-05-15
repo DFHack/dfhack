@@ -366,7 +366,7 @@ Enum types support the following:
 * ``type.attrs``
 
   A mapping of enum keys (usually integers) and values (usually strings) to
-  their attributes. e.g ``df.goal_type.attrs.STAY_ALIVE`` returns 
+  their attributes. e.g ``df.goal_type.attrs.STAY_ALIVE`` returns
   ``{ short_name: "Stay Alive", achieved_short_name: "Stayed Alive" } }``
 
 * ``type._attr_entry_type``

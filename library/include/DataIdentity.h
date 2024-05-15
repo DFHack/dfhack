@@ -193,13 +193,14 @@ namespace DFHack
     };
 
     template <typename C>
-    concept isIndexedContainer = requires (C c, C::iterator i, C::size_type sz) {
+    concept isIndexedContainer = requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
         { c[sz] } -> std::same_as<typename C::reference>;
         { c.size() } ->std::same_as<typename C::size_type>;
         { c.begin() } -> std::same_as<typename C::iterator>;
         { c.end() } -> std::same_as<typename C::iterator>;
         { c.erase(i) };
         { c.resize(sz) };
+        { c.insert(i, v) };
     };
 
     template<isIndexedContainer C>

@@ -218,7 +218,7 @@ namespace DFHack
 
     template <typename C>
     concept isAssocContainer = requires (C c, C::iterator i, C::key_type k) {
-        { c[k] } -> std::same_as<typename C::mapped_type>;
+        { c[k] } -> std::same_as<typename C::mapped_type &>;
         { c.size() } -> std::same_as<typename C::size_type>;
         { c.begin() } -> std::same_as<typename C::iterator>;
         { c.end() } -> std::same_as<typename C::iterator>;
@@ -241,7 +241,7 @@ namespace DFHack
 
     template <typename C>
     concept isSetContainer = requires (C c, C::iterator i, C::key_type k) {
-        std::same_as<typename C::key_type, typename C::value_type>;
+        requires std::same_as<typename C::key_type, typename C::value_type>;
         { c.contains(k) } -> std::same_as<bool>;
         { c.size() } -> std::same_as<typename C::size_type>;
         { c.begin() } -> std::same_as<typename C::iterator>;

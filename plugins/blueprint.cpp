@@ -464,14 +464,20 @@ static const char * get_tile_smooth_all(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_track_str(const char *prefix, df::tiletype tt) {
+static bool has_track_designation(df::tile_occupancy occ) {
+    static const uint32_t track_mask = occ.mask_carve_track_north | occ.mask_carve_track_south
+        | occ.mask_carve_track_east | occ.mask_carve_track_west;
+    return occ.whole & track_mask;
+}
+
+static const char * get_track_str(const char *prefix, df::tiletype tt, df::tile_occupancy occ) {
     TileDirection tdir = tileDirection(tt);
 
     string dir;
-    if (tdir.north) dir += "N";
-    if (tdir.south) dir += "S";
-    if (tdir.east)  dir += "E";
-    if (tdir.west)  dir += "W";
+    if (tdir.north || occ.bits.carve_track_north) dir += "N";
+    if (tdir.south || occ.bits.carve_track_south) dir += "S";
+    if (tdir.east  || occ.bits.carve_track_east)  dir += "E";
+    if (tdir.west  || occ.bits.carve_track_west)  dir += "W";
 
     return cache(prefix + dir);
 }
@@ -496,6 +502,7 @@ static const char * get_tile_carve_minimal(const df::coord &pos,
     }
 
     auto td = Maps::getTileDesignation(pos);
+    auto occ = Maps::getTileOccupancy(pos);
     switch (tileShape(*tt))
     {
     case tiletype_shape::WALL:
@@ -503,12 +510,12 @@ static const char * get_tile_carve_minimal(const df::coord &pos,
             return "F";
         break;
     case tiletype_shape::FLOOR:
-        if (tileSpecial(*tt) == tiletype_special::TRACK)
-            return get_track_str("track", *tt);
+        if (tileSpecial(*tt) == tiletype_special::TRACK || has_track_designation(*occ))
+            return get_track_str("track", *tt, *occ);
         break;
     case tiletype_shape::RAMP:
-        if (tileSpecial(*tt) == tiletype_special::TRACK)
-            return get_track_str("trackramp", *tt);
+        if (tileSpecial(*tt) == tiletype_special::TRACK || has_track_designation(*occ))
+            return get_track_str("trackramp", *tt, *occ);
         break;
     case tiletype_shape::FORTIFICATION:
         return "F";

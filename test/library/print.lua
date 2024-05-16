@@ -162,7 +162,7 @@ function test.printall_recurse()
                     idx = validate_patterns(idx, {'^fn$', EQ, '^function: '})
                 elseif str:startswith('udatatable') then
                     idx = validate_patterns(idx,
-                            {'^udatatable$', EQ, '^<vector<int32_t>%[6%]: ',
+                            {'^udatatable$', EQ, '^<container<int32_t>%[6%]: ',
                              '%s+', '^0$', EQ, '^10$',
                              '%s+', '^1$', EQ, '^20$',
                              'Repeated 2 times',

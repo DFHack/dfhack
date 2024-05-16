@@ -18,7 +18,7 @@ local DISPOSITION = {
     TAME={label='Domesticated', value=2},
     TRAINED={label='Partially trained', value=3},
     WILD_TRAINABLE={label='Wild (trainable)', value=4},
-    WILD_UNTRAINABLE={label='Wild (untrainable)', value=5},
+    WILD_UNTRAINABLE={label='Untrainable', value=5},
     HOSTILE={label='Hostile', value=6},
 }
 local DISPOSITION_REVMAP = {}

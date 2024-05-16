@@ -1632,7 +1632,7 @@ static void MakeContainerMetatable(lua_State *state, container_identity *type,
 {
     int base = lua_gettop(state);
 
-    MakeMetatable(state, type, "vector");
+    MakeMetatable(state, type, "container");
     SetPtrMethods(state, base+1, base+2);
 
     // Update the type name using full info

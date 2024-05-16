@@ -51,33 +51,39 @@ set(MAIN_HEADERS
     include/Internal.h
     include/DFHack.h
     include/DFHackVersion.h
+    include/BitArray.h
+    include/ColorText.h
     include/Console.h
     include/Core.h
-    include/ColorText.h
     include/DataDefs.h
+    include/DataFuncs.h
     include/DataIdentity.h
     include/Debug.h
     include/DebugManager.h
-    include/VTableInterpose.h
-    include/LuaWrapper.h
-    include/LuaTools.h
     include/Error.h
     include/Export.h
     include/Hooks.h
+    include/LuaTools.h
+    include/LuaWrapper.h
+    include/MemAccess.h
+    include/Memory.h
     include/MiscUtils.h
     include/Module.h
     include/Pragma.h
     include/MemAccess.h
+    include/ModuleFactory.h
     include/PluginManager.h
     include/PluginStatics.h
+    include/Pragma.h
+    include/RemoteClient.h
+    include/RemoteServer.h
+    include/RemoteTools.h
     include/Signal.hpp
     include/TileTypes.h
     include/Types.h
     include/VersionInfo.h
     include/VersionInfoFactory.h
-    include/RemoteClient.h
-    include/RemoteServer.h
-    include/RemoteTools.h
+    include/VTableInterpose.h
 )
 
 set(MAIN_HEADERS_WINDOWS

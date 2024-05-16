@@ -492,7 +492,15 @@ static const char * get_tile_carve_minimal(const df::coord &pos,
         df::job *job = dig_job_cache[pos];
         switch (job->job_type) {
         case df::job_type::CarveTrack:
-            // TODO: where is the track direction stored in the job?
+            switch (tileShape(*tt))
+            {
+            case tiletype_shape::FLOOR:
+                return get_track_str("track", *tt, job->specflag.carve_track_flags);
+            case tiletype_shape::RAMP:
+                return get_track_str("trackramp", *tt, job->specflag.carve_track_flags);
+            default:
+                break;
+            }
             break;
         case df::job_type::CarveFortification:
             return "F";

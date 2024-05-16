@@ -2353,10 +2353,10 @@ public:
                     td.bits.smooth = 2;
                     break;
                 case job_type::CarveTrack:
-                    to.bits.carve_track_north = (job->item_category.whole >> 18) & 1;
-                    to.bits.carve_track_south = (job->item_category.whole >> 19) & 1;
-                    to.bits.carve_track_west = (job->item_category.whole >> 20) & 1;
-                    to.bits.carve_track_east = (job->item_category.whole >> 21) & 1;
+                    to.bits.carve_track_north = job->specflag.carve_track_flags.bits.carve_track_north;
+                    to.bits.carve_track_south = job->specflag.carve_track_flags.bits.carve_track_south;
+                    to.bits.carve_track_west = job->specflag.carve_track_flags.bits.carve_track_west;
+                    to.bits.carve_track_east = job->specflag.carve_track_flags.bits.carve_track_east;
                     break;
                 default:
                     continue;

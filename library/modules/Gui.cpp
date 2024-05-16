@@ -1125,11 +1125,23 @@ df::job *Gui::getAnyJob(df::viewscreen *top) {
         return cri_job.size() ? cri_job[0]->jb : NULL;
     }
 
-    if (auto unit = getAnyUnit(top)) {
+    if (auto unit = getAnyUnit(top))
         return unit->job.current_job;
+
+    if (auto job = getAnyWorkshopJob(top))
+        return job;
+
+    if (auto cursor = getCursorPos(); cursor.isValid()) {
+        for (auto *link = world->jobs.list.next; link; link = link->next) {
+            df::job *job = link->item;
+            if (!job)
+                continue;
+            if (job->pos == cursor)
+                return job;
+        }
     }
 
-    return getAnyWorkshopJob(top);
+    return NULL;
 }
 
 df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)

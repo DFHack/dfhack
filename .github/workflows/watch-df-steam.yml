@@ -12,24 +12,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # leave blank if no structures update is desired
-        dfhack_ref: ['']
-        structures_ref: ['']
-        # leave blank if no steam push is desired
-        steam_branch: ['']
-        platform: [all]
-        channel: [steam]
+        # dfhack_ref: leave blank if no structures update is desired
+        # structures_ref: leave blank to default to master
+        # steam_branch: leave blank if no steam push is desired
+        # platform: leave blank to default to all
+        # channel: leave blank to default to all; should usually be steam
         include:
           - df_steam_branch: public
             version: public
           - dfhack_ref: adv-beta
             structures_ref: adv-beta
             version: 51.01-beta
+            channel: steam
             df_steam_branch: beta
             steam_branch: adventure-beta
           - dfhack_ref: testing
             structures_ref: testing
             version: testing
+            channel: steam
             df_steam_branch: testing
     steps:
     - name: Setup steamcmd

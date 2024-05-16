@@ -100,9 +100,8 @@ struct VeinEdgeBitmask
 
 static void ChangeSameBlockVeins(df::map_block* block, df::block_square_event_mineralst* event, VeinEdgeBitmask& mask, int32_t matIndex)
 {
-    for (size_t i = 0; i < block->block_events.size(); i++)
+    for (auto evt : block->block_events)
     {
-        df::block_square_event* evt = block->block_events[i];
         if (evt == event)
             continue;
         if (evt->getType() != block_square_event_type::mineral)
@@ -113,7 +112,7 @@ static void ChangeSameBlockVeins(df::map_block* block, df::block_square_event_mi
         {
             for (uint8_t j = 0; j < 15; j++)
             {
-                uint16_t bitmask = cur->tile_bitmask.bits[j] | cur->tile_bitmask.bits[std::max(j - 1, 0)] | cur->tile_bitmask.bits[std::min(j + 1, 15)];
+                uint16_t bitmask = cur->tile_bitmask.bits[j] | cur->tile_bitmask.bits[(j>0 ? j-1 : 0)] | cur->tile_bitmask.bits[std::min(j + 1, 15)];
                 bitmask |= (bitmask << 1) | (bitmask >> 1);
 
                 if (bitmask & event->tile_bitmask.bits[j])
@@ -150,9 +149,8 @@ static void ChangeSurroundingBlockVeins(df::map_block* block, VeinEdgeBitmask& m
         if (!newBlock)
             continue;
 
-        for (size_t j = 0; j < newBlock->block_events.size(); j++)
+        for (auto evt : newBlock->block_events)
         {
-            df::block_square_event* evt = newBlock->block_events[j];
             if (evt->getType() != block_square_event_type::mineral)
                 continue;
 
@@ -185,9 +183,8 @@ static void ChangeSurroundingBlockVeins(df::map_block* block, VeinEdgeBitmask& m
         if (!newBlock)
             continue;
 
-        for (size_t j = 0; j < newBlock->block_events.size(); j++)
+        for (auto evt : newBlock->block_events)
         {
-            df::block_square_event* evt = newBlock->block_events[j];
             if (evt->getType() != block_square_event_type::mineral)
                 continue;
 
@@ -246,9 +243,8 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
     }
     df::block_square_event_mineralst *mineral = NULL;
     int tx = cursor->x % 16, ty = cursor->y % 16;
-    for (size_t j = 0; j < block->block_events.size(); j++)
+    for (auto evt : block->block_events)
     {
-        df::block_square_event *evt = block->block_events[j];
         if (evt->getType() != block_square_event_type::mineral)
             continue;
         df::block_square_event_mineralst *cur = (df::block_square_event_mineralst *)evt;

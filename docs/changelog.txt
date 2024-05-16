@@ -61,6 +61,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
+- `changevein`: affect connected veins even outside of the selected map block
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

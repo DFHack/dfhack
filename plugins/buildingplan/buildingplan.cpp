@@ -15,7 +15,7 @@
 #include "df/organic_mat_category.h"
 #include "df/world.h"
 
-#if (defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14)
+#if __has_cpp_attribute(no_dangling)
 #define NO_DANGLING_REFERENCE [[gnu::no_dangling]]
 #else
 #define NO_DANGLING_REFERENCE

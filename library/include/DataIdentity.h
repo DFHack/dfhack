@@ -194,7 +194,7 @@ namespace DFHack
     };
 
     template <typename C>
-    concept isIndexedContainer = requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
+    concept isIndexedContainer = requires (C c, C::size_type sz) {
         { c[sz] } -> std::same_as<typename C::reference>;
         { c.size() } ->std::same_as<typename C::size_type>;
         { c.begin() } -> std::same_as<typename C::iterator>;
@@ -202,8 +202,7 @@ namespace DFHack
     };
 
     template <typename C>
-    concept isResizableContainer = requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
-        requires isIndexedContainer<C>;
+    concept isResizableContainer = isIndexedContainer<C> && requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
         { c.erase(i) };
         { c.resize(sz) };
         { c.insert(i, v) };
@@ -301,10 +300,12 @@ namespace df
     using DFHack::ptr_container_identity;
     using DFHack::bit_container_identity;
     using DFHack::generic_container_identity;
+    using DFHack::resizable_container_identity;
     using DFHack::generic_assoc_container_identity;
     using DFHack::generic_set_container_identity;
 
     using DFHack::isIndexedContainer;
+    using DFHack::isResizableContainer;
     using DFHack::isAssocContainer;
     using DFHack::isSetContainer;
 
@@ -805,6 +806,14 @@ namespace df
     struct DFHACK_EXPORT identity_traits<C> {
         static type_identity* get() {
             static generic_container_identity<C> identity{};
+            return &identity;
+        }
+    };
+
+    template<isResizableContainer C>
+    struct DFHACK_EXPORT identity_traits<C> {
+        static type_identity* get() {
+            static resizable_container_identity<C> identity{};
             return &identity;
         }
     };

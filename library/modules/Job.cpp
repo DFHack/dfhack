@@ -248,6 +248,7 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         case df::job_type::InterrogateSubject: print_bitfield(out, job->specflag.interrogation_flags); break;
         case df::job_type::WeaveCloth:         print_bitfield(out, job->specflag.weave_cloth_flags); break;
         case df::job_type::CarveTrack:         print_bitfield(out, job->specflag.carve_track_flags); break;
+        case df::job_type::LinkBuildingToTrigger: print_bitfield(out, job->specflag.link_building_to_trigger_flags); break;
         case df::job_type::EncrustWithGems:
         case df::job_type::EncrustWithGlass:
         case df::job_type::EncrustWithStones:

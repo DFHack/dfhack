@@ -10,19 +10,19 @@ local widgets = require('gui.widgets')
 -- logistics status console output
 --
 
-local function make_stat(type, sp_number, l_stats, l_configs) --todo: add totals?
-    local type_stat = {
-        enabled=(l_configs[sp_number] ~= nil) and (l_configs[sp_number][type] == 'true'),
-        designated=l_stats[type..'_designated'][sp_number] or 0,
-        can_designate=l_stats[type..'_can_designate'][sp_number] or 0,
+local function make_stat(type, sp_number, stats, configs)
+    local stat = {
+        enabled=(configs[sp_number] ~= nil) and (configs[sp_number][type] == 'true'),
+        designated=stats[type..'_designated'][sp_number] or 0,
+        can_designate=stats[type..'_can_designate'][sp_number] or 0,
         designatable=nil,
     }
-    type_stat.designatable = type_stat.designated + type_stat.can_designate
-    return type_stat
+    stat.designatable = stat.designated + stat.can_designate
+    return stat
 end
 
 function getStockpileData()
-    local l_stats, l_configs = logistics_getStockpileData()
+    local stats, configs = logistics_getStockpileData()
     local data = {sp_stats = {}, sp_totals = {}, sp_name_max_len = 0}
     data.sp_totals = {
         melt = {enabled_count = 0, designated = 0, designatable = 0},
@@ -51,13 +51,13 @@ function getStockpileData()
             sp_number=sp_number,
             sp_name=sp_name,
             sort_key=sort_key,
-            melt=make_stat('melt', sp_number, l_stats, l_configs),
-            trade=make_stat('trade', sp_number, l_stats, l_configs),
-            dump=make_stat('dump', sp_number, l_stats, l_configs),
-            train=make_stat('train', sp_number, l_stats, l_configs),
-            forbid=make_stat('forbid', sp_number, l_stats, l_configs),
-            claim=make_stat('claim', sp_number, l_stats, l_configs),
-            melt_masterworks=(l_configs[sp_number] ~= nil) and (l_configs[sp_number].melt_masterworks == 'true'),
+            melt=make_stat('melt', sp_number, stats, configs),
+            trade=make_stat('trade', sp_number, stats, configs),
+            dump=make_stat('dump', sp_number, stats, configs),
+            train=make_stat('train', sp_number, stats, configs),
+            forbid=make_stat('forbid', sp_number, stats, configs),
+            claim=make_stat('claim', sp_number, stats, configs),
+            melt_masterworks=(configs[sp_number] ~= nil) and (configs[sp_number].melt_masterworks == 'true'),
         })
 
         local j = i+1
@@ -74,54 +74,44 @@ function getStockpileData()
 end
 
 local function print_stockpile_data(data)
-    -- setup stockpile table size and format
-    local num_col_size = 6
+    -- setup stockpile summary table size and format
     local totals_row_label = 'Total Stockpiled Items'
-    local name_col_size = math.min(40, math.max(data.sp_name_max_len, #totals_row_label))
-    local en_col_size = 6
-    local itm_col_size = 11
-    local num_name_col_fmt = '%' .. num_col_size .. 's  %-' .. name_col_size .. 's' -- %6s  %-40s
-    local type_col_fmt = '%-' .. en_col_size .. 's%-' .. itm_col_size .. 's' -- %-6s%-11s
-    -- --              sp.#_  sp.name                  melt__                 _trade__                __dump__                  _train__                _forbid___
-    local fmt = ' ' .. num_name_col_fmt .. '  ' ..  type_col_fmt .. '  ' ..  type_col_fmt .. '  ' ..  type_col_fmt .. '  ' ..  type_col_fmt .. '  ' ..  type_col_fmt .. ' '
-    --    fmt = '         %6s  %-40s                  %-6s%-11s                %-6s%-11s               %-6s%-11s                 %-6s%-11s               %-6s%-11s'
-    local fmt = ' %6s  %-' .. name_col_size .. 's  %-6s%-11s  %-6s%-11s  %-6s%-11s  %-6s%-11s  %-6s%-11s'
+    local name_len = math.min(40, math.max(data.sp_name_max_len, #totals_row_label))
 
+    -- --          sp.#  sp.name                    '  melt'     trade       dump      train      forbid  ' -- --
+    local fmt =  ' %6s  %-' .. name_len .. 's  ' .. '%-6s%-11s  %-6s%-11s  %-6s%-11s  %-6s%-11s  %-6s%-11s' -- --
     local col_labels = fmt:format('number' , 'name',
-    --                                      [-6]'------' '-----------'[-11s]
-    --                                          '  [x] ' '#### / ####'
-                                                '  melt','   items',
-                                                ' trade','   items',
-                                                '  dump','   items',
-                                                ' train','   items',
-                                                ' forbid','  items')
-    local footer_header_len = name_col_size + 105
-
+    -- --                                           '  [x] ' '#### / ####'                                  -- --
+                                                    '  melt','   items',
+                                                    ' trade','   items',
+                                                    '  dump','   items',
+                                                    ' train','   items',
+                                                    ' forbid','  items')
+    -- --                                           '------' '-----------'                                  -- --
     local function uline(len) return ('-'):rep(len) end
-    local function space(len) return (' '):rep(len) end
-
-    local ulines = fmt:format(
-        uline(num_col_size), uline(name_col_size),
-        uline(en_col_size), uline(itm_col_size),  -- melt
-        uline(en_col_size), uline(itm_col_size),  -- trade
-        uline(en_col_size), uline(itm_col_size),  -- dump
-        uline(en_col_size), uline(itm_col_size),  -- train
-        uline(en_col_size), uline(itm_col_size))  -- forbid
-
+    local ulines = fmt:format(uline(6), uline(name_len),
+                                                    uline(6), uline(11),  -- melt
+                                                    uline(6), uline(11),  -- trade
+                                                    uline(6), uline(11),  -- dump
+                                                    uline(6), uline(11),  -- train
+                                                    uline(6), uline(11))  -- forbid
+    -- --                                           '------' '-----------'                                  -- --
     local totals = data.sp_totals
+    -- --                                           '  [#] ' '#### / ####'                                  -- --
+    local tbl_ln_len = name_len + 105
+    --  --------------------------------------------------------------------------------------------------  -- --
+    local has_melt_mastworks, has_claim_enabled = false, false
 
     -- print stockpiles summary table header
-    print('Stockpiles' .. space(name_col_size) .. space(1) .. '[Enabled] Auto-Designations' .. space(11) .. 'Designated / Designatable Item Counts')
-    print(uline(footer_header_len))
+    local function space(len) return (' '):rep(len) end
+    print('Stockpiles' .. space(name_len) .. space(1) .. '[Enabled] Auto-Designations' .. space(11) .. 'Designated / Designatable Item Counts')
+    print(uline(tbl_ln_len))
     print(col_labels)
     print(ulines)
 
     -- print stockpiles summary table data
-    local has_melt_mastworks, has_claim_enabled = false, false
-
-    local function get_enab(l_stats, ch) return ('  [%s]'):format(l_stats.enabled and (ch or 'x') or ' ') end
-    local function get_dstat(l_stats) return ('%4d / %-4d'):format(l_stats.designated, l_stats.designatable) end
-
+    local function get_enab(stats, ch) return ('  [%s]'):format(stats.enabled and (ch or 'x') or ' ') end
+    local function get_dstat(stats) return ('%4d / %-4d'):format(stats.designated, stats.designatable) end
     for _,sp in ipairs(data.sp_stats) do
         has_melt_mastworks = has_melt_mastworks or sp.melt_masterworks
         has_claim_enabled = has_claim_enabled or sp.claim.enabled
@@ -142,12 +132,11 @@ local function print_stockpile_data(data)
             '', get_dstat(totals.dump),
             '', get_dstat(totals.train),
             '', get_dstat(totals.forbid)))
-    print(uline(footer_header_len))
-    print()
+    print(uline(tbl_ln_len))
     if has_melt_mastworks or has_claim_enabled then
+        print()
         if has_melt_mastworks then print('[M] in the "melt" column indicates that masterworks in the stockpile will be melted.') end
         if has_claim_enabled then print('[C] in the "forbid" column indicates that items in the stockpile will be claimed (unforbidden).') end
-        print()
     end
 end
 
@@ -159,34 +148,28 @@ local function print_status()
     if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() or not dfhack.isSiteLoaded() then
         return
     end
-    print((' - %sautoretraining partially trained animals')
+    print((' - %sauto-retraining partially trained animals')
             :format(logistics_getFeature('autoretrain') and '' or 'not '))
-    print()
 
     -- print stockpile logistics configuration and summary
     local data = getStockpileData()
+    print()
     if not data.sp_stats[1] then
         print 'No stockpiles configured'
-        print()
     else
         print_stockpile_data(data)
     end
 
-    -- local item_script = reqscript('item')
-    -- local item_script_sp_stats = {forbidden = 0, melt = 0, dump = 0}
-    -- local conditions = {}
-    -- item_script.condition_reachable(conditions)
-    -- item_script_sp_stats = item_script.execute('count', conditions, options)
-
     -- print fortress logistics summary of all items
     local global_sp_stats = logistics_getGlobalCounts()
-    print('Total (reachable) fortress items:')
+    print()
+    print('Total fortress items:')
     print((' - Items designated for melting: %5d'):format(global_sp_stats.total_melt))
     print((' - Items designated for trading: %5d'):format(global_sp_stats.total_trade))
     print((' - Items designated for dumping: %5d'):format(global_sp_stats.total_dump))
-    print((' - Animals designated for train: %5d'):format(global_sp_stats.total_train))  -- TODO: unlike the others, this is currently limited to animals in stockpiles
+    print((' - Animals designated for train: %5d'):format(global_sp_stats.total_train))  -- TODO: fix to include all animals designated for training
     print((' - Forbidden items             : %5d'):format(global_sp_stats.total_forbid)) -- TODO: this should exclude unreachable items and buildings
-    print((' - All (unforbidden) items     : %5d'):format(global_sp_stats.total_claim))  -- TODO: same ^^
+    print((' - All (unforbidden) items     : %5d'):format(global_sp_stats.total_claim))  -- TODO: same ^^ implement in logistics.cpp or use item script api? (reqscript('item'))
 end
 
 --------------------------
@@ -197,7 +180,7 @@ local function for_stockpiles(opts, fn)
     if not opts.sp then
         local selected_sp = dfhack.gui.getSelectedStockpile()
         if not selected_sp then qerror('please specify or select a stockpile') end
-        fn(selected_sp.sp_number)
+        fn(selected_sp.stockpile_number)
         return
     end
     for _,sp in ipairs(argparse.stringList(opts.sp)) do
@@ -207,20 +190,18 @@ end
 
 local function do_add_stockpile_config(features, opts)
     for_stockpiles(opts, function(sp)
-        local l_configs = logistics_getStockpileConfigs(tonumber(sp) or sp)
-        if not l_configs then
+        local configs = logistics_getStockpileConfigs(tonumber(sp) or sp)
+        if not configs then
             dfhack.printerr('invalid stockpile: '..sp)
         else
-            for _,config in ipairs(l_configs) do
-                if (features.forbid) then config.forbid = 1
-                elseif (features.claim) then config.forbid = 2
-                end
-                logistics_setStockpileConfig(config.sp_number,
+            for _,config in ipairs(configs) do
+                features.claim = features.claim or features.unforbid -- accept 'add unforbid' in addition to 'add claim'
+                logistics_setStockpileConfig(config.stockpile_number,
                         features.melt or config.melt == 1,
                         features.trade or config.trade == 1,
                         features.dump or config.dump == 1,
                         features.train or config.train == 1,
-                        config.forbid,
+                        (features.forbid and 1) or (features.claim and 2) or config.forbid,
                         not not opts.melt_masterworks)
             end
         end

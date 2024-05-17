@@ -35,6 +35,7 @@ distribution.
 #include <vector>
 #include <variant>
 #include <ranges>
+#include <array>
 
 #include "DataDefs.h"
 
@@ -198,6 +199,11 @@ namespace DFHack
         { c.size() } ->std::same_as<typename C::size_type>;
         { c.begin() } -> std::same_as<typename C::iterator>;
         { c.end() } -> std::same_as<typename C::iterator>;
+    };
+
+    template <typename C>
+    concept isResizableContainer = requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
+        requires isIndexedContainer<C>;
         { c.erase(i) };
         { c.resize(sz) };
         { c.insert(i, v) };
@@ -217,20 +223,27 @@ namespace DFHack
         template<typename T> struct type_name<std::deque<T>> {
             static const inline std::string name = "deque";
         };
+        template<typename T, int sz> struct type_name<std::array<T, sz>> {
+            static const inline std::string name = "array";
+        };
 
     public:
         generic_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get()) {};
-        // this is just going to be generic "container", doing something more interesting requires parsing typeid which is nonportable
         std::string getFullName(type_identity* item) { return type_name<C>::name + container_identity::getFullName(item); }
-        virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
-        virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
-        virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }
     protected:
         virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
         virtual void* item_pointer(type_identity* item, void* ptr, int idx) { return &(*(C*)ptr)[idx]; }
     };
 
-#undef realname
+    template<isResizableContainer C>
+    class resizable_container_identity : public generic_container_identity<C> {
+    private:
+        using T = C::value_type;
+    public:
+        virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
+        virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
+        virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }
+    };
 
     template <typename C>
     concept isAssocContainer = requires (C c, C::iterator i, C::key_type k) {
@@ -248,9 +261,8 @@ namespace DFHack
     public:
         generic_assoc_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get(), df::identity_traits<KT>::get()) {};
         std::string getFullName(type_identity* item) { return "map" + container_identity::getFullName(item); }
-        virtual bool resize(void* ptr, int size) { return false; }
-        virtual bool erase(void* ptr, int size) { return false; }
         virtual bool is_readonly() { return true; }
+
     protected:
         virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
         virtual void* item_pointer(type_identity* item, void* ptr, int idx) { auto iter = (((C*)ptr)->begin()); while(idx--) iter++; return (void*)&(iter->second); }
@@ -272,8 +284,6 @@ namespace DFHack
     public:
         generic_set_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<KT>::get()) {};
         std::string getFullName(type_identity* item) { return "set" + container_identity::getFullName(item); }
-        virtual bool resize(void* ptr, int size) { return false; }
-        virtual bool erase(void* ptr, int size) { return false; }
         virtual bool is_readonly() { return true; }
     protected:
         virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }

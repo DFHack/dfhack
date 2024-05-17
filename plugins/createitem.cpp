@@ -12,6 +12,7 @@
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Materials.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/building.h"
@@ -444,15 +445,20 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         if (*gametype == game_type::ADVENTURE_ARENA || World::isAdventureMode())
         {
             // Use the adventurer unit
-            unit = world->units.active[0];
+            unit = World::getAdventurer();
         }
-        else if (!world->units.active.empty() && cursor->x >= 0)
+        else if (cursor->x >= 0)
         {
-            // Use the first possible unit and the cursor position
-            unit = world->units.active[0];
+            // Use the first possible citizen if possible, otherwise the first unit
+            for (auto u : Units::citizensRange(world->units.active)) {
+                unit = u;
+                break;
+            }
+            if (!unit && world->units.active.size())
+                unit = world->units.active[0];
             move_to_cursor = true;
         }
-        else
+        if (!unit)
         {
             out.printerr("No unit selected!\n");
             return CR_FAILURE;

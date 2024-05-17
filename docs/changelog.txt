@@ -54,17 +54,23 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
 
 ## Fixes
+- `suspendmanager`: stop suspending single tile stair constructions
 
 ## Misc Improvements
+- `blueprint`: capture track carving designations in addition to already-carved tracks
+- `changevein`: affect connected veins even outside of the selected map block
 - `logistics`: new ability to automaticly forbid or claim items brought to a stockpile (or a dump within a stockpile)
 
 ## Documentation
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
 
 ## API
 
 ## Lua
+- ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)
 
 ## Removed
 

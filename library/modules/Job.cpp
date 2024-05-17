@@ -151,7 +151,7 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
 {
     if (!(CMP(job_type) && CMP(job_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
-          CMP(item_subtype) && CMP(item_category.whole) &&
+          CMP(item_subtype) && CMP(specflag.whole) &&
           CMP(hist_figure_id) && CMP(material_category.whole) &&
           CMP(reaction_name) && CMP(job_items.size())))
         return false;
@@ -201,6 +201,11 @@ void DFHack::Job::printItemDetails(color_ostream &out, df::job_item *item, int i
         out << "    tool use: " << ENUM_KEY_STR(tool_uses, item->has_tool_use) << endl;
 }
 
+template <typename T>
+static void print_bitfield(color_ostream &out, T jsf) {
+    out << " (" << bitfield_to_string(jsf) << ")";
+}
+
 void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 {
     using std::endl;
@@ -228,12 +233,30 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         out << endl;
     }
 
-    if (job->item_subtype >= 0 || job->item_category.whole)
+    if (job->item_subtype >= 0 || job->specflag.whole)
     {
         ItemTypeInfo iinfo(itype, job->item_subtype);
 
-        out << "    item: " << iinfo.toString()
-               << " (" << bitfield_to_string(job->item_category) << ")" << endl;
+        out << "    item: " << iinfo.toString();
+        switch (job->job_type) {
+        case df::job_type::ConstructBuilding:  print_bitfield(out, job->specflag.construct_building_flags); break;
+        case df::job_type::CleanPatient:       print_bitfield(out, job->specflag.clean_patient_flags); break;
+        case df::job_type::CleanSelf:          print_bitfield(out, job->specflag.clean_self_flags); break;
+        case df::job_type::PlaceTrackVehicle:  print_bitfield(out, job->specflag.place_track_vehicle_flags); break;
+        case df::job_type::GatherPlants:       print_bitfield(out, job->specflag.gather_flags); break;
+        case df::job_type::Drink:              print_bitfield(out, job->specflag.drink_item_flags); break;
+        case df::job_type::InterrogateSubject: print_bitfield(out, job->specflag.interrogation_flags); break;
+        case df::job_type::WeaveCloth:         print_bitfield(out, job->specflag.weave_cloth_flags); break;
+        case df::job_type::CarveTrack:         print_bitfield(out, job->specflag.carve_track_flags); break;
+        case df::job_type::EncrustWithGems:
+        case df::job_type::EncrustWithGlass:
+        case df::job_type::EncrustWithStones:
+            print_bitfield(out, job->specflag.encrust_flags);
+            break;
+        default:
+            break;
+        }
+        out << endl;
     }
 
     if (job->hist_figure_id >= 0)
@@ -594,7 +617,7 @@ std::string Job::getName(df::job *job)
     button->subtype = job->item_subtype;
     button->material = job->mat_type;
     button->matgloss = job->mat_index;
-    button->specflag = job->item_category;
+    button->specflag = job->specflag;
     button->job_item_flag = job->material_category;
 
     button->text(&desc);

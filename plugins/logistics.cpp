@@ -187,7 +187,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::IsSiteLoaded())
+    if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         logistics_cycle(out, true);
@@ -198,7 +198,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

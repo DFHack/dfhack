@@ -558,9 +558,11 @@ private:
 
             if (!exit) {
                 // there is no exit at all
-                // suspend the current construction job to leave the entire plan suspended
+                if (isImpassable(building)) {
+                    // suspend the current construction job to leave the entire plan suspended
+                    suspensions[job->id] = Reason::DEADEND;
+                }
                 // and stop here
-                suspensions[job->id] = Reason::DEADEND;
                 return;
             }
 
@@ -775,7 +777,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
@@ -857,7 +859,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     // be sure to suspend the core if any DF state is read or modified
     CoreSuspender suspend;
 
-    if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }

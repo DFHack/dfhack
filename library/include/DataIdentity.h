@@ -207,10 +207,21 @@ namespace DFHack
     class generic_container_identity : public container_identity {
     private:
         using T = C::value_type;
+
+        template<typename T> struct type_name {
+            static const inline std::string name = "container";
+        };
+        template<typename T> struct type_name<std::vector<T>> {
+            static const inline std::string name = "vector";
+        };
+        template<typename T> struct type_name<std::deque<T>> {
+            static const inline std::string name = "deque";
+        };
+
     public:
         generic_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get()) {};
         // this is just going to be generic "container", doing something more interesting requires parsing typeid which is nonportable
-        std::string getFullName(type_identity* item) { return "container" + container_identity::getFullName(item); }
+        std::string getFullName(type_identity* item) { return type_name<C>::name + container_identity::getFullName(item); }
         virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
         virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
         virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }

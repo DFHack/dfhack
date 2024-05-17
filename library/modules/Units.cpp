@@ -314,7 +314,7 @@ bool Units::isHidden(df::unit *unit)
 
     if (*gamemode == game_mode::ADVENTURE)
     {
-        if (unit == world->units.active[0])
+        if (unit == World::getAdventurer())
             return false;
         else if (unit->flags1.bits.hidden_in_ambush)
             return true;
@@ -2000,8 +2000,8 @@ std::string Units::getCasteProfessionName(int race, int casteid, df::profession 
     if (pid < (df::profession)0 || !is_valid_enum_item(pid))
         return "";
     int16_t current_race = df::global::plotinfo->race_id;
-    if (df::global::gamemode && *df::global::gamemode == df::game_mode::ADVENTURE)
-        current_race = world->units.active[0]->race;
+    if (auto adv = World::getAdventurer())
+        current_race = adv->race;
     bool use_race_prefix = (race >= 0 && race != current_race);
 
     if (auto creature = df::creature_raw::find(race))

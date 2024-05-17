@@ -13,7 +13,7 @@ local getval = utils.getval
 ---@field fg? dfhack.color
 ---@field bg? dfhack.color
 ---@field bold? boolean
----@field tile? integer
+---@field tile? integer|fun(): integer
 ---@field tile_color? boolean
 ---@field tile_fg? dfhack.color
 ---@field tile_bg? dfhack.color

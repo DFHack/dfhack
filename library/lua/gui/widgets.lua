@@ -18,9 +18,9 @@ local function show_view(view,vis)
     end
 end
 
----@param tab table
+---@param tab? table
 ---@param idx integer
----@return table|integer
+---@return any|integer
 local function map_opttab(tab,idx)
     if tab then
         return tab[idx]
@@ -103,9 +103,9 @@ end
 ---@field frame_style gui.Frame|fun(): gui.Frame
 ---@field interior boolean
 ---@field frame_style_t? false|gui.Frame|fun(): gui.Frame
----@field frame_style_b? false|fun(): gui.Frame
----@field frame_style_l? false|fun(): gui.Frame
----@field frame_style_r? false|fun(): gui.Frame
+---@field frame_style_b? false|gui.Frame|fun(): gui.Frame
+---@field frame_style_l? false|gui.Frame|fun(): gui.Frame
+---@field frame_style_r? false|gui.Frame|fun(): gui.Frame
 ---@field interior_t? boolean
 ---@field interior_b? boolean
 ---@field interior_l? boolean
@@ -2111,7 +2111,7 @@ ToggleHotkeyLabel.ATTRS{
 ----------
 
 ---@class widgets.ListChoice
----@field text string
+---@field text string|widgets.LabelToken[]
 ---@field key string
 ---@field search_key? string
 ---@field icon? string|dfhack.pen|fun(): string|dfhack.pen

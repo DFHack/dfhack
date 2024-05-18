@@ -5339,7 +5339,7 @@ possible fields:
 
   Reserved for internal use.
 
-The Label widget implements the following class methods:
+The Label widget implements the following methods:
 
 * ``label:setText(new_text)``
 

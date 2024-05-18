@@ -587,6 +587,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Stockpile";
             if (game->main_interface.stockpile.cur_bld) {
                 newFocusString += "/Some";
+                if (game->main_interface.stockpile_link.open)
+                    newFocusString += "/Links";
+                else if (game->main_interface.stockpile_tools.open)
+                    newFocusString += "/Containers";
+                else if (game->main_interface.custom_stockpile.open)
+                    newFocusString += "/Customize";
+                else
+                    newFocusString += "/Default";
             }
             break;
         case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
@@ -800,21 +808,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.assign_vehicle.open) {
         newFocusString = baseFocus;
         newFocusString += "/AssignVehicle";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.stockpile_link.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/StockpileLink";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.stockpile_tools.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/StockpileTools";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.custom_stockpile.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/CustomStockpile";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.create_squad.open) {

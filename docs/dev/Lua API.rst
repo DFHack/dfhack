@@ -5845,6 +5845,19 @@ The parent widget owns the range values, and can control them independently (e.g
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
 
+DimensionsTooltip class
+-----------------------
+
+This widget follows the mouse cursor around and displays a string that
+indicates selected 3d dimensions. It is intended to be a child widget of a
+full-screen ``View``, such as a ``ZScreen``.
+
+:display_offset: the offset from the mouse cursor where the tooltip is
+    displayed. Positive offsets are down and to the right. Defaults to
+    ``{x=3, y=3}``.
+:get_anchor_pos_fn: function that provides the other corner of the selected
+    area as a ``df.coord``-style table, that is, a table with ``x``, ``y``, and
+    ``z`` fields. Must return ``nil`` if there is no current selection.
 
 gui.textures
 ============

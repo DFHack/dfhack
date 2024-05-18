@@ -87,10 +87,11 @@ To download a development build from GitHub:
 - Go to https://github.com/DFHack/dfhack/actions/workflows/build.yml?query=branch%3Adevelop+event%3Apush
 - Click on the first entry that has a green checkmark
 - Click the number under "Artifacts" (or scroll down)
-- Click on the "dfhack-*-build-*" artifact for your platform to download
+- Click on the ``dfhack-*-build-*`` artifact for your platform to download
 
-You can extract this package the same as if you are doing a manual install (see
-the next section).
+The artifacts are "double-zipped". That is, you will have to extract the
+initial zip file to get to the package archive. You can extract this second
+package the same as if you are doing a manual install (see the next section).
 
 Older releases
 --------------
@@ -112,9 +113,11 @@ When you `download DFHack <downloading>`, you will end up with a release archive
 operating system should have built-in utilities capable of extracting files from
 these archives.
 
-If you are on Windows, please remember to right click on the file after
-downloading, open the file properties, and select the "Unblock" checkbox. This
-will prevent issues with Windows antivirus programs.
+.. note::
+
+    If you are on Windows, please remember to right click on the file after
+    downloading, open the file properties, and select the "Unblock" checkbox.
+    This will prevent issues with Windows antivirus programs.
 
 The release archives contain a ``hack`` folder where DFHack binary and system
 data is stored, a ``stonesense`` folder that contains data specific to the
@@ -137,7 +140,7 @@ a wineskin that has DF installed in it:
    contents" from the menu.
 #. Find the location of the ``Dwarf Fortress`` folder inside the package
    contents (default is ``/drive_c/Program Files/``)
-#. Copy the contents of the unzipped DFHack folder (Windows versino) into the
+#. Copy the contents of the unzipped DFHack folder (Windows version) into the
    ``Dwarf Fortress`` folder inside the package.
 
 These instructions were last tested on Mac Sonoma 14.1.2.
@@ -145,7 +148,7 @@ These instructions were last tested on Mac Sonoma 14.1.2.
 Uninstalling DFHack
 ===================
 
-Just renaming or removing the ``dfhooks`` library file is enough to disable
+Just renaming or removing the ``dfhooks`` library files is enough to disable
 DFHack. If you would like to remove all DFHack files, consult the DFHack install
 archive to see the list of files and remove the corresponding files in the Dwarf
 Fortress folder. Any DFHack files left behind will not negatively affect DF.

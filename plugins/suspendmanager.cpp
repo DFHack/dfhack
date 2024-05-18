@@ -529,6 +529,12 @@ private:
         return true;
     }
 
+    void suspendBuilding(df::building *building, Reason reason){
+        for (auto job : building->jobs)
+            if (job->job_type == df::job_type::ConstructBuilding)
+                suspensions[job->id] = reason;
+    }
+
     void suspendDeadend (color_ostream &out, df::job* job) {
         auto building = Job::getHolder(job);
         if (!building) return;
@@ -561,18 +567,14 @@ private:
                 // there is no exit at all
                 if (isImpassable(building)) {
                     // suspend the current construction job to leave the entire plan suspended
-                    suspensions[job->id] = Reason::DEADEND;
+                    suspendBuilding(building, Reason::DEADEND);
                 }
                 // and stop here
                 return;
             }
 
             // exit is the single exit point of this corridor, suspend its construction job...
-            for (auto exit_job : exit->jobs) {
-                if (exit_job->job_type == df::job_type::ConstructBuilding) {
-                    suspensions[exit_job->id] = Reason::DEADEND;
-                }
-            }
+            suspendBuilding(exit, Reason::DEADEND);
             // ...mark the current tile of the corridor as leading to a dead-end...
             leadsToDeadend.insert(building->id);
 
@@ -590,11 +592,7 @@ private:
         {
             auto building = Buildings::findAtTile(job->pos);
             if (building) {
-                for (auto building_job : building->jobs) {
-                    if (building_job->job_type == df::job_type::ConstructBuilding) {
-                        suspensions[building_job->id] = Reason::ERASE_DESIGNATION;
-                    }
-                }
+                suspendBuilding(building, Reason::ERASE_DESIGNATION);
             }
         }
     }

@@ -104,24 +104,28 @@ function ItemSelection:init()
                 },
                 widgets.Label{
                     frame={r=0, w=15, t=0, h=3},
-                    text_pen=BUILD_TEXT_PEN,
-                    text_hpen=BUILD_TEXT_HPEN,
-                    text={
-                        '               ', NEWLINE,
-                        '   Autoselect  ', NEWLINE,
-                        '               ',
+                    text=widgets.makeButtonLabelText{
+                        chars={
+                            '               ',
+                            '   Autoselect  ',
+                            '               ',
+                            },
+                        pens=BUILD_TEXT_PEN,
+                        pens_hover=BUILD_TEXT_HPEN,
                     },
                     on_click=self:callback('submit'),
                     visible=function() return self.num_selected < self.quantity end,
                 },
                 widgets.Label{
                     frame={r=0, w=15, t=0, h=3},
-                    text_pen=BUILD_TEXT_PEN,
-                    text_hpen=BUILD_TEXT_HPEN,
-                    text={
-                        '               ', NEWLINE,
-                        '    Continue   ', NEWLINE,
-                        '               ',
+                    text=widgets.makeButtonLabelText{
+                        chars={
+                            '               ',
+                            '    Continue   ',
+                            '               ',
+                            },
+                        pens=BUILD_TEXT_PEN,
+                        pens_hover=BUILD_TEXT_HPEN,
                     },
                     on_click=self:callback('submit'),
                     visible=function() return self.num_selected >= self.quantity end,

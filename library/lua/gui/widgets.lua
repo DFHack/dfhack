@@ -1687,6 +1687,124 @@ function Label:onInput(keys)
     return check_text_keys(self, keys)
 end
 
+--------------------------------
+-- makeButtonLabelText
+--
+
+local function get_button_token_hover_ch(spec, x, y, ch)
+    local ch_hover = ch
+    if spec.chars_hover then
+        local row = spec.chars_hover[y]
+        if type(row) == 'string' then
+            ch_hover = row:sub(x, x)
+        else
+            ch_hover = row[x]
+        end
+    end
+    return ch_hover
+end
+
+local function get_button_token_base_pens(spec, x, y)
+    local pen, pen_hover = COLOR_GRAY, COLOR_WHITE
+    if spec.pens then
+        pen = type(spec.pens) == 'table' and spec.pens[y][x] or spec.pens
+        if spec.pens_hover then
+            pen_hover = type(spec.pens_hover) == 'table' and spec.pens_hover[y][x] or spec.pens_hover
+        else
+            pen_hover = pen
+        end
+    end
+    return pen, pen_hover
+end
+
+local function get_button_tileset_idx(spec, x, y, tileset_offset, tileset_stride)
+    local idx = (tileset_offset or 1)
+    idx = idx + (x - 1)
+    idx = idx + (y - 1) * (tileset_stride or #spec.chars[1])
+    return idx
+end
+
+local function get_button_token_tiles(spec, x, y)
+    local tile = safe_index(spec.tiles, y, x)
+    local tile_hover = safe_index(spec.tiles_hover, y, x) or tile
+    if not tile and spec.tileset then
+        local tileset = spec.tileset
+        local idx = get_button_tileset_idx(spec, x, y, spec.tileset_offset, spec.tileset_stride)
+        tile = dfhack.textures.getTexposByHandle(tileset[idx])
+        if spec.tileset_hover then
+            local tileset_hover = spec.tileset_hover
+            local idx_hover = get_button_tileset_idx(spec, x, y,
+                spec.tileset_hover_offset or spec.tileset_offset,
+                spec.tileset_hover_stride or spec.tileset_stride)
+            tile_hover = dfhack.textures.getTexposByHandle(tileset_hover[idx_hover])
+        else
+            tile_hover = tile
+        end
+    end
+    return tile, tile_hover
+end
+
+local function get_button_token_pen(base_pen, tile, ch)
+    local pen = dfhack.pen.make(base_pen)
+    pen.tile = tile
+    pen.ch = ch
+    return pen
+end
+
+local function get_button_token_pens(spec, x, y, ch, ch_hover)
+    local base_pen, base_pen_hover = get_button_token_base_pens(spec, x, y)
+    local tile, tile_hover = get_button_token_tiles(spec, x, y)
+    return get_button_token_pen(base_pen, tile, ch), get_button_token_pen(base_pen_hover, tile_hover, ch_hover)
+end
+
+local function make_button_token(spec, x, y, ch)
+    local ch_hover = get_button_token_hover_ch(spec, x, y, ch)
+    local pen, pen_hover = get_button_token_pens(spec, x, y, ch, ch_hover)
+    return {
+        tile=pen,
+        htile=pen_hover,
+        width=1,
+    }
+end
+
+---@class widgets.ButtonLabelSpec
+---@field chars (string|string[])[]
+---@field chars_hover? (string|string[])[]
+---@field pens? dfhack.color|dfhack.color[][]
+---@field pens_hover? dfhack.color|dfhack.color[][]
+---@field tiles? integer[][]
+---@field tiles_hover? integer[][]
+---@field tileset? TexposHandle[]
+---@field tileset_hover? TexposHandle[]
+---@field tileset_offset? integer
+---@field tileset_hover_offset? integer
+---@field tileset_stride? integer
+---@field tileset_hover_stride? integer
+
+---@nodiscard
+---@param spec widgets.ButtonLabelSpec
+---@return widgets.LabelToken[]
+function makeButtonLabelText(spec)
+    local tokens = {}
+    for y, row in ipairs(spec.chars) do
+        if type(row) == 'string' then
+            local x = 1
+            for ch in row:gmatch('.') do
+                table.insert(tokens, make_button_token(spec, x, y, ch))
+                x = x + 1
+            end
+        else
+            for x, ch in ipairs(row) do
+                table.insert(tokens, make_button_token(spec, x, y, ch))
+            end
+        end
+        if y < #spec.chars then
+            table.insert(tokens, NEWLINE)
+        end
+    end
+    return tokens
+end
+
 ------------------
 -- WrappedLabel --
 ------------------

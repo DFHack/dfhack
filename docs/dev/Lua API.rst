@@ -5257,9 +5257,10 @@ It has the following attributes:
 :auto_width: Sets self.frame.w from the text width.
 :on_click: A callback called when the label is clicked (optional)
 :on_rclick: A callback called when the label is right-clicked (optional)
-:scroll_keys: Specifies which keys the label should react to as a table. The table should map
-    keys to the number of lines to scroll as positive or negative integers or one of the keywords
-    supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
+:scroll_keys: Specifies which keys the label should react to as a table. The
+    table should map keys to the number of lines to scroll as positive or
+    negative integers or one of the keywords supported by the ``scroll``
+    method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
 
 ``text_pen``, ``text_dpen``, and ``text_hpen`` can either be a pen or a
@@ -5273,7 +5274,8 @@ the ``setText`` method, as one of:
 * A sequence of tokens.
 
 Every token in the sequence in turn may be either a string, possibly
-containing newlines, or a table with the following possible fields:
+containing newlines (or equal to ``NEWLINE``), or a table with the following
+possible fields:
 
 * ``token.text = ...``
 
@@ -5373,6 +5375,107 @@ The Label widget implements the following methods:
         return HotkeyLabel.super.shouldHover(self) or self.on_activate
     end
 
+The widgets module also provides the following methods for help in constructing
+common text token lists that you can then pass as ``text`` to a ``Label``:
+
+* ``makeButtonLabelText(spec)``
+
+    Returns a list of ``Label`` text tokens that represent a button according
+    to the given ``spec``, which is a table with the following fields. Fields
+    that contain ``_hover`` are optional and specify alternate values to be
+    used when the mouse cursor is hovering over the button.
+
+    - ``chars``, ``chars_hover``: A list of strings or a list of lists of
+        characters. These strings (or lists of characters) make up the ASCII
+        representation of the button. If a list of strings is passed, each
+        string must be the same length. ``chars`` is the only required element
+        in the spec. If ``chars_hover`` is not specified, it defaults to the
+        value of ``chars``.
+
+    - ``pens``, ``pens_hover``: A color or a pen or a list of lists of colors
+        or pens. This controls what color and other pen properties should be
+        applied to the corresponding button tile position. If a single color or
+        pen is passed, then that color or pen will apply to all tiles of the
+        button. If not specified, ``pens`` defaults to ``COLOR_GRAY`` and
+        ``pens_hover`` defaults to ``COLOR_WHITE``
+
+    - ``tileset``, ``tileset_hover``: A tileset returned from
+        ``dfhack.textures.loadTileset``. If not specified, the corresponding
+        pen is used without setting a ``tile`` value.
+
+    - ``tileset_offset``, ``tileset_hover_offset``: The 1-based offset within
+        the tileset to the tile that represents the upper left corner of the
+        button. If not specified, defaults to ``1``.
+
+    - ``tileset_stride``, ``tileset_hover_stride``: The number of tiles in one
+        row of the tileset. This is used to find the start position of
+        subsequent rows of tiles for the button. If not specified, defaults to
+        the width of a button row specified in ``chars``, which is appropriate
+        for a tileset that has only a single button image per logical row.
+
+    - ``tiles``, ``tiles_hover``: A list of lists of integers representing raw
+        tile texpos values to be displayed at the corresponding button
+        position. Tiles specified here will override corresponding tiles from
+        ``tileset``. The lists can be sparse, so any unspecified values will
+        fall through to the corresponding ``tileset`` tile.
+
+    Example 1: The civ-alert button - a text-only button that highlights the
+    text on hover::
+
+        widgets.Label{
+            text=widgets.makeButtonLabelText{
+                chars={
+                    ' Activate ',
+                    ' civilian ',
+                    '  alert   ',
+                },
+                pens={fg=COLOR_BLACK, bg=COLOR_LIGHTRED},
+                pens_hover={fg=COLOR_WHITE, bg=COLOR_RED},
+            },
+            on_click=sound_alarm,
+        },
+
+    Example 2: The DFHack logo - a graphical button in graphics mode and a text
+    button in ASCII mode. The ASCII colors use the default for hovering::
+
+        widgets.Label{
+            text=widgets.makeButtonLabelText{
+                chars={
+                    {179, 'D', 'F', 179},
+                    {179, 'H', 'a', 179},
+                    {179, 'c', 'k', 179},
+                },
+                tileset=dfhack.textures.loadTileset(
+                    'hack/data/art/logo.png', 8, 12, true),
+                tileset_hover=dfhack.textures.loadTileset(
+                    'hack/data/art/logo_hovered.png', 8, 12, true),
+            },
+            on_click=function()
+                dfhack.run_command{'hotkeys', 'menu', self.name}
+            end,
+        },
+
+    Example 3: One of the warm/damp toolbar buttons - similar to example 2, but
+    with custom colors throughout the button when in ASCII mode::
+
+        widgets.Label{
+            text=widgets.makeButtonLabelText{
+                chars={
+                    {218, 196, 196, 191},
+                    {179, '~', '~', 179},
+                    {192, 196, 196, 217},
+                },
+                pens={
+                    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                    {COLOR_WHITE, COLOR_RED,   COLOR_GRAY,  COLOR_WHITE},
+                    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                },
+                tileset=toolbar_textures,
+                tileset_offset=25,
+                tileset_stride=8,
+            },
+            on_click=launch_warm_damp_dig_config,
+        },
 
 WrappedLabel class
 ------------------

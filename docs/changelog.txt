@@ -62,7 +62,7 @@ Template for new versions:
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
 - `changevein`: affect connected veins even outside of the selected map block
-- `logistics`: new ability to automaticly forbid or claim items brought to a stockpile (or a dump within a stockpile)
+- `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

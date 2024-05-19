@@ -177,7 +177,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         auto& c = loaded_persist_data[idx];
         if (c.key() == CONFIG_KEY)
             continue;
-        if (c.get_int(STOCKPILE_CONFIG_FORBID) == -1) // remove this once saves from 50.08 are no longer compatible
+        if (c.get_int(STOCKPILE_CONFIG_FORBID) == -1) // remove this once saves from 51.01 are no longer compatible
             c.set_int(STOCKPILE_CONFIG_FORBID, 0);
         watched_stockpiles.emplace(c.get_int(STOCKPILE_CONFIG_STOCKPILE_NUMBER), c);
     }

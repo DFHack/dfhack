@@ -337,8 +337,7 @@ public:
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
-        return !item->flags.bits.forbid &&
-                !item->flags.bits.artifact;
+        return !item->flags.bits.forbid;
     }
 
     bool designate(color_ostream& out, df::item* item) override {
@@ -394,7 +393,7 @@ public:
     }
 
     bool can_designate(color_ostream& out, df::item* item) override {
-        return !item->flags.bits.artifact;
+        return true;
     }
 
     bool designate(color_ostream& out, df::item* item) override {

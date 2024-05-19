@@ -736,20 +736,6 @@ function PlannerOverlay:init()
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
             end,
         },
-        widgets.Label{
-            frame={b=4, l=23},
-            text_pen=COLOR_DARKGREY,
-            text={
-                'Selected area: ',
-                {text=function()
-                     return ('%dx%dx%d'):format(get_cur_area_dims(self.saved_placement))
-                 end
-                },
-            },
-            visible=function()
-                return not cur_building_has_no_area() and (self.saved_placement or is_choosing_area())
-            end,
-        },
         widgets.Panel{
             visible=function() return #get_cur_filters() > 0 end,
             subviews={

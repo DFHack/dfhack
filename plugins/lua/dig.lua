@@ -162,33 +162,11 @@ WarmDampToolbarOverlay.ATTRS{
 }
 
 function WarmDampToolbarOverlay:init()
-    local to_pen = dfhack.pen.parse
-    local function tp(idx, ch, fg)
-        return to_pen{
-            tile=function() return dfhack.textures.getTexposByHandle(toolbar_textures[idx]) end,
-            ch=ch,
-            fg=fg,
-            bold=fg>=8,
-        }
-    end
-    local function get_tile_tokens(offset, heat_color, damp_color, border_color)
-        return {
-            {tile=tp(1+offset, 218, border_color)},
-            {tile=tp(2+offset, 196, border_color)},
-            {tile=tp(3+offset, 196, border_color)},
-            {tile=tp(4+offset, 191, border_color)},
-            NEWLINE,
-            {tile=tp(9+offset, 179, border_color)},
-            {tile=tp(10+offset, '~', damp_color)},
-            {tile=tp(11+offset, '~', heat_color)},
-            {tile=tp(12+offset, 179, border_color)},
-            NEWLINE,
-            {tile=tp(17+offset, 192, border_color)},
-            {tile=tp(18+offset, 196, border_color)},
-            {tile=tp(19+offset, 196, border_color)},
-            {tile=tp(20+offset, 217, border_color)},
-        }
-    end
+    local button_chars = {
+        {218, 196, 196, 191},
+        {179, '~', '~', 179},
+        {192, 196, 196, 217},
+    }
 
     self:addviews{
         widgets.Panel{
@@ -214,22 +192,58 @@ function WarmDampToolbarOverlay:init()
             frame={b=0, r=22, w=4, h=3},
             subviews={
                 widgets.Label{
-                    text=get_tile_tokens(0, COLOR_GREY, COLOR_GREY, COLOR_GREY),
+                    text=widgets.makeButtonLabelText{
+                        chars=button_chars,
+                        pens=COLOR_GRAY,
+                        tileset=toolbar_textures,
+                        tileset_offset=1,
+                        tileset_stride=8,
+                    },
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return not getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
-                    text=get_tile_tokens(24, COLOR_RED, COLOR_GREY, COLOR_WHITE),
+                    text=widgets.makeButtonLabelText{
+                        chars=button_chars,
+                        pens={
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_RED,   COLOR_GRAY,  COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                        },
+                        tileset=toolbar_textures,
+                        tileset_offset=25,
+                        tileset_stride=8,
+                    },
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return getWarmPaintEnabled() and not getDampPaintEnabled() end,
                 },
                 widgets.Label{
-                    text=get_tile_tokens(4, COLOR_GREY, COLOR_BLUE, COLOR_WHITE),
+                    text=widgets.makeButtonLabelText{
+                        chars=button_chars,
+                        pens={
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_GRAY,  COLOR_BLUE,  COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                        },
+                        tileset=toolbar_textures,
+                        tileset_offset=5,
+                        tileset_stride=8,
+                    },
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return not getWarmPaintEnabled() and getDampPaintEnabled() end,
                 },
                 widgets.Label{
-                    text=get_tile_tokens(28, COLOR_RED, COLOR_BLUE, COLOR_WHITE),
+                    text=widgets.makeButtonLabelText{
+                        chars=button_chars,
+                        pens={
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_RED,   COLOR_BLUE,  COLOR_WHITE},
+                            {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                        },
+                        tileset=toolbar_textures,
+                        tileset_offset=29,
+                        tileset_stride=8,
+                    },
                     on_click=launch_warm_damp_dig_config,
                     visible=function() return getWarmPaintEnabled() and getDampPaintEnabled() end,
                 },

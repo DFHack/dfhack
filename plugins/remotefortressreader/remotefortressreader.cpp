@@ -1872,8 +1872,8 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_cursor_pos_y(cy);
     out->set_cursor_pos_z(cz);
 
-    if (gamemode && *gamemode == GameMode::ADVENTURE)
-        out->set_follow_unit_id(world->units.active[0]->id);
+    if (auto adv = World::getAdventurer())
+        out->set_follow_unit_id(adv->id);
     else
         out->set_follow_unit_id(plotinfo->follow_unit);
     out->set_follow_item_id(plotinfo->follow_item);

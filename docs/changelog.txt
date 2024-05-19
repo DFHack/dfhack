@@ -68,9 +68,13 @@ Template for new versions:
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
 
 ## API
+- Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)
+- ``widgets.makeButtonLabelText``: create text and graphical buttons from character/color/tile maps and/or dynamically loaded tilesets
+- ``widgets.DimensionsTooltip``: reusable selected dimensions tooltip that follows the mouse cursor around
+- ``widgets.ButtonGroup``: subclass of CycleHotkeyLabel that additionally displays clickable graphical buttons
 
 ## Removed
 

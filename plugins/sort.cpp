@@ -79,7 +79,7 @@ static int32_t our_filter_idx(df::widget_unit_list *unitlist) {
     if (world->units.active.empty())
         return true;
 
-    df::unit *u = world->units.active[0];
+    df::unit *u = world->units.active[0]; // any unit will do; we just need a sentinel
     if (!u)
         return true;
 

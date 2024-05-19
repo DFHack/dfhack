@@ -5,7 +5,7 @@ local _ENV = mkmodule('gui.textures')
 ---@alias TexposHandle integer
 
 -- Preloaded DFHack Assets.
--- Use this handles if you need to get dfhack standard textures.
+-- Use these handles if you need to get dfhack standard textures.
 ---@type table<string, TexposHandle[]>
 local texpos_handles = {
   green_pin = dfhack.textures.loadTileset('hack/data/art/green-pin.png', 8, 12, true),

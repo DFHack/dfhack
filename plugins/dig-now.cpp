@@ -853,9 +853,9 @@ static DFCoord simulate_fall(const DFCoord &pos) {
 
 static void create_boulders(color_ostream &out,
                 const item_coords_t &item_coords,
-                const dig_now_options &options) {
-    df::unit *unit = world->units.active[0];
-    df::historical_entity *civ = df::historical_entity::find(unit->civ_id);
+                const dig_now_options &options,
+                df::unit * creator) {
+    df::historical_entity *civ = df::historical_entity::find(creator->civ_id);
     df::world_site *site = World::isFortressMode() ?
             df::world_site::find(plotinfo->site_id) : NULL;
 
@@ -891,7 +891,7 @@ static void create_boulders(color_ostream &out,
                                           static_cast<size_t>(INT16_MAX));
             prod->count = batch_size;
             remaining_items -= batch_size;
-            prod->produce(unit, &out_products, &out_items, &in_reag, &in_items,
+            prod->produce(creator, &out_products, &out_items, &in_reag, &in_items,
                           1, job_skill::NONE, 0, civ, site, NULL);
         }
 
@@ -1036,7 +1036,7 @@ bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
     item_coords_t item_coords;
 
     do_dig(out, dug_coords, item_coords, options);
-    create_boulders(out, item_coords, options);
+    create_boulders(out, item_coords, options, world->units.active[0]);
     post_process_dug_tiles(out, dug_coords);
 
     // force the game to recompute its walkability cache

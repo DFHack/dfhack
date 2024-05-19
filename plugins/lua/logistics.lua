@@ -10,11 +10,11 @@ local widgets = require('gui.widgets')
 -- logistics status console output
 --
 
-local function make_stat(type, sp_number, stats, configs)
+local function make_stat(desig, sp_number, stats, configs)
     local stat = {
-        enabled=(configs[sp_number] ~= nil) and (configs[sp_number][type] == 'true'),
-        designated=stats[type..'_designated'][sp_number] or 0,
-        can_designate=stats[type..'_can_designate'][sp_number] or 0,
+        enabled=(configs[sp_number] ~= nil) and (configs[sp_number][desig] == 'true'),
+        designated=stats[desig..'_designated'][sp_number] or 0,
+        can_designate=stats[desig..'_can_designate'][sp_number] or 0,
         designatable=nil,
     }
     stat.designatable = stat.designated + stat.can_designate

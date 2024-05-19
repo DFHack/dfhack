@@ -34,7 +34,7 @@ Usage
     enable logistics
     logistics [status]
     logistics now
-    logistics add [melt] [trade] [dump] [train] [<options>]
+    logistics add [melt] [trade] [dump] [train] [forbid|claim] [<options>]
     logistics clear [all] [<options>]
     logistics (enable|disable) autoretrain
 

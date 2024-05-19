@@ -430,7 +430,7 @@ StockpilesOverlay.ATTRS{
     desc='Shows a panel when a stockpile is selected for stockpile automation.',
     default_pos={x=5, y=44},
     default_enabled=true,
-    viewscreens='dwarfmode/Stockpile/Default',
+    viewscreens='dwarfmode/Stockpile/Some/Default',
     frame={w=49, h=5},
 }
 
@@ -466,7 +466,7 @@ function StockpilesOverlay:init()
                     widgets.Label{
                         frame={t=0, l=0, h=1},
                         auto_height=false,
-                        text={'Designate items/animals brought to this stockpile for:'},
+                        text={'Auto-designate stockpile items/animals for:'},
                         text_pen=COLOR_DARKGREY,
                     }, widgets.ToggleHotkeyLabel{
                         view_id='melt',
@@ -490,7 +490,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'trade'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='dump',
-                        frame={t=1, l=32},
+                        frame={t=2, l=0},
                         auto_width=true,
                         key='CUSTOM_CTRL_U',
                         option_gap=-1,
@@ -500,7 +500,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'dump'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='train',
-                        frame={t=2, l=32},
+                        frame={t=1, l=32},
                         auto_width=true,
                         key='CUSTOM_CTRL_A',
                         option_gap=-1,
@@ -510,7 +510,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'train'),
                     }, widgets.CycleHotkeyLabel{
                         view_id='forbid',
-                        frame={t=2, l=0, w=16},
+                        frame={t=2, l=16, w=16},
                         key='CUSTOM_CTRL_F',
                         option_gap=-1,
                         options={{label='Forbid', value=0},

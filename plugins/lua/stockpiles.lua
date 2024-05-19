@@ -430,7 +430,7 @@ StockpilesOverlay.ATTRS{
     desc='Shows a panel when a stockpile is selected for stockpile automation.',
     default_pos={x=5, y=44},
     default_enabled=true,
-    viewscreens='dwarfmode/Stockpile/Some', -- hmm, how do I close it when 'dwarfmode/CustomStockpile' is also up?
+    viewscreens='dwarfmode/Stockpile/Default',
     frame={w=49, h=5},
 }
 

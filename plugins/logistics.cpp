@@ -808,12 +808,7 @@ static int logistics_getGlobalCounts(lua_State *L) {
     size_t num_forbid = 0;
     size_t num_claim = 0;
     for (auto item : world->items.other.IN_PLAY) {
-        if (item->flags.bits.construction ||
-                item->flags.bits.garbage_collect ||
-                item->flags.bits.in_building ||
-                item->flags.bits.hostile ||
-                item->flags.bits.on_fire ||
-                item->flags.bits.trader)
+        if (item->flags.whole & bad_flags.whole)
             continue;
         if (item->flags.bits.dump)
             ++num_dump;

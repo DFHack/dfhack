@@ -23,14 +23,14 @@ end
 
 function getStockpileData()
     local stats, configs = logistics_getStockpileData()
-    local data = {sp_stats = {}, sp_totals = {}, sp_name_max_len = 0}
+    local data={sp_stats={}, sp_totals={}, sp_name_max_len=0}
     data.sp_totals = {
-        melt = {enabled_count = 0, designated = 0, designatable = 0},
-        trade = {enabled_count = 0, designated = 0, designatable = 0},
-        dump = {enabled_count = 0, designated = 0, designatable = 0},
-        train = {enabled_count = 0, designated = 0, designatable = 0},
-        forbid = {enabled_count = 0, designated = 0, designatable = 0},
-        claim = {enabled_count = 0}
+        melt={enabled_count=0, designated=0, designatable=0},
+        trade={enabled_count=0, designated=0, designatable=0},
+        dump={enabled_count=0, designated=0, designatable=0},
+        train={enabled_count=0, designated=0, designatable=0},
+        forbid={enabled_count=0, designated=0, designatable=0},
+        claim={enabled_count=0}
     }
     local function inc_totals(total, sp)
         if sp.enabled then total.enabled_count = total.enabled_count + 1 end

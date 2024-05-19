@@ -431,7 +431,7 @@ StockpilesOverlay.ATTRS{
     default_pos={x=5, y=44},
     default_enabled=true,
     viewscreens='dwarfmode/Stockpile/Some', -- hmm, how do I close it when 'dwarfmode/CustomStockpile' is also up?
-    frame={w=65, h=5},
+    frame={w=49, h=5},
 }
 
 function StockpilesOverlay:init()
@@ -500,7 +500,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'dump'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='train',
-                        frame={t=1, l=48},
+                        frame={t=2, l=32},
                         auto_width=true,
                         key='CUSTOM_CTRL_A',
                         option_gap=-1,

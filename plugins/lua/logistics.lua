@@ -168,8 +168,8 @@ local function print_status()
     print((' - Items designated for trading: %5d'):format(global_sp_stats.total_trade))
     print((' - Items designated for dumping: %5d'):format(global_sp_stats.total_dump))
     print((' - Animals designated for train: %5d'):format(global_sp_stats.total_train))  -- TODO: fix to include all animals designated for training
-    print((' - Forbidden items             : %5d'):format(global_sp_stats.total_forbid)) -- TODO: this should exclude unreachable items and buildings
-    print((' - All (unforbidden) items     : %5d'):format(global_sp_stats.total_claim))  -- TODO: same ^^ implement in logistics.cpp or use item script api? (reqscript('item'))
+    print((' - Forbidden items             : %5d'):format(global_sp_stats.total_forbid)) -- TODO: this should exclude unreachable items
+    print((' - All (unforbidden) items     : %5d'):format(global_sp_stats.total_claim))  -- TODO: same ^^ implement in logistics.cpp or use `item` script api?
 end
 
 --------------------------

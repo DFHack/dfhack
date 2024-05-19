@@ -222,7 +222,7 @@ namespace DFHack
         template<typename T> struct type_name<std::deque<T>> {
             static const inline std::string name = "deque";
         };
-        template<typename T, int sz> struct type_name<std::array<T, sz>> {
+        template<typename T, size_t sz> struct type_name<std::array<T, sz>> {
             static const inline std::string name = "array";
         };
 

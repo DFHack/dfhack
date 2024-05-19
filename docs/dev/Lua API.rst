@@ -5602,6 +5602,21 @@ The CycleHotkeyLabel widget implements the following methods:
     selected option if no index is given. If an option was defined as just a
     string, then this function will return ``nil`` for that option.
 
+ButtonGroup class
+-----------------
+
+This is a specialized subclass of CycleHotkeyLabel that, in addition to the
+regular clickable widget, displays a corresponding row of clickable graphical
+buttons and synchronizes their selection state with the currently selected
+option.
+
+It takes two additional required parameters to define the buttons:
+
+:button_specs: A list of specs to pass to ``makeButtonLabelText`` (defined in
+    `Label class`_ above).
+:button_specs_selected: A list of specs that represent the buttons in their
+    selected state.
+
 ToggleHotkeyLabel class
 -----------------------
 

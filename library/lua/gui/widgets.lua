@@ -2210,7 +2210,7 @@ function CycleHotkeyLabel:onInput(keys)
     elseif keys._MOUSE_L and not is_disabled(self) then
         local x = self:getMousePos()
         if x then
-            self:cycle(x == 0)
+            self:cycle(self.key_back and x == 0)
             return true
         end
     end

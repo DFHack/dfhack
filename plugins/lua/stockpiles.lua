@@ -428,10 +428,10 @@ end
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
     desc='Shows a panel when a stockpile is selected for stockpile automation.',
-    default_pos={x=24, y=-6},
+    default_pos={x=5, y=44},
     default_enabled=true,
-    viewscreens='dwarfmode/Stockpile/Some',
-    frame={w=65, h=4},
+    viewscreens='dwarfmode/Stockpile/Some/Default',
+    frame={w=49, h=5},
 }
 
 function StockpilesOverlay:init()
@@ -466,7 +466,7 @@ function StockpilesOverlay:init()
                     widgets.Label{
                         frame={t=0, l=0, h=1},
                         auto_height=false,
-                        text={'Designate items/animals brought to this stockpile for:'},
+                        text={'Auto-designate stockpile items/animals for:'},
                         text_pen=COLOR_DARKGREY,
                     }, widgets.ToggleHotkeyLabel{
                         view_id='melt',
@@ -490,7 +490,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'trade'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='dump',
-                        frame={t=1, l=32},
+                        frame={t=2, l=0},
                         auto_width=true,
                         key='CUSTOM_CTRL_U',
                         option_gap=-1,
@@ -500,7 +500,7 @@ function StockpilesOverlay:init()
                         on_change=self:callback('toggleLogisticsFeature', 'dump'),
                     }, widgets.ToggleHotkeyLabel{
                         view_id='train',
-                        frame={t=1, l=48},
+                        frame={t=1, l=32},
                         auto_width=true,
                         key='CUSTOM_CTRL_A',
                         option_gap=-1,
@@ -508,6 +508,16 @@ function StockpilesOverlay:init()
                                 {label='Training', value=false}},
                         initial_option=false,
                         on_change=self:callback('toggleLogisticsFeature', 'train'),
+                    }, widgets.CycleHotkeyLabel{
+                        view_id='forbid',
+                        frame={t=2, l=16, w=16},
+                        key='CUSTOM_CTRL_F',
+                        option_gap=-1,
+                        options={{label='Forbid', value=0},
+                                {label='Forbid', value=1, pen=COLOR_LIGHTRED},
+                                {label='Claim', value=2, pen=COLOR_LIGHTBLUE}},
+                        initial_option=0,
+                        on_change=self:callback('toggleLogisticsFeature', 'forbid'),
                     },
                 },
             },
@@ -545,6 +555,7 @@ function StockpilesOverlay:onRenderFrame()
         self.subviews.melt:setOption(config.melt == 1)
         self.subviews.trade:setOption(config.trade == 1)
         self.subviews.dump:setOption(config.dump == 1)
+        self.subviews.forbid:setOption(config.forbid)
         self.subviews.train:setOption(config.train == 1)
         self.cur_stockpile = sp
     end
@@ -559,7 +570,7 @@ function StockpilesOverlay:toggleLogisticsFeature(feature)
     logistics.logistics_setStockpileConfig(config.stockpile_number,
             (feature == 'melt') ~= (config.melt == 1), (feature == 'trade') ~= (config.trade == 1),
             (feature == 'dump') ~= (config.dump == 1), (feature == 'train') ~= (config.train == 1),
-            config.melt_masterworks == 1)
+            self.subviews.forbid:getOptionValue(), config.melt_masterworks == 1)
 end
 
 function StockpilesOverlay:on_custom_config(custom)
@@ -567,7 +578,9 @@ function StockpilesOverlay:on_custom_config(custom)
     if not sp then return end
     local config = logistics.logistics_getStockpileConfigs(sp.stockpile_number)[1]
     logistics.logistics_setStockpileConfig(config.stockpile_number,
-            config.melt == 1, config.trade == 1, config.dump == 1, config.train == 1, custom.melt_masterworks)
+            config.melt == 1, config.trade == 1,
+            config.dump == 1, config.train == 1,
+            config.forbid, custom.melt_masterworks)
 end
 
 function StockpilesOverlay:toggleMinimized()

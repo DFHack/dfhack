@@ -583,6 +583,14 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
             newFocusString += "/Stockpile";
             if (game->main_interface.stockpile.cur_bld) {
                 newFocusString += "/Some";
+                if (game->main_interface.stockpile_link.open)
+                    newFocusString += "/Links";
+                else if (game->main_interface.stockpile_tools.open)
+                    newFocusString += "/Containers";
+                else if (game->main_interface.custom_stockpile.open)
+                    newFocusString += "/Customize";
+                else
+                    newFocusString += "/Default";
             }
             break;
         case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
@@ -796,21 +804,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.assign_vehicle.open) {
         newFocusString = baseFocus;
         newFocusString += "/AssignVehicle";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.stockpile_link.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/StockpileLink";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.stockpile_tools.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/StockpileTools";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.custom_stockpile.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/CustomStockpile";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.create_squad.open) {
@@ -1879,7 +1872,9 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     if (flags.bits.PAUSE || flags.bits.RECENTER)
         pauseRecenter((flags.bits.RECENTER ? pos : df::coord()), flags.bits.PAUSE); // Does nothing if not dwarf mode
 
-    bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
+    bool adv_unconscious = false;
+    if (auto adv = World::getAdventurer())
+        adv_unconscious = adv->counters.unconscious > 0;
 
     if (flags.bits.DO_MEGA && !adv_unconscious)
         showPopupAnnouncement(message, color, bright);
@@ -2113,19 +2108,19 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     // Check if the announcement will actually be used and written to gamelog
     if (*gamemode == game_mode::ADVENTURE)
     {
-        // TODO: Expect this check when adventure mode is re-added; sound and gamelog will happen otherwise
-        /*if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
+        if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
         {
             DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
             return false;
-        }*/
+        }
+
         if (info.pos.x >= 0 &&
             info.type != announcement_type::CREATURE_SOUND &&
             info.type != announcement_type::REGULAR_CONVERSATION &&
             info.type != announcement_type::CONFLICT_CONVERSATION &&
             info.type != announcement_type::MECHANISM_SOUND)
         {   // If not sound, make sure we can see pos if we're not involved
-            if (world->units.active.empty() || (info.unit_a != world->units.active[0] && info.unit_d != world->units.active[0]))
+            if (auto adv = World::getAdventurer(); info.unit_a != adv && info.unit_d != adv)
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
                 if (!Maps::isValidTilePos(info.pos) || (Maps::getTileDesignation(info.pos)->whole & 0x10) == 0x0)
                 {
@@ -2172,7 +2167,9 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     if (a_flags.bits.PAUSE || a_flags.bits.RECENTER)
         pauseRecenter((a_flags.bits.RECENTER ? info.pos : df::coord()), a_flags.bits.PAUSE); // Does nothing if not dwarf mode
 
-    bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
+    bool adv_unconscious = false;
+    if (auto adv = World::getAdventurer())
+        adv_unconscious = adv->counters.unconscious > 0;
 
     if (a_flags.bits.DO_MEGA && !adv_unconscious)
         showPopupAnnouncement(message, info.color, info.bright);

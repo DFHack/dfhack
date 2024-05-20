@@ -31,37 +31,19 @@ HotspotMenuWidget.ATTRS{
     frame={w=4, h=3}
 }
 
-function HotspotMenuWidget:init()
-    local to_pen = dfhack.pen.parse
-    local function tp(idx, ch)
-        return to_pen{
-            tile=function() return dfhack.textures.getTexposByHandle(logo_textures[idx]) end,
-            ch=ch,
-            fg=COLOR_GREY,
-        }
-    end
-    local function tph(idx, ch)
-        return to_pen{
-            tile=function() return dfhack.textures.getTexposByHandle(logo_hovered_textures[idx]) end,
-            ch=ch,
-            fg=COLOR_WHITE,
-            bold=true,
-        }
-    end
-    local function get_tile_token(idx, ch)
-        return {
-            tile=tp(idx, ch),
-            htile=tph(idx, ch),
-            width=1,
-        }
-    end
+local VERT_BAR = 179
 
+function HotspotMenuWidget:init()
     self:addviews{
         widgets.Label{
-            text={
-                get_tile_token(1, 179), get_tile_token(2, 'D'), get_tile_token(3, 'F'), get_tile_token(4, 179), NEWLINE,
-                get_tile_token(5, 179), get_tile_token(6, 'H'), get_tile_token(7, 'a'), get_tile_token(8, 179), NEWLINE,
-                get_tile_token(9, 179), get_tile_token(10, 'c'), get_tile_token(11, 'k'), get_tile_token(12, 179),
+            text=widgets.makeButtonLabelText{
+                chars={
+                    {VERT_BAR, 'D', 'F', VERT_BAR},
+                    {VERT_BAR, 'H', 'a', VERT_BAR},
+                    {VERT_BAR, 'c', 'k', VERT_BAR},
+                },
+                tileset=logo_textures,
+                tileset_hover=logo_hovered_textures,
             },
             on_click=function() dfhack.run_command{'hotkeys', 'menu', self.name} end,
         },

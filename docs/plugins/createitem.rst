@@ -5,9 +5,10 @@ createitem
     :summary: Create arbitrary items.
     :tags: adventure fort armok items
 
-You can create new items of any type and made of any material. A unit must be
-selected in-game to use this command. By default, items created are spawned at
-the feet of the selected unit.
+You can create new items of any type and made of any material. By default,
+items created are spawned at the feet of the selected unit. If no unit is
+selected, the first citizen will be used as the creator unit and the items
+will be spawned at the location of the keyboard cursor.
 
 Specify the item and material information as you would indicate them in custom
 reaction raws, with the following differences:

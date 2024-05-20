@@ -75,6 +75,7 @@ Template for new versions:
 - ``widgets.makeButtonLabelText``: create text and graphical buttons from character/color/tile maps and/or dynamically loaded tilesets
 - ``widgets.DimensionsTooltip``: reusable selected dimensions tooltip that follows the mouse cursor around
 - ``widgets.ButtonGroup``: subclass of CycleHotkeyLabel that additionally displays clickable graphical buttons
+- ``widgets.CycleHotkeyLabel``: when the widget has both forward and backward hotkeys defined, support moving backwards by clicking on the appropriate hotkey hint
 
 ## Removed
 

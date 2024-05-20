@@ -1132,7 +1132,7 @@ end
 
 function ZScreen:isMouseOver()
     for _,sv in ipairs(self.subviews) do
-        if sv:getMouseFramePos() then return true end
+        if sv.visible and sv:getMouseFramePos() then return true end
     end
 end
 

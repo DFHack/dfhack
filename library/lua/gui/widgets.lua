@@ -238,6 +238,7 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
+    no_force_pause_badge = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -651,7 +652,7 @@ function Panel:onRenderFrame(dc, rect)
     if not self.frame_style then return end
     local inactive = self.parent_view and self.parent_view.hasFocus
             and not self.parent_view:hasFocus()
-    local pause_forced = self.parent_view and self.parent_view.force_pause
+    local pause_forced = not self.no_force_pause_badge and safe_index(self.parent_view, 'force_pause')
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title, inactive,
             pause_forced, self.resizable)
     if self.kbd_get_pos then
@@ -2206,9 +2207,12 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L and self:getMousePos() and not is_disabled(self) then
-        self:cycle()
-        return true
+    elseif keys._MOUSE_L and not is_disabled(self) then
+        local x = self:getMousePos()
+        if x then
+            self:cycle(self.key_back and x == 0)
+            return true
+        end
     end
 end
 
@@ -2248,6 +2252,7 @@ function ButtonGroup:init(info)
             Label{
                 frame={t=2, l=start, w=width},
                 text=makeButtonLabelText(info.button_specs_selected[idx]),
+                on_click=function() self:setOption(opt_val, false) end,
                 visible=function() return self:getOptionValue() == opt_val end,
             },
         }
@@ -3242,6 +3247,7 @@ DimensionsTooltip = defclass(DimensionsTooltip, ResizingPanel)
 DimensionsTooltip.ATTRS{
     frame_style=gui.FRAME_THIN,
     frame_background=gui.CLEAR_PEN,
+    no_force_pause_badge=true,
     auto_width=true,
     display_offset={x=3, y=3},
     get_anchor_pos_fn=DEFAULT_NIL,

@@ -4980,6 +4980,11 @@ Has attributes:
   module, remember to ``require`` the gui module and prefix the identifier with
   ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
 
+* ``no_force_pause_badge`` (default: ``false``)
+
+  If true, then don't display the PAUSE FORCED badge on the frame even if the
+  game has been force paused.
+
 Has functions:
 
 * ``panel:setKeyboardDragEnabled(bool)``

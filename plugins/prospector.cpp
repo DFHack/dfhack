@@ -491,14 +491,14 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
 
         for (unsigned j = 0; j < layer->vein_mat.size(); j++)
             if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))
-                sums[layer->vein_type[j]] += layer->vein_unk_38[j];
+                sums[layer->vein_type[j]] += layer->vein_freq[j];
 
         for (unsigned j = 0; j < layer->vein_mat.size(); j++)
         {
             // TODO: find out how to estimate the real density
-            // this code assumes that vein_unk_38 is the weight
+            // this code assumes that vein_freq is the weight
             // used when choosing the vein material
-            float size = float(layer->vein_unk_38[j]);
+            float size = float(layer->vein_freq[j]);
             df::inclusion_type type = layer->vein_type[j];
 
             // There doesn't seem to be any relation between mineral scarcity and the number or size of clusters and veins,
@@ -543,7 +543,7 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
                     // Vanilla only has single clusters nested in small ones. We weigh the estimate based on the proportion of
                     // the small clusters out of the 10 standard ones. Note that this does not distinguish between enclosing small
                     // clusters that are actually in standard pool of 10 and those in veins (TODO)
-                    size = size * layer->vein_unk_38[layer->vein_nested_in[j]] * 10 / sums[inclusion_type::CLUSTER_SMALL] / sums[type];
+                    size = size * layer->vein_freq[layer->vein_nested_in[j]] * 10 / sums[inclusion_type::CLUSTER_SMALL] / sums[type];
                 }
                 break;
             default:

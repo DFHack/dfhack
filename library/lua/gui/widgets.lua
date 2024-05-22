@@ -1725,9 +1725,13 @@ local function get_button_tileset_idx(spec, x, y, tileset_offset, tileset_stride
     return idx
 end
 
+local function get_asset_tile(asset, x, y)
+    return dfhack.screen.findGraphicsTile(asset.page, asset.x+x-1, asset.y+y-1)
+end
+
 local function get_button_token_tiles(spec, x, y)
-    local tile = safe_index(spec.tiles, y, x)
-    local tile_hover = safe_index(spec.tiles_hover, y, x) or tile
+    local tile = safe_index(spec.tiles_override, y, x)
+    local tile_hover = safe_index(spec.tiles_hover_override, y, x) or tile
     if not tile and spec.tileset then
         local tileset = spec.tileset
         local idx = get_button_tileset_idx(spec, x, y, spec.tileset_offset, spec.tileset_stride)
@@ -1738,6 +1742,14 @@ local function get_button_token_tiles(spec, x, y)
                 spec.tileset_hover_offset or spec.tileset_offset,
                 spec.tileset_hover_stride or spec.tileset_stride)
             tile_hover = dfhack.textures.getTexposByHandle(tileset_hover[idx_hover])
+        else
+            tile_hover = tile
+        end
+    end
+    if not tile and spec.asset then
+        tile = get_asset_tile(spec.asset, x, y)
+        if spec.asset_hover then
+            tile_hover = get_asset_tile(spec.asset_hover, x, y)
         else
             tile_hover = tile
         end
@@ -1773,14 +1785,16 @@ end
 ---@field chars_hover? (string|string[])[]
 ---@field pens? dfhack.color|dfhack.color[][]
 ---@field pens_hover? dfhack.color|dfhack.color[][]
----@field tiles? integer[][]
----@field tiles_hover? integer[][]
+---@field tiles_override? integer[][]
+---@field tiles_hover_override? integer[][]
 ---@field tileset? TexposHandle[]
 ---@field tileset_hover? TexposHandle[]
 ---@field tileset_offset? integer
 ---@field tileset_hover_offset? integer
 ---@field tileset_stride? integer
 ---@field tileset_hover_stride? integer
+---@field asset? {page: string, x: integer, y: integer}
+---@field asset_hover? {page: string, x: integer, y: integer}
 
 ---@nodiscard
 ---@param spec widgets.ButtonLabelSpec

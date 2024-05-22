@@ -1708,9 +1708,9 @@ end
 local function get_button_token_base_pens(spec, x, y)
     local pen, pen_hover = COLOR_GRAY, COLOR_WHITE
     if spec.pens then
-        pen = type(spec.pens) == 'table' and safe_index(spec.pens, y, x) or spec.pens[y] or spec.pens
+        pen = type(spec.pens) == 'table' and (safe_index(spec.pens, y, x) or spec.pens[y]) or spec.pens
         if spec.pens_hover then
-            pen_hover = type(spec.pens_hover) == 'table' and safe_index(spec.pens_hover, y, x) or spec.pens_hover[y] or spec.pens_hover
+            pen_hover = type(spec.pens_hover) == 'table' and (safe_index(spec.pens_hover, y, x) or spec.pens_hover[y]) or spec.pens_hover
         else
             pen_hover = pen
         end

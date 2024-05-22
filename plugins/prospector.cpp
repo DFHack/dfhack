@@ -328,11 +328,11 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
             if (tile.elevation == 99)
                 tile.elevation = 98;
 
-            if (tile.geo_biome && (tile.geo_biome->unk1 == 4 || tile.geo_biome->unk1 == 5))
+            if (tile.geo_biome && (tile.geo_biome->type == 4 || tile.geo_biome->type == 5))
             {
                 auto b_details = get_details(data, tile.biome_pos);
 
-                if (b_details && b_details->unk12e8 < 500)
+                if (b_details && b_details->ocean_beach_comp.soil_freq < 500)
                     tile.max_soil_depth = 0;
             }
         }

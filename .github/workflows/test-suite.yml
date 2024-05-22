@@ -1,0 +1,91 @@
+name: Test suite
+
+on:
+  workflow_call:
+    inputs:
+      dfhack_repo:
+        type: string
+      dfhack_ref:
+        type: string
+      os:
+        type: string
+      compiler:
+        type: string
+      plugins:
+        type: string
+      config:
+        type: string
+
+jobs:
+  run-tests:
+    name: Test (${{ inputs.os }}, ${{ inputs.compiler }}, ${{ inputs.plugins }} plugins, ${{ inputs.config }} config)
+    runs-on: ${{ inputs.os }}-latest
+    steps:
+    - name: Set env
+      shell: bash
+      run: echo "DF_FOLDER=DF" >>$GITHUB_ENV
+    - name: Install dependencies
+      if: inputs.os == 'ubuntu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          libsdl2-2.0-0 \
+          libsdl2-image-2.0-0
+    - name: Clone DFHack
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.dfhack_repo }}
+        ref: ${{ inputs.dfhack_ref }}
+    - name: Detect DF version
+      shell: bash
+      run: echo DF_VERSION="$(sh ci/get-df-version.sh)" >>$GITHUB_ENV
+    - name: Fetch DF cache
+      id: restore-df
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ env.DF_FOLDER }}
+        key: df-${{ inputs.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
+    - name: Download DF
+      if: steps.restore-df.outputs.cache-hit != 'true'
+      run: sh ci/download-df.sh ${{ env.DF_FOLDER }} ${{ inputs.os }} ${{ env.DF_VERSION }}
+    - name: Save DF cache
+      if: steps.restore-df.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ env.DF_FOLDER }}
+        key: df-${{ inputs.os }}-${{ env.DF_VERSION }}-${{ hashFiles('ci/download-df.sh') }}
+    - name: Install blank DFHack init scripts
+      if: inputs.config == 'empty'
+      shell: bash
+      run: |
+        mkdir -p ${{ env.DF_FOLDER }}/dfhack-config/init
+        cd data/dfhack-config/init
+        for fname in *.init; do touch ../../../${{ env.DF_FOLDER }}/dfhack-config/init/$fname; done
+    - name: Download DFHack
+      uses: actions/download-artifact@v4
+      with:
+        name: test-${{ inputs.compiler }}
+    - name: Install DFHack
+      shell: bash
+      run: tar xjf test-${{ inputs.compiler }}.tar.bz2 -C ${{ env.DF_FOLDER }}
+    - name: Start X server
+      if: inputs.os == 'ubuntu'
+      run: Xvfb :0 -screen 0 1600x1200x24 &
+    - name: Run lua tests
+      timeout-minutes: 10
+      env:
+        DISPLAY: :0
+        TERM: xterm-256color
+      run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
+    - name: Check RPC interface
+      run: python ci/check-rpc.py "${{ env.DF_FOLDER }}/dfhack-rpc.txt"
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      continue-on-error: true
+      with:
+        name: test-output-${{ inputs.compiler }}-${{ inputs.plugins }}_plugins-${{ inputs.config }}_config
+        path: |
+          ${{ env.DF_FOLDER }}/dfhack-rpc.txt
+          ${{ env.DF_FOLDER }}/test*.json
+          ${{ env.DF_FOLDER }}/*.log

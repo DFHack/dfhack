@@ -3376,7 +3376,8 @@ environment by the mandatory init file dfhack.lua:
 * ``safe_index(obj,index...)``
 
   Walks a sequence of dereferences, which may be represented by numbers or strings.
-  Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
+  Returns *nil* if any of obj or indices is *nil*, obj isn't indexable, or a numeric
+  index is out of array bounds.
 
 * ``ensure_key(t, key[, default_value])``
 

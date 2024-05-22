@@ -1318,12 +1318,12 @@ bool GeoLayer::form_veins(color_ostream &out)
                 );
             }
 
-            vptr->probability = std::max<int>(vptr->probability, info->vein_unk_38[i]);
+            vptr->probability = std::max<int>(vptr->probability, info->vein_freq[i]);
         }
         else
         {
             vptr = VeinExtent::Ptr(new VeinExtent(key));
-            vptr->probability = info->vein_unk_38[i];
+            vptr->probability = info->vein_freq[i];
             if (parent_id >= 0)
                 vptr->set_parent(refs[parent_id]);
 

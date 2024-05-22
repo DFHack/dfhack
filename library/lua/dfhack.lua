@@ -514,11 +514,12 @@ end
 ---@param ... number|string
 ---@return any obj
 function safe_index(obj,idx,...)
-    if obj == nil or idx == nil then
+    local obj_type = type(obj)
+    if obj == nil or idx == nil or (obj_type ~= "table" and obj_type ~= "userdata") then
         return nil
     end
     if type(idx) == 'number' and
-            type(obj) == 'userdata' and -- this check is only relevant for c++
+            obj_type == 'userdata' and -- this check is only relevant for c++
             (idx < 0 or idx >= #obj)
     then
         return nil

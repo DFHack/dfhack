@@ -1394,7 +1394,7 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding
-    bld->deconstructItems(false, false);
+    bld->deconstructItems(false, false, false);
     // Don't clear arrows.
 
     bld->uncategorize();
@@ -1605,8 +1605,7 @@ bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-    // 8 is the value obtained by reverse engineering
-    return ((df::building_civzonest*)building)->is_active == 8;
+    return ((df::building_civzonest*)building)->spec_sub_flag.bits.active;
 }
 
  bool Buildings::isAnimalTraining(df::building * building)

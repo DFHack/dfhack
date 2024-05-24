@@ -812,7 +812,7 @@ static const char * get_trap_str(df::building *b) {
         {
             std::ostringstream buf;
             buf << "CS";
-            if (trap->use_dump) {
+            if (trap->track_flags.bits.use_dump) {
                 if (trap->dump_x_shift == 0) {
                     buf << "d";
                     if (trap->dump_y_shift > 0)

@@ -5405,9 +5405,8 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
         button. If not specified, ``pens`` defaults to ``COLOR_GRAY`` and
         ``pens_hover`` defaults to ``COLOR_WHITE``
 
-    - ``tileset``, ``tileset_hover``: A tileset returned from
-        ``dfhack.textures.loadTileset``. If not specified, the corresponding
-        pen is used without setting a ``tile`` value.
+    - ``tileset``, ``tileset_hover``: If specified, must be a tileset that was
+        returned from ``dfhack.textures.loadTileset``.
 
     - ``tileset_offset``, ``tileset_hover_offset``: The 1-based offset within
         the tileset to the tile that represents the upper left corner of the
@@ -5419,14 +5418,24 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
         the width of a button row specified in ``chars``, which is appropriate
         for a tileset that has only a single button image per logical row.
 
-    - ``tiles``, ``tiles_hover``: A list of lists of integers representing raw
-        tile texpos values to be displayed at the corresponding button
-        position. Tiles specified here will override corresponding tiles from
-        ``tileset``. The lists can be sparse, so any unspecified values will
-        fall through to the corresponding ``tileset`` tile.
+    - ``asset``, ``asset_hover``: If specified, must be a table defining a
+        graphic asset loaded by DF from the vanilla sprite sheets or a mod. The
+        table must indicate which sprite page to read and the x and y offsets
+        of the upper left corner of the target asset in the following format:
+        ``{page=pagename, x=x_offset, y=y_offset}``.
 
-    Example 1: The civ-alert button - a text-only button that highlights the
-    text on hover::
+    - ``tiles_override``, ``tiles_hover_override``: A list of lists of integers
+        representing raw tile texpos values to be displayed at the
+        corresponding button position. Tiles specified here will override
+        corresponding tiles from ``tileset`` and ``asset``. The lists can be
+        sparse, so any unspecified values in the override array will fall
+        through to other specifiers.
+
+    If no tile is set for a particular button position, the corresponding
+    pen is used without setting a ``tile`` value.
+
+    Example 1: The civ-alert button - a text-only (no graphic tiles) button
+    that highlights the text on hover::
 
         widgets.Label{
             text=widgets.makeButtonLabelText{
@@ -5481,6 +5490,53 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
                 tileset_stride=8,
             },
             on_click=launch_warm_damp_dig_config,
+        },
+
+    Example 4: A copy of the mining toolbar button (except that it has a
+    highlight on hover), loaded from the DF assets::
+
+        widgets.Label{
+            text=widgets.makeButtonLabelText{
+                chars={
+                    {218, 196, 196, 191},
+                    {179, '-', ')', 179},
+                    {192, 196, 196, 217},
+                },
+                pens={
+                    {COLOR_GRAY, COLOR_GRAY,  COLOR_GRAY, COLOR_GRAY},
+                    {COLOR_GRAY, COLOR_BROWN, COLOR_GRAY, COLOR_GRAY},
+                    {COLOR_GRAY, COLOR_GRAY,  COLOR_GRAY, COLOR_GRAY},
+                },
+                pens_hover={
+                    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                    {COLOR_WHITE, COLOR_BROWN, COLOR_GRAY,  COLOR_WHITE},
+                    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+                },
+                asset={page='INTERFACE_BITS', x=0, y=22},
+            },
+            on_click=self:callback('mining_menu'),
+        },
+
+    Example 5: A copy of the mining toolbar button (except that it has a
+    custom hotkey hint in the upper corner), loaded from the DF assets and with
+    one tile overridden::
+
+        widgets.Label{
+            text=widgets.makeButtonLabelText{
+                chars={
+                    {218, 196, 196, self.hint_char},
+                    {179, '-', ')', 179},
+                    {192, 196, 196, 217},
+                },
+                pens={
+                    {COLOR_GRAY, COLOR_GRAY,  COLOR_GRAY, COLOR_RED},
+                    {COLOR_GRAY, COLOR_BROWN, COLOR_GRAY, COLOR_GRAY},
+                    {COLOR_GRAY, COLOR_GRAY,  COLOR_GRAY, COLOR_GRAY},
+                },
+                asset={page='INTERFACE_BITS', x=0, y=22},
+                tiles_override={{[4]=string.byte(self.hint_char)}},
+            },
+            on_click=self:callback('mining_menu'),
         },
 
 WrappedLabel class

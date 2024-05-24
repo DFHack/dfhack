@@ -1816,7 +1816,7 @@ static bool recent_report_any(df::unit *unit)
     return false;
 }
 
-static bool add_proper_report(df::unit* unit, bool is_sparring, df::report *report, bool update_alert = false)
+static bool add_proper_report(df::unit *unit, bool is_sparring, df::report *report, bool update_alert = false)
 {   // Add report to proper category based on is_sparring and unit current job
     if (is_sparring)
         return Gui::addCombatReport(unit, unit_report_type::Sparring, report, update_alert);
@@ -1889,9 +1889,9 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     {
         if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, type)) >= 0) // Alert of type exists
         {
-            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+            for (size_t i = reports.size(); i-- > 0;)
             {
-                auto& cur_report = **it;
+                auto &cur_report = *reports[i];
                 if (cur_report.text == message) // Repeat if text matches
                 {
                     cur_report.duration = ANNOUNCE_LINE_DURATION;
@@ -1924,7 +1924,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         if (flags.bits.D_DISPLAY)
         {   // Find existing alert of same type, else create new
             auto alert_type = ENUM_ATTR(announcement_type, alert_type, type);
-            df::announcement_alertst* alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
+            df::announcement_alertst *alert = vector_get(alerts, linear_index(alerts, &df::announcement_alertst::type, alert_type));
 
             if (!alert)
             {
@@ -2001,7 +2001,8 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
 }
 
 
-bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert) {
+bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index, bool update_alert)
+{
     return addCombatReport(unit, slot, vector_get(df::global::world->status.reports, report_index), update_alert);
 }
 
@@ -2021,7 +2022,8 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, df::r
     return ok;
 }
 
-bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index) {
+bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
+{
     return addCombatReportAuto(unit, mode, vector_get(df::global::world->status.reports, report_index));
 }
 
@@ -2206,9 +2208,9 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (linear_index(alerts, &df::announcement_alertst::type, ENUM_ATTR(announcement_type, alert_type, info.type)) >= 0) // Alert of type exists
         {
-            for (vector<df::report*>::iterator it = reports.end() - 1; it > reports.begin(); it--)
+            for (size_t i = reports.size(); i-- > 0;)
             {
-                auto& cur_report = **it;
+                auto &cur_report = *reports[i];
                 if (cur_report.text == message) // Repeat if text matches
                 {
                     cur_report.duration = ANNOUNCE_LINE_DURATION;
@@ -2601,30 +2603,27 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
 
     insert_markup_text_wordst(word_vec, str, link_index, color);
 
-    if (word_vec.size() > 1) // Merge punctuation after "[/LPAGE]" left into link word
+    for (size_t i = word_vec.size(); i-- > 1;) // Merge punctuation after "[/LPAGE]" left into link word
     {
-        for (vector<df::markup_text_wordst*>::iterator it = word_vec.end() - 1; it > word_vec.begin(); it--)
-        {
-            auto cur_entry = *it;
-            if (cur_entry->link_index != -1 || cur_entry->str.empty()) // Doesn't check (cur_entry->str.size() != 1)
-                continue;
-            auto prev_entry = *(it - 1);
-            if (prev_entry->link_index == -1 || prev_entry->str.empty())
-                continue;
+        auto &cur_entry = *word_vec[i];
+        if (cur_entry.link_index != -1 || cur_entry.str.empty()) // Doesn't check (cur_entry.str.size() != 1)
+            continue;
+        auto &prev_entry = *word_vec[i-1];
+        if (prev_entry.link_index == -1 || prev_entry.str.empty())
+            continue;
 
-            if (cur_entry->str[0] == '.' || cur_entry->str[0] == ',' || cur_entry->str[0] == '?' || cur_entry->str[0] == '!')
-            {
-                prev_entry->str += cur_entry->str;
-                delete cur_entry;
-                word_vec.erase(it);
-            }
+        if (cur_entry.str[0] == '.' || cur_entry.str[0] == ',' || cur_entry.str[0] == '?' || cur_entry.str[0] == '!')
+        {
+            prev_entry.str += cur_entry.str;
+            word_vec.erase(word_vec.begin() + i);
+            delete &cur_entry;
         }
     }
 
     return;
 }
 
-void Gui::MTB_set_width(df::markup_text_boxst* mtb, int32_t width)
+void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t width)
 {   // Reverse-engineered from "markup_text_boxst::set_width" FUN_1409f6e80 (v50.11 win64 Steam)
     if (mtb->current_width == width)
         return;
@@ -2636,7 +2635,7 @@ void Gui::MTB_set_width(df::markup_text_boxst* mtb, int32_t width)
     int32_t px_val = 0;
     int32_t py_val = 0;
 
-    for (vector<df::markup_text_wordst*>::iterator it = mtb->word.begin(); it < mtb->word.end(); it++)
+    for (vector<df::markup_text_wordst *>::iterator it = mtb->word.begin(); it < mtb->word.end(); it++)
     {
         auto &cur_word = **it;
 

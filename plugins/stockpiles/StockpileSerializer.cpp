@@ -888,7 +888,7 @@ void StockpileSettingsSerializer::write_general(color_ostream& out) {
 
 void StockpileSerializer::write_general(color_ostream& out) {
     StockpileSettingsSerializer::write_general(out);
-    mBuffer.set_use_links_only(mPile->use_links_only);
+    mBuffer.set_use_links_only(mPile->stockpile_flag.bits.use_links_only);
 }
 
 void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMode mode) {
@@ -904,10 +904,12 @@ void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMo
 
 void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode) {
     StockpileSettingsSerializer::read_general(out, mode);
-    read_elem<int32_t, bool>(out, "use_links_only", mode,
+    bool use_links_only;
+    read_elem<bool, bool>(out, "use_links_only", mode,
             std::bind(&StockpileSettings::has_use_links_only, mBuffer),
             std::bind(&StockpileSettings::use_links_only, mBuffer),
-            mPile->use_links_only);
+            use_links_only);
+    mPile->stockpile_flag.bits.use_links_only = use_links_only;
 }
 
 static bool ammo_mat_is_allowed(const MaterialInfo& mi) {

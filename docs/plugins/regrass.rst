@@ -46,8 +46,9 @@ Options
     specified.
 ``-p <grass_id>``, ``--plant <grass_id>``
     Specify a grass type for the ``--force`` option. ``grass_id`` is not
-    case-sensitive, but must be enclosed in quotes if spaces exist. Providing
-    an empty string with "" will print all available IDs and skip regrass.
+    case-sensitive, but must be enclosed in quotes if spaces exist. A numerical
+    ID can also be used. Providing an empty string with "" will print all
+    available IDs and skip regrass.
 ``-a``, ``--ashes``
     Regrass tiles that've been burnt to ash.
 ``-d``, ``--buildings``
@@ -65,8 +66,8 @@ Options
     `devel/block-borders` can be used to visualize map blocks.
 ``-z``, ``--zlevel``
     Regrass entire z-levels. Will do all z-levels between ``pos`` arguments if
-    both given, z-level of first ``pos`` if one given, else z-level of
-    viewscreen if no ``pos`` given.
+    both are given, z-level of first ``pos`` if one is given, else z-level of
+    current view if no ``pos`` is given.
 
 Examples
 --------

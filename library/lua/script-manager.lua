@@ -113,7 +113,6 @@ local function add_mod_paths(mod_paths, id, base_path, subdir)
     local sep = base_path:endswith('/') and '' or '/'
     local path = ('%s%s%s'):format(base_path, sep, subdir)
     if dfhack.filesystem.isdir(path) then
-        print(('indexing %s for mod: %s'):format(subdir, id))
         table.insert(mod_paths, {id=id, path=path})
     end
 end
@@ -124,7 +123,7 @@ function get_mod_paths(installed_subdir, active_subdir)
     local mod_paths = {}
 
     -- if a world is loaded, process active mods first, and lock to active version
-    if active_subdir and dfhack.isWorldLoaded() then
+    if dfhack.isWorldLoaded() then
         for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
             path = tostring(path.value)
             -- skip vanilla "mods"
@@ -132,7 +131,9 @@ function get_mod_paths(installed_subdir, active_subdir)
             local id = get_mod_id_and_version(path)
             if not id then goto continue end
             mods[id] = {handled=true}
-            add_mod_paths(mod_paths, id, path, active_subdir)
+            if active_subdir then
+                add_mod_paths(mod_paths, id, path, active_subdir)
+            end
             add_mod_paths(mod_paths, id, path, installed_subdir)
             ::continue::
         end
@@ -177,6 +178,23 @@ function get_mod_script_paths()
         table.insert(paths, v.path)
     end
     return paths
+end
+
+function getModSourcePath(mod_id)
+    for _,v in ipairs(get_mod_paths('.')) do
+        if v.id == mod_id then
+            -- trim off the final '.'
+            return v.path:sub(1, #v.path-1)
+        end
+    end
+end
+
+function getModStatePath(mod_id)
+    local path = ('dfhack-config/mods/%s/'):format(mod_id)
+    if not dfhack.filesystem.mkdir_recursive(path) then
+        error(('failed to create mod state directory: "%s"'):format(path))
+    end
+    return path
 end
 
 ---------------------

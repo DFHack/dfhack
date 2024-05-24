@@ -78,6 +78,7 @@ Template for new versions:
 - ``widgets.ButtonGroup``: subclass of CycleHotkeyLabel that additionally displays clickable graphical buttons
 - ``widgets.CycleHotkeyLabel``: when the widget has both forward and backward hotkeys defined, support moving backwards by clicking on the appropriate hotkey hint
 - ``safe_index``: will now return nil when attempting to index into a non-indexable object
+- ``widgets.FilteredList``: don't restrict the player from inputting multiple successive space characters
 
 ## Removed
 

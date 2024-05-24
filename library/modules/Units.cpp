@@ -893,7 +893,7 @@ static void add_assigned_noble_units(vector<df::unit *> &units, const df::histor
 
 static void add_entity_nobles(vector<df::unit *> &units, string noble, size_t limit, df::historical_entity *he) {
     if (!he)
-        return ;
+        return;
     int32_t noble_position_id = get_noble_position_id(he->positions, noble);
     if (noble_position_id >= 0)
         add_assigned_noble_units(units, he->positions, noble_position_id, limit);
@@ -1925,9 +1925,7 @@ bool Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit)
     if (!histfig)
         return false;
 
-    for (size_t i = 0; i < histfig->entity_links.size(); i++)
-    {
-        auto link = histfig->entity_links[i];
+    for (auto link: histfig->entity_links) {
         auto epos = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
         if (!epos)
             continue;

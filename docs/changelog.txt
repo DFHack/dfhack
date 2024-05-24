@@ -67,6 +67,7 @@ Template for new versions:
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
+- `modding-guide`: add a section on persistent storage, both for global settings and world-specific settings
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
@@ -78,6 +79,7 @@ Template for new versions:
 - ``widgets.ButtonGroup``: subclass of CycleHotkeyLabel that additionally displays clickable graphical buttons
 - ``widgets.CycleHotkeyLabel``: when the widget has both forward and backward hotkeys defined, support moving backwards by clicking on the appropriate hotkey hint
 - ``safe_index``: will now return nil when attempting to index into a non-indexable object
+- ``script-manager``: add ``getModSourcePath`` and ``getModStatePath`` so modders can get the directory path to their own files
 - ``widgets.FilteredList``: don't restrict the player from inputting multiple successive space characters
 
 ## Removed

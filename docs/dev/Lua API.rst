@@ -709,6 +709,7 @@ Locking and finalization
 
   Calls ``fn(obj,args...)``, then finalizes with ``obj:delete()``.
 
+.. _persistent-api:
 
 Persistent configuration storage
 --------------------------------
@@ -3434,6 +3435,46 @@ functions. These are invoked just like standard string functions, e.g.::
 * ``string:escape_pattern()``
 
   Escapes regex special chars in a string. E.g. ``'a+b'`` -> ``'a%+b'``.
+
+.. _script-manager:
+
+script-manager
+==============
+
+This module contains functions useful for mods that contain DFHack scripts to
+retrieve source and state paths. The value to pass as ``mod_id`` must be the
+same as the mod ID in the mod's :file:`info.txt` metadata file. The returned
+paths will be relative to the top level game directory and will end in a slash
+(``/``).
+
+* ``scriptmanager.getModSourcePath(mod_id)``
+
+  Retrieve the source directory path for the mod with the given ID or ``nil``
+  if the mod cannot be found. If multiple versions of a mod are found, the path
+  for the version loaded by the current world is used. If the current world
+  does not have the mod loaded (or if a world is not currently loaded) then the
+  path for the most recent version of the mod is returned. Example::
+
+      local scriptmanager = require('script-manager')
+      local path = scriptmanager.getModSourcePath('my_awesome_mod')
+      print(path)
+
+  Which would print something like: ``mods/2945575779/`` or
+  ``data/installed_mods/my_awesome_mod (108)/``, depending on where the mod is
+  being loaded from.
+
+* ``scriptmanager.getModStatePath(mod_id)``
+
+  Retrieve the directory path where a mod with the given ID should store its
+  persistent state. Example::
+
+      local json = require('json')
+      local scriptmanager = require('script-manager')
+      local path = scriptmanager.getModStatePath('my_awesome_mod')
+      config = config or json.open(path .. 'settings.json')
+
+  Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
+  calling ``getModStatePath``, the returned directory is guaranteed to exist.
 
 utils
 =====
@@ -6860,18 +6901,32 @@ If the state of your script can be tied to an active savegame, then your script
 should hook the appropriate events to load persisted state when a savegame is
 loaded. For example::
 
-    local json = require('json')
-    local persist = require('persist-table')
+    local utils = require('utils')
 
     local GLOBAL_KEY = 'my-script-name'
-    g_state = g_state or {}
+
+    local function get_default_state()
+        return {
+            -- add default config here, e.g.
+            -- enabled=false,
+        }
+    end
+
+    state = state or get_default_state()
 
     dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
             return
         end
-        local state = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-        g_state = state or {}
+        -- retrieve state saved in game. merge with default state so config
+        -- saved from previous versions can pick up newer defaults.
+        state = get_default_state()
+        utils.assign(state, dfhack.persistent.getSiteData(GLOBAL_KEY, state))
+    end
+
+    -- to be called when global state changes that needs to be persisted
+    local function persist_state()
+        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
     end
 
 The attachment to ``dfhack.onStateChange`` should appear in your script code

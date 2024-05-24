@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
+- `plant` (formerly ``plants``): can now ``remove`` shrubs and saplings; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions

@@ -938,8 +938,6 @@ end
 
 internal.scripts = internal.scripts or {}
 
-local hack_path = dfhack.getHackPath()
-
 function dfhack.findScript(name)
     return dfhack.internal.findScript(name .. '.lua')
 end

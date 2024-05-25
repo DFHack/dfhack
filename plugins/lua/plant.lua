@@ -62,7 +62,7 @@ local function plant_age(s) --tree stage or numerical value
     end
 
     if n then
-        n = (n > 1250) and 1250 or n
+        n = math.min(n, 1250)
         if n > 0 then
             return 40320*n-1 --years to tens of ticks - 1
         else

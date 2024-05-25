@@ -1,25 +1,16 @@
 // Grow and remove shrubs or trees.
 
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <algorithm>
-#include <vector>
-#include <string>
-
 #include "Debug.h"
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"
-#include "modules/MapCache.h"
 #include "modules/Maps.h"
 
 #include "df/block_square_event_grassst.h"
+#include "df/block_square_event_material_spatterst.h"
+#include "df/builtin_mats.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
@@ -48,15 +39,14 @@ struct cuboid
     int16_t z_max = -1;
 
     bool isValid() const
-    {   // False if any bound is < 0
-        return x_min >= 0 && x_max >= 0 &&
-            y_min >= 0 && y_max >= 0 &&
-            z_min >= 0 && z_max >= 0;
+    {   // True if all max >= min >= 0
+        return (x_min >= 0 && y_min >= 0 && z_min >= 0 &&
+            x_max >= x_min && y_max >= y_min && z_max >= z_min);
     }
 
     bool addPos(int16_t x, int16_t y, int16_t z)
     {   // Expand cuboid to include point. Return true if bounds changed
-        if (x < 0 || y < 0 || z < 0 || (isValid() && testPos(x, y, z)))
+        if (x < 0 || y < 0 || z < 0 || (isValid() && containsPos(x, y, z)))
             return false;
 
         x_min = (x_min < 0 || x < x_min) ? x : x_min;
@@ -70,15 +60,15 @@ struct cuboid
 
         return true;
     }
-    inline bool addPos(df::coord pos) { return addPos(pos.x, pos.y, pos.z); }
+    inline bool addPos(const df::coord &pos) { return addPos(pos.x, pos.y, pos.z); }
 
-    bool testPos(int16_t x, int16_t y, int16_t z) const
+    bool containsPos(int16_t x, int16_t y, int16_t z) const
     {   // Return true if point inside cuboid. Make sure cuboid is valid first!
         return x >= x_min && x <= x_max &&
             y >= y_min && y <= y_max &&
             z >= z_min && z <= z_max;
     }
-    inline bool testPos(df::coord pos) const { return testPos(pos.x, pos.y, pos.z); }
+    inline bool containsPos(const df::coord &pos) const { return containsPos(pos.x, pos.y, pos.z); }
 };
 
 struct plant_options
@@ -86,6 +76,7 @@ struct plant_options
     bool create = false; // Create a plant
     bool grow = false; // Grow saplings into trees
     bool del = false; // Remove plants
+    bool force = false; // Create plants on no_grow
     bool shrubs = false; // Remove shrubs
     bool saplings = false; // Remove saplings
     bool trees = false; // Remove grown trees
@@ -104,6 +95,7 @@ static const struct_field_info plant_options_fields[] =
     { struct_field_info::PRIMITIVE, "create",    offsetof(plant_options, create),    &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "grow",      offsetof(plant_options, grow),      &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "del",       offsetof(plant_options, del),       &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "force",     offsetof(plant_options, force),     &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "shrubs",    offsetof(plant_options, shrubs),    &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "saplings",  offsetof(plant_options, saplings),  &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "trees",     offsetof(plant_options, trees),     &df::identity_traits<bool>::identity, 0, 0 },
@@ -119,38 +111,89 @@ struct_identity plant_options::_identity(sizeof(plant_options), &df::allocator_f
 
 const int32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3 - 1; // 3 years minus 1; let the game handle the actual growing-up
 
-command_result df_createplant(color_ostream &out, df::coord pos, const plant_options &options)
+static bool tile_muddy(const df::coord &pos)
+{   // True if tile has mud spatter
+    auto block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+
+    for (auto blev : block->block_events)
+    {
+        if (blev->getType() != block_square_event_type::material_spatter)
+            continue;
+
+        auto &ms_ev = *(df::block_square_event_material_spatterst *)blev;
+        if (ms_ev.mat_type == builtin_mats::MUD)
+            return ms_ev.amount[pos.x&15][pos.y&15] > 0;
+    }
+
+    return false;
+}
+
+command_result df_createplant(color_ostream &out, const df::coord &pos, const plant_options &options)
 {
     auto col = Maps::getBlockColumn((pos.x / 48)*3, (pos.y / 48)*3);
-    if (!Maps::getTileBlock(pos) || !col)
+    auto tt = Maps::getTileType(pos);
+    if (!tt || !col)
     {
         out.printerr("No map block at pos!\n");
         return CR_FAILURE;
     }
 
-    auto tt = Maps::getTileType(pos);
-    if (!tt || tileShape(*tt) != tiletype_shape::FLOOR)
+    if (tileShape(*tt) != tiletype_shape::FLOOR)
     {
-        out.printerr("Plants can only be placed on floors!\n");
+        out.printerr("Can't create plant: Not floor!\n");
         return CR_FAILURE;
     }
-    else // Check tile mat and building occ
-    {
-        auto mat = tileMaterial(*tt);
-        if (mat != tiletype_material::SOIL &&
-            mat != tiletype_material::GRASS_DARK &&
-            mat != tiletype_material::GRASS_LIGHT)
-        {
-            out.printerr("Plants can only be placed on dirt or grass!\n");
-            return CR_FAILURE;
-        }
 
-        auto occ = Maps::getTileOccupancy(pos);
-        if (occ && occ->bits.building > tile_building_occ::None)
-        {
-            out.printerr("Building present at pos!\n");
+    auto occ = Maps::getTileOccupancy(pos);
+    CHECK_NULL_POINTER(occ);
+    if (occ->bits.building > tile_building_occ::None)
+    {
+        out.printerr("Can't create plant: Building present!\n");
+        return CR_FAILURE;
+    }
+    else if (!options.force && occ->bits.no_grow)
+    {
+        out.printerr("Can't create plant: Tile flagged no_grow and not --force!\n");
+        return CR_FAILURE;
+    }
+
+    auto des = Maps::getTileDesignation(pos);
+    CHECK_NULL_POINTER(des);
+    if (des->bits.flow_size > (des->bits.liquid_type == tile_liquid::Magma ? 0 : 3))
+    {
+        out.printerr("Can't create plant: Too much liquid!\n");
+        return CR_FAILURE;
+    }
+
+    auto spec = tileSpecial(*tt);
+    auto mat = tileMaterial(*tt);
+    switch (mat)
+    {
+        case tiletype_material::SOIL:
+        case tiletype_material::GRASS_LIGHT:
+        case tiletype_material::GRASS_DARK:
+        case tiletype_material::ASHES:
+            break;
+        case tiletype_material::STONE:
+        case tiletype_material::LAVA_STONE:
+        case tiletype_material::MINERAL:
+            if (spec == tiletype_special::SMOOTH || spec == tiletype_special::TRACK)
+            {
+                out.printerr("Can't create plant: Smooth stone!\n");
+                return CR_FAILURE;
+            }
+            else if (!tile_muddy(pos))
+            {
+                out.printerr("Can't create plant: Non-muddy stone!\n");
+                return CR_FAILURE;
+            }
+
+            break;
+        default:
+            out.printerr("Can't create plant: Wrong tile material!\n");
             return CR_FAILURE;
-        }
     }
 
     auto p_raw = vector_get(world->raws.plants.all, options.plant_idx);
@@ -171,7 +214,7 @@ command_result df_createplant(color_ostream &out, df::coord pos, const plant_opt
 
     // This is correct except for RICE, DATE_PALM, and underground plants
     // near pool/river/brook. These have both WET and DRY flags.
-    // Should more properly detect if near surface water feature
+    // Should more properly detect if near surface water feature.
     if (!p_raw->flags.is_set(plant_raw_flags::DRY))
         plant->flags.bits.watery = true;
 
@@ -181,12 +224,19 @@ command_result df_createplant(color_ostream &out, df::coord pos, const plant_opt
     plant->update_order = rand() % 10;
 
     world->plants.all.push_back(plant);
-    switch (plant->flags.whole & 3) // watery, is_shrub
+    if (plant->flags.bits.is_shrub)
     {
-        case 0: world->plants.tree_dry.push_back(plant); break;
-        case 1: world->plants.tree_wet.push_back(plant); break;
-        case 2: world->plants.shrub_dry.push_back(plant); break;
-        case 3: world->plants.shrub_wet.push_back(plant); break;
+        if (plant->flags.bits.watery)
+            world->plants.shrub_wet.push_back(plant);
+        else
+            world->plants.shrub_dry.push_back(plant);
+    }
+    else
+    {
+        if (plant->flags.bits.watery)
+            world->plants.tree_wet.push_back(plant);
+        else
+            world->plants.tree_dry.push_back(plant);
     }
 
     col->plants.push_back(plant);
@@ -194,6 +244,8 @@ command_result df_createplant(color_ostream &out, df::coord pos, const plant_opt
         *tt = tiletype::Shrub;
     else
         *tt = tiletype::Sapling;
+
+    occ->bits.no_grow = false;
 
     return CR_OK;
 }
@@ -219,7 +271,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     {
         if (plant->flags.bits.is_shrub)
             continue; // Shrub
-        else if (!bounds.testPos(plant->pos))
+        else if (!bounds.containsPos(plant->pos))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant->material) == options.filter_ex))
             continue; // Filtered out
@@ -264,13 +316,11 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
 static bool uncat_plant(df::plant *plant)
 {   // Remove plant from extra vectors
     vector<df::plant *> *vec = NULL;
-    switch (plant->flags.whole & 3) // watery, is_shrub
-    {
-        case 0: vec = &world->plants.tree_dry; break;
-        case 1: vec = &world->plants.tree_wet; break;
-        case 2: vec = &world->plants.shrub_dry; break;
-        case 3: vec = &world->plants.shrub_wet; break;
-    }
+
+    if (plant->flags.bits.is_shrub)
+        vec = plant->flags.bits.watery ? &world->plants.shrub_wet : &world->plants.shrub_dry;
+    else
+        vec = plant->flags.bits.watery ? &world->plants.tree_wet : &world->plants.tree_dry;
 
     for (size_t i = vec->size(); i-- > 0;)
     {   // Not sorted, but more likely near end
@@ -313,7 +363,7 @@ static bool has_grass(df::map_block *block, int tx, int ty)
     return false;
 }
 
-static void set_tt(df::coord pos)
+static void set_tt(const df::coord &pos)
 {   // Set tiletype to grass or soil floor
     auto block = Maps::getTileBlock(pos);
     if (!block)
@@ -365,7 +415,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
                 continue; // Not removing saplings
         }
 
-        if (!bounds.testPos(plant.pos))
+        if (!bounds.containsPos(plant.pos))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant.material) == options.filter_ex))
             continue; // Filtered out
@@ -438,6 +488,11 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     if (!Lua::CallLuaModuleFunction(out, "plugins.plant", "parse_commandline",
         std::make_tuple(&options, &pos_1, &pos_2, &filter, parameters)))
     {
+        return CR_WRONG_USAGE;
+    }
+    else if (options.force && !options.create)
+    {
+        out.printerr("Can't use --force without create!\n");
         return CR_WRONG_USAGE;
     }
 

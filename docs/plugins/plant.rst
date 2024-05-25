@@ -19,33 +19,16 @@ Provide a mode (including a ``plant_id`` for ``create``) followed by optional
 in the form ``0,0,0``, without spaces. The string ``here`` can be used in place
 of numeric coordinates to use the position of the keyboard cursor, if active.
 
-create
-======
-
 ::
 
     plant create <plant_id> [<pos>] [<options>]
 
 Creates a new plant of the specified type at ``pos`` or the cursor position.
-The target tile must be a dirt or grass floor. ``plant_id`` is not
-case-sensitive, but must be enclosed in quotes if spaces exist. (No unmodded
-shrub or sapling IDs have spaces.) A numerical ID can also be used. Providing
-an empty string with "" will print all available IDs and skip plant creation.
-
-Options
--------
-
-``-a <value>``, ``--age <value>``
-    Set the created plant to a specific age (in years.) ``value`` can be a
-    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
-    ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at
-    1250. Defaults to 0 if option is unused. Only a few tree types grow wider
-    than 1x1, but many may grow taller. (Going directly to higher years will
-    stunt height. It may be more desirable to instead use ``plant grow`` in
-    stages, or just spawn full trees using `gui/sandbox`.)
-
-grow
-====
+The target must be a floor tile, consisting of soil, grass, ashes, or
+non-smooth muddy stone. ``plant_id`` is not case-sensitive, but must be
+enclosed in quotes if spaces exist. (No unmodded shrub or sapling IDs have
+spaces.) A numerical ID can also be used. Providing an empty string with ""
+will print all available IDs and skip plant creation.
 
 ::
 
@@ -55,8 +38,62 @@ Grows saplings (including dead ones) into trees. Will default to all saplings
 on the map if no ``pos`` arguments are used. Saplings will die and fail to grow
 if they are blocked by another tree.
 
-Options
--------
+::
+
+    plant remove [<pos> [<pos>]] [<options>]
+
+Remove plants from the map (or area defined by ``pos`` arguments.) By default,
+only removes invalid plants that exist on non-plant tiles (due to `Bug 12868
+<https://dwarffortressbugtracker.com/view.php?id=12868>`_.) The ``--shrubs``
+and ``--saplings`` options allow normal plants to be targeted instead. Removal
+of fully-grown trees isn't currently supported.
+
+Examples
+--------
+
+``plant create tower_cap``
+    Create a Tower Cap sapling at the cursor.
+``plant create ""``
+    List all valid shrub and sapling IDs.
+``plant create 198 -a tree``
+    Create an Oak sapling at the cursor, ready to mature into a tree.
+``plant create single-grain_wheat 70,70,140``
+    Create a Single-grain Wheat shrub at (70, 70, 140.)
+``plant grow``
+    Attempt to grow all saplings on the map into trees.
+``plant grow -z -f maple,200,sand_pear``
+    Attempt to grow all Maple, Acacia, and Sand Pear saplings on the current
+    z-level into trees.
+``plant grow 0,0,100 19,19,119 -a 10``
+    Set the age of all saplings and trees (with their original sapling tile)
+    in the defined 20x20x20 cube to at least 10 years.
+``plant remove``
+    Remove all invalid plants from the map.
+``plant remove here -sp``
+    Remove the shrub or sapling at the cursor.
+``plant remove -spd``
+    Remove all dead shrubs and saplings from the map.
+``plant remove 0,0,49 0,0,51 -pz -e nether_cap``
+    Remove all saplings on z-levels 49 to 51, excluding Nether Cap.
+
+Create Options
+--------------
+
+``-c``, ``--force``
+    Create plant even on tiles flagged ``no_grow`` and unset the flag. This
+    flag is set on tiles that were originally boulders or pebbles, as well
+    as on some tiles found in deserts, etc.
+``-a <value>``, ``--age <value>``
+    Set the created plant to a specific age (in years.) ``value`` can be a
+    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
+    ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at
+    1250. Defaults to 0 if option is unused. Only a few tree types grow wider
+    than 1x1, but many may grow taller. (Going directly to higher years will
+    stunt height. It may be more desirable to instead use ``plant grow`` in
+    stages, or just spawn full trees using `gui/sandbox`.)
+
+Grow Options
+------------
 
 ``-a <value>``, ``--age <value>``
     Define the age (in years) to set saplings to. ``value`` can be a
@@ -84,21 +121,8 @@ Options
     Don't actually grow plants. Just print the total number of plants that
     would be grown.
 
-remove
-======
-
-::
-
-    plant remove [<pos> [<pos>]] [<options>]
-
-Remove plants from the map (or area defined by ``pos`` arguments.) By default,
-only removes invalid plants that exist on non-plant tiles (due to `Bug 12868
-<https://dwarffortressbugtracker.com/view.php?id=12868>`_.) The ``--shrubs``
-and ``--saplings`` options allow normal plants to be targeted instead. Removal
-of fully-grown trees isn't currently supported.
-
-Options
--------
+Remove Options
+--------------
 
 ``-s``, ``--shrubs``
     Target shrubs for removal.
@@ -124,31 +148,3 @@ Options
 ``-n``, ``--dryrun``
     Don't actually remove plants. Just print the total number of plants that
     would be removed.
-
-Examples
-========
-
-``plant create tower_cap``
-    Create a Tower Cap sapling at the cursor.
-``plant create ""``
-    List all valid shrub and sapling IDs.
-``plant create 198 -a tree``
-    Create an Oak sapling at the cursor, ready to mature into a tree.
-``plant create single-grain_wheat 70,70,140``
-    Create a Single-grain Wheat shrub at (70, 70, 140.)
-``plant grow``
-    Attempt to grow all saplings on the map into trees.
-``plant grow -z -f maple,200,sand_pear``
-    Attempt to grow all Maple, Acacia, and Sand Pear saplings on the current
-    z-level into trees.
-``plant grow 0,0,100 19,19,119 -a 10``
-    Set the age of all saplings and trees (with their original sapling tile)
-    in the defined 20x20x20 cube to at least 10 years.
-``plant remove``
-    Remove all invalid plants from the map.
-``plant remove here -sp``
-    Remove the shrub or sapling at the cursor.
-``plant remove -spd``
-    Remove all dead shrubs and saplings from the map.
-``plant remove 0,0,49 0,0,51 -pz -e nether_cap``
-    Remove all saplings on z-levels 49 to 51, excluding Nether Cap.

@@ -347,7 +347,7 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
         DEBUG(log, out).print("Tiletype no change.\n");
         return 1;
     }
-    else if (mat == tiletype_material::STONE ||
+    /*else if (mat == tiletype_material::STONE || // DF doesn't seem to remove mud
         mat == tiletype_material::LAVA_STONE ||
         mat == tiletype_material::MINERAL)
     {   // Muddy non-feature stone
@@ -364,7 +364,7 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
                 break;
             }
         }
-    }
+    }*/
 
     if (shape == tiletype_shape::FLOOR)
     {   // Handle random variant, ashes

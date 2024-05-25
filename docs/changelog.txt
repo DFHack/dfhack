@@ -52,14 +52,16 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `plant` (formerly `plants`): (reinstated) tool for creating/growing/removing plants
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
-- `plant` (formerly ``plants``): can now ``remove`` shrubs and saplings; ``grow`` can make mature trees older; many new command options
+- `plant` (formerly `plants`): can now ``remove`` shrubs and saplings; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
+- `regrass`: don't remove mud on regrass, consistent with vanilla behavior
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
@@ -82,6 +84,7 @@ Template for new versions:
 - ``safe_index``: will now return nil when attempting to index into a non-indexable object
 
 ## Removed
+- `plants`: renamed to `plant`
 
 # 50.13-r2
 

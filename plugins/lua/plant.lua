@@ -76,6 +76,7 @@ end
 function parse_commandline(opts, pos_1, pos_2, filter_vec, args)
     local positionals = argparse.processArgsGetopt(args,
     {
+        {'c', 'force', handler=function() opts.force = true end},
         {'s', 'shrubs', handler=function() opts.shrubs = true end},
         {'p', 'saplings', handler=function() opts.saplings = true end},
         {'t', 'trees', handler=function() opts.trees = true end},

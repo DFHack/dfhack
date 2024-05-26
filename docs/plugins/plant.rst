@@ -83,7 +83,7 @@ Create Options
     Create plant even on tiles flagged ``no_grow`` and unset the flag. This
     flag is set on tiles that were originally boulders or pebbles, as well
     as on some tiles found in deserts, etc.
-``-a <value>``, ``--age <value>``
+``-a``, ``--age <value>``
     Set the created plant to a specific age (in years.) ``value`` can be a
     non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
     ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at

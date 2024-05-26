@@ -95,7 +95,7 @@ Create Options
 Grow Options
 ------------
 
-``-a <value>``, ``--age <value>``
+``-a``, ``--age <value>``
     Define the age (in years) to set saplings to. ``value`` can be a
     non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
     ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at
@@ -104,13 +104,13 @@ Grow Options
     given value, allowing them to grow larger. (Going directly to higher years
     will stunt tree height. It may be more desirable to grow in stages rather
     than all at once. Trees grow taller every 10 years.)
-``-f <plant_id>[,<plant_id>...]``, ``--filter <plant_id>[,<plant_id>...]``
+``-f``, ``--filter <plant_id>[,<plant_id>...]``
     Define a filter list of plant IDs to target, ignoring all other tree types.
     ``plant_id`` is not case-sensitive, but must be enclosed in quotes if
     spaces exist. (No unmodded tree IDs have spaces.) A numerical ID can also
     be used. Use ``plant create ""`` and check under ``Saplings`` for a list
     of valid IDs.
-``-e <plant_id>[,<plant_id>...]``, ``--exclude <plant_id>[,<plant_id>...]``
+``-e``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.
 ``-z``, ``--zlevel``
@@ -132,14 +132,14 @@ Remove Options
 ``-d``, ``--dead``
     Only target dead plants for removal. Can't be used without ``--shrubs`` or
     ``--saplings``.
-``-f <plant_id>[,<plant_id>...]``, ``--filter <plant_id>[,<plant_id>...]``
+``-f``, ``--filter <plant_id>[,<plant_id>...]``
     Define a filter list of plant IDs to target, ignoring all other plant types.
     This applies after ``--shrubs`` and ``--saplings`` are targeted, and can't
     be used without one of those options. ``plant_id`` is not case-sensitive,
     but must be enclosed in quotes if spaces exist. (No unmodded shrub or
     sapling IDs have spaces.) A numerical ID can also be used. Use
     ``plant create ""`` for a list of valid IDs.
-``-e <plant_id>[,<plant_id>...]``, ``--exclude <plant_id>[,<plant_id>...]``
+``-e``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.
 ``-z``, ``--zlevel``

@@ -2720,19 +2720,19 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
             {
                 auto send_mod = send_caste->add_modifiers();
                 auto orig_mod = orig_caste->bp_appearance.modifiers[k];
-                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
+                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->modifier.type));
 
 #if DF_VERSION_INT > 34011
-                if (orig_mod->growth_rate > 0)
+                if (orig_mod->modifier.growth_rate > 0)
                 {
-                    send_mod->set_mod_min(orig_mod->growth_min);
-                    send_mod->set_mod_max(orig_mod->growth_max);
+                    send_mod->set_mod_min(orig_mod->modifier.growth_min);
+                    send_mod->set_mod_max(orig_mod->modifier.growth_max);
                 }
                 else
 #endif
                 {
-                    send_mod->set_mod_min(orig_mod->ranges[0]);
-                    send_mod->set_mod_max(orig_mod->ranges[6]);
+                    send_mod->set_mod_min(orig_mod->modifier.ranges[0]);
+                    send_mod->set_mod_max(orig_mod->modifier.ranges[6]);
                 }
 
             }
@@ -2747,19 +2747,19 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                 auto send_mod = send_caste->add_body_appearance_modifiers();
                 auto orig_mod = orig_caste->body_appearance_modifiers[k];
 
-                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
+                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->modifier.type));
 
 #if DF_VERSION_INT > 34011
-                if (orig_mod->growth_rate > 0)
+                if (orig_mod->modifier.growth_rate > 0)
                 {
-                    send_mod->set_mod_min(orig_mod->growth_min);
-                    send_mod->set_mod_max(orig_mod->growth_max);
+                    send_mod->set_mod_min(orig_mod->modifier.growth_min);
+                    send_mod->set_mod_max(orig_mod->modifier.growth_max);
                 }
                 else
 #endif
                 {
-                    send_mod->set_mod_min(orig_mod->ranges[0]);
-                    send_mod->set_mod_max(orig_mod->ranges[6]);
+                    send_mod->set_mod_min(orig_mod->modifier.ranges[0]);
+                    send_mod->set_mod_max(orig_mod->modifier.ranges[6]);
                 }
             }
             for (size_t k = 0; k < orig_caste->color_modifiers.size(); k++)

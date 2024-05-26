@@ -66,7 +66,7 @@ Examples
     z-level into trees.
 ``plant grow 0,0,100 19,19,119 -a 10``
     Set the age of all saplings and trees (with their original sapling tile)
-    in the defined 20x20x20 cube to at least 10 years.
+    in the defined 20 x 20 x 20 cube to at least 10 years.
 ``plant remove``
     Remove all invalid plants from the map.
 ``plant remove here -sp``

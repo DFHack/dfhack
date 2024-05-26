@@ -9,8 +9,8 @@ What is the difference between a script and a mod?
 --------------------------------------------------
 
 Well, sometimes there is no difference. A mod is anything you add to the game,
-which can be graphics overrides, content in the raws, DFHack scripts, any, or
-all. There are already resources out there for
+which can be graphics overrides, content in the raws, DFHack scripts, or all of
+the above. There are already resources out there for
 `raws modding <https://dwarffortresswiki.org/index.php/Modding>`__, so this
 guide will focus more on scripts, both standalone and as an extension to
 raws-based mods.
@@ -111,7 +111,9 @@ Your :file:`info.txt` could look something like this::
 
 and your blueprints, which could be .csv or .xlsx files, would go in a
 ``blueprints/`` subdirectory. If you add blueprint file named
-``blueprints/bedrooms.csv``, then it will be shown to players as ``drooble_blueprints/bedrooms.csv`` in `quickfort` and `gui/quickfort`. The "drooble_blueprints" prefix comes from the mod ID specified in ``info.txt``.
+``blueprints/bedrooms.csv``, then it will be shown to players as
+``drooble_blueprints/bedrooms.csv`` in `quickfort` and `gui/quickfort`. The
+"drooble_blueprints" prefix comes from the mod ID specified in ``info.txt``.
 
 What if I just want to distribute a simple script?
 --------------------------------------------------
@@ -206,6 +208,26 @@ script is active to view help.
 
 Familiarising yourself with the many structs of the game will help with ideas
 immensely, and you can always ask for help in the `right places <support>`.
+
+Reading and writing files or persistent state
+---------------------------------------------
+
+If you need to read files from your own mod directory, or get a directory in
+which to save your global state, use the `script-manager` API to get the paths
+and the ``json`` API to write (and read, if the data is JSON)::
+
+    local json = require('json')
+    local scriptmanager = require('script-manager')
+    local path = scriptmanager.getModStatePath('my_awesome_mod')
+    config = config or json.open(path .. 'settings.json')
+
+    -- modify state in the config.data table and persist it when it changes with
+    -- config:write()
+
+If you want to store state in the savegame so that it is associated with the
+current world/fort/adventure, use the `persistent-api` API. There's a good
+example of usage in `script-enable-api` or in the fuller example later in this
+guide.
 
 Reacting to events
 ------------------
@@ -480,12 +502,19 @@ Ok, you're all set up! Now, let's take a look at an example
 
     local GLOBAL_KEY = 'example-mod'
 
-    enabled = enabled or false
+    local function get_default_state()
+        return {
+            enabled=false,
+            -- add more default config here
+        }
+    end
+
+    state = state or get_default_state()
 
     function isEnabled()
         -- this function is for the enabled API, the script won't show up on the
         -- control panel without it
-        return enabled
+        return state.enabled
     end
 
     dfhack.onStateChange[GLOBAL_KEY] = function(sc)
@@ -503,7 +532,14 @@ Ok, you're all set up! Now, let's take a look at an example
             return
         end
 
-        dfhack.run_command('enable', 'example-mod')
+        -- retrieve state saved in game. merge with default state so config
+        -- saved from previous versions can pick up newer defaults.
+        state = get_default_state()
+        utils.assign(state, dfhack.persistent.getSiteData(GLOBAL_KEY, state))
+
+        if state.enabled then
+            dfhack.run_command('enable', 'example-mod')
+        end
     end
 
     if dfhack_flags.module then
@@ -551,7 +587,8 @@ Ok, you're all set up! Now, let's take a look at an example
         eventful.onProjUnitCheckMovement[modId] = moduleD.onProjUnitCheckMovement
 
         print('Example mod enabled')
-        enabled = true
+        state.enabled = true
+        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
     else
         -- call any shutdown functions your internal scripts might require
         moduleA.onUnload()
@@ -564,7 +601,8 @@ Ok, you're all set up! Now, let's take a look at an example
         eventful.onProjUnitCheckMovement[modId] = nil
 
         print('Example mod disabled')
-        enabled = false
+        state.enabled = false
+        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
     end
 
 Inside ``scripts_modinstalled/internal/example-mod/module-a.lua`` you could

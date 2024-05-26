@@ -2703,13 +2703,6 @@ FilteredList.ATTRS {
 ---@param self widgets.FilteredList
 ---@param info widgets.FilteredList.initTable
 function FilteredList:init(info)
-    local on_char = self:callback('onFilterChar')
-    if self.edit_on_char then
-        on_char = function(c, text)
-            return self.edit_on_char(c, text) and self:onFilterChar(c, text)
-        end
-    end
-
     local on_change = self:callback('onFilterChange')
     if self.edit_on_change then
         on_change = function(text)
@@ -2722,7 +2715,7 @@ function FilteredList:init(info)
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = on_change,
-        on_char = on_char,
+        on_char = self.edit_on_char,
         key = self.edit_key,
         ignore_keys = self.edit_ignore_keys,
     }
@@ -2875,13 +2868,6 @@ end
 
 function FilteredList:onFilterChange(text)
     self:setFilter(text)
-end
-
-function FilteredList:onFilterChar(char, text)
-    if char == ' ' then
-        return string.match(text, '%S$')
-    end
-    return true
 end
 
 ---@class widgets.TabPens

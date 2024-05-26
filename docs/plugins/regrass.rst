@@ -76,7 +76,7 @@ Options
     forced instead. By default, a single random grass type is selected from
     the world's raws. The ``--plant`` option allows a specific grass type to be
     specified.
-``-p <grass_id>``, ``--plant <grass_id>``
+``-p``, ``--plant <grass_id>``
     Specify a grass type for the ``--force`` option. ``grass_id`` is not
     case-sensitive, but must be enclosed in quotes if spaces exist. A numerical
     ID can also be used. Providing an empty string with "" will print all

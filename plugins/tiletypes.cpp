@@ -1097,39 +1097,75 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
     return rv;
 }
 
-static bool setTile(color_ostream &out, df::coord pos, df::tiletype_shape shape,
-                    df::tiletype_material material, df::tiletype_special special,
-                    df::tiletype_variant variant) {
+static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     if (!Maps::isValidTilePos(pos)) {
         out.printerr("Invalid map position: %d, %d, %d\n", pos.x, pos.y, pos.z);
         return false;
     }
 
-    if (!is_valid_enum_item(shape)) {
-        out.printerr("Invalid shape type: %d\n", shape);
+    if (!is_valid_enum_item(target.shape)) {
+        out.printerr("Invalid shape type: %d\n", target.shape);
         return false;
     }
-    if (!is_valid_enum_item(material)) {
-        out.printerr("Invalid material type: %d\n", material);
+    if (!is_valid_enum_item(target.material)) {
+        out.printerr("Invalid material type: %d\n", target.material);
         return false;
     }
-    if (!is_valid_enum_item(special)) {
-        out.printerr("Invalid special type: %d\n", special);
+    if (!is_valid_enum_item(target.special)) {
+        out.printerr("Invalid special type: %d\n", target.special);
         return false;
     }
-    if (!is_valid_enum_item(variant)) {
-        out.printerr("Invalid variant type: %d\n", variant);
+    if (!is_valid_enum_item(target.variant)) {
+        out.printerr("Invalid variant type: %d\n", target.variant);
+        return false;
+    }
+    if (target.dig < -1 || target.dig > 1) {
+        out.printerr("Invalid dig value: %d\n", target.dig);
+        return false;
+    }
+    if (target.hidden < -1 || target.hidden > 1) {
+        out.printerr("Invalid hidden value: %d\n", target.hidden);
+        return false;
+    }
+    if (target.light < -1 || target.light > 1) {
+        out.printerr("Invalid light value: %d\n", target.light);
+        return false;
+    }
+    if (target.subterranean < -1 || target.subterranean > 1) {
+        out.printerr("Invalid subterranean value: %d\n", target.subterranean);
+        return false;
+    }
+    if (target.skyview < -1 || target.skyview > 1) {
+        out.printerr("Invalid skyview value: %d\n", target.skyview);
+        return false;
+    }
+    if (target.aquifer < -1 || target.aquifer > 1) {
+        out.printerr("Invalid aquifer value: %d\n", target.aquifer);
+        return false;
+    }
+    if (!isStoneInorganic(target.stone_material)) {
+        out.printerr("Invalid stone material: %d\n", target.stone_material);
+        return false;
+    }
+    if (!is_valid_enum_item(target.vein_type)) {
+        out.printerr("Invalid vein type: %d\n", target.vein_type);
         return false;
     }
 
+    MapExtras::MapCache map;
+    return paintTile(map, pos, target) && map.WriteAll();
+}
+
+static bool setTile(color_ostream &out, df::coord pos, df::tiletype_shape shape,
+                    df::tiletype_material material, df::tiletype_special special,
+                    df::tiletype_variant variant) {
     TileType target;
     target.shape = shape;
     target.material = material;
     target.special = special;
     target.variant = variant;
 
-    MapExtras::MapCache map;
-    return paintTile(map, pos, target) && map.WriteAll();
+    return setTile(out, pos, target);
 }
 
 static int tiletypes_setTile(lua_State *L) {
@@ -1137,14 +1173,42 @@ static int tiletypes_setTile(lua_State *L) {
     if (!out)
         out = &Core::getInstance().getConsole();
 
+    TileType target = TileType();
+
     df::coord pos;
     Lua::CheckDFAssign(L, &pos, 1);
-    df::tiletype_shape shape = (df::tiletype_shape)lua_tointeger(L, 2);
-    df::tiletype_material material = (df::tiletype_material)lua_tointeger(L, 3);
-    df::tiletype_special special = (df::tiletype_special)lua_tointeger(L, 4);
-    df::tiletype_variant variant = (df::tiletype_variant)lua_tointeger(L, 5);
+    if (lua_istable(L, 2)) {
+        auto lua_getintfield = [L](const char* fieldName, int defaultValue) -> int {
+            lua_getfield(L, 2, fieldName);
+            int output = defaultValue;
+            if (!lua_isnil(L, -1)) {
+                output = lua_tointeger(L, -1);
+            }
+            lua_pop(L, 1);
+            return output;
+        };
 
-    Lua::Push(L, setTile(*out, pos, shape, material, special, variant));
+        target.shape     = (df::tiletype_shape)lua_getintfield("shape", target.shape);
+        target.material  = (df::tiletype_material)lua_getintfield("material", target.material);
+        target.special   = (df::tiletype_special)lua_getintfield("special", target.special);
+        target.variant   = (df::tiletype_variant)lua_getintfield("variant", target.variant);
+        target.vein_type = (df::inclusion_type)lua_getintfield("vein_type", target.vein_type);
+        target.dig            = lua_getintfield("dig", target.dig);
+        target.hidden         = lua_getintfield("hidden", target.hidden);
+        target.light          = lua_getintfield("light", target.light);
+        target.subterranean   = lua_getintfield("subterranean", target.subterranean);
+        target.skyview        = lua_getintfield("skyview", target.skyview);
+        target.aquifer        = lua_getintfield("aquifer", target.aquifer);
+        target.stone_material = lua_getintfield("stone_material", target.stone_material);
+    }
+    else {
+        target.shape = (df::tiletype_shape)lua_tointeger(L, 2);
+        target.material = (df::tiletype_material)lua_tointeger(L, 3);
+        target.special = (df::tiletype_special)lua_tointeger(L, 4);
+        target.variant = (df::tiletype_variant)lua_tointeger(L, 5);
+    }
+
+    Lua::Push(L, setTile(*out, pos, target));
     return 1;
 }
 

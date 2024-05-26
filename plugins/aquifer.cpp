@@ -88,32 +88,11 @@ static bool is_rough_natural_wall(const df::coord & pos) {
     return is_rough_natural_wall(pos.x, pos.y, pos.z);
 }
 
-static bool is_aquifer(int16_t x, int16_t y, int16_t z, df::tile_designation *des = NULL) {
-    if (!des)
-        des = Maps::getTileDesignation(x, y, z);
-    return des && des->bits.water_table;
-}
-
-static bool is_aquifer(const df::coord & pos, df::tile_designation *des = NULL) {
-    return is_aquifer(pos.x, pos.y, pos.z, des);
-}
-
-static bool is_heavy_aquifer(int16_t x, int16_t y, int16_t z, df::tile_occupancy *occ = NULL) {
-    if (!occ)
-        occ = Maps::getTileOccupancy(x, y, z);
-    return occ && occ->bits.heavy_aquifer;
-}
-
-static bool is_heavy_aquifer(const df::coord & pos, df::tile_occupancy *occ = NULL) {
-    return is_heavy_aquifer(pos.x, pos.y, pos.z, occ);
-}
-
 static auto DEFAULT_PRE_BLOCK_FN = [](df::map_block *block){return block->flags.bits.has_aquifer;};
 
 static void for_block(int minz, int maxz, const df::coord & pos1, const df::coord & pos2,
     std::function<void(const df::coord &)> pos_fn,
-    std::function<bool(df::map_block *)> pre_block_fn = DEFAULT_PRE_BLOCK_FN,
-    std::function<void(df::map_block *)> post_block_fn = [](df::map_block *){})
+    std::function<bool(df::map_block *)> pre_block_fn = DEFAULT_PRE_BLOCK_FN)
 {
     for (auto block : world->map.map_blocks) {
         const df::coord & bpos = block->map_pos;
@@ -134,8 +113,6 @@ static void for_block(int minz, int maxz, const df::coord & pos1, const df::coor
                     pos_fn(pos);
             }
         }
-
-        post_block_fn(block);
     }
 }
 
@@ -188,8 +165,8 @@ static void aquifer_list(color_ostream &out, df::coord pos1, df::coord pos2, int
     get_z_range(out, minz, maxz, pos1, pos2, levels);
 
     for_block(minz, maxz, pos1, pos2, [&](const df::coord &pos){
-        if (is_aquifer(pos) && (!leaky || is_leaky(pos))) {
-            if (is_heavy_aquifer(pos))
+        if (Maps::isTileAquifer(pos) && (!leaky || is_leaky(pos))) {
+            if (Maps::isTileHeavyAquifer(pos))
                 ++heavy_tiles[pos.z];
             else
                 ++light_tiles[pos.z];
@@ -226,27 +203,17 @@ static int aquifer_drain(color_ostream &out, string aq_type,
     int modified = 0;
     for_block(minz, maxz, pos1, pos2, [&](const df::coord & pos){
         TRACE(log,out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
-        auto des = Maps::getTileDesignation(pos);
-        if (!is_aquifer(pos, des))
+        if (!Maps::isTileAquifer(pos))
             return;
-        if (!all && is_heavy_aquifer(pos) != heavy_state)
+        if (!all && Maps::isTileHeavyAquifer(pos) != heavy_state)
             return;
         if (leaky && !is_leaky(pos))
             return;
-        des->bits.water_table = false;
+        auto succ = Maps::removeTileAquifer(pos);
+        if (!succ)
+            return;
         DEBUG(log,out).print("drained aquifer tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
         ++modified;
-    },
-    DEFAULT_PRE_BLOCK_FN,
-    [](df::map_block *block){
-        const df::coord & bpos = block->map_pos;
-        for (int xoff = 0; xoff <= 15; ++xoff)
-            for (int yoff = 0; yoff <= 15; ++yoff)
-                if (is_aquifer(bpos + df::coord(xoff, yoff, 0)))
-                    return;
-
-        block->flags.bits.has_aquifer = false;
-        block->flags.bits.check_aquifer = false;
     });
 
     return modified;
@@ -267,15 +234,15 @@ static int aquifer_convert(color_ostream &out, string aq_type,
     int modified = 0;
     for_block(minz, maxz, pos1, pos2, [&](const df::coord & pos){
         TRACE(log,out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
-        auto des = Maps::getTileDesignation(pos);
-        if (!is_aquifer(pos, des))
+        if (!Maps::isTileAquifer(pos))
             return;
-        auto occ = Maps::getTileOccupancy(pos);
-        if (is_heavy_aquifer(pos, occ) == heavy_state)
+        if (Maps::isTileHeavyAquifer(pos) == heavy_state)
             return;
         if (leaky && !is_leaky(pos))
             return;
-        occ->bits.heavy_aquifer = heavy_state;
+        auto succ = Maps::setTileAquifer(pos, heavy_state);
+        if (!succ)
+            return;
         DEBUG(log,out).print("converted aquifer tile: pos=%d,%d,%d, heavy_state=%d\n",
                 pos.x, pos.y, pos.z, heavy_state);
         ++modified;
@@ -297,17 +264,14 @@ static int aquifer_add(color_ostream &out, string aq_type,
     get_z_range(out, minz, maxz, pos1, pos2, levels, false, skip_top);
 
     int modified = 0;
-    bool added = false;
     for_block(minz, maxz, pos1, pos2, [&](const df::coord & pos){
         TRACE(log,out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
         if (!leaky && is_leaky(pos))
             return;
-        auto des = Maps::getTileDesignation(pos);
-        bool changed = !is_aquifer(pos, des);
-        des->bits.water_table = true;
-        auto occ = Maps::getTileOccupancy(pos);
-        changed = changed || is_heavy_aquifer(pos, occ) != heavy_state;
-        occ->bits.heavy_aquifer = heavy_state;
+        bool changed = !Maps::isTileAquifer(pos) || Maps::isTileHeavyAquifer(pos) != heavy_state;
+        auto succ = Maps::setTileAquifer(pos, heavy_state);
+        if (!succ)
+            return;
         if (changed) {
             DEBUG(log,out).print("added aquifer tile: pos=%d,%d,%d, heavy_state=%d\n",
                 pos.x, pos.y, pos.z, heavy_state);
@@ -316,17 +280,8 @@ static int aquifer_add(color_ostream &out, string aq_type,
             DEBUG(log,out).print("tile already in target state: pos=%d,%d,%d, heavy_state=%d\n",
                 pos.x, pos.y, pos.z, heavy_state);
         }
-        added = true;
-    }, [&](df::map_block *block){
-        added = false;
+    }, [&](df::map_block* block) {
         return true;
-    }, [&](df::map_block *block){
-        if (added) {
-            block->flags.bits.has_aquifer = true;
-            block->flags.bits.check_aquifer = true;
-            block->flags.bits.update_liquid = true;
-            block->flags.bits.update_liquid_twice = true;
-        }
     });
 
     return modified;

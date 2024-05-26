@@ -108,7 +108,7 @@ Grow Options
     Define a filter list of plant IDs to target, ignoring all other tree types.
     ``plant_id`` is not case-sensitive, but must be enclosed in quotes if
     spaces exist. (No unmodded tree IDs have spaces.) A numerical ID can also
-    be used.
+    be used. Use ``plant create ""`` for a list of valid IDs.
 ``-e <plant_id>[,<plant_id>...]``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.
@@ -136,7 +136,8 @@ Remove Options
     This applies after ``--shrubs`` and ``--saplings`` are targeted, and can't
     be used without one of those options. ``plant_id`` is not case-sensitive,
     but must be enclosed in quotes if spaces exist. (No unmodded shrub or
-    sapling IDs have spaces.) A numerical ID can also be used.
+    sapling IDs have spaces.) A numerical ID can also be used. Use
+    ``plant create ""`` for a list of valid IDs.
 ``-e <plant_id>[,<plant_id>...]``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.

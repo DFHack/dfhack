@@ -55,8 +55,9 @@ Examples
     Create a Tower Cap sapling at the cursor.
 ``plant create ""``
     List all valid shrub and sapling IDs.
-``plant create 198 -a tree``
-    Create an Oak sapling at the cursor, ready to mature into a tree.
+``plant create 203 -c -a tree``
+    Create a Willow sapling at the cursor, even away from water features,
+    ready to mature into a tree.
 ``plant create single-grain_wheat 70,70,140``
     Create a Single-grain Wheat shrub at (70, 70, 140.)
 ``plant grow``
@@ -82,7 +83,10 @@ Create Options
 ``-c``, ``--force``
     Create plant even on tiles flagged ``no_grow`` and unset the flag. This
     flag is set on tiles that were originally boulders or pebbles, as well
-    as on some tiles found in deserts, etc.
+    as on some tiles found in deserts, etc. Also allow non-``[DRY]`` plants
+    (e.g., willow) to grow away (3+ tiles) from water features (i.e., pools,
+    brooks, and rivers,) and non-``[WET]`` plants (e.g., prickle berry) to
+    grow near them.
 ``-a``, ``--age <value>``
     Set the created plant to a specific age (in years.) ``value`` can be a
     non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)

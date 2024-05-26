@@ -76,7 +76,7 @@ struct plant_options
     bool create = false; // Create a plant
     bool grow = false; // Grow saplings into trees
     bool del = false; // Remove plants
-    bool force = false; // Create plants on no_grow
+    bool force = false; // Create plants on no_grow or incompatible wet/dry
     bool shrubs = false; // Remove shrubs
     bool saplings = false; // Remove saplings
     bool trees = false; // Remove grown trees
@@ -125,6 +125,34 @@ static bool tile_muddy(const df::coord &pos)
         auto &ms_ev = *(df::block_square_event_material_spatterst *)blev;
         if (ms_ev.mat_type == builtin_mats::MUD)
             return ms_ev.amount[pos.x&15][pos.y&15] > 0;
+    }
+
+    return false;
+}
+
+static bool tile_watery(const df::coord &pos)
+{   // Determines if plant should be in wet or dry vector
+    int32_t x = pos.x, y = pos.y, z = pos.z - 1;
+
+    for (int32_t dx = -2; dx <= 2; dx++)
+    {   // Check 5x5 area under tile, skipping corners
+        for (int32_t dy = -2; dy <= 2; dy++)
+        {
+            if (abs(dx) == 2 && abs(dy) == 2)
+                continue; // Skip corners
+
+            auto tt = Maps::getTileType(x+dx, y+dy, z);
+            if (!tt)
+                continue; // Invalid tile
+
+            auto mat = tileMaterial(*tt);
+            if (mat == tiletype_material::POOL ||
+                mat == tiletype_material::RIVER ||
+                tileShape(*tt) == tiletype_shape::BROOK_BED)
+            {
+                return true;
+            }
+        }
     }
 
     return false;
@@ -203,21 +231,28 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
         return CR_FAILURE;
     }
 
+    bool is_watery = tile_watery(pos);
+    if (!options.force)
+    {   // Check if plant compatible with wet/dry
+        if (is_watery && !p_raw->flags.is_set(plant_raw_flags::WET) ||
+            !is_watery && !p_raw->flags.is_set(plant_raw_flags::DRY))
+        {
+            out.printerr("Can't create plant: Plant type can't grow this %s water feature!\n"
+                "Override with --force\n", is_watery ? "close to" : "far from");
+            return CR_FAILURE;
+        }
+    }
+
     auto plant = df::allocate<df::plant>();
     if (p_raw->flags.is_set(plant_raw_flags::TREE))
         plant->hitpoints = 400000;
     else
     {
-        plant->hitpoints = 100000;
         plant->flags.bits.is_shrub = true;
+        plant->hitpoints = 100000;
     }
 
-    // This is correct except for RICE, DATE_PALM, and underground plants
-    // near pool/river/brook. These have both WET and DRY flags.
-    // Should more properly detect if near surface water feature.
-    if (!p_raw->flags.is_set(plant_raw_flags::DRY))
-        plant->flags.bits.watery = true;
-
+    plant->flags.bits.watery = is_watery;
     plant->material = options.plant_idx;
     plant->pos = pos;
     plant->grow_counter = options.age < 0 ? 0 : options.age;

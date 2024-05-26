@@ -35,7 +35,7 @@ Examples
     Regrass all z-levels including the selected tile's z-level through z-level
     90, refilling existing and depleted grass.
 ``regrass 0,0,100 19,19,119 --ashes --mud``
-    Regrass tiles in the 20x20x20 cube defined by the coords, refilling
+    Regrass tiles in the 20 x 20 x 20 cube defined by the coords, refilling
     existing and depleted grass, and converting ashes and muddy stone (if
     respective blocks ever had grass.)
 ``regrass 10,10,100 -baudnm``

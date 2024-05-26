@@ -1015,15 +1015,15 @@ bool Maps::isTileHeavyAquifer(int32_t x, int32_t y, int32_t z) {
     return occ && occ->bits.heavy_aquifer;
 }
 
-bool Maps::SetTileAquifer(df::coord pos, bool heavy) {
-    df::map_block* block = Maps::getTileBlock(pos);
+bool Maps::setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy) {
+    df::map_block* block = Maps::getTileBlock(x, y ,z);
     if (!block)
         return false;
 
-    auto des = Maps::getTileDesignation(pos);
+    auto des = Maps::getTileDesignation(x, y, z);
     des->bits.water_table = true;
     if (heavy) {
-        auto occ = Maps::getTileOccupancy(pos);
+        auto occ = Maps::getTileOccupancy(x, y, z);
         occ->bits.heavy_aquifer = true;
     }
     block->flags.bits.has_aquifer = true;
@@ -1033,16 +1033,16 @@ bool Maps::SetTileAquifer(df::coord pos, bool heavy) {
     return true;
 }
 
-bool Maps::RemoveTileAquifer(df::coord pos) {
-    df::map_block* block = Maps::getTileBlock(pos);
+bool Maps::removeTileAquifer(int32_t x, int32_t y, int32_t z) {
+    df::map_block* block = Maps::getTileBlock(x, y, z);
     if (!block)
         return false;
-    if (!isTileAquifer(pos))
-        return false;
+    if (!isTileAquifer(x, y, z))
+        return true;
 
-    auto des = Maps::getTileDesignation(pos);
+    auto des = Maps::getTileDesignation(x, y, z);
     des->bits.water_table = false;
-    auto occ = Maps::getTileOccupancy(pos);
+    auto occ = Maps::getTileOccupancy(x, y, z);
     occ->bits.heavy_aquifer = false;
 
     if (block->flags.bits.has_aquifer) {

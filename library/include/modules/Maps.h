@@ -357,10 +357,12 @@ namespace DFHack
         inline bool isTileHeavyAquifer(df::coord pos) { return isTileHeavyAquifer(pos.x, pos.y, pos.z); }
 
         // Make tile into an aquifer
-        extern DFHACK_EXPORT bool SetTileAquifer(df::coord pos, bool heavy = false);
+        extern DFHACK_EXPORT bool setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy = false);
+        inline bool setTileAquifer(df::coord pos, bool heavy = false) { return setTileAquifer(pos.x, pos.y, pos.z, heavy); }
 
         // Remove aquifer from tile
-        extern DFHACK_EXPORT bool RemoveTileAquifer(df::coord pos);
+        extern DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
+        inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
     }
 }
 #endif

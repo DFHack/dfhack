@@ -1022,9 +1022,9 @@ bool Maps::setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy) {
 
     auto des = Maps::getTileDesignation(x, y, z);
     des->bits.water_table = true;
-    if (heavy) {
+    if (Maps::isTileHeavyAquifer(x, y, z) != heavy) {
         auto occ = Maps::getTileOccupancy(x, y, z);
-        occ->bits.heavy_aquifer = true;
+        occ->bits.heavy_aquifer = heavy;
     }
     block->flags.bits.has_aquifer = true;
     block->flags.bits.check_aquifer = true;

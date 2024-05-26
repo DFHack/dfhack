@@ -1004,3 +1004,59 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     else
         return biome_type::FOREST_TAIGA;
 }
+
+bool Maps::isTileAquifer(int32_t x, int32_t y, int32_t z) {
+    df::tile_designation* des = Maps::getTileDesignation(x, y, z);
+    return des && des->bits.water_table;
+}
+
+bool Maps::isTileHeavyAquifer(int32_t x, int32_t y, int32_t z) {
+    df::tile_occupancy* occ = Maps::getTileOccupancy(x, y, z);
+    return occ && occ->bits.heavy_aquifer;
+}
+
+bool Maps::SetTileAquifer(df::coord pos, bool heavy) {
+    df::map_block* block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+
+    auto des = Maps::getTileDesignation(pos);
+    des->bits.water_table = true;
+    if (heavy) {
+        auto occ = Maps::getTileOccupancy(pos);
+        occ->bits.heavy_aquifer = true;
+    }
+    block->flags.bits.has_aquifer = true;
+    block->flags.bits.check_aquifer = true;
+    block->flags.bits.update_liquid = true;
+    block->flags.bits.update_liquid_twice = true;
+    return true;
+}
+
+bool Maps::RemoveTileAquifer(df::coord pos) {
+    df::map_block* block = Maps::getTileBlock(pos);
+    if (!block)
+        return false;
+    if (!isTileAquifer(pos))
+        return false;
+
+    auto des = Maps::getTileDesignation(pos);
+    des->bits.water_table = false;
+    auto occ = Maps::getTileOccupancy(pos);
+    occ->bits.heavy_aquifer = false;
+
+    if (block->flags.bits.has_aquifer) {
+        auto blockHasAquifer = [block]() -> bool {
+            for (auto& row : block->designation)
+                for (auto& col : row)
+                    if (col.bits.water_table)
+                        return true;
+            return false;
+        };
+        if (!blockHasAquifer()) {
+            block->flags.bits.has_aquifer = false;
+            block->flags.bits.check_aquifer = false;
+        }
+    }
+    return true;
+}

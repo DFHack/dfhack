@@ -93,6 +93,24 @@ deterioratefood
 Replaced by the new combined `deteriorate` script. Run
 ``deteriorate --types=food``.
 
+.. _devel/find-offsets:
+
+devel/find-offsets
+==================
+Used in pre-v50 times for memory structure analysis. No longer useful post-v50.
+
+.. _devel/find-twbt:
+
+devel/find-twbt
+===============
+Used in pre-v50 times for memory structure analysis. No longer useful post-v50.
+
+.. _devel/prepare-save:
+
+devel/prepare-save
+==================
+Used in pre-v50 times for memory structure analysis. No longer useful post-v50.
+
 .. _devel/unforbidall:
 
 devel/unforbidall

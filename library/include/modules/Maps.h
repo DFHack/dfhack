@@ -347,6 +347,21 @@ namespace DFHack
         // Get the biome type at the given region coordinates
         DFHACK_EXPORT df::enums::biome_type::biome_type getBiomeTypeWithRef(int16_t region_x, int16_t region_y, int16_t region_ref_y);
         inline df::enums::biome_type::biome_type getBiomeType(int16_t region_x, int16_t region_y) { return getBiomeTypeWithRef(region_x, region_y, region_y); }
+
+        DFHACK_EXPORT bool isTileAquifer(int32_t x, int32_t y, int32_t z);
+        inline bool isTileAquifer(df::coord pos) { return isTileAquifer(pos.x, pos.y, pos.z); }
+        DFHACK_EXPORT bool isTileHeavyAquifer(int32_t x, int32_t y, int32_t z);
+        inline bool isTileHeavyAquifer(df::coord pos) { return isTileHeavyAquifer(pos.x, pos.y, pos.z); }
+        DFHACK_EXPORT bool setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy = false);
+        inline bool setTileAquifer(df::coord pos, bool heavy = false) { return setTileAquifer(pos.x, pos.y, pos.z, heavy); }
+        DFHACK_EXPORT int setAreaAquifer(df::coord pos1, df::coord pos2, bool heavy = false,
+            std::function<bool(df::coord, df::map_block*)> filter = [](df::coord pos, df::map_block* block)->bool { return true; }
+        );
+        DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
+        inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
+        DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
+            std::function<bool(df::coord, df::map_block*)> filter = [](df::coord pos, df::map_block* block)->bool { return true; }
+        );
     }
 }
 #endif

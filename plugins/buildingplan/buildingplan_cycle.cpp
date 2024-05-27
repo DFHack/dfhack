@@ -3,6 +3,7 @@
 
 #include "Debug.h"
 
+#include "modules/Burrows.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
@@ -10,6 +11,7 @@
 
 #include "df/building_actual.h"
 #include "df/building_design.h"
+#include "df/burrow.h"
 #include "df/general_ref.h"
 #include "df/item.h"
 #include "df/item_slabst.h"
@@ -78,13 +80,19 @@ static bool isInWheelbarrow(color_ostream& out, df::item* item) {
     return container->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING);
 }
 
+bool isInIgnoreBurrow(df::item *item){
+    auto ignore_burrow = getIgnoreBurrow();
+    return ignore_burrow && Burrows::isAssignedTile(ignore_burrow, Items::getPosition(item));
+}
+
 bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile()
         && isAccessible(out, item)
         && !isUnusableBar(out, item)
-        && !isInWheelbarrow(out, item);
+        && !isInWheelbarrow(out, item)
+        && !isInIgnoreBurrow(item);
 }
 
 bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {

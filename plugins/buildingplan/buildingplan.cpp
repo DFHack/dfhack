@@ -7,9 +7,11 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
+#include "modules/Burrows.h"
 #include "modules/World.h"
 
 #include "df/construction_type.h"
+#include "df/burrow.h"
 #include "df/item.h"
 #include "df/job_item.h"
 #include "df/organic_mat_category.h"
@@ -525,6 +527,8 @@ static void printStatus(color_ostream &out) {
     out.print("  use bars:     %s\n", config.get_bool(CONFIG_BARS) ? "yes" : "no");
     out.print("  plan constructions on tiles with existing constructed floors/ramps when using box select: %s\n",
         config.get_bool(CONFIG_RECONSTRUCT) ? "yes" : "no");
+    auto burrow = df::burrow::find(config.get_int(CONFIG_BURROW));
+    out.print("  ignore building materials in burrow: %s\n", burrow ? burrow->name.c_str() : "none");
     out.print("\n");
 
     size_t bld_count = 0;
@@ -590,6 +594,21 @@ static bool setSetting(color_ostream &out, string name, bool value) {
 static void resetFilters(color_ostream &out) {
     DEBUG(control,out).print("entering resetFilters\n");
     reset_filters(out);
+}
+
+static void setIgnoreBurrow(color_ostream &out, string burrow_name){
+    DEBUG(control,out).print("entering setIgnoreBurrow\n");
+    auto burrow = Burrows::findByName(burrow_name);
+    if (burrow) {
+        config.set_int(CONFIG_BURROW, burrow->id);
+    } else {
+        config.set_int(CONFIG_BURROW, -1);
+    }
+}
+
+df::burrow *getIgnoreBurrow(){
+    int id = config.get_int(CONFIG_BURROW);
+    return id < 0 ? nullptr : df::burrow::find(id);
 }
 
 static bool isPlannableBuilding(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom) {
@@ -1206,6 +1225,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
+    DFHACK_LUA_FUNCTION(setIgnoreBurrow),
     DFHACK_LUA_END
 };
 

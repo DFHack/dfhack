@@ -60,7 +60,7 @@ local function plant_age(s) --tree stage or numerical value
     end
 
     if n then
-        n = math.min(n, 1250)
+        n = math.min(n, 1250) --grow_counter stops at 1250 years
         return math.max(0, 40320*n-1) --years to tens of ticks - 1; correct for n = 0
     end
 

@@ -1033,6 +1033,50 @@ bool Maps::setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy) {
     return true;
 }
 
+int Maps::setAreaAquifer(df::coord pos1, df::coord pos2, bool heavy, std::function<bool(df::coord, df::map_block*)> filter) {
+    df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
+    df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
+
+    int totalAffectedCount = 0;
+    // Loop through the affected blocks
+    for (int16_t z = minPos.z; z <= maxPos.z; z++) {
+        for (int16_t blockX = (minPos.x >> 4) << 4; blockX <= maxPos.x; blockX += 16) {
+            for (int16_t blockY = (minPos.y >> 4) << 4; blockY <= maxPos.y; blockY += 16) {
+                df::map_block* block = Maps::getTileBlock(blockX, blockY, z);
+                if (!block)
+                    continue;
+
+                int blockAffectedCount = 0;
+                int16_t startX = std::max(minPos.x - blockX, 0);
+                int16_t startY = std::max(minPos.y - blockY, 0);
+                int16_t endX = std::min(maxPos.x - blockX, 15);
+                int16_t endY = std::min(maxPos.y - blockY, 15);
+                // Loop through the affected tiles in the block
+                for (int16_t xOffset = startX; xOffset <= endX; xOffset++) {
+                    for (int16_t yOffset = startY; yOffset <= endY; yOffset++) {
+                        if (filter(df::coord(blockX + xOffset, blockY + yOffset, z), block)) {
+                            blockAffectedCount++;
+                            block->designation[xOffset][yOffset].bits.water_table = true;
+                            block->occupancy[xOffset][yOffset].bits.heavy_aquifer = heavy;
+                        }
+                    }
+                }
+
+                // If any tile was set to be an aquifer, update the block
+                if (blockAffectedCount > 0) {
+                    block->flags.bits.has_aquifer = true;
+                    block->flags.bits.check_aquifer = true;
+                    block->flags.bits.update_liquid = true;
+                    block->flags.bits.update_liquid_twice = true;
+                    totalAffectedCount += blockAffectedCount;
+                }
+            }
+        }
+    }
+
+    return totalAffectedCount;
+}
+
 bool Maps::removeTileAquifer(int32_t x, int32_t y, int32_t z) {
     df::map_block* block = Maps::getTileBlock(x, y, z);
     if (!block)
@@ -1059,4 +1103,55 @@ bool Maps::removeTileAquifer(int32_t x, int32_t y, int32_t z) {
         }
     }
     return true;
+}
+
+int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(df::coord, df::map_block*)> filter) {
+    df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
+    df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
+
+    int totalAffectedCount = 0;
+    // Loop through the affected blocks
+    for (int16_t z = minPos.z; z <= maxPos.z; z++) {
+        for (int16_t blockX = (minPos.x >> 4) << 4; blockX <= maxPos.x; blockX += 16) {
+            for (int16_t blockY = (minPos.y >> 4) << 4; blockY <= maxPos.y; blockY += 16) {
+                df::map_block* block = Maps::getTileBlock(blockX, blockY, z);
+                if (!block)
+                    continue;
+
+                int blockAffectedCount = 0;
+                int aquiferCount = 0;
+                int16_t startX = std::max(minPos.x - blockX, 0);
+                int16_t startY = std::max(minPos.y - blockY, 0);
+                int16_t endX = std::min(maxPos.x - blockX, 15);
+                int16_t endY = std::min(maxPos.y - blockY, 15);
+                // Loop through all tiles in the block
+                for (int16_t xOffset = 0; xOffset <= 15; xOffset++) {
+                    for (int16_t yOffset = 0; yOffset <= 15; yOffset++) {
+                        df::tile_designation& des = block->designation[xOffset][yOffset];
+                        if (des.bits.water_table) {
+                            if (xOffset >= startX && yOffset >= startY && xOffset <= endX && yOffset <= endY
+                                && filter(df::coord(blockX + xOffset, blockY + yOffset, z), block)
+                            ) {
+                                blockAffectedCount++;
+                                des.bits.water_table = false;
+                                block->occupancy[xOffset][yOffset].bits.heavy_aquifer = false;
+                            }
+                            else {
+                                aquiferCount++;
+                            }
+                        }
+                    }
+                }
+
+                // If none of the block's tiles are now aquifers, update the block
+                if (aquiferCount == 0) {
+                    block->flags.bits.has_aquifer = false;
+                    block->flags.bits.check_aquifer = false;
+                }
+                totalAffectedCount += blockAffectedCount;
+            }
+        }
+    }
+
+    return totalAffectedCount;
 }

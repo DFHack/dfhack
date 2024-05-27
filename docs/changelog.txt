@@ -74,7 +74,9 @@ Template for new versions:
 - ``Maps::isTileAquifer``: check if tile is an aquifer
 - ``Maps::isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``Maps::setTileAquifer``: make tile into an aquifer
+- ``Maps::setAreaAquifer``: make all tiles in a cuboid into aquifers, with the option to provide a filter
 - ``Maps::removeTileAquifer``: remove aquifer from tile
+- ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)

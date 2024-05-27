@@ -2513,20 +2513,20 @@ static int maps_setTileAquifer(lua_State* L)
 
     switch (lua_gettop(L))
     {
-    default:
-    case 4:
-        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false), lua_toboolean(L, 4));
-        break;
-    case 3:
-        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false));
-        break;
+    case 1:
+        Lua::CheckDFAssign(L, &p, 1);
+        rv = Maps::setTileAquifer(p);
     case 2:
         Lua::CheckDFAssign(L, &p, 1);
         rv = Maps::setTileAquifer(p, lua_toboolean(L, 2));
         break;
-    case 1:
-        Lua::CheckDFAssign(L, &p, 1);
-        rv = Maps::setTileAquifer(p);
+    case 3:
+        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false));
+        break;
+    case 4:
+    default:
+        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false), lua_toboolean(L, 4));
+        break;
     }
 
     lua_pushboolean(L, rv);

@@ -2152,6 +2152,23 @@ Maps module
 
   Sets all bits in the mask to the *enable* argument.
 
+* ``dfhack.maps.isTileAquifer(pos)``, or ``isTileAquifer(x,y,z)``
+
+  Checks if there's an aquifer on the given tile position; returns *true* or *false*.
+
+* ``dfhack.maps.isTileHeavyAquifer(pos)``, or ``isTileHeavyAquifer(x,y,z)``
+
+  Checks if there's a heavy aquifer on the given tile position; returns *true* or *false*.
+
+* ``dfhack.maps.setTileAquifer(pos[,heavy])``, or ``setTileAquifer(x,y,z[,heavy])``
+
+  Adds a light aquifer on the given tile position, or a heavy aquifer if the *heavy* argument is *true*;
+  returns *true* or *false* depending on success.
+
+* ``dfhack.maps.removeTileAquifer(pos)``, or ``removeTileAquifer(x,y,z)``
+
+  Removes an aquifer from the given tile position; returns *true* or *false* depending on success.
+
 
 Burrows module
 --------------

@@ -2492,6 +2492,54 @@ static int maps_getBiomeType(lua_State *L)
     return 1;
 }
 
+static int maps_isTileAquifer(lua_State* L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isTileAquifer(pos));
+    return 1;
+}
+
+static int maps_isTileHeavyAquifer(lua_State* L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isTileHeavyAquifer(pos));
+    return 1;
+}
+
+static int maps_setTileAquifer(lua_State* L)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(L))
+    {
+    case 1:
+        Lua::CheckDFAssign(L, &p, 1);
+        rv = Maps::setTileAquifer(p);
+    case 2:
+        Lua::CheckDFAssign(L, &p, 1);
+        rv = Maps::setTileAquifer(p, lua_toboolean(L, 2));
+        break;
+    case 3:
+        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false));
+        break;
+    case 4:
+    default:
+        rv = Maps::setTileAquifer(CheckCoordXYZ(L, 1, false), lua_toboolean(L, 4));
+        break;
+    }
+
+    lua_pushboolean(L, rv);
+    return 1;
+}
+
+static int maps_removeTileAquifer(lua_State* L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::removeTileAquifer(pos));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -2503,6 +2551,10 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { "getPlantAtTile", maps_getPlantAtTile },
     { "getBiomeType", maps_getBiomeType },
+    { "isTileAquifer", maps_isTileAquifer },
+    { "isTileHeavyAquifer", maps_isTileHeavyAquifer },
+    { "setTileAquifer", maps_setTileAquifer },
+    { "removeTileAquifer", maps_removeTileAquifer },
     { NULL, NULL }
 };
 

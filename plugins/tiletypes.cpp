@@ -194,7 +194,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
     else if (option == "aquifer" || option == "aqua")
     {
         out << "Available aquifer flags:" << std::endl
-            << " ANY, 0, 1" << std::endl;
+            << " ANY, 0, 1, 2" << std::endl;
     }
     else if (option == "stone")
     {
@@ -259,6 +259,7 @@ struct TileType
 
     inline bool matches(const df::tiletype source,
                         const df::tile_designation des,
+                        const df::tile_occupancy occ,
                         const t_matpair mat) const
     {
         bool rv = true;
@@ -275,8 +276,14 @@ struct TileType
         rv &= (subterranean == -1 || (subterranean != 0) == des.bits.subterranean);
         rv &= (skyview == -1 || (skyview != 0) == des.bits.outside);
         rv &= (aquifer == -1 || (aquifer != 0) == des.bits.water_table);
+        rv &= (aquifer == -1 || (aquifer == 2) == occ.bits.heavy_aquifer);
         return rv;
     }
+};
+
+struct PaintResult {
+    int paintCount = 0;
+    std::function<void()> postWrite = []() {};
 };
 
 std::ostream &operator<<(std::ostream &stream, const TileType &paint)
@@ -403,7 +410,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << (paint.aquifer ? "AQUIFER" : "NO AQUIFER");
+        stream << (paint.aquifer ? (paint.aquifer == 1 ? "LIGHT AQUIFER" : "HEAVY AQUIFER") : "NO AQUIFER");
         used = true;
         needSpace = true;
     }
@@ -680,7 +687,7 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     }
     else if (option == "aquifer" || option == "aqua")
     {
-        if (valInt >= -1 && valInt < 2)
+        if (valInt >= -1 && valInt < 3)
         {
             paint.aquifer = valInt;
             found = true;
@@ -811,9 +818,6 @@ static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& bloc
     if (target.skyview > -1)
         des.bits.outside = target.skyview;
 
-    if (target.aquifer > -1)
-        des.bits.water_table = target.aquifer;
-
     // Remove liquid from walls, etc
     if (type != (df::tiletype)-1 && !DFHack::FlowPassable(type))
     {
@@ -829,7 +833,7 @@ static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& bloc
     return block->setDesignationAt(blockPos, des);
 }
 
-static int paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2,
+static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2,
     const TileType& target, const TileType& match = TileType()) {
     df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
     df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
@@ -857,6 +861,7 @@ static int paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::
 
                         df::tiletype source = block->tiletypeAt(blockOffset);
                         df::tile_designation des = block->DesignationAt(blockOffset);
+                        df::tile_occupancy occ = block->OccupancyAt(blockOffset);
 
                         // Stone painting operates on the base layer
                         if (target.stone_material >= 0)
@@ -864,7 +869,7 @@ static int paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::
 
                         t_matpair basemat = block->baseMaterialAt(blockOffset);
 
-                        if (!match.matches(source, des, basemat)) {
+                        if (!match.matches(source, des, occ, basemat)) {
                             totalFilteredCount++;
                             skipList.push_back(df::coord(blockX + xOffset, blockY + yOffset, z));
                             continue;
@@ -883,28 +888,33 @@ static int paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::
         }
     }
 
-    if (totalAffectedCount > 0) {
-        auto filter = [skipList](df::coord pos, df::map_block* block) -> bool {
-            // Returns true if 'pos' is in 'skipList'
-            return skipList.end() == std::find_if(skipList.begin(), skipList.end(), [pos](df::coord p) { return p.x == pos.x && p.y == pos.y && p.z == pos.z; });
-        };
+    return PaintResult{
+        .paintCount = totalAffectedCount + totalFilteredCount,
+        .postWrite = [totalAffectedCount, skipList, target, pos1, pos2]() {
+            if (totalAffectedCount > 0) {
+                auto filter = [skipList](df::coord pos, df::map_block* block) -> bool {
+                    // Returns true if 'pos' is in 'skipList'
+                    return skipList.end() == std::find_if(skipList.begin(), skipList.end(), [pos](df::coord p) { return p.x == pos.x && p.y == pos.y && p.z == pos.z; });
+                };
 
-        if (target.aquifer == 0)
-            Maps::removeAreaAquifer(pos1, pos2, filter);
-        else if (target.aquifer > 0)
-            Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
-    }
-    return totalAffectedCount + totalFilteredCount;
+                if (target.aquifer == 0)
+                    Maps::removeAreaAquifer(pos1, pos2, filter);
+                else if (target.aquifer > 0)
+                    Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
+            }
+        }
+    };
 }
 
-static bool paintTile(MapExtras::MapCache &map, const df::coord &pos,
+static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                       const TileType &target, const TileType &match = TileType()) {
     MapExtras::Block *blk = map.BlockAtTile(pos);
     if (!blk)
-        return false;
+        return PaintResult();
 
     df::tiletype source = map.tiletypeAt(pos);
     df::tile_designation des = map.designationAt(pos);
+    df::tile_occupancy occ = map.occupancyAt(pos);
 
     // Stone painting operates on the base layer
     if (target.stone_material >= 0)
@@ -912,17 +922,21 @@ static bool paintTile(MapExtras::MapCache &map, const df::coord &pos,
 
     t_matpair basemat = blk->baseMaterialAt(pos);
 
-    if (!match.matches(source, des, basemat))
-        return true;
+    if (!match.matches(source, des, occ, basemat))
+        return PaintResult();
 
     if (paintTileProcessing(blk, df::coord2d(pos.x&15, pos.y&15), target)) {
-        if (target.aquifer == 0)
-            Maps::removeTileAquifer(pos);
-        else if (target.aquifer > 0)
-            Maps::setTileAquifer(pos, target.aquifer == 2);
-        return true;
+        return PaintResult{
+            .paintCount = 1,
+            .postWrite = [target, pos]() {
+                if (target.aquifer == 0)
+                    Maps::removeTileAquifer(pos);
+                else if (target.aquifer > 0)
+                    Maps::setTileAquifer(pos, target.aquifer == 2);
+            }
+        };
     }
-    return false;
+    return PaintResult();
 }
 
 command_result executePaintJob(color_ostream &out,
@@ -970,6 +984,7 @@ command_result executePaintJob(color_ostream &out,
         out.print("working...\n");
 
     int failures = 0;
+    std::vector<PaintResult> paintResults = std::vector<PaintResult>();
 
     if (all_tiles.size() > 0) {
         // Force the game to recompute its walkability cache
@@ -978,7 +993,7 @@ command_result executePaintJob(color_ostream &out,
         if (dynamic_cast<RectangleBrush*>(brush) != nullptr || dynamic_cast<BlockBrush*>(brush) != nullptr || dynamic_cast<ColumnBrush*>(brush) != nullptr) {
             df::coord minPos = all_tiles[0];
             df::coord maxPos = all_tiles[0];
-            for (auto tile : all_tiles) {
+            for (df::coord& tile : all_tiles) {
                 minPos.x = std::min(minPos.x, tile.x);
                 minPos.y = std::min(minPos.y, tile.y);
                 minPos.z = std::min(minPos.z, tile.z);
@@ -986,13 +1001,18 @@ command_result executePaintJob(color_ostream &out,
                 maxPos.y = std::max(maxPos.y, tile.y);
                 maxPos.z = std::max(maxPos.z, tile.z);
             }
-            failures = all_tiles.size() - paintArea(map, minPos, maxPos, paint, filter);
+            PaintResult result = paintArea(map, minPos, maxPos, paint, filter);
+            paintResults.push_back(result);
+            failures = all_tiles.size() - result.paintCount;
         }
         else {
             for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
             {
-                if (!paintTile(map, *iter, paint, filter))
+                PaintResult result = paintTile(map, *iter, paint, filter);
+                if (result.paintCount == 0)
                     ++failures;
+                else
+                    paintResults.push_back(result);
             }
         }
     }
@@ -1004,6 +1024,9 @@ command_result executePaintJob(color_ostream &out,
 
     if (map.WriteAll())
     {
+        for (PaintResult& result : paintResults) {
+            result.postWrite();
+        }
         if (!opts.quiet)
             out.print("OK\n");
         return CR_OK;
@@ -1241,7 +1264,7 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         out.printerr("Invalid skyview value: %d\n", target.skyview);
         return false;
     }
-    if (target.aquifer < -1 || target.aquifer > 1) {
+    if (target.aquifer < -1 || target.aquifer > 2) {
         out.printerr("Invalid aquifer value: %d\n", target.aquifer);
         return false;
     }
@@ -1261,7 +1284,12 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     }
 
     MapExtras::MapCache map;
-    return paintTile(map, pos, target) && map.WriteAll();
+    PaintResult result = paintTile(map, pos, target);
+    if (result.paintCount > 0 && map.WriteAll()) {
+        result.postWrite();
+        return true;
+    }
+    return false;
 }
 
 static bool setTile(color_ostream &out, df::coord pos, df::tiletype_shape shape,

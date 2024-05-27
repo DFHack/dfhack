@@ -6622,6 +6622,14 @@ tiletypes
   the parameters are enum values from ``df.tiletype_shape``,
   ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
 
+* ``bool tiletypes_setTile(pos, tiletype_options)`` where
+  the ``tiletype_options`` parameter takes in a table, with any fields
+  matching the available tiletypes options:
+  ``shape``, ``material``, ``special``, ``variant``, ``dig``,
+  ``hidden``, ``light``, ``subterranean``, ``skyview``, ``aquifer``,
+  ``stone_material``, ``vein_type``.
+  Returns whether the conversion succeeded.
+
 .. _xlsxreader-api:
 
 xlsxreader

@@ -59,11 +59,14 @@ Template for new versions:
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
+- `tiletypes`: fix missing map block aquifer logic
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
 - `changevein`: affect connected veins even outside of the selected map block
 - `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
+- `tiletypes`: batches tile modifications when using *range*, *column*, or *block* options
+- `tiletypes`: support for heavy aquifers
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
@@ -91,6 +94,7 @@ Template for new versions:
 - ``dfhack.maps.isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``dfhack.maps.setTileAquifer``: make tile into an aquifer
 - ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
+- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table with for access to previously unavailable options
 
 
 ## Removed

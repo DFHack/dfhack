@@ -1143,13 +1143,19 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         out.printerr("Invalid aquifer value: %d\n", target.aquifer);
         return false;
     }
-    if (!isStoneInorganic(target.stone_material)) {
-        out.printerr("Invalid stone material: %d\n", target.stone_material);
-        return false;
+    if (target.material == df::tiletype_material::STONE) {
+        if (!isStoneInorganic(target.stone_material)) {
+            out.printerr("Invalid stone material: %d\n", target.stone_material);
+            return false;
+        }
+        if (!is_valid_enum_item(target.vein_type)) {
+            out.printerr("Invalid vein type: %d\n", target.vein_type);
+            return false;
+        }
     }
-    if (!is_valid_enum_item(target.vein_type)) {
-        out.printerr("Invalid vein type: %d\n", target.vein_type);
-        return false;
+    else {
+        target.stone_material = -1;
+        target.vein_type = df::inclusion_type::CLUSTER;
     }
 
     MapExtras::MapCache map;
@@ -1192,14 +1198,16 @@ static int tiletypes_setTile(lua_State *L) {
         target.material  = (df::tiletype_material)lua_getintfield("material", target.material);
         target.special   = (df::tiletype_special)lua_getintfield("special", target.special);
         target.variant   = (df::tiletype_variant)lua_getintfield("variant", target.variant);
-        target.vein_type = (df::inclusion_type)lua_getintfield("vein_type", target.vein_type);
         target.dig            = lua_getintfield("dig", target.dig);
         target.hidden         = lua_getintfield("hidden", target.hidden);
         target.light          = lua_getintfield("light", target.light);
         target.subterranean   = lua_getintfield("subterranean", target.subterranean);
         target.skyview        = lua_getintfield("skyview", target.skyview);
         target.aquifer        = lua_getintfield("aquifer", target.aquifer);
-        target.stone_material = lua_getintfield("stone_material", target.stone_material);
+        if (target.material == df::tiletype_material::STONE) {
+            target.stone_material = lua_getintfield("stone_material", target.stone_material);
+            target.vein_type = (df::inclusion_type)lua_getintfield("vein_type", target.vein_type);
+        }
     }
     else {
         target.shape = (df::tiletype_shape)lua_tointeger(L, 2);

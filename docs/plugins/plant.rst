@@ -50,11 +50,10 @@ if they are blocked by another tree.
 
     plant remove [<pos> [<pos>]] [<options>]
 
-Remove plants from the map (or area defined by ``pos`` arguments.) By default,
-only removes invalid plants that exist on non-plant tiles (due to `Bug 12868
-<https://dwarffortressbugtracker.com/view.php?id=12868>`_.) The ``--shrubs``
-and ``--saplings`` options allow normal plants to be targeted instead. Removal
-of fully-grown trees isn't currently supported.
+Remove plants from the map (or area defined by ``pos`` arguments). By default,
+it only removes invalid plants that exist on non-plant tiles (due to
+:bug:`12868`). The ``--shrubs`` and ``--saplings`` options allow normal plants
+to be targeted instead. Removal of fully-grown trees isn't currently supported.
 
 Examples
 --------
@@ -67,7 +66,7 @@ Examples
     Create a Willow sapling at the cursor, even away from water features,
     ready to mature into a tree.
 ``plant create single-grain_wheat 70,70,140``
-    Create a Single-grain Wheat shrub at (70, 70, 140.)
+    Create a Single-grain Wheat shrub at (70, 70, 140).
 ``plant grow``
     Attempt to grow all saplings on the map into trees.
 ``plant grow -z -f maple,200,sand_pear``
@@ -93,12 +92,12 @@ Create Options
     flag is set on tiles that were originally boulders or pebbles, as well
     as on some tiles found in deserts, etc. Also allow non-``[DRY]`` plants
     (e.g., willow) to grow away (3+ tiles) from water features (i.e., pools,
-    brooks, and rivers,) and non-``[WET]`` plants (e.g., prickle berry) to
+    brooks, and rivers), and non-``[WET]`` plants (e.g., prickle berry) to
     grow near them.
 ``-a``, ``--age <value>``
-    Set the created plant to a specific age (in years.) ``value`` can be a
-    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
-    ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at
+    Set the created plant to a specific age (in years). ``value`` can be a
+    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years),
+    ``2x2`` (201 years), or ``3x3`` (401 years). ``value`` will be capped at
     1250. Defaults to 0 if option is unused. Only a few tree types grow wider
     than 1x1, but many may grow taller. (Going directly to higher years will
     stunt height. It may be more desirable to instead use ``plant grow`` in
@@ -109,8 +108,8 @@ Grow Options
 
 ``-a``, ``--age <value>``
     Define the age (in years) to set saplings to. ``value`` can be a
-    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years,)
-    ``2x2`` (201 years,) or ``3x3`` (401 years.) ``value`` will be capped at
+    non-negative integer, or one of the strings ``tree``/``1x1`` (3 years),
+    ``2x2`` (201 years), or ``3x3`` (401 years). ``value`` will be capped at
     1250. Defaults to 3 if option is unused. If a ``value`` larger than 3 is
     used, it will make sure even fully-grown trees have an age of at least the
     given value, allowing them to grow larger. (Going directly to higher years
@@ -127,10 +126,10 @@ Grow Options
     with ``--filter``.
 ``-z``, ``--zlevel``
     Operate on a range of z-levels instead of default targeting. Will do all
-    z-levels between ``pos`` arguments if both are given (instead of cuboid,)
-    z-level of first ``pos`` if one is given (instead of single tile,) else
-    z-level of current view if no ``pos`` is given (instead of entire map.)
-``-n``, ``--dryrun``
+    z-levels between ``pos`` arguments if both are given (instead of cuboid),
+    z-level of first ``pos`` if one is given (instead of single tile), else
+    z-level of current view if no ``pos`` is given (instead of entire map).
+``-n``, ``--dry-run``
     Don't actually grow plants. Just print the total number of plants that
     would be grown.
 
@@ -156,9 +155,9 @@ Remove Options
     with ``--filter``.
 ``-z``, ``--zlevel``
     Operate on a range of z-levels instead of default targeting. Will do all
-    z-levels between ``pos`` arguments if both are given (instead of cuboid,)
-    z-level of first ``pos`` if one is given (instead of single tile,) else
-    z-level of current view if no ``pos`` is given (instead of entire map.)
+    z-levels between ``pos`` arguments if both are given (instead of cuboid),
+    z-level of first ``pos`` if one is given (instead of single tile), else
+    z-level of current view if no ``pos`` is given (instead of entire map).
 ``-n``, ``--dryrun``
     Don't actually remove plants. Just print the total number of plants that
     would be removed.

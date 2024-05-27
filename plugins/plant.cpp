@@ -578,7 +578,7 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     {   // Check improper options and plant raw
         if (options.zlevel || options.dry_run)
         {
-            out.printerr("Cannot use --zlevel or --dryrun with create!\n");
+            out.printerr("Cannot use --zlevel or --dry-run with create!\n");
             return CR_FAILURE;
         }
         else if (!filter.empty())

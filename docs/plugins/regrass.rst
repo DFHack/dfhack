@@ -37,7 +37,7 @@ Examples
 ``regrass 0,0,100 19,19,119 --ashes --mud``
     Regrass tiles in the 20 x 20 x 20 cube defined by the coords, refilling
     existing and depleted grass, and converting ashes and muddy stone (if
-    respective blocks ever had grass.)
+    respective blocks ever had grass).
 ``regrass 10,10,100 -baudnm``
     Regrass the block that contains the given coord; converting ashes, muddy
     stone, and tiles under buildings; adding all compatible grass types, and
@@ -61,8 +61,8 @@ Options
 -------
 
 ``-l``, ``--list``
-    Print all available grass raw IDs and skip regrass. For use with
-    ``--plant``.
+    List all available grass raw IDs that you can later pass to the ``--plant``
+    option. The map will not be affected when running with this option.
 ``-m``, ``--max``
     Maxes out every grass type in the tile, giving extra grazing time.
     Not normal DF behavior. Tile will appear to be the first type of grass

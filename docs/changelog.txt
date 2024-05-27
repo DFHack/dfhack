@@ -52,11 +52,11 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `plant` (formerly `plants`): (reinstated) tool for creating/growing/removing plants
+- `plant`: (reinstated) tool for creating/growing/removing plants
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
-- `plant` (formerly `plants`): can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
+- `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions

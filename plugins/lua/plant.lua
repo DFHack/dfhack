@@ -83,7 +83,7 @@ function parse_commandline(opts, pos_1, pos_2, filter_vec, args)
             opts.filter_ex = true
             build_filter(filter_vec, optarg) end},
         {'z', 'zlevel', handler=function() opts.zlevel = true end},
-        {'n', 'dryrun', handler=function() opts.dry_run = true end},
+        {'n', 'dry-run', handler=function() opts.dry_run = true end},
     })
 
     if #positionals > 3 then

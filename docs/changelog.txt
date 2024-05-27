@@ -56,7 +56,7 @@ Template for new versions:
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
-- `plant` (formerly `plants`): can now ``remove`` shrubs and saplings; ``grow`` can make mature trees older; many new command options
+- `plant` (formerly `plants`): can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
@@ -67,7 +67,7 @@ Template for new versions:
 - `blueprint`: capture track carving designations in addition to already-carved tracks
 - `changevein`: affect connected veins even outside of the selected map block
 - `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
-- `regrass`: now accepts numerical IDs for grass raws
+- `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

@@ -3,7 +3,7 @@ regrass
 
 .. dfhack-tool::
     :summary: Regrow surface grass and cavern moss.
-    :tags: adventure fort armok animals map
+    :tags: adventure fort armok animals map plants
 
 This command can refresh the grass (and subterranean moss) growing on your map.
 Operates on floors, stairs, and ramps. Also works underneath shrubs, saplings,
@@ -45,9 +45,10 @@ Examples
 ``regrass -f``
     Regrass the entire map, refilling existing and depleted grass, else filling
     with a randomly selected grass type if non-existent.
-``regrass -p ""``
-    Print all valid grass raw ids. Don't regrass.
-``regrass -zf -p underlichen``
+``regrass -l``
+    Print all valid grass raw IDs for use with ``--plant``. Both numerical and
+    string IDs are provided. This ignores all other options and skips regrass.
+``regrass -zf -p 128``
     Regrass the current z-level, refilling existing and depleted grass, else
     filling with ``underlichen`` if non-existent.
 ``regrass here -bnf -p "dog's tooth grass"``
@@ -59,6 +60,9 @@ Examples
 Options
 -------
 
+``-l``, ``--list``
+    Print all available grass raw IDs and skip regrass. For use with
+    ``--plant``.
 ``-m``, ``--max``
     Maxes out every grass type in the tile, giving extra grazing time.
     Not normal DF behavior. Tile will appear to be the first type of grass
@@ -79,10 +83,10 @@ Options
 ``-p``, ``--plant <grass_id>``
     Specify a grass type for the ``--force`` option. ``grass_id`` is not
     case-sensitive, but must be enclosed in quotes if spaces exist. A numerical
-    ID can also be used. Providing an empty string with "" will print all
-    available IDs and skip regrass.
+    ID can also be used.
 ``-a``, ``--ashes``
-    Regrass tiles that've been burnt to ash.
+    Regrass tiles that've been burnt to ash. Usually ash must revert to soil
+    first before grass can grow.
 ``-d``, ``--buildings``
     Regrass tiles under certain passable building tiles including stockpiles,
     planned buildings, workshops, and farms. (Farms will convert grass tiles to

@@ -19,9 +19,7 @@ local function find_plant_idx(s) --find plant raw index by id string
 end
 
 local function find_plant(s) --accept index string or match id string
-    if s == '' then
-        return -2 --will print all non-grass ids (for create)
-    elseif tonumber(s) then
+    if tonumber(s) then
         return argparse.nonnegativeInt(s, 'plant_id')
     else
         return find_plant_idx(s)
@@ -50,7 +48,7 @@ local year_table =
     tree = 3, --sapling_to_tree_threshold
     ["1x1"] = 3,
     ["2x2"] = 201, --kapok, ginkgo, highwood
-    ["3x3"] = 401, --highwood
+    ["3x3"] = 401, --highwood (tower-cap is bugged)
 }
 
 local function plant_age(s) --tree stage or numerical value
@@ -98,7 +96,9 @@ function parse_commandline(opts, pos_1, pos_2, filter_vec, args)
 
     local p1 = positionals[1]
     if not p1 then
-        qerror('Specify mode: create, grow, or remove!')
+        qerror('Specify mode: list, create, grow, or remove!')
+    elseif p1 == 'list' then
+        opts.plant_idx = -2 --will print all non-grass IDs
     elseif p1 == 'create' then
         opts.create = true
 
@@ -112,7 +112,7 @@ function parse_commandline(opts, pos_1, pos_2, filter_vec, args)
     elseif p1 == 'remove' then
         opts.del = true
     else
-        qerror('Invalid mode: "'..p1..'"! Must be create, grow, or remove!')
+        qerror('Invalid mode: "'..p1..'"! Must be list, create, grow, or remove!')
     end
 
     local n = opts.create and 3 or 2

@@ -85,7 +85,7 @@ struct plant_options
     bool zlevel = false; // Operate on entire z-levels
     bool dry_run = false; // Don't actually grow or remove anything
 
-    int32_t plant_idx = -1; // Plant raw index of plant to create; -2 means print all non-grass ids
+    int32_t plant_idx = -1; // Plant raw index of plant to create; -2 means print all non-grass IDs
     int32_t age = -1; // Set plant to this age for grow/create; -1 for default
 
     static struct_identity _identity;
@@ -227,7 +227,7 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     auto p_raw = vector_get(world->raws.plants.all, options.plant_idx);
     if (!p_raw)
     {
-        out.printerr("Plant raw not found!\n");
+        out.printerr("Can't create plant: Plant raw not found!\n");
         return CR_FAILURE;
     }
 
@@ -525,6 +525,18 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     {
         return CR_WRONG_USAGE;
     }
+    else if (options.plant_idx == -2)
+    {   // Print all non-grass raw IDs ("plant list")
+        out.print("--- Shrubs ---\n");
+        for (auto p_raw : world->raws.plants.bushes)
+            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
+
+        out.print("\n--- Saplings ---\n");
+        for (auto p_raw : world->raws.plants.trees)
+            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
+
+        return CR_OK;
+    }
     else if (options.force && !options.create)
     {
         out.printerr("Can't use --force without create!\n");
@@ -551,18 +563,6 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     {   // TODO: implement
         out.printerr("--trees not implemented!\n");
         return CR_FAILURE;
-    }
-    else if (options.plant_idx == -2)
-    {   // Print all non-grass raw ids
-        out.print("--- Shrubs ---\n");
-        for (auto p_raw : world->raws.plants.bushes)
-            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
-
-        out.print("\n--- Saplings ---\n");
-        for (auto p_raw : world->raws.plants.trees)
-            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
-
-        return CR_OK;
     }
 
     DEBUG(log, out).print("pos_1 = (%d, %d, %d)\npos_2 = (%d, %d, %d)\n",

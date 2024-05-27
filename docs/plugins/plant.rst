@@ -5,9 +5,10 @@ plant
     :summary: Grow and remove shrubs or trees.
     :tags: adventure fort armok map plants
 
-Grow and remove shrubs or trees. Modes are ``create``, ``grow``, and ``remove``.
-``create`` allows the creation of new shrubs and saplings. ``grow`` adjusts the
-age of saplings and trees, allowing them to grow instantly. ``remove`` can
+Grow and remove shrubs or trees. Modes are ``list``, ``create``, ``grow``,
+and ``remove``. ``list`` prints a list of all valid shrub and sapling raw IDs.
+``create`` allows the creation of new shrubs and saplings. ``grow`` adjusts
+the age of saplings and trees, allowing them to grow instantly. ``remove`` can
 remove existing shrubs and saplings.
 
 Usage
@@ -21,14 +22,21 @@ of numeric coordinates to use the position of the keyboard cursor, if active.
 
 ::
 
+    plant list
+
+Prints a list of all shrub and sapling raw IDs for use with the other modes.
+Both numerical and string IDs are provided.
+
+::
+
     plant create <plant_id> [<pos>] [<options>]
 
 Creates a new plant of the specified type at ``pos`` or the cursor position.
 The target must be a floor tile, consisting of soil, grass, ashes, or
-non-smooth muddy stone. ``plant_id`` is not case-sensitive, but must be
-enclosed in quotes if spaces exist. (No unmodded shrub or sapling IDs have
-spaces.) A numerical ID can also be used. Providing an empty string with ""
-will print all available IDs and skip plant creation.
+non-smooth muddy (layer, obsidian, or ore) stone. ``plant_id`` is not
+case-sensitive, but must be enclosed in quotes if spaces exist. (No unmodded
+shrub or sapling raw IDs have spaces.) A numerical ID can be used in place of a
+string. Use ``plant list`` for a list of valid IDs.
 
 ::
 
@@ -51,10 +59,10 @@ of fully-grown trees isn't currently supported.
 Examples
 --------
 
+``plant list``
+    List all valid shrub and sapling raw IDs.
 ``plant create tower_cap``
     Create a Tower Cap sapling at the cursor.
-``plant create ""``
-    List all valid shrub and sapling IDs.
 ``plant create 203 -c -a tree``
     Create a Willow sapling at the cursor, even away from water features,
     ready to mature into a tree.
@@ -109,11 +117,11 @@ Grow Options
     will stunt tree height. It may be more desirable to grow in stages rather
     than all at once. Trees grow taller every 10 years.)
 ``-f``, ``--filter <plant_id>[,<plant_id>...]``
-    Define a filter list of plant IDs to target, ignoring all other tree types.
-    ``plant_id`` is not case-sensitive, but must be enclosed in quotes if
-    spaces exist. (No unmodded tree IDs have spaces.) A numerical ID can also
-    be used. Use ``plant create ""`` and check under ``Saplings`` for a list
-    of valid IDs.
+    Define a filter list of plant raw IDs to target, ignoring all other tree
+    types. ``plant_id`` is not case-sensitive, but must be enclosed in quotes
+    if spaces exist. (No unmodded tree raw IDs have spaces.) A numerical ID
+    can be used in place of a string. Use ``plant list`` and check under
+    ``Saplings`` for a list of valid IDs.
 ``-e``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.
@@ -134,15 +142,15 @@ Remove Options
 ``-p``, ``--saplings``
     Target saplings for removal.
 ``-d``, ``--dead``
-    Only target dead plants for removal. Can't be used without ``--shrubs`` or
-    ``--saplings``.
+    Only target dead plants for removal. Can't be used without ``--shrubs``
+    or ``--saplings``.
 ``-f``, ``--filter <plant_id>[,<plant_id>...]``
-    Define a filter list of plant IDs to target, ignoring all other plant types.
-    This applies after ``--shrubs`` and ``--saplings`` are targeted, and can't
-    be used without one of those options. ``plant_id`` is not case-sensitive,
-    but must be enclosed in quotes if spaces exist. (No unmodded shrub or
-    sapling IDs have spaces.) A numerical ID can also be used. Use
-    ``plant create ""`` for a list of valid IDs.
+    Define a filter list of plant raw IDs to target, ignoring all other plant
+    types. This applies after ``--shrubs`` and ``--saplings`` are targeted,
+    and can't be used without one of those options. ``plant_id`` is not
+    case-sensitive, but must be enclosed in quotes if spaces exist. (No
+    unmodded shrub or sapling raw IDs have spaces.) A numerical ID can be
+    used in place of a string. Use ``plant list`` for a list of valid IDs.
 ``-e``, ``--exclude <plant_id>[,<plant_id>...]``
     Same as ``--filter``, but target everything except these. Cannot be used
     with ``--filter``.

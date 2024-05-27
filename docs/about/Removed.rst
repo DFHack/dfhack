@@ -229,6 +229,12 @@ masspit
 =======
 Replaced with a GUI version: `gui/masspit`.
 
+.. _max-wave:
+
+max-wave
+========
+Set population cap based on parameters. Merged into `pop-control`.
+
 .. _mousequery:
 
 mousequery

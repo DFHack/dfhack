@@ -1615,6 +1615,7 @@ inline void adjust_speed_rating(int &rating, bool is_adventure, int value, int d
     }
 }
 
+/*
 static int calcInventoryWeight(df::unit *unit)
 {
     int armor_skill = Units::getEffectiveSkill(unit, job_skill::ARMOR);
@@ -1646,6 +1647,7 @@ static int calcInventoryWeight(df::unit *unit)
 
     return inv_weight*100 + inv_weight_fraction/10000;
 }
+*/
 
 int Units::computeMovementSpeed(df::unit *unit)
 {
@@ -1660,6 +1662,8 @@ int Units::computeMovementSpeed(df::unit *unit)
 
     // Base speed
 
+    int speed = 0;
+    /*
     auto creature = df::creature_raw::find(unit->race);
     if (!creature)
         return 0;
@@ -1854,6 +1858,7 @@ int Units::computeMovementSpeed(df::unit *unit)
         if (player && player->id == unit->relationship_ids[df::unit_relationship_type::GroupLeader])
             speed = std::min(speed, computeMovementSpeed(player));
     }
+    */
 
     return std::min(10000, std::max(0, speed));
 }

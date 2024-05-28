@@ -145,8 +145,8 @@ The options identify the property of the tile and the value of that property:
     Whether a tile is marked as "Subterranean".
 ``sv``, ``skyview 0|1``
     Whether a tile is marked as "Outside". A value of ``0`` means "inside".
-``aqua``, ``aquifer 0|1``
-    Whether a tile is marked as an aquifer.
+``aqua``, ``aquifer 0|1|2``
+    Whether a tile is marked as an aquifer. A value of ``2`` means "heavy aquifer".
 ``stone <stone type>``
     Set a particular type of stone, creating veins as required. To see a list of
     valid stone types, run: ``:lua for _,mat in ipairs(df.global.world.raws.inorganics) do if mat.material.flags.IS_STONE and not mat.material.flags.NO_STONE_STOCKPILE then print(mat.id) end end``

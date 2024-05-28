@@ -59,14 +59,16 @@ Template for new versions:
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
-- `tiletypes`: fix missing map block aquifer logic
+- `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
 - `changevein`: affect connected veins even outside of the selected map block
 - `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
-- `tiletypes`: batches tile modifications when using *range*, *column*, or *block* options
+- `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
+- Dreamfort: add a full complement of beds and chests to both barracks
+- Dreamfort: redesign guildhall/temple/library level for better accessibility
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

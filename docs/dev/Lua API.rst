@@ -6624,18 +6624,19 @@ tiletypes
 
 * ``bool tiletypes_setTile(pos, tiletype_options)`` where
   the ``tiletype_options`` parameter takes in a table, with any fields matching
-  the available tiletypes options. Returns whether the conversion succeeded.
-    - ``shape``: ``df.tiletype_shape``
-    - ``material``: ``df.tiletype_material``
-    - ``special``: ``df.tiletype_special``
-    - ``variant``: ``df.tiletype_variant``
-    - ``hidden``: -1, 0, or 1
-    - ``light``: -1, 0, or 1
-    - ``subterranean``: -1, 0, or 1
-    - ``skyview``: -1, 0, or 1
-    - ``aquifer``: -1, 0, 1, or 2
-    - ``stone_material``: material id
-    - ``vein_type``: ``df.inclusion_type``
+  the available tiletypes options. Any unspecified fields default to keeping
+  the value of the original tile. Returns whether the conversion succeeded.
+  - ``shape``: ``df.tiletype_shape``
+  - ``material``: ``df.tiletype_material``
+  - ``special``: ``df.tiletype_special``
+  - ``variant``: ``df.tiletype_variant``
+  - ``hidden``: -1, 0, or 1
+  - ``light``: -1, 0, or 1
+  - ``subterranean``: -1, 0, or 1
+  - ``skyview``: -1, 0, or 1
+  - ``aquifer``: -1, 0, 1, or 2
+  - ``stone_material``: integer material id
+  - ``vein_type``: ``df.inclusion_type``
   
 
 .. _xlsxreader-api:

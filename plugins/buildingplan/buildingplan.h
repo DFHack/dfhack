@@ -5,6 +5,7 @@
 #include "modules/Persistence.h"
 
 #include "df/building.h"
+#include "df/burrow.h"
 #include "df/job_item.h"
 #include "df/job_item_vector_id.h"
 
@@ -23,6 +24,7 @@ enum ConfigValues {
     CONFIG_LOGS = 3,
     CONFIG_BARS = 4,
     CONFIG_RECONSTRUCT = 5,
+    CONFIG_BURROW = 6
 };
 
 enum FilterConfigValues {
@@ -55,3 +57,4 @@ bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat);
 bool matchesFilters(df::item * item, const df::job_item * job_item, HeatSafety heat, const ItemFilter &item_filter, const std::set<std::string> &special);
 bool isJobReady(DFHack::color_ostream &out, const std::vector<df::job_item *> &jitems);
 void finalizeBuilding(DFHack::color_ostream &out, df::building *bld, bool unsuspend_on_finalize);
+df::burrow *getIgnoreBurrow();

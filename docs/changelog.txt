@@ -69,6 +69,7 @@ Template for new versions:
 - `tiletypes`: support for heavy aquifers
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
+- `buildingplan`: add option to ignore items from a specified burrow
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

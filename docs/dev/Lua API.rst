@@ -6637,7 +6637,6 @@ tiletypes
   - ``aquifer``: -1, 0, 1, or 2
   - ``stone_material``: integer material id
   - ``vein_type``: ``df.inclusion_type``
-  
 
 .. _xlsxreader-api:
 

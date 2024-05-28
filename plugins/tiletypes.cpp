@@ -120,7 +120,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " Special / sp: set special tile information" << std::endl
             << " Variant / var / v: set variant tile information" << std::endl
             << " All / a: set the four above at the same time (no ANY support)" << std::endl
-            << " Designated / d: set designated flag" << std::endl
+            << " Designated / d: set designated flag (Only for filters)" << std::endl
             << " Hidden / h: set hidden flag" << std::endl
             << " Light / l: set light flag" << std::endl
             << " Subterranean / st: set subterranean flag" << std::endl
@@ -168,7 +168,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
     }
     else if (option == "designated" || option == "d")
     {
-        out << "Available designated flags:" << std::endl
+        out << "Available designated flags (Only for filters):" << std::endl
             << " ANY, 0, 1" << std::endl;
     }
     else if (option == "hidden" || option == "h")
@@ -534,7 +534,7 @@ bool tryVariant(std::string value, TileType &paint)
     return false;
 }
 
-bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end)
+bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end, bool isFilter)
 {
     if (start == end)
     {
@@ -627,14 +627,21 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     }
     else if (option == "designated" || option == "d")
     {
-        if (valInt >= -1 && valInt < 2)
+        if (isFilter)
         {
-            paint.dig = valInt;
-            found = true;
+            if (valInt >= -1 && valInt < 2)
+            {
+                paint.dig = valInt;
+                found = true;
+            }
+            else
+            {
+                out << "Unknown designation flag: " << value << std::endl;
+            }
         }
         else
         {
-            out << "Unknown designation flag: " << value << std::endl;
+            out << "Option only available in filters: '" << option << "'" << std::endl;
         }
     }
     else if (option == "hidden" || option == "h")
@@ -1061,11 +1068,11 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
     }
     else if (command == "filter" || command == "f")
     {
-        processTileType(out, filter, commands, loc, end);
+        processTileType(out, filter, commands, loc, end, true);
     }
     else if (command == "paint" || (command == "p" && commands.size() > 1))
     {
-        processTileType(out, paint, commands, loc, end);
+        processTileType(out, paint, commands, loc, end, false);
     }
     else if (command == "point" || command == "p")
     {
@@ -1244,10 +1251,6 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         out.printerr("Invalid variant type: %d\n", target.variant);
         return false;
     }
-    if (target.dig < -1 || target.dig > 1) {
-        out.printerr("Invalid dig value: %d\n", target.dig);
-        return false;
-    }
     if (target.hidden < -1 || target.hidden > 1) {
         out.printerr("Invalid hidden value: %d\n", target.hidden);
         return false;
@@ -1316,7 +1319,6 @@ static int tiletypes_setTile(lua_State *L) {
         target.material  = (df::tiletype_material)lua_getintfield("material", target.material);
         target.special   = (df::tiletype_special)lua_getintfield("special", target.special);
         target.variant   = (df::tiletype_variant)lua_getintfield("variant", target.variant);
-        target.dig            = lua_getintfield("dig", target.dig);
         target.hidden         = lua_getintfield("hidden", target.hidden);
         target.light          = lua_getintfield("light", target.light);
         target.subterranean   = lua_getintfield("subterranean", target.subterranean);

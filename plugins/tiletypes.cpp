@@ -1292,18 +1292,6 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     return false;
 }
 
-static bool setTile(color_ostream &out, df::coord pos, df::tiletype_shape shape,
-                    df::tiletype_material material, df::tiletype_special special,
-                    df::tiletype_variant variant) {
-    TileType target;
-    target.shape = shape;
-    target.material = material;
-    target.special = special;
-    target.variant = variant;
-
-    return setTile(out, pos, target);
-}
-
 static int tiletypes_setTile(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)

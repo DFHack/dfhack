@@ -59,7 +59,7 @@ Template for new versions:
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
-- `seedwatch`: display a limit of `-` instead of `0` for a seed that is present in inventory but not being watched
+- `seedwatch`: display a limit of `\-` instead of `0` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 
 ## Misc Improvements

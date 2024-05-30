@@ -60,6 +60,7 @@ Template for new versions:
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
+- `seedwatch`: do not include unplantable tree seeds in its status report
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

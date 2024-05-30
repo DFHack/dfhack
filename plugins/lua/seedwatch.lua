@@ -21,7 +21,9 @@ local function print_status()
     local sum = 0
     local plants = df.global.world.raws.plants.all
     for k,v in pairs(seed_counts) do
-        print(('  %4d/%d %s'):format(v, watch_map[k] or 0, plants[k].id))
+        local w = watch_map[k]
+        local wstr = (w and ('%d'):format(w)) or '-'
+        print(('  %4d/%s %s'):format(v, wstr, plants[k].id))
         sum = sum + v
     end
     print()

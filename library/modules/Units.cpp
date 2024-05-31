@@ -1132,6 +1132,18 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     return NULL;
 }
 
+void Units::makeown(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto fp = df::global::unitst_make_own;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit* bld)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
+}
+
 
 int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr)
 {

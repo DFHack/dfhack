@@ -85,6 +85,7 @@ Template for new versions:
 - ``Maps::setAreaAquifer``: make all tiles in a cuboid into aquifers, with the option to provide a filter
 - ``Maps::removeTileAquifer``: remove aquifer from tile
 - ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
+- ``Units::makeown``: API to use bay12-provided entry point for "makeown" operation
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)

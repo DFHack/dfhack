@@ -200,6 +200,10 @@ DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
 DFHACK_EXPORT df::identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
+// note: this function may fail for any of several reasons, all of which are silent
+// if needed, use isOwnCiv or another relevant predicate after invoking to determine if that the makeown operation was successful
+DFHACK_EXPORT void makeown(df::unit* unit);
+
 DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
 DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
 DFHACK_EXPORT bool casteFlagSet(int race, int caste, df::caste_raw_flags flag);

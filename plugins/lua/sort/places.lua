@@ -32,7 +32,7 @@ local zone_names = {
 
 -- I used strings rather than df.civzone_type because nobody is going to search "MeadHall" they're going to search "Tavern"
 local language_name_types = {
-    [df.language_name_type.SymbolFood] = 'Inn Tavern',
+    [df.language_name_type.FoodStore] = 'Inn Tavern',
     [df.language_name_type.Temple] = 'Temple',
     [df.language_name_type.Hospital] = 'Hospital',
     [df.language_name_type.Guildhall] = 'Guildhall',

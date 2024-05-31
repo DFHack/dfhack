@@ -25,9 +25,34 @@ DFHACK_PLUGIN("fix-occupancy");
 
 REQUIRE_GLOBAL(world);
 
-DFhackCExport command_result plugin_init (color_ostream &out, vector<PluginCommand> &commands) {
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
+
+    bool show_help = false;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.fix-occupancy", "parse_commandline", std::make_tuple(parameters),
+            1, [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
+        return CR_FAILURE;
+    }
+
+    return show_help ? CR_WRONG_USAGE : CR_OK;
+}
+
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
+    DEBUG(log, out).print("initializing %s\n", plugin_name);
+
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Fix phantom occupancy issues.",
+        do_command));
+
     return CR_OK;
 }
+
+/////////////////////////////////////////////////////
+// Lua API
+//
 
 static void normalize_item_vector(color_ostream &out, df::map_block *block, bool dry_run) {
     bool needs_sorting = false;

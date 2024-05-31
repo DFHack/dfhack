@@ -2240,6 +2240,10 @@ General
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
 
+  ``dfhack.buildings.getName(building)``
+
+  Returns the name of the building as it would appear in game.
+
 * ``dfhack.buildings.getSize(building)``
 
   Returns *width, height, centerx, centery*.

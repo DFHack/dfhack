@@ -355,6 +355,15 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     return findRef(building->specific_refs, type);
 }
 
+std::string Buildings::getName(df::building* building)
+{
+    CHECK_NULL_POINTER(building);
+
+    std::string tmp;
+    building->getName(&tmp);
+    return tmp;
+}
+
 bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);

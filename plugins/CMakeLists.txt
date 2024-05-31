@@ -170,7 +170,6 @@ if(BUILD_SUPPORTED)
     #dfhack_plugin(workflow workflow.cpp LINK_LIBRARIES lua)
     dfhack_plugin(work-now work-now.cpp)
     dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
-    dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
 endif(BUILD_SUPPORTED)
 
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,

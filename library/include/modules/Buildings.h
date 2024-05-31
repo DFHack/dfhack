@@ -113,6 +113,11 @@ DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::speci
 DFHACK_EXPORT bool setOwner(df::building_civzonest *building, df::unit *owner);
 
 /**
+ * Get the building's name (convenience method)
+ */
+DFHACK_EXPORT std::string getName(df::building* building);
+
+/**
  * Find the building located at the specified tile.
  * Does not work on civzones.
  */

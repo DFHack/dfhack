@@ -2663,6 +2663,7 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, isPitPond),
     WRAPM(Buildings, isActive),
     WRAPM(Buildings, completeBuild),
+    WRAPM(Buildings, getName),
     { NULL, NULL }
 };
 

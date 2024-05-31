@@ -79,6 +79,7 @@ Template for new versions:
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
+- ``Buildings::getName``: get a building's name, convenience method for easier use from Lua
 - ``Maps::isTileAquifer``: check if tile is an aquifer
 - ``Maps::isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``Maps::setTileAquifer``: make tile into an aquifer

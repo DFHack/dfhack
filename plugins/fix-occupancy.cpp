@@ -7,6 +7,7 @@
 #include "modules/Units.h"
 
 #include "df/building.h"
+#include "df/creature_raw.h"
 #include "df/item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
@@ -83,14 +84,17 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
     }
 
     // building occupancy
+    size_t num_buildings = 0;
     if (occ->bits.building != df::tile_building_occ::None && !Buildings::findAtTile(pos)) {
         INFO(log,out).print("%s building occupancy at (%d, %d, %d)\n",
             dry_run ? "would fix" : "fixing", pos.x, pos.y, pos.z);
+        ++num_buildings;
         if (!dry_run)
             occ->bits.building = df::tile_building_occ::None;
     }
 
     // check/fix unit occupancy
+    size_t num_units = 0;
     if (occ->bits.unit || occ->bits.unit_grounded) {
         vector<df::unit *> units;
         Units::getUnitsInBox(units, pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
@@ -99,6 +103,7 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
         for (auto unit : units) {
             if (unit->flags1.bits.caged)
                 continue;
+            ++num_units;
             if (unit->flags1.bits.on_ground)
                 found_grounded_unit = true;
             else
@@ -123,6 +128,7 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
 
     // scan for items at that position in the map block
     // this won't catch issues with items that are members of an incorrect map block. use fix_map for that.
+    size_t num_items = 0;
     bool found_item = false;
     for (auto item_id : block->items) {
         auto item = df::item::find(item_id);
@@ -130,6 +136,7 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
             continue;
         if (!item->flags.bits.on_ground || item->pos != pos)
             continue;
+        ++num_items;
         found_item = true;
         break;
     }
@@ -141,138 +148,53 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
         if (!dry_run)
             occ->bits.item = found_item;
     }
+
+    INFO(log,out).print("verified %zd building(s), %zd unit(s), %zd item(s), 1 map block(s), and 1 map tile(s)\n",
+        num_buildings, num_units, num_items);
 }
 
-/*
-static void fix_map_items(color_ostream &out, bool dry_run) {
-        local cnt = 0
-    local icnt = 0
-    local found = {}
-    local found_somewhere = {}
-
-    local should_fix = false
-    local can_fix = true
-
-    for _,block in ipairs(df.global.world.map.map_blocks) do
-        local itable = {}
-        local bx,by,bz = pos2xyz(block.map_pos)
-
-        -- Scan the block item vector
-        local last_id = nil
-        local resort = false
-
-        for _,id in ipairs(block.items) do
-            local item = df.item.find(id)
-            local ix,iy,iz = pos2xyz(item.pos)
-            local dx,dy,dz = ix-bx,iy-by,iz-bz
-
-            -- Check sorted order
-            if last_id and last_id >= id then
-                print(bx,by,bz,last_id,id,'block items not sorted')
-                resort = true
-            else
-                last_id = id
-            end
-
-            -- Check valid coordinates and flags
-            if not item.flags.on_ground then
-                print(bx,by,bz,id,dx,dy,'in block & not on ground')
-            elseif dx < 0 or dx >= 16 or dy < 0 or dy >= 16 or dz ~= 0 then
-                found_somewhere[id] = true
-                print(bx,by,bz,id,dx,dy,dz,'invalid pos')
-                can_fix = false
-            else
-                found[id] = true
-                itable[dx + dy*16] = true;
-
-                -- Check missing occupancy
-                if not block.occupancy[dx][dy].item then
-                    print(bx,by,bz,dx,dy,'item & not occupied')
-                    if fix then
-                        block.occupancy[dx][dy].item = true
-                    else
-                        should_fix = true
-                    end
-                end
-            end
-        end
-
-        -- Sort the vector if needed
-        if resort then
-            if fix then
-                utils.sort_vector(block.items)
-            else
-                should_fix = true
-            end
-        end
-
-        icnt = icnt + #block.items
-
-        -- Scan occupancy for spurious marks
-        for x=0,15 do
-            local ocx = block.occupancy[x]
-            for y=0,15 do
-                if ocx[y].item and not itable[x + y*16] then
-                    print(bx,by,bz,x,y,'occupied & no item')
-                    if fix then
-                        ocx[y].item = false
-                    else
-                        should_fix = true
-                    end
-                end
-            end
-        end
-
-        cnt = cnt + 256
-    end
-
-    -- Check if any items are missing from blocks
-    for _,item in ipairs(df.global.world.items.other.IN_PLAY) do
-        if item.flags.on_ground and not found[item.id] then
-            can_fix = false
-            if not found_somewhere[item.id] then
-                print(item.id,item.pos.x,item.pos.y,item.pos.z,'on ground & not in block')
-            end
-        end
-    end
-
-    -- Report
-    print(cnt.." tiles and "..icnt.." items checked.")
-
-    if should_fix and can_fix then
-        print("Use 'fix/item-occupancy --fix' to fix the listed problems.")
-    elseif should_fix then
-        print("The problems are too severe to be fixed by this script.")
-    end
-}
-*/
-
-struct OccBuf {
+struct Expected {
 private:
     int32_t dim_x, dim_y, dim_z;
     size_t size;
-    df::tile_occupancy * buf;
+    df::tile_occupancy * occ_buf;
+    std::unordered_map<df::map_block *, std::set<int32_t>> block_items_buf;
 
 public:
-    OccBuf() {
+    Expected() {
         Maps::getTileSize(dim_x, dim_y, dim_z);
         size = dim_x * dim_y * dim_z;
-        buf = (df::tile_occupancy *)calloc(size, sizeof(*buf));
+        occ_buf = (df::tile_occupancy *)calloc(size, sizeof(*occ_buf));
     }
 
-    ~OccBuf() {
-        free(buf);
+    ~Expected() {
+        free(occ_buf);
+    }
+
+    size_t get_size() const {
+        return size;
     }
 
     df::tile_occupancy * occ(int32_t x, int32_t y, int32_t z) {
         size_t off = (dim_x * dim_y * z) + (dim_x * y) + x;
         if (off < size)
-            return &buf[off];
+            return &occ_buf[off];
         return nullptr;
     }
-
     df::tile_occupancy * occ(const df::coord & pos) {
         return occ(pos.x, pos.y, pos.z);
+    }
+
+    std::set<int32_t> * block_items(df::map_block * block) {
+        if (!block)
+            return nullptr;
+        return &block_items_buf[block];
+    }
+    std::set<int32_t> * block_items(int32_t x, int32_t y, int32_t z) {
+        return block_items(Maps::getTileBlock(x, y, z));
+    }
+    std::set<int32_t> * block_items(const df::coord & pos) {
+        return block_items(pos.x, pos.y, pos.z);
     }
 };
 
@@ -310,19 +232,46 @@ static void reconcile_map_tile(color_ostream &out, df::tile_occupancy & expected
     }
 }
 
+static void reconcile_block_items(color_ostream &out, std::set<int32_t> * expected_items, df::map_block * block, bool dry_run) {
+    vector<int32_t> & block_items = block->items;
+
+    if (!expected_items) {
+        if (block_items.size()) {
+            INFO(log,out).print("%s stale item references in map block at (%d, %d, %d)\n",
+                dry_run ? "would fix" : "fixing", block->map_pos.x, block->map_pos.y, block->map_pos.z);
+            if (!dry_run)
+                block_items.resize(0);
+        }
+        return;
+    }
+
+    if (!std::equal(expected_items->begin(), expected_items->end(), block_items.begin(), block_items.end())) {
+        INFO(log,out).print("%s stale item references in map block at (%d, %d, %d)\n",
+            dry_run ? "would fix" : "fixing", block->map_pos.x, block->map_pos.y, block->map_pos.z);
+        if (!dry_run) {
+            block_items.resize(expected_items->size());
+            std::copy(expected_items->begin(), expected_items->end(), block_items.begin());
+        }
+    }
+}
+
 static void fix_map(color_ostream &out, bool dry_run) {
     static const uint32_t occ_mask = df::tile_occupancy::mask_building | df::tile_occupancy::mask_unit |
         df::tile_occupancy::mask_unit_grounded | df::tile_occupancy::mask_item;
 
-    OccBuf occ_buf;
+    Expected expected;
 
     // set expected building occupancy
     for (auto bld : world->buildings.all) {
         for (int y = bld->y1; y <= bld->y2; ++y) {
             for (int x = bld->x1; x <= bld->x2; ++x) {
-                if (Buildings::containsTile(bld, df::coord2d(x, y))) {
-                    if (auto occ = occ_buf.occ(x, y, bld->z))
-                        occ->bits.building = df::tile_building_occ::Impassable;
+                if (!Buildings::containsTile(bld, df::coord2d(x, y)))
+                    continue;
+                if (auto expected_occ = expected.occ(x, y, bld->z)) {
+                    auto bld_occ = df::tile_building_occ::Impassable;
+                    if (auto block_occ = Maps::getTileOccupancy(x, y, bld->z))
+                        bld_occ = block_occ->bits.building;
+                    expected_occ->bits.building = bld_occ;
                 }
             }
         }
@@ -330,11 +279,20 @@ static void fix_map(color_ostream &out, bool dry_run) {
 
     // set expected unit occupancy
     for (auto unit : world->units.active) {
-        if (unit->flags1.bits.caged)
+        if (unit->flags1.bits.caged || unit->flags1.bits.inactive || unit->flags1.bits.rider)
             continue;
-        if (auto occ = occ_buf.occ(unit->pos)) {
-            occ->bits.unit = !unit->flags1.bits.on_ground;
-            occ->bits.unit_grounded = unit->flags1.bits.on_ground;
+        if (auto craw = df::creature_raw::find(unit->race); craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON)) {
+            for (int y = unit->pos.y - 1; y <= unit->pos.y + 1; ++y) {
+                for (int x = unit->pos.x - 1; x <= unit->pos.x + 1; ++x) {
+                    if (auto expected_occ = expected.occ(x, y, unit->pos.z)) {
+                        expected_occ->bits.unit = true;
+                    }
+                }
+            }
+        }
+        if (auto expected_occ = expected.occ(unit->pos)) {
+            expected_occ->bits.unit = expected_occ->bits.unit || !unit->flags1.bits.on_ground;
+            expected_occ->bits.unit_grounded = expected_occ->bits.unit_grounded || unit->flags1.bits.on_ground;
         }
     }
 
@@ -342,14 +300,18 @@ static void fix_map(color_ostream &out, bool dry_run) {
     for (auto item : world->items.other.IN_PLAY) {
         if (!item->flags.bits.on_ground)
             continue;
-        if (auto occ = occ_buf.occ(Items::getPosition(item)))
-            occ->bits.item = true;
+        auto pos = Items::getPosition(item);
+        if (auto block_items = expected.block_items(pos))
+            block_items->emplace(item->id);
+        if (auto expected_occ = expected.occ(pos))
+            expected_occ->bits.item = true;
     }
 
-    // check against expected occupancy and fix
+    // check against expected values and fix
     for (auto block : world->map.map_blocks) {
         // check/fix order of map block item vector
         normalize_item_vector(out, block, dry_run);
+        reconcile_block_items(out, expected.block_items(block), block, dry_run);
 
         // reconcile occupancy of each tile against expected values
         int z = block->map_pos.z;
@@ -357,14 +319,14 @@ static void fix_map(color_ostream &out, bool dry_run) {
             int y = block->map_pos.y + yoff;
             for (int xoff = 0; xoff < 16; ++xoff) {
                 int x = block->map_pos.x + xoff;
-                auto expected_occ = occ_buf.occ(x, y, z);
+                auto expected_occ = expected.occ(x, y, z);
                 if (!expected_occ) {
                     TRACE(log,out).print("pos out of bounds (%d, %d, %d)\n", x, y, z);
                     continue;
                 }
-                df::tile_occupancy &block_occ = block->occupancy[x][y];
+                df::tile_occupancy &block_occ = block->occupancy[xoff][yoff];
                 if ((expected_occ->whole & occ_mask) != (block_occ.whole & occ_mask)) {
-                    TRACE(log,out).print("reconciling occupancy at (%d, %d, %d) (%d != %d)\n",
+                    DEBUG(log,out).print("reconciling occupancy at (%d, %d, %d) (0x%x != 0x%x)\n",
                         x, y, z, expected_occ->whole & occ_mask, block_occ.whole & occ_mask);
                     reconcile_map_tile(out, *expected_occ, block_occ, dry_run, x, y, z);
                 }
@@ -372,25 +334,9 @@ static void fix_map(color_ostream &out, bool dry_run) {
         }
     }
 
-    // check/fix item membership in block item vectors
-    // bool found_item = false;
-    // for (auto item : world->items.other.IN_PLAY) {
-    //     if (!item->flags.bits.on_ground || item->pos != pos)
-    //         continue;
-    //     found_item = true;
-    //     if (!dry_run) {
-    //         bool inserted = false;
-    //         insert_into_vector(block->items, item->id, &inserted);
-    //         if (inserted) {
-    //             INFO(log,out).print("fixing item membership in map block item list at (%d, %d, %d)\n",
-    //                 pos.x, pos.y, pos.z);
-    //         }
-    //     } else if (!vector_contains(block->items, item->id)) {
-    //         INFO(log,out).print("would fix item membership in map block item list at (%d, %d, %d)\n",
-    //             pos.x, pos.y, pos.z);
-    //     }
-    // }
-
+    INFO(log,out).print("verified %zd buildings, %zd units, %zd items, %zd map blocks, and %zd map tiles\n",
+        world->buildings.all.size(), world->units.active.size(), world->items.other.IN_PLAY.size(),
+        world->map.map_blocks.size(), expected.get_size());
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{
@@ -398,99 +344,3 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(fix_map),
     DFHACK_LUA_END
 };
-
-/*
-
-#include "modules/Maps.h"
-#include "modules/Units.h"
-#include "modules/Translation.h"
-#include "modules/World.h"
-
-#include "df/creature_raw.h"
-#include "df/map_block.h"
-#include "df/unit.h"
-#include "df/world.h"
-
-unsigned fix_unit_occupancy (color_ostream &out, uo_opts &opts)
-{
-    if (!Core::getInstance().isMapLoaded())
-        return 0;
-
-    if (!World::isFortressMode() && !opts.use_cursor)
-    {
-        out.printerr("Can only scan entire map in fortress mode\n");
-        return 0;
-    }
-
-    if (opts.use_cursor && cursor->x < 0)
-    {
-        out.printerr("No cursor\n");
-        return 0;
-    }
-
-    uo_buffer.resize();
-    unsigned count = 0;
-
-    float time1 = getClock();
-    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
-    {
-        df::map_block *block = world->map.map_blocks[i];
-        int map_z = block->map_pos.z;
-        if (opts.use_cursor && (map_z != cursor->z || block->map_pos.y != (cursor->y / 16) * 16 || block->map_pos.x != (cursor->x / 16) * 16))
-            continue;
-        for (int x = 0; x < 16; x++)
-        {
-            int map_x = x + block->map_pos.x;
-            for (int y = 0; y < 16; y++)
-            {
-                if (block->designation[x][y].bits.hidden)
-                    continue;
-                int map_y = y + block->map_pos.y;
-                if (opts.use_cursor && (map_x != cursor->x || map_y != cursor->y))
-                    continue;
-                if (block->occupancy[x][y].bits.unit)
-                    uo_buffer.set(map_x, map_y, map_z, 1);
-            }
-        }
-    }
-
-    for (auto it = world->units.active.begin(); it != world->units.active.end(); ++it)
-    {
-        df::unit *u = *it;
-        if (!u || u->flags1.bits.caged || u->pos.x < 0)
-            continue;
-        df::creature_raw *craw = df::creature_raw::find(u->race);
-        int unit_extents = (craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON)) ? 1 : 0;
-        for (int16_t x = u->pos.x - unit_extents; x <= u->pos.x + unit_extents; ++x)
-        {
-            for (int16_t y = u->pos.y - unit_extents; y <= u->pos.y + unit_extents; ++y)
-            {
-                uo_buffer.set(x, y, u->pos.z, 0);
-            }
-        }
-    }
-
-    for (size_t i = 0; i < uo_buffer.size; i++)
-    {
-        if (uo_buffer.buf[i])
-        {
-            uint32_t x, y, z;
-            uo_buffer.get_coords(i, x, y, z);
-            out.print("(%u, %u, %u) - no unit found\n", x, y, z);
-            ++count;
-            if (!opts.dry_run)
-            {
-                df::map_block *b = Maps::getTileBlock(x, y, z);
-                b->occupancy[x % 16][y % 16].bits.unit = false;
-            }
-        }
-    }
-
-    float time2 = getClock();
-    std::cerr << "fix-unit-occupancy: elapsed time: " << time2 - time1 << " secs" << endl;
-    if (count)
-        out << (opts.dry_run ? "[dry run] " : "") << "Fixed occupancy of " << count << " tiles [fix-unit-occupancy]" << endl;
-    return count;
-}
-
-*/

@@ -1139,7 +1139,7 @@ void Units::makeown(df::unit* unit)
     auto fp = df::global::unitst_make_own;
     CHECK_NULL_POINTER(fp);
 
-    using FT = std::function<void(df::unit* bld)>;
+    using FT = std::function<void(df::unit*)>;
     auto f = reinterpret_cast<FT*>(fp);
     (*f)(unit);
 }

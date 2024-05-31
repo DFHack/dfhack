@@ -165,8 +165,8 @@ end
 
 function Viewport:getCenter()
     return xyz2pos(
-        math.floor((self.x2+self.x1)/2),
-        math.floor((self.y2+self.y1)/2),
+        (self.x2+self.x1+1)//2,
+        (self.y2+self.y1+1)//2,
         self.z
     )
 end

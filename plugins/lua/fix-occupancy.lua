@@ -21,6 +21,8 @@ function parse_commandline(args)
     else
         fix_tile(argparse.coords(positionals[1], 'pos'), opts.dry_run)
     end
+
+    return true
 end
 
 return _ENV

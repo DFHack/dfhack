@@ -6,6 +6,7 @@
 #include "modules/Maps.h"
 #include "modules/Units.h"
 
+#include "df/building.h"
 #include "df/item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
@@ -43,7 +44,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     DEBUG(log, out).print("initializing %s\n", plugin_name);
 
     commands.push_back(PluginCommand(
-        plugin_name,
+        "fix/occupancy",
         "Fix phantom occupancy issues.",
         do_command));
 
@@ -142,8 +143,8 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
     }
 }
 
+/*
 static void fix_map_items(color_ostream &out, bool dry_run) {
-    /*
         local cnt = 0
     local icnt = 0
     local found = {}
@@ -243,8 +244,8 @@ static void fix_map_items(color_ostream &out, bool dry_run) {
     elseif should_fix then
         print("The problems are too severe to be fixed by this script.")
     end
-    */
 }
+*/
 
 struct OccBuf {
 private:
@@ -269,9 +270,15 @@ public:
             return &buf[off];
         return nullptr;
     }
+
+    df::tile_occupancy * occ(const df::coord & pos) {
+        return occ(pos.x, pos.y, pos.z);
+    }
 };
 
-static void reconcile_map_tile(color_ostream &out, df::tile_occupancy & expected_occ, df::tile_occupancy & block_occ, bool dry_run) {
+static void reconcile_map_tile(color_ostream &out, df::tile_occupancy & expected_occ, df::tile_occupancy & block_occ,
+    bool dry_run, int x, int y, int z)
+{
     // clear building occupancy if there is no building there
     if (expected_occ.bits.building == df::tile_building_occ::None && block_occ.bits.building != df::tile_building_occ::None) {
         INFO(log,out).print("%s building occupancy at (%d, %d, %d)\n",
@@ -280,60 +287,63 @@ static void reconcile_map_tile(color_ostream &out, df::tile_occupancy & expected
             block_occ.bits.building = df::tile_building_occ::None;
     }
 
-    // check/fix unit occupancy
-    if (occ->bits.unit || occ->bits.unit_grounded) {
-        vector<df::unit *> units;
-        Units::getUnitsInBox(units, pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
-        bool found_standing_unit = false;
-        bool found_grounded_unit = false;
-        for (auto unit : units) {
-            if (unit->flags1.bits.caged)
-                continue;
-            if (unit->flags1.bits.on_ground)
-                found_grounded_unit = true;
-            else
-                found_standing_unit = true;
-        }
-        if (occ->bits.unit != found_standing_unit) {
-            INFO(log,out).print("%s standing unit occupancy at (%d, %d, %d)\n",
-                dry_run ? "would fix" : "fixing", pos.x, pos.y, pos.z);
-            if (!dry_run)
-                occ->bits.unit = found_standing_unit;
-        }
-        if (occ->bits.unit_grounded != found_grounded_unit) {
-            INFO(log,out).print("%s grounded unit occupancy at (%d, %d, %d)\n",
-                dry_run ? "would fix" : "fixing", pos.x, pos.y, pos.z);
-            if (!dry_run)
-                occ->bits.unit_grounded = found_grounded_unit;
-        }
-    }
-
-    // check/fix block occupancy
-    if (occ->bits.item != found_item) {
-        INFO(log,out).print("%s item occupancy at (%d, %d, %d)\n",
-            dry_run ? "would fix" : "fixing", pos.x, pos.y, pos.z);
+    // clear unit occupancy if there are no units there
+    if (!expected_occ.bits.unit && block_occ.bits.unit) {
+        INFO(log,out).print("%s standing unit occupancy at (%d, %d, %d)\n",
+            dry_run ? "would fix" : "fixing", x, y, z);
         if (!dry_run)
-            occ->bits.item = found_item;
+            block_occ.bits.unit = false;
+    }
+    if (!expected_occ.bits.unit_grounded && block_occ.bits.unit_grounded) {
+        INFO(log,out).print("%s grounded unit occupancy at (%d, %d, %d)\n",
+            dry_run ? "would fix" : "fixing", x, y, z);
+        if (!dry_run)
+            block_occ.bits.unit_grounded = false;
     }
 
+    // clear item occupancy if there are no items there
+    if (!expected_occ.bits.item && block_occ.bits.item) {
+        INFO(log,out).print("%s item occupancy at (%d, %d, %d)\n",
+            dry_run ? "would fix" : "fixing", x, y, z);
+        if (!dry_run)
+            block_occ.bits.item = false;
+    }
 }
 
 static void fix_map(color_ostream &out, bool dry_run) {
+    static const uint32_t occ_mask = df::tile_occupancy::mask_building | df::tile_occupancy::mask_unit |
+        df::tile_occupancy::mask_unit_grounded | df::tile_occupancy::mask_item;
+
     OccBuf occ_buf;
 
     // set expected building occupancy
     for (auto bld : world->buildings.all) {
-
+        for (int y = bld->y1; y <= bld->y2; ++y) {
+            for (int x = bld->x1; x <= bld->x2; ++x) {
+                if (Buildings::containsTile(bld, df::coord2d(x, y))) {
+                    if (auto occ = occ_buf.occ(x, y, bld->z))
+                        occ->bits.building = df::tile_building_occ::Impassable;
+                }
+            }
+        }
     }
 
     // set expected unit occupancy
     for (auto unit : world->units.active) {
-
+        if (unit->flags1.bits.caged)
+            continue;
+        if (auto occ = occ_buf.occ(unit->pos)) {
+            occ->bits.unit = !unit->flags1.bits.on_ground;
+            occ->bits.unit_grounded = unit->flags1.bits.on_ground;
+        }
     }
 
     // set expected item occupancy
     for (auto item : world->items.other.IN_PLAY) {
-
+        if (!item->flags.bits.on_ground)
+            continue;
+        if (auto occ = occ_buf.occ(Items::getPosition(item)))
+            occ->bits.item = true;
     }
 
     // check against expected occupancy and fix
@@ -352,29 +362,34 @@ static void fix_map(color_ostream &out, bool dry_run) {
                     TRACE(log,out).print("pos out of bounds (%d, %d, %d)\n", x, y, z);
                     continue;
                 }
-                reconcile_map_tile(out, *expected_occ, block->occupancy[x][y], dry_run);
+                df::tile_occupancy &block_occ = block->occupancy[x][y];
+                if ((expected_occ->whole & occ_mask) != (block_occ.whole & occ_mask)) {
+                    TRACE(log,out).print("reconciling occupancy at (%d, %d, %d) (%d != %d)\n",
+                        x, y, z, expected_occ->whole & occ_mask, block_occ.whole & occ_mask);
+                    reconcile_map_tile(out, *expected_occ, block_occ, dry_run, x, y, z);
+                }
             }
         }
     }
 
-    // check/fix item membership in block item vector
-    bool found_item = false;
-    for (auto item : world->items.other.IN_PLAY) {
-        if (!item->flags.bits.on_ground || item->pos != pos)
-            continue;
-        found_item = true;
-        if (!dry_run) {
-            bool inserted = false;
-            insert_into_vector(block->items, item->id, &inserted);
-            if (inserted) {
-                INFO(log,out).print("fixing item membership in map block item list at (%d, %d, %d)\n",
-                    pos.x, pos.y, pos.z);
-            }
-        } else if (!vector_contains(block->items, item->id)) {
-            INFO(log,out).print("would fix item membership in map block item list at (%d, %d, %d)\n",
-                pos.x, pos.y, pos.z);
-        }
-    }
+    // check/fix item membership in block item vectors
+    // bool found_item = false;
+    // for (auto item : world->items.other.IN_PLAY) {
+    //     if (!item->flags.bits.on_ground || item->pos != pos)
+    //         continue;
+    //     found_item = true;
+    //     if (!dry_run) {
+    //         bool inserted = false;
+    //         insert_into_vector(block->items, item->id, &inserted);
+    //         if (inserted) {
+    //             INFO(log,out).print("fixing item membership in map block item list at (%d, %d, %d)\n",
+    //                 pos.x, pos.y, pos.z);
+    //         }
+    //     } else if (!vector_contains(block->items, item->id)) {
+    //         INFO(log,out).print("would fix item membership in map block item list at (%d, %d, %d)\n",
+    //             pos.x, pos.y, pos.z);
+    //     }
+    // }
 
 }
 

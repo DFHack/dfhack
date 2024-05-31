@@ -62,6 +62,7 @@ Template for new versions:
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 - `seedwatch`: do not include unplantable tree seeds in its status report
+- ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

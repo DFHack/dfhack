@@ -895,6 +895,9 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile) {
             return false;
     }
 
+    if (!bld->room.extents)
+        return true;
+
     df::building_extents_type *etile = getExtentTile(bld->room, tile);
     return etile && *etile;
 }

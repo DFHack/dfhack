@@ -62,6 +62,8 @@ Template for new versions:
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 - `seedwatch`: do not include unplantable tree seeds in its status report
+- ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
+- Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
@@ -72,6 +74,8 @@ Template for new versions:
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - `buildingplan`: add option to ignore items from a specified burrow
+- `autobutcher`: do not butcher pregnant (or brooding) females
+- `quickfort`: support buildable instruments
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
@@ -79,12 +83,14 @@ Template for new versions:
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
+- ``Buildings::getName``: get a building's name, convenience method for easier use from Lua
 - ``Maps::isTileAquifer``: check if tile is an aquifer
 - ``Maps::isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``Maps::setTileAquifer``: make tile into an aquifer
 - ``Maps::setAreaAquifer``: make all tiles in a cuboid into aquifers, with the option to provide a filter
 - ``Maps::removeTileAquifer``: remove aquifer from tile
 - ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
+- ``Units::makeown``: API to use bay12-provided entry point for "makeown" operation
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)

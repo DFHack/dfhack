@@ -526,6 +526,11 @@ function get_entry_tags(entry)
     return get_db_property(entry, 'tags')
 end
 
+-- returns whether the given entry exists and has the specified tag
+function has_tag(entry, tag)
+    return is_entry(entry) and get_entry_tags(entry)[tag]
+end
+
 -- returns whether the given string (or list of strings) matches a tag name
 function is_tag(str)
     ensure_db()

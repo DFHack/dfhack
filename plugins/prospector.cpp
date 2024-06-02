@@ -790,7 +790,7 @@ static command_result map_prospector(color_ostream &con,
                             loc = loc % 16;
                             if (options.hidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                if(plant.flags.bits.is_shrub)
+                                if (plant.type == df::plant_type::DRY_PLANT || plant.type == df::plant_type::WET_PLANT)
                                     plantMats[plant.material].add(global_z);
                                 else
                                     treeMats[plant.material].add(global_z);

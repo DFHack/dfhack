@@ -458,9 +458,7 @@ local function load_tests(file, tests)
     local targets = type(env.config.target) == 'table' and env.config.target or {env.config.target}
     for _,target in ipairs(targets) do
         if target == 'core' then goto continue end
-        if type(target) ~= 'string' or not helpdb.is_entry(target) or
-            helpdb.get_entry_tags(target).unavailable
-        then
+        if type(target) ~= 'string' or helpdb.has_tag(target, 'unavailable') then
             dfhack.printerr('Skipping tests for unavailable target: ' .. target)
             return true
         end

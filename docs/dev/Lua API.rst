@@ -1629,6 +1629,11 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+  ``dfhack.units.makeown(unit)``
+
+  Makes the selected unit a member of the current fortress and site.
+  Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 
@@ -2234,6 +2239,10 @@ General
 
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
+
+  ``dfhack.buildings.getName(building)``
+
+  Returns the name of the building as it would appear in game.
 
 * ``dfhack.buildings.getSize(building)``
 
@@ -3940,6 +3949,10 @@ Each entry has several properties associated with it:
 * ``helpdb.get_entry_tags(entry)``
 
   Returns the set of tag names for the given entry.
+
+* ``helpdb.has_tag(entry, tag)``
+
+  Returns whether the given entry exists and has the specified tag.
 
 * ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
 

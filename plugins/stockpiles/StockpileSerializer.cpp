@@ -1563,7 +1563,7 @@ food_pair StockpileSettingsSerializer::food_map(organic_mat_category::organic_ma
         FuncReadImport getter = [&](size_t idx) -> string { return mBuffer.food().seeds(idx); };
         return food_pair("seeds", setter, &mSettings->food.seeds, getter, mBuffer.food().seeds_size());
     }
-    case organic_mat_category::Leaf:
+    case organic_mat_category::PlantGrowth:
     {
         FuncWriteExport setter = [&](const string& id) {
             mBuffer.mutable_food()->add_leaves(id);
@@ -1651,7 +1651,7 @@ food_pair StockpileSettingsSerializer::food_map(organic_mat_category::organic_ma
     case organic_mat_category::CookableLiquid:
     case organic_mat_category::CookablePowder:
     case organic_mat_category::CookableSeed:
-    case organic_mat_category::CookableLeaf:
+    case organic_mat_category::CookablePlantGrowth:
     case organic_mat_category::Yarn:
     case organic_mat_category::MetalThread:
     default:

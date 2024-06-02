@@ -355,6 +355,15 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     return findRef(building->specific_refs, type);
 }
 
+std::string Buildings::getName(df::building* building)
+{
+    CHECK_NULL_POINTER(building);
+
+    std::string tmp;
+    building->getName(&tmp);
+    return tmp;
+}
+
 bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
@@ -885,6 +894,9 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile) {
         if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y > bld->y2)
             return false;
     }
+
+    if (!bld->room.extents)
+        return true;
 
     df::building_extents_type *etile = getExtentTile(bld->room, tile);
     return etile && *etile;

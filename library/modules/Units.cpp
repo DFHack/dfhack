@@ -1085,7 +1085,7 @@ void Units::setNickname(df::unit *unit, std::string nick)
 
             case df::identity_type::Impersonating:
             case df::identity_type::TrueName:
-                id_hfig = df::historical_figure::find(identity->originator_hf);
+                id_hfig = df::historical_figure::find(identity->histfig_id);
                 break;
             }
 
@@ -1130,6 +1130,18 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     }
 
     return NULL;
+}
+
+void Units::makeown(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto fp = df::global::unitst_make_own;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
 }
 
 

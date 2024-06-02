@@ -242,7 +242,7 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->soap_level != -0)
             out.print("\t[SOAP_LEVEL:%o]\n", mat->soap_level);
 
-        for (size_t i = 0; i < mat->syndrome.size(); i++)
+        for (size_t i = 0; i < mat->syndrome.syndrome.size(); i++)
             out.print("\t[SYNDROME] ...\n");
     }
     return CR_OK;

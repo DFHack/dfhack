@@ -963,7 +963,7 @@ local warned_scripts = {}
 function dfhack.run_script(name,...)
     if not warned_scripts[name] then
         local helpdb = require('helpdb')
-        if helpdb.is_entry(name) and helpdb.get_entry_tags(name).unavailable then
+        if helpdb.has_tag(name, 'unavailable') then
             warned_scripts[name] = true
             dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
             dfhack.printerr('It may not work as expected, or it may corrupt your game.')

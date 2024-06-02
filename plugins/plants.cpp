@@ -153,8 +153,12 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     }
     // for now, always set  to WET_TREE for WET-permitted plants, even if they're spawned away from water
     // the proper method would be to actually look for nearby water features, but it's not clear exactly how that works
-    if (plant_raw->flags.is_set(plant_raw_flags::WET))
-        plant->type = df::plant_type::WET_TREE;
+    if (plant_raw->flags.is_set(plant_raw_flags::WET)) {
+        if (plant_raw->flags.is_set(plant_raw_flags::TREE))
+            plant->type = df::plant_type::WET_TREE;
+        else
+            plant->type = df::plant_type::WET_PLANT;
+    }
     plant->material = plant_id;
     plant->pos.x = x;
     plant->pos.y = y;

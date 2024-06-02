@@ -1085,7 +1085,7 @@ void Units::setNickname(df::unit *unit, std::string nick)
 
             case df::identity_type::Impersonating:
             case df::identity_type::TrueName:
-                id_hfig = df::historical_figure::find(identity->originator_hf);
+                id_hfig = df::historical_figure::find(identity->histfig_id);
                 break;
             }
 

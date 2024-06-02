@@ -184,7 +184,7 @@ public:
 
     void scan_clothing()
     {
-        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "nontattered clothing"
+        for (auto i : world->items.other[df::items_other_id::ANY_GOES_IN_CABINET])
         {
             if (i->flags.whole & badFlags.whole)
             {

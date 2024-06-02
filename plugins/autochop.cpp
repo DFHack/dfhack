@@ -248,7 +248,7 @@ static bool is_accessible_tree(const df::coord &pos, const vector<df::unit *> &c
 
 static bool is_valid_tree(const df::plant *plant) {
     // Skip all non-trees immediately.
-    if (plant->flags.bits.is_shrub)
+    if (plant->type == df::plant_type::DRY_PLANT || plant->type == df::plant_type::WET_PLANT)
         return false;
 
     // Skip plants with invalid tile.

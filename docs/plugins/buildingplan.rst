@@ -65,6 +65,7 @@ Usage
     buildingplan [status]
     buildingplan set <setting> (true|false)
     buildingplan reset
+    buildingplan ignore [<burrow>]
 
 Examples
 --------
@@ -80,6 +81,11 @@ Examples
 ``buildingplan reset``
     Reset all settings and filters to their defaults. This command does not
     affect existing planned buildings.
+
+``buildingplan ignore [<burrow>]``
+    Do not use items from the selected burrow as building materials. If no
+    burrow is specified, or if the specified burrow does not exist, revert to
+    using all available items.
 
 .. _buildingplan-settings:
 

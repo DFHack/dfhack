@@ -173,11 +173,29 @@ fix/feeding-timers
 ==================
 The corresponding DF :bug:`2606` was fixed in DF 0.40.12.
 
+.. _fix/item-occupancy:
+
+fix/item-occupancy
+==================
+Merged into `fix/occupancy`.
+
 .. _fix/merchants:
 
 fix/merchants
 =============
 Humans can now make trade agreements. This fix is no longer necessary.
+
+.. _fix/tile-occupancy:
+
+fix/tile-occupancy
+==================
+Merged into `fix/occupancy`.
+
+.. _fix-unit-occupancy:
+
+fix-unit-occupancy
+==================
+Merged into `fix/occupancy`.
 
 .. _fortplan:
 

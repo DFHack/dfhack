@@ -1629,6 +1629,11 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+  ``dfhack.units.makeown(unit)``
+
+  Makes the selected unit a member of the current fortress and site.
+  Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 
@@ -2234,6 +2239,10 @@ General
 
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
+
+  ``dfhack.buildings.getName(building)``
+
+  Returns the name of the building as it would appear in game.
 
 * ``dfhack.buildings.getSize(building)``
 
@@ -6621,6 +6630,22 @@ tiletypes
 * ``bool tiletypes_setTile(pos, shape, material, special, variant)`` where
   the parameters are enum values from ``df.tiletype_shape``,
   ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
+
+* ``bool tiletypes_setTile(pos, tiletype_options)`` where
+  the ``tiletype_options`` parameter takes in a table, with any fields matching
+  the available tiletypes options. Any unspecified fields default to keeping
+  the value of the original tile. Returns whether the conversion succeeded.
+  - ``shape``: ``df.tiletype_shape``
+  - ``material``: ``df.tiletype_material``
+  - ``special``: ``df.tiletype_special``
+  - ``variant``: ``df.tiletype_variant``
+  - ``hidden``: -1, 0, or 1
+  - ``light``: -1, 0, or 1
+  - ``subterranean``: -1, 0, or 1
+  - ``skyview``: -1, 0, or 1
+  - ``aquifer``: -1, 0, 1, or 2
+  - ``stone_material``: integer material id
+  - ``vein_type``: ``df.inclusion_type``
 
 .. _xlsxreader-api:
 

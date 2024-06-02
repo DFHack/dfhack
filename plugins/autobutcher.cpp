@@ -667,6 +667,7 @@ static bool isProtectedUnit(df::unit *unit) {
         // ignore creatures in built cages which are defined as rooms to leave zoos alone
         // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
         || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+        || (unit->pregnancy_timer != 0) // do not butcher pregnant animals (which includes brooding female egglayers)
         || Units::isAvailableForAdoption(unit)
         || unit->name.has_name
         || !unit->name.nickname.empty();

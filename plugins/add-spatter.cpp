@@ -108,8 +108,8 @@ static int has_contaminant(df::item_actual *item, int type, int index)
     for (size_t i = 0; i < cont->size(); i++)
     {
         auto cur = (*cont)[i];
-        if (cur->mat_type == type && cur->mat_index == index)
-            size += cur->size;
+        if (cur->base.mat_type == type && cur->base.mat_index == index)
+            size += cur->base.size;
     }
 
     return size;

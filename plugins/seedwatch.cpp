@@ -291,6 +291,9 @@ static void scan_seeds(color_ostream &out, unordered_map<int32_t, int32_t> *acce
         MaterialInfo mat(item);
         if (mat.plant->index < 0 || !mat.isPlant())
             continue;
+        auto plant = df::plant_raw::find(mat.plant->index);
+        if (!plant || plant->flags.is_set(df::enums::plant_raw_flags::TREE))
+            continue;
         if ((bad_flags.whole & item->flags.whole) || !is_accessible_item(item, citizens)) {
             if (inaccessible_counts)
                 ++(*inaccessible_counts)[mat.plant->index];

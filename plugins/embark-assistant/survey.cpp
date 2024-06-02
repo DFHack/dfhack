@@ -266,7 +266,7 @@ namespace embark_assist {
                         else if (interaction->targets[k]->getType() == df::interaction_target_type::MATERIAL) {
                             df::interaction_target_materialst* material = virtual_cast<df::interaction_target_materialst>(interaction->targets[k]);
                             if (material && DFHack::MaterialInfo(material->mat_type, material->mat_index).isInorganic()) {
-                                for (const auto &syndrome : world->raws.inorganics[material->mat_index]->material.syndrome) {
+                                for (const auto &syndrome : world->raws.inorganics[material->mat_index]->material.syndrome.syndrome) {
                                     for (const auto &ce : syndrome->ce) {
                                         df::creature_interaction_effect_type ce_type = ce->getType();
                                         if (ce_type == df::creature_interaction_effect_type::FLASH_TILE) {

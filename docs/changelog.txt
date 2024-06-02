@@ -63,6 +63,7 @@ Template for new versions:
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 - `seedwatch`: do not include unplantable tree seeds in its status report
 - ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
+- Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

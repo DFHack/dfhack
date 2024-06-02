@@ -2460,6 +2460,23 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
     return false;
 }
 
+static bool should_hide_from_mortals(const std::string &command) {
+    auto &out = Core::getInstance().getConsole();
+
+    bool is_mortal = false;
+    Lua::CallLuaModuleFunction(out, "dfhack", "getHideArmokTools", {}, 1,
+        [&](lua_State* L) { is_mortal = lua_toboolean(L, -1); });
+
+    if (!is_mortal)
+        return false;
+
+    bool is_armok = false;
+    Lua::CallLuaModuleFunction(out, "helpdb", "has_tag", std::make_tuple(command, "armok"), 1,
+        [&](lua_State* L) { is_armok = lua_toboolean(L, -1); });
+
+    return is_armok;
+}
+
 bool Core::SelectHotkey(int sym, int modifiers)
 {
     // Find the topmost viewscreen
@@ -2501,6 +2518,11 @@ bool Core::SelectHotkey(int sym, int modifiers)
             }
             if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
                 DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
+                                        binding.command[0].c_str());
+                continue;
+            }
+            if (should_hide_from_mortals(binding.command[0])) {
+                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
                                         binding.command[0].c_str());
                 continue;
             }

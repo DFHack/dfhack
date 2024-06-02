@@ -2249,6 +2249,7 @@ Symbol            Type                          Properties
 ``~a``            offering place
 ``~c``            bookcase
 ``F``             display furniture
+``I``             buildable instrument
 ``p``             farm plot                     if ``seasonal_fertilize`` is
                                                 set to ``true`` then the plots
                                                 will be configured for seasonal

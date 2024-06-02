@@ -373,7 +373,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(product_hook, produce);
 struct item_hooks :df::item_actual {
         typedef df::item_actual interpose_base;
 
-        DEFINE_VMETHOD_INTERPOSE(void, contaminateWound,(df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2))
+        DEFINE_VMETHOD_INTERPOSE(void, contaminateWound,(df::unit* unit, df::unit_wound* wound, int32_t a1, int16_t a2))
         {
             CoreSuspendClaimer suspend;
             color_ostream_proxy out(Core::getInstance().getConsole());

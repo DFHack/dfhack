@@ -69,7 +69,8 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
         {
             df::plant *p = world->plants.all[i];
             df::tiletype ttype = map.tiletypeAt(df::coord(p->pos.x,p->pos.y,p->pos.z));
-            if(!p->flags.bits.is_shrub && tileShape(ttype) == tiletype_shape::SAPLING && tileSpecial(ttype) != tiletype_special::DEAD)
+            bool is_shrub = plant->type == df::plant_type::DRY_PLANT || plant->type == df::plant_type::WET_PLANT;
+            if(!is_shrub && tileShape(ttype) == tiletype_shape::SAPLING && tileSpecial(ttype) != tiletype_special::DEAD)
             {
                 p->grow_counter = sapling_to_tree_threshold;
                 grown++;
@@ -148,12 +149,12 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     else
     {
         plant->hitpoints = 100000;
-        plant->flags.bits.is_shrub = 1;
+        plant->type = df::plant_type::DRY_PLANT;
     }
-    // for now, always set "watery" for WET-permitted plants, even if they're spawned away from water
+    // for now, always set  to WET_TREE for WET-permitted plants, even if they're spawned away from water
     // the proper method would be to actually look for nearby water features, but it's not clear exactly how that works
     if (plant_raw->flags.is_set(plant_raw_flags::WET))
-        plant->flags.bits.watery = 1;
+        plant->type = df::plant_type::WET_TREE;
     plant->material = plant_id;
     plant->pos.x = x;
     plant->pos.y = y;
@@ -169,7 +170,7 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     case 3: world->plants.shrub_wet.push_back(plant); break;
     }
     col->plants.push_back(plant);
-    if (plant->flags.bits.is_shrub)
+    if (plant->type == df::plant_type::DRY_PLANT || plant->type == df::plant_type::WET_PLANT)
         map->tiletype[tx][ty] = tiletype::Shrub;
     else
         map->tiletype[tx][ty] = tiletype::Sapling;

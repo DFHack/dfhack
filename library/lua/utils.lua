@@ -515,7 +515,7 @@ function getItemDescription(item,mode)
 end
 
 function getItemDescriptionPrefix(item,mode)
-    return call_with_string(item, 'getItemDescriptionPrefix', mode or 0)
+    return call_with_string(item, 'getItemDescriptionPrefix', mode or df.article_type.INDEFINITE)
 end
 
 -- Split the string by the given delimiter

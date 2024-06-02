@@ -74,6 +74,7 @@ Template for new versions:
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - `buildingplan`: add option to ignore items from a specified burrow
 - `autobutcher`: do not butcher pregnant (or brooding) females
+- `quickfort`: support buildable instruments
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

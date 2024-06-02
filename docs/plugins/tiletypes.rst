@@ -21,6 +21,8 @@ You can use the `probe` command to discover properties of existing tiles that
 you'd like to copy. If you accidentally paint over a vein that you want back,
 `fixveins` may help.
 
+See `gui/tiletypes` for an in-game interface for this functionality.
+
 The tool works with a brush, a filter, and a paint specification. The brush
 determines the shape of the area to affect, the filter selects which tiles to
 affect, and the paint specification determines how to affect those tiles.

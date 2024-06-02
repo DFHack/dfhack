@@ -180,7 +180,7 @@ local building_inputs = {
     [df.building_type.NestBox] = { { has_tool_use=df.tool_uses.NEST_BOX, item_type=df.item_type.TOOL } },
     [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } },
     [df.building_type.OfferingPlace] = { { has_tool_use=df.tool_uses.PLACE_OFFERING, item_type=df.item_type.TOOL } },
-    [df.building_type.Instrument] = { vector_id=df.job_item_vector_id.INSTRUMENT_STATIONARY },
+    [df.building_type.Instrument] = { {vector_id=df.job_item_vector_id.INSTRUMENT_STATIONARY} },
     [df.building_type.Bookcase] = { { has_tool_use=df.tool_uses.BOOKCASE, item_type=df.item_type.TOOL } },
     [df.building_type.DisplayFurniture] = { { has_tool_use=df.tool_uses.DISPLAY_OBJECT, item_type=df.item_type.TOOL } },
     [df.building_type.Rollers] = {

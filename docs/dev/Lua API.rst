@@ -3950,6 +3950,10 @@ Each entry has several properties associated with it:
 
   Returns the set of tag names for the given entry.
 
+* ``helpdb.has_tag(entry, tag)``
+
+  Returns whether the given entry exists and has the specified tag.
+
 * ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
 
   Returns whether the given string (or list of strings) is a (are all) valid tag

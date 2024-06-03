@@ -1341,7 +1341,9 @@ void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlo
     ConvertDFCoord(localFlow->pos, netFlow->mutable_pos());
     ConvertDFCoord(localFlow->dest, netFlow->mutable_dest());
     netFlow->set_expanding(localFlow->expanding);
-    netFlow->set_reuse(localFlow->reuse);
+    netFlow->set_dead(localFlow->flags.bits.DEAD);
+    netFlow->set_fast(localFlow->flags.bits.FAST);
+    netFlow->set_creeping(localFlow->flags.bits.CREEPING);
     netFlow->set_guide_id(localFlow->guide_id);
     auto mat = netFlow->mutable_material();
     mat->set_mat_index(localFlow->mat_index);

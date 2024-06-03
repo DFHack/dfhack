@@ -342,12 +342,12 @@ struct product_hook : item_product {
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
          int32_t quantity, df::job_skill skill,
-         int32_t quality, df::historical_entity *entity,  df::world_site *site, std::vector<void *> *unk2)
+         int32_t quality, df::historical_entity *entity,  df::world_site *site, std::vector<df::item *> *improv_items)
     ) {
         color_ostream_proxy out(Core::getInstance().getConsole());
         auto product = products[this];
         if ( !product ) {
-            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, unk2);
+            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, improv_items);
             return;
         }
         df::reaction* this_reaction=product->react;
@@ -359,7 +359,7 @@ struct product_hook : item_product {
 
         size_t out_item_count = out_items->size();
 
-        INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, unk2);
+        INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, improv_items);
         if ( out_items->size() == out_item_count )
             return;
         //if it produced something, call the scripts

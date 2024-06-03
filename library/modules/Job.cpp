@@ -78,7 +78,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     //pnew->items.clear();
     //pnew->specific_refs.clear();
     pnew->general_refs.clear();
-    //pnew->job_items.clear();
+    //pnew->job_items.elements.clear();
 
     if ( keepEverything ) {
         for ( size_t a = 0; a < pnew->items.size(); a++ )
@@ -90,8 +90,8 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
         pnew->specific_refs.clear();
     }
 
-    for ( size_t a = 0; a < pnew->job_items.size(); a++ )
-        pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
+    for ( size_t a = 0; a < pnew->job_items.elements.size(); a++ )
+        pnew->job_items.elements[a] = new df::job_item(*pnew->job_items.elements[a]);
 
     for ( size_t a = 0; a < job->general_refs.size(); a++ )
         if ( keepEverything || job->general_refs[a]->getType() != general_ref_type::UNIT_WORKER )
@@ -117,8 +117,8 @@ void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
         for ( size_t a = 0; a < job->specific_refs.size(); a++ )
             delete job->specific_refs[a];
     }
-    for ( size_t a = 0; a < job->job_items.size(); a++ )
-        delete job->job_items[a];
+    for ( size_t a = 0; a < job->job_items.elements.size(); a++ )
+        delete job->job_items.elements[a];
     for ( size_t a = 0; a < job->general_refs.size(); a++ )
         delete job->general_refs[a];
 
@@ -153,11 +153,11 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(specflag.whole) &&
           CMP(hist_figure_id) && CMP(material_category.whole) &&
-          CMP(reaction_name) && CMP(job_items.size())))
+          CMP(reaction_name) && CMP(job_items.elements.size())))
         return false;
 
-    for (int i = a.job_items.size()-1; i >= 0; i--)
-        if (!(*a.job_items[i] == *b.job_items[i]))
+    for (int i = a.job_items.elements.size()-1; i >= 0; i--)
+        if (!(*a.job_items.elements[i] == *b.job_items.elements[i]))
             return false;
 
     return true;
@@ -266,8 +266,8 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
     if (!job->reaction_name.empty())
         out << "    reaction: " << job->reaction_name << endl;
 
-    for (size_t i = 0; i < job->job_items.size(); i++)
-        printItemDetails(out, job->job_items[i], i);
+    for (size_t i = 0; i < job->job_items.elements.size(); i++)
+        printItemDetails(out, job->job_items.elements[i], i);
 }
 
 df::general_ref *Job::getGeneralRef(df::job *job, df::general_ref_type type)

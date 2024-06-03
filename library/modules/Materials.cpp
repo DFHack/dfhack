@@ -478,9 +478,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
 
     TEST(millable, structural && FLAG(plant, plant_raw_flags::MILL));
     TEST(sharpenable, MAT_FLAG(IS_STONE));
-    TEST(distillable, structural && FLAG(plant, plant_raw_flags::DRINK));
     TEST(processable, structural && FLAG(plant, plant_raw_flags::THREAD));
-    TEST(bag, isAnyCloth() || MAT_FLAG(LEATHER));
     TEST(cookable, MAT_FLAG(EDIBLE_COOKED));
     TEST(extract_bearing_plant, structural && FLAG(plant, plant_raw_flags::EXTRACT_STILL_VIAL));
     TEST(extract_bearing_fish, false);

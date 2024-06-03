@@ -57,7 +57,7 @@ function job_outputs.CustomReaction(callback, job)
                 local reagent_idx, src = utils.linear_index(r.reagents, reagent_code, 'code')
                 if not reagent_idx then goto continue end
 
-                local item_idx, jitem = utils.linear_index(job.job_items, reagent_idx, 'reagent_index')
+                local item_idx, jitem = utils.linear_index(job.job_items.elements, reagent_idx, 'reagent_index')
                 if jitem then
                     mat_type, mat_index = jitem.mat_type, jitem.mat_index
                 else
@@ -120,9 +120,9 @@ local function guess_job_material(job)
         end
     end
 
-    if mat_type < 0 and #job.job_items > 0 then
-        local item0 = job.job_items[0]
-        if #job.job_items == 1 or item0.item_type == df.item_type.PLANT then
+    if mat_type < 0 and #job.job_items.elements > 0 then
+        local item0 = job.job_items.elements[0]
+        if #job.job_items.elements == 1 or item0.item_type == df.item_type.PLANT then
             mat_type, mat_index = item0.mat_type, item0.mat_index
 
             if item0.item_type == df.item_type.WOOD then
@@ -150,7 +150,7 @@ function default_output(callback, job, mat_type, mat_index, mat_mask)
 end
 
 function job_outputs.SmeltOre(callback, job)
-    local mat = dfhack.matinfo.decode(job.job_items[0])
+    local mat = dfhack.matinfo.decode(job.job_items.elements[0])
     if mat and mat.inorganic then
         for i,v in ipairs(mat.inorganic.metal_ore.mat_index) do
             callback{ item_type = df.item_type.BAR, mat_type = 0, mat_index = v }
@@ -161,7 +161,7 @@ function job_outputs.SmeltOre(callback, job)
 end
 
 function job_outputs.ExtractMetalStrands(callback, job)
-    local mat = dfhack.matinfo.decode(job.job_items[0])
+    local mat = dfhack.matinfo.decode(job.job_items.elements[0])
     if mat and mat.inorganic then
         for i,v in ipairs(mat.inorganic.thread_metal.mat_index) do
             callback{ item_type = df.item_type.THREAD, mat_type = 0, mat_index = v }
@@ -208,7 +208,7 @@ for job,flag in pairs(plant_products) do
     job_outputs[job] = function(callback, job)
         local mat_type, mat_index = -1, -1
         local seed_type, seed_index = -1, -1
-        local mat = dfhack.matinfo.decode(job.job_items[0])
+        local mat = dfhack.matinfo.decode(job.job_items.elements[0])
         if mat and mat.plant and mat.plant.flags[flag] then
             mat_type = mat.plant.material_defs.type[tag]
             mat_index = mat.plant.material_defs.idx[tag]

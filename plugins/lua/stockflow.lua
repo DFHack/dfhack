@@ -296,19 +296,19 @@ function collect_reactions()
             reaction_entry(result, job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
-                item_category = {finished_goods = true},
+                specflag = {encrust_flags={finished_goods=true}},
             }, "Encrust Finished Goods With "..rock_name)
 
             reaction_entry(result, job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
-                item_category = {furniture = true},
+                specflag = {encrust_flags={furniture=true}},
             }, "Encrust Furniture With "..rock_name)
 
             reaction_entry(result, job_types.EncrustWithGems, {
                 mat_type = 0,
                 mat_index = rock_id,
-                item_category = {ammo = true},
+                specflag = {encrust_flags={ammo=true}},
             }, "Encrust Ammo With "..rock_name)
         end
 
@@ -339,17 +339,17 @@ function collect_reactions()
 
             reaction_entry(result, job_types.EncrustWithGlass, {
                 mat_type = glass_id,
-                item_category = {finished_goods = true},
+                specflag = {encrust_flags={finished_goods=true}},
             }, "Encrust Finished Goods With "..glass_name)
 
             reaction_entry(result, job_types.EncrustWithGlass, {
                 mat_type = glass_id,
-                item_category = {furniture = true},
+                specflag = {encrust_flags={furniture=true}},
             }, "Encrust Furniture With "..glass_name)
 
             reaction_entry(result, job_types.EncrustWithGlass, {
                 mat_type = glass_id,
-                item_category = {ammo = true},
+                specflag = {encrust_flags={ammo=true}},
             }, "Encrust Ammo With "..glass_name)
         end
     end
@@ -1033,18 +1033,15 @@ function orders_match(a, b)
         end
     end
 
-    local subtables = {
-        "item_category",
-        "material_category",
-    }
+    for key, value in ipairs(a.specflag.encrust_flags) do
+        if b.specflag.encrust_flags[key] ~= value then
+            return false
+        end
+    end
 
-    for _, fieldname in ipairs(subtables) do
-        local aa = a[fieldname]
-        local bb = b[fieldname]
-        for key, value in ipairs(aa) do
-            if bb[key] ~= value then
-                return false
-            end
+    for key, value in ipairs(a.material_category) do
+        if b.material_category[key] ~= value then
+            return false
         end
     end
 

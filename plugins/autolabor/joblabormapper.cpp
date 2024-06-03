@@ -446,7 +446,7 @@ public:
         }
         break;
         case df::building_type::Construction:
-            return df::unit_labor::REMOVE_CONSTRUCTION;
+            return df::unit_labor::MINE;
         case df::building_type::TradeDepot:
         case df::building_type::Wagon:
         case df::building_type::Bridge:
@@ -536,7 +536,7 @@ public:
             {
             case df::workshop_type::Craftsdwarfs:
             {
-                df::item_type jobitem = j->job_items[0]->item_type;
+                df::item_type jobitem = j->job_items.elements[0]->item_type;
                 switch (jobitem)
                 {
                 case df::item_type::BOULDER:
@@ -696,16 +696,16 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::DigChannel] = jlf_const(df::unit_labor::MINE);
     job_to_labor_table[df::job_type::FellTree] = jlf_const(df::unit_labor::CUTWOOD);
     job_to_labor_table[df::job_type::GatherPlants] = jlf_const(df::unit_labor::HERBALIST);
-    job_to_labor_table[df::job_type::RemoveConstruction] = jlf_const(df::unit_labor::REMOVE_CONSTRUCTION);
+    job_to_labor_table[df::job_type::RemoveConstruction] = jlf_const(df::unit_labor::MINE);
     job_to_labor_table[df::job_type::CollectWebs] = jlf_const(df::unit_labor::WEAVER);
     job_to_labor_table[df::job_type::BringItemToDepot] = jlf_const(df::unit_labor::HAUL_TRADE);
     job_to_labor_table[df::job_type::BringItemToShop] = jlf_no_labor;
     job_to_labor_table[df::job_type::Eat] = jlf_no_labor;
     job_to_labor_table[df::job_type::GetProvisions] = jlf_no_labor;
     job_to_labor_table[df::job_type::Drink] = jlf_no_labor;
-    job_to_labor_table[df::job_type::Drink2] = jlf_no_labor;
+    job_to_labor_table[df::job_type::DrinkItem] = jlf_no_labor;
     job_to_labor_table[df::job_type::FillWaterskin] = jlf_no_labor;
-    job_to_labor_table[df::job_type::FillWaterskin2] = jlf_no_labor;
+    job_to_labor_table[df::job_type::FillWaterskinItem] = jlf_no_labor;
     job_to_labor_table[df::job_type::Sleep] = jlf_no_labor;
     job_to_labor_table[df::job_type::CollectSand] = jlf_const(df::unit_labor::HAUL_ITEM);
     job_to_labor_table[df::job_type::Fish] = jlf_const(df::unit_labor::FISH);
@@ -733,7 +733,7 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::SeekInfant] = jlf_no_labor;
     job_to_labor_table[df::job_type::AttendParty] = jlf_no_labor;
     job_to_labor_table[df::job_type::GoShopping] = jlf_no_labor;
-    job_to_labor_table[df::job_type::GoShopping2] = jlf_no_labor;
+    job_to_labor_table[df::job_type::GoShoppingSpecific] = jlf_no_labor;
     job_to_labor_table[df::job_type::Clean] = jlf_const(df::unit_labor::CLEAN);
     job_to_labor_table[df::job_type::Rest] = jlf_no_labor;
     job_to_labor_table[df::job_type::PickupEquipment] = jlf_no_labor;
@@ -860,8 +860,8 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::FillPond] = jlf_const(df::unit_labor::HAUL_WATER);
     job_to_labor_table[df::job_type::GiveWater] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::GiveFood] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
-    job_to_labor_table[df::job_type::GiveWater2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
-    job_to_labor_table[df::job_type::GiveFood2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
+    job_to_labor_table[df::job_type::GiveWaterPet] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
+    job_to_labor_table[df::job_type::GiveFoodPet] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::RecoverPet] = jlf_no_labor;
     job_to_labor_table[df::job_type::PitLargeAnimal] = jlf_const(df::unit_labor::HAUL_ANIMALS);
     job_to_labor_table[df::job_type::PitSmallAnimal] = jlf_no_labor;
@@ -924,9 +924,9 @@ JobLaborMapper::JobLaborMapper()
 
     job_to_labor_table[df::job_type::StoreItemInLocation] = jlf_no_labor; // StoreItemInLocation
 
-    job_to_labor_table[df::job_type::unk_fake_no_job] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::HeistItem] = jlf_no_labor; // added for 47.04 - see #1561
     job_to_labor_table[df::job_type::InterrogateSubject] = jlf_no_labor; // added for 47.04 - see #1561
-    job_to_labor_table[df::job_type::unk_fake_no_activity] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::AcceptHeistItem] = jlf_no_labor; // added for 47.04 - see #1561
 };
 
 df::unit_labor JobLaborMapper::find_job_labor(df::job* j)

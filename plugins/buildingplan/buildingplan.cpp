@@ -467,7 +467,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bo
     for (auto job : bld->jobs)
         job->flags.bits.suspend = true;
 
-    auto job_items = bld->jobs[0]->job_items;
+    auto job_items = bld->jobs[0]->job_items.elements;
     if (isJobReady(out, job_items)) {
         // all items are already attached
         finalizeBuilding(out, bld, unsuspend_on_finalize);
@@ -541,7 +541,7 @@ static void printStatus(color_ostream &out) {
         auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
-        auto &job_items = bld->jobs[0]->job_items;
+        auto &job_items = bld->jobs[0]->job_items.elements;
         const size_t num_job_items = job_items.size();
         if (num_job_items != pb.vector_ids.size())
             continue;
@@ -772,7 +772,7 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
         auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
-        for (auto pb_jitem : bld->jobs[0]->job_items) {
+        for (auto pb_jitem : bld->jobs[0]->job_items.elements) {
             if (pb_jitem->item_type == jitem->item_type && pb_jitem->item_subtype == jitem->item_subtype)
                 count -= pb_jitem->quantity;
         }
@@ -1115,7 +1115,7 @@ static bool validate_pb(color_ostream &out, df::building *bld, int index) {
     if (!isPlannedBuilding(out, bld) || bld->jobs.size() != 1)
         return false;
 
-    auto &job_items = bld->jobs[0]->job_items;
+    auto &job_items = bld->jobs[0]->job_items.elements;
     if ((int)job_items.size() <= index)
         return false;
 
@@ -1132,7 +1132,7 @@ static string getDescString(color_ostream &out, df::building *bld, int index) {
         return "INVALID";
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto & jitems = bld->jobs[0]->job_items;
+    auto & jitems = bld->jobs[0]->job_items.elements;
     const size_t num_job_items = jitems.size();
     int rev_index = num_job_items - (index + 1);
     auto &jitem = jitems[rev_index];
@@ -1145,7 +1145,7 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         return 0;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto & jitems = bld->jobs[0]->job_items;
+    auto & jitems = bld->jobs[0]->job_items.elements;
     const size_t num_job_items = jitems.size();
     int rev_index = num_job_items - (index + 1);
     auto &job_item = jitems[rev_index];
@@ -1180,7 +1180,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
         return;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto &job_items = bld->jobs[0]->job_items;
+    auto &job_items = bld->jobs[0]->job_items.elements;
     const int num_job_items = (int)job_items.size();
 
     for (int index = 0; index < num_job_items; ++index) {

@@ -16,10 +16,10 @@ struct reaction_gloves_hook : df::reaction_product_itemst {
         std::vector<df::reaction_product*> *out_products, std::vector<df::item*> *out_items,
         std::vector<df::reaction_reagent*> *in_reag, std::vector<df::item*> *in_items,
         int32_t quantity, df::job_skill skill, int32_t quality,
-        df::historical_entity *entity, df::world_site *site, std::vector<void *> *improved_i))
+        df::historical_entity *entity, df::world_site *site, std::vector<df::item *> *improv_items))
     {
         if (item_type != df::item_type::GLOVES) {
-            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, improved_i);
+            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, improv_items);
             return;
         }
 
@@ -49,7 +49,7 @@ struct reaction_gloves_hook : df::reaction_product_itemst {
             count *= num_hands;
         }
 
-        INTERPOSE_NEXT(produce)(unit, out_products, &out_items_temp, in_reag, in_items, quantity, skill, quality, entity, site, improved_i);
+        INTERPOSE_NEXT(produce)(unit, out_products, &out_items_temp, in_reag, in_items, quantity, skill, quality, entity, site, improv_items);
         count = old_count;
 
         // If the reaction was somehow asked to produce multiple sets (due to excess inputs), multiply the outputs too

@@ -332,8 +332,10 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
     if (!des || !occ || !is_wall(pos))
         return;
 
-    des->bits.dig = df::tile_dig_designation::Default;
-    occ->bits.dig_auto = true;
+    if (des->bits.hidden && ((warm && is_warm(pos)) || (damp && is_damp(pos)))) {
+        des->bits.dig = df::tile_dig_designation::Default;
+        occ->bits.dig_auto = true;
+    }
 
     if (warm) {
         if (auto warm_mask = World::getPersistentTilemask(warm_config, block, true))

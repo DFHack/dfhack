@@ -64,6 +64,7 @@ Template for new versions:
 - `seedwatch`: do not include unplantable tree seeds in its status report
 - ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
 - Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
+- `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

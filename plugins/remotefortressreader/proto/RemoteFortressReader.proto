@@ -1111,10 +1111,13 @@ message FlowInfo
     optional Coord pos = 4;
     optional Coord dest = 5;
     optional bool expanding = 6;
-    optional bool reuse = 7;
+    optional bool reuse = 7 [deprecated=true];
     optional int32 guide_id = 8;
     optional MatPair material = 9;
     optional MatPair item = 10;
+    optional bool dead = 11;
+    optional bool fast = 12;
+    optional bool creeping = 13;
 }
 
 message Wave

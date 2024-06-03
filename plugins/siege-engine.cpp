@@ -1855,9 +1855,9 @@ struct building_hook : df::building_siegeenginest {
             switch (job->job_type)
             {
                 case job_type::LoadCatapult:
-                    if (!job->job_items.empty())
+                    if (!job->job_items.elements.empty())
                     {
-                        auto item = job->job_items[0];
+                        auto item = job->job_items.elements[0];
                         item->item_type = engine->ammo_item_type;
                         item->vector_id = engine->ammo_vector_id;
 

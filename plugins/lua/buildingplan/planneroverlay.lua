@@ -1322,7 +1322,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         -- attach chosen items and reduce job_item quantity
         if chosen_items then
             local job = bld.jobs[0]
-            local jitems = job.job_items
+            local jitems = job.job_items.elements
             local num_filters = #get_cur_filters()
             for idx=1,num_filters do
                 local item_ids = chosen_items[idx]

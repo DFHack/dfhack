@@ -152,7 +152,7 @@ void buildings_onUpdate(color_ostream &out)
 
         if (job->job_type != job_type::ConstructBuilding)
             continue;
-        if (job->job_items.empty())
+        if (job->job_items.elements.empty())
             continue;
 
         buildings_do_onupdate = true;
@@ -162,7 +162,7 @@ void buildings_onUpdate(color_ostream &out)
             df::job_item_ref *iref = job->items[i];
             if (iref->role != df::job_item_ref::Reagent)
                 continue;
-            df::job_item *item = vector_get(job->job_items, iref->job_item_idx);
+            df::job_item *item = vector_get(job->job_items.elements, iref->job_item_idx);
             if (!item)
                 continue;
             // Convert Reagent to Hauled, while decrementing quantity
@@ -1300,7 +1300,7 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
          * order, but processes filters straight. This reverses
          * the order of filters so as to produce the same final
          * contained_items ordering as the normal ui way. */
-        vector_insert_at(job->job_items, 0, items[i]);
+        vector_insert_at(job->job_items.elements, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)
             rough = true;

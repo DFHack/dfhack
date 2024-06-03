@@ -228,7 +228,7 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
         auto id = task.first;
         if (planned_buildings.count(id) > 0) {
             auto bld = planned_buildings.at(id).getBuildingIfValidOrRemoveIfNot(out);
-            if (bld && bld->jobs[0]->job_items[task.second]->quantity)
+            if (bld && bld->jobs[0]->job_items.elements[task.second]->quantity)
                 return bld;
         }
         DEBUG(cycle,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n", id, task.second);
@@ -278,7 +278,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
 
             auto id = task.first;
             auto job = bld->jobs[0];
-            auto &jitems = job->job_items;
+            auto &jitems = job->job_items.elements;
             const size_t num_filters = jitems.size();
             const int filter_idx = task.second;
             const int rev_filter_idx = num_filters - (filter_idx+1);

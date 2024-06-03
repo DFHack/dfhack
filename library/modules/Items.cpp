@@ -333,9 +333,9 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
 
     // Set up the flag mask
 
-    RQ(1,millable); RQ(1,sharpenable); RQ(1,distillable); RQ(1,processable); RQ(1,bag);
+    RQ(1,millable); RQ(1,sharpenable); RQ(1,processable);
     RQ(1,extract_bearing_plant); RQ(1,extract_bearing_fish); RQ(1,extract_bearing_vermin);
-    RQ(1,processable_to_vial); RQ(1,processable_to_bag); RQ(1,processable_to_barrel);
+    RQ(1,processable_to_vial); RQ(1,processable_to_barrel);
     RQ(1,solid); RQ(1,tameable_vermin); RQ(1,sand_bearing); RQ(1,milk); RQ(1,milkable);
     RQ(1,not_bin); RQ(1,lye_bearing); RQ(1, undisturbed);
 
@@ -360,10 +360,8 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
     switch (type) {
     case PLANT:
         OK(1,millable); OK(1,processable);
-        OK(1,distillable);
         OK(1,extract_bearing_plant);
         OK(1,processable_to_vial);
-        OK(1,processable_to_bag);
         OK(1,processable_to_barrel);
         break;
 
@@ -433,7 +431,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
 
     // TODO: split this into BOX and BAG
     case BOX:
-        OK(1,bag); OK(1,sand_bearing); OK(1,milk);
+        OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);
         xmask1.bits.cookable = true;
         break;

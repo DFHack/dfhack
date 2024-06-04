@@ -156,7 +156,7 @@ bool Kitchen::removeExclusion(df::kitchen_exc_type type,
     df::item_type item_type, int16_t item_subtype,
     int16_t mat_type, int32_t mat_index)
 {
-    int i = findExclusion(types, item_type, item_subtype, mat_type, mat_index);
+    int i = findExclusion(type, item_type, item_subtype, mat_type, mat_index);
     if (i < 0)
         return false;
 

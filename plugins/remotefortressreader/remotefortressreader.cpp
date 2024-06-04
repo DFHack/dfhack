@@ -1336,7 +1336,7 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 
 void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlow, int index)
 {
-    netFlow->set_type((FlowType)localFlow->type);
+    netFlow->set_type((FlowType)localFlow->type.value);
     netFlow->set_density(localFlow->density);
     ConvertDFCoord(localFlow->pos, netFlow->mutable_pos());
     ConvertDFCoord(localFlow->dest, netFlow->mutable_dest());

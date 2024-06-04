@@ -107,9 +107,11 @@ Template for new versions:
 - ``dfhack.maps.setTileAquifer``: make tile into an aquifer
 - ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
 - ``plugins.tiletypes.tiletypes_setTile``: can now accept a table with for access to previously unavailable options
+- ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 
 
 ## Removed
+- ``gui.FramedScreen``: this class is now deprecated; please use ``gui.ZScreen`` and ``widgets.Window`` instead
 
 # 50.13-r2
 

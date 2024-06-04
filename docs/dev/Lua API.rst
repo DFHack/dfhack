@@ -6648,6 +6648,7 @@ tiletypes
   - ``subterranean``: -1, 0, or 1
   - ``skyview``: -1, 0, or 1
   - ``aquifer``: -1, 0, 1, or 2
+  - ``surroundings``: 0 or 1
   - ``stone_material``: integer material id
   - ``vein_type``: ``df.inclusion_type``
 

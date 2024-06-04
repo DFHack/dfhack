@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <queue>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -73,6 +74,11 @@ static const struct_field_info tiletypes_options_fields[] = {
     { struct_field_info::END }
 };
 struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);
+// pair<bottomShape, topShape> -> newTopShape
+static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::tiletype_shape> surroundingsMap = {
+    { { df::tiletype_shape::WALL, df::tiletype_shape::EMPTY    }, df::tiletype_shape::FLOOR    },
+    { { df::tiletype_shape::RAMP, df::tiletype_shape::EMPTY    }, df::tiletype_shape::RAMP_TOP },
+};
 
 static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
 CommandHistory tiletypes_hist;
@@ -126,6 +132,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " Subterranean / st: set subterranean flag" << std::endl
             << " Skyview / sv: set skyview flag" << std::endl
             << " Aquifer / aqua: set aquifer flag" << std::endl
+            << " Surroundings / surr: set surroundings flag" << std::endl
             << " Stone: paint specific stone material" << std::endl
             << " Veintype: use specific vein type for stone" << std::endl
             << "See help [option] for more information" << std::endl;
@@ -196,6 +203,11 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
         out << "Available aquifer flags:" << std::endl
             << " ANY, 0, 1, 2" << std::endl;
     }
+    else if (option == "surroundings" || option == "surrounding" || option == "surr")
+    {
+        out << "Available surroundings flags:" << std::endl
+            << " 0, 1" << std::endl;
+    }
     else if (option == "stone")
     {
         out << "The stone option allows painting any specific stone material." << std::endl
@@ -226,6 +238,7 @@ struct TileType
     int subterranean;
     int skyview;
     int aquifer;
+    int surroundings;
     int stone_material;
     df::inclusion_type vein_type;
 
@@ -246,6 +259,7 @@ struct TileType
         subterranean = -1;
         skyview = -1;
         aquifer = -1;
+        surroundings = 0;
         stone_material = -1;
         vein_type = inclusion_type::CLUSTER;
     }
@@ -254,7 +268,8 @@ struct TileType
     {
         return shape == -1 && material == -1 && special == -1 && variant == -1
             && dig == -1 && hidden == -1 && light == -1 && subterranean == -1
-            && skyview == -1 && aquifer == -1 && stone_material == -1;
+            && skyview == -1 && aquifer == -1 && surroundings == 0
+            && stone_material == -1;
     }
 
     inline bool matches(const df::tiletype source,
@@ -283,7 +298,7 @@ struct TileType
 
 struct PaintResult {
     int paintCount = 0;
-    std::function<void()> postWrite = []() {};
+    std::function<void(MapExtras::MapCache&)> postWrite = [](MapExtras::MapCache& map) {};
 };
 
 std::ostream &operator<<(std::ostream &stream, const TileType &paint)
@@ -411,6 +426,19 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
         }
 
         stream << (paint.aquifer ? (paint.aquifer == 1 ? "LIGHT AQUIFER" : "HEAVY AQUIFER") : "NO AQUIFER");
+        used = true;
+        needSpace = true;
+    }
+
+    if (paint.surroundings == 1)
+    {
+        if (needSpace)
+        {
+            stream << " ";
+            needSpace = false;
+        }
+
+        stream << "UPDATE SURROUNDINGS";
         used = true;
         needSpace = true;
     }
@@ -704,6 +732,18 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
             out << "Unknown aquifer flag: " << value << std::endl;
         }
     }
+    else if (option == "surroundings" || option == "surrounding" || option == "surr")
+    {
+        if (valInt >= 0 && valInt < 2)
+        {
+            paint.surroundings = valInt;
+            found = true;
+        }
+        else
+        {
+            out << "Unknown surroundings flag: " << value << std::endl;
+        }
+    }
     else if (option == "all" || option == "a")
     {
         loc--;
@@ -840,6 +880,113 @@ static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& bloc
     return block->setDesignationAt(blockPos, des);
 }
 
+static bool updateSurroundings(MapExtras::Block* botBlock, MapExtras::Block* topBlock, const df::coord2d& blockPos, const TileType& target) {
+    if (!botBlock || !topBlock)
+        return false;
+    tiletype::tiletype botTiletype = botBlock->tiletypeAt(blockPos);
+    tiletype::tiletype topTiletype = topBlock->tiletypeAt(blockPos);
+
+    auto iter = surroundingsMap.find(std::make_pair(tileShape(botTiletype), tileShape(topTiletype)));
+    if (iter == surroundingsMap.end())
+        return false;
+
+    df::tiletype_shape newTopShape = iter->second;
+    TileType tiletype = TileType(target);
+    tiletype.shape = newTopShape;
+    tiletype.material = tiletype_material::NONE;
+    tiletype.variant = tiletype_variant::NONE;
+    tiletype.special = tiletype_special::NONE;
+    tiletype.stone_material = -1;
+    tiletype.aquifer = -1;
+    tiletype.dig = -1;
+    tiletype.surroundings = 0;
+    if (paintTileProcessing(topBlock, blockPos, tiletype) && tileShape(topBlock->tiletypeAt(blockPos)) == newTopShape)
+        return true;
+
+    tiletype_material::tiletype_material topMat = tileMaterial(topTiletype);
+    tiletype_material::tiletype_material botMat = tileMaterial(botTiletype);
+    topMat = topMat == tiletype_material::NONE ? botMat : topMat;
+
+    tiletype_variant::tiletype_variant topVariant = tileVariant(topTiletype);
+    tiletype_variant::tiletype_variant botVariant = tileVariant(botTiletype);
+    topVariant = topVariant == tiletype_variant::NONE ? botVariant : topVariant;
+
+    tiletype_special::tiletype_special topSpecial = tileSpecial(topTiletype);
+    tiletype_special::tiletype_special botSpecial = tileSpecial(botTiletype);
+    topSpecial = topSpecial == tiletype_special::NONE ? botSpecial : topSpecial;
+    botSpecial = botSpecial == tiletype_special::NONE ? tiletype_special::NORMAL : botSpecial;
+
+    int topLikeness = 0;
+
+    for (df::tiletype tt = (df::enum_traits<df::tiletype>::first_item); DFHack::is_valid_enum_item(tt); tt = DFHack::next_enum_item(tt, false))
+    {
+        if (newTopShape != tileShape(tt))
+            continue;
+
+        int tempLikeness = 0;
+        tiletype_material::tiletype_material mat = tileMaterial(tt);
+        if (mat == topMat)
+            tempLikeness += 16;
+        else if (mat == botMat)
+            tempLikeness += 8;
+        else continue;
+
+        tiletype_variant::tiletype_variant variant = tileVariant(tt);
+        if (variant == topVariant)
+            tempLikeness += 2;
+        else if (variant == botVariant)
+            tempLikeness += 1;
+
+        tiletype_special::tiletype_special special = tileSpecial(tt);
+        if (special == topSpecial)
+            tempLikeness += 8;
+        else if (special == botSpecial)
+            tempLikeness += 4;
+
+        if (tempLikeness > topLikeness) {
+            topLikeness = tempLikeness;
+            tiletype.material = mat;
+            tiletype.variant = variant;
+            tiletype.special = special;
+        }
+    }
+    return paintTileProcessing(topBlock, blockPos, tiletype);
+}
+
+static bool updateAreaSurroundings(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2, const TileType& botType) {
+    df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
+    df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
+
+    bool updated = false;
+    // Loop through the affected blocks
+    for (int16_t blockX = (minPos.x >> 4) << 4; blockX <= maxPos.x; blockX += 16) {
+        for (int16_t blockY = (minPos.y >> 4) << 4; blockY <= maxPos.y; blockY += 16) {
+            std::queue<MapExtras::Block*> blockQueue = std::queue<MapExtras::Block*>();
+            blockQueue.push(map.BlockAtTile(df::coord(blockX, blockY, minPos.z - 1)));
+            blockQueue.push(map.BlockAtTile(df::coord(blockX, blockY, minPos.z)));
+            for (int16_t z = minPos.z; z <= maxPos.z; z++) {
+                blockQueue.push(map.BlockAtTile(df::coord(blockX, blockY, minPos.z + 1)));
+                MapExtras::Block* belowBlock = blockQueue.front();
+                blockQueue.pop();
+
+                int16_t startX = std::max(minPos.x - blockX, 0);
+                int16_t startY = std::max(minPos.y - blockY, 0);
+                int16_t endX = std::min(maxPos.x - blockX, 15);
+                int16_t endY = std::min(maxPos.y - blockY, 15);
+                // Loop through all tiles in the block
+                for (int16_t xOffset = startX; xOffset <= endX; xOffset++) {
+                    for (int16_t yOffset = startY; yOffset <= endY; yOffset++) {
+                        updated |= updateSurroundings(blockQueue.front(), blockQueue.back(), df::coord2d(xOffset, yOffset), botType);
+                        updated |= updateSurroundings(belowBlock, blockQueue.front(), df::coord2d(xOffset, yOffset), botType);
+                    }
+                }
+                blockQueue.front()->enableBlockUpdates(true, true);
+            }
+        }
+    }
+    return updated;
+}
+
 static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2,
     const TileType& target, const TileType& match = TileType()) {
     df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
@@ -897,7 +1044,7 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
 
     return PaintResult{
         .paintCount = totalAffectedCount + totalFilteredCount,
-        .postWrite = [totalAffectedCount, skipList, target, pos1, pos2]() {
+        .postWrite = [totalAffectedCount, skipList, target, pos1, pos2](MapExtras::MapCache& map) {
             if (totalAffectedCount > 0) {
                 auto filter = [skipList](df::coord pos, df::map_block* block) -> bool {
                     // Returns true if 'pos' is in 'skipList'
@@ -908,6 +1055,9 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                     Maps::removeAreaAquifer(pos1, pos2, filter);
                 else if (target.aquifer > 0)
                     Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
+
+                if (target.surroundings > 0 && updateAreaSurroundings(map, pos1, pos2, target))
+                    map.WriteAll();
             }
         }
     };
@@ -935,11 +1085,23 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
     if (paintTileProcessing(blk, df::coord2d(pos.x&15, pos.y&15), target)) {
         return PaintResult{
             .paintCount = 1,
-            .postWrite = [target, pos]() {
+            .postWrite = [target, pos](MapExtras::MapCache& map) {
                 if (target.aquifer == 0)
                     Maps::removeTileAquifer(pos);
                 else if (target.aquifer > 0)
                     Maps::setTileAquifer(pos, target.aquifer == 2);
+
+                if (target.surroundings > 0) {
+                    MapExtras::Block* block = map.BlockAtTile(pos);
+                    MapExtras::Block* topBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z + 1));
+                    MapExtras::Block* belowBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z - 1));
+                    bool updated = updateSurroundings(block, topBlock, df::coord2d(pos.x & 15, pos.y & 15), target);
+                    updated |= updateSurroundings(belowBlock, block, df::coord2d(pos.x & 15, pos.y & 15), target);
+                    if (updated) {
+                        block->enableBlockUpdates(true, true);
+                        map.WriteAll();
+                    }
+                }
             }
         };
     }
@@ -1032,7 +1194,7 @@ command_result executePaintJob(color_ostream &out,
     if (map.WriteAll())
     {
         for (PaintResult& result : paintResults) {
-            result.postWrite();
+            result.postWrite(map);
         }
         if (!opts.quiet)
             out.print("OK\n");
@@ -1271,6 +1433,10 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         out.printerr("Invalid aquifer value: %d\n", target.aquifer);
         return false;
     }
+    if (target.surroundings < 0 || target.surroundings > 1) {
+        out.printerr("Invalid surroundings value: %d\n", target.surroundings);
+        return false;
+    }
     if (target.material == df::tiletype_material::STONE) {
         if (!isStoneInorganic(target.stone_material)) {
             out.printerr("Invalid stone material: %d\n", target.stone_material);
@@ -1289,7 +1455,7 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     MapExtras::MapCache map;
     PaintResult result = paintTile(map, pos, target);
     if (result.paintCount > 0 && map.WriteAll()) {
-        result.postWrite();
+        result.postWrite(map);
         return true;
     }
     return false;
@@ -1324,6 +1490,7 @@ static int tiletypes_setTile(lua_State *L) {
         target.subterranean   = lua_getintfield("subterranean", target.subterranean);
         target.skyview        = lua_getintfield("skyview", target.skyview);
         target.aquifer        = lua_getintfield("aquifer", target.aquifer);
+        target.surroundings   = lua_getintfield("surroundings", target.surroundings);
         if (target.material == df::tiletype_material::STONE) {
             target.stone_material = lua_getintfield("stone_material", target.stone_material);
             target.vein_type = (df::inclusion_type)lua_getintfield("vein_type", target.vein_type);

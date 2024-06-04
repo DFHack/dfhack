@@ -1438,7 +1438,7 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         return false;
     }
     if (target.material == df::tiletype_material::STONE) {
-        if (!isStoneInorganic(target.stone_material)) {
+        if (target.stone_material != -1 && !isStoneInorganic(target.stone_material)) {
             out.printerr("Invalid stone material: %d\n", target.stone_material);
             return false;
         }

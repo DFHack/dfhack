@@ -1097,10 +1097,9 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                     MapExtras::Block* belowBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z - 1));
                     bool updated = updateSurroundings(block, topBlock, df::coord2d(pos.x & 15, pos.y & 15), target);
                     updated |= updateSurroundings(belowBlock, block, df::coord2d(pos.x & 15, pos.y & 15), target);
-                    if (updated) {
-                        block->enableBlockUpdates(true, true);
+                    block->enableBlockUpdates(true, true);
+                    if (updated)
                         map.WriteAll();
-                    }
                 }
             }
         };

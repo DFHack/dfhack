@@ -39,11 +39,17 @@ void Kitchen::debug_print(color_ostream &out)
                        plotinfo->kitchen.item_subtypes[i],
                        plotinfo->kitchen.mat_types[i],
                        plotinfo->kitchen.mat_indices[i],
-                       plotinfo->kitchen.exc_types[i],
+                       plotinfo->kitchen.exc_types[i].whole,
                        (plotinfo->kitchen.mat_types[i] >= 419 && plotinfo->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[plotinfo->kitchen.mat_indices[i]]->id.c_str() : "n/a"
         );
     }
     out.print("\n");
+}
+
+static df::kitchen_exc_type get_cook_type(){
+    df::kitchen_exc_type cook_type;
+    cook_type.bits.Cook = true;
+    return cook_type;
 }
 
 void Kitchen::allowPlantSeedCookery(int32_t plant_id)
@@ -52,12 +58,13 @@ void Kitchen::allowPlantSeedCookery(int32_t plant_id)
         return;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
+    static df::kitchen_exc_type cook_type = get_cook_type();
 
-    removeExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+    removeExclusion(cook_type, item_type::SEEDS, -1,
         type->material_defs.type[plant_material_def::seed],
         type->material_defs.idx[plant_material_def::seed]);
 
-    removeExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+    removeExclusion(cook_type, item_type::PLANT, -1,
         type->material_defs.type[plant_material_def::basic_mat],
         type->material_defs.idx[plant_material_def::basic_mat]);
 }
@@ -68,12 +75,13 @@ void Kitchen::denyPlantSeedCookery(int32_t plant_id)
         return;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
+    static df::kitchen_exc_type cook_type = get_cook_type();
 
-    addExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+    addExclusion(cook_type, item_type::SEEDS, -1,
         type->material_defs.type[plant_material_def::seed],
         type->material_defs.idx[plant_material_def::seed]);
 
-    addExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+    addExclusion(cook_type, item_type::PLANT, -1,
         type->material_defs.type[plant_material_def::basic_mat],
         type->material_defs.idx[plant_material_def::basic_mat]);
 }
@@ -83,7 +91,9 @@ bool Kitchen::isPlantCookeryAllowed(int32_t plant_id) {
         return false;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
-    return findExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+    static df::kitchen_exc_type cook_type = get_cook_type();
+
+    return findExclusion(cook_type, item_type::PLANT, -1,
             type->material_defs.type[plant_material_def::basic_mat],
             type->material_defs.idx[plant_material_def::basic_mat]) < 0;
 }
@@ -93,7 +103,9 @@ bool Kitchen::isSeedCookeryAllowed(int32_t plant_id) {
         return false;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
-    return findExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+    static df::kitchen_exc_type cook_type = get_cook_type();
+
+    return findExclusion(cook_type, item_type::SEEDS, -1,
                 type->material_defs.type[plant_material_def::seed],
                 type->material_defs.idx[plant_material_def::seed]) < 0;
 }
@@ -113,7 +125,7 @@ int Kitchen::findExclusion(df::kitchen_exc_type type,
             plotinfo->kitchen.item_subtypes[i] == item_subtype &&
             plotinfo->kitchen.mat_types[i] == mat_type &&
             plotinfo->kitchen.mat_indices[i] == mat_index &&
-            plotinfo->kitchen.exc_types[i] == type)
+            plotinfo->kitchen.exc_types[i].whole == type.whole)
         {
             return int(i);
         }
@@ -125,6 +137,10 @@ bool Kitchen::addExclusion(df::kitchen_exc_type type,
     df::item_type item_type, int16_t item_subtype,
     int16_t mat_type, int32_t mat_index)
 {
+    // exactly one flag must be set
+    if (!type.whole || type.whole > 2)
+        return false;
+
     if (findExclusion(type, item_type, item_subtype, mat_type, mat_index) >= 0)
         return false;
 
@@ -140,7 +156,7 @@ bool Kitchen::removeExclusion(df::kitchen_exc_type type,
     df::item_type item_type, int16_t item_subtype,
     int16_t mat_type, int32_t mat_index)
 {
-    int i = findExclusion(type, item_type, item_subtype, mat_type, mat_index);
+    int i = findExclusion(types, item_type, item_subtype, mat_type, mat_index);
     if (i < 0)
         return false;
 

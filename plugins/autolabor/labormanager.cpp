@@ -1404,8 +1404,8 @@ public:
             (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers) ? 1 : 0;
 
         /* add animal trainers */
-        for (auto a = df::global::plotinfo->equipment.training_assignments.begin();
-            a != df::global::plotinfo->equipment.training_assignments.end();
+        for (auto a = df::global::plotinfo->training.training_assignments.begin();
+            a != df::global::plotinfo->training.training_assignments.end();
             a++)
         {
             labor_needed[df::unit_labor::ANIMALTRAIN]++;

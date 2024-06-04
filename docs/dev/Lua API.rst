@@ -2487,8 +2487,8 @@ Kitchen module
   Finds a kitchen exclusion in the vectors in ``df.global.ui.kitchen``. Returns
   -1 if not found.
 
-  * ``type`` is a ``df.kitchen_exc_type``, i.e. ``df.kitchen_exc_type.Cook`` or
-    ``df.kitchen_exc_type.Brew``.
+  * ``type`` is a ``df.kitchen_exc_type`` with exactly one flag set, i.e
+    ``{Cook=true}`` or ``{Brew=true}``.
   * ``item_type`` is a ``df.item_type``
   * ``item_subtype``, ``mat_type``, and ``mat_index`` are all numeric
 

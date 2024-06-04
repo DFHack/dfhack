@@ -105,7 +105,7 @@ void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
     CHECK_NULL_POINTER(burrow);
 
     if (enable) {
-        if (burrow->limit_workshops & 2)  // inactive flag
+        if (burrow->flags.bits.suspended)
             insert_into_vector(unit->inactive_burrows, burrow->id);
         else
             insert_into_vector(unit->burrows, burrow->id);

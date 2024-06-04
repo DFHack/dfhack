@@ -89,8 +89,8 @@ df::squad* Military::makeSquad(int32_t assignment_id)
     df::squad* result = new df::squad();
     result->id = *df::global::squad_next_id;
     result->uniform_priority = result->id + 1; //no idea why, but seems to hold
-    result->carry_food = 2;
-    result->carry_water = 1;
+    result->supplies.carry_food = 2;
+    result->supplies.carry_water = df::squad::T_supplies::Water;
     result->entity_id = df::global::plotinfo->group_id;
     result->leader_position = corresponding_position->id;
     result->leader_assignment = found_assignment->id;
@@ -141,7 +141,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
             asched[month].orders.push_back(order);
             //wear uniform while training
-            asched[month].uniform_mode = 0;
+            asched[month].uniform_mode = df::squad_civilian_uniform_type::Regular;
         };
 
         //Dwarf fortress does do this via a series of string comparisons
@@ -150,8 +150,8 @@ df::squad* Military::makeSquad(int32_t assignment_id)
         {
             for (int i=0; i < 12; i++)
             {
-                asched[i].sleep_mode = 0;
-                asched[i].uniform_mode = 1;
+                asched[i].sleep_mode = df::squad_sleep_option_type::AnywhereAtWill;
+                asched[i].uniform_mode = df::squad_civilian_uniform_type::Civilian;
             }
         }
         //Staggered Training: Training orders at months 3 4 5 9 10 11, *or* 0 1 2 6 7 8, sleep/room at will. Equip/orders only, except train months which are equip/always
@@ -176,7 +176,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
             {
                 insert_training_order(index);
                 //still sleep in room at will even when training
-                asched[index].sleep_mode = 0;
+                asched[index].sleep_mode = df::squad_sleep_option_type::AnywhereAtWill;
             }
         }
         //see above, but with all indices
@@ -186,23 +186,23 @@ df::squad* Military::makeSquad(int32_t assignment_id)
             {
                 insert_training_order(i);
                 //still sleep in room at will even when training
-                asched[i].sleep_mode = 0;
+                asched[i].sleep_mode = df::squad_sleep_option_type::AnywhereAtWill;
             }
         }
         else if (routine->name == "Ready")
         {
             for (int i=0; i < 12; i++)
             {
-                asched[i].sleep_mode = 2;
-                asched[i].uniform_mode = 0;
+                asched[i].sleep_mode = df::squad_sleep_option_type::InBarracksAtNeed;
+                asched[i].uniform_mode = df::squad_civilian_uniform_type::Regular;
             }
         }
         else
         {
             for (int i=0; i < 12; i++)
             {
-                asched[i].sleep_mode = 0;
-                asched[i].uniform_mode = 0;
+                asched[i].sleep_mode = df::squad_sleep_option_type::AnywhereAtWill;
+                asched[i].uniform_mode = df::squad_civilian_uniform_type::Regular;
             }
         }
 

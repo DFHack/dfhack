@@ -366,7 +366,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 bitfield_to_json_array(order["material_category"], it->material_category);
             }
 
-            if (it->art_spec.type != df::job_art_specification::None)
+            if (it->art_spec.type != df::job_art_specifier_type::None)
             {
                 Json::Value art(Json::objectValue);
 

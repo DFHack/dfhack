@@ -40,6 +40,7 @@ distribution.
 #include <stack>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <stdint.h>
 
@@ -192,6 +193,8 @@ namespace DFHack
 
         bool getSuppressDuplicateKeyboardEvents();
         void setSuppressDuplicateKeyboardEvents(bool suppress);
+        void setMortalMode(bool value);
+        void setArmokTools(const std::vector<std::string> &tool_names);
 
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
@@ -285,6 +288,8 @@ namespace DFHack
         int8_t modstate;
 
         bool suppress_duplicate_keyboard_events;
+        bool mortal_mode;
+        std::unordered_set<std::string> armok_tools;
         std::map<int, std::vector<KeyBinding> > key_bindings;
         std::string hotkey_cmd;
         enum hotkey_set_t {

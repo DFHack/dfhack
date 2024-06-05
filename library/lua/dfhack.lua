@@ -99,12 +99,19 @@ dfhack.HIDE_CONSOLE_ON_STARTUP = true
 function dfhack.getHideConsoleOnStartup()
     return dfhack.HIDE_CONSOLE_ON_STARTUP
 end
+function dfhack.setHideConsoleOnStartup(value)
+    dfhack.HIDE_CONSOLE_ON_STARTUP = value
+end
 
 dfhack.HIDE_ARMOK_TOOLS = false
 ---@nodiscard
 ---@return boolean
-function dfhack.getHideArmokTools()
+function dfhack.getMortalMode()
     return dfhack.HIDE_ARMOK_TOOLS
+end
+function dfhack.setMortalMode(value)
+    dfhack.HIDE_ARMOK_TOOLS = value
+    dfhack.internal.setMortalMode(value)
 end
 
 -- Error handling

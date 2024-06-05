@@ -82,7 +82,7 @@ end
 
 DialogScreen = defclass(DialogScreen, gui.ZScreenModal)
 DialogScreen.ATTRS{
-    focus_path='dialogs/message',
+    focus_path='MessageBox',
     title=DEFAULT_NIL,
     min_width=DEFAULT_NIL,
     extra_height=DEFAULT_NIL,

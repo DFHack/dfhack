@@ -375,9 +375,10 @@ on UNIX-like systems:
   with the default, if this port cannot be used, the server is not started.
   See `remote` for more details.
 
-- ``DFHACK_DISABLE_CONSOLE``: if set, the DFHack console is not set up. This is
-  the default behavior if ``PRINT_MODE:TEXT`` is set in ``data/init/init.txt``.
-  Intended for situations where DFHack cannot run in a terminal window.
+- ``DFHACK_DISABLE_CONSOLE``: if set, DFHack's external console is not set up.
+  This is the default behavior if ``PRINT_MODE:TEXT`` is set in
+  ``data/init/init.txt``. Intended for situations where DFHack cannot run in a
+  terminal window.
 
 - ``DFHACK_HEADLESS``: if set, and ``PRINT_MODE:TEXT`` is set, DF's display will
   be hidden, and the console will be started unless ``DFHACK_DISABLE_CONSOLE``
@@ -409,19 +410,23 @@ Other (non-DFHack-specific) variables that affect DFHack:
 Core preferences
 ================
 
-There are a few settings that can be changed dynamically via
-`gui/control-panel` to affect runtime behavior. You can also toggle these from
-the commandline using the `lua` command, e.g.
-``lua dfhack.HIDE_ARMOK_TOOLS=true`` or by editing the generated
-``dfhack-config/init/dfhack.control-panel-preferences.init`` file and
-restarting DF.
+Settings that control DFHack's runtime behavior can be changed dynamically via
+the "Preferences" tab in `gui/control-panel` or on the commandline with
+`control-panel`. The two most important settings for the core are:
 
-- ``dfhack.HIDE_CONSOLE_ON_STARTUP``: Whether to hide the external DFHack
-  terminal window on startup. This, of course, is not useful to change
-  dynamically. You'll have to use `gui/control-panel` or edit the init file
-  directly and restart DF for it to have an effect.
+- ``HIDE_CONSOLE_ON_STARTUP``: On Windows, this controls whether to hide the
+  external DFHack terminal window on startup. The console is hidden by default
+  so it does not get in the way of gameplay, but it can be useful to enable for
+  debugging purposes or if you just prefer to use the external console instead
+  of the in-game `gui/launcher`. When you change this setting, the new behavior
+  will take effect the next time you start the game. If you are running the
+  native Linux version of DF (and DFHack), the terminal that you run the game
+  from becomes the DFHack console and this setting has no effect.
 
-- ``dfhack.HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists.
+- ``HIDE_ARMOK_TOOLS``: Whether to hide "armok" tools in command lists. Also
+  known as "Mortal mode", this setting keeps god-mode tools out of sight and
+  out of mind. Highly recommended for players who would prefer if the god-mode
+  tools were not quite as obvious and accessible.
 
 Performance monitoring
 ======================

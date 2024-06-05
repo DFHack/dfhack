@@ -2381,6 +2381,15 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
     suppress_duplicate_keyboard_events = suppress;
 }
 
+void Core::setMortalMode(bool value) {
+    mortal_mode = value;
+}
+
+void Core::setArmokTools(const std::vector<std::string> &tool_names) {
+    armok_tools.clear();
+    armok_tools.insert(tool_names.begin(), tool_names.end());
+}
+
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
     uint32_t start_ms = p->getTickCount();
@@ -2460,23 +2469,6 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
     return false;
 }
 
-static bool should_hide_from_mortals(const std::string &command) {
-    auto &out = Core::getInstance().getConsole();
-
-    bool is_mortal = false;
-    Lua::CallLuaModuleFunction(out, "dfhack", "getHideArmokTools", {}, 1,
-        [&](lua_State* L) { is_mortal = lua_toboolean(L, -1); });
-
-    if (!is_mortal)
-        return false;
-
-    bool is_armok = false;
-    Lua::CallLuaModuleFunction(out, "helpdb", "has_tag", std::make_tuple(command, "armok"), 1,
-        [&](lua_State* L) { is_armok = lua_toboolean(L, -1); });
-
-    return is_armok;
-}
-
 bool Core::SelectHotkey(int sym, int modifiers)
 {
     // Find the topmost viewscreen
@@ -2521,7 +2513,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
                                         binding.command[0].c_str());
                 continue;
             }
-            if (should_hide_from_mortals(binding.command[0])) {
+            if (mortal_mode && armok_tools.contains(binding.command[0])) {
                 DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
                                         binding.command[0].c_str());
                 continue;

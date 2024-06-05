@@ -419,6 +419,9 @@ local function ensure_db()
     scan_plugins(old_db)
     scan_scripts(old_db)
     index_tags()
+    if is_tag('armok') then
+        dfhack.internal.setArmokTools(get_tag_data('armok'))
+    end
 end
 
 function refresh()
@@ -795,7 +798,7 @@ function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
     end
     if not show_dev_commands then
         local dev_tags = {'dev', 'unavailable'}
-        if filter_str ~= 'armok' and dfhack.getHideArmokTools() then
+        if filter_str ~= 'armok' and dfhack.getMortalMode() then
             table.insert(dev_tags, 'armok')
         end
         table.insert(excludes, {tag=dev_tags})
@@ -828,7 +831,7 @@ function tags(tag)
     if tag ~= 'unavailable' then
         table.insert(excludes.tag, 'unavailable')
     end
-    if tag ~= 'armok' and dfhack.getHideArmokTools() then
+    if tag ~= 'armok' and dfhack.getMortalMode() then
         table.insert(excludes.tag, 'armok')
     end
 

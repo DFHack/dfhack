@@ -110,6 +110,10 @@ function dfhack.getMortalMode()
     return HIDE_ARMOK_TOOLS
 end
 function dfhack.setMortalMode(value)
+    local launcher = reqscript('gui/launcher')
+    if launcher then
+        launcher.set_armok_filter_if_default(value)
+    end
     HIDE_ARMOK_TOOLS = value
     dfhack.internal.setMortalMode(value)
 end

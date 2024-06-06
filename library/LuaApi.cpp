@@ -4002,6 +4002,19 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
     return 0;
 }
 
+static int internal_setMortalMode(lua_State *L) {
+    bool value = lua_toboolean(L, 1);
+    Core::getInstance().setMortalMode(value);
+    return 0;
+}
+
+static int internal_setArmokTools(lua_State *L) {
+    std::vector<string> tool_names;
+    Lua::GetVector(L, tool_names);
+    Core::getInstance().setArmokTools(tool_names);
+    return 0;
+}
+
 template<typename T>
 static std::map<const char *, T> translate_event_types(const std::unordered_map<int32_t, T> & in_map) {
     std::map<const char *, T> out_map;
@@ -4096,6 +4109,8 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "md5File", internal_md5file },
     { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
     { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
+    { "setMortalMode", internal_setMortalMode },
+    { "setArmokTools", internal_setArmokTools },
     { "getPerfCounters", internal_getPerfCounters },
     { NULL, NULL }
 };

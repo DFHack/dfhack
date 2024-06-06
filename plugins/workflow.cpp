@@ -379,7 +379,7 @@ static bool isSupportedJob(df::job *job)
 {
     return job->specific_refs.empty() &&
            Job::getHolder(job) &&
-           (!job->job_items.empty() ||
+           (!job->job_items.elements.empty() ||
             job->job_type == job_type::CollectClay ||
             job->job_type == job_type::CollectSand ||
             job->job_type == job_type::MilkCreature ||
@@ -889,13 +889,13 @@ static void guess_job_material(df::job *job, MaterialInfo &mat, df::dfhack_mater
     }
 
     // Material from the job reagent
-    if (!mat.isValid() && !job->job_items.empty() &&
-        (job->job_items.size() == 1 ||
-         job->job_items[0]->item_type == item_type::PLANT))
+    if (!mat.isValid() && !job->job_items.elements.empty() &&
+        (job->job_items.elements.size() == 1 ||
+         job->job_items.elements[0]->item_type == item_type::PLANT))
     {
-        mat.decode(job->job_items[0]);
+        mat.decode(job->job_items.elements[0]);
 
-        switch (job->job_items[0]->item_type)
+        switch (job->job_items.elements[0]->item_type)
         {
         case item_type::WOOD:
             mat_mask.bits.wood = mat_mask.bits.wood2 = true;

@@ -2381,6 +2381,17 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
     suppress_duplicate_keyboard_events = suppress;
 }
 
+void Core::setMortalMode(bool value) {
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
+    mortal_mode = value;
+}
+
+void Core::setArmokTools(const std::vector<std::string> &tool_names) {
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
+    armok_tools.clear();
+    armok_tools.insert(tool_names.begin(), tool_names.end());
+}
+
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
     uint32_t start_ms = p->getTickCount();
@@ -2501,6 +2512,11 @@ bool Core::SelectHotkey(int sym, int modifiers)
             }
             if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
                 DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
+                                        binding.command[0].c_str());
+                continue;
+            }
+            if (mortal_mode && armok_tools.contains(binding.command[0])) {
+                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
                                         binding.command[0].c_str());
                 continue;
             }

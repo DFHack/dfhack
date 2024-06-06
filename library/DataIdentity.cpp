@@ -58,4 +58,7 @@ namespace df {
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
 
     buffer_container_identity buffer_container_identity::base_instance;
+
+    DFHACK_EXPORT stl_container_identity<std::vector<int32_t> > stl_vector_int32_t_identity("vector", identity_traits<int32_t>::get());
+    DFHACK_EXPORT stl_container_identity<std::vector<int16_t> > stl_vector_int16_t_identity("vector", identity_traits<int16_t>::get());
 }

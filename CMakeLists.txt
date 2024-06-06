@@ -38,12 +38,6 @@ macro(CHECK_GCC compiler_path)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
     if(${GCC_VERSION_OUT} VERSION_LESS "10")
         message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
-        # TODO: this may need to be removed when DF linux actually comes out
-        # TODO: and we can test
-        # GCC 5 changes ABI name mangling to enable C++11 changes.
-        # This must be disabled to enable linking against DF.
-        # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
-        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
     endif()
 endmacro()
 
@@ -61,10 +55,12 @@ if(UNIX)
 endif()
 
 if(WIN32)
+    set(MSVC_MIN_VER 1930)
+    set(MSVC_MAX_VER 1940)
     if(NOT MSVC)
-        message(SEND_ERROR "No MSVC found! MSVC 2022 version 1930 to 1939 is required.")
-    elseif((MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1939))
-        message(SEND_ERROR "MSVC 2022 version 1930 to 1939 is required, Version Found: ${MSVC_VERSION}")
+        message(SEND_ERROR "No MSVC found! MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required.")
+    elseif((MSVC_VERSION LESS MSVC_MIN_VER) OR (MSVC_VERSION GREATER MSVC_MAX_VER))
+        message(SEND_ERROR "MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required, Version Found: ${MSVC_VERSION}")
     endif()
 endif()
 

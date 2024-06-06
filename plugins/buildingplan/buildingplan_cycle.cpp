@@ -3,6 +3,7 @@
 
 #include "Debug.h"
 
+#include "modules/Burrows.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
@@ -10,6 +11,7 @@
 
 #include "df/building_actual.h"
 #include "df/building_design.h"
+#include "df/burrow.h"
 #include "df/general_ref.h"
 #include "df/item.h"
 #include "df/item_slabst.h"
@@ -78,13 +80,19 @@ static bool isInWheelbarrow(color_ostream& out, df::item* item) {
     return container->hasToolUse(df::tool_uses::HEAVY_OBJECT_HAULING);
 }
 
+bool isInIgnoreBurrow(df::item *item){
+    auto ignore_burrow = getIgnoreBurrow();
+    return ignore_burrow && Burrows::isAssignedTile(ignore_burrow, Items::getPosition(item));
+}
+
 bool itemPassesScreen(color_ostream& out, df::item* item) {
     static const BadFlags bad_flags;
     return !(item->flags.whole & bad_flags.whole)
         && !item->isAssignedToStockpile()
         && isAccessible(out, item)
         && !isUnusableBar(out, item)
-        && !isInWheelbarrow(out, item);
+        && !isInWheelbarrow(out, item)
+        && !isInIgnoreBurrow(item);
 }
 
 bool matchesHeatSafety(int16_t mat_type, int32_t mat_index, HeatSafety heat) {
@@ -220,7 +228,7 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
         auto id = task.first;
         if (planned_buildings.count(id) > 0) {
             auto bld = planned_buildings.at(id).getBuildingIfValidOrRemoveIfNot(out);
-            if (bld && bld->jobs[0]->job_items[task.second]->quantity)
+            if (bld && bld->jobs[0]->job_items.elements[task.second]->quantity)
                 return bld;
         }
         DEBUG(cycle,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n", id, task.second);
@@ -270,7 +278,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
 
             auto id = task.first;
             auto job = bld->jobs[0];
-            auto &jitems = job->job_items;
+            auto &jitems = job->job_items.elements;
             const size_t num_filters = jitems.size();
             const int filter_idx = task.second;
             const int rev_filter_idx = num_filters - (filter_idx+1);

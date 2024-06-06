@@ -502,7 +502,7 @@ public:
                     {
                     case job_type::Eat:
                     case job_type::Drink:
-                    case job_type::Drink2:
+                    case job_type::DrinkItem:
                     case job_type::Sleep:
                     case job_type::AttendParty:
                     case job_type::Rest:
@@ -516,7 +516,7 @@ public:
                     case job_type::SeekInfant:
                     case job_type::SeekArtifact:
                     case job_type::GoShopping:
-                    case job_type::GoShopping2:
+                    case job_type::GoShoppingSpecific:
                     case job_type::RecoverPet:
                     case job_type::CauseTrouble:
                     case job_type::ReportCrime:
@@ -549,7 +549,7 @@ public:
                     case job_type::BringItemToShop:
                     case job_type::GetProvisions:
                     case job_type::FillWaterskin:
-                    case job_type::FillWaterskin2:
+                    case job_type::FillWaterskinItem:
                     case job_type::CheckChest:
                     case job_type::PickupEquipment:
                     case job_type::DumpItem:
@@ -743,8 +743,8 @@ public:
                     case job_type::PlaceInTraction:
                     case job_type::GiveWater:
                     case job_type::GiveFood:
-                    case job_type::GiveWater2:
-                    case job_type::GiveFood2:
+                    case job_type::GiveWaterPet:
+                    case job_type::GiveFoodPet.job_items:
                     case job_type::BringCrutch:
                     case job_type::ApplyCast:
                         real_activity = JOB_MEDICAL;

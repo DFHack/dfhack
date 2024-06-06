@@ -719,7 +719,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     df::job_item *item;
     if (job->job_type == job_type::StrangeMoodFell)
     {
-        job->job_items.push_back(item = new df::job_item());
+        job->job_items.elements.push_back(item = new df::job_item());
         item->item_type = item_type::CORPSE;
         item->flags1.bits.allow_buryable = true;
         item->flags1.bits.murdered = true;
@@ -731,20 +731,20 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         switch (rng.df_trandom(3))
         {
         case 0:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::REMAINS;
             item->flags1.bits.allow_buryable = true;
             item->quantity = 1;
             break;
         case 1:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->flags1.bits.allow_buryable = true;
             item->flags2.bits.bone = true;
             item->flags2.bits.body_part = true;
             item->quantity = 1;
             break;
         case 2:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->flags1.bits.allow_buryable = true;
             item->flags2.bits.totemable = true;
             item->flags2.bits.body_part = true;
@@ -765,7 +765,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::MECHANICS:
         case job_skill::CUT_STONE:
         case job_skill::CARVE_STONE:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::BOULDER;
             item->quantity = base_item_count;
             item->flags3.bits.hard = true;
@@ -794,14 +794,14 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::BOWYER:
         case job_skill::PAPERMAKING:
         case job_skill::BOOKBINDING:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::WOOD;
             item->quantity = base_item_count;
             break;
 
         case job_skill::TANNER:
         case job_skill::LEATHERWORK:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::SKIN_TANNED;
             item->quantity = base_item_count;
             break;
@@ -809,10 +809,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::WEAVING:
         case job_skill::CLOTHESMAKING:
             filter = NULL;
-            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC36] for item_type CLOTH, mat_type 0, flags2.deep_material, and min_dimension 10000
-            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC36].size(); i++)
-            {
-                filter = world->items.other[items_other_id::ANY_GENERIC36][i];
+            for (auto chest_item : world->items.other[items_other_id::ANY_GOES_IN_CHEST]) {
+                filter = chest_item;
                 if (filter->getType() != item_type::CLOTH)
                 {
                     filter = NULL;
@@ -838,7 +836,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             if (filter)
             {
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::CLOTH;
                 item->mat_type = filter->getMaterial();
                 item->mat_index = filter->getMaterialIndex();
@@ -847,7 +845,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             else
             {
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::CLOTH;
                 bool found_pref = false;
                 if (soul)
@@ -898,10 +896,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::FORGE_FURNITURE:
         case job_skill::METALCRAFT:
             filter = NULL;
-            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC36] for item_type BAR, mat_type 0, and flags2.deep_material
-            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC36].size(); i++)
-            {
-                filter = world->items.other[items_other_id::ANY_GENERIC36][i];
+            for (auto chest_item : world->items.other[items_other_id::ANY_GOES_IN_CHEST]) {
+                filter = chest_item;
                 if (filter->getType() != item_type::BAR)
                 {
                     filter = NULL;
@@ -922,7 +918,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             if (filter)
             {
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::BAR;
                 item->mat_type = filter->getMaterial();
                 item->mat_index = filter->getMaterialIndex();
@@ -931,7 +927,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             else
             {
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::BAR;
                 item->mat_type = 0;
                 vector<int32_t> mats;
@@ -955,14 +951,14 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
         case job_skill::CUTGEM:
         case job_skill::ENCRUSTGEM:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::ROUGH;
             item->mat_type = 0;
             item->quantity = base_item_count;
             break;
 
         case job_skill::GLASSMAKER:
-            job->job_items.push_back(item = new df::job_item());
+            job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::ROUGH;
             found_pref = false;
             if (soul)
@@ -1008,7 +1004,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         MaterialInfo mat(pref->mattype, pref->matindex);
                         if (mat.material->flags.is_set(material_flags::BONE))
                         {
-                            job->job_items.push_back(item = new df::job_item());
+                            job->job_items.elements.push_back(item = new df::job_item());
                             item->flags2.bits.bone = true;
                             item->flags2.bits.body_part = true;
                             found_pref = true;
@@ -1016,7 +1012,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         }
                         else if (mat.material->flags.is_set(material_flags::SHELL))
                         {
-                            job->job_items.push_back(item = new df::job_item());
+                            job->job_items.elements.push_back(item = new df::job_item());
                             item->flags2.bits.shell = true;
                             item->flags2.bits.body_part = true;
                             found_pref = true;
@@ -1027,7 +1023,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             if (!found_pref)
             {
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->flags2.bits.bone = true;
                 item->flags2.bits.body_part = true;
                 found_pref = true;
@@ -1094,13 +1090,13 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 switch (rng.df_trandom(2))
                 {
                 case 0:
-                    job->job_items.push_back(item = new df::job_item());
+                    job->job_items.elements.push_back(item = new df::job_item());
                     item->item_type = item_type::REMAINS;
                     item->flags1.bits.allow_buryable = true;
                     item->quantity = 1;
                     break;
                 case 1:
-                    job->job_items.push_back(item = new df::job_item());
+                    job->job_items.elements.push_back(item = new df::job_item());
                     item->flags1.bits.allow_buryable = true;
                     item->flags2.bits.bone = true;
                     item->flags2.bits.body_part = true;
@@ -1184,7 +1180,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         }
                         break;
                     }
-                    item = job->job_items[0];
+                    item = job->job_items.elements[0];
                     if (item->item_type == item_type && item->mat_type == mat_type)
                         continue;
                     if (item_type == avoid_type)
@@ -1199,7 +1195,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         continue;
                     break;
                 } while (1);
-                job->job_items.push_back(item = new df::job_item());
+                job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type;
                 item->mat_type = mat_type;
                 item->flags2.whole = flags2.whole;

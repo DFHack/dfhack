@@ -516,14 +516,14 @@ bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
     assignment->trainer_id = trainer_id;
     assignment->flags.whole = 0;
     assignment->flags.bits.any_trainer = trainer_id == -1;
-    insert_into_vector(plotinfo->equipment.training_assignments,
+    insert_into_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, assignment);
     return true;
 }
 
 bool Units::unassignTrainer(df::unit* unit) {
     CHECK_NULL_POINTER(unit);
-    return erase_from_vector(plotinfo->equipment.training_assignments,
+    return erase_from_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, unit->id);
 }
 
@@ -549,7 +549,7 @@ bool Units::isDomesticated(df::unit* unit)
 }
 
 static df::training_assignment * get_training_assignment(df::unit* unit) {
-    return binsearch_in_vector(plotinfo->equipment.training_assignments,
+    return binsearch_in_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, unit->id);
 }
 
@@ -1130,6 +1130,18 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     }
 
     return NULL;
+}
+
+void Units::makeown(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto fp = df::global::unitst_make_own;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
 }
 
 

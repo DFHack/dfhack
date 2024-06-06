@@ -236,7 +236,7 @@ static const struct labor_default default_labor_infos[] = {
     /* PUSH_HAUL_VEHICLES */    {100, 0, TOOL_NONE},
     /* HAUL_TRADE */            {1000, 0, TOOL_NONE},
     /* PULL_LEVER */            {1000, 0, TOOL_NONE},
-    /* REMOVE_CONSTRUCTION */   {100, 0, TOOL_NONE},
+    /* UNUSED_13 */             {0, 0, TOOL_NONE},
     /* HAUL_WATER */            {100, 0, TOOL_NONE},
     /* GELD */                  {100, 0, TOOL_NONE},
     /* BUILD_ROAD */            {100, 0, TOOL_NONE},
@@ -415,7 +415,7 @@ static struct skill_attr_weight skill_attr_weights[ENUM_LAST_ITEM(job_skill) + 1
     { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MINING */,
     { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WOODCUTTING */,
     { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CARPENTRY */,
-    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DETAILSTONE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ENGRAVE_STONE */,
     { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MASONRY */,
     { { 0, 1, 1, 1, 0, 0 }, { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0 } } /* ANIMALTRAIN */,
     { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 } } /* ANIMALCARE */,
@@ -1404,8 +1404,8 @@ public:
             (isOptionEnabled(CF_ALLOW_HUNTING) && has_butchers) ? 1 : 0;
 
         /* add animal trainers */
-        for (auto a = df::global::plotinfo->equipment.training_assignments.begin();
-            a != df::global::plotinfo->equipment.training_assignments.end();
+        for (auto a = df::global::plotinfo->training.training_assignments.begin();
+            a != df::global::plotinfo->training.training_assignments.end();
             a++)
         {
             labor_needed[df::unit_labor::ANIMALTRAIN]++;
@@ -1734,12 +1734,6 @@ public:
 
             set_labor(canary_dwarf, df::unit_labor::CLEAN, true);
 
-            /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
-            if (!labor_infos[df::unit_labor::REMOVE_CONSTRUCTION].is_unmanaged())
-            {
-                set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
-            }
-
             /* Set HAUL_WATER so we can detect ponds that need to be filled ponds. */
 
             if (!labor_infos[df::unit_labor::HAUL_WATER].is_unmanaged())
@@ -1773,7 +1767,6 @@ public:
                         (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
                         l == df::unit_labor::CLEAN ||
                         l == df::unit_labor::HAUL_WATER ||
-                        l == df::unit_labor::REMOVE_CONSTRUCTION ||
                         l == df::unit_labor::PULL_LEVER ||
                         l == df::unit_labor::HAUL_TRADE);
             }

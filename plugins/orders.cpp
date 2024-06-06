@@ -351,9 +351,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 order["material"] = MaterialInfo(it).getToken();
             }
 
-            if (it->item_category.whole != 0)
+            if (it->specflag.encrust_flags.whole != 0)
             {
-                bitfield_to_json_array(order["item_category"], it->item_category);
+                bitfield_to_json_array(order["item_category"], it->specflag.encrust_flags);
             }
 
             if (it->hist_figure_id != -1)
@@ -366,7 +366,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 bitfield_to_json_array(order["material_category"], it->material_category);
             }
 
-            if (it->art_spec.type != df::job_art_specification::None)
+            if (it->art_spec.type != df::job_art_specifier_type::None)
             {
                 Json::Value art(Json::objectValue);
 
@@ -437,9 +437,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                         condition["material"] = MaterialInfo(it2).getToken();
                     }
 
-                    if (it2->inorganic_bearing != -1)
+                    if (it2->metal_ore != -1)
                     {
-                        condition["bearing"] = df::inorganic_raw::find(it2->inorganic_bearing)->id;
+                        condition["bearing"] = df::inorganic_raw::find(it2->metal_ore)->id;
                     }
 
                     if (!it2->reaction_class.empty())
@@ -598,7 +598,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
         if (it.isMember("item_category"))
         {
-            json_array_to_bitfield(order->item_category, it["item_category"]);
+            json_array_to_bitfield(order->specflag.encrust_flags, it["item_category"]);
             if (!it["item_category"].empty())
             {
                 delete order;
@@ -779,7 +779,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
                         continue;
                     }
-                    condition->inorganic_bearing = found - world->raws.inorganics.begin();
+                    condition->metal_ore = found - world->raws.inorganics.begin();
                 }
 
                 if (it2.isMember("reaction_class"))
@@ -994,7 +994,7 @@ static command_result orders_clear_command(color_ostream & out)
         }
         if (order->items)
         {
-            for (auto item : *order->items)
+            for (auto item : order->items->elements)
             {
                 delete item;
             }

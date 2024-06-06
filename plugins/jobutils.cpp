@@ -129,9 +129,9 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
         return CR_FAILURE;
     }
 
-    for (size_t i = 0; i < job->job_items.size(); i++)
+    for (size_t i = 0; i < job->job_items.elements.size(); i++)
     {
-        df::job_item *item = job->job_items[i];
+        df::job_item *item = job->job_items.elements[i];
         MaterialInfo item_mat(item);
 
         if (item_mat != cur_mat)
@@ -153,9 +153,9 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
     job->mat_type = new_mat.type;
     job->mat_index = new_mat.index;
 
-    for (size_t i = 0; i < job->job_items.size(); i++)
+    for (size_t i = 0; i < job->job_items.elements.size(); i++)
     {
-        df::job_item *item = job->job_items[i];
+        df::job_item *item = job->job_items.elements[i];
         item->mat_type = new_mat.type;
         item->mat_index = new_mat.index;
     }
@@ -252,7 +252,7 @@ static command_result job_duplicate(color_ostream &out, vector <string> & parame
         return CR_FAILURE;
 
     if (!job->specific_refs.empty() ||
-        (job->job_items.empty() &&
+        (job->job_items.elements.empty() &&
          job->job_type != job_type::CollectSand &&
          job->job_type != job_type::CollectClay))
     {
@@ -284,12 +284,12 @@ static df::job_item *getJobItem(color_ostream &out, df::job *job, std::string id
         return NULL;
 
     int v = atoi(idx.c_str());
-    if (v < 1 || size_t(v) > job->job_items.size()) {
+    if (v < 1 || size_t(v) > job->job_items.elements.size()) {
         out.printerr("Invalid item index.\n");
         return NULL;
     }
 
-    return job->job_items[v-1];
+    return job->job_items.elements[v-1];
 }
 
 static command_result job_cmd(color_ostream &out, vector <string> & parameters)

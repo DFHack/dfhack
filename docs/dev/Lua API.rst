@@ -1629,6 +1629,11 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+  ``dfhack.units.makeown(unit)``
+
+  Makes the selected unit a member of the current fortress and site.
+  Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 
@@ -2235,6 +2240,10 @@ General
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.
   Returns *false* in case of error.
 
+  ``dfhack.buildings.getName(building)``
+
+  Returns the name of the building as it would appear in game.
+
 * ``dfhack.buildings.getSize(building)``
 
   Returns *width, height, centerx, centery*.
@@ -2478,8 +2487,8 @@ Kitchen module
   Finds a kitchen exclusion in the vectors in ``df.global.ui.kitchen``. Returns
   -1 if not found.
 
-  * ``type`` is a ``df.kitchen_exc_type``, i.e. ``df.kitchen_exc_type.Cook`` or
-    ``df.kitchen_exc_type.Brew``.
+  * ``type`` is a ``df.kitchen_exc_type`` with exactly one flag set, i.e
+    ``{Cook=true}`` or ``{Brew=true}``.
   * ``item_type`` is a ``df.item_type``
   * ``item_subtype``, ``mat_type``, and ``mat_index`` are all numeric
 
@@ -3195,6 +3204,12 @@ and are only documented here for completeness:
 
   Gets and sets the flag for whether to suppress DF key events when a DFHack
   keybinding is matched and a command is launched.
+
+* ``dfhack.internal.setMortalMode(value)``
+* ``dfhack.internal.setArmokTools(tool_names)``
+
+  Used to sync mortal mode state to DFHack Core memory for use in keybinding
+  checks.
 
 .. _lua-core-context:
 
@@ -3940,6 +3955,10 @@ Each entry has several properties associated with it:
 * ``helpdb.get_entry_tags(entry)``
 
   Returns the set of tag names for the given entry.
+
+* ``helpdb.has_tag(entry, tag)``
+
+  Returns whether the given entry exists and has the specified tag.
 
 * ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
 
@@ -4849,56 +4868,6 @@ A ZScreen convenience subclass that sets the attributes to something
 appropriate for modal dialogs. The game is force paused, and no input is passed
 through to the underlying viewscreens.
 
-FramedScreen class
-------------------
-
-A Screen subclass that paints a visible frame around its body.
-Most dialogs should inherit from this class.
-
-A framed screen has the following attributes:
-
-:frame_style: A table that defines a set of pens to draw various parts of the frame.
-:frame_title: A string to display in the middle of the top of the frame.
-:frame_width: Desired width of the client area. If *nil*, the screen will occupy the whole width.
-:frame_height: Likewise, for height.
-:frame_inset: The gap between the frame and the client area. Defaults to 0.
-:frame_background: The pen to fill in the frame with. Defaults to CLEAR_PEN.
-
-There are the following predefined frame style tables:
-
-* ``FRAME_WINDOW``
-
-  A frame suitable for a draggable, optionally resizable window.
-
-* ``FRAME_PANEL``
-
-  A frame suitable for a static (non-draggable, non-resizable) panel.
-
-* ``FRAME_MEDIUM``
-
-  A frame suitable for overlay widget panels.
-
-* ``FRAME_THIN``
-
-  A frame suitable for floating tooltip panels that need the DFHack signature.
-
-* ``FRAME_BOLD``
-
-  A frame suitable for a non-draggable panel meant to capture the user's focus,
-  like an important notification, confirmation dialog or error message.
-
-* ``FRAME_INTERIOR``
-
-  A frame suitable for light interior accent elements. This frame does *not*
-  have a visible ``DFHack`` signature on it, so it must not be used as the most
-  external frame for a DFHack-owned UI.
-
-* ``FRAME_INTERIOR_MEDIUM``
-
-  A copy of ``FRAME_MEDIUM`` that lacks the ``DFHack`` signature. Suitable for
-  panels that are part of a larger widget cluster. Must *not* be used as the
-  most external frame for a DFHack-owned UI.
-
 gui.widgets
 ===========
 
@@ -5034,10 +5003,44 @@ Has attributes:
 * ``frame_style``, ``frame_title`` (default: ``nil``)
 
   If defined, a frame will be drawn around the panel and subviews will be inset
-  by 1. The attributes are identical to what is defined in the
-  `FramedScreen class`_. When using the predefined frame styles in the ``gui``
-  module, remember to ``require`` the gui module and prefix the identifier with
-  ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
+  by 1. The following predefined frame styles are defined:
+
+  * ``FRAME_WINDOW``
+
+    A frame suitable for a draggable, optionally resizable window.
+
+  * ``FRAME_PANEL``
+
+    A frame suitable for a static (non-resizable) panel.
+
+  * ``FRAME_MEDIUM``
+
+    A frame suitable for overlay widget panels.
+
+  * ``FRAME_THIN``
+
+    A frame suitable for floating tooltip panels that need the DFHack signature.
+
+  * ``FRAME_BOLD``
+
+    A frame suitable for a non-draggable panel meant to capture the user's
+    focus, like an important notification, confirmation dialog or error message.
+
+  * ``FRAME_INTERIOR``
+
+    A frame suitable for light interior accent elements. This frame does *not*
+    have a visible ``DFHack`` signature on it, so it must not be used as the
+    external frame for a DFHack-owned UI.
+
+  * ``FRAME_INTERIOR_MEDIUM``
+
+    A copy of ``FRAME_MEDIUM`` that lacks the ``DFHack`` signature. Suitable for
+    panels that are part of a larger widget cluster. Must *not* be used as the
+    external frame for a DFHack-owned UI.
+
+  When using the predefined frame styles in the ``gui`` module, remember to
+  ``require`` the gui module and prefix the identifier with ``gui.``, e.g.
+  ``gui.FRAME_THIN``.
 
 * ``no_force_pause_badge`` (default: ``false``)
 
@@ -6621,6 +6624,22 @@ tiletypes
 * ``bool tiletypes_setTile(pos, shape, material, special, variant)`` where
   the parameters are enum values from ``df.tiletype_shape``,
   ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
+
+* ``bool tiletypes_setTile(pos, tiletype_options)`` where
+  the ``tiletype_options`` parameter takes in a table, with any fields matching
+  the available tiletypes options. Any unspecified fields default to keeping
+  the value of the original tile. Returns whether the conversion succeeded.
+  - ``shape``: ``df.tiletype_shape``
+  - ``material``: ``df.tiletype_material``
+  - ``special``: ``df.tiletype_special``
+  - ``variant``: ``df.tiletype_variant``
+  - ``hidden``: -1, 0, or 1
+  - ``light``: -1, 0, or 1
+  - ``subterranean``: -1, 0, or 1
+  - ``skyview``: -1, 0, or 1
+  - ``aquifer``: -1, 0, 1, or 2
+  - ``stone_material``: integer material id
+  - ``vein_type``: ``df.inclusion_type``
 
 .. _xlsxreader-api:
 

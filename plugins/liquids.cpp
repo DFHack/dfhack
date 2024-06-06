@@ -125,7 +125,7 @@ static const char *permaflow_name[] = {
 
 #define X(name) tile_liquid_flow_dir::name
 static const df::tile_liquid_flow_dir permaflow_id[] = {
-    X(none), X(none), X(north), X(south), X(east), X(west),
+    X(inactive), X(inactive), X(north), X(south), X(east), X(west),
     X(northeast), X(northwest), X(southeast), X(southwest)
 };
 #undef X

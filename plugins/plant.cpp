@@ -158,6 +158,16 @@ static bool tile_watery(const df::coord &pos)
     return false;
 }
 
+static bool plant_shrub(const df::plant &plant)
+{
+    return plant.type == df::plant_type::DRY_PLANT || plant.type == df::plant_type::WET_PLANT;
+}
+
+static bool plant_shrub(const df::plant *plant)
+{
+    return plant_shrub(*plant);
+}
+
 command_result df_createplant(color_ostream &out, const df::coord &pos, const plant_options &options)
 {
     auto col = Maps::getBlockColumn((pos.x / 48)*3, (pos.y / 48)*3);
@@ -244,38 +254,42 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     }
 
     auto plant = df::allocate<df::plant>();
+    bool is_shrub = true;
     if (p_raw->flags.is_set(plant_raw_flags::TREE))
+    {
+        plant->type = is_watery ? df::plant_type::WET_TREE : df::plant_type::DRY_TREE;
         plant->hitpoints = 400000;
+        is_shrub = false;
+    }
     else
     {
-        plant->flags.bits.is_shrub = true;
+        plant->type = is_watery ? df::plant_type::WET_PLANT : df::plant_type::DRY_PLANT;
         plant->hitpoints = 100000;
     }
 
-    plant->flags.bits.watery = is_watery;
     plant->material = options.plant_idx;
     plant->pos = pos;
     plant->grow_counter = options.age < 0 ? 0 : options.age;
     plant->update_order = rand() % 10;
 
     world->plants.all.push_back(plant);
-    if (plant->flags.bits.is_shrub)
+    if (is_shrub)
     {
-        if (plant->flags.bits.watery)
+        if (is_watery)
             world->plants.shrub_wet.push_back(plant);
         else
             world->plants.shrub_dry.push_back(plant);
     }
     else
     {
-        if (plant->flags.bits.watery)
+        if (is_watery)
             world->plants.tree_wet.push_back(plant);
         else
             world->plants.tree_dry.push_back(plant);
     }
 
     col->plants.push_back(plant);
-    if (plant->flags.bits.is_shrub)
+    if (is_shrub)
         *tt = tiletype::Shrub;
     else
         *tt = tiletype::Sapling;
@@ -304,7 +318,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     int grown = 0, grown_trees = 0;
     for (auto plant : world->plants.all)
     {
-        if (plant->flags.bits.is_shrub)
+        if (plant_shrub(plant))
             continue; // Shrub
         else if (!bounds.containsPos(plant->pos))
             continue; // Outside cuboid
@@ -352,10 +366,13 @@ static bool uncat_plant(df::plant *plant)
 {   // Remove plant from extra vectors
     vector<df::plant *> *vec = NULL;
 
-    if (plant->flags.bits.is_shrub)
-        vec = plant->flags.bits.watery ? &world->plants.shrub_wet : &world->plants.shrub_dry;
-    else
-        vec = plant->flags.bits.watery ? &world->plants.tree_wet : &world->plants.tree_dry;
+    switch (plant->type)
+    {
+    case df::plant_type::DRY_PLANT: vec = &world->plants.shrub_dry; break;
+    case df::plant_type::WET_PLANT: vec = &world->plants.shrub_wet; break;
+    case df::plant_type::DRY_TREE:  vec = &world->plants.tree_dry; break;
+    case df::plant_type::WET_TREE:  vec = &world->plants.tree_wet; break;
+    }
 
     for (size_t i = vec->size(); i-- > 0;)
     {   // Not sorted, but more likely near end
@@ -441,7 +458,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
                 continue; // Not removing living
             /*else if (plant->tree_info && !options.trees)
                 continue; // Not removing trees*/
-            else if (plant.flags.bits.is_shrub)
+            else if (plant_shrub(plant))
             {
                 if (!options.shrubs)
                     continue; // Not removing shrubs
@@ -458,7 +475,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
         bool bad_tt = false;
         if (tt)
         {
-            if (plant.flags.bits.is_shrub)
+            if (plant_shrub(plant))
             {
                 if (tileShape(*tt) != tiletype_shape::SHRUB)
                 {

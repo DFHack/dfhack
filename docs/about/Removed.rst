@@ -283,6 +283,12 @@ petcapRemover
 =============
 Renamed to `pet-uncapper`.
 
+.. _plants:
+
+plants
+======
+Renamed to `plant`.
+
 .. _resume:
 
 resume

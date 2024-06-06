@@ -7,7 +7,7 @@ local function search_str(s)
     return dfhack.upperCp437(dfhack.toSearchNormalized(s))
 end
 
-local function find_grass_idx(s)
+local function find_grass_idx(s) --find plant raw index by id string
     local id_str = search_str(s)
     for _,grass in ipairs(df.global.world.raws.plants.grasses) do
         if search_str(grass.id) == id_str then
@@ -15,13 +15,22 @@ local function find_grass_idx(s)
         end
     end
 
-    return -1
+    qerror('Plant raw not found: "'..s..'"')
+end
+
+local function find_grass(s) --accept index string or match id string
+    if tonumber(s) then
+        return argparse.nonnegativeInt(s, 'grass_id')
+    else
+        return find_grass_idx(s)
+    end
 end
 
 function parse_commandline(opts, pos_1, pos_2, args)
-    local plant_str
+    local plant_str, do_list
     local positionals = argparse.processArgsGetopt(args,
     {
+        {'l', 'list', handler=function() do_list = true end},
         {'m', 'max', handler=function() opts.max_grass = true end},
         {'n', 'new', handler=function() opts.new_grass = true end},
         {'a', 'ashes', handler=function() opts.ashes = true end},
@@ -33,13 +42,13 @@ function parse_commandline(opts, pos_1, pos_2, args)
         {'p', 'plant', hasArg=true, handler=function(optarg) plant_str = optarg end},
     })
 
-    if plant_str then
-        if plant_str == '' then --will print all ids
-            opts.forced_plant = -2
-        elseif not opts.force then
+    if do_list then
+        opts.forced_plant = -2 --will print all grass IDs
+    elseif plant_str then
+        if not opts.force then
             qerror('Use of --plant without --force!')
         else
-            opts.forced_plant = find_grass_idx(plant_str)
+            opts.forced_plant = find_grass(plant_str)
         end
     elseif opts.force then
         local grasses = df.global.world.raws.plants.grasses

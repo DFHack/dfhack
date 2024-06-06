@@ -370,6 +370,7 @@ namespace df
             return ((uint8_t*)ptr) + idx * item->byte_size();
         }
     };
+#endif
 
     template<class T>
     class stl_container_identity : public container_identity {
@@ -406,6 +407,7 @@ namespace df
         }
     };
 
+#ifdef BUILD_DFHACK_LIB
     template<class T>
     class ro_stl_container_identity : public container_identity {
     protected:
@@ -657,15 +659,27 @@ namespace df
     template<class T, int sz> struct identity_traits<T [sz]> {
         static container_identity *get();
     };
+#endif
 
     template<class T> struct identity_traits<std::vector<T> > {
         static container_identity *get();
     };
-#endif
 
     template<class T> struct identity_traits<std::vector<T*> > {
         static stl_ptr_vector_identity *get();
     };
+
+    // explicit specializations for these two types
+    // for availability in plugins
+
+    template<> struct identity_traits<std::vector<int32_t> > {
+        static container_identity* get();
+    };
+
+    template<> struct identity_traits<std::vector<int16_t> > {
+        static container_identity* get();
+    };
+
 
 #ifdef BUILD_DFHACK_LIB
     template<class T> struct identity_traits<std::deque<T> > {
@@ -737,6 +751,19 @@ namespace df
     inline stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
         static stl_ptr_vector_identity identity(identity_traits<T>::get());
         return &identity;
+    }
+
+    // explicit specializations for these two types
+    // for availability in plugins
+
+    extern DFHACK_EXPORT stl_container_identity<std::vector<int32_t> > stl_vector_int32_t_identity;
+    inline container_identity* identity_traits<std::vector<int32_t> >::get() {
+        return &stl_vector_int32_t_identity;
+    }
+
+    extern DFHACK_EXPORT stl_container_identity<std::vector<int16_t> > stl_vector_int16_t_identity;
+    inline container_identity* identity_traits<std::vector<int16_t> >::get() {
+        return &stl_vector_int16_t_identity;
     }
 
 #ifdef BUILD_DFHACK_LIB

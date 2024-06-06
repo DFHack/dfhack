@@ -659,11 +659,11 @@ namespace df
     template<class T, int sz> struct identity_traits<T [sz]> {
         static container_identity *get();
     };
-#endif
 
     template<class T> struct identity_traits<std::vector<T> > {
         static container_identity *get();
     };
+#endif
 
     template<class T> struct identity_traits<std::vector<T*> > {
         static stl_ptr_vector_identity *get();

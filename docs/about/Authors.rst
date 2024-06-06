@@ -245,6 +245,7 @@ Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
+Varnavskii Aleksandr    Crystalwarrior
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
 Vjek                    vjek

@@ -122,6 +122,7 @@ void DFHack::Lua::Push(lua_State *state, const df::coord2d &pos)
 
 void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec, int idx)
 {
+    luaL_checktype(state, idx, LUA_TTABLE);
     lua_pushnil(state);   // first key
     while (lua_next(state, idx) != 0)
     {

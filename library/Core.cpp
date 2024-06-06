@@ -2382,10 +2382,12 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 void Core::setMortalMode(bool value) {
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
     mortal_mode = value;
 }
 
 void Core::setArmokTools(const std::vector<std::string> &tool_names) {
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
     armok_tools.clear();
     armok_tools.insert(tool_names.begin(), tool_names.end());
 }

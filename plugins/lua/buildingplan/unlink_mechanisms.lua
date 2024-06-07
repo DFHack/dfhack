@@ -1,11 +1,9 @@
 local _ENV = mkmodule("plugins.buildingplan.unlink_mechanisms")
 
-local gui = require("gui")
+local dialogs = require('gui.dialogs')
 local overlay = require("plugins.overlay")
 local utils = require("utils")
 local widgets = require("gui.widgets")
-
-saved_mode = saved_mode or 0
 
 local function mech_iter(b) --iterate mechanisms backwards
     local t = b.contained_items
@@ -110,6 +108,18 @@ local function unlink_mech(b_src, m_src, b_dst, free_src, free_dst) --unlink two
     end
 end
 
+local function confirm_action(self, title, message, pause_var, action_fn)
+    if self[pause_var] then
+        action_fn()
+        return
+    end
+    local function pause()
+        self[pause_var] = true
+        action_fn()
+    end
+    dialogs.showYesNoPrompt(title, message, nil, action_fn, nil, pause)
+end
+
 local sheet = df.global.game.main_interface.view_sheets
 
 local valid_build = {
@@ -131,80 +141,6 @@ local valid_build = {
     "Weapon",
 }
 
-------------------------
--- ConfirmWindow
-
-ConfirmWindow = defclass(ConfirmWindow, widgets.Window)
-ConfirmWindow.ATTRS
-{
-    frame = {w=56, h=8},
-    message = DEFAULT_NIL,
-    desired_lines = 1,
-    propagate_fn = DEFAULT_NIL,
-}
-
-function ConfirmWindow:init()
-    self.frame.h = 8 + self.desired_lines
-
-    self:addviews
-    {
-        widgets.Label
-        {
-            frame = {t=0, l=0, r=0},
-            text = self.message,
-        },
-        widgets.HotkeyLabel
-        {
-            frame = {b=2, l=0},
-            label = "Yes, proceed",
-            key = "SELECT",
-            auto_width = true,
-            on_activate = self:callback("proceed"),
-        },
-        widgets.HotkeyLabel
-        {
-            frame = {b=0, l=0},
-            label = "Suppress this warning until DF restarts",
-            key = "CUSTOM_SHIFT_S",
-            auto_width = true,
-            on_activate = self:callback("suppress"),
-        },
-    }
-end
-
-function ConfirmWindow:proceed()
-    self.parent_view:dismiss()
-    self.propagate_fn()
-end
-
-function ConfirmWindow:suppress()
-    self.parent_view:dismiss()
-    self.propagate_fn(true)
-end
-
-ConfirmScreen = defclass(ConfirmScreen, gui.ZScreenModal)
-ConfirmScreen.ATTRS
-{
-    focus_path = "mech/confirm",
-    title = DEFAULT_NIL,
-    message = DEFAULT_NIL,
-    desired_lines = 1,
-    propagate_fn = DEFAULT_NIL,
-}
-
-function ConfirmScreen:init()
-    self:addviews
-    {
-        ConfirmWindow
-        {
-            frame_title = self.title,
-            message = self.message,
-            desired_lines = self.desired_lines,
-            propagate_fn = self.propagate_fn,
-        }
-    }
-end
-
 -- ----------------------
 -- MechLinkOverlay
 --
@@ -221,7 +157,7 @@ MechLinkOverlay.ATTRS
 }
 
 for _,v in ipairs(valid_build) do
-    table.insert(MechLinkOverlay.ATTRS.viewscreens, "dwarfmode/ViewSheets/BUILDING/"..v.."/LinkedBuildings")
+    utils.insert_sorted(MechLinkOverlay.ATTRS.viewscreens, "dwarfmode/ViewSheets/BUILDING/"..v.."/LinkedBuildings")
 end
 
 function MechLinkOverlay:init()
@@ -243,8 +179,6 @@ function MechLinkOverlay:init()
                 {value=2, label="Free target mechanism", pen=COLOR_GREEN},
                 {value=3, label="Free local and target", pen=COLOR_GREEN},
             },
-            initial_option = saved_mode,
-            on_change = function(val) saved_mode = val end,
         },
         widgets.HotkeyLabel
         {
@@ -332,6 +266,7 @@ end
 
 function MechLinkOverlay:activate_button(n)
     local button = self:get_button(n)
+    local saved_mode = self.subviews.unlink_mode:getOptionValue()
 
     local idx = self:idx_from_offset(button.frame.t)
     if idx > 0 and idx < #self.building.contained_items then
@@ -342,39 +277,25 @@ function MechLinkOverlay:activate_button(n)
             local free_src = (saved_mode % 2 == 1)
             local free_dst = (saved_mode // 2 > 0)
 
-            if always_unlink_single then
+            local message = {
+                "Unlink mechanism?",
+                NEWLINE, NEWLINE,
+                "Mechanism:       ", {text=dfhack.items.getDescription(item, 0, true), pen=COLOR_BLUE},
+                NEWLINE,
+                "Target building: ", {text=utils.getBuildingName(target), pen=COLOR_BLUE},
+                NEWLINE, NEWLINE,
+                free_src and {text="This mechanism will be freed and moved to the ground.", pen=COLOR_GREEN} or
+                    {text="This mechanism will be kept in the building. You can free it later.", pen=COLOR_DARKGRAY},
+                NEWLINE,
+                free_dst and {text="Mechanism in target will be freed and moved to the ground.", pen=COLOR_GREEN} or
+                    {text="Mechanism in target will be kept in the building. You can free it later.", pen=COLOR_DARKGRAY},
+            }
+            confirm_action(self, "Unlink mechanism", message, 'always_unlink_single', function()
                 unlink_mech(self.building, item, target, free_src, free_dst)
                 if not has_link_tab(self.building) then
                     sheet.show_linked_buildings = false --DF will swap viewscreen
                 end
-                return
-            end
-
-            ConfirmScreen
-            {
-                title = "Unlink Mechanism",
-                message =
-                {
-                    "Really unlink mechanism? This cannot be undone.\n\nThis mechanism: ",
-                    {text = dfhack.items.getDescription(item, 0, true), pen = COLOR_BLUE},
-                    "\nTarget building: ",
-                    {text = utils.getBuildingName(target), pen = COLOR_BLUE},
-                    "\n\n",
-                    free_src and {text = "This mechanism will be freed.", pen = COLOR_GREEN} or
-                        {text = "This mechanism will not be freed.", pen = COLOR_DARKGRAY},
-                    "\n",
-                    free_dst and {text = "Target mechanism will be freed.", pen = COLOR_GREEN} or
-                    {text = "Target mechanism will not be freed.", pen = COLOR_DARKGRAY},
-                },
-                desired_lines = 7,
-                propagate_fn = function(suppress)
-                    always_unlink_single = suppress
-                    unlink_mech(self.building, item, target, free_src, free_dst)
-                    if not has_link_tab(self.building) then
-                        sheet.show_linked_buildings = false --DF will swap viewscreen
-                    end
-                end,
-            }:show()
+            end)
         else
             dfhack.printerr(("MechLinkOverlay: Mechanism %s had no target!"):format(item))
         end
@@ -384,49 +305,35 @@ function MechLinkOverlay:activate_button(n)
 end
 
 function MechLinkOverlay:ask_unlink_all()
-    if always_unlink_all then
-        self:do_unlink_all()
-        return
-    end
+    local saved_mode = self.subviews.unlink_mode:getOptionValue()
+    local message = {
+        "Unlink all mechanisms?",
+        NEWLINE, NEWLINE,
+        (saved_mode % 2 == 1) and {text="These mechanisms will be freed and moved to the ground.", pen=COLOR_GREEN} or
+           {text="These mechanisms will be kept in the building. You can free them later.", pen=COLOR_DARKGRAY},
+        NEWLINE,
+        (saved_mode // 2 > 0) and {text="Mechanisms in linked buildings will be freed and moved to the ground.", pen=COLOR_GREEN} or
+            {text="Mechanisms in linked buildings will be kept in the buildings. You can free them later.", pen=COLOR_DARKGRAY},
+    }
+    confirm_action(self, "Unlink", message, 'always_unlink_all', function ()
+        local free_src = (saved_mode % 2 == 1)
+        local free_dst = (saved_mode // 2 > 0)
 
-    ConfirmScreen
-    {
-        title = "Unlink All Mechanisms",
-        message =
-        {
-            "Really unlink all mechanisms? This cannot be undone.\n\n",
-            (saved_mode % 2 == 1) and {text = "These mechanisms will be freed.", pen = COLOR_GREEN} or
-                {text = "These mechanisms will not be freed.", pen = COLOR_DARKGRAY},
-            "\n",
-            (saved_mode // 2 > 0) and {text = "Target mechanisms will be freed.", pen = COLOR_GREEN} or
-            {text = "Target mechanisms will not be freed.", pen = COLOR_DARKGRAY},
-        },
-        desired_lines = 4,
-        propagate_fn = function(suppress)
-            always_unlink_all = suppress
-            self:do_unlink_all()
-        end,
-    }:show()
-end
+        for _, idx in ipairs(self.links) do
+            local item = self.building.contained_items[idx].item
+            local target = get_mech_target(item)
 
-function MechLinkOverlay:do_unlink_all()
-    local free_src = (saved_mode % 2 == 1)
-    local free_dst = (saved_mode // 2 > 0)
-
-    for _, idx in ipairs(self.links) do
-        local item = self.building.contained_items[idx].item
-        local target = get_mech_target(item)
-
-        if target then
-            unlink_mech(self.building, item, target, free_src, free_dst)
-        else
-            dfhack.printerr(("MechLinkOverlay: Mechanism %s had no target!"):format(item))
+            if target then
+                unlink_mech(self.building, item, target, free_src, free_dst)
+            else
+                dfhack.printerr(("MechLinkOverlay: Mechanism %s had no target!"):format(item))
+            end
         end
-    end
 
-    if not has_link_tab(self.building) then
-        sheet.show_linked_buildings = false --DF will swap viewscreen
-    end
+        if not has_link_tab(self.building) then
+            sheet.show_linked_buildings = false --DF will swap viewscreen
+        end
+    end)
 end
 
 function MechLinkOverlay:update_buttons()
@@ -562,27 +469,15 @@ function MechItemOverlay:activate_button(n)
         if target then
             dfhack.printerr(("MechItemOverlay: Mechanism %s still linked to %s!"):format(item, target))
         else
-            if always_free_single then
+            local message = {
+                "Free mechanism and move it to the ground?",
+                NEWLINE, NEWLINE,
+                "This mechanism: ", {text=dfhack.items.getDescription(item, 0, true), pen=COLOR_BLUE},
+            }
+            confirm_action(self, "Free mechanism", message, 'always_free_single', function()
                 item.flags.in_building = false
                 dfhack.items.moveToGround(item, xyz2pos(dfhack.items.getPosition(item)))
-                return
-            end
-
-            ConfirmScreen
-            {
-                title = "Free Mechanism",
-                message =
-                {
-                    "Really free mechanism? This cannot be undone.\n\nThis mechanism: ",
-                    {text = dfhack.items.getDescription(item, 0, true), pen = COLOR_BLUE},
-                },
-                desired_lines = 3,
-                propagate_fn = function(suppress)
-                    always_free_single = suppress
-                    item.flags.in_building = false
-                    dfhack.items.moveToGround(item, xyz2pos(dfhack.items.getPosition(item)))
-                end,
-            }:show()
+            end)
         end
     else
         dfhack.printerr(("MechItemOverlay: Invalid button! Offset %d"):format(button.frame.t))
@@ -590,30 +485,19 @@ function MechItemOverlay:activate_button(n)
 end
 
 function MechItemOverlay:ask_free_all()
-    if always_free_all then
-        self:do_free_all()
-        return
-    end
-
-    ConfirmScreen
-    {
-        title = "Free All Mechanisms",
-        message = "Really free all mechanisms? This cannot be undone.",
-        desired_lines = 1,
-        propagate_fn = function(suppress)
-            always_free_all = suppress
-            self:do_free_all()
-        end,
-    }:show()
-end
-
-function MechItemOverlay:do_free_all()
-    for item in mech_iter(self.building) do
-        if not get_mech_target(item) then
-            item.flags.in_building = false
-            dfhack.items.moveToGround(item, xyz2pos(dfhack.items.getPosition(item)))
+    local message = {
+        "Free all mechanisms and move them to the ground?",
+        NEWLINE, NEWLINE,
+        "This will recover all unlinked mechanisms from the building for reuse.",
+    }
+    confirm_action(self, "Free all mechanisms", message, 'always_free_all', function()
+        for item in mech_iter(self.building) do
+            if not get_mech_target(item) then
+                item.flags.in_building = false
+                dfhack.items.moveToGround(item, xyz2pos(dfhack.items.getPosition(item)))
+            end
         end
-    end
+    end)
 end
 
 function MechItemOverlay:update_buttons()

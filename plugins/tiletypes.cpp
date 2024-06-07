@@ -1051,13 +1051,13 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                     return skipList.end() == std::find_if(skipList.begin(), skipList.end(), [pos](df::coord p) { return p.x == pos.x && p.y == pos.y && p.z == pos.z; });
                 };
 
+                if (target.surroundings > 0 && updateAreaSurroundings(map, pos1, pos2, target))
+                    map.WriteAll();
+
                 if (target.aquifer == 0)
                     Maps::removeAreaAquifer(pos1, pos2, filter);
                 else if (target.aquifer > 0)
                     Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
-
-                if (target.surroundings > 0 && updateAreaSurroundings(map, pos1, pos2, target))
-                    map.WriteAll();
             }
         }
     };
@@ -1086,11 +1086,6 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
         return PaintResult{
             .paintCount = 1,
             .postWrite = [target, pos](MapExtras::MapCache& map) {
-                if (target.aquifer == 0)
-                    Maps::removeTileAquifer(pos);
-                else if (target.aquifer > 0)
-                    Maps::setTileAquifer(pos, target.aquifer == 2);
-
                 if (target.surroundings > 0) {
                     MapExtras::Block* block = map.BlockAtTile(pos);
                     MapExtras::Block* topBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z + 1));
@@ -1101,6 +1096,11 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                     if (updated)
                         map.WriteAll();
                 }
+
+                if (target.aquifer == 0)
+                    Maps::removeTileAquifer(pos);
+                else if (target.aquifer > 0)
+                    Maps::setTileAquifer(pos, target.aquifer == 2);
             }
         };
     }

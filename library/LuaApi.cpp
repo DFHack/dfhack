@@ -1350,6 +1350,8 @@ static string upperCp437(string s) { return toUpper_cp437(s); }
 static string lowerCp437(string s) { return toLower_cp437(s); }
 static string toSearchNormalized(string s) { return to_search_normalized(s); }
 static string capitalizeStringWords(string s) { return capitalize_string_words(s); }
+static string formatInt(int32_t num) { return format_number(num); }
+static string formatFloat(float num) { return format_number(num); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1372,6 +1374,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(lowerCp437),
     WRAP(toSearchNormalized),
     WRAP(capitalizeStringWords),
+    WRAP(formatInt),
+    WRAP(formatFloat),
     WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
     WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
     WRAP_VERSION_FUNC(getDFHackBuildID, dfhack_build_id),

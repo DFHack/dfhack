@@ -456,6 +456,21 @@ static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
 
+// format a number according to the current system locale
+template<typename T>
+static inline std::string format_number(T num) {
+    std::ostringstream ss;
+
+    try {
+        static const std::locale user_loc("");
+        ss.imbue(user_loc);
+    } catch (std::exception &) {
+        // ignore locale errors
+    }
+    ss << std::fixed << num;
+    return ss.str();
+}
+
 enum word_wrap_whitespace_mode {
     WSMODE_KEEP_ALL,
     WSMODE_COLLAPSE_ALL,

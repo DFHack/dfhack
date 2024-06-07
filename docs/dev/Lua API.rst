@@ -1629,10 +1629,19 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
-  ``dfhack.units.makeown(unit)``
+* ``dfhack.units.makeown(unit)``
 
   Makes the selected unit a member of the current fortress and site.
   Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+
+* ``dfhack.units.create(race, caste)``
+
+  Creates a new unit from scratch. The unit will be added to the
+  ``world.units.all`` vector, but not to the ``world.units.active`` vector. The
+  unit will not have an associated historical figure, nemesis record, map
+  position, labors, or any group associations. The unit *will* have a race,
+  caste, name, soul, and initialized body and mind (including personality). The
+  unit must be configured further as needed and put into play by the client.
 
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``

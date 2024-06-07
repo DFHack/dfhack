@@ -101,8 +101,8 @@ struct work_hook : df::building_workshopst{
             //try getting ref, if not return from definition
             if (ref)
             {
-                info->produced = ref->unk_1;
-                info->consumed = ref->unk_2;
+                info->produced = ref->race;
+                info->consumed = ref->caste;
                 return true;
             }
             else
@@ -131,18 +131,18 @@ struct work_hook : df::building_workshopst{
         //if we have a setting then update it, else create a new ref for dynamic power tracking
         if (ref)
         {
-            ref->unk_1 = produced;
-            ref->unk_2 = consumed;
+            ref->race = produced;
+            ref->caste = consumed;
         }
         else
         {
             ref = df::allocate<df::general_ref_creaturest>();
-            ref->unk_1 = produced;
-            ref->unk_2 = consumed;
+            ref->race = produced;
+            ref->caste = consumed;
             general_refs.push_back(ref);
         }
     }
-    DEFINE_VMETHOD_INTERPOSE(uint32_t,getImpassableOccupancy,())
+    DEFINE_VMETHOD_INTERPOSE(df::tile_building_occ,getImpassableOccupancy,())
     {
         if(auto def = find_def())
         {

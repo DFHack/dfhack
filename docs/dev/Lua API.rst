@@ -994,6 +994,18 @@ can be omitted.
   This function does not downcase characters. Use ``dfhack.lowerCp437``
   first, if desired.
 
+* ``dfhack.formatInt(num)``
+
+  Formats an integer value as a string according to the current system locale.
+  E.g. for American English, it would transform like: ``12345`` ->
+  ``'12,345'``
+
+* ``dfhack.formatFloat(num)``
+
+  Formats a floating point value as a string according to the current system
+  locale. E.g. for American English, it would transform like: ``-12345.6789``
+  -> ``'-12,345.678711'`` (because float imprecision).
+
 * ``dfhack.run_command(command[, ...])``
 
   Run an arbitrary DFHack command, with the core suspended, and send output to
@@ -1629,10 +1641,19 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
-  ``dfhack.units.makeown(unit)``
+* ``dfhack.units.makeown(unit)``
 
   Makes the selected unit a member of the current fortress and site.
   Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+
+* ``dfhack.units.create(race, caste)``
+
+  Creates a new unit from scratch. The unit will be added to the
+  ``world.units.all`` vector, but not to the ``world.units.active`` vector. The
+  unit will not have an associated historical figure, nemesis record, map
+  position, labors, or any group associations. The unit *will* have a race,
+  caste, name, soul, and initialized body and mind (including personality). The
+  unit must be configured further as needed and put into play by the client.
 
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``

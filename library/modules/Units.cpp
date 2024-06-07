@@ -1143,6 +1143,14 @@ void Units::makeown(df::unit* unit)
     (*f)(unit);
 }
 
+df::unit * Units::create(int16_t race, int16_t caste) {
+    auto fp = df::global::unitst_more_convenient_create;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<df::unit * (int16_t, int16_t)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    return (*f)(race, caste);
+}
 
 int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr)
 {

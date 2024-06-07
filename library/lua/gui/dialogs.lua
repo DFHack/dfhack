@@ -145,7 +145,7 @@ function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel, on_pause, on
         },
         widgets.HotkeyLabel{
             frame={b=2, l=0},
-            label='Pause confirmations',
+            label='Pause this confirmation',
             key='CUSTOM_SHIFT_P',
             auto_width=true,
             on_activate=function()
@@ -167,7 +167,7 @@ function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel, on_pause, on
         },
         on_accept=on_accept,
         on_cancel=on_cancel,
-        min_width=on_settings and 35 or nil,
+        min_width=on_settings and 39 or nil,
         extra_height=(on_pause or on_settings) and 2 or 0,
         subviews=subviews,
     }

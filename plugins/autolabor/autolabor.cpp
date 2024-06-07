@@ -691,7 +691,7 @@ static void assign_labor(unit_labor::unit_labor labor,
             {
                 dwarf_info[dwarf].has_exclusive_labor = true;
                 // all the exclusive labors require equipment so this should force the dorf to reequip if needed
-                dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
+                dwarfs[dwarf]->uniform.pickup_flags.bits.update = 1;
             }
 
             TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n",

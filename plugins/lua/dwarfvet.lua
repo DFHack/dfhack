@@ -146,7 +146,7 @@ local function attach_to_pasture(unit, zone)
     utils.insert_sorted(zone.assigned_units, unit.id)
 end
 
--- TODO: If health.requires_recovery is set, the creature can't move under its own power
+-- TODO: If health.should_not_move is set, the creature can't move under its own power
 --   and a Recover Wounded or Pen/Pasture job must be created by hand
 function HospitalZone:assign_spot(unit, unit_pos)
     local pos = self:find_spot(unit_pos)

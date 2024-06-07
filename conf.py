@@ -181,6 +181,7 @@ today_fmt = html_last_updated_fmt = '%Y-%m-%d'
 # directories to ignore when looking for source files.
 exclude_patterns = [
     'README.md',
+    '.git/*',
     'build*',
     'depends/*',
     'docs/html/*',

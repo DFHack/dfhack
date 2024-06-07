@@ -97,6 +97,7 @@ Template for new versions:
 - ``Maps::removeTileAquifer``: remove aquifer from tile
 - ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
 - ``Units::create``, ``Units::makeown``: new APIs to use bay12-provided entry points for low-level operations
+- ``format_number``: format numbers according to the current system locale
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)
@@ -114,6 +115,7 @@ Template for new versions:
 - ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 - ``dfhack.units.create``, ``dfhack.units.makeown``: Lua access to new module API
+- ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the current system locale
 
 ## Removed
 - `plants`: renamed to `plant`

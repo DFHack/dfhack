@@ -994,6 +994,18 @@ can be omitted.
   This function does not downcase characters. Use ``dfhack.lowerCp437``
   first, if desired.
 
+* ``dfhack.formatInt(num)``
+
+  Formats an integer value as a string according to the current system locale.
+  E.g. for American English, it would transform like: ``12345`` ->
+  ``'12,345'``
+
+* ``dfhack.formatFloat(num)``
+
+  Formats a floating point value as a string according to the current system
+  locale. E.g. for American English, it would transform like: ``-12345.6789``
+  -> ``'-12,345.678711'`` (because float imprecision).
+
 * ``dfhack.run_command(command[, ...])``
 
   Run an arbitrary DFHack command, with the core suspended, and send output to

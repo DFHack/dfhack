@@ -76,6 +76,7 @@ Template for new versions:
 - `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 - `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
+- `tiletypes`: new ``surroundings`` property for maintaining valid tile surroundings
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - `buildingplan`: add option to ignore items from a specified burrow
@@ -110,7 +111,7 @@ Template for new versions:
 - ``dfhack.maps.isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``dfhack.maps.setTileAquifer``: make tile into an aquifer
 - ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
-- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table with for access to previously unavailable options
+- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 
 ## Removed

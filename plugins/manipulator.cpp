@@ -1736,7 +1736,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                         unit->status.labors[columns[i].labor] = false;
                 }
             }
-            unit->military.pickup_flags.bits.update = true;
+            unit->uniform.pickup_flags.bits.update = true;
         }
         unit->status.labors[col.labor] = newstatus;
     }
@@ -1760,7 +1760,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                             unit->status.labors[columns[j].labor] = false;
                     }
                 }
-                unit->military.pickup_flags.bits.update = true;
+                unit->uniform.pickup_flags.bits.update = true;
             }
             unit->status.labors[columns[i].labor] = newstatus;
         }

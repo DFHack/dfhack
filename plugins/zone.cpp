@@ -542,7 +542,7 @@ static command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::b
     }
 
     // don't assign owned pets to a cage. the owner will release them, resulting into infinite hauling (df bug)
-    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+    if(unit->relationship_ids[df::unit_relationship_type::PetOwner] != -1)
         return CR_OK;
 
     // check if unit is already pastured or caged, remove refs where necessary

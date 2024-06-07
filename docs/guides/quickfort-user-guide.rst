@@ -2367,7 +2367,7 @@ Symbol Meaning Properties
                ``create``: if set to ``true``, will create a burrow with the
                specified ``name`` if it doesn't already exist.
                ``civalert``: if set to ``true``, will register this burrow with
-               `gui/civ-alert` if no burrow has already been registered.
+               `gui/civ-alert` as a safe space during danger.
                ``autochop_clear``: if set to ``true``, register the burrow with
                `autochop` so that all trees in the burrow are immediately
                chopped down, regardless of how many logs are in stock.

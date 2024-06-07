@@ -52,13 +52,16 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `plant`: (reinstated) tool for creating/growing/removing plants
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
+- `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
 - `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
+- `regrass`: don't remove mud on regrass, consistent with vanilla behavior
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
 - `seedwatch`: do not include unplantable tree seeds in its status report
@@ -70,8 +73,10 @@ Template for new versions:
 - `blueprint`: capture track carving designations in addition to already-carved tracks
 - `changevein`: affect connected veins even outside of the selected map block
 - `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
+- `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 - `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
+- `tiletypes`: new ``surroundings`` property for maintaining valid tile surroundings
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - `buildingplan`: add option to ignore items from a specified burrow
@@ -106,12 +111,13 @@ Template for new versions:
 - ``dfhack.maps.isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``dfhack.maps.setTileAquifer``: make tile into an aquifer
 - ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
-- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table with for access to previously unavailable options
+- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 
-
 ## Removed
+- `plants`: renamed to `plant`
 - ``gui.FramedScreen``: this class is now deprecated; please use ``gui.ZScreen`` and ``widgets.Window`` instead
+- ``dfhack.HIDE_CONSOLE_ON_STARTUP`` and ``dfhack.HIDE_ARMOK_TOOLS`` are no longer directly accessible. Please use `control-panel` or `gui/control-panel` to interact wtih those settings.
 
 # 50.13-r2
 

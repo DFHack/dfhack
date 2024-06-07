@@ -3205,6 +3205,12 @@ and are only documented here for completeness:
   Gets and sets the flag for whether to suppress DF key events when a DFHack
   keybinding is matched and a command is launched.
 
+* ``dfhack.internal.setMortalMode(value)``
+* ``dfhack.internal.setArmokTools(tool_names)``
+
+  Used to sync mortal mode state to DFHack Core memory for use in keybinding
+  checks.
+
 .. _lua-core-context:
 
 Core interpreter context
@@ -6632,6 +6638,7 @@ tiletypes
   - ``subterranean``: -1, 0, or 1
   - ``skyview``: -1, 0, or 1
   - ``aquifer``: -1, 0, 1, or 2
+  - ``surroundings``: 0 or 1
   - ``stone_material``: integer material id
   - ``vein_type``: ``df.inclusion_type``
 

@@ -16,7 +16,7 @@ end
 
 function should_hide_armok(cmdline)
     local command = get_command(cmdline)
-    return dfhack.getHideArmokTools() and helpdb.has_tag(command, 'armok')
+    return dfhack.getMortalMode() and helpdb.has_tag(command, 'armok')
 end
 
 -- ----------------- --

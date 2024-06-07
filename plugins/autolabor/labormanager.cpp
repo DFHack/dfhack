@@ -1120,7 +1120,7 @@ private:
                     dwarf->dwarf->profession == profession::BABY)
                     )
                 {
-                    if (dwarf->dwarf->health->flags.bits.needs_recovery)
+                    if (dwarf->dwarf->health->flags.bits.should_not_move)
                         cnt_recover_wounded++;
                     if (dwarf->dwarf->health->flags.bits.rq_diagnosis)
                         cnt_diagnosis++;
@@ -1640,7 +1640,7 @@ public:
                         if (print_debug)
                             out.print("LABORMANAGER: asking %s to pick up tools, current job %s\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(job_type, j).c_str());
 
-                        (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
+                        (*bestdwarf)->dwarf->uniform.pickup_flags.bits.update = true;
                         labors_changed = true;
                     }
                 }
@@ -1815,7 +1815,7 @@ public:
             if ((*d)->dwarf->job.current_job && (*d)->dwarf->job.current_job->job_type == df::job_type::PickupEquipment)
                 continue;
 
-            if ((*d)->dwarf->military.pickup_flags.bits.update)
+            if ((*d)->dwarf->uniform.pickup_flags.bits.update)
                 continue;
 
             FOR_ENUM_ITEMS(unit_labor, l)
@@ -1841,7 +1841,7 @@ public:
                     if (print_debug)
                         out.print("LABORMANAGER: asking %s to %s tools, current job %s, %d %d \n", (*d)->dwarf->name.first_name.c_str(), (has_tool) ? "drop" : "pick up", ENUM_KEY_STR(job_type, j).c_str(), has_tool, needs_tool);
 
-                    (*d)->dwarf->military.pickup_flags.bits.update = true;
+                    (*d)->dwarf->uniform.pickup_flags.bits.update = true;
                     labors_changed = true;
 
                     if (needs_tool)

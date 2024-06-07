@@ -3,7 +3,7 @@ regrass
 
 .. dfhack-tool::
     :summary: Regrow surface grass and cavern moss.
-    :tags: adventure fort armok animals map
+    :tags: adventure fort armok animals map plants
 
 This command can refresh the grass (and subterranean moss) growing on your map.
 Operates on floors, stairs, and ramps. Also works underneath shrubs, saplings,
@@ -24,9 +24,45 @@ can be used in place of numeric coordinates to use the position of the keyboard
 cursor, if active. The ``--block`` and ``--zlevel`` options use the ``pos``
 values differently.
 
+Examples
+--------
+
+``regrass``
+    Regrass the entire map, refilling existing and depleted grass.
+``regrass here``
+    Regrass the selected tile, refilling existing and depleted grass.
+``regrass here 0,0,90 --zlevel``
+    Regrass all z-levels including the selected tile's z-level through z-level
+    90, refilling existing and depleted grass.
+``regrass 0,0,100 19,19,119 --ashes --mud``
+    Regrass tiles in the 20 x 20 x 20 cube defined by the coords, refilling
+    existing and depleted grass, and converting ashes and muddy stone (if
+    respective blocks ever had grass).
+``regrass 10,10,100 -baudnm``
+    Regrass the block that contains the given coord; converting ashes, muddy
+    stone, and tiles under buildings; adding all compatible grass types, and
+    filling each grass type to max.
+``regrass -f``
+    Regrass the entire map, refilling existing and depleted grass, else filling
+    with a randomly selected grass type if non-existent.
+``regrass -l``
+    Print all valid grass raw IDs for use with ``--plant``. Both numerical and
+    string IDs are provided. This ignores all other options and skips regrass.
+``regrass -zf -p 128``
+    Regrass the current z-level, refilling existing and depleted grass, else
+    filling with ``underlichen`` if non-existent.
+``regrass here -bnf -p "dog's tooth grass"``
+    Regrass the selected block, adding all compatible grass types to block data,
+    ``dog's tooth grass`` if no compatible types exist. Refill existing grass
+    on each tile, else select one of the block's types if depleted or
+    previously non-existent.
+
 Options
 -------
 
+``-l``, ``--list``
+    List all available grass raw IDs that you can later pass to the ``--plant``
+    option. The map will not be affected when running with this option.
 ``-m``, ``--max``
     Maxes out every grass type in the tile, giving extra grazing time.
     Not normal DF behavior. Tile will appear to be the first type of grass
@@ -44,12 +80,13 @@ Options
     forced instead. By default, a single random grass type is selected from
     the world's raws. The ``--plant`` option allows a specific grass type to be
     specified.
-``-p <grass_id>``, ``--plant <grass_id>``
+``-p``, ``--plant <grass_id>``
     Specify a grass type for the ``--force`` option. ``grass_id`` is not
-    case-sensitive, but must be enclosed in quotes if spaces exist. Providing
-    an empty string with "" will print all available IDs and skip regrass.
+    case-sensitive, but must be enclosed in quotes if spaces exist. A numerical
+    ID can also be used.
 ``-a``, ``--ashes``
-    Regrass tiles that've been burnt to ash.
+    Regrass tiles that've been burnt to ash. Usually ash must revert to soil
+    first before grass can grow.
 ``-d``, ``--buildings``
     Regrass tiles under certain passable building tiles including stockpiles,
     planned buildings, workshops, and farms. (Farms will convert grass tiles to
@@ -65,40 +102,8 @@ Options
     `devel/block-borders` can be used to visualize map blocks.
 ``-z``, ``--zlevel``
     Regrass entire z-levels. Will do all z-levels between ``pos`` arguments if
-    both given, z-level of first ``pos`` if one given, else z-level of
-    viewscreen if no ``pos`` given.
-
-Examples
---------
-
-``regrass``
-    Regrass the entire map, refilling existing and depleted grass.
-``regrass here``
-    Regrass the selected tile, refilling existing and depleted grass.
-``regrass here 0,0,90 --zlevel``
-    Regrass all z-levels including the selected tile's z-level through z-level
-    90, refilling existing and depleted grass.
-``regrass 0,0,100 19,19,119 --ashes --mud``
-    Regrass tiles in the 20x20x20 cube defined by the coords, refilling
-    existing and depleted grass, and converting ashes and muddy stone (if
-    respective blocks ever had grass.)
-``regrass 10,10,100 -baudnm``
-    Regrass the block that contains the given coord; converting ashes, muddy
-    stone, and tiles under buildings; adding all compatible grass types, and
-    filling each grass type to max.
-``regrass -f``
-    Regrass the entire map, refilling existing and depleted grass, else filling
-    with a randomly selected grass type if non-existent.
-``regrass -p ""``
-    Print all valid grass raw ids. Don't regrass.
-``regrass -zf -p underlichen``
-    Regrass the current z-level, refilling existing and depleted grass, else
-    filling with ``underlichen`` if non-existent.
-``regrass here -bnf -p "dog's tooth grass"``
-    Regrass the selected block, adding all compatible grass types to block data,
-    ``dog's tooth grass`` if no compatible types exist. Refill existing grass
-    on each tile, else select one of the block's types if depleted or
-    previously non-existent.
+    both are given, z-level of first ``pos`` if one is given, else z-level of
+    current view if no ``pos`` is given.
 
 Troubleshooting
 ---------------

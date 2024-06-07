@@ -10,8 +10,10 @@
 #include "df/item_actual.h"
 #include "df/map_block.h"
 #include "df/plant.h"
+#include "df/plant_spatter.h"
 #include "df/spatter.h"
 #include "df/unit.h"
+#include "df/unit_spatter.h"
 #include "df/world.h"
 
 using std::vector;

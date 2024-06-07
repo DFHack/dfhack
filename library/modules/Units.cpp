@@ -484,7 +484,6 @@ bool Units::isTame(df::unit* unit)
             case df::animal_training_level::Domesticated:
                 tame=true;
                 break;
-            case df::animal_training_level::Unk8:     //??
             case df::animal_training_level::WildUntamed:
             default:
                 tame=false;
@@ -683,7 +682,7 @@ bool Units::isPet(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+    if(unit->relationship_ids[df::unit_relationship_type::PetOwner] != -1)
         return true;
 
     return false;
@@ -2284,23 +2283,26 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
         return &action->data.standup.timer;
     case unit_action_type::LieDown:
         return &action->data.liedown.timer;
-    case unit_action_type::Job2:
-        return &action->data.job2.timer;
+    case unit_action_type::JobRecover:
+        return &action->data.jobrecover.timer;
         // could also patch the unit->job.current_job->completion_timer
     case unit_action_type::PushObject:
         return &action->data.pushobject.timer;
     case unit_action_type::SuckBlood:
         return &action->data.suckblood.timer;
+    case unit_action_type::Mount:
+        return &action->data.mount.timer;
+    case unit_action_type::Dismount:
+        return &action->data.dismount.timer;
+    case unit_action_type::HoldItem:
+        return &action->data.holditem.timer;
+    case unit_action_type::LeadAnimal:
+    case unit_action_type::StopLeadAnimal:
     case unit_action_type::Jump:
     case unit_action_type::ReleaseTerrain:
     case unit_action_type::Parry:
     case unit_action_type::Block:
-    case unit_action_type::HoldItem:
     case unit_action_type::ReleaseItem:
-    case unit_action_type::Unk20:
-    case unit_action_type::Unk21:
-    case unit_action_type::Unk22:
-    case unit_action_type::Unk23:
         break;
     }
     return nullptr;

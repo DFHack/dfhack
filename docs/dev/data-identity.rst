@@ -10,7 +10,7 @@ by various components of DFHack. This metadata is used primarily to enable the L
 held by Dwarf Fortress in a transparent manner, but is also used for several other purposes within DFHack.
 
 The base class of the identity system is the class ``type_identity``, defined in :source:`DataDefs.h <library/include/DataDefs.h>`. A ``type_identity`` object
-provides information about one _type_ of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.
+provides information about one *type* of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.
 With one specific exception (``global_identity``), there is a one-to-one relationship between C++ types and ``type_identity`` objects.
 In Lua, objects that are being managed via the data identity system are represented as a Lua userdata object. The userdata object
 contains both a pointer to the C++ object itself and a pointer to a ``type_identity`` object that describes the data pointed
@@ -31,7 +31,7 @@ never responsible for managing their lifetimes.
 
 - ``build_metatable``: Create a Lua metatable in the specified Lua state corresponding to this type identity.
 
-- ``is_primitive``: indicates that ``lua_read`` will store a _copy_ of the object on the Lua stack instead of a non-owning reference to it. Used for types that have direct representations in Lua: numbers, booleans, simple strings
+- ``is_primitive``: indicates that ``lua_read`` will store a *copy* of the object on the Lua stack instead of a non-owning reference to it. Used for types that have direct representations in Lua: numbers, booleans, simple strings
 
 - ``is_constructed``: indicates that creating a C++ instance of this type requires the use of a possibly nontrivial constructor. A type identity that is both primitive and constructed cannot be inserted into a container. At the moment the only type identity that is both primitive and constructed is ``stl_string_identity``, which wraps the C++ ``std::string`` type.
 
@@ -70,7 +70,7 @@ There are plethora of subclasses of ``type_identity``:
 
     * ``container_identity`` "containers" generally. note that all container types are homogeneous (that is, the elements of the container must all be of the same type). abstract base class
 
-      * ``bit_container_identity`` for containers that contain bools stored one element per _bit_ (rather than per byte)
+      * ``bit_container_identity`` for containers that contain bools stored one element per *bit* (rather than per byte)
 
         * ``bit_array_identity`` Dwarf Fortress's ``BitArray`` type
 
@@ -88,7 +88,7 @@ There are plethora of subclasses of ``type_identity``:
 
         * ``ro_stl_assoc_container_identity`` (template) ``std::map<KT,T>`` and ``std::unordered_map<KT,T>``
 
-      * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is _not_ a pointer (and not `bool`)
+      * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is *not* a pointer (and not `bool`)
 
     * ``opaque_identity`` opaque wrapper around any type, provides no functionality
 
@@ -121,7 +121,7 @@ Types marked with "(template)" are C++ template types, all parameterized by a si
 Type identity object lifetime and mutability
 ============================================
 
-_Most_ instances of ``type_identity`` are statically constructed and are effectively immutable,
+*Most* instances of ``type_identity`` are statically constructed and are effectively immutable,
 although this is not at present enforced.
 However, ``struct_identity``'s ``parent`` and ``child`` members can be mutated as additional identities are constructed
 and so instances of ``struct_identity`` and its descendants are not immutable
@@ -149,9 +149,9 @@ those objects must be indistinguishable from one another by anything other than 
 The ``type_identity`` object for a given C++ type can be obtained by using the ``get`` method of the ``df::identity_trait``
 trait class.
 More specifically, ``identity_class<T>::get()`` will return a pointer to a ``type_identity`` object for the type ``T``.
-Developers who create new type identities must _either_ provide an specialization of ``identity_trait`` that implements
+Developers who create new type identities must *either* provide an specialization of ``identity_trait`` that implements
 a ``get`` method that returns the correct ``type_identity``
-_or_ ensure that a static instance of ``T::_identity`` exists for the type ``T``
+*or* ensure that a static instance of ``T::_identity`` exists for the type ``T``
 (which will result in a template in :source:`DataDefs.h <library/include/DataDefs.h>` providing
 an implementation of ``get`` for that type).
 Note that this is only possible for compound types, and is the way that the _vast_ majority of
@@ -160,7 +160,7 @@ compound type's have their identities specified (including all of those defined 
 Because objects in the Lua environment are constructed as a pointer to the data and
 a pointer to the data's ``type_identity`` object, it is necessary for ``type_identity`` objects to have a lifetime
 that exceeds the lifetime in the Lua environment of any object that exists anywhere in the Lua environment.
-It is therefore advised to avoid creating ``type_identity`` objects that do _not_ have program lifetime, since
+It is therefore advised to avoid creating ``type_identity`` objects that do *not* have program lifetime, since
 predicting the lifetime of objects in the Lua environment can be difficult.
 If it is necessary to create a ``type_identity`` object that will not have program lifetime,
 it is incumbent on the developer to ensure that no references to that type identity object persist beyond its lifetime.
@@ -194,7 +194,7 @@ a potentially dangling reference to that identity in the ``child`` vector of the
 must also be approached with caution.
 
 A final note: because most instances of ``type_identity`` are statically constructed
-and their construction is scattered across multiple translation units, it is _not_ safe to cross-reference
+and their construction is scattered across multiple translation units, it is, in general, *not* safe to cross-reference
 one ``type_identity`` instance during the instantiation of another, because the order in which statically constructed
 objects are instantiated in C++ is unspecified for objects defined in different translation units.
 Specifically, this means that the constructor for a ``type_identity`` instance must use care in using
@@ -222,7 +222,7 @@ This type trait has one member:
 
 * ``static type_identity * get()``: This function returns a pointer to the ``type_identity`` for the type ``T``.
 
-While not a type trait _per se_, the ``allocate<T>`` template function is defined for all types
+While not a type trait *per se*, the ``allocate<T>`` template function is defined for all types
 as ``return (T*)identity_traits<T>::get()->allocate()`` and provides a convenient way to
 reference the allocator in a type's ``type_identity``.
 

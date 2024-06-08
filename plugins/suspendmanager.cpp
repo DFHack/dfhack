@@ -562,6 +562,7 @@ private:
                 exit = impassiblePlan;
             }
 
+
             if (!exit) {
                 // there is no exit at all
                 if (isImpassable(building)) {

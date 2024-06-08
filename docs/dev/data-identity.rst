@@ -101,6 +101,15 @@ that is, two copies having the same values will compare equal in all known such 
 Therefore, if two ``type_identity`` objects do exist (for any reason) for the same underlying C++ type,
 those objects must be indistinguishable from one another by anything other than their address.
 
+The ``type_identity`` object for a given C++ type can be obtained by using the ``get`` method of the ``identity_trait``
+trait class.
+More specifically, ``identity_class<T>::get()`` will return a pointer to a ``type_identity`` object for the type ``T``.
+Developers who create new type identities must _either_ provide an specialization of ``identity_trait`` that implements
+a ``get`` method that returns the correct ``type_identity`` _or_ insure that a static instance of ``T::_identity`` exists
+for the type T (which will result in a template in ``DataDefs.h`` providing one for that type).
+Note that this is only possible for compound types, and is the way that the _vast_ majority of
+compound type's have their identities specified (including all of those defined via codegen).
+
 Because objects in the Lua environment are constructed as a pointer to the data and
 a pointer to the data's ``type_identity`` object, it is necessary for ``type_identity`` objects to have a lifetime
 that exceeds the lifetime in the Lua environment of any object that exists anywhere in the Lua environment.
@@ -135,6 +144,14 @@ that will persist in the Lua environment beyond the lifetime of the plugin.
 Declaring a ``struct_identity`` in a plugin that is the child of another ``struct_identity`` will also result in
 a potentially dangling reference to that identity in the ``child`` vector of the parent identity, which means this
 must also be approached with caution.
+
+A final note: because most instances of ``type_identity`` are statically constructed
+and their construction is scattered across multiple translation units, it is _not_ safe to cross-reference
+one ``type_identity`` instance during the instantiation of another, because the order in which statically constructed
+objects are instantiated in C++ is unspecified for objects defined in different translation units.
+Specifically, this means that the constructor for a ``type_identity`` instance must use care in using
+``identity_traits<T>::get`` to get the identity object
+of some other type because that type's identity object may not have been constructed yet.
 
 Namespace issues
 ================

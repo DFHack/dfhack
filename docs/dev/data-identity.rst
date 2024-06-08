@@ -88,7 +88,7 @@ There are plethora of subclasses of ``type_identity``:
 
         * ``ro_stl_assoc_container_identity`` (template) ``std::map<KT,T>`` and ``std::unordered_map<KT,T>``
 
-      * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is *not* a pointer (and not `bool`)
+      * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is *not* a pointer (and not ``bool``)
 
     * ``opaque_identity`` opaque wrapper around any type, provides no functionality
 

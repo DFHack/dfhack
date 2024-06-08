@@ -59,7 +59,6 @@ Template for new versions:
 - `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
-- `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
 - `regrass`: don't remove mud on regrass, consistent with vanilla behavior
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched

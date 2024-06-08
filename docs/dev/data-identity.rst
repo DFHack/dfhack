@@ -9,11 +9,11 @@ DFHack internally has a collection of C++ classes that provide metedata about th
 by various components of DFHack. This metadata is used primarily to enable the Lua scripting system to access data
 held by Dwarf Fortress in a transparent manner, but is also used for several other purposes within DFHack.
 
-The base class of the identity system is the class ``type_identity``, defined in ``DataDefs.h``. A `type_identity` object
+The base class of the identity system is the class ``type_identity``, defined in ``DataDefs.h``. A ``type_identity`` object
 provides information about one _type_ of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.
-With one specific exception (``global_identity``), there is a one-to-one relationship between C++ classes and `type_identity` objects.
+With one specific exception (``global_identity``), there is a one-to-one relationship between C++ classes and ``type_identity`` objects.
 In Lua, objects that are being managed via the data identity system are represented as a Lua userdata object. The userdata object
-contains both a pointer to the C++ object itself and a pointer to a `type_identity` object that describes the data pointed
+contains both a pointer to the C++ object itself and a pointer to a ``type_identity`` object that describes the data pointed
 by that pointer. Note that the userdata object does not own the objects pointed to by these pointers, and the Lua engine is
 never responsible for managing their lifetimes.
 
@@ -25,7 +25,7 @@ never responsible for managing their lifetimes.
 - ``lua_read``: Used by the Lua engine to "read" the data from a C++ object into the Lua state.
 - ``lua_write``: Used by the Lua engine to "write" a value from the Lua state into a C++ data object.
 - ``build_metatable``: Create a Lua metatable in the specified Lua state corresponding to this type identity.
-- ``is_primitive``: indicates that `lua_read` will store a _copy_ of the object on the Lua stack instead of a non-owning reference to it. Used for types that have direct representations in Lua: numbers, booleans, simple strings
+- ``is_primitive``: indicates that ``lua_read`` will store a _copy_ of the object on the Lua stack instead of a non-owning reference to it. Used for types that have direct representations in Lua: numbers, booleans, simple strings
 - ``is_constructed``: indicates that creating a C++ instance of this type requires the use of a possibly nontrivial constructor. A type identity that is both primitive and constructed cannot be inserted into a container. At the moment the only type identity that is both primitive and constructed is ``stl_string_identity``, which wraps the C++ ``std::string`` type.
 - ``is_container``: indicates that the type is a container and thus implements the methods specific to ``container_identity``
 - ``allocate``: allocate, and construct if necessary, a C++ instance of this type. This may fail if the type does not support construction.

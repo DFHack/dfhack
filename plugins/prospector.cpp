@@ -289,8 +289,8 @@ struct EmbarkTileLayout {
 
 static df::world_region_details *get_details(df::world_data *data, df::coord2d pos)
 {
-    int d_idx = linear_index(data->midmap_data.region_details, &df::world_region_details::pos, pos);
-    return vector_get(data->midmap_data.region_details, d_idx);
+    int d_idx = linear_index(data->region_details, &df::world_region_details::pos, pos);
+    return vector_get(data->region_details, d_idx);
 }
 
 bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
@@ -358,19 +358,17 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
 
         float penalty = 1.0f;
         switch (layer->type) {
-        case df::feature_layer_type::SUBTERRANEAN:
+        case df::world_underground_region::Cavern:
             penalty = 0.75f;
             break;
-        case df::feature_layer_type::MAGMA_CORE:
+        case df::world_underground_region::MagmaSea:
             sea_found = true;
             tile.min_z = feature->min_z;
             for (int i = feature->min_z; i <= feature->max_z; i++)
                 tile.penalty[i] = 0.2 + 0.6f*(i-feature->min_z)/(feature->max_z-feature->min_z+1);
             break;
-        case df::feature_layer_type::UNDERWORLD:
+        case df::world_underground_region::Underworld:
             penalty = 0.0f;
-            break;
-        case df::feature_layer_type::NONE:
             break;
         }
 
@@ -792,7 +790,7 @@ static command_result map_prospector(color_ostream &con,
                             loc = loc % 16;
                             if (options.hidden || !b->DesignationAt(loc).bits.hidden)
                             {
-                                if (plant.type == df::plant_type::DRY_PLANT || plant.type == df::plant_type::WET_PLANT)
+                                if (ENUM_ATTR(plant_type, is_shrub, plant.type))
                                     plantMats[plant.material].add(global_z);
                                 else
                                     treeMats[plant.material].add(global_z);

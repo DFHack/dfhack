@@ -34,6 +34,8 @@ distribution.
 #include <variant>
 #include <vector>
 #include <variant>
+#include <ranges>
+#include <array>
 
 #include "DataDefs.h"
 
@@ -113,10 +115,10 @@ namespace DFHack
 
     class DFHACK_EXPORT container_identity : public constructed_identity {
         type_identity *item;
-        enum_identity *ienum;
+        type_identity *ienum;
 
     public:
-        container_identity(size_t size, TAllocateFn alloc, type_identity *item, enum_identity *ienum = NULL)
+        container_identity(size_t size, TAllocateFn alloc, type_identity *item, type_identity *ienum = NULL)
             : constructed_identity(size, alloc), item(item), ienum(ienum) {};
 
         virtual identity_type type() { return IDTYPE_CONTAINER; }
@@ -190,6 +192,102 @@ namespace DFHack
         virtual bool get_item(void *ptr, int idx) = 0;
         virtual void set_item(void *ptr, int idx, bool val) = 0;
     };
+
+    template <typename C>
+    concept isIndexedContainer = requires (C c, C::size_type sz) {
+        { c[sz] } -> std::same_as<typename C::reference>;
+        { c.size() } ->std::same_as<typename C::size_type>;
+        { c.begin() } -> std::same_as<typename C::iterator>;
+        { c.end() } -> std::same_as<typename C::iterator>;
+    };
+
+    template <typename C>
+    concept isResizableContainer = isIndexedContainer<C> && requires (C c, C::iterator i, C::size_type sz, C::value_type v) {
+        { c.erase(i) };
+        { c.resize(sz) };
+        { c.insert(i, v) };
+    };
+
+    template<isIndexedContainer C>
+    class generic_container_identity : public container_identity {
+    private:
+        using T = C::value_type;
+
+        template<typename T> struct type_name {
+            static const inline std::string name = "container";
+        };
+        template<typename T> struct type_name<std::vector<T>> {
+            static const inline std::string name = "vector";
+        };
+        template<typename T> struct type_name<std::deque<T>> {
+            static const inline std::string name = "deque";
+        };
+        template<typename T, size_t sz> struct type_name<std::array<T, sz>> {
+            static const inline std::string name = "array";
+        };
+
+    public:
+        generic_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get()) {};
+        std::string getFullName(type_identity* item) { return type_name<C>::name + container_identity::getFullName(item); }
+    protected:
+        virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
+        virtual void* item_pointer(type_identity* item, void* ptr, int idx) { return &(*(C*)ptr)[idx]; }
+    };
+
+    template<isResizableContainer C>
+    class resizable_container_identity : public generic_container_identity<C> {
+    private:
+        using T = C::value_type;
+    public:
+        virtual bool resize(void* ptr, int size) { ((C*)ptr)->resize(size); return true; }
+        virtual bool erase(void* ptr, int size) { auto& ct = *(C*)ptr; ct.erase(ct.begin() + size); return true; }
+        virtual bool insert(void* ptr, int idx, void* item) { auto& ct = *(C*)ptr; ct.insert(ct.begin() + idx, *(T*)item); return true; }
+    };
+
+    template <typename C>
+    concept isAssocContainer = requires (C c, C::iterator i, C::key_type k) {
+        { c[k] } -> std::same_as<typename C::mapped_type &>;
+        { c.size() } -> std::same_as<typename C::size_type>;
+        { c.begin() } -> std::same_as<typename C::iterator>;
+        { c.end() } -> std::same_as<typename C::iterator>;
+    };
+
+    template<isAssocContainer C>
+    class generic_assoc_container_identity : public container_identity {
+    private:
+        using KT = C::key_type;
+        using T = C::mapped_type;
+    public:
+        generic_assoc_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<T>::get(), df::identity_traits<KT>::get()) {};
+        std::string getFullName(type_identity* item) { return "map" + container_identity::getFullName(item); }
+        virtual bool is_readonly() { return true; }
+
+    protected:
+        virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
+        virtual void* item_pointer(type_identity* item, void* ptr, int idx) { auto iter = (((C*)ptr)->begin()); while(idx--) iter++; return (void*)&(iter->second); }
+    };
+
+    template <typename C>
+    concept isSetContainer = requires (C c, C::iterator i, C::key_type k) {
+        requires std::same_as<typename C::key_type, typename C::value_type>;
+        { c.contains(k) } -> std::same_as<bool>;
+        { c.size() } -> std::same_as<typename C::size_type>;
+        { c.begin() } -> std::same_as<typename C::iterator>;
+        { c.end() } -> std::same_as<typename C::iterator>;
+    };
+
+    template<isSetContainer C>
+    class generic_set_container_identity : public container_identity {
+    private:
+        using KT = C::key_type;
+    public:
+        generic_set_container_identity() : container_identity(sizeof(C), &df::allocator_fn<C>, df::identity_traits<KT>::get()) {};
+        std::string getFullName(type_identity* item) { return "set" + container_identity::getFullName(item); }
+        virtual bool is_readonly() { return true; }
+    protected:
+        virtual int item_count(void* ptr, CountMode cnt) { return (int)((C*)ptr)->size(); }
+        virtual void* item_pointer(type_identity* item, void* ptr, int idx) { auto iter = (((C*)ptr)->begin()); while (idx--) iter++; return (void*)&(*iter); }
+    };
 }
 
 namespace df
@@ -201,6 +299,15 @@ namespace df
     using DFHack::container_identity;
     using DFHack::ptr_container_identity;
     using DFHack::bit_container_identity;
+    using DFHack::generic_container_identity;
+    using DFHack::resizable_container_identity;
+    using DFHack::generic_assoc_container_identity;
+    using DFHack::generic_set_container_identity;
+
+    using DFHack::isIndexedContainer;
+    using DFHack::isResizableContainer;
+    using DFHack::isAssocContainer;
+    using DFHack::isSetContainer;
 
     class DFHACK_EXPORT number_identity_base : public primitive_identity {
         const char *name;
@@ -579,6 +686,7 @@ namespace df
     INTEGER_IDENTITY_TRAITS(unsigned long long);
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
+
     OPAQUE_IDENTITY_TRAITS(std::condition_variable);
     OPAQUE_IDENTITY_TRAITS(std::fstream);
     OPAQUE_IDENTITY_TRAITS(std::mutex);
@@ -660,9 +768,6 @@ namespace df
         static container_identity *get();
     };
 
-    template<class T> struct identity_traits<std::vector<T> > {
-        static container_identity *get();
-    };
 #endif
 
     template<class T> struct identity_traits<std::vector<T*> > {
@@ -682,21 +787,6 @@ namespace df
 
 
 #ifdef BUILD_DFHACK_LIB
-    template<class T> struct identity_traits<std::deque<T> > {
-        static container_identity *get();
-    };
-
-    template<class T> struct identity_traits<std::set<T> > {
-        static container_identity *get();
-    };
-
-    template<class KT, class T> struct identity_traits<std::map<KT, T>> {
-        static container_identity *get();
-    };
-
-    template<class KT, class T> struct identity_traits<std::unordered_map<KT, T>> {
-        static container_identity *get();
-    };
 
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
@@ -726,6 +816,38 @@ namespace df
     }
 #endif
 
+    template<isIndexedContainer C>
+    struct DFHACK_EXPORT identity_traits<C> {
+        static type_identity* get() {
+            static generic_container_identity<C> identity{};
+            return &identity;
+        }
+    };
+
+    template<isResizableContainer C>
+    struct DFHACK_EXPORT identity_traits<C> {
+        static type_identity* get() {
+            static resizable_container_identity<C> identity{};
+            return &identity;
+        }
+    };
+
+    template<isAssocContainer C>
+    struct DFHACK_EXPORT identity_traits<C> {
+        static type_identity* get() {
+            static generic_assoc_container_identity<C> identity{};
+            return &identity;
+        }
+    };
+
+    template<isSetContainer C>
+    struct DFHACK_EXPORT identity_traits<C> {
+        static type_identity* get() {
+            static generic_set_container_identity<C> identity{};
+            return &identity;
+        }
+    };
+
     template<class T>
     inline pointer_identity *identity_traits<T *>::get() {
         static pointer_identity identity(identity_traits<T>::get());
@@ -739,12 +861,6 @@ namespace df
         return &identity;
     }
 
-    template<class T>
-    inline container_identity *identity_traits<std::vector<T> >::get() {
-        typedef std::vector<T> container;
-        static stl_container_identity<container> identity("vector", identity_traits<T>::get());
-        return &identity;
-    }
 #endif
 
     template<class T>
@@ -767,34 +883,6 @@ namespace df
     }
 
 #ifdef BUILD_DFHACK_LIB
-    template<class T>
-    inline container_identity *identity_traits<std::deque<T> >::get() {
-        typedef std::deque<T> container;
-        static stl_container_identity<container> identity("deque", identity_traits<T>::get());
-        return &identity;
-    }
-
-    template<class T>
-    inline container_identity *identity_traits<std::set<T> >::get() {
-        typedef std::set<T> container;
-        static ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
-        return &identity;
-    }
-
-    template<class KT, class T>
-    inline container_identity *identity_traits<std::map<KT, T>>::get() {
-        typedef std::map<KT, T> container;
-        static ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
-        return &identity;
-    }
-
-    template<class KT, class T>
-    inline container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
-        typedef std::unordered_map<KT, T> container;
-        static ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
-        return &identity;
-    }
-
     template<class T>
     inline bit_container_identity *identity_traits<BitArray<T> >::get() {
         static bit_array_identity identity(identity_traits<T>::get());

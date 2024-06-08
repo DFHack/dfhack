@@ -11,7 +11,7 @@ held by Dwarf Fortress in a transparent manner, but is also used for several oth
 
 The base class of the identity system is the class ``type_identity``, defined in ``DataDefs.h``. A ``type_identity`` object
 provides information about one _type_ of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.
-With one specific exception (``global_identity``), there is a one-to-one relationship between C++ classes and ``type_identity`` objects.
+With one specific exception (``global_identity``), there is a one-to-one relationship between C++ types and ``type_identity`` objects.
 In Lua, objects that are being managed via the data identity system are represented as a Lua userdata object. The userdata object
 contains both a pointer to the C++ object itself and a pointer to a ``type_identity`` object that describes the data pointed
 by that pointer. Note that the userdata object does not own the objects pointed to by these pointers, and the Lua engine is
@@ -91,7 +91,7 @@ although this is not enforced at present.
 Having more than one ``struct_identity`` object for the same type might also potentially lead to misoperation.
 
 In general, there should be a one to one correspondence between ``type_identity`` objects and C++ types
-(with the special case that ``global_identity`` has no corresponding class).
+(with the special case that ``global_identity`` has no corresponding type).
 As far as we know, for any type other than ``virtual_identity``,
 violations of this constraint will not lead to misoperation, but this constraint should not be lightly violated.
 The Lua/C++ interface does, in a handful of places, assume that it can compare ``type_identity``

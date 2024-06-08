@@ -200,7 +200,7 @@ objects are instantiated in C++ is unspecified for objects defined in different 
 Specifically, this means that the constructor for a ``type_identity`` instance must use care in using
 ``df::identity_traits<T>::get`` to use values from the identity object
 of some other type, because that type's identity object may not have been constructed yet.
-The `get` operation itself is safe, but the pointer returned by `get` may point to not-yet-initialized data
+The ``get`` operation itself is safe, but the pointer returned by ``get`` may point to not-yet-initialized data
 until at-start static data initialization is fully complete.
 
 Namespaces

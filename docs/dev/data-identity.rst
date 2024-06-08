@@ -154,8 +154,8 @@ a ``get`` method that returns the correct ``type_identity``
 *or* ensure that a static instance of ``T::_identity`` exists for the type ``T``
 (which will result in a template in :source:`DataDefs.h <library/include/DataDefs.h>` providing
 an implementation of ``get`` for that type).
-Note that this is only possible for compound types, and is the way that the _vast_ majority of
-compound type's have their identities specified (including all of those defined via codegen).
+Note that this is only possible for compound types, and is the way that the *vast* majority of
+compound types have their identities specified (including all of those defined via codegen).
 
 Because objects in the Lua environment are constructed as a pointer to the data and
 a pointer to the data's ``type_identity`` object, it is necessary for ``type_identity`` objects to have a lifetime

@@ -171,14 +171,14 @@ This is because we export the statically constructed instances from the core lib
 from the core library instead of instantiating them locally. As a result, referencing an instance in a plugin that has
 not been instantiated in the core will result in linkage errors when linking the plugin to the core library.
 
-We could instead _not_ export the templated types, and thus their statically constructed identity objects,
+We could instead *not* export the templated types, and thus their statically constructed identity objects,
 and instead allow the compiler to instantiate a local copy of these instances while compiling a plugin,
 but this would definitely result in a violation of the current requirement that there be at most one instance of the
 type identity object for a given C++ type across the entire program (including plugins loaded as a shared library).
 
 For primitive and opaque types the static constructors of the identity types
 are generally found in :source:`DataIdentity.h <library/include/DataIdentity.h>`
-or :source:`DataIdentity.cpp <library/DataIdentity.cpp>`
+or :source:`DataIdentity.cpp <library/DataIdentity.cpp>`.
 Types defined by Dwarf Fortress are constructed in the header files and the related ``static*.inc`` files created by codegen,
 which are included into DFHack via :source:`DataStatics.cpp <library/DataStatics.cpp>`.
 
@@ -188,7 +188,7 @@ Since the ``type_identity`` object is constructed within the the plugin's addres
 this ``type_identity`` object will hold a (borrowed) pointer to that object,
 unloading the plugin will result in a dangling pointer reference within the Lua environment.
 It is, at present, incumbent on plugin authors to ensure that they do not use plugin defined type identities on objects
-that will persist in the Lua environment beyond the lifetime of the plugin.
+that may persist in the Lua environment beyond the lifetime of the plugin.
 Declaring a ``struct_identity`` in a plugin that is the child of another ``struct_identity`` will also result in
 a potentially dangling reference to that identity in the ``child`` vector of the parent identity, which means this
 must also be approached with caution.
@@ -198,8 +198,10 @@ and their construction is scattered across multiple translation units, it is, in
 one ``type_identity`` instance during the instantiation of another, because the order in which statically constructed
 objects are instantiated in C++ is unspecified for objects defined in different translation units.
 Specifically, this means that the constructor for a ``type_identity`` instance must use care in using
-``df::identity_traits<T>::get`` to get the identity object
-of some other type because that type's identity object may not have been constructed yet.
+``df::identity_traits<T>::get`` to use values from the identity object
+of some other type, because that type's identity object may not have been constructed yet.
+The `get` operation itself is safe, but the pointer returned by `get` may point to not-yet-initialized data
+until at-start static data initialization is fully complete.
 
 Namespaces
 ==========

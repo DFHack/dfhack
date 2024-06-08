@@ -375,13 +375,13 @@ static void clean_ramps(MapExtras::MapCache &map, const DFCoord &pos) {
 static void destroy_colony(const DFCoord &pos) {
     auto same_pos = [&](df::vermin *colony){ return colony->pos == pos; };
 
-    auto &colonies = world->vermin.colonies;
+    auto &colonies = world->event.vermin_colonies;
     auto found_colony = std::find_if(begin(colonies), end(colonies), same_pos);
     if (found_colony == end(colonies))
         return;
     colonies.erase(found_colony);
 
-    auto &all_vermin = world->vermin.all;
+    auto &all_vermin = world->event.vermin;
     all_vermin.erase(
         std::find_if(begin(all_vermin), end(all_vermin), same_pos));
 }

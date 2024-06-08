@@ -1232,7 +1232,7 @@ local function is_nobility(unit)
 end
 
 local function has_infant(unit)
-    for _, baby in ipairs(df.global.world.units.other.ANY_BABY2) do
+    for _, baby in ipairs(df.global.world.units.other.ANY_BABY) do
         if baby.relationship_ids.Mother == unit.id then
             return true
         end

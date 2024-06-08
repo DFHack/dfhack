@@ -135,7 +135,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 // Queue up a single order to engrave the slab for the given unit
 static void createSlabJob(df::unit *unit)
 {
-    auto next_id = world->manager_order_next_id++;
+    auto next_id = world->manager_orders.manager_order_next_id++;
     auto order = new df::manager_order();
 
     order->id = next_id;
@@ -143,14 +143,14 @@ static void createSlabJob(df::unit *unit)
     order->hist_figure_id = unit->hist_figure_id;
     order->amount_left = 1;
     order->amount_total = 1;
-    world->manager_orders.push_back(order);
+    world->manager_orders.all.push_back(order);
 }
 
 static void checkslabs(color_ostream &out)
 {
     // Get existing orders for slab engraving as map hist_figure_id -> order ID
     std::map<int32_t, int32_t> histToJob;
-    for (auto order : world->manager_orders)
+    for (auto order : world->manager_orders.all)
     {
         if (order->job_type == df::job_type::EngraveSlab)
             histToJob[order->hist_figure_id] = order->id;

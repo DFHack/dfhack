@@ -122,6 +122,11 @@ Template for new versions:
 - ``gui.FramedScreen``: this class is now deprecated; please use ``gui.ZScreen`` and ``widgets.Window`` instead
 - ``dfhack.HIDE_CONSOLE_ON_STARTUP`` and ``dfhack.HIDE_ARMOK_TOOLS`` are no longer directly accessible. Please use `control-panel` or `gui/control-panel` to interact wtih those settings.
 
+# 50.13-r2.1
+
+## Fixes
+- `suspendmanager`: stop suspending single tile stair constructions
+
 # 50.13-r2
 
 ## New Tools

@@ -246,4 +246,3 @@ This type trait has the following members:
 ``enum_fields``
 ---------------
 (TODO)
-

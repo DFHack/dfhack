@@ -105,7 +105,7 @@ The ``type_identity`` object for a given C++ type can be obtained by using the `
 trait class.
 More specifically, ``identity_class<T>::get()`` will return a pointer to a ``type_identity`` object for the type ``T``.
 Developers who create new type identities must _either_ provide an specialization of ``identity_trait`` that implements
-a ``get`` method that returns the correct ``type_identity`` _or_ insure that a static instance of ``T::_identity`` exists
+a ``get`` method that returns the correct ``type_identity`` _or_ ensure that a static instance of ``T::_identity`` exists
 for the type T (which will result in a template in ``DataDefs.h`` providing one for that type).
 Note that this is only possible for compound types, and is the way that the _vast_ majority of
 compound type's have their identities specified (including all of those defined via codegen).

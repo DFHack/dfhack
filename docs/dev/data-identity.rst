@@ -57,7 +57,7 @@ There are plethora of subclasses of ``type_identity``:
       * ``ro_stl_container_identity`` (template) "read only containers"
         * ``ro_stl_assoc_container_identity`` (template) ``std::map<KT,T>`` and ``std::unordered_map<KT,T>``
       * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is _not_ a pointer (and not `bool`)
-    * ``opaque_identity`` opaque wrapper around any object all
+    * ``opaque_identity`` opaque wrapper around any type, provides no functionality
     * ``stl_string_identity`` ``std::string``
   * ``function_identity_base`` abstract base class for ``function_identity``
     * ``function_identity`` (template) wrapper around a C++ function that can be invoked from Lua
@@ -130,11 +130,12 @@ but this would definitely result in a violation of the current requirement that 
 type identity object for a given C++ type across the entire program (including plugins loaded as a shared library).
 
 For primitive and opaque types the static constructors of the identity types
-are generally found in ``DataIdentity.h`` or ``DataIdentity.cpp``.
+are generally found in :source:`DataIdentity.h <library/include/DataIdentity.h>`
+or :source:`DataIdentity.cpp <library/DataIdentity.cpp>`
 Types defined by Dwarf Fortress are constructed in the header files and the related ``static*.inc`` files created by codegen,
-which are included into DFHack via ``DataStatics.cpp``.
+which are included into DFHack via :source:`DataStatics.cpp <library/DataStatics.cpp>`.
 
-Some plugins also define their own type identities. Type identities in plugins should be used with caution,
+Some plugins (e.g. :source:`blueprint <plugins/blueprint.cpp>`) also define their own type identities. Type identities in plugins should be used with caution,
 because the DFHack plugin model allows plugins to be unloaded on request.
 Since the ``type_identity`` object is constructed within the the plugin's address space, and Lua objects that reference
 this ``type_identity`` object will hold a (borrowed) pointer to that object,

@@ -154,11 +154,11 @@ static void cache_tiles(const df::coord_path & tiles) {
 }
 
 static void initialize_trigger_cache() {
-    for (auto & horror : world->encased_horrors)
+    for (auto & horror : world->event.encased_horrors)
         cache_tiles(horror->tiles);
-    for (auto & hollow : world->deep_vein_hollows)
+    for (auto & hollow : world->event.deep_vein_hollows)
         cache_tiles(hollow->tiles);
-    for (auto & treasure : world->divine_treasures)
+    for (auto & treasure : world->event.divine_treasures)
         cache_tiles(treasure->tiles);
 }
 
@@ -254,7 +254,7 @@ command_result reveal(color_ostream &out, vector<string> & params) {
     }
 
     if (no_hell) {
-        size_t initial_buckets = 2 * (world->encased_horrors.size() + world->divine_treasures.size() + world->deep_vein_hollows.size());
+        size_t initial_buckets = 2 * (world->event.encased_horrors.size() + world->event.divine_treasures.size() + world->event.deep_vein_hollows.size());
         trigger_cache.reserve(initial_buckets);
         initialize_trigger_cache();
     }

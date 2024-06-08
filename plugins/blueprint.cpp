@@ -189,7 +189,7 @@ static PersistentDataItem warm_config, damp_config;
 static void init_caches(DFHack::color_ostream &out, bool cache_engravings) {
     if (cache_engravings) {
         // initialize the engravings cache
-        for (auto engraving : world->engravings) {
+        for (auto engraving : world->event.engravings) {
             engravings_cache.emplace(engraving->pos, engraving);
         }
     }

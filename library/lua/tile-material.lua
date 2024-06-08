@@ -87,7 +87,7 @@ end
 function GetLavaStone(x, y, z)
     local pos = prepPos(x, y, z)
 
-    local regions = df.global.world.world_data.region_details
+    local regions = df.global.world.world_data.midmap_data.region_details
 
     local rx, ry = dfhack.maps.getTileBiomeRgn(pos)
 
@@ -149,7 +149,7 @@ end
 function GetConstructionMat(x, y, z)
     local pos = prepPos(x, y, z)
 
-    for _, construction in ipairs(df.global.world.constructions) do
+    for _, construction in ipairs(df.global.world.event.constructions) do
         if construction.pos.x == pos.x and construction.pos.y == pos.y and construction.pos.z == pos.z then
             return dfhack.matinfo.decode(construction)
         end
@@ -162,7 +162,7 @@ end
 function GetConstructOriginalTileMat(x, y, z)
     local pos = prepPos(x, y, z)
 
-    for _, construction in ipairs(df.global.world.constructions) do
+    for _, construction in ipairs(df.global.world.event.constructions) do
         if construction.pos.x == pos.x and construction.pos.y == pos.y and construction.pos.z == pos.z then
             return GetTileTypeMat(construction.original_tile, BasicMats, pos)
         end

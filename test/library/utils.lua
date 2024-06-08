@@ -59,8 +59,8 @@ end
 
 function test.df_expr_to_ref()
     -- userdata field
-    expect.eq(utils.df_expr_to_ref('df.global.world.engravings'), df.global.world.engravings)
-    expect.eq(utils.df_expr_to_ref('df.global.world.engravings'), df.global.world:_field('engravings'))
+    expect.eq(utils.df_expr_to_ref('df.global.world.event.engravings'), df.global.world.event.engravings)
+    expect.eq(utils.df_expr_to_ref('df.global.world.event.engravings'), df.global.world.event:_field('engravings'))
     -- primitive field
     expect.eq(utils.df_expr_to_ref('df.global.world.original_save_version'), df.global.world:_field('original_save_version'))
     -- table field

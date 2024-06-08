@@ -651,7 +651,7 @@ static void add_clothing_orders()
                 continue;
 
             bool orderExistedAlready = false;
-            for (auto& managerOrder : world->manager_orders)
+            for (auto& managerOrder : world->manager_orders.all)
             {
                 //Annoyingly, the manager orders store the job type for clothing orders, and actual item type is left at -1;
                 if (managerOrder->job_type != clothingOrder.jobType)
@@ -675,15 +675,15 @@ static void add_clothing_orders()
             {
                 df::manager_order * newOrder = new df::manager_order();
 
-                newOrder->id = world->manager_order_next_id;
-                world->manager_order_next_id++;
+                newOrder->id = world->manager_orders.manager_order_next_id;
+                world->manager_orders.manager_order_next_id++;
                 newOrder->job_type = clothingOrder.jobType;
                 newOrder->item_subtype = clothingOrder.item_subtype;
                 newOrder->hist_figure_id = race;
                 newOrder->material_category = clothingOrder.material_category;
                 newOrder->amount_left = amount;
                 newOrder->amount_total = amount;
-                world->manager_orders.push_back(newOrder);
+                world->manager_orders.all.push_back(newOrder);
             }
         }
     }

@@ -1051,7 +1051,7 @@ end
 -- Reduce the quantity by the number of matching orders in the queue.
 function order_quantity(order, quantity)
     local amount = quantity
-    for _, managed in ipairs(df.global.world.manager_orders) do
+    for _, managed in ipairs(df.global.world.manager_orders.all) do
         if orders_match(order, managed) then
             amount = amount - managed.amount_left
             if amount < 0 then
@@ -1072,9 +1072,9 @@ function create_orders(order, amount)
     -- Todo: Create in a validated state if the fortress is small enough?
     new_order.status.validated = false
     new_order.status.active = false
-    new_order.id = df.global.world.manager_order_next_id
-    df.global.world.manager_order_next_id = df.global.world.manager_order_next_id + 1
-    df.global.world.manager_orders:insert('#', new_order)
+    new_order.id = df.global.world.manager_orders.manager_order_next_id
+    df.global.world.manager_orders.manager_order_next_id = df.global.world.manager_orders.manager_order_next_id + 1
+    df.global.world.manager_orders.all:insert('#', new_order)
 end
 
 function countContents(container, settings)

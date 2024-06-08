@@ -410,7 +410,7 @@ public:
 
     void scan_existing_orders()
     {
-        for (auto o : world->manager_orders)
+        for (auto o : world->manager_orders.all)
         {
             auto f = jobTypeMap.find(o->job_type);
             if (f == jobTypeMap.end())
@@ -449,7 +449,7 @@ public:
     }
 
     static df::manager_order * get_existing_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat) {
-        for (auto order : world->manager_orders) {
+        for (auto order : world->manager_orders.all) {
             if (order->job_type == ty &&
                     order->item_type == df::item_type::NONE &&
                     order->item_subtype == sub &&
@@ -571,11 +571,11 @@ public:
                             order->amount_total = c;
                             order->status.bits.validated = false;
                             order->status.bits.active = false;
-                            order->id = world->manager_order_next_id++;
+                            order->id = world->manager_orders.manager_order_next_id++;
                             order->hist_figure_id = sizes[size];
                             order->material_category = m.job_material;
 
-                            world->manager_orders.push_back(order);
+                            world->manager_orders.all.push_back(order);
                         }
 
                         INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",

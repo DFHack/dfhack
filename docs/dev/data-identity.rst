@@ -148,7 +148,7 @@ those objects must be indistinguishable from one another by anything other than 
 
 The ``type_identity`` object for a given C++ type can be obtained by using the ``get`` method of the ``df::identity_trait``
 trait class.
-More specifically, ``identity_class<T>::get()`` will return a pointer to a ``type_identity`` object for the type ``T``.
+More specifically, ``identity_traits<T>::get()`` will return a pointer to a ``type_identity`` object for the type ``T``.
 Developers who create new type identities must *either* provide an specialization of ``identity_trait`` that implements
 a ``get`` method that returns the correct ``type_identity``
 *or* ensure that a static instance of ``T::_identity`` exists for the type ``T``

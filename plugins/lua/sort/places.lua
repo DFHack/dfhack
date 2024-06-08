@@ -40,7 +40,7 @@ local language_name_types = {
 }
 
 local function get_location_religion(religion_id, religion_type)
-    if religion_type == df.temple_deity_type.None then return 'Temple'
+    if religion_type == df.religious_practice_type.NONE then return 'Temple'
     else return locationselector.get_religion_string(religion_id, religion_type) or '' end
 end
 

@@ -941,7 +941,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     int16_t bottom_z;
     df::coord2d adjusted;
     df::world_data *world_data = world->world_data;
-    df::world_region_details *details = world_data->region_details[0];
+    df::world_region_details *details = world_data->midmap_data.region_details[0];
     df::region_map_entry *world_tile = &world_data->region_map[x][y];
     std::vector <df::world_region_feature *> features;
     uint8_t soil_erosion;
@@ -1042,7 +1042,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     feature->min_z != -30000) {
                     auto layer = world_data->underground_regions[feature->layer];
 
-                    if (layer->type == df::world_underground_region::MagmaSea) {
+                    if (layer->type == df::feature_layer_type::MAGMA_CORE) {
                         min_z = feature->min_z;  //  The features are individual per region tile
                     }
                 }
@@ -1389,10 +1389,10 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         copy_incursion_values(tile.west_column[i], mlt->at(0).at(i));
         copy_incursion_values(tile.east_column[i], mlt->at(15).at(i));
 
-        tile.north_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[i][0];
-        tile.west_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[0][i];
-        tile.north_row_biome_x[i] = world_data->region_details[0]->edges.biome_x[i][0];
-        tile.west_column_biome_y[i] = world_data->region_details[0]->edges.biome_y[0][i];
+        tile.north_corner_selection[i] = world_data->midmap_data.region_details[0]->edges.biome_corner[i][0];
+        tile.west_corner_selection[i] = world_data->midmap_data.region_details[0]->edges.biome_corner[0][i];
+        tile.north_row_biome_x[i] = world_data->midmap_data.region_details[0]->edges.biome_x[i][0];
+        tile.west_column_biome_y[i] = world_data->midmap_data.region_details[0]->edges.biome_y[0][i];
     }
 
     for (uint8_t i = 0; i < 16; i++) {
@@ -1675,7 +1675,7 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
     }
 
     if (effective_x == x && effective_y == y) {
-        effective_corner = world_data->region_details[0]->edges.biome_corner[effective_i][effective_k];
+        effective_corner = world_data->midmap_data.region_details[0]->edges.biome_corner[effective_i][effective_k];
     }
     else if (effective_y != y) {
         effective_corner = survey_results->at(effective_x).at(effective_y).north_corner_selection[effective_i];
@@ -1909,13 +1909,13 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
     if (own_edge) {
         if (y == 0 && k == 0) return embark_assist::defs::directions::Center; //  There's nothing to the north, so we fall back on our own tile.
 
-        effective_edge = world_data->region_details[0]->edges.biome_x[i][k];
+        effective_edge = world_data->midmap_data.region_details[0]->edges.biome_x[i][k];
         south_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         north_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k - 1);
     }
     else {
         if (k < 15) {  //  We're still within the same world tile
-            effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
+            effective_edge = world_data->midmap_data.region_details[0]->edges.biome_x[i][k + 1];
         }
         else {
             //  Getting the data from the world tile to the south
@@ -1995,13 +1995,13 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
 
     if (own_edge) {
         if (x == 0 && i == 0) return embark_assist::defs::directions::Center;  //  There's nothing to the west, so we fall back on our own tile.
-        effective_edge = world_data->region_details[0]->edges.biome_y[i][k];
+        effective_edge = world_data->midmap_data.region_details[0]->edges.biome_y[i][k];
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i - 1, k);
     }
     else {
         if (i < 15) {  //  We're still within the same world tile
-            effective_edge = world_data->region_details[0]->edges.biome_y[i + 1][k];
+            effective_edge = world_data->midmap_data.region_details[0]->edges.biome_y[i + 1][k];
         }
         else {  //  Getting the data from the world tile to the east
             if (x + 1 == world_data->world_width) {

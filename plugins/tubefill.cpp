@@ -26,9 +26,9 @@ REQUIRE_GLOBAL(world);
 
 bool isDesignatedHollow(df::coord pos)
 {
-    for (size_t i = 0; i < world->deep_vein_hollows.size(); i++)
+    for (size_t i = 0; i < world->event.deep_vein_hollows.size(); i++)
     {
-        auto *vein = world->deep_vein_hollows[i];
+        auto *vein = world->event.deep_vein_hollows[i];
         for (size_t j = 0; j < vein->tiles.x.size(); j++)
             if (pos == df::coord(vein->tiles.x[j], vein->tiles.y[j], vein->tiles.z[j]))
                 return true;

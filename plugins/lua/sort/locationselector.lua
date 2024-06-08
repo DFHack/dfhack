@@ -36,10 +36,10 @@ function get_religion_string(religion_id, religion_type)
     if religion_id == -1 then return end
     local entity
     local spheres = {}
-    if religion_type == df.temple_deity_type.Deity then
+    if religion_type == df.religious_practice_type.WORSHIP_HFID then
         entity = df.historical_figure.find(religion_id)
         add_spheres(entity, spheres)
-    elseif religion_type == df.temple_deity_type.Religion then
+    elseif religion_type == df.religious_practice_type.RELIGION_ENID then
         entity = df.historical_entity.find(religion_id)
         if entity then
             for _, deity in ipairs(entity.relations.deities) do

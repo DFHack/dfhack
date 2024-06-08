@@ -1504,9 +1504,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         }
     }
 
-    for (size_t i = 0; i < world->engravings.size(); i++)
+    for (size_t i = 0; i < world->event.engravings.size(); i++)
     {
-        auto engraving = world->engravings[i];
+        auto engraving = world->event.engravings[i];
         if (engraving->pos.x < (min_x * 16) || engraving->pos.x >(max_x * 16))
             continue;
         if (engraving->pos.y < (min_y * 16) || engraving->pos.y >(max_y * 16))
@@ -1553,9 +1553,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         netEngraving->set_southwest(engraving->flags.bits.southwest);
         netEngraving->set_southeast(engraving->flags.bits.southeast);
     }
-    for (size_t i = 0; i < world->ocean_waves.size(); i++)
+    for (size_t i = 0; i < world->event.ocean_waves.size(); i++)
     {
-        auto wave = world->ocean_waves[i];
+        auto wave = world->event.ocean_waves[i];
         auto netWave = out->add_ocean_waves();
         ConvertDFCoord(wave->dest.x, wave->dest.y, wave->z, netWave->mutable_dest());
         ConvertDFCoord(wave->cur.x, wave->cur.y, wave->z, netWave->mutable_pos());
@@ -2304,9 +2304,9 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     df::world_region_details * east = NULL;
     df::world_region_details * southEast = NULL;
 
-    for (size_t i = 0; i < worldData->region_details.size(); i++)
+    for (size_t i = 0; i < worldData->midmap_data.region_details.size(); i++)
     {
-        auto region = worldData->region_details[i];
+        auto region = worldData->midmap_data.region_details[i];
         if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
             southEast = region;
         else if (region->pos.x == pos_x + 1 && region->pos.y == pos_y)
@@ -2391,9 +2391,9 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     df::world_region_details * east = NULL;
     df::world_region_details * southEast = NULL;
 
-    for (size_t i = 0; i < worldData->region_details.size(); i++)
+    for (size_t i = 0; i < worldData->midmap_data.region_details.size(); i++)
     {
-        auto region = worldData->region_details[i];
+        auto region = worldData->midmap_data.region_details[i];
         if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
             southEast = region;
         else if (region->pos.x == pos_x + 1 && region->pos.y == pos_y)
@@ -2553,7 +2553,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                         auto out_tower = out_building->mutable_tower_info();
                         out_tower->set_roof_z(tower_info->roof_z);
                         out_tower->set_round(tower_info->shape.bits.round);
-                        out_tower->set_goblin(tower_info->shape.bits.goblin);
+                        out_tower->set_goblin(tower_info->shape.bits.use_relative_elevation);
                     }
                     STRICT_VIRTUAL_CAST_VAR(wall_info, df::site_realization_building_info_castle_wallst, in_building->building_info);
                     if (wall_info)
@@ -2583,9 +2583,9 @@ static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *i
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
-    for (size_t i = 0; i < data->region_details.size(); i++)
+    for (size_t i = 0; i < data->midmap_data.region_details.size(); i++)
     {
-        df::world_region_details * region = data->region_details[i];
+        df::world_region_details * region = data->midmap_data.region_details[i];
         if (!region)
             continue;
         WorldMap * regionMap = out->add_world_maps();
@@ -2601,9 +2601,9 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
-    for (size_t i = 0; i < data->region_details.size(); i++)
+    for (size_t i = 0; i < data->midmap_data.region_details.size(); i++)
     {
-        df::world_region_details * region = data->region_details[i];
+        df::world_region_details * region = data->midmap_data.region_details[i];
         if (!region)
             continue;
         RegionMap * regionMap = out->add_region_maps();

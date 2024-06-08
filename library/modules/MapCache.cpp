@@ -1250,9 +1250,9 @@ MapExtras::MapCache::MapCache()
 
     if (auto data = df::global::world->world_data)
     {
-        for (size_t i = 0; i < data->region_details.size(); i++)
+        for (size_t i = 0; i < data->midmap_data.region_details.size(); i++)
         {
-            auto info = data->region_details[i];
+            auto info = data->midmap_data.region_details[i];
             region_details[info->pos] = info;
         }
     }

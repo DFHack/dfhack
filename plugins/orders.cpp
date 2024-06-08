@@ -317,7 +317,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
     {
         CoreSuspender suspend;
 
-        for (auto it : world->manager_orders)
+        for (auto it : world->manager_orders.all)
         {
             Json::Value order(Json::objectValue);
 
@@ -523,8 +523,8 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
     std::map<int32_t, int32_t> id_mapping;
     for (auto it : orders)
     {
-        id_mapping[it["id"].asInt()] = world->manager_order_next_id;
-        world->manager_order_next_id++;
+        id_mapping[it["id"].asInt()] = world->manager_orders.manager_order_next_id;
+        world->manager_orders.manager_order_next_id++;
     }
 
     for (auto & it : orders)
@@ -909,7 +909,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
         // TODO: items
 
-        world->manager_orders.push_back(order);
+        world->manager_orders.all.push_back(order);
     }
 
     return CR_OK;
@@ -982,7 +982,7 @@ static command_result orders_clear_command(color_ostream & out)
 {
     CoreSuspender suspend;
 
-    for (auto order : world->manager_orders)
+    for (auto order : world->manager_orders.all)
     {
         for (auto condition : order->item_conditions)
         {
@@ -1004,9 +1004,9 @@ static command_result orders_clear_command(color_ostream & out)
         delete order;
     }
 
-    out << "Deleted " << world->manager_orders.size() << " manager orders." << std::endl;
+    out << "Deleted " << world->manager_orders.all.size() << " manager orders." << std::endl;
 
-    world->manager_orders.clear();
+    world->manager_orders.all.clear();
 
     return CR_OK;
 }
@@ -1023,12 +1023,12 @@ static command_result orders_sort_command(color_ostream & out)
 {
     CoreSuspender suspend;
 
-    if (!std::is_sorted(world->manager_orders.begin(),
-                        world->manager_orders.end(),
+    if (!std::is_sorted(world->manager_orders.all.begin(),
+                        world->manager_orders.all.end(),
                         compare_freq))
     {
-        std::stable_sort(world->manager_orders.begin(),
-                         world->manager_orders.end(),
+        std::stable_sort(world->manager_orders.all.begin(),
+                         world->manager_orders.all.end(),
                          compare_freq);
         out << "Fixed priority of manager orders." << std::endl;
     }
@@ -1039,7 +1039,7 @@ static command_result orders_sort_command(color_ostream & out)
 static command_result orders_recheck_command(color_ostream & out)
 {
     size_t count = 0;
-    for (auto it : world->manager_orders) {
+    for (auto it : world->manager_orders.all) {
         if (it->item_conditions.size() && it->status.bits.active) {
             ++count;
             it->status.bits.active = false;

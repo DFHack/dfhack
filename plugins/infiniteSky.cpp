@@ -77,18 +77,18 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             return CR_OK;
     }
 
-    if ( world->constructions.size() == constructionSize )
+    if ( world->event.constructions.size() == constructionSize )
         return CR_OK;
     int32_t zNow = world->map.z_count_block;
-    for ( size_t a = constructionSize; a < world->constructions.size(); a++ ) {
-        df::construction* construct = world->constructions[a];
+    for ( size_t a = constructionSize; a < world->event.constructions.size(); a++ ) {
+        df::construction* construct = world->event.constructions[a];
         if ( construct->pos.z+2 < zNow )
             continue;
         doInfiniteSky(out, 1);
         zNow = world->map.z_count_block;
         ///break;
     }
-    constructionSize = world->constructions.size();
+    constructionSize = world->event.constructions.size();
 
     return CR_OK;
 }

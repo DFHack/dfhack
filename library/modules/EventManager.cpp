@@ -341,7 +341,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastJobId = -1 + *df::global::job_next_id;
 
         constructions.clear();
-        for (auto c : df::global::world->constructions) {
+        for (auto c : df::global::world->event.constructions) {
             if ( !c ) {
                 if ( Once::doOnce("EventManager.onLoad null constr") ) {
                     out.print("EventManager.onLoad: null construction.\n");
@@ -797,7 +797,7 @@ static void manageBuildingEvent(color_ostream& out) {
 static void manageConstructionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
+    //unordered_set<df::construction*> constructionsNow(df::global::world->event.constructions.begin(), df::global::world->event.constructions.end());
 
     multimap<Plugin*, EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
 
@@ -806,7 +806,7 @@ static void manageConstructionEvent(color_ostream& out) {
     vector<df::construction> new_constructions;
 
     // find new constructions - swapping found constructions over from constructions to next_construction_set
-    for (auto c : df::global::world->constructions) {
+    for (auto c : df::global::world->event.constructions) {
         auto &construction = *c;
         auto it = constructions.find(construction);
         if (it == constructions.end()) {
@@ -821,7 +821,7 @@ static void manageConstructionEvent(color_ostream& out) {
 
     constructions.swap(next_construction_set);
 
-    // now next_construction_set contains all the constructions that were removed (not found in df::global::world->constructions)
+    // now next_construction_set contains all the constructions that were removed (not found in df::global::world->event.constructions)
     for (auto& construction : next_construction_set) {
         // handle construction removed event
         for (const auto &[_,handle]: copy) {

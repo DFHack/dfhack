@@ -101,6 +101,14 @@ that is, two copies having the same values will compare equal in all known such 
 Therefore, if two ``type_identity`` objects do exist (for any reason) for the same underlying C++ type,
 those objects must be indistinguishable from one another by anything other than their address.
 
+Because objects in the Lua environment are constructed as a pointer to the data and
+a pointer to the data's ``type_identity`` object, it is necessary for ``type_identity`` objects to have a lifetime
+that exceeds the lifetime in the Lua environment of any object that exists anywhere in the Lua environment.
+It is therefore advised to avoid creating ``type_identity`` objects that do _not_ have program lifetime, since
+predicting the lifetime of objects in the Lua environment can be difficult.
+If it is necessary to create a ``type_identity`` that will not have program lifetime,
+it is incumbent on the developer to ensure that no references of that type identity persist beyond its lifetime.
+
 Due to the way template types are implemented in the C++ compilers we use for Dwarf Fortress, any specialization of one
 of the type identity classes noted above as a template must at present be statically constructed in the DFHack core.
 This is because we export the statically constructed instances from the core library to plugins, which then imports them
@@ -126,7 +134,7 @@ It is, at present, incumbent on plugin authors to ensure that they do not use pl
 that will persist in the Lua environment beyond the lifetime of the plugin.
 Declaring a ``struct_identity`` in a plugin that is the child of another ``struct_identity`` will also result in
 a potentially dangling reference to that identity in the ``child`` vector of the parent identity, which means this
-must also be approaached with caution.
+must also be approached with caution.
 
 Namespace issues
 ================

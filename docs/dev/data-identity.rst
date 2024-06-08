@@ -46,7 +46,7 @@ There are plethora of subclasses of ``type_identity``:
       * ``stl_string_identity`` ``std::string``
       * ``xlsx_file_handle_identity`` special case
       * ``xlsx_sheet_handle_identity`` special case
-    * ``container_identity`` "containers" generally. note that all container types are homogenous. abstract base class
+    * ``container_identity`` "containers" generally. note that all container types are homogeneous (that is, the elements of the container must all be of the same type). abstract base class
       * ``bit_container_identity`` for containers that contain bools stored one element per _bit_ (rather than per byte)
         * ``bit_array_identity`` Dwarf Fortress's ``BitArray`` type
         * ``stl_bit_vector_identity`` ``std::vector<bool>``

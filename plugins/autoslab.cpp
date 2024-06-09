@@ -140,7 +140,7 @@ static void createSlabJob(df::unit *unit)
 
     order->id = next_id;
     order->job_type = df::job_type::EngraveSlab;
-    order->hist_figure_id = unit->hist_figure_id;
+    order->specdata.hist_figure_id = unit->hist_figure_id;
     order->amount_left = 1;
     order->amount_total = 1;
     world->manager_orders.all.push_back(order);
@@ -153,7 +153,7 @@ static void checkslabs(color_ostream &out)
     for (auto order : world->manager_orders.all)
     {
         if (order->job_type == df::job_type::EngraveSlab)
-            histToJob[order->hist_figure_id] = order->id;
+            histToJob[order->specdata.hist_figure_id] = order->id;
     }
 
     // Build list of ghosts

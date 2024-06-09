@@ -1302,10 +1302,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         -- to the call to constructBuilding since attempting to assign unrelated
         -- fields to building types that don't support them causes errors.
         for k in pairs(bld) do
-            if k == 'friction' then bld.friction = uibs.friction end
-            if k == 'use_dump' then bld.use_dump = uibs.use_dump end
-            if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
-            if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
+            if k == 'track_stop_info' then utils.assign(bld.track_stop_info, uibs.track_stop) end
             if k == 'speed' then bld.speed = uibs.speed end
             if k == 'plate_info' then utils.assign(bld.plate_info, uibs.plate_info) end
         end

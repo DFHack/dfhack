@@ -812,20 +812,20 @@ static const char * get_trap_str(df::building *b) {
         {
             std::ostringstream buf;
             buf << "CS";
-            if (trap->track_flags.bits.use_dump) {
-                if (trap->dump_x_shift == 0) {
+            if (trap->track_stop_info.track_flags.bits.use_dump) {
+                if (trap->track_stop_info.dump_x_shift == 0) {
                     buf << "d";
-                    if (trap->dump_y_shift > 0)
+                    if (trap->track_stop_info.dump_y_shift > 0)
                         buf << "d";
                 } else {
                     buf << "ddd";
-                    if (trap->dump_x_shift < 0)
+                    if (trap->track_stop_info.dump_x_shift < 0)
                         buf << "d";
                 }
             }
 
             // each case falls through and is additive
-            switch (trap->friction) {
+            switch (trap->track_stop_info.friction) {
             case 10:    buf << "a";
             case 50:    buf << "a";
             case 500:   buf << "a";

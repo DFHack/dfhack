@@ -152,7 +152,7 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
     if (!(CMP(job_type) && CMP(job_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(specflag.whole) &&
-          CMP(hist_figure_id) && CMP(material_category.whole) &&
+          CMP(specdata.hist_figure_id) && CMP(material_category.whole) &&
           CMP(reaction_name) && CMP(job_items.elements.size())))
         return false;
 
@@ -260,8 +260,8 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         out << endl;
     }
 
-    if (job->hist_figure_id >= 0)
-        out << "    figure: " << job->hist_figure_id << endl;
+    if (job->specdata.hist_figure_id >= 0)
+        out << "    figure: " << job->specdata.hist_figure_id << endl;
 
     if (!job->reaction_name.empty())
         out << "    reaction: " << job->reaction_name << endl;
@@ -612,7 +612,7 @@ std::string Job::getName(df::job *job)
     std::string desc;
     auto button = df::allocate<df::interface_button_building_new_jobst>();
     button->mstring = job->reaction_name;
-    button->spec_id = job->hist_figure_id;
+    button->specdata.hist_figure_id = job->specdata.hist_figure_id;
     button->jobtype = job->job_type;
     button->itemtype = job->item_type;
     button->subtype = job->item_subtype;

@@ -83,7 +83,6 @@ distribution.
 #include "df/route_stockpile_link.h"
 #include "df/soundst.h"
 #include "df/stop_depart_condition.h"
-#include "df/ui_look_list.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
@@ -611,65 +610,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             }
             break;
         case df::enums::main_bottom_mode_type::ZONE_PAINT:
-            newFocusString += "/Zone/Paint";
-
-            // TODO: figure out why enum_item_key doesn't work on this?
-            switch(game->main_interface.civzone.adding_new_type) {
-            case df::enums::civzone_type::MeetingHall:
-                newFocusString += "/MeetingHall";
-                break;
-            case df::enums::civzone_type::Bedroom:
-                newFocusString += "/Bedroom";
-                break;
-            case df::enums::civzone_type::DiningHall:
-                newFocusString += "/DiningHall";
-                break;
-            case df::enums::civzone_type::Pen:
-                newFocusString += "/Pen";
-                break;
-            case df::enums::civzone_type::Pond:
-                newFocusString += "/Pond";
-                break;
-            case df::enums::civzone_type::WaterSource:
-                newFocusString += "/WaterSource";
-                break;
-            case df::enums::civzone_type::Dungeon:
-                newFocusString += "/Dungeon";
-                break;
-            case df::enums::civzone_type::FishingArea:
-                newFocusString += "/FishingArea";
-                break;
-            case df::enums::civzone_type::SandCollection:
-                newFocusString += "/SandCollection";
-                break;
-            case df::enums::civzone_type::Office:
-                newFocusString += "/Office";
-                break;
-            case df::enums::civzone_type::Dormitory:
-                newFocusString += "/Dormitory";
-                break;
-            case df::enums::civzone_type::Barracks:
-                newFocusString += "/Barracks";
-                break;
-            case df::enums::civzone_type::ArcheryRange:
-                newFocusString += "/ArcheryRange";
-                break;
-            case df::enums::civzone_type::Dump:
-                newFocusString += "/Dump";
-                break;
-            case df::enums::civzone_type::AnimalTraining:
-                newFocusString += "/AnimalTraining";
-                break;
-            case df::enums::civzone_type::Tomb:
-                newFocusString += "/Tomb";
-                break;
-            case df::enums::civzone_type::PlantGathering:
-                newFocusString += "/PlantGathering";
-                break;
-            case df::enums::civzone_type::ClayCollection:
-                newFocusString += "/ClayCollection";
-                break;
-            }
+            newFocusString += "/Zone/Paint/" + enum_item_key(game->main_interface.civzone.adding_new_type);
             break;
         case df::enums::main_bottom_mode_type::BURROW:
             newFocusString += "/Burrow";

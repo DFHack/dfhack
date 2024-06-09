@@ -29,48 +29,6 @@ namespace DFHack
     DBG_DECLARE(plant, log, DebugCategory::LINFO);
 }
 
-struct cuboid
-{
-    int16_t x_min = -1;
-    int16_t x_max = -1;
-    int16_t y_min = -1;
-    int16_t y_max = -1;
-    int16_t z_min = -1;
-    int16_t z_max = -1;
-
-    bool isValid() const
-    {   // True if all max >= min >= 0
-        return (x_min >= 0 && y_min >= 0 && z_min >= 0 &&
-            x_max >= x_min && y_max >= y_min && z_max >= z_min);
-    }
-
-    bool addPos(int16_t x, int16_t y, int16_t z)
-    {   // Expand cuboid to include point. Return true if bounds changed
-        if (x < 0 || y < 0 || z < 0 || (isValid() && containsPos(x, y, z)))
-            return false;
-
-        x_min = (x_min < 0 || x < x_min) ? x : x_min;
-        x_max = (x_max < 0 || x > x_max) ? x : x_max;
-
-        y_min = (y_min < 0 || y < y_min) ? y : y_min;
-        y_max = (y_max < 0 || y > y_max) ? y : y_max;
-
-        z_min = (z_min < 0 || z < z_min) ? z : z_min;
-        z_max = (z_max < 0 || z > z_max) ? z : z_max;
-
-        return true;
-    }
-    inline bool addPos(const df::coord &pos) { return addPos(pos.x, pos.y, pos.z); }
-
-    bool containsPos(int16_t x, int16_t y, int16_t z) const
-    {   // Return true if point inside cuboid. Make sure cuboid is valid first!
-        return x >= x_min && x <= x_max &&
-            y >= y_min && y <= y_max &&
-            z >= z_min && z <= z_max;
-    }
-    inline bool containsPos(const df::coord &pos) const { return containsPos(pos.x, pos.y, pos.z); }
-};
-
 struct plant_options
 {
     bool create = false; // Create a plant
@@ -156,16 +114,6 @@ static bool tile_watery(const df::coord &pos)
     }
 
     return false;
-}
-
-static bool plant_shrub(const df::plant &plant)
-{
-    return plant.type == df::plant_type::DRY_PLANT || plant.type == df::plant_type::WET_PLANT;
-}
-
-static bool plant_shrub(const df::plant *plant)
-{
-    return plant_shrub(*plant);
 }
 
 command_result df_createplant(color_ostream &out, const df::coord &pos, const plant_options &options)
@@ -254,16 +202,14 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     }
 
     auto plant = df::allocate<df::plant>();
-    bool is_shrub = true;
     if (p_raw->flags.is_set(plant_raw_flags::TREE))
     {
-        plant->type = is_watery ? df::plant_type::WET_TREE : df::plant_type::DRY_TREE;
+        plant->type = is_watery ? plant_type::WET_TREE : plant_type::DRY_TREE;
         plant->hitpoints = 400000;
-        is_shrub = false;
     }
-    else
+    else // Shrub
     {
-        plant->type = is_watery ? df::plant_type::WET_PLANT : df::plant_type::DRY_PLANT;
+        plant->type = is_watery ? plant_type::WET_PLANT : plant_type::DRY_PLANT;
         plant->hitpoints = 100000;
     }
 
@@ -273,26 +219,27 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     plant->update_order = rand() % 10;
 
     world->plants.all.push_back(plant);
-    if (is_shrub)
-    {
-        if (is_watery)
-            world->plants.shrub_wet.push_back(plant);
-        else
-            world->plants.shrub_dry.push_back(plant);
-    }
-    else
-    {
-        if (is_watery)
-            world->plants.tree_wet.push_back(plant);
-        else
-            world->plants.tree_dry.push_back(plant);
-    }
-
     col->plants.push_back(plant);
-    if (is_shrub)
-        *tt = tiletype::Shrub;
-    else
-        *tt = tiletype::Sapling;
+
+    switch (plant->type)
+    {
+        case plant_type::DRY_TREE:
+            world->plants.tree_dry.push_back(plant);
+            *tt = tiletype::Sapling;
+            break;
+        case plant_type::WET_TREE:
+            world->plants.tree_wet.push_back(plant);
+            *tt = tiletype::Sapling;
+            break;
+        case plant_type::DRY_PLANT:
+            world->plants.shrub_dry.push_back(plant);
+            *tt = tiletype::Shrub;
+            break;
+        case plant_type::WET_PLANT:
+            world->plants.shrub_wet.push_back(plant);
+            *tt = tiletype::Shrub;
+            break;
+    }
 
     occ->bits.no_grow = false;
 
@@ -318,7 +265,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     int grown = 0, grown_trees = 0;
     for (auto plant : world->plants.all)
     {
-        if (plant_shrub(plant))
+        if (ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue; // Shrub
         else if (!bounds.containsPos(plant->pos))
             continue; // Outside cuboid
@@ -368,10 +315,10 @@ static bool uncat_plant(df::plant *plant)
 
     switch (plant->type)
     {
-    case df::plant_type::DRY_PLANT: vec = &world->plants.shrub_dry; break;
-    case df::plant_type::WET_PLANT: vec = &world->plants.shrub_wet; break;
-    case df::plant_type::DRY_TREE:  vec = &world->plants.tree_dry; break;
-    case df::plant_type::WET_TREE:  vec = &world->plants.tree_wet; break;
+        case plant_type::DRY_TREE: vec = &world->plants.tree_dry; break;
+        case plant_type::WET_TREE: vec = &world->plants.tree_wet; break;
+        case plant_type::DRY_PLANT: vec = &world->plants.shrub_dry; break;
+        case plant_type::WET_PLANT: vec = &world->plants.shrub_wet; break;
     }
 
     for (size_t i = vec->size(); i-- > 0;)
@@ -458,7 +405,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
                 continue; // Not removing living
             /*else if (plant->tree_info && !options.trees)
                 continue; // Not removing trees*/
-            else if (plant_shrub(plant))
+            else if (ENUM_ATTR(plant_type, is_shrub, plant.type))
             {
                 if (!options.shrubs)
                     continue; // Not removing shrubs
@@ -475,7 +422,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
         bool bad_tt = false;
         if (tt)
         {
-            if (plant_shrub(plant))
+            if (ENUM_ATTR(plant_type, is_shrub, plant.type))
             {
                 if (tileShape(*tt) != tiletype_shape::SHRUB)
                 {

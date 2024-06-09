@@ -1081,7 +1081,7 @@ local function attach_to_building(unit_or_vermin)
     local bld = dfhack.gui.getSelectedBuilding(true)
     if not bld then return end
     local is_unit = df.unit:is_instance(unit_or_vermin)
-    if is_unit and unit_or_vermin.relationship_ids[df.unit_relationship_type.Pet] ~= -1 then
+    if is_unit and unit_or_vermin.relationship_ids[df.unit_relationship_type.PetOwner] ~= -1 then
         -- pet owners would just release them
         return
     end

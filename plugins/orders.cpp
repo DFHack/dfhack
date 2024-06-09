@@ -356,9 +356,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 bitfield_to_json_array(order["item_category"], it->specflag.encrust_flags);
             }
 
-            if (it->hist_figure_id != -1)
+            if (it->specdata.hist_figure_id != -1)
             {
-                order["hist_figure"] = it->hist_figure_id;
+                order["hist_figure"] = it->specdata.hist_figure_id;
             }
 
             if (it->material_category.whole != 0)
@@ -620,7 +620,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                 continue;
             }
 
-            order->hist_figure_id = it["hist_figure"].asInt();
+            order->specdata.hist_figure_id = it["hist_figure"].asInt();
         }
 
         if (it.isMember("material_category"))

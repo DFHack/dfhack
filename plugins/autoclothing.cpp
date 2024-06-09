@@ -658,7 +658,7 @@ static void add_clothing_orders()
                     continue;
                 if (managerOrder->item_subtype != clothingOrder.item_subtype)
                     continue;
-                if (managerOrder->hist_figure_id != race)
+                if (managerOrder->specdata.hist_figure_id != race)
                     continue;
 
                 //We found a work order, that means we don't need to make a new one.
@@ -679,7 +679,7 @@ static void add_clothing_orders()
                 world->manager_orders.manager_order_next_id++;
                 newOrder->job_type = clothingOrder.jobType;
                 newOrder->item_subtype = clothingOrder.item_subtype;
-                newOrder->hist_figure_id = race;
+                newOrder->specdata.hist_figure_id = race;
                 newOrder->material_category = clothingOrder.material_category;
                 newOrder->amount_left = amount;
                 newOrder->amount_total = amount;

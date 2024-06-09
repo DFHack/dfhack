@@ -151,7 +151,7 @@ end
 function HospitalZone:assign_spot(unit, unit_pos)
     local pos = self:find_spot(unit_pos)
     if not pos then return false end
-    local job = df.new(df.job)
+    local job = df.job:new()
     dfhack.job.linkIntoWorld(job, true)
     job.pos.x = pos.x
     job.pos.y = pos.y

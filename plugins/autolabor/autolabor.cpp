@@ -293,7 +293,9 @@ static void cleanup_state()
 {
     enable_autolabor = false;
     labor_infos.clear();
-    game->external_flag &= ~1; // reinstate DF's work detail system
+
+    // reinstate DF's work detail system
+    game->external_flag.bits.automatic_professions_disabled = false;
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -315,7 +317,8 @@ static void init_state()
     if (!enable_autolabor)
         return;
 
-    game->external_flag |= 1; // bypass DF's work detail system
+    // bypass DF's work detail system
+    game->external_flag.bits.automatic_professions_disabled = true;
 
     auto cfg_haulpct = World::GetPersistentSiteData("autolabor/haulpct");
     if (cfg_haulpct.isValid())

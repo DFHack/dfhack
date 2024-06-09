@@ -495,13 +495,11 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             if (!exclude)
                 continue;
         }
-        df::tiletype_shape shape = tileShape(cur->tiletype[x][y]);
-        df::tiletype_material material = tileMaterial(cur->tiletype[x][y]);
-        df::tiletype_special special = tileSpecial(cur->tiletype[x][y]);
-        bool is_shrub = plant->type == df::plant_type::DRY_PLANT || plant->type == df::plant_type::WET_PLANT;
-        if (is_shrub && (treesonly || !(shape == tiletype_shape::SHRUB && special != tiletype_special::DEAD)))
+        df::tiletype tt = cur->tiletype[x][y];
+        df::tiletype_material mat = tileMaterial(tt);
+        if ((treesonly || tt != tiletype::Shrub) && ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
-        if (!is_shrub && (shrubsonly || !(material == tiletype_material::TREE)))
+        if ((shrubsonly || mat != tiletype_material::TREE) && !ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
         if (cur->designation[x][y].bits.hidden)
             continue;

@@ -69,12 +69,12 @@ distribution.
 #include "df/item_cagest.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/lookinfost.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
 #include "df/inorganic_raw.h"
 #include "df/plotinfost.h"
 #include "df/squad.h"
-#include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
@@ -1429,13 +1429,13 @@ bool Buildings::deconstruct(df::building *bld)
         world->update_selected_building = true;
     }
 
-    for (int i = ui_look_list->items.size()-1; i >= 0; i--)
+    for (int i = ui_look_list->size()-1; i >= 0; --i)
     {
-        auto item = ui_look_list->items[i];
-        if (item->type == df::ui_look_list::T_items::Building &&
+        auto item = (*ui_look_list)[i];
+        if (item->type == df::lookinfost::Building &&
             item->data.building.bld_id == id)
         {
-            vector_erase_at(ui_look_list->items, i);
+            vector_erase_at(*ui_look_list, i);
             delete item;
         }
     }

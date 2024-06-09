@@ -416,7 +416,7 @@ public:
             if (f == jobTypeMap.end())
                 continue;
 
-            int race = o->hist_figure_id;
+            int race = o->specdata.hist_figure_id;
 
             for (auto& m : all_materials)
             {
@@ -455,7 +455,7 @@ public:
                     order->item_subtype == sub &&
                     order->mat_type == -1 &&
                     order->mat_index == -1 &&
-                    order->hist_figure_id == hfid &&
+                    order->specdata.hist_figure_id == hfid &&
                     order->material_category.whole == mcat.whole &&
                     order->frequency == df::manager_order::T_frequency::OneTime)
                 return order;
@@ -572,7 +572,7 @@ public:
                             order->status.bits.validated = false;
                             order->status.bits.active = false;
                             order->id = world->manager_orders.manager_order_next_id++;
-                            order->hist_figure_id = sizes[size];
+                            order->specdata.hist_figure_id = sizes[size];
                             order->material_category = m.job_material;
 
                             world->manager_orders.all.push_back(order);
@@ -583,7 +583,7 @@ public:
                             c,
                             bitfield_to_string(order->material_category).c_str(),
                             DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
-                            DF2CONSOLE(world->raws.creatures.all[order->hist_figure_id]->name[1]).c_str()
+                            DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
                         );
 
                         count -= c;

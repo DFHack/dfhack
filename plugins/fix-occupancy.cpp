@@ -102,12 +102,12 @@ static void scan_unit(df::unit * unit, Expected & expected) {
         for (int y = unit->pos.y - 1; y <= unit->pos.y + 1; ++y) {
             for (int x = unit->pos.x - 1; x <= unit->pos.x + 1; ++x) {
                 if (auto expected_occ = expected.occ(x, y, unit->pos.z)) {
-                    expected_occ->bits.unit = true;
+                    expected_occ->bits.unit = expected_occ->bits.unit || !unit->flags1.bits.on_ground;
+                    expected_occ->bits.unit_grounded = expected_occ->bits.unit_grounded || unit->flags1.bits.on_ground;
                 }
             }
         }
-    }
-    if (auto expected_occ = expected.occ(unit->pos)) {
+    } else if (auto expected_occ = expected.occ(unit->pos)) {
         expected_occ->bits.unit = expected_occ->bits.unit || !unit->flags1.bits.on_ground;
         expected_occ->bits.unit_grounded = expected_occ->bits.unit_grounded || unit->flags1.bits.on_ground;
     }

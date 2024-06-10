@@ -550,6 +550,7 @@ namespace df
 
 #define NUMBER_IDENTITY_TRAITS(category, type) \
     template<> struct DFHACK_EXPORT identity_traits<type> { \
+        static const bool is_primitive = true; \
         static category##_identity<type> identity; \
         static category##_identity_base *get() { return &identity; } \
     };
@@ -604,26 +605,31 @@ namespace df
 #endif
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
+        static const bool is_primitive = true;
         static bool_identity identity;
         static bool_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
+        static const bool is_primitive = true;
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<char*> {
+        static const bool is_primitive = true;
         static ptr_string_identity identity;
         static ptr_string_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<const char*> {
+        static const bool is_primitive = true;
         static ptr_string_identity identity;
         static ptr_string_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<void*> {
+        static const bool is_primitive = true;
         static pointer_identity identity;
         static pointer_identity *get() { return &identity; }
     };
@@ -652,6 +658,7 @@ namespace df
 #endif
 
     template<class T> struct identity_traits<T *> {
+        static const bool is_primitive = true;
         static pointer_identity *get();
     };
 

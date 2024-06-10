@@ -31,16 +31,16 @@ struct QueueItem
 };
 struct CheckedStructure
 {
-    type_identity *identity;
+    const type_identity *identity;
     size_t count;
     size_t allocated_count;
-    enum_identity *eid;
+    const enum_identity *eid;
     bool ptr_is_array;
     bool inside_structure;
 
     CheckedStructure();
-    explicit CheckedStructure(type_identity *, size_t = 0);
-    CheckedStructure(type_identity *, size_t, enum_identity *, bool);
+    explicit CheckedStructure(const type_identity *, size_t = 0);
+    CheckedStructure(const type_identity *, size_t, const enum_identity *, bool);
     CheckedStructure(const struct_field_info *);
 
     size_t full_size() const;
@@ -109,7 +109,7 @@ public:
 
         return *reinterpret_cast<const T *>(item.ptr);
     }
-    int64_t get_int_value(const QueueItem & item, type_identity *type, bool quiet = false);
+    int64_t get_int_value(const QueueItem & item, const type_identity *type, bool quiet = false);
     const char *get_vtable_name(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
     std::pair<const void *, CheckedStructure> validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
     size_t get_allocated_size(const QueueItem & item);
@@ -117,8 +117,8 @@ public:
     // this function doesn't make sense on windows, where std::string is not pointer-sized.
     const std::string *validate_stl_string_pointer(const void *const*);
 #endif
-    static const char *const *get_enum_item_key(enum_identity *identity, int64_t value);
-    static const char *const *get_enum_item_attr_or_key(enum_identity *identity, int64_t value, const char *attr_name);
+    static const char *const *get_enum_item_key(const enum_identity *identity, int64_t value);
+    static const char *const *get_enum_item_attr_or_key(const enum_identity *identity, int64_t value, const char *attr_name);
 
 private:
     color_ostream & fail(int, const QueueItem &, const CheckedStructure &);
@@ -132,7 +132,7 @@ private:
     void dispatch_bitfield(const QueueItem &, const CheckedStructure &);
     void dispatch_enum(const QueueItem &, const CheckedStructure &);
     void dispatch_struct(const QueueItem &, const CheckedStructure &);
-    void dispatch_field(const QueueItem &, const CheckedStructure &, struct_identity *, const struct_field_info *);
+    void dispatch_field(const QueueItem &, const CheckedStructure &, const struct_identity *, const struct_field_info *);
     void dispatch_class(const QueueItem &, const CheckedStructure &);
     void dispatch_buffer(const QueueItem &, const CheckedStructure &);
     void dispatch_stl_ptr_vector(const QueueItem &, const CheckedStructure &);
@@ -140,15 +140,15 @@ private:
     void dispatch_tagged_union_vector(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &, const char *);
     void dispatch_untagged_union(const QueueItem &, const CheckedStructure &);
     void check_unknown_pointer(const QueueItem &);
-    void check_stl_vector(const QueueItem &, type_identity *, type_identity *);
+    void check_stl_vector(const QueueItem &, const type_identity *, const type_identity *);
     void check_stl_string(const QueueItem &);
-    void check_stl_map(const QueueItem &, container_identity *);
-    void check_stl_unordered_map(const QueueItem &, container_identity *);
+    void check_stl_map(const QueueItem &, const container_identity *);
+    void check_stl_unordered_map(const QueueItem &, const container_identity *);
     void check_possible_pointer(const QueueItem &, const CheckedStructure &);
 
     friend struct CheckedStructure;
-    static type_identity *wrap_in_pointer(type_identity *);
-    static type_identity *wrap_in_stl_ptr_vector(type_identity *);
+    static const type_identity *wrap_in_pointer(const type_identity *);
+    static const type_identity *wrap_in_stl_ptr_vector(const type_identity *);
 };
 
 #define FAIL(message) \

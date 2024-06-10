@@ -381,7 +381,7 @@ namespace df
             : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
         {}
 
-        const std::string getFullName(type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const {
             return name + container_identity::getFullName(item);
         }
 

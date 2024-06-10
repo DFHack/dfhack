@@ -541,7 +541,12 @@ namespace df
     }
 
     template<class T>
-    struct identity_traits {
+    struct identity_traits {};
+
+    template<class T>
+        requires requires () { { &T::_identity } -> std::convertible_to<compound_identity*>; }
+    struct identity_traits<T> {
+        static const bool is_primitive = false;
         static compound_identity *get() { return &T::_identity; }
     };
 

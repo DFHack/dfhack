@@ -27,28 +27,37 @@ using namespace DFHack;
 using namespace df::enums;
 
 namespace DFHack {
-DBG_DECLARE(design, log, DebugCategory::LINFO);
+    DBG_DECLARE(design, log, DebugCategory::LINFO);
 }
 
-DFhackCExport command_result plugin_init(color_ostream &out,
-                                         std::vector<PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     return CR_OK;
 }
 
-std::map<uint32_t, Screen::Pen> PENS;
+static std::map<uint32_t, Screen::Pen> PENS;
+
+static int point_highlight_tile = 0;
+static int point_hover_highlight_tile = 0;
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         DEBUG(log,out).print("clearing PENS\n");
         PENS.clear();
+        point_highlight_tile = 0;
+        point_hover_highlight_tile = 0;
     }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
+    Screen::findGraphicsTile("ACTIVITY_ZONES", 2, 15, &point_highlight_tile);
+    Screen::findGraphicsTile("ACTIVITY_ZONES", 3, 15, &point_hover_highlight_tile);
     return CR_OK;
 }
 
 struct DrawingPoint {
     uint32_t penKey = 0;
     std::pair<int, int> cursor_coords;
-
     DrawingPoint() : penKey(0), cursor_coords({-1, -1}) {}
 };
 
@@ -143,7 +152,9 @@ Screen::Pen make_pen(const std::pair<int, int> &direction, bool is_drag_point,
     return pen;
 }
 
-Screen::Pen get_pen(int x, int y, ShapeMap &arr, const std::string &type = "") {
+void get_pen(Screen::Pen * tile_pen, int * highlight_tile,
+    int x, int y, ShapeMap &arr, const std::string &type = "")
+{
     bool n = false, w = false, e = false, s = false;
     if (has_point(x, y)) {
         if (y == 0 || !has_point(x, y - 1)) n = true;
@@ -169,8 +180,11 @@ Screen::Pen get_pen(int x, int y, ShapeMap &arr, const std::string &type = "") {
         std::pair<int, int> cursor{-1, -1};
 
         if (type != "") {
-            return make_pen(CURSORS_MAP.at({n, w, e, s}), is_drag_point,
+            *tile_pen = make_pen(CURSORS_MAP.at({n, w, e, s}), is_drag_point,
                             mouse_over, is_in_shape, is_extra);
+            if (highlight_tile)
+                *highlight_tile = mouse_over ? point_hover_highlight_tile : point_highlight_tile;
+            return;
         }
 
         if (CURSORS_MAP.count({n, w, e, s}) > 0) {
@@ -183,7 +197,7 @@ Screen::Pen get_pen(int x, int y, ShapeMap &arr, const std::string &type = "") {
         }
     }
 
-    return PENS.at(pen_key);
+    *tile_pen = PENS.at(pen_key);
 }
 
 static int design_load_shape(lua_State *L) {
@@ -224,9 +238,10 @@ static int design_draw_shape(lua_State *L) {
 
     for (auto x : arr) {
         for (auto y : x.second) {
-            Screen::Pen pen = get_pen(x.first, y.first, arr);
-            Screen::paintTile(pen, x.first - *window_x,
-                              y.first - *window_y, true);
+            Screen::Pen pen;
+            get_pen(&pen, NULL, x.first, y.first, arr);
+            df::coord2d pos(x.first - *window_x, y.first - *window_y);
+            Screen::paintTile(pen, pos.x, pos.y, true);
         }
     }
 
@@ -234,6 +249,8 @@ static int design_draw_shape(lua_State *L) {
 }
 
 static int design_draw_points(lua_State *L) {
+    bool is_graphics_mode = Screen::inGraphicsMode();
+
     if (lua_istable(L, -1)) {
         const char *str;
         lua_rawgeti(L, -1, 2);
@@ -251,8 +268,16 @@ static int design_draw_points(lua_State *L) {
             x = lua_tointeger(L, -1);
             lua_pop(L, 3);
 
-            Screen::Pen pen = get_pen(x, y, arr, str);
-            Screen::paintTile(pen, x - *window_x, y - *window_y, true);
+            Screen::Pen pen;
+            int highlight_tile = 0;
+            get_pen(&pen, &highlight_tile, x, y, arr, str);
+            df::coord2d pos(x - *window_x, y - *window_y);
+            Screen::paintTile(pen, pos.x, pos.y, true);
+            if (is_graphics_mode && highlight_tile > 0) {
+                Screen::Pen highlight_pen;
+                highlight_pen.tile = highlight_tile;
+                Screen::paintTile(highlight_pen, pos.x, pos.y, true, &df::graphic_viewportst::screentexpos_designation);
+            }
         }
         lua_pop(L, 1);
     }
@@ -260,7 +285,9 @@ static int design_draw_points(lua_State *L) {
     return 0;
 }
 
-DFHACK_PLUGIN_LUA_COMMANDS{DFHACK_LUA_COMMAND(design_draw_shape),
-                           DFHACK_LUA_COMMAND(design_draw_points),
-                           DFHACK_LUA_COMMAND(design_clear_shape),
-                           DFHACK_LUA_END};
+DFHACK_PLUGIN_LUA_COMMANDS{
+    DFHACK_LUA_COMMAND(design_draw_shape),
+    DFHACK_LUA_COMMAND(design_draw_points),
+    DFHACK_LUA_COMMAND(design_clear_shape),
+    DFHACK_LUA_END
+};

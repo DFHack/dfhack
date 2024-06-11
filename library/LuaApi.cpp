@@ -32,6 +32,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "Debug.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 #include "md5wrapper.h"
@@ -112,6 +113,10 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+
+namespace DFHack {
+    DBG_DECLARE(core, luaapi, DebugCategory::LINFO);
+}
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -1350,8 +1355,8 @@ static string upperCp437(string s) { return toUpper_cp437(s); }
 static string lowerCp437(string s) { return toLower_cp437(s); }
 static string toSearchNormalized(string s) { return to_search_normalized(s); }
 static string capitalizeStringWords(string s) { return capitalize_string_words(s); }
-static string formatInt(int32_t num) { return format_number(num); }
-static string formatFloat(float num) { return format_number(num); }
+static string formatInt(int64_t num) { return format_number_by_locale(num, get_preferred_number_format_type()); }
+static string formatFloat(double num) { return format_number_by_locale(num, get_preferred_number_format_type()); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -3388,6 +3393,25 @@ static void recordRepeatRuntime(string name, uint32_t start_ms) {
     counters.incCounter(counters.update_lua_per_repeat[name.c_str()], start_ms);
 }
 
+static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
+    NumberFormatType type = (NumberFormatType)type_int;
+    switch (type) {
+    case NumberFormatType::SCIENTIFIC:
+    case NumberFormatType::DEFAULT:
+    case NumberFormatType::ENGLISH:
+    case NumberFormatType::SYSTEM:
+        set_preferred_number_format_type(type);
+        break;
+    default:
+        WARN(luaapi, out).print("invalid number format enum value: %d\n", type_int);
+    }
+}
+
+static int internal_getPreferredNumberFormat(lua_State *L) {
+    lua_pushinteger(L, (int32_t)get_preferred_number_format_type());
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3407,6 +3431,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(setClipboardTextCp437Multiline),
     WRAP(resetPerfCounters),
     WRAP(recordRepeatRuntime),
+    WRAP(setPreferredNumberFormat),
     { NULL, NULL }
 };
 
@@ -4117,6 +4142,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "setMortalMode", internal_setMortalMode },
     { "setArmokTools", internal_setArmokTools },
     { "getPerfCounters", internal_getPerfCounters },
+    { "getPreferredNumberFormat", internal_getPreferredNumberFormat },
     { NULL, NULL }
 };
 

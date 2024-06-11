@@ -333,7 +333,7 @@ namespace DFHack
                 compound_identity *scope_parent, const char *dfhack_name,
                 struct_identity *parent, const struct_field_info *fields);
 
-        virtual identity_type type() { return IDTYPE_UNION; }
+        virtual identity_type type() const { return IDTYPE_UNION; }
 
         virtual void build_metatable(lua_State *state) const;
     };

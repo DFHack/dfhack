@@ -456,19 +456,32 @@ static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
 
+enum struct NumberFormatType : int32_t {
+    DEFAULT = 0,
+    ENGLISH,
+    SYSTEM,
+    SCIENTIFIC,
+};
+
+DFHACK_EXPORT NumberFormatType get_preferred_number_format_type();
+DFHACK_EXPORT void set_preferred_number_format_type(NumberFormatType type);
+DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type);
+
 // format a number according to the current system locale
 template<typename T>
-static inline std::string format_number(T num) {
+static inline std::string format_number_by_locale(T num, NumberFormatType type) {
     std::ostringstream ss;
-
-    try {
-        static const std::locale user_loc("");
-        ss.imbue(user_loc);
-    } catch (std::exception &) {
-        // ignore locale errors
-    }
-    ss << std::fixed << num;
+    imbue_with_locale(ss, type);
+    if (type == NumberFormatType::SCIENTIFIC)
+        ss << (double)num;
+    else
+        ss << num;
     return ss.str();
+}
+
+template<typename T>
+static inline std::string format_number_by_locale(T num) {
+    return format_number_by_locale(num, get_preferred_number_format_type());
 }
 
 enum word_wrap_whitespace_mode {

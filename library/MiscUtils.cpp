@@ -48,6 +48,43 @@ distribution.
 #include <map>
 #include <array>
 
+NumberFormatType preferred_number_format_type = NumberFormatType::DEFAULT;
+
+DFHACK_EXPORT NumberFormatType get_preferred_number_format_type() {
+    return preferred_number_format_type;
+}
+
+DFHACK_EXPORT void set_preferred_number_format_type(NumberFormatType type) {
+    preferred_number_format_type = type;
+}
+
+static std::locale * try_get_locale(const char * name) {
+    try {
+        return new std::locale(name);
+    } catch (std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
+    return nullptr;
+}
+
+static const std::locale * english_loc = try_get_locale("en_US.UTF-8");
+static const std::locale * system_loc  = try_get_locale("");
+
+DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type) {
+    if (type != NumberFormatType::DEFAULT) {
+        try {
+            if (english_loc && type == NumberFormatType::ENGLISH)
+                ss.imbue(*english_loc);
+            else if (system_loc && type == NumberFormatType::SYSTEM)
+                ss.imbue(*system_loc);
+        } catch (std::exception &e) {
+            std::cerr << e.what() << std::endl;
+        }
+    }
+    if (type != NumberFormatType::SCIENTIFIC)
+        ss << std::fixed;
+}
+
 int random_int(int max)
 {
     return int(int64_t(rand()) * max / (int64_t(RAND_MAX) + 1));

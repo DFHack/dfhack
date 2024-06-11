@@ -457,10 +457,10 @@ static inline std::string &trim(std::string &s) {
 }
 
 enum struct NumberFormatType : int32_t {
+    SCIENTIFIC = -1, // for the hard core (undocumented)
     DEFAULT = 0,
     ENGLISH,
     SYSTEM,
-    SCIENTIFIC,
 };
 
 DFHACK_EXPORT NumberFormatType get_preferred_number_format_type();
@@ -477,11 +477,6 @@ static inline std::string format_number_by_locale(T num, NumberFormatType type) 
     else
         ss << num;
     return ss.str();
-}
-
-template<typename T>
-static inline std::string format_number_by_locale(T num) {
-    return format_number_by_locale(num, get_preferred_number_format_type());
 }
 
 enum word_wrap_whitespace_mode {

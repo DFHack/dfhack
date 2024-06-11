@@ -473,7 +473,7 @@ namespace df
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
         {}
 
-        const std::string getFullName(type_identity *item) const {
+        virtual const std::string getFullName(const type_identity *item) const {
             return "BitArray<>";
         }
 

@@ -505,6 +505,7 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
         end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
+            --print('widget handled input:', w.name)
             return true
         end
         ::skip::

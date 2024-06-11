@@ -63,6 +63,12 @@ namespace df {
         static const bool is_method = true;
     };
 
+    // the std::is_enum_v alternative is because pushing is_primitive
+    // into all the enum identities would require changing codegen
+
+    template<typename RT>
+    concept isPrimitive = identity_traits<RT>::is_primitive || std::is_enum_v<RT> || std::is_void_v<RT>;
+
     template<typename T>
     T get_from_lua_state(lua_State* L, int idx) {
         T val;
@@ -73,7 +79,8 @@ namespace df {
 
     template<typename RT, typename... AT, typename FT, typename... ET, std::size_t... I>
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
-    void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
+        && isPrimitive<RT>
+        void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
     {
         if constexpr (std::is_same_v<RT, void>) {
             std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
@@ -88,6 +95,8 @@ namespace df {
 
     template<typename RT, typename... AT, typename FT, typename... ET, typename indices = std::index_sequence_for<AT...> >
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
+        && isPrimitive<RT>
+
     void call_and_push(lua_State* L, int base, FT fun, ET... extra)
     {
         call_and_push_impl<RT, AT...>(L, base, indices{}, fun, extra...);
@@ -96,6 +105,7 @@ namespace df {
     template<typename T> struct function_wrapper {};
 
     template<typename RT, typename ...AT>
+        requires isPrimitive<RT>
     struct function_wrapper<RT(*)(DFHack::color_ostream&, AT...)> {
         static const int num_args = sizeof...(AT);
         static void execute(lua_State *L, int base, RT (fun)(DFHack::color_ostream& out, AT...)) {
@@ -105,6 +115,7 @@ namespace df {
     };
 
     template<typename RT, typename ...AT>
+        requires isPrimitive<RT>
     struct function_wrapper<RT(*)(AT...)> {
         static const int num_args = sizeof...(AT);
         static void execute(lua_State *L, int base, RT (fun)(AT...)) {
@@ -113,6 +124,7 @@ namespace df {
     };
 
     template<typename RT, class CT, typename ...AT>
+        requires isPrimitive<RT>
     struct function_wrapper<RT(CT::*)(AT...)> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...)) {
@@ -122,6 +134,7 @@ namespace df {
     };
 
     template<typename RT, class CT, typename ...AT>
+        requires isPrimitive<RT>
     struct function_wrapper<RT(CT::*)(AT...) const> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...) const) {
@@ -130,7 +143,7 @@ namespace df {
         };
     };
 
-    template<class T>
+    template<typename T>
     class function_identity : public function_identity_base {
         T ptr;
 
@@ -140,12 +153,14 @@ namespace df {
         function_identity(T ptr, bool vararg)
             : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};
 
-        virtual void invoke(lua_State *state, int base) { wrapper::execute(state, base, ptr); }
+        virtual void invoke(lua_State *state, int base) const { wrapper::execute(state, base, ptr); }
     };
 
-    template<class T>
+    template<typename T>
     inline function_identity_base *wrap_function(T ptr, bool vararg = false) {
-        // bah, but didn't have any idea how to allocate statically
-        return new function_identity<T>(ptr, vararg);
-    }
-}
+        using RT = return_type<T>::type;
+        if constexpr (isPrimitive<RT>)
+            return new function_identity<T>(ptr, vararg);
+        else
+            return nullptr;
+    }}

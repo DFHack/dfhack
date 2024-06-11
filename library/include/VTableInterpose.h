@@ -160,7 +160,7 @@ namespace DFHack
         */
         friend class virtual_identity;
 
-        virtual_identity *host; // Class with the vtable
+        const virtual_identity *host; // Class with the vtable
         int vmethod_idx;        // Index of the interposed method in the vtable
         void *interpose_method; // Pointer to the code of the interposing method
         void *chain_mptr;       // Pointer to the chain field in the subclass below
@@ -173,18 +173,18 @@ namespace DFHack
         // Chain of hooks within the same host
         VMethodInterposeLinkBase *next, *prev;
         // Subclasses that inherit this topmost hook directly
-        std::set<virtual_identity*> child_hosts;
+        std::set<const virtual_identity*> child_hosts;
         // Hooks within subclasses that branch off this topmost hook
         std::set<VMethodInterposeLinkBase*> child_next;
         // (See the cpp file for a more detailed description of these links)
 
         void set_chain(void *chain);
-        void on_host_delete(virtual_identity *host);
+        void on_host_delete(const virtual_identity *host);
 
-        VMethodInterposeLinkBase *get_first_interpose(virtual_identity *id);
-        bool find_child_hosts(virtual_identity *cur, void *vmptr);
+        VMethodInterposeLinkBase *get_first_interpose(const virtual_identity *id);
+        bool find_child_hosts(const virtual_identity *cur, void *vmptr);
     public:
-        VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name);
+        VMethodInterposeLinkBase(const virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name);
         ~VMethodInterposeLinkBase();
 
         bool is_applied() { return applied; }

@@ -105,7 +105,7 @@ bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructur
 #undef FAIL_PTR
 }
 
-int64_t Checker::get_int_value(const QueueItem & item, type_identity *type, bool quiet)
+int64_t Checker::get_int_value(const QueueItem & item, const type_identity *type, bool quiet)
 {
     if (type == df::identity_traits<int32_t>::get())
     {
@@ -388,12 +388,12 @@ const std::string *Checker::validate_stl_string_pointer(const void *const* base)
 }
 #endif
 
-const char *const *Checker::get_enum_item_key(enum_identity *identity, int64_t value)
+const char *const *Checker::get_enum_item_key(const enum_identity *identity, int64_t value)
 {
     return get_enum_item_attr_or_key(identity, value, nullptr);
 }
 
-const char *const *Checker::get_enum_item_attr_or_key(enum_identity *identity, int64_t value, const char *attr_name)
+const char *const *Checker::get_enum_item_attr_or_key(const enum_identity *identity, int64_t value, const char *attr_name)
 {
     size_t index;
     if (auto cplx = identity->getComplex())

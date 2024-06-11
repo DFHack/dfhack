@@ -523,7 +523,7 @@ bool dig (MapExtras::MapCache & MCache,
             df::tiletype_shape_basic tsb = ENUM_ATTR(tiletype_shape, basic_shape, ts);
             if(tsb == tiletype_shape_basic::Wall)
             {
-                std::cerr << "allowing tt" << (int)tt << ", is wall\n";
+                //std::cerr << "allowing tt" << (int)tt << ", is wall\n";
                 break;
             }
             if (tsb == tiletype_shape_basic::Floor
@@ -533,7 +533,7 @@ bool dig (MapExtras::MapCache & MCache,
                 && ts != tiletype_shape::TWIG
                 )
             {
-                std::cerr << "allowing tt" << (int)tt << ", is floor\n";
+                //std::cerr << "allowing tt" << (int)tt << ", is floor\n";
                 break;
             }
             if (tsb == tiletype_shape_basic::Stair && type == tile_dig_designation::Channel )
@@ -567,7 +567,7 @@ bool dig (MapExtras::MapCache & MCache,
         }
         break;
     }
-    std::cerr << "allowing tt" << (int)tt << "\n";
+    //std::cerr << "allowing tt" << (int)tt << "\n";
     MCache.setDesignationAt(at,des,priority);
     return true;
 };

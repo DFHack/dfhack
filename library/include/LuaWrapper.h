@@ -147,10 +147,10 @@ namespace LuaWrapper {
     /*
      * If is_method is true, these use UPVAL_TYPETABLE to save a hash lookup.
      */
-    void push_object_internal(lua_State *state, type_identity *type, void *ptr, bool in_method = true);
-    void *get_object_internal(lua_State *state, type_identity *type, int val_index, bool exact_type, bool in_method = true);
+    void push_object_internal(lua_State *state, const type_identity *type, void *ptr, bool in_method = true);
+    void *get_object_internal(lua_State *state, const type_identity *type, int val_index, bool exact_type, bool in_method = true);
 
-    void push_adhoc_pointer(lua_State *state, void *ptr, type_identity *target);
+    void push_adhoc_pointer(lua_State *state, void *ptr, const type_identity *target);
 
     /**
      * Verify that the object is a DF ref with UPVAL_METATABLE.
@@ -158,11 +158,11 @@ namespace LuaWrapper {
      */
     DFHACK_EXPORT uint8_t *get_object_addr(lua_State *state, int obj, int field, const char *mode);
 
-    bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
-                            type_identity *type2, int meta2, bool exact_equal);
+    bool is_type_compatible(lua_State *state, const type_identity *type1, int meta1,
+        const type_identity *type2, int meta2, bool exact_equal);
 
     DFHACK_EXPORT
-    type_identity *get_object_identity(lua_State *state, int objidx,
+    const type_identity *get_object_identity(lua_State *state, int objidx,
                                        const char *ctx, bool allow_type = false,
                                        bool keep_metatable = false);
 
@@ -181,7 +181,7 @@ namespace LuaWrapper {
     /**
      * Make a metatable with most common fields, and an empty table for UPVAL_FIELDTABLE.
      */
-    void MakeMetatable(lua_State *state, type_identity *type, const char *kind);
+    void MakeMetatable(lua_State *state, const type_identity *type, const char *kind);
     /**
      * Enable a metafield by injecting an entry into a UPVAL_FIELDTABLE.
      */
@@ -209,18 +209,18 @@ namespace LuaWrapper {
      */
     void PushContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
                              lua_CFunction function,
-                             type_identity *container, type_identity *item, int count);
+        const type_identity *container, const type_identity *item, int count);
     /**
      * Add a 6 upvalue metamethod to the metatable.
      */
     void SetContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
                             lua_CFunction function, const char *name,
-                            type_identity *container, type_identity *item, int count);
+                            const type_identity *container, const type_identity *item, int count);
     /**
      * If ienum refers to a valid enum, attach its keys to UPVAL_FIELDTABLE,
      * and the enum itself to the _enum metafield. Pushes the key table on the stack.
      */
-    void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum);
+    void AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, const type_identity *ienum);
 
     /**
      * Push a closure invoking the given function.

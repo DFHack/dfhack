@@ -3236,9 +3236,10 @@ and are only documented here for completeness:
 * ``dfhack.internal.getPreferredNumberFormat()``
 
   Sets (gets) the preferred numeric format. ``0`` means no formatting (e.g.
-  ``1234567``), ``1`` means English formatting (e.g. ``1,234,567``), and ``2``
+  ``1234567``), ``1`` means English formatting (e.g. ``1,234,567``), ``2``
   means system locale formatting (e.g. ``12.345`` on German systems,
-  ``12,34,567`` on Indian systems, etc.).
+  ``12,34,567`` on Indian systems, etc.), and ``3`` means scientific notation
+  (e.g. ``1.23457e+06``).
 
 For the internal preference values, be aware that setting the values via these
 functions will not persist the choice across program invocations. You must set

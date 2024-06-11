@@ -11,7 +11,7 @@ held by Dwarf Fortress in a transparent manner, but is also used for several oth
 
 The base class of the identity system is the class ``type_identity``, defined in :source:`DataDefs.h <library/include/DataDefs.h>`. A ``type_identity`` object
 provides information about one *type* of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.
-With one specific exception (``global_identity``), there is a one-to-one relationship between C++ types and ``type_identity`` objects.
+With one specific exception (``global_identity``, covered below), there is a one-to-one relationship between C++ types and ``type_identity`` objects.
 In Lua, objects that are being managed via the data identity system are represented as a Lua userdata object. The userdata object
 contains both a pointer to the C++ object itself and a pointer to a ``type_identity`` object that describes the data pointed
 by that pointer. Note that the userdata object does not own the objects pointed to by these pointers, and the Lua engine is
@@ -43,9 +43,10 @@ never responsible for managing their lifetimes.
 
 There are plethora of subclasses of ``type_identity``:
 
-* ``type_identity``
+* ``type_identity`` the abstract base class of all type identities
 
   * ``constructed_identity`` anything with an internal structure (not primitive)
+
     * ``compound_identity`` anything with fields
 
       * ``bitfield_identity`` a structure defined with fields at bit rather than byte boundaries
@@ -121,17 +122,13 @@ Types marked with "(template)" are C++ template types, all parameterized by a si
 Type identity object lifetime and mutability
 ============================================
 
-*Most* instances of ``type_identity`` are statically constructed and are effectively immutable,
-although this is not at present enforced.
-However, ``struct_identity``'s ``parent`` and ``child`` members can be mutated as additional identities are constructed
-and so instances of ``struct_identity`` and its descendants are not immutable
-while other ``struct_identity`` objects are still being constructed.
-(Note that loading a plugin, which can happen at any time, can cause the construction of ``struct_identity`` objects and
-thus the mutation of other existing ``struct_identity`` objects.)
-In addition, ``virtual_identity`` objects contain the data for implementing vmethod interposes,
-which can be added and removed dynamically during the life of the program, and so these objects remain mutable
-for the life of the program.
-It is therefore important that there be at most one ``virtual_identity`` object per virtual class,
+*Most* instances of ``type_identity`` are statically constructed and immutable and are thus ``const static`` when constructed.
+All ``type_identity`` pointers should be declared ``const``.
+Due to the use of lazy initialization, ``compound_identity`` and its subclasses have a few fields that are marked as ``mutable``
+(so that the ``parent`` and ``child`` members can be updated as additional instances are constructed).
+In addition, ``virtual_identity`` has two fields that are ``mutable`` due to the dual use of this type to implement
+DFHack's vmethod interpose system.
+Due to this dual purpose, it is important that there be at most one ``virtual_identity`` object per virtual class,
 although this is not enforced at present.
 Having more than one ``struct_identity`` object for the same type might also potentially lead to misoperation.
 
@@ -195,8 +192,8 @@ must also be approached with caution.
 
 A final note: because most instances of ``type_identity`` are statically constructed
 and their construction is scattered across multiple translation units, it is, in general, *not* safe to cross-reference
-one ``type_identity`` instance during the instantiation of another, because the order in which statically constructed
-objects are instantiated in C++ is unspecified for objects defined in different translation units.
+the contents of one statically-defined ``type_identity`` instance during the static instantiation of another,
+because the order in which statically constructed objects are instantiated in C++ is unspecified for objects defined in different translation units.
 Specifically, this means that the constructor for a ``type_identity`` instance must use care in using
 ``df::identity_traits<T>::get`` to use values from the identity object
 of some other type, because that type's identity object may not have been constructed yet.
@@ -220,13 +217,18 @@ Type traits
 
 ``identity_traits``
 -------------------
-This type trait has one member:
+This type trait has two members:
 
-* ``static type_identity * get()``: This function returns a pointer to the ``type_identity`` for the type ``T``.
+* ``static const type_identity * get()``: This function returns a pointer to the ``type_identity`` for the type ``T``.
+* ``is_primitive``: true if the type is a "primitive type" (except false for enums)
 
 While not a type trait *per se*, the ``allocate<T>`` template function is defined for all types
 as ``return (T*)identity_traits<T>::get()->allocate()`` and provides a convenient way to
 reference the allocator in a type's ``type_identity``.
+
+An additional note: Conceptually, ``Lua::Push<T>`` and ``identity_traits<T>::get->lua_read`` are equivalent, but this is aspirational rather than actual.
+There are several types for which ``Lua::Push`` has specializations that do something different than what ``type_identity::lua_read`` does for the same type.
+
 
 ``enum_traits``
 ---------------

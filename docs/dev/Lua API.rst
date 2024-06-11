@@ -3232,6 +3232,18 @@ and are only documented here for completeness:
   Used to sync mortal mode state to DFHack Core memory for use in keybinding
   checks.
 
+* ``dfhack.internal.setPreferredNumberFormat(value)``
+* ``dfhack.internal.getPreferredNumberFormat()``
+
+  Sets (gets) the preferred numeric format. ``0`` means no formatting (e.g.
+  ``1234567``), ``1`` means English formatting (e.g. ``1,234,567``), and ``2``
+  means system locale formatting (e.g. ``12.345`` on German systems,
+  ``12,34,567`` on Indian systems, etc.).
+
+For the internal preference values, be aware that setting the values via these
+functions will not persist the choice across program invocations. You must set
+preferences via the `control-panel` or `gui/control-panel` interfaces for that.
+
 .. _lua-core-context:
 
 Core interpreter context

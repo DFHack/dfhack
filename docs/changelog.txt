@@ -114,7 +114,7 @@ Template for new versions:
 - ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 - ``dfhack.units.create``, ``dfhack.units.makeown``: Lua access to new module API
-- ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the current system locale
+- ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the player preferences for number formatting set in `gui/control-panel`
 
 ## Removed
 - `plants`: renamed to `plant`

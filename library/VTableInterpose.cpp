@@ -206,7 +206,7 @@ void DFHack::addr_to_method_pointer_(void *pptr, void *addr)
 #error Unknown compiler type
 #endif
 
-void *virtual_identity::get_vmethod_ptr(int idx)
+void *virtual_identity::get_vmethod_ptr(int idx) const
 {
     assert(idx >= 0);
     void **vtable = (void**)vtable_ptr;
@@ -214,7 +214,7 @@ void *virtual_identity::get_vmethod_ptr(int idx)
     return vtable[idx];
 }
 
-bool virtual_identity::set_vmethod_ptr(MemoryPatcher &patcher, int idx, void *ptr)
+bool virtual_identity::set_vmethod_ptr(MemoryPatcher &patcher, int idx, void *ptr) const
 {
     assert(idx >= 0);
     void **vtable = (void**)vtable_ptr;
@@ -295,7 +295,7 @@ void VMethodInterposeLinkBase::set_chain(void *chain)
     addr_to_method_pointer_(chain_mptr, chain);
 }
 
-VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name)
+VMethodInterposeLinkBase::VMethodInterposeLinkBase(const virtual_identity *host, int vmethod_idx, void *interpose_method, void *chain_mptr, int priority, const char *name)
     : host(host), vmethod_idx(vmethod_idx), interpose_method(interpose_method),
       chain_mptr(chain_mptr), priority(priority), name_str(name),
       applied(false), saved_chain(NULL), next(NULL), prev(NULL)
@@ -323,11 +323,13 @@ VMethodInterposeLinkBase::~VMethodInterposeLinkBase()
         remove();
 }
 
-VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(virtual_identity *id)
+VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(const virtual_identity *id)
 {
-    auto item = id->interpose_list[vmethod_idx];
-    if (!item)
+    auto pitem = id->interpose_list.find(vmethod_idx);
+    if (pitem == id->interpose_list.end())
         return NULL;
+
+    auto item = pitem->second;
 
     if (item->host != id)
         return NULL;
@@ -337,14 +339,16 @@ VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(virtual_
     return item;
 }
 
-bool VMethodInterposeLinkBase::find_child_hosts(virtual_identity *cur, void *vmptr)
+bool VMethodInterposeLinkBase::find_child_hosts(const virtual_identity *cur, void *vmptr)
 {
     auto &children = cur->getChildren();
     bool found = false;
 
-    for (size_t i = 0; i < children.size(); i++)
-    {
-        auto child = static_cast<virtual_identity*>(children[i]);
+    for (const auto& child_ : children) {
+        auto child = dynamic_cast<const virtual_identity*>(child_);
+
+        if (!child) continue;
+
         auto base = get_first_interpose(child);
 
         if (base)
@@ -383,7 +387,7 @@ bool VMethodInterposeLinkBase::find_child_hosts(virtual_identity *cur, void *vmp
     return found;
 }
 
-void VMethodInterposeLinkBase::on_host_delete(virtual_identity *from)
+void VMethodInterposeLinkBase::on_host_delete(const virtual_identity *from)
 {
     if (from == host)
     {

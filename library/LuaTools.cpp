@@ -226,12 +226,12 @@ int DFHack::Lua::PushPosXY(lua_State *state, const df::coord2d &pos)
  * Public DF object reference handling API
  */
 
-void DFHack::Lua::PushDFObject(lua_State *state, type_identity *type, void *ptr)
+void DFHack::Lua::PushDFObject(lua_State *state, const type_identity *type, void *ptr)
 {
     push_object_internal(state, type, ptr, false);
 }
 
-void *DFHack::Lua::GetDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
+void *DFHack::Lua::GetDFObject(lua_State *state, const type_identity *type, int val_index, bool exact_type)
 {
     return get_object_internal(state, type, val_index, exact_type, false);
 }
@@ -248,7 +248,7 @@ static void check_valid_ptr_index(lua_State *state, int val_index)
 }
 
 static void signal_typeid_error(color_ostream *out, lua_State *state,
-                                type_identity *type, const char *msg,
+    const type_identity *type, const char *msg,
                                 int val_index, bool perr, bool signal)
 {
     std::string typestr = type ? type->getFullName() : "any pointer";
@@ -273,7 +273,7 @@ static void signal_typeid_error(color_ostream *out, lua_State *state,
 }
 
 
-void *DFHack::Lua::CheckDFObject(lua_State *state, type_identity *type, int val_index, bool exact_type)
+void *DFHack::Lua::CheckDFObject(lua_State *state, const type_identity *type, int val_index, bool exact_type)
 {
     check_valid_ptr_index(state, val_index);
 

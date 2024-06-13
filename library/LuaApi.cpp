@@ -2860,6 +2860,34 @@ static int screen_readTile(lua_State *L)
     return 1;
 }
 
+static int screen_paintTileMapPort(lua_State *L)
+{
+    Pen pen;
+    Lua::CheckPen(L, &pen, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
+    {
+        if (lua_type(L, 4) == LUA_TSTRING)
+            pen.ch = lua_tostring(L, 4)[0];
+        else
+            pen.ch = luaL_checkint(L, 4);
+    }
+    if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
+        pen.tile = luaL_checkint(L, 5);
+    lua_pushboolean(L, Screen::paintTileMapPort(pen, x, y));
+    return 1;
+}
+
+// static int screen_readTileMapPort(lua_State *L)
+// {
+//     int x = luaL_checkint(L, 1);
+//     int y = luaL_checkint(L, 2);
+//     Pen pen = Screen::readTileMapPort(x, y);
+//     Lua::Push(L, pen);
+//     return 1;
+// }
+
 static int screen_paintString(lua_State *L)
 {
     Pen pen;
@@ -3047,6 +3075,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
     { "readTile", screen_readTile },
+    { "paintTileMapPort", screen_paintTileMapPort },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },

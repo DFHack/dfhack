@@ -365,6 +365,41 @@ Pen Screen::readTile(int x, int y, bool map, int32_t * df::graphic_viewportst::*
     return doGetTile(x, y, map, texpos_field);
 }
 
+static bool doSetTile_map_port(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field) {
+    auto &vp = gps->main_map_port;
+    if (!texpos_field)
+        texpos_field = &df::graphic_map_portst::screentexpos_interface;
+
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return false;
+
+    size_t max_index = vp->dim_y * vp->dim_x - 1;
+    size_t index = (y * vp->dim_x) + x;
+
+    if (index > max_index)
+        return false;
+
+    long texpos = pen.tile;
+    if (!texpos && pen.ch)
+        texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
+    (vp->*texpos_field)[index] = texpos;
+    return true;
+}
+
+GUI_HOOK_DEFINE(Screen::Hooks::set_tile_map_port, doSetTile_map_port);
+static bool doSetTileMapPort(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field = NULL)
+{
+    return GUI_HOOK_TOP(Screen::Hooks::set_tile_map_port)(pen, x, y, texpos_field);
+}
+
+bool Screen::paintTileMapPort(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field)
+{
+    if (!gps || !pen.valid()) return false;
+
+    doSetTileMapPort(pen, x, y, texpos_field);
+    return true;
+}
+
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)
 {
     auto dim = getWindowSize();

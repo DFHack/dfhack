@@ -35,7 +35,7 @@ enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
 };
 
-static const int32_t CYCLE_TICKS = 47; // need to react quickly when eggs are laid/unforbidden
+static const int32_t CYCLE_TICKS = 7; // need to react quickly when eggs are laid/unforbidden
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static void do_cycle(color_ostream &out);

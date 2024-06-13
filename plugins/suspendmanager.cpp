@@ -684,8 +684,13 @@ public:
         DEBUG(cycle,out).print("finished refresh: found %zu reasons for suspension\n",suspensions.size());
     }
 
-    void do_cycle (color_ostream &out) {
-        refresh(out);
+    void do_cycle (color_ostream &out, bool unsuspend_everything = false)
+    {
+        if (unsuspend_everything){
+            suspensions.clear();
+        } else {
+            refresh(out);
+        }
         num_suspend = 0, num_unsuspend = 0;
 
         Reason reason;
@@ -904,6 +909,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 }
 
 static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters) {
+    CoreSuspender suspend;
     auto ok = Lua::CallLuaModuleFunction(out, "plugins.suspendmanager", "unsuspend_command", parameters);
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -957,10 +963,10 @@ static bool suspendmanager_isKeptSuspended(df::job *job) {
     }
 }
 
-static void suspendmanager_runOnce(color_ostream &out, bool blocking) {
+static void suspendmanager_runOnce(color_ostream &out, bool blocking, bool unsuspend_everything) {
     auto save = suspendmanager_instance->prevent_blocking;
     suspendmanager_instance->prevent_blocking = blocking;
-    do_cycle(out);
+    suspendmanager_instance->do_cycle(out, unsuspend_everything);
     suspendmanager_instance->prevent_blocking = save;
 }
 

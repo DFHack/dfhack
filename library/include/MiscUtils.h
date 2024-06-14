@@ -479,11 +479,8 @@ static inline std::string format_number(T num, NumberFormatType type) {
         ss << (double)num;
         break;
     case NumberFormatType::SIG_FIG:
-        if (num >= (T)10000) {
-            ss << format_number_by_sig_fig((double)num, 3);
-            break;
-        }
-        // fallthrough
+        ss << format_number_by_sig_fig((double)num, 3);
+        break;
     default:
         ss << num;
         break;

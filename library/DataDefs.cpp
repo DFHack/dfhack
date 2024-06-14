@@ -341,8 +341,10 @@ virtual_identity *virtual_identity::find(void *vtable)
         return p;
     }
 
-    std::cerr << "Class not in symbols.xml: '" << name << "': vtable = 0x"
-              << std::hex << uintptr_t(vtable) << std::dec << std::endl;
+    if (name.find("dfhack_") == name.npos) {
+        std::cerr << "Class not in symbols.xml: '" << name << "': vtable = 0x"
+                << std::hex << uintptr_t(vtable) << std::dec << std::endl;
+    }
 
     known[vtable] = NULL;
     return NULL;

@@ -112,17 +112,18 @@ DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs) 
     if (num == 0)
         return "0";
 
-    std::ostringstream ss;
-    if (sig_figs > sig_fig_db.size()) {
-        ss << std::fixed << num;
-        return ss.str();
-    }
+    double absnum = std::abs(num);
+    int magnitude = absnum <= 1 ? 0 : std::min((size_t)std::floor(std::log2(absnum) * (1/std::log2(10))) + 1, sig_fig_db.size() - 1);
+    auto & sig_data = sig_fig_db[magnitude];
 
     int sf = (int)sig_figs;
-    int magnitude = std::min((size_t)std::floor(std::log10(std::abs(num))) + 1, sig_fig_db.size() - 1);
-    auto & sig_data = sig_fig_db[magnitude];
-    int precision = std::max(0, sf - (magnitude % 3)) % 3;
-    ss << std::fixed << std::setprecision(precision) << num / sig_data.second << sig_data.first;
+    if (sf < 1) sf = 1;
+    int precision = magnitude <= 4 ? std::max(0, sf - magnitude) : std::max(0, sf - (magnitude % 3)) % 3;
+    double divisor = sig_data.second;
+    double roundoff = divisor <= 1.0 ? 0 : 1.0 / (2.0 * std::pow(10, precision));
+
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(precision) << std::copysign(absnum / divisor - roundoff, num) << sig_data.first;
     return ss.str();
 }
 

@@ -10,6 +10,12 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _adv-rumors:
+
+adv-rumors
+==========
+Converted to an `overlay` and merged into `advtools`.
+
 .. _autohauler:
 
 autohauler

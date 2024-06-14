@@ -43,10 +43,12 @@ distribution.
 #include <stdarg.h>
 #include <string.h>
 #include <cstdlib>
+#include <cmath>
 
 #include <sstream>
 #include <map>
 #include <array>
+#include <unordered_map>
 
 NumberFormatType preferred_number_format_type = NumberFormatType::DEFAULT;
 
@@ -71,7 +73,7 @@ static const std::locale * english_loc = try_get_locale("en_US.UTF-8");
 static const std::locale * system_loc  = try_get_locale("");
 
 DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type) {
-    if (type != NumberFormatType::DEFAULT) {
+    if (type == NumberFormatType::ENGLISH || type == NumberFormatType::SYSTEM) {
         try {
             if (english_loc && type == NumberFormatType::ENGLISH)
                 ss.imbue(*english_loc);
@@ -83,6 +85,45 @@ DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType ty
     }
     if (type != NumberFormatType::SCIENTIFIC)
         ss << std::fixed;
+    ss << std::setprecision(2);
+}
+
+// magnitude to (suffix, divisor)
+static const std::vector<std::pair<const char *, double>> sig_fig_db = {
+    { "", 1.0},              //                    0.*
+    { "", 1.0},              //                    1
+    { "", 1.0},              //                   10
+    { "", 1.0},              //                  100
+    { "", 1.0},              //                1,000
+    {"k", 1000.0},           //               10,000
+    {"k", 1000.0},           //              100,000
+    {"M", 1000000.0},        //            1,000,000
+    {"M", 1000000.0},        //           10,000,000
+    {"M", 1000000.0},        //          100,000,000
+    {"B", 1000000000.0},     //        1,000,000,000
+    {"B", 1000000000.0},     //       10,000,000,000
+    {"B", 1000000000.0},     //      100,000,000,000
+    {"T", 1000000000000.0},  //    1,000,000,000,000
+    {"T", 1000000000000.0},  //   10,000,000,000,000
+    {"T", 1000000000000.0},  //  100,000,000,000,000+
+};
+
+DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs) {
+    if (num == 0)
+        return "0";
+
+    std::ostringstream ss;
+    if (sig_figs > sig_fig_db.size()) {
+        ss << std::fixed << num;
+        return ss.str();
+    }
+
+    int sf = (int)sig_figs;
+    int magnitude = std::min((size_t)std::floor(std::log10(std::abs(num))) + 1, sig_fig_db.size() - 1);
+    auto & sig_data = sig_fig_db[magnitude];
+    int precision = std::max(0, sf - (magnitude % 3)) % 3;
+    ss << std::fixed << std::setprecision(precision) << num / sig_data.second << sig_data.first;
+    return ss.str();
 }
 
 int random_int(int max)

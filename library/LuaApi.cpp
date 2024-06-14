@@ -1355,8 +1355,8 @@ static string upperCp437(string s) { return toUpper_cp437(s); }
 static string lowerCp437(string s) { return toLower_cp437(s); }
 static string toSearchNormalized(string s) { return to_search_normalized(s); }
 static string capitalizeStringWords(string s) { return capitalize_string_words(s); }
-static string formatInt(int64_t num) { return format_number_by_locale(num, get_preferred_number_format_type()); }
-static string formatFloat(double num) { return format_number_by_locale(num, get_preferred_number_format_type()); }
+static string formatInt(int64_t num) { return format_number(num, get_preferred_number_format_type()); }
+static string formatFloat(double num) { return format_number(num, get_preferred_number_format_type()); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -3396,10 +3396,11 @@ static void recordRepeatRuntime(string name, uint32_t start_ms) {
 static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
     NumberFormatType type = (NumberFormatType)type_int;
     switch (type) {
-    case NumberFormatType::SCIENTIFIC:
     case NumberFormatType::DEFAULT:
     case NumberFormatType::ENGLISH:
     case NumberFormatType::SYSTEM:
+    case NumberFormatType::SIG_FIG:
+    case NumberFormatType::SCIENTIFIC:
         set_preferred_number_format_type(type);
         break;
     default:

@@ -61,6 +61,7 @@ case "$1" in
   -g | --gdb)
     shift
     echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
+    echo "set print thread-events off" >> gdbcmd.tmp
     gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./dwarfort "$@"
     rm gdbcmd.tmp
     ret=$?

@@ -83,6 +83,7 @@ Template for new versions:
 - `quickfort`: support buildable instruments
 - `nestboxes`: increase the scanning frequency for fertile eggs to reduce the chance that they get snarfed by eager dwarves
 - `autonestbox`: wait until juveniles become adults before they are assigned to nestboxes
+- `suspendmanager`: add option to ``unsuspend`` that unsuspends all jobs, regardless of potential issues
 
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)

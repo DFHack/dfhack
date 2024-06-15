@@ -210,6 +210,7 @@ static bool isFreeEgglayer(df::unit *unit) {
     return Units::isActive(unit)
         && !Units::isUndead(unit)
         && Units::isFemale(unit)
+        && Units::isAdult(unit)
         && unlikely_to_revert_to_wild(unit)
         && Units::isOwnCiv(unit)
         && Units::isEggLayer(unit)

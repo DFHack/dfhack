@@ -2145,7 +2145,9 @@ apply in a different fort.
 ~~~~~~~~~~~~~~~~~~~~~
 
 In addition to the type-specific properties listed in the symbol table below,
-all building types accept the ``name`` property.
+all building types accept the ``name`` and ``do_now`` properties. The
+``do_now`` property, if set to ``true``, will cause the building to be built at
+high priority as soon as possible.
 
 Moreover, all workshops and furnaces (both called "workshops" below) accept the
 following "profile" properties:

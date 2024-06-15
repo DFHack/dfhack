@@ -56,7 +56,7 @@ gui/quickfort,/setup_help,,For advice on how to do initial setup for success.
 ""
 -- Find a good starting spot on the surface --
 DFHack command,Blueprint,Generate orders,Notes
-gui/quickfort,/perimeter,,Run at embark. Don't actually apply the blueprint -- it's way too early to dedicate resources to building walls. Just use the preview shadow to find a good spot on the surface.
+gui/quickfort,/perimeter,,Run at embark. Don't actually apply the blueprint -- it's way too early to dedicate resources to building walls. Just use the preview shadow to find a good spot on the surface. See the surface level help for how to find a good spot.
 ""
 -- Dig  --
 DFHack command,Blueprint,Generate orders,Notes
@@ -69,14 +69,12 @@ gui/quickfort,/surface2,,"Build starter workshops/stockpiles and dig miasma vent
 gui/quickfort,/farming1,,Dig out the farming level. Run when channels on the surface are dug and the additional designated trees are cleared.
 gui/quickfort,/farming2,,Build farming level. Run as soon as the farming level has been completely dug out.
 gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central staircase from early invasions. Run right after /farming2.
-gui/quickfort,/industry2,,Build industry level. Run as soon as the industry level has been completely dug out.
-prioritize ConstructBuilding,,,"To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. Be sure that there are no items attached to jobs left in the surface workshops before deconstructing them, otherwise you'll get canceled jobs!"
+gui/quickfort,/industry2,,"Build industry level. Run as soon as the industry level has been completely dug out. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. Be sure that there are no items attached to jobs left in the surface workshops before deconstructing them, otherwise you'll get canceled jobs!"
 gui/quickfort,/surface4,,Finish protecting the staircase and lay flooring for future buildings. Run after the walls and floors around the staircase are built and you have moved production from the surface to the industry level.
 gui/quickfort,/industry3,,Build the rest of the industry level. Run once /surface4 is mostly complete.
 orders import library/basic,,,"Run after the first migration wave, so you have dwarves to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 gui/quickfort,/services2,Yes,"Build simple hospital and dining room, including a well. Run once the 4 services levels have been dug out and you have built up some stone in your industry stone stockpiles. Feel free to remove the orders for the ropes if you brought some with you. If you are filling your wells from an aquifer or stream, now is also a good time to start digging the plumbing."
 gui/quickfort,/surface5,Yes,"Build surface buildings, drawbridges, and furniture. Run when all marked trees on the surface are chopped down and previously-designated walls and floors have been constructed. Be sure to check that the little ""wing"" of roof section over the future barracks is constructed so we can place the barracks beds."
-prioritize ConstructBuilding,,,Run when you see the bridges ready to be built so the busy masons come and build them.
 gui/quickfort,/surface6,Yes,Build security perimeter. Run once you have linked all levers to their respective bridges.
 gui/quickfort,/surface7,Yes,Build roof. Run after the surface walls are completed and any marked trees are chopped down. Be sure to give your haulers some time to fill the stonecutter's stockpile with some stone first so your stonecutters won't be hauling it up from the depths by hand.
 ""
@@ -104,7 +102,7 @@ gui/quickfort,/apartments2,Yes,Repeat as needed as your fort grows.
 gui/quickfort,/crypt3,Yes,Run when the crypt is starting to run out of free tombs.
 ""
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
-#notes label(setup_help)
+#notes label(setup_help) pre- and post-embark tasks
 These are Dreamfort's suggestions for adjustments to settings and initial setup.
 ""
 You can save some time by setting up your settings in gui/control-panel before you embark.
@@ -126,6 +124,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 - buildingplan set boulders false
 - buildingplan set logs false
 - cleanowned
+- logistics enable autoretrain
 - nestboxes
 - orders-sort
 - prioritize
@@ -147,8 +146,10 @@ On the work details screen (Labor -> Work details)
 ""
 In standing orders (Labor -> Standing orders):
 "  - Change ""Automatically weave all thread"" to ""No automatic weaving"" so the hospital always has thread -- we'll be managing cloth production with automated orders"
-"- On the ""Other"" tab, change ""Everybody harvests"" to ""Only farmers harvest"""
-"#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
+"- On the ""Other"" tab, change ""Everybody harvests"" to ""Only farmers harvest"". This will prevent unilts that don't have the Planting labor enabled from harvesting plants, allowing planting skill gains to be concentrated into your designated planters and improving your overall crop yield."
+""
+"Once you have your standing orders set the way you like, you can export them and instruct DFHack to autoload your saved settings on new embarks. The controls for getting this set up are available by default in a panel at the bottom of the Standing orders -> Automated workshops tab."
+"#meta label(dig_all) start(central stairs on industry level) message(You can repeat the /central_stairs blueprint down more levels if you need more stairs.) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
 /industry1
@@ -234,7 +235,7 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [PET:1:CAT:MALE:STANDARD]
 [PET:2:BIRD_GOOSE:FEMALE:STANDARD]
 [PET:2:BIRD_GOOSE:MALE:STANDARD]
-#notes label(surface_help)
+#notes label(surface_help) surface level walkthrough
 Sets up a protected entrance to your fort in a flat area on the surface.
 Screenshot: https://drive.google.com/file/d/1dlu3nmwQszav-ZaTx-ac28wrcaYBQc_t
 ""
@@ -245,10 +246,10 @@ Features:
 - Barracks (with prisoner processing quantum dump)
 - Trap-filled hallways for invaders
 - Optional extended trap hallways (to handle larger sieges with a smaller/no military)
-"- Protected trade depot, with separate trade goods stockpiles for organics and inorganics (for easy elven trading)"
+"- Protected trade depot, with separate trade goods stockpiles for organics and inorganics (for safe elven trading)"
 - A grid of small farm plots for lucrative surface farming
 "- A burrow named ""Inside+"" that grows with your fort as you dig it out. It is pre-registered as a civilian alert burrow so you can use it to get your civilians to safety during sieges."
-"- A burrow named ""Clearcutting area"" that is automatically registered with autochop (if you have it enabled) to keep the area around your fort clear of trees"
+"- A burrow named ""Clearcutting area"" that is automatically registered with autochop (if you have it enabled) to keep the area around your fort clear of trees. This prevents invaders from jumping over your walls. Moreover, it prevents trees from growing large near your exterior walls. If those trees are chopped down so they fall on the fort, they can collapse the roof."
 ""
 Manual steps you have to take:
 "- Assign grazing livestock to the large pasture, dogs to the pasture over the central stairs, and male birds to the zone between the rows of nestboxes (DFHack's autonestbox will auto-assign the female egg-laying birds to the nestbox zones)"
@@ -258,21 +259,21 @@ Manual steps you have to take:
 Be sure to choose an embark site that has a flat area on the surface large enough to use these blueprints!
 ""
 Surface Walkthrough:
-"1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or ponds. To be sure that the tile you've chosen is in a good spot, run ""gui/quickfort dreamfort /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Cancel out of the preview. You don't actually need to apply this blueprint."
+"1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or ponds. To be sure that the tile you've chosen is in a good spot, run ""gui/quickfort dreamfort /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Cancel out of the preview. You don't actually need to apply this blueprint. You may want to double-check your selected area with gui/biomes to make sure your surface farm plots (to the left of the central tile) will be in a biome that you want to grow in (e.g. you cannot grow surface plants in mountain biomes). Also, the biome to the north of the central tile will hold the underground farm plots, so be sure it has soil."
 ""
-"2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. Your egg-layers will automatically get assigned to nestbox zones once the nestboxes are built, so you don't need to worry about them. You can let your cats roam free to chase vermin."
+"2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase, your grazing animals to the large pasture, and your male birds to the zone between the nestboxes. Your female egg-layers will automatically get assigned to nestbox zones once the nestboxes are built, so you don't need to worry about them. You can let your cats roam free to chase vermin."
 ""
-"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Generate manager orders for /surface2."
+"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Generate manager orders for /surface2 if you haven't already preordered with the checklist command."
 ""
-"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level. Generate manager orders for /surface3."
+"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring (or solid walls), they will still work to prevent miasma on the farming level. Generate manager orders for /surface3 if you haven't already preordered with the checklist command."
 ""
-"5) Once all walls and floors have been constructed around the stairwell, run /surface4 to build floors and walls to support upcoming buildings and furniture. Generate manager orders for /surface4."
+"5) Once all walls and floors have been constructed around the stairwell, run /surface4 to build floors and walls to support upcoming buildings and furniture. Generate manager orders for /surface4 if you haven't already preordered with the checklist command."
 ""
-"6) Once walls and floors have been constructed (including the small roof segment one z-level up over the barracks), run /surface5 to build furniture, gates, and the permanent trade depot. Remember to deconstruct the temporary trade depot once nobody is using it. Generate manager orders for /surface5."
+"6) Once walls and floors have been constructed (including the small roof segment one z-level up over the barracks), run /surface5 to build furniture and the drawbridge gates. This blueprint also clearcuts the trees from around the exterior walls. The blueprint may appear to extend off the map or into a nearby hill, but that is ok. Generate manager orders for /surface5."
 ""
 "7) Once all marked trees are cleared, run /surface6 to build the security perimeter and remaining flooring. Generate manager orders for /surface6."
 ""
-"8) Once you have enough dwarves to do a lot of building without starving other important tasks, run /surface7 to build the roof. Generate manager orders for /surface7."
+"8) Once you have enough dwarves to do a lot of building without starving other important tasks, run /surface7 to build the roof. This blueprint also sets up the autochop-integrated clearcutting area, so it may extend off the map or into nearby hills. It is not a problem if that happens. Generate manager orders for /surface7."
 ""
 "9) For extra security, you can run /surface8 any time after /surface7 to extend the trap corridors. Generate manager orders for /surface8."
 ""
@@ -320,7 +321,7 @@ Cu,`,Cu
 /central_stairs_odd_constructed
 #>
 /central_stairs_even_constructed
-"#meta label(perimeter) start(central stairs) message(If you accidentally applied this blueprint to the map, run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting"
+"#meta label(perimeter) start(central stairs) message(If you accidentally applied this blueprint to the map, run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting. DO NOT APPLY."
 walls/surface_walls
 corridor_gates/surface_corridor_gates
 corridor/surface_corridor
@@ -336,25 +337,24 @@ zones/surface_zones
 #>
 central_stairs/central_stairs repeat(down 10)
 ""
-"#meta label(surface2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface2) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.
 Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
 place_start/surface_place_start
 build_start/surface_build_start
 channel/surface_channel
 clear/surface_clear
 ""
-"#meta label(surface3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface3) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.
 Once the walls and floors around the staircase have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
 cover_vents/surface_cover_vents
 cover_stairs/surface_cover_stairs
 ""
-"#meta label(surface4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface4) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.
 Once the bits of flooring have been constructed, continue with /surface5. Be sure to check one z-level above the surface to ensure the roof segment above the future barracks has been finished.) build walls and flooring to support upcoming buildings and furniture"
 stairs_doors/surface_stairs_doors
 pre_building/surface_pre_building
 ""
 "#meta label(surface5) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
-Disassemble the temporary trade depot in the pasture once the new one is constructed (and no merchants are using the old one).
 Once the marked trees are cleared, continue with /surface6.) build gates, furniture, and trade stockpile/depot"
 traffic/surface_traffic
 place/surface_place
@@ -398,7 +398,7 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,t1,`,`,`,`,`,`,,`,,`,`,`,`,`,t1,`,`,`,t1,`,`,,`
-,,,`,,`,,`,t1,t1,,,,,,`,t1,t1,t1,t1,t1,`,,,,,,,,,,`,,`
+,,,`,,`,,`,t1,t1,,,,,,`,t1,t1,t1,t1,t1,`,,,,t1(5x5),,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,t1,t1,t1,t1,t1,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,`,t1,j,t1,j,t1,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,t1,t1,t1,t1,t1,,,,,,,,,,,`,,`
@@ -488,17 +488,17 @@ corridor_traps/surface_corridor_traps
 
 
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,,"gunzSpd{name=""Starting misc"" containers=0}(8x2)",,,,,,,,"hlr{name=""Starting cloth/trash"" containers=0}(8x2)",,,,,,,,,,,,,,,`,,`
+,,,`,,`,"hlr{name=""Starting cloth/trash"" containers=0}(15x2)",,,,,,,,,,,,,,,,"gunzSpd{name=""Starting misc"" containers=0}(9x2)",,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,"f{name=""Starting food""}(8x4)",,,,,,,,"w{name=""Starting wood""}(4x4)",,,,"s2{name=""Starting stone""}:=otherstone(6x4)",,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,"f{name=""Starting food""}(9x4)",,,,,,,,,`,,`
+,,,`,,`,"w{name=""Starting wood""}(4x4)",,,,~,~,~,,"s2{name=""Starting stone""}:=otherstone(7x3)",,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,~,~,~,~,~,~,~,~,~,`,,`
+,,,`,,`,,,,,~,~,~,,~,~,~,,~,~,~,,~,~,~,~,~,~,~,~,~,`,,`
+,,,`,,`,~,~,~,,~,~,~,,~,~,~,,~,~,~,,~,~,~,~,~,~,~,~,~,`,,`
+,,,`,,`,~,~,~,,~,~,~,,~,~,~,,~,~,~,,~,~,~,~,~,~,~,~,~,`,,`
+,,,`,,`,~,~,~,,,,,,,,,,,,,,~,~,~,~,~,~,~,~,~,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
@@ -522,23 +522,23 @@ corridor_traps/surface_corridor_traps
 
 
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,`,`,"D{name=""Starter trade depot""}",`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,,,,,,,,,,`,,`
-,,,`,,`,`,"wt{name=""Starter mechanic's""}",`,,`,"wc{name=""Starter carpenter""}",`,,`,"wr{name=""Starter craftsdwarf's""}",`,,`,"wm{name=""Starter stoneworker's"" max_general_orders=2}",`,,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,"wt{name=""Starter mechanic's""}",~,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,~,~,~,,~,~,~,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,"wc{name=""Starter carpenter""}",~,,~,"wr{name=""Starter craftsdwarf's""}",~,,~,"wm{name=""Starter stoneworker's"" max_general_orders=2}",~,,,,,,,,,,,`,,`
+,,,`,,`,,,,,~,~,~,,~,~,~,,~,~,~,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,`,N,N,,,,,,`,,,,,,`,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,`,,`,~,`,,`,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,N,N,,,,,,`,,,,,,`,,,,~,~,~,~,~,,`,,`
+,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,~,~,~,~,~,,`,,`
+,,,`,,`,,,,,,,,,,`,,`,~,`,,`,,,,~,~,D,~,~,,`,,`
+,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,~,~,~,~,~,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -807,11 +807,11 @@ corridor_traps/surface_corridor_traps
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,`,,,,,,,,`,Cf,,Cf,,Cf,`,Cf,Cf,,Cf,Cf,Cf,Cf,Cf,,`,,`
-,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,Cf,Cf,,Cf,Cf,Cf,Cf,Cf,,`,,`
-,,,`,,`,,Cf,,,,,,,,`,,`,`,`,,`,Cf,Cf,,Cf,Cf,Cf,Cf,Cf,,`,,`
-,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,Cf,Cf,,Cf,Cf,Cf,Cf,Cf,,`,,`
-,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,Cf,Cf,,Cf,Cf,Cf,Cf,Cf,,`,,`
+,,,`,,`,,`,~,~,N,N,N,N,N,`,Cf,,Cf,,Cf,`,Cf,Cf,,~,~,~,~,~,,`,,`
+,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,Cf,Cf,,~,~,~,~,~,,`,,`
+,,,`,,`,,Cf,,,,,,,,`,,`,`,`,,`,Cf,Cf,,~,~,~,~,~,,`,,`
+,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,Cf,Cf,,~,~,~,~,~,,`,,`
+,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,Cf,Cf,,~,~,~,~,~,,`,,`
 ,,,`,,`,`,`,`,`,`,Cw,Cf,Cw,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
 ,,,`,,`,Cf,Cf,Cf,Cf,Cf,,,,`,~,Cf,Cf,Cf,Cf,Cf,~,`,,,,,,,,,`,,`
 ,,,`,,`,Cf,Cf,Cf,Cf,Cf,,,,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,,`,,`
@@ -860,7 +860,7 @@ corridor_traps/surface_corridor_traps
 
 "#place label(surface_place) start(19; 19) hidden() message(Remember to assign minecarts to the trade goods and prisoner processing quantum stockpiles (run ""assign-minecarts all"").
 Feel free to adjust the configuration of the ""trade goods"" feeder stockpile so it accepts the item types you want to trade away. If those items types are also accepted by other stockpiles, configure those stockpiles to give to the ""trade goods"" stockpile.
-You might also want to set the ""trade goods quantum"" stockpile to autotrade.) remaining surface stockpiles"
+The inorganic trade goods stockpile is set to autotrade, but you can toggle that according to your preference.) remaining surface stockpiles"
 
 
 
@@ -908,24 +908,24 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,~,~,~,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,~,"ww{name=""Milking/shearing station"" labor=""Milking, Shearing""}",~,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,~,~,~,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,N,N,N,N,N,`,"Tl{name=""Barracks gate""}",,"Tl{name=""Inner main gate""}",,"Tl{name=""Trade depot gate""}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
+,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,~,~,~,~,~,~,~,`,"Tl{name=""Barracks gate"" do_now=true}",,"Tl{name=""Inner main gate"" do_now=true}",,"Tl{name=""Trade depot gate"" do_now=true}",`,"trackstopE{name=""Organic trade goods dumper"" take_from=""Trade goods"" route=""Organic trade goods quantum""}",,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
-,,,`,,`,"~h{name=""reserved for splitting"" do_install=true}(1x1)",d,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),`,,`,`,`,,`,,,,~,~,D,~,~,,`,,`
+,,,`,,`,"~h{name=""reserved for splitting"" do_install=true}(1x1)",d,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),`,,`,`,`,,`,,,,~,~,~,~,~,,`,,`
 ,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,~,~,~,~,~,,`,,`
-,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,N,N,N,N,N,N,N,`,"Tl{name=""Left outer gate""}(1x1)","Tl{name=""Left inner gate""}(1x1)","Tl{name=""Outer main gate""}(1x1)","Tl{name=""Right inner gate""}(1x1)","Tl{name=""Right outer gate""}(1x1)",`,"trackstopE{name=""Inorganic trade goods dumper"" take_from=""Trade goods,Organic trade goods quantum"" route=""Inorganic trade goods quantum""}:-organic",,,~,~,~,~,~,,`,,`
+,,,`,,`,~h{do_install=true do_gather=true}(1x1),`,N,N,N,N,N,N,N,`,"Tl{name=""Left outer gate"" do_now=true}(1x1)","Tl{name=""Left inner gate"" do_now=true}(1x1)","Tl{name=""Outer main gate"" do_now=true}(1x1)","Tl{name=""Right inner gate"" do_now=true}(1x1)","Tl{name=""Right outer gate"" do_now=true}(1x1)",`,"trackstopE{name=""Inorganic trade goods dumper"" take_from=""Trade goods,Organic trade goods quantum"" route=""Inorganic trade goods quantum""}:-organic",,,~,~,~,~,~,,`,,`
 ,,,`,,`,`,`,`,`,`,`,d,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
-,,,`,,`,b,b,b,b,b,,,,`,,"gw{name=""Inner main gate""}",gw,gw,gw,gw,,`,,,,,,,,,`,,`
-,,,`,,`,h,h,h,h,h,,,,"ga{name=""Barracks gate""}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depot gate""}",gd,,,,,,,,,`,,`
+,,,`,,`,b,b,b,b,b,,,,`,,"gw{name=""Inner main gate"" do_now=true}",gw,gw,gw,gw,,`,,,,,,,,,`,,`
+,,,`,,`,h,h,h,h,h,,,,"ga{name=""Barracks gate"" do_now=true}",ga,gw,gw,gw,gw,gw,"gd{name=""Trade depot gate"" do_now=true}",gd,,,,,,,,,`,,`
 ,,,`,,`,a,r,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,h,h,h,h,h,,"trackstopS{name=""Prisoner/cage dumper"" take_from=""Pets/Prisoner feeder"" route=""Prisoner/cage quantum""}:-cat_animals/tameable",,ga,ga,,,,,,gd,gd,,,,,,,,,`,,`
 ,,,`,,`,b,b,b,b,b,,,,`,,,,,,,,`,s,,s,,,s,,s,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,"gd{name=""Left outer gate""}",gd,,,,,,,,"gd{name=""Left inner gate""}",gd,,,,,,,,"ga{name=""Right inner gate""}",ga,,,,,,,,"ga{name=""Right outer gate""}",ga,`
-,,,`,`,`,`,`,`,`,`,`,`,`,`,"gw{name=""Outer main gate""}",gw,gw,gw,gw,gw,gw,`,`,`,`,`,`,`,`,`,`,`,`
+,,,`,"gd{name=""Left outer gate"" do_now=true}",gd,,,,,,,,"gd{name=""Left inner gate"" do_now=true}",gd,,,,,,,,"ga{name=""Right inner gate"" do_now=true}",ga,,,,,,,,"ga{name=""Right outer gate"" do_now=true}",ga,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,"gw{name=""Outer main gate"" do_now=true}",gw,gw,gw,gw,gw,gw,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 ,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 
@@ -1238,7 +1238,7 @@ t1(37x33)
 #build label(surface_corridor_gates) start(19; 19) hidden() message(Remember to connect the levers to the new external trap gates.) gates for the longer trap hallways
 
 
-,,,,"gx{name=""Left trap gate""}",,,,,,,,,,,,,,,,,,,,,,,,,,,,"gx{name=""Right trap gate""}"
+,,,,"gx{name=""Left trap gate"" do_now=true}",,,,,,,,,,,,,,,,,,,,,,,,,,,,"gx{name=""Right trap gate"" do_now=true}"
 ,,,`,gx,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,gx,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -1254,7 +1254,7 @@ t1(37x33)
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,`,"Tl{name=""Left trap gate""}",`,`,`,"Tl{name=""Right trap gate""}",`,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,"Tl{name=""Left trap gate"" do_now=true}",`,`,`,"Tl{name=""Right trap gate"" do_now=true}",`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,,,,,,,`,,`
@@ -1371,7 +1371,7 @@ t1(37x33)
 ,,Tc,Tc,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Tc,Tc
 
 
-#notes label(farming_help)
+#notes label(farming_help) farming level walkthrough
 "Sets up farming, food storage, and related industries. Also provides post-embark necessities that can later be disassembled."
 Screenshot: https://drive.google.com/file/d/1vDaedLcgoexUdKREUz75ZXQi0ZSdwWwj
 ""
@@ -1399,13 +1399,13 @@ Manual steps you have to take:
 Farming Walkthrough:
 "1) Wait until you have channeled the miasma vents and cleared trees on the surface before digging out the farming level on the z-level below the surface, otherwise you will end up with extra ramps on the farming level and unprotected holes through the surface when you later chop down trees growing above empty space."
 ""
-2) Start digging with /farming1 and get started on manufacturing furniture by generating manager orders for /farming2
+2) Start digging with /farming1 and get started on manufacturing furniture by generating manager orders for /farming2 (if you haven't already preordered with the checklist command).
 ""
 "3) Once the level is dug out, run /farming2 to designate zones, build workshops and stockpiles, and place furniture. Remember to assign a minecart to the newly-designated quantum refuse dump with assign-minecarts all."
 ""
 "4) Once your fort has enough free time to build the remaining doors, run /farming3. Generate manager orders for /farming3."
 ""
-"5) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
+"5) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like. Also, you can turn on seasonal fertilization for the farm plots if you need to boost your crop yields."
 "#dig label(farming1) start(16; 18; central stairs) message(Once the area is dug out, continue with /farming2.)"
 # this level is dug at priority 3 since it is dug in soil. it's worth the miner's time to
 # stop digging the industry level and quickly dig out this one.
@@ -1437,7 +1437,7 @@ Farming Walkthrough:
 ,,,,,,,,,,,,,,,z3
 
 
-"#meta label(farming2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(farming2) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.
 Once furniture has been placed, continue with /farming3.) workshops, stockpiles, and important furniture"
 zone/farming_zone
 place/farming_place
@@ -1481,7 +1481,7 @@ doors/farming_doors
 "#place label(farming_place) start(16; 18) hidden() message(remember to assign a minecart to the refuse quantum stockpile (run ""assign-minecarts all"")"
 
 
-,,,,,,,,,`,`,`,,`,`,`,"c{name=""Seeds"" barrels=10 links_only=true take_from=""Starting food""}:+seeds(1x9)","c{name=""Potash""}:+potash(1x12)",,"c{name=""booze"" barrels=-1 take_from=""Starting food""}:+booze(4x2)",,,`
+,,,,,,,,,`,`,`,,`,`,`,"c{name=""Seeds"" barrels=10 links_only=true take_from=""Starting food""}:+seeds(1x9)","c{name=""Potash""}:+potash(1x12)",,"c{name=""Booze"" barrels=-1 take_from=""Starting food""}:+booze(4x2)",,,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,`,,`,`,`,`,`,,`,`,`,`
@@ -1512,19 +1512,19 @@ doors/farming_doors
 #build label(farming_build) start(16; 18) hidden() workshops and important furniture
 
 
-,,,,,,,,,n,`,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,`,`,`
-,,,,,,,,,n,`,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,`,`,`
-,,,,,,,,,n,`,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,c,t,t,c
-,,,,,,,,,,,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,c,t,t,c
-,,,,,,,t,c,`,,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,`,`,`
-,,,,,,,`,`,`,`,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,`,`,`
-,,,,,,,t,c,`,,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`
-,,,,,,,,,,,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,,b,b,b
-,,,,,,`,`,`,`,,`,,p{seasonal_fertilize=true}(3x1),,,`,`,,`,`,`,`,h
+,,,,,,,,,n,`,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,,,n,`,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,,,n,`,`,,p(3x1),,,`,`,,c,t,t,c
+,,,,,,,,,,,`,,p(3x1),,,`,`,,c,t,t,c
+,,,,,,,t,c,`,,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,`,`,`,`,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,t,c,`,,`,,p(3x1),,,`,`,,`
+,,,,,,,,,,,`,,p(3x1),,,`,`,,`,,b,b,b
+,,,,,,`,`,`,`,,`,,p(3x1),,,`,`,,`,`,`,`,h
 ,,,,,,`,wl,`,`,,`,,`,`,`,`,`,,`,,b,b,b
 ,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
 ,,wq,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
-,,wp,`,`,`,`,ww,`,`,`,`,,,`,,`,,,`,`,`,wu,`,`,`,wz,`
+,,wp,`,`,`,`,"ww{labor_mask=""Milking, Shearing""}",`,`,`,`,,,`,,`,,,`,`,`,wu,`,`,`,wz,`
 ,,,`,`,,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
 ,,,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
 ,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
@@ -1617,13 +1617,13 @@ doors/farming_doors
 ,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,~,~,~
 ,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
 ,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
-,,`,`,`,d,`,`,`,`,d,`,,,d,,d,,,`,d,`,`,`,d,`,`,`
-,,,`,`,,`,`,`,`,,`,d,`,`,`,`,`,d,`,,`,`,`,,`,`,`
+,,`,`,`,d,`,`,`,`,d,`,,,d{name=Farming},,d{name=Farming},,,`,d,`,`,`,d,`,`,`
+,,,`,`,,`,`,`,`,,`,d{name=Farming},`,`,`,`,`,d{name=Farming},`,,`,`,`,,`,`,`
 ,,,,d,,,d,,,,,,`,`,`,`,`,,,,,d,,,,d
 ,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,d{name=Farming},`,`,`,`,`,d{name=Farming},`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,,,,d,,d,,,,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,,,,d{name=Farming},,d{name=Farming},,,,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,,,`,~,`,`,`,~,`,,,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,,`,`,,,~,,,`,`,,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
@@ -1633,7 +1633,7 @@ doors/farming_doors
 ,,,,,,,,,,,,,,,`
 
 
-#notes label(industry_help)
+#notes label(industry_help) industry level walkthrough
 Sets up workshops for all non-farming industries
 Screenshot: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
 ""
@@ -1641,7 +1641,7 @@ Features:
 - Compact layout that covers all workshops
 - Manager orders that automate basic fortress maintenance
 "- Space available underneath the forge and smelters for magma, allowing the starting forge and smelters to be eventually replaced by magma versions."
-- Quantum stockpiles for compact storage
+- Quantum stockpiles for compact storage (see the wiki for more info on QSPs)
 with separate stockpiles for:
 - A reserve of uncut gems for strange moods that the jeweler's workshop cannot take from
 "- Wood, iron bars, steel bars, flux, and coal so you can see at a glance if you're low on stock"
@@ -1649,7 +1649,7 @@ with separate stockpiles for:
 - Meltable weapons and armor
 ""
 Workshops:
-- 2x Stonecutter
+- 2x Stoneworker
 - 4x Craftsdwarf (labor restrictions set to specialize for materials in adjacent stockpiles)
 - 1x Jeweler
 - 1x Mechanic
@@ -1671,20 +1671,20 @@ Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes. The assign-minecarts all command will do it for you.
 ""
 Optional manual steps you can take:
-"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a forested area, set up autochop, and keep your coal stocks high."
+"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a forested area, set up autochop, and keep your coal stocks high!"
 ""
 Industry Walkthrough:
 "1) Start digging out /industry1 as soon as you find a non-aquifer stone layer at least two layers beneath the surface so the boulders can be used by your starting workshops. The services level is intended to be dug beneath this one, and there is space on that level to route magma underneath your furnaces so you can replace the furnaces on this level with magma-powered equivalents."
 ""
-"2) Generate manager orders for /industry2. You brought an anvil with you (right??), so you can remove the unneeded anvil work order from the manager orders screen. Note that stockpiles that accept containers may claim the barrels you need to build the Dyer's Workshop and Ashery. If you see those two buildings not being constructed, build a few extra barrels or run combine all to free up some existing ones."
+"2) Generate manager orders for /industry2 if you haven't already preordered with the checklist command. You brought an anvil with you (right??), so you can remove the unneeded anvil work order from the manager orders screen. Note that stockpiles that accept containers may claim the barrels you need to build the Dyer's Workshop and Ashery. If you see those two buildings not being constructed, build a few extra barrels or run combine all to free up some existing ones."
 ""
 "3) Once the area is dug out, run /industry2 to build replacements for your starter workshops up on the surface. Remember to assign minecarts to to your quantum stockpile hauling routes with assign-minecarts all."
 ""
-"4) After the initial workshops are constructed, run /industry3 to build the remaining workshops."
+"4) After the initial workshops are constructed, run /industry3 to build the remaining workshops. Generate manager orders if you haven't already preordered with the checklist command."
 ""
 "5) Once you have enough dwarves to do maintenance tasks (that is, after the first or second migration wave), run ""orders import library/basic"" to use the provided manager orders to take care of your fort's basic needs, such as food, booze, and raw material processing."
 ""
-"6) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-west stockpiles for auto-melt. If you don't have a high density of trees to make into charcoal, though, be sure to route magma to the level beneath this one and replace the forge and furnaces with magma equivalents."
+"6) If you want to automatically melt goblinite and other non-masterwork weapons and armor, mark the south-west stockpiles for auto-melt. If you don't have an abundance of fuel, though, be sure to route magma to the level beneath this one and replace the forge and furnaces with magma equivalents."
 ""
 "7) Once you have magma furnaces (or abundant fuel) and more dwarves, run ""orders import library/furnace"", ""orders import library/military"", and ""orders import library/smelting"" (in that order) to import the remaining fort automation orders. The military orders are optional if you are not planning to have a military, of course."
 ""
@@ -1725,11 +1725,11 @@ Industry Walkthrough:
 ,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d
 
 
-#meta label(industry2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) stockpiles and high-priority workshops
+"#meta label(industry2) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.) stockpiles and high-priority workshops"
 traffic/industry_traffic
 place/industry_place
 build/industry_build
-#meta label(industry3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) remaining workshops
+"#meta label(industry3) start(central stairs) message(If you preordered items on the checklist, good. If not, don't forget to generate orders for this blueprint now.) remaining workshops"
 build2/industry_build2
 #dig label(industry_traffic) start(18; 18; central stairs) hidden() traffic patterns
 
@@ -1811,20 +1811,20 @@ build2/industry_build2
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"wj{name=""Encruster"" do_now=true take_from=""Goods/wood quantum,Stoneworker quantum,Gem feeder""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf"" labor=Stonecrafting}",`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopN{name=""Stone/gem dumper"" take_from=""Stone feeder,Gem feeder"" route=""Stone/gem quantum""}",`,`,`,`,`,`,`,`,~,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,"wr{name=""Stone craftsdwarf"" do_now=true labor=Stonecrafting}",`,`,`,`,`,`,`,wt{do_now=true},`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopN{name=""Stone/gem dumper"" do_now=true take_from=""Stone feeder,Gem feeder"" route=""Stone/gem quantum""}",`,`,`,`,`,`,`,`,~,`,`,`,`
 ,,,,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,wm{max_general_orders=2},`,`,`,`,`,`,`,wm{max_general_orders=10},`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,wm{max_general_orders=2 do_now=true},`,`,`,`,`,`,`,wm{max_general_orders=10 do_now=true},`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,~,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,~,`,`,~,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,~,,~,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,~,`,,,,`,~,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,wc{max_general_orders=9},`,`,`,"trackstopW{name=""Goods/wood dumper"" take_from=""Wood feeder,Goods feeder,Furniture feeder"" route=""Goods/wood quantum""}",`,`,`,`,`,,`,,`,,`,,`,`,`,`,`,"trackstopE{name=""Cloth/bones dumper"" take_from=""Cloth/bones feeder"" route=""Cloth/bones quantum""}",`,`,`,~,`,`
+,,`,`,wc{max_general_orders=9 do_now=true},`,`,`,"trackstopW{name=""Goods/wood dumper"" do_now=true take_from=""Wood feeder,Goods feeder,Furniture feeder"" route=""Goods/wood quantum""}",`,`,`,`,`,,`,,`,,`,,`,`,`,`,`,"trackstopE{name=""Cloth/bones dumper"" do_now=true take_from=""Cloth/bones feeder"" route=""Cloth/bones quantum""}",`,`,`,~,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,~,`,,,,`,~,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,~,,~,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1833,7 +1833,7 @@ build2/industry_build2
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopS{name=""Metalworker dumper"" take_from=""Bar/military feeder,Ore/clay feeder"" route=""Metalworker quantum""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"trackstopS{name=""Metalworker dumper"" do_now=true take_from=""Bar/military feeder,Ore/clay feeder"" route=""Metalworker quantum""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1857,13 +1857,13 @@ build2/industry_build2
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,wy,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wk,`,`,wo,`,`,"wd{take_from=""Cloth/bones feeder,Cloth/bones quantum,Dye""}",`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,,,d{name=Industry},,d{name=Industry},,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,d{name=Industry},`,,,,`,d{name=Industry},`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,~,`,`,`,~,`,`,`,`,`,,`,,`,,`,,`,`,`,`,`,~,`,`,`,we,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,d{name=Industry},`,,,,`,d{name=Industry},`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,,,d{name=Industry},,d{name=Industry},,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,"wr{name=""Wood craftsdwarf"" labor=Woodcrafting}",`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,"wr{name=""Misc craftsdwarf"" labor_mask=""Stonecrafting,Woodcrafting,Bone Carving""}",`,`,"wr{name=""Bone craftsdwarf"" labor=""Bone Carving""}",`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1878,7 +1878,7 @@ build2/industry_build2
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
-#notes label(services_help)
+#notes label(services_help) services level walkthrough
 "Sets up public services (dining, hospital, etc.)"
 Screenshot: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
 ""
@@ -1895,7 +1895,7 @@ Features:
 ""
 Manual steps you have to take:
 "- If you want to tavern to attract visitors, change the restriction in the location configuration screen."
-"- Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water to prevent muddiness. If you want to fill with buckets, you can use the pre-designated pond zones on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases). See the aquifer_tap blueprint for help with getting water from a light aquifer."
+"- Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water (e.g. with the aquifer_tap library blueprint). Fill so that there are two z-levels of 7-depth water to prevent muddiness. If you want to fill with buckets, you can use the pre-designated pond zones on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases). See the aquifer_tap blueprint for help with getting water from a light aquifer."
 "- If you are filling the wells with a bucket brigade and at least one well is already constructed, you'll run into issues with the dwarves stealing water from one well to fill another. Temporarily deconstruct the wells or temporarily build grates beneath the wells to block the buckets to avoid this issue. Remember to rebuild the wells or remove the grates afterwards, though!"
 ""
 Services Walkthrough:
@@ -1905,7 +1905,7 @@ Services Walkthrough:
 ""
 "3) Once the area is dug out, start populating the rooms with /services2. Generate manager orders for /services2."
 ""
-4) Fill the wells with either bucket brigades or by carefully routing flowing water.
+"4) Fill the wells with either bucket brigades or by carefully routing flowing water. If you are using a bucket brigade, you have to activate the ""Cistern"" pond zones (which you can search for in the Places screen)."
 ""
 "5) When your fort has grown some more, or you start needing a jail, run /services3 to extend the rooms a bit more. Generate manager orders for /services3."
 ""
@@ -1971,22 +1971,22 @@ Services Walkthrough:
 #>
 
 ,,,,,,,,,,,,,u5,h5,i,,u5,h5,i,,u5,h5,i,,u5,h5,i,,u5,h5,i
-
-
-
-
-
-
-
-
-
-
-
-
-
-,,,,,,,,,,,,,,,d,d,d,d,d
-,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,,,,,,,u5
-,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,,,,,,,h5
+,,,,,,,,mbd,,,,,,mbd,,,,mbd,,,,mbd,,,,mbd,,,,mbd
+,,,,,,,mbd,,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd,mbd
+,,,,,,,,mbd,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,d,d,d,d,d,,,,,,,,,,,mbd
+,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,,,,,mbd,,u5
+,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,,,,,mbd,mbd,h5
 ,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,,,,,,,i
 ,,,,,,,,,,,,,,,d,d,d,d,d
 
@@ -2128,7 +2128,7 @@ build3/services_build3
 ,,,,,,,,,,,,,,,`,`,`,`,`
 
 "#zone label(services_zones) start(18; 18) hidden() message(Don't forget to assign a doctor to the hospital!
-If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
+If you'd like to fill your wells via bucket brigade instead of routing water (e.g. with the aquifer_tap library blueprint), activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
 ,,,,,,,,,,,,,"j{name=""Jail 1""}(4x5)",,,,"j{name=""Jail 2""}(4x5)",,,,"j{name=""Jail 3""}(4x5)",,,,"j{name=""Jail 4""}(4x5)",,,,"j{name=""Jail 5""}(4x5)"
 ,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2404,11 +2404,11 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,s,`,`,`,`,`,`,`,`,`,s,,`,`,`,`,`,`,`,`,`,~,~,,`,,v,v,v,v,v
 ,`,`,`,`,`,`,`,`,`,`,`,,~,h,h,h,h,h,h,h,~
 ,s,`,`,`,`,`,`,`,`,`,s,,~,b,b,b,b,b,b,b,~,,~,,~,,~,,~,,~
-,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,~,,~,,~,,~,,~
+,`,`,`,`,`,`,`,`,`,`,`,,,,,d{name=Services},,d{name=Services},,,,,~,,~,,~,,~,,~
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`,,`
-,`,`,`,`,`,`,`,`,`,`,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,d,`,d{name=Services},`,`,`,`,`,d{name=Services},`,d,`,`,`,`,`,`,`,`,`,`
 ,`,t,c,`,`,~,`,`,c,t,`,,s,,`,`,`,`,`,,s,,~,`,`,t,`,~,`,`,`,~
-,`,t,c,`,`,`,`,`,c,t,`,d,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,`,`,`,`,`
+,`,t,c,`,`,`,`,`,c,t,`,d,`,d{name=Services},`,`,`,`,`,d{name=Services},`,d,`,`,`,`,`,`,`,`,`,`
 ,`,t,c,c,t,`,t,c,c,t,`,,,,`,`,`,`,`,,,,`,,`,,`,,`,,`
 ,`,t,c,c,t,`,t,c,c,t,`,,,,,,`,,,,,,d,,d,,d,,d,,`
 ,`,t,c,c,t,`,t,c,c,t,`,,,,,,,,,,,,b,,b,,b,,b,,`
@@ -2425,12 +2425,14 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,,`,`,`,`,`
 
-#notes label(guildhall_help)
+#notes label(guildhall_help) guildhall level walkthrough
 "Eight 7x7 rooms for guildhalls, temples, libraries, etc."
 Screenshot: https://drive.google.com/file/d/1mt66QOkfBqFLtw6AJKU6GNYmhB72XSJG
 ""
 Features:
 "- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add maximum value. Pre-made meeting zones can be made into locations (e.g. guildhalls) as needed. Optional pre-configured library/temple combo."
+""
+"Each 7x7 room will be worth about 3000 when fully engraved (with random quality of engravings). This will get you past the first ""tier"" threshold at standard difficulty settings. Add artifacts to the display cases or other fancy decorations if you need more value. You can also assign multiple 7x7 rooms to the same zone or location and gain more value that way."
 ""
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
@@ -2555,13 +2557,13 @@ doors/guildhall_doors
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,,,,,,,,d,,,,d,,d,,,,d
 ,,,,,,,,,,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,,`,,,d,,d,,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,,d{name=Guidhall},,d{name=Guidhall},,,`,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,d,`,d,`,,,,`,d,`,d,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,d,`,d{name=Guidhall},`,,,,`,d{name=Guidhall},`,d,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,`,,`,,`,,`,,`,,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,d,`,d,`,,,,`,d,`,d,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,d,`,d{name=Guidhall},`,,,,`,d{name=Guidhall},`,d,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,,`,,,d,,d,,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,,d{name=Guidhall},,d{name=Guidhall},,,`,,`,`,`,`,`,`,`
 ,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,d,,,,d,,d,,,,d
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
@@ -2603,7 +2605,7 @@ doors/guildhall_doors
 ,,F,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,F
 
 
-#notes label(beds_help)
+#notes label(beds_help) walkthrough for the suites and apartments levels
 Suites for nobles and apartments for the teeming masses
 Suites screenshot: https://drive.google.com/file/d/16XRb1w5zFoyVq2LBMx_aCwOyjFq7GULc
 Apt. screenshot: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dXQo
@@ -2713,13 +2715,13 @@ build_suites/suites_build
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
-,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d{name=Suites},,d{name=Suites},,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
+,`,`,d,`,`,`,`,`,`,`,`,`,`,d{name=Suites},`,`,`,`,`,d{name=Suites},`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`,~,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
+,`,`,d,`,`,`,`,`,`,`,`,`,`,d{name=Suites},`,`,`,`,`,d{name=Suites},`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
-,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
+,`,,a,r,`,`,h,,,h,`,`,r,a,,d{name=Suites},,d{name=Suites},,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`,`,`,d,`,`,b,`,`,,,`,`,b,`,`,d,`
 ,`,,c,`,`,`,f,,,f,`,`,`,c,,`,`,`,,c,`,`,`,f,,,f,`,`,`,c,,`
@@ -2824,13 +2826,13 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,,,,,,,,,,,,,,,,`,`,`
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
-,`,b,,`,b,,`,b,,`,b,,`,b,,d,,d,,b,`,,b,`,,b,`,,b,`,,b,`
+,`,b,,`,b,,`,b,,`,b,,`,b,,d{name=Apartments},,d{name=Apartments},,b,`,,b,`,,b,`,,b,`,,b,`
 ,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
-,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,d{name=Apartments},`,`,`,`,`,d{name=Apartments},`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,d{name=Apartments},`,`,`,`,`,d{name=Apartments},`,`,`,`,`,`,`,`,`,`,`,`,`
 ,d,,,d,,,d,,,d,,,d,,,`,`,`,,,d,,,d,,,d,,,d,,,d
-,`,b,,`,b,,`,b,,`,b,,`,b,,d,,d,,b,`,,b,`,,b,`,,b,`,,b,`
+,`,b,,`,b,,`,b,,`,b,,`,b,,d{name=Apartments},,d{name=Apartments},,b,`,,b,`,,b,`,,b,`,,b,`
 ,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,h,f,,h,f,,h,f,,h,f,,h,f,,`,`,`,,f,h,,f,h,,f,h,,f,h,,f,h
 ,,,,,,,,,,,,,,,,`,`,`
@@ -2845,7 +2847,7 @@ b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,b(4x5),,,,`,`,`,b(4x5),,,b(4x5),,,b(4x5),,,b
 ,,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`,,`,`
 ,,,f,h,,f,h,,f,h,,f,h,,f,h,,h,f,,h,f,,h,f,,h,f,,h,f
 
-#notes label(crypt_help)
+#notes label(crypt_help) crypt level walkthrough
 Places to rest your dead
 Screenshot: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
 ""
@@ -2955,13 +2957,13 @@ build_extended/crypt_extended_build
 ,,,,,,,,,,,`,`,,,,,,,,,,`,`
 ,,,,,,,,,,,,`,,n,,n,,n,,n,,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,`,,n,,`,s,`,,n,,`
+,,,,,,,,,,,,`,,n,,`,s{name=Crypt},`,,n,,`
 ,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
 ,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
-,,,,,,,,,,,,`,`,s,`,,~,,`,s,`,`
+,,,,,,,,,,,,`,`,s{name=Crypt},`,,~,,`,s{name=Crypt},`,`
 ,,,,,,,,,,,,`,`,`,`,,,,`,`,`,`
 ,,,,,,,,,,,`,`,,,,`,`,`,,,,`,`
-,,,,,,,,,,,,`,,n,,`,s,`,,n,,`
+,,,,,,,,,,,,`,,n,,`,s{name=Crypt},`,,n,,`
 ,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,`,,n,,n,,n,,n,,`
 ,,,,,,,,,,,`,`,,,,,,,,,,`,`

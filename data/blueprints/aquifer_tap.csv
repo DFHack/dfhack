@@ -1,23 +1,25 @@
 #notes label(help)
-"This blueprint will help you get a safe, everlasting source of fresh water from a light aquifer."
+"This blueprint will help you get a safe, everlasting source of fresh water from a light aquifer. See https://youtu.be/hF3_fjLc_EU for a video tutorial."
 ""
 Here's the procedure:
 ""
-1) Dig a tunnel from where you want the water to end up (e.g. your well cistern) off to an unused portion of the map that has an aquifer above it. Be sure to dig a one-tile-wide diagonal segment in this tunnel so water that will eventually flow through the tunnel is depressurized.
+"1) Locate an area with a light aquifer. DFHack gives light aquifer tiles a two-drop icon that appears when you are in mining mode. If you dug through it on the way down, take note of the elevations where it's likely to be (but be aware that there is regional variation and there's no guarantee that it exists on the map where you want it to be). If you are having trouble finding the boundaries of your aquifer, you can run prospect all --show features to discover the general elevations or gui/reveal -o to see the actual tiles."
 ""
-"2) From the end of that tunnel, go down one z-level, enable damp dig mode in the dig toolbar, then dig a staircase straight up to the lowest aquifer level. Erase the top staircase tile (the down-only stairs) so your miners don't dig it yet. We'll be adding it back with the aquifer_tap #dig blueprint."
+2) Dig a one-tile-wide tunnel from where you want the water to end up (e.g. your well cistern) to an area on the same z-level directly below the target light aquifer. Dig a one-tile-wide diagonal segment in this tunnel near the cistern side so water that will eventually flow through the tunnel is depressurized.
 ""
-"3) From the bottom of the staircase (the z-level below where the water will flow to your cisterns), dig a straight, one-tile wide tunnel to the closest edge of the map. This is your emergency drainage tunnel. Smooth the map edge tile and carve a fortification. The water can flow through the fortification and off the map, allowing the dwarves to dig out the aquifer tap without drowning."
+"3) From the end of that tunnel, go down one z-level, enable damp dig mode in the dig toolbar, then dig a staircase straight up so that the top is in the lowest aquifer level (a tile with a two-drop icon). Change the top staircase tile (the down-only stairs) to a ""blueprint"" tile (default hotkey: m-L) so your miners don't dig it yet."
 ""
-4) Place a lever-controlled floodgate in the drainage tunnel and open the floodgate. Place the lever somewhere else in your fort so that it will remain dry and accessible.
+"4) From the bottom of the staircase (the z-level below where the water will flow to your cisterns), dig a straight, one-tile wide tunnel to the closest edge of the map. This is your emergency drainage tunnel. Smooth the map edge tile and carve a fortification. The water can flow through the fortification and off the map, allowing the dwarves to dig out the aquifer tap without drowning."
 ""
-"5) If you want, haul away any boulders in the tunnels and/or smooth the tiles. You won't be able to access any of this area once it fills up with water!"
+5) Place a lever-controlled floodgate in the drainage tunnel and open the floodgate. Place the lever somewhere else in your fort so that it will remain dry and accessible.
 ""
-"6) Apply this blueprint (gui/quickfort aquifer_tap /dig) to the z-level above the top of the staircase, inside the lowest aquifer level. The tiles will be designated in ""damp dig"" mode so your miners can dig it out without the damp tiles canceling the digging designations."
+"6) If you want, haul away any boulders in the tunnels and/or smooth the tiles (e.g. mark them for dumping -- hotkey i-p -- and wait for them to be dumped). You won't be able to access any of this area once it fills up with water!"
 ""
-"7) Dig out the tap. You can haul away any boulders and remove the ramps if you like. The water will safely flow down the staircase, through the open floodgate, down the drainage tunnel, and off the map as long as the floodgate is open."
+"7) Apply this blueprint (gui/quickfort aquifer_tap /dig) to the z-level above the top of the staircase, inside the lowest aquifer level. The tiles will be designated in ""damp dig"" mode so your miners can dig it out without the damp tiles canceling the digging designations. This blueprint designates ramps for digging so two layers of aquifer can contribute to the water collector."
+""
+"8) Dig out the tap. You can haul away any boulders and remove the ramps if you like. The water will safely flow down the staircase, through the open floodgate, down the drainage tunnel, and off the map as long as the floodgate is open."
 
-"8) Once everything is dug out and all dwarves are out of the waterways, close the floodgate. Your cisterns will fill with water. Since the waterway to your cisterns is depressurized, the cisterns will stay forever full, but will not flood."
+"9) Once everything is dug out and all dwarves are out of the waterways, close the floodgate. Your cisterns will fill with water. Since the waterway to your cisterns is depressurized, the cisterns will stay forever full, but will not flood."
 ""
 A diagram might be useful. Here is a vertical view through the z-levels. This blueprint goes at the top:
 ""

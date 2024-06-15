@@ -78,6 +78,10 @@ Template for new versions:
 - `tiletypes`: new ``surroundings`` property for maintaining valid tile surroundings
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
+- Dreamfort: walkthough documentation refresh
+- Dreamfort: add milking/shearing station in surface grazing pasture
+- Dreamfort: integrate building prioritization into the blueprints and remove `prioritize` checklist steps
+- Dreamfort: add plumbing template for filling cisterns with running water
 - `buildingplan`: add option to ignore items from a specified burrow
 - `autobutcher`: do not butcher pregnant (or brooding) females
 - `quickfort`: support buildable instruments

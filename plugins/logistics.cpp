@@ -32,8 +32,8 @@ REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
-DBG_DECLARE(logistics, control, DebugCategory::LINFO);
-DBG_DECLARE(logistics, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(logistics, control, DebugCategory::LINFO);
+    DBG_DECLARE(logistics, cycle, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY_PREFIX = string(plugin_name) + "/";
@@ -687,11 +687,12 @@ static void logistics_cycle(color_ostream &out, bool quiet = false) {
 static void find_stockpiles(lua_State *L, int idx,
         vector<df::building_stockpilest*> &sps) {
     if (lua_isnumber(L, idx)) {
-        sps.emplace_back(find_stockpile(lua_tointeger(L, -1)));
+        if (auto sp = find_stockpile(lua_tointeger(L, idx)))
+            sps.emplace_back(sp);
         return;
     }
 
-    const char * pname = lua_tostring(L, -1);
+    const char * pname = lua_tostring(L, idx);
     if (!pname || !*pname)
         return;
     string name(pname);
@@ -733,7 +734,7 @@ static int logistics_getStockpileConfigs(lua_State *L) {
     validate_stockpile_configs(*out, cache);
 
     vector<df::building_stockpilest*> sps;
-    find_stockpiles(L, -1, sps);
+    find_stockpiles(L, 1, sps);
     if (sps.empty())
         return 0;
 
@@ -773,7 +774,7 @@ static int logistics_clearStockpileConfig(lua_State *L) {
     DEBUG(control, *out).print("entering logistics_clearStockpileConfig\n");
 
     vector<df::building_stockpilest*> sps;
-    find_stockpiles(L, -1, sps);
+    find_stockpiles(L, 1, sps);
     if (sps.empty())
         return 0;
 

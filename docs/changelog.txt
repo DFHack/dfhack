@@ -82,6 +82,7 @@ Template for new versions:
 - `autobutcher`: do not butcher pregnant (or brooding) females
 - `quickfort`: support buildable instruments
 - `nestboxes`: increase the scanning frequency for fertile eggs to reduce the chance that they get snarfed by eager dwarves
+- `autonestbox`: wait until juveniles become adults before they are assigned to nestboxes
 - `suspendmanager`: add option to ``unsuspend`` that unsuspends all jobs, regardless of potential issues
 
 ## Documentation

@@ -2133,6 +2133,10 @@ Property          Description
                   feature
 ``autotrain``     if set to ``true``, enables the corresponding `logistics`
                   feature
+``autoforbid``    if set to ``true``, enables the corresponding `logistics`
+                  feature
+``autoclaim``     if set to ``true``, enables the corresponding `logistics`
+                  feature
 ================  ===========
 
 Note that specifying building IDs in ``take_from`` or ``give_to`` lists is

@@ -43,7 +43,7 @@ jobs:
       with:
         timeout_minutes: 2
         command: |
-          timestamp=$(curl -X GET 'https://api.steamcmd.net/v1/info/975370?pretty=1 | \
+          timestamp=$(curl -X GET 'https://api.steamcmd.net/v1/info/975370?pretty=1' | \
               awk '/^ *"branches"/,0' | \
               awk '/^ *"${{ matrix.df_steam_branch }}"/,0' | \
               fgrep timeupdated | \

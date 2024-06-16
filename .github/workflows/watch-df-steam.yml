@@ -32,42 +32,20 @@ jobs:
             channel: steam
             df_steam_branch: testing
     steps:
-    - name: Setup steamcmd
-      id: steamcmd
-      uses: CyberAndrii/setup-steamcmd@v1
-      continue-on-error: true
-    - name: Setup steamcmd (retry)
-      id: steamcmd2
-      uses: CyberAndrii/setup-steamcmd@v1
-      if: steps.steamcmd.outcome == 'failure'
     - name: Fetch state
       uses: actions/cache/restore@v4
       with:
         path: state
         key: watchstate-${{ matrix.version }}
         restore-keys: watchstate-${{ matrix.version }}
-    - name: Prep Steam auth
-      env:
-        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
-      run: |
-        mkdir -p $HOME/Steam/config
-        echo "$STEAM_CONFIG_VDF" | base64 -d >$HOME/Steam/config/config.vdf
     - name: Compare branch metadata
       uses: nick-fields/retry@v3
-      env:
-        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
       with:
         timeout_minutes: 2
         command: |
-          timestamp=$(${{ steps.steamcmd.outputs.executable || steps.steamcmd2.outputs.executable }} \
-            +@ShutdownOnFailedCommand 1 \
-            +login $STEAM_USERNAME \
-            +app_info_request 975370 \
-            +app_info_print 975370 \
-            +quit | \
-              awk '/^{/,0' | \
-              awk '/^\t\t"branches"/,0' | \
-              awk '/^\t\t\t"${{ matrix.df_steam_branch }}"/,0' | \
+          timestamp=$(curl -X GET 'https://api.steamcmd.net/v1/info/975370?pretty=1 | \
+              awk '/^ *"branches"/,0' | \
+              awk '/^ *"${{ matrix.df_steam_branch }}"/,0' | \
               fgrep timeupdated | \
               head -n1 | \
               cut -d'"' -f4)

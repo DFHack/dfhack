@@ -108,12 +108,20 @@ static const std::vector<std::pair<const char *, double>> sig_fig_db = {
     {"T", 1000000000000.0},  //  100,000,000,000,000+
 };
 
+template<typename T>
+static int get_magnitude(T absnum) {
+    static const size_t max_magnitude = sig_fig_db.size() - 1;
+    if (absnum <= 1)
+        return 0;
+    return std::min(max_magnitude, (size_t)std::floor(std::log2(absnum) * (1/std::log2(10))) + 1);
+}
+
 DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs) {
     if (num == 0)
         return "0";
 
     double absnum = std::abs(num);
-    int magnitude = absnum <= 1 ? 0 : std::min((size_t)std::floor(std::log2(absnum) * (1/std::log2(10))) + 1, sig_fig_db.size() - 1);
+    int magnitude = get_magnitude(absnum);
     auto & sig_data = sig_fig_db[magnitude];
 
     int sf = (int)sig_figs;
@@ -125,6 +133,16 @@ DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs) 
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(precision) << std::copysign(absnum / divisor - roundoff, num) << sig_data.first;
     return ss.str();
+}
+
+DFHACK_EXPORT std::string format_number_by_sig_fig(int64_t num, size_t sig_figs) {
+    if (std::abs(num) < 10000) {
+        std::ostringstream ss;
+        ss << std::fixed << num;
+        return ss.str();
+    }
+
+    return format_number_by_sig_fig((double)num, sig_figs);
 }
 
 int random_int(int max)

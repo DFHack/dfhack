@@ -1198,16 +1198,21 @@ bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
 {
     CHECK_NULL_POINTER(item);
 
-    auto pos = getPosition(item);
+    if (auto spec_ref = getSpecificRef(item, df::specific_ref_type::JOB))
+        Job::removeJob(spec_ref->data.job);
 
     if (!detachItem(mc, item))
         return false;
 
-    if (pos.isValid())
+    if (auto pos = getPosition(item); pos.isValid())
         item->pos = pos;
 
     if (!no_uncat)
         item->uncategorize();
+
+    // hide them from jobs and the UI until the item can be garbage collected
+    item->flags.bits.forbid = true;
+    item->flags.bits.hidden = true;
 
     item->flags.bits.removed = true;
     item->flags.bits.garbage_collect = !no_uncat;

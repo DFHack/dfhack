@@ -104,6 +104,7 @@ Template for new versions:
 - ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
 - ``Units::create``, ``Units::makeown``: new APIs to use bay12-provided entry points for low-level operations
 - ``format_number``: format numbers according to the configured player formatting preference
+- ``Items::remove``: now cancels related jobs and marks the item as hidden and forbidden
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)

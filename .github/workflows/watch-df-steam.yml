@@ -20,17 +20,17 @@ jobs:
         include:
           - df_steam_branch: public
             version: public
-          - dfhack_ref: adv-beta
-            structures_ref: adv-beta
+          - df_steam_branch: beta
             version: 51.01-beta
             channel: steam
-            df_steam_branch: beta
+            dfhack_ref: adv-beta
+            structures_ref: adv-beta
             steam_branch: adventure-beta
-          - dfhack_ref: testing
-            structures_ref: testing
+          - df_steam_branch: testing
             version: testing
             channel: steam
-            df_steam_branch: testing
+            dfhack_ref: testing
+            structures_ref: testing
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4

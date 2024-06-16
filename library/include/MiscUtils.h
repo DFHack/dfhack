@@ -468,6 +468,7 @@ DFHACK_EXPORT NumberFormatType get_preferred_number_format_type();
 DFHACK_EXPORT void set_preferred_number_format_type(NumberFormatType type);
 DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type);
 DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs);
+DFHACK_EXPORT std::string format_number_by_sig_fig(int64_t num, size_t sig_figs);
 
 // format a number according to the give formatting type
 template<typename T>
@@ -479,7 +480,7 @@ static inline std::string format_number(T num, NumberFormatType type) {
         ss << (double)num;
         break;
     case NumberFormatType::SIG_FIG:
-        ss << format_number_by_sig_fig((double)num, 3);
+        ss << format_number_by_sig_fig(num, 3);
         break;
     default:
         ss << num;

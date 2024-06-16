@@ -170,7 +170,7 @@ Hauler / Manager / Bookkeeper / Broker,Miner,Miner,Stoneworker,Craftsdwarf,Outdo
 Noble role skills,Miner,Miner,Stonecutter,Stonecrafting,Carpenter,Planter
 ,,,Stone Carver,Mechanic,Wood Cutter,Stonecutter
 ""
-"The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two stonecutters helps keep the fort from stalling. If you have to smooth walls to prevent a light aquifer from flooding your fort, starting with a few engravers saves a ton of time."
+"The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two stonecutters helps keep the fort from stalling."
 ""
 We suggest bringing at least:
 2 picks,for the two miners
@@ -1905,7 +1905,7 @@ Services Walkthrough:
 ""
 "3) Once the area is dug out, start populating the rooms with /services2. Generate manager orders for /services2."
 ""
-"4) Fill the wells with either bucket brigades or by carefully routing flowing water. If you are using a bucket brigade, you have to activate the ""Cistern"" pond zones (which you can search for in the Places screen)."
+"4) Fill the wells with either bucket brigades or by carefully routing flowing water (you can use the ""blueprinted"" plumbing template or erase it and plan your own). If you are using a bucket brigade, you have to activate the ""Cistern"" pond zones (which you can search for in the Places screen)."
 ""
 "5) When your fort has grown some more, or you start needing a jail, run /services3 to extend the rooms a bit more. Generate manager orders for /services3."
 ""

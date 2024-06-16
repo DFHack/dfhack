@@ -1924,7 +1924,9 @@ Items module
 
 * ``dfhack.items.remove(item[, no_uncat])``
 
-  Removes the item, and marks it for garbage collection unless ``no_uncat`` is true.
+  Cancels any jobs associated with the item, removes the item from containers
+  and inventories, hides the item from the UI, and, unless ``no_uncat`` is
+  true, marks it for garbage collection.
 
 * ``dfhack.items.makeProjectile(item)``
 

@@ -85,27 +85,19 @@ Services levels (4 deep)
   :target: https://drive.google.com/file/d/1RQMy_zYQWM5GN7-zjn6LoLWmnrJjkxPM
   :align: center
 
-Services waterway:
-
-.. image:: https://lh3.googleusercontent.com/d/1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
-  :alt: Annotated screenshot of the dreamfort waterway
-  :target: https://drive.google.com/file/d/1SXknicNS13Dkq1A_8QLoK8OMxdolw-BY
-  :align: center
-
 **Example plumbing to fill cisterns**
 
-If you are routing water to fill the cisterns, you can do it like this (1
-z-level below the preceding screenshot)
+If you are routing water to fill the cisterns, you can do it like this:
 
 .. image:: https://lh3.googleusercontent.com/d/1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
-  :alt: Annotated screenshot of an example aqueduct addition to the dreamfort cisterns
+  :alt: Annotated screenshot of an example plumbing for the dreamfort cisterns
   :target: https://drive.google.com/file/d/1paXqPJ-7h9_jG_eNXU1z5GGvR0J8C0uJ
   :align: center
 
 Cistern drain (keep open while you're digging out the aquifer tap):
 
 .. image:: https://lh3.googleusercontent.com/d/1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
-  :alt: Annotated screenshot of an example drainage addition to the dreamfort cisterns
+  :alt: Annotated screenshot of an example drainage for the dreamfort cisterns
   :target: https://drive.google.com/file/d/1SwSluJcN_kOrCYPdcFOfJ13wEDvZGcJe
   :align: center
 

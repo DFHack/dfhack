@@ -578,31 +578,31 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
     return true;
 }
 
-bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype)
+bool Job::isSuitableItem(const df::job_item *jitem, df::item_type itype, int isubtype)
 {
-    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(jitem);
 
     if (itype == item_type::NONE)
         return true;
 
     ItemTypeInfo iinfo(itype, isubtype);
-    MaterialInfo minfo(item);
+    MaterialInfo minfo(jitem);
 
-    return iinfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
+    return iinfo.isValid() && iinfo.matches(*jitem, &minfo, false, itype);
 }
 
 bool Job::isSuitableMaterial(
-    const df::job_item *item, int mat_type, int mat_index, df::item_type itype)
+    const df::job_item *jitem, int mat_type, int mat_index, df::item_type itype)
 {
-    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(jitem);
 
     if (mat_type == -1 && mat_index == -1)
         return true;
 
-    ItemTypeInfo iinfo(item);
+    ItemTypeInfo iinfo(jitem);
     MaterialInfo minfo(mat_type, mat_index);
 
-    return minfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
+    return minfo.isValid() && iinfo.matches(*jitem, &minfo, false, itype);
 }
 
 std::string Job::getName(df::job *job)

@@ -152,7 +152,7 @@ namespace DFHack
 
         bool matches(const df::job_material_category &cat) const;
         bool matches(const df::dfhack_material_category &cat) const;
-        bool matches(const df::job_item &item,
+        bool matches(const df::job_item &jitem,
                      df::item_type itype = df::item_type::NONE) const;
     };
 

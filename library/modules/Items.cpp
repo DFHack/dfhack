@@ -300,18 +300,18 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
     return true;
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
+bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
                            bool skip_vector, df::item_type itype)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item, itype) : false;
+        return mat ? mat->matches(jitem, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;
 
-    if (!skip_vector && !matches(item.vector_id))
+    if (!skip_vector && !matches(jitem.vector_id))
         return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1, xmask1;
@@ -504,12 +504,12 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
     mask1.whole &= ~xmask1.whole;
     mask2.whole &= ~xmask2.whole;
 
-    return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
-           bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&
-           bits_match(item.flags3.whole, ok3.whole, mask3.whole) &&
-           bits_match(item.flags1.whole, item_ok1.whole, item_mask1.whole) &&
-           bits_match(item.flags2.whole, item_ok2.whole, item_mask2.whole) &&
-           bits_match(item.flags3.whole, item_ok3.whole, item_mask3.whole);
+    return bits_match(jitem.flags1.whole, ok1.whole, mask1.whole) &&
+           bits_match(jitem.flags2.whole, ok2.whole, mask2.whole) &&
+           bits_match(jitem.flags3.whole, ok3.whole, mask3.whole) &&
+           bits_match(jitem.flags1.whole, item_ok1.whole, item_mask1.whole) &&
+           bits_match(jitem.flags2.whole, item_ok2.whole, item_mask2.whole) &&
+           bits_match(jitem.flags3.whole, item_ok3.whole, item_mask3.whole);
 }
 
 df::item * Items::findItemByID(int32_t id)

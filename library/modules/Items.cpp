@@ -341,6 +341,7 @@ bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
     RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
+    RQ(2,plant); RQ(2,silk); RQ(2,yarn);
     RQ(2,totemable); RQ(2,plaster_containing); RQ(2,body_part); RQ(2,lye_milk_free);
     RQ(2,blunt); RQ(2,unengraved); RQ(2,hair_wool);
 
@@ -453,7 +454,17 @@ bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
         break;
 
     case THREAD:
+        if ((!jitem.flags2.bits.plant && ok2.bits.plant)
+            || (!jitem.flags2.bits.silk && ok2.bits.silk)
+            || (!jitem.flags2.bits.yarn && ok2.bits.yarn))
+        {
+            // material flags must match exactly
+            return false;
+        }
         OK(1,undisturbed);
+        OK(2,plant);
+        OK(2,silk);
+        OK(2,yarn);
     case CLOTH:
         OK(2,dyeable); OK(2,dyed);
         break;

@@ -93,7 +93,7 @@ namespace DFHack
         bool find(const std::string &token);
 
         bool matches(df::job_item_vector_id vec_id);
-        bool matches(const df::job_item &item, MaterialInfo *mat = NULL,
+        bool matches(const df::job_item &jitem, MaterialInfo *mat = NULL,
                      bool skip_vector = false,
                      df::item_type itype = df::item_type::NONE);
     };

@@ -144,11 +144,13 @@ bool matchesFilters(df::item * item, const df::job_item * jitem, HeatSafety heat
         && !item->hasToolUse(jitem->has_tool_use))
         return false;
 
-    if (item->getType() == df::item_type::SLAB && specials.count("engraved")
+    auto itype = item->getType();
+
+    if (itype == df::item_type::SLAB && specials.count("engraved")
         && static_cast<df::item_slabst *>(item)->engraving_type != df::slab_engraving_type::Memorial)
         return false;
 
-    if (item->getType() == df::item_type::CAGE && specials.count("empty")
+    if (itype == df::item_type::CAGE && specials.count("empty")
         && (Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT)
             || Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM)))
         return false;
@@ -156,11 +158,8 @@ bool matchesFilters(df::item * item, const df::job_item * jitem, HeatSafety heat
     if (!matchesHeatSafety(item->getMaterial(), item->getMaterialIndex(), heat))
         return false;
 
-    return Job::isSuitableItem(
-            jitem, item->getType(), item->getSubtype())
-        && Job::isSuitableMaterial(
-            jitem, item->getMaterial(), item->getMaterialIndex(),
-            item->getType())
+    return Job::isSuitableItem(jitem, itype, item->getSubtype())
+        && Job::isSuitableMaterial(jitem, item->getMaterial(), item->getMaterialIndex(), itype)
         && item_filter.matches(item);
 }
 

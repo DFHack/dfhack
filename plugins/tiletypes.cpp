@@ -75,9 +75,10 @@ static const struct_field_info tiletypes_options_fields[] = {
 };
 struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);
 // pair<bottomShape, topShape> -> newTopShape
-static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::tiletype_shape> surroundingsMap = {
-    { { df::tiletype_shape::WALL, df::tiletype_shape::EMPTY    }, df::tiletype_shape::FLOOR    },
-    { { df::tiletype_shape::RAMP, df::tiletype_shape::EMPTY    }, df::tiletype_shape::RAMP_TOP },
+static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::tiletype_shape> autocorrectMap = {
+    { { df::tiletype_shape::WALL,  df::tiletype_shape::EMPTY    }, df::tiletype_shape::FLOOR    },
+    { { df::tiletype_shape::RAMP,  df::tiletype_shape::EMPTY    }, df::tiletype_shape::RAMP_TOP },
+    { { df::tiletype_shape::EMPTY, df::tiletype_shape::RAMP_TOP }, df::tiletype_shape::EMPTY    },
 };
 
 static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
@@ -132,7 +133,7 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
             << " Subterranean / st: set subterranean flag" << std::endl
             << " Skyview / sv: set skyview flag" << std::endl
             << " Aquifer / aqua: set aquifer flag" << std::endl
-            << " Surroundings / surr: set surroundings flag" << std::endl
+            << " Autocorrect / ac: set autocorrect flag" << std::endl
             << " Stone: paint specific stone material" << std::endl
             << " Veintype: use specific vein type for stone" << std::endl
             << "See help [option] for more information" << std::endl;
@@ -203,9 +204,9 @@ void help( color_ostream & out, std::vector<std::string> &commands, int start, i
         out << "Available aquifer flags:" << std::endl
             << " ANY, 0, 1, 2" << std::endl;
     }
-    else if (option == "surroundings" || option == "surrounding" || option == "surr")
+    else if (option == "autocorrect" || option == "ac")
     {
-        out << "Available surroundings flags:" << std::endl
+        out << "Available autocorrect flags:" << std::endl
             << " 0, 1" << std::endl;
     }
     else if (option == "stone")
@@ -238,7 +239,7 @@ struct TileType
     int subterranean;
     int skyview;
     int aquifer;
-    int surroundings;
+    int autocorrect;
     int stone_material;
     df::inclusion_type vein_type;
 
@@ -259,7 +260,7 @@ struct TileType
         subterranean = -1;
         skyview = -1;
         aquifer = -1;
-        surroundings = 0;
+        autocorrect = 0;
         stone_material = -1;
         vein_type = inclusion_type::CLUSTER;
     }
@@ -268,7 +269,7 @@ struct TileType
     {
         return shape == -1 && material == -1 && special == -1 && variant == -1
             && dig == -1 && hidden == -1 && light == -1 && subterranean == -1
-            && skyview == -1 && aquifer == -1 && surroundings == 0
+            && skyview == -1 && aquifer == -1 && autocorrect == 0
             && stone_material == -1;
     }
 
@@ -430,7 +431,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
         needSpace = true;
     }
 
-    if (paint.surroundings == 1)
+    if (paint.autocorrect == 1)
     {
         if (needSpace)
         {
@@ -438,7 +439,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << "UPDATE SURROUNDINGS";
+        stream << "AUTOCORRECT";
         used = true;
         needSpace = true;
     }
@@ -732,16 +733,16 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
             out << "Unknown aquifer flag: " << value << std::endl;
         }
     }
-    else if (option == "surroundings" || option == "surrounding" || option == "surr")
+    else if (option == "autocorrect" || option == "ac")
     {
         if (valInt >= 0 && valInt < 2)
         {
-            paint.surroundings = valInt;
+            paint.autocorrect = valInt;
             found = true;
         }
         else
         {
-            out << "Unknown surroundings flag: " << value << std::endl;
+            out << "Unknown autocorrect flag: " << value << std::endl;
         }
     }
     else if (option == "all" || option == "a")
@@ -880,14 +881,14 @@ static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& bloc
     return block->setDesignationAt(blockPos, des);
 }
 
-static bool updateSurroundings(MapExtras::Block* botBlock, MapExtras::Block* topBlock, const df::coord2d& blockPos, const TileType& target) {
+static bool autocorrectTile(MapExtras::Block* botBlock, MapExtras::Block* topBlock, const df::coord2d& blockPos, const TileType& target) {
     if (!botBlock || !topBlock)
         return false;
     tiletype::tiletype botTiletype = botBlock->tiletypeAt(blockPos);
     tiletype::tiletype topTiletype = topBlock->tiletypeAt(blockPos);
 
-    auto iter = surroundingsMap.find(std::make_pair(tileShape(botTiletype), tileShape(topTiletype)));
-    if (iter == surroundingsMap.end())
+    auto iter = autocorrectMap.find(std::make_pair(tileShape(botTiletype), tileShape(topTiletype)));
+    if (iter == autocorrectMap.end())
         return false;
 
     df::tiletype_shape newTopShape = iter->second;
@@ -899,7 +900,7 @@ static bool updateSurroundings(MapExtras::Block* botBlock, MapExtras::Block* top
     tiletype.stone_material = -1;
     tiletype.aquifer = -1;
     tiletype.dig = -1;
-    tiletype.surroundings = 0;
+    tiletype.autocorrect = 0;
     if (paintTileProcessing(topBlock, blockPos, tiletype) && tileShape(topBlock->tiletypeAt(blockPos)) == newTopShape)
         return true;
 
@@ -953,7 +954,7 @@ static bool updateSurroundings(MapExtras::Block* botBlock, MapExtras::Block* top
     return paintTileProcessing(topBlock, blockPos, tiletype);
 }
 
-static bool updateAreaSurroundings(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2, const TileType& botType) {
+static bool autocorrectArea(MapExtras::MapCache& map, const df::coord& pos1, const df::coord& pos2, const TileType& botType) {
     df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
     df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
 
@@ -976,8 +977,8 @@ static bool updateAreaSurroundings(MapExtras::MapCache& map, const df::coord& po
                 // Loop through all tiles in the block
                 for (int16_t xOffset = startX; xOffset <= endX; xOffset++) {
                     for (int16_t yOffset = startY; yOffset <= endY; yOffset++) {
-                        updated |= updateSurroundings(blockQueue.front(), blockQueue.back(), df::coord2d(xOffset, yOffset), botType);
-                        updated |= updateSurroundings(belowBlock, blockQueue.front(), df::coord2d(xOffset, yOffset), botType);
+                        updated |= autocorrectTile(blockQueue.front(), blockQueue.back(), df::coord2d(xOffset, yOffset), botType);
+                        updated |= autocorrectTile(belowBlock, blockQueue.front(), df::coord2d(xOffset, yOffset), botType);
                     }
                 }
                 blockQueue.front()->enableBlockUpdates(true, true);
@@ -1051,7 +1052,7 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                     return skipList.end() == std::find_if(skipList.begin(), skipList.end(), [pos](df::coord p) { return p.x == pos.x && p.y == pos.y && p.z == pos.z; });
                 };
 
-                if (target.surroundings > 0 && updateAreaSurroundings(map, pos1, pos2, target))
+                if (target.autocorrect > 0 && autocorrectArea(map, pos1, pos2, target))
                     map.WriteAll();
 
                 if (target.aquifer == 0)
@@ -1086,12 +1087,12 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
         return PaintResult{
             .paintCount = 1,
             .postWrite = [target, pos](MapExtras::MapCache& map) {
-                if (target.surroundings > 0) {
+                if (target.autocorrect > 0) {
                     MapExtras::Block* block = map.BlockAtTile(pos);
                     MapExtras::Block* topBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z + 1));
                     MapExtras::Block* belowBlock = map.BlockAtTile(df::coord(pos.x, pos.y, pos.z - 1));
-                    bool updated = updateSurroundings(block, topBlock, df::coord2d(pos.x & 15, pos.y & 15), target);
-                    updated |= updateSurroundings(belowBlock, block, df::coord2d(pos.x & 15, pos.y & 15), target);
+                    bool updated = autocorrectTile(block, topBlock, df::coord2d(pos.x & 15, pos.y & 15), target);
+                    updated |= autocorrectTile(belowBlock, block, df::coord2d(pos.x & 15, pos.y & 15), target);
                     block->enableBlockUpdates(true, true);
                     if (updated)
                         map.WriteAll();
@@ -1432,8 +1433,8 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
         out.printerr("Invalid aquifer value: %d\n", target.aquifer);
         return false;
     }
-    if (target.surroundings < 0 || target.surroundings > 1) {
-        out.printerr("Invalid surroundings value: %d\n", target.surroundings);
+    if (target.autocorrect < 0 || target.autocorrect > 1) {
+        out.printerr("Invalid autocorrect value: %d\n", target.autocorrect);
         return false;
     }
     if (target.material == df::tiletype_material::STONE) {
@@ -1489,7 +1490,7 @@ static int tiletypes_setTile(lua_State *L) {
         target.subterranean   = lua_getintfield("subterranean", target.subterranean);
         target.skyview        = lua_getintfield("skyview", target.skyview);
         target.aquifer        = lua_getintfield("aquifer", target.aquifer);
-        target.surroundings   = lua_getintfield("surroundings", target.surroundings);
+        target.autocorrect    = lua_getintfield("autocorrect", target.autocorrect);
         if (target.material == df::tiletype_material::STONE) {
             target.stone_material = lua_getintfield("stone_material", target.stone_material);
             target.vein_type = (df::inclusion_type)lua_getintfield("vein_type", target.vein_type);

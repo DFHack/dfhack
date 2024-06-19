@@ -63,20 +63,20 @@ Template for new versions:
 - `regrass`: don't remove mud on regrass, consistent with vanilla behavior
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
-- `seedwatch`: do not include unplantable tree seeds in its status report
+- `seedwatch`: do not include unplantable tree seeds in status report
 - ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
 - Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
 - `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
-- `buildingplan`: properly identify appropriate thread-based construction items for modded buildings built from thread
+- `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
-- `changevein`: affect connected veins even outside of the selected map block
-- `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
+- `changevein`: follow veins into adjacent map blocks so you can run the command once instead of once per map block that the vein touches
+- `logistics`: automatically forbid or claim items brought to a stockpile
 - `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 - `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
-- `tiletypes`: new ``surroundings`` property for maintaining valid tile surroundings
+- `tiletypes`: new ``surroundings`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - Dreamfort: walkthough documentation refresh
@@ -92,7 +92,7 @@ Template for new versions:
 - `gui/create-item`: allow right click to cancel out of material dialog submenus
 
 ## Documentation
-- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (ito benefit from DFHack auto-updates and cloud backups)
 - `modding-guide`: add a section on persistent storage, both for global settings and world-specific settings
 
 ## API
@@ -117,10 +117,7 @@ Template for new versions:
 - ``safe_index``: will now return nil when attempting to index into a non-indexable object
 - ``script-manager``: add ``getModSourcePath`` and ``getModStatePath`` so modders can get the directory path to their own files
 - ``widgets.FilteredList``: don't restrict the player from inputting multiple successive space characters
-- ``dfhack.maps.isTileAquifer``: check if tile is an aquifer
-- ``dfhack.maps.isTileHeavyAquifer``: check if tile is a heavy aquifer
-- ``dfhack.maps.setTileAquifer``: make tile into an aquifer
-- ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
+- ``dfhack.maps.isTileAquifer``, ``dfhack.maps.isTileHeavyAquifer``, ``dfhack.maps.setTileAquifer``, ``dfhack.maps.removeTileAquifer``: access to new aquifer API
 - ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 - ``dfhack.units.create``, ``dfhack.units.makeown``: Lua access to new module API

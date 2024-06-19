@@ -149,8 +149,8 @@ The options identify the property of the tile and the value of that property:
     Whether a tile is marked as "Outside". A value of ``0`` means "inside".
 ``aqua``, ``aquifer 0|1|2``
     Whether a tile is marked as an aquifer. A value of ``2`` means "heavy aquifer".
-``surr``, ``surroundings 0|1``
-    Whether the tile's surroundings should be validated, e.g., adding bottoms/tops
+``ac``, ``autocorrect 0|1``
+    Whether the tile's surroundings should be autocorrected, e.g., adding bottoms/tops
     to tiles that span multiple Z levels and updating liquids. A value of ``1``
     means to do so.
 ``stone <stone type>``

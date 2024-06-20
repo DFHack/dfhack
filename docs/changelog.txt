@@ -76,7 +76,7 @@ Template for new versions:
 - `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 - `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
-- `tiletypes`: new ``surroundings`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
+- `tiletypes`: new ``autocorrect`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
 - Dreamfort: walkthough documentation refresh

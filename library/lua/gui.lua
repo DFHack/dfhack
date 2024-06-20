@@ -120,6 +120,25 @@ function mkdims_wh(x1,y1,w,h)
     return { x1=x1, y1=y1, x2=x1+w-1, y2=y1+h-1, width=w, height=h }
 end
 
+---@return gui.dimension
+function get_interface_rect()
+    local l, t = 0, 0
+    local w, h = dscreen.getWindowSize()
+    local interface_pct = df.global.init.display.max_interface_percentage
+    if interface_pct < 100 then
+        local interface_width = math.max(114, w * interface_pct / 100)
+        l = math.ceil((w - interface_width) / 2)
+        w = math.floor(interface_width)
+    end
+    return mkdims_wh(l, t, w, h)
+end
+
+---@return widgets.Widget.frame
+function get_interface_frame()
+    local interface_rect = get_interface_rect()
+    return {t=0, l=interface_rect.x1, w=interface_rect.width, height=interface_rect.height}
+end
+
 ---@param rect gui.dimension
 ---@param x integer
 ---@param y integer

@@ -41,7 +41,7 @@ function AutolaborOverlay:init()
 end
 
 function AutolaborOverlay:render(dc)
-    if df.global.game.external_flag ~= 1 then return end
+    if not df.global.game.external_flag.automatic_professions_disabled then return end
     AutolaborOverlay.super.render(self, dc)
 end
 

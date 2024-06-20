@@ -79,7 +79,10 @@ any of the callbacks -- to indicate a new size. The overlay framework will
 detect the size change and adjust the widget position and layout.
 
 If you don't need to dynamically resize, just set ``self.frame.w`` and
-``self.frame.h`` once in ``init()`` (or just leave them at the defaults).
+``self.frame.h`` once in ``init()`` (or just leave them at the defaults). If
+you don't need to render a widget on the screen at all, set your frame width
+and/or height to 0. Your ``render`` function will still be called, but no
+repositioning frame will be shown for the overlay in `gui/overlay`.
 
 Widget attributes
 *****************
@@ -128,10 +131,15 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     viewscreen's ``logic()`` function). This call to ``overlay_onupdate`` is in
     addition to any calls initiated from associated interposed viewscreens and
     will come after calls from associated viewscreens.
-- ``overlay_only`` (default: ``false``)
+- ``fullscreen`` (default: ``false``)
     If set to ``true``, no widget frame will be drawn in `gui/overlay` for drag
-    and drop repositioning. Overlay widgets that don't have a "widget" to
-    reposition should set this to ``true``.
+    and drop repositioning. Overlay widgets that need their frame positioned
+    relative to the screen and not just the scaled interface area should set
+    this to ``true``.
+- ``full_interface`` (default: ``false``)
+    If set to ``true``, no widget frame will be drawn in `gui/overlay` for drag
+    and drop repositioning. Overlay widgets that need access to the whole
+    scaled interface area should set this to ``true``.
 - ``overlay_onupdate_max_freq_seconds`` (default: ``5``)
     This throttles how often a widget's ``overlay_onupdate`` function can be
     called (from any source). Set this to the largest amount of time (in
@@ -296,6 +304,7 @@ seconds to avoid slowing down the entire game on every frame.
         desc='Sample widget that highlights artifacts on the game map.',
         default_enabled=true,
         viewscreens={'dwarfmode', 'dungeonmode'},
+        frame={w=0, h=0},
         overlay_onupdate_max_freq_seconds=10,
     }
 

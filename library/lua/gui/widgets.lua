@@ -337,7 +337,13 @@ end
 
 local function Panel_drag_frame(self, mouse_pos)
     local frame = copyall(self.frame)
-    local parent_rect, frame_rect = self.frame_parent_rect, self.frame_rect
+    local parent_rect = self.frame_parent_rect
+    local frame_rect = gui.mkdims_wh(
+        self.frame_rect.x1+parent_rect.x1,
+        self.frame_rect.y1+parent_rect.y1,
+        self.frame_rect.width,
+        self.frame_rect.height
+    )
     local bound_rect = self.drag_bound == 'body' and self.frame_body
             or frame_rect
     local offset = self.drag_offset

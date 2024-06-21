@@ -136,7 +136,7 @@ end
 ---@return widgets.Widget.frame
 function get_interface_frame()
     local interface_rect = get_interface_rect()
-    return {t=0, l=interface_rect.x1, w=interface_rect.width, height=interface_rect.height}
+    return {t=0, l=interface_rect.x1, w=interface_rect.width, h=interface_rect.height}
 end
 
 ---@param rect gui.dimension

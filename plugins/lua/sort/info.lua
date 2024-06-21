@@ -54,7 +54,7 @@ local function get_race_name(raw_id)
     return raw.name[1]
 end
 
--- get name in both dwarvish and English
+-- get name in both dwarven and English
 local function get_artifact_search_key(artifact)
     return ('%s %s'):format(dfhack.TranslateName(artifact.name), dfhack.TranslateName(artifact.name, true))
 end
@@ -286,8 +286,7 @@ function resize_overlay(self)
 end
 
 local function is_tabs_in_two_rows()
-    local sw = dfhack.screen.getWindowSize()
-    return sw < 155
+    return gui.get_interface_rect().width < 155
 end
 
 function get_panel_offsets()
@@ -457,7 +456,7 @@ local function get_work_animal_counts()
         then
             goto continue
         end
-        local owner_id = unit.relationship_ids.Pet
+        local owner_id = unit.relationship_ids.PetOwner
         if owner_id == -1 then goto continue end
         counts[owner_id] = (counts[owner_id] or 0) + 1
         ::continue::

@@ -364,7 +364,10 @@ MenuScreen.ATTRS {
 
 function MenuScreen:init()
     self:addviews{
-        Menu{hotspot=self.hotspot},
+        Menu{
+            frame=gui.get_interface_frame(),
+            hotspot=self.hotspot,
+        },
     }
 end
 

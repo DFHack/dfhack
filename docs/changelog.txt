@@ -122,6 +122,8 @@ Template for new versions:
 - ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
 - ``dfhack.units.create``, ``dfhack.units.makeown``: Lua access to new module API
 - ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the player preferences for number formatting set in `gui/control-panel`
+- ``gui.get_interface_rect``, ``gui.get_interface_frame``: convenience functions for working with scaled interfaces
+- ``overlay``: new attributes: ``fullscreen`` and ``full_interface`` for overlays that need access to the entire screen or the scaled interface area, respectively
 
 ## Removed
 - `plants`: renamed to `plant`

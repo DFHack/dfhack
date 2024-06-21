@@ -150,7 +150,6 @@ MechLinkOverlay.ATTRS
 {
     desc = "Allows unlinking mechanisms from buildings.",
     default_enabled = true,
-    overlay_only = true,
     default_pos = {x=-41, y=-4},
     frame = {w=56, h=27},
     viewscreens = {},
@@ -401,7 +400,6 @@ MechItemOverlay.ATTRS
 {
     desc = "Allows freeing unlinked mechanisms from buildings.",
     default_enabled = true,
-    overlay_only = true,
     default_pos = {x=-41, y=-4},
     frame = {w=56, h=27},
     viewscreens = {},

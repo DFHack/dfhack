@@ -4342,6 +4342,16 @@ Misc
   Returns the same kind of table as ``mkdims_xy``, only this time it computes
   ``x2`` and ``y2``.
 
+* ``get_interface_rect()``
+
+  Returns the table rect (as per ``mkdims_xy``) for the interface area of the
+  screen, respecting the player's setting for ``max_interface_percentage``.
+
+* ``get_interface_frame()``
+
+  Returns the frame (as per `Widget class`_) for configuring a ``Widget`` with
+  a body that represents the interface area.
+
 * ``is_in_rect(rect,x,y)``
 
   Checks if the given point is within a rectangle, represented by a table produced

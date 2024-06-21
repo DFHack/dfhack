@@ -385,7 +385,11 @@ local function Panel_begin_drag(self, drag_offset, resize_edge)
     self.drag_offset = drag_offset or {x=0, y=0}
     self.resize_edge = resize_edge
     self.saved_frame = copyall(self.frame)
-    self.saved_frame_rect = copyall(self.frame_rect)
+    self.saved_frame_rect = gui.mkdims_wh(
+        self.frame_rect.x1+self.frame_parent_rect.x1,
+        self.frame_rect.y1+self.frame_parent_rect.y1,
+        self.frame_rect.width,
+        self.frame_rect.height)
     self.prev_focus_owner = self.focus_group.cur
     self:setFocus(true)
     if self.resize_edge then
@@ -495,7 +499,11 @@ function Panel:onInput(keys)
 
     local resize_edge = nil
     if self.resizable then
-        local rect = self.frame_rect
+        local rect = gui.mkdims_wh(
+            self.frame_rect.x1+self.frame_parent_rect.x1,
+            self.frame_rect.y1+self.frame_parent_rect.y1,
+            self.frame_rect.width,
+            self.frame_rect.height)
         if self.resize_anchors.r and self.resize_anchors.b
                 and x == rect.x2 - rect.x1 and y == rect.y2 - rect.y1 then
             resize_edge = 'rb'
@@ -555,34 +563,39 @@ end
 
 local function Panel_get_resize_data(self)
     local resize_anchors = self.resize_anchors
+    local frame_rect = gui.mkdims_wh(
+        self.frame_rect.x1+self.frame_parent_rect.x1,
+        self.frame_rect.y1+self.frame_parent_rect.y1,
+        self.frame_rect.width,
+        self.frame_rect.height)
     if resize_anchors.r and resize_anchors.b then
         return 'rb', function()
-            return {x=self.frame_rect.x2, y=self.frame_rect.y2} end
+            return {x=frame_rect.x2, y=frame_rect.y2} end
     elseif resize_anchors.l and resize_anchors.b then
         return 'lb', function()
-            return {x=self.frame_rect.x1, y=self.frame_rect.y2} end
+            return {x=frame_rect.x1, y=frame_rect.y2} end
     elseif resize_anchors.r and resize_anchors.t then
         return 'rt', function()
-            return {x=self.frame_rect.x2, y=self.frame_rect.y1} end
+            return {x=frame_rect.x2, y=frame_rect.y1} end
     elseif resize_anchors.l and resize_anchors.t then
         return 'lt', function()
-            return {x=self.frame_rect.x1, y=self.frame_rect.y1} end
+            return {x=frame_rect.x1, y=frame_rect.y1} end
     elseif resize_anchors.b then
         return 'b', function()
-            return {x=(self.frame_rect.x1+self.frame_rect.x2)/2,
-                    y=self.frame_rect.y2} end
+            return {x=(frame_rect.x1+frame_rect.x2)//2,
+                    y=frame_rect.y2} end
     elseif resize_anchors.r then
         return 'r', function()
-            return {x=self.frame_rect.x2,
-                    y=(self.frame_rect.y1+self.frame_rect.y2)/2} end
+            return {x=frame_rect.x2,
+                    y=(frame_rect.y1+frame_rect.y2)//2} end
     elseif resize_anchors.l then
         return 'l', function()
-            return {x=self.frame_rect.x1,
-                    y=(self.frame_rect.y1+self.frame_rect.y2)/2} end
+            return {x=frame_rect.x1,
+                    y=(frame_rect.y1+frame_rect.y2)//2} end
     elseif resize_anchors.t then
         return 't', function()
-            return {x=(self.frame_rect.x1+self.frame_rect.x2)/2,
-                    y=self.frame_rect.y1} end
+            return {x=(frame_rect.x1+frame_rect.x2)//2,
+                    y=frame_rect.y1} end
     end
 end
 

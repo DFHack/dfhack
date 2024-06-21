@@ -145,7 +145,7 @@ SuspendOverlay.ATTRS{
     desc='Annotates suspended buildings with a visible marker.',
     viewscreens='dwarfmode',
     default_enabled=true,
-    fullscreen=true,
+    frame={w=0, h=0},
     overlay_onupdate_max_freq_seconds=30,
 }
 

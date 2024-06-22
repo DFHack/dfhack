@@ -68,6 +68,7 @@ Template for new versions:
 - Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
 - `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
 - `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
+- `overlay`: overlays now respect custom settings for the the max interface width percentage
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

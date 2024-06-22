@@ -2,7 +2,7 @@ pathable
 ========
 
 .. dfhack-tool::
-    :summary: Marks tiles that are reachable from the cursor.
+    :summary: Highlights pathable tiles.
     :tags: dev
     :no-command:
 

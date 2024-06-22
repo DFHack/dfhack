@@ -10,6 +10,12 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _adv-fix-sleepers:
+
+adv-fix-sleepers
+================
+Converted to fix/sleepers.
+
 .. _autohauler:
 
 autohauler

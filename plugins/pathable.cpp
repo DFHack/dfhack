@@ -2,6 +2,7 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
@@ -202,6 +203,11 @@ struct FloodCtx {
 };
 
 static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df::coord & prev_pos) {
+    if (auto bld = Buildings::findAtTile(pos)) {
+        if (bld->getType() == df::building_type::Trap)
+            return false;
+    }
+
     if (ctx.wgroup == Maps::getWalkableGroup(pos))
         return true;
 

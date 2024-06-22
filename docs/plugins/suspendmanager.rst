@@ -32,7 +32,7 @@ Usage
 ``suspendmanager set preventblocking (true|false)``
     Prevent construction jobs from blocking each others (enabled by default). See `suspend`.
 
-``unsuspend [-s|--skipblocking] [-q|--quiet]``
+``unsuspend [-s|--skipblocking] [-q|--quiet] [-f|--force]``
     Perform a single cycle, suspending and unsuspending jobs as described above,
     regardless of whether `suspendmanager` is enabled.
 
@@ -48,6 +48,10 @@ Options
 
 ``-s``, ``--skipblocking``
     Also resume jobs that may block other jobs.
+
+``-f``, ``--force``
+    Resume all construction jobs, even if they are submerged or will collapse on
+    completion; implies ``--skipblocking``.
 
 Overlay
 -------

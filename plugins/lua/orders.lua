@@ -209,11 +209,7 @@ RecheckOverlay.ATTRS{
 }
 
 local function areTabsInTwoRows()
-    -- get the tile above the order status icon
-    local pen = dfhack.screen.readTile(7, 7, false)
-    -- in graphics mode, `0` when one row, something else when two (`67` aka 'C' from "Creatures")
-    -- in ASCII mode, `32` aka ' ' when one row, something else when two (`196` aka '-' from tab frame's top)
-    return (pen.ch ~= 0 and pen.ch ~= 32)
+    return gui.get_interface_rect().width < 155
 end
 
 function RecheckOverlay:updateTextButtonFrame()

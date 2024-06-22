@@ -13,15 +13,15 @@ local function test_wrapper(test_fn)
     -- backup and clear active orders
     dfhack.run_command_silent{'orders', 'export', BACKUP_FILE_NAME}
     dfhack.run_command_silent{'orders', 'clear'}
-    df.global.world.manager_order_next_id = 0
+    df.global.world.manager_orders.manager_order_next_id = 0
     return dfhack.with_finalize(
         function()
             -- clear test orders, restore original orders, remove temp files
             dfhack.run_command_silent{'orders', 'clear'}
-            df.global.world.manager_order_next_id = 0
+            df.global.world.manager_orders.manager_order_next_id = 0
             dfhack.run_command_silent{'orders', 'import', BACKUP_FILE_NAME}
-            df.global.world.manager_order_next_id =
-                    #df.global.world.manager_orders
+            df.global.world.manager_orders.manager_order_next_id =
+                    #df.global.world.manager_orders.all
             os.remove(BACKUP_FILE_PATH)
             os.remove(TMP_FILE_PATH)
         end,
@@ -61,22 +61,22 @@ function check_export_success(expected_file_content)
 end
 
 function check_import_success(file_content, comment, num_expected_orders)
-    local prev_num_orders = #df.global.world.manager_orders
+    local prev_num_orders = #df.global.world.manager_orders.all
     local output, result = run_orders_import(file_content)
     expect.eq(result, CR_OK, comment)
     expect.eq(prev_num_orders + num_expected_orders,
-              #df.global.world.manager_orders, comment)
+              #df.global.world.manager_orders.all, comment)
 end
 
 function check_import_fail(file_content, comment, prefix)
     comment = comment or ''
-    local prev_num_orders = #df.global.world.manager_orders
+    local prev_num_orders = #df.global.world.manager_orders.all
     local output, result = run_orders_import(file_content)
     expect.eq(result, CR_FAILURE, ('%s: was successful'):format(comment))
     if prefix then
         expect.true_(output:lower():startswith(prefix), ('%s: "%s" missing "%s"'):format(comment, output, prefix))
     end
-    expect.eq(prev_num_orders, #df.global.world.manager_orders, ('%s: number of manager orders changed'):format(comment))
+    expect.eq(prev_num_orders, #df.global.world.manager_orders.all, ('%s: number of manager orders changed'):format(comment))
 end
 
 function test.import_empty()
@@ -199,7 +199,7 @@ function test.import_export_reaction_condition()
 end
 
 local function get_last_order()
-    return df.global.world.manager_orders[#df.global.world.manager_orders-1]
+    return df.global.world.manager_orders.all[#df.global.world.manager_orders.all-1]
 end
 
 function test.import_invalid_reaction_conditions()

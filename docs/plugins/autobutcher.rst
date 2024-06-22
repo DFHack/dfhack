@@ -12,6 +12,7 @@ excess livestock for slaughter. Units will be ignored if they are:
 * Named or nicknamed
 * Caged, if and only if the cage is in a zone (to protect zoos)
 * Trained for war or hunting
+* Females who are pregnant or brooding a clutch of fertile eggs
 
 Creatures that are least useful for animal breeding programs are marked for
 slaughter first. That is:

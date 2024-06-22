@@ -300,18 +300,18 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
     return true;
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
+bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
                            bool skip_vector, df::item_type itype)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item, itype) : false;
+        return mat ? mat->matches(jitem, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;
 
-    if (!skip_vector && !matches(item.vector_id))
+    if (!skip_vector && !matches(jitem.vector_id))
         return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1, xmask1;
@@ -333,14 +333,15 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
 
     // Set up the flag mask
 
-    RQ(1,millable); RQ(1,sharpenable); RQ(1,distillable); RQ(1,processable); RQ(1,bag);
+    RQ(1,millable); RQ(1,sharpenable); RQ(1,processable);
     RQ(1,extract_bearing_plant); RQ(1,extract_bearing_fish); RQ(1,extract_bearing_vermin);
-    RQ(1,processable_to_vial); RQ(1,processable_to_bag); RQ(1,processable_to_barrel);
+    RQ(1,processable_to_vial); RQ(1,processable_to_barrel);
     RQ(1,solid); RQ(1,tameable_vermin); RQ(1,sand_bearing); RQ(1,milk); RQ(1,milkable);
     RQ(1,not_bin); RQ(1,lye_bearing); RQ(1, undisturbed);
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
     RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
+    RQ(2,plant); RQ(2,silk); RQ(2,yarn);
     RQ(2,totemable); RQ(2,plaster_containing); RQ(2,body_part); RQ(2,lye_milk_free);
     RQ(2,blunt); RQ(2,unengraved); RQ(2,hair_wool);
 
@@ -360,10 +361,8 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
     switch (type) {
     case PLANT:
         OK(1,millable); OK(1,processable);
-        OK(1,distillable);
         OK(1,extract_bearing_plant);
         OK(1,processable_to_vial);
-        OK(1,processable_to_bag);
         OK(1,processable_to_barrel);
         break;
 
@@ -431,9 +430,8 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
         xmask1.bits.cookable = true;
         break;
 
-    // TODO: split this into BOX and BAG
-    case BOX:
-        OK(1,bag); OK(1,sand_bearing); OK(1,milk);
+    case BAG:
+        OK(1,sand_bearing); OK(1,milk);
         OK(2,dye); OK(2,plaster_containing);
         xmask1.bits.cookable = true;
         break;
@@ -455,7 +453,17 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
         break;
 
     case THREAD:
+        if ((!jitem.flags2.bits.plant && ok2.bits.plant)
+            || (!jitem.flags2.bits.silk && ok2.bits.silk)
+            || (!jitem.flags2.bits.yarn && ok2.bits.yarn))
+        {
+            // material flags must match exactly
+            return false;
+        }
         OK(1,undisturbed);
+        OK(2,plant);
+        OK(2,silk);
+        OK(2,yarn);
     case CLOTH:
         OK(2,dyeable); OK(2,dyed);
         break;
@@ -506,12 +514,12 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
     mask1.whole &= ~xmask1.whole;
     mask2.whole &= ~xmask2.whole;
 
-    return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
-           bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&
-           bits_match(item.flags3.whole, ok3.whole, mask3.whole) &&
-           bits_match(item.flags1.whole, item_ok1.whole, item_mask1.whole) &&
-           bits_match(item.flags2.whole, item_ok2.whole, item_mask2.whole) &&
-           bits_match(item.flags3.whole, item_ok3.whole, item_mask3.whole);
+    return bits_match(jitem.flags1.whole, ok1.whole, mask1.whole) &&
+           bits_match(jitem.flags2.whole, ok2.whole, mask2.whole) &&
+           bits_match(jitem.flags3.whole, ok3.whole, mask3.whole) &&
+           bits_match(jitem.flags1.whole, item_ok1.whole, item_mask1.whole) &&
+           bits_match(jitem.flags2.whole, item_ok2.whole, item_mask2.whole) &&
+           bits_match(jitem.flags3.whole, item_ok3.whole, item_mask3.whole);
 }
 
 df::item * Items::findItemByID(int32_t id)
@@ -1200,16 +1208,21 @@ bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
 {
     CHECK_NULL_POINTER(item);
 
-    auto pos = getPosition(item);
+    if (auto spec_ref = getSpecificRef(item, df::specific_ref_type::JOB))
+        Job::removeJob(spec_ref->data.job);
 
     if (!detachItem(mc, item))
         return false;
 
-    if (pos.isValid())
+    if (auto pos = getPosition(item); pos.isValid())
         item->pos = pos;
 
     if (!no_uncat)
         item->uncategorize();
+
+    // hide them from jobs and the UI until the item can be garbage collected
+    item->flags.bits.forbid = true;
+    item->flags.bits.hidden = true;
 
     item->flags.bits.removed = true;
     item->flags.bits.garbage_collect = !no_uncat;

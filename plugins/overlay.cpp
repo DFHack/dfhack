@@ -1,4 +1,5 @@
 #include "df/enabler.h"
+#include "df/init.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -35,6 +36,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(enabler);
+REQUIRE_GLOBAL(init);
 
 namespace DFHack {
     DBG_DECLARE(overlay, control, DebugCategory::LINFO);
@@ -42,6 +44,7 @@ namespace DFHack {
 }
 
 static df::coord2d screenSize;
+static int32_t interfacePct = 100;
 
 static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
@@ -198,9 +201,11 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
     df::coord2d newScreenSize = Screen::getWindowSize();
-    if (newScreenSize != screenSize) {
+    int32_t newInterfacePct = init->display.max_interface_percentage;
+    if (newScreenSize != screenSize || newInterfacePct != interfacePct) {
         Lua::CallLuaModuleFunction(out, "plugins.overlay", "reposition_widgets");
         screenSize = newScreenSize;
+        interfacePct = newInterfacePct;
     }
     Lua::CallLuaModuleFunction(out, "plugins.overlay", "update_hotspot_widgets");
     return CR_OK;

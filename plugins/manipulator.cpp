@@ -111,7 +111,7 @@ const SkillColumn columns[] = {
     {1, 14, profession::WOODCUTTER, unit_labor::CUTWOOD, job_skill::WOODCUTTING, "WC", true},
 // Stoneworking
     {2, 15, profession::MASON, unit_labor::MASON, job_skill::MASONRY, "Ma"},
-    {2, 15, profession::ENGRAVER, unit_labor::DETAIL, job_skill::DETAILSTONE, "En"},
+    {2, 15, profession::ENGRAVER, unit_labor::DETAIL, job_skill::ENGRAVE_STONE, "En"},
 // Hunting/Related
     {3, 2, profession::ANIMAL_TRAINER, unit_labor::ANIMALTRAIN, job_skill::ANIMALTRAIN, "Tn"},
     {3, 2, profession::ANIMAL_CARETAKER, unit_labor::ANIMALCARE, job_skill::ANIMALCARE, "Ca"},
@@ -198,7 +198,7 @@ const SkillColumn columns[] = {
     {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv"},
     {12, 4, profession::NONE, unit_labor::BUILD_ROAD, job_skill::NONE, "Ro"},
     {12, 4, profession::NONE, unit_labor::BUILD_CONSTRUCTION, job_skill::NONE, "Co"},
-    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "CR"},
+    {12, 4, profession::NONE, unit_labor::UNUSED_13, job_skill::NONE, "CR"},
 // Military - Weapons
     {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
     {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
@@ -1736,7 +1736,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                         unit->status.labors[columns[i].labor] = false;
                 }
             }
-            unit->military.pickup_flags.bits.update = true;
+            unit->uniform.pickup_flags.bits.update = true;
         }
         unit->status.labors[col.labor] = newstatus;
     }
@@ -1760,7 +1760,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                             unit->status.labors[columns[j].labor] = false;
                     }
                 }
-                unit->military.pickup_flags.bits.update = true;
+                unit->uniform.pickup_flags.bits.update = true;
             }
             unit->status.labors[columns[i].labor] = newstatus;
         }

@@ -184,7 +184,7 @@ public:
 
     void scan_clothing()
     {
-        for (auto i : world->items.other[df::items_other_id::ANY_GENERIC37]) // GENERIC37 is "nontattered clothing"
+        for (auto i : world->items.other[df::items_other_id::ANY_GOES_IN_CABINET])
         {
             if (i->flags.whole & badFlags.whole)
             {
@@ -410,13 +410,13 @@ public:
 
     void scan_existing_orders()
     {
-        for (auto o : world->manager_orders)
+        for (auto o : world->manager_orders.all)
         {
             auto f = jobTypeMap.find(o->job_type);
             if (f == jobTypeMap.end())
                 continue;
 
-            int race = o->hist_figure_id;
+            int race = o->specdata.hist_figure_id;
 
             for (auto& m : all_materials)
             {
@@ -449,13 +449,13 @@ public:
     }
 
     static df::manager_order * get_existing_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat) {
-        for (auto order : world->manager_orders) {
+        for (auto order : world->manager_orders.all) {
             if (order->job_type == ty &&
                     order->item_type == df::item_type::NONE &&
                     order->item_subtype == sub &&
                     order->mat_type == -1 &&
                     order->mat_index == -1 &&
-                    order->hist_figure_id == hfid &&
+                    order->specdata.hist_figure_id == hfid &&
                     order->material_category.whole == mcat.whole &&
                     order->frequency == df::manager_order::T_frequency::OneTime)
                 return order;
@@ -571,11 +571,11 @@ public:
                             order->amount_total = c;
                             order->status.bits.validated = false;
                             order->status.bits.active = false;
-                            order->id = world->manager_order_next_id++;
-                            order->hist_figure_id = sizes[size];
+                            order->id = world->manager_orders.manager_order_next_id++;
+                            order->specdata.hist_figure_id = sizes[size];
                             order->material_category = m.job_material;
 
-                            world->manager_orders.push_back(order);
+                            world->manager_orders.all.push_back(order);
                         }
 
                         INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
@@ -583,7 +583,7 @@ public:
                             c,
                             bitfield_to_string(order->material_category).c_str(),
                             DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
-                            DF2CONSOLE(world->raws.creatures.all[order->hist_figure_id]->name[1]).c_str()
+                            DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
                         );
 
                         count -= c;

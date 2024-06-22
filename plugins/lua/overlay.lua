@@ -120,9 +120,10 @@ local function make_frame(pos, old_frame)
     return frame
 end
 
-local function get_screen_rect()
-    local w, h = dfhack.screen.getWindowSize()
-    return gui.ViewRect{rect=gui.mkdims_wh(0, 0, w, h)}
+local function get_interface_rects()
+    local full = gui.ViewRect{rect=gui.mkdims_wh(0, 0, dfhack.screen.getWindowSize())}
+    local scaled = gui.ViewRect{rect=gui.get_interface_rect()}
+    return full, scaled
 end
 
 -- ------------- --
@@ -364,7 +365,8 @@ local function do_position(args, quiet)
     end
     overlay_config[name].pos = pos
     widget.frame = make_frame(pos, widget.frame)
-    widget:updateLayout(get_screen_rect())
+    local full, scaled = get_interface_rects()
+    widget:updateLayout(widget.fullscreen and full or scaled)
     save_config()
     if not quiet then
         print(('repositioned widget %s to x=%d, y=%d'):format(name, pos.x, pos.y))
@@ -505,6 +507,7 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
         end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
                 detect_frame_change(w, function() return w:onInput(keys) end) then
+            --print('widget handled input:', w.name)
             return true
         end
         ::skip::
@@ -520,26 +523,28 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
     return true
 end
 
-local function _render_viewscreen_widgets(vs_name, vs, dc)
+local function _render_viewscreen_widgets(vs_name, vs, full_dc, scaled_dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
-    dc = dc or gui.Painter.new()
+    local full, scaled = get_interface_rects()
+    full_dc = full_dc or gui.Painter.new(full)
+    scaled_dc = scaled_dc or gui.Painter.new(scaled)
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
         if not utils.getval(w.visible) then goto skip end
         if not vs or matches_focus_strings(db_entry, vs_name, vs) then
-            detect_frame_change(w, function() w:render(dc) end)
+            detect_frame_change(w, function() w:render(w.fullscreen and full_dc or scaled_dc) end)
         end
         ::skip::
     end
-    return dc
+    return full_dc, scaled_dc
 end
 
 local force_refresh
 
 function render_viewscreen_widgets(vs_name, vs)
-    local dc = _render_viewscreen_widgets(vs_name, vs, nil)
-    _render_viewscreen_widgets('all', nil, dc)
+    local full_dc, scaled_dc = _render_viewscreen_widgets(vs_name, vs, nil, nil)
+    _render_viewscreen_widgets('all', nil, full_dc, scaled_dc)
     if force_refresh then
         force_refresh = nil
         df.global.gps.force_full_display_count = 1
@@ -548,9 +553,10 @@ end
 
 -- called when the DF window is resized
 function reposition_widgets()
-    local sr = get_screen_rect()
+    local full, scaled = get_interface_rects()
     for _,db_entry in pairs(widget_db) do
-        db_entry.widget:updateLayout(sr)
+        local widget = db_entry.widget
+        widget:updateLayout(widget.fullscreen and full or scaled)
     end
     force_refresh = true
 end
@@ -565,7 +571,8 @@ OverlayWidget.ATTRS{
     desc=DEFAULT_NIL, -- add a short description (<100 chars); displays in control panel
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
     default_enabled=false, -- initial enabled state if not in config
-    overlay_only=false, -- true if there is no widget to reposition
+    fullscreen=false, -- true if widget covers entire screen
+    full_interface=false, -- true if widget covers entire interface area
     hotspot=false, -- whether to call overlay_onupdate on all screens
     viewscreens={}, -- override with associated viewscreen or list of viewscrens
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate

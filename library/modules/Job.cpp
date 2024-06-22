@@ -78,7 +78,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
     //pnew->items.clear();
     //pnew->specific_refs.clear();
     pnew->general_refs.clear();
-    //pnew->job_items.clear();
+    //pnew->job_items.elements.clear();
 
     if ( keepEverything ) {
         for ( size_t a = 0; a < pnew->items.size(); a++ )
@@ -90,8 +90,8 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
         pnew->specific_refs.clear();
     }
 
-    for ( size_t a = 0; a < pnew->job_items.size(); a++ )
-        pnew->job_items[a] = new df::job_item(*pnew->job_items[a]);
+    for ( size_t a = 0; a < pnew->job_items.elements.size(); a++ )
+        pnew->job_items.elements[a] = new df::job_item(*pnew->job_items.elements[a]);
 
     for ( size_t a = 0; a < job->general_refs.size(); a++ )
         if ( keepEverything || job->general_refs[a]->getType() != general_ref_type::UNIT_WORKER )
@@ -117,8 +117,8 @@ void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
         for ( size_t a = 0; a < job->specific_refs.size(); a++ )
             delete job->specific_refs[a];
     }
-    for ( size_t a = 0; a < job->job_items.size(); a++ )
-        delete job->job_items[a];
+    for ( size_t a = 0; a < job->job_items.elements.size(); a++ )
+        delete job->job_items.elements[a];
     for ( size_t a = 0; a < job->general_refs.size(); a++ )
         delete job->general_refs[a];
 
@@ -152,12 +152,12 @@ bool DFHack::operator== (const df::job &a, const df::job &b)
     if (!(CMP(job_type) && CMP(job_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(specflag.whole) &&
-          CMP(hist_figure_id) && CMP(material_category.whole) &&
-          CMP(reaction_name) && CMP(job_items.size())))
+          CMP(specdata.hist_figure_id) && CMP(material_category.whole) &&
+          CMP(reaction_name) && CMP(job_items.elements.size())))
         return false;
 
-    for (int i = a.job_items.size()-1; i >= 0; i--)
-        if (!(*a.job_items[i] == *b.job_items[i]))
+    for (int i = a.job_items.elements.size()-1; i >= 0; i--)
+        if (!(*a.job_items.elements[i] == *b.job_items.elements[i]))
             return false;
 
     return true;
@@ -260,14 +260,14 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         out << endl;
     }
 
-    if (job->hist_figure_id >= 0)
-        out << "    figure: " << job->hist_figure_id << endl;
+    if (job->specdata.hist_figure_id >= 0)
+        out << "    figure: " << job->specdata.hist_figure_id << endl;
 
     if (!job->reaction_name.empty())
         out << "    reaction: " << job->reaction_name << endl;
 
-    for (size_t i = 0; i < job->job_items.size(); i++)
-        printItemDetails(out, job->job_items[i], i);
+    for (size_t i = 0; i < job->job_items.elements.size(); i++)
+        printItemDetails(out, job->job_items.elements[i], i);
 }
 
 df::general_ref *Job::getGeneralRef(df::job *job, df::general_ref_type type)
@@ -578,31 +578,31 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
     return true;
 }
 
-bool Job::isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype)
+bool Job::isSuitableItem(const df::job_item *jitem, df::item_type itype, int isubtype)
 {
-    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(jitem);
 
     if (itype == item_type::NONE)
         return true;
 
     ItemTypeInfo iinfo(itype, isubtype);
-    MaterialInfo minfo(item);
+    MaterialInfo minfo(jitem);
 
-    return iinfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
+    return iinfo.isValid() && iinfo.matches(*jitem, &minfo, false, itype);
 }
 
 bool Job::isSuitableMaterial(
-    const df::job_item *item, int mat_type, int mat_index, df::item_type itype)
+    const df::job_item *jitem, int mat_type, int mat_index, df::item_type itype)
 {
-    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(jitem);
 
     if (mat_type == -1 && mat_index == -1)
         return true;
 
-    ItemTypeInfo iinfo(item);
+    ItemTypeInfo iinfo(jitem);
     MaterialInfo minfo(mat_type, mat_index);
 
-    return minfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
+    return minfo.isValid() && iinfo.matches(*jitem, &minfo, false, itype);
 }
 
 std::string Job::getName(df::job *job)
@@ -612,7 +612,7 @@ std::string Job::getName(df::job *job)
     std::string desc;
     auto button = df::allocate<df::interface_button_building_new_jobst>();
     button->mstring = job->reaction_name;
-    button->spec_id = job->hist_figure_id;
+    button->specdata.hist_figure_id = job->specdata.hist_figure_id;
     button->jobtype = job->job_type;
     button->itemtype = job->item_type;
     button->subtype = job->item_subtype;

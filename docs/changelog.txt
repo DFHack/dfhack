@@ -52,36 +52,62 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `plant`: (reinstated) tool for creating/growing/removing plants
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
+- `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
 
 ## Fixes
-- `suspendmanager`: stop suspending single tile stair constructions
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
+- `regrass`: don't remove mud on regrass, consistent with vanilla behavior
+- `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
 - `tiletypes`: make aquifers functional when adding the ``aquifer`` property
+- `seedwatch`: do not include unplantable tree seeds in status report
+- ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
+- Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
+- `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
+- `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
+- `overlay`: overlays now respect custom settings for the the max interface width percentage
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
-- `changevein`: affect connected veins even outside of the selected map block
-- `logistics`: new ability to automatically forbid or claim items brought to a stockpile (or a dump within a stockpile)
+- `changevein`: follow veins into adjacent map blocks so you can run the command once instead of once per map block that the vein touches
+- `logistics`: automatically forbid or claim items brought to a stockpile
+- `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
 - `tiletypes`: performance improvements when affecting tiles over a large range
 - `tiletypes`: support for heavy aquifers
+- `tiletypes`: new ``autocorrect`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
+- Dreamfort: walkthough documentation refresh
+- Dreamfort: add milking/shearing station in surface grazing pasture
+- Dreamfort: integrate building prioritization into the blueprints and remove `prioritize` checklist steps
+- Dreamfort: add plumbing template for filling cisterns with running water
+- `buildingplan`: add option to ignore items from a specified burrow
+- `autobutcher`: do not butcher pregnant (or brooding) females
+- `quickfort`: support buildable instruments
+- `nestboxes`: increase the scanning frequency for fertile eggs to reduce the chance that they get snarfed by eager dwarves
+- `autonestbox`: wait until juveniles become adults before they are assigned to nestboxes
+- `suspendmanager`: add option to ``unsuspend`` that unsuspends all jobs, regardless of potential issues
+- `gui/create-item`: allow right click to cancel out of material dialog submenus
 
 ## Documentation
-- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (for DFHack auto-updates and cloud backups)
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (ito benefit from DFHack auto-updates and cloud backups)
 - `modding-guide`: add a section on persistent storage, both for global settings and world-specific settings
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
+- ``Buildings::getName``: get a building's name, convenience method for easier use from Lua
 - ``Maps::isTileAquifer``: check if tile is an aquifer
 - ``Maps::isTileHeavyAquifer``: check if tile is a heavy aquifer
 - ``Maps::setTileAquifer``: make tile into an aquifer
 - ``Maps::setAreaAquifer``: make all tiles in a cuboid into aquifers, with the option to provide a filter
 - ``Maps::removeTileAquifer``: remove aquifer from tile
 - ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
+- ``Units::create``, ``Units::makeown``: new APIs to use bay12-provided entry points for low-level operations
+- ``format_number``: format numbers according to the configured player formatting preference
+- ``Items::remove``: now cancels related jobs and marks the item as hidden and forbidden
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)
@@ -92,14 +118,23 @@ Template for new versions:
 - ``safe_index``: will now return nil when attempting to index into a non-indexable object
 - ``script-manager``: add ``getModSourcePath`` and ``getModStatePath`` so modders can get the directory path to their own files
 - ``widgets.FilteredList``: don't restrict the player from inputting multiple successive space characters
-- ``dfhack.maps.isTileAquifer``: check if tile is an aquifer
-- ``dfhack.maps.isTileHeavyAquifer``: check if tile is a heavy aquifer
-- ``dfhack.maps.setTileAquifer``: make tile into an aquifer
-- ``dfhack.maps.removeTileAquifer``: remove aquifer from tile
-- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table with for access to previously unavailable options
-
+- ``dfhack.maps.isTileAquifer``, ``dfhack.maps.isTileHeavyAquifer``, ``dfhack.maps.setTileAquifer``, ``dfhack.maps.removeTileAquifer``: access to new aquifer API
+- ``plugins.tiletypes.tiletypes_setTile``: can now accept a table for access to previously unavailable options
+- ``dialogs.showYesNoPrompt``: extend options so the standard dialog can be used for `gui/confirm`-style confirmation prompts
+- ``dfhack.units.create``, ``dfhack.units.makeown``: Lua access to new module API
+- ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the player preferences for number formatting set in `gui/control-panel`
+- ``gui.get_interface_rect``, ``gui.get_interface_frame``: convenience functions for working with scaled interfaces
+- ``overlay``: new attributes: ``fullscreen`` and ``full_interface`` for overlays that need access to the entire screen or the scaled interface area, respectively
 
 ## Removed
+- `plants`: renamed to `plant`
+- ``gui.FramedScreen``: this class is now deprecated; please use ``gui.ZScreen`` and ``widgets.Window`` instead
+- ``dfhack.HIDE_CONSOLE_ON_STARTUP`` and ``dfhack.HIDE_ARMOK_TOOLS`` are no longer directly accessible. Please use `control-panel` or `gui/control-panel` to interact wtih those settings.
+
+# 50.13-r2.1
+
+## Fixes
+- `suspendmanager`: stop suspending single tile stair constructions
 
 # 50.13-r2
 

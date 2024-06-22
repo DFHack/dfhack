@@ -484,7 +484,6 @@ bool Units::isTame(df::unit* unit)
             case df::animal_training_level::Domesticated:
                 tame=true;
                 break;
-            case df::animal_training_level::Unk8:     //??
             case df::animal_training_level::WildUntamed:
             default:
                 tame=false;
@@ -516,14 +515,14 @@ bool Units::assignTrainer(df::unit* unit, int32_t trainer_id) {
     assignment->trainer_id = trainer_id;
     assignment->flags.whole = 0;
     assignment->flags.bits.any_trainer = trainer_id == -1;
-    insert_into_vector(plotinfo->equipment.training_assignments,
+    insert_into_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, assignment);
     return true;
 }
 
 bool Units::unassignTrainer(df::unit* unit) {
     CHECK_NULL_POINTER(unit);
-    return erase_from_vector(plotinfo->equipment.training_assignments,
+    return erase_from_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, unit->id);
 }
 
@@ -549,7 +548,7 @@ bool Units::isDomesticated(df::unit* unit)
 }
 
 static df::training_assignment * get_training_assignment(df::unit* unit) {
-    return binsearch_in_vector(plotinfo->equipment.training_assignments,
+    return binsearch_in_vector(plotinfo->training.training_assignments,
         &df::training_assignment::animal_id, unit->id);
 }
 
@@ -683,7 +682,7 @@ bool Units::isPet(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
+    if(unit->relationship_ids[df::unit_relationship_type::PetOwner] != -1)
         return true;
 
     return false;
@@ -1085,7 +1084,7 @@ void Units::setNickname(df::unit *unit, std::string nick)
 
             case df::identity_type::Impersonating:
             case df::identity_type::TrueName:
-                id_hfig = df::historical_figure::find(identity->originator_hf);
+                id_hfig = df::historical_figure::find(identity->histfig_id);
                 break;
             }
 
@@ -1132,6 +1131,26 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
     return NULL;
 }
 
+void Units::makeown(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto fp = df::global::unitst_make_own;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
+}
+
+df::unit * Units::create(int16_t race, int16_t caste) {
+    auto fp = df::global::unitst_more_convenient_create;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<df::unit * (int16_t, int16_t)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    return (*f)(race, caste);
+}
 
 int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr)
 {
@@ -2272,23 +2291,26 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
         return &action->data.standup.timer;
     case unit_action_type::LieDown:
         return &action->data.liedown.timer;
-    case unit_action_type::Job2:
-        return &action->data.job2.timer;
+    case unit_action_type::JobRecover:
+        return &action->data.jobrecover.timer;
         // could also patch the unit->job.current_job->completion_timer
     case unit_action_type::PushObject:
         return &action->data.pushobject.timer;
     case unit_action_type::SuckBlood:
         return &action->data.suckblood.timer;
+    case unit_action_type::Mount:
+        return &action->data.mount.timer;
+    case unit_action_type::Dismount:
+        return &action->data.dismount.timer;
+    case unit_action_type::HoldItem:
+        return &action->data.holditem.timer;
+    case unit_action_type::LeadAnimal:
+    case unit_action_type::StopLeadAnimal:
     case unit_action_type::Jump:
     case unit_action_type::ReleaseTerrain:
     case unit_action_type::Parry:
     case unit_action_type::Block:
-    case unit_action_type::HoldItem:
     case unit_action_type::ReleaseItem:
-    case unit_action_type::Unk20:
-    case unit_action_type::Unk21:
-    case unit_action_type::Unk22:
-    case unit_action_type::Unk23:
         break;
     }
     return nullptr;

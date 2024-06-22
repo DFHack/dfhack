@@ -288,7 +288,7 @@ WarmDampOverlay.ATTRS{
         'dwarfmode/Designate/FORTIFY',
     },
     default_enabled=true,
-    overlay_only=true,
+    frame={w=0, h=0},
 }
 
 local function get_bounds()
@@ -362,7 +362,7 @@ CarveOverlay.ATTRS{
         'dwarfmode/Designate/ERASE',
     },
     default_enabled=true,
-    overlay_only=true,
+    frame={w=0, h=0},
 }
 
 function CarveOverlay:onRenderFrame()

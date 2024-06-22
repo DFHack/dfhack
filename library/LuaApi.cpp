@@ -32,6 +32,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "Debug.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 #include "md5wrapper.h"
@@ -112,6 +113,10 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+
+namespace DFHack {
+    DBG_DECLARE(core, luaapi, DebugCategory::LINFO);
+}
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -1350,6 +1355,8 @@ static string upperCp437(string s) { return toUpper_cp437(s); }
 static string lowerCp437(string s) { return toLower_cp437(s); }
 static string toSearchNormalized(string s) { return to_search_normalized(s); }
 static string capitalizeStringWords(string s) { return capitalize_string_words(s); }
+static string formatInt(int64_t num) { return format_number(num); }
+static string formatFloat(double num) { return format_number(num); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1372,6 +1379,8 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(lowerCp437),
     WRAP(toSearchNormalized),
     WRAP(capitalizeStringWords),
+    WRAP(formatInt),
+    WRAP(formatFloat),
     WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
     WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
     WRAP_VERSION_FUNC(getDFHackBuildID, dfhack_build_id),
@@ -2052,6 +2061,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
+    WRAPM(Units, makeown),
+    WRAPM(Units, create),
     WRAPM(Units, getPhysicalAttrValue),
     WRAPM(Units, getMentalAttrValue),
     WRAPM(Units, casteFlagSet),
@@ -2663,6 +2674,7 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, isPitPond),
     WRAPM(Buildings, isActive),
     WRAPM(Buildings, completeBuild),
+    WRAPM(Buildings, getName),
     { NULL, NULL }
 };
 
@@ -3381,6 +3393,26 @@ static void recordRepeatRuntime(string name, uint32_t start_ms) {
     counters.incCounter(counters.update_lua_per_repeat[name.c_str()], start_ms);
 }
 
+static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
+    NumberFormatType type = (NumberFormatType)type_int;
+    switch (type) {
+    case NumberFormatType::DEFAULT:
+    case NumberFormatType::ENGLISH:
+    case NumberFormatType::SYSTEM:
+    case NumberFormatType::SIG_FIG:
+    case NumberFormatType::SCIENTIFIC:
+        set_preferred_number_format_type(type);
+        break;
+    default:
+        WARN(luaapi, out).print("invalid number format enum value: %d\n", type_int);
+    }
+}
+
+static int internal_getPreferredNumberFormat(lua_State *L) {
+    lua_pushinteger(L, (int32_t)get_preferred_number_format_type());
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
@@ -3400,6 +3432,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(setClipboardTextCp437Multiline),
     WRAP(resetPerfCounters),
     WRAP(recordRepeatRuntime),
+    WRAP(setPreferredNumberFormat),
     { NULL, NULL }
 };
 
@@ -4000,6 +4033,19 @@ static int internal_setSuppressDuplicateKeyboardEvents(lua_State *L) {
     return 0;
 }
 
+static int internal_setMortalMode(lua_State *L) {
+    bool value = lua_toboolean(L, 1);
+    Core::getInstance().setMortalMode(value);
+    return 0;
+}
+
+static int internal_setArmokTools(lua_State *L) {
+    std::vector<string> tool_names;
+    Lua::GetVector(L, tool_names);
+    Core::getInstance().setArmokTools(tool_names);
+    return 0;
+}
+
 template<typename T>
 static std::map<const char *, T> translate_event_types(const std::unordered_map<int32_t, T> & in_map) {
     std::map<const char *, T> out_map;
@@ -4094,7 +4140,10 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "md5File", internal_md5file },
     { "getSuppressDuplicateKeyboardEvents", internal_getSuppressDuplicateKeyboardEvents },
     { "setSuppressDuplicateKeyboardEvents", internal_setSuppressDuplicateKeyboardEvents },
+    { "setMortalMode", internal_setMortalMode },
+    { "setArmokTools", internal_setArmokTools },
     { "getPerfCounters", internal_getPerfCounters },
+    { "getPreferredNumberFormat", internal_getPreferredNumberFormat },
     { NULL, NULL }
 };
 

@@ -8,8 +8,8 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.13")
-set(DFHACK_RELEASE "r2")
-set(DFHACK_PRERELEASE FALSE)
+set(DFHACK_RELEASE "r3rc1")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
@@ -38,12 +38,6 @@ macro(CHECK_GCC compiler_path)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
     if(${GCC_VERSION_OUT} VERSION_LESS "10")
         message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
-        # TODO: this may need to be removed when DF linux actually comes out
-        # TODO: and we can test
-        # GCC 5 changes ABI name mangling to enable C++11 changes.
-        # This must be disabled to enable linking against DF.
-        # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
-        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
     endif()
 endmacro()
 

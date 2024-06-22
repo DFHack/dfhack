@@ -26,21 +26,22 @@ function isBuildingPlanJob(job)
     return suspendmanager_isBuildingPlanJob(job)
 end
 
-function runOnce(prevent_blocking, quiet)
-    suspendmanager_runOnce(prevent_blocking)
+function runOnce(prevent_blocking, quiet, unsuspend_everything)
+    suspendmanager_runOnce(prevent_blocking, unsuspend_everything)
     if (not quiet) then
         print(suspendmanager_getStatus())
     end
 end
 
 function unsuspend_command(...)
-    local quiet, skipblocking = false, false
+    local quiet, skipblocking, unsuspend_everything = false, false, false
     argparse.processArgsGetopt({ ... }, {
         { 'q', 'quiet',        handler = function() quiet = true end },
         { 's', 'skipblocking', handler = function() skipblocking = true end },
+        { 'f', 'force', handler = function() unsuspend_everything = true end },
     })
 
-    runOnce(not skipblocking, quiet)
+    runOnce(not skipblocking, quiet, unsuspend_everything)
 end
 
 
@@ -144,7 +145,7 @@ SuspendOverlay.ATTRS{
     desc='Annotates suspended buildings with a visible marker.',
     viewscreens='dwarfmode',
     default_enabled=true,
-    overlay_only=true,
+    frame={w=0, h=0},
     overlay_onupdate_max_freq_seconds=30,
 }
 

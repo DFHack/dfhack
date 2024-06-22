@@ -69,12 +69,12 @@ distribution.
 #include "df/item_cagest.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/lookinfost.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
 #include "df/inorganic_raw.h"
 #include "df/plotinfost.h"
 #include "df/squad.h"
-#include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
@@ -152,7 +152,7 @@ void buildings_onUpdate(color_ostream &out)
 
         if (job->job_type != job_type::ConstructBuilding)
             continue;
-        if (job->job_items.empty())
+        if (job->job_items.elements.empty())
             continue;
 
         buildings_do_onupdate = true;
@@ -162,7 +162,7 @@ void buildings_onUpdate(color_ostream &out)
             df::job_item_ref *iref = job->items[i];
             if (iref->role != df::job_item_ref::Reagent)
                 continue;
-            df::job_item *item = vector_get(job->job_items, iref->job_item_idx);
+            df::job_item *item = vector_get(job->job_items.elements, iref->job_item_idx);
             if (!item)
                 continue;
             // Convert Reagent to Hauled, while decrementing quantity
@@ -353,6 +353,15 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
     CHECK_NULL_POINTER(building);
 
     return findRef(building->specific_refs, type);
+}
+
+std::string Buildings::getName(df::building* building)
+{
+    CHECK_NULL_POINTER(building);
+
+    std::string tmp;
+    building->getName(&tmp);
+    return tmp;
 }
 
 bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
@@ -886,6 +895,9 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile) {
             return false;
     }
 
+    if (!bld->room.extents)
+        return true;
+
     df::building_extents_type *etile = getExtentTile(bld->room, tile);
     return etile && *etile;
 }
@@ -1288,7 +1300,7 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
          * order, but processes filters straight. This reverses
          * the order of filters so as to produce the same final
          * contained_items ordering as the normal ui way. */
-        vector_insert_at(job->job_items, 0, items[i]);
+        vector_insert_at(job->job_items.elements, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)
             rough = true;
@@ -1417,13 +1429,13 @@ bool Buildings::deconstruct(df::building *bld)
         world->update_selected_building = true;
     }
 
-    for (int i = ui_look_list->items.size()-1; i >= 0; i--)
+    for (int i = ui_look_list->size()-1; i >= 0; --i)
     {
-        auto item = ui_look_list->items[i];
-        if (item->type == df::ui_look_list::T_items::Building &&
+        auto item = (*ui_look_list)[i];
+        if (item->type == df::lookinfost::Building &&
             item->data.building.bld_id == id)
         {
-            vector_erase_at(ui_look_list->items, i);
+            vector_erase_at(*ui_look_list, i);
             delete item;
         }
     }

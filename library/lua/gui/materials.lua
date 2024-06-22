@@ -42,10 +42,12 @@ function MaterialDialog:init(info)
             text_pen = COLOR_WHITE,
             frame = { l = 0, t = 0 },
         },
-        widgets.Label{
+        widgets.HotkeyLabel{
             view_id = 'back',
             visible = false,
-            text = { { key = 'LEAVESCREEN', text = ': Back' } },
+            key = 'LEAVESCREEN',
+            label = 'Back',
+            on_activate = self:callback('onEsc'),
             frame = { r = 0, b = 0 },
             auto_width = true,
         },
@@ -228,7 +230,15 @@ function MaterialDialog:pushContext(name, choices)
     self.subviews.list:setChoices(choices, 1)
 end
 
-function MaterialDialog:onGoBack()
+function MaterialDialog:onEsc()
+    if not self.subviews.back.visible then
+        self:dismiss()
+        if self.on_cancel then
+            self.on_cancel()
+        end
+        return
+    end
+
     local save = table.remove(self.back_stack)
     self.subviews.back.visible = (#self.back_stack > 0)
 
@@ -254,15 +264,8 @@ function MaterialDialog:onSubmitItem(idx, item)
 end
 
 function MaterialDialog:onInput(keys)
-    if keys.LEAVESCREEN then
-        if self.subviews.back.visible then
-            self:onGoBack()
-        else
-            self:dismiss()
-            if self.on_cancel then
-                self.on_cancel()
-            end
-        end
+    if keys._MOUSE_R then
+        self:onEsc()
         return true
     end
     self:inputToSubviews(keys)

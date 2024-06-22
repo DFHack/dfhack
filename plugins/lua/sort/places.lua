@@ -32,7 +32,7 @@ local zone_names = {
 
 -- I used strings rather than df.civzone_type because nobody is going to search "MeadHall" they're going to search "Tavern"
 local language_name_types = {
-    [df.language_name_type.SymbolFood] = 'Inn Tavern',
+    [df.language_name_type.FoodStore] = 'Inn Tavern',
     [df.language_name_type.Temple] = 'Temple',
     [df.language_name_type.Hospital] = 'Hospital',
     [df.language_name_type.Guildhall] = 'Guildhall',
@@ -40,7 +40,7 @@ local language_name_types = {
 }
 
 local function get_location_religion(religion_id, religion_type)
-    if religion_type == df.temple_deity_type.None then return 'Temple'
+    if religion_type == df.religious_practice_type.NONE then return 'Temple'
     else return locationselector.get_religion_string(religion_id, religion_type) or '' end
 end
 

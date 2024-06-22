@@ -51,7 +51,7 @@ bool Checker::queue_item(const QueueItem & item, CheckedStructure cs)
         if (get_vtable_name(item, cs, true))
         {
             auto actual_identity = virtual_identity::get(reinterpret_cast<virtual_ptr>(const_cast<void *>(item.ptr)));
-            if (static_cast<virtual_identity *>(cs.identity)->is_subclass(actual_identity))
+            if (static_cast<const virtual_identity *>(cs.identity)->is_subclass(actual_identity))
             {
                 cs.identity = actual_identity;
             }
@@ -302,13 +302,13 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
             FAIL("invalid value for bool: " << int(val));
         }
     }
-    else if (dynamic_cast<df::integer_identity_base *>(cs.identity))
+    else if (dynamic_cast<const df::integer_identity_base *>(cs.identity))
     {
         check_possible_pointer(item, cs);
 
         // TODO check ints?
     }
-    else if (dynamic_cast<df::float_identity_base *>(cs.identity))
+    else if (dynamic_cast<const df::float_identity_base *>(cs.identity))
     {
         // TODO check floats?
     }
@@ -335,7 +335,7 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
     }
 
     QueueItem target_item(item.path, target_ptr);
-    auto target = static_cast<pointer_identity *>(cs.identity)->getTarget();
+    auto target = static_cast<const pointer_identity *>(cs.identity)->getTarget();
     if (!target)
     {
         check_unknown_pointer(target_item);
@@ -364,7 +364,7 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
 }
 void Checker::dispatch_container(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<container_identity *>(cs.identity);
+    auto identity = static_cast<const container_identity *>(cs.identity);
     auto base_container = identity->getFullName(nullptr);
     if (base_container == "vector<void>")
     {
@@ -393,7 +393,7 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
 }
 void Checker::dispatch_ptr_container(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<container_identity *>(cs.identity);
+    auto identity = static_cast<const container_identity *>(cs.identity);
     auto base_container = identity->getFullName(nullptr);
     {
         UNEXPECTED;
@@ -401,7 +401,7 @@ void Checker::dispatch_ptr_container(const QueueItem & item, const CheckedStruct
 }
 void Checker::dispatch_bit_container(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<container_identity *>(cs.identity);
+    auto identity = static_cast<const container_identity *>(cs.identity);
     auto base_container = identity->getFullName(nullptr);
     if (base_container == "BitArray<>")
     {
@@ -425,7 +425,7 @@ void Checker::dispatch_bitfield(const QueueItem & item, const CheckedStructure &
         return;
     }
 
-    auto bitfield_type = static_cast<bitfield_identity *>(cs.identity);
+    auto bitfield_type = static_cast<const bitfield_identity *>(cs.identity);
     uint64_t bitfield_value;
     switch (bitfield_type->byte_size())
     {
@@ -495,7 +495,7 @@ void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
         return;
     }
 
-    auto enum_type = static_cast<enum_identity *>(cs.identity);
+    auto enum_type = static_cast<const enum_identity *>(cs.identity);
     auto enum_value = get_int_value(item, enum_type->getBaseType());
     if (enum_type->byte_size() == 2 && uint16_t(enum_value) == 0xd2d2)
     {
@@ -528,7 +528,7 @@ void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
 }
 void Checker::dispatch_struct(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<struct_identity *>(cs.identity);
+    auto identity = static_cast<const struct_identity *>(cs.identity);
     for (auto p = identity; p; p = p->getParent())
     {
         auto fields = p->getFields();
@@ -543,7 +543,7 @@ void Checker::dispatch_struct(const QueueItem & item, const CheckedStructure & c
         }
     }
 }
-void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs, struct_identity *identity, const struct_field_info *field)
+void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs, const struct_identity *identity, const struct_field_info *field)
 {
     if (field->mode == struct_field_info::OBJ_METHOD ||
         field->mode == struct_field_info::CLASS_METHOD)
@@ -584,7 +584,7 @@ void Checker::dispatch_class(const QueueItem & item, const CheckedStructure & cs
         return;
     }
 
-    auto base_identity = static_cast<virtual_identity *>(cs.identity);
+    auto base_identity = static_cast<const virtual_identity *>(cs.identity);
     auto vptr = static_cast<virtual_ptr>(const_cast<void *>(item.ptr));
     auto identity = virtual_identity::get(vptr);
     if (!identity)
@@ -608,14 +608,14 @@ void Checker::dispatch_class(const QueueItem & item, const CheckedStructure & cs
 }
 void Checker::dispatch_buffer(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<container_identity *>(cs.identity);
+    auto identity = static_cast<const container_identity *>(cs.identity);
 
     auto item_identity = identity->getItemType();
-    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType()), true));
+    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<const enum_identity *>(identity->getIndexEnumType()), true));
 }
 void Checker::dispatch_stl_ptr_vector(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<container_identity *>(cs.identity);
+    auto identity = static_cast<const container_identity *>(cs.identity);
     auto ptr_type = wrap_in_pointer(identity->getItemType());
     check_stl_vector(item, ptr_type, identity->getIndexEnumType());
 }
@@ -627,7 +627,7 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         return;
     }
 
-    auto union_type = static_cast<union_identity *>(cs.identity);
+    auto union_type = static_cast<const union_identity *>(cs.identity);
     auto union_data_ptr = reinterpret_cast<const uint8_t *>(item.ptr);
     uint8_t padding_byte = *union_data_ptr;
     bool all_padding = false;
@@ -644,7 +644,7 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         }
     }
 
-    auto tag_identity = static_cast<enum_identity *>(tag_cs.identity);
+    auto tag_identity = static_cast<const enum_identity *>(tag_cs.identity);
     auto tag_value = get_int_value(tag_item, tag_identity->getBaseType());
     if (all_padding && padding_byte == 0xd2)
     {
@@ -720,7 +720,7 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
 }
 void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs, const char *attr_name)
 {
-    auto union_container_identity = static_cast<container_identity *>(cs.identity);
+    auto union_container_identity = static_cast<const container_identity *>(cs.identity);
     CheckedStructure union_item_cs(union_container_identity->getItemType());
     if (union_container_identity->type() != IDTYPE_CONTAINER)
     {
@@ -728,7 +728,7 @@ void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueIt
         union_item_cs.identity = wrap_in_pointer(union_item_cs.identity);
     }
 
-    auto tag_container_identity = static_cast<container_identity *>(tag_cs.identity);
+    auto tag_container_identity = static_cast<const container_identity *>(tag_cs.identity);
     auto tag_container_base = tag_container_identity->getFullName(nullptr);
     if (tag_container_base == "vector<void>")
     {
@@ -821,7 +821,7 @@ void Checker::check_unknown_pointer(const QueueItem & item)
     }
 }
 
-void Checker::check_stl_vector(const QueueItem & item, type_identity *item_identity, type_identity *eid)
+void Checker::check_stl_vector(const QueueItem & item, const type_identity *item_identity, const type_identity *eid)
 {
     auto vec_items = validate_vector_size(item, CheckedStructure(item_identity));
 
@@ -903,7 +903,7 @@ void Checker::check_stl_string(const QueueItem & item)
     }
 }
 
-void Checker::check_stl_map(const QueueItem & item, container_identity *identity)
+void Checker::check_stl_map(const QueueItem & item, const container_identity *identity)
 {
 #ifndef WIN32
     const static CheckedStructure cs(identity, 0, nullptr, true);
@@ -1003,7 +1003,7 @@ void Checker::check_stl_map(const QueueItem & item, container_identity *identity
 #endif
 }
 
-void Checker::check_stl_unordered_map(const QueueItem & item, container_identity *identity)
+void Checker::check_stl_unordered_map(const QueueItem & item, const container_identity *identity)
 {
 #ifndef WIN32
     const static CheckedStructure cs(identity, 0, nullptr, true);

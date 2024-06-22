@@ -456,6 +456,44 @@ static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
 
+enum struct NumberFormatType : int32_t {
+    DEFAULT = 0,
+    ENGLISH,
+    SYSTEM,
+    SIG_FIG,
+    SCIENTIFIC,
+};
+
+DFHACK_EXPORT NumberFormatType get_preferred_number_format_type();
+DFHACK_EXPORT void set_preferred_number_format_type(NumberFormatType type);
+DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type);
+DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs);
+DFHACK_EXPORT std::string format_number_by_sig_fig(int64_t num, size_t sig_figs);
+
+// format a number according to the give formatting type
+template<typename T>
+static inline std::string format_number(T num, NumberFormatType type) {
+    std::ostringstream ss;
+    imbue_with_locale(ss, type);
+    switch (type) {
+    case NumberFormatType::SCIENTIFIC:
+        ss << (double)num;
+        break;
+    case NumberFormatType::SIG_FIG:
+        ss << format_number_by_sig_fig(num, 3);
+        break;
+    default:
+        ss << num;
+        break;
+    }
+    return ss.str();
+}
+
+template<typename T>
+static inline std::string format_number(T num) {
+    return format_number(num, get_preferred_number_format_type());
+}
+
 enum word_wrap_whitespace_mode {
     WSMODE_KEEP_ALL,
     WSMODE_COLLAPSE_ALL,

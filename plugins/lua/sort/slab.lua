@@ -88,7 +88,7 @@ function SlabOverlay:reset()
 end
 
 local function get_unit(if_button)
-    local hf = df.historical_figure.find(if_button.spec_id)
+    local hf = df.historical_figure.find(if_button.specdata.hist_figure_id)
     return hf and df.unit.find(hf.unit_id) or nil
 end
 

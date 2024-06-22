@@ -56,7 +56,7 @@ function test.nonexistent()
 end
 
 function test.count()
-    expect.eq(df.unit._fields.relationship_ids.count, 10)
+    expect.eq(df.unit._fields.relationship_ids.count, 9)
 end
 
 function test.index_enum()

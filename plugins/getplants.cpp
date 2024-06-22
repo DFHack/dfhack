@@ -149,7 +149,7 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
                 (growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED) ||
                     growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW))) ||
                 (plant->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
-                    growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
+                    growth_mat.material->flags.is_set(material_flags::STOCKPILE_PLANT_GROWTH)))
             {
                 bool seedSource = plant->growths[i]->item_type == df::item_type::SEEDS;
 
@@ -288,12 +288,12 @@ bool designate(color_ostream& out, const df::plant* plant, bool farming) {
         TRACE(log, out).print("edible_cooked=%d edible_raw=%d leaf_mat=%d\n",
             growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED),
             growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW),
-            growth_mat.material->flags.is_set(material_flags::LEAF_MAT));
+            growth_mat.material->flags.is_set(material_flags::STOCKPILE_PLANT_GROWTH));
         if (!(plant_raw->growths[i]->item_type == df::item_type::SEEDS &&
             (growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED) ||
                 growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW))) &&
             !(plant_raw->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
-                growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
+                growth_mat.material->flags.is_set(material_flags::STOCKPILE_PLANT_GROWTH)))
             continue;
 
         bool seedSource = plant_raw->growths[i]->item_type == df::item_type::SEEDS;
@@ -495,12 +495,11 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             if (!exclude)
                 continue;
         }
-        df::tiletype_shape shape = tileShape(cur->tiletype[x][y]);
-        df::tiletype_material material = tileMaterial(cur->tiletype[x][y]);
-        df::tiletype_special special = tileSpecial(cur->tiletype[x][y]);
-        if (plant->flags.bits.is_shrub && (treesonly || !(shape == tiletype_shape::SHRUB && special != tiletype_special::DEAD)))
+        df::tiletype tt = cur->tiletype[x][y];
+        df::tiletype_material mat = tileMaterial(tt);
+        if ((treesonly || tt != tiletype::Shrub) && ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
-        if (!plant->flags.bits.is_shrub && (shrubsonly || !(material == tiletype_material::TREE)))
+        if ((shrubsonly || mat != tiletype_material::TREE) && !ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
         if (cur->designation[x][y].bits.hidden)
             continue;

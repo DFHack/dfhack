@@ -2133,6 +2133,10 @@ Property          Description
                   feature
 ``autotrain``     if set to ``true``, enables the corresponding `logistics`
                   feature
+``autoforbid``    if set to ``true``, enables the corresponding `logistics`
+                  feature
+``autoclaim``     if set to ``true``, enables the corresponding `logistics`
+                  feature
 ================  ===========
 
 Note that specifying building IDs in ``take_from`` or ``give_to`` lists is
@@ -2145,7 +2149,9 @@ apply in a different fort.
 ~~~~~~~~~~~~~~~~~~~~~
 
 In addition to the type-specific properties listed in the symbol table below,
-all building types accept the ``name`` property.
+all building types accept the ``name`` and ``do_now`` properties. The
+``do_now`` property, if set to ``true``, will cause the building to be built at
+high priority as soon as possible.
 
 Moreover, all workshops and furnaces (both called "workshops" below) accept the
 following "profile" properties:
@@ -2249,6 +2255,7 @@ Symbol            Type                          Properties
 ``~a``            offering place
 ``~c``            bookcase
 ``F``             display furniture
+``I``             buildable instrument
 ``p``             farm plot                     if ``seasonal_fertilize`` is
                                                 set to ``true`` then the plots
                                                 will be configured for seasonal
@@ -2366,7 +2373,7 @@ Symbol Meaning Properties
                ``create``: if set to ``true``, will create a burrow with the
                specified ``name`` if it doesn't already exist.
                ``civalert``: if set to ``true``, will register this burrow with
-               `gui/civ-alert` if no burrow has already been registered.
+               `gui/civ-alert` as a safe space during danger.
                ``autochop_clear``: if set to ``true``, register the burrow with
                `autochop` so that all trees in the burrow are immediately
                chopped down, regardless of how many logs are in stock.

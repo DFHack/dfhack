@@ -78,7 +78,7 @@ void add_task(mat_index gem_type, df::building_workshopst *workshop) {
     job->mat_type = df::builtin_mats::INORGANIC;
     job->mat_index = gem_type;
     job->general_refs.push_back(ref);
-    job->job_items.push_back(item);
+    job->job_items.elements.push_back(item);
 
     workshop->jobs.push_back(job);
     Job::linkIntoWorld(job);

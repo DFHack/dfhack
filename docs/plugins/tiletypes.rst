@@ -21,6 +21,8 @@ You can use the `probe` command to discover properties of existing tiles that
 you'd like to copy. If you accidentally paint over a vein that you want back,
 `fixveins` may help.
 
+See `gui/tiletypes` for an in-game interface for this functionality.
+
 The tool works with a brush, a filter, and a paint specification. The brush
 determines the shape of the area to affect, the filter selects which tiles to
 affect, and the paint specification determines how to affect those tiles.
@@ -147,6 +149,10 @@ The options identify the property of the tile and the value of that property:
     Whether a tile is marked as "Outside". A value of ``0`` means "inside".
 ``aqua``, ``aquifer 0|1|2``
     Whether a tile is marked as an aquifer. A value of ``2`` means "heavy aquifer".
+``ac``, ``autocorrect 0|1``
+    Whether the tile's surroundings should be autocorrected, e.g., adding bottoms/tops
+    to tiles that span multiple Z levels and updating liquids. A value of ``1``
+    means to do so.
 ``stone <stone type>``
     Set a particular type of stone, creating veins as required. To see a list of
     valid stone types, run: ``:lua for _,mat in ipairs(df.global.world.raws.inorganics) do if mat.material.flags.IS_STONE and not mat.material.flags.NO_STONE_STOCKPILE then print(mat.id) end end``

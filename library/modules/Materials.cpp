@@ -443,7 +443,7 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat) const
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item, df::item_type itype) const
+bool MaterialInfo::matches(const df::job_item &jitem, df::item_type itype) const
 {
     if (!isValid()) return false;
 
@@ -459,9 +459,9 @@ bool MaterialInfo::matches(const df::job_item &item, df::item_type itype) const
     xmask2.bits.non_economic = itype != df::item_type::BOULDER;
     mask2.whole &= ~xmask2.whole;
 
-    return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
-           bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&
-           bits_match(item.flags3.whole, ok3.whole, mask3.whole);
+    return bits_match(jitem.flags1.whole, ok1.whole, mask1.whole) &&
+           bits_match(jitem.flags2.whole, ok2.whole, mask2.whole) &&
+           bits_match(jitem.flags3.whole, ok3.whole, mask3.whole);
 }
 
 void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const
@@ -478,9 +478,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
 
     TEST(millable, structural && FLAG(plant, plant_raw_flags::MILL));
     TEST(sharpenable, MAT_FLAG(IS_STONE));
-    TEST(distillable, structural && FLAG(plant, plant_raw_flags::DRINK));
     TEST(processable, structural && FLAG(plant, plant_raw_flags::THREAD));
-    TEST(bag, isAnyCloth() || MAT_FLAG(LEATHER));
     TEST(cookable, MAT_FLAG(EDIBLE_COOKED));
     TEST(extract_bearing_plant, structural && FLAG(plant, plant_raw_flags::EXTRACT_STILL_VIAL));
     TEST(extract_bearing_fish, false);

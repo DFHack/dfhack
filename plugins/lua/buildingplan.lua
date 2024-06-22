@@ -46,6 +46,8 @@ function parse_commandline(...)
         setSetting(positionals[1], positionals[2] == 'true')
     elseif command == 'reset' then
         resetFilters()
+    elseif command == 'ignore' and positionals then
+        setIgnoreBurrow(positionals[1] or "")
     else
         return false
     end

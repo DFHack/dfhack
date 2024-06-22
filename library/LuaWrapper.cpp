@@ -159,7 +159,7 @@ void LuaWrapper::SaveTypeInfo(lua_State *state, void *node)
     SaveInTable(state, node, &DFHACK_TYPETABLE_TOKEN);
 }
 
-static void BuildTypeMetatable(lua_State *state, type_identity *type);
+static void BuildTypeMetatable(lua_State *state, const type_identity *type);
 
 /**
  * Push the pointer as DF object ref using metatable on the stack.
@@ -195,7 +195,7 @@ void *LuaWrapper::get_object_ref(lua_State *state, int val_index)
 /**
  * Push the pointer using given identity.
  */
-void LuaWrapper::push_object_internal(lua_State *state, type_identity *type, void *ptr, bool in_method)
+void LuaWrapper::push_object_internal(lua_State *state, const type_identity *type, void *ptr, bool in_method)
 {
     /*
      * If NULL pointer or no type, push something simple
@@ -226,7 +226,7 @@ void LuaWrapper::push_object_internal(lua_State *state, type_identity *type, voi
      * Resolve metatable by identity, and push the object
      */
 
-    lua_pushlightuserdata(state, type); // () -> type
+    lua_pushlightuserdata(state, const_cast<type_identity*>(type)); // () -> type
 
     if (!LookupTypeInfo(state, in_method)) // type -> metatable?
         BuildTypeMetatable(state, type); // () -> metatable
@@ -234,7 +234,7 @@ void LuaWrapper::push_object_internal(lua_State *state, type_identity *type, voi
     push_object_ref(state, ptr); // metatable -> userdata
 }
 
-static void fetch_container_details(lua_State *state, int meta, type_identity **pitem, int *pcount)
+static void fetch_container_details(lua_State *state, int meta, const type_identity **pitem, int *pcount)
 {
     if (!meta) return;
 
@@ -254,8 +254,8 @@ static void fetch_container_details(lua_State *state, int meta, type_identity **
 /**
  * Check if type1 and type2 are compatible, possibly using additional metatable data.
  */
-bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int meta1,
-                                    type_identity *type2, int meta2, bool exact_equal)
+bool LuaWrapper::is_type_compatible(lua_State *state, const type_identity *type1, int meta1,
+    const type_identity *type2, int meta2, bool exact_equal)
 {
     if (type1 == type2)
         return true;
@@ -272,16 +272,16 @@ bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int 
     {
     case IDTYPE_POINTER:
         return is_type_compatible(state,
-                                  ((pointer_identity*)type1)->getTarget(), 0,
-                                  ((pointer_identity*)type2)->getTarget(), 0,
+                                  ((const pointer_identity*)type1)->getTarget(), 0,
+                                  ((const pointer_identity*)type2)->getTarget(), 0,
                                   exact_equal);
         break;
 
     case IDTYPE_BUFFER:
     {
-        auto b1 = (df::buffer_container_identity*)type1;
-        auto b2 = (df::buffer_container_identity*)type2;
-        type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
+        auto b1 = (const df::buffer_container_identity*)type1;
+        auto b2 = (const df::buffer_container_identity*)type2;
+        const type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
         int count1 = b1->getSize(), count2 = b2->getSize();
 
         fetch_container_details(state, meta1, &item1, &count1);
@@ -293,9 +293,9 @@ bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int 
 
     case IDTYPE_STL_PTR_VECTOR:
     {
-        auto b1 = (df::stl_ptr_vector_identity*)type1;
-        auto b2 = (df::stl_ptr_vector_identity*)type2;
-        type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
+        auto b1 = (const df::stl_ptr_vector_identity*)type1;
+        auto b2 = (const df::stl_ptr_vector_identity*)type2;
+        const type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
 
         fetch_container_details(state, meta1, &item1, NULL);
         fetch_container_details(state, meta1, &item2, NULL);
@@ -318,7 +318,7 @@ bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int 
     }
 }
 
-static bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
+static bool is_type_compatible(lua_State *state, const type_identity *type1, int meta1,
                                int meta2, bool exact_equal)
 {
     lua_rawgetp(state, meta2, &DFHACK_IDENTITY_FIELD_TOKEN);
@@ -343,7 +343,7 @@ static bool is_type_compatible(lua_State *state, int meta1, int meta2, bool exac
 /**
  * Verify that the value matches the identity, and return ptr if so.
  */
-void *LuaWrapper::get_object_internal(lua_State *state, type_identity *type, int val_index, bool exact_type, bool in_method)
+void *LuaWrapper::get_object_internal(lua_State *state, const type_identity *type, int val_index, bool exact_type, bool in_method)
 {
     /*
      * Non-userdata results in NULL; nil for NULL gets handled here too.
@@ -469,7 +469,7 @@ static const char *const primitive_types[] = {
     "bit-array",
     NULL
 };
-static type_identity *const primitive_identities[] = {
+static const type_identity *const primitive_identities[] = {
     df::identity_traits<std::string>::get(),
     df::identity_traits<const char*>::get(),
     df::identity_traits<char>::get(),
@@ -491,7 +491,7 @@ static type_identity *const primitive_identities[] = {
 /**
  * Given a DF object reference or type, safely retrieve its identity pointer.
  */
-type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
+const type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
                                                const char *ctx, bool allow_type,
                                                bool keep_metatable)
 {
@@ -522,7 +522,7 @@ type_identity *LuaWrapper::get_object_identity(lua_State *state, int objidx,
 }
 
 static bool check_type_compatible(lua_State *state, int obj1, int obj2,
-                                  type_identity **type1, type_identity **type2,
+                                  const type_identity **type1, const type_identity **type2,
                                   const char *ctx, bool allow_type, bool exact, bool error = true)
 {
     int base = lua_gettop(state);
@@ -590,13 +590,13 @@ static int meta_sizeof(lua_State *state)
         return 2;
     }
 
-    type_identity *id = get_object_identity(state, 1, "df.sizeof()", true, true);
+    const type_identity *id = get_object_identity(state, 1, "df.sizeof()", true, true);
 
     // Static arrays need special handling
     if (id->type() == IDTYPE_BUFFER)
     {
-        auto buf = (df::buffer_container_identity*)id;
-        type_identity *item = buf->getItemType();
+        auto buf = (const df::buffer_container_identity*)id;
+        const type_identity *item = buf->getItemType();
         int count = buf->getSize();
 
         fetch_container_details(state, lua_gettop(state), &item, &count);
@@ -653,7 +653,7 @@ static int meta_displace(lua_State *state)
         return 1;
     }
 
-    type_identity *id = get_object_identity(state, 1, "df._displace()");
+    const type_identity *id = get_object_identity(state, 1, "df._displace()");
 
     if (!has_step)
         step = id->byte_size();
@@ -682,7 +682,7 @@ static int meta_new(lua_State *state)
     if (argc != 1 && argc != 2)
         luaL_error(state, "Usage: object:new() or df.new(object) or df.new(ptype,count)");
 
-    type_identity *id = get_object_identity(state, 1, "df.new()", true);
+    const type_identity *id = get_object_identity(state, 1, "df.new()", true);
 
     void *ptr = nullptr;
     std::string err_context;
@@ -743,7 +743,7 @@ static int meta_reinterpret_cast(lua_State *state)
     if (argc != 2)
         luaL_error(state, "Usage: df.reinterpret_cast(type,ptr)");
 
-    type_identity *id = get_object_identity(state, 1, "df.reinterpret_cast()", true);
+    const type_identity *id = get_object_identity(state, 1, "df.reinterpret_cast()", true);
 
     // Find the raw pointer value
     void *ptr;
@@ -824,7 +824,7 @@ static int meta_assign(lua_State *state)
 
     if (!lua_istable(state, 2))
     {
-        type_identity *id1, *id2;
+        const type_identity *id1, *id2;
         check_type_compatible(state, 1, 2, &id1, &id2, "df.assign()", false, false);
 
         if (!id1->copy(get_object_ref(state, 1), get_object_ref(state, 2)))
@@ -832,7 +832,7 @@ static int meta_assign(lua_State *state)
     }
     else
     {
-        type_identity *id = get_object_identity(state, 1, "df.assign()", false);
+        const type_identity *id = get_object_identity(state, 1, "df.assign()", false);
 
         if (lua_getmetatable(state, 2))
             luaL_error(state, "cannot use lua tables with metatable in df.assign()");
@@ -945,7 +945,7 @@ static int meta_is_instance(lua_State *state)
         return 1;
     }
 
-    type_identity *id1, *id2;
+    const type_identity *id1, *id2;
     bool ok = check_type_compatible(state, 1, 2, &id1, &id2, "df.is_instance()", true, false, false);
 
     lua_pushboolean(state, ok);
@@ -968,7 +968,7 @@ static int meta_delete(lua_State *state)
         return 1;
     }
 
-    type_identity *id = get_object_identity(state, 1, "df.delete()", false);
+    const type_identity *id = get_object_identity(state, 1, "df.delete()", false);
 
     bool ok = id->destroy(get_object_ref(state, 1));
 
@@ -1018,7 +1018,7 @@ static int meta_ptr_tostring(lua_State *state)
 
     bool has_length = false;
     uint64_t length = 0;
-    auto *cid = dynamic_cast<df::container_identity*>(get_object_identity(state, 1, "__tostring()", true, true));
+    auto *cid = dynamic_cast<const df::container_identity*>(get_object_identity(state, 1, "__tostring()", true, true));
 
     if (cid && (cid->type() == IDTYPE_CONTAINER || cid->type() == IDTYPE_STL_PTR_VECTOR))
     {
@@ -1138,7 +1138,7 @@ static int meta_pairs(lua_State *state)
 /**
  * Make a metatable with most common fields, and an empty table for UPVAL_FIELDTABLE.
  */
-void LuaWrapper::MakeMetatable(lua_State *state, type_identity *type, const char *kind)
+void LuaWrapper::MakeMetatable(lua_State *state, const type_identity *type, const char *kind)
 {
     int base = lua_gettop(state);
     lua_newtable(state); // metatable
@@ -1146,10 +1146,10 @@ void LuaWrapper::MakeMetatable(lua_State *state, type_identity *type, const char
     lua_pushstring(state, type->getFullName().c_str());
     lua_setfield(state, base+1, "__metatable");
 
-    lua_pushlightuserdata(state, type);
+    lua_pushlightuserdata(state, const_cast<type_identity*>(type));
     lua_rawsetp(state, base+1, &DFHACK_IDENTITY_FIELD_TOKEN);
 
-    LookupInTable(state, type, &DFHACK_TYPEID_TABLE_TOKEN);
+    LookupInTable(state, const_cast<type_identity*>(type), &DFHACK_TYPEID_TABLE_TOKEN);
     if (lua_isnil(state, -1))
     {
         // Copy the string from __metatable if no real type
@@ -1255,14 +1255,14 @@ void LuaWrapper::SetStructMethod(lua_State *state, int meta_idx, int ftable_idx,
  */
 void LuaWrapper::PushContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
                                      lua_CFunction function,
-                                     type_identity *container, type_identity *item, int count)
+    const type_identity *container, const type_identity *item, int count)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
     lua_pushvalue(state, meta_idx);
     lua_pushvalue(state, ftable_idx);
 
-    lua_pushlightuserdata(state, container);
-    lua_pushlightuserdata(state, item);
+    lua_pushlightuserdata(state, const_cast<type_identity*>(container));
+    lua_pushlightuserdata(state, const_cast<type_identity*>(item));
     if (count < 0)
         lua_pushnil(state);
     else
@@ -1276,7 +1276,7 @@ void LuaWrapper::PushContainerMethod(lua_State *state, int meta_idx, int ftable_
  */
 void LuaWrapper::SetContainerMethod(lua_State *state, int meta_idx, int ftable_idx,
                                     lua_CFunction function, const char *name,
-                                    type_identity *container, type_identity *item, int count)
+    const type_identity *container, const type_identity *item, int count)
 {
     PushContainerMethod(state, meta_idx, ftable_idx, function, container, item, count);
     lua_setfield(state, meta_idx, name);
@@ -1286,14 +1286,14 @@ void LuaWrapper::SetContainerMethod(lua_State *state, int meta_idx, int ftable_i
  * If ienum refers to a valid enum, attach its keys to UPVAL_FIELDTABLE,
  * and the enum itself to the _enum metafield. Pushes the key table on the stack
  */
-void LuaWrapper::AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, type_identity *ienum)
+void LuaWrapper::AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, const type_identity *ienum)
 {
     EnableMetaField(state, ftable_idx, "_enum");
 
-    LookupInTable(state, ienum, &DFHACK_TYPEID_TABLE_TOKEN);
+    LookupInTable(state, const_cast<type_identity*>(ienum), &DFHACK_TYPEID_TABLE_TOKEN);
     lua_setfield(state, meta_idx, "_enum");
 
-    LookupInTable(state, ienum, &DFHACK_ENUM_TABLE_TOKEN);
+    LookupInTable(state, const_cast<type_identity*>(ienum), &DFHACK_ENUM_TABLE_TOKEN);
 
     if (!lua_isnil(state, -1))
     {
@@ -1313,13 +1313,13 @@ void LuaWrapper::AttachEnumKeys(lua_State *state, int meta_idx, int ftable_idx, 
     lua_setfield(state, meta_idx, "_index_table");
 }
 
-static void BuildTypeMetatable(lua_State *state, type_identity *type)
+static void BuildTypeMetatable(lua_State *state, const type_identity *type)
 {
     type->build_metatable(state);
 
     lua_pop(state, 1);
 
-    SaveTypeInfo(state, type);
+    SaveTypeInfo(state, const_cast<type_identity*>(type));
 }
 
 /*
@@ -1445,7 +1445,7 @@ static int complex_enum_ipairs(lua_State *L)
 }
 
 
-static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children);
+static void RenderTypeChildren(lua_State *state, const std::vector<const compound_identity*> &children);
 
 void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *name)
 {
@@ -1587,7 +1587,7 @@ static void FillBitfieldKeys(lua_State *state, int ix_meta, int ftable, bitfield
     lua_setmetatable(state, ftable);
 }
 
-static void RenderType(lua_State *state, compound_identity *node)
+static void RenderType(lua_State *state, const compound_identity *node)
 {
     assert(node->getName());
     std::string name = node->getFullName();
@@ -1603,7 +1603,7 @@ static void RenderType(lua_State *state, compound_identity *node)
     if (!lua_checkstack(state, 20))
         return;
 
-    SaveInTable(state, node, &DFHACK_TYPEID_TABLE_TOKEN);
+    SaveInTable(state, const_cast<compound_identity*>(node), &DFHACK_TYPEID_TABLE_TOKEN);
 
     // metatable
     lua_newtable(state);
@@ -1618,7 +1618,7 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_TYPE_TOSTRING_NAME);
     lua_setfield(state, ix_meta, "__tostring");
 
-    lua_pushlightuserdata(state, node);
+    lua_pushlightuserdata(state, const_cast<compound_identity*>(node));
     lua_rawsetp(state, ix_meta, &DFHACK_IDENTITY_FIELD_TOKEN);
 
     // inner table
@@ -1671,7 +1671,7 @@ static void RenderType(lua_State *state, compound_identity *node)
             RenderTypeChildren(state, node->getScopeChildren());
             IndexStatics(state, ix_meta, ftable, (struct_identity*)node);
 
-            lua_pushlightuserdata(state, node);
+            lua_pushlightuserdata(state, const_cast<compound_identity*>(node));
             lua_setfield(state, ftable, "_identity");
 
             BuildTypeMetatable(state, node);
@@ -1694,7 +1694,7 @@ static void RenderType(lua_State *state, compound_identity *node)
 
     RenderTypeChildren(state, node->getScopeChildren());
 
-    lua_pushlightuserdata(state, node);
+    lua_pushlightuserdata(state, const_cast<compound_identity*>(node));
     lua_setfield(state, ftable, "_identity");
 
     lua_getfield(state, LUA_REGISTRYINDEX, DFHACK_SIZEOF_NAME);
@@ -1709,7 +1709,7 @@ static void RenderType(lua_State *state, compound_identity *node)
     base += 1;
 }
 
-static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children)
+static void RenderTypeChildren(lua_State *state, const std::vector<const compound_identity*> &children)
 {
     // fieldtable pairstable |
     int base = lua_gettop(state);

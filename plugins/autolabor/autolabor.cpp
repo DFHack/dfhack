@@ -227,24 +227,24 @@ static const struct labor_default default_labor_infos[] = {
     /* HANDLE_VEHICLES */       {HAULERS, false, 1, 200, 0},
     /* HAUL_TRADE */            {HAULERS, false, 1, 200, 0},
     /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
-    /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
+    /* UNUSED_13 */             {DISABLE, false, 1, 0, 0},
     /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
     /* GELD */                  {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0},
     /* PAPERMAKING */           {AUTOMATIC, false, 1, 200, 0},
     /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0},
-    /* ANON_LABOR_83 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_84 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_85 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_86 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_87 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_88 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_89 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_90 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_91 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_92 */         {DISABLE, false, 0, 0, 0},
-    /* ANON_LABOR_93 */         {DISABLE, false, 0, 0, 0},
+    /* UNUSED_20 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_21 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_22 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_23 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_24 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_25 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_26 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_27 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_28 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_29 */             {DISABLE, false, 0, 0, 0},
+    /* UNUSED_30 */             {DISABLE, false, 0, 0, 0},
 };
 
 static const int responsibility_penalties[] = {
@@ -293,7 +293,9 @@ static void cleanup_state()
 {
     enable_autolabor = false;
     labor_infos.clear();
-    game->external_flag &= ~1; // reinstate DF's work detail system
+
+    // reinstate DF's work detail system
+    game->external_flag.bits.automatic_professions_disabled = false;
 }
 
 static void reset_labor(df::unit_labor labor)
@@ -315,7 +317,8 @@ static void init_state()
     if (!enable_autolabor)
         return;
 
-    game->external_flag |= 1; // bypass DF's work detail system
+    // bypass DF's work detail system
+    game->external_flag.bits.automatic_professions_disabled = true;
 
     auto cfg_haulpct = World::GetPersistentSiteData("autolabor/haulpct");
     if (cfg_haulpct.isValid())
@@ -691,7 +694,7 @@ static void assign_labor(unit_labor::unit_labor labor,
             {
                 dwarf_info[dwarf].has_exclusive_labor = true;
                 // all the exclusive labors require equipment so this should force the dorf to reequip if needed
-                dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
+                dwarfs[dwarf]->uniform.pickup_flags.bits.update = 1;
             }
 
             TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n",

@@ -7,9 +7,11 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
+#include "modules/Burrows.h"
 #include "modules/World.h"
 
 #include "df/construction_type.h"
+#include "df/burrow.h"
 #include "df/item.h"
 #include "df/job_item.h"
 #include "df/organic_mat_category.h"
@@ -465,7 +467,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bo
     for (auto job : bld->jobs)
         job->flags.bits.suspend = true;
 
-    auto job_items = bld->jobs[0]->job_items;
+    auto job_items = bld->jobs[0]->job_items.elements;
     if (isJobReady(out, job_items)) {
         // all items are already attached
         finalizeBuilding(out, bld, unsuspend_on_finalize);
@@ -525,6 +527,8 @@ static void printStatus(color_ostream &out) {
     out.print("  use bars:     %s\n", config.get_bool(CONFIG_BARS) ? "yes" : "no");
     out.print("  plan constructions on tiles with existing constructed floors/ramps when using box select: %s\n",
         config.get_bool(CONFIG_RECONSTRUCT) ? "yes" : "no");
+    auto burrow = df::burrow::find(config.get_int(CONFIG_BURROW));
+    out.print("  ignore building materials in burrow: %s\n", burrow ? burrow->name.c_str() : "none");
     out.print("\n");
 
     size_t bld_count = 0;
@@ -537,7 +541,7 @@ static void printStatus(color_ostream &out) {
         auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
-        auto &job_items = bld->jobs[0]->job_items;
+        auto &job_items = bld->jobs[0]->job_items.elements;
         const size_t num_job_items = job_items.size();
         if (num_job_items != pb.vector_ids.size())
             continue;
@@ -590,6 +594,21 @@ static bool setSetting(color_ostream &out, string name, bool value) {
 static void resetFilters(color_ostream &out) {
     DEBUG(control,out).print("entering resetFilters\n");
     reset_filters(out);
+}
+
+static void setIgnoreBurrow(color_ostream &out, string burrow_name){
+    DEBUG(control,out).print("entering setIgnoreBurrow\n");
+    auto burrow = Burrows::findByName(burrow_name);
+    if (burrow) {
+        config.set_int(CONFIG_BURROW, burrow->id);
+    } else {
+        config.set_int(CONFIG_BURROW, -1);
+    }
+}
+
+df::burrow *getIgnoreBurrow(){
+    int id = config.get_int(CONFIG_BURROW);
+    return id < 0 ? nullptr : df::burrow::find(id);
 }
 
 static bool isPlannableBuilding(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom) {
@@ -753,7 +772,7 @@ static int countAvailableItems(color_ostream &out, df::building_type type, int16
         auto bld = pb.getBuildingIfValidOrRemoveIfNot(out, true);
         if (!bld || bld->jobs.size() != 1)
             continue;
-        for (auto pb_jitem : bld->jobs[0]->job_items) {
+        for (auto pb_jitem : bld->jobs[0]->job_items.elements) {
             if (pb_jitem->item_type == jitem->item_type && pb_jitem->item_subtype == jitem->item_subtype)
                 count -= pb_jitem->quantity;
         }
@@ -1096,7 +1115,7 @@ static bool validate_pb(color_ostream &out, df::building *bld, int index) {
     if (!isPlannedBuilding(out, bld) || bld->jobs.size() != 1)
         return false;
 
-    auto &job_items = bld->jobs[0]->job_items;
+    auto &job_items = bld->jobs[0]->job_items.elements;
     if ((int)job_items.size() <= index)
         return false;
 
@@ -1113,7 +1132,7 @@ static string getDescString(color_ostream &out, df::building *bld, int index) {
         return "INVALID";
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto & jitems = bld->jobs[0]->job_items;
+    auto & jitems = bld->jobs[0]->job_items.elements;
     const size_t num_job_items = jitems.size();
     int rev_index = num_job_items - (index + 1);
     auto &jitem = jitems[rev_index];
@@ -1126,7 +1145,7 @@ static int getQueuePosition(color_ostream &out, df::building *bld, int index) {
         return 0;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto & jitems = bld->jobs[0]->job_items;
+    auto & jitems = bld->jobs[0]->job_items.elements;
     const size_t num_job_items = jitems.size();
     int rev_index = num_job_items - (index + 1);
     auto &job_item = jitems[rev_index];
@@ -1161,7 +1180,7 @@ static void makeTopPriority(color_ostream &out, df::building *bld) {
         return;
 
     PlannedBuilding &pb = planned_buildings.at(bld->id);
-    auto &job_items = bld->jobs[0]->job_items;
+    auto &job_items = bld->jobs[0]->job_items.elements;
     const int num_job_items = (int)job_items.size();
 
     for (int index = 0; index < num_job_items; ++index) {
@@ -1206,6 +1225,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(getDescString),
     DFHACK_LUA_FUNCTION(getQueuePosition),
     DFHACK_LUA_FUNCTION(makeTopPriority),
+    DFHACK_LUA_FUNCTION(setIgnoreBurrow),
     DFHACK_LUA_END
 };
 

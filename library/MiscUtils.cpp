@@ -43,10 +43,107 @@ distribution.
 #include <stdarg.h>
 #include <string.h>
 #include <cstdlib>
+#include <cmath>
 
 #include <sstream>
 #include <map>
 #include <array>
+#include <unordered_map>
+
+NumberFormatType preferred_number_format_type = NumberFormatType::DEFAULT;
+
+DFHACK_EXPORT NumberFormatType get_preferred_number_format_type() {
+    return preferred_number_format_type;
+}
+
+DFHACK_EXPORT void set_preferred_number_format_type(NumberFormatType type) {
+    preferred_number_format_type = type;
+}
+
+static std::locale * try_get_locale(const char * name) {
+    try {
+        return new std::locale(name);
+    } catch (std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
+    return nullptr;
+}
+
+static const std::locale * english_loc = try_get_locale("en_US.UTF-8");
+static const std::locale * system_loc  = try_get_locale("");
+
+DFHACK_EXPORT void imbue_with_locale(std::ostringstream &ss, NumberFormatType type) {
+    if (type == NumberFormatType::ENGLISH || type == NumberFormatType::SYSTEM) {
+        try {
+            if (english_loc && type == NumberFormatType::ENGLISH)
+                ss.imbue(*english_loc);
+            else if (system_loc && type == NumberFormatType::SYSTEM)
+                ss.imbue(*system_loc);
+        } catch (std::exception &e) {
+            std::cerr << e.what() << std::endl;
+        }
+    }
+    if (type != NumberFormatType::SCIENTIFIC)
+        ss << std::fixed;
+    ss << std::setprecision(2);
+}
+
+// magnitude to (suffix, divisor)
+static const std::vector<std::pair<const char *, double>> sig_fig_db = {
+    { "", 1.0},              //                    0.*
+    { "", 1.0},              //                    1
+    { "", 1.0},              //                   10
+    { "", 1.0},              //                  100
+    { "", 1.0},              //                1,000
+    {"k", 1000.0},           //               10,000
+    {"k", 1000.0},           //              100,000
+    {"M", 1000000.0},        //            1,000,000
+    {"M", 1000000.0},        //           10,000,000
+    {"M", 1000000.0},        //          100,000,000
+    {"B", 1000000000.0},     //        1,000,000,000
+    {"B", 1000000000.0},     //       10,000,000,000
+    {"B", 1000000000.0},     //      100,000,000,000
+    {"T", 1000000000000.0},  //    1,000,000,000,000
+    {"T", 1000000000000.0},  //   10,000,000,000,000
+    {"T", 1000000000000.0},  //  100,000,000,000,000+
+};
+
+template<typename T>
+static int get_magnitude(T absnum) {
+    static const size_t max_magnitude = sig_fig_db.size() - 1;
+    if (absnum <= 1)
+        return 0;
+    return std::min(max_magnitude, (size_t)std::floor(std::log2(absnum) * (1/std::log2(10))) + 1);
+}
+
+DFHACK_EXPORT std::string format_number_by_sig_fig(double num, size_t sig_figs) {
+    if (num == 0)
+        return "0";
+
+    double absnum = std::abs(num);
+    int magnitude = get_magnitude(absnum);
+    auto & sig_data = sig_fig_db[magnitude];
+
+    int sf = (int)sig_figs;
+    if (sf < 1) sf = 1;
+    int precision = magnitude <= 4 ? std::max(0, sf - magnitude) : std::max(0, sf - (magnitude % 3)) % 3;
+    double divisor = sig_data.second;
+    double roundoff = divisor <= 1.0 ? 0 : 1.0 / (2.0 * std::pow(10, precision));
+
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(precision) << std::copysign(absnum / divisor - roundoff, num) << sig_data.first;
+    return ss.str();
+}
+
+DFHACK_EXPORT std::string format_number_by_sig_fig(int64_t num, size_t sig_figs) {
+    if (std::abs(num) < 10000) {
+        std::ostringstream ss;
+        ss << std::fixed << num;
+        return ss.str();
+    }
+
+    return format_number_by_sig_fig((double)num, sig_figs);
+}
 
 int random_int(int max)
 {

@@ -42,44 +42,44 @@ distribution.
 using namespace DFHack;
 
 
-void *type_identity::do_allocate_pod() {
+void *type_identity::do_allocate_pod() const {
     size_t sz = byte_size();
     void *p = malloc(sz);
     memset(p, 0, sz);
     return p;
 }
 
-void type_identity::do_copy_pod(void *tgt, const void *src) {
+void type_identity::do_copy_pod(void *tgt, const void *src) const {
     memmove(tgt, src, byte_size());
 };
 
-bool type_identity::do_destroy_pod(void *obj) {
+bool type_identity::do_destroy_pod(void *obj) const {
     free(obj);
     return true;
 }
 
-void *type_identity::allocate() {
+void *type_identity::allocate() const {
     if (can_allocate())
         return do_allocate();
     else
         return NULL;
 }
 
-bool type_identity::copy(void *tgt, const void *src) {
+bool type_identity::copy(void *tgt, const void *src) const {
     if (can_allocate() && tgt && src)
         return do_copy(tgt, src);
     else
         return false;
 }
 
-bool type_identity::destroy(void *obj) {
+bool type_identity::destroy(void *obj) const {
     if (can_allocate() && obj)
         return do_destroy(obj);
     else
         return false;
 }
 
-void *enum_identity::do_allocate() {
+void *enum_identity::do_allocate() const {
     size_t sz = byte_size();
     void *p = malloc(sz);
     memcpy(p, &first_item_value, std::min(sz, sizeof(int64_t)));
@@ -92,11 +92,11 @@ void *enum_identity::do_allocate() {
  * initialized by the loader in the initial mmap.
  */
 compound_identity *compound_identity::list = NULL;
-std::vector<compound_identity*> compound_identity::top_scope;
+std::vector<const compound_identity*> compound_identity::top_scope;
 
 compound_identity::compound_identity(size_t size, TAllocateFn alloc,
-                                     compound_identity *scope_parent, const char *dfhack_name)
-    : constructed_identity(size, alloc), dfhack_name(dfhack_name), scope_parent(scope_parent)
+    const compound_identity *scope_parent, const char *dfhack_name)
+    : constructed_identity(size, alloc), dfhack_name(dfhack_name), scope_parent(const_cast<compound_identity*>(scope_parent)) // fixme
 {
     next = list; list = this;
 }
@@ -109,7 +109,7 @@ void compound_identity::doInit(Core *)
         top_scope.push_back(this);
 }
 
-std::string compound_identity::getFullName()
+const std::string compound_identity::getFullName() const
 {
     if (scope_parent)
         return scope_parent->getFullName() + "." + getName();
@@ -131,19 +131,19 @@ void compound_identity::Init(Core *core)
 }
 
 bitfield_identity::bitfield_identity(size_t size,
-                                     compound_identity *scope_parent, const char *dfhack_name,
+                                     const compound_identity *scope_parent, const char *dfhack_name,
                                      int num_bits, const bitfield_item_info *bits)
     : compound_identity(size, NULL, scope_parent, dfhack_name), bits(bits), num_bits(num_bits)
 {
 }
 
 enum_identity::enum_identity(size_t size,
-                             compound_identity *scope_parent, const char *dfhack_name,
-                             type_identity *base_type,
+    const compound_identity *scope_parent, const char *dfhack_name,
+    const type_identity *base_type,
                              int64_t first_item_value, int64_t last_item_value,
                              const char *const *keys,
                              const ComplexData *complex,
-                             const void *attrs, struct_identity *attr_type)
+                             const void *attrs, const struct_identity *attr_type)
     : compound_identity(size, NULL, scope_parent, dfhack_name),
       keys(keys), complex(complex),
       first_item_value(first_item_value), last_item_value(last_item_value),
@@ -158,7 +158,7 @@ enum_identity::enum_identity(size_t size,
     }
 }
 
-enum_identity::enum_identity(enum_identity *base_enum, type_identity *override_base_type)
+enum_identity::enum_identity(const enum_identity *base_enum, const type_identity *override_base_type)
     : enum_identity(override_base_type->byte_size(), base_enum->getScopeParent(),
                     base_enum->getName(), override_base_type, base_enum->first_item_value,
                     base_enum->last_item_value, base_enum->keys, base_enum->complex,
@@ -177,10 +177,10 @@ enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
 }
 
 struct_identity::struct_identity(size_t size, TAllocateFn alloc,
-                                 compound_identity *scope_parent, const char *dfhack_name,
-                                 struct_identity *parent, const struct_field_info *fields)
+    const compound_identity *scope_parent, const char *dfhack_name,
+    const struct_identity *parent, const struct_field_info *fields)
     : compound_identity(size, alloc, scope_parent, dfhack_name),
-      parent(parent), has_children(false), fields(fields)
+      parent(const_cast<struct_identity*>(parent)), has_children(false), fields(fields)
 {
 }
 
@@ -194,7 +194,7 @@ void struct_identity::doInit(Core *core)
     }
 }
 
-bool struct_identity::is_subclass(struct_identity *actual)
+bool struct_identity::is_subclass(const struct_identity *actual) const
 {
     if (!has_children && actual != this)
         return false;
@@ -205,42 +205,42 @@ bool struct_identity::is_subclass(struct_identity *actual)
     return false;
 }
 
-std::string pointer_identity::getFullName()
+const std::string pointer_identity::getFullName() const
 {
     return (target ? target->getFullName() : std::string("void")) + "*";
 }
 
-std::string container_identity::getFullName(type_identity *item)
+const std::string container_identity::getFullName(const type_identity *item) const
 {
     return '<' + (item ? item->getFullName() : std::string("void")) + '>';
 }
 
-std::string ptr_container_identity::getFullName(type_identity *item)
+const std::string ptr_container_identity::getFullName(const type_identity *item) const
 {
     return '<' + (item ? item->getFullName() : std::string("void")) + std::string("*>");
 }
 
-std::string bit_container_identity::getFullName(type_identity *)
+const std::string bit_container_identity::getFullName(const type_identity *) const
 {
     return "<bool>";
 }
 
-std::string df::buffer_container_identity::getFullName(type_identity *item)
+const std::string df::buffer_container_identity::getFullName(const type_identity *item) const
 {
     return (item ? item->getFullName() : std::string("void")) +
            (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));
 }
 
-union_identity::union_identity(size_t size, TAllocateFn alloc,
+union_identity::union_identity(size_t size, const TAllocateFn alloc,
         compound_identity *scope_parent, const char *dfhack_name,
         struct_identity *parent, const struct_field_info *fields)
     : struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields)
 {
 }
 
-virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
+virtual_identity::virtual_identity(size_t size, const TAllocateFn alloc,
                                    const char *dfhack_name, const char *original_name,
-                                   virtual_identity *parent, const struct_field_info *fields,
+                                   const virtual_identity *parent, const struct_field_info *fields,
                                    bool is_plugin)
     : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
       vtable_ptr(NULL), is_plugin(is_plugin)
@@ -341,8 +341,10 @@ virtual_identity *virtual_identity::find(void *vtable)
         return p;
     }
 
-    std::cerr << "Class not in symbols.xml: '" << name << "': vtable = 0x"
-              << std::hex << uintptr_t(vtable) << std::dec << std::endl;
+    if (name.find("dfhack_") == std::string::npos) {
+        std::cerr << "INFO: Class not in symbols.xml: '" << name << "': vtable = 0x"
+                << std::hex << uintptr_t(vtable) << std::dec << std::endl;
+    }
 
     known[vtable] = NULL;
     return NULL;
@@ -462,7 +464,7 @@ void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
     }
 }
 
-static const struct_field_info *find_union_tag_candidate(struct_identity *structure, const struct_field_info *union_field)
+static const struct_field_info *find_union_tag_candidate(const struct_identity *structure, const struct_field_info *union_field)
 {
     if (union_field->extra && union_field->extra->union_tag_field)
     {
@@ -502,7 +504,7 @@ static const struct_field_info *find_union_tag_candidate(struct_identity *struct
     return nullptr;
 }
 
-const struct_field_info *DFHack::find_union_tag(struct_identity *structure, const struct_field_info *union_field)
+const struct_field_info *DFHack::find_union_tag(const struct_identity *structure, const struct_field_info *union_field)
 {
     CHECK_NULL_POINTER(structure);
     CHECK_NULL_POINTER(union_field);
@@ -538,7 +540,7 @@ const struct_field_info *DFHack::find_union_tag(struct_identity *structure, cons
         return nullptr;
     }
 
-    auto container_type = static_cast<container_identity *>(union_field->type);
+    auto container_type = static_cast<const container_identity *>(union_field->type);
     if (container_type->getFullName(nullptr) != "vector<void>" ||
             !container_type->getItemType() ||
             container_type->getItemType()->type() != IDTYPE_UNION)
@@ -555,7 +557,7 @@ const struct_field_info *DFHack::find_union_tag(struct_identity *structure, cons
         return nullptr;
     }
 
-    auto tag_container_type = static_cast<container_identity *>(tag_candidate->type);
+    auto tag_container_type = static_cast<const container_identity *>(tag_candidate->type);
     if (tag_container_type->getFullName(nullptr) == "vector<void>" &&
             tag_container_type->getItemType() &&
             tag_container_type->getItemType()->type() == IDTYPE_ENUM)

@@ -197,10 +197,10 @@ local function do_add_stockpile_config(features, opts)
             for _,config in ipairs(configs) do
                 features.claim = features.claim or features.unforbid -- accept 'add unforbid' in addition to 'add claim'
                 logistics_setStockpileConfig(config.stockpile_number,
-                        features.melt or config.melt == 1,
-                        features.trade or config.trade == 1,
-                        features.dump or config.dump == 1,
-                        features.train or config.train == 1,
+                        features.melt and true or config.melt == 1,
+                        features.trade and true or config.trade == 1,
+                        features.dump and true or config.dump == 1,
+                        features.train and true or config.train == 1,
                         (features.forbid and 1) or (features.claim and 2) or config.forbid,
                         not not opts.melt_masterworks)
             end

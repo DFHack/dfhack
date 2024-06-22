@@ -1456,6 +1456,7 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     PaintResult result = paintTile(map, pos, target);
     if (result.paintCount > 0 && map.WriteAll()) {
         result.postWrite(map);
+        world->reindex_pathfinding = true;
         return true;
     }
     return false;

@@ -6,6 +6,7 @@
 #include "VTableInterpose.h"
 
 DFHACK_PLUGIN("tweak");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 using std::vector;
 using std::string;
@@ -112,6 +113,7 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector<stri
             enable_hook(out, entry.second, parameters);
         }
     }
+    is_enabled = false;
     for (auto & entry : tweak_onupdate_hooks) {
         tweak_onupdate_hookst &hook = entry.second;
         if (entry.first == cmd) {
@@ -120,6 +122,8 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector<stri
             hook.enabled = state;
             out.print("%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
         }
+        if (hook.enabled)
+            is_enabled = true;
     }
     if (!recognized) {
         out.printerr("Unrecognized tweak: %s\n", cmd.c_str());

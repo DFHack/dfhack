@@ -1,0 +1,225 @@
+#include "modules/References.h"
+
+#include "df/general_ref.h"
+#include "df/general_ref_abstract_buildingst.h"
+#include "df/general_ref_activity_eventst.h"
+#include "df/general_ref_artifact.h"
+#include "df/general_ref_building_cagedst.h"
+#include "df/general_ref_building_chainst.h"
+#include "df/general_ref_building_civzone_assignedst.h"
+#include "df/general_ref_building_destinationst.h"
+#include "df/general_ref_building_display_furniturest.h"
+#include "df/general_ref_building.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/general_ref_building_nest_boxst.h"
+#include "df/general_ref_building_triggerst.h"
+#include "df/general_ref_building_triggertargetst.h"
+#include "df/general_ref_building_use_target_1st.h"
+#include "df/general_ref_building_use_target_2st.h"
+#include "df/general_ref_building_well_tag.h"
+#include "df/general_ref_coinbatch.h"
+#include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_contains_unitst.h"
+#include "df/general_ref_creaturest.h"
+#include "df/general_ref_dance_formst.h"
+#include "df/general_ref_entity_art_image.h"
+#include "df/general_ref_entity.h"
+#include "df/general_ref_entity_itemownerst.h"
+#include "df/general_ref_entity_offeredst.h"
+#include "df/general_ref_entity_popst.h"
+#include "df/general_ref_entity_stolenst.h"
+#include "df/general_ref_feature_layerst.h"
+#include "df/general_ref_historical_eventst.h"
+#include "df/general_ref_historical_figurest.h"
+#include "df/general_ref_interactionst.h"
+#include "df/general_ref_is_artifactst.h"
+#include "df/general_ref_is_nemesisst.h"
+#include "df/general_ref_item.h"
+#include "df/general_ref_item_type.h"
+#include "df/general_ref_knowledge_scholar_flagst.h"
+#include "df/general_ref_languagest.h"
+#include "df/general_ref_locationst.h"
+#include "df/general_ref_mapsquare.h"
+#include "df/general_ref_musical_formst.h"
+#include "df/general_ref_nemesis.h"
+#include "df/general_ref_poetic_formst.h"
+#include "df/general_ref_projectile.h"
+#include "df/general_ref_sitest.h"
+#include "df/general_ref_spherest.h"
+#include "df/general_ref_subregionst.h"
+#include "df/general_ref_type.h"
+#include "df/general_ref_unit_beateest.h"
+#include "df/general_ref_unit_cageest.h"
+#include "df/general_ref_unit_climberst.h"
+#include "df/general_ref_unit_foodreceiverst.h"
+#include "df/general_ref_unit_geldeest.h"
+#include "df/general_ref_unit.h"
+#include "df/general_ref_unit_holderst.h"
+#include "df/general_ref_unit_infantst.h"
+#include "df/general_ref_unit_interrogateest.h"
+#include "df/general_ref_unit_itemownerst.h"
+#include "df/general_ref_unit_kidnapeest.h"
+#include "df/general_ref_unit_milkeest.h"
+#include "df/general_ref_unit_patientst.h"
+#include "df/general_ref_unit_reporteest.h"
+#include "df/general_ref_unit_riderst.h"
+#include "df/general_ref_unit_sheareest.h"
+#include "df/general_ref_unit_slaughtereest.h"
+#include "df/general_ref_unit_suckeest.h"
+#include "df/general_ref_unit_tradebringerst.h"
+#include "df/general_ref_unit_traineest.h"
+#include "df/general_ref_unit_workerst.h"
+#include "df/general_ref_value_levelst.h"
+#include "df/general_ref_written_contentst.h"
+
+using namespace df::enums;
+
+df::general_ref *DFHack::References::createGeneralRef(df::general_ref_type type)
+{
+    switch (type)
+    {
+    case general_ref_type::ARTIFACT:
+        return df::allocate<df::general_ref_artifact>();
+    case general_ref_type::IS_ARTIFACT:
+        return df::allocate<df::general_ref_is_artifactst>();
+    case general_ref_type::NEMESIS:
+        return df::allocate<df::general_ref_nemesis>();
+    case general_ref_type::IS_NEMESIS:
+        return df::allocate<df::general_ref_is_nemesisst>();
+    case general_ref_type::ITEM:
+        return df::allocate<df::general_ref_item>();
+    case general_ref_type::ITEM_TYPE:
+        return df::allocate<df::general_ref_item_type>();
+    case general_ref_type::COINBATCH:
+        return df::allocate<df::general_ref_coinbatch>();
+    case general_ref_type::MAPSQUARE:
+        return df::allocate<df::general_ref_mapsquare>();
+    case general_ref_type::ENTITY_ART_IMAGE:
+        return df::allocate<df::general_ref_entity_art_image>();
+    case general_ref_type::CONTAINS_UNIT:
+        return df::allocate<df::general_ref_contains_unitst>();
+    case general_ref_type::CONTAINS_ITEM:
+        return df::allocate<df::general_ref_contains_itemst>();
+    case general_ref_type::CONTAINED_IN_ITEM:
+        return df::allocate<df::general_ref_contained_in_itemst>();
+    case general_ref_type::PROJECTILE:
+        return df::allocate<df::general_ref_projectile>();
+    case general_ref_type::UNIT:
+        return df::allocate<df::general_ref_unit>();
+    case general_ref_type::UNIT_MILKEE:
+        return df::allocate<df::general_ref_unit_milkeest>();
+    case general_ref_type::UNIT_TRAINEE:
+        return df::allocate<df::general_ref_unit_traineest>();
+    case general_ref_type::UNIT_ITEMOWNER:
+        return df::allocate<df::general_ref_unit_itemownerst>();
+    case general_ref_type::UNIT_TRADEBRINGER:
+        return df::allocate<df::general_ref_unit_tradebringerst>();
+    case general_ref_type::UNIT_HOLDER:
+        return df::allocate<df::general_ref_unit_holderst>();
+    case general_ref_type::UNIT_WORKER:
+        return df::allocate<df::general_ref_unit_workerst>();
+    case general_ref_type::UNIT_CAGEE:
+        return df::allocate<df::general_ref_unit_cageest>();
+    case general_ref_type::UNIT_BEATEE:
+        return df::allocate<df::general_ref_unit_beateest>();
+    case general_ref_type::UNIT_FOODRECEIVER:
+        return df::allocate<df::general_ref_unit_foodreceiverst>();
+    case general_ref_type::UNIT_KIDNAPEE:
+        return df::allocate<df::general_ref_unit_kidnapeest>();
+    case general_ref_type::UNIT_PATIENT:
+        return df::allocate<df::general_ref_unit_patientst>();
+    case general_ref_type::UNIT_INFANT:
+        return df::allocate<df::general_ref_unit_infantst>();
+    case general_ref_type::UNIT_SLAUGHTEREE:
+        return df::allocate<df::general_ref_unit_slaughtereest>();
+    case general_ref_type::UNIT_SHEAREE:
+        return df::allocate<df::general_ref_unit_sheareest>();
+    case general_ref_type::UNIT_SUCKEE:
+        return df::allocate<df::general_ref_unit_suckeest>();
+    case general_ref_type::UNIT_REPORTEE:
+        return df::allocate<df::general_ref_unit_reporteest>();
+    case general_ref_type::BUILDING:
+        return df::allocate<df::general_ref_building>();
+    case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
+        return df::allocate<df::general_ref_building_civzone_assignedst>();
+    case general_ref_type::BUILDING_TRIGGER:
+        return df::allocate<df::general_ref_building_triggerst>();
+    case general_ref_type::BUILDING_TRIGGERTARGET:
+        return df::allocate<df::general_ref_building_triggertargetst>();
+    case general_ref_type::BUILDING_CHAIN:
+        return df::allocate<df::general_ref_building_chainst>();
+    case general_ref_type::BUILDING_CAGED:
+        return df::allocate<df::general_ref_building_cagedst>();
+    case general_ref_type::BUILDING_HOLDER:
+        return df::allocate<df::general_ref_building_holderst>();
+    case general_ref_type::BUILDING_WELL_TAG:
+        return df::allocate<df::general_ref_building_well_tag>();
+    case general_ref_type::BUILDING_USE_TARGET_1:
+        return df::allocate<df::general_ref_building_use_target_1st>();
+    case general_ref_type::BUILDING_USE_TARGET_2:
+        return df::allocate<df::general_ref_building_use_target_2st>();
+    case general_ref_type::BUILDING_DESTINATION:
+        return df::allocate<df::general_ref_building_destinationst>();
+    case general_ref_type::BUILDING_NEST_BOX:
+        return df::allocate<df::general_ref_building_nest_boxst>();
+    case general_ref_type::ENTITY:
+        return df::allocate<df::general_ref_entity>();
+    case general_ref_type::ENTITY_STOLEN:
+        return df::allocate<df::general_ref_entity_stolenst>();
+    case general_ref_type::ENTITY_OFFERED:
+        return df::allocate<df::general_ref_entity_offeredst>();
+    case general_ref_type::ENTITY_ITEMOWNER:
+        return df::allocate<df::general_ref_entity_itemownerst>();
+    case general_ref_type::LOCATION:
+        return df::allocate<df::general_ref_locationst>();
+    case general_ref_type::INTERACTION:
+        return df::allocate<df::general_ref_interactionst>();
+    case general_ref_type::ABSTRACT_BUILDING:
+        return df::allocate<df::general_ref_abstract_buildingst>();
+    case general_ref_type::HISTORICAL_EVENT:
+        return df::allocate<df::general_ref_historical_eventst>();
+    case general_ref_type::SPHERE:
+        return df::allocate<df::general_ref_spherest>();
+    case general_ref_type::SITE:
+        return df::allocate<df::general_ref_sitest>();
+    case general_ref_type::SUBREGION:
+        return df::allocate<df::general_ref_subregionst>();
+    case general_ref_type::FEATURE_LAYER:
+        return df::allocate<df::general_ref_feature_layerst>();
+    case general_ref_type::HISTORICAL_FIGURE:
+        return df::allocate<df::general_ref_historical_figurest>();
+    case general_ref_type::ENTITY_POP:
+        return df::allocate<df::general_ref_entity_popst>();
+    case general_ref_type::CREATURE:
+        return df::allocate<df::general_ref_creaturest>();
+    case general_ref_type::UNIT_RIDER:
+        return df::allocate<df::general_ref_unit_riderst>();
+    case general_ref_type::UNIT_CLIMBER:
+        return df::allocate<df::general_ref_unit_climberst>();
+    case general_ref_type::UNIT_GELDEE:
+        return df::allocate<df::general_ref_unit_geldeest>();
+    case general_ref_type::KNOWLEDGE_SCHOLAR_FLAG:
+        return df::allocate<df::general_ref_knowledge_scholar_flagst>();
+    case general_ref_type::ACTIVITY_EVENT:
+        return df::allocate<df::general_ref_activity_eventst>();
+    case general_ref_type::VALUE_LEVEL:
+        return df::allocate<df::general_ref_value_levelst>();
+    case general_ref_type::LANGUAGE:
+        return df::allocate<df::general_ref_languagest>();
+    case general_ref_type::WRITTEN_CONTENT:
+        return df::allocate<df::general_ref_written_contentst>();
+    case general_ref_type::POETIC_FORM:
+        return df::allocate<df::general_ref_poetic_formst>();
+    case general_ref_type::MUSICAL_FORM:
+        return df::allocate<df::general_ref_musical_formst>();
+    case general_ref_type::DANCE_FORM:
+        return df::allocate<df::general_ref_dance_formst>();
+    case general_ref_type::BUILDING_DISPLAY_FURNITURE:
+        return df::allocate<df::general_ref_building_display_furniturest>();
+    case general_ref_type::UNIT_INTERROGATEE:
+        return df::allocate<df::general_ref_unit_interrogateest>();
+    default:
+        return nullptr;
+    }
+}

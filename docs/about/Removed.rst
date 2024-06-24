@@ -20,7 +20,7 @@ Converted to an `overlay` and merged into `advtools`.
 
 adv-fix-sleepers
 ================
-Converted to fix/sleepers.
+Renamed to `fix/sleepers`.
 
 .. _autohauler:
 

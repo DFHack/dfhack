@@ -1104,6 +1104,9 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                     Maps::setTileAquifer(pos, target.aquifer == 2);
             }
         };
+
+        // force the game to recompute its walkability cache on the next tick
+        world->reindex_pathfinding = true;
     }
     return PaintResult();
 }
@@ -1156,9 +1159,6 @@ command_result executePaintJob(color_ostream &out,
     std::vector<PaintResult> paintResults = std::vector<PaintResult>();
 
     if (all_tiles.size() > 0) {
-        // Force the game to recompute its walkability cache
-        world->reindex_pathfinding = true;
-
         if (dynamic_cast<RectangleBrush*>(brush) != nullptr || dynamic_cast<BlockBrush*>(brush) != nullptr || dynamic_cast<ColumnBrush*>(brush) != nullptr) {
             df::coord minPos = all_tiles[0];
             df::coord maxPos = all_tiles[0];
@@ -1456,7 +1456,6 @@ static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     PaintResult result = paintTile(map, pos, target);
     if (result.paintCount > 0 && map.WriteAll()) {
         result.postWrite(map);
-        world->reindex_pathfinding = true;
         return true;
     }
     return false;

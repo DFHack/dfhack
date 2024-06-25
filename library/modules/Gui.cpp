@@ -849,6 +849,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (df::global::gametype && !World::isFortressMode()) {
         newFocusString = baseFocus;
         newFocusString += '/' + enum_item_key(*df::global::gametype);
+        if (*df::global::gametype == df::game_type::DWARF_ARENA) {
+            if (game->main_interface.bottom_mode_selected != df::main_bottom_mode_type::NONE)
+                newFocusString += "/Paint/" + enum_item_key(game->main_interface.bottom_mode_selected);
+            else if (game->main_interface.arena_unit.open)
+                newFocusString += "/ConfigureUnit";
+            else if (game->main_interface.arena_tree.open)
+                newFocusString += "/ConfigureTree";
+            else
+                newFocusString += "/Default";
+        }
         focusStrings.push_back(newFocusString);
     }
     add_main_interface_focus_strings(baseFocus, focusStrings);

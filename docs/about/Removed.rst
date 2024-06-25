@@ -16,6 +16,12 @@ adv-rumors
 ==========
 Converted to an `overlay` and merged into `advtools`.
 
+.. _adv-fix-sleepers:
+
+adv-fix-sleepers
+================
+Renamed to `fix/sleepers`.
+
 .. _autohauler:
 
 autohauler

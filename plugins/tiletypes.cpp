@@ -1059,6 +1059,9 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                     Maps::removeAreaAquifer(pos1, pos2, filter);
                 else if (target.aquifer > 0)
                     Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
+
+                // force the game to recompute its walkability cache on the next tick
+                world->reindex_pathfinding = true;
             }
         }
     };
@@ -1102,6 +1105,9 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                     Maps::removeTileAquifer(pos);
                 else if (target.aquifer > 0)
                     Maps::setTileAquifer(pos, target.aquifer == 2);
+
+                // force the game to recompute its walkability cache on the next tick
+                world->reindex_pathfinding = true;
             }
         };
     }
@@ -1156,9 +1162,6 @@ command_result executePaintJob(color_ostream &out,
     std::vector<PaintResult> paintResults = std::vector<PaintResult>();
 
     if (all_tiles.size() > 0) {
-        // Force the game to recompute its walkability cache
-        world->reindex_pathfinding = true;
-
         if (dynamic_cast<RectangleBrush*>(brush) != nullptr || dynamic_cast<BlockBrush*>(brush) != nullptr || dynamic_cast<ColumnBrush*>(brush) != nullptr) {
             df::coord minPos = all_tiles[0];
             df::coord maxPos = all_tiles[0];

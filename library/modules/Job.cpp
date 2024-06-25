@@ -273,6 +273,7 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
 
 bool Job::addGeneralRef(df::job *job, df::general_ref_type type, int32_t id)
 {
+    CHECK_NULL_POINTER(job)
     auto ref = References::createGeneralRef(type);
     if (!ref)
         return false;
@@ -523,18 +524,20 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
     {
         if (job->posting_index >= 0 && size_t(job->posting_index) < world->jobs.postings.size())
         {
-            world->jobs.postings[job->posting_index]->flags.bits.dead = true;
+            auto posting = world->jobs.postings[job->posting_index];
+            posting->flags.bits.dead = true;
+            posting->job = nullptr;
             removed = true;
         }
     }
     else
     {
-        for (auto it = world->jobs.postings.begin(); it != world->jobs.postings.end(); ++it)
+        for (auto posting : world->jobs.postings)
         {
-            if ((**it).job == job)
+            if (posting->job == job)
             {
-                (**it).job = NULL;
-                (**it).flags.bits.dead = true;
+                posting->flags.bits.dead = true;
+                posting->job = nullptr;
                 removed = true;
             }
         }

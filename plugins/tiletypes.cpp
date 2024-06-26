@@ -80,6 +80,7 @@ static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::til
     { { df::tiletype_shape::RAMP,  df::tiletype_shape::EMPTY    }, df::tiletype_shape::RAMP_TOP },
     { { df::tiletype_shape::EMPTY, df::tiletype_shape::RAMP_TOP }, df::tiletype_shape::EMPTY    },
 };
+static const uint16_t UNDERGROUND_TEMP = 10015;
 
 static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
 CommandHistory tiletypes_hist;
@@ -860,8 +861,15 @@ static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& bloc
     if (target.light > -1)
         des.bits.light = target.light;
 
-    if (target.subterranean > -1)
+    if (target.subterranean > -1) {
         des.bits.subterranean = target.subterranean;
+
+        // Underground tiles have a fixed ambient temperature, though magma and fire can raise it
+        if (target.subterranean == 1 && block->temperature1At(blockPos) < UNDERGROUND_TEMP) {
+            block->setTemp1At(blockPos, UNDERGROUND_TEMP);
+            block->setTemp2At(blockPos, UNDERGROUND_TEMP);
+        }
+    }
 
     if (target.skyview > -1)
         des.bits.outside = target.skyview;

@@ -260,7 +260,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(world)
 }
 
 static bool widget_is_visible(df::widget * w) {
-    return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
+    return w && w->visibility_flags.bits.VISIBILITY_VISIBLE;
 }
 
 static df::widget * get_visible_child(df::widget *parent) {
@@ -374,7 +374,7 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
             } else if (tab->name == "Work Details") {
                 newFocusString += "/WORK_DETAILS";
                 if (auto details = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Details");
-                        details && !details->visibility_flags.bits.WIDGET_VISIBILITY_CAN_KEY_ACTIVATE)
+                        details && !details->visibility_flags.bits.CAN_KEY_ACTIVATE)
                     newFocusString += "/Details";
                 else
                     newFocusString += "/Default";
@@ -685,7 +685,7 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString += "/ImageCreator";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.unit_selector.visibility_flags.bits.WIDGET_VISIBILITY_ACTIVE) {
+    if (game->main_interface.unit_selector.visibility_flags.bits.VISIBILITY_ACTIVE) {
         newFocusString = baseFocus;
         newFocusString += "/UnitSelector/";
         newFocusString += enum_item_key(game->main_interface.unit_selector.context);

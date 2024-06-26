@@ -2528,9 +2528,9 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                 if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
                     continue;
 
-                for (size_t j = 0; j < realization->face[site_x][site_y].buildings.size(); j++)
+                for (size_t j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
                 {
-                    auto in_building = realization->face[site_x][site_y].buildings[j];
+                    auto in_building = realization->building_map[site_x][site_y].buildings[j];
                     auto out_building = outputTiles[region_x][region_y]->add_buildings();
 
                     out_building->set_id(in_building->id);

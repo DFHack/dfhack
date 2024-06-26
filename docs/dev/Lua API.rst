@@ -1811,30 +1811,30 @@ Timers will be capped to go no lower than 1.
 
 API functions:
 
-* ``subtractActionTimers(unit, amount, affectedActionType)``
+* ``dfhack.units.subtractActionTimers(unit, amount, affectedActionType)``
 
   Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing of ``affectedActionType``
   (usually one or zero actions in normal gameplay).
 
-* ``subtractGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+* ``dfhack.units.subtractGroupActionTimers(unit, amount, affectedActionTypeGroup)``
 
   Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing that match the ``affectedActionTypeGroup`` category.
 
-* ``multiplyActionTimers(unit, amount, affectedActionType)``
+* ``dfhack.units.multiplyActionTimers(unit, amount, affectedActionType)``
 
   Multiply the timers of any actions of ``affectedActionType`` the unit is performing by ``amount`` (float)
   (usually one or zero actions in normal gameplay).
 
-* ``multiplyGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+* ``dfhack.units.multiplyGroupActionTimers(unit, amount, affectedActionTypeGroup)``
 
   Multiply the timers of any actions that match the ``affectedActionTypeGroup`` category the unit is performing by ``amount`` (float).
 
-* ``setActionTimers(unit, amount, affectedActionType)``
+* ``dfhack.units.setActionTimers(unit, amount, affectedActionType)``
 
   Set the timers of any action the unit is performing of ``affectedActionType`` to ``amount`` (32-bit integer)
   (usually one or zero actions in normal gameplay).
 
-* ``setGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+* ``dfhack.units.setGroupActionTimers(unit, amount, affectedActionTypeGroup)``
 
   Set the timers of any action the unit is performing that match the ``affectedActionTypeGroup`` category to ``amount`` (32-bit integer).
 

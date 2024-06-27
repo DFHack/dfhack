@@ -1898,13 +1898,11 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
-    // remove some io functions (if coverage monitoring, which needs them, is not enabled)
-    if (!getenv("DFHACK_ENABLE_LUACOV")) {
-        lua_getglobal(state, "io");
-        lua_pushnil(state);
-        lua_setfield(state, -2, "popen");
-        lua_pop(state, 1);
-    }
+    // DFHack should not be running external processes (security hardening measure)
+    lua_getglobal(state, "io");
+    lua_pushnil(state);
+    lua_setfield(state, -2, "popen");
+    lua_pop(state, 1);
 
     // replace some os functions
     lua_getglobal(state, "os");

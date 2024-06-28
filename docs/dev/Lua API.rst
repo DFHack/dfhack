@@ -3493,7 +3493,7 @@ functions. These are invoked just like standard string functions, e.g.::
   Removes spaces (i.e. everything that matches ``'%s'``) from the start and end
   of a string. Spaces between non-space characters are left untouched.
 
-* ``string:wrap([width][, opts])``
+* ``string:wrap([width[, opts]])``
 
   Inserts newlines into a string so no individual line exceeds the given width.
   Lines are split at space-separated word boundaries. Any existing newlines are

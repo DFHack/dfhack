@@ -620,7 +620,6 @@ end
 ---@field subviews gui.View[]
 ---@field parent_view? gui.View
 ---@field focus_group gui.View.focus_group
----@field focus_path? string
 ---@field focus boolean
 ---@field active boolean|fun(): boolean
 ---@field visible boolean|fun(): boolean
@@ -886,6 +885,7 @@ end
 ---@class gui.Screen.attrs: gui.View.attrs
 ---@field text_input_mode boolean
 ---@field request_full_screen_refresh boolean
+---@field focus_path string
 
 ---@class gui.Screen.attrs.partial: gui.Screen.attrs
 
@@ -1082,10 +1082,16 @@ function ZScreen:onIdle()
     end
 end
 
+local function record_zscreen_runtime(self, start_ms)
+    dfhack.internal.recordZScreenRuntime(self.focus_path or 'unknown', start_ms)
+end
+
 ---@param dc gui.Painter
 function ZScreen:render(dc)
     self:renderParent()
+    local now_ms = dfhack.getTickCount()
     ZScreen.super.render(self, dc)
+    record_zscreen_runtime(self, now_ms)
 end
 
 ---@return boolean
@@ -1095,6 +1101,7 @@ function ZScreen:hasFocus()
 end
 
 function ZScreen:onInput(keys)
+    local now_ms = dfhack.getTickCount()
     local has_mouse = self:isMouseOver()
     if not self:hasFocus() then
         if has_mouse and
@@ -1103,6 +1110,7 @@ function ZScreen:onInput(keys)
                  keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN) then
             self:raise()
         else
+            record_zscreen_runtime(self, now_ms)
             self:sendInputToParent(keys)
             return true
         end
@@ -1112,7 +1120,9 @@ function ZScreen:onInput(keys)
         -- noop
     elseif self.pass_mouse_clicks and keys._MOUSE_L and not has_mouse then
         self.defocused = self.defocusable
+        record_zscreen_runtime(self, now_ms)
         self:sendInputToParent(keys)
+        return true
     elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
     else
@@ -1134,9 +1144,12 @@ function ZScreen:onInput(keys)
             passit = require('gui.dwarfmode').getMapKey(keys)
         end
         if passit then
+            record_zscreen_runtime(self, now_ms)
             self:sendInputToParent(keys)
+            return true
         end
     end
+    record_zscreen_runtime(self, now_ms)
     return true
 end
 

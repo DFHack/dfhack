@@ -110,6 +110,7 @@ distribution.
 #include <lualib.h>
 
 #include <cstring>
+#include <numeric>
 #include <string>
 #include <vector>
 #include <map>
@@ -3393,6 +3394,11 @@ static void recordRepeatRuntime(string name, uint32_t start_ms) {
     counters.incCounter(counters.update_lua_per_repeat[name.c_str()], start_ms);
 }
 
+static void recordZScreenRuntime(string name, uint32_t start_ms) {
+    auto & counters = Core::getInstance().perf_counters;
+    counters.incCounter(counters.zscreen_per_focus[name.c_str()], start_ms);
+}
+
 static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
     NumberFormatType type = (NumberFormatType)type_int;
     switch (type) {
@@ -3432,6 +3438,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(setClipboardTextCp437Multiline),
     WRAP(resetPerfCounters),
     WRAP(recordRepeatRuntime),
+    WRAP(recordZScreenRuntime),
     WRAP(setPreferredNumberFormat),
     { NULL, NULL }
 };
@@ -4100,6 +4107,9 @@ static int internal_getPerfCounters(lua_State *L) {
     summary["update_lua_ms"] = counters.update_lua_ms;
     summary["total_keybinding_ms"] = counters.total_keybinding_ms;
     summary["total_overlay_ms"] = counters.total_overlay_ms;
+    summary["total_zscreen_ms"] = std::accumulate(
+        std::begin(counters.zscreen_per_focus), std::end(counters.zscreen_per_focus), 0,
+        [](const uint32_t prev, const std::pair<const std::string, uint32_t>& p){ return prev + p.second; });
     Lua::Push(L, summary);
     Lua::Push(L, translate_event_types(counters.event_manager_event_total_ms));
     Lua::Push(L, mapify(translate_event_types(counters.event_manager_event_per_plugin_ms)));
@@ -4107,7 +4117,8 @@ static int internal_getPerfCounters(lua_State *L) {
     Lua::Push(L, counters.state_change_per_plugin);
     Lua::Push(L, counters.update_lua_per_repeat);
     Lua::Push(L, counters.overlay_per_widget);
-    return 7;
+    Lua::Push(L, counters.zscreen_per_focus);
+    return 8;
 }
 
 static int internal_getClipboardTextCp437Multiline(lua_State *L) {

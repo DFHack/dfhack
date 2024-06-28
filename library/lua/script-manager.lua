@@ -234,11 +234,12 @@ end
 
 function print_timers()
     local summary, em_per_event, em_per_plugin_per_event, update_per_plugin, state_change_per_plugin,
-        update_lua_per_repeat, overlay_per_widget = dfhack.internal.getPerfCounters()
+        update_lua_per_repeat, overlay_per_widget, zscreen_per_focus = dfhack.internal.getPerfCounters()
 
     local elapsed = summary.elapsed_ms
     local total_update_time = summary.total_update_ms
     local total_overlay_time = summary.total_overlay_ms
+    local total_zscreen_time = summary.total_zscreen_ms
 
     print('Summary')
     print('-------')
@@ -249,8 +250,8 @@ function print_timers()
 
     if elapsed <= 0 then return end
 
-    local sum = summary.total_keybinding_ms + total_update_time + total_overlay_time
-    print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'), '(does not include non-overlay interpose time)')
+    local sum = summary.total_keybinding_ms + total_update_time + total_overlay_time + total_zscreen_time
+    print(format_relative_time(7, 'dfhack', sum, elapsed, 'elapsed'))
 
     if sum > 0 then
         print()
@@ -261,6 +262,7 @@ function print_timers()
         print(format_relative_time(10, 'keybinding', summary.total_keybinding_ms, sum, 'dfhack', elapsed, 'elapsed'))
         print(format_relative_time(10, 'update', total_update_time, sum, 'dfhack', elapsed, 'elapsed'))
         print(format_relative_time(10, 'overlay', total_overlay_time, sum, 'dfhack', elapsed, 'elapsed'))
+        print(format_relative_time(10, 'zscreen', total_zscreen_time, sum, 'dfhack', elapsed, 'elapsed'))
     end
 
     if total_update_time > 0 then
@@ -326,6 +328,15 @@ function print_timers()
         print('---------------')
         print()
         print_sorted_timers(overlay_per_widget, 45, total_overlay_time, 'overlay', elapsed, 'elapsed')
+    end
+
+    if total_zscreen_time > 0 then
+        print()
+        print()
+        print('ZScreen details')
+        print('---------------')
+        print()
+        print_sorted_timers(zscreen_per_focus, 45, total_zscreen_time, 'zscreen', elapsed, 'elapsed')
     end
 end
 

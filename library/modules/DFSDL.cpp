@@ -183,6 +183,30 @@ DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
     return textcp437;
 }
 
+DFHACK_EXPORT bool DFHack::getClipboardTextCp437Multiline(vector<string> * lines) {
+    CHECK_NULL_POINTER(lines);
+
+    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
+        return false;
+    char *text = g_SDL_GetClipboardText();
+    // convert tabs to spaces so they don't get converted to '?'
+    for (char *c = text; *c; ++c) {
+        if (*c == '\t')
+            *c = ' ';
+    }
+    vector<string> utf8_lines;
+    if (!split_string(&utf8_lines, text, "\n")) {
+        DFHack::DFSDL::DFSDL_free(text);
+        return false;
+    }
+    DFHack::DFSDL::DFSDL_free(text);
+
+    for (auto utf8_line : utf8_lines)
+        lines->emplace_back(UTF2DF(utf8_line));
+
+    return true;
+}
+
 DFHACK_EXPORT bool DFHack::setClipboardTextCp437(string text) {
     if (!g_sdl_handle)
         return false;

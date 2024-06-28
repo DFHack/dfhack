@@ -125,6 +125,7 @@ Template for new versions:
 - ``dfhack.formatInt``, ``dfhack.formatFloat``: formats numbers according to the player preferences for number formatting set in `gui/control-panel`
 - ``gui.get_interface_rect``, ``gui.get_interface_frame``: convenience functions for working with scaled interfaces
 - ``overlay``: new attributes: ``fullscreen`` and ``full_interface`` for overlays that need access to the entire screen or the scaled interface area, respectively
+- ``string:wrap``: now preserves inter-word spacing and can return the wrapped lines as a table of strings instead of a single multi-line string
 
 ## Removed
 - `plants`: renamed to `plant`

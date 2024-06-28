@@ -619,47 +619,61 @@ function string:trim()
     return content
 end
 
+local function wrap_word(word, width, wrapped_text, words, cur_line_len)
+    local word_len = #word
+    -- word fits within the current line
+    if cur_line_len + word_len <= width then
+        table.insert(words, word)
+        cur_line_len = cur_line_len + word_len
+        return words, cur_line_len
+    end
+    -- word needs to go on the next line, but is not itself longer
+    -- than the specified width
+    if word_len <= width then
+        table.insert(wrapped_text, table.concat(words, ''))
+        return {word}, word_len
+    end
+    -- word is too long to fit on one line and needs to be split up
+    local emitted_chars = 0
+    repeat
+        if #words > 0 then
+            table.insert(wrapped_text, table.concat(words, ''))
+        end
+        local word_frag = word:sub(emitted_chars + 1, emitted_chars + width)
+        words, cur_line_len = {word_frag}, #word_frag
+        emitted_chars = emitted_chars + cur_line_len
+    until emitted_chars >= word_len
+    return words, cur_line_len
+end
+
 -- Inserts newlines into a string so no individual line exceeds the given width.
--- Lines are split at space-separated word boundaries. Any existing newlines are
--- kept in place. If a single word is longer than width, it is split over
--- multiple lines. If width is not specified, 72 is used.
+-- Lines are split at space-separated word boundaries. No existing spaces or
+-- newlines are lost (even spaces at the end of wrapped lines will be kept). If
+-- a single word is longer than width, it is split over multiple lines. If width
+-- is not specified, 72 is used. If the return_as_table parameter is set, then
+-- the wrapped text is returned as a table, one line per element, instead of a
+-- pre-concatentated multi-line string.
 ---@nodiscard
 ---@param self string
 ---@param width number
----@return string
-function string:wrap(width)
+---@param return_as_table boolean
+---@return string|string[]
+function string:wrap(width, return_as_table)
     width = width or 72
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
     for line in self:gmatch('[^\n]*') do
-        local line_start_pos = 1
-        local wrapped_line = line:gsub(
-            '%s*()(%S+)()',
-            function(start_pos, word, end_pos)
-                -- word fits within the current line
-                if end_pos - line_start_pos <= width then return end
-                -- word needs to go on the next line, but is not itself longer
-                -- than the specified width
-                if #word <= width then
-                    line_start_pos = start_pos
-                    return '\n' .. word
-                end
-                -- word is too long to fit on one line and needs to be split up
-                local num_chars, str = 0, start_pos == 1 and '' or '\n'
-                repeat
-                    local word_frag = word:sub(num_chars + 1, num_chars + width)
-                    str = str .. word_frag
-                    num_chars = num_chars + #word_frag
-                    if num_chars < #word then
-                        str = str .. '\n'
-                    end
-                    line_start_pos = start_pos + num_chars
-                until end_pos - line_start_pos <= width
-                return str .. word:sub(num_chars + 1)
-            end)
-        table.insert(wrapped_text, wrapped_line)
+        local prespace = line:match('^(%s*)')
+        local words, cur_line_len = {}, 0
+        if #prespace > 0 then
+            words, cur_line_len = wrap_word(prespace, width, wrapped_text, words, cur_line_len)
+        end
+        for word in line:gmatch('%S+%s*') do
+            words, cur_line_len = wrap_word(word, width, wrapped_text, words, cur_line_len)
+        end
+        table.insert(wrapped_text, table.concat(words, ''))
     end
-    return table.concat(wrapped_text, '\n')
+    return return_as_table and wrapped_text or table.concat(wrapped_text, '\n')
 end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"

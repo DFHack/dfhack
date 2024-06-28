@@ -3217,6 +3217,13 @@ and are only documented here for completeness:
 
   Sets the system clipboard text from a CP437 string.
 
+* ``dfhack.internal.getClipboardTextCp437Multiline()``
+
+  Gets the system clipboard text (and converts text to CP437 encoding).
+  Character 0x10 is interpreted as a newline instead of the usual CP437 glyph.
+  The text is returned as a list of strings, one for each line of text on the
+  clipboard.
+
 * ``dfhack.internal.setClipboardTextCp437Multiline(text)``
 
   Sets the system clipboard text from a CP437 string. Character 0x10 is

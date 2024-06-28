@@ -24,13 +24,13 @@ CHANGELOG_SECTIONS = [
     'New Internal Commands', # deprecated
     'Fixes',
     'Misc Improvements',
+    'Documentation',
     'Removed',
     'API',
     'Internals',
     'Lua',
     'Ruby', # deprecated, but still here so old changelogs build
     'Structures',
-    'Documentation',
 ]
 
 REPLACEMENTS = {

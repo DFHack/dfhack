@@ -56,28 +56,29 @@ Template for new versions:
 
 ## New Features
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
+- `logistics`: automatically forbid or claim items brought to a stockpile
 - `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
+- Locale-senstive number formatting: select your preferred format in `gui/control-panel`. prices and other large numbers in DFHack UIs can be displayed with commas (English formatting), the number formatting used by your system locale, in SI units (e.g. ``12.3k``), or even in scientific notation
 
 ## Fixes
-- ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix skipping index 0 when iterating reports vector
+- ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix case where a new announcement is created instead of adding to the count of an existing announcement if the existing announcement was the first one in the reports vector
 - `regrass`: don't remove mud on regrass, consistent with vanilla behavior
 - `seedwatch`: display a limit of ``-`` instead of ``0`` for a seed that is present in inventory but not being watched
-- `tiletypes`: make aquifers functional when adding the ``aquifer`` property
+- `tiletypes`: make aquifers functional when adding the ``aquifer`` property and there are no existing aquifer tiles in the same map block
 - `seedwatch`: do not include unplantable tree seeds in status report
 - ``Buildings::containsTile``: fix result for buildings that are solid and have no extent structures
 - Mortal mode: prevent keybindings that run armok tools from being recognized when in mortal mode
 - `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
 - `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
-- `overlay`: overlays now respect custom settings for the the max interface width percentage
+- `overlay`: overlay positions are now adjusted according to the configured max interface width percentage in the DF settings
 - `zone`: animal assignment overlay button moved to not conflict with vanilla aquarium/terrarium button on glass cages
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks
-- `changevein`: follow veins into adjacent map blocks so you can run the command once instead of once per map block that the vein touches
-- `logistics`: automatically forbid or claim items brought to a stockpile
+- `changevein`: follow veins into adjacent map blocks so you can run the command once instead of once per map block that the vein crosses
 - `regrass`: now accepts numerical IDs for grass raws; ``regrass --list`` replaces ``regrass --plant ""``
-- `tiletypes`: performance improvements when affecting tiles over a large range
-- `tiletypes`: support for heavy aquifers
+- `tiletypes`: performance improvements when affecting tiles over a large area
+- `tiletypes`: support for creating heavy aquifers
 - `tiletypes`: new ``autocorrect`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
@@ -88,27 +89,23 @@ Template for new versions:
 - `buildingplan`: add option to ignore items from a specified burrow
 - `autobutcher`: do not butcher pregnant (or brooding) females
 - `quickfort`: support buildable instruments
+- `orders`: you can now delete your exported orders from the import dialog
 - `nestboxes`: increase the scanning frequency for fertile eggs to reduce the chance that they get snarfed by eager dwarves
 - `autonestbox`: wait until juveniles become adults before they are assigned to nestboxes
-- `suspendmanager`: add option to ``unsuspend`` that unsuspends all jobs, regardless of potential issues
+- `suspendmanager`: add option to ``unsuspend`` that unsuspends all jobs, regardless of potential issues (like blocking other construction jobs)
 - `gui/create-item`: allow right click to cancel out of material dialog submenus
 
 ## Documentation
-- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (ito benefit from DFHack auto-updates and cloud backups)
+- `installing`: add instructions for how to use Steam DFHack with non-Steam DF (e.g. to benefit from DFHack auto-updates and cloud backups)
 - `modding-guide`: add a section on persistent storage, both for global settings and world-specific settings
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``
-- ``Buildings::getName``: get a building's name, convenience method for easier use from Lua
-- ``Maps::isTileAquifer``: check if tile is an aquifer
-- ``Maps::isTileHeavyAquifer``: check if tile is a heavy aquifer
-- ``Maps::setTileAquifer``: make tile into an aquifer
-- ``Maps::setAreaAquifer``: make all tiles in a cuboid into aquifers, with the option to provide a filter
-- ``Maps::removeTileAquifer``: remove aquifer from tile
-- ``Maps::removeAreaAquifer``: remove aquifers from all tiles in a cuboid, with the option to provide a filter
+- ``Buildings::getName``: get a building's name
+- ``Maps::isTileAquifer``, ``Maps::isTileHeavyAquifer``, ``Maps::setTileAquifer``, ``Maps::removeTileAquifer``, ``Maps::setAreaAquifer``, ``Maps::removeAreaAquifer``: new aquifer detection and modification API
 - ``Units::create``, ``Units::makeown``: new APIs to use bay12-provided entry points for low-level operations
 - ``format_number``: format numbers according to the configured player formatting preference
-- ``Items::remove``: now cancels related jobs and marks the item as hidden and forbidden
+- ``Items::remove``: now cancels related jobs and marks the item as hidden and forbidden until it can be garbage collected
 
 ## Lua
 - ``dfhack.gui.getSelectedJob``: can now return the job with a destination under the keyboard cursor (e.g. digging/carving/engraving jobs)

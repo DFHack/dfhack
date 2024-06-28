@@ -118,6 +118,7 @@ namespace DFHack
         std::unordered_map<std::string, uint32_t> state_change_per_plugin;
         std::unordered_map<std::string, uint32_t> update_lua_per_repeat;
         std::unordered_map<std::string, uint32_t> overlay_per_widget;
+        std::unordered_map<std::string, uint32_t> zscreen_per_focus;
 
         void reset(bool ignorePauseState = false);
         bool getIgnorePauseState();

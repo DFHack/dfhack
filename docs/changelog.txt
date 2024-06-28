@@ -69,6 +69,7 @@ Template for new versions:
 - `dig`: don't leave phantom dig designations behind when autodigging warm/damp designated tiles
 - `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
 - `overlay`: overlays now respect custom settings for the the max interface width percentage
+- `zone`: animal assignment overlay button moved to not conflict with vanilla aquarium/terrarium button on glass cages
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

@@ -3,6 +3,8 @@
 #include "Export.h"
 #include "ColorText.h"
 
+#include <vector>
+
 struct SDL_Surface;
 struct SDL_Rect;
 struct SDL_PixelFormat;
@@ -65,6 +67,7 @@ DFHACK_EXPORT std::string getClipboardTextCp437();
 DFHACK_EXPORT bool setClipboardTextCp437(std::string text);
 
 // interprets 0xa as newline instead of usual CP437 char
+DFHACK_EXPORT bool getClipboardTextCp437Multiline(std::vector<std::string> * lines);
 DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
 
 }

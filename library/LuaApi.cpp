@@ -4110,6 +4110,13 @@ static int internal_getPerfCounters(lua_State *L) {
     return 7;
 }
 
+static int internal_getClipboardTextCp437Multiline(lua_State *L) {
+    std::vector<string> lines;
+    getClipboardTextCp437Multiline(&lines);
+    Lua::Push(L, lines);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -4144,6 +4151,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "setArmokTools", internal_setArmokTools },
     { "getPerfCounters", internal_getPerfCounters },
     { "getPreferredNumberFormat", internal_getPreferredNumberFormat },
+    { "getClipboardTextCp437Multiline", internal_getClipboardTextCp437Multiline },
     { NULL, NULL }
 };
 

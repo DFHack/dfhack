@@ -195,10 +195,7 @@ DFHACK_EXPORT bool DFHack::getClipboardTextCp437Multiline(vector<string> * lines
             *c = ' ';
     }
     vector<string> utf8_lines;
-    if (!split_string(&utf8_lines, text, "\n")) {
-        DFHack::DFSDL::DFSDL_free(text);
-        return false;
-    }
+    split_string(&utf8_lines, text, "\n");
     DFHack::DFSDL::DFSDL_free(text);
 
     for (auto utf8_line : utf8_lines)
@@ -217,8 +214,7 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
     if (!g_sdl_handle)
         return false;
     vector<string> lines;
-    if (!split_string(&lines, text, "\n"))
-        return false;
+    split_string(&lines, text, "\n");
     std::ostringstream str;
     for (size_t idx = 0; idx < lines.size(); ++idx) {
         str << DF2UTF(lines[idx]);

@@ -62,22 +62,29 @@ end
 function test.wrap()
     expect.eq('', (''):wrap())
     expect.eq('  ', ('  '):wrap())
-    expect.eq('   \n ', ('    '):wrap(3))
-    expect.eq('   \n   \n ', ('       '):wrap(3))
+    expect.eq('\n', ('    '):wrap(3))
+    expect.eq('\n', ('       '):wrap(3))
+
+    expect.eq('', (''):wrap(3, {keep_trailing_spaces=true}))
+    expect.eq('  ', ('  '):wrap(3, {keep_trailing_spaces=true}))
+    expect.eq('   \n ', ('    '):wrap(3, {keep_trailing_spaces=true}))
+    expect.eq('   \n   \n ', ('       '):wrap(3, {keep_trailing_spaces=true}))
 
     expect.eq('hello world', ('hello world'):wrap(20))
     expect.eq('hello   world', ('hello   world'):wrap(20))
     expect.eq('  hello world  ', ('  hello world  '):wrap(20))
     expect.eq('  hello   world  ', ('  hello   world  '):wrap(20))
     expect.eq('hello world \nhow are you?',('hello world how are you?'):wrap(12))
-    expect.eq('hello\n \nworld', ('hello world'):wrap(5))
-    expect.eq('hello\n     \n   \nworld', ('hello        world'):wrap(5))
-    expect.eq('  \nhello\n  \nworld\n  ', ('  hello  world  '):wrap(5))
+    expect.eq('hello\nworld', ('hello world'):wrap(5))
+    expect.eq('hello\nworld', ('hello        world'):wrap(5))
+    expect.eq('  \nhello\nworld', ('  hello  world  '):wrap(5))
     expect.eq('hello \nworld', ('hello world'):wrap(8))
     expect.eq('hel\nlo \nwor\nld', ('hello world'):wrap(3))
-    expect.eq('hel\nloo\n  \nwor\nldo', ('helloo  worldo'):wrap(3))
+    expect.eq('hel\nloo\nwor\nldo', ('helloo  worldo'):wrap(3))
 
-    expect.table_eq({'hel', 'lo ', 'wor', 'ld'}, ('hello world'):wrap(3, true))
+    expect.eq('hel\nloo\n  \nwor\nldo', ('helloo  worldo'):wrap(3, {keep_trailing_spaces=true}))
+
+    expect.table_eq({'hel', 'lo ', 'wor', 'ld'}, ('hello world'):wrap(3, {return_as_table=true}))
 
     expect.error_match('expected width > 0', function() ('somestr'):wrap(0) end)
 end

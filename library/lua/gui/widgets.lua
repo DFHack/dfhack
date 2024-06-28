@@ -1870,7 +1870,7 @@ function WrappedLabel:getWrappedText(width)
     if type(text_to_wrap) == 'table' then
         text_to_wrap = table.concat(text_to_wrap, NEWLINE)
     end
-    return text_to_wrap:wrap(width - self.indent)
+    return text_to_wrap:wrap(width - self.indent, {return_as_table=true})
 end
 
 function WrappedLabel:preUpdateLayout()
@@ -1883,7 +1883,7 @@ function WrappedLabel:postComputeFrame()
     local wrapped_text = self:getWrappedText(self.frame_body.width-3)
     if not wrapped_text then return end
     local text = {}
-    for _,line in ipairs(wrapped_text:split(NEWLINE)) do
+    for _,line in ipairs(wrapped_text) do
         table.insert(text, {gap=self.indent, text=line})
         -- a trailing newline will get ignored so we don't have to manually trim
         table.insert(text, NEWLINE)

@@ -615,17 +615,26 @@ end
 ---@param self string
 ---@return string
 function string:trim()
-    local _, _, content = self:find('^%s*(.-)%s*$')
-    return content
+    return self:match('^%s*(.-)%s*$')
 end
 
-local function wrap_word(word, width, wrapped_text, words, cur_line_len)
+local function wrap_word(word, width, wrapped_text, words, cur_line_len, opts)
     local word_len = #word
     -- word fits within the current line
     if cur_line_len + word_len <= width then
         table.insert(words, word)
         cur_line_len = cur_line_len + word_len
         return words, cur_line_len
+    end
+    local trimmed_word = word
+    if not opts.keep_trailing_spaces then
+        trimmed_word = word:trim()
+        -- trimmed word fits on the current line and ends it
+        if cur_line_len + #trimmed_word <= width then
+            table.insert(words, trimmed_word)
+            table.insert(wrapped_text, table.concat(words, ''))
+            return {}, 0
+        end
     end
     -- word needs to go on the next line, but is not itself longer
     -- than the specified width
@@ -634,7 +643,7 @@ local function wrap_word(word, width, wrapped_text, words, cur_line_len)
         return {word}, word_len
     end
     -- word is too long to fit on one line and needs to be split up
-    local emitted_chars = 0
+    local emitted_chars, trimmed_word_len = 0, #trimmed_word
     repeat
         if #words > 0 then
             table.insert(wrapped_text, table.concat(words, ''))
@@ -642,38 +651,32 @@ local function wrap_word(word, width, wrapped_text, words, cur_line_len)
         local word_frag = word:sub(emitted_chars + 1, emitted_chars + width)
         words, cur_line_len = {word_frag}, #word_frag
         emitted_chars = emitted_chars + cur_line_len
-    until emitted_chars >= word_len
+    until emitted_chars >= trimmed_word_len
     return words, cur_line_len
 end
 
 -- Inserts newlines into a string so no individual line exceeds the given width.
--- Lines are split at space-separated word boundaries. No existing spaces or
--- newlines are lost (even spaces at the end of wrapped lines will be kept). If
--- a single word is longer than width, it is split over multiple lines. If width
--- is not specified, 72 is used. If the return_as_table parameter is set, then
--- the wrapped text is returned as a table, one line per element, instead of a
--- pre-concatentated multi-line string.
 ---@nodiscard
 ---@param self string
 ---@param width number
----@param return_as_table boolean
+---@param opts {return_as_table:boolean, keep_trailing_spaces:boolean}
 ---@return string|string[]
-function string:wrap(width, return_as_table)
-    width = width or 72
+function string:wrap(width, opts)
+    width, opts = width or 72, opts or {}
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
     for line in self:gmatch('[^\n]*') do
         local prespace = line:match('^(%s*)')
         local words, cur_line_len = {}, 0
         if #prespace > 0 then
-            words, cur_line_len = wrap_word(prespace, width, wrapped_text, words, cur_line_len)
+            words, cur_line_len = wrap_word(prespace, width, wrapped_text, words, cur_line_len, opts)
         end
         for word in line:gmatch('%S+%s*') do
-            words, cur_line_len = wrap_word(word, width, wrapped_text, words, cur_line_len)
+            words, cur_line_len = wrap_word(word, width, wrapped_text, words, cur_line_len, opts)
         end
         table.insert(wrapped_text, table.concat(words, ''))
     end
-    return return_as_table and wrapped_text or table.concat(wrapped_text, '\n')
+    return opts.return_as_table and wrapped_text or table.concat(wrapped_text, '\n')
 end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"

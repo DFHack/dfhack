@@ -1054,7 +1054,8 @@ end
 CageChainOverlay = defclass(CageChainOverlay, overlay.OverlayWidget)
 CageChainOverlay.ATTRS{
     desc='Adds a link to launch the animal assignment UI to cages and chains.',
-    default_pos={x=-40,y=34},
+    default_pos={x=-64,y=34},
+    version=2,
     default_enabled=true,
     viewscreens={'dwarfmode/ViewSheets/BUILDING/Cage', 'dwarfmode/ViewSheets/BUILDING/Chain'},
     frame={w=23, h=1},

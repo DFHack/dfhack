@@ -1290,6 +1290,11 @@ Job module
 
   Cancels a job, cleans up all references to it, and removes it from the world.
 
+* ``dfhack.job.addGeneralRef(job, type, id)``
+
+  Create a general reference of the given type, pointing to the object with the
+  specified id, and add the created general reference to the provided job.
+
 * ``dfhack.job.getGeneralRef(job, type)``
 
   Searches for a general_ref with the given type.
@@ -1311,6 +1316,11 @@ Job module
   Prevent the worker from taking jobs at the specified workshop for the
   specified cooldown period (in ticks). This doesn't decrease the cooldown
   period in any circumstances.
+
+* ``dfhack.job.addWorker(job, unit)``
+
+  Assign the specified job to the provided unit, unless the unit already has an
+  active job. Also cleans up a potential job posting for the provided job.
 
 * ``dfhack.job.removeWorker(job,cooldown)``
 

@@ -425,8 +425,6 @@ static Pen doGetTile_map_port(int x, int y, int32_t * df::graphic_map_portst::*t
 
     int tile = 0;
     if (!texpos_field) {
-        // I dunno if any of these are even set, they appear to be 0 in fort mode world map
-        tile = vp->screentexpos_interface[index];
         if (tile == 0)
             tile = vp->screentexpos_base[index];
         if (tile == 0)
@@ -439,6 +437,28 @@ static Pen doGetTile_map_port(int x, int y, int32_t * df::graphic_map_portst::*t
             tile = vp->screentexpos_road[index];
         if (tile == 0)
             tile = vp->screentexpos_site[index];
+        if (tile == 0)
+            tile = vp->screentexpos_army[index];
+        if (tile == 0)
+            tile = vp->screentexpos_interface[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_n[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_s[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_w[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_e[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_nw[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_ne[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_sw[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_se[index];
+        if (tile == 0)
+            tile = vp->screentexpos_site_to_s[index];
     } else {
         tile = (vp->*texpos_field)[index];
     }

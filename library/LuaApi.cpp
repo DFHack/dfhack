@@ -2880,14 +2880,14 @@ static int screen_paintTileMapPort(lua_State *L)
     return 1;
 }
 
-// static int screen_readTileMapPort(lua_State *L)
-// {
-//     int x = luaL_checkint(L, 1);
-//     int y = luaL_checkint(L, 2);
-//     Pen pen = Screen::readTileMapPort(x, y);
-//     Lua::Push(L, pen);
-//     return 1;
-// }
+static int screen_readTileMapPort(lua_State *L)
+{
+    int x = luaL_checkint(L, 1);
+    int y = luaL_checkint(L, 2);
+    Pen pen = Screen::readTileMapPort(x, y);
+    Lua::Push(L, pen);
+    return 1;
+}
 
 static int screen_paintString(lua_State *L)
 {
@@ -3077,6 +3077,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintTile", screen_paintTile },
     { "readTile", screen_readTile },
     { "paintTileMapPort", screen_paintTileMapPort },
+    { "readTileMapPort", screen_readTileMapPort },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },

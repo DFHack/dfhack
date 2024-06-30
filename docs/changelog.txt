@@ -98,6 +98,7 @@ Template for new versions:
 ## Documentation
 - `installing`: add instructions for how to use Steam DFHack with non-Steam DF (e.g. to benefit from DFHack auto-updates and cloud backups)
 - `modding-guide`: add a section on persistent storage, both for global settings and world-specific settings
+- Developer's primer for DFHack's type identity system
 
 ## API
 - Focus strings have moved for stockpile states: ``dwarfmode/CustomStockpile`` is now ``dwarfmode/Stockpile/Some/Customize`` and similar for ``dwarfmode/StockpileTools`` and ``dwarfmode/StockpileLink``

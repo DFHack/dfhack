@@ -665,7 +665,7 @@ function string:wrap(width, opts)
     width, opts = width or 72, opts or {}
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
-    for line in self:gmatch('[^\n]*') do
+    for line in self:gmatch('[^\n]*'..(opts.keep_original_newlines and '\n?' or '')) do
         local prespace = line:match('^(%s*)')
         local words, cur_line_len = {}, 0
         if #prespace > 0 then

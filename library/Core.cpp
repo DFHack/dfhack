@@ -154,13 +154,46 @@ void PerfCounters::reset(bool ignorePauseState) {
 }
 
 void PerfCounters::incCounter(uint32_t &counter, uint32_t baseline_ms) {
-    if (!ignore_pause_state && World::ReadPauseState())
+    if (!ignore_pause_state && (!World::isFortressMode() || World::ReadPauseState()))
         return;
     counter += Core::getInstance().p->getTickCount() - baseline_ms;
 }
 
 bool PerfCounters::getIgnorePauseState() {
     return ignore_pause_state;
+}
+
+void PerfCounters::registerTick(uint32_t baseline_ms) {
+    if (!World::isFortressMode() || World::ReadPauseState()) {
+        last_tick_baseline_ms = 0;
+        return;
+    }
+
+    if (last_tick_baseline_ms == 0) {
+        last_tick_baseline_ms = baseline_ms;
+        return;
+    }
+
+    uint32_t elapsed_ms = baseline_ms - last_tick_baseline_ms;
+    last_tick_baseline_ms = baseline_ms;
+
+    recent_ticks_head_idx = (recent_ticks_head_idx + 1) % RECENT_TICKS_HISTORY_SIZE;
+
+    if (recent_ticks_full)
+        recent_ticks_sum_ms -= recent_ticks_ms[recent_ticks_head_idx];
+    else if (recent_ticks_head_idx == 0)
+        recent_ticks_full = true;
+
+    recent_ticks_ms[recent_ticks_head_idx] = elapsed_ms;
+    recent_ticks_sum_ms += elapsed_ms;
+}
+
+uint32_t PerfCounters::getUnpausedFps() {
+    uint32_t seconds = recent_ticks_sum_ms / 1000;
+    if (seconds == 0)
+        return 0;
+    size_t num_frames = recent_ticks_full ? RECENT_TICKS_HISTORY_SIZE : recent_ticks_head_idx;
+    return num_frames / seconds;
 }
 
 struct CommandDepthCounter
@@ -2007,6 +2040,7 @@ int Core::Update()
         }
 
         uint32_t start_ms = p->getTickCount();
+        perf_counters.registerTick(start_ms);
         doUpdate(out);
         perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }

@@ -182,22 +182,22 @@ void PerfCounters::registerTick(uint32_t baseline_ms) {
     uint32_t elapsed_ms = baseline_ms - last_tick_baseline_ms;
     last_tick_baseline_ms = baseline_ms;
 
-    recent_ticks_head_idx = (recent_ticks_head_idx + 1) % RECENT_TICKS_HISTORY_SIZE;
+    recent_ticks.head_idx = (recent_ticks.head_idx + 1) % RECENT_TICKS_HISTORY_SIZE;
 
-    if (recent_ticks_full)
-        recent_ticks_sum_ms -= recent_ticks_ms[recent_ticks_head_idx];
-    else if (recent_ticks_head_idx == 0)
-        recent_ticks_full = true;
+    if (recent_ticks.full)
+        recent_ticks.sum_ms -= recent_ticks.history[recent_ticks.head_idx];
+    else if (recent_ticks.head_idx == 0)
+        recent_ticks.full = true;
 
-    recent_ticks_ms[recent_ticks_head_idx] = elapsed_ms;
-    recent_ticks_sum_ms += elapsed_ms;
+    recent_ticks.history[recent_ticks.head_idx] = elapsed_ms;
+    recent_ticks.sum_ms += elapsed_ms;
 }
 
 uint32_t PerfCounters::getUnpausedFps() {
-    uint32_t seconds = recent_ticks_sum_ms / 1000;
+    uint32_t seconds = recent_ticks.sum_ms / 1000;
     if (seconds == 0)
         return 0;
-    size_t num_frames = recent_ticks_full ? RECENT_TICKS_HISTORY_SIZE : recent_ticks_head_idx;
+    size_t num_frames = recent_ticks.full ? RECENT_TICKS_HISTORY_SIZE : recent_ticks.head_idx;
     return num_frames / seconds;
 }
 

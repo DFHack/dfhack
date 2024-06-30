@@ -3514,6 +3514,9 @@ functions. These are invoked just like standard string functions, e.g.::
     :keep_trailing_spaces: if ``true``, then spaces at the end of a wrapped
         line will be kept. Normally, spaces at the end of a wrapped line are
         elided.
+    :keep_original_newlines: if ``true`` (and ``return_as_table`` is also
+        ``true``), then if a newline was encountered in the original string, it
+        will be included in the relevant table entry.
 
 * ``string:escape_pattern()``
 

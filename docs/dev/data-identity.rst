@@ -5,9 +5,9 @@ DFHack Data Identity System
 ###########################
 
 This article is an attempt to describe DFHack's data identity system.
-DFHack internally has a collection of C++ classes that provide metedata about the data in DF itself as well as data used
+DFHack internally has a collection of C++ classes that provide metadata about the data in DF itself as well as data used
 by various components of DFHack. This metadata is used primarily to enable the Lua scripting system to access data
-held by Dwarf Fortress in a transparent manner, but is also used for several other purposes within DFHack.
+held by Dwarf Fortress in a transparent manner, but is also used for several other purposes within DFHack, such as rerouting virtual method calls.
 
 The base class of the identity system is the class ``type_identity``, defined in :source:`DataDefs.h <library/include/DataDefs.h>`. A ``type_identity`` object
 provides information about one *type* of data object, in either Dwarf Fortress or DFHack, that can be manipulated as a discrete entity in Lua.

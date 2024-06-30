@@ -133,6 +133,7 @@ namespace DFHack
         bool ignore_pause_state = false;
 
         static const size_t RECENT_TICKS_HISTORY_SIZE = 1000;
+        int32_t last_frame_counter;
         uint32_t last_tick_baseline_ms;
         uint32_t recent_ticks_ms[RECENT_TICKS_HISTORY_SIZE];
         size_t recent_ticks_head_idx;

@@ -25,6 +25,8 @@ distribution.
 
 #include "Internal.h"
 
+#include "modules/Gui.h"
+#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -34,6 +36,7 @@ distribution.
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/plotinfost.h"
+#include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_site.h"
@@ -53,6 +56,12 @@ bool World::ReadPauseState()
 
     if (!pause_state || !plotinfo || !game || !world)
         return false;
+
+    // count single stepping as paused
+    if (World::isFortressMode()) {
+        if (auto scr = Gui::getViewscreenByType<df::viewscreen_dwarfmodest>(0); scr && scr->keyRepeat)
+            return true;
+    }
 
     return *pause_state ||
         (plotinfo->main.mode != df::ui_sidebar_mode::Default &&

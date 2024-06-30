@@ -3399,6 +3399,11 @@ static void recordZScreenRuntime(string name, uint32_t start_ms) {
     counters.incCounter(counters.zscreen_per_focus[name.c_str()], start_ms);
 }
 
+static uint32_t getUnpausedFps() {
+    auto & counters = Core::getInstance().perf_counters;
+    return counters.getUnpausedFps();
+}
+
 static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
     NumberFormatType type = (NumberFormatType)type_int;
     switch (type) {
@@ -3439,6 +3444,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(resetPerfCounters),
     WRAP(recordRepeatRuntime),
     WRAP(recordZScreenRuntime),
+    WRAP(getUnpausedFps),
     WRAP(setPreferredNumberFormat),
     { NULL, NULL }
 };

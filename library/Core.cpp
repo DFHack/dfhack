@@ -169,6 +169,11 @@ void PerfCounters::registerTick(uint32_t baseline_ms) {
         return;
     }
 
+    // only update when the tick counter has advanced
+    if (!world || last_frame_counter == world->frame_counter)
+        return;
+    last_frame_counter = world->frame_counter;
+
     if (last_tick_baseline_ms == 0) {
         last_tick_baseline_ms = baseline_ms;
         return;

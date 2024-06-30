@@ -304,7 +304,7 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
 virtual_identity *virtual_identity::find(void *vtable)
 {
-    if (!vtable)
+    if (!vtable || !known_mutex)
         return NULL;
 
     // Actually, a reader/writer lock would be sufficient,

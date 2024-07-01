@@ -61,7 +61,7 @@ end
 
 function test.wrap()
     expect.eq('', (''):wrap())
-    expect.eq('  ', ('  '):wrap())
+    expect.eq('', ('  '):wrap())
     expect.eq('\n', ('    '):wrap(3))
     expect.eq('\n', ('       '):wrap(3))
 
@@ -72,19 +72,20 @@ function test.wrap()
 
     expect.eq('hello world', ('hello world'):wrap(20))
     expect.eq('hello   world', ('hello   world'):wrap(20))
-    expect.eq('  hello world  ', ('  hello world  '):wrap(20))
-    expect.eq('  hello   world  ', ('  hello   world  '):wrap(20))
-    expect.eq('hello world \nhow are you?',('hello world how are you?'):wrap(12))
+    expect.eq('  hello world', ('  hello world  '):wrap(20))
+    expect.eq('  hello   world', ('  hello   world  '):wrap(20))
+    expect.eq('hello world\nhow are you?',('hello world how are you?'):wrap(12))
     expect.eq('hello\nworld', ('hello world'):wrap(5))
+    expect.eq('hello\nworld\n\n', ('hello world\n'):wrap(5))
     expect.eq('hello\nworld', ('hello        world'):wrap(5))
-    expect.eq('  \nhello\nworld', ('  hello  world  '):wrap(5))
-    expect.eq('hello \nworld', ('hello world'):wrap(8))
-    expect.eq('hel\nlo \nwor\nld', ('hello world'):wrap(3))
+    expect.eq('\nhello\nworld', ('  hello  world  '):wrap(5))
+    expect.eq('hello\nworld', ('hello world'):wrap(8))
+    expect.eq('hel\nlo\nwor\nld', ('hello world'):wrap(3))
     expect.eq('hel\nloo\nwor\nldo', ('helloo  worldo'):wrap(3))
 
     expect.eq('hel\nloo\n  \nwor\nldo', ('helloo  worldo'):wrap(3, {keep_trailing_spaces=true}))
 
-    expect.table_eq({'hel', 'lo ', 'wor', 'ld'}, ('hello world'):wrap(3, {return_as_table=true}))
+    expect.table_eq({'hel', 'lo', 'wor', 'ld'}, ('hello world'):wrap(3, {return_as_table=true}))
 
     expect.error_match('expected width > 0', function() ('somestr'):wrap(0) end)
 
@@ -134,8 +135,9 @@ function test.wrap()
         'is a ',
         'sim\n',
         'ple ',
-        'text'
-    }, ('this is a sim\nple text'):wrap(7, journal_opts),
+        'text\n',
+        ''
+    }, ('this is a sim\nple text\n'):wrap(7, journal_opts),
     'take into account existing new line')
 
     expect.table_eq({

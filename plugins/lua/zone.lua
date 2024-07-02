@@ -589,11 +589,16 @@ local function get_item_disposition(item)
 end
 
 local function is_assignable_unit(unit)
-    return dfhack.units.isActive(unit) and
-        ((dfhack.units.isAnimal(unit) and dfhack.units.isOwnCiv(unit)) or get_cage_ref(unit)) and
-        not dfhack.units.isDead(unit) and
-        not dfhack.units.isMerchant(unit) and
-        not dfhack.units.isForest(unit)
+    if not dfhack.units.isActive(unit) or dfhack.units.isDead(unit) then
+        return false
+    end
+    local caged = get_cage_ref(unit)
+    if dfhack.units.isAnimal(unit) then
+        return (dfhack.units.isOwnCiv(unit) or caged) and
+            not dfhack.units.isMerchant(unit) and
+            not dfhack.units.isForest(unit)
+    end
+    return caged
 end
 
 local function is_assignable_item(item)
@@ -620,7 +625,9 @@ function AssignAnimal:cache_choices()
     local bld_assignments = get_bld_assignments()
     local choices = {}
     for _, unit in ipairs(df.global.world.units.active) do
-        if not is_assignable_unit(unit) then goto continue end
+        if not get_general_ref(unit, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED) then
+            if not is_assignable_unit(unit) then goto continue end
+        end
         local raw = df.creature_raw.find(unit.race)
         local desc = dfhack.units.getReadableName(unit)
         if #unit.custom_profession > 0 then

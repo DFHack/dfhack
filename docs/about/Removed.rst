@@ -14,7 +14,7 @@ work (e.g. links from the `changelog`).
 
 linger
 ======
-Merged into `bodyswap` as `bodyswap linger`.
+Merged into `bodyswap` as ``bodyswap linger``.
 
 .. _adv-rumors:
 

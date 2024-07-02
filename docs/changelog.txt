@@ -72,6 +72,7 @@ Template for new versions:
 - `buildingplan`: properly identify appropriate construction items for modded buildings built from thread
 - `overlay`: overlay positions are now adjusted according to the configured max interface width percentage in the DF settings
 - `zone`: animal assignment overlay button moved to not conflict with vanilla aquarium/terrarium button on glass cages
+- `zone`: allow friendly creatures to be released from cages by assigning them to a pasture zone and then unassigning them
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

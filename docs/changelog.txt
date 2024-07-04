@@ -52,6 +52,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r2
+
+## New Tools
 - `plant`: (reinstated) tool for creating/growing/removing plants
 
 ## New Features

@@ -56,6 +56,8 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `changelayer`: fix faulty logic for looking up geological regions
+- `tweak`: reduce lag impact from ``adamantine-cloth-wear``
 
 ## Misc Improvements
 

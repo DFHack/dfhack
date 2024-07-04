@@ -67,7 +67,7 @@ Template for new versions:
 
 ## Removed
 
-# 50.13-r2
+# 50.13-r3
 
 ## New Tools
 - `plant`: (reinstated) tool for creating/growing/removing plants
@@ -91,6 +91,7 @@ Template for new versions:
 - `overlay`: overlay positions are now adjusted according to the configured max interface width percentage in the DF settings
 - `zone`: animal assignment overlay button moved to not conflict with vanilla aquarium/terrarium button on glass cages
 - `zone`: allow friendly creatures to be released from cages by assigning them to a pasture zone and then unassigning them
+- `autobutcher`: fix inverted ranking of which animals to butcher first
 
 ## Misc Improvements
 - `blueprint`: capture track carving designations in addition to already-carved tracks

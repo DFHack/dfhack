@@ -216,19 +216,19 @@ static void doMarkForSlaughter(df::unit *unit) {
 // returns true if a should be butchered before b
 static bool compareKids(df::unit *a, df::unit *b) {
     if (isHighPriority(a) != isHighPriority(b))
-        return isHighPriority(a);
+        return isHighPriority(b);
     if (Units::isDomesticated(a) != Units::isDomesticated(b))
-        return Units::isDomesticated(b);
-    return Units::getAge(a, true) < Units::getAge(b, true);
+        return Units::isDomesticated(a);
+    return Units::getAge(a, true) > Units::getAge(b, true);
 }
 
 // returns true if a should be butchered before b
 static bool compareAdults(df::unit* a, df::unit* b) {
     if (isHighPriority(a) != isHighPriority(b))
-        return isHighPriority(a);
+        return isHighPriority(b);
     if (Units::isDomesticated(a) != Units::isDomesticated(b))
-        return Units::isDomesticated(b);
-    return Units::getAge(a, true) > Units::getAge(b, true);
+        return Units::isDomesticated(a);
+    return Units::getAge(a, true) < Units::getAge(b, true);
 }
 
 struct WatchedRace {

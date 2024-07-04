@@ -68,7 +68,7 @@ DFHack command,Blueprint,Generate orders,Notes
 gui/quickfort,/surface2,,"Build starter workshops/stockpiles and dig miasma vents. Run after initial trees are cleared. If you are deconstructing the wagon, do it before running this blueprint so the jobs that depend on scattered wagon contents (e.g. blocks) don't get canceled later."
 gui/quickfort,/farming1,,Dig out the farming level. Run when channels on the surface are dug and the additional designated trees are cleared.
 gui/quickfort,/farming2,,Build farming level. Run as soon as the farming level has been completely dug out.
-gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central staircase from early invasions. Run right after /farming2.
+gui/quickfort,/surface3,,Cover the miasma vents and start protecting the central staircase from early invasions. Run when /farming2 is mostly complete.
 gui/quickfort,/industry2,,"Build industry level. Run as soon as the industry level has been completely dug out. As industry workshops are built, you can remove the temporary workshops and stockpiles on the surface. Be sure that there are no items attached to jobs left in the surface workshops before deconstructing them, otherwise you'll get canceled jobs!"
 gui/quickfort,/surface4,,Finish protecting the staircase and lay flooring for future buildings. Run after the walls and floors around the staircase are built and you have moved production from the surface to the industry level.
 gui/quickfort,/industry3,,Build the rest of the industry level. Run once /surface4 is mostly complete.
@@ -134,6 +134,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 """Gameplay"" subtab:"
 - combine
 - dwarfvet
+- timestream
 - work-now
 "Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tabs instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
 ""

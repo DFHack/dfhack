@@ -173,6 +173,7 @@ set(MODULE_HEADERS
     include/modules/Once.h
     include/modules/Persistence.h
     include/modules/Random.h
+    include/modules/References.h
     include/modules/Renderer.h
     include/modules/Screen.h
     include/modules/Textures.h
@@ -202,6 +203,7 @@ set(MODULE_SOURCES
     modules/Once.cpp
     modules/Persistence.cpp
     modules/Random.cpp
+    modules/References.cpp
     modules/Renderer.cpp
     modules/Screen.cpp
     modules/Textures.cpp

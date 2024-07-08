@@ -6143,8 +6143,9 @@ The names of the functions are also available as the keys of the
 building-hacks
 ==============
 
-This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
-plugin export a function it's recommended to use lua decorated function.
+This plugin extends DF workshops to support custom powered buildings.
+
+.. note:: when using numeric ids for workshops be aware that those id can change between worlds
 
 .. contents::
   :local:
@@ -6152,73 +6153,124 @@ plugin export a function it's recommended to use lua decorated function.
 Functions
 ---------
 
-``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+* ``setOwnableBuilding(workshop_type)``
 
-    :name:
-        custom workshop id e.g. ``SOAPMAKER``
+  Set workshop to be included in zones (such as bedroom or inn).
 
-        .. note:: this is the only mandatory field.
+  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
 
-    :fix_impassible:
-        if true make impassable tiles impassable to liquids too
-    :consume:
-        how much machine power is needed to work.
-        Disables reactions if not supplied enough and ``needs_power==1``
-    :produce:
-        how much machine power is produced.
-    :needs_power:
-        if produced in network < consumed stop working, default true
-    :gears:
-        a table or ``{x=?,y=?}`` of connection points for machines.
-    :action:
-        a table of number (how much ticks to skip) and a function which
-        gets called on shop update
-    :animate:
-        a table of frames which can be a table of:
+* ``fixImpassible(workshop_type)``
 
-        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
-        b. empty table (tile not modified) OR
-        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
-           this generates full frame useful for animations that change little (1-2 tiles)
+  Set workshop non walkable tiles to also block liquids (i.e. water and magma).
 
-    :canBeRoomSubset:
-        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
-    :auto_gears:
-        a flag that automatically fills up gears and animations. It looks over the building definition for gear icons and maps them.
+  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
 
-    Animate table also might contain:
+* ``setMachineInfo(workshop_type, needs_power, power_consumed, power_produced, connection_points)``
 
-    :frameLength:
-        how many ticks does one frame take OR
-    :isMechanical:
-        a bool that says to try to match to mechanical system (i.e. how gears are turning)
+  Setup and enable machine-like functionality for the workshop. All workshops of this type will have
+  this as default power consumption/production. Note: due to implementation limitations
+  workshop only connects to other machines if the other machine is build later than this one.
 
-``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
+  :workshop_type:       custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :needs_power:         only function if it has sufficient power
+  :power_consumed:      building consumes this amount of power
+  :power_produced:      output this amount of power
+  :connection_points:   a table of ``{x=?,y=?}`` zero-based coordinates that can connect to other machines
 
-``setPower(building,produced,consumed)`` sets current power production and consumption for a building.
+* ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced, [gear_tiles])``
+
+  Same as ``setMachineInfo`` but fills out the ``connection_points`` table from raws placing connection
+  points on tiles which have the gear tile. ``gear_tiles`` is an optional array of two tiles that are
+  counted as gears in the workshop ascii tile raws. The default gear tiles are ``42`` and ``15``.
+
+* ``setAnimationInfo(workshop_type, frames, frame_skip)``
+
+  Animate workshop by replacing displayed tiles (or graphical tiles). There are two ways this works:
+  if ``frame_skip>=0`` then it shows each frame for ``frame_skip`` of frames or if ``frame_skip<0``
+  Frames are synchronized to the machine this building is connected to.
+
+  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :frames:          table of frames. Each frame is sparse flat table with ids from ``0`` to ``31*31-1``.
+                    Each frame tile is table of integers from 4 to 8 members long. Tile members are as
+                    follow: ``tile``, ``foreground color``, ``background color``, ``bright``,
+                    ``graphics tile``, ``overlay tile``, ``signpost tile``, ``item tile``.
+                    First 4 are function same as ascii workshop definition. The latter 4 are graphics
+                    layers. ``signpost tile`` is an optional row that sticks up over the workshop.
+
+  :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
+                    are synchronized with machine animation.
+
+* ``setAnimationInfoAuto(workshop_type, make_graphics_too, [frame_length], [gear_tiles])``
+
+  Animate workshop as with function above but generate frames automatically. This works by finding
+  tiles which have gears and animating them with alternating gear tiles.
+
+  :workshop_type:     custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
+  :frame_length:      How many ticks to display one frame. If set to negative number (or skipped) frames
+                      are synchronized with machine animation.
+  :gear_tiles:        Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
+                      This overrides default gear tiles.
+
+* ``setOnUpdate(workshop_type,interval,callback)``
+
+  Setup callback to be called every ``interval`` of ticks for each building of this type. Note: low interval
+  numbers and/or many workshops that use this might reduce DF performance.
+
+  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :interval:        how many ticks to skip between event triggers
+  :callback:        function to call. Function signature is ``func(workshop)`` where ``workshop`` is of type
+                    ``df.building_workshopst``
+
+* ``getPower(building)``
+
+  Returns two number - produced and consumed power if building can be modified and returns nothing otherwise.
+
+  :building:   specific workshop that produces or consumes power
+
+* ``setPower(building, power_consumed, power_produced)``
+
+  Sets current power production and consumption for a specific workshop building. Can be used to make buildings that
+  dynamically change power consumption and production.
+
+  :building:   specific workshop that produces or consumes power
+  :power_consumed:   set building to consume this amount of power
+  :power_produced:   output this amount of power
+
+
+Events
+------
+
+This module exports two events. However only one is documented here and is intended to be used directly. To use
+``onUpdateAction`` instead call ``setOnUpdate`` function.
+
+* ``onSetTriggerState(workshop,state)``
+
+  Notify when building is triggered from linked lever or trap.
+
+  :workshop:   object of type ``df.building_workshopst`` that is triggered.
+  :state:   integer value of new state.
 
 Examples
 --------
 
 Simple mechanical workshop::
 
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    gears={x=0,y=0}, --connection point
-    animate={
-      isMechanical=true, --animate the same conn. point as vanilla gear
-      frames={
-      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
-      {{x=0,y=0,15,7,0,0}} -- second frame, same
+  local bld=require('plugins.building-hacks')
+  --work only powered, consume 15 power and one connection point at 0,0
+  bld.setMachineInfo("BONE_GRINDER",true,15,0,{{x=0,y=0}})
+  --set animation to switch between gear tiles at 0,0
+  bld.setAnimationInfo("BONE_GRINDER",{
+      {[0]={42,7,0,0}}, --first frame, 1 changed tile
+      {[0]={15,7,0,0}} -- second frame, same
       }
-    }
+    )
 
 Or with auto_gears::
 
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    auto_gears=true
-    }
+  local bld=require('plugins.building-hacks')
+  bld.setMachineInfoAuto("BONE_GRINDER",true,15)
+  bld.setAnimationInfoAuto("BONE_GRINDER",true)
 
 buildingplan
 ============

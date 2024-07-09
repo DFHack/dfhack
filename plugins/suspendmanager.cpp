@@ -796,8 +796,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
             do_cycle(out);
         } else {
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::unregisterAll(plugin_self);
         }
 
     } else {

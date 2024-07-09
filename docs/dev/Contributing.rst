@@ -83,6 +83,15 @@ Pull request guidelines
     unless you indicate that it isn't ready (see below), but you can continue to
     push to the same branch and open new pull requests as needed.
 
+* Our continuous integration (CI) will perform certain automatic checks,
+  ensuring that your code conforms to the code format described above. It is
+  recommended to install `pre-commit <https://pre-commit.com/>`__ (e.g. using
+  your distribution's package manager, if on Linux, or using ``pip``) and enable
+  it by running ``pre-commit install`` from the top-level of any repository from
+  which you plan to create pull requests. This will perform those checks when
+  you create the commit locally, allowing you to fix any style issues before
+  creating the actual pull request.
+
 * Try to keep pull requests relatively small so that they are easier to review
   and merge.
 

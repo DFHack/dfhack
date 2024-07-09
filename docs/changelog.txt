@@ -66,6 +66,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
 
 ## Removed
 

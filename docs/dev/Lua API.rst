@@ -4861,6 +4861,10 @@ ZScreen subclasses can set the following attributes:
   of the screen other than the tool window. If the player clicks on a different
   ZScreen window, focus still transfers to that other ZScreen.
 
+* ``defocused`` (default: ``false``)
+
+  Whether the ZScreen starts in a defocused state.
+
 * ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE or not pass_mouse_clicks``)
 
   Whether to pause the game when the ZScreen is shown. If not explicitly set,

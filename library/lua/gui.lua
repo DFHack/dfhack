@@ -1007,6 +1007,7 @@ ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
     initial_pause=DEFAULT_NIL,
+    defocused=false,
     force_pause=false,
     pass_pause=true,
     pass_movement_keys=false,
@@ -1028,7 +1029,6 @@ function ZScreen:init()
     if self.initial_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
-    self.defocused = false
 end
 
 function ZScreen:dismiss()

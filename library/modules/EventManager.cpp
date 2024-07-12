@@ -500,19 +500,20 @@ static void manageJobStartedEvent(color_ostream& out) {
     unordered_set<int32_t> newStartedJobs;
     newStartedJobs.reserve(startedJobs.size());
 
-    for (df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next) {
-        if (link->item != nullptr) {
-            df::job& job = *link->item;
-            // To have a worker, there must be at least one general_ref.
+    for (const auto jobPtr : df::global::world->jobs.list) {
+        auto& job = *jobPtr;
+        // To have a worker, there must be at least one general_ref.
+        if (!startedJobs.contains(job.id)) {
             if (job.general_refs.size() > 0 && Job::getWorker(&job)) {
                 newStartedJobs.emplace(job.id);
-                if (!startedJobs.count(job.id)) {
-                    for (auto &[_,handle] : copy) {
-                        DEBUG(log,out).print("calling handler for job started event\n");
-                        run_handler(out, EventType::JOB_STARTED, handle, &job);
-                    }
+                for (auto &[_,handle] : copy) {
+                    DEBUG(log,out).print("calling handler for job started event\n");
+                    run_handler(out, EventType::JOB_STARTED, handle, &job);
                 }
             }
+        } else {
+            // Make sure it stays in startedJobs container for as long as the job is active.
+            newStartedJobs.emplace(job.id);
         }
     }
     startedJobs = std::move(newStartedJobs);
@@ -557,9 +558,11 @@ static void manageJobCompletedEvent(color_ostream& out) {
                     || (seenJob->general_refs.size() != job.general_refs.size())) {
                 seenIt->second = Job::JobUniquePtr(Job::cloneJobStruct(&job, true));
             }
-        } else {
+        } else if (job.completion_timer != -1) {
             seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
         }
+        // We still need to push back all jobs to maintain the invariant of the algorithm used with
+        // prevJobs and nowJobs. See comments below for more details.
         nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
     }
 
@@ -638,27 +641,32 @@ static void manageJobCompletedEvent(color_ostream& out) {
          * than any in prevJobs.
          */
         while (prevIt != prevJobs.end()) {
-            if (nowIt == nowJobs.end() || prevIt->id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
-                auto& prevJob = *prevIt;
-                df::job& seenJob = *seenJobs[prevJob.id];
-                // recently finished or cancelled job
-                if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
-                    for (auto& [_, handle] : copy) {
-                        DEBUG(log, out).print("calling handler for job completed event\n");
-                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+            auto& prevJob = *prevIt;
+            auto seenIt = seenJobs.find(prevJob.id);
+            if (nowIt == nowJobs.end() || prevJob.id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
+                if (seenIt != seenJobs.end()) {
+                    // recently finished or cancelled job
+                    if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
+                        df::job& seenJob = *seenIt->second;
+                        for (auto& [_, handle] : copy) {
+                            DEBUG(log, out).print("calling handler for job completed event\n");
+                            run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+                        }
                     }
+                    // note: this is only safe to erase when the job is not in nowJobs.
+                    seenJobs.erase(prevJob.id);
                 }
-                seenJobs.erase(prevJob.id);
             } else { // prevIt job ID and nowIt job ID are equal.
-                // could have just finished if it's a repeat job
-                auto& prevJob = *prevIt;
-                if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
-                        && nowIt->completion_timer == -1) {
-                    df::job& seenJob = *seenJobs[prevJob.id];
-                    // still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-                    for (auto& [_, handle] : copy) {
-                        DEBUG(log, out).print("calling handler for repeated job completed event\n");
-                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+                if (seenIt != seenJobs.end()) {
+                    // could have just finished if it's a repeat job
+                    if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
+                            && nowIt->completion_timer == -1) {
+                        df::job& seenJob = *seenIt->second;
+                        // still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                        for (auto& [_, handle] : copy) {
+                            DEBUG(log, out).print("calling handler for repeated job completed event\n");
+                            run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+                        }
                     }
                 }
                 // prevIt has caught up to nowIt.

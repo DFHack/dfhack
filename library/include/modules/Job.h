@@ -113,6 +113,14 @@ namespace DFHack
                                               int mat_index,
                                               df::item_type itype);
         DFHACK_EXPORT std::string getName(df::job *job);
+
+        struct JobDeleter {
+            void operator()(df::job *ptr) const {
+                if (ptr)
+                    Job::deleteJobStruct(ptr, true);
+            }
+        };
+        using JobUniquePtr = std::unique_ptr<df::job, JobDeleter>;
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

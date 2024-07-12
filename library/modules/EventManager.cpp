@@ -217,14 +217,8 @@ struct JobCompleteData {
     uint32_t flags_bits_repeat;
 };
 
-struct JobDeleter {
-    void operator()(df::job *ptr) const {
-        if (ptr)
-            Job::deleteJobStruct(ptr, true);
-    }
-};
-using JobUniquePtr = std::unique_ptr<df::job, JobDeleter>;
-static std::unordered_map<int32_t, JobUniquePtr> seenJobs;
+
+static std::unordered_map<int32_t, Job::JobUniquePtr> seenJobs;
 static std::vector<JobCompleteData> prevJobs;
 
 //active units
@@ -561,10 +555,10 @@ static void manageJobCompletedEvent(color_ostream& out) {
             if (seenJob->flags.whole != job.flags.whole
                     || (seenJob->items.size() != job.items.size())
                     || (seenJob->general_refs.size() != job.general_refs.size())) {
-                seenIt->second = JobUniquePtr(Job::cloneJobStruct(&job, true));
+                seenIt->second = Job::JobUniquePtr(Job::cloneJobStruct(&job, true));
             }
         } else {
-            seenJobs.emplace(job.id, JobUniquePtr(Job::cloneJobStruct(&job, true)));
+            seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
         }
         nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
     }
@@ -682,7 +676,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
      * these missed jobs.
      */
     if (seenJobs.size() > nowJobs.size() * 2) {
-        std::unordered_map<int32_t, JobUniquePtr> newMap;
+        std::unordered_map<int32_t, Job::JobUniquePtr> newMap;
         newMap.reserve(nowJobs.size());
         for (auto& data : nowJobs) {
             auto it = seenJobs.find(data.id);

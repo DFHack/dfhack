@@ -208,7 +208,7 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
 static int32_t lastJobId = -1;
 
 //job started
-static unordered_set<int32_t> startedJobs;
+static std::vector<int32_t> startedJobs;
 
 //job completed
 struct JobCompleteData {
@@ -497,23 +497,27 @@ static void manageJobStartedEvent(color_ostream& out) {
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
 
-    unordered_set<int32_t> newStartedJobs;
+    std::vector<int32_t> newStartedJobs;
     newStartedJobs.reserve(startedJobs.size());
 
     for (const auto jobPtr : df::global::world->jobs.list) {
-        auto& job = *jobPtr;
-        // To have a worker, there must be at least one general_ref.
-        if (!startedJobs.contains(job.id)) {
-            if (job.general_refs.size() > 0 && Job::getWorker(&job)) {
-                newStartedJobs.emplace(job.id);
+        // posting_index of -1 implies a worker has been assigned to a new job.
+        if (jobPtr->posting_index == -1) {
+            auto jobId = jobPtr->id;
+            newStartedJobs.push_back(jobId);
+            /*
+             * The startedJobs set peaks at the number of work-eligible citizens.
+             * This set is small enough to fit comfortably in the CPU caches,
+             * e.g., 200 workers * 4 bytes (jobId) = 800 bytes,
+             * ensuring better memory locality and thus more efficiency than a hashmap
+             * where memory access tends to be all over the place.
+             */
+            if (!std::binary_search(startedJobs.begin(), startedJobs.end(), jobId)) {
                 for (auto &[_,handle] : copy) {
                     DEBUG(log,out).print("calling handler for job started event\n");
-                    run_handler(out, EventType::JOB_STARTED, handle, &job);
+                    run_handler(out, EventType::JOB_STARTED, handle, jobPtr);
                 }
             }
-        } else {
-            // Make sure it stays in startedJobs container for as long as the job is active.
-            newStartedJobs.emplace(job.id);
         }
     }
     startedJobs = std::move(newStartedJobs);
@@ -546,12 +550,11 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
         auto seenIt = seenJobs.find(job.id);
         if (seenIt != seenJobs.end()) {
-            // No reference here, to prevent dangling reference situation.
+            /*
+             * No reference here, to prevent dangling reference situation
+             * when job is re-cloned.
+             */
             auto seenJob = seenIt->second.get();
-
-            //out.print("SEEN0: %d, %ld, %ld, %d, %ld, %d %s\n", seenJob.id, seenJob.items.size(), seenJob.job_items.elements.size(), seenJob.flags.bits.working, seenJob.general_refs.size(), getWorkerID(&seenJob), ENUM_ATTR(job_type, caption, seenJob.job_type));
-            //out.print("SEEN1: %d, %ld, %ld, %d, %ld, %d %s\n", job.id, job.items.size(), job.job_items.elements.size(), job.flags.bits.working, job.general_refs.size(), getWorkerID(&job), ENUM_ATTR(job_type, caption, job.job_type));
-
             // The key here is to strategically check the most important bits to reduce churn.
             if (seenJob->flags.whole != job.flags.whole
                     || (seenJob->items.size() != job.items.size())
@@ -559,10 +562,13 @@ static void manageJobCompletedEvent(color_ostream& out) {
                 seenIt->second = Job::JobUniquePtr(Job::cloneJobStruct(&job, true));
             }
         } else if (job.completion_timer != -1) {
+            // Restrict additions to seenJobs to jobs that we know have started.
             seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
         }
-        // We still need to push back all jobs to maintain the invariant of the algorithm used with
-        // prevJobs and nowJobs. See comments below for more details.
+        /*
+         * We still need to push back all jobs to maintain the invariant of the algorithm used with
+         * prevJobs and nowJobs. See comments below for more details.
+         */
         nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
     }
 
@@ -628,8 +634,11 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
-    // if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-    // note observation: delta 0 tick events happens normally on load, save, paused (whether by user or game)
+    /*
+     * if it happened within a tick, must have been cancelled by the user or a plugin: not completed
+     * note observation: delta 0 tick events happens normally on load, save, paused (whether by user or game).
+     * Does it make sense to check this here? This should be handled by manageEvents().
+     */
     if (tick1 >= tick0) {
         auto prevIt = prevJobs.begin();
         auto nowIt = nowJobs.begin();
@@ -653,7 +662,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
                             run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
                         }
                     }
-                    // note: this is only safe to erase when the job is not in nowJobs.
+                    // note: only safe to erase when the job is not in nowJobs.
                     seenJobs.erase(prevJob.id);
                 }
             } else { // prevIt job ID and nowIt job ID are equal.

@@ -70,15 +70,13 @@ namespace df {
  * @ingroup grp_modules
  */
 
-namespace df
-{
+namespace df {
     struct burrow;
     struct world_data;
     struct block_burrow;
 }
 
-namespace DFHack
-{
+namespace DFHack {
     /***************************************************************************
                                     T Y P E S
     ***************************************************************************/
@@ -95,24 +93,22 @@ namespace DFHack
      * A local or global map feature
      * \ingroup grp_maps
      */
-    struct t_feature
-    {
+    struct t_feature {
         df::feature_type type;
-        /// main material type - decides between stuff like bodily fluids, inorganics, vomit, amber, etc.
+        // Main material type - decides between stuff like bodily fluids, inorganics, vomit, amber, etc.
         int16_t main_material;
-        /// generally some index to a vector of material types.
+        // Generally some index to a vector of material types.
         int32_t sub_material;
-        /// placeholder
+        // Placeholder
         bool discovered;
-        /// this is NOT part of the DF feature, but an address of the feature as seen by DFhack.
+        // This is NOT part of the DF feature, but an address of the feature as seen by DFhack.
         df::feature_init * origin;
     };
 
     /**
      * \ingroup grp_maps
      */
-    enum BiomeOffset
-    {
+    enum BiomeOffset {
         eNorthWest,
         eNorth,
         eNorthEast,
@@ -165,7 +161,7 @@ namespace DFHack
     typedef uint16_t t_temperatures [16][16];
 
     /**
-     * Index a tile array by a 2D coordinate, clipping it to mod 16
+     * Index a tile array by a 2D coordinate, clipping it to mod 16.
      */
     template<class T> inline auto index_tile(T &v, df::coord2d p)
         -> typename std::add_rvalue_reference<decltype(v[0][0])>::type
@@ -181,11 +177,10 @@ namespace DFHack
     }
 
     /**
-     * Utility class representing a cuboid of df::coord
+     * Utility class representing a cuboid of df::coord.
      * \ingroup grp_maps
      */
-    class cuboid
-    {
+    class cuboid {
         public:
         // Bounds
         int16_t x_min = -1;
@@ -200,24 +195,33 @@ namespace DFHack
 
         // Construct from two corners
         DFHACK_EXPORT cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2);
-        DFHACK_EXPORT cuboid(const df::coord &p1, const df::coord &p2) { cuboid(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z); }
+        DFHACK_EXPORT cuboid(const df::coord &p1, const df::coord &p2) : cuboid(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z) {}
 
         // Construct as single tile
         DFHACK_EXPORT cuboid(int16_t x, int16_t y, int16_t z);
-        DFHACK_EXPORT cuboid(const df::coord &p) { cuboid(p.x, p.y, p.z); }
+        DFHACK_EXPORT cuboid(const df::coord &p) : cuboid(p.x, p.y, p.z) {}
+
+        // Construct from map block
+        DFHACK_EXPORT cuboid(const df::map_block *block);
 
         // Valid cuboid? True if all max >= min >= 0
         DFHACK_EXPORT bool isValid() const;
 
-        // Clear cuboid dimensions, making it invalid
+        // Clear cuboid dimensions, making it invalid.
         DFHACK_EXPORT void clear() { x_min = x_max = y_min = y_max = z_min = z_max = -1; }
+
+        // Clamp this cuboid within another cuboid. If valid input, invalid result implies no intersection.
+        DFHACK_EXPORT cuboid clamp(const cuboid &other);
+
+        // Return a new cuboid representing overlapping volume. If valid input, invalid result implies no intersection.
+        DFHACK_EXPORT cuboid clampNew(const cuboid &other) const { return cuboid(*this).clamp(other); }
 
         /// Clamp cuboid within map area and ensure max >= min. Fails if map not loaded or any bound < 0.
         /// Can optionally treat cuboid as map blocks instead of tiles.
         /// Note: A point being in map area isn't sufficient to know that a tile block is allocated there!
-        DFHACK_EXPORT bool clamp(bool block = false);
+        DFHACK_EXPORT bool clampMap(bool block = false);
 
-        // Expand cuboid to include point. Returns true if bounds changed.
+        // Expand cuboid to include point. Returns true if bounds changed. Fails if x/y/z < 0.
         DFHACK_EXPORT bool addPos(int16_t x, int16_t y, int16_t z);
         DFHACK_EXPORT bool addPos(const df::coord &pos) { return addPos(pos.x, pos.y, pos.z); }
 
@@ -226,8 +230,14 @@ namespace DFHack
         DFHACK_EXPORT bool containsPos(const df::coord &pos) const { return containsPos(pos.x, pos.y, pos.z); }
 
         /// Iterate over every point in the cuboid from top-down, N-S, then W-E. Doesn't guarantee valid map tile!
-        /// "fn" should return true to keep iterating.
-        DFHACK_EXPORT void forCoord(std::function<bool(df::coord)> fn);
+        /// "fn" should return true to keep iterating. Won't iterate if cuboid invalid.
+        DFHACK_EXPORT void forCoord(std::function<bool(df::coord)> fn) const;
+
+        /// Iterate over every non-NULL map block intersecting the tile cuboid from top-down, N-S, then W-E.
+        /// Will also supply the intersection of this cuboid and block to your "fn" for use with cuboid::forCoord.
+        /// Can optionally attempt to create map blocks if they aren't allocated.
+        /// "fn" should return true to keep iterating. Won't iterate if map not loaded or any bound < 0.
+        DFHACK_EXPORT void forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block = false) const;
     };
 
     /**
@@ -235,8 +245,7 @@ namespace DFHack
      * \ingroup grp_modules
      * \ingroup grp_maps
      */
-    namespace Maps
-    {
+    namespace Maps {
         extern DFHACK_EXPORT bool IsValid();
 
         /// Iterate over points in a cuboid from z1:z2, y1:y2, then x1:x2.
@@ -263,12 +272,12 @@ namespace DFHack
          * I'm thinking about turning that Geology stuff into a two-dimensional array
          * with static size.
          *
-         * this is the algorithm for applying matgloss:
+         * This is the algorithm for applying matgloss:
          * @code
 
         void DfMap::applyGeoMatgloss(Block * b)
         {
-            // load layer matgloss
+            // Load layer matgloss
             for(int x_b = 0; x_b < BLOCK_SIZE; x_b++)
             {
                 for(int y_b = 0; y_b < BLOCK_SIZE; y_b++)
@@ -283,31 +292,20 @@ namespace DFHack
 
          * @endcode
          */
-        extern DFHACK_EXPORT bool ReadGeology(std::vector<std::vector<int16_t> > *layer_mats,
-                                              std::vector<df::coord2d> *geoidx);
-        /**
-         * Get pointers to features of a block
-         */
+        extern DFHACK_EXPORT bool ReadGeology(std::vector<std::vector<int16_t> > *layer_mats, std::vector<df::coord2d> *geoidx);
+        // Get pointers to features of a block.
         extern DFHACK_EXPORT bool ReadFeatures(int32_t x, int32_t y, int32_t z, t_feature * local, t_feature * global);
-        extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature * local, t_feature * global); // todo: deprecate me
-        /**
-         * Get pointers to features of an already read block
-         */
+        extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature * local, t_feature * global); // TODO: deprecate me
+        // Get pointers to features of an already read block.
         extern DFHACK_EXPORT bool ReadFeatures(df::map_block * block, t_feature * local, t_feature * global);
 
 
-        /**
-         * Get a pointer to a specific global feature directly.
-        */
+        // Get a pointer to a specific global feature directly.
         DFHACK_EXPORT df::feature_init *getGlobalInitFeature(int32_t index);
-        /**
-         * Get a pointer to a specific local feature directly. rgn_coord is in the world region grid.
-         */
+        // Get a pointer to a specific local feature directly. rgn_coord is in the world region grid.
         DFHACK_EXPORT df::feature_init *getLocalInitFeature(df::coord2d rgn_coord, int32_t index);
 
-        /**
-         * Read a specific global or local feature directly
-         */
+        // Read a specific global or local feature directly.
         extern DFHACK_EXPORT bool GetGlobalFeature(t_feature &feature, int32_t index);
         //extern DFHACK_EXPORT bool GetLocalFeature(t_feature &feature, df::coord2d rgn_coord, int32_t index);
 
@@ -316,13 +314,13 @@ namespace DFHack
          * BLOCK DATA
          */
 
-        /// get size of the map in blocks
+        // Get size of the map in blocks.
         extern DFHACK_EXPORT void getSize(int32_t &x, int32_t &y, int32_t &z);
-        extern DFHACK_EXPORT void getSize(uint32_t &x, uint32_t &y, uint32_t &z); // todo: deprecate me
-        /// get size of the map in tiles
+        extern DFHACK_EXPORT void getSize(uint32_t &x, uint32_t &y, uint32_t &z); // TODO: deprecate me
+        // Get size of the map in tiles.
         extern DFHACK_EXPORT void getTileSize(int32_t &x, int32_t &y, int32_t &z);
-        extern DFHACK_EXPORT void getTileSize(uint32_t &x, uint32_t &y, uint32_t &z); // todo: deprecate me
-        /// get the position of the map on world map
+        extern DFHACK_EXPORT void getTileSize(uint32_t &x, uint32_t &y, uint32_t &z); // TODO: deprecate me
+        // Get the position of the map on world map.
         extern DFHACK_EXPORT void getPosition(int32_t &x, int32_t &y, int32_t &z);
 
         extern DFHACK_EXPORT bool isValidTilePos(int32_t x, int32_t y, int32_t z);
@@ -331,9 +329,7 @@ namespace DFHack
         extern DFHACK_EXPORT bool isTileVisible(int32_t x, int32_t y, int32_t z);
         inline bool isTileVisible(df::coord pos) { return isTileVisible(pos.x, pos.y, pos.z); }
 
-        /**
-         * Get the map block or NULL if block is not valid
-         */
+        // Get the map block or NULL if block is not valid.
         extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, int32_t blockz);
         extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t z);
         extern DFHACK_EXPORT df::map_block * ensureTileBlock (int32_t x, int32_t y, int32_t z);
@@ -352,14 +348,10 @@ namespace DFHack
         inline df::tile_designation *getTileDesignation(df::coord pos) { return getTileDesignation(pos.x, pos.y, pos.z); }
         inline df::tile_occupancy *getTileOccupancy(df::coord pos) { return getTileOccupancy(pos.x, pos.y, pos.z); }
 
-        /**
-         * Returns biome info about the specified world region.
-         */
+        // Returns biome info about the specified world region.
         DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
-        /**
-         * Returns biome world region coordinates for the given tile within given block.
-         */
+        // Returns biome world region coordinates for the given tile within given block.
         DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
 
         inline df::coord2d getTileBiomeRgn(df::coord pos) { return getBlockTileBiomeRgn(getTileBlock(pos), pos); }
@@ -369,8 +361,8 @@ namespace DFHack
 
         DFHACK_EXPORT df::flow_info *spawnFlow(df::coord pos, df::flow_type type, int mat_type = 0, int mat_index = -1, int density = 100);
 
-        /// sorts the block event vector into multiple vectors by type
-        /// mineral veins, what's under ice, blood smears and mud
+        /// Sorts the block event vector into multiple vectors by type,
+        /// mineral veins, what's under ice, blood smears, and mud.
         extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
             std::vector<df::block_square_event_mineralst *> *veins,
             std::vector<df::block_square_event_frozen_liquidst *> *ices = 0,
@@ -382,19 +374,19 @@ namespace DFHack
             std::vector<df::block_square_event_designation_priorityst *> *priorities = 0
         );
 
-        /// remove a block event from the block by address
+        // Remove a block event from the block by address.
         extern DFHACK_EXPORT bool RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event * which );
-        extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which ); // todo: deprecate me
+        extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which ); // TODO: deprecate me
 
         DFHACK_EXPORT uint16_t getWalkableGroup(df::coord pos);
         DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
         DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 
-        // Get the plant that owns the tile at the specified position
+        // Get the plant that owns the tile at the specified position.
         extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z);
         inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, pos.y, pos.z); }
 
-        // Get the biome type at the given region coordinates
+        // Get the biome type at the given region coordinates.
         DFHACK_EXPORT df::enums::biome_type::biome_type getBiomeTypeWithRef(int16_t region_x, int16_t region_y, int16_t region_ref_y);
         inline df::enums::biome_type::biome_type getBiomeType(int16_t region_x, int16_t region_y) { return getBiomeTypeWithRef(region_x, region_y, region_y); }
 
@@ -405,13 +397,11 @@ namespace DFHack
         DFHACK_EXPORT bool setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy = false);
         inline bool setTileAquifer(df::coord pos, bool heavy = false) { return setTileAquifer(pos.x, pos.y, pos.z, heavy); }
         DFHACK_EXPORT int setAreaAquifer(df::coord pos1, df::coord pos2, bool heavy = false,
-            std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block)->bool { return true; }
-        );
+            std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
         DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
         inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
         DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
-            std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block)->bool { return true; }
-        );
+            std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
     }
 }
 #endif

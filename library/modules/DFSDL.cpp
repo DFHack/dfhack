@@ -7,6 +7,10 @@
 
 #include <SDL_stdinc.h>
 
+#ifdef WIN32
+# include <regex>
+#endif
+
 namespace DFHack {
     DBG_DECLARE(core, dfsdl, DebugCategory::LINFO);
 }

@@ -54,22 +54,42 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- ``cuboid``: construct from ``df::map_block*``, ``forBlock`` iterator to access map blocks in cuboid
+- ``cuboid``: ``clamp(cuboid other)``, ``clampNew(cuboid other)`` for cuboid intersection. ``clampNew`` returns new cuboid instead of modifying.
+- ``Units::isUnitInBox``, ``getUnitsInBox``: add versions that take cuboid, filter fn parameter for ``getUnitsInBox``
+- ``Units::getProfession``: fn to return profession type accounding for fake identity
 
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks
 - Fix handling of multi-line text when interacting with the system clipboard on Windows
+- Fix ``cuboid`` ``df::coord`` constructors not initializing properly
+- ``Units::isVisible``: account for units in cages
+- ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
+- ``Units::getReadableName``: fix position of "Ghostly", use ``curse.name`` instead of iterating syndrome name effects
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
+- ``setAreaAquifer``, ``removeAreaAquifer``: make use of cuboid iters to simplify code
+- ``Units::isNaked``: now only checks equipped items (including rings, for now). Setting bool ``no_items`` to true checks empty inventory like before.
+- ``Units::isUndead``: bool ``include_vamps`` renamed to ``hiding_curse``. Fn now checks that instead of bloodsucker syndrome.
+- ``Units::isDanger``: added bool ``hiding_curse``, passed to ``isUndead`` to avoid spoilers
+- ``Units::getRaceChildName``, ``getRaceChildNameById``, ``getRaceBabyName``, ``getRaceBabyNameById``: bool ``plural`` to get plural form
+- ``Units::getProfessionName``: bool ``land_title`` to append "of Sitename" where applicable, use Prisoner/Slave and noble spouse titles (controlled by ``ignore_noble``)
+- `plant`: detect trees via branches/leaves for cuboid selection
 
 ## Documentation
+- ``Units.h``: more comments on what each fn does
+- Improve ``Units`` module Lua API docs, including some fns that were completely unlisted
 
 ## API
+- ``Units::getRaceReadableName``, ``getRaceReadableNameById``, ``getRaceNamePluralById``: add missing fns to Lua API
 
 ## Lua
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
 
 ## Removed
+- ``cuboid::clamp(bool block)``: renamed to ``cuboid::clampMap(bool block)``, name taken by ``cuboid::clamp(cuboid other)``
+- ``Units::MAX_COLORS``, ``Units::findIndexById``, ``Units::getNumUnits``, ``Units::getUnit``: not used anywhere, covered by structure defs and vector size
 
 # 50.13-r3
 

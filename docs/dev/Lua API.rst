@@ -1841,8 +1841,8 @@ Units module
 
   Modify the unit's action timers. ``amount`` may be a floating point number for multiplication.
   ``action_type`` is a ``df.unit_action_type``. ``group_type`` is a ``df.unit_action_type_group``
-  (representing multiple action types. See:
-  `structure definition <https://github.com/DFHack/df-structures/blob/master/df.units.xml>`_). Examples:
+  (representing multiple action types, see `unit_action_type definition
+  <https://github.com/DFHack/df-structures/blob/master/df.units.xml>`_ for grouping). Examples:
   ``dfhack.units.subtractActionTimers(unit, -1, df.unit_action_type.StandUp)`` will add 1 tick to the
   unit's current action for standing up (if it's doing that).
   ``dfhack.units.multiplyGroupActionTimers(unit, 2.0, df.unit_action_type_group.All)`` will double

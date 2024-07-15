@@ -1381,21 +1381,17 @@ Job module
 Units module
 ------------
 
-* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
-
-  The unit is within the specified coordinates.
-
 * ``dfhack.units.isActive(unit)``
 
-  The unit is active (alive and on the map).
+  The unit is active (non-dead and on the map).
 
 * ``dfhack.units.isVisible(unit)``
 
-  The unit is visible on the map.
+  The unit is on a visible map tile. Doesn't account for sneaking.
 
 * ``dfhack.units.isCitizen(unit[,include_insane])``
 
-  The unit is an alive sane citizen of the fortress; wraps the
+  The unit is a non-dead sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction,
   with an additional sanity check. You can identify citizens,
   regardless of their sanity, by passing ``true`` as the optional
@@ -1426,7 +1422,7 @@ Units module
 
 * ``dfhack.units.isAlive(unit)``
 
-  The unit isn't dead or undead.
+  The unit isn't dead or undead. Naturally inorganic is okay.
 
 * ``dfhack.units.isDead(unit)``
 
@@ -1439,12 +1435,13 @@ Units module
 
 * ``dfhack.units.isSane(unit)``
 
-  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+  The unit is normally capable of rational action. I.e., not dead, insane, zombie,
+  nor crazed (unless active werebeast).
 
 * ``dfhack.units.isCrazed``
 
-  The unit is berserk and will attack all other creatures except members of its own species
-  that are also crazed. (can be modified by curses)
+  The unit is berserk and will attack all other creatures except crazed members of
+  its own species. (Can be modified by curses.)
 
 * ``dfhack.units.isGhost(unit)``
 
@@ -1458,21 +1455,26 @@ Units module
 
   The unit is hiding a curse.
 
-
 * ``dfhack.units.isMale(unit)``
 * ``dfhack.units.isFemale(unit)``
 * ``dfhack.units.isBaby(unit)``
 * ``dfhack.units.isChild(unit)``
 * ``dfhack.units.isAdult(unit)``
-* ``dfhack.units.isGay(unit)``
-* ``dfhack.units.isNaked(unit)``
 
   Simple unit property checks
 
+* ``dfhack.units.isGay(unit)``
+
+  Not willing to breed. Also includes any creature caste without a gender.
+
+* ``dfhack.units.isNaked(unit[,no_items])``
+
+  Not wearing anything (including rings, etc.). Can optionally check for
+  empty inventory.
+
 * ``dfhack.units.isVisiting(unit)``
 
-  The unit is visiting. eg. Merchants, Diplomatics, travelers.
-
+  The unit is visiting. E.g., merchants, diplomats, and travelers.
 
 * ``dfhack.units.isTrainableHunting(unit)``
 
@@ -1484,7 +1486,7 @@ Units module
 
 * ``dfhack.units.isTrained(unit)``
 
-  The unit is trained.
+  The unit is trained for hunting or war, or is non-wild and non-domesticated.
 
 * ``dfhack.units.isHunter(unit)``
 
@@ -1518,23 +1520,25 @@ Units module
 
 * ``dfhack.units.isMischievous(unit)``
 
-  The unit is mischievous.
+  The unit is mischievous and will randomly pull levers, etc.
 
 * ``dfhack.units.isAvailableForAdoption(unit)``
 
   The unit is available for adoption.
 
 * ``dfhack.units.isPet(unit)``
-* ``dfhack.units.isOpposedToLife(unit)``
+
+  Unit has pet owner.
+
 * ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
 
   Simple checks of caste attributes that can be modified by curses.
 
-
 * ``dfhack.units.isDwarf(unit)``
 
-  The unit is of the correct race for the fortress.
+  The unit is of the same race for the fortress. (Includes active werebeasts.)
 
 * ``dfhack.units.isAnimal(unit)``
 * ``dfhack.units.isMerchant(unit)``
@@ -1544,40 +1548,39 @@ Units module
 
 * ``dfhack.units.isVisitor(unit)``
 
-  The unit is a regular visitor with no special purpose (eg. merchant).
+  The unit is a regular visitor with no special purpose (e.g., merchant).
 
 * ``dfhack.units.isInvader(unit)``
 
   The unit is an active invader or marauder.
 
-* ``dfhack.units.isUndead(unit[,include_vamps])``
+* ``dfhack.units.isUndead(unit[,hiding_curse])``
 
   The unit is undead. Pass ``true`` as the optional second parameter to
-  count vampires as undead.
+  count undead hiding their curse (i.e., vampires).
 
 * ``dfhack.units.isNightCreature(unit)``
 * ``dfhack.units.isSemiMegabeast(unit)``
-* ``dfhack.units.isForgottenBeast(unit)``
 * ``dfhack.units.isMegabeast(unit)``
 * ``dfhack.units.isTitan(unit)``
+* ``dfhack.units.isForgottenBeast(unit)``
 * ``dfhack.units.isDemon(unit)``
 
   Simple enemy type checks.
 
-* ``dfhack.units.isDanger(unit)``
+* ``dfhack.units.isDanger(unit[,hiding_curse])``
 
-  The unit is dangerous, and probably hostile. This includes
-  Great Dangers (see below), semi-megabeasts, night creatures,
-  undead, invaders, agitated wildlife, and crazed units.
+  The unit is dangerous and probably hostile. This includes undead (optionally those hiding
+  curse), night creatures, semi-megabeasts, invaders, agitated wildlife, crazed units, and
+  Great Dangers (see below).
 
 * ``dfhack.units.isGreatDanger(unit)``
 
-  The unit is of Great Danger. This include demons, titans, forgotten
-  beasts, and megabeasts.
+  The unit is of Great Danger. This includes megabeasts, titans, forgotten beasts, and demons.
 
-* ``dfhack.units.getPosition(unit)``
+* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
 
-  Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
+  Returns true if the unit is within a box defined by the specified coordinates.
 
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
@@ -1599,49 +1602,40 @@ Units module
 
   Returns a list of units (possibly empty) assigned to the given noble role.
 
-* ``dfhack.units.getCitizens([exclude_residents, [include_insane]])``
+* ``dfhack.units.getCitizens([exclude_residents, include_insane])``
 
-  Returns a list of all living, sane, citizens and residents that are currently
-  on the  map. Pass ``exclude_residents`` and ``include_insane`` both default
-  to ``false`` but can be overridden.
+  Returns a list of all living, sane citizens and residents that are currently
+  on the  map. Can ``exclude_residents`` or ``include_insane`` (both default
+  to ``false``).
+
+* ``dfhack.units.getPosition(unit)``
+
+  Returns true *x,y,z* of the unit, or *nil* if invalid. May not be equal to
+  unit.pos if caged.
 
 * ``dfhack.units.teleport(unit, pos)``
 
   Moves the specified unit and any riders to the target coordinates, setting
   tile occupancy flags appropriately. Returns true if successful.
 
-* ``dfhack.units.assignTrainer(unit[, trainer_id])``
-* ``dfhack.units.unassignTrainer(unit)``
-
-  Assignes (or unassigns) a trainer for the specified trainable unit. The
-  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
-  indicating whether the operation was successful.
-
 * ``dfhack.units.getGeneralRef(unit, type)``
 
-  Searches for a general_ref with the given type.
+  Searches for a ``general_ref`` with the given type.
 
 * ``dfhack.units.getSpecificRef(unit, type)``
 
-  Searches for a specific_ref with the given type.
+  Searches for a ``specific_ref`` with the given type.
 
 * ``dfhack.units.getContainer(unit)``
 
   Returns the container (cage) item or *nil*.
 
-* ``dfhack.units.setNickname(unit,nick)``
-
-  Sets the unit's nickname properly.
-
 * ``dfhack.units.getOuterContainerRef(unit)``
 
-  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object that contains the unit (or one of the unit itself.)
-  The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
+  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object
+  that contains the unit (or one of the unit itself). The ``type`` field contains a
+  ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
   The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
-
-* ``dfhack.units.getVisibleName(unit)``
-
-  Returns the language_name object visible in game, accounting for false identities.
 
 * ``dfhack.units.getIdentity(unit)``
 
@@ -1651,10 +1645,27 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.setNickname(unit, nick)``
+
+  Sets the unit's nickname properly.
+
+* ``dfhack.units.getVisibleName(unit)``
+
+  Returns the ``language_name`` object visible in game, accounting for false identities.
+
+* ``dfhack.units.assignTrainer(unit[,trainer_id])``
+* ``dfhack.units.unassignTrainer(unit)``
+
+  Assignes (or unassigns) a trainer for the specified trainable unit. The
+  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
+  indicating whether the operation was successful.
+
 * ``dfhack.units.makeown(unit)``
 
   Makes the selected unit a member of the current fortress and site.
-  Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+  Note that this operation may silently fail for any of several reasons,
+  so it may be prudent to check if the operation has succeeded by using
+  ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
 
 * ``dfhack.units.create(race, caste)``
 
@@ -1679,10 +1690,60 @@ Units module
 
   Finds (or creates if requested) a misc trait object with the given id.
 
+* ``dfhack.units.getRaceNameById(race_id)``
+* ``dfhack.units.getRaceName(unit)``
+
+  Get raw token name (e.g., "DWARF").
+
+* ``dfhack.units.getRaceReadableNameById(race_id)``
+* ``dfhack.units.getRaceReadableName(unit)``
+* ``dfhack.units.getRaceNamePluralById(race_id)``
+* ``dfhack.units.getRaceNamePlural(unit)``
+
+  Get human-readable name (e.g., "dwarf" or "dwarves").
+
+* ``dfhack.units.getRaceBabyNameById(race_id[,plural])``
+* ``dfhack.units.getRaceBabyName(unit[,plural])``
+* ``dfhack.units.getRaceChildNameById(race_id[,plural])``
+* ``dfhack.units.getRaceChildName(unit[,plural])``
+
+  Get human-readable baby or child name (e.g., "dwarven baby" or "dwarven child").
+
+* ``dfhack.units.getReadableName(unit)``
+
+  Returns a string that includes the language name of the unit (if any), the
+  race of the unit (if different from fort), whether it is trained for war or
+  hunting, any syndrome-given descriptions (such as "necromancer"), the training
+  level (if tame), and profession or noble role.
+
+* ``dfhack.units.getPhysicalDescription(unit)``
+
+  Should return physical description of the unit, but may not work for a given
+  DFHack build.
+
 * ``dfhack.units.getAge(unit[,true_age])``
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getKillCount(unit)``
+
+  Returns the number of units the unit has killed.
+
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account
+  skill rust, exhaustion, pain, etc.
+
+* ``dfhack.units.getExperience(unit, skill[, total])``
+
+  Returns the experience value for the given skill. If ``total`` is true,
+  adds experience implied by the current skill level.
 
 * ``dfhack.units.isValidLabor(unit, unit_labor)``
 
@@ -1695,22 +1756,10 @@ Units module
   in the in-game labor management screens (including DFHack's `labor manipulator
   screen <manipulator>`).
 
-* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
-
-  Retrieves the nominal skill level for the given unit. If ``use_rust``
-  is *true*, subtracts the rust penalty.
-
-* ``dfhack.units.getEffectiveSkill(unit, skill)``
-
-  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
-
-* ``dfhack.units.getExperience(unit, skill[, total])``
-
-  Returns the experience value for the given skill. If ``total`` is true, adds experience implied by the current rating.
-
 * ``dfhack.units.computeMovementSpeed(unit)``
 
-  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
+  Computes number of frames * 100 it takes the unit to move in its current state of
+  mind and body. **Currently broken due to move speed changes, will always return 0!**
 
 * ``dfhack.units.computeSlowdownFactor(unit)``
 
@@ -1722,14 +1771,20 @@ Units module
   Returns a list of tables describing noble position assignments, or *nil*.
   Every table has fields ``entity``, ``assignment`` and ``position``.
 
-* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural])``
+* ``dfhack.units.getProfession(unit)``
 
-  Retrieves the profession name using custom profession, noble assignments
-  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+  Returns unit's profession ID (``df.profession``), accounting for false identity.
+
+* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural,land_title])``
+
+  Retrieves the profession name using custom profession, noble assignments,
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions
+  ("Prisoner", "Slave", and noble spouse titles included). The ``land_title``
+  boolean causes ``of Sitename`` to be appended when applicable.
 
 * ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
 
-  Retrieves the profession name for the given race/caste using raws.
+  Retrieves the profession name for the given race and caste using raws.
 
 * ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
 
@@ -1738,38 +1793,31 @@ Units module
 
 * ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
 
-  Retrieves the profession color for the given race/caste using raws.
+  Retrieves the profession color for the given race and caste using raws.
 
 * ``dfhack.units.getGoalType(unit[,goalIndex])``
 
   Retrieves the goal type of the dream that the given unit has.
   By default the goal of the first dream is returned.
-  The goalIndex parameter may be used to retrieve additional dream goals.
+  The ``goalIndex`` parameter may be used to retrieve additional dream goals.
   Currently only one dream per unit is supported by Dwarf Fortress.
   Support for multiple dreams may be added in future versions of Dwarf Fortress.
 
 * ``dfhack.units.getGoalName(unit[,goalIndex])``
 
   Retrieves the short name describing the goal of the dream that the given unit has.
-  By default the goal of the first dream is returned.
-  The goalIndex parameter may be used to retrieve additional dream goals.
-  Currently only one dream per unit is supported by Dwarf Fortress.
-  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+  By default the goal of the first dream is returned (see above).
 
 * ``dfhack.units.isGoalAchieved(unit[,goalIndex])``
 
   Checks if given unit has achieved the goal of the dream.
-  By default the status of the goal of the first dream is returned.
-  The goalIndex parameter may be used to check additional dream goals.
-  Currently only one dream per unit is supported by Dwarf Fortress.
-  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+  By default the status of the goal of the first dream is returned (see above).
 
-* ``dfhack.units.getReadableName(unit)``
+* ``dfhack.units.getMainSocialActivity(unit)``
+* ``dfhack.units.getMainSocialEvent(unit)``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit, whether it is trained for war or hunting, any
-  syndrome-given descriptions (such as "necromancer"), and the training level
-  (if tame).
+  Return the ``df.activity_entry`` or ``df.activity_event`` representing the unit's
+  current social activity.
 
 * ``dfhack.units.getStressCategory(unit)``
 
@@ -1783,6 +1831,22 @@ Units module
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
+
+* ``dfhack.units.subtractActionTimers(unit, amount, action_type)``
+* ``dfhack.units.subtractGroupActionTimers(unit, amount, group_type)``
+* ``dfhack.units.multiplyActionTimers(unit, amount, action_type)``
+* ``dfhack.units.multiplyGroupActionTimers(unit, amount, group_type)``
+* ``dfhack.units.setActionTimers(unit, amount, action_type)``
+* ``dfhack.units.setGroupActionTimers(unit, amount, group_type)``
+
+  Modify the unit's action timers. ``amount`` may be a floating point number for multiplication.
+  ``action_type`` is a ``df.unit_action_type``. ``group_type`` is a ``df.unit_action_type_group``
+  (representing multiple action types. See:
+  `structure definition <https://github.com/DFHack/df-structures/blob/master/df.units.xml>`_). Examples:
+  ``dfhack.units.subtractActionTimers(unit, -1, df.unit_action_type.StandUp)`` will add 1 tick to the
+  unit's current action for standing up (if it's doing that).
+  ``dfhack.units.multiplyGroupActionTimers(unit, 2.0, df.unit_action_type_group.All)`` will double
+  all the unit's current action timers.
 
 Military module
 ~~~~~~~~~~~~~~~~~~~

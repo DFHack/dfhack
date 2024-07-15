@@ -46,10 +46,10 @@ end
 local MOUSE_KEYS = {
     _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
     _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
-    _MOUSE_M = true,
-    _MOUSE_L_DOWN = true,
-    _MOUSE_R_DOWN = true,
-    _MOUSE_M_DOWN = true,
+    _MOUSE_M = curry(set_and_get_undo, 'mouse_mbut'),
+    _MOUSE_L_DOWN = curry(set_and_get_undo, 'mouse_lbut_down'),
+    _MOUSE_R_DOWN = curry(set_and_get_undo, 'mouse_rbut_down'),
+    _MOUSE_M_DOWN = curry(set_and_get_undo, 'mouse_mbut_down'),
 }
 
 local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)

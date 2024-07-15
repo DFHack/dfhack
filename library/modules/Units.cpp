@@ -1278,7 +1278,7 @@ bool Units::isValidLabor(df::unit *unit, df::unit_labor labor) {
         return false;
 
     auto entity = df::historical_entity::find(unit->civ_id);
-    return !entity || !entity->entity_raw || entity->entity_raw->jobs.permitted_labor[labor]
+    return !entity || !entity->entity_raw || entity->entity_raw->jobs.permitted_labor[labor];
 }
 
 bool Units::setLaborValidity(df::unit_labor labor, bool isValid) {

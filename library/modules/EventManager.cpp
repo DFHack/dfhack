@@ -523,23 +523,12 @@ static void manageJobStartedEvent(color_ostream& out) {
     startedJobs = std::move(newStartedJobs);
 }
 
-//helper function for manageJobCompletedEvent
-#if 0
-static int32_t getWorkerID(df::job* job) {
-    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
-    return ref ? ref->getID() : -1;
-}
-#endif
-
 /*
 TODO: consider checking item creation / experience gain just in case
 */
 static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-
-    int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
-    int32_t tick1 = df::global::world->frame_counter;
 
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     std::vector<JobCompleteData> nowJobs;
@@ -566,11 +555,39 @@ static void manageJobCompletedEvent(color_ostream& out) {
             seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
         }
         /*
-         * We still need to push back all jobs to maintain the invariant of the algorithm used with
-         * prevJobs and nowJobs. See comments below for more details.
+         * We still need to push back all jobs to maintain the invariant of the
+         * algorithm used with prevJobs and nowJobs.
+         *
+         * Consider a list of job IDs from the job list, including those
+         * that haven't started:
+         * 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+         *
+         * We push back all jobs, including those that haven't started or have
+         * been assigned yet. Jobs that haven't started or finished have a
+         * completion_timer of -1.
+         *
+         * If we don't push back all jobs to the vector, we could encounter
+         * this situation:
+         *
+         * prevJob IDs (jobs with completion_timer != -1):
+         * 2, 4, 8, 10
+         *
+         * nowJobs IDs (completion_timer != -1 or had completion_timer != -1):
+         * 1, 2, 4, 8, 10
+         *
+         * In this case, Job with ID 1 has started after jobs 2, 4, 8, and 10.
+         * But, nowJobs is not greater than or equal to prevJobs because the ID
+         * 1 in nowJobs is less than the smallest ID in prevJobs,
+         * which breaks the algorithm.
          */
         nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
     }
+
+    // Do we want this check?
+    //assert(std::is_sorted(nowJobs.begin(), nowJobs.end()));
+
+    // uncomment if bay12 changes things to make job IDs not be in ascending order.
+    //std::ranges::sort(nowJobs, {}, &JobCompleteData::id);
 
 #if 0
     //testing info on job initiation/completion
@@ -634,55 +651,50 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
+    auto prevIt = prevJobs.begin();
+    auto nowIt = nowJobs.begin();
     /*
-     * if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-     * note observation: delta 0 tick events happens normally on load, save, paused (whether by user or game).
-     * Does it make sense to check this here? This should be handled by manageEvents().
+     * Iterate through two ordered sets, prevJobs and nowJobs, where job IDs in nowJobs are invariably
+     * greater than or equal to job IDs in prevJobs. The algorithm maintains the invariant that for each
+     * iteration nowIt is within valid range (not equal to nowJobs.end()), and prevIt->id is less than
+     * or equal to nowIt->id. Entries in nowJobs that are not found in prevJobs have IDs greater
+     * than any in prevJobs.
      */
-    if (tick1 >= tick0) {
-        auto prevIt = prevJobs.begin();
-        auto nowIt = nowJobs.begin();
-        /*
-         * Iterate through two ordered sets, prevJobs and nowJobs, where job IDs in nowJobs are invariably
-         * greater than or equal to job IDs in prevJobs. The algorithm maintains the invariant that for each
-         * iteration nowIt is within valid range (not equal to nowJobs.end()), and prevIt->id is less than
-         * or equal to nowIt->id. Entries in nowJobs that are not found in prevJobs have IDs greater
-         * than any in prevJobs.
-         */
-        while (prevIt != prevJobs.end()) {
-            auto& prevJob = *prevIt;
-            auto seenIt = seenJobs.find(prevJob.id);
-            if (nowIt == nowJobs.end() || prevJob.id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
+    while (prevIt != prevJobs.end()) {
+        auto& prevJob = *prevIt;
+        if (nowIt == nowJobs.end() || prevJob.id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
+            // recently finished or cancelled job
+            if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
+                // It should be in seenJobs.
+                auto seenIt = seenJobs.find(prevJob.id);
                 if (seenIt != seenJobs.end()) {
-                    // recently finished or cancelled job
-                    if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
-                        df::job& seenJob = *seenIt->second;
-                        for (auto& [_, handle] : copy) {
-                            DEBUG(log, out).print("calling handler for job completed event\n");
-                            run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
-                        }
+                    df::job& seenJob = *seenIt->second;
+                    for (auto& [_, handle] : copy) {
+                        DEBUG(log, out).print("calling handler for job completed event\n");
+                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
                     }
-                    // note: only safe to erase when the job is not in nowJobs.
                     seenJobs.erase(prevJob.id);
                 }
-            } else { // prevIt job ID and nowIt job ID are equal.
+            }
+        } else { // prevIt job ID and nowIt job ID are equal.
+            // could have just finished if it's a repeat job
+            if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
+                    && nowIt->completion_timer == -1) {
+                // It should be in seenJobs.
+                auto seenIt = seenJobs.find(prevJob.id);
                 if (seenIt != seenJobs.end()) {
-                    // could have just finished if it's a repeat job
-                    if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
-                            && nowIt->completion_timer == -1) {
-                        df::job& seenJob = *seenIt->second;
-                        // still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-                        for (auto& [_, handle] : copy) {
-                            DEBUG(log, out).print("calling handler for repeated job completed event\n");
-                            run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
-                        }
+                    df::job& seenJob = *seenIt->second;
+                    // still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                    for (auto& [_, handle] : copy) {
+                        DEBUG(log, out).print("calling handler for repeated job completed event\n");
+                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
                     }
                 }
-                // prevIt has caught up to nowIt.
-                ++nowIt;
             }
-            ++prevIt;
+            // prevIt has caught up to nowIt.
+            ++nowIt;
         }
+        ++prevIt;
     }
 
     /*

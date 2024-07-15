@@ -169,15 +169,19 @@ int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const c
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
 }
 
-DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
-    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
-        return "";
-    char *text = g_SDL_GetClipboardText();
-    // convert tabs to spaces so they don't get converted to '?'
-    for (char *c = text; *c; ++c) {
+// convert tabs to spaces so they don't get converted to '?'
+static char * tabs_to_spaces(char *str) {
+    for (char *c = str; *c; ++c) {
         if (*c == '\t')
             *c = ' ';
     }
+    return str;
+}
+
+DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
+    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
+        return "";
+    char *text = tabs_to_spaces(g_SDL_GetClipboardText());
     string textcp437 = UTF2DF(text);
     DFHack::DFSDL::DFSDL_free(text);
     return textcp437;
@@ -188,14 +192,14 @@ DFHACK_EXPORT bool DFHack::getClipboardTextCp437Multiline(vector<string> * lines
 
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return false;
-    char *text = g_SDL_GetClipboardText();
-    // convert tabs to spaces so they don't get converted to '?'
-    for (char *c = text; *c; ++c) {
-        if (*c == '\t')
-            *c = ' ';
-    }
+    char *text = tabs_to_spaces(g_SDL_GetClipboardText());
+    string textstr = text;
+#ifdef WIN32
+    static const std::regex CRLF("\r\n");
+    textstr = std::regex_replace(textstr, CRLF, "\n");
+#endif
     vector<string> utf8_lines;
-    split_string(&utf8_lines, text, "\n");
+    split_string(&utf8_lines, textstr, "\n");
     DFHack::DFSDL::DFSDL_free(text);
 
     for (auto utf8_line : utf8_lines)
@@ -218,8 +222,13 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
     std::ostringstream str;
     for (size_t idx = 0; idx < lines.size(); ++idx) {
         str << DF2UTF(lines[idx]);
-        if (idx < lines.size() - 1)
+        if (idx < lines.size() - 1) {
+#ifdef WIN32
+            str << "\r\n";
+#else
             str << "\n";
+#endif
+        }
     }
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
 }

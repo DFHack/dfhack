@@ -56,10 +56,11 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `changelayer`: fix faulty logic for looking up geological regions
-- `tweak`: reduce lag impact from ``adamantine-cloth-wear``
+- `changelayer`: fix incorrect lookup of geological region in multi-region embarks
+- Fix handling of multi-line text when interacting with the system clipboard on Windows
 
 ## Misc Improvements
+- `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
 
 ## Documentation
 

@@ -696,9 +696,8 @@ public:
         Reason reason;
 
 
-        for (auto job : df::global::world->jobs.list) {
-            if (!isConstructionJob(job)) continue;
-
+        for (auto job : df::global::world->jobs.list | std::views::filter(isConstructionJob))
+        {
             if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
                 unsuspend(job); // suspended for no reason
                 ++num_unsuspend;

@@ -238,43 +238,7 @@ namespace DFHack
     template <typename L, typename I>
     struct DfLinkedList
     {
-        class iterator;
         class const_iterator;
-
-        class proxy
-        {
-            L *cur;
-            friend struct DfLinkedList<L, I>;
-            friend class iterator;
-            proxy(L *cur) : cur(cur)
-            {
-                CHECK_NULL_POINTER(cur);
-            }
-        public:
-            operator I *const &() const
-            {
-                return cur->item;
-            }
-            I *operator->() const
-            {
-                return cur->item;
-            }
-            proxy & operator=(I *const & item)
-            {
-                if (item)
-                {
-                    CHECK_INVALID_ARGUMENT(item->dfhack_get_list_link() == nullptr);
-                    item->dfhack_set_list_link(cur);
-                }
-                if (cur->item)
-                {
-                    cur->item->dfhack_set_list_link(nullptr);
-                }
-                cur->item = item;
-
-                return *this;
-            }
-        };
 
         class iterator
         {
@@ -284,10 +248,10 @@ namespace DFHack
             friend class const_iterator;
             iterator(L *root, L *cur) : root(root), cur(cur) {}
         public:
-            using difference_type = void;
+            using difference_type = std::ptrdiff_t;
             using value_type = I *;
             using pointer = I **;
-            using reference = proxy;
+            using reference = I *&;
             using iterator_category = std::bidirectional_iterator_tag;
 
             iterator() : root(nullptr), cur(nullptr) {}
@@ -339,15 +303,15 @@ namespace DFHack
                 return *this;
             }
 
-            proxy operator*()
+            I *& operator*()
             {
                 CHECK_NULL_POINTER(root);
                 CHECK_NULL_POINTER(cur);
 
-                return proxy(cur);
+                return cur->item;
             }
 
-            I *const & operator*() const
+            I *& operator*() const
             {
                 CHECK_NULL_POINTER(root);
                 CHECK_NULL_POINTER(cur);
@@ -373,12 +337,13 @@ namespace DFHack
             iterator iter;
             friend struct DfLinkedList<L, I>;
         public:
-            using difference_type = void;
+            using difference_type = std::ptrdiff_t;
             using value_type = I *;
             using pointer = I *const *;
             using reference = I *const &;
             using iterator_category = std::bidirectional_iterator_tag;
 
+            const_iterator() : iter(nullptr) {}
             const_iterator(const iterator & iter) : iter(iter) {}
             const_iterator(const const_iterator & other) : iter(other.iter) {}
 
@@ -424,7 +389,7 @@ namespace DFHack
         };
 
         using value_type = I *;
-        using reference_type = proxy;
+        using reference_type = I *&;
         using difference_type = void;
         using size_type = size_t;
 
@@ -465,6 +430,11 @@ namespace DFHack
             return end();
         }
 
+        /**
+         * This erases the cell at the location of the iterator, but not the item pointed to by that cell.
+         * When using this with lists that own the items being pointed to (e.g. world->jobs.list), it is the
+         * responsibility of the caller to avoid memory leaks.
+         */
         iterator erase(const_iterator pos)
         {
             auto root = static_cast<L *>(this);
@@ -488,13 +458,14 @@ namespace DFHack
                 link->next->prev = link->prev;
             }
 
-            proxy p(link);
-            p = nullptr;
+            if (link->item)
+                link->item->dfhack_set_list_link(nullptr);
 
             delete link;
 
             return iterator(root, next);
         }
+
         iterator insert(const_iterator pos, I *const & item)
         {
             auto root = static_cast<L *>(this);
@@ -526,11 +497,12 @@ namespace DFHack
             {
                 root->next = newlink;
             }
-            newlink->item = nullptr;
-            proxy p(newlink);
-            p = item;
+            newlink->item = item;
+            item->dfhack_set_list_link(newlink);
+
             return iterator(root, newlink);
         }
+
         iterator insert_after(const_iterator pos, I *const & item)
         {
             auto root = static_cast<L *>(this);
@@ -547,11 +519,11 @@ namespace DFHack
             {
                 next->prev = newlink;
             }
-            newlink->item = nullptr;
-            proxy p(newlink);
-            p= item;
+            newlink->item = item;
+            item->dfhack_set_list_link(newlink);
             return iterator(root, newlink);
         }
+
         void push_front(I *const & item)
         {
             auto root = static_cast<L *>(this);
@@ -562,11 +534,13 @@ namespace DFHack
                 root->next->prev = link;
                 link->next = root->next;
             }
-            link->item = nullptr;
-            proxy p(link);
-            p = item;
+            link->item = item;
+            item->dfhack_set_list_link(link);
             root->next = link;
         }
+
+        static_assert(std::bidirectional_iterator<iterator>);
+        static_assert(std::bidirectional_iterator<const_iterator>);
     };
 
     template<typename T, typename O, typename I>

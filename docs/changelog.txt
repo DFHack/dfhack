@@ -89,7 +89,7 @@ Template for new versions:
 
 ## Removed
 - ``cuboid::clamp(bool block)``: renamed to ``cuboid::clampMap(bool block)``, name taken by ``cuboid::clamp(cuboid other)``
-- ``Units::MAX_COLORS``, ``Units::findIndexById``, ``Units::getNumUnits``, ``Units::getUnit``: not used anywhere, covered by structure defs and vector size
+- ``Units::MAX_COLORS``, ``Units::findIndexById``, ``Units::getNumUnits``, ``Units::getUnit``: not used anywhere; covered by ``DFHack::COLOR_MAX`` and various vector fns
 
 # 50.13-r3
 

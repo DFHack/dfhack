@@ -57,7 +57,8 @@ Template for new versions:
 - ``cuboid``: construct from ``df::map_block*``, ``forBlock`` iterator to access map blocks in cuboid
 - ``cuboid``: ``clamp(cuboid other)``, ``clampNew(cuboid other)`` for cuboid intersection. ``clampNew`` returns new cuboid instead of modifying.
 - ``Units::isUnitInBox``, ``getUnitsInBox``: add versions that take cuboid, filter fn parameter for ``getUnitsInBox``
-- ``Units::getProfession``: fn to return profession type accounding for fake identity
+- ``Units::getProfession``: get a unit's profession type accounting for fake identity
+- ``Units::getCasteRaw``: get a caste_raw from a unit or race and caste
 
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks

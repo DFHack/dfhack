@@ -33,6 +33,7 @@ distribution.
 #include "modules/Items.h"
 #include "modules/Maps.h"
 
+#include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
 #include "df/goal_type.h"
 #include "df/job_skill.h"
@@ -238,6 +239,10 @@ namespace DFHack {
         /// Create new unit and add to all units vector (but not active). No HF, nemesis, pos,
         /// labors, or group associations. Will have race, caste, name, soul, body, and mind.
         DFHACK_EXPORT df::unit *create(int16_t race, int16_t caste);
+
+        // Get caste_raw or NULL
+        DFHACK_EXPORT df::caste_raw *getCasteRaw(int race, int caste);
+        DFHACK_EXPORT df::caste_raw *getCasteRaw(df::unit *unit);
 
         // Attribute values accounting for curses.
         DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);

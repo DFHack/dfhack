@@ -2216,6 +2216,19 @@ static int units_getUnitsByNobleRole(lua_State *L) {
     return 1;
 }
 
+
+static int units_getCasteRaw(lua_State *state) {
+    df::caste_raw *craw = NULL;
+
+    if (lua_gettop(state) <= 1)
+        craw = Units::getCasteRaw(Lua::CheckDFObject<df::unit>(state, 1));
+    else // Use race, caste
+        craw = Units::getCasteRaw(lua_tointeger(state, 1), lua_tointeger(state, 2));
+
+    Lua::PushDFObject(state, craw);
+    return 1;
+}
+
 static int units_getStressCutoffs(lua_State *L)
 {
     lua_newtable(L);
@@ -2242,6 +2255,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsInBox", units_getUnitsInBox },
     { "getCitizens", units_getCitizens },
     { "getUnitsByNobleRole", units_getUnitsByNobleRole},
+    { "getCasteRaw", units_getCasteRaw},
     { "getStressCutoffs", units_getStressCutoffs },
     { "assignTrainer", units_assignTrainer },
     { NULL, NULL }

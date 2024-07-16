@@ -1676,6 +1676,11 @@ Units module
   caste, name, soul, and initialized body and mind (including personality). The
   unit must be configured further as needed and put into play by the client.
 
+* ``dfhack.units.getCasteRaw(unit)``
+* ``dfhack.units.getCasteRaw(race, caste)``
+
+  Returns the relevant ``caste_raw`` or *nil*.
+
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 

@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks
 - Fix handling of multi-line text when interacting with the system clipboard on Windows
+- `zone`: fix alignment of animal actions overlay panel when the animal has a custom portrait (like named dragons)
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak

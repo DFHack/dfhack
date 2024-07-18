@@ -71,6 +71,7 @@ Template for new versions:
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
 
 ## Removed
+- The ``PRELOAD_LIB`` environment variable has been renamed to ``DF_PRELOAD`` to match the naming scheme of other environment variables used by the ``dfhack`` startup script. If you are preloading libraries (e.g. for performance testing) please define ``DF_PRELOAD`` instead of ``PRELOAD_LIB`` or ``LD_PRELOAD``
 
 # 50.13-r3
 

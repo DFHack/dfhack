@@ -218,9 +218,7 @@ bool Units::isOwnGroup(df::unit* unit)
     auto histfig = df::historical_figure::find(unit->hist_figure_id);
     if (!histfig)
         return false;
-    for (size_t i = 0; i < histfig->entity_links.size(); i++)
-    {
-        auto link = histfig->entity_links[i];
+    for (auto link : histfig->entity_links) {
         if (link->entity_id == plotinfo->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
             return true;
     }

@@ -66,9 +66,11 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
 
 ## Lua
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
+- ``dfhack.units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
 
 ## Removed
 

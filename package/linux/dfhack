@@ -44,7 +44,7 @@ if which objdump > /dev/null; then
   LIBSAN="$(objdump -p $DFHACK_LIB | sed -n 's/^.*NEEDED.*\(lib[a-z]san[a-z.0-9]*\).*$/\1/p' | head -n1):"
   if [ ":" != "${LIBSAN}" ]; then
     DF_PRELOAD="${DF_PRELOAD:+$DF_PRELOAD:}${LIBSAN}"
-    echo "preloading address sanitizer: ${LIBSAN}"
+    echo "preloading sanitizer: ${LIBSAN}"
   fi
 fi
 

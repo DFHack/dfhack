@@ -1421,6 +1421,18 @@ string Units::getReadableName(df::historical_figure* hf) {
         name += ", ";
         name += base_name;
     }
+    if (hf->flags.is_set(df::histfig_flags::ghost)) {
+        name = "Ghostly " + name;
+    }
+
+    if (hf->info && hf->info->curse) {
+        auto & curse = *hf->info->curse;
+        if (curse.name.size()) {
+            name += " ";
+            name += curse.name;
+        }
+    }
+
     return name;
 }
 

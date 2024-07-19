@@ -1639,7 +1639,7 @@ Units module
   The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
   The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
 
-* ``dfhack.units.getVisibleName(unit)``
+* ``dfhack.units.getVisibleName(unit or historical_figure)``
 
   Returns the language_name object visible in game, accounting for false identities.
 
@@ -1717,12 +1717,12 @@ Units module
   Meandering and floundering in liquid introduces additional slowdown. It is
   random, but the function computes and returns the expected mean factor as a float.
 
-* ``dfhack.units.getNoblePositions(unit)``
+* ``dfhack.units.getNoblePositions(unit or historical_figure)``
 
   Returns a list of tables describing noble position assignments, or *nil*.
   Every table has fields ``entity``, ``assignment`` and ``position``.
 
-* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural])``
+* ``dfhack.units.getProfessionName(unit or histfig[,ignore_noble,plural])``
 
   Retrieves the profession name using custom profession, noble assignments
   or raws. The ``ignore_noble`` boolean disables the use of noble positions.
@@ -1764,12 +1764,13 @@ Units module
   Currently only one dream per unit is supported by Dwarf Fortress.
   Support for multiple dreams may be added in future versions of Dwarf Fortress.
 
-* ``dfhack.units.getReadableName(unit)``
+* ``dfhack.units.getReadableName(unit or historical_figure)``
 
   Returns a string that includes the language name of the unit (if any), the
   race of the unit, whether it is trained for war or hunting, any
   syndrome-given descriptions (such as "necromancer"), and the training level
-  (if tame).
+  (if tame). If a historical figure is passed instead of a unit, some
+  information (e.g. syndromes, agitation status) is not available.
 
 * ``dfhack.units.getStressCategory(unit)``
 

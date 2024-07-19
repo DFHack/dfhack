@@ -2061,7 +2061,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getSpecificRef),
     WRAPM(Units, getContainer),
     WRAPM(Units, setNickname),
-    WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
     WRAPM(Units, makeown),
@@ -2079,7 +2078,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, setLaborValidity),
     WRAPM(Units, computeMovementSpeed),
     WRAPM(Units, computeSlowdownFactor),
-    WRAPM(Units, getProfessionName),
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
     WRAPM(Units, getCasteProfessionColor),
@@ -2094,7 +2092,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
     WRAPM(Units, getRaceChildNameById),
-    WRAPM(Units, getReadableName),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),
@@ -2140,14 +2137,23 @@ static int units_getOuterContainerRef(lua_State *state)
     return 1;
 }
 
-static int units_getNoblePositions(lua_State *state)
-{
+static int units_getNoblePositions(lua_State *L) {
     std::vector<Units::NoblePosition> np;
 
-    if (Units::getNoblePositions(&np, Lua::CheckDFObject<df::unit>(state,1)))
-        Lua::PushVector(state, np);
+    if (auto unit = Lua::GetDFObject<df::unit>(L, 1)) {
+        if (Units::getNoblePositions(&np, unit))
+            Lua::PushVector(L, np);
+        else
+            lua_pushnil(L);
+    }
+    else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1)) {
+        if (Units::getNoblePositions(&np, hf))
+            Lua::PushVector(L, np);
+        else
+            lua_pushnil(L);
+    }
     else
-        lua_pushnil(state);
+        luaL_argerror(L, 1, "Expected a unit or a historical figure");
 
     return 1;
 }
@@ -2220,6 +2226,36 @@ static int units_assignTrainer(lua_State *L) {
     return 1;
 }
 
+static int units_getReadablename(lua_State *L) {
+    if (auto unit = Lua::GetDFObject<df::unit>(L, 1))
+        Lua::Push(L, Units::getReadableName(unit));
+    else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1))
+        Lua::Push(L, Units::getReadableName(hf));
+    else
+        luaL_argerror(L, 1, "Expected a unit or a historical figure");
+    return 1;
+}
+
+static int units_getVisibleName(lua_State *L) {
+    if (auto unit = Lua::GetDFObject<df::unit>(L, 1))
+        Lua::Push(L, Units::getVisibleName(unit));
+    else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1))
+        Lua::Push(L, Units::getVisibleName(hf));
+    else
+        luaL_argerror(L, 1, "Expected a unit or a historical figure");
+    return 1;
+}
+
+static int units_getProfessionName(lua_State *L) {
+    if (auto unit = Lua::GetDFObject<df::unit>(L, 1))
+        Lua::Push(L, Units::getProfessionName(unit));
+    else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1))
+        Lua::Push(L, Units::getProfessionName(hf));
+    else
+        luaL_argerror(L, 1, "Expected a unit or a historical figure");
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getOuterContainerRef", units_getOuterContainerRef },
@@ -2229,6 +2265,9 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getUnitsByNobleRole", units_getUnitsByNobleRole},
     { "getStressCutoffs", units_getStressCutoffs },
     { "assignTrainer", units_assignTrainer },
+    { "getReadableName", units_getReadablename },
+    { "getVisibleName", units_getVisibleName },
+    { "getProfessionName", units_getProfessionName },
     { NULL, NULL }
 };
 

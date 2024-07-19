@@ -193,6 +193,7 @@ DFHACK_EXPORT inline df::specific_ref getOuterContainerRef(df::unit *unit) { df:
 
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
+DFHACK_EXPORT df::language_name *getVisibleName(df::historical_figure *hf);
 
 DFHACK_EXPORT bool assignTrainer(df::unit *unit, int32_t trainer_id = -1);
 DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
@@ -223,6 +224,7 @@ DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
 DFHACK_EXPORT std::string getReadableName(df::unit* unit);
+DFHACK_EXPORT std::string getReadableName(df::historical_figure* hf);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 DFHACK_EXPORT int getKillCount(df::unit *unit);
@@ -244,8 +246,10 @@ struct NoblePosition {
 };
 
 DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit);
+DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::historical_figure *hf);
 
 DFHACK_EXPORT std::string getProfessionName(df::unit *unit, bool ignore_noble = false, bool plural = false);
+DFHACK_EXPORT std::string getProfessionName(df::historical_figure *hf, bool ignore_noble = false, bool plural = false);
 DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profession pid, bool plural = false);
 
 DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);

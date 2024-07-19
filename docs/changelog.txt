@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks
 - Fix handling of multi-line text when interacting with the system clipboard on Windows
+- `zone`: fix alignment of animal actions overlay panel when the animal has a custom portrait (like named dragons)
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
@@ -65,11 +66,14 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
 
 ## Lua
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
+- ``dfhack.units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
 
 ## Removed
+- The ``PRELOAD_LIB`` environment variable has been renamed to ``DF_PRELOAD`` to match the naming scheme of other environment variables used by the ``dfhack`` startup script. If you are preloading libraries (e.g. for performance testing) please define ``DF_PRELOAD`` instead of ``PRELOAD_LIB`` or ``LD_PRELOAD``
 
 # 50.13-r3
 

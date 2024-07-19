@@ -1356,7 +1356,7 @@ AnimalActionsWidget.ATTRS {
     default_pos={x=-41,y=37},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/UNIT/Overview',
-    frame={w=25, h=6},
+    frame={w=25, h=8},
 }
 
 -- The above function already handles checking if valid unit
@@ -1424,6 +1424,14 @@ function AnimalActionsWidget:render(dc)
         self.subviews.geld_animal:setOption(dfhack.units.isMarkedForGelding(unit))
         self.subviews.adopt_animal:setOption(dfhack.units.isAvailableForAdoption(unit))
         self.subviews.tame_animal:setOption(dfhack.units.isMarkedForTraining(unit))
+
+        local frame = self.subviews.panel.frame
+        local t = unit.portrait_texpos > 0 and 2 or 0
+        if t ~= frame.t then
+            frame.t = t
+            frame.b = 2 - t
+            self:updateLayout()
+        end
     end
 
     AnimalActionsWidget.super.render(self, dc)
@@ -1432,6 +1440,8 @@ end
 function AnimalActionsWidget:init()
     self:addviews{
         widgets.Panel{
+            view_id='panel',
+            frame={t=0, b=2},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
             visible=check_valid_unit,

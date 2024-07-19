@@ -11,7 +11,8 @@
 #     DF_GDB_OPTS: Options to pass to gdb, if it's being run
 #     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
 #     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
-#     DF_POST_CMD: Shell command to be run at very end of script
+#     DF_POST_CMD: Shell command to be run at very end of script (after DF exits)
+#     DF_PRELOAD: Colon-separated list of libraries to preload with LD_PRELOAD
 
 DF_DIR=$(dirname "$0")
 cd "${DF_DIR}"
@@ -38,12 +39,14 @@ old_tty_settings=$(stty -g)
 # Now run
 export LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
 
-LIB="./hack/libdfhack.so"
-LIBSAN=""
 if which objdump > /dev/null; then
-  LIBSAN="$(objdump -p $LIB | sed -n 's/^.*NEEDED.*\(lib[a-z]san[a-z.0-9]*\).*$/\1/p' | head -n1):"
+  DFHACK_LIB="./hack/libdfhack.so"
+  LIBSAN="$(objdump -p $DFHACK_LIB | sed -n 's/^.*NEEDED.*\(lib[a-z]san[a-z.0-9]*\).*$/\1/p' | head -n1):"
+  if [ ":" != "${LIBSAN}" ]; then
+    DF_PRELOAD="${DF_PRELOAD:+$DF_PRELOAD:}${LIBSAN}"
+    echo "preloading sanitizer: ${LIBSAN}"
+  fi
 fi
-PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}${LIBSAN}${LIB}"
 
 setarch_arch=$(cat hack/dfhack_setarch.txt || printf x86_64)
 if ! setarch "$setarch_arch" -R true 2>/dev/null; then
@@ -60,7 +63,7 @@ fi
 case "$1" in
   -g | --gdb)
     shift
-    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
+    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD' MALLOC_PERTURB_=45" > gdbcmd.tmp
     echo "set print thread-events off" >> gdbcmd.tmp
     gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./dwarfort "$@"
     rm gdbcmd.tmp
@@ -75,7 +78,7 @@ case "$1" in
       echo "****"
     fi
     echo "set environment LD_LIBRARY_PATH $LD_LIBRARY_PATH" > gdbcmd.tmp
-    echo "set environment LD_PRELOAD $PRELOAD_LIB" >> gdbcmd.tmp
+    echo "set environment LD_PRELOAD $DF_PRELOAD" >> gdbcmd.tmp
     echo "set environment MALLOC_PERTURB_ 45" >> gdbcmd.tmp
     echo "set startup-with-shell off" >> gdbcmd.tmp
     echo "target extended-remote localhost:12345" >> gdbcmd.tmp
@@ -96,31 +99,31 @@ case "$1" in
     ;;
   -h | --helgrind)
     shift
-    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./dwarfort "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" setarch "$setarch_arch" -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./dwarfort "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" setarch "$setarch_arch" -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   -c | --callgrind)
     shift
-    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./dwarfort "$@"
+    LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" setarch "$setarch_arch" -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./dwarfort "$@"
     ret=$?
     ;;
   --strace)
     shift
-    strace -f setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@" 2> strace.log
+    strace -f setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" ./dwarfort "$@" 2> strace.log
     ret=$?
     ;;
   -x | --exec)
-    exec setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@"
+    exec setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" ./dwarfort "$@"
     # script does not resume
     ;;
   --sc | --sizecheck)
-    PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}./hack/libsizecheck.so"
-    MALLOC_PERTURB_=45 setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" ./dwarfort "$@"
+    DF_PRELOAD="${DF_PRELOAD:+$DF_PRELOAD:}./hack/libsizecheck.so"
+    MALLOC_PERTURB_=45 setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" ./dwarfort "$@"
     ret=$?
     ;;
   *)
@@ -128,7 +131,7 @@ case "$1" in
     if [ "$SteamAppId" = 2346660 ]; then
       TARGET=hack/launchdf
     fi
-    setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$PRELOAD_LIB" $TARGET "$@"
+    setarch "$setarch_arch" -R env LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$DF_PRELOAD" $TARGET "$@"
     ret=$?
     ;;
 esac

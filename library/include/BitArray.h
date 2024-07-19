@@ -400,8 +400,10 @@ namespace DFHack
         size_t size() const
         {
             size_t n = 0;
-            for (value_type const & i : *this)
-                n++;
+            for (auto It = this->cbegin(); It != this->cend(); ++It)
+            {
+               n++;
+            }
             return n;
         }
 
@@ -507,7 +509,7 @@ namespace DFHack
         {
             auto root = static_cast<L *>(this);
             CHECK_INVALID_ARGUMENT(pos.iter.root == root);
-            CHECK_NULL_POINTER(pos.iter.cur);
+            CHECK_INVALID_ARGUMENT(pos.iter.cur);
 
             auto link = pos.iter.cur;
             auto next = link->next;
@@ -528,7 +530,7 @@ namespace DFHack
         {
             auto root = static_cast<L *>(this);
             auto link = new L();
-            link->prev = nullptr;
+            link->prev = root;
             if (root->next)
             {
                 root->next->prev = link;

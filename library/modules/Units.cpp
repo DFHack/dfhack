@@ -218,9 +218,7 @@ bool Units::isOwnGroup(df::unit* unit)
     auto histfig = df::historical_figure::find(unit->hist_figure_id);
     if (!histfig)
         return false;
-    for (size_t i = 0; i < histfig->entity_links.size(); i++)
-    {
-        auto link = histfig->entity_links[i];
+    for (auto link : histfig->entity_links) {
         if (link->entity_id == plotinfo->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
             return true;
     }
@@ -1098,22 +1096,27 @@ void Units::setNickname(df::unit *unit, std::string nick)
     }
 }
 
-df::language_name *Units::getVisibleName(df::unit *unit)
+df::language_name *Units::getVisibleName(df::historical_figure *hf)
 {
+    CHECK_NULL_POINTER(hf);
+
+    auto identity = getFigureIdentity(hf);
+    if (identity) {
+        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+    }
+
+    return &hf->name;
+}
+
+df::language_name *Units::getVisibleName(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
 
     auto hf = df::historical_figure::find(unit->hist_figure_id);
     if (!hf)
         return &unit->name;
 
-    auto identity = getFigureIdentity(hf);
-    if (identity)
-    {
-        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
-        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
-    }
-
-    return &hf->name;
+    return getVisibleName(hf);
 }
 
 df::nemesis_record *Units::getNemesis(df::unit *unit)
@@ -1406,6 +1409,30 @@ string Units::getReadableName(df::unit* unit) {
         name += getTameTag(unit);
         name += ")";
     }
+    return name;
+}
+
+string Units::getReadableName(df::historical_figure* hf) {
+    string base_name = getProfessionName(hf);
+    string name = Translation::TranslateName(getVisibleName(hf), false);
+    if (name.empty()) {
+        name = base_name;
+    } else {
+        name += ", ";
+        name += base_name;
+    }
+    if (hf->flags.is_set(df::histfig_flags::ghost)) {
+        name = "Ghostly " + name;
+    }
+
+    if (hf->info && hf->info->curse) {
+        auto & curse = *hf->info->curse;
+        if (curse.name.size()) {
+            name += " ";
+            name += curse.name;
+        }
+    }
+
     return name;
 }
 
@@ -1939,17 +1966,13 @@ static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NobleP
     return a.position->id < b.position->id;
 }
 
-bool Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit)
+bool Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::historical_figure *hf)
 {
-    CHECK_NULL_POINTER(unit);
+    CHECK_NULL_POINTER(hf);
 
     pvec->clear();
 
-    auto histfig = df::historical_figure::find(unit->hist_figure_id);
-    if (!histfig)
-        return false;
-
-    for (auto link: histfig->entity_links) {
+    for (auto link: hf->entity_links) {
         auto epos = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
         if (!epos)
             continue;
@@ -1978,6 +2001,49 @@ bool Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit)
     return true;
 }
 
+bool Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit) {
+    CHECK_NULL_POINTER(unit);
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+
+    return getNoblePositions(pvec, histfig);
+}
+
+static std::string get_noble_title(const Units::NoblePosition & noble_pos, df::pronoun_type sex, bool plural) {
+    std::string prof;
+    switch (sex) {
+    case 0:
+        prof = noble_pos.position->name_female[plural ? 1 : 0];
+        break;
+    case 1:
+        prof = noble_pos.position->name_male[plural ? 1 : 0];
+        break;
+    default:
+        break;
+    }
+
+    if (prof.empty())
+        prof = noble_pos.position->name[plural ? 1 : 0];
+
+    return prof;
+}
+
+std::string Units::getProfessionName(df::historical_figure *hf, bool ignore_noble, bool plural)
+{
+    CHECK_NULL_POINTER(hf);
+
+    std::vector<NoblePosition> np;
+    if (!ignore_noble && getNoblePositions(&np, hf)) {
+        std::string prof = get_noble_title(np[0], hf->sex, plural);
+        if (!prof.empty())
+            return prof;
+    }
+
+    return getCasteProfessionName(hf->race, hf->caste, hf->profession, plural);
+}
+
 std::string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural)
 {
     CHECK_NULL_POINTER(unit);
@@ -1988,22 +2054,8 @@ std::string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plu
 
     std::vector<NoblePosition> np;
 
-    if (!ignore_noble && getNoblePositions(&np, unit))
-    {
-        switch (unit->sex)
-        {
-        case 0:
-            prof = np[0].position->name_female[plural ? 1 : 0];
-            break;
-        case 1:
-            prof = np[0].position->name_male[plural ? 1 : 0];
-            break;
-        default:
-            break;
-        }
-
-        if (prof.empty())
-            prof = np[0].position->name[plural ? 1 : 0];
+    if (!ignore_noble && getNoblePositions(&np, unit)) {
+        prof = get_noble_title(np[0], unit->sex, plural);
         if (!prof.empty())
             return prof;
     }

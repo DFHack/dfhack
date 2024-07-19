@@ -1431,6 +1431,10 @@ string Units::getReadableName(df::historical_figure* hf) {
             name += " ";
             name += curse.name;
         }
+        if (curse.undead_name.size()) {
+            name += " reanimated ";
+            name += curse.undead_name;
+        }
     }
 
     return name;

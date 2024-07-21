@@ -72,12 +72,6 @@ static void paint_screen(const PaintCtx & ctx, const unordered_set<df::coord> & 
             if (!Maps::isValidTilePos(map_pos))
                 continue;
 
-            // don't overwrite the target tile
-            if (!ctx.use_graphics && targets.contains(map_pos)) {
-                TRACE(log).print("skipping target tile\n");
-                continue;
-            }
-
             if (!show_hidden && !Maps::isTileVisible(map_pos)) {
                 TRACE(log).print("skipping hidden tile\n");
                 continue;
@@ -108,6 +102,8 @@ static void paint_screen(const PaintCtx & ctx, const unordered_set<df::coord> & 
                 }
             } else {
                 int color = can_walk ? COLOR_GREEN : COLOR_RED;
+                if (targets.contains(map_pos))
+                    color = COLOR_CYAN;
                 if (cur_tile.fg && cur_tile.ch != ' ') {
                     cur_tile.fg = color;
                     cur_tile.bg = 0;
@@ -298,19 +294,21 @@ static bool wagon_flood(unordered_set<df::coord> * wagon_path, const df::coord &
 }
 
 static unordered_set<df::coord> wagon_path;
+static unordered_set<df::coord> entry_tiles;
 
 static bool getDepotAccessibleByWagons(bool cache_scan_for_painting) {
+    if (cache_scan_for_painting) {
+        entry_tiles.clear();
+        wagon_path.clear();
+    }
     unordered_set<df::coord> depot_coords;
     if (!get_depot_coords(&depot_coords))
         return false;
     unordered_set<uint16_t> depot_pathability_groups;
     if (!get_pathability_groups(&depot_pathability_groups, depot_coords))
         return false;
-    unordered_set<df::coord> entry_tiles;
     if (!get_entry_tiles(&entry_tiles, depot_pathability_groups))
         return false;
-    if (cache_scan_for_painting)
-        wagon_path.clear();
     bool found_edge = false;
     for (auto depot_pos : depot_coords) {
         if (wagon_flood(cache_scan_for_painting ? &wagon_path : NULL, depot_pos, entry_tiles)) {
@@ -323,12 +321,8 @@ static bool getDepotAccessibleByWagons(bool cache_scan_for_painting) {
 }
 
 static void paintScreenDepotAccess() {
-    unordered_set<df::coord> depot_coords;
-    if (!get_depot_coords(&depot_coords))
-        return;
-
     PaintCtx ctx;
-    paint_screen(ctx, depot_coords, false, [&](const df::coord & pos){
+    paint_screen(ctx, entry_tiles, false, [&](const df::coord & pos){
         return wagon_path.contains(pos);
     });
 }

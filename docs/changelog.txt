@@ -62,6 +62,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
+- `gui/pathable`: give edge tiles where wagons can enter the map a special highlight to make them more identifiable. this is especially useful when the game decides that only a portion of the map edge is usable by wagons.
 
 ## Documentation
 

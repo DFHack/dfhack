@@ -1749,7 +1749,7 @@ Units module
   race of the unit (if different from fort), whether it is trained for war or
   hunting, any syndrome-given descriptions (such as "necromancer"), the
   training level (if tame), and profession or noble role. If a
-  `historical_figure` is passed instead of a unit, some information
+  ``historical_figure`` is passed instead of a unit, some information
   (e.g., agitation status) is not available, and the profession may be
   different (e.g., "Monk") from what is displayed in fort mode.
 
@@ -1817,7 +1817,7 @@ Units module
   or raws. The ``ignore_noble`` boolean disables the use of noble positions
   ("Prisoner", "Slave", and noble spouse titles included). The ``land_title``
   boolean causes ``of Sitename`` to be appended when applicable. If a
-  `historical_figure` is passed instead of a unit, some information (e.g.,
+  ``historical_figure`` is passed instead of a unit, some information (e.g.,
   agitation status) is not available, and the profession may be different
   (e.g., "Monk") from what is displayed in fort mode.
 

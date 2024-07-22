@@ -84,8 +84,8 @@ artifact list on GitHub for specific repository commits.
 To download a development build from GitHub:
 
 - Ensure you are logged into your GitHub account
-- Go to https://github.com/DFHack/dfhack/actions/workflows/build.yml?query=branch%3Adevelop+event%3Apush
-- Click on the first entry that has a green checkmark
+- Go to https://github.com/DFHack/dfhack/actions/workflows/build.yml?query=branch%3Adevelop+event%3Apush+is%3Asuccess
+- Click on the first entry (it should have a green checkmark next to it)
 - Click the number under "Artifacts" (or scroll down)
 - Click on the ``dfhack-*-build-*`` artifact for your platform to download
 

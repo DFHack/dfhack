@@ -226,7 +226,6 @@ DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 // Unit's name accounting for false identities.
 DFHACK_EXPORT df::language_name *getVisibleName(df::historical_figure *hf);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
-DFHACK_EXPORT df::language_name *getVisibleName(df::historical_figure *hf);
 
 // trainer_id -1 for any available.
 DFHACK_EXPORT bool assignTrainer(df::unit *unit, int32_t trainer_id = -1);
@@ -304,7 +303,6 @@ struct NoblePosition {
 // Fill vector with info describing unit's noble position assignments.
 DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::historical_figure *hf);
 DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::unit *unit);
-DFHACK_EXPORT bool getNoblePositions(std::vector<NoblePosition> *pvec, df::historical_figure *hf);
 
 // Unit's profession, accounting for false identity.
 DFHACK_EXPORT df::profession getProfession(df::unit *unit);

@@ -6412,7 +6412,7 @@ Native functions provided by the `buildingplan` plugin:
 
 * ``void doCycle()``
 
-  Runs a check for whether buildings in the monitor list can be assigned 
+  Runs a check for whether buildings in the monitor list can be assigned
   items and unsuspended. This method runs automatically twice a game day,
   so you only need to call it directly if you want buildingplan to do a
   check right now.

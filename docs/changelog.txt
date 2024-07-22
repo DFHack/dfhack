@@ -54,15 +54,11 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- ``cuboid``: construct from ``df::map_block*``, ``forBlock`` iterator to access map blocks in cuboid
-- ``cuboid``: ``clamp(cuboid other)``, ``clampNew(cuboid other)`` for cuboid intersection. ``clampNew`` returns new cuboid instead of modifying.
-- ``Units::isUnitInBox``, ``getUnitsInBox``: add versions that take cuboid, filter fn parameter for ``getUnitsInBox``
-- ``Units::getProfession``: get a unit's profession type accounting for fake identity
-- ``Units::getCasteRaw``: get a caste_raw from a unit or race and caste
 
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks
 - Fix handling of multi-line text when interacting with the system clipboard on Windows
+- `zone`: fix alignment of animal actions overlay panel when the animal has a custom portrait (like named dragons)
 - Fix ``cuboid`` ``df::coord`` constructors not initializing properly
 - ``Units::isVisible``: account for units in cages
 - ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
@@ -70,6 +66,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
+- `gui/pathable`: give edge tiles where wagons can enter the map a special highlight to make them more identifiable. this is especially useful when the game decides that only a portion of the map edge is usable by wagons.
 - ``setAreaAquifer``, ``removeAreaAquifer``: make use of cuboid iters to simplify code
 - ``Units::isNaked``: now only checks equipped items (including rings, for now). Setting bool ``no_items`` to true checks empty inventory like before.
 - ``Units::isUndead``: bool ``include_vamps`` renamed to ``hiding_curse``. Fn now checks that instead of bloodsucker syndrome.
@@ -83,12 +80,20 @@ Template for new versions:
 - Improve ``Units`` module Lua API docs, including some fns that were completely unlisted
 
 ## API
-- ``Units::getRaceReadableName``, ``getRaceReadableNameById``, ``getRaceNamePluralById``: add missing fns to Lua API
+- ``Units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
+- ``Units``: add missing fns ``getRaceReadableName``, ``getRaceReadableNameById``, ``getRaceNamePluralById`` to Lua API
+- ``Units::isUnitInBox``, ``getUnitsInBox``: add versions that take cuboid, filter fn parameter for ``getUnitsInBox``
+- ``Units::getProfession``: get a unit's profession type accounting for fake identity
+- ``Units::getCasteRaw``: get a caste_raw from a unit or race and caste
+- ``cuboid``: construct from ``df::map_block*``, ``forBlock`` iterator to access map blocks in cuboid
+- ``cuboid``: ``clamp(cuboid other)``, ``clampNew(cuboid other)`` for cuboid intersection. ``clampNew`` returns new cuboid instead of modifying.
 
 ## Lua
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
+- ``dfhack.units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
 
 ## Removed
+- The ``PRELOAD_LIB`` environment variable has been renamed to ``DF_PRELOAD`` to match the naming scheme of other environment variables used by the ``dfhack`` startup script. If you are preloading libraries (e.g. for performance testing) please define ``DF_PRELOAD`` instead of ``PRELOAD_LIB`` or ``LD_PRELOAD``
 - ``cuboid::clamp(bool block)``: renamed to ``cuboid::clampMap(bool block)``, name taken by ``cuboid::clamp(cuboid other)``
 - ``Units::MAX_COLORS``, ``Units::findIndexById``, ``Units::getNumUnits``, ``Units::getUnit``: not used anywhere; covered by ``DFHack::COLOR_MAX`` and various vector fns
 

@@ -868,18 +868,20 @@ void Units::setNickname(df::unit *unit, string nick) {
         Translation::setNickname(&identity->name, nick);
 }
 
-df::language_name *Units::getVisibleName(df::unit *unit) {
-    CHECK_NULL_POINTER(unit);
-    auto hf = df::historical_figure::find(unit->hist_figure_id);
-    if (!hf)
-        return &unit->name;
-
+df::language_name *Units::getVisibleName(df::historical_figure *hf) {
+    CHECK_NULL_POINTER(hf);
     if (auto identity = getFigureIdentity(hf))
     {
         auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
         return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
     }
     return &hf->name;
+}
+
+df::language_name *Units::getVisibleName(df::unit *unit) {
+    CHECK_NULL_POINTER(unit);
+    auto hf = df::historical_figure::find(unit->hist_figure_id);
+    return hf ? getVisibleName(hf) : &unit->name;
 }
 
 bool Units::assignTrainer(df::unit *unit, int32_t trainer_id) {
@@ -1078,6 +1080,24 @@ static string getTameTag(df::unit *unit) {
     }
 }
 
+string Units::getReadableName(df::historical_figure *hf) {
+    CHECK_NULL_POINTER(hf);
+    string prof_name = getProfessionName(hf, false, false, true);
+
+    if (hf->info && hf->info->curse) {
+        auto &curse = *hf->info->curse;
+        if (curse.original_race >= 0 && !curse.undead_name.empty()) // Zombie
+            prof_name = curse.undead_name; // Replaces entire profession
+        else if (curse.use_display_name && !curse.name.empty()) // Necromancer, etc.
+            prof_name += " " + curse.name;
+        else if (hf->flags.is_set(histfig_flags::ghost))
+            prof_name = "Ghostly " + prof_name;
+    }
+
+    string name = Translation::TranslateName(getVisibleName(hf), false);
+    return name.empty() ? prof_name : name + ", " + prof_name;
+}
+
 string Units::getReadableName(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
     string prof_name = getProfessionName(unit, false, false, true);
@@ -1086,12 +1106,12 @@ string Units::getReadableName(df::unit *unit) {
         prof_name += " " + unit->curse.name;
     else if (isGhost(unit)) // TODO: Should be "Ghost" instead of "Ghostly Peasant"
         prof_name = "Ghostly " + prof_name;
-
-    if (unit->enemy.undead) {
+    // TODO: impersonating deity/force
+    if (unit->enemy.undead) { // Zombie
         if (unit->enemy.undead->undead_name.empty())
             prof_name += " Corpse";
-        else
-            prof_name += " " + unit->enemy.undead->undead_name;
+        else // Replaces entire profession
+            prof_name = unit->enemy.undead->undead_name;
     }
 
     if (isTame(unit))
@@ -1580,18 +1600,17 @@ static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NobleP
     return a.position->id < b.position->id;
 }
 
-static bool get_noble_positions(vector<Units::NoblePosition> *pvec, df::historical_figure *histfig)
-{   // Utility fn to search directly from HF
+bool Units::getNoblePositions(vector<NoblePosition> *pvec, df::historical_figure *hf) {
     pvec->clear();
-    if (!histfig)
+    if (!hf)
         return false;
 
-    for (auto link: histfig->entity_links) {
+    for (auto link: hf->entity_links) {
         auto epos = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
         if (!epos)
             continue;
 
-        Units::NoblePosition npos;
+        NoblePosition npos;
 
         npos.entity = df::historical_entity::find(epos->entity_id);
         if (!npos.entity)
@@ -1617,8 +1636,8 @@ static bool get_noble_positions(vector<Units::NoblePosition> *pvec, df::historic
 
 bool Units::getNoblePositions(vector<NoblePosition> *pvec, df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    auto histfig = df::historical_figure::find(unit->hist_figure_id);
-    return get_noble_positions(pvec, histfig);
+    auto hf = df::historical_figure::find(unit->hist_figure_id);
+    return getNoblePositions(pvec, hf);
 }
 
 df::profession Units::getProfession(df::unit *unit) {
@@ -1628,21 +1647,13 @@ df::profession Units::getProfession(df::unit *unit) {
     return unit->profession;
 }
 
-static df::historical_figure *find_spouse_hf(df::historical_figure *hf) {
-    CHECK_NULL_POINTER(hf);
-    for (auto link : hf->histfig_links) {
-        auto spouse_link = strict_virtual_cast<df::histfig_hf_link_spousest>(link);
-        if (spouse_link)
-            return df::historical_figure::find(spouse_link->target_hf);
-    }
-    return NULL;
-}
-
-static string getLandTitle(Units::NoblePosition &np) {
-    if (np.position->land_holder <= 0)
+static string get_land_title(Units::NoblePosition *np)
+{   // Utility fn to get " of Sitename" string.
+    CHECK_NULL_POINTER(np);
+    if (np->position->land_holder <= 0)
         return ""; // Not a baron, count, or duke equivalent.
-    for (auto site_link : np.entity->site_links)
-        if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np.assignment->id)
+    for (auto site_link : np->entity->site_links)
+        if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
             return site ? " of " + Translation::TranslateName(&site->name) : "";
@@ -1650,91 +1661,110 @@ static string getLandTitle(Units::NoblePosition &np) {
     return "";
 }
 
-static bool hasActiveEntityLink(df::historical_figure *hf, df::histfig_entity_link_type type) {
+static string get_noble_title(df::pronoun_type my_sex, bool plural, bool land_title,
+    Units::NoblePosition *np = NULL, Units::NoblePosition *np_spouse = NULL)
+{   // Utility fn to get (spouse) title string of more important noble position.
+    string result;
+    int32_t plural_idx = plural ? 1 : 0;
+    // Try spouse title
+    if (np_spouse && (!np || np_spouse->position->precedence < np->position->precedence)) {
+        switch (my_sex)
+        {
+            case pronoun_type::she:
+                result = np_spouse->position->spouse_female[plural_idx];
+                break;
+            case pronoun_type::he:
+                result = np_spouse->position->spouse_male[plural_idx];
+                break;
+            default:
+                break;
+        }
+        if (result.empty()) // Try generic title
+            result = np_spouse->position->spouse[plural_idx];
+        if (!result.empty()) // Success
+            return land_title ? result + get_land_title(np_spouse) : result;
+    }
+    // Try our own title
+    if (np) {
+        switch (my_sex)
+        {
+            case pronoun_type::she:
+                result = np->position->name_female[plural_idx];
+                break;
+            case pronoun_type::he:
+                result = np->position->name_male[plural_idx];
+                break;
+            default:
+                break;
+        }
+        if (result.empty()) // Try generic title
+            result = np->position->name[plural_idx];
+        if (!result.empty()) // Success
+            return land_title ? result + get_land_title(np) : result;
+    }
+    return ""; // Not a noble
+}
+
+static bool has_active_entity_link(df::historical_figure *hf, df::histfig_entity_link_type type)
+{   // Returns true if first link of type is non-zero.
     CHECK_NULL_POINTER(hf);
     for (auto link : hf->entity_links) {
         if (link->getType() == type)
-            return link->link_strength > 0; // Only first of type matters, even if zero?
+            return link->link_strength > 0;
     }
     return false;
 }
 
-string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural, bool land_title)
-{   // TODO: Change ignore_noble and land_title to enum, option to ignore spouse/prisoner/slave?
+static df::historical_figure *find_spouse_hf(df::historical_figure *my_hf) {
+    CHECK_NULL_POINTER(my_hf);
+    for (auto link : my_hf->histfig_links) {
+        if (auto spouse_link = strict_virtual_cast<df::histfig_hf_link_spousest>(link))
+            return df::historical_figure::find(spouse_link->target_hf);
+    }
+    return NULL;
+}
+
+static string get_linked_title(df::historical_figure *hf, bool plural, bool land_title)
+{   // Utility fn for getProfessionName common code.
+    // TODO: Change ignore_noble and land_title to enum, option to ignore spouse/prisoner/slave?
+    if (!hf)
+        return "";
+    else if (has_active_entity_link(hf, histfig_entity_link_type::PRISONER))
+        return "Prisoner";
+    else if (has_active_entity_link(hf, histfig_entity_link_type::SLAVE))
+        return "Slave";
+
+    vector<Units::NoblePosition> np, np_spouse;
+    getNoblePositions(&np, hf);
+    getNoblePositions(&np_spouse, find_spouse_hf(hf));
+
+    return get_noble_title(hf->sex, plural, land_title,
+        (np.empty() ? NULL : &np[0]), (np_spouse.empty() ? NULL : &np_spouse[0]));
+}
+
+string Units::getProfessionName(df::historical_figure *hf, bool ignore_noble, bool plural, bool land_title) {
+    CHECK_NULL_POINTER(hf);
+    if (!ignore_noble) {
+        string title = get_linked_title(hf, plural, land_title);
+        if (!title.empty())
+            return title;
+    }
+    auto fi = getFigureIdentity(hf);
+    return getCasteProfessionName(hf->race, hf->caste, (fi ? fi->profession : hf->profession), plural);
+}
+
+string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural, bool land_title) {
     CHECK_NULL_POINTER(unit);
     string prof = unit->custom_profession;
     if (!prof.empty())
         return prof;
-
-    auto hf = df::historical_figure::find(unit->hist_figure_id);
-    if (!ignore_noble && hf)
-    {   // We'll group Prisoner and Slave in with ignore_noble.
-        if (hasActiveEntityLink(hf, histfig_entity_link_type::PRISONER))
-            return "Prisoner";
-        else if (hasActiveEntityLink(hf, histfig_entity_link_type::SLAVE))
-            return "Slave";
-        // Note: The above would actually be appended to the noble title if unit profession is
-        // Baby or Child, due to an oversight. (Nobles are restricted to adults, however.)
-
-        vector<NoblePosition> np, np_spouse;
-        get_noble_positions(&np, hf);
-        get_noble_positions(&np_spouse, find_spouse_hf(hf));
-
-        if (!np.empty() || !np_spouse.empty())
-        {   // Any noble or spouse noble position
-            int32_t plural_idx = plural ? 1 : 0;
-            auto spouse_epos = np_spouse.empty() ? NULL : np_spouse[0].position;
-
-            if (spouse_epos && // Spouse exists and has position
-                (np.empty() ||
-                spouse_epos->precedence < np[0].position->precedence) && // Spouse position is more important
-                !(spouse_epos->spouse[plural_idx].empty() &&
-                spouse_epos->spouse_female[plural_idx].empty() &&
-                spouse_epos->spouse_male[plural_idx].empty())) // Spouse position has any spouse name
-            {   // Use spouse-related title
-                switch (unit->sex)
-                {
-                    case pronoun_type::she:
-                        prof = spouse_epos->spouse_female[plural_idx];
-                        break;
-                    case pronoun_type::he:
-                        prof = spouse_epos->spouse_male[plural_idx];
-                        break;
-                    default:
-                        break;
-                }
-                if (prof.empty())
-                    prof = spouse_epos->spouse[plural_idx];
-
-                if (land_title && !prof.empty())
-                    prof += getLandTitle(np_spouse[0]);
-            }
-            else if (!np.empty())
-            {   // Use our own title
-                switch (unit->sex)
-                {
-                    case pronoun_type::she:
-                        prof = np[0].position->name_female[plural_idx];
-                        break;
-                    case pronoun_type::he:
-                        prof = np[0].position->name_male[plural_idx];
-                        break;
-                    default:
-                        break;
-                }
-                if (prof.empty())
-                    prof = np[0].position->name[plural_idx];
-
-                if (land_title && !prof.empty())
-                    prof += getLandTitle(np[0]);
-            }
-
-            if (!prof.empty())
-                return prof;
-        }
+    else if (!ignore_noble) {
+        prof = get_linked_title(df::historical_figure::find(unit->hist_figure_id), plural, land_title);
+        if (!prof.empty())
+            return prof;
     }
-    string cpn = getCasteProfessionName(unit->race, unit->caste, getProfession(unit), plural);
-    return unit->flags4.bits.agitated_wilderness_creature ? "Agitated " + cpn : cpn;
+    prof = getCasteProfessionName(unit->race, unit->caste, getProfession(unit), plural);
+    return unit->flags4.bits.agitated_wilderness_creature ? "Agitated " + prof : prof;
 }
 
 string Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural) {

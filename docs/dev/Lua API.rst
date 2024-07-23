@@ -2029,8 +2029,9 @@ Items module
 * ``dfhack.items.moveToBuilding(item,building[,use_mode[,force_in_building])``
 
   Move the item to the building. Returns *false* if impossible.
-  ``use_mode`` defaults to 0. If set to 2, the item will be treated as part of
-  the building. If ``force_in_building`` is true, the item will be considered
+  ``use_mode`` defaults to ``df.building_item_role_type.TEMP``.
+  If set to ``df.building_item_role_type.PERM``, the item will be treated as part
+  of the building. If ``force_in_building`` is true, the item will be considered
   to be stored by the building (used for items temporarily used in traps in
   vanilla DF).
 

@@ -271,8 +271,6 @@ DFHACK_EXPORT std::string getRaceChildName(df::unit *unit, bool plural = false);
 DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf);
 // Full readable name including profession, curse name, and tame description.
 DFHACK_EXPORT std::string getReadableName(df::unit *unit);
-// Currently broken since address isn't defined in structures.
-DFHACK_EXPORT std::string getPhysicalDescription(df::unit *unit);
 
 // Unit's age (in non-integer years). Ignore false identities if true_age.
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);

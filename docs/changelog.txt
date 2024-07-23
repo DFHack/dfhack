@@ -96,6 +96,7 @@ Template for new versions:
 - The ``PRELOAD_LIB`` environment variable has been renamed to ``DF_PRELOAD`` to match the naming scheme of other environment variables used by the ``dfhack`` startup script. If you are preloading libraries (e.g. for performance testing) please define ``DF_PRELOAD`` instead of ``PRELOAD_LIB`` or ``LD_PRELOAD``
 - ``cuboid::clamp(bool block)``: renamed to ``cuboid::clampMap(bool block)``, name taken by ``cuboid::clamp(cuboid other)``
 - ``Units::MAX_COLORS``, ``Units::findIndexById``, ``Units::getNumUnits``, ``Units::getUnit``: not used anywhere; covered by ``DFHack::COLOR_MAX`` and various vector fns
+- ``Units::getPhysicalDescription``: function never really worked, missing required address to call Bay12 code
 
 # 50.13-r3
 

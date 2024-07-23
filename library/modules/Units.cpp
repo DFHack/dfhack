@@ -1121,23 +1121,6 @@ string Units::getReadableName(df::unit *unit) {
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
-static void df_unit_get_physical_description(df::unit *unit, string *out_str) {
-    static auto* const fn =
-        reinterpret_cast<void(THISCALL *)(df::unit*, string*)>(
-            Core::getInstance().vinfo->getAddress("unit_get_physical_description"));
-    if (fn)
-        fn(unit, out_str);
-    else
-        *out_str = "";
-}
-
-string Units::getPhysicalDescription(df::unit *unit) {
-    CHECK_NULL_POINTER(unit);
-    string str;
-    df_unit_get_physical_description(unit, &str);
-    return str;
-}
-
 double Units::getAge(df::unit *unit, bool true_age) {
     using df::global::cur_year;
     using df::global::cur_year_tick;

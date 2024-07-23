@@ -245,7 +245,8 @@ class cuboid {
  * \ingroup grp_modules
  * \ingroup grp_maps
  */
-namespace Maps {
+namespace Maps
+{
 extern DFHACK_EXPORT bool IsValid();
 
 /// Iterate over points in a cuboid from z1:z2, y1:y2, then x1:x2.

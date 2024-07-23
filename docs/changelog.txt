@@ -62,7 +62,7 @@ Template for new versions:
 - Fix ``cuboid`` ``df::coord`` constructors not initializing properly
 - ``Units::isVisible``: account for units in cages
 - ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
-- ``Units::getReadableName``: fix position of "Ghostly", use ``curse.name`` instead of iterating syndrome name effects
+- ``Units::getReadableName``: correct display of ghost+curse names w/r/t each other and unit prof, use ``curse.name`` instead of iterating syndrome name effects
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak

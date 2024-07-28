@@ -22,23 +22,22 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
-
-#include "MemAccess.h"
 #include "Core.h"
 #include "Error.h"
+#include "Internal.h"
+#include "MemAccess.h"
 #include "VersionInfo.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
-#include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "DataIdentity.h"
 #include "Debug.h"
 #include "DFHackVersion.h"
-#include "PluginManager.h"
-#include "md5wrapper.h"
-#include "LuaWrapper.h"
 #include "LuaTools.h"
+#include "LuaWrapper.h"
+#include "md5wrapper.h"
 #include "MiscUtils.h"
+#include "PluginManager.h"
 
 #include "modules/Buildings.h"
 #include "modules/Burrows.h"
@@ -50,7 +49,6 @@ distribution.
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Kitchen.h"
-#include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Military.h"
@@ -106,20 +104,21 @@ distribution.
 #include "df/viewscreen.h"
 
 #include <lua.h>
-#include <lauxlib.h>
 #include <lualib.h>
+#include <lauxlib.h>
 
 #include <cstring>
+#include <map>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace DFHack {
     DBG_DECLARE(core, luaapi, DebugCategory::LINFO);
 }
 
 using namespace DFHack;
+using namespace df::enums;
 using namespace DFHack::LuaWrapper;
 using std::string;
 using std::vector;
@@ -2310,37 +2309,6 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
 
 /***** Items module *****/
 
-static bool items_moveToGround(df::item *item, df::coord pos)
-{
-    MapExtras::MapCache mc;
-    return Items::moveToGround(mc, item, pos);
-}
-
-static bool items_moveToContainer(df::item *item, df::item *container)
-{
-    MapExtras::MapCache mc;
-    return Items::moveToContainer(mc, item, container);
-}
-
-static bool items_moveToInventory
-    (df::item *item, df::unit *unit, df::unit_inventory_item::T_mode mode, int body_part)
-{
-    MapExtras::MapCache mc;
-    return Items::moveToInventory(mc, item, unit, mode, body_part);
-}
-
-static bool items_remove(df::item *item, bool no_uncat)
-{
-    MapExtras::MapCache mc;
-    return Items::remove(mc, item, no_uncat);
-}
-
-static df::proj_itemst *items_makeProjectile(df::item *item)
-{
-    MapExtras::MapCache mc;
-    return Items::makeProjectile(mc, item);
-}
-
 static int16_t items_findType(string token)
 {
     DFHack::ItemTypeInfo result;
@@ -2383,11 +2351,12 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
     WRAPM(Items, getCapacity),
-    WRAPN(moveToGround, items_moveToGround),
-    WRAPN(moveToContainer, items_moveToContainer),
-    WRAPN(moveToInventory, items_moveToInventory),
-    WRAPN(makeProjectile, items_makeProjectile),
-    WRAPN(remove, items_remove),
+    WRAPM(Items, moveToGround),
+    WRAPM(Items, moveToContainer),
+    WRAPM(Items, moveToBuilding),
+    WRAPM(Items, moveToInventory),
+    WRAPM(Items, makeProjectile),
+    WRAPM(Items, remove),
     WRAPN(findType, items_findType),
     WRAPN(findSubtype, items_findSubtype),
     { NULL, NULL }
@@ -2431,17 +2400,6 @@ static int items_getContainedItems(lua_State *state)
     return 1;
 }
 
-static int items_moveToBuilding(lua_State *state)
-{
-    MapExtras::MapCache mc;
-    auto item = Lua::CheckDFObject<df::item>(state, 1);
-    auto building = Lua::CheckDFObject<df::building_actual>(state, 2);
-    df::building_item_role_type use_mode = (df::building_item_role_type)luaL_optint(state, 3, 0);
-    bool force_in_building = lua_toboolean(state, 4);
-    lua_pushboolean(state, Items::moveToBuilding(mc, item, building, use_mode, force_in_building));
-    return 1;
-}
-
 static int items_createItem(lua_State *state)
 {
     auto unit = Lua::CheckDFObject<df::unit>(state, 1);
@@ -2461,7 +2419,6 @@ static const luaL_Reg dfhack_items_funcs[] = {
     { "getPosition", items_getPosition },
     { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
-    { "moveToBuilding", items_moveToBuilding },
     { "createItem", items_createItem },
     { NULL, NULL }
 };

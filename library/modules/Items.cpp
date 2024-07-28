@@ -2142,8 +2142,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
             auto unit = gref->getUnit();
             if (!unit)
                 continue;
-            df::creature_raw *raw = world->raws.creatures.all[unit->race];
-            df::caste_raw *caste = raw->caste.at(unit->caste);
+            auto caste = Units::getCasteRaw(unit);
             int unit_value = caste->misc.petvalue;
             if (Units::isWar(unit) || Units::isHunter(unit))
                 unit_value *= 2;

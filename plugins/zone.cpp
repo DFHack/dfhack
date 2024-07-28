@@ -888,7 +888,10 @@ static struct zone_filters_init { zone_filters_init() {
     zone_filters["hunting"] = Units::isHunter;
     zone_filters["male"] = Units::isMale;
     zone_filters["milkable"] = Units::isMilkable;
-    zone_filters["naked"] = Units::isNaked;
+    zone_filters["naked"] = [](df::unit *unit) -> bool
+    {
+        return Units::isNaked(unit, true);
+    };
     zone_filters["own"] = Units::isOwnCiv;
     zone_filters["tamable"] = Units::isTamable;
     zone_filters["tame"] = Units::isTame;
@@ -914,6 +917,7 @@ static unordered_map<string, string> zone_filter_notes;
 static struct zone_filter_notes_init { zone_filter_notes_init() {
     zone_filter_notes["caged"] = "caged (ignores built cages)";
     zone_filter_notes["hunting"] = "trained hunting creature";
+    zone_filter_notes["naked"] = "striped of all items";
     zone_filter_notes["named"] = "has name or nickname";
     zone_filter_notes["own"] = "own civilization";
     zone_filter_notes["trainablehunt"] = "trainable for hunting";

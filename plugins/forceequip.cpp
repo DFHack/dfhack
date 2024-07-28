@@ -36,8 +36,6 @@ using namespace std;
 #include "df/body_part_template.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
-#include "df/general_ref.h"
-#include "df/caste_raw.h"
 
 #include "DFHack.h"
 

@@ -63,6 +63,7 @@ Template for new versions:
 - ``Units::isVisible``: account for units in cages
 - ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
 - ``Units::getReadableName``: correct display of ghost+curse names w/r/t each other and unit prof, use ``curse.name`` instead of iterating syndrome name effects
+- `autodump`: allow dumping on mid-air hatches and floor bars/grates.
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
@@ -74,6 +75,7 @@ Template for new versions:
 - ``Units::getRaceChildName``, ``getRaceChildNameById``, ``getRaceBabyName``, ``getRaceBabyNameById``: bool ``plural`` to get plural form
 - ``Units::getProfessionName``: bool ``land_title`` to append "of Sitename" where applicable, use Prisoner/Slave and noble spouse titles (controlled by ``ignore_noble``)
 - `plant`: detect trees via branches/leaves for cuboid selection
+- ``Items``: module no longer dependent on MapCache. No longer need to pass MapCache parameter to ``moveToGround``, ``moveToContainer``, ``moveToBuilding``, ``moveToInventory``, ``makeProjectile``, or ``Items::remove``
 
 ## Documentation
 - ``Units.h``: more comments on what each fn does

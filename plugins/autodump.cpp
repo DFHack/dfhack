@@ -120,7 +120,7 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
             out.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
             return CR_FAILURE;
         }
-        else if(!isWalkable(*ttype)) { // TODO: Improve this w/r/t impassible buildings
+        else if(!isWalkable(*ttype)) { // TODO: Bring this in line with gui/autodump?
             auto b_occ = Maps::getTileOccupancy(pos_cursor)->bits.building;
             if (b_occ != tile_building_occ::Floored)
             {   // Some Dynamic act as floors

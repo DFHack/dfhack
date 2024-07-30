@@ -2438,7 +2438,7 @@ static const luaL_Reg dfhack_items_funcs[] = {
     { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
     { "moveToBuilding", items_moveToBuilding },
-    { "moveToInventory", items_moveToBuilding },
+    { "moveToInventory", items_moveToInventory },
     { "createItem", items_createItem },
     { NULL, NULL }
 };

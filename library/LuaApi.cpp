@@ -2353,7 +2353,6 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getCapacity),
     WRAPM(Items, moveToGround),
     WRAPM(Items, moveToContainer),
-    WRAPM(Items, moveToInventory),
     WRAPM(Items, makeProjectile),
     WRAPM(Items, remove),
     WRAPN(findType, items_findType),
@@ -2409,6 +2408,16 @@ static int items_moveToBuilding(lua_State *state)
     return 1;
 }
 
+static int items_moveToInventory(lua_State *state)
+{
+    auto item = Lua::CheckDFObject<df::item>(state, 1);
+    auto unit = Lua::CheckDFObject<df::unit>(state, 2);
+    df::unit_inventory_item::T_mode use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
+    int body_part = luaL_optint(state, 4, -1);
+    lua_pushboolean(state, Items::moveToInventory(item, unit, use_mode, body_part));
+    return 1;
+}
+
 static int items_createItem(lua_State *state)
 {
     auto unit = Lua::CheckDFObject<df::unit>(state, 1);
@@ -2429,6 +2438,7 @@ static const luaL_Reg dfhack_items_funcs[] = {
     { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
     { "moveToBuilding", items_moveToBuilding },
+    { "moveToInventory", items_moveToBuilding },
     { "createItem", items_createItem },
     { NULL, NULL }
 };

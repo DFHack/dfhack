@@ -1,4 +1,4 @@
-// Quick Dumper : Moves items marked as "dump" to cursor
+// Instantly gather or destroy items marked for dumping.
 
 #include "Console.h"
 #include "Core.h"
@@ -7,23 +7,19 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
-#include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
+#include "modules/Job.h"
 #include "modules/Maps.h"
-#include "modules/Materials.h"
 
-#include "df/building_stockpilest.h"
 #include "df/general_ref.h"
 #include "df/item.h"
-#include "df/viewscreen_dwarfmodest.h"
+#include "df/proj_itemst.h"
 #include "df/world.h"
 
 #include <algorithm>
-#include <climits>
 #include <iomanip>
 #include <iostream>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,17 +31,15 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::building_stockpilest;
-
 DFHACK_PLUGIN("autodump");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 
-command_result df_autodump(color_ostream &out, vector <string> & parameters);
-command_result df_autodump_destroy_here(color_ostream &out, vector <string> & parameters);
-command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters);
+command_result df_autodump(color_ostream &out, vector<string> &parameters);
+command_result df_autodump_destroy_here(color_ostream &out, vector<string> &parameters);
+command_result df_autodump_destroy_item(color_ostream &out, vector<string> &parameters);
 
-DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         "autodump",
         "Teleport items marked for dumping to the keyboard cursor.",
@@ -63,14 +57,24 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
 typedef map<DFCoord, uint32_t> coordmap;
 
+// Projectile flags for falling items.
+static constexpr uint32_t proj_flags = (
+    df::projectile_flags::mask_no_impact_destroy |
+    df::projectile_flags::mask_bouncing |
+    df::projectile_flags::mask_piercing |
+    df::projectile_flags::mask_parabolic |
+    df::projectile_flags::mask_no_adv_pause |
+    df::projectile_flags::mask_no_collide
+);
+
 static command_result autodump_main(color_ostream &out, vector<string> &parameters)
-{   // Command line options
+{   // Command line options.
     bool destroy = false;
     bool here = false;
     bool need_visible = false;
@@ -103,6 +107,7 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
     }
 
     int dumped_total = 0;
+    bool make_projectile = false;
 
     df::coord pos_cursor;
     if(!destroy || here)
@@ -117,29 +122,22 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
     if (!destroy) {
         auto ttype = Maps::getTileType(pos_cursor);
         if(!ttype) {
-            out.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");
+            out.printerr("Cursor is in an invalid/uninitialized area.\n");
             return CR_FAILURE;
         }
-        else if(!isWalkable(*ttype)) { // TODO: Bring this in line with gui/autodump?
-            auto b_occ = Maps::getTileOccupancy(pos_cursor)->bits.building;
-            if (b_occ != tile_building_occ::Floored)
-            {   // Some Dynamic act as floors
-                auto bld = b_occ == tile_building_occ::Dynamic ? Buildings::findAtTile(pos_cursor) : NULL;
-                if (bld &&
-                    bld->getType() != building_type::Hatch &&
-                    bld->getType() != building_type::GrateFloor &&
-                    bld->getType() != building_type::BarsFloor)
-                {
-                    out.printerr("Cursor should be placed over a floor.\n");
-                    return CR_FAILURE;
-                }
+        else if(!isWalkable(*ttype))
+        {   // Not floor, stair, nor ramp.
+            if (tileShapeBasic(tileShape(*ttype)) == tiletype_shape_basic::Wall) {
+                out.printerr("Can't dump inside walls or fortifications.\n");
+                return CR_FAILURE;
             }
+            make_projectile = true;
         }
     }
 
-    // Proceed with the dumpification operation
+    // Proceed with the dumpification operation.
     for (auto itm : world->items.other.IN_PLAY) {
-        // Only dump valid stuff marked for dumping
+        // Only dump valid stuff marked for dumping.
         if (!itm->flags.bits.dump ||
             itm->flags.bits.construction ||
             itm->flags.bits.in_building ||
@@ -153,30 +151,37 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
         )
             continue;
 
-        if (!destroy) // Move to cursor
-        {   // Don't move items if they're already at the cursor
-            if (pos_cursor != itm->pos) {
+        if (!destroy)
+        {   // Move to cursor.
+            if (pos_cursor != itm->pos)
+            {   // Don't move items if they're already at the cursor.
+                if (itm->flags.bits.in_job) {
+                    if (auto job_ref = Items::getSpecificRef(itm, specific_ref_type::JOB))
+                        Job::removeJob(job_ref->data.job);
+                }
                 if (Items::moveToGround(itm, pos_cursor))
-                {   // Change flags to indicate the dump was completed, as if by super-dwarfs
+                {   // Change flags to indicate the dump was completed, as if by super-dwarves.
                     itm->flags.bits.dump = false;
+                    itm->flags.bits.trader = false;
                     itm->flags.bits.forbid = true;
+                    if (make_projectile)
+                    {   // Convert to projectile if dumping in air.
+                        if (auto proj = Items::makeProjectile(itm))
+                            proj->flags.whole = proj_flags;
+                    }
                 }
                 else
                     out.print("Could not move item: %s\n", Items::getDescription(itm, 0, true).c_str());
             }
         }
-        else // Destroy
-        {
+        else { // Destroy
             if (here && itm->pos != pos_cursor)
                 continue;
-
             itm->flags.bits.garbage_collect = true;
-
-            // Cosmetic changes: make them disappear from view instantly
+            // Cosmetic changes: make them disappear from view instantly.
             itm->flags.bits.forbid = true;
             itm->flags.bits.hidden = true;
         }
-
         dumped_total++;
     }
 
@@ -214,7 +219,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
     if (!item)
         return CR_FAILURE;
 
-    // Allow undoing the destroy
+    // Allow undoing the destroy.
     if (world->frame_counter != last_frame)
     {
         last_frame = world->frame_counter;
@@ -233,7 +238,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
         return CR_OK;
     }
 
-    // Check the item is good to destroy
+    // Check the item is good to destroy.
     if (item->flags.bits.garbage_collect) {
         out.printerr("Item is already marked for destroy.\n");
         return CR_FAILURE;
@@ -254,7 +259,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
         }
     }
 
-    // Set the flags
+    // Set the flags.
     pending_destroy[item->id] = item->flags;
 
     item->flags.bits.garbage_collect = true;

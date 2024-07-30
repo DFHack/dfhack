@@ -12,9 +12,9 @@ This tool can instantly move all unforbidden items marked for dumping to the
 tile under the keyboard cursor. After moving the items, the dump flag is unset
 and the forbid flag is set, just as if it had been dumped normally.
 
-The keyboard cursor can be placed on a floor tile or in the air. If in air
+The keyboard cursor can be placed on a floor tile or in the air. If in air,
 the items will be converted into projectiles and fall. Items cannot be dumped
-inside of walls or fortifications.
+inside of walls nor fortifications.
 
 Usage
 -----

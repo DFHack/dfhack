@@ -125,10 +125,10 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
             out.printerr("Cursor is in an invalid/uninitialized area.\n");
             return CR_FAILURE;
         }
-        else if(!isWalkable(*ttype))
-        {   // Not floor, stair, nor ramp.
+        else if(!isWalkable(*ttype) && tileShape(*ttype) != tiletype_shape::FORTIFICATION)
+        {   // Not floor, stair, ramp, nor fortification.
             if (tileShapeBasic(tileShape(*ttype)) == tiletype_shape_basic::Wall) {
-                out.printerr("Can't dump inside walls or fortifications.\n");
+                out.printerr("Can't dump inside walls.\n");
                 return CR_FAILURE;
             }
             make_projectile = true;

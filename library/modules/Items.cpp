@@ -907,10 +907,7 @@ static bool removeItemOnGround(df::item *item)
     if (!block)
         return false;
 
-    int idx = binsearch_index(block->items, item->id);
-    if (idx < 0)
-        return false;
-    vector_erase_at(block->items, idx);
+    erase_from_vector(block->items, item->id);
 
     for (auto b_item : block->items) {
         auto other_item = df::item::find(b_item);
@@ -1005,33 +1002,13 @@ static bool detachItem(df::item *item)
             case general_ref_type::CONTAINED_IN_ITEM:
                 if (auto item2 = ref->getItem())
                 {
-                    /* TODO: understand how this changes for v50
-                    // Viewscreens hold general_ref_contains_itemst pointers
-                    for (auto screen = Core::getTopViewscreen(); screen; screen = screen->parent)
-                    {
-                        auto vsitem = strict_virtual_cast<df::viewscreen_itemst>(screen);
-                        if (vsitem && vsitem->item == item2)
-                            return false;
-                    }
-                    */
                     item2->flags.bits.weight_computed = false;
-
                     DFHack::removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
                 }
                 break;
             case general_ref_type::UNIT_HOLDER:
-                if (auto unit = ref->getUnit())
-                {
-                    /* TODO: understand how this changes for v50
-                    // Unit view sidebar holds inventory item pointers
-                    if (plotinfo->main.mode == ui_sidebar_mode::ViewUnits &&
-                        (!ui_selected_unit ||
-                        vector_get(world->units.active, *ui_selected_unit) == unit))
-                        return false;
-                    */
-
-                    for (int i = unit->inventory.size()-1; i >= 0; i--)
-                    {
+                if (auto unit = ref->getUnit()) {
+                    for (int i = unit->inventory.size()-1; i >= 0; i--) {
                         df::unit_inventory_item *inv_item = unit->inventory[i];
                         if (inv_item->item != item)
                             continue;

@@ -28,14 +28,14 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
+#include "ModuleFactory.h"
 #include "Types.h"
 #include "VersionInfo.h"
-#include "ModuleFactory.h"
 
-#include "modules/Job.h"
-#include "modules/MapCache.h"
-#include "modules/Materials.h"
+#include "modules/Buildings.h"
 #include "modules/Items.h"
+#include "modules/Job.h"
+#include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -901,32 +901,51 @@ string Items::getReadableDescription(df::item *item) {
     return desc;
 }
 
-static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item)
-{
+static bool removeItemOnGround(df::item *item)
+{   // Replaces the MapCache fn
+    auto block = Maps::getTileBlock(item->pos);
+    if (!block)
+        return false;
+
+    erase_from_vector(block->items, item->id);
+
+    for (auto b_item : block->items) {
+        auto other_item = df::item::find(b_item);
+        if (other_item && other_item->pos == item->pos)
+            return true; // Don't touch occupancy
+    }
+
+    auto &occ = index_tile(block->occupancy, item->pos);
+    occ.bits.item = false;
+
+    if (occ.bits.building == tile_building_occ::Planned) {
+        if (auto bld = Buildings::findAtTile(item->pos))
+        {   // TODO: Maybe recheck other tiles like the game does.
+            bld->flags.bits.site_blocked = false;
+        }
+    }
+    return true;
+}
+
+static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item) {
     if (inv_item->mode == df::unit_inventory_item::Worn ||
         inv_item->mode == df::unit_inventory_item::WrappedAround)
     {
         unit->flags2.bits.calculated_inventory = false;
         unit->flags2.bits.calculated_insulation = false;
     }
-    else if (inv_item->mode == df::unit_inventory_item::StuckIn)
-    {
+    else if (inv_item->mode == df::unit_inventory_item::StuckIn) {
         unit->flags3.bits.stuck_weapon_computed = false;
     }
 }
 
-static bool detachItem(MapExtras::MapCache &mc, df::item *item)
-{
-    if (!item->specific_refs.empty())
-        return false;
-    if (item->world_data_id != -1)
+static bool detachItem(df::item *item)
+{   // Remove item from any inventory or map block
+    if (!item->specific_refs.empty() || item->world_data_id != -1)
         return false;
 
     bool building_clutter = false;
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
-        df::general_ref *ref = item->general_refs[i];
-
+    for (auto ref : item->general_refs) {
         switch (ref->getType())
         {
             case general_ref_type::BUILDING_HOLDER:
@@ -939,22 +958,18 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             case general_ref_type::BUILDING_TRIGGERTARGET:
             case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
                 return false;
-
             default:
                 continue;
         }
     }
 
-    if (building_clutter)
-    {
+    if (building_clutter) {
         auto building = virtual_cast<df::building_actual>(Items::getHolderBuilding(item));
-        if (building)
-        {
+        if (building) {
             for (size_t i = 0; i < building->contained_items.size(); i++)
             {
                 auto ci = building->contained_items[i];
-                if (ci->item == item)
-                {
+                if (ci->item == item) {
                     DFHack::removeRef(item->general_refs, general_ref_type::BUILDING_HOLDER, building->id);
                     vector_erase_at(building->contained_items, i);
                     delete ci;
@@ -965,25 +980,19 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     }
 
     if (auto *ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-    {
         return linked_list_remove(&world->proj_list, ref->projectile_id) &&
             DFHack::removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
-    }
 
-    if (item->flags.bits.on_ground)
-    {
-        if (!mc.removeItemOnGround(item))
+    if (item->flags.bits.on_ground) {
+        if (!removeItemOnGround(item))
             Core::printerr("Item was marked on_ground, but not in block: %d (%d,%d,%d)\n",
-                           item->id, item->pos.x, item->pos.y, item->pos.z);
-
+                item->id, item->pos.x, item->pos.y, item->pos.z);
         item->flags.bits.on_ground = false;
         return true;
     }
 
-    if (item->flags.bits.in_inventory)
-    {
+    if (item->flags.bits.in_inventory) {
         bool found = false;
-
         for (int i = item->general_refs.size()-1; i >= 0; i--)
         {
             df::general_ref *ref = item->general_refs[i];
@@ -993,38 +1002,16 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             case general_ref_type::CONTAINED_IN_ITEM:
                 if (auto item2 = ref->getItem())
                 {
-/* TODO: understand how this changes for v50
-                    // Viewscreens hold general_ref_contains_itemst pointers
-                    for (auto screen = Core::getTopViewscreen(); screen; screen = screen->parent)
-                    {
-                        auto vsitem = strict_virtual_cast<df::viewscreen_itemst>(screen);
-                        if (vsitem && vsitem->item == item2)
-                            return false;
-                    }
-*/
                     item2->flags.bits.weight_computed = false;
-
-                    removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
+                    DFHack::removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
                 }
                 break;
-
             case general_ref_type::UNIT_HOLDER:
-                if (auto unit = ref->getUnit())
-                {
-/* TODO: understand how this changes for v50
-                    // Unit view sidebar holds inventory item pointers
-                    if (plotinfo->main.mode == ui_sidebar_mode::ViewUnits &&
-                        (!ui_selected_unit ||
-                         vector_get(world->units.active, *ui_selected_unit) == unit))
-                        return false;
-*/
-
-                    for (int i = unit->inventory.size()-1; i >= 0; i--)
-                    {
+                if (auto unit = ref->getUnit()) {
+                    for (int i = unit->inventory.size()-1; i >= 0; i--) {
                         df::unit_inventory_item *inv_item = unit->inventory[i];
                         if (inv_item->item != item)
                             continue;
-
                         resetUnitInvFlags(unit, inv_item);
 
                         vector_erase_at(unit->inventory, i);
@@ -1032,7 +1019,6 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
                     }
                 }
                 break;
-
             default:
                 continue;
             }
@@ -1053,41 +1039,30 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
     {
         item->flags.bits.removed = false;
 
-        if (item->flags.bits.garbage_collect)
-        {
+        if (item->flags.bits.garbage_collect) {
             item->flags.bits.garbage_collect = false;
             item->categorize(true);
         }
-
         return true;
     }
-
     return false;
 }
 
-static void putOnGround(MapExtras::MapCache &mc, df::item *item, df::coord pos)
-{
+bool DFHack::Items::moveToGround(df::item *item, df::coord pos) {
+    CHECK_NULL_POINTER(item);
+    if (!detachItem(item))
+        return false;
+
     item->pos = pos;
     item->flags.bits.on_ground = true;
 
-    if (!mc.addItemOnGround(item))
+    if (!item->moveToGround(pos.x, pos.y, pos.z))
         Core::printerr("Could not add item %d to ground at (%d,%d,%d)\n",
-                       item->id, pos.x, pos.y, pos.z);
-}
-
-bool DFHack::Items::moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos)
-{
-    CHECK_NULL_POINTER(item);
-
-    if (!detachItem(mc, item))
-        return false;
-
-    putOnGround(mc, item, pos);
+            item->id, pos.x, pos.y, pos.z);
     return true;
 }
 
-bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container)
-{
+bool DFHack::Items::moveToContainer(df::item *item, df::item *container) {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(container);
 
@@ -1098,16 +1073,16 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     auto ref1 = df::allocate<df::general_ref_contains_itemst>();
     auto ref2 = df::allocate<df::general_ref_contained_in_itemst>();
 
-    if (!ref1 || !ref2)
-    {
-        delete ref1; delete ref2;
+    if (!ref1 || !ref2) {
+        delete ref1;
+        delete ref2;
         Core::printerr("Could not allocate container refs.\n");
         return false;
     }
 
-    if (!detachItem(mc, item))
-    {
-        delete ref1; delete ref2;
+    if (!detachItem(item)) {
+        delete ref1;
+        delete ref2;
         return false;
     }
 
@@ -1126,48 +1101,46 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     return true;
 }
 
-bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
+bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building,
     df::building_item_role_type use_mode, bool force_in_building)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);
-    CHECK_INVALID_ARGUMENT(use_mode == 0 || use_mode == 2);
+    CHECK_INVALID_ARGUMENT(use_mode == building_item_role_type::TEMP ||
+        use_mode == building_item_role_type::PERM);
 
     auto ref = df::allocate<df::general_ref_building_holderst>();
-    if(!ref)
-    {
+    if(!ref) {
         delete ref;
         Core::printerr("Could not allocate building holder refs.\n");
         return false;
     }
 
-    if (!detachItem(mc, item))
-    {
+    if (!detachItem(item)) {
         delete ref;
         return false;
     }
 
-    item->pos.x=building->centerx;
-    item->pos.y=building->centery;
-    item->pos.z=building->z;
-    if (use_mode == 2 || force_in_building)
-        item->flags.bits.in_building=true;
+    item->pos.x = building->centerx;
+    item->pos.y = building->centery;
+    item->pos.z = building->z;
+    if (use_mode == building_item_role_type::PERM || force_in_building)
+        item->flags.bits.in_building = true;
 
-    ref->building_id=building->id;
+    ref->building_id = building->id;
     item->general_refs.push_back(ref);
 
-    auto con=new df::building_actual::T_contained_items;
-    con->item=item;
-    con->use_mode=use_mode;
+    auto con = new df::building_actual::T_contained_items;
+    con->item = item;
+    con->use_mode = use_mode;
     building->contained_items.push_back(con);
 
     return true;
 }
 
-bool DFHack::Items::moveToInventory(
-    MapExtras::MapCache &mc, df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode, int body_part
-) {
+bool DFHack::Items::moveToInventory(df::item *item, df::unit *unit,
+    df::unit_inventory_item::T_mode mode, int body_part)
+{
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(unit->body.body_plan);
@@ -1176,14 +1149,12 @@ bool DFHack::Items::moveToInventory(
     CHECK_INVALID_ARGUMENT(body_part < 0 || body_part <= body_plan_size);
 
     auto holderReference = df::allocate<df::general_ref_unit_holderst>();
-    if (!holderReference)
-    {
+    if (!holderReference) {
         Core::printerr("Could not allocate UNIT_HOLDER reference.\n");
         return false;
     }
 
-    if (!detachItem(mc, item))
-    {
+    if (!detachItem(item)) {
         delete holderReference;
         return false;
     }
@@ -1200,18 +1171,16 @@ bool DFHack::Items::moveToInventory(
     item->general_refs.push_back(holderReference);
 
     resetUnitInvFlags(unit, newInventoryItem);
-
     return true;
 }
 
-bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
-{
+bool Items::remove(df::item *item, bool no_uncat) {
     CHECK_NULL_POINTER(item);
 
-    if (auto spec_ref = getSpecificRef(item, df::specific_ref_type::JOB))
+    if (auto spec_ref = getSpecificRef(item, specific_ref_type::JOB))
         Job::removeJob(spec_ref->data.job);
 
-    if (!detachItem(mc, item))
+    if (!detachItem(item))
         return false;
 
     if (auto pos = getPosition(item); pos.isValid())
@@ -1220,7 +1189,7 @@ bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
     if (!no_uncat)
         item->uncategorize();
 
-    // hide them from jobs and the UI until the item can be garbage collected
+    // Hide them from jobs and the UI until the item can be garbage collected
     item->flags.bits.forbid = true;
     item->flags.bits.hidden = true;
 
@@ -1229,10 +1198,8 @@ bool Items::remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat)
     return true;
 }
 
-df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
-{
+df::proj_itemst *Items::makeProjectile(df::item *item) {
     CHECK_NULL_POINTER(item);
-
     if (!world || !proj_next_id)
         return NULL;
 
@@ -1250,8 +1217,7 @@ df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
         return NULL;
     }
 
-    if (!detachItem(mc, item))
-    {
+    if (!detachItem(item)) {
         delete ref;
         delete proj;
         return NULL;
@@ -1272,7 +1238,6 @@ df::proj_itemst *Items::makeProjectile(MapExtras::MapCache &mc, df::item *item)
     item->general_refs.push_back(ref);
 
     linked_list_append(&world->proj_list, proj->link);
-
     return proj;
 }
 
@@ -2487,7 +2452,7 @@ int32_t Items::getCapacity(df::item* item)
             return tool->subtype->container_capacity;
         // fall through
     default:
-        ; // fall through to default exit
+        break; // fall through to default exit
     }
     return 0;
 }

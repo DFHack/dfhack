@@ -2035,11 +2035,13 @@ Items module
   to be stored by the building (used for items temporarily used in traps in
   vanilla DF).
 
-* ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
+* ``dfhack.items.moveToInventory(item,unit[,use_mode[,body_part]])``
 
   Move the item to the unit inventory. Returns *false* if impossible.
+  ``use_mode`` defaults to ``df.unit_inventory_item.T_mode.Hauled``.
+  ``body_part`` defaults to ``-1``.
 
-* ``dfhack.items.remove(item[, no_uncat])``
+* ``dfhack.items.remove(item[,no_uncat])``
 
   Cancels any jobs associated with the item, removes the item from containers
   and inventories, hides the item from the UI, and, unless ``no_uncat`` is

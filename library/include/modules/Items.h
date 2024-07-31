@@ -26,11 +26,11 @@ distribution.
 /*
 * Items!
 */
+#include "DataDefs.h"
 #include "Export.h"
+#include "MemAccess.h"
 #include "Module.h"
 #include "Types.h"
-#include "MemAccess.h"
-#include "DataDefs.h"
 
 #include "modules/Materials.h"
 
@@ -53,10 +53,6 @@ namespace df {
     union item_flags;
 }
 
-namespace MapExtras {
-    class MapCache;
-}
-
 /**
  * \defgroup grp_items Items module and its types
  * @ingroup grp_modules
@@ -64,46 +60,41 @@ namespace MapExtras {
 
 namespace DFHack
 {
-    struct DFHACK_EXPORT ItemTypeInfo {
-        df::item_type type;
-        int16_t subtype;
+struct DFHACK_EXPORT ItemTypeInfo {
+    df::item_type type;
+    int16_t subtype;
 
-        df::itemdef *custom;
+    df::itemdef *custom;
 
     public:
-        ItemTypeInfo(df::item_type type_ = df::enums::item_type::NONE, int16_t subtype_ = -1) {
-            decode(type_, subtype_);
-        }
-        template<class T> ItemTypeInfo(T *ptr) { decode(ptr); }
+    ItemTypeInfo(df::item_type type_ = df::enums::item_type::NONE, int16_t subtype_ = -1) { decode(type_, subtype_); }
+    template<class T> ItemTypeInfo(T *ptr) { decode(ptr); }
 
-        bool isValid() const {
-            return (type != df::enums::item_type::NONE) && (subtype == -1 || custom);
-        }
+    bool isValid() const { return (type != df::enums::item_type::NONE) && (subtype == -1 || custom); }
 
-        bool decode(df::item_type type_, int16_t subtype_ = -1);
-        bool decode(df::item *ptr);
+    bool decode(df::item_type type_, int16_t subtype_ = -1);
+    bool decode(df::item *ptr);
 
-        template<class T> bool decode(T *ptr) {
-            return ptr ? decode(ptr->item_type, ptr->item_subtype) : decode(df::enums::item_type::NONE);
-        }
-
-        std::string getToken();
-        std::string toString();
-
-        bool find(const std::string &token);
-
-        bool matches(df::job_item_vector_id vec_id);
-        bool matches(const df::job_item &jitem, MaterialInfo *mat = NULL,
-                     bool skip_vector = false,
-                     df::item_type itype = df::item_type::NONE);
-    };
-
-    inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {
-        return a.type == b.type && a.subtype == b.subtype;
+    template<class T> bool decode(T *ptr) {
+        return ptr ? decode(ptr->item_type, ptr->item_subtype) : decode(df::enums::item_type::NONE);
     }
-    inline bool operator!= (const ItemTypeInfo &a, const ItemTypeInfo &b) {
-        return a.type != b.type || a.subtype != b.subtype;
-    }
+
+    std::string getToken();
+    std::string toString();
+
+    bool find(const std::string &token);
+
+    bool matches(df::job_item_vector_id vec_id);
+    bool matches(const df::job_item &jitem, MaterialInfo *mat = NULL,
+        bool skip_vector = false, df::item_type itype = df::item_type::NONE);
+};
+
+inline bool operator== (const ItemTypeInfo &a, const ItemTypeInfo &b) {
+    return a.type == b.type && a.subtype == b.subtype;
+}
+inline bool operator!= (const ItemTypeInfo &a, const ItemTypeInfo &b) {
+    return a.type != b.type || a.subtype != b.subtype;
+}
 
 /**
  * The Items module
@@ -112,7 +103,6 @@ namespace DFHack
  */
 namespace Items
 {
-
 DFHACK_EXPORT bool isCasteMaterial(df::item_type itype);
 DFHACK_EXPORT int getSubtypeCount(df::item_type itype);
 DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
@@ -155,18 +145,18 @@ DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool deco
 
 DFHACK_EXPORT std::string getReadableDescription(df::item *item);
 
-DFHACK_EXPORT bool moveToGround(MapExtras::MapCache &mc, df::item *item, df::coord pos);
-DFHACK_EXPORT bool moveToContainer(MapExtras::MapCache &mc, df::item *item, df::item *container);
-DFHACK_EXPORT bool moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
+DFHACK_EXPORT bool moveToGround(df::item *item, df::coord pos);
+DFHACK_EXPORT bool moveToContainer(df::item *item, df::item *container);
+DFHACK_EXPORT bool moveToBuilding(df::item *item, df::building_actual *building,
     df::building_item_role_type use_mode = df::building_item_role_type::TEMP, bool force_in_building = false);
-DFHACK_EXPORT bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit,
+DFHACK_EXPORT bool moveToInventory(df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
 /// Makes the item removed and marked for garbage collection
-DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat = false);
+DFHACK_EXPORT bool remove(df::item *item, bool no_uncat = false);
 
 /// Detaches the items from its current location and turns it into a projectile
-DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item *item);
+DFHACK_EXPORT df::proj_itemst *makeProjectile(df::item *item);
 
 /// Gets value of base-quality item with specified type and material
 DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype);
@@ -174,7 +164,8 @@ DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int1
 /// Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given
 DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
-DFHACK_EXPORT bool createItem(std::vector<df::item *> &out_items, df::unit* creator, df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool no_floor = false);
+DFHACK_EXPORT bool createItem(std::vector<df::item *> &out_items, df::unit *creator, df::item_type type,
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool no_floor = false);
 
 /// Returns true if the item is free from mandates, or false if mandates prevent trading the item
 DFHACK_EXPORT bool checkMandates(df::item *item);
@@ -202,6 +193,5 @@ DFHACK_EXPORT bool isRouteVehicle(df::item *item);
 DFHACK_EXPORT bool isSquadEquipment(df::item *item);
 /// Returns the item's capacity as a storage container
 DFHACK_EXPORT int32_t getCapacity(df::item* item);
-
 }
 }

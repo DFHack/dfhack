@@ -63,6 +63,7 @@ Template for new versions:
 - ``Units::isVisible``: account for units in cages
 - ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
 - ``Units::getReadableName``: correct display of ghost+curse names w/r/t each other and unit prof, use ``curse.name`` instead of iterating syndrome name effects
+- `autodump`: cancel active job on dumped items
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak
@@ -74,6 +75,7 @@ Template for new versions:
 - ``Units::getRaceChildName``, ``getRaceChildNameById``, ``getRaceBabyName``, ``getRaceBabyNameById``: bool ``plural`` to get plural form
 - ``Units::getProfessionName``: bool ``land_title`` to append "of Sitename" where applicable, use Prisoner/Slave and noble spouse titles (controlled by ``ignore_noble``)
 - `plant`: detect trees via branches/leaves for cuboid selection
+- `autodump`: allow dumping items into air, converting into projectile like ``gui/autodump``
 
 ## Documentation
 - ``Units.h``: more comments on what each fn does
@@ -87,10 +89,12 @@ Template for new versions:
 - ``Units::getCasteRaw``: get a caste_raw from a unit or race and caste
 - ``cuboid``: construct from ``df::map_block*``, ``forBlock`` iterator to access map blocks in cuboid
 - ``cuboid``: ``clamp(cuboid other)``, ``clampNew(cuboid other)`` for cuboid intersection. ``clampNew`` returns new cuboid instead of modifying.
+- ``Items``: module no longer dependent on MapCache. No longer need to pass MapCache parameter to ``moveToGround``, ``moveToContainer``, ``moveToBuilding``, ``moveToInventory``, ``makeProjectile``, or ``Items::remove``
 
 ## Lua
 - ``ZScreen``: new ``defocused`` property for starting screens without keyboard focus
 - ``dfhack.units``: allow historical figures to be passed instead of units for ``getReadableName``, ``getVisibleName``, and ``getProfessionName``
+- ``dfhack.items.moveToInventory``: make ``use_mode`` and ``body_part`` args optional
 
 ## Removed
 - The ``PRELOAD_LIB`` environment variable has been renamed to ``DF_PRELOAD`` to match the naming scheme of other environment variables used by the ``dfhack`` startup script. If you are preloading libraries (e.g. for performance testing) please define ``DF_PRELOAD`` instead of ``PRELOAD_LIB`` or ``LD_PRELOAD``

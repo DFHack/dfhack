@@ -47,10 +47,8 @@
 #include "df/building_wellst.h"
 
 #include "df/caste_raw.h"
-#include "df/caste_raw.h"
 #include "df/color_modifier_raw.h"
 #include "df/construction.h"
-#include "df/creature_raw.h"
 #include "df/creature_raw.h"
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -1713,7 +1711,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             appearance->add_colors(unit->appearance.colors[j]);
         appearance->set_size_modifier(unit->appearance.size_modifier);
 
-        appearance->set_physical_description(Units::getPhysicalDescription(unit));
+        appearance->set_physical_description(""); // TODO: Units::getPhysicalDescription(unit) removed, figure this out.
 
         send_unit->set_profession_id(unit->profession);
 

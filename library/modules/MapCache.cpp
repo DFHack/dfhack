@@ -1207,11 +1207,7 @@ bool MapExtras::Block::removeItemOnGround(df::item *item)
 
     init_item_counts();
 
-    int idx = binsearch_index(block->items, item->id);
-    if (idx < 0)
-        return false;
-
-    vector_erase_at(block->items, idx);
+    erase_from_vector(block->items,item->id);
 
     int &count = index_tile(item_counts,item->pos);
 

@@ -1056,9 +1056,9 @@ bool DFHack::Items::moveToGround(df::item *item, df::coord pos) {
     item->pos = pos;
     item->flags.bits.on_ground = true;
 
-    if (!item->moveToGround(pos.x, pos.y, pos.z))
-        Core::printerr("Could not add item %d to ground at (%d,%d,%d)\n",
-            item->id, pos.x, pos.y, pos.z);
+    // the moveToGround function can return false even when it succeeds
+    // so we don't check the return value
+    item->moveToGround(pos.x, pos.y, pos.z);
     return true;
 }
 

@@ -64,6 +64,7 @@ Template for new versions:
 - ``Units::isHidingCurse``: don't check ``hunt_target``, which is obsolete
 - ``Units::getReadableName``: correct display of ghost+curse names w/r/t each other and unit prof, use ``curse.name`` instead of iterating syndrome name effects
 - `autodump`: cancel active job on dumped items
+- `add-spatter`: fix a crash related to unloading a savegame with add-spatter reactions, then loading a second savegame with add-spatter reactions
 
 ## Misc Improvements
 - `tweak`: improve performance of ``adamantine-cloth-wear`` tweak

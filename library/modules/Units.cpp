@@ -1965,7 +1965,6 @@ static int32_t *getActionTimerPointer(df::unit_action *action) {
             return &action->data.climb.timer;
         case unit_action_type::Job:
             return &action->data.job.timer;
-            // TODO: Could also patch the unit->job.current_job->completion_timer
         case unit_action_type::Talk:
             return &action->data.talk.timer;
         case unit_action_type::Unsteady:
@@ -1980,7 +1979,6 @@ static int32_t *getActionTimerPointer(df::unit_action *action) {
             return &action->data.liedown.timer;
         case unit_action_type::JobRecover:
             return &action->data.jobrecover.timer;
-            // TODO: Could also patch the unit->job.current_job->completion_timer
         case unit_action_type::PushObject:
             return &action->data.pushobject.timer;
         case unit_action_type::SuckBlood:

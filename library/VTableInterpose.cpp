@@ -330,6 +330,8 @@ VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(const vi
         return NULL;
 
     auto item = pitem->second;
+    if (!item)
+        return NULL;
 
     if (item->host != id)
         return NULL;

@@ -6,7 +6,8 @@ stockpiles
     :tags: fort design productivity stockpiles
 
 Commands act upon the stockpile selected in the UI unless another stockpile
-identifier is specified on the commandline.
+identifier is specified on the commandline. See `gui/stockpiles` for an
+in-game version of this tool.
 
 You can also specify hauling route stops to import and export "desired items"
 configuration.

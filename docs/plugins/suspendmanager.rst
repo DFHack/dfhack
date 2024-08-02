@@ -20,6 +20,8 @@ When enabled, ``suspendmanager`` will watch your active jobs and:
 - suspend construction jobs that would cave in immediately on completion,
   such as when building walls or floors next to grates/bars.
 
+See `gui/suspendmanager` for a graphical configuration interface.
+
 Usage
 -----
 

@@ -21,6 +21,7 @@ reaction raws, with the following differences:
   instead of a material token.
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
+See `gui/create-item` for an interactive version of the tool.
 
 Usage
 -----

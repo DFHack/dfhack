@@ -1056,49 +1056,6 @@ static void markBuildingTiles(df::building *bld, bool remove)
     }
 }
 
-static void linkRooms(df::building *bld)
-{
-/* TODO: understand how this changes for v50
-    auto &vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
-    bool changed = false;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto room = vec[i];
-        if (!room->is_room || room->z != bld->z || room == bld)
-            continue;
-
-        df::building_extents_type *pext = getExtentTile(room->room, df::coord2d(bld->x1, bld->y1));
-        if (!pext || !*pext)
-            continue;
-
-        changed = true;
-        room->children.push_back(bld);
-        bld->parents.push_back(room);
-
-        // TODO: the game updates room rent here if economy is enabled
-    }
-
-    if (changed)
-        df::global::plotinfo->equipment.update.bits.buildings = true;
-*/
-}
-
-static void unlinkRooms(df::building *bld)
-{
-/* TODO: understand how this changes for v50
-    for (size_t i = 0; i < bld->parents.size(); i++)
-    {
-        auto parent = bld->parents[i];
-        int idx = linear_index(parent->children, bld);
-        vector_erase_at(parent->children, idx);
-    }
-
-    bld->parents.clear();
-*/
-}
-
 static void linkBuilding(df::building *bld)
 {
     bld->id = (*building_next_id)++;
@@ -1108,8 +1065,6 @@ static void linkBuilding(df::building *bld)
 
     if (bld->isSettingOccupancy())
         markBuildingTiles(bld, false);
-
-    linkRooms(bld);
 
     Job::checkBuildingsNow();
 }
@@ -1376,14 +1331,15 @@ static void on_civzone_delete(df::building_civzonest* civzone)
 
 bool Buildings::deconstruct(df::building *bld)
 {
-    using df::global::plotinfo;
-    using df::global::world;
     using df::global::ui_look_list;
 
     CHECK_NULL_POINTER(bld);
 
-    if (bld->isActual() && bld->getBuildStage() > 0)
-    {
+    if (bld->isActual() && bld->getBuildStage() > 0) {
+        if (bld->jobs.size() == 1 && bld->jobs[0]->job_type == df::job_type::DestroyBuilding) {
+            // already queued for destruction
+            return false;
+        }
         bld->queueDestroy();
         return false;
     }
@@ -1391,18 +1347,14 @@ bool Buildings::deconstruct(df::building *bld)
     /* Immediate destruction code path.
        Should only happen for abstract and unconstructed buildings.*/
 
-    if (bld->isSettingOccupancy())
-    {
+    if (bld->isSettingOccupancy()) {
         markBuildingTiles(bld, true);
         bld->cleanupMap();
     }
 
     bld->removeUses(false, false);
-    // Assume: no parties.
-    unlinkRooms(bld);
     // Assume: not unit destroy target
     int id = bld->id;
-    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding
@@ -1413,24 +1365,14 @@ bool Buildings::deconstruct(df::building *bld)
 
     remove_building_from_all_zones(bld);
 
-    if (bld->getType() == df::building_type::Civzone)
-    {
-        auto zone = strict_virtual_cast<df::building_civzonest>(bld);
-
-        if (zone)
+    if (bld->getType() == df::building_type::Civzone) {
+        if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
             on_civzone_delete(zone);
     }
 
     delete bld;
 
-    if (world->selected_building == bld)
-    {
-        world->selected_building = NULL;
-        world->update_selected_building = true;
-    }
-
-    for (int i = ui_look_list->size()-1; i >= 0; --i)
-    {
+    for (int i = ui_look_list->size()-1; i >= 0; --i) {
         auto item = (*ui_look_list)[i];
         if (item->type == df::lookinfost::Building &&
             item->data.building.bld_id == id)

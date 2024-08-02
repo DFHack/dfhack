@@ -330,6 +330,8 @@ VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(const vi
         return NULL;
 
     auto item = pitem->second;
+    if (!item)
+        return NULL;
 
     if (item->host != id)
         return NULL;
@@ -398,7 +400,7 @@ void VMethodInterposeLinkBase::on_host_delete(const virtual_identity *from)
     {
         // Otherwise, drop the link to that child:
         assert(child_hosts.count(from) != 0 &&
-               from->interpose_list[vmethod_idx] == this);
+               from->interpose_list[vmethod_idx] == this); // while mutating this gets cleaned up below so machts nichts
 
         // Find and restore the original vmethod ptr
         auto last = this;
@@ -410,7 +412,7 @@ void VMethodInterposeLinkBase::on_host_delete(const virtual_identity *from)
 
         // Unlink the chains
         child_hosts.erase(from);
-        from->interpose_list[vmethod_idx] = NULL;
+        from->interpose_list.erase(vmethod_idx);
     }
 }
 
@@ -432,8 +434,10 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     }
 
     // Retrieve the current vtable entry
-    VMethodInterposeLinkBase *old_link = host->interpose_list[vmethod_idx];
-    VMethodInterposeLinkBase *next_link = NULL;
+    auto l = host->interpose_list.find(vmethod_idx);
+
+    VMethodInterposeLinkBase* old_link = (l != host->interpose_list.end()) ? (l->second) : nullptr;
+    VMethodInterposeLinkBase* next_link = NULL;
 
     while (old_link && old_link->host == host && old_link->priority > priority)
     {
@@ -527,7 +531,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     for (auto it = child_hosts.begin(); it != child_hosts.end(); ++it)
     {
         auto nhost = *it;
-        assert(nhost->interpose_list[vmethod_idx] == old_link);
+        assert(nhost->interpose_list[vmethod_idx] == old_link); // acceptable due to assign below
         nhost->set_vmethod_ptr(patcher, vmethod_idx, interpose_method);
         nhost->interpose_list[vmethod_idx] = this;
     }
@@ -584,7 +588,7 @@ void VMethodInterposeLinkBase::remove()
         for (auto it = child_hosts.begin(); it != child_hosts.end(); ++it)
         {
             auto nhost = *it;
-            assert(nhost->interpose_list[vmethod_idx] == this);
+            assert(nhost->interpose_list[vmethod_idx] == this); // acceptable due to assign below
             nhost->interpose_list[vmethod_idx] = prev;
             nhost->set_vmethod_ptr(patcher, vmethod_idx, saved_chain);
             if (prev)

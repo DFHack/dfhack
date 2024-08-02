@@ -1355,6 +1355,7 @@ bool Buildings::deconstruct(df::building *bld)
     bld->removeUses(false, false);
     // Assume: not unit destroy target
     int id = bld->id;
+    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding

@@ -250,6 +250,7 @@ Varnavskii Aleksandr    Crystalwarrior
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
 Vjek                    vjek
+Vladimir Florov         foxxelias
 Warmist                 warmist
 Wes Malone              wesQ3
 Will H                  TSM-EVO

@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `gui/journal`: new hotkey, accessible from anywhere in fort mode: Ctrl-j
 
 ## Fixes
 - `changelayer`: fix incorrect lookup of geological region in multi-region embarks

@@ -1368,6 +1368,7 @@ bool Buildings::deconstruct(df::building *bld)
         btype == df::building_type::Door ||
         btype == df::building_type::Floodgate ||
         btype == df::building_type::Bridge ||
+        btype == df::building_type::Trap ||
         btype == df::building_type::Support ||
         btype == df::building_type::Chain ||
         btype == df::building_type::Cage ||

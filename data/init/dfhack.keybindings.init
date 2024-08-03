@@ -146,7 +146,7 @@ keybinding add Ctrl-D@dwarfmode/Default gui/design
 keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
 
 # gui/journal
-keybdinding add Ctrl-J@dwarfmode gui/journal
+keybinding add Ctrl-J@dwarfmode gui/journal
 
 
 ########################

@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "modules/Job.h"
 #include "modules/EventManager.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
@@ -11,9 +12,6 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("work-now");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
-REQUIRE_GLOBAL(process_jobs);
-REQUIRE_GLOBAL(process_dig);
 
 namespace DFHack {
     DBG_DECLARE(worknow, log, DebugCategory::LINFO);
@@ -90,8 +88,8 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 }
 
 static void poke_idlers() {
-    *process_jobs = true;
-    *process_dig  = true;
+    Job::checkBuildingsNow();
+    Job::checkDesignationsNow();
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event e) {

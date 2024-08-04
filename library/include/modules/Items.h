@@ -82,6 +82,7 @@ struct DFHACK_EXPORT ItemTypeInfo {
     std::string getToken();
     std::string toString();
 
+    // Token should look like "TOOL" or "TOOL:ITEM_TOOL_HIVE".
     bool find(const std::string &token);
 
     bool matches(df::job_item_vector_id vec_id);
@@ -103,8 +104,11 @@ inline bool operator!= (const ItemTypeInfo &a, const ItemTypeInfo &b) {
  */
 namespace Items
 {
+// Returns true if item type uses creature/caste pair as material.
 DFHACK_EXPORT bool isCasteMaterial(df::item_type itype);
+// Returns the number of raw-defined subtypes of item type (or -1 if N/A).
 DFHACK_EXPORT int getSubtypeCount(df::item_type itype);
+// Returns the raw definition for given item type and subtype or NULL.
 DFHACK_EXPORT df::itemdef *getSubtypeDef(df::item_type itype, int subtype);
 
 // Look for a particular item by ID.
@@ -119,7 +123,7 @@ DFHACK_EXPORT df::unit *getOwner(df::item *item);
 // Set the owner of the item. Pass NULL as unit to remove the owner.
 DFHACK_EXPORT bool setOwner(df::item *item, df::unit *unit);
 
-// Get the item's container or NULL.
+// Get the item's container item or NULL.
 DFHACK_EXPORT df::item *getContainer(df::item *item);
 /// Ref to the outermost object item is contained in. Possible ref types: UNIT, ITEM_GENERAL, VERMIN_EVENT
 /// (init_ref is used to initialize the ref to the item itself before recursive calls.)
@@ -143,7 +147,7 @@ DFHACK_EXPORT std::string getBookTitle(df::item *item);
 
 /// Returns the description string of the item with quality modifiers.
 /// type: 0 = prickle berries [2], 1 = prickle berry, 2 = prickle berries
-/// If decorate, add item improvement modifiers and indicate "(foreign)".
+/// If decorate, add quality/improvement indicators and "(foreign)".
 DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool decorate = false);
 // Includes wear level, book/artifact title, and any caged units.
 DFHACK_EXPORT std::string getReadableDescription(df::item *item);
@@ -155,7 +159,8 @@ DFHACK_EXPORT bool moveToBuilding(df::item *item, df::building_actual *building,
 DFHACK_EXPORT bool moveToInventory(df::item *item, df::unit *unit,
     df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
 
-// Makes the item removed and marked for garbage collection.
+/// Remove item from jobs and inventories, hide and forbid.
+/// Unless no_uncat, item is marked for garbage collection.
 DFHACK_EXPORT bool remove(df::item *item, bool no_uncat = false);
 
 // Detaches the item from its current location and turns it into a projectile.
@@ -183,7 +188,7 @@ DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot
 // Returns true if an active caravan will pay extra for the given item.
 DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
 
-// Returns true if the item can be melted. If game_ui, then only if DF's UI allows it.
+// Returns true if the item can currently be melted. If game_ui, then able to be marked is enough.
 DFHACK_EXPORT bool canMelt(df::item *item, bool game_ui = false);
 // Marks the item for melting.
 DFHACK_EXPORT bool markForMelting(df::item *item);

@@ -54,6 +54,22 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r4
+
+## New Features
 - `gui/journal`: new hotkey, accessible from anywhere in fort mode: Ctrl-j
 
 ## Fixes

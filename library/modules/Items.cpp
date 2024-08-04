@@ -141,42 +141,6 @@ namespace DFHack {
     ITEM(PANTS, pants, itemdef_pantsst) \
     ITEM(FOOD, food, itemdef_foodst)
 
-int Items::getSubtypeCount(df::item_type itype)
-{
-    using namespace df::enums::item_type;
-
-    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-
-    switch (itype) {
-#define ITEM(type,vec,tclass) \
-    case type: \
-        return defs.vec.size();
-ITEMDEF_VECTORS
-#undef ITEM
-
-    default:
-        return -1;
-    }
-}
-
-df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
-{
-    using namespace df::enums::item_type;
-
-    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-
-    switch (itype) {
-#define ITEM(type,vec,tclass) \
-    case type: \
-        return vector_get(defs.vec, subtype);
-ITEMDEF_VECTORS
-#undef ITEM
-
-    default:
-        return NULL;
-    }
-}
-
 bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
 {
     type = type_;
@@ -272,11 +236,6 @@ ITEMDEF_VECTORS
     }
 
     return (subtype >= 0);
-}
-
-bool Items::isCasteMaterial(df::item_type itype)
-{
-    return ENUM_ATTR(item_type, is_caste_mat, itype);
 }
 
 bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
@@ -520,6 +479,47 @@ bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
            bits_match(jitem.flags1.whole, item_ok1.whole, item_mask1.whole) &&
            bits_match(jitem.flags2.whole, item_ok2.whole, item_mask2.whole) &&
            bits_match(jitem.flags3.whole, item_ok3.whole, item_mask3.whole);
+}
+
+bool Items::isCasteMaterial(df::item_type itype)
+{
+    return ENUM_ATTR(item_type, is_caste_mat, itype);
+}
+
+int Items::getSubtypeCount(df::item_type itype)
+{
+    using namespace df::enums::item_type;
+
+    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+
+    switch (itype) {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return defs.vec.size();
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return -1;
+    }
+}
+
+df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
+{
+    using namespace df::enums::item_type;
+
+    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+
+    switch (itype) {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return vector_get(defs.vec, subtype);
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return NULL;
+    }
 }
 
 df::item * Items::findItemByID(int32_t id)
@@ -1967,31 +1967,6 @@ static int32_t get_sell_request_multiplier(df::unit *unit, const df::caravan_sta
     return (price != -1) ? price : DEFAULT_AGREEMENT_MULTIPLIER;
 }
 
-static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
-    auto trade_state = caravan->trade_state;
-    if (caravan->time_remaining <= 0 ||
-            (trade_state != df::caravan_state::T_trade_state::Approaching &&
-                trade_state != df::caravan_state::T_trade_state::AtDepot))
-        return false;
-    return get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER;
-}
-
-bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
-    if (caravan)
-        return is_requested_trade_good(item, caravan);
-
-    for (auto caravan : df::global::plotinfo->caravans) {
-        auto trade_state = caravan->trade_state;
-        if (caravan->time_remaining <= 0 ||
-                (trade_state != df::caravan_state::T_trade_state::Approaching &&
-                 trade_state != df::caravan_state::T_trade_state::AtDepot))
-            continue;
-        if (get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER)
-            return true;
-    }
-    return false;
-}
-
 int Items::getValue(df::item *item, df::caravan_state *caravan)
 {
     CHECK_NULL_POINTER(item);
@@ -2319,6 +2294,31 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     Job::linkIntoWorld(job);
 
     return true;
+}
+
+static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
+    auto trade_state = caravan->trade_state;
+    if (caravan->time_remaining <= 0 ||
+            (trade_state != df::caravan_state::T_trade_state::Approaching &&
+                trade_state != df::caravan_state::T_trade_state::AtDepot))
+        return false;
+    return get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER;
+}
+
+bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
+    if (caravan)
+        return is_requested_trade_good(item, caravan);
+
+    for (auto caravan : df::global::plotinfo->caravans) {
+        auto trade_state = caravan->trade_state;
+        if (caravan->time_remaining <= 0 ||
+                (trade_state != df::caravan_state::T_trade_state::Approaching &&
+                 trade_state != df::caravan_state::T_trade_state::AtDepot))
+            continue;
+        if (get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER)
+            return true;
+    }
+    return false;
 }
 
 // When called with game_ui = true, this is equivalent to bay12's itemst::meltable()

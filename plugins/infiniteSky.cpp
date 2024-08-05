@@ -65,8 +65,6 @@ void doInfiniteSky(color_ostream& out, int32_t howMany);
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    if ( !enabled )
-        return CR_OK;
     if ( !Core::getInstance().isMapLoaded() )
         return CR_OK;
     {

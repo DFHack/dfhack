@@ -444,7 +444,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out)
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out)
 {
-    if (enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autofarmInstance->process(out);
 
     return CR_OK;

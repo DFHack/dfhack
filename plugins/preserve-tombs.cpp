@@ -153,7 +153,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= cycle_freq)
+    if (world->frame_counter - cycle_timestamp >= cycle_freq)
         update_tomb_assignments(out);
     return CR_OK;
 }

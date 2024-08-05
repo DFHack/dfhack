@@ -343,8 +343,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
 
-    if (is_enabled &&
-            (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
+    if (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }

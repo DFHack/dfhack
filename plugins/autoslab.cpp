@@ -126,8 +126,7 @@ static const int32_t CYCLE_TICKS = 1289;
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    CoreSuspender suspend;
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }

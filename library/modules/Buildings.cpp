@@ -263,7 +263,6 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
 static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone) {
     erase_from_vector(zone->contained_buildings, &df::building::id, bld->id);
     vector_erase_at(bld->relations, binsearch_index(bld->relations, &df::building::id, zone->id));
-
 }
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)

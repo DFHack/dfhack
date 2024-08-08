@@ -187,7 +187,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::isFortressMode())
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         logistics_cycle(out, true);

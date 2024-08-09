@@ -177,24 +177,16 @@ void buildings_onUpdate(color_ostream &out)
 
 static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (auto contained_building : zone->contained_buildings)
-    {
-        if (contained_building == bld)
-            return;
-    }
-
-    insert_into_vector(zone->contained_buildings, &df::building::id, bld);
+    if (linear_index(zone->contained_buildings, bld) >= 0)
+        return;
+    zone->contained_buildings.push_back(bld);
 }
 
 static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (auto relation : bld->relations)
-    {
-        if (relation == zone)
-            return;
-    }
-
-    insert_into_vector(bld->relations, &df::building_civzonest::id, zone);
+    if (linear_index(bld->relations, zone) >= 0)
+        return;
+    bld->relations.push_back(zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)
@@ -261,8 +253,8 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
 }
 
 static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone) {
-    erase_from_vector(zone->contained_buildings, &df::building::id, bld->id);
-    vector_erase_at(bld->relations, binsearch_index(bld->relations, &df::building::id, zone->id));
+    vector_erase_at(zone->contained_buildings, linear_index(zone->contained_buildings, bld));
+    vector_erase_at(bld->relations, linear_index(bld->relations, zone));
 }
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)

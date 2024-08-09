@@ -79,6 +79,7 @@ Template for new versions:
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
 - ``dfhack.units.isDanger``: no longer returns true for intelligent undead
 - Overlay widgets can now assume their ``active`` and ``visible`` functions will only execute in a context that matches their ``viewscreens`` associations
+- ``gui.simulateInput``: do not generate spurious keycode from ``_STRING``
 
 ## Removed
 - ``quickfortress.csv``: remove old sample blueprints for "The Quick Fortress", which were unmaintained and non-functional in DF v50+. Online blueprints are available at https://docs.google.com/spreadsheets/d/1WuLYZBM6S2nt-XsPS30kpDnngpOQCuIdlw4zjrcITdY if anyone is interested in giving these blueprints some love

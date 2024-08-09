@@ -56,7 +56,9 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- prevent hang when buildings in zones are destroyed in the case where the buildings were not added to the zone in the same order that they were created (uncommon)
 - `buildingplan`: improved performance in forts with large numbers of items
+- System clipboard: when pasting single lines from the system clipboard, replace newlines with spaces so they don't show up as strange CP437 glyphs in-game
 
 ## Misc Improvements
 

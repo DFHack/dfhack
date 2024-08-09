@@ -57,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - `buildingplan`: improved performance in forts with large numbers of items
+- System clipboard: when pasting single lines from the system clipboard, replace newlines with spaces so they don't show up as strange CP437 glyphs in-game
 
 ## Misc Improvements
 

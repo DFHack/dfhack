@@ -182,11 +182,23 @@ static char * tabs_to_spaces(char *str) {
     return str;
 }
 
+static string normalize_newlines(const string & str, bool to_spaces = false) {
+    string normalized_str = str;
+#ifdef WIN32
+    static const std::regex CRLF("\r\n");
+    normalized_str = std::regex_replace(normalized_str, CRLF, "\n");
+#endif
+    if (to_spaces)
+        std::replace(normalized_str.begin(), normalized_str.end(), '\n', ' ');
+
+    return normalized_str;
+}
+
 DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return "";
     char *text = tabs_to_spaces(g_SDL_GetClipboardText());
-    string textcp437 = UTF2DF(text);
+    string textcp437 = UTF2DF(normalize_newlines(text, true));
     DFHack::DFSDL::DFSDL_free(text);
     return textcp437;
 }
@@ -197,13 +209,8 @@ DFHACK_EXPORT bool DFHack::getClipboardTextCp437Multiline(vector<string> * lines
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return false;
     char *text = tabs_to_spaces(g_SDL_GetClipboardText());
-    string textstr = text;
-#ifdef WIN32
-    static const std::regex CRLF("\r\n");
-    textstr = std::regex_replace(textstr, CRLF, "\n");
-#endif
     vector<string> utf8_lines;
-    split_string(&utf8_lines, textstr, "\n");
+    split_string(&utf8_lines, normalize_newlines(text), "\n");
     DFHack::DFSDL::DFSDL_free(text);
 
     for (auto utf8_line : utf8_lines)

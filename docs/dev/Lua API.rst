@@ -1569,6 +1569,14 @@ Units module
 
   The unit is a regular visitor with no special purpose (e.g., merchant).
 
+* ``dfhack.units.isWildlife(unit)``
+
+  The unit is surface or cavern wildlife.
+
+* ``dfhack.units.isAgitated(unit)``
+
+  The unit is an agitated creature.
+
 * ``dfhack.units.isInvader(unit)``
 
   The unit is an active invader or marauder.
@@ -1587,11 +1595,11 @@ Units module
 
   Simple enemy type checks.
 
-* ``dfhack.units.isDanger(unit[,hiding_curse])``
+* ``dfhack.units.isDanger(unit)``
 
-  The unit is dangerous and probably hostile. This includes undead
-  (optionally those hiding curse), night creatures, semi-megabeasts,
-  invaders, agitated wildlife, crazed units, and Great Dangers (see below).
+  The unit is dangerous and probably hostile. This includes night creatures,
+  semi-megabeasts, invaders, agitated wildlife, crazed units, and Great Dangers
+  (see below).
 
 * ``dfhack.units.isGreatDanger(unit)``
 

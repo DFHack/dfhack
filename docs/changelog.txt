@@ -62,6 +62,7 @@ Template for new versions:
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
 - `buildingplan`: fixed type confusion when using quick filter slot '0'
+- DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
 
 ## Misc Improvements
 - `orders`: more space efficient workshop overlay

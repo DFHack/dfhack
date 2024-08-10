@@ -171,8 +171,7 @@ bool Units::isFortControlled(df::unit *unit)
         return false;
     else if (unit->flags1.bits.tame)
         return true;
-    else if (unit->flags2.whole & exclude_flags2 ||
-        unit->flags4.bits.agitated_wilderness_creature)
+    else if (unit->flags2.whole & exclude_flags2 || isAgitated(unit))
         return false;
     return isOwnCiv(unit);
 }
@@ -577,6 +576,19 @@ bool Units::isVisitor(df::unit *unit) {
     return unit->flags2.bits.visitor || unit->flags2.bits.visitor_uninvited;
 }
 
+bool Units::isWildlife(df::unit *unit) {
+    CHECK_NULL_POINTER(unit);
+    return unit->animal.population.population_idx >= 0
+        && !isMerchant(unit)
+        && !isForest(unit)
+        && !isFortControlled(unit);
+}
+
+bool Units::isAgitated(df::unit *unit) {
+    CHECK_NULL_POINTER(unit);
+    return unit->flags4.bits.agitated_wilderness_creature;
+}
+
 bool Units::isInvader(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
     return (unit->flags1.bits.marauder ||
@@ -624,15 +636,18 @@ bool Units::isDemon(df::unit *unit) {
         || cf.is_set(caste_raw_flags::UNIQUE_DEMON);
 }
 
-bool Units::isDanger(df::unit *unit, bool hiding_curse) {
+bool Units::isDanger(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    return isCrazed(unit) ||
-        isInvader(unit) ||
-        isUndead(unit, hiding_curse) ||
-        unit->flags4.bits.agitated_wilderness_creature ||
-        isSemiMegabeast(unit) ||
-        isNightCreature(unit) ||
-        isGreatDanger(unit);
+    if (isTame(unit) || isOwnGroup(unit))
+        return false;
+
+    return isCrazed(unit)
+        || isInvader(unit)
+        || isOpposedToLife(unit)
+        || isAgitated(unit)
+        || isSemiMegabeast(unit)
+        || isNightCreature(unit)
+        || isGreatDanger(unit);
 }
 
 bool Units::isGreatDanger(df::unit *unit) {
@@ -1747,7 +1762,7 @@ string Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural, 
             return prof;
     }
     prof = getCasteProfessionName(unit->race, unit->caste, getProfession(unit), plural);
-    return unit->flags4.bits.agitated_wilderness_creature ? "Agitated " + prof : prof;
+    return isAgitated(unit) ? "Agitated " + prof : prof;
 }
 
 string Units::getCasteProfessionName(int race, int casteid, df::profession pid, bool plural) {

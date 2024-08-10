@@ -552,7 +552,7 @@ end
 
 local function get_unit_disposition(unit)
     local disposition = DISPOSITION.NONE
-    if dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit) then
+    if dfhack.units.isDanger(unit) then
         disposition = DISPOSITION.HOSTILE
     elseif dfhack.units.isPet(unit) then
         disposition = DISPOSITION.PET

@@ -13,3 +13,6 @@ If you have DFHack installed, it is also accessible as raw text in the `hack/doc
 If you're an end-user, modder, or interested in contributing to DFHack -- go read those docs.
 
 If the docs are unclear or you need more help, please check out our [support page](https://docs.dfhack.org/en/latest/docs/Support.html) for ways to contact the DFHack developers.
+
+ 
+

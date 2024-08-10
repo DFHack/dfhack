@@ -3672,7 +3672,7 @@ functions. These are invoked just like standard string functions, e.g.::
   Lines are split at space-separated word boundaries. Any existing newlines are
   kept in place. If a single word is longer than width, it is split over
   multiple lines. If ``width`` is not specified, 72 is used. The ``opts``
-  parameter can be a table with the following boolean fields specified::
+  parameter can be a table with the following boolean fields specified:
 
     :return_as_table: if ``true``, then the function will return a table of
         strings, with each string representing one wrapped line. Otherwise, a

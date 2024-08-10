@@ -749,7 +749,7 @@ local function filter_matches(unit, subset)
     elseif dfhack.units.isDead(unit) or not dfhack.units.isActive(unit) then
         return subset == 'deceased'
     elseif dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit)
-        or unit.flags2.visitor_uninvited or unit.flags4.agitated_wilderness_creature
+        or unit.flags2.visitor_uninvited or dfhack.units.isAgitated(unit)
     then
         return subset == 'others'
     elseif dfhack.units.isVisiting(unit) then

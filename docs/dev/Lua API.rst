@@ -1641,8 +1641,9 @@ Units module
 
 * ``dfhack.units.getPosition(unit)``
 
-  Returns true *x,y,z* of the unit, or *nil* if invalid. May not be equal to
-  unit.pos if caged.
+  Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
+  generally use this method instead of reading *unit.pos* directly since
+  that field can be inaccurate when the unit is caged.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -1964,27 +1965,29 @@ Military module
 Items module
 ------------
 
-* ``dfhack.items.getPosition(item)``
+* ``dfhack.items.findType(string)``
 
-  Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos
-  if in inventory.
+  Finds an item type by string and returns the ``df.item_type``. String is
+  case-sensitive (e.g., "TOOL").
 
-* ``dfhack.items.getBookTitle(item)``
+* ``dfhack.items.findSubtype(string)``
 
-  Returns the title of the "book" item, or an empty string if the item isn't a "book"
-  or it doesn't have a title. A "book" is a codex or a tool item that has page or
-  writings improvements, such as scrolls and quires.
+  Finds an item subtype by string and returns the subtype or *-1*. String is
+  case-sensitive (e.g., "TOOL:ITEM_TOOL_HIVE").
 
-* ``dfhack.items.getDescription(item, type[, decorate])``
+* ``dfhack.items.isCasteMaterial(item_type)``
 
-  Returns the string description of the item, as produced by the ``getItemDescription``
-  method. If decorate is true, also adds markings for quality and improvements.
+  Returns *true* if this item type uses a creature/caste pair as its material.
 
-* ``dfhack.items.getReadableDescription(item)``
+* ``dfhack.items.getSubtypeCount(item_type)``
 
-  Returns a string generally fit to usefully describe the item to the player.
-  When the item description appears anywhere in a script output or in the UI,
-  this is usually the string you should use.
+  Returns the number of raw-defined subtypes of the given item type, or *-1*
+  if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil*
+  if invalid.
 
 * ``dfhack.items.getGeneralRef(item, type)``
 
@@ -2005,7 +2008,7 @@ Items module
 
 * ``dfhack.items.getContainer(item)``
 
-  Returns the container item or *nil*.
+  Returns the item's container item or *nil*.
 
 * ``dfhack.items.getOuterContainerRef(item)``
 
@@ -2025,6 +2028,32 @@ Items module
 * ``dfhack.items.getHolderUnit(item)``
 
   Returns the holder unit or *nil*.
+
+* ``dfhack.items.getPosition(item)``
+
+  Returns the true *x,y,z* of the item, or *nil* if invalid. You should generally
+  use this method instead of reading *item.pos* directly since that field only stores
+  the last position where the item was on the ground.
+
+* ``dfhack.items.getBookTitle(item)``
+
+  Returns the title of the "book" item, or an empty string if the item isn't a "book"
+  or it doesn't have a title. A "book" is a codex or a tool item that has page or
+  writing improvements, such as scrolls and quires.
+
+* ``dfhack.items.getDescription(item, type[, decorate])``
+
+  Returns the string description of the item, as produced by the ``getItemDescription``
+  method. A ``type`` of ``0`` results in a string like ``prickle berries [2]``. ``1``
+  results in the singular ``prickle berry``, and ``2`` results in the plural
+  ``prickle berries``. If decorate is *true*, also adds markings for quality and
+  improvements, as well as ``(foreign)`` indicator (when applicable).
+
+* ``dfhack.items.getReadableDescription(item)``
+
+  Returns a string generally fit to usefully describe the item to the player.
+  When the item description appears anywhere in a script output or in the UI,
+  this is usually the string you should use.
 
 * ``dfhack.items.moveToGround(item,pos)``
 
@@ -2060,35 +2089,16 @@ Items module
   Turns the item into a projectile, and returns the new object, or *nil*
   if impossible.
 
-* ``dfhack.items.isCasteMaterial(item_type)``
-
-  Returns *true* if this item type uses a creature/caste pair as its material.
-
-* ``dfhack.items.getSubtypeCount(item_type)``
-
-  Returns the number of raw-defined subtypes of the given item type, or *-1*
-  if not applicable.
-
-* ``dfhack.items.getSubtypeDef(item_type, subtype)``
-
-  Returns the raw definition for the given item type and subtype, or *nil*
-  if invalid.
-
 * ``dfhack.items.getItemBaseValue(item_type, subtype, material, mat_index)``
 
   Calculates the base value for an item of the specified type and material.
 
-* ``dfhack.items.getValue(item[, caravan_state])``
+* ``dfhack.items.getValue(item[,caravan_state])``
 
   Calculates the value of an item. If a ``df.caravan_state`` object is given
   (from ``df.global.plotinfo.caravans`` or
-  ``df.global.main_interface.trade.mer``), then the value is modified by civ
+  ``df.global.game.main_interface.trade.mer``), then the value is modified by civ
   properties and any trade agreements that might be in effect.
-
-* ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
-
-  Returns whether a caravan will pay extra for the given item. If caravan_state
-  is not given, checks all active caravans.
 
 * ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
 
@@ -2116,9 +2126,14 @@ Items module
 
   Marks the given item for trade at the given depot.
 
-* ``dfhack.items.canMelt(item[, game_ui])``
+* ``dfhack.items.isRequestedTradeGood(item[,caravan_state])``
 
-  Returns true if the item can be designated for melting. Unless ``game_ui`` is
+  Returns whether a caravan will pay extra for the given item. If caravan_state
+  is not given, checks all active caravans.
+
+* ``dfhack.items.canMelt(item[,game_ui])``
+
+  Returns true if the item can be melted (at a smelter). Unless ``game_ui`` is
   given and true, bars, non-empty metal containers, and items in unit
   inventories are not considered meltable, even though they can be designated
   for melting using the game UI.

@@ -64,6 +64,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks

@@ -608,9 +608,6 @@ static void process_constraints(color_ostream &out);
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (!enabled)
-        return CR_OK;
-
     // Every 5 frames check the jobs for disappearance
     static unsigned cnt = 0;
     if ((++cnt % 5) != 0)

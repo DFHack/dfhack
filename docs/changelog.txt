@@ -56,6 +56,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- prevent hang when buildings in zones are destroyed in the case where the buildings were not added to the zone in the same order that they were created (uncommon)
+- `buildingplan`: improved performance in forts with large numbers of items
+- System clipboard: when pasting single lines from the system clipboard, replace newlines with spaces so they don't show up as strange CP437 glyphs in-game
+- `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 
 ## Misc Improvements
 
@@ -63,8 +67,11 @@ Template for new versions:
 - Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
 
 ## API
+- ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
 
 ## Lua
+- ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
+- ``dfhack.units.isDanger``: no longer returns true for intelligent undead
 
 ## Removed
 

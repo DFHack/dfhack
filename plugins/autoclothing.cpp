@@ -293,7 +293,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 // Whatever you put here will be done in each game step. Don't abuse it.
 // It's optional, so you can just comment it out like this if you don't need it.
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_autoclothing();
     return CR_OK;
 }

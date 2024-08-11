@@ -343,8 +343,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
 
-    if (is_enabled &&
-            (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
+    if (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
@@ -667,22 +666,23 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     auto &jitem = job_items[index];
     auto vector_ids = getVectorIds(out, jitem, ignore_filters);
 
+    ItemFilter filter = filters[index];
+    set<string> special = specials;
+    if (ignore_filters || counts) {
+        // don't filter by material; we want counts for all materials
+        filter.setMaterialMask(0);
+        filter.setMaterials(set<MaterialInfo>());
+        special.clear();
+    }
+    if (ignore_quality) {
+        filter.setMinQuality(df::item_quality::Ordinary);
+        filter.setMaxQuality(df::item_quality::Artifact);
+    }
+
     int count = 0;
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            ItemFilter filter = filters[index];
-            set<string> special = specials;
-            if (ignore_filters || counts) {
-                // don't filter by material; we want counts for all materials
-                filter.setMaterialMask(0);
-                filter.setMaterials(set<MaterialInfo>());
-                special.clear();
-            }
-            if (ignore_quality) {
-                filter.setMinQuality(df::item_quality::Ordinary);
-                filter.setMaxQuality(df::item_quality::Artifact);
-            }
             if (itemPassesScreen(out, item) && matchesFilters(item, jitem, heat, filter, special)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);

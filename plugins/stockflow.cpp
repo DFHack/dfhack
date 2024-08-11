@@ -217,9 +217,6 @@ static LuaHelper helper;
 #define DELTA_TICKS 600
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!enabled)
-        return CR_OK;
-
     if (!Maps::IsValid())
         return CR_OK;
 

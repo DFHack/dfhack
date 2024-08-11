@@ -219,7 +219,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         int32_t num_enabled_seeds, num_disabled_seeds;
         do_cycle(out, &num_enabled_seeds, &num_disabled_seeds);
         if (0 < num_enabled_seeds)

@@ -1569,6 +1569,14 @@ Units module
 
   The unit is a regular visitor with no special purpose (e.g., merchant).
 
+* ``dfhack.units.isWildlife(unit)``
+
+  The unit is surface or cavern wildlife.
+
+* ``dfhack.units.isAgitated(unit)``
+
+  The unit is an agitated creature.
+
 * ``dfhack.units.isInvader(unit)``
 
   The unit is an active invader or marauder.
@@ -1587,11 +1595,11 @@ Units module
 
   Simple enemy type checks.
 
-* ``dfhack.units.isDanger(unit[,hiding_curse])``
+* ``dfhack.units.isDanger(unit)``
 
-  The unit is dangerous and probably hostile. This includes undead
-  (optionally those hiding curse), night creatures, semi-megabeasts,
-  invaders, agitated wildlife, crazed units, and Great Dangers (see below).
+  The unit is dangerous and probably hostile. This includes night creatures,
+  semi-megabeasts, invaders, agitated wildlife, crazed units, and Great Dangers
+  (see below).
 
 * ``dfhack.units.isGreatDanger(unit)``
 
@@ -1633,8 +1641,9 @@ Units module
 
 * ``dfhack.units.getPosition(unit)``
 
-  Returns true *x,y,z* of the unit, or *nil* if invalid. May not be equal to
-  unit.pos if caged.
+  Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
+  generally use this method instead of reading *unit.pos* directly since
+  that field can be inaccurate when the unit is caged.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -2022,14 +2031,15 @@ Items module
 
 * ``dfhack.items.getPosition(item)``
 
-  Returns true *x,y,z* of the item, or *nil* if invalid. May not be equal to item.pos
-  if in inventory.
+  Returns the true *x,y,z* of the item, or *nil* if invalid. You should generally
+  use this method instead of reading *item.pos* directly since that field only stores
+  the last position where the item was on the ground.
 
 * ``dfhack.items.getBookTitle(item)``
 
   Returns the title of the "book" item, or an empty string if the item isn't a "book"
   or it doesn't have a title. A "book" is a codex or a tool item that has page or
-  writings improvements, such as scrolls and quires.
+  writing improvements, such as scrolls and quires.
 
 * ``dfhack.items.getDescription(item, type[, decorate])``
 
@@ -2123,7 +2133,7 @@ Items module
 
 * ``dfhack.items.canMelt(item[,game_ui])``
 
-  Returns true if the item can be used for melting. Unless ``game_ui`` is
+  Returns true if the item can be melted (at a forge). Unless ``game_ui`` is
   given and true, bars, non-empty metal containers, and items in unit
   inventories are not considered meltable, even though they can be designated
   for melting using the game UI.

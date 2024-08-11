@@ -705,7 +705,7 @@ static string get_item_type_str(df::item *item) {
 static string get_base_desc(df::item *item) {
     if (auto name = Items::getBookTitle(item); !name.empty())
         return name;
-    if (auto artifact = get_artifact(item); artifact->name.has_name)
+    if (auto artifact = get_artifact(item); artifact && artifact->name.has_name)
         return Translation::TranslateName(&artifact->name, false) +
             ", " + Translation::TranslateName(&artifact->name) +
             " (" + get_item_type_str(item) + ")";
@@ -1239,7 +1239,6 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
         case CORPSEPIECE:
         case REMAINS:
         case ROCK:
-        default:
             return 0;
     }
 

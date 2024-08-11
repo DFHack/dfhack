@@ -158,6 +158,8 @@ DFHACK_EXPORT bool isAnimal(df::unit *unit);
 DFHACK_EXPORT bool isMerchant(df::unit *unit);
 DFHACK_EXPORT bool isDiplomat(df::unit *unit);
 DFHACK_EXPORT bool isVisitor(df::unit *unit);
+DFHACK_EXPORT bool isWildlife(df::unit *unit);
+DFHACK_EXPORT bool isAgitated(df::unit *unit);
 DFHACK_EXPORT bool isInvader(df::unit *unit);
 // Ignores units hiding curse by default to avoid spoiling vampires.
 DFHACK_EXPORT bool isUndead(df::unit *unit, bool hiding_curse = false);
@@ -167,9 +169,8 @@ DFHACK_EXPORT bool isMegabeast(df::unit *unit);
 DFHACK_EXPORT bool isTitan(df::unit *unit);
 DFHACK_EXPORT bool isForgottenBeast(df::unit *unit);
 DFHACK_EXPORT bool isDemon(df::unit *unit);
-/// Probably hostile. Includes undead (optionally those hiding curse), night creatures,
-/// semi-megabeasts, invaders, agitated wildlife, crazed units, and Great Dangers.
-DFHACK_EXPORT bool isDanger(df::unit *unit, bool hiding_curse = false);
+/// Probably hostile.
+DFHACK_EXPORT bool isDanger(df::unit *unit);
 // Megabeasts, titans, forgotten beasts, and demons.
 DFHACK_EXPORT bool isGreatDanger(df::unit *unit);
 

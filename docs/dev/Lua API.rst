@@ -2133,7 +2133,7 @@ Items module
 
 * ``dfhack.items.canMelt(item[,game_ui])``
 
-  Returns true if the item can be melted (at a forge). Unless ``game_ui`` is
+  Returns true if the item can be melted (at a smelter). Unless ``game_ui`` is
   given and true, bars, non-empty metal containers, and items in unit
   inventories are not considered meltable, even though they can be designated
   for melting using the game UI.

@@ -152,6 +152,11 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     updates, set it to ``0`` and it will be noticed immediately.
 
 Common widget attributes such as ``active`` and ``visible`` are also respected.
+Note that those properties are checked *after* matching ``viewscreens`` focus
+string(s), so you can assume they are evaluated in an consistent context. For
+example, if your widget has ``viewscreens='dwarfmode/Trade/Default'``, then you
+can assume your ``visible=function() ... end`` function will be executing while
+the trade screen is active.
 
 Registering a widget with the overlay framework
 ***********************************************

@@ -2111,15 +2111,13 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     { NULL, NULL }
 };
 
-static int units_getPosition(lua_State *state)
-{
+static int units_getPosition(lua_State *state) {
     return Lua::PushPosXYZ(state, Units::getPosition(Lua::CheckDFObject<df::unit>(state,1)));
 }
 
 static int units_getOuterContainerRef(lua_State *state)
 {
     auto ref = Units::getOuterContainerRef(Lua::CheckDFObject<df::unit>(state, 1));
-
     lua_newtable(state);
     Lua::TableInsert(state, "type", ref.type);
 
@@ -2137,7 +2135,6 @@ static int units_getOuterContainerRef(lua_State *state)
         default:
             Lua::TableInsert(state, "object", NULL);
     }
-
     return 1;
 }
 
@@ -2158,7 +2155,6 @@ static int units_getNoblePositions(lua_State *L) {
     }
     else
         luaL_argerror(L, 1, "Expected a unit or a historical figure");
-
     return 1;
 }
 
@@ -2225,7 +2221,6 @@ static int units_getUnitsByNobleRole(lua_State *L) {
 
 static int units_getCasteRaw(lua_State *state) {
     df::caste_raw *craw = NULL;
-
     if (lua_gettop(state) <= 1)
         craw = Units::getCasteRaw(Lua::CheckDFObject<df::unit>(state, 1));
     else // Use race, caste
@@ -2235,8 +2230,7 @@ static int units_getCasteRaw(lua_State *state) {
     return 1;
 }
 
-static int units_getStressCutoffs(lua_State *L)
-{
+static int units_getStressCutoffs(lua_State *L) {
     lua_newtable(L);
     for (size_t i = 0; i < Units::stress_cutoffs.size(); i++)
         Lua::TableInsert(L, i, Units::stress_cutoffs[i]);
@@ -2244,7 +2238,7 @@ static int units_getStressCutoffs(lua_State *L)
 }
 
 static int units_assignTrainer(lua_State *L) {
-    df::unit * unit = Lua::CheckDFObject<df::unit>(L, 1);
+    auto unit = Lua::CheckDFObject<df::unit>(L, 1);
     int isNum = 0;
     int trainer_id = lua_tointegerx(L, 2, &isNum);
     if (!isNum || trainer_id < 0)
@@ -2311,21 +2305,24 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
 
 /***** Items module *****/
 
-static int16_t items_findType(string token)
-{
+static int16_t items_findType(string token) {
     DFHack::ItemTypeInfo result;
     result.find(token);
     return result.type;
 }
 
-static int32_t items_findSubtype(string token)
-{
+static int32_t items_findSubtype(string token) {
     DFHack::ItemTypeInfo result;
     result.find(token);
     return result.subtype;
 }
 
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
+    WRAPN(findType, items_findType),
+    WRAPN(findSubtype, items_findSubtype),
+    WRAPM(Items, isCasteMaterial),
+    WRAPM(Items, getSubtypeCount),
+    WRAPM(Items, getSubtypeDef),
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
     WRAPM(Items, getOwner),
@@ -2336,41 +2333,30 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getBookTitle),
     WRAPM(Items, getDescription),
     WRAPM(Items, getReadableDescription),
-    WRAPM(Items, isCasteMaterial),
-    WRAPM(Items, getSubtypeCount),
-    WRAPM(Items, getSubtypeDef),
+    WRAPM(Items, moveToGround),
+    WRAPM(Items, moveToContainer),
+    WRAPM(Items, remove),
+    WRAPM(Items, makeProjectile),
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
-    WRAPM(Items, isRequestedTradeGood),
     WRAPM(Items, checkMandates),
     WRAPM(Items, canTrade),
     WRAPM(Items, canTradeWithContents),
     WRAPM(Items, canTradeAnyWithContents),
     WRAPM(Items, markForTrade),
+    WRAPM(Items, isRequestedTradeGood),
     WRAPM(Items, canMelt),
     WRAPM(Items, markForMelting),
     WRAPM(Items, cancelMelting),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
     WRAPM(Items, getCapacity),
-    WRAPM(Items, moveToGround),
-    WRAPM(Items, moveToContainer),
-    WRAPM(Items, makeProjectile),
-    WRAPM(Items, remove),
-    WRAPN(findType, items_findType),
-    WRAPN(findSubtype, items_findSubtype),
     { NULL, NULL }
 };
-
-static int items_getPosition(lua_State *state)
-{
-    return Lua::PushPosXYZ(state, Items::getPosition(Lua::CheckDFObject<df::item>(state,1)));
-}
 
 static int items_getOuterContainerRef(lua_State *state)
 {
     auto ref = Items::getOuterContainerRef(Lua::CheckDFObject<df::item>(state, 1));
-
     lua_newtable(state);
     Lua::TableInsert(state, "type", ref.type);
 
@@ -2388,33 +2374,34 @@ static int items_getOuterContainerRef(lua_State *state)
         default:
             Lua::TableInsert(state, "object", NULL);
     }
-
     return 1;
 }
 
-static int items_getContainedItems(lua_State *state)
-{
+static int items_getContainedItems(lua_State *state) {
     vector<df::item*> pvec;
     Items::getContainedItems(Lua::CheckDFObject<df::item>(state,1),&pvec);
     Lua::PushVector(state, pvec);
     return 1;
 }
 
+static int items_getPosition(lua_State *state) {
+    return Lua::PushPosXYZ(state, Items::getPosition(Lua::CheckDFObject<df::item>(state,1)));
+}
+
 static int items_moveToBuilding(lua_State *state)
 {
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto building = Lua::CheckDFObject<df::building_actual>(state, 2);
-    df::building_item_role_type use_mode = (df::building_item_role_type)luaL_optint(state, 3, 0);
+    auto use_mode = (df::building_item_role_type)luaL_optint(state, 3, 0);
     bool force_in_building = lua_toboolean(state, 4);
     lua_pushboolean(state, Items::moveToBuilding(item, building, use_mode, force_in_building));
     return 1;
 }
 
-static int items_moveToInventory(lua_State *state)
-{
+static int items_moveToInventory(lua_State *state) {
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto unit = Lua::CheckDFObject<df::unit>(state, 2);
-    df::unit_inventory_item::T_mode use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
+    auto use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
     int body_part = luaL_optint(state, 4, -1);
     lua_pushboolean(state, Items::moveToInventory(item, unit, use_mode, body_part));
     return 1;
@@ -2436,9 +2423,9 @@ static int items_createItem(lua_State *state)
 }
 
 static const luaL_Reg dfhack_items_funcs[] = {
-    { "getPosition", items_getPosition },
     { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
+    { "getPosition", items_getPosition },
     { "moveToBuilding", items_moveToBuilding },
     { "moveToInventory", items_moveToInventory },
     { "createItem", items_createItem },

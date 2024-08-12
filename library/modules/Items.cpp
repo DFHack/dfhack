@@ -41,28 +41,25 @@ distribution.
 #include "modules/World.h"
 
 #include "df/artifact_record.h"
-#include "df/body_part_raw.h"
-#include "df/body_part_template_flags.h"
 #include "df/building.h"
 #include "df/building_actual.h"
 #include "df/building_tradedepotst.h"
 #include "df/builtin_mats.h"
 #include "df/caravan_state.h"
-#include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/entity_buy_prices.h"
 #include "df/entity_buy_requests.h"
+#include "df/entity_raw.h"
 #include "df/entity_sell_category.h"
 #include "df/entity_sell_prices.h"
-#include "df/entity_raw.h"
 #include "df/general_ref.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/general_ref_contains_itemst.h"
 #include "df/general_ref_projectile.h"
-#include "df/general_ref_unit_itemownerst.h"
 #include "df/general_ref_unit_holderst.h"
+#include "df/general_ref_unit_itemownerst.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_bookst.h"
@@ -100,26 +97,18 @@ distribution.
 #include "df/unit_inventory_item.h"
 #include "df/vehicle.h"
 #include "df/vermin.h"
-#include "df/viewscreen.h"
 #include "df/world.h"
 #include "df/world_site.h"
 #include "df/written_content.h"
 
-#include <cstdio>
-#include <map>
-#include <sstream>
 #include <string>
 #include <vector>
-#include <set>
 
 using std::string;
 using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
-using df::global::plotinfo;
-using df::global::ui_selected_unit;
-using df::global::proj_next_id;
 
 namespace DFHack {
     DBG_DECLARE(core, items, DebugCategory::LINFO);
@@ -141,44 +130,7 @@ namespace DFHack {
     ITEM(PANTS, pants, itemdef_pantsst) \
     ITEM(FOOD, food, itemdef_foodst)
 
-int Items::getSubtypeCount(df::item_type itype)
-{
-    using namespace df::enums::item_type;
-
-    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-
-    switch (itype) {
-#define ITEM(type,vec,tclass) \
-    case type: \
-        return defs.vec.size();
-ITEMDEF_VECTORS
-#undef ITEM
-
-    default:
-        return -1;
-    }
-}
-
-df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
-{
-    using namespace df::enums::item_type;
-
-    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-
-    switch (itype) {
-#define ITEM(type,vec,tclass) \
-    case type: \
-        return vector_get(defs.vec, subtype);
-ITEMDEF_VECTORS
-#undef ITEM
-
-    default:
-        return NULL;
-    }
-}
-
-bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
-{
+bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_) {
     type = type_;
     subtype = subtype_;
     custom = Items::getSubtypeDef(type_, subtype_);
@@ -186,17 +138,14 @@ bool ItemTypeInfo::decode(df::item_type type_, int16_t subtype_)
     return isValid();
 }
 
-bool ItemTypeInfo::decode(df::item *ptr)
-{
-    if (!ptr)
-        return decode(item_type::NONE);
-    else
+bool ItemTypeInfo::decode(df::item *ptr) {
+    if (ptr)
         return decode(ptr->getType(), ptr->getSubtype());
+    return decode(item_type::NONE);
 }
 
-std::string ItemTypeInfo::getToken()
-{
-    std::string rv = ENUM_KEY_STR(item_type, type);
+string ItemTypeInfo::getToken() {
+    string rv = ENUM_KEY_STR(item_type, type);
     if (custom)
         rv += ":" + custom->id;
     else if (subtype != -1 && type != item_type::PLANT_GROWTH)
@@ -204,11 +153,10 @@ std::string ItemTypeInfo::getToken()
     return rv;
 }
 
-std::string ItemTypeInfo::toString()
-{
-    using namespace df::enums::item_type;
-
-    switch (type) {
+string ItemTypeInfo::toString()
+{   using namespace df::enums::item_type;
+    switch (type)
+    {
 #define ITEM(type,vec,tclass) \
     case type: \
         if (VIRTUAL_CAST_VAR(cv, df::tclass, custom)) \
@@ -220,18 +168,14 @@ ITEMDEF_VECTORS
         break;
     }
 
-    const char *name = ENUM_ATTR(item_type, caption, type);
-    if (name)
+    if (const char *name = ENUM_ATTR(item_type, caption, type))
         return name;
-
     return toLower_cp437(ENUM_KEY_STR(item_type, type));
 }
 
-bool ItemTypeInfo::find(const std::string &token)
-{
-    using namespace df::enums::item_type;
-
-    std::vector<std::string> items;
+bool ItemTypeInfo::find(const string &token)
+{   using namespace df::enums::item_type;
+    vector<string> items;
     split_string(&items, token, ":");
 
     type = NONE;
@@ -240,20 +184,16 @@ bool ItemTypeInfo::find(const std::string &token)
 
     if (items.size() < 1 || items.size() > 2)
         return false;
-
     if (items[0] == "NONE")
         return true;
-
-    if (!find_enum_item(&type, items[0]))
-        return false;
-    if (type == NONE)
+    if (!find_enum_item(&type, items[0]) || type == NONE)
         return false;
     if (items.size() == 1)
         return true;
 
-    df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
-
-    switch (type) {
+    auto &defs = world->raws.itemdefs;
+    switch (type)
+    {
 #define ITEM(type,vec,tclass) \
     case type: \
         for (size_t i = 0; i < defs.vec.size(); i++) { \
@@ -274,13 +214,7 @@ ITEMDEF_VECTORS
     return (subtype >= 0);
 }
 
-bool Items::isCasteMaterial(df::item_type itype)
-{
-    return ENUM_ATTR(item_type, is_caste_mat, itype);
-}
-
-bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
-{
+bool ItemTypeInfo::matches(df::job_item_vector_id vec_id) {
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vec_id);
 
     auto explicit_item = ENUM_ATTR(items_other_id, item, other_id);
@@ -288,39 +222,29 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
         return false;
 
     auto generic_item = ENUM_ATTR(items_other_id, generic_item, other_id);
-    if (generic_item.size > 0)
-    {
+    if (generic_item.size > 0) {
         for (size_t i = 0; i < generic_item.size; i++)
             if (generic_item.items[i] == type)
                 return true;
-
         return false;
     }
-
     return true;
 }
 
 bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
                            bool skip_vector, df::item_type itype)
-{
-    using namespace df::enums::item_type;
-
+{   using namespace df::enums::item_type;
     if (!isValid())
         return mat ? mat->matches(jitem, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;
-
     if (!skip_vector && !matches(jitem.vector_id))
         return false;
 
     df::job_item_flags1 ok1, mask1, item_ok1, item_mask1, xmask1;
     df::job_item_flags2 ok2, mask2, item_ok2, item_mask2, xmask2;
     df::job_item_flags3 ok3, mask3, item_ok3, item_mask3;
-
-    ok1.whole = mask1.whole = item_ok1.whole = item_mask1.whole = xmask1.whole = 0;
-    ok2.whole = mask2.whole = item_ok2.whole = item_mask2.whole = xmask2.whole = 0;
-    ok3.whole = mask3.whole = item_ok3.whole = item_mask3.whole = 0;
 
     if (mat) {
         mat->getMatchBits(ok1, mask1);
@@ -332,7 +256,6 @@ bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
 #define RQ(id,name) item_mask##id.bits.name = true
 
     // Set up the flag mask
-
     RQ(1,millable); RQ(1,sharpenable); RQ(1,processable);
     RQ(1,extract_bearing_plant); RQ(1,extract_bearing_fish); RQ(1,extract_bearing_vermin);
     RQ(1,processable_to_vial); RQ(1,processable_to_barrel);
@@ -347,236 +270,238 @@ bool ItemTypeInfo::matches(const df::job_item &jitem, MaterialInfo *mat,
 
     RQ(3,any_raw_material); RQ(3,non_pressed); RQ(3,food_storage);
 
-    // only checked if boulder
-
+    // Only checked if boulder
     xmask2.bits.non_economic = true;
 
-    // Compute the ok mask
-
+    // Compute the "ok" mask
     OK(1,solid);
     OK(1,not_bin);
 
     // TODO: furniture, ammo, finished good, craft
+    switch (type)
+    {
+        case PLANT:
+            OK(1,millable); OK(1,processable);
+            OK(1,extract_bearing_plant);
+            OK(1,processable_to_vial);
+            OK(1,processable_to_barrel);
+            break;
+        case BOULDER:
+            OK(1,sharpenable);
+            xmask2.bits.non_economic = false;
+        case BAR:
+            OK(3,any_raw_material);
+        case BLOCKS:
+        case WOOD:
+            OK(2,building_material);
+            OK(2,fire_safe); OK(2,magma_safe);
+            break;
+        case VERMIN:
+            OK(1,extract_bearing_fish);
+            OK(1,extract_bearing_vermin);
+            OK(1,tameable_vermin);
+            OK(1,milkable);
+            break;
+        case DRINK:
+            item_ok1.bits.solid = false;
+            break;
+        case ROUGH:
+            OK(2,glass_making);
+            break;
+        case ANIMALTRAP:
+        case CAGE:
+            OK(1,milk);
+            OK(1,milkable);
+            xmask1.bits.cookable = true;
+            break;
+        case BUCKET:
+            OK(2,lye_milk_free);
+        case FLASK:
+            OK(1,milk);
+            xmask1.bits.cookable = true;
+            break;
+        case TOOL:
+            OK(1,lye_bearing);
+            OK(1,milk);
+            OK(2,lye_milk_free);
+            OK(2,blunt);
+            xmask1.bits.cookable = true;
 
-    switch (type) {
-    case PLANT:
-        OK(1,millable); OK(1,processable);
-        OK(1,extract_bearing_plant);
-        OK(1,processable_to_vial);
-        OK(1,processable_to_barrel);
-        break;
-
-    case BOULDER:
-        OK(1,sharpenable);
-        xmask2.bits.non_economic = false;
-    case BAR:
-        OK(3,any_raw_material);
-    case BLOCKS:
-    case WOOD:
-        OK(2,building_material);
-        OK(2,fire_safe); OK(2,magma_safe);
-        break;
-
-    case VERMIN:
-        OK(1,extract_bearing_fish);
-        OK(1,extract_bearing_vermin);
-        OK(1,tameable_vermin);
-        OK(1,milkable);
-        break;
-
-    case DRINK:
-        item_ok1.bits.solid = false;
-        break;
-
-    case ROUGH:
-        OK(2,glass_making);
-        break;
-
-    case ANIMALTRAP:
-    case CAGE:
-        OK(1,milk);
-        OK(1,milkable);
-        xmask1.bits.cookable = true;
-        break;
-
-    case BUCKET:
-        OK(2,lye_milk_free);
-    case FLASK:
-        OK(1,milk);
-        xmask1.bits.cookable = true;
-        break;
-
-    case TOOL:
-        OK(1,lye_bearing);
-        OK(1,milk);
-        OK(2,lye_milk_free);
-        OK(2,blunt);
-        xmask1.bits.cookable = true;
-
-        if (VIRTUAL_CAST_VAR(def, df::itemdef_toolst, custom)) {
-            df::tool_uses key(tool_uses::FOOD_STORAGE);
-            if (linear_index(def->tool_use, key) >= 0)
+            if (VIRTUAL_CAST_VAR(def, df::itemdef_toolst, custom)) {
+                if (linear_index(def->tool_use, tool_uses::FOOD_STORAGE) >= 0)
+                    OK(3,food_storage);
+            }
+            else
                 OK(3,food_storage);
-        } else {
+            break;
+        case BARREL:
+            OK(1,lye_bearing);
+            OK(1,milk);
+            OK(2,lye_milk_free);
             OK(3,food_storage);
-        }
-        break;
-
-    case BARREL:
-        OK(1,lye_bearing);
-        OK(1,milk);
-        OK(2,lye_milk_free);
-        OK(3,food_storage);
-        xmask1.bits.cookable = true;
-        break;
-
-    case BAG:
-        OK(1,sand_bearing); OK(1,milk);
-        OK(2,dye); OK(2,plaster_containing);
-        xmask1.bits.cookable = true;
-        break;
-
-    case BIN:
-        item_ok1.bits.not_bin = false;
-        break;
-
-    case LIQUID_MISC:
-        item_ok1.bits.solid = false;
-        OK(1,milk);
-        break;
-
-    case POWDER_MISC:
-        OK(2,dye);
-    case GLOB:
-        OK(3,any_raw_material);
-        OK(3,non_pressed);
-        break;
-
-    case THREAD:
-        if ((!jitem.flags2.bits.plant && ok2.bits.plant)
-            || (!jitem.flags2.bits.silk && ok2.bits.silk)
-            || (!jitem.flags2.bits.yarn && ok2.bits.yarn))
-        {
-            // material flags must match exactly
-            return false;
-        }
-        OK(1,undisturbed);
-        OK(2,plant);
-        OK(2,silk);
-        OK(2,yarn);
-    case CLOTH:
-        OK(2,dyeable); OK(2,dyed);
-        break;
-
-    case WEAPON:
-    case AMMO:
-    case ROCK:
-        OK(2,blunt);
-        break;
-
-    case TRAPCOMP:
-        if (VIRTUAL_CAST_VAR(def, df::itemdef_trapcompst, custom)) {
-            if (def->flags.is_set(trapcomp_flags::IS_SCREW))
+            xmask1.bits.cookable = true;
+            break;
+        case BAG:
+            OK(1,sand_bearing); OK(1,milk);
+            OK(2,dye); OK(2,plaster_containing);
+            xmask1.bits.cookable = true;
+            break;
+        case BIN:
+            item_ok1.bits.not_bin = false;
+            break;
+        case LIQUID_MISC:
+            item_ok1.bits.solid = false;
+            OK(1,milk);
+            break;
+        case POWDER_MISC:
+            OK(2,dye);
+        case GLOB:
+            OK(3,any_raw_material);
+            OK(3,non_pressed);
+            break;
+        case THREAD:
+            if ((!jitem.flags2.bits.plant && ok2.bits.plant) ||
+                (!jitem.flags2.bits.silk && ok2.bits.silk) ||
+                (!jitem.flags2.bits.yarn && ok2.bits.yarn))
+            {   // Material flags must match exactly
+                return false;
+            }
+            OK(1,undisturbed);
+            OK(2,plant);
+            OK(2,silk);
+            OK(2,yarn);
+        case CLOTH:
+            OK(2,dyeable); OK(2,dyed);
+            break;
+        case WEAPON:
+        case AMMO:
+        case ROCK:
+            OK(2,blunt);
+            break;
+        case TRAPCOMP:
+            if (VIRTUAL_CAST_VAR(def, df::itemdef_trapcompst, custom)) {
+                if (def->flags.is_set(trapcomp_flags::IS_SCREW))
+                    OK(2,screw);
+            }
+            else
                 OK(2,screw);
-        } else {
-            OK(2,screw);
-        }
-        OK(2,blunt);
-        break;
-
-    case CORPSE:
-    case CORPSEPIECE:
-        OK(2,totemable);
-        OK(2,body_part);
-        OK(2,hair_wool);
-        break;
-
-    case SLAB:
-        OK(2,unengraved);
-        break;
-
-    case ANVIL:
-        OK(2,fire_safe); OK(2,magma_safe);
-        break;
-
-    default:
-        break;
+            OK(2,blunt);
+            break;
+        case CORPSE:
+        case CORPSEPIECE:
+            OK(2,totemable);
+            OK(2,body_part);
+            OK(2,hair_wool);
+            break;
+        case SLAB:
+            OK(2,unengraved);
+            break;
+        case ANVIL:
+            OK(2,fire_safe); OK(2,magma_safe);
+            break;
+        default:
+            break;
     }
 
     if ((item_ok1.whole & ~item_mask1.whole) ||
         (item_ok2.whole & ~item_mask2.whole) ||
-        (item_ok3.whole & ~item_mask3.whole))
+        (item_ok3.whole & ~item_mask3.whole)
+    )
         Core::printerr("ItemTypeInfo.matches inconsistent\n");
-
 #undef OK
 #undef RQ
 
     mask1.whole &= ~xmask1.whole;
     mask2.whole &= ~xmask2.whole;
 
-    return bits_match(jitem.flags1.whole, ok1.whole, mask1.whole) &&
-           bits_match(jitem.flags2.whole, ok2.whole, mask2.whole) &&
-           bits_match(jitem.flags3.whole, ok3.whole, mask3.whole) &&
-           bits_match(jitem.flags1.whole, item_ok1.whole, item_mask1.whole) &&
-           bits_match(jitem.flags2.whole, item_ok2.whole, item_mask2.whole) &&
-           bits_match(jitem.flags3.whole, item_ok3.whole, item_mask3.whole);
+    return bits_match(jitem.flags1.whole, ok1.whole, mask1.whole)
+        && bits_match(jitem.flags2.whole, ok2.whole, mask2.whole)
+        && bits_match(jitem.flags3.whole, ok3.whole, mask3.whole)
+        && bits_match(jitem.flags1.whole, item_ok1.whole, item_mask1.whole)
+        && bits_match(jitem.flags2.whole, item_ok2.whole, item_mask2.whole)
+        && bits_match(jitem.flags3.whole, item_ok3.whole, item_mask3.whole);
 }
 
-df::item * Items::findItemByID(int32_t id)
-{
-    if (id < 0)
-        return 0;
-    return df::item::find(id);
+bool Items::isCasteMaterial(df::item_type itype) {
+    return ENUM_ATTR(item_type, is_caste_mat, itype);
 }
 
-df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type)
-{
+int Items::getSubtypeCount(df::item_type itype)
+{   using namespace df::enums::item_type;
+    auto &defs = world->raws.itemdefs;
+
+    switch (itype)
+    {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return defs.vec.size();
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return -1;
+    }
+}
+
+df::itemdef *Items::getSubtypeDef(df::item_type itype, int subtype)
+{   using namespace df::enums::item_type;
+    auto &defs = world->raws.itemdefs;
+
+    switch (itype)
+    {
+#define ITEM(type,vec,tclass) \
+    case type: \
+        return vector_get(defs.vec, subtype);
+ITEMDEF_VECTORS
+#undef ITEM
+
+    default:
+        return NULL;
+    }
+}
+#undef ITEMDEF_VECTORS
+
+df::item *Items::findItemByID(int32_t id) {
+    return id < 0 ? NULL : df::item::find(id);
+}
+
+df::general_ref *Items::getGeneralRef(df::item *item, df::general_ref_type type) {
     CHECK_NULL_POINTER(item);
-
     return findRef(item->general_refs, type);
 }
 
-df::specific_ref *Items::getSpecificRef(df::item *item, df::specific_ref_type type)
-{
+df::specific_ref *Items::getSpecificRef(df::item *item, df::specific_ref_type type) {
     CHECK_NULL_POINTER(item);
-
     return findRef(item->specific_refs, type);
 }
 
-df::unit *Items::getOwner(df::item * item)
-{
+df::unit *Items::getOwner(df::item *item) {
     auto ref = getGeneralRef(item, general_ref_type::UNIT_ITEMOWNER);
-
     return ref ? ref->getUnit() : NULL;
 }
 
-bool Items::setOwner(df::item *item, df::unit *unit)
-{
+bool Items::setOwner(df::item *item, df::unit *unit) {
     CHECK_NULL_POINTER(item);
 
     for (int i = item->general_refs.size()-1; i >= 0; i--)
     {
-        df::general_ref *ref = item->general_refs[i];
-
+        auto ref = item->general_refs[i];
         if (ref->getType() != general_ref_type::UNIT_ITEMOWNER)
             continue;
 
-        if (auto cur = ref->getUnit())
-        {
+        if (auto cur = ref->getUnit()) {
             if (cur == unit)
                 return true;
-
             erase_from_vector(cur->owned_items, item->id);
         }
 
-        delete ref;
         vector_erase_at(item->general_refs, i);
+        delete ref;
     }
 
     item->flags.bits.owned = false;
 
-    if (unit)
-    {
+    if (unit) {
         auto ref = df::allocate<df::general_ref_unit_itemownerst>();
         if (!ref)
             return false;
@@ -587,24 +512,18 @@ bool Items::setOwner(df::item *item, df::unit *unit)
         insert_into_vector(unit->owned_items, item->id);
         item->general_refs.push_back(ref);
     }
-
     return true;
 }
 
-df::item *Items::getContainer(df::item * item)
-{
+df::item *Items::getContainer(df::item *item) {
     auto ref = getGeneralRef(item, general_ref_type::CONTAINED_IN_ITEM);
-
     return ref ? ref->getItem() : NULL;
 }
 
 void Items::getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, bool init_ref)
-{
+{   // Reverse-engineered from ambushing unit code.
     CHECK_NULL_POINTER(item);
-    // Reverse-engineered from ambushing unit code
-
-    if (init_ref)
-    {
+    if (init_ref) {
         spec_ref.type = specific_ref_type::ITEM_GENERAL;
         spec_ref.data.object = item;
     }
@@ -612,17 +531,16 @@ void Items::getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, boo
     if (item->flags.bits.removed || !item->flags.bits.in_inventory)
         return;
 
-    for (size_t i = 0; i < item->general_refs.size(); i++)
+    for (auto gref : item->general_refs)
     {
-        auto g = item->general_refs[i];
-        switch (g->getType())
+        switch (gref->getType())
         {
             case general_ref_type::CONTAINED_IN_ITEM:
-                if (auto item2 = g->getItem())
+                if (auto item2 = gref->getItem())
                     return Items::getOuterContainerRef(spec_ref, item2);
                 break;
             case general_ref_type::UNIT_HOLDER:
-                if (auto unit = g->getUnit())
+                if (auto unit = gref->getUnit())
                     return Units::getOuterContainerRef(spec_ref, unit);
                 break;
             default:
@@ -630,101 +548,68 @@ void Items::getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, boo
         }
     }
 
-    auto s = findRef(item->specific_refs, specific_ref_type::VERMIN_ESCAPED_PET);
-    if (s)
-    {
+    if (auto sref = getSpecificRef(item, specific_ref_type::VERMIN_ESCAPED_PET)) {
         spec_ref.type = specific_ref_type::VERMIN_EVENT;
-        spec_ref.data.vermin = s->data.vermin;
+        spec_ref.data.vermin = sref->data.vermin;
     }
     return;
 }
 
-void Items::getContainedItems(df::item *item, std::vector<df::item*> *items)
-{
+void Items::getContainedItems(df::item *item, vector<df::item *> *items) {
     CHECK_NULL_POINTER(item);
-
+    CHECK_NULL_POINTER(items);
     items->clear();
 
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
-        df::general_ref *ref = item->general_refs[i];
-        if (ref->getType() != general_ref_type::CONTAINS_ITEM)
+    for (auto gref : item->general_refs) {
+        if (gref->getType() != general_ref_type::CONTAINS_ITEM)
             continue;
-
-        auto child = ref->getItem();
-        if (child)
+        else if (auto child = gref->getItem())
             items->push_back(child);
     }
 }
 
-df::building *Items::getHolderBuilding(df::item * item)
-{
+df::building *Items::getHolderBuilding(df::item *item) {
     auto ref = getGeneralRef(item, general_ref_type::BUILDING_HOLDER);
-
     return ref ? ref->getBuilding() : NULL;
 }
 
-df::unit *Items::getHolderUnit(df::item * item)
-{
+df::unit *Items::getHolderUnit(df::item *item) {
     auto ref = getGeneralRef(item, general_ref_type::UNIT_HOLDER);
-
     return ref ? ref->getUnit() : NULL;
 }
 
-df::coord Items::getPosition(df::item *item)
-{
+df::coord Items::getPosition(df::item *item) {
     CHECK_NULL_POINTER(item);
-
-    /* Function reverse-engineered from DF code. */
-
+    // Function reverse-engineered from DF code.
     if (item->flags.bits.removed)
         return df::coord();
 
-    if (item->flags.bits.in_inventory)
-    {
-        for (size_t i = 0; i < item->general_refs.size(); i++)
+    if (item->flags.bits.in_inventory) {
+        for (auto gref : item->general_refs)
         {
-            df::general_ref *ref = item->general_refs[i];
-
-            switch (ref->getType())
+            switch (gref->getType())
             {
-            case general_ref_type::CONTAINED_IN_ITEM:
-                if (auto item2 = ref->getItem())
-                    return getPosition(item2);
-                break;
-
-            case general_ref_type::UNIT_HOLDER:
-                if (auto unit = ref->getUnit())
-                    return Units::getPosition(unit);
-                break;
-
-            /*case general_ref_type::BUILDING_HOLDER:
-                if (auto bld = ref->getBuilding())
-                    return df::coord(bld->centerx, bld->centery, bld->z);
-                break;*/
-
-            default:
-                break;
+                case general_ref_type::CONTAINED_IN_ITEM:
+                    if (auto item2 = gref->getItem())
+                        return getPosition(item2);
+                    break;
+                case general_ref_type::UNIT_HOLDER:
+                    if (auto unit = gref->getUnit())
+                        return Units::getPosition(unit);
+                    break;
+                /*case general_ref_type::BUILDING_HOLDER: // Note: Not "in_inventory"
+                    if (auto bld = ref->getBuilding())
+                        return df::coord(bld->centerx, bld->centery, bld->z);
+                    break;*/
+                default:
+                    break;
             }
         }
 
-        for (size_t i = 0; i < item->specific_refs.size(); i++)
-        {
-            df::specific_ref *ref = item->specific_refs[i];
-
-            switch (ref->type)
-            {
-            case specific_ref_type::VERMIN_ESCAPED_PET:
-                return ref->data.vermin->pos;
-
-            default:
-                break;
-            }
-        }
-
+        if (auto sref = getSpecificRef(item, specific_ref_type::VERMIN_ESCAPED_PET))
+            return sref->data.vermin->pos;
         return df::coord();
     }
-
     return item->pos;
 }
 
@@ -737,100 +622,54 @@ static const char quality_table[] = {
     '\x0F'  // (☼) masterful
 };
 
-static void addQuality(std::string &tmp, int quality)
-{
+static void addQuality(string &tmp, int quality) {
     if (quality > 0 && quality <= 5) {
         char c = quality_table[quality];
         tmp = c + tmp + c;
     }
 }
 
-//  It's not impossible the functionality of this operation is provided by one of the unmapped item functions.
-std::string Items::getBookTitle(df::item *item)
-{
+static bool title_from_content(string &result, const vector<int32_t> &vec) {
+    for (auto content : vec)
+    {
+        auto w_contents = df::written_content::find(content);
+        if (w_contents && !w_contents->title.empty()) {
+            result = w_contents->title;
+            return true;
+        }
+    }
+    return false;
+}
+
+static string title_from_imps(const vector<df::itemimprovement *> &vec) {
+    string result;
+    for (auto imp : vec) {
+        if (auto page = virtual_cast<df::itemimprovement_pagesst>(imp))
+            if (title_from_content(result, page->contents))
+                break;
+
+        if (auto writing = virtual_cast<df::itemimprovement_writingst>(imp))
+            if (title_from_content(result, writing->contents))
+                break;
+    }
+    return result;
+}
+
+string Items::getBookTitle(df::item *item) {
     CHECK_NULL_POINTER(item);
 
-    std::string tmp;
+    if (auto book = virtual_cast<df::item_bookst>(item))
+        return book->title.empty() ? title_from_imps(book->improvements) : book->title;
 
-    if (item->getType() == df::item_type::BOOK)
-    {
-        auto book = virtual_cast<df::item_bookst>(item);
-
-        if (book->title != "")
-        {
-            return book->title;
-        }
-        else
-        {
-            for (size_t i = 0; i < book->improvements.size(); i++)
-            {
-                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
-                {
-                    for (size_t k = 0; k < page->contents.size(); k++)
-                    {
-                        df::written_content *contents = world->written_contents.all[page->contents[k]];
-                        if (contents->title != "")
-                        {
-                            return contents->title;
-                        }
-                    }
-                }
-                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
-                {
-                    for (size_t k = 0; k < writing->contents.size(); k++)
-                    {
-                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
-                        if (contents->title != "")
-                        {
-                            return contents->title;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if (item->getType() == df::item_type::TOOL)
-    {
-        auto book = virtual_cast<df::item_toolst>(item);
-
-        if (book->hasToolUse(df::tool_uses::CONTAIN_WRITING))
-        {
-            for (size_t i = 0; i < book->improvements.size(); i++)
-            {
-                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
-                {
-                    for (size_t k = 0; k < page->contents.size(); k++)
-                    {
-                        df::written_content *contents = world->written_contents.all[page->contents[k]];
-                        if (contents->title != "")
-                        {
-                            return contents->title;
-                        }
-                    }
-                }
-                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
-                {
-                    for (size_t k = 0; k < writing->contents.size(); k++)
-                    {
-                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
-                        if (contents->title != "")
-                        {
-                            return contents->title;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
+    if (auto tool = virtual_cast<df::item_toolst>(item))
+        if (tool->hasToolUse(tool_uses::CONTAIN_WRITING))
+            return title_from_imps(tool->improvements);
     return "";
 }
 
-std::string Items::getDescription(df::item *item, int type, bool decorate)
-{
+string Items::getDescription(df::item *item, int type, bool decorate) {
     CHECK_NULL_POINTER(item);
-
-    std::string tmp;
+    string tmp;
     item->getItemDescription(&tmp, type);
 
     if (decorate) {
@@ -840,18 +679,16 @@ std::string Items::getDescription(df::item *item, int type, bool decorate)
             tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
             addQuality(tmp, item->getImprovementQuality());
         }
-
         if (item->flags.bits.foreign)
             tmp = "(" + tmp + ")";
     }
-
     return tmp;
 }
 
-static df::artifact_record* get_artifact(df::item *item) {
+static df::artifact_record *get_artifact(df::item *item) {
     if (!item->flags.bits.artifact)
         return NULL;
-    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::IS_ARTIFACT))
+    if (auto gref = Items::getGeneralRef(item, general_ref_type::IS_ARTIFACT))
         return gref->getArtifact();
     return NULL;
 }
@@ -866,38 +703,35 @@ static string get_item_type_str(df::item *item) {
 }
 
 static string get_base_desc(df::item *item) {
-    if (auto name = Items::getBookTitle(item); name.size())
+    if (auto name = Items::getBookTitle(item); !name.empty())
         return name;
-    if (auto artifact = get_artifact(item)) {
-        if (artifact->name.has_name)
-            return Translation::TranslateName(&artifact->name, false) + ", " + Translation::TranslateName(&artifact->name) + " (" + get_item_type_str(item) + ")";
-    }
+    if (auto artifact = get_artifact(item); artifact && artifact->name.has_name)
+        return Translation::TranslateName(&artifact->name, false) +
+            ", " + Translation::TranslateName(&artifact->name) +
+            " (" + get_item_type_str(item) + ")";
     return Items::getDescription(item, 0, true);
 }
 
 string Items::getReadableDescription(df::item *item) {
     CHECK_NULL_POINTER(item);
-
     auto desc = get_base_desc(item);
 
-    switch (item->getWear()) {
-    case 1: desc = "x" + desc + "x"; break;
-    case 2: desc = "X" + desc + "X"; break;
-    case 3: desc = "XX" + desc + "XX"; break;
-    default:
-        break;
+    switch (item->getWear())
+    {
+        case 1: desc = "x" + desc + "x"; break; // Worn
+        case 2: desc = "X" + desc + "X"; break; // Threadbare
+        case 3: desc = "XX" + desc + "XX"; break; // Tattered
     }
 
-    if (auto gref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_UNIT)) {
-        if (auto unit = gref->getUnit()) {
+    if (auto gref = Items::getGeneralRef(item, general_ref_type::CONTAINS_UNIT)) {
+        if (auto unit = gref->getUnit())
+        {
             auto str = " [" + Units::getReadableName(unit);
             if (Units::isInvader(unit) || Units::isOpposedToLife(unit))
                 str += " (hostile)";
-            str += "]";
-            return desc + str;
+            return desc + str + "]";
         }
     }
-
     return desc;
 }
 
@@ -909,7 +743,8 @@ static bool removeItemOnGround(df::item *item)
 
     erase_from_vector(block->items, item->id);
 
-    for (auto b_item : block->items) {
+    for (auto b_item : block->items)
+    {
         auto other_item = df::item::find(b_item);
         if (other_item && other_item->pos == item->pos)
             return true; // Don't touch occupancy
@@ -918,12 +753,11 @@ static bool removeItemOnGround(df::item *item)
     auto &occ = index_tile(block->occupancy, item->pos);
     occ.bits.item = false;
 
-    if (occ.bits.building == tile_building_occ::Planned) {
+    if (occ.bits.building == tile_building_occ::Planned)
         if (auto bld = Buildings::findAtTile(item->pos))
         {   // TODO: Maybe recheck other tiles like the game does.
             bld->flags.bits.site_blocked = false;
         }
-    }
     return true;
 }
 
@@ -934,9 +768,8 @@ static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item)
         unit->flags2.bits.calculated_inventory = false;
         unit->flags2.bits.calculated_insulation = false;
     }
-    else if (inv_item->mode == df::unit_inventory_item::StuckIn) {
+    else if (inv_item->mode == df::unit_inventory_item::StuckIn)
         unit->flags3.bits.stuck_weapon_computed = false;
-    }
 }
 
 static bool detachItem(df::item *item)
@@ -950,7 +783,7 @@ static bool detachItem(df::item *item)
         {
             case general_ref_type::BUILDING_HOLDER:
                 if (item->flags.bits.in_building)
-                    return false;
+                    return false; // Construction mat
                 building_clutter = true;
                 break;
             case general_ref_type::BUILDING_CAGED:
@@ -959,18 +792,17 @@ static bool detachItem(df::item *item)
             case general_ref_type::BUILDING_CIVZONE_ASSIGNED:
                 return false;
             default:
-                continue;
+                break;
         }
     }
 
     if (building_clutter) {
-        auto building = virtual_cast<df::building_actual>(Items::getHolderBuilding(item));
-        if (building) {
+        if (auto building = virtual_cast<df::building_actual>(Items::getHolderBuilding(item))) {
             for (size_t i = 0; i < building->contained_items.size(); i++)
             {
                 auto ci = building->contained_items[i];
                 if (ci->item == item) {
-                    DFHack::removeRef(item->general_refs, general_ref_type::BUILDING_HOLDER, building->id);
+                    removeRef(item->general_refs, general_ref_type::BUILDING_HOLDER, building->id);
                     vector_erase_at(building->contained_items, i);
                     delete ci;
                     return true;
@@ -979,9 +811,9 @@ static bool detachItem(df::item *item)
         }
     }
 
-    if (auto *ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-        return linked_list_remove(&world->proj_list, ref->projectile_id) &&
-            DFHack::removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
+    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
+        return linked_list_remove(&world->proj_list, ref->projectile_id)
+            && removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
@@ -993,9 +825,8 @@ static bool detachItem(df::item *item)
 
     if (item->flags.bits.in_inventory) {
         bool found = false;
-        for (int i = item->general_refs.size()-1; i >= 0; i--)
-        {
-            df::general_ref *ref = item->general_refs[i];
+        for (int i = item->general_refs.size()-1; i >= 0; i--) {
+            auto ref = item->general_refs[i];
 
             switch (ref->getType())
             {
@@ -1003,24 +834,23 @@ static bool detachItem(df::item *item)
                 if (auto item2 = ref->getItem())
                 {
                     item2->flags.bits.weight_computed = false;
-                    DFHack::removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
+                    removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
                 }
                 break;
             case general_ref_type::UNIT_HOLDER:
-                if (auto unit = ref->getUnit()) {
+                if (auto unit = ref->getUnit())
                     for (int i = unit->inventory.size()-1; i >= 0; i--) {
-                        df::unit_inventory_item *inv_item = unit->inventory[i];
+                        auto inv_item = unit->inventory[i];
                         if (inv_item->item != item)
-                            continue;
+                            continue; // Next inventory item
                         resetUnitInvFlags(unit, inv_item);
 
                         vector_erase_at(unit->inventory, i);
                         delete inv_item;
                     }
-                }
                 break;
             default:
-                continue;
+                continue; // Next ref
             }
 
             found = true;
@@ -1056,8 +886,8 @@ bool DFHack::Items::moveToGround(df::item *item, df::coord pos) {
     item->pos = pos;
     item->flags.bits.on_ground = true;
 
-    // the moveToGround function can return false even when it succeeds
-    // so we don't check the return value
+    // The moveToGround function can return false even when it succeeds,
+    // so we don't check the return value.
     item->moveToGround(pos.x, pos.y, pos.z);
     return true;
 }
@@ -1079,8 +909,7 @@ bool DFHack::Items::moveToContainer(df::item *item, df::item *container) {
         Core::printerr("Could not allocate container refs.\n");
         return false;
     }
-
-    if (!detachItem(item)) {
+    else if (!detachItem(item)) {
         delete ref1;
         delete ref2;
         return false;
@@ -1111,12 +940,10 @@ bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building
 
     auto ref = df::allocate<df::general_ref_building_holderst>();
     if(!ref) {
-        delete ref;
         Core::printerr("Could not allocate building holder refs.\n");
         return false;
     }
-
-    if (!detachItem(item)) {
+    else if (!detachItem(item)) {
         delete ref;
         return false;
     }
@@ -1153,8 +980,7 @@ bool DFHack::Items::moveToInventory(df::item *item, df::unit *unit,
         Core::printerr("Could not allocate UNIT_HOLDER reference.\n");
         return false;
     }
-
-    if (!detachItem(item)) {
+    else if (!detachItem(item)) {
         delete holderReference;
         return false;
     }
@@ -1179,13 +1005,10 @@ bool Items::remove(df::item *item, bool no_uncat) {
 
     if (auto spec_ref = getSpecificRef(item, specific_ref_type::JOB))
         Job::removeJob(spec_ref->data.job);
-
     if (!detachItem(item))
         return false;
-
     if (auto pos = getPosition(item); pos.isValid())
         item->pos = pos;
-
     if (!no_uncat)
         item->uncategorize();
 
@@ -1198,7 +1021,8 @@ bool Items::remove(df::item *item, bool no_uncat) {
     return true;
 }
 
-df::proj_itemst *Items::makeProjectile(df::item *item) {
+df::proj_itemst *Items::makeProjectile(df::item *item)
+{   using df::global::proj_next_id;
     CHECK_NULL_POINTER(item);
     if (!world || !proj_next_id)
         return NULL;
@@ -1216,8 +1040,7 @@ df::proj_itemst *Items::makeProjectile(df::item *item) {
         delete ref;
         return NULL;
     }
-
-    if (!detachItem(item)) {
+    else if (!detachItem(item)) {
         delete ref;
         delete proj;
         return NULL;
@@ -1241,250 +1064,182 @@ df::proj_itemst *Items::makeProjectile(df::item *item) {
     return proj;
 }
 
-int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype)
+int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_subtype)
 {
     int value = 0;
     switch (item_type)
-    {
-    case item_type::BAR:
-    case item_type::BLOCKS:
-    case item_type::SKIN_TANNED:
-        value = 5;
-        break;
-
-    case item_type::SMALLGEM:
-        value = 20;
-        break;
-
-    case item_type::BOULDER:
-    case item_type::WOOD:
-        value = 3;
-        break;
-
-    case item_type::ROUGH:
-        value = 6;
-        break;
-
-    case item_type::DOOR:
-    case item_type::FLOODGATE:
-    case item_type::BED:
-    case item_type::CHAIR:
-    case item_type::CHAIN:
-    case item_type::FLASK:
-    case item_type::GOBLET:
-    case item_type::TOY:
-    case item_type::CAGE:
-    case item_type::BARREL:
-    case item_type::BUCKET:
-    case item_type::ANIMALTRAP:
-    case item_type::TABLE:
-    case item_type::COFFIN:
-    case item_type::BOX:
-    case item_type::BAG:
-    case item_type::BIN:
-    case item_type::ARMORSTAND:
-    case item_type::WEAPONRACK:
-    case item_type::CABINET:
-    case item_type::FIGURINE:
-    case item_type::AMULET:
-    case item_type::SCEPTER:
-    case item_type::CROWN:
-    case item_type::RING:
-    case item_type::EARRING:
-    case item_type::BRACELET:
-    case item_type::GEM:
-    case item_type::ANVIL:
-    case item_type::TOTEM:
-    case item_type::BACKPACK:
-    case item_type::QUIVER:
-    case item_type::BALLISTAARROWHEAD:
-    case item_type::PIPE_SECTION:
-    case item_type::HATCH_COVER:
-    case item_type::GRATE:
-    case item_type::QUERN:
-    case item_type::MILLSTONE:
-    case item_type::SPLINT:
-    case item_type::CRUTCH:
-    case item_type::SLAB:
-    case item_type::BOOK:
-        value = 10;
-        break;
-
-    case item_type::WINDOW:
-    case item_type::STATUE:
-        value = 25;
-        break;
-
-    case item_type::CORPSE:
-    case item_type::CORPSEPIECE:
-    case item_type::REMAINS:
-        return 0;
-
-    case item_type::WEAPON:
-        if (size_t(item_subtype) < world->raws.itemdefs.weapons.size())
-            value = world->raws.itemdefs.weapons[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::ARMOR:
-        if (size_t(item_subtype) < world->raws.itemdefs.armor.size())
-            value = world->raws.itemdefs.armor[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::SHOES:
-        if (size_t(item_subtype) < world->raws.itemdefs.shoes.size())
-            value = world->raws.itemdefs.shoes[item_subtype]->value;
-        else
-            value = 5;
-        break;
-
-    case item_type::SHIELD:
-        if (size_t(item_subtype) < world->raws.itemdefs.shields.size())
-            value = world->raws.itemdefs.shields[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::HELM:
-        if (size_t(item_subtype) < world->raws.itemdefs.helms.size())
-            value = world->raws.itemdefs.helms[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::GLOVES:
-        if (size_t(item_subtype) < world->raws.itemdefs.gloves.size())
-            value = world->raws.itemdefs.gloves[item_subtype]->value;
-        else
-            value = 5;
-        break;
-
-    case item_type::AMMO:
-        if (size_t(item_subtype) < world->raws.itemdefs.ammo.size())
-            value = world->raws.itemdefs.ammo[item_subtype]->value;
-        else
+    {   using namespace df::enums::item_type;
+        case SEEDS:
+        case DRINK:
+        case POWDER_MISC:
+        case LIQUID_MISC:
+        case COIN:
+        case GLOB:
+        case ORTHOPEDIC_CAST:
+        case BRANCH:
             value = 1;
-        break;
-
-    case item_type::MEAT:
-    case item_type::PLANT:
-    case item_type::PLANT_GROWTH:
-        value = 2;
-        break;
-
-    case item_type::CHEESE:
-        value = 10;
-        break;
-
-    case item_type::FISH:
-    case item_type::FISH_RAW:
-    case item_type::EGG:
-        value = 2;
-        if (size_t(mat_type) < world->raws.creatures.all.size())
-        {
-            auto creature = world->raws.creatures.all[mat_type];
-            if (size_t(mat_subtype) < creature->caste.size())
-            {
-                auto caste = creature->caste[mat_subtype];
-                mat_type = caste->misc.bone_mat;
-                mat_subtype = caste->misc.bone_matidx;
+            break;
+        case MEAT:
+        case PLANT:
+        case PLANT_GROWTH:
+            value = 2;
+            break;
+        case BOULDER:
+        case WOOD:
+            value = 3;
+            break;
+        case BAR:
+        case BLOCKS:
+        case SKIN_TANNED:
+        case SHEET:
+            value = 5;
+            break;
+        case ROUGH:
+        case THREAD:
+            value = 6;
+            break;
+        case CLOTH:
+            value = 7;
+            break;
+        case DOOR:
+        case FLOODGATE:
+        case BED:
+        case CHAIR:
+        case CHAIN:
+        case FLASK:
+        case GOBLET:
+        case TOY:
+        case CAGE:
+        case BARREL:
+        case BUCKET:
+        case ANIMALTRAP:
+        case TABLE:
+        case COFFIN:
+        case BOX:
+        case BAG:
+        case BIN:
+        case ARMORSTAND:
+        case WEAPONRACK:
+        case CABINET:
+        case FIGURINE:
+        case AMULET:
+        case SCEPTER:
+        case CROWN:
+        case RING:
+        case EARRING:
+        case BRACELET:
+        case GEM:
+        case ANVIL:
+        case TOTEM:
+        case BACKPACK:
+        case QUIVER:
+        case BALLISTAARROWHEAD:
+        case CHEESE:
+        case PIPE_SECTION:
+        case HATCH_COVER:
+        case GRATE:
+        case QUERN:
+        case MILLSTONE:
+        case SPLINT:
+        case CRUTCH:
+        case SLAB:
+        case BOOK:
+            value = 10;
+            break;
+        case SMALLGEM:
+        case SIEGEAMMO:
+        case TRACTION_BENCH:
+            value = 20;
+            break;
+        case df::enums::item_type::WINDOW:
+        case STATUE:
+            value = 25;
+            break;
+        case CATAPULTPARTS:
+        case BALLISTAPARTS:
+        case TRAPPARTS:
+            value = 30;
+            break;
+        case INSTRUMENT:
+            value = 10;
+            if (auto def = df::itemdef_instrumentst::find(item_subtype))
+                value = def->value;
+            break;
+        case WEAPON:
+            value = 10;
+            if (auto def = df::itemdef_weaponst::find(item_subtype))
+                value = def->value;
+            break;
+        case ARMOR:
+            value = 10;
+            if (auto def = df::itemdef_armorst::find(item_subtype))
+                value = def->value;
+            break;
+        case SHOES:
+            value = 5;
+            if (auto def = df::itemdef_shoesst::find(item_subtype))
+                value = def->value;
+            break;
+        case SHIELD:
+            value = 10;
+            if (auto def = df::itemdef_shieldst::find(item_subtype))
+                value = def->value;
+            break;
+        case HELM:
+            value = 10;
+            if (auto def = df::itemdef_helmst::find(item_subtype))
+                value = def->value;
+            break;
+        case GLOVES:
+            value = 5;
+            if (auto def = df::itemdef_glovesst::find(item_subtype))
+                value = def->value;
+            break;
+        case AMMO:
+            value = 1;
+            if (auto def = df::itemdef_ammost::find(item_subtype))
+                value = def->value;
+            break;
+        case PANTS:
+            value = 10;
+            if (auto def = df::itemdef_pantsst::find(item_subtype))
+                value = def->value;
+            break;
+        case TRAPCOMP:
+            value = 10;
+            if (auto def = df::itemdef_trapcompst::find(item_subtype))
+                value = def->value;
+            break;
+        case TOOL:
+            value = 10;
+            if (auto def = df::itemdef_toolst::find(item_subtype))
+                value = def->value;
+            break;
+        case FISH:
+        case FISH_RAW:
+        case EGG:
+            value = 2;
+            if (auto craw = Units::getCasteRaw(mat_type, mat_subtype)) {
+                mat_type = craw->misc.bone_mat;
+                mat_subtype = craw->misc.bone_matidx;
             }
-        }
-        break;
-
-    case item_type::VERMIN:
-        value = 0;
-        if (size_t(mat_type) < world->raws.creatures.all.size())
-        {
-            auto creature = world->raws.creatures.all[mat_type];
-            if (size_t(mat_subtype) < creature->caste.size())
-                value = creature->caste[mat_subtype]->misc.petvalue;
-        }
-        value /= 2;
-        if (!value)
-                return 1;
-        return value;
-
-    case item_type::PET:
-        if (size_t(mat_type) < world->raws.creatures.all.size())
-        {
-            auto creature = world->raws.creatures.all[mat_type];
-            if (size_t(mat_subtype) < creature->caste.size())
-                return creature->caste[mat_subtype]->misc.petvalue;
-        }
-        return 0;
-
-    case item_type::SEEDS:
-    case item_type::DRINK:
-    case item_type::POWDER_MISC:
-    case item_type::LIQUID_MISC:
-    case item_type::COIN:
-    case item_type::GLOB:
-    case item_type::ORTHOPEDIC_CAST:
-    case item_type::BRANCH:
-        value = 1;
-        break;
-
-    case item_type::THREAD:
-        value = 6;
-        break;
-
-    case item_type::CLOTH:
-        value = 7;
-        break;
-
-    case item_type::SHEET:
-        value = 5;
-        break;
-
-    case item_type::PANTS:
-        if (size_t(item_subtype) < world->raws.itemdefs.pants.size())
-            value = world->raws.itemdefs.pants[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::CATAPULTPARTS:
-    case item_type::BALLISTAPARTS:
-    case item_type::TRAPPARTS:
-        value = 30;
-        break;
-
-    case item_type::SIEGEAMMO:
-    case item_type::TRACTION_BENCH:
-        value = 20;
-        break;
-
-    case item_type::TRAPCOMP:
-        if (size_t(item_subtype) < world->raws.itemdefs.trapcomps.size())
-            value = world->raws.itemdefs.trapcomps[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::FOOD:
-        return 10;
-
-    case item_type::TOOL:
-        if (size_t(item_subtype) < world->raws.itemdefs.tools.size())
-            value = world->raws.itemdefs.tools[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-    case item_type::INSTRUMENT:
-        if (size_t(item_subtype) < world->raws.itemdefs.instruments.size())
-            value = world->raws.itemdefs.instruments[item_subtype]->value;
-        else
-            value = 10;
-        break;
-
-//  case item_type::ROCK:
-    default:
-        return 0;
+            break;
+        case VERMIN:
+            if (auto craw = Units::getCasteRaw(mat_type, mat_subtype))
+                value = craw->misc.petvalue / 2;
+            return value ? value : 1;
+        case PET:
+            if (auto craw = Units::getCasteRaw(mat_type, mat_subtype))
+                value = craw->misc.petvalue;
+            return value;
+        case FOOD:
+            return 10;
+        case CORPSE:
+        case CORPSEPIECE:
+        case REMAINS:
+        case ROCK:
+            return 0;
     }
 
     MaterialInfo mat;
@@ -1494,18 +1249,22 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
 }
 
 static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
+    CHECK_NULL_POINTER(item);
     static const int32_t DEFAULT_WAR_MULTIPLIER = 256;
-
     if (!caravan)
         return DEFAULT_WAR_MULTIPLIER;
+
     auto caravan_he = df::historical_entity::find(caravan->entity);
     if (!caravan_he)
         return DEFAULT_WAR_MULTIPLIER;
-    int32_t war_alignment = caravan_he->entity_raw->sphere_alignment[df::sphere_type::WAR];
+
+    int32_t war_alignment = caravan_he->entity_raw->sphere_alignment[sphere_type::WAR];
     if (war_alignment == DEFAULT_WAR_MULTIPLIER)
         return DEFAULT_WAR_MULTIPLIER;
-    switch (item->getType()) {
-    case df::item_type::WEAPON:
+
+    switch (item->getType())
+    {   using namespace df::enums::item_type;
+    case WEAPON:
     {
         auto weap_def = df::itemdef_weaponst::find(item->getSubtype());
         auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
@@ -1513,28 +1272,30 @@ static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
             return DEFAULT_WAR_MULTIPLIER;
         break;
     }
-    case df::item_type::ARMOR:
-    case df::item_type::SHOES:
-    case df::item_type::HELM:
-    case df::item_type::GLOVES:
-    case df::item_type::PANTS:
+    case ARMOR:
+    case SHOES:
+    case HELM:
+    case GLOVES:
+    case PANTS:
     {
         if (item->getEffectiveArmorLevel() <= 0)
             return DEFAULT_WAR_MULTIPLIER;
+
         auto caravan_cre_raw = df::creature_raw::find(caravan_he->race);
         auto maker_cre_raw = df::creature_raw::find(item->getMakerRace());
         if (!caravan_cre_raw || !maker_cre_raw)
             return DEFAULT_WAR_MULTIPLIER;
+
         if (caravan_cre_raw->adultsize < ((maker_cre_raw->adultsize * 6) / 7))
             return DEFAULT_WAR_MULTIPLIER;
         if (caravan_cre_raw->adultsize > ((maker_cre_raw->adultsize * 8) / 7))
             return DEFAULT_WAR_MULTIPLIER;
         break;
     }
-    case df::item_type::SHIELD:
-    case df::item_type::AMMO:
-    case df::item_type::BACKPACK:
-    case df::item_type::QUIVER:
+    case SHIELD:
+    case AMMO:
+    case BACKPACK:
+    case QUIVER:
         break;
     default:
         return DEFAULT_WAR_MULTIPLIER;
@@ -1545,6 +1306,7 @@ static int32_t get_war_multiplier(df::item *item, df::caravan_state *caravan) {
 static const int32_t DEFAULT_AGREEMENT_MULTIPLIER = 128;
 
 static int32_t get_buy_request_multiplier(df::item *item, const df::entity_buy_prices *buy_prices) {
+    CHECK_NULL_POINTER(item);
     if (!buy_prices)
         return DEFAULT_AGREEMENT_MULTIPLIER;
 
@@ -1554,41 +1316,39 @@ static int32_t get_buy_request_multiplier(df::item *item, const df::entity_buy_p
     int32_t mat_subtype = item->getMaterialIndex();
 
     for (size_t idx = 0; idx < buy_prices->price.size(); ++idx) {
-        if (buy_prices->items->item_type[idx] != item_type)
-            continue;
-        if (buy_prices->items->item_subtype[idx] != -1 && buy_prices->items->item_subtype[idx] != item_subtype)
-            continue;
-        if (buy_prices->items->mat_types[idx] != -1 && buy_prices->items->mat_types[idx] != mat_type)
-            continue;
-        if (buy_prices->items->mat_indices[idx] != -1 && buy_prices->items->mat_indices[idx] != mat_subtype)
-            continue;
-        return buy_prices->price[idx];
+        if ((buy_prices->items->item_type[idx] == item_type) &&
+            (buy_prices->items->item_subtype[idx] == -1 || buy_prices->items->item_subtype[idx] == item_subtype) &&
+            (buy_prices->items->mat_types[idx] == -1 || buy_prices->items->mat_types[idx] == mat_type) &&
+            (buy_prices->items->mat_indices[idx] == -1 || buy_prices->items->mat_indices[idx] == mat_subtype)
+        )
+            return buy_prices->price[idx];
     }
     return DEFAULT_AGREEMENT_MULTIPLIER;
 }
 
 template<typename T>
-static int get_price(const std::vector<T> &res, int32_t val, const std::vector<int32_t> &pri) {
-    for (size_t idx = 0; idx < res.size(); ++idx) {
-        if (res[idx] == val && pri.size() > idx)
-            return pri[idx];
-    }
+static int get_price(const vector<T> &res, int32_t val, const vector<int32_t> &pri) {
+    for (size_t idx = 0; idx < res.size(); ++idx)
+        if (res[idx] == val)
+            return vector_get(pri, idx, -1);
     return -1;
 }
 
 template<typename T1, typename T2>
-static int get_price(const std::vector<T1> &mat_res, int32_t mat, const std::vector<T2> &gloss_res, int32_t gloss, const std::vector<int32_t> &pri) {
-    for (size_t idx = 0; idx < mat_res.size(); ++idx) {
-        if (mat_res[idx] == mat && (gloss_res[idx] == -1 || gloss_res[idx] == gloss) && pri.size() > idx)
-            return pri[idx];
-    }
+static int get_price(const vector<T1> &mat_res, int32_t mat, const vector<T2> &gloss_res,
+    int32_t gloss, const vector<int32_t> &pri)
+{
+    for (size_t idx = 0; idx < mat_res.size(); ++idx)
+        if (mat_res[idx] == mat && (gloss_res[idx] == -1 || gloss_res[idx] == gloss))
+            return vector_get(pri, idx, -1);
     return -1;
 }
 
-static const uint16_t PLANT_BASE = 419;
-static const uint16_t NUM_PLANT_TYPES = 200;
-
-static int32_t get_sell_request_multiplier(df::item *item, const df::historical_entity::T_resources &resources, const std::vector<int32_t> *prices) {
+static int32_t get_sell_request_multiplier(df::item *item,
+    const df::historical_entity::T_resources &resources, const vector<int32_t> *prices)
+{
+    CHECK_NULL_POINTER(item);
+    CHECK_NULL_POINTER(prices);
     static const df::dfhack_material_category silk_cat(df::dfhack_material_category::mask_silk);
     static const df::dfhack_material_category yarn_cat(df::dfhack_material_category::mask_yarn);
     static const df::dfhack_material_category leather_cat(df::dfhack_material_category::mask_leather);
@@ -1598,362 +1358,239 @@ static int32_t get_sell_request_multiplier(df::item *item, const df::historical_
     int16_t mat_type = item->getMaterial();
     int32_t mat_subtype = item->getMaterialIndex();
 
-    bool inorganic = mat_type == df::builtin_mats::INORGANIC;
-    bool is_plant = (uint16_t)(mat_type - PLANT_BASE) < NUM_PLANT_TYPES;
+    MaterialInfo mi(mat_type, mat_subtype);
 
-    switch (item_type) {
-    case df::item_type::BAR:
-        if (inorganic) {
-            if (int32_t price = get_price(resources.metals, mat_subtype, prices[df::entity_sell_category::MetalBars]); price != -1)
-                return price;
+#define TRY_RETURN_PRICE(res, cat) \
+    if (int32_t price = get_price(resources.res, mat_subtype, \
+        prices[entity_sell_category::cat]); price != -1) return price
+#define TRY_RETURN_PRICE_2(mat_res, gloss_res, cat) \
+    if (int32_t price = get_price(resources.mat_res, mat_type, \
+        resources.gloss_res, mat_subtype, \
+        prices[entity_sell_category::cat]); price != -1) return price
+
+    switch (item_type)
+    {   using namespace df::enums::item_type;
+    case BAR:
+        if (mi.mode == MaterialInfo::Inorganic)
+            TRY_RETURN_PRICE(metals, MetalBars);
+        break;
+    case SMALLGEM:
+        if (mi.mode == MaterialInfo::Inorganic)
+            TRY_RETURN_PRICE(gems, SmallCutGems);
+        break;
+    case BLOCKS:
+        if (mi.mode == MaterialInfo::Inorganic)
+            TRY_RETURN_PRICE(stones, StoneBlocks);
+        break;
+    case ROUGH:
+        TRY_RETURN_PRICE_2(misc_mat.glass.mat_type, misc_mat.glass.mat_index, Glass);
+        break;
+    case BOULDER:
+        TRY_RETURN_PRICE(stones, Stone);
+        TRY_RETURN_PRICE_2(misc_mat.clay.mat_type, misc_mat.clay.mat_index, Clay);
+        break;
+    case WOOD:
+        TRY_RETURN_PRICE_2(organic.wood.mat_type, organic.wood.mat_index, Wood);
+        break;
+    case CHAIN:
+        if (mi.mode == MaterialInfo::Plant)
+            TRY_RETURN_PRICE_2(organic.fiber.mat_type, organic.fiber.mat_index, RopesPlant);
+        if (mi.matches(silk_cat))
+            TRY_RETURN_PRICE_2(organic.silk.mat_type, organic.silk.mat_index, RopesSilk);
+        if (mi.matches(yarn_cat))
+            TRY_RETURN_PRICE_2(organic.wool.mat_type, organic.wool.mat_index, RopesYarn);
+        break;
+    case FLASK:
+        TRY_RETURN_PRICE_2(misc_mat.flasks.mat_type, misc_mat.flasks.mat_index, FlasksWaterskins);
+        break;
+    case GOBLET:
+        TRY_RETURN_PRICE_2(misc_mat.crafts.mat_type, misc_mat.crafts.mat_index, CupsMugsGoblets);
+        break;
+    case INSTRUMENT:
+        TRY_RETURN_PRICE(instrument_type, Instruments);
+        break;
+    case TOY:
+        TRY_RETURN_PRICE(toy_type, Toys);
+        break;
+    case CAGE:
+        TRY_RETURN_PRICE_2(misc_mat.cages.mat_type, misc_mat.cages.mat_index, Cages);
+        break;
+    case BARREL:
+        TRY_RETURN_PRICE_2(misc_mat.barrels.mat_type, misc_mat.barrels.mat_index, Barrels);
+        break;
+    case BUCKET:
+        TRY_RETURN_PRICE_2(misc_mat.barrels.mat_type, misc_mat.barrels.mat_index, Buckets);
+        break;
+    case WEAPON:
+        TRY_RETURN_PRICE(weapon_type, Weapons);
+        TRY_RETURN_PRICE(digger_type, DiggingImplements);
+        TRY_RETURN_PRICE(training_weapon_type, TrainingWeapons);
+        break;
+    case ARMOR:
+        TRY_RETURN_PRICE(armor_type, Bodywear);
+        break;
+    case SHOES:
+        TRY_RETURN_PRICE(shoes_type, Footwear);
+        break;
+    case SHIELD:
+        TRY_RETURN_PRICE(shield_type, Shields);
+        break;
+    case HELM:
+        TRY_RETURN_PRICE(helm_type, Headwear);
+        break;
+    case GLOVES:
+        TRY_RETURN_PRICE(gloves_type, Handwear);
+        break;
+    case BAG:
+        if (mi.matches(leather_cat))
+            TRY_RETURN_PRICE_2(organic.leather.mat_type, organic.leather.mat_index, BagsLeather);
+        if (mi.mode == MaterialInfo::Plant)
+            TRY_RETURN_PRICE_2(organic.fiber.mat_type, organic.fiber.mat_index, BagsPlant);
+        if (mi.matches(silk_cat))
+            TRY_RETURN_PRICE_2(organic.silk.mat_type, organic.silk.mat_index, BagsSilk);
+        if (mi.matches(yarn_cat))
+            TRY_RETURN_PRICE_2(organic.wool.mat_type, organic.wool.mat_index, BagsYarn);
+        break;
+    case FIGURINE:
+    case AMULET:
+    case SCEPTER:
+    case CROWN:
+    case RING:
+    case EARRING:
+    case BRACELET:
+    case TOTEM:
+    case BOOK:
+        TRY_RETURN_PRICE_2(misc_mat.crafts.mat_type, misc_mat.crafts.mat_index, Crafts);
+        break;
+    case AMMO:
+        TRY_RETURN_PRICE(ammo_type, Ammo);
+        break;
+    case GEM:
+        if (mi.mode == MaterialInfo::Inorganic)
+            TRY_RETURN_PRICE(gems, LargeCutGems);
+        break;
+    case ANVIL:
+        TRY_RETURN_PRICE_2(metal.anvil.mat_type, metal.anvil.mat_index, Anvils);
+        break;
+    case MEAT:
+        TRY_RETURN_PRICE_2(misc_mat.meat.mat_type, misc_mat.meat.mat_index, Meat);
+        break;
+    case FISH:
+    case FISH_RAW:
+        TRY_RETURN_PRICE_2(fish_races, fish_castes, Fish);
+        break;
+    case VERMIN:
+    case PET:
+        TRY_RETURN_PRICE_2(animals.pet_races, animals.pet_castes, Pets);
+        break;
+    case SEEDS:
+        TRY_RETURN_PRICE_2(seeds.mat_type, seeds.mat_index, Seeds);
+        break;
+    case PLANT:
+        TRY_RETURN_PRICE_2(plants.mat_type, plants.mat_index, Plants);
+        break;
+    case SKIN_TANNED:
+        TRY_RETURN_PRICE_2(organic.leather.mat_type, organic.leather.mat_index, Leather);
+        break;
+    case PLANT_GROWTH:
+        if (mi.mode == MaterialInfo::Plant) {
+            TRY_RETURN_PRICE_2(tree_fruit_plants, tree_fruit_growths, FruitsNuts);
+            TRY_RETURN_PRICE_2(shrub_fruit_plants, shrub_fruit_growths, GardenVegetables);
         }
         break;
-    case df::item_type::SMALLGEM:
-        if (inorganic) {
-            if (int32_t price = get_price(resources.gems, mat_subtype, prices[df::entity_sell_category::SmallCutGems]); price != -1)
-                return price;
-        }
+    case THREAD:
+        if (mi.mode == MaterialInfo::Plant)
+            TRY_RETURN_PRICE_2(organic.fiber.mat_type, organic.fiber.mat_index, ThreadPlant);
+        if (mi.matches(silk_cat))
+            TRY_RETURN_PRICE_2(organic.silk.mat_type, organic.silk.mat_index, ThreadSilk);
+        if (mi.matches(yarn_cat))
+            TRY_RETURN_PRICE_2(organic.wool.mat_type, organic.wool.mat_index, ThreadYarn);
         break;
-    case df::item_type::BLOCKS:
-        if (inorganic) {
-            if (int32_t price = get_price(resources.stones, mat_subtype, prices[df::entity_sell_category::StoneBlocks]); price != -1)
-                return price;
-        }
+    case CLOTH:
+        if (mi.mode == MaterialInfo::Plant)
+            TRY_RETURN_PRICE_2(organic.fiber.mat_type, organic.fiber.mat_index, ClothPlant);
+        if (mi.matches(silk_cat))
+            TRY_RETURN_PRICE_2(organic.silk.mat_type, organic.silk.mat_index, ClothSilk);
+        if (mi.matches(yarn_cat))
+            TRY_RETURN_PRICE_2(organic.wool.mat_type, organic.wool.mat_index, ClothYarn);
         break;
-    case df::item_type::ROUGH:
-        if (int32_t price = get_price(resources.misc_mat.glass.mat_type, mat_type, resources.misc_mat.glass.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Glass]); price != -1)
-            return price;
+    case PANTS:
+        TRY_RETURN_PRICE(pants_type, Legwear);
         break;
-    case df::item_type::BOULDER:
-        if (int32_t price = get_price(resources.stones, mat_subtype, prices[df::entity_sell_category::Stone]); price != -1)
-            return price;
-        if (int32_t price = get_price(resources.misc_mat.clay.mat_type, mat_type, resources.misc_mat.clay.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Clay]); price != -1)
-            return price;
+    case BACKPACK:
+        TRY_RETURN_PRICE_2(misc_mat.backpacks.mat_type, misc_mat.backpacks.mat_index, Backpacks);
         break;
-    case df::item_type::WOOD:
-        if (int32_t price = get_price(resources.organic.wood.mat_type, mat_type, resources.organic.wood.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Wood]); price != -1)
-            return price;
+    case QUIVER:
+        TRY_RETURN_PRICE_2(misc_mat.quivers.mat_type, misc_mat.quivers.mat_index, Quivers);
         break;
-    case df::item_type::CHAIN:
-        if (is_plant) {
-            if (int32_t price = get_price(resources.organic.fiber.mat_type, mat_type, resources.organic.fiber.mat_index, mat_subtype,
-                    prices[df::entity_sell_category::RopesPlant]); price != -1)
-                return price;
-        }
-        {
-            MaterialInfo mi;
-            mi.decode(mat_type, mat_subtype);
-            if (mi.isValid()) {
-                if (mi.matches(silk_cat)) {
-                    if (int32_t price = get_price(resources.organic.silk.mat_type, mat_type, resources.organic.silk.mat_index, mat_subtype,
-                            prices[df::entity_sell_category::RopesSilk]); price != -1)
-                        return price;
-                }
-                if (mi.matches(yarn_cat)) {
-                    if (int32_t price = get_price(resources.organic.wool.mat_type, mat_type, resources.organic.wool.mat_index, mat_subtype,
-                            prices[df::entity_sell_category::RopesYarn]); price != -1)
-                        return price;
-                }
-            }
-        }
+    case TRAPCOMP:
+        TRY_RETURN_PRICE(trapcomp_type, TrapComponents);
         break;
-    case df::item_type::FLASK:
-        if (int32_t price = get_price(resources.misc_mat.flasks.mat_type, mat_type, resources.misc_mat.flasks.mat_index, mat_subtype,
-                prices[df::entity_sell_category::FlasksWaterskins]); price != -1)
-            return price;
+    case DRINK:
+        TRY_RETURN_PRICE_2(misc_mat.booze.mat_type, misc_mat.booze.mat_index, Drinks);
         break;
-    case df::item_type::GOBLET:
-        if (int32_t price = get_price(resources.misc_mat.crafts.mat_type, mat_type, resources.misc_mat.crafts.mat_index, mat_subtype,
-                prices[df::entity_sell_category::CupsMugsGoblets]); price != -1)
-            return price;
+    case POWDER_MISC:
+        TRY_RETURN_PRICE_2(misc_mat.powders.mat_type, misc_mat.powders.mat_index, Powders);
+        TRY_RETURN_PRICE_2(misc_mat.sand.mat_type, misc_mat.sand.mat_index, Sand);
         break;
-    case df::item_type::INSTRUMENT:
-        if (int32_t price = get_price(resources.instrument_type, mat_subtype, prices[df::entity_sell_category::Instruments]); price != -1)
-            return price;
+    case CHEESE:
+        TRY_RETURN_PRICE_2(misc_mat.cheese.mat_type, misc_mat.cheese.mat_index, Cheese);
         break;
-    case df::item_type::TOY:
-        if (int32_t price = get_price(resources.toy_type, mat_subtype, prices[df::entity_sell_category::Toys]); price != -1)
-            return price;
+    case LIQUID_MISC:
+        TRY_RETURN_PRICE_2(misc_mat.extracts.mat_type, misc_mat.extracts.mat_index, Extracts);
         break;
-    case df::item_type::CAGE:
-        if (int32_t price = get_price(resources.misc_mat.cages.mat_type, mat_type, resources.misc_mat.cages.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Cages]); price != -1)
-            return price;
+    case SPLINT:
+        TRY_RETURN_PRICE_2(misc_mat.barrels.mat_type, misc_mat.barrels.mat_index, Splints);
         break;
-    case df::item_type::BARREL:
-        if (int32_t price = get_price(resources.misc_mat.barrels.mat_type, mat_type, resources.misc_mat.barrels.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Barrels]); price != -1)
-            return price;
+    case CRUTCH:
+        TRY_RETURN_PRICE_2(misc_mat.barrels.mat_type, misc_mat.barrels.mat_index, Crutches);
         break;
-    case df::item_type::BUCKET:
-        if (int32_t price = get_price(resources.misc_mat.barrels.mat_type, mat_type, resources.misc_mat.barrels.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Buckets]); price != -1)
-            return price;
+    case TOOL:
+        TRY_RETURN_PRICE(tool_type, Tools);
         break;
-    case df::item_type::WEAPON:
-        if (int32_t price = get_price(resources.weapon_type, mat_subtype, prices[df::entity_sell_category::Weapons]); price != -1)
-            return price;
-        if (int32_t price = get_price(resources.digger_type, mat_subtype, prices[df::entity_sell_category::DiggingImplements]); price != -1)
-            return price;
-        if (int32_t price = get_price(resources.training_weapon_type, mat_subtype, prices[df::entity_sell_category::TrainingWeapons]); price != -1)
-            return price;
+    case EGG:
+        TRY_RETURN_PRICE_2(egg_races, egg_castes, Eggs);
         break;
-    case df::item_type::ARMOR:
-        if (int32_t price = get_price(resources.armor_type, mat_subtype, prices[df::entity_sell_category::Bodywear]); price != -1)
-            return price;
+    case SHEET:
+        TRY_RETURN_PRICE_2(organic.parchment.mat_type, organic.parchment.mat_index, Parchment);
         break;
-    case df::item_type::SHOES:
-        if (int32_t price = get_price(resources.shoes_type, mat_subtype, prices[df::entity_sell_category::Footwear]); price != -1)
-            return price;
-        break;
-    case df::item_type::SHIELD:
-        if (int32_t price = get_price(resources.shield_type, mat_subtype, prices[df::entity_sell_category::Shields]); price != -1)
-            return price;
-        break;
-    case df::item_type::HELM:
-        if (int32_t price = get_price(resources.helm_type, mat_subtype, prices[df::entity_sell_category::Headwear]); price != -1)
-            return price;
-        break;
-    case df::item_type::GLOVES:
-        if (int32_t price = get_price(resources.gloves_type, mat_subtype, prices[df::entity_sell_category::Handwear]); price != -1)
-            return price;
-        break;
-    case df::item_type::BAG:
-        {
-            MaterialInfo mi;
-            mi.decode(mat_type, mat_subtype);
-            if (mi.isValid() && mi.matches(leather_cat)) {
-                if (int32_t price = get_price(resources.organic.leather.mat_type, mat_type, resources.organic.leather.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::BagsLeather]); price != -1)
-                    return price;
-            }
-            if (is_plant) {
-                if (int32_t price = get_price(resources.organic.fiber.mat_type, mat_type, resources.organic.fiber.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::BagsPlant]); price != -1)
-                    return price;
-            }
-            if (mi.isValid() && mi.matches(silk_cat)) {
-                if (int32_t price = get_price(resources.organic.silk.mat_type, mat_type, resources.organic.silk.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::BagsSilk]); price != -1)
-                    return price;
-            }
-            if (mi.isValid() && mi.matches(yarn_cat)) {
-                if (int32_t price = get_price(resources.organic.wool.mat_type, mat_type, resources.organic.wool.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::BagsYarn]); price != -1)
-                    return price;
-            }
-        }
-        break;
-    case df::item_type::FIGURINE:
-    case df::item_type::AMULET:
-    case df::item_type::SCEPTER:
-    case df::item_type::CROWN:
-    case df::item_type::RING:
-    case df::item_type::EARRING:
-    case df::item_type::BRACELET:
-    case df::item_type::TOTEM:
-    case df::item_type::BOOK:
-        if (int32_t price = get_price(resources.misc_mat.crafts.mat_type, mat_type, resources.misc_mat.crafts.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Crafts]); price != -1)
-            return price;
-        break;
-    case df::item_type::AMMO:
-        if (int32_t price = get_price(resources.ammo_type, mat_subtype, prices[df::entity_sell_category::Ammo]); price != -1)
-            return price;
-        break;
-    case df::item_type::GEM:
-        if (inorganic) {
-            if (int32_t price = get_price(resources.gems, mat_subtype, prices[df::entity_sell_category::LargeCutGems]); price != -1)
-                return price;
-        }
-        break;
-    case df::item_type::ANVIL:
-        if (int32_t price = get_price(resources.metal.anvil.mat_type, mat_type, resources.metal.anvil.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Anvils]); price != -1)
-            return price;
-        break;
-    case df::item_type::MEAT:
-        if (int32_t price = get_price(resources.misc_mat.meat.mat_type, mat_type, resources.misc_mat.meat.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Meat]); price != -1)
-            return price;
-        break;
-    case df::item_type::FISH:
-    case df::item_type::FISH_RAW:
-        if (int32_t price = get_price(resources.fish_races, mat_type, resources.fish_castes, mat_subtype,
-                prices[df::entity_sell_category::Fish]); price != -1)
-            return price;
-        break;
-    case df::item_type::VERMIN:
-    case df::item_type::PET:
-        if (int32_t price = get_price(resources.animals.pet_races, mat_type, resources.animals.pet_castes, mat_subtype,
-                prices[df::entity_sell_category::Pets]); price != -1)
-            return price;
-        break;
-    case df::item_type::SEEDS:
-        if (int32_t price = get_price(resources.seeds.mat_type, mat_type, resources.seeds.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Seeds]); price != -1)
-            return price;
-        break;
-    case df::item_type::PLANT:
-        if (int32_t price = get_price(resources.plants.mat_type, mat_type, resources.plants.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Plants]); price != -1)
-            return price;
-        break;
-    case df::item_type::SKIN_TANNED:
-        if (int32_t price = get_price(resources.organic.leather.mat_type, mat_type, resources.organic.leather.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Leather]); price != -1)
-            return price;
-        break;
-    case df::item_type::PLANT_GROWTH:
-        if (is_plant) {
-            if (int32_t price = get_price(resources.tree_fruit_plants, mat_type, resources.tree_fruit_growths, mat_subtype,
-                    prices[df::entity_sell_category::FruitsNuts]); price != -1)
-                return price;
-            if (int32_t price = get_price(resources.shrub_fruit_plants, mat_type, resources.shrub_fruit_growths, mat_subtype,
-                    prices[df::entity_sell_category::GardenVegetables]); price != -1)
-                return price;
-        }
-        break;
-    case df::item_type::THREAD:
-        if (is_plant) {
-            if (int32_t price = get_price(resources.organic.fiber.mat_type, mat_type, resources.organic.fiber.mat_index, mat_subtype,
-                    prices[df::entity_sell_category::ThreadPlant]); price != -1)
-                return price;
-        }
-        {
-            MaterialInfo mi;
-            mi.decode(mat_type, mat_subtype);
-            if (mi.isValid() && mi.matches(silk_cat)) {
-                if (int32_t price = get_price(resources.organic.silk.mat_type, mat_type, resources.organic.silk.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::ThreadSilk]); price != -1)
-                    return price;
-            }
-            if (mi.isValid() && mi.matches(yarn_cat)) {
-                if (int32_t price = get_price(resources.organic.wool.mat_type, mat_type, resources.organic.wool.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::ThreadYarn]); price != -1)
-                    return price;
-            }
-        }
-        break;
-    case df::item_type::CLOTH:
-        if (is_plant) {
-            if (int32_t price = get_price(resources.organic.fiber.mat_type, mat_type, resources.organic.fiber.mat_index, mat_subtype,
-                    prices[df::entity_sell_category::ClothPlant]); price != -1)
-                return price;
-        }
-        {
-            MaterialInfo mi;
-            mi.decode(mat_type, mat_subtype);
-            if (mi.isValid() && mi.matches(silk_cat)) {
-                if (int32_t price = get_price(resources.organic.silk.mat_type, mat_type, resources.organic.silk.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::ClothSilk]); price != -1)
-                    return price;
-            }
-            if (mi.isValid() && mi.matches(yarn_cat)) {
-                if (int32_t price = get_price(resources.organic.wool.mat_type, mat_type, resources.organic.wool.mat_index, mat_subtype,
-                        prices[df::entity_sell_category::ClothYarn]); price != -1)
-                    return price;
-            }
-        }
-        break;
-    case df::item_type::PANTS:
-        if (int32_t price = get_price(resources.pants_type, mat_subtype, prices[df::entity_sell_category::Legwear]); price != -1)
-            return price;
-        break;
-    case df::item_type::BACKPACK:
-        if (int32_t price = get_price(resources.misc_mat.backpacks.mat_type, mat_type, resources.misc_mat.backpacks.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Backpacks]); price != -1)
-            return price;
-        break;
-    case df::item_type::QUIVER:
-        if (int32_t price = get_price(resources.misc_mat.quivers.mat_type, mat_type, resources.misc_mat.quivers.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Quivers]); price != -1)
-            return price;
-        break;
-    case df::item_type::TRAPCOMP:
-        if (int32_t price = get_price(resources.trapcomp_type, mat_subtype, prices[df::entity_sell_category::TrapComponents]); price != -1)
-            return price;
-        break;
-    case df::item_type::DRINK:
-        if (int32_t price = get_price(resources.misc_mat.booze.mat_type, mat_type, resources.misc_mat.booze.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Drinks]); price != -1)
-            return price;
-        break;
-    case df::item_type::POWDER_MISC:
-        if (int32_t price = get_price(resources.misc_mat.powders.mat_type, mat_type, resources.misc_mat.powders.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Powders]); price != -1)
-            return price;
-        if (int32_t price = get_price(resources.misc_mat.sand.mat_type, mat_type, resources.misc_mat.sand.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Sand]); price != -1)
-            return price;
-        break;
-    case df::item_type::CHEESE:
-        if (int32_t price = get_price(resources.misc_mat.cheese.mat_type, mat_type, resources.misc_mat.cheese.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Cheese]); price != -1)
-            return price;
-        break;
-    case df::item_type::LIQUID_MISC:
-        if (int32_t price = get_price(resources.misc_mat.extracts.mat_type, mat_type, resources.misc_mat.extracts.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Extracts]); price != -1)
-            return price;
-        break;
-    case df::item_type::SPLINT:
-        if (int32_t price = get_price(resources.misc_mat.barrels.mat_type, mat_type, resources.misc_mat.barrels.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Splints]); price != -1)
-            return price;
-        break;
-    case df::item_type::CRUTCH:
-        if (int32_t price = get_price(resources.misc_mat.barrels.mat_type, mat_type, resources.misc_mat.barrels.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Crutches]); price != -1)
-            return price;
-        break;
-    case df::item_type::TOOL:
-        if (int32_t price = get_price(resources.tool_type, mat_subtype, prices[df::entity_sell_category::Tools]); price != -1)
-            return price;
-        break;
-    case df::item_type::EGG:
-        if (int32_t price = get_price(resources.egg_races, mat_type, resources.egg_castes, mat_subtype,
-                prices[df::entity_sell_category::Eggs]); price != -1)
-            return price;
-        break;
-    case df::item_type::SHEET:
-        if (int32_t price = get_price(resources.organic.parchment.mat_type, mat_type, resources.organic.parchment.mat_index, mat_subtype,
-                prices[df::entity_sell_category::Parchment]); price != -1)
-            return price;
-        break;
+    /// DOOR, FLOODGATE, BED, CHAIR, WINDOW, ANIMALTRAP, TABLE, COFFIN, STATUE, CORPSE, BOX, BIN,
+    /// ARMORSTAND, WEAPONRACK, CABINET, CORPSEPIECE, REMAINS, CATAPULTPARTS, BALLISTAPARTS,
+    /// SIEGEAMMO, BALLISTAARROWHEAD, TRAPPARTS, FOOD, COIN, GLOB, ROCK, PIPE_SECTION,
+    /// HATCH_COVER, GRATE, QUERN, MILLSTONE, TRACTION_BENCH, ORTHOPEDIC_CAST, SLAB, BRANCH
     default:
         break;
     }
 
-    for (size_t idx = 0; idx < resources.wood_products.item_type.size(); ++idx) {
-        if (resources.wood_products.item_type[idx] == item_type &&
-                (resources.wood_products.item_subtype[idx] == -1 || resources.wood_products.item_subtype[idx] == item_subtype) &&
-                resources.wood_products.material.mat_type[idx] == mat_type &&
-                (resources.wood_products.material.mat_index[idx] == -1 || resources.wood_products.material.mat_index[idx] == mat_subtype) &&
-                prices[df::entity_sell_category::Miscellaneous].size() > idx)
-            return prices[df::entity_sell_category::Miscellaneous][idx];
-    }
+#undef TRY_RETURN_PRICE
+#undef TRY_RETURN_PRICE_2
 
+    for (size_t idx = 0; idx < resources.wood_products.item_type.size(); ++idx)
+        if ((resources.wood_products.item_type[idx] == item_type) &&
+            (resources.wood_products.item_subtype[idx] == -1 || resources.wood_products.item_subtype[idx] == item_subtype) &&
+            (resources.wood_products.material.mat_type[idx] == mat_type) &&
+            (resources.wood_products.material.mat_index[idx] == -1 || resources.wood_products.material.mat_index[idx] == mat_subtype)
+        )
+            return vector_get(prices[entity_sell_category::Miscellaneous], idx, DEFAULT_AGREEMENT_MULTIPLIER);
     return DEFAULT_AGREEMENT_MULTIPLIER;
 }
 
 static int32_t get_sell_request_multiplier(df::item *item, const df::caravan_state *caravan) {
-    const df::entity_sell_prices *sell_prices = caravan->sell_prices;
+    CHECK_NULL_POINTER(caravan);
+    auto sell_prices = caravan->sell_prices;
     if (!sell_prices)
         return DEFAULT_AGREEMENT_MULTIPLIER;
 
     auto caravan_he = df::historical_entity::find(caravan->entity);
     if (!caravan_he)
         return DEFAULT_AGREEMENT_MULTIPLIER;
-
     return get_sell_request_multiplier(item, caravan_he->resources, &sell_prices->price[0]);
 }
 
 static int32_t get_sell_request_multiplier(df::unit *unit, const df::caravan_state *caravan) {
-    const df::entity_sell_prices *sell_prices = caravan->sell_prices;
+    CHECK_NULL_POINTER(unit);
+    CHECK_NULL_POINTER(caravan);
+    auto sell_prices = caravan->sell_prices;
     if (!sell_prices)
         return DEFAULT_AGREEMENT_MULTIPLIER;
 
@@ -1961,41 +1598,14 @@ static int32_t get_sell_request_multiplier(df::unit *unit, const df::caravan_sta
     if (!caravan_he)
         return DEFAULT_AGREEMENT_MULTIPLIER;
 
-    auto & resources = caravan_he->resources;
+    auto &resources = caravan_he->resources;
     int32_t price = get_price(resources.animals.pet_races, unit->race, resources.animals.pet_castes, unit->caste,
-                              sell_prices->price[df::entity_sell_category::Pets]);
+                              sell_prices->price[entity_sell_category::Pets]);
     return (price != -1) ? price : DEFAULT_AGREEMENT_MULTIPLIER;
 }
 
-static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
-    auto trade_state = caravan->trade_state;
-    if (caravan->time_remaining <= 0 ||
-            (trade_state != df::caravan_state::T_trade_state::Approaching &&
-                trade_state != df::caravan_state::T_trade_state::AtDepot))
-        return false;
-    return get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER;
-}
-
-bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
-    if (caravan)
-        return is_requested_trade_good(item, caravan);
-
-    for (auto caravan : df::global::plotinfo->caravans) {
-        auto trade_state = caravan->trade_state;
-        if (caravan->time_remaining <= 0 ||
-                (trade_state != df::caravan_state::T_trade_state::Approaching &&
-                 trade_state != df::caravan_state::T_trade_state::AtDepot))
-            continue;
-        if (get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER)
-            return true;
-    }
-    return false;
-}
-
-int Items::getValue(df::item *item, df::caravan_state *caravan)
-{
+int Items::getValue(df::item *item, df::caravan_state *caravan) {
     CHECK_NULL_POINTER(item);
-
     int16_t item_type = item->getType();
     int16_t item_subtype = item->getSubtype();
     int16_t mat_type = item->getMaterial();
@@ -2003,35 +1613,18 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
 
     // Get base value for item type, subtype, and material
     int value = getItemBaseValue(item_type, item_subtype, mat_type, mat_subtype);
-
-    // entity value modifications
+    // Entity value modifications
     value *= get_war_multiplier(item, caravan);
     value >>= 8;
 
     // Improve value based on quality
-    switch (item->getQuality()) {
-    case 1:
-        value *= 1.1;
-        value += 3;
-        break;
-    case 2:
-        value *= 1.2;
-        value += 6;
-        break;
-    case 3:
-        value *= 1.333;
-        value += 10;
-        break;
-    case 4:
-        value *= 1.5;
-        value += 15;
-        break;
-    case 5:
-        value *= 2;
-        value += 30;
-        break;
-    default:
-        break;
+    switch (item->getQuality())
+    {
+        case 1: value *= 1.1; value += 3; break; // (-) well-crafted
+        case 2: value *= 1.2; value += 6; break; // (+) Finely-crafted
+        case 3: value *= 1.333; value += 10; break; // (*) superior quality
+        case 4: value *= 1.5; value += 15; break; // (≡) exceptional
+        case 5: value *= 2; value += 30; break; // (☼) masterful, artifact
     }
 
     // Add improvement values
@@ -2043,15 +1636,9 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     // Degrade value due to wear
     switch (item->getWear())
     {
-    case 1:
-        value = value * 3 / 4;
-        break;
-    case 2:
-        value = value / 2;
-        break;
-    case 3:
-        value = value / 4;
-        break;
+        case 1: value = value * 3 / 4; break; // (x) worn
+        case 2: value = value / 2; break; // (X) threadbare
+        case 3: value = value / 4; break; // (XX) tattered
     }
 
     // Ignore value bonuses from magic, since that never actually happens
@@ -2060,16 +1647,14 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     if (item->flags.bits.artifact_mood)
         value *= 10;
 
-    // modify buy/sell prices
+    // Modify buy/sell prices
     if (caravan) {
         int32_t buy_multiplier = get_buy_request_multiplier(item, caravan->buy_prices);
-        if (buy_multiplier == DEFAULT_AGREEMENT_MULTIPLIER) {
-            value *= get_sell_request_multiplier(item, caravan);;
-            value >>= 7;
-        } else {
+        if (buy_multiplier == DEFAULT_AGREEMENT_MULTIPLIER)
+            value *= get_sell_request_multiplier(item, caravan);
+        else
             value *= buy_multiplier;
-            value >>= 7;
-        }
+        value >>= 7;
     }
 
     // Boost value from stack size
@@ -2086,7 +1671,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     if (item_type == item_type::VERMIN || item_type == item_type::PET)
     {
         int divisor = 1;
-        auto creature = vector_get(world->raws.creatures.all, mat_type);
+        auto creature = df::creature_raw::find(mat_type);
         if (creature) {
             size_t caste = std::max(0, mat_subtype);
             if (caste < creature->caste.size())
@@ -2102,7 +1687,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
     // Add in value from units contained in cages
     if (item_type == item_type::CAGE) {
         for (auto gref : item->general_refs) {
-            if (gref->getType() != df::general_ref_type::CONTAINS_UNIT)
+            if (gref->getType() != general_ref_type::CONTAINS_UNIT)
                 continue;
             auto unit = gref->getUnit();
             if (!unit)
@@ -2118,16 +1703,17 @@ int Items::getValue(df::item *item, df::caravan_state *caravan)
             value += unit_value;
         }
     }
-
     return value;
 }
 
-bool Items::createItem(std::vector<df::item *> &out_items, df::unit* unit, df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print, bool no_floor) {
-    //based on Quietust's plugins/createitem.cpp
+bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print, bool no_floor)
+{   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
-    df::coord pos = Units::getPosition(unit);
-    df::map_block* block = Maps::getTileBlock(pos);
+    auto pos = Units::getPosition(unit);
+    auto block = Maps::getTileBlock(pos);
     CHECK_NULL_POINTER(block);
+
     auto prod = df::allocate<df::reaction_product_itemst>();
     prod->item_type = item_type;
     prod->item_subtype = item_subtype;
@@ -2135,164 +1721,125 @@ bool Items::createItem(std::vector<df::item *> &out_items, df::unit* unit, df::i
     prod->mat_index = mat_index;
     prod->probability = 100;
     prod->count = 1;
-    switch(item_type) {
-    case df::item_type::BAR:
-    case df::item_type::POWDER_MISC:
-    case df::item_type::LIQUID_MISC:
-    case df::item_type::DRINK:
-        prod->product_dimension = 150;
-        break;
-    case df::item_type::THREAD:
-        prod->product_dimension = 15000;
-        break;
-    case df::item_type::CLOTH:
-        prod->product_dimension = 10000;
-        break;
-    default:
-        prod->product_dimension = 1;
-        break;
+
+    switch(item_type)
+    {   using namespace df::enums::item_type;
+        case BAR:
+        case POWDER_MISC:
+        case LIQUID_MISC:
+        case DRINK:
+            prod->product_dimension = 150;
+            break;
+        case THREAD:
+            prod->product_dimension = 15000;
+            break;
+        case CLOTH:
+            prod->product_dimension = 10000;
+            break;
+        default:
+            prod->product_dimension = 1;
     }
 
-    //makeItem
-    vector<df::reaction_product*> out_products;
-    vector<df::reaction_reagent*> in_reag;
-    vector<df::item*> in_items;
+    // makeItem
+    vector<df::reaction_product *> out_products;
+    vector<df::reaction_reagent *> in_reag;
+    vector<df::item *> in_items;
 
     out_items.clear();
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-            0, df::historical_entity::find(unit->civ_id),
-            World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL,
-            NULL);
+        0, df::historical_entity::find(unit->civ_id),
+        World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL, NULL);
     delete prod;
 
     DEBUG(items).print("produced %zd items\n", out_items.size());
 
-    for (size_t a = 0; a < out_items.size(); a++ ) {
-        // Plant growths need a valid "growth print", otherwise they behave oddly
-        auto growth = virtual_cast<df::item_plant_growthst>(out_items[a]);
-        if (growth)
+    for (auto out_item : out_items)
+    {   // Plant growths need a valid "growth print", otherwise they behave oddly
+        if (auto growth = virtual_cast<df::item_plant_growthst>(out_item))
             growth->growth_print = growth_print;
-
         if (!no_floor)
-            out_items[a]->moveToGround(pos.x, pos.y, pos.z);
+            out_item->moveToGround(pos.x, pos.y, pos.z);
     }
-
-    return out_items.size() != 0;
+    return !out_items.empty();
 }
 
 /*
  * Trade Info
  */
 
-bool Items::checkMandates(df::item *item)
-{
+bool Items::checkMandates(df::item *item) {
     CHECK_NULL_POINTER(item);
-
-    for (df::mandate *mandate : world->mandates)
-    {
-        if (mandate->mode != df::mandate::T_mode::Export)
-            continue;
-
-        if (item->getType() != mandate->item_type ||
-            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
-            continue;
-
-        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
-            continue;
-
-        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
-            continue;
-
-        return false;
+    for (auto mandate : world->mandates) {
+        if ((mandate->mode == df::mandate::Export) &&
+            (item->getType() == mandate->item_type) &&
+            (mandate->item_subtype == -1 || item->getSubtype() == mandate->item_subtype) &&
+            (mandate->mat_type == -1 || item->getMaterial() == mandate->mat_type) &&
+            (mandate->mat_index == -1 || item->getMaterialIndex() == mandate->mat_index)
+        )
+            return false;
     }
-
     return true;
 }
 
-bool Items::canTrade(df::item *item)
-{
+bool Items::canTrade(df::item *item) {
     CHECK_NULL_POINTER(item);
-
-    if (item->flags.bits.owned || item->flags.bits.artifact || item->flags.bits.spider_web || item->flags.bits.in_job)
+    if (item->flags.bits.owned || item->flags.bits.artifact ||
+        item->flags.bits.spider_web || item->flags.bits.in_job
+    )
         return false;
 
-    for (df::general_ref *ref : item->general_refs)
-    {
-        switch (ref->getType())
+    for (auto gref : item->general_refs) {
+        switch (gref->getType())
         {
-        case general_ref_type::UNIT_HOLDER:
-            return false;
-
-        case general_ref_type::BUILDING_HOLDER:
-            return false;
-
-        default:
-            break;
+            case general_ref_type::UNIT_HOLDER:
+            case general_ref_type::BUILDING_HOLDER:
+                return false;
+            default:
+                break;
         }
     }
 
-    for (df::specific_ref *ref : item->specific_refs)
-    {
-        if (ref->type == specific_ref_type::JOB)
-        {
-            // Ignore any items assigned to a job
-            return false;
-        }
-    }
-
+    if (getSpecificRef(item, specific_ref_type::JOB))
+        return false; // Ignore any items assigned to a job
     return checkMandates(item);
 }
 
-bool Items::canTradeWithContents(df::item *item)
-{
+bool Items::canTradeWithContents(df::item *item) {
     CHECK_NULL_POINTER(item);
-
-    if (item->flags.bits.in_inventory)
+    if (item->flags.bits.in_inventory || !canTrade(item))
         return false;
 
-    if (!canTrade(item))
-        return false;
-
-    vector<df::item*> contained_items;
+    vector<df::item *> contained_items;
     getContainedItems(item, &contained_items);
-    for (df::item *cit : contained_items)
-    {
+    for (auto cit : contained_items)
         if (!canTrade(cit))
             return false;
-    }
-
     return true;
 }
 
-bool Items::canTradeAnyWithContents(df::item *item)
-{
+bool Items::canTradeAnyWithContents(df::item *item) {
     CHECK_NULL_POINTER(item);
-
     if (item->flags.bits.in_inventory)
         return false;
 
-    vector<df::item*> contained_items;
+    vector<df::item *> contained_items;
     getContainedItems(item, &contained_items);
-
     if (contained_items.empty())
         return canTrade(item);
 
-    for (df::item *cit : contained_items) {
+    for (auto cit : contained_items)
         if (canTrade(cit))
             return true;
-    }
-
     return false;
 }
 
 bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(depot);
-
-    // validate that the depot is in a good state
-    if (depot->getBuildStage() < depot->getMaxBuildStage())
-        return false;
-    if (depot->jobs.size() && depot->jobs[0]->job_type == df::job_type::DestroyBuilding)
+    // Validate that the depot is in a good state
+    if ((depot->getBuildStage() < depot->getMaxBuildStage()) ||
+        (!depot->jobs.empty() && depot->jobs[0]->job_type == job_type::DestroyBuilding)
+    )
         return false;
 
     auto href = df::allocate<df::general_ref_building_holderst>();
@@ -2300,7 +1847,7 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
         return false;
 
     auto job = new df::job();
-    job->job_type = df::job_type::BringItemToDepot;
+    job->job_type = job_type::BringItemToDepot;
     job->pos = df::coord(depot->centerx, depot->centery, depot->z);
 
     // job <-> item link
@@ -2315,33 +1862,53 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     depot->jobs.push_back(job);
     job->general_refs.push_back(href);
 
-    // add to job list
+    // Add to job list
     Job::linkIntoWorld(job);
-
     return true;
 }
 
-// When called with game_ui = true, this is equivalent to bay12's itemst::meltable()
-// (i.e., returning true if and only if the item has a "designate for melting" button in game)
-bool Items::canMelt(df::item *item, bool game_ui)
-{
-    CHECK_NULL_POINTER(item);
-
-    MaterialInfo mat(item);
-    if (mat.getCraftClass() != df::craft_material_class::Metal)
+static bool is_requested_trade_good(df::item *item, df::caravan_state *caravan) {
+    CHECK_NULL_POINTER(caravan);
+    if (caravan->time_remaining <= 0)
         return false;
 
-    switch(item->getType()) {
-        // these are not meltable, even if made from metal
-        case item_type::CORPSE:
-        case item_type::CORPSEPIECE:
-        case item_type::REMAINS:
-        case item_type::FISH:
-        case item_type::FISH_RAW:
-        case item_type::VERMIN:
-        case item_type::PET:
-        case item_type::FOOD:
-        case item_type::EGG:
+    auto &trade_state = caravan->trade_state;
+    if (trade_state == df::caravan_state::Approaching || trade_state == df::caravan_state::AtDepot)
+        return get_buy_request_multiplier(item, caravan->buy_prices) > DEFAULT_AGREEMENT_MULTIPLIER;
+    return false;
+}
+
+bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
+    CHECK_NULL_POINTER(item);
+    if (caravan)
+        return is_requested_trade_good(item, caravan);
+
+    for (auto caravan : df::global::plotinfo->caravans)
+        if (is_requested_trade_good(item, caravan))
+            return true;
+    return false;
+}
+
+/// When called with game_ui = true, this is equivalent to Bay12's itemst::meltable()
+/// (i.e., returning true if and only if the item has a "designate for melting" button in game)
+bool Items::canMelt(df::item *item, bool game_ui) {
+    CHECK_NULL_POINTER(item);
+    MaterialInfo mat(item);
+    if (mat.getCraftClass() != craft_material_class::Metal)
+        return false;
+
+    switch(item->getType())
+    {   using namespace df::enums::item_type;
+        // These are not meltable, even if made from metal
+        case CORPSE:
+        case CORPSEPIECE:
+        case REMAINS:
+        case FISH:
+        case FISH_RAW:
+        case VERMIN:
+        case PET:
+        case FOOD:
+        case EGG:
             return false;
         default:
             break;
@@ -2349,110 +1916,98 @@ bool Items::canMelt(df::item *item, bool game_ui)
 
     if (item->flags.bits.artifact)
         return false;
-
-    // ignore checks below, when asked to behave like itemst::meltable()
-    if (game_ui) return true;
+    // Ignore checks below when asked to behave like itemst::meltable()
+    if (game_ui)
+        return true;
 
     if (item->getType() == item_type::BAR)
         return false;
 
-    // do not melt nonempty containers and items in unit inventories
-    for (auto &g : item->general_refs) {
-        switch (g->getType()) {
-            case df::general_ref_type::CONTAINS_ITEM:
-            case df::general_ref_type::UNIT_HOLDER:
-            case df::general_ref_type::CONTAINS_UNIT:
+    // Do not melt nonempty containers and items in unit inventories
+    for (auto gref : item->general_refs) {
+        switch (gref->getType())
+        {   using namespace df::enums::general_ref_type;
+            case CONTAINS_ITEM:
+            case UNIT_HOLDER:
+            case CONTAINS_UNIT:
                 return false;
-            case df::general_ref_type::CONTAINED_IN_ITEM:
-            {
-                df::item *c = g->getItem();
-                for (auto &gg : c->general_refs) {
-                    if (gg->getType() == df::general_ref_type::UNIT_HOLDER)
-                        return false;
-                }
+            case CONTAINED_IN_ITEM:
+                if (auto cont = gref->getItem(); getGeneralRef(cont, UNIT_HOLDER))
+                    return false;
                 break;
-            }
             default:
                 break;
         }
     }
-
     return true;
-};
+}
 
-bool Items::markForMelting(df::item *item)
-{
+bool Items::markForMelting(df::item *item) {
     CHECK_NULL_POINTER(item);
-    if (item->flags.bits.melt || !canMelt(item,true)) return false;
+    if (item->flags.bits.melt || !canMelt(item, true))
+        return false;
     insert_into_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item);
-    item->flags.bits.melt = 1;
+    item->flags.bits.melt = true;
     return true;
 }
 
-bool Items::cancelMelting(df::item *item)
-{
+bool Items::cancelMelting(df::item *item) {
     CHECK_NULL_POINTER(item);
-    if (!item->flags.bits.melt) return false;
+    if (!item->flags.bits.melt)
+        return false;
     erase_from_vector(world->items.other.ANY_MELT_DESIGNATED, &df::item::id, item->id);
-    item->flags.bits.melt = 0;
+    item->flags.bits.melt = false;
     return true;
 }
 
-bool Items::isRouteVehicle(df::item *item)
-{
+bool Items::isRouteVehicle(df::item *item) {
     CHECK_NULL_POINTER(item);
-    int id = item->getVehicleID();
-    if (id < 0) return false;
-
-    auto vehicle = df::vehicle::find(id);
+    auto vehicle = df::vehicle::find(item->getVehicleID());
     return vehicle && vehicle->route_id >= 0;
 }
 
 bool Items::isSquadEquipment(df::item *item)
-{
+{   using df::global::plotinfo;
     CHECK_NULL_POINTER(item);
     if (!plotinfo)
         return false;
-
     auto &vec = plotinfo->equipment.items_assigned[item->getType()];
-    return binsearch_index(vec, item->id) >= 0;
+    return vector_contains(vec, item->id);
 }
 
-// reverse engineered, code reference: 0x140953150 in 50.11-win64-steam
-// our name for this function: itemst::getCapacity
-// bay12 name for this function: not known
-
-int32_t Items::getCapacity(df::item* item)
-{
+/// Reverse engineered, code reference: 0x140953150 in 50.11-win64-steam
+/// Our name for this function: itemst::getCapacity
+/// Bay12 name for this function: not known
+int32_t Items::getCapacity(df::item *item) {
     CHECK_NULL_POINTER(item);
-
-    switch (item->getType()) {
-    case df::enums::item_type::FLASK:
-    case df::enums::item_type::GOBLET:
-        return 180;
-    case df::enums::item_type::CAGE:
-    case df::enums::item_type::BARREL:
-    case df::enums::item_type::COFFIN:
-    case df::enums::item_type::BOX:
-    case df::enums::item_type::BAG:
-    case df::enums::item_type::BIN:
-    case df::enums::item_type::ARMORSTAND:
-    case df::enums::item_type::WEAPONRACK:
-    case df::enums::item_type::CABINET:
-        return 6000;
-    case df::enums::item_type::BUCKET:
-        return 600;
-    case df::enums::item_type::ANIMALTRAP:
-    case df::enums::item_type::BACKPACK:
-        return 3000;
-    case df::enums::item_type::QUIVER:
-        return 1200;
-    case df::enums::item_type::TOOL:
-        if (auto tool = virtual_cast<df::item_toolst>(item))
-            return tool->subtype->container_capacity;
-        // fall through
-    default:
-        break; // fall through to default exit
+    switch (item->getType())
+    {   using namespace df::enums::item_type;
+        case FLASK:
+        case GOBLET:
+            return 180;
+        case CAGE:
+        case BARREL:
+        case COFFIN:
+        case BOX:
+        case BAG:
+        case BIN:
+        case ARMORSTAND:
+        case WEAPONRACK:
+        case CABINET:
+            return 6000;
+        case BUCKET:
+            return 600;
+        case ANIMALTRAP:
+        case BACKPACK:
+            return 3000;
+        case QUIVER:
+            return 1200;
+        case TOOL:
+            if (auto tool = virtual_cast<df::item_toolst>(item))
+                return tool->subtype->container_capacity;
+            break;
+        default:
+            break;
     }
     return 0;
 }

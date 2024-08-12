@@ -64,6 +64,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
@@ -71,6 +72,7 @@ Template for new versions:
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
 - ``dfhack.units.isDanger``: no longer returns true for intelligent undead
+- Overlay widgets can now assume their ``active`` and ``visible`` functions will only execute in a context that matches their ``viewscreens`` associations
 
 ## Removed
 

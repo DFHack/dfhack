@@ -280,7 +280,7 @@ local function can_set_skill_level()
             return false
         end
     end
-    return ret and not df.global.game.main_interface.stockpile_link.adding_new_link
+    return ret
 end
 
 local function set_skill_level(which, val, bld)
@@ -539,8 +539,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
         frame={l=0, r=0, t=0, h=math.max(#labors+5,9)},
         visible=function()
             local bld = dfhack.gui.getSelectedBuilding(true)
-            return bld and bld:getType() == bld_type and bld.type == bld_subtype and
-                not df.global.game.main_interface.stockpile_link.adding_new_link
+            return bld and bld:getType() == bld_type and bld.type == bld_subtype
         end,
         subviews={
             widgets.Label{

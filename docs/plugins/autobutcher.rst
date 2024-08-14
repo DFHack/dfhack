@@ -7,7 +7,7 @@ autobutcher
 
 This plugin monitors how many pets you have of each gender and age and assigns
 excess livestock for slaughter. See `gui/autobutcher` for an in-game interface.
-Units will be ignored if they are:
+Units are protected from being automatically butchered if they are:
 
 * Untamed
 * Named or nicknamed

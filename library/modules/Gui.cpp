@@ -541,7 +541,9 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
             break;
         case df::view_sheet_type::BUILDING:
             if (game->main_interface.view_sheets.linking_lever)
-                newFocusString = baseFocus + "/LinkingLever";
+                newFocusString += "/LinkingLever";
+            else if (game->main_interface.stockpile_link.open && game->main_interface.stockpile_link.adding_new_link)
+                newFocusString += "/LinkingStockpile";
             else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
                 newFocusString += '/' + enum_item_key(bld->getType());
                 auto bld_type = bld->getType();

@@ -19,7 +19,6 @@ These files contain the plans for entire fortresses. Each file has one or more
 help sections that walk you through how to build the fort, step by step.
 
 - :source:`library/dreamfort.csv <data/blueprints/dreamfort.csv>`
-- :source:`library/quickfortress.csv <data/blueprints/quickfortress.csv>`
 
 .. _dreamfort:
 
@@ -132,17 +131,6 @@ Crypt
   :alt: Annotated screenshot of the dreamfort crypt
   :target: https://drive.google.com/file/d/16iT_ho7BIRPD_eofuxdlVQ4FunR1Li23
   :align: center
-
-The Quick Fortress
-~~~~~~~~~~~~~~~~~~
-
-The Quick Fortress is an updated version of the example fortress that came with
-`Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the utility that
-inspired DFHack quickfort). While it is not a complete fortress by
-itself, it is much simpler than Dreamfort and is good for a first introduction
-to `quickfort` blueprints. Read its walkthrough with ``quickfort run
-library/quickfortress.csv`` or view the blueprints `online
-<https://docs.google.com/spreadsheets/d/1WuLYZBM6S2nt-XsPS30kpDnngpOQCuIdlw4zjrcITdY>`__.
 
 Layout helpers
 --------------

@@ -62,6 +62,7 @@ Template for new versions:
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 
 ## Misc Improvements
+- `orders`: more space efficient workshop overlay
 
 ## Documentation
 - Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

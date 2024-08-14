@@ -266,7 +266,7 @@ SkillRestrictionOverlay.ATTRS{
         'dwarfmode/ViewSheets/BUILDING/Furnace',
         'dwarfmode/ViewSheets/BUILDING/Workshop',
     },
-    frame={w=54, h=7},
+    frame={w=57, h=7},
 }
 
 local function can_set_skill_level()
@@ -330,7 +330,7 @@ function SkillRestrictionOverlay:init()
     panel:addviews{
         widgets.CycleHotkeyLabel{
             view_id='min_skill',
-            frame={l=0, t=0, w=16},
+            frame={l=1, t=0, w=16},
             label='Min skill:',
             label_below=true,
             key_back='CUSTOM_SHIFT_C',
@@ -365,7 +365,7 @@ function SkillRestrictionOverlay:init()
             end,
         },
         widgets.RangeSlider{
-            frame={l=0, t=3},
+            frame={l=1, t=3},
             num_stops=#SKILL_OPTIONS,
             get_left_idx_fn=function()
                 return self.subviews.min_skill:getOptionValue()
@@ -445,7 +445,7 @@ LaborRestrictionsOverlay.ATTRS{
         'dwarfmode/ViewSheets/BUILDING/Workshop/Quern/Workers',
         'dwarfmode/ViewSheets/BUILDING/Workshop/Still/Workers',
     },
-    frame={w=37, h=17},
+    frame={w=57, h=15},
 }
 
 local function can_set_labors()
@@ -527,7 +527,7 @@ end
 
 function make_labor_panel(bld_type, bld_subtype, labors)
     local list = widgets.List{
-        frame={t=2, l=0, r=0, b=2},
+        frame={t=2, l=1, w=28, b=0},
         on_double_click=toggle_labor,
     }
 
@@ -536,7 +536,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
         frame_background=gui.CLEAR_PEN,
         -- will get clamped to parent frame and a scrollbar will appear if the list
         -- is too long
-        frame={l=0, r=0, t=0, h=#labors+7},
+        frame={l=0, r=0, t=0, h=math.max(#labors+5,9)},
         visible=function()
             local bld = dfhack.gui.getSelectedBuilding(true)
             return bld and bld:getType() == bld_type and bld.type == bld_subtype
@@ -548,7 +548,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
             },
             list,
             widgets.HotkeyLabel{
-                frame={l=0, b=1},
+                frame={l=30, t=2},
                 key='CUSTOM_CTRL_A',
                 label='Toggle all',
                 auto_width=true,
@@ -563,12 +563,16 @@ function make_labor_panel(bld_type, bld_subtype, labors)
                 end,
             },
             widgets.HotkeyLabel{
-                frame={l=0, b=0},
+                frame={l=30, t=4},
                 key='SELECT',
-                label='Or double click to toggle',
+                label='Toggle selected',
                 auto_width=true,
                 on_activate=function() toggle_labor(list:getSelected()) end,
             },
+            widgets.Label{
+                frame={l=37, t=5},
+                text='(or double click)'
+            }
         },
     }
 

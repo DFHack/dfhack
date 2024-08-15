@@ -12,7 +12,7 @@ generate manager orders to manufacture more when your stock drops below a
 configured per-citizen threshold.
 
 If you are wondering whether you should enable `tailor` instead, see the
-comparsion in the last section below.
+comparison in the last section below.
 
 Usage
 -----
@@ -62,6 +62,6 @@ Enable `tailor` when:
 - you want a tool that can run effectively with a default configuration
 
 You can even enable both tools if you only want to set configuration for a few
-specific clothing types (e.g. if you'd prefer that most pople wear dresses).
+specific clothing types (e.g. if you'd prefer that most people wear dresses).
 You can set the configuration for those types in ``autoclothing`` and let
 `tailor` automatically manage the rest.

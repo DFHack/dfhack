@@ -16,7 +16,7 @@ materials that you have on hand in the fort. For example, if you have lots of
 silk, but no cloth, then ``tailor`` will order only silk clothing to be made.
 
 If you are wondering whether you should enable `autoclothing` instead, see the
-head-to-head comparsion in the `autoclothing` docs.
+head-to-head comparison in the `autoclothing` docs.
 
 Usage
 -----

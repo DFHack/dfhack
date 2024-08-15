@@ -268,7 +268,7 @@ examples::
         Show help text.
     ``-l``, ``--quality <level>``
         Set the quality of the architecture for built architected
-        builtings.
+        buildings.
     ``-q``, ``--quiet``
         Suppress informational output (error messages are still
         printed).

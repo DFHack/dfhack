@@ -53,7 +53,7 @@ Usage
 ``revflood``
     Hide everything, then reveal tiles with a path to the keyboard cursor (if
     enabled) or the selected unit (if a unit is selected) or else a random
-    citizen. This allows reparing maps that you accidentally saved while they
+    citizen. This allows repairing maps that you accidentally saved while they
     were revealed. Note that tiles behind constructed walls are also revealed
     as a workaround for :bug:`1871`.
 

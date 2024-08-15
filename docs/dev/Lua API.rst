@@ -736,14 +736,14 @@ arbitrary Lua tables.
 
     local state = dfhack.persistent.getSiteData('my-script-name', {somedata={}})
 
-* ``dfhack.peristent.getSiteDataString(key)``
+* ``dfhack.persistent.getSiteDataString(key)``
 
   Retrieves the underlying serialized string associated with the current site
   and the given string ``key``. Returns *nil* if the key isn't found in the
   current site's persistent data. Most scripts will want to use ``getSiteData``
   instead.
 
-* ``dfhack.peristent.saveSiteData(key, data)``
+* ``dfhack.persistent.saveSiteData(key, data)``
 
   Persists the given ``data`` (usually a table; can be of arbitrary complexity and depth)
   in the world save, associated with the current site and the given ``key``.
@@ -759,8 +759,8 @@ arbitrary Lua tables.
   ``key``. Returns *true* if succeeded.
 
 * ``dfhack.persistent.getWorldData(key[, default])``
-* ``dfhack.peristent.getWorldDataString(key)``
-* ``dfhack.peristent.saveWorldData(key, data)``
+* ``dfhack.persistent.getWorldDataString(key)``
+* ``dfhack.persistent.saveWorldData(key, data)``
 * ``dfhack.persistent.saveWorldDataString(key, data_str)``
 * ``dfhack.persistent.deleteWorldData(key)``
 
@@ -1047,7 +1047,7 @@ Screens
   The strings have a "screen/foo/bar/baz..." format e.g.::
 
     [1] = "dwarfmode/Info/CREATURES/CITIZEN"
-    [2] = "dwardmode/Squads"
+    [2] = "dwarfmode/Squads"
 
 * ``dfhack.gui.matchFocusString(focus_string[, viewscreen])``
 
@@ -1099,7 +1099,7 @@ General-purpose selections
   associated with the selected in-game object. For example, Calling
   ``getSelectedJob`` when a building is selected will return the job associated
   with the building (e.g., the ``ConstructBuilding`` job). If ``silent`` is
-  ommitted or set to ``false`` and a selected object cannot be found, then an
+  omitted or set to ``false`` and a selected object cannot be found, then an
   error is printed to the console.
 
 * ``dfhack.gui.getAnyWorkshopJob(screen)``
@@ -1244,7 +1244,7 @@ Announcements
   ``subid`` is only used for ``AB`` and ``ART_IMAGE``. ``[/LPAGE]`` ends the link text.
 
   ``[C:`` screenf ``:`` screenb ``:`` screenbright ``]``: Color text. Sets the
-  repective values in ``df.global.gps`` and then sets text color.
+  respective values in ``df.global.gps`` and then sets text color.
   ``color`` = ``screenf``, ``bright`` = ``screenbright``, ``screenb`` does nothing
   since popup backgrounds are always black.
   Example: ``"Light gray, [C:4:0:0]red, [C:4:0:1]orange, [C:7:0:0]light gray."``
@@ -1691,7 +1691,7 @@ Units module
 * ``dfhack.units.assignTrainer(unit[,trainer_id])``
 * ``dfhack.units.unassignTrainer(unit)``
 
-  Assignes (or unassigns) a trainer for the specified trainable unit. The
+  Assigns (or unassigns) a trainer for the specified trainable unit. The
   trainer ID can be omitted if "any trainer" is desired. Returns a boolean
   indicating whether the operation was successful.
 
@@ -4025,7 +4025,7 @@ parameters.
       optionActions: list of option specifications
 
   and returns a list of positional parameters -- that is, all strings that are
-  neither options nor argruments to options. Options and positional parameters
+  neither options nor arguments to options. Options and positional parameters
   can appear in any order on the commandline, as long as arguments to options
   immediately follow the option itself.
 
@@ -5213,7 +5213,7 @@ Has attributes:
   ``true`` if the drag was "successful" (i.e., not canceled) and ``false``
   otherwise. Dragging can be canceled by right clicking while dragging with the
   mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
-  calling ``Panel:setKeyboaredDragEnabled(false)`` (while dragging with the
+  calling ``Panel:setKeyboardDragEnabled(false)`` (while dragging with the
   keyboard). If it is more convenient to do so, you can choose to override the
   ``panel:onDragBegin`` and/or the ``panel:onDragEnd`` methods instead of
   setting the ``on_drag_begin`` and/or ``on_drag_end`` attributes.
@@ -5303,7 +5303,7 @@ Has functions:
 
   If called with ``true`` and the panel is not already in keyboard drag mode,
   then any current drag or resize operations are halted where they are (not
-  canceled), the panel siezes input focus (see `View class`_ above for
+  canceled), the panel seizes input focus (see `View class`_ above for
   information on the DFHack focus subsystem), and further keyboard cursor keys
   move the window as if it were being dragged. Shift-cursor keys move by larger
   amounts. Hit :kbd:`Enter` to commit the new window position or :kbd:`Esc` to
@@ -5314,7 +5314,7 @@ Has functions:
 
   If called with ``true`` and the panel is not already in keyboard resize mode,
   then any current drag or resize operations are halted where they are (not
-  canceled), the panel siezes input focus (see `View class`_ above for
+  canceled), the panel seizes input focus (see `View class`_ above for
   information on the DFHack focus subsystem), and further keyboard cursor keys
   resize the window as if it were being dragged from the lower right corner. If
   neither the bottom or right edge is a valid anchor, an appropriate corner will
@@ -5526,7 +5526,7 @@ The Scrollbar widget implements the following methods:
   The ``top_elem`` param is the (one-based) index of the first visible element.
   The ``elems_per_page`` param is the maximum number of elements that can be
   shown at one time. The ``num_elems`` param is the total number of elements
-  that the paried widget can scroll through. If ``elems_per_page`` or
+  that the paired widget can scroll through. If ``elems_per_page`` or
   ``num_elems`` is not specified, the most recently specified value for these
   parameters is used. The scrollbar will adjust its scrollbar size and position
   according to the values passed to this function.
@@ -6484,7 +6484,7 @@ Native functions (exported to Lua)
 
 - ``rollNormal(rngID, avg, stddev)``
 
-  generates random normal[gaus.]
+  generates random double drawn from a normal (Gaussian) distribution
 
 - ``rollBool(rngID, chance)``
 

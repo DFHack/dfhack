@@ -261,6 +261,15 @@ static bool widget_is_visible(df::widget * w) {
     return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
 }
 
+static size_t get_num_children(df::widget * w) {
+    if (!w)
+        return 0;
+    df::widget_container *container = virtual_cast<df::widget_container>(w);
+    if (!container)
+        return 0;
+    return container->children.size();
+}
+
 static df::widget * get_visible_child(df::widget *parent) {
     df::widget_container *container = virtual_cast<df::widget_container>(parent);
     if (!container)
@@ -377,8 +386,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 WARN(gui).print("Labor tab widget not found\n");
             } else if (tab->name == "Work Details") {
                 newFocusString += "/WORK_DETAILS";
-                if (auto details = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Details");
-                        details && !details->visibility_flags.bits.WIDGET_VISIBILITY_CAN_KEY_ACTIVATE)
+                auto rp = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Right panel");
+                if (get_num_children(rp) == 2)
                     newFocusString += "/Details";
                 else
                     newFocusString += "/Default";

@@ -27,7 +27,7 @@ Options
     population, artifact limit not reached, etc.).
 ``--unit``
     Make the strange mood strike the selected unit instead of picking one
-    randomly. Unit eligibility is still enforced (unless ``-force`` is also
+    randomly. Unit eligibility is still enforced (unless ``--force`` is also
     specified).
 ``--type <type>``
     Force the mood to be of a particular type instead of choosing randomly based

@@ -26,7 +26,7 @@ static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
 static PersistentDataItem config;
 
 static int32_t cycle_timestamp;
-static constexpr int32_t cycle_freq = 107;
+static constexpr int32_t CYCLE_TICKS = 107;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
@@ -153,7 +153,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (world->frame_counter - cycle_timestamp >= cycle_freq)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         update_tomb_assignments(out);
     return CR_OK;
 }

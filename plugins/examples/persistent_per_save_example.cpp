@@ -29,7 +29,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
-// the names "config" and "cycle" are arbitrary and are just used to categorize
+// the names "control" and "cycle" are arbitrary and are just used to categorize
 // your log messages.
 namespace DFHack {
     // for configuration-related logging

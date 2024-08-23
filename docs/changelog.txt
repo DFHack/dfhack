@@ -64,6 +64,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `orders`: more space efficient workshop overlay
+- `gui/family-affairs`: is now an alias that points to `gui/pregnancy`
 
 ## Documentation
 - Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

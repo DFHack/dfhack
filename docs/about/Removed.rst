@@ -243,7 +243,13 @@ Replaced by `gui/sandbox`.
 
 gui/dig
 =======
-Renamed to gui/design
+Renamed to `gui/design`.
+
+.. _gui/family-affairs:
+
+gui/family-affairs
+==================
+Merged into `gui/pregnancy`.
 
 .. _gui/hack-wish:
 

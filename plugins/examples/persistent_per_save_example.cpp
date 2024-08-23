@@ -127,7 +127,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
     if (!config.isValid()) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         config.set_int(CONFIG_SOMETHING_ELSE, 6000);
     }

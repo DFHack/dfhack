@@ -29,7 +29,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
-// the names "config" and "cycle" are arbitrary and are just used to categorize
+// the names "control" and "cycle" are arbitrary and are just used to categorize
 // your log messages.
 namespace DFHack {
     // for configuration-related logging
@@ -127,7 +127,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
     if (!config.isValid()) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         config.set_int(CONFIG_SOMETHING_ELSE, 6000);
     }

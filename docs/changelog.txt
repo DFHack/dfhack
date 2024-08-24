@@ -65,8 +65,8 @@ Template for new versions:
 
 ## Misc Improvements
 - `orders`: more space efficient workshop overlay
-- `gui/family-affairs`: is now an alias that points to `gui/pregnancy`
 - `sort`: Search results on the Places>Stockpile tab now filter based on: the stockpile's default name & number, customized name, and the storable-category flags that are enabled for the stockpile
+- `gui/pregnancy`: is now an alias that points to `gui/family-affairs`
 
 ## Documentation
 - Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

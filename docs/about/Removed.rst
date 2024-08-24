@@ -245,12 +245,6 @@ gui/dig
 =======
 Renamed to `gui/design`.
 
-.. _gui/family-affairs:
-
-gui/family-affairs
-==================
-Merged into `gui/pregnancy`.
-
 .. _gui/hack-wish:
 
 gui/hack-wish

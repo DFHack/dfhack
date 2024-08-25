@@ -39,6 +39,26 @@ local language_name_types = {
     [df.language_name_type.Library] = 'Library',
 }
 
+local stockpile_settings_flag_names = {
+    animals = 'Animal',
+    food = 'Food',
+    furniture = 'Furniture',
+    corpses = 'Corpse',
+    refuse = 'Refuse',
+    stone = 'Stone',
+    ammo = 'Ammo',
+    coins = 'Coins',
+    bars_blocks = 'Bars/Blocks',
+    gems = 'Gems',
+    finished_goods = 'Finished Goods',
+    leather = 'Leather',
+    cloth = 'Cloth',
+    wood = 'Wood',
+    weapons = 'Weapon',
+    armor = 'Armor',
+    sheet = 'Sheet'
+}
+
 local function get_location_religion(religion_id, religion_type)
     if religion_type == df.religious_practice_type.NONE then return 'Temple'
     else return locationselector.get_religion_string(religion_id, religion_type) or '' end
@@ -112,8 +132,16 @@ local function get_location_search_key(zone)
 end
 
 local function get_stockpile_search_key(stockpile)
-    if #stockpile.name ~= 0 then return stockpile.name
-    else return ('Stockpile #%s'):format(stockpile.stockpile_number) end
+    local result = {}
+    if #stockpile.name ~= 0 then table.insert(result, stockpile.name) end
+
+    local flags = stockpile.settings.flags
+    for flag, name in pairs(stockpile_settings_flag_names) do
+        if flags[flag] then table.insert(result, name) end
+    end
+
+    table.insert(result, ('Stockpile #%s'):format(stockpile.stockpile_number))
+    return table.concat(result, ' ')
 end
 
 local function get_workshop_search_key(workshop)

@@ -61,6 +61,7 @@ Template for new versions:
 - System clipboard: when pasting single lines from the system clipboard, replace newlines with spaces so they don't show up as strange CP437 glyphs in-game
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
+- `buildingplan`: fixed type confusion when using quick filter slot '0'
 
 ## Misc Improvements
 - `orders`: more space efficient workshop overlay

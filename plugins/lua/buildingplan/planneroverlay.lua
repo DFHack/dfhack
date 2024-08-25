@@ -462,11 +462,30 @@ end
 --
 
 -- Used to store a table of the following format:
--- table<integer, { label: string, mats: string[] }>
--- integer: quick filter slot
+-- table<string, { label: string, mats: string[] }>
+-- string: quick filter slot (must be strings because of the way persistence works)
 -- label: string representation of the filter
 -- mats: list of material names allowed by the filter
 BUILDINGPLAN_FILTERS_KEY = "buildingplan/quick-filters"
+
+-- old saves may use numbers as keys, which we convert to string keys on load
+dfhack.onStateChange[BUILDINGPLAN_FILTERS_KEY] = function(sc)
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+    print('quick filter: checking/updating configuration')
+    local saved_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
+    local new_filters = {}
+    for k, v in pairs(saved_filters) do
+        if type(k) == 'number' then
+            new_filters[tostring(k)] = v
+            print(('quick filter: updated number key %d to string key'):format(k))
+        elseif type(k) == 'string' then
+            new_filters[k] = v
+        end
+    end
+    dfhack.persistent.saveSiteData(BUILDINGPLAN_FILTERS_KEY, new_filters)
+end
 
 QuickFilter = defclass(QuickFilter, widgets.Panel)
 QuickFilter.ATTRS{
@@ -584,7 +603,7 @@ function PlannerOverlay:init()
     self.selected = 1
     self.state = ensure_key(config.data, 'planner')
 
-    self.selected_favorite = 1
+    self.selected_favorite = '1'
 
     local main_panel = widgets.Panel{
         view_id='main',
@@ -886,36 +905,36 @@ function PlannerOverlay:init()
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('show_favorites'),
         subviews={
-            QuickFilter{idx=1, frame={t=0,l=0},
+            QuickFilter{idx='1', frame={t=0,l=0},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(1) },
-            QuickFilter{idx=2, frame={t=1,l=0},
+                        is_selected_fn=make_is_selected_filter('1') },
+            QuickFilter{idx='2', frame={t=1,l=0},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(2) },
-            QuickFilter{idx=3, frame={t=2,l=0},
+                        is_selected_fn=make_is_selected_filter('2') },
+            QuickFilter{idx='3', frame={t=2,l=0},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(3) },
-            QuickFilter{idx=4, frame={t=3,l=0},
+                        is_selected_fn=make_is_selected_filter('3') },
+            QuickFilter{idx='4', frame={t=3,l=0},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(4) },
-            QuickFilter{idx=5, frame={t=4,l=0},
+                        is_selected_fn=make_is_selected_filter('4') },
+            QuickFilter{idx='5', frame={t=4,l=0},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(5) },
-            QuickFilter{idx=6, frame={t=0,l=27},
+                        is_selected_fn=make_is_selected_filter('5') },
+            QuickFilter{idx='6', frame={t=0,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(6) },
-            QuickFilter{idx=7, frame={t=1,l=27},
+                        is_selected_fn=make_is_selected_filter('6') },
+            QuickFilter{idx='7', frame={t=1,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(7) },
-            QuickFilter{idx=8, frame={t=2,l=27},
+                        is_selected_fn=make_is_selected_filter('7') },
+            QuickFilter{idx='8', frame={t=2,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(8) },
-            QuickFilter{idx=9, frame={t=3,l=27},
+                        is_selected_fn=make_is_selected_filter('8') },
+            QuickFilter{idx='9', frame={t=3,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(9) },
-            QuickFilter{idx=0, frame={t=4,l=27},
+                        is_selected_fn=make_is_selected_filter('9') },
+            QuickFilter{idx='0', frame={t=4,l=27},
                         on_click_fn=self:callback("save_restore_filter"),
-                        is_selected_fn=make_is_selected_filter(0) },
+                        is_selected_fn=make_is_selected_filter('0') },
             widgets.CycleHotkeyLabel {
                 view_id='slot_select',
                 frame={b=0, l=2},
@@ -923,9 +942,9 @@ function PlannerOverlay:init()
                 key_back='CUSTOM_SHIFT_X',
                 label='next/previous slot',
                 auto_width=true,
-                options=utils.tabulate(function(i) return {label="", value=i} end, 0, 9),
-                initial_option=1,
-                on_change=function(val) print(val) self.selected_favorite = val end,
+                options=utils.tabulate(function(i) return {label="", value=tostring(i)} end, 0, 9),
+                initial_option='1',
+                on_change=function(val) self.selected_favorite = val end,
             },
             widgets.HotkeyLabel{
                 frame={b=0, l=28},

@@ -473,13 +473,11 @@ dfhack.onStateChange[BUILDINGPLAN_FILTERS_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
-    print('quick filter: checking/updating configuration')
     local saved_filters = dfhack.persistent.getSiteData(BUILDINGPLAN_FILTERS_KEY, {})
     local new_filters = {}
     for k, v in pairs(saved_filters) do
         if type(k) == 'number' then
             new_filters[tostring(k)] = v
-            print(('quick filter: updated number key %d to string key'):format(k))
         elseif type(k) == 'string' then
             new_filters[k] = v
         end

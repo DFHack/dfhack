@@ -45,7 +45,7 @@ weapon they have the most skill in. The effectiveness rating also takes into
 account physical and mental attributes as well as general fighting (non-weapon)
 skills.
 
-Simiarly, the "ranged effectiveness" annotation indicates expected
+Similarly, the "ranged effectiveness" annotation indicates expected
 effectiveness with a crossbow. This rating also takes into account relevant
 physical and mental attributes.
 
@@ -150,7 +150,7 @@ be involved in plots, such as criminals, necromancers, necromancer experiments,
 and intelligent undead.
 
 On the interrogations screen, you can also filter units by whether they have
-already been interviewed in realation to the current crime.
+already been interviewed in relation to the current crime.
 
 Candidates overlay
 ------------------

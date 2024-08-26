@@ -133,7 +133,7 @@ API
 
 Internals
 ---------
-- Constructions module: ``findAtTile`` now uses a binary search intead of a linear search
+- Constructions module: ``findAtTile`` now uses a binary search instead of a linear search
 - MSVC warning level upped to /W3, and /WX added to make warnings cause compilations to fail.
 
 Lua
@@ -231,7 +231,7 @@ Misc Improvements
 - `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
 - `quickfort`:
     - `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
-    - library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library bluerpints.
+    - library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library blueprints.
     - better error message when the blueprints directory cannot be found
 - `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
@@ -338,7 +338,7 @@ Misc Improvements
     - allow players to pause the confirmation dialog until they exit the current screen
 - `deteriorate`: new ``now`` command immediately deteriorates items of the specified types
 - `dfhack-examples-guide`:
-    - refine food preparation orders so meal types are chosen intelligently according to the amount of meals that exist and the number of aviailable items to cook with
+    - refine food preparation orders so meal types are chosen intelligently according to the amount of meals that exist and the number of available items to cook with
     - reduce required stock of dye for "Dye cloth" orders
     - fix material conditions for making jugs and pots
     - make wooden jugs by default to differentiate them from other stone tools. this allows players to more easily select jugs out with a properly-configured stockpile (i.e. the new ``woodentools`` alias)
@@ -351,7 +351,7 @@ Misc Improvements
 - `quickfort`:
     - `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: automatically create tavern, library, and temple locations (restricted to residents only by default), automatically associate the rented rooms with the tavern
     - `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including were-bitten hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
-- `workorder`: a manager is no longer required for orders to be created (matching bevavior in the game itself)
+- `workorder`: a manager is no longer required for orders to be created (matching behavior in the game itself)
 
 Removed
 -------
@@ -407,7 +407,7 @@ Fixes
     - fixed a crash when trying to iterate over linked lists
 - `gui/advfort`: encrust and stud jobs no longer consume reagents without actually improving the target item
 - `luasocket`: return correct status code when closing socket connections so clients can know when to retry
-- `quickfort`: contructions and bridges are now properly placed over natural ramps
+- `quickfort`: constructions and bridges are now properly placed over natural ramps
 - `setfps`: keep internal ratio of processing FPS to graphics FPS in sync when updating FPS
 
 Misc Improvements
@@ -559,7 +559,7 @@ API
 Lua
 ---
 - ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.
-- ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a suported target sidebar mode
+- ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a supported target sidebar mode
 
 Structures
 ----------
@@ -619,10 +619,10 @@ Misc Improvements
 - `gui/gm-editor`: made search case-insensitive
 - `orders`:
     - support importing and exporting reaction-specific item conditions, like "lye-containing" for soap production orders
-    - new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.
+    - new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for similar items from ever getting completed.
 - `quickfort`:
     - Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated ``onMapLoad_dreamfort.init`` settings file, enhanced automation orders, and premade profession definitions.  see full changelog at https://github.com/DFHack/dfhack/pull/1921 and https://github.com/DFHack/dfhack/pull/1925
-    - accept multiple commands, list numbers, and/or blueprint lables on a single commandline
+    - accept multiple commands, list numbers, and/or blueprint labels on a single commandline
 - `tailor`: allow user to specify which materials to be used, and in what order
 - `tiletypes-here`, `tiletypes-here-point`: add ``--cursor`` and ``--quiet`` options to support non-interactive use cases
 - `unretire-anyone`: replaced the 'undead' descriptor with 'reanimated' to make it more mod-friendly
@@ -743,7 +743,7 @@ Lua
     - ``string:wrap(width)`` wraps a string at space-separated word boundaries
     - ``string:trim()`` removes whitespace characters from the beginning and end of the string
     - ``string:split(delimiter, plain)`` splits a string with the given delimiter and returns a table of substrings. if ``plain`` is specified and set to ``true``, ``delimiter`` is interpreted as a literal string instead of as a pattern (the default)
-- new utility function: ``utils.normalizePath()``: normalizes directory slashes across platoforms to ``/`` and coaleses adjacent directory separators
+- new utility function: ``utils.normalizePath()``: normalizes directory slashes across platforms to ``/`` and coalesces adjacent directory separators
 - `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
 - `xlsxreader`: added Lua class wrappers for the xlsxreader plugin API
 - ``argparse.processArgsGetopt()`` (previously ``utils.processArgsGetopt()``):
@@ -1502,7 +1502,7 @@ Misc Improvements
 - `modtools/reaction-trigger`:
     - added ``-ignoreWorker``: ignores the worker when selecting the targets
     - changed the default behavior to skip inactive/dead units; added ``-dontSkipInactive`` to include creatures that are inactive
-    - added ``-range``: controls how far elligible targets can be from the workshop
+    - added ``-range``: controls how far eligible targets can be from the workshop
     - syndromes now are applied before commands are run, not after
     - if both a command and a syndrome are given, the command only runs if the syndrome could be applied
 - `mousequery`: made it more clear when features are enabled
@@ -3574,7 +3574,7 @@ Internals
 
 New Plugins
 -----------
-- `hotkeys`: Shows ingame viewscreen with all dfhack keybindings active in current mode.
+- `hotkeys`: Shows in-game viewscreen with all dfhack keybindings active in current mode.
 - `automelt`: allows marking stockpiles so any items placed in them will be designated for melting
 
 Fixes
@@ -3585,7 +3585,7 @@ Fixes
 
 Misc Improvements
 -----------------
-- now you can use ``@`` to print things in interactive Lua with subtley different semantics
+- now you can use ``@`` to print things in interactive Lua with subtly different semantics
 - optimizations for stockpiles for `autotrade` and `stockflow`
 - updated `exportlegends` to work with new maps, dfhack 40.11 r1+
 
@@ -3706,7 +3706,7 @@ New scripts
 New plugins
 -----------
 - `rendermax`: replace the renderer with something else, eg ``rendermax light``- a lighting engine
-- `automelt`: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+- `automelt`: allows marking stockpiles for automelt (i.e. any items placed in stockpile will be designated for melting)
 - `embark-tools`: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
 - `building-hacks`: Allows to add custom functionality and/or animations to buildings.
 - `petcapRemover`: triggers pregnancies in creatures so that you can effectively raise the default pet population cap
@@ -3829,7 +3829,7 @@ Misc improvements
 - `superdwarf`: work in adventure mode too
 - `tweak` stable-cursor: carries cursor location from/to Build menu.
 - `deathcause`: allow selection from the unitlist screen
-- slayrace: allow targetting undeads
+- slayrace: allow targeting undeads
 - `workflow` plugin:
 
     - properly considers minecarts assigned to routes busy.
@@ -3939,7 +3939,7 @@ New tweaks
 - tweak fast-heat: speeds up item heating & cooling, thus making stable-temp act faster.
 - tweak fix-dimensions: fixes subtracting small amounts from stacked liquids etc.
 - tweak advmode-contained: fixes UI bug in custom reactions with container inputs in advmode.
-- tweak fast-trade: Shift-Enter for selecting items quckly in Trade and Move to Depot screens.
+- tweak fast-trade: Shift-Enter for selecting items quickly in Trade and Move to Depot screens.
 - tweak military-stable-assign: Stop rightmost list of military->Positions from jumping to top.
 - tweak military-color-assigned: In same list, color already assigned units in brown & green.
 

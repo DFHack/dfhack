@@ -1728,7 +1728,7 @@ The industry_ level: advanced linking
   :target: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :align: center
 
-The industry level is densely packed and has more intracate stockpile and
+The industry level is densely packed and has more intricate stockpile and
 hauling route configuration.
 
 .. topic:: Tip
@@ -1854,7 +1854,7 @@ With option 2, if you need a "better" bedroom, you'd just expand the zone to
 cover the neighboring "unit". Satisfying the monarch is also simple: plop down
 a new suites level and assign each block of 4 rooms to one zone. four units for
 the bedroom, four for the office, four for the dining hall, and four for the
-tomb. Smooth and engrave and you're done. Of course, more asthetic-minded
+tomb. Smooth and engrave and you're done. Of course, more aesthetic-minded
 players are always free to design custom areas too. These blueprints are
 designed to be functional more than beautiful.
 
@@ -2054,7 +2054,7 @@ Property           Description
                    ``residents``, ``citizens``, or ``members``. defaults to
                    ``visitors``.
 ``profession``     (only if ``location=guildhall``) sets the profession of the
-                   guildhall. See possilbe values with ``:lua @df.profession``.
+                   guildhall. See possible values with ``:lua @df.profession``.
                    For example: ``profession=metalsmith``.
 ``desired_*``      (only if the location is set to the relevant type) sets the
                    desired number of stocked items for the attached location.

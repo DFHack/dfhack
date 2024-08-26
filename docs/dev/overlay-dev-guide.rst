@@ -379,7 +379,7 @@ screen (by default, but the player can move it wherever).
     function MenuScreen:init()
         self.mouseover = false
 
-        -- derrive the menu frame from the hotspot frame so it
+        -- derive the menu frame from the hotspot frame so it
         -- can appear in a nearby location
         local frame = copyall(self.hotspot_frame)
         -- ...

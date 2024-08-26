@@ -97,7 +97,7 @@ If you are auto-expanding a burrow (whose name ends in a ``+``) and the miner
 who is digging to expand the burrow is assigned to that burrow, then 1-wide
 corridors that expand the burrow will have very slow progress. This is because
 the burrow is expanded to include the next dig job only after the miner has
-chosen a next tile to dig, which may be far away. 2-wide cooridors are much
+chosen a next tile to dig, which may be far away. 2-wide corridors are much
 more efficient when expanding a burrow since the "next" tile to dig will still
 be nearby.
 

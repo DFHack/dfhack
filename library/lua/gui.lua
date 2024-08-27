@@ -81,7 +81,7 @@ function simulateInput(screen,...)
                 for k,v in pairs(arg) do
                     if v == true then
                         push_key(k)
-                    else
+                    elseif k ~= '_STRING' then
                         push_key(v)
                     end
                 end

@@ -4512,7 +4512,10 @@ Misc
   Every argument after the initial screen may be *nil*, a numeric keycode,
   a string keycode, a sequence of numeric or string keycodes, or a mapping
   of keycodes to *true* or *false*. For instance, it is possible to use the
-  table passed as argument to ``onInput``.
+  table passed as argument to ``onInput``. The ``_STRING`` convenience field of
+  an ``onInput`` keys table will be ignored; the presence (or absence) of a
+  ``STRING_A???`` keycode will determine the text content of the simulated
+  input.
 
   You can send mouse clicks as well by setting the ``_MOUSE_L`` key or other
   mouse-related pseudo-keys documented with the ``screen:onInput(keys)``

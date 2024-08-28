@@ -2414,10 +2414,9 @@ static int items_createItem(lua_State *state)
     auto item_subtype = lua_tointeger(state, 3);
     auto mat_type = lua_tointeger(state, 4);
     auto mat_index = lua_tointeger(state, 5);
-    int growth_print = luaL_optint(state, 6, -1);
-    bool no_floor = lua_toboolean(state, 7);
+    bool no_floor = lua_toboolean(state, 6);
     vector<df::item *> out_items;
-    Items::createItem(out_items, unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor);
+    Items::createItem(out_items, unit, item_type, item_subtype, mat_type, mat_index, no_floor);
     Lua::PushVector(state, out_items);
     return 1;
 }

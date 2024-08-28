@@ -87,6 +87,9 @@ distribution.
 #include "df/mandate.h"
 #include "df/map_block.h"
 #include "df/material.h"
+#include "df/plant_raw.h"
+#include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
 #include "df/proj_itemst.h"
 #include "df/proj_list_link.h"
 #include "df/reaction_product_itemst.h"
@@ -1707,7 +1710,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
 }
 
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1756,7 +1759,34 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     for (auto out_item : out_items)
     {   // Plant growths need a valid "growth print", otherwise they behave oddly
         if (auto growth = virtual_cast<df::item_plant_growthst>(out_item))
+        {
+            int growth_print = -1;
+            // Make sure it's made of a valid plant material, then grab its definition
+            if (growth->mat_type >= 419 && growth->mat_type <= 618 && growth->mat_index >= 0 && (unsigned)growth->mat_index < world->raws.plants.all.size())
+            {
+                auto plant_def = world->raws.plants.all[growth->mat_index];
+                // Make sure it subtype is also valid
+                if (growth->subtype >= 0 && (unsigned)growth->subtype < plant_def->growths.size())
+                {
+                    auto growth_def = plant_def->growths[growth->subtype];
+                    // Try and find a growth print matching the current time
+                    // (in practice, only tree leaves use this for autumn color changes)
+                    for (size_t i = 0; i < growth_def->prints.size(); i++)
+                    {
+                        auto print_def = growth_def->prints[i];
+                        if (print_def->timing_start <= *df::global::cur_year_tick && *df::global::cur_year_tick <= print_def->timing_end)
+                        {
+                            growth_print = i;
+                            break;
+                        }
+                    }
+                    // If we didn't find one, then pick the first one (if it exists)
+                    if (growth_print == -1 && !growth_def->prints.empty())
+                        growth_print = 0;
+                }
+            }
             growth->growth_print = growth_print;
+        }
         if (!no_floor)
             out_item->moveToGround(pos.x, pos.y, pos.z);
     }

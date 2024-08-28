@@ -94,7 +94,7 @@ armor, or just metalsmithing. Then, you can assign appropriate legendary
 masters to each forge, and they will only receive orders for appropriate
 products.
 
-Simiarly, you can set up Craftsdwarf's workshops to specialize in stone, wood,
+Similarly, you can set up Craftsdwarf's workshops to specialize in stone, wood,
 or bone.
 
 Regardless of the labor restriction settings, you can manually assign any task

@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `preserve-rooms`: manage room assignments for off-map units and noble roles. reserves rooms owned by traveling units and reinstates their ownership when they return to the site. also allows you to assign rooms to noble/administrator roles, and the rooms will be automatically assigned whenever the holder of the role changes
 
 ## New Features
 
@@ -62,6 +63,7 @@ Template for new versions:
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
 - `buildingplan`: fixed type confusion when using quick filter slot '0'
+- DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
 
 ## Misc Improvements
 - `orders`: more space efficient workshop overlay
@@ -73,11 +75,14 @@ Template for new versions:
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
+- ``Items::createItem``: removed growth_print parameter, now determined automatically
 
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
 - ``dfhack.units.isDanger``: no longer returns true for intelligent undead
 - Overlay widgets can now assume their ``active`` and ``visible`` functions will only execute in a context that matches their ``viewscreens`` associations
+- ``gui.simulateInput``: do not generate spurious keycode from ``_STRING``
+- ``dfhack.items.createItem``: removed growth_print parameter to match C++ API
 
 ## Removed
 - ``quickfortress.csv``: remove old sample blueprints for "The Quick Fortress", which were unmaintained and non-functional in DF v50+. Online blueprints are available at https://docs.google.com/spreadsheets/d/1WuLYZBM6S2nt-XsPS30kpDnngpOQCuIdlw4zjrcITdY if anyone is interested in giving these blueprints some love
@@ -141,7 +146,7 @@ Template for new versions:
 - `tweak`: ``named-codices``: display book titles instead of a material description in the stocks/trade screens
 - `logistics`: automatically forbid or claim items brought to a stockpile
 - `plant`: can now ``remove`` shrubs and saplings; ``list`` all valid shrub/sapling raw IDs; ``grow`` can make mature trees older; many new command options
-- Locale-senstive number formatting: select your preferred format in `gui/control-panel`. prices and other large numbers in DFHack UIs can be displayed with commas (English formatting), the number formatting used by your system locale, in SI units (e.g. ``12.3k``), or even in scientific notation
+- Locale-sensitive number formatting: select your preferred format in `gui/control-panel`. prices and other large numbers in DFHack UIs can be displayed with commas (English formatting), the number formatting used by your system locale, in SI units (e.g. ``12.3k``), or even in scientific notation
 
 ## Fixes
 - ``Gui::makeAnnouncement``, ``Gui::autoDFAnnouncement``: fix case where a new announcement is created instead of adding to the count of an existing announcement if the existing announcement was the first one in the reports vector
@@ -167,7 +172,7 @@ Template for new versions:
 - `tiletypes`: new ``autocorrect`` property for autocorrecting adjacent tiles when making changes (e.g. adding ramp tops when you add a ramp)
 - Dreamfort: add a full complement of beds and chests to both barracks
 - Dreamfort: redesign guildhall/temple/library level for better accessibility
-- Dreamfort: walkthough documentation refresh
+- Dreamfort: walkthrough documentation refresh
 - Dreamfort: add milking/shearing station in surface grazing pasture
 - Dreamfort: integrate building prioritization into the blueprints and remove `prioritize` checklist steps
 - Dreamfort: add plumbing template for filling cisterns with running water
@@ -217,7 +222,7 @@ Template for new versions:
 ## Removed
 - `plants`: renamed to `plant`
 - ``gui.FramedScreen``: this class is now deprecated; please use ``gui.ZScreen`` and ``widgets.Window`` instead
-- ``dfhack.HIDE_CONSOLE_ON_STARTUP`` and ``dfhack.HIDE_ARMOK_TOOLS`` are no longer directly accessible. Please use `control-panel` or `gui/control-panel` to interact wtih those settings.
+- ``dfhack.HIDE_CONSOLE_ON_STARTUP`` and ``dfhack.HIDE_ARMOK_TOOLS`` are no longer directly accessible. Please use `control-panel` or `gui/control-panel` to interact with those settings.
 
 # 50.13-r2.1
 
@@ -240,7 +245,7 @@ Template for new versions:
 - `dig`: don't affect already-revealed tiles when marking z-level for warm/damp dig
 - `zone`: refresh values in distance column when switching selected pastures when the assign animals dialog is open
 - `logistics`: include semi-wild pets when autoretrain is enabled
-- `suspendmanager`: fully suspend unbuildable dead ends (e.g. buildling second level of a wall when the wall top is only accessible via ramp, causing the planned wall to be pathable but not buildable)
+- `suspendmanager`: fully suspend unbuildable dead ends (e.g. building second level of a wall when the wall top is only accessible via ramp, causing the planned wall to be pathable but not buildable)
 - `prospect`: don't use scientific notation for representing large numbers
 
 ## Misc Improvements
@@ -360,7 +365,7 @@ Template for new versions:
 - `suspendmanager`: improve performance when there are many active jobs
 - `clean`: protect farm plots when cleaning mud
 - `tweak`: add ``quiet`` option for silent enablement and disablement of tweaks
-- `gui/teleport`: add global Ctrl-Shift-T keybinding (only avaiable when DFHack mortal mode is disabled)
+- `gui/teleport`: add global Ctrl-Shift-T keybinding (only available when DFHack mortal mode is disabled)
 - Dreamfort: the four Craftsdwarf's workshops on the industry level are now specialized for Stonecrafting, Woodcrafting, Bone Carving, and miscellaneous tasks, respectively
 - `dwarfvet`: automatically unassign animals from pastures when they need treatment so they can make their way to the hospital. reassign them to their original pasture when treatment is complete.
 - `dwarfvet`: ignore animals assigned to cages or restraints
@@ -398,7 +403,7 @@ Template for new versions:
 # 50.12-r1
 
 ## Misc Improvements
-- `sort`: squad assignment overlay rewritten for compatiblity with new vanilla data structures and screen layouts
+- `sort`: squad assignment overlay rewritten for compatibility with new vanilla data structures and screen layouts
 
 ## Fixes
 - `gui/design`: no longer comes up when Ctrl-D is pressed but other DFHack windows have focus
@@ -427,7 +432,7 @@ Template for new versions:
 - `tweak`: Add "flask-contents", makes flasks/vials/waterskins be named according to their contents
 
 ## Fixes
-- `dig`: overlay that shows damp designations in ASCII mode now propertly highlights tiles that are damp because of an aquifer in the layer above
+- `dig`: overlay that shows damp designations in ASCII mode now properly highlights tiles that are damp because of an aquifer in the layer above
 - `dig-now`: fix digging stairs in the surface sometimes creating underworld gates.
 - ``Units::getVisibleName``: don't reveal the true identities of units that are impersonating other historical figures
 - ``Gui::revealInDwarfmodeMap``: properly center the zoom even when the target tile is near the edge of the map
@@ -555,7 +560,7 @@ Template for new versions:
 - ``Persistence``: persistent keys are now namespaced by an entity_id (e.g. a player fort site ID)
 - ``Persistence``: data is now stored one file per entity ID (plus one for the global world) in the DF savegame directory
 - ``Units.isDanger``: now returns true for agitated wildlife
-- ``Constructions::designateRemove``: no longer designates the non-removable "pseudo" construtions that represent the top of walls
+- ``Constructions::designateRemove``: no longer designates the non-removable "pseudo" constructions that represent the top of walls
 
 ## Lua
 - ``dfhack.capitalizeStringWords``: new function, returns string with all words capitalized
@@ -607,7 +612,7 @@ Template for new versions:
 - `buildingplan`: make it easier to build single-tile staircases of any shape (up, down, or up/down)
 - `sort`: allow searching by profession on the squad assignment page
 - `sort`: add search for places screens
-- `sort`: add search for work animal assignment screen; allow filtering by miltary/squad/civilian/burrow
+- `sort`: add search for work animal assignment screen; allow filtering by military/squad/civilian/burrow
 - `sort`: on the squad assignment screen, make effectiveness and potential ratings use the same scale so effectiveness is always less than or equal to potential for a given unit. this way you can also tell when units are approaching their maximum potential
 - `sort`: new overlay on the animal assignment screen that shows how many work animals each visible unit already has assigned to them
 - `dreamfort`: Inside+ and Clearcutting burrows now automatically created and managed
@@ -662,7 +667,7 @@ Template for new versions:
 - `zone`: animals trained for war or hunting are now labeled as such in animal assignment screens
 - `buildingplan`: support filtering cages by whether they are occupied
 - `buildingplan`: show how many items you need to make when planning buildings
-- `tailor`: now adds to existing orders if possilbe instead of creating new ones
+- `tailor`: now adds to existing orders if possible instead of creating new ones
 
 ## Documentation
 - unavailable tools are no longer listed in the tag indices in the online docs
@@ -760,8 +765,8 @@ Template for new versions:
 ## API
 - ``Items::getValue()``: remove ``caravan_buying`` parameter since the identity of the selling party doesn't actually affect the item value
 - `RemoteFortressReader`: add a ``force_reload`` option to the GetBlockList RPC API to return blocks regardless of whether they have changed since the last request
-- ``Units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
-- ``Gui``: ``getAnyStockpile`` and ``getAnyCivzone`` (along with their ``getSelected`` variants) now work through layers of ZScreens. This means that they will still return valid results even if a DFHack tool window is in the foereground.
+- ``Units``: new animal property check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``Gui``: ``getAnyStockpile`` and ``getAnyCivzone`` (along with their ``getSelected`` variants) now work through layers of ZScreens. This means that they will still return valid results even if a DFHack tool window is in the foreground.
 
 ## Lua
 - ``new()``: improved error handling so that certain errors that were previously uncatchable (creating objects with members with unknown vtables) are now catchable with ``pcall()``
@@ -769,7 +774,7 @@ Template for new versions:
 - ``widgets.BannerPanel``: panel with distinctive border for marking DFHack UI elements on otherwise vanilla screens
 - ``widgets.Panel``: new functions to override instead of setting corresponding properties (useful when subclassing instead of just setting attributes): ``onDragBegin``, ``onDragEnd``, ``onResizeBegin``, ``onResizeEnd``
 - ``dfhack.screen.readTile()``: now populates extended tile property fields (like ``top_of_text``) in the returned ``Pen`` object
-- ``dfhack.units``: new animal propery check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
+- ``dfhack.units``: new animal property check functions ``isMarkedForTraining(unit)``, ``isMarkedForTaming(unit)``, ``isMarkedForWarTraining(unit)``, and ``isMarkedForHuntTraining(unit)``
 - ``dfhack.gui``: new ``getAnyCivZone`` and ``getAnyStockpile`` functions; also behavior of ``getSelectedCivZone`` and ``getSelectedStockpile`` functions has changes as per the related API notes
 
 # 50.09-r2
@@ -969,7 +974,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `buildingplan`: filters and global settings are now ignored when manually choosing items for a building, allowing you to make custom choices independently of the filters that would otherwise be used
-- `buildingplan`: if `suspendmanager` is running, then planned buildings will be left suspended when their items are all attached. `suspendmanager` will unsuspsend them for construction when it is safe to do so.
+- `buildingplan`: if `suspendmanager` is running, then planned buildings will be left suspended when their items are all attached. `suspendmanager` will unsuspend them for construction when it is safe to do so.
 - `buildingplan`: add option for autoselecting the last manually chosen item (like `automaterial` used to do)
 - `confirm`: adds confirmation for removing burrows via the repaint menu
 - `stockpiles`: support applying stockpile configurations with fully enabled categories to stockpiles in worlds other than the one where the configuration was exported from
@@ -985,7 +990,7 @@ Template for new versions:
 
 ## Documentation
 - `modding-guide`: guide updated to include information for 3rd party script developers
-- the ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavaialable tools. most of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
+- the ``untested`` tag has been renamed to ``unavailable`` to better reflect the status of the remaining unavailable tools. most of the simply "untested" tools have now been tested and marked as working. the remaining tools are known to need development work before they are available again.
 
 ## Lua
 - ``widgets.Label``: tokens can now specify a ``htile`` property to indicate the tile that should be shown when the Label is hovered over with the mouse
@@ -1115,7 +1120,7 @@ Template for new versions:
 - ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
 - ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
 - ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
-- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional parameter to determine if filtering is case sensitive.
 
 # 50.05-alpha3.1
 

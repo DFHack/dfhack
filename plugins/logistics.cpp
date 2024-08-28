@@ -605,7 +605,7 @@ static int logistics_getStockpileData(lua_State *L) {
 
     ProcessorStats melt_stats, trade_stats, dump_stats, train_stats, forbid_stats, claim_stats;
 
-    for (auto bld : df::global::world->buildings.other.STOCKPILE) {
+    for (auto bld : world->buildings.other.STOCKPILE) {
         int32_t stockpile_number = bld->stockpile_number;
         MeltStockProcessor melt_stock_processor(stockpile_number, false, melt_stats, false);
         TradeStockProcessor trade_stock_processor(stockpile_number, false, trade_stats);
@@ -796,7 +796,7 @@ static int logistics_getGlobalCounts(lua_State *L) {
         out = &Core::getInstance().getConsole();
     DEBUG(control,*out).print("entering logistics_getGlobalCounts\n");
 
-    size_t num_melt = df::global::world->items.other.ANY_MELT_DESIGNATED.size();
+    size_t num_melt = world->items.other.ANY_MELT_DESIGNATED.size();
 
     size_t num_trade = 0;
     for (auto link = world->jobs.list.next; link; link = link->next) {

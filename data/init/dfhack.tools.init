@@ -10,6 +10,7 @@ enable burrow
 enable faststart
 enable logistics
 enable overlay
+enable preserve-rooms
 
 # aliases
 alias add autounsuspend suspendmanager

@@ -44,7 +44,7 @@ General contribution guidelines
 * Update ``docs/changelog.txt`` and ``docs/about/Authors.rst`` when applicable. See
   `build-changelog` for more information on the changelog format.
 * Submit ideas and bug reports as :issue:`issues on GitHub <>`.
-  Posts in the forum thread or on Disord can easily get missed or forgotten.
+  Posts in the forum thread or on Discord can easily get missed or forgotten.
 * Work on :issue:`reported problems <?q=is:open+-label:idea>`
   will take priority over ideas or suggestions.
 

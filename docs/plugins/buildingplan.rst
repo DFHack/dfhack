@@ -35,7 +35,7 @@ building to be fire- or magma-proof in the placement UI screen. This makes it
 very easy to ensure that your pump stacks and floodgates, for example, are
 magma-safe.
 
-Buildingplan works well in conjuction with other design tools like
+Buildingplan works well in conjunction with other design tools like
 `gui/quickfort`, which allow you to apply a building layout from a blueprint.
 You can apply very large, complicated layouts, and the buildings will simply be
 built when your dwarves get around to producing the needed materials. If you

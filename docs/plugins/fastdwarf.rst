@@ -51,5 +51,5 @@ Note that a dwarf will only teleport when:
 So you may still see dwarves walking normally or just standing still if they do
 not have a job to teleport to. Since jobs get done so much faster, you will
 likely see groups of dwarves just standing around, with individual dwarves
-periodically disappaearing and reappearing moments later when they have a job
+periodically disappearing and reappearing moments later when they have a job
 to do.

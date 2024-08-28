@@ -173,7 +173,7 @@ DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int1
 DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
 DFHACK_EXPORT bool createItem(std::vector<df::item *> &out_items, df::unit *creator, df::item_type type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool no_floor = false);
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor = false);
 
 // Returns true if the item is free from mandates, or false if mandates prevent trading the item.
 DFHACK_EXPORT bool checkMandates(df::item *item);

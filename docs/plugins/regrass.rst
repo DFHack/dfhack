@@ -76,7 +76,7 @@ Options
     begin with. Will still fail in incompatible biomes.
 ``-f``, ``--force``
     Force a grass type on tiles with no compatible grass types. The ``--new``
-    option takes precidence for compatible biomes, otherwise such tiles will be
+    option takes precedence for compatible biomes, otherwise such tiles will be
     forced instead. By default, a single random grass type is selected from
     the world's raws. The ``--plant`` option allows a specific grass type to be
     specified.

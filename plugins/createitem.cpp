@@ -20,7 +20,6 @@
 #include "df/game_type.h"
 #include "df/item.h"
 #include "df/plant_growth.h"
-#include "df/plant_growth_print.h"
 #include "df/plant_raw.h"
 #include "df/tool_uses.h"
 #include "df/unit.h"
@@ -54,7 +53,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 }
 
 bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index,
-    int32_t growth_print = -1, bool move_to_cursor = false, bool second_item = false)
+    bool move_to_cursor = false, bool second_item = false)
 {   // Special logic for making Gloves and Shoes in pairs
     bool is_gloves = (type == item_type::GLOVES);
     bool is_shoes = (type == item_type::SHOES);
@@ -69,7 +68,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
     bool on_floor = (container == NULL) && (building == NULL) && !move_to_cursor;
 
     vector<df::item *> out_items;
-    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, growth_print, !on_floor))
+    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor))
         return false;
 
     for (size_t i = 0; i < out_items.size(); i++) {
@@ -105,7 +104,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
         is_shoes = false;
     // If we asked for gloves/shoes and only got one (and we're making the first one), make another
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(unit, type, subtype, mat_type, mat_index, growth_print, move_to_cursor, true);
+        return makeItem(unit, type, subtype, mat_type, mat_index, move_to_cursor, true);
     return true;
 }
 
@@ -157,7 +156,7 @@ static inline bool select_caste_mat(color_ostream &out, vector<string> &tokens,
 }
 
 static inline bool select_plant_growth(color_ostream &out, vector<string> &tokens, df::item_type &item_type,
-    int16_t &item_subtype, int16_t &mat_type, int32_t &mat_index, int32_t &growth_print, const string &material_str)
+    int16_t &item_subtype, int16_t &mat_type, int32_t &mat_index, const string &material_str)
 {
     split_string(&tokens, material_str, ":");
     if (tokens.size() == 1)
@@ -191,21 +190,6 @@ static inline bool select_plant_growth(color_ostream &out, vector<string> &token
             item_subtype = growth->item_subtype;
             mat_type = growth->mat_type;
             mat_index = growth->mat_index;
-
-            // Try and find a growth print matching the current time
-            // (in practice, only tree leaves use this for autumn color changes)
-            for (size_t k = 0; k < growth->prints.size(); k++)
-            {
-                auto print = growth->prints[k];
-                if (print->timing_start <= *cur_year_tick && *cur_year_tick <= print->timing_end)
-                {
-                    growth_print = k;
-                    break;
-                }
-            }
-            // If we didn't find one, then pick the first one (if it exists)
-            if (growth_print == -1 && !growth->prints.empty())
-                growth_print = 0;
             break;
         }
         if (mat_type == -1) {
@@ -230,7 +214,6 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
     int16_t item_subtype = -1;
     int16_t mat_type = -1;
     int32_t mat_index = -1;
-    int32_t growth_print = -1;
     int count = 1;
     bool move_to_cursor = false;
 
@@ -372,7 +355,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             break;
         case PLANT_GROWTH:
             if (!select_plant_growth(out, tokens, item_type, item_subtype,
-                mat_type, mat_index, growth_print, material_str)
+                mat_type, mat_index, material_str)
                 )
                 return CR_FAILURE;
             break;
@@ -452,7 +435,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
     }
 
     for (int i = 0; i < count; i++) {
-        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, move_to_cursor, false))
+        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, move_to_cursor, false))
         {
             out.printerr("Failed to create item!\n");
             return CR_FAILURE;

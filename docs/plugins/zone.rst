@@ -178,7 +178,7 @@ In the window that pops up when you click the hotkey hint or hit the hotkey on y
 - filter by whether the unit lays eggs
 - filter by whether the unit needs a grazing area
 
-The window is fully navigatable via keyboard or mouse. Hit Enter or click on a
+The window is fully navigable via keyboard or mouse. Hit Enter or click on a
 unit to assign/unassign it to the currently selected zone or building. Shift
 click to assign/unassign a range of units.
 

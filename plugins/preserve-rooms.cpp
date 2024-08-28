@@ -6,7 +6,6 @@
 #include "modules/Buildings.h"
 #include "modules/EventManager.h"
 #include "modules/Gui.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -33,9 +32,9 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
-    DBG_DECLARE(persistent_per_save_example, control, DebugCategory::LINFO);
-    DBG_DECLARE(persistent_per_save_example, cycle, DebugCategory::LINFO);
-    DBG_DECLARE(persistent_per_save_example, event, DebugCategory::LINFO);
+    DBG_DECLARE(preserverooms, control, DebugCategory::LINFO);
+    DBG_DECLARE(preserverooms, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(preserverooms, event, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -207,7 +206,7 @@ static void assign_nobles(color_ostream &out) {
                 continue;
             Buildings::setOwner(zone, unit);
             INFO(cycle,out).print("assigning %s to a %s-associated %s\n",
-                Translation::TranslateName(&unit->name, false).c_str(), code.c_str(),
+                Units::getReadableName(unit).c_str(), code.c_str(),
                 ENUM_KEY_STR(civzone_type, zone->type).c_str());
             break;
         }
@@ -243,7 +242,8 @@ static int32_t get_spouse_hfid(color_ostream &out, df::historical_figure *hf) {
 }
 
 // handles when units disappear from their assignments compared to the last scan
-static void handle_missing_assignments(ZoneAssignments::iterator *pit,
+static void handle_missing_assignments(color_ostream &out,
+    ZoneAssignments::iterator *pit,
     const ZoneAssignments::iterator & it_end,
     bool share_with_spouse,
     int32_t next_zone_id)
@@ -262,23 +262,35 @@ static void handle_missing_assignments(ZoneAssignments::iterator *pit,
             // unit is still alive on the map; assume the unassigment was intentional/expected
             continue;
         }
+        if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
+            continue;
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;
-        // unit is off-screen or is dead; if we can assign room to spouse then we don't need to reserve the room
+        // unit is off-map or is dead; if we can assign room to spouse then we don't need to reserve the room
         if (auto spouse_hf = df::historical_figure::find(spouse_hfid); spouse_hf && share_with_spouse) {
             if (auto spouse = df::unit::find(spouse_hf->unit_id);
                 spouse && Units::isActive(spouse) && !Units::isDead(spouse))
             {
+                DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
+                    zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),
+                    Units::getReadableName(spouse).c_str());
                 Buildings::setOwner(zone, spouse);
                 continue;
             }
         }
+        if (Units::isDead(unit))
+            continue;
         // register the hf ids for reassignment and reserve the room
-        // when the unit with the registered hfid returns, they will be assigned back to the zone
+        DEBUG(cycle,out).print("registering primary unit for reassignment to zone %d (%s): %d %s\n",
+            zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), unit->id,
+            Units::getReadableName(unit).c_str());
         pending_reassignment[hfid].push_back(zone_id);
-        if (share_with_spouse)
+        if (share_with_spouse) {
+            DEBUG(cycle,out).print("registering spouse unit for reassignment to zone %d (%s): hfid=%d\n",
+                zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), spouse_hfid);
             pending_reassignment[spouse_hfid].push_back(zone_id);
+        }
         reserved_zones[zone_id].push_back(hfid);
         zone->spec_sub_flag.bits.active = false;
     }
@@ -294,7 +306,7 @@ static void process_rooms(color_ostream &out,
     auto it_end = last_known.end();
     for (auto zone : vec) {
         if (!zone->assigned_unit) {
-            handle_missing_assignments(&it, it_end, share_with_spouse, zone->id);
+            handle_missing_assignments(out, &it, it_end, share_with_spouse, zone->id);
             continue;
         }
         auto hf = df::historical_figure::find(zone->assigned_unit->hist_figure_id);
@@ -303,7 +315,7 @@ static void process_rooms(color_ostream &out,
         int32_t spouse_hfid = share_with_spouse ? get_spouse_hfid(out, hf) : -1;
         assignments.emplace_back(zone->id, std::make_pair(hf->id, spouse_hfid));
     }
-    handle_missing_assignments(&it, it_end, share_with_spouse, -1);
+    handle_missing_assignments(out, &it, it_end, share_with_spouse, -1);
 
     last_known = assignments;
 }
@@ -319,6 +331,10 @@ static void do_cycle(color_ostream &out) {
     process_rooms(out, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
     process_rooms(out, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
     process_rooms(out, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
+
+    DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
+        last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
+        last_known_assignments_dining.size(), last_known_assignments_tomb.size());
 }
 
 /////////////////////////////////////////////////////
@@ -338,8 +354,10 @@ static bool spouse_has_sharable_room(color_ostream& out, int32_t hfid, df::civzo
     if (!spouse)
         return false;
     for (auto owned_zone : spouse->owned_buildings) {
-        if (owned_zone->type == ztype)
+        if (owned_zone->type == ztype) {
+            DEBUG(event,out).print("spouse had sharable room; no need to set ownership\n");
             return true;
+        }
     }
     return false;
 }
@@ -353,10 +371,14 @@ static void on_new_active_unit(color_ostream& out, void* data) {
     auto it = pending_reassignment.find(hfid);
     if (it == pending_reassignment.end())
         return;
+    DEBUG(event,out).print("restoring zone ownership for unit %d (%s)\n",
+        unit->id, Units::getReadableName(unit).c_str());
     for (auto zone_id : it->second) {
+        reserved_zones.erase(zone_id);
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone || zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
             continue;
+        DEBUG(event,out).print("assigning and activating zone %d\n", zone->id);
         Buildings::setOwner(zone, unit);
         zone->spec_sub_flag.bits.active = true;
     }
@@ -368,12 +390,12 @@ static void on_new_active_unit(color_ostream& out, void* data) {
 //
 
 static void preserve_rooms_cycle(color_ostream &out) {
-    DEBUG(control,out).print("entering preserve_rooms_cycle\n");
+    DEBUG(control,out).print("preserve_rooms_cycle\n");
     do_cycle(out);
 }
 
 static bool preserve_rooms_setFeature(color_ostream &out, bool enabled, string feature) {
-    DEBUG(control,out).print("entering preserve_rooms_setFeature (enabled=%d, feature=%s)\n",
+    DEBUG(control,out).print("preserve_rooms_setFeature: enabled=%d, feature=%s\n",
         enabled, feature.c_str());
     if (feature == "track-missions") {
         config.set_bool(CONFIG_TRACK_MISSIONS, enabled);
@@ -389,7 +411,7 @@ static bool preserve_rooms_setFeature(color_ostream &out, bool enabled, string f
 }
 
 static bool preserve_rooms_getFeature(color_ostream &out, string feature) {
-    DEBUG(control,out).print("entering preserve_rooms_getFeature (feature=%s)\n", feature.c_str());
+    TRACE(control,out).print("preserve_rooms_getFeature: feature=%s\n", feature.c_str());
     if (feature == "track-missions")
         return config.get_bool(CONFIG_TRACK_MISSIONS);
     if (feature == "track-roles")
@@ -398,7 +420,7 @@ static bool preserve_rooms_getFeature(color_ostream &out, string feature) {
 }
 
 static bool preserve_rooms_resetFeatureState(color_ostream &out, string feature) {
-    DEBUG(control,out).print("entering preserve_rooms_resetFeatureState (feature=%s)\n", feature.c_str());
+    DEBUG(control,out).print("preserve_rooms_resetFeatureState: feature=%s\n", feature.c_str());
     if (feature == "track-missions") {
         vector<int32_t> zone_ids;
         std::transform(reserved_zones.begin(), reserved_zones.end(), std::back_inserter(zone_ids), [](auto & elem){ return elem.first; });
@@ -418,6 +440,7 @@ static void preserve_rooms_assignToRole(color_ostream &out, string code) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return;
+    DEBUG(control,out).print("preserve_rooms_assignToRole: zone_id=%d, code=%s\n", zone->id, code.c_str());
     noble_zones[zone->id] = code;
     do_cycle(out);
 }
@@ -426,6 +449,7 @@ static string preserve_rooms_getRoleAssignment(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return "";
+    TRACE(control,out).print("preserve_rooms_getRoleAssignment: zone_id=%d\n", zone->id);
     auto it = noble_zones.find(zone->id);
     if (it == noble_zones.end())
         return "";
@@ -436,6 +460,7 @@ static bool preserve_rooms_isReserved(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return false;
+    TRACE(control,out).print("preserve_rooms_isReserved: zone_id=%d\n", zone->id);
     auto it = reserved_zones.find(zone->id);
     return it != reserved_zones.end() && it->second.size() > 0;
 }
@@ -444,10 +469,11 @@ static string preserve_rooms_getReservationName(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return "";
+    TRACE(control,out).print("preserve_rooms_getReservationName: zone_id=%d\n", zone->id);
     auto it = reserved_zones.find(zone->id);
     if (it != reserved_zones.end() && it->second.size() > 0) {
         if (auto hf = df::historical_figure::find(it->second.front())) {
-            return Translation::TranslateName(&hf->name, false);
+            return Units::getReadableName(hf);
         }
     }
     return "";
@@ -457,6 +483,7 @@ static bool preserve_rooms_clearReservation(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return false;
+    DEBUG(control,out).print("preserve_rooms_clearReservation: zone_id=%d\n", zone->id);
     clear_reservation(out, zone->id, zone);
     return true;
 }
@@ -465,7 +492,7 @@ static int preserve_rooms_getState(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    DEBUG(control,*out).print("entering preserve_rooms_getState\n");
+    DEBUG(control,*out).print("preserve_rooms_getState\n");
 
     unordered_map<string, bool> features;
     features.emplace("track-missions", config.get_bool(CONFIG_TRACK_MISSIONS));

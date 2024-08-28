@@ -144,7 +144,7 @@ function ReservedWidget:init()
                     },
                 },
                 widgets.Panel{
-                    frame={h=5},
+                    frame={t=0, h=5},
                     frame_style=gui.FRAME_MEDIUM,
                     frame_background=gui.CLEAR_PEN,
                     visible=preserve_rooms_isReserved,
@@ -153,7 +153,7 @@ function ReservedWidget:init()
                             frame={t=0, l=0},
                             text={
                                 'Reserved for traveling unit:', NEWLINE,
-                                {text=preserve_rooms_getReservationName, pen=COLOR_YELLOW},
+                                {gap=1, text=preserve_rooms_getReservationName, pen=COLOR_YELLOW},
                             },
                         },
                         widgets.HotkeyLabel{

@@ -22,6 +22,7 @@
 using std::pair;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 using namespace DFHack;
@@ -243,6 +244,7 @@ static int32_t get_spouse_hfid(color_ostream &out, df::historical_figure *hf) {
 
 // handles when units disappear from their assignments compared to the last scan
 static void handle_missing_assignments(color_ostream &out,
+    const unordered_set<int32_t> & active_unit_ids,
     ZoneAssignments::iterator *pit,
     const ZoneAssignments::iterator & it_end,
     bool share_with_spouse,
@@ -258,7 +260,7 @@ static void handle_missing_assignments(color_ostream &out,
             // if unit data is completely gone, then they're not likely to come back
             continue;
         }
-        if (Units::isActive(unit) && !Units::isDead(unit)) {
+        if (Units::isActive(unit) && !Units::isDead(unit) && active_unit_ids.contains(unit->id)) {
             // unit is still alive on the map; assume the unassigment was intentional/expected
             continue;
         }
@@ -270,7 +272,7 @@ static void handle_missing_assignments(color_ostream &out,
         // unit is off-map or is dead; if we can assign room to spouse then we don't need to reserve the room
         if (auto spouse_hf = df::historical_figure::find(spouse_hfid); spouse_hf && share_with_spouse) {
             if (auto spouse = df::unit::find(spouse_hf->unit_id);
-                spouse && Units::isActive(spouse) && !Units::isDead(spouse))
+                spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
             {
                 DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
                     zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),
@@ -286,17 +288,19 @@ static void handle_missing_assignments(color_ostream &out,
             zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), unit->id,
             Units::getReadableName(unit).c_str());
         pending_reassignment[hfid].push_back(zone_id);
-        if (share_with_spouse) {
+        reserved_zones[zone_id].push_back(hfid);
+        if (share_with_spouse && spouse_hfid > -1) {
             DEBUG(cycle,out).print("registering spouse unit for reassignment to zone %d (%s): hfid=%d\n",
                 zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), spouse_hfid);
             pending_reassignment[spouse_hfid].push_back(zone_id);
+            reserved_zones[zone_id].push_back(spouse_hfid);
         }
-        reserved_zones[zone_id].push_back(hfid);
         zone->spec_sub_flag.bits.active = false;
     }
 }
 
 static void process_rooms(color_ostream &out,
+    const unordered_set<int32_t> & active_unit_ids,
     ZoneAssignments & last_known,
     const vector<df::building_civzonest *> & vec,
     bool share_with_spouse=true)
@@ -306,7 +310,7 @@ static void process_rooms(color_ostream &out,
     auto it_end = last_known.end();
     for (auto zone : vec) {
         if (!zone->assigned_unit) {
-            handle_missing_assignments(out, &it, it_end, share_with_spouse, zone->id);
+            handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, zone->id);
             continue;
         }
         auto hf = df::historical_figure::find(zone->assigned_unit->hist_figure_id);
@@ -315,7 +319,7 @@ static void process_rooms(color_ostream &out,
         int32_t spouse_hfid = share_with_spouse ? get_spouse_hfid(out, hf) : -1;
         assignments.emplace_back(zone->id, std::make_pair(hf->id, spouse_hfid));
     }
-    handle_missing_assignments(out, &it, it_end, share_with_spouse, -1);
+    handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, -1);
 
     last_known = assignments;
 }
@@ -323,14 +327,18 @@ static void process_rooms(color_ostream &out,
 static void do_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
 
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    TRACE(cycle,out).print("running %s cycle\n", plugin_name);
 
     assign_nobles(out);
 
-    process_rooms(out, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
-    process_rooms(out, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
-    process_rooms(out, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
-    process_rooms(out, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
+    unordered_set<int32_t> active_unit_ids;
+    std::transform(world->units.active.begin(), world->units.active.end(),
+        std::inserter(active_unit_ids, active_unit_ids.end()), [](auto & unit){ return unit->id; });
+
+    process_rooms(out, active_unit_ids, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
+    process_rooms(out, active_unit_ids, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
+    process_rooms(out, active_unit_ids, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
+    process_rooms(out, active_unit_ids, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
 
     DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
         last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
@@ -365,8 +373,11 @@ static bool spouse_has_sharable_room(color_ostream& out, int32_t hfid, df::civzo
 static void on_new_active_unit(color_ostream& out, void* data) {
     int32_t unit_id = reinterpret_cast<std::intptr_t>(data);
     auto unit = df::unit::find(unit_id);
-    if (!unit)
+    if (!unit || unit->hist_figure_id < 0)
         return;
+    TRACE(event,out).print("unit %d (%s) arrived on map (hfid: %d, in pending: %d)\n",
+        unit->id, Units::getReadableName(unit).c_str(), unit->hist_figure_id,
+        pending_reassignment.contains(unit->hist_figure_id));
     auto hfid = unit->hist_figure_id;
     auto it = pending_reassignment.find(hfid);
     if (it == pending_reassignment.end())

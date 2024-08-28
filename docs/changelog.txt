@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `preserve-rooms`: manage room assignments for off-map units and noble roles. reserves rooms owned by traveling units and reinstates their ownership when they return to the site. also allows you to assign rooms to noble/administrator roles, and the rooms will be automatically assigned whenever the holder of the role changes
 
 ## New Features
 

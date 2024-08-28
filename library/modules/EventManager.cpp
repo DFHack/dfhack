@@ -725,19 +725,20 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
-    vector<int32_t> new_active_unit_ids;
+    vector<int32_t> newly_active_unit_ids;
     for (df::unit* unit : df::global::world->units.active) {
-        if (!activeUnits.count(unit->id)) {
-            activeUnits.emplace(unit->id);
-            new_active_unit_ids.emplace_back(unit->id);
-        }
+        if (!activeUnits.count(unit->id))
+            newly_active_unit_ids.emplace_back(unit->id);
     }
-    for (int32_t unit_id : new_active_unit_ids) {
+    for (int32_t unit_id : newly_active_unit_ids) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for new unit event\n");
             run_handler(out, EventType::UNIT_NEW_ACTIVE, handle, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
         }
     }
+    activeUnits.clear();
+    std::transform(df::global::world->units.active.begin(), df::global::world->units.active.end(),
+        std::inserter(activeUnits, activeUnits.end()), [](auto & unit){ return unit->id; });
 }
 
 

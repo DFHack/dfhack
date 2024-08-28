@@ -98,7 +98,9 @@ function ReservedWidget:init()
             end,
             subviews={
                 widgets.Panel{
-                    visible=function() return not preserve_rooms_isReserved() end,
+                    visible=function()
+                        return not preserve_rooms_isReserved() and preserve_rooms_getFeature('track-roles')
+                    end,
                     subviews={
                         widgets.CycleHotkeyLabel{
                             view_id='role',
@@ -164,6 +166,9 @@ function ReservedWidget:init()
                 },
                 widgets.HelpButton{
                     command='preserve-rooms',
+                    visible=function()
+                        return preserve_rooms_isReserved() or preserve_rooms_getFeature('track-roles')
+                    end,
                 },
             },
         },

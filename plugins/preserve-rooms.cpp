@@ -4,6 +4,7 @@
 #include "PluginManager.h"
 
 #include "modules/Buildings.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
@@ -11,6 +12,7 @@
 
 #include "df/building_civzonest.h"
 #include "df/historical_figure.h"
+#include "df/histfig_hf_link.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -33,16 +35,18 @@ REQUIRE_GLOBAL(world);
 namespace DFHack {
     DBG_DECLARE(persistent_per_save_example, control, DebugCategory::LINFO);
     DBG_DECLARE(persistent_per_save_example, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(persistent_per_save_example, event, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
 static PersistentDataItem config;
 
-// zone id -> hfids (includes spouses)
-static vector<pair<int32_t, vector<int32_t>>> last_known_assignments_bedroom;
-static vector<pair<int32_t, vector<int32_t>>> last_known_assignments_office;
-static vector<pair<int32_t, vector<int32_t>>> last_known_assignments_dining;
-static vector<pair<int32_t, vector<int32_t>>> last_known_assignments_tomb;
+// zone id, hfids (main, spouse)
+typedef vector<pair<int32_t, pair<int32_t, int32_t>>> ZoneAssignments;
+static ZoneAssignments last_known_assignments_bedroom;
+static ZoneAssignments last_known_assignments_office;
+static ZoneAssignments last_known_assignments_dining;
+static ZoneAssignments last_known_assignments_tomb;
 // hfid -> zone ids
 static unordered_map<int32_t, vector<int32_t>> pending_reassignment;
 // zone id -> hfids
@@ -61,6 +65,7 @@ static const int32_t CYCLE_TICKS = 109;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
+static void on_new_active_unit(color_ostream& out, void* data);
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -73,7 +78,16 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    is_enabled = enable;
+    static EventManager::EventHandler new_unit_handler(plugin_self, on_new_active_unit, CYCLE_TICKS);
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        if (enable)
+            EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
+        else
+            EventManager::unregisterAll(plugin_self);
+    }
+
     DEBUG(control, out).print("now %s\n", is_enabled ? "enabled" : "disabled");
     return CR_OK;
 }
@@ -103,7 +117,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     if (!config.isValid()) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentSiteData(CONFIG_KEY);
-        config.set_bool(CONFIG_TRACK_MISSIONS, false);
+        config.set_bool(CONFIG_TRACK_MISSIONS, true);
         config.set_bool(CONFIG_TRACK_ROLES, true);
     }
 
@@ -171,7 +185,7 @@ static bool is_noble_zone(int32_t zone_id, const string & code) {
 static void assign_nobles(color_ostream &out) {
     for (auto &[zone_id, code] : noble_zones) {
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
-        if (!zone)
+        if (!zone || !zone->spec_sub_flag.bits.active)
             continue;
         vector<df::unit *> units;
         Units::getUnitsByNobleRole(units, code);
@@ -220,17 +234,76 @@ static void clear_reservation(color_ostream &out, int32_t zone_id, df::building_
         zone->spec_sub_flag.bits.active = true;
 }
 
-static void scan_assignments(color_ostream &out,
-    vector<pair<int32_t, vector<int32_t>>> & last_known,
-    const vector<df::building_civzonest *> & vec,
-    bool exclude_spouse = false)
+static int32_t get_spouse_hfid(color_ostream &out, df::historical_figure *hf) {
+    for (auto link : hf->histfig_links) {
+        if (link->getType() == df::histfig_hf_link_type::SPOUSE)
+            return link->target_hf;
+    }
+    return -1;
+}
+
+// handles when units disappear from their assignments compared to the last scan
+static void handle_missing_assignments(ZoneAssignments::iterator *pit,
+    const ZoneAssignments::iterator & it_end,
+    bool share_with_spouse,
+    int32_t next_zone_id)
 {
-    // auto it = last_known.begin();
+    for (auto & it = *pit; it != it_end && (next_zone_id == -1 || it->first <= next_zone_id); ++it) {
+        int32_t zone_id = it->first;
+        int32_t hfid = it->second.first;
+        int32_t spouse_hfid = it->second.second;
+        auto hf = df::historical_figure::find(hfid);
+        auto unit = df::unit::find(hf->unit_id);
+        if (!unit) {
+            // if unit data is completely gone, then they're not likely to come back
+            continue;
+        }
+        if (Units::isActive(unit) && !Units::isDead(unit)) {
+            // unit is still alive on the map; assume the unassigment was intentional/expected
+            continue;
+        }
+        auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
+        if (!zone)
+            continue;
+        // unit is off-screen or is dead; if we can assign room to spouse then we don't need to reserve the room
+        if (auto spouse_hf = df::historical_figure::find(spouse_hfid); spouse_hf && share_with_spouse) {
+            if (auto spouse = df::unit::find(spouse_hf->unit_id);
+                spouse && Units::isActive(spouse) && !Units::isDead(spouse))
+            {
+                Buildings::setOwner(zone, spouse);
+                continue;
+            }
+        }
+        // register the hf ids for reassignment and reserve the room
+        // when the unit with the registered hfid returns, they will be assigned back to the zone
+        pending_reassignment[hfid].push_back(zone_id);
+        if (share_with_spouse)
+            pending_reassignment[spouse_hfid].push_back(zone_id);
+        reserved_zones[zone_id].push_back(hfid);
+        zone->spec_sub_flag.bits.active = false;
+    }
+}
 
-    vector<pair<int32_t, vector<int32_t>>> assignments;
-    // for (auto zone : vec) {
-
-    // }
+static void process_rooms(color_ostream &out,
+    ZoneAssignments & last_known,
+    const vector<df::building_civzonest *> & vec,
+    bool share_with_spouse=true)
+{
+    ZoneAssignments assignments;
+    auto it = last_known.begin();
+    auto it_end = last_known.end();
+    for (auto zone : vec) {
+        if (!zone->assigned_unit) {
+            handle_missing_assignments(&it, it_end, share_with_spouse, zone->id);
+            continue;
+        }
+        auto hf = df::historical_figure::find(zone->assigned_unit->hist_figure_id);
+        if (!hf)
+            continue;
+        int32_t spouse_hfid = share_with_spouse ? get_spouse_hfid(out, hf) : -1;
+        assignments.emplace_back(zone->id, std::make_pair(hf->id, spouse_hfid));
+    }
+    handle_missing_assignments(&it, it_end, share_with_spouse, -1);
 
     last_known = assignments;
 }
@@ -242,10 +315,52 @@ static void do_cycle(color_ostream &out) {
 
     assign_nobles(out);
 
-    scan_assignments(out, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
-    scan_assignments(out, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
-    scan_assignments(out, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
-    scan_assignments(out, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, true);
+    process_rooms(out, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
+    process_rooms(out, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
+    process_rooms(out, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
+    process_rooms(out, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
+}
+
+/////////////////////////////////////////////////////
+// Event logic
+//
+
+static bool spouse_has_sharable_room(color_ostream& out, int32_t hfid, df::civzone_type ztype) {
+    if (ztype == df::civzone_type::Tomb)
+        return false;
+    auto hf = df::historical_figure::find(hfid);
+    if (!hf)
+        return false;
+    auto spouse_hf = df::historical_figure::find(get_spouse_hfid(out, hf));
+    if (!spouse_hf)
+        return false;
+    auto spouse = df::unit::find(spouse_hf->unit_id);
+    if (!spouse)
+        return false;
+    for (auto owned_zone : spouse->owned_buildings) {
+        if (owned_zone->type == ztype)
+            return true;
+    }
+    return false;
+}
+
+static void on_new_active_unit(color_ostream& out, void* data) {
+    int32_t unit_id = reinterpret_cast<std::intptr_t>(data);
+    auto unit = df::unit::find(unit_id);
+    if (!unit)
+        return;
+    auto hfid = unit->hist_figure_id;
+    auto it = pending_reassignment.find(hfid);
+    if (it == pending_reassignment.end())
+        return;
+    for (auto zone_id : it->second) {
+        auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
+        if (!zone || zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
+            continue;
+        Buildings::setOwner(zone, unit);
+        zone->spec_sub_flag.bits.active = true;
+    }
+    pending_reassignment.erase(it);
 }
 
 /////////////////////////////////////////////////////
@@ -271,6 +386,15 @@ static bool preserve_rooms_setFeature(color_ostream &out, bool enabled, string f
     }
 
     return true;
+}
+
+static bool preserve_rooms_getFeature(color_ostream &out, string feature) {
+    DEBUG(control,out).print("entering preserve_rooms_getFeature (feature=%s)\n", feature.c_str());
+    if (feature == "track-missions")
+        return config.get_bool(CONFIG_TRACK_MISSIONS);
+    if (feature == "track-roles")
+        return config.get_bool(CONFIG_TRACK_ROLES);
+    return false;
 }
 
 static bool preserve_rooms_resetFeatureState(color_ostream &out, string feature) {
@@ -354,6 +478,7 @@ static int preserve_rooms_getState(lua_State *L) {
 DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(preserve_rooms_cycle),
     DFHACK_LUA_FUNCTION(preserve_rooms_setFeature),
+    DFHACK_LUA_FUNCTION(preserve_rooms_getFeature),
     DFHACK_LUA_FUNCTION(preserve_rooms_resetFeatureState),
     DFHACK_LUA_FUNCTION(preserve_rooms_assignToRole),
     DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignment),

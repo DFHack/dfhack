@@ -51,19 +51,19 @@ Examples
 ``preserve-rooms disable track-missions``
     Disable the ``track-missions`` feature for this fort.
 ``preserve-rooms reset track-roles``
-    Clear all configuration related to the ``track-roles`` feature.
+    Clear all configuration related to the ``track-roles`` feature (currently
+    assigned rooms are not unassigned).
 
 Features
 --------
 
 ``track-missions``
     Reserve the rooms assigned to units that leave the map and reassign them
-    upon their return. This feature is automatically enabled for new forts
-    unless disabled in `gui/control-panel` ("Bugfixes" / "Autostart" tab).
+    upon their return. This feature is enabled by default.
 ``track-roles``
     Allow rooms to be associated with noble or adminstrative roles. Associated
     rooms will be automatically assigned to the current holder of the specified
-    role. This feature is enabled by default for all forts.
+    role. This feature is enabled by default.
 
 Overlay
 -------
@@ -71,4 +71,12 @@ Overlay
 The ``preserve-rooms.reserved`` overlay indicates whether a zone is disabled
 because it is being reserved for a unit that left the map and is expected to
 return. For unreserved rooms, it provides widgets to mark the zone as
-associated with a noble or administrative role.
+associated with a specific noble or administrative role.
+
+Notes
+-----
+
+This tool fixes rooms being unassigned when a unit leaves the map. This is a
+different bug from the one fixed by `preserve-tombs`, which handles the case
+where a tomb is unassigned upon a unit's death, preventing them from ever being
+buried in their own tomb.

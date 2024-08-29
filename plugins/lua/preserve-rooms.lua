@@ -12,11 +12,13 @@ local GLOBAL_KEY = 'preserve-rooms'
 --
 
 local function print_status()
-    local features = preserve_rooms_getState()
+    local features, stats = preserve_rooms_getState()
     print('Features:')
     for feature,enabled in pairs(features) do
         print(('  %20s: %s'):format(feature, enabled))
     end
+    print()
+    print('Rooms reserved for traveling units:', stats.reservations)
 end
 
 local function do_set_feature(enabled, feature)

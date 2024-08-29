@@ -87,7 +87,7 @@ namespace DFHack
             static const std::string empty;
             return isValid() ? val() : empty;
         }
-        void set_str(const std::string value) {
+        void set_str(const std::string & value) {
             if (isValid())
                 val() = value;
         }

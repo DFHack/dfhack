@@ -2562,7 +2562,7 @@ void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
             continue;
         }
 
-        size_t str_size = it[0]->str.size();
+        int32_t str_size = (int32_t)(it[0]->str.size());
         if (n_width < str_size)
         {
             n_width = mtb->current_width;

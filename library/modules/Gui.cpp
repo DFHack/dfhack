@@ -2527,81 +2527,82 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
     return;
 }
 
-void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t width)
-{   // Reverse-engineered from "markup_text_boxst::set_width" FUN_1409f6e80 (v50.11 win64 Steam)
-    if (mtb->current_width == width)
+void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
+{   // Reverse-engineered from void markup_text_boxst::set_width(markup_text_boxst *this,int n_width), 0x140a16b70 (v50.13 win64 Steam)
+
+    if (mtb->current_width == n_width)
         return;
 
     mtb->max_y = 0;
-    mtb->current_width = width;
+    mtb->current_width = n_width;
 
-    int32_t remain_width = width;
     int32_t px_val = 0;
     int32_t py_val = 0;
 
-    for (vector<df::markup_text_wordst *>::iterator it = mtb->word.begin(); it < mtb->word.end(); it++)
+    auto end = mtb->word.end();
+    for (auto it = mtb->word.begin(); it != end; it++)
     {
-        auto &cur_word = **it;
-
-        if (cur_word.flags.bits.NEW_LINE)
+        if (it[0]->flags.bits.NEW_LINE)
         {
-            remain_width = 0;
+            n_width = 0;
             continue;
         }
-        else if (cur_word.flags.bits.BLANK_LINE)
+        if (it[0]->flags.bits.BLANK_LINE)
         {
-            remain_width = 0;
+            n_width = 0;
             px_val = 0;
             py_val++;
             continue;
         }
-        else if (cur_word.flags.bits.INDENT)
+        if (it[0]->flags.bits.INDENT)
         {
-            remain_width = width;
+            n_width = mtb->current_width;
             px_val = 4;
             py_val++;
             continue;
         }
 
-        int32_t str_size = cur_word.str.size();
-        if (remain_width < str_size)
+        size_t str_size = it[0]->str.size();
+        if (n_width < str_size)
         {
-            remain_width = width;
+            n_width = mtb->current_width;
             px_val = 0;
             py_val++;
         }
 
-        char only_char = (str_size == 1) ? cur_word.str[0] : '\0';
-        if (only_char && (only_char == '.' || only_char == ',' || only_char == '?' || only_char == '!'))
+        if (it + 1 != end && it[1]->str.size() == 1)
         {
-            if (it + 1 < mtb->word.end() && px_val > 0 && remain_width < 3) // remain_width < str_size + 2
+            char ch = it[1]->str[0];
+            if ((ch == '.' || ch == ',' || ch == '?' || ch == '!') &&
+                0 < px_val && n_width < str_size + 2)
             {
-                remain_width = width;
+                n_width = mtb->current_width;
                 px_val = 0;
                 py_val++;
             }
-            else if (px_val > 0)
-            {
-                cur_word.px = px_val - 1;
-                cur_word.py = py_val;
+        }
 
+        if (str_size == 1) {
+            char ch = it[0]->str[0];
+            if ((ch == '.' || ch == ',' || ch == '?' || ch == '!') &&
+                0 < px_val)
+            {
+                it[0]->px = px_val - 1;
+                it[0]->py = py_val;
                 if (mtb->max_y < py_val)
                     mtb->max_y = py_val;
-
-                remain_width--; // remain_width -= str_size
-                px_val++; // px_val += str_size
+                n_width -= str_size;
+                px_val += str_size;
                 continue;
             }
         }
 
-        cur_word.px = px_val;
-        cur_word.py = py_val;
-
+        it[0]->px = px_val;
+        it[0]->py = py_val;
         if (mtb->max_y < py_val)
             mtb->max_y = py_val;
-
-        remain_width -= str_size + 1;
         px_val += str_size + 1;
+        n_width -= str_size + 1;
     }
 
     return;

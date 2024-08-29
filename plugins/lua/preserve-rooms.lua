@@ -7,6 +7,8 @@ local widgets = require('gui.widgets')
 
 local GLOBAL_KEY = 'preserve-rooms'
 
+DEBUG = DEBUG or false
+
 ------------------
 -- command line
 --
@@ -19,6 +21,21 @@ local function print_status()
     end
     print()
     print('Rooms reserved for traveling units:', stats.reservations)
+    print('Managing assignments for noble rooms:', stats.nobles)
+
+    if DEBUG then
+        for k,v in pairs(preserve_rooms_getDebugState()) do
+            local elems = v:split(',')
+            if elems[1] == '' then
+                table.remove(elems, 1)
+            end
+            print(('%s (%d):'):format(k, #elems))
+            for _,elem in ipairs(elems) do
+                print('  ' .. elem)
+            end
+            print()
+        end
+    end
 end
 
 local function do_set_feature(enabled, feature)
@@ -111,10 +128,10 @@ function ReservedWidget:init()
                             label='Autoassign to holder of role:',
                             label_below=true,
                             key='CUSTOM_SHIFT_S',
-                            options={{label='None', value='', pen=COLOR_YELLOW}},
-                            on_change=function(code)
-                                self.subviews.list:setSelected(self.code_to_idx[code] or 1)
-                                preserve_rooms_assignToRole(code)
+                            options={{label='None', value={''}, pen=COLOR_YELLOW}},
+                            on_change=function(group_codes)
+                                self.subviews.list:setSelected(self.code_to_idx[group_codes[1]] or 1)
+                                preserve_rooms_assignToRole(group_codes)
                             end,
                         },
                         widgets.Panel{
@@ -197,9 +214,10 @@ function ReservedWidget:render(dc)
 
     local code = preserve_rooms_getRoleAssignment()
     local role = self.subviews.role
-    if code ~= role:getOptionValue() then
-        role:setOption(code)
-        self.subviews.list:setSelected(self.code_to_idx[code] or 1)
+    if code ~= role:getOptionValue()[1] then
+        local idx = self.code_to_idx[code] or 1
+        role:setOption(idx)
+        self.subviews.list:setSelected(idx)
     end
 
     local hover_expansion = self.subviews.hover_expansion
@@ -216,31 +234,76 @@ local function to_title_case(str)
     return dfhack.capitalizeStringWords(dfhack.lowerCp437(str:gsub('_', ' ')))
 end
 
-local function add_codes(codes, entity)
+local function add_positions(positions, entity)
     if not entity then return end
-    for _,role in ipairs(entity.positions.own) do
-        table.insert(codes, role.code)
+    for _,position in ipairs(entity.positions.own) do
+        positions[position.id] = {id=position.id, code=position.code, replaced_by=position.replaced_by}
     end
 end
 
+local function get_codes(positions)
+    -- group by promotion chain
+    -- grouped[id] is the group of positions that can be (eventually) promoted to the id'd position
+    local grouped = {}
+    for id,position in pairs(positions) do
+        if position.replaced_by == -1 then
+            ensure_key(grouped, id)[id] = position
+        else
+            local parent = positions[position.replaced_by]
+            while parent.replaced_by ~= -1 do
+                parent = positions[parent.replaced_by]
+            end
+            ensure_key(grouped, parent.id)[id] = position
+        end
+    end
+
+    -- add reverse links for promotion chains
+    for _,group in pairs(grouped) do
+        for _,position in pairs(group) do
+            if position.replaced_by ~= -1 then
+                group[position.replaced_by].prev = position.id
+            end
+        end
+    end
+
+    -- produce combined codes
+    local codes = {}
+    for id,group in pairs(grouped) do
+        local group_codes = {}
+        local position = group[id]
+        while position do
+            table.insert(group_codes, 1, position.code)
+            position=group[position.prev]
+        end
+        table.insert(codes, group_codes)
+    end
+    table.sort(codes, function(a, b) return a[1] < b[1] end)
+
+    return codes
+end
+
 local function add_options(options, choices, codes)
-    for _,code in ipairs(codes) do
-        local name = to_title_case(code)
-        table.insert(options, {label=name, value=code, pen=COLOR_YELLOW})
+    for _,group_codes in ipairs(codes) do
+        local names = {}
+        for _,code in ipairs(group_codes) do
+            table.insert(names, to_title_case(code))
+        end
+        local name = table.concat(names, '/')
+        table.insert(options, {label=name, value=group_codes, pen=COLOR_YELLOW})
         table.insert(choices, name)
     end
 end
 
 function ReservedWidget:refresh_role_list()
-    local codes, options, choices = {}, {{label='None', value='', pen=COLOR_YELLOW}}, {'None'}
-    add_codes(codes, df.historical_entity.find(df.global.plotinfo.civ_id));
-    add_codes(codes, df.historical_entity.find(df.global.plotinfo.group_id));
-    table.sort(codes)
+    local positions, options, choices = {}, {{label='None', value={''}, pen=COLOR_YELLOW}}, {'None'}
+    add_positions(positions, df.historical_entity.find(df.global.plotinfo.civ_id));
+    add_positions(positions, df.historical_entity.find(df.global.plotinfo.group_id));
+    local codes = get_codes(positions)
     add_options(options, choices, codes)
 
     self.code_to_idx = {['']=1}
-    for idx,code in ipairs(codes) do
-        self.code_to_idx[code] = idx + 1 -- offset for None option
+    for idx,group_codes in ipairs(codes) do
+        self.code_to_idx[group_codes[1]] = idx + 1 -- offset for None option
     end
 
     self.subviews.role.options = options

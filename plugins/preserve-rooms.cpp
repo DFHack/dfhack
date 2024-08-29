@@ -53,7 +53,7 @@ static unordered_map<int32_t, vector<int32_t>> pending_reassignment;
 static unordered_map<int32_t, vector<int32_t>> reserved_zones;
 
 // zone id -> noble/administrative position code
-static unordered_map<int32_t, string> noble_zones;
+static unordered_map<int32_t, vector<string>> noble_zones;
 
 // as a "system" plugin, we do not persist plugin enabled state, just feature enabled state
 enum ConfigValues {
@@ -120,13 +120,17 @@ static PersistentDataItem get_config(const char * suffix, bool create = false) {
     return c;
 }
 
-static void store_zone_assignments(const ZoneAssignments & data, const char * suffix) {
+static string serialize_zone_assignments(const ZoneAssignments & data) {
     vector<string> elems;
     for (auto elem : data) {
         vector<int32_t> ints = {elem.first, elem.second.first, elem.second.second};
         elems.push_back(join_strings("/", ints));
     }
-    get_config(suffix, true).set_str(join_strings(",", elems));
+    return join_strings(",", elems);
+}
+
+static void store_zone_assignments(const ZoneAssignments & data, const char * suffix) {
+    get_config(suffix, true).set_str(serialize_zone_assignments(data));
 }
 
 static void load_zone_assignments(ZoneAssignments * data, const char * suffix) {
@@ -146,14 +150,18 @@ static void load_zone_assignments(ZoneAssignments * data, const char * suffix) {
     }
 }
 
-static void store_associations(const unordered_map<int32_t, vector<int32_t>> & data, const char * suffix) {
+static string serialize_associations(const unordered_map<int32_t, vector<int32_t>> & data) {
     vector<string> elems;
     for (auto &[key, vec] : data) {
         vector<int32_t> combined = vec;
         combined.push_back(key);
         elems.push_back(join_strings("/", combined));
     }
-    get_config(suffix, true).set_str(join_strings(",", elems));
+    return join_strings(",", elems);
+}
+
+static void store_associations(const unordered_map<int32_t, vector<int32_t>> & data, const char * suffix) {
+    get_config(suffix, true).set_str(serialize_associations(data));
 }
 
 static void load_associations(unordered_map<int32_t, vector<int32_t>> * data, const char * suffix) {
@@ -177,14 +185,18 @@ static void load_associations(unordered_map<int32_t, vector<int32_t>> * data, co
     }
 }
 
-static void store_int_string_map(const unordered_map<int32_t, string> & data, const char * suffix) {
+static string serialize_noble_map(const unordered_map<int32_t, vector<string>> & data) {
     vector<string> elems;
-    for (auto &[key, str] : data)
-        elems.push_back(int_to_string(key) + "/" + str);
-    get_config(suffix, true).set_str(join_strings(",", elems));
+    for (auto &[key, vec] : data)
+        elems.push_back(int_to_string(key) + "/" + join_strings("/", vec));
+    return join_strings(",", elems);
 }
 
-static void load_int_string_map(unordered_map<int32_t, string> * data, const char * suffix) {
+static void store_noble_map(const unordered_map<int32_t, vector<string>> & data, const char * suffix) {
+    get_config(suffix, true).set_str(serialize_noble_map(data));
+}
+
+static void load_noble_map(unordered_map<int32_t, vector<string>> * data, const char * suffix) {
     PersistentDataItem c = get_config(suffix);
     if (!c.isValid())
         return;
@@ -192,11 +204,13 @@ static void load_int_string_map(unordered_map<int32_t, string> * data, const cha
     vector<string> elems;
     split_string(&elems, c.get_str(), ",");
     for (auto elem : elems) {
-        vector<string> key_str;
-        split_string(&key_str, elem, "/");
-        if (key_str.size() != 2)
+        vector<string> key_and_codes;
+        split_string(&key_and_codes, elem, "/");
+        if (key_and_codes.size() < 2)
             continue;
-        data->emplace(string_to_int(key_str[0], -1), key_str[1]);
+        int32_t key = string_to_int(key_and_codes[0], -1);
+        key_and_codes.erase(key_and_codes.begin());
+        data->emplace(key, key_and_codes);
     }
 }
 
@@ -220,7 +234,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     load_zone_assignments(&last_known_assignments_tomb, "tomb");
     load_associations(&pending_reassignment, "pending");
     load_associations(&reserved_zones, "reserved");
-    load_int_string_map(&noble_zones, "noble");
+    load_noble_map(&noble_zones, "noble");
 
     return CR_OK;
 }
@@ -232,7 +246,7 @@ DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
     store_zone_assignments(last_known_assignments_tomb, "tomb");
     store_associations(pending_reassignment, "pending");
     store_associations(reserved_zones, "reserved");
-    store_int_string_map(noble_zones, "noble");
+    store_noble_map(noble_zones, "noble");
 
     return CR_OK;
 }
@@ -270,41 +284,71 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 static bool is_noble_zone(int32_t zone_id, const string & code) {
     auto it = noble_zones.find(zone_id);
-    return it != noble_zones.end() && it->second == code;
+    return it != noble_zones.end() && it->second[0] == code;
+}
+
+static int32_t get_spouse_hfid(color_ostream &out, df::historical_figure *hf) {
+    for (auto link : hf->histfig_links) {
+        if (link->getType() == df::histfig_hf_link_type::SPOUSE)
+            return link->target_hf;
+    }
+    return -1;
+}
+
+static vector<int32_t> get_spouse_ids(color_ostream &out, const vector<df::unit *> units) {
+    vector<int32_t> spouse_ids;
+    for (auto unit : units) {
+        auto hf = df::historical_figure::find(unit->hist_figure_id);
+        if (!hf)
+            continue;
+        auto spouse_hf = df::historical_figure::find(get_spouse_hfid(out, hf));
+        if (spouse_hf)
+            spouse_ids.push_back(spouse_hf->unit_id);
+    }
+    return spouse_ids;
 }
 
 static void assign_nobles(color_ostream &out) {
-    for (auto &[zone_id, code] : noble_zones) {
+    for (auto &[zone_id, group_codes] : noble_zones) {
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;
-        vector<df::unit *> units;
-        Units::getUnitsByNobleRole(units, code);
-        // if zone is already assigned to a proper unit, skip
-        if (linear_index(units, zone->assigned_unit) >= 0)
-            continue;
-        // assign to a relevant noble that does not already have a registered zone of this type assigned
         bool assigned = false;
-        for (auto unit : units) {
-            if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
-                continue;
-            bool found = false;
-            for (auto owned_zone : unit->owned_buildings) {
-                if (owned_zone->type == zone->type && is_noble_zone(owned_zone->id, code)) {
-                    found = true;
-                    break;
-                }
+        for (auto it = group_codes.rbegin(); it != group_codes.rend(); it++) {
+            auto code = *it;
+            vector<df::unit *> units;
+            Units::getUnitsByNobleRole(units, code);
+            // if zone is already assigned to a proper unit (or their spouse), skip
+            if (linear_index(units, zone->assigned_unit) >= 0 ||
+                linear_index(get_spouse_ids(out, units), zone->assigned_unit_id) >= 0)
+            {
+                assigned = true;
+                break;
             }
-            if (found)
-                continue;
-            zone->spec_sub_flag.bits.active = true;
-            Buildings::setOwner(zone, unit);
-            assigned = true;
-            INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
-                DF2CONSOLE(Units::getReadableName(unit)).c_str(),
-                toLower_cp437(code).c_str(),
-                ENUM_KEY_STR(civzone_type, zone->type).c_str());
-            break;
+            // assign to a relevant noble that does not already have a registered zone of this type assigned
+            for (auto unit : units) {
+                if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
+                    continue;
+                bool found = false;
+                for (auto owned_zone : unit->owned_buildings) {
+                    if (owned_zone->type == zone->type && is_noble_zone(owned_zone->id, group_codes[0])) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found)
+                    continue;
+                zone->spec_sub_flag.bits.active = true;
+                Buildings::setOwner(zone, unit);
+                assigned = true;
+                INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
+                    DF2CONSOLE(Units::getReadableName(unit)).c_str(),
+                    toLower_cp437(code).c_str(),
+                    ENUM_KEY_STR(civzone_type, zone->type).c_str());
+                break;
+            }
+            if (assigned)
+                break;
         }
         if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit)) {
             DEBUG(cycle,out).print("noble zone now reserved for eventual office holder: %d\n", zone_id);
@@ -332,14 +376,6 @@ static void clear_reservation(color_ostream &out, int32_t zone_id, df::building_
         zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
     if (zone)
         zone->spec_sub_flag.bits.active = true;
-}
-
-static int32_t get_spouse_hfid(color_ostream &out, df::historical_figure *hf) {
-    for (auto link : hf->histfig_links) {
-        if (link->getType() == df::histfig_hf_link_type::SPOUSE)
-            return link->target_hf;
-    }
-    return -1;
 }
 
 // handles when units disappear from their assignments compared to the last scan
@@ -436,10 +472,6 @@ static void do_cycle(color_ostream &out) {
 
     TRACE(cycle,out).print("running %s cycle\n", plugin_name);
 
-    if (config.get_bool(CONFIG_TRACK_ROLES)) {
-        assign_nobles(out);
-    }
-
     if (config.get_bool(CONFIG_TRACK_MISSIONS)) {
         unordered_set<int32_t> active_unit_ids;
         std::transform(world->units.active.begin(), world->units.active.end(),
@@ -453,6 +485,10 @@ static void do_cycle(color_ostream &out) {
         DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
             last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
             last_known_assignments_dining.size(), last_known_assignments_tomb.size());
+    }
+
+    if (config.get_bool(CONFIG_TRACK_ROLES)) {
+        assign_nobles(out);
     }
 }
 
@@ -560,21 +596,30 @@ static bool preserve_rooms_resetFeatureState(color_ostream &out, string feature)
     return true;
 }
 
-static void preserve_rooms_assignToRole(color_ostream &out, string code) {
-    auto zone = Gui::getSelectedCivZone(out, true);
+static int preserve_rooms_assignToRole(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    auto zone = Gui::getSelectedCivZone(*out, true);
     if (!zone)
-        return;
-    DEBUG(control,out).print("preserve_rooms_assignToRole: zone_id=%d, code=%s\n", zone->id, code.c_str());
-    if (code == "") {
+        return 0;
+    DEBUG(control,*out).print("preserve_rooms_assignToRole: zone_id=%d\n", zone->id);
+
+    vector<string> group_codes;
+    Lua::GetVector(L, group_codes);
+
+    if (group_codes.empty() || group_codes[0] == "") {
         // if we're removing an assignment, activate the zone
         if (auto it = noble_zones.find(zone->id); it != noble_zones.end()) {
             zone->spec_sub_flag.bits.active = true;
             noble_zones.erase(it);
         }
-        return;
+        return 0;
     }
-    noble_zones[zone->id] = code;
-    do_cycle(out);
+    noble_zones[zone->id] = group_codes;
+    do_cycle(*out);
+
+    return 0;
 }
 
 static string preserve_rooms_getRoleAssignment(color_ostream &out) {
@@ -583,9 +628,9 @@ static string preserve_rooms_getRoleAssignment(color_ostream &out) {
         return "";
     TRACE(control,out).print("preserve_rooms_getRoleAssignment: zone_id=%d\n", zone->id);
     auto it = noble_zones.find(zone->id);
-    if (it == noble_zones.end())
+    if (it == noble_zones.end() || it->second.empty())
         return "";
-    return it->second;
+    return it->second[0];
 }
 
 static bool preserve_rooms_isReserved(color_ostream &out) {
@@ -634,9 +679,29 @@ static int preserve_rooms_getState(lua_State *L) {
     unordered_map<string, size_t> stats;
     stats.emplace("travelers", pending_reassignment.size());
     stats.emplace("reservations", reserved_zones.size());
+    stats.emplace("nobles", noble_zones.size());
     Lua::Push(L, stats);
 
     return 2;
+}
+
+static int preserve_rooms_getDebugState(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    DEBUG(control,*out).print("preserve_rooms_getDebugState\n");
+
+    unordered_map<string, string> ret;
+    ret.emplace("bedroom", serialize_zone_assignments(last_known_assignments_bedroom));
+    ret.emplace("office", serialize_zone_assignments(last_known_assignments_office));
+    ret.emplace("dining", serialize_zone_assignments(last_known_assignments_dining));
+    ret.emplace("tomb", serialize_zone_assignments(last_known_assignments_tomb));
+    ret.emplace("pending", serialize_associations(pending_reassignment));
+    ret.emplace("reserved", serialize_associations(reserved_zones));
+    ret.emplace("noble", serialize_noble_map(noble_zones));
+    Lua::Push(L, ret);
+
+    return 1;
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{
@@ -644,7 +709,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(preserve_rooms_setFeature),
     DFHACK_LUA_FUNCTION(preserve_rooms_getFeature),
     DFHACK_LUA_FUNCTION(preserve_rooms_resetFeatureState),
-    DFHACK_LUA_FUNCTION(preserve_rooms_assignToRole),
     DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignment),
     DFHACK_LUA_FUNCTION(preserve_rooms_isReserved),
     DFHACK_LUA_FUNCTION(preserve_rooms_getReservationName),
@@ -652,5 +716,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_END};
 
 DFHACK_PLUGIN_LUA_COMMANDS{
+    DFHACK_LUA_COMMAND(preserve_rooms_assignToRole),
     DFHACK_LUA_COMMAND(preserve_rooms_getState),
+    DFHACK_LUA_COMMAND(preserve_rooms_getDebugState),
     DFHACK_LUA_END};

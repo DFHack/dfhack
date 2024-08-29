@@ -23,10 +23,12 @@ away from the fort, the zone will become unreserved and available for reuse.
 
 When you click on an assignable zone, you will also now have the option to
 associate the room with a noble or administrative role. The room will be
-automatically reassigned to whoever currently holds that position. If multiple
-rooms of the same type are assigned to a position, then only one room of that
-type will be assigned to each holder of that position (e.g. one room per baron
-or militia captain).
+automatically reassigned to whoever currently holds that position. If there
+isn't anyone who is currently assigned to the designated role, then the zone
+becomes reserved: any current owner is evicted and the zone is suspended. If
+multiple rooms of the same type are assigned to a position, then only one room
+of that type will be assigned to each holder of that position (e.g. one room
+per baron or militia captain).
 
 Usage
 -----

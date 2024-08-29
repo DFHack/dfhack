@@ -276,7 +276,7 @@ static bool is_noble_zone(int32_t zone_id, const string & code) {
 static void assign_nobles(color_ostream &out) {
     for (auto &[zone_id, code] : noble_zones) {
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
-        if (!zone || !zone->spec_sub_flag.bits.active)
+        if (!zone)
             continue;
         vector<df::unit *> units;
         Units::getUnitsByNobleRole(units, code);
@@ -284,6 +284,7 @@ static void assign_nobles(color_ostream &out) {
         if (linear_index(units, zone->assigned_unit) >= 0)
             continue;
         // assign to a relevant noble that does not already have a registered zone of this type assigned
+        bool assigned = false;
         for (auto unit : units) {
             if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
                 continue;
@@ -296,11 +297,19 @@ static void assign_nobles(color_ostream &out) {
             }
             if (found)
                 continue;
+            zone->spec_sub_flag.bits.active = true;
             Buildings::setOwner(zone, unit);
+            assigned = true;
             INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
-                DF2CONSOLE(Units::getReadableName(unit)).c_str(), code.c_str(),
+                DF2CONSOLE(Units::getReadableName(unit)).c_str(),
+                toLower_cp437(code).c_str(),
                 ENUM_KEY_STR(civzone_type, zone->type).c_str());
             break;
+        }
+        if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit)) {
+            DEBUG(cycle,out).print("noble zone now reserved for eventual office holder: %d\n", zone_id);
+            zone->spec_sub_flag.bits.active = false;
+            Buildings::setOwner(zone, NULL);
         }
     }
 }
@@ -556,6 +565,14 @@ static void preserve_rooms_assignToRole(color_ostream &out, string code) {
     if (!zone)
         return;
     DEBUG(control,out).print("preserve_rooms_assignToRole: zone_id=%d, code=%s\n", zone->id, code.c_str());
+    if (code == "") {
+        // if we're removing an assignment, activate the zone
+        if (auto it = noble_zones.find(zone->id); it != noble_zones.end()) {
+            zone->spec_sub_flag.bits.active = true;
+            noble_zones.erase(it);
+        }
+        return;
+    }
     noble_zones[zone->id] = code;
     do_cycle(out);
 }

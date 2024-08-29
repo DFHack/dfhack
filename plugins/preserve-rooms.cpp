@@ -237,16 +237,6 @@ DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (event == DFHack::SC_WORLD_UNLOADED) {
-        if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n", plugin_name);
-            is_enabled = false;
-        }
-    }
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
@@ -308,7 +298,7 @@ static void assign_nobles(color_ostream &out) {
                 continue;
             Buildings::setOwner(zone, unit);
             INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
-                Units::getReadableName(unit).c_str(), code.c_str(),
+                DF2CONSOLE(Units::getReadableName(unit)).c_str(), code.c_str(),
                 ENUM_KEY_STR(civzone_type, zone->type).c_str());
             break;
         }
@@ -371,13 +361,14 @@ static void handle_missing_assignments(color_ostream &out,
         if (!zone)
             continue;
         // unit is off-map or is dead; if we can assign room to spouse then we don't need to reserve the room
-        if (auto spouse_hf = df::historical_figure::find(spouse_hfid); spouse_hf && share_with_spouse) {
+        auto spouse_hf = df::historical_figure::find(spouse_hfid);
+        if (spouse_hf && share_with_spouse) {
             if (auto spouse = df::unit::find(spouse_hf->unit_id);
                 spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
             {
                 DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
                     zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),
-                    Units::getReadableName(spouse).c_str());
+                    DF2CONSOLE(Units::getReadableName(spouse)).c_str());
                 Buildings::setOwner(zone, spouse);
                 continue;
             }
@@ -387,7 +378,7 @@ static void handle_missing_assignments(color_ostream &out,
         // register the hf ids for reassignment and reserve the room
         DEBUG(cycle,out).print("registering primary unit for reassignment to zone %d (%s): %d %s\n",
             zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), unit->id,
-            Units::getReadableName(unit).c_str());
+            DF2CONSOLE(Units::getReadableName(unit)).c_str());
         pending_reassignment[hfid].push_back(zone_id);
         reserved_zones[zone_id].push_back(hfid);
         if (share_with_spouse && spouse_hfid > -1) {
@@ -396,6 +387,12 @@ static void handle_missing_assignments(color_ostream &out,
             pending_reassignment[spouse_hfid].push_back(zone_id);
             reserved_zones[zone_id].push_back(spouse_hfid);
         }
+        INFO(cycle,out).print("preserve-rooms: reserving %s for the return of %s%s%s\n",
+                    toLower_cp437(ENUM_KEY_STR(civzone_type, zone->type)).c_str(),
+                    DF2CONSOLE(Units::getReadableName(unit)).c_str(),
+                    spouse_hf ? " or their spouse, " : "",
+                    spouse_hf ? DF2CONSOLE(Units::getReadableName(spouse_hf)).c_str() : "");
+
         zone->spec_sub_flag.bits.active = false;
     }
 }
@@ -481,22 +478,24 @@ static void on_new_active_unit(color_ostream& out, void* data) {
     if (!unit || unit->hist_figure_id < 0)
         return;
     TRACE(event,out).print("unit %d (%s) arrived on map (hfid: %d, in pending: %d)\n",
-        unit->id, Units::getReadableName(unit).c_str(), unit->hist_figure_id,
+        unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str(), unit->hist_figure_id,
         pending_reassignment.contains(unit->hist_figure_id));
     auto hfid = unit->hist_figure_id;
     auto it = pending_reassignment.find(hfid);
     if (it == pending_reassignment.end())
         return;
     INFO(event,out).print("preserve-rooms: restoring room ownership for %s\n",
-        Units::getReadableName(unit).c_str());
+        DF2CONSOLE(Units::getReadableName(unit)).c_str());
     for (auto zone_id : it->second) {
         reserved_zones.erase(zone_id);
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
-        if (!zone || zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
+        if (!zone)
             continue;
-        DEBUG(event,out).print("assigning and activating zone %d\n", zone->id);
-        Buildings::setOwner(zone, unit);
         zone->spec_sub_flag.bits.active = true;
+        if (zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
+            continue;
+        DEBUG(event,out).print("reassigning zone %d\n", zone->id);
+        Buildings::setOwner(zone, unit);
     }
     pending_reassignment.erase(it);
 }
@@ -615,7 +614,12 @@ static int preserve_rooms_getState(lua_State *L) {
     features.emplace("track-roles", config.get_bool(CONFIG_TRACK_ROLES));
     Lua::Push(L, features);
 
-    return 1;
+    unordered_map<string, size_t> stats;
+    stats.emplace("travelers", pending_reassignment.size());
+    stats.emplace("reservations", reserved_zones.size());
+    Lua::Push(L, stats);
+
+    return 2;
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{

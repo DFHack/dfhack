@@ -724,9 +724,12 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
         return;
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
-    // iterate event handler callbacks
+    unordered_set<int32_t> next_activeUnits;
     vector<int32_t> newly_active_unit_ids;
     for (df::unit* unit : df::global::world->units.active) {
+        if (!Units::isActive(unit))
+            continue;
+        next_activeUnits.emplace(unit->id);
         if (!activeUnits.count(unit->id))
             newly_active_unit_ids.emplace_back(unit->id);
     }
@@ -736,9 +739,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
             run_handler(out, EventType::UNIT_NEW_ACTIVE, handle, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
         }
     }
-    activeUnits.clear();
-    std::transform(df::global::world->units.active.begin(), df::global::world->units.active.end(),
-        std::inserter(activeUnits, activeUnits.end()), [](auto & unit){ return unit->id; });
+    activeUnits = std::move(next_activeUnits);
 }
 
 

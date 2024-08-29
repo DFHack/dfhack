@@ -181,7 +181,9 @@ function ReservedWidget:onInput(keys)
     if ReservedWidget.super.onInput(self, keys) then
         return true
     end
-    if keys._MOUSE_L and preserve_rooms_isReserved() then
+    if keys._MOUSE_L and
+        (preserve_rooms_isReserved() or preserve_rooms_getRoleAssignment() ~= '')
+    then
         if self.subviews.pause_mask:getMousePos() then return true end
         if self.subviews.add_mask:getMousePos() then return true end
     end

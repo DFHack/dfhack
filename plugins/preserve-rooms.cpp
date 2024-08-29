@@ -110,6 +110,96 @@ static void clear_track_roles_state() {
     noble_zones.clear();
 }
 
+static PersistentDataItem get_config(const char * suffix, bool create = false) {
+    string key = CONFIG_KEY + "/" + suffix;
+
+    PersistentDataItem c = World::GetPersistentSiteData(key);
+    if (!c.isValid())
+        c = World::AddPersistentSiteData(key);
+
+    return c;
+}
+
+static void store_zone_assignments(const ZoneAssignments & data, const char * suffix) {
+    vector<string> elems;
+    for (auto elem : data) {
+        vector<int32_t> ints = {elem.first, elem.second.first, elem.second.second};
+        elems.push_back(join_strings("/", ints));
+    }
+    get_config(suffix, true).set_str(join_strings(",", elems));
+}
+
+static void load_zone_assignments(ZoneAssignments * data, const char * suffix) {
+    PersistentDataItem c = get_config(suffix);
+    if (!c.isValid())
+        return;
+
+    vector<string> elems;
+    split_string(&elems, c.get_str(), ",");
+    for (auto elem : elems) {
+        vector<string> ints;
+        split_string(&ints, elem, "/");
+        if (ints.size() != 3)
+            continue;
+        data->emplace_back(string_to_int(ints[0], -1),
+            std::make_pair(string_to_int(ints[1], -1), string_to_int(ints[2], -1)));
+    }
+}
+
+static void store_associations(const unordered_map<int32_t, vector<int32_t>> & data, const char * suffix) {
+    vector<string> elems;
+    for (auto &[key, vec] : data) {
+        vector<int32_t> combined = vec;
+        combined.push_back(key);
+        elems.push_back(join_strings("/", combined));
+    }
+    get_config(suffix, true).set_str(join_strings(",", elems));
+}
+
+static void load_associations(unordered_map<int32_t, vector<int32_t>> * data, const char * suffix) {
+    PersistentDataItem c = get_config(suffix);
+    if (!c.isValid())
+        return;
+
+    vector<string> elems;
+    split_string(&elems, c.get_str(), ",");
+    for (auto elem : elems) {
+        vector<string> combined;
+        split_string(&combined, elem, "/");
+        if (combined.size() <= 1)
+            continue;
+        int32_t key = string_to_int(combined.back(), -1);
+        combined.pop_back();
+        vector<int32_t> vals;
+        for (auto str : combined)
+            vals.push_back(string_to_int(str, -1));
+        data->emplace(key, vals);
+    }
+}
+
+static void store_int_string_map(const unordered_map<int32_t, string> & data, const char * suffix) {
+    vector<string> elems;
+    for (auto &[key, str] : data)
+        elems.push_back(int_to_string(key) + "/" + str);
+    get_config(suffix, true).set_str(join_strings(",", elems));
+}
+
+static void load_int_string_map(unordered_map<int32_t, string> * data, const char * suffix) {
+    PersistentDataItem c = get_config(suffix);
+    if (!c.isValid())
+        return;
+
+    vector<string> elems;
+    split_string(&elems, c.get_str(), ",");
+    for (auto elem : elems) {
+        vector<string> key_str;
+        split_string(&key_str, elem, "/");
+        if (key_str.size() != 2)
+            continue;
+        data->emplace(string_to_int(key_str[0], -1), key_str[1]);
+    }
+}
+
 DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
@@ -124,13 +214,25 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     clear_track_missions_state();
     clear_track_roles_state();
 
-    // TODO: restore vectors/maps from serialized state
+    load_zone_assignments(&last_known_assignments_bedroom, "bedroom");
+    load_zone_assignments(&last_known_assignments_office, "office");
+    load_zone_assignments(&last_known_assignments_dining, "dining");
+    load_zone_assignments(&last_known_assignments_tomb, "tomb");
+    load_associations(&pending_reassignment, "pending");
+    load_associations(&reserved_zones, "reserved");
+    load_int_string_map(&noble_zones, "noble");
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
-    // TODO: serialize vectors/maps
+    store_zone_assignments(last_known_assignments_bedroom, "bedroom");
+    store_zone_assignments(last_known_assignments_office, "office");
+    store_zone_assignments(last_known_assignments_dining, "dining");
+    store_zone_assignments(last_known_assignments_tomb, "tomb");
+    store_associations(pending_reassignment, "pending");
+    store_associations(reserved_zones, "reserved");
+    store_int_string_map(noble_zones, "noble");
 
     return CR_OK;
 }
@@ -138,8 +240,7 @@ DFhackCExport command_result plugin_save_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
-                                    plugin_name);
+            DEBUG(control,out).print("world unloaded; disabling %s\n", plugin_name);
             is_enabled = false;
         }
     }
@@ -206,7 +307,7 @@ static void assign_nobles(color_ostream &out) {
             if (found)
                 continue;
             Buildings::setOwner(zone, unit);
-            INFO(cycle,out).print("assigning %s to a %s-associated %s\n",
+            INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
                 Units::getReadableName(unit).c_str(), code.c_str(),
                 ENUM_KEY_STR(civzone_type, zone->type).c_str());
             break;
@@ -329,20 +430,24 @@ static void do_cycle(color_ostream &out) {
 
     TRACE(cycle,out).print("running %s cycle\n", plugin_name);
 
-    assign_nobles(out);
+    if (config.get_bool(CONFIG_TRACK_ROLES)) {
+        assign_nobles(out);
+    }
 
-    unordered_set<int32_t> active_unit_ids;
-    std::transform(world->units.active.begin(), world->units.active.end(),
-        std::inserter(active_unit_ids, active_unit_ids.end()), [](auto & unit){ return unit->id; });
+    if (config.get_bool(CONFIG_TRACK_MISSIONS)) {
+        unordered_set<int32_t> active_unit_ids;
+        std::transform(world->units.active.begin(), world->units.active.end(),
+            std::inserter(active_unit_ids, active_unit_ids.end()), [](auto & unit){ return unit->id; });
 
-    process_rooms(out, active_unit_ids, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
-    process_rooms(out, active_unit_ids, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
-    process_rooms(out, active_unit_ids, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
-    process_rooms(out, active_unit_ids, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
+        process_rooms(out, active_unit_ids, last_known_assignments_bedroom, world->buildings.other.ZONE_BEDROOM);
+        process_rooms(out, active_unit_ids, last_known_assignments_office, world->buildings.other.ZONE_OFFICE);
+        process_rooms(out, active_unit_ids, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
+        process_rooms(out, active_unit_ids, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
 
-    DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
-        last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
-        last_known_assignments_dining.size(), last_known_assignments_tomb.size());
+        DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
+            last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
+            last_known_assignments_dining.size(), last_known_assignments_tomb.size());
+    }
 }
 
 /////////////////////////////////////////////////////
@@ -382,8 +487,8 @@ static void on_new_active_unit(color_ostream& out, void* data) {
     auto it = pending_reassignment.find(hfid);
     if (it == pending_reassignment.end())
         return;
-    DEBUG(event,out).print("restoring zone ownership for unit %d (%s)\n",
-        unit->id, Units::getReadableName(unit).c_str());
+    INFO(event,out).print("preserve-rooms: restoring room ownership for %s\n",
+        Units::getReadableName(unit).c_str());
     for (auto zone_id : it->second) {
         reserved_zones.erase(zone_id);
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));

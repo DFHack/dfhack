@@ -307,7 +307,7 @@ static void assign_nobles(color_ostream &out) {
             if (found)
                 continue;
             Buildings::setOwner(zone, unit);
-            INFO(cycle,out).print("assigning %s to a %s-associated %s\n",
+            INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
                 Units::getReadableName(unit).c_str(), code.c_str(),
                 ENUM_KEY_STR(civzone_type, zone->type).c_str());
             break;

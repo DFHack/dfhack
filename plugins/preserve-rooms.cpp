@@ -600,7 +600,9 @@ static int preserve_rooms_assignToRole(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    auto zone = Gui::getSelectedCivZone(*out, true);
+    int zone_id = luaL_checkint(L, 2);
+    auto zone = zone_id == -1 ? Gui::getSelectedCivZone(*out, true) :
+        virtual_cast<df::building_civzonest>(df::building::find(zone_id));
     if (!zone)
         return 0;
     DEBUG(control,*out).print("preserve_rooms_assignToRole: zone_id=%d\n", zone->id);

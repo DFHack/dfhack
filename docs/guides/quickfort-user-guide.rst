@@ -694,12 +694,14 @@ and then using that label for each of the zones you want to attach::
     b{location=tavern/bigpub name="Rent me"}(3x1)
     h{location=tavern/bigpub name="Central pub" allow=residents}(25x40)
 
-Note that the label ("bigpub" in this case) will never appear in-game. It is only used in the context of the blueprint to identify a common location.
+Note that the label ("bigpub" in this case) will never appear in-game. It is
+only used in the context of the blueprint to identify a common location.
 
 #place mode
 -----------
 
-``#place`` mode is dedicated to stockpiles, which are a major design element in any fortress.
+``#place`` mode is dedicated to stockpiles, which are a major design element in
+any fortress.
 
 Stockpile designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2036,13 +2038,14 @@ Property           Description
 =================  ===========
 ``name``           the name of the zone
 ``active``         if set to ``false`` then the zone is deactivated
-``assigned_unit``  if set to the name of a noble position (like ``manager`` or
-                   ``bookkeeper`` or ``sheriff``) then the zone will be
-                   assigned to the unit appointed to the indicated noble
-                   position (if any). if the fort has progressed to the point
-                   that the sheriff role has been replaced by the captain of
-                   the guard, then ``assigned_unit=sheriff`` will be
-                   interpreted as ``assigned_unit=captain_of_the_guard``.
+``assigned_unit``  if set to the name of a noble or administrative position
+                   (like ``manager`` or ``bookkeeper`` or ``sheriff``) then the
+                   zone will be assigned to the unit appointed to the indicated
+                   position (if any). the assignment will be registered with
+                   `preserve-rooms`, so if the role is assumed by a different
+                   unit in the future, the zone assignment will automatically
+                   be updated. this property only has an effect for assignable
+                   zone types: bedrooms, dining halls, offices, and tombs.
 ``location``       the type of location to create and attach the zone to: one
                    of: ``hospital``, ``guildhall``, ``tavern``, ``library``, or
                    ``temple``. To attach multiple zones to the same location,

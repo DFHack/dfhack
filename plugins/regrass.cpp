@@ -260,8 +260,9 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
 
         for (auto gr_ev : consider_grev)
         {   // These grass events are already present.
-            if (erase_from_vector(new_grasses, gr_ev->plant_index))
+            if (erase_from_vector(new_grasses, gr_ev->plant_index)) {
                 TRACE(log, out).print("Grass (ID %d) already present.\n", gr_ev->plant_index);
+            }
         }
 
         for (auto id : new_grasses) {
@@ -310,7 +311,8 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
         }
 
         DEBUG(log, out).print("Allocating new forced grass event.\n");
-        if (forced_grev = df::allocate<df::block_square_event_grassst>())
+        forced_grev = df::allocate<df::block_square_event_grassst>();
+        if (forced_grev)
         {   // Initialize it.
             forced_grev->plant_index = options.forced_plant;
             forced_grev->amount[tx][ty] = 100;

@@ -3,6 +3,7 @@ local _ENV = mkmodule('plugins.preserve-rooms')
 local argparse = require('argparse')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local GLOBAL_KEY = 'preserve-rooms'
@@ -84,7 +85,7 @@ ReservedWidget = defclass(ReservedWidget, overlay.OverlayWidget)
 ReservedWidget.ATTRS{
     desc='Shows whether a zone has been reserved for a unit or role.',
     default_enabled=true,
-    default_pos={x=37, y=9},
+    default_pos={x=37, y=6},
     viewscreens={
         'dwarfmode/Zone/Some/Bedroom',
         'dwarfmode/Zone/Some/DiningHall',
@@ -96,17 +97,24 @@ ReservedWidget.ATTRS{
 
 local new_world_loaded = true
 
+local CONFLICTING_TOOLTIPS = utils.invert{
+    df.main_hover_instruction.ZoneRepaint,
+    df.main_hover_instruction.ZoneSuspend,
+    df.main_hover_instruction.ZoneRemove,
+    df.main_hover_instruction.ZoneAssignLocation,
+}
+
 function ReservedWidget:init()
     self.code_to_idx = {}
 
     self:addviews{
         widgets.Panel{
             view_id='pause_mask',
-            frame={t=0, l=0, w=4, h=3},
+            frame={t=3, l=0, w=4, h=3},
         },
         widgets.Panel{
             view_id='add_mask',
-            frame={t=3, l=4, w=4, h=3},
+            frame={t=6, l=4, w=4, h=3},
         },
         widgets.Panel{
             frame={t=0, l=9},
@@ -194,8 +202,10 @@ function ReservedWidget:init()
     }
 end
 
+local mi = df.global.game.main_interface
+
 function ReservedWidget:onInput(keys)
-    if ReservedWidget.super.onInput(self, keys) then
+    if not CONFLICTING_TOOLTIPS[mi.current_hover] and ReservedWidget.super.onInput(self, keys) then
         return true
     end
     if keys._MOUSE_L and
@@ -227,7 +237,9 @@ function ReservedWidget:render(dc)
         hover_expansion.visible = true
     end
 
-    ReservedWidget.super.render(self, dc)
+    if not CONFLICTING_TOOLTIPS[mi.current_hover] then
+        ReservedWidget.super.render(self, dc)
+    end
 end
 
 local function to_title_case(str)

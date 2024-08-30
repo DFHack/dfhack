@@ -110,8 +110,7 @@ const char * DFHack::sa_feature(df::feature_type index)
 /*
  * Cuboid class fns
  */
-cuboid::cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2)
-{
+cuboid::cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2) {
     x_min = min(x1, x2);
     x_max = max(x1, x2);
     y_min = min(y1, y2);
@@ -120,17 +119,14 @@ cuboid::cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16
     z_max = max(z1, z2);
 }
 
-cuboid::cuboid(int16_t x, int16_t y, int16_t z)
-{
+cuboid::cuboid(int16_t x, int16_t y, int16_t z) {
     x_min = x_max = x;
     y_min = y_max = y;
     z_min = z_max = z;
 }
 
-cuboid::cuboid(const df::map_block *block)
-{
-    if (block)
-    {
+cuboid::cuboid(const df::map_block *block) {
+    if (block) {
         auto &pos = block->map_pos;
         x_min = pos.x;
         x_max = pos.x + 15;
@@ -140,48 +136,41 @@ cuboid::cuboid(const df::map_block *block)
     }
 }
 
-bool cuboid::isValid() const
-{
+bool cuboid::isValid() const {
     return x_min >= 0 && y_min >= 0 && z_min >= 0 &&
         x_max >= x_min && y_max >= y_min && z_max >= z_min;
 }
 
 cuboid cuboid::clamp(const cuboid &other)
 {
-    x_min = max(x_min, other.x_min);
-    y_min = max(y_min, other.y_min);
-    z_min = max(z_min, other.z_min);
-    x_max = min(x_max, other.x_max);
-    y_max = min(y_max, other.y_max);
-    z_max = min(z_max, other.z_max);
+    if (isValid() && other.isValid()) {
+        x_min = max(x_min, other.x_min);
+        y_min = max(y_min, other.y_min);
+        z_min = max(z_min, other.z_min);
+        x_max = min(x_max, other.x_max);
+        y_max = min(y_max, other.y_max);
+        z_max = min(z_max, other.z_max);
+    }
+    else
+        clear();
 
     return *this;
 }
 
-bool cuboid::clampMap(bool block)
+cuboid cuboid::clampMap(bool block)
 {
-    if (!Maps::IsValid() || x_min < 0 || y_min < 0 || z_min < 0 ||
-        x_max < 0 || y_max < 0 || z_max < 0)
-    {
-        return false;
+    if (!Maps::IsValid() || !isValid()) {
+        clear();
+        return *this;
     }
 
-    int32_t xy_mult = block ? 1 : 16;
-    int16_t tile_max = world->map.x_count_block * xy_mult - 1;
-    x_min = min(x_min, tile_max);
-    x_max = min(x_max, tile_max);
-    tile_max = world->map.y_count_block * xy_mult - 1;
-    y_min = min(y_min, tile_max);
-    y_max = min(y_max, tile_max);
-    tile_max = world->map.z_count_block - 1;
-    z_min = min(z_min, tile_max);
-    z_max = min(z_max, tile_max);
+    int32_t x, y, z;
+    if (block)
+        Maps::getSize(x, y, z);
+    else
+        Maps::getTileSize(x, y, z);
 
-    if (x_min > x_max) std::swap(x_min, x_max);
-    if (y_min > y_max) std::swap(y_min, y_max);
-    if (z_min > z_max) std::swap(z_min, z_max);
-
-    return true;
+    return clamp(cuboid(0, 0, 0, x-1, y-1, z-1));
 }
 
 bool cuboid::addPos(int16_t x, int16_t y, int16_t z)
@@ -201,42 +190,40 @@ bool cuboid::addPos(int16_t x, int16_t y, int16_t z)
     return true;
 }
 
-bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const
-{
+bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const {
     return x >= x_min && y >= y_min && z >= z_min &&
         x <= x_max && y <= y_max && z <= z_max;
 }
 
 void cuboid::forCoord(std::function<bool(df::coord)> fn) const
 {
-    if (isValid()) // Only iterate if valid cuboid
+    if (isValid()) // Only iterate if valid cuboid.
         Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min);
 }
 
 void cuboid::forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block) const
 {
-    auto c = *this; // Create a copy to modify
-    if (!c.clampMap()) // Bound < 0 or no map
+    auto c = *this; // Create a copy to modify.
+    if (!c.clampMap().isValid()) // No intersection.
         return;
 
-    // Process z, y, then x
+    // Process z, y, then x.
     for (int16_t x = (c.x_min >> 4) << 4; x <= c.x_max; x += 16)
         for (int16_t y = (c.y_min >> 4) << 4; y <= c.y_max; y += 16)
             for (int16_t z = c.z_max; z >= c.z_min; z--)
             {
                 auto *block = ensure_block ? Maps::ensureTileBlock(x, y, z) : Maps::getTileBlock(x, y, z);
-                if (!block) // Skip unallocated block
+                if (!block) // Skip unallocated block.
                     continue;
                 else if (!fn(block, cuboid(block).clamp(c)))
-                    return; // Break iterator
+                    return; // Break iterator.
             }
 }
 
 /*
  * The Maps module
  */
-bool Maps::IsValid ()
-{
+bool Maps::IsValid() {
     return (world->map.block_index != NULL);
 }
 
@@ -247,12 +234,12 @@ void Maps::forCoord(std::function<bool(df::coord)> fn, int16_t x1, int16_t y1, i
     int16_t dy = y1 > y2 ? -1 : 1;
     int16_t dz = z1 > z2 ? -1 : 1;
 
-    // Process z, y, then x
+    // Process z, y, then x.
     for (int16_t x = x1; x != x2 + dx; x += dx)
         for (int16_t y = y1; y != y2 + dy; y += dy)
             for (int16_t z = z1; z != z2 + dz; z += dz)
                 if (!fn(df::coord(x, y, z)))
-                    return; // Break iterator
+                    return; // Break iterator.
 }
 
 // getter for map size in blocks

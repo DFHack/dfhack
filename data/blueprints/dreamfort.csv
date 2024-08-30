@@ -2650,13 +2650,13 @@ Apt. screenshot: https://drive.google.com/file/d/16-NXlodLIQjeZUMSmsWRafeytwU2dX
 ""
 Features:
 - Well-appointed suites to satisfy nobles or citizens with a need for opulence
-"- Suite rooms are multi-functional. Any suite can be zoned as a bedroom, office, dining hall, or tomb. If a noble requires a fancier version than what one room can provide, include multiple rooms in the zone. A suites level can fully satisfy a monarch if each zone covers four (engraved) rooms."
+"- Suite rooms are multi-functional. Any suite can be zoned as a bedroom, office, dining hall, or tomb. If a noble requires more wealth than what a default room provides, you can smooth, engrave, add furniture, or include multiple rooms in the zone. A default suites level can fully satisfy a monarch if each zone covers four (engraved) rooms."
 - Apartments with beds and storage to keep dwarves happy and the fortress clean
 ""
 Suites Walkthrough:
 1) Dig out the suites layer with /suites1.
 ""
-"2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unzoned so you can configure them for the needs of specific nobles. Generate manager orders for /suites2."
+"2) Once the area is dug out, choose a /suites2 variant based on your needs. For your first copy of this level, you probably want /suites2_default, which defines zones and assigns them to the usual cohort of demanding nobles and administrators. For later copies where your needs are ad hoc, you can choose /suites2_no_zones. Generate manager orders for your chosen variant."
 ""
 Apartments Walkthrough:
 "1) Dig out one layer of apartments with /apartments1, or 3 layers at once (180 bedrooms total) by configuring gui/quickfort to repeat down 3 levels."
@@ -2698,7 +2698,12 @@ Apartments Walkthrough:
 ,d,,,,d,,,,,,,d,,,,d,d,d,,,,d,,,,,,,d,,,,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 
-"#meta label(suites2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(suites2_default) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build furniture, set traffic patterns, create zones, and assign them to nobles and administrators"
+traffic_suites/suites_traffic
+build_suites/suites_build
+zone_suites/suites_zone
+""
+"#meta label(suites2_no_zones) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 rooms are left unzoned so you can configure them for specific nobles.) build furniture and set traffic patterns"
 traffic_suites/suites_traffic
 build_suites/suites_build
@@ -2772,6 +2777,42 @@ build_suites/suites_build
 ,`,,`,`,`,`,h,,,h,`,`,`,`,,`,`,`,,`,`,`,`,h,,,h,`,`,`,`,,`
 ,`,,a,r,`,`,h,,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,,h,`,`,r,a,,`
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+
+#zone label(suites_zone) start(18; 18; central stairs) hidden()
+
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,h{assigned_unit=sheriff},h,h,b{assigned_unit=sheriff},b,b,b,o{assigned_unit=mayor}(7x7),,,`,,,,`,`,`,o{assigned_unit=baron}(7x7),,,`,,,,T{assigned_unit=baron}(7x7),,,`,,,,`
+,`,h,h,h,b,b,b,b,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,h,h,h,b,b,b,b,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,h,h,h,b,b,b,b,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,h,h,h,h,b,b,b,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,h,h,h,h,b,b,b,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,h,h,h,h,b,b,b,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,h{assigned_unit=mayor}(7x7),,,,,,,b{assigned_unit=mayor}(7x7),,,,,,,`,`,`,b{assigned_unit=baron}(7x7),,,,,,,h{assigned_unit=baron}(7x7),,,,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,h{assigned_unit=outpost_liaison}(7x7),,,`,,,,b{assigned_unit=outpost_liaison}(7x7),,,`,,,,`,`,`,b{assigned_unit=monarch}(7x7),,,`,,,,h{assigned_unit=monarch}(7x7),,,`,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,T{assigned_unit=outpost_liaison}(7x7),,,,,,,o{assigned_unit=outpost_liaison}(7x7),,,,,,,`,`,`,o{assigned_unit=monarch}(7x7),,,,,,,T{assigned_unit=monarch}(7x7),,,,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 "#dig label(apartments1) start(18; 18; central stairs) message(Once the area is dug out, continue with /apartments2.) apartment complex"

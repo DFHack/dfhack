@@ -11,6 +11,21 @@ local GLOBAL_KEY = 'preserve-rooms'
 DEBUG = DEBUG or false
 
 ------------------
+-- public API
+--
+
+-- updated on world load
+local code_lookup = {}
+
+function assignToRole(code, bld)
+    local group_codes = code_lookup[code:lower()]
+    if not group_codes then
+        dfhack.printerr('Noble or administrator role not found: ' .. code)
+    end
+    preserve_rooms_assignToRole(group_codes, bld and bld.id or -1)
+end
+
+------------------
 -- command line
 --
 
@@ -139,7 +154,7 @@ function ReservedWidget:init()
                             options={{label='None', value={''}, pen=COLOR_YELLOW}},
                             on_change=function(group_codes)
                                 self.subviews.list:setSelected(self.code_to_idx[group_codes[1]] or 1)
-                                preserve_rooms_assignToRole(group_codes)
+                                preserve_rooms_assignToRole(group_codes, -1)
                             end,
                         },
                         widgets.Panel{
@@ -246,6 +261,39 @@ local function to_title_case(str)
     return dfhack.capitalizeStringWords(dfhack.lowerCp437(str:gsub('_', ' ')))
 end
 
+local function add_options(options, choices, codes)
+    for _,group_codes in ipairs(codes) do
+        local names = {}
+        for _,code in ipairs(group_codes) do
+            table.insert(names, to_title_case(code))
+        end
+        local name = table.concat(names, '/')
+        table.insert(options, {label=name, value=group_codes, pen=COLOR_YELLOW})
+        table.insert(choices, name)
+    end
+end
+
+-- updated on world load
+local codes = {}
+
+function ReservedWidget:refresh_role_list()
+    local options, choices = {{label='None', value={''}, pen=COLOR_YELLOW}}, {'None'}
+    add_options(options, choices, codes)
+
+    self.code_to_idx = {['']=1}
+    for idx,group_codes in ipairs(codes) do
+        self.code_to_idx[group_codes[1]] = idx + 1 -- offset for None option
+    end
+
+    self.subviews.role.options = options
+    self.subviews.role:setOption(1)
+    self.subviews.list:setChoices(choices, 1)
+end
+
+OVERLAY_WIDGETS = {
+    reserved=ReservedWidget,
+}
+
 local function add_positions(positions, entity)
     if not entity then return end
     for _,position in ipairs(entity.positions.own) do
@@ -294,43 +342,25 @@ local function get_codes(positions)
     return codes
 end
 
-local function add_options(options, choices, codes)
+local function get_api_lookup_table(codes)
+    local lookup = {}
     for _,group_codes in ipairs(codes) do
-        local names = {}
         for _,code in ipairs(group_codes) do
-            table.insert(names, to_title_case(code))
+            lookup[code:lower()] = group_codes
         end
-        local name = table.concat(names, '/')
-        table.insert(options, {label=name, value=group_codes, pen=COLOR_YELLOW})
-        table.insert(choices, name)
     end
+    return lookup
 end
-
-function ReservedWidget:refresh_role_list()
-    local positions, options, choices = {}, {{label='None', value={''}, pen=COLOR_YELLOW}}, {'None'}
-    add_positions(positions, df.historical_entity.find(df.global.plotinfo.civ_id));
-    add_positions(positions, df.historical_entity.find(df.global.plotinfo.group_id));
-    local codes = get_codes(positions)
-    add_options(options, choices, codes)
-
-    self.code_to_idx = {['']=1}
-    for idx,group_codes in ipairs(codes) do
-        self.code_to_idx[group_codes[1]] = idx + 1 -- offset for None option
-    end
-
-    self.subviews.role.options = options
-    self.subviews.role:setOption(1)
-    self.subviews.list:setChoices(choices, 1)
-end
-
-OVERLAY_WIDGETS = {
-    reserved=ReservedWidget,
-}
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or not dfhack.world.isFortressMode() then
         return
     end
+    local positions = {}
+    add_positions(positions, df.historical_entity.find(df.global.plotinfo.civ_id));
+    add_positions(positions, df.historical_entity.find(df.global.plotinfo.group_id));
+    codes = get_codes(positions)
+    code_lookup = get_api_lookup_table(codes)
     new_world_loaded = true
 end
 

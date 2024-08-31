@@ -428,6 +428,8 @@ the "Preferences" tab in `gui/control-panel` or on the commandline with
   out of mind. Highly recommended for players who would prefer if the god-mode
   tools were not quite as obvious and accessible.
 
+.. _performance-monitoring:
+
 Performance monitoring
 ======================
 

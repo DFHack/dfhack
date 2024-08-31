@@ -200,6 +200,19 @@ Please see the Core `performance-monitoring` section for details on how to get
 a perf report while testing your overlay. The metric that you will be
 interested in is the percentage of elapsed time that your overlay accounts for.
 
+If you need to improve performance, here are some potential options:
+
+1. Shard scanning over multiple passes. For example, instead of checking every
+   item on the map in every update in your overlay, only check every Nth item
+   and change the start offset every time you scan.
+
+2. Reduce the frequency of state updates by moving calcuations to
+   ``overlay_onupdate`` and setting the valud of the
+   ``overlay_onupdate_max_freq_seconds`` attribute appropriately
+
+3. Move hotspots into C++ code, either in a new core library function or in a
+   dedicated plugin
+
 Development workflows
 ---------------------
 

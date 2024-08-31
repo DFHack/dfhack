@@ -62,26 +62,25 @@ Template for new versions:
 - System clipboard: when pasting single lines from the system clipboard, replace newlines with spaces so they don't show up as strange CP437 glyphs in-game
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
-- `buildingplan`: fixed type confusion when using quick filter slot '0'
+- `buildingplan`: fixed processing errors when using quick material filter slot '0'
 - DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
 
 ## Misc Improvements
-- `orders`: more space efficient workshop overlay
-- `sort`: Search results on the Places>Stockpile tab now filter based on: the stockpile's default name & number, customized name, and the storable-category flags that are enabled for the stockpile
-- `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start on the "Pregnancies" tab
+- `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories
+- `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start directly on the "Pregnancies" tab
 
 ## Documentation
-- Lua API document ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
+- add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
-- ``Items::createItem``: removed growth_print parameter, now determined automatically
+- ``Items::createItem``: removed growth_print parameter; now determined automatically
 
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
-- ``dfhack.units.isDanger``: no longer returns true for intelligent undead
+- ``dfhack.units.isDanger``: no longer unconditionally returns true for intelligent undead
 - Overlay widgets can now assume their ``active`` and ``visible`` functions will only execute in a context that matches their ``viewscreens`` associations
-- ``gui.simulateInput``: do not generate spurious keycode from ``_STRING``
+- ``gui.simulateInput``: do not generate spurious keycode from ``_STRING`` key inputs
 - ``dfhack.items.createItem``: removed growth_print parameter to match C++ API
 
 ## Removed

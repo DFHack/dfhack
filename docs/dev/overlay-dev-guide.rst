@@ -186,6 +186,20 @@ the resulting objects. The instantiated widgets must not be added as subviews to
 any other View, including the Screen views that can be returned from the
 ``overlay_trigger()`` function.
 
+Performance considerations
+**************************
+
+Overlays that do any processing or rendering during unpaused gameplay (that is,
+nearly all of them) must be developed with performance in mind. DFHack has an
+overall service level objective of no more than 10% performance impact during
+unpaused gameplay with all overlays and background tools enabled. A single
+overlay should seek to take up no more than a fraction of 1% of elapsed
+gameplay time.
+
+Please see the Core `performance-monitoring` section for details on how to get
+a perf report while testing your overlay. The metric that you will be
+interested in is the percentage of elapsed time that your overlay accounts for.
+
 Development workflows
 ---------------------
 

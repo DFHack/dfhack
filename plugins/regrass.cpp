@@ -365,21 +365,6 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
         TRACE(log, out).print("Tiletype no change.\n");
         return 1;
     }
-    /*else if (mat == tiletype_material::STONE || // Note: DF doesn't seem to remove mud.
-        mat == tiletype_material::FEATURE ||
-        mat == tiletype_material::LAVA_STONE ||
-        mat == tiletype_material::MINERAL)
-    {   // Muddy stone.
-        for (auto blev : block->block_events)
-        {   // Remove mud spatter.
-            auto ms_ev = virtual_cast<df::block_square_event_material_spatterst>(blev);
-            if (ms_ev && ms_ev->mat_type == builtin_mats::MUD) {
-                ms_ev->amount[tx][ty] = 0;
-                DEBUG(log, out).print("Removed tile mud.\n");
-                break;
-            }
-        }
-    }*/
 
     if (shape == tiletype_shape::FLOOR)
     {   // Floor (including ashes).

@@ -69,6 +69,8 @@ Template for new versions:
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories
 - `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start directly on the "Pregnancies" tab
+- Dreamfort: integrate with `preserve-rooms` to assign relevant rooms to nobles/adimistrators
+- Dreamfort: smooth tiles under statues and other large furniture that you can't easily smooth later
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

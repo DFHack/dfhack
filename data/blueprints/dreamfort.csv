@@ -151,7 +151,7 @@ In standing orders (Labor -> Standing orders):
 ""
 "Once you have your standing orders set the way you like, you can export them and instruct DFHack to autoload your saved settings on new embarks. The controls for getting this set up are available by default in a panel at the bottom of the Standing orders -> Automated workshops tab."
 "#meta label(dig_all) start(central stairs on industry level) message(You can repeat the /central_stairs blueprint down more levels if you need more stairs.) dig industry, services, guildhall, suites, apartments, and crypt levels. does not include farming."
-# Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
+# Note that this blueprint will only work for the unified dreamfort.csv. It won't work if you have downloaded the individual .xlsx files since #meta blueprints can't cross file boundaries.
 ""
 /industry1
 #>
@@ -2023,6 +2023,7 @@ smooth/services_smooth
 "#meta label(services3) start(central stairs) message(Once furniture has been built, continue with /services4.) expand furnishings"
 place2/services_place2
 build2/services_build2
+smooth2/services_smooth2
 ""
 #meta label(services4) start(central stairs) complete furnishings
 place3/services_place3
@@ -2391,6 +2392,42 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 ,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,,`,`,`,`,`
 
+#dig label(services_smooth2) start(18; 18) hidden() smooth the floor where the statues will go
+
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,`,`,`,s1,`,`,`,s1,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,,`
+,s1,`,`,`,`,`,`,`,`,`,s1,,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`
+,s1,`,`,`,`,`,`,`,`,`,s1,,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,s1,`,`,`,`,`,`,`,`,`,s1,,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,s1,`,`,`,`,`,`,`,`,`,s1,,`,`,`,`,`,`,`,`,`,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,s1,`,`,`,`,`,s1,`,`
+,,,,`,`,,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+
 #place label(services_place3) start(18; 18) hidden() remaining jail food and booze
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2512,16 +2549,17 @@ Guildhall Walkthrough:
 locations/guildhall_locations
 doors/guildhall_doors
 furnish/guildhall_furnish
+smooth/guildhall_smooth
 ""
 #meta label(guildhall2_no_locations) fully furnished and zoned but no locations
 zones/guildhall_zones
 doors/guildhall_doors
 furnish/guildhall_furnish
+smooth/guildhall_smooth
 ""
 #meta label(guildhall2_custom) only zones and doors
 zones/guildhall_zones
 doors/guildhall_doors
-""
 ""
 "#zone label(guildhall_locations) start(15; 15; central stairs) hidden() message(The library and temple are restricted to residents only by default. If you'd like them to attract vistors, please go to the location screen and change the restrictions.) declare a library and temple"
 
@@ -2641,6 +2679,36 @@ doors/guildhall_doors
 ,,`,c,t,c,`,`,s,,,t,c,`,`,`,c,t,,,s,`,`,c,t,c,`
 ,,`,`,c,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,c,`,`
 ,,F,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,F
+
+
+#dig label(guildhall_smooth) start(15; 15; central stairs) hidden() smooth statue tiles
+
+
+,,`,`,`,`,s,`,`,,,`,`,`,`,`,`,`,,,`,`,s,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,s,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,s,,,`,`,`,`,`,`,`,,,s,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,s,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,s
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,s,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,s,`,`
+,,,,,,,,,`,,,,`,,`,,,,`
+,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,`,s,`,`,`,`,`,,`,,,`,,`,,,`,,`,`,`,`,`,s,`
+,,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,`,,`,,`,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,,`,,`,,,`,,`,`,`,`,`,`,`
+,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,,,,`,,`,,,,`
+,,`,`,s,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,s,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,s,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,s
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,s,,,`,`,`,`,`,`,`,,,s,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,s,`,`,,,`,`,`,s,`,`,`,,,`,`,s,`,`,`,`
 
 
 #notes label(beds_help) walkthrough for the suites and apartments levels

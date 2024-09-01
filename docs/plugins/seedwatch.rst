@@ -15,6 +15,8 @@ that type falls below that target, then the plants and seeds of that type will
 be protected from cookery. If the number rises above the target + 20, then
 cooking will be allowed again.
 
+See `gui/seedwatch` for a convenient UI for setting seed thresholds.
+
 Usage
 -----
 

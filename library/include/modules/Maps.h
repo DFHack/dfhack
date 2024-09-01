@@ -190,36 +190,36 @@ class cuboid {
     int16_t z_min = -1;
     int16_t z_max = -1;
 
-    // Default constructor
+    // Default constructor.
     DFHACK_EXPORT cuboid() {}
 
-    // Construct from two corners
+    // Construct from two corners.
     DFHACK_EXPORT cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2);
     DFHACK_EXPORT cuboid(const df::coord &p1, const df::coord &p2) : cuboid(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z) {}
 
-    // Construct as single tile
+    // Construct as single tile.
     DFHACK_EXPORT cuboid(int16_t x, int16_t y, int16_t z);
     DFHACK_EXPORT cuboid(const df::coord &p) : cuboid(p.x, p.y, p.z) {}
 
-    // Construct from map block
+    // Construct from map block.
     DFHACK_EXPORT cuboid(const df::map_block *block);
 
-    // Valid cuboid? True if all max >= min >= 0
+    // Valid cuboid? True if all max >= min >= 0.
     DFHACK_EXPORT bool isValid() const;
 
     // Clear cuboid dimensions, making it invalid.
     DFHACK_EXPORT void clear() { x_min = x_max = y_min = y_max = z_min = z_max = -1; }
 
-    // Clamp this cuboid within another cuboid. If valid input, invalid result implies no intersection.
+    // Clamp this cuboid within another cuboid. Invalid result implies no intersection or invalid input.
     DFHACK_EXPORT cuboid clamp(const cuboid &other);
 
-    // Return a new cuboid representing overlapping volume. If valid input, invalid result implies no intersection.
+    // Return a new cuboid representing overlapping volume. Invalid result implies no intersection or invalid input.
     DFHACK_EXPORT cuboid clampNew(const cuboid &other) const { return cuboid(*this).clamp(other); }
 
-    /// Clamp cuboid within map area and ensure max >= min. Fails if map not loaded or any bound < 0.
+    /// Clamp this cuboid within map area. Invalid result implies no intersection or invalid input (e.g., no map).
     /// Can optionally treat cuboid as map blocks instead of tiles.
     /// Note: A point being in map area isn't sufficient to know that a tile block is allocated there!
-    DFHACK_EXPORT bool clampMap(bool block = false);
+    DFHACK_EXPORT cuboid clampMap(bool block = false);
 
     // Expand cuboid to include point. Returns true if bounds changed. Fails if x/y/z < 0.
     DFHACK_EXPORT bool addPos(int16_t x, int16_t y, int16_t z);
@@ -236,7 +236,7 @@ class cuboid {
     /// Iterate over every non-NULL map block intersecting the tile cuboid from top-down, N-S, then W-E.
     /// Will also supply the intersection of this cuboid and block to your "fn" for use with cuboid::forCoord.
     /// Can optionally attempt to create map blocks if they aren't allocated.
-    /// "fn" should return true to keep iterating. Won't iterate if map not loaded or any bound < 0.
+    /// "fn" should return true to keep iterating. Won't iterate if cuboid::clampMap() would fail.
     DFHACK_EXPORT void forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block = false) const;
 };
 

@@ -734,14 +734,14 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::REMAINS;
             item->flags1.bits.allow_buryable = true;
-            item->quantity = 1;
+            item->quantity = base_item_count;
             break;
         case 1:
             job->job_items.elements.push_back(item = new df::job_item());
             item->flags1.bits.allow_buryable = true;
             item->flags2.bits.bone = true;
             item->flags2.bits.body_part = true;
-            item->quantity = 1;
+            item->quantity = base_item_count;
             break;
         case 2:
             job->job_items.elements.push_back(item = new df::job_item());

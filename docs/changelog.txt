@@ -64,6 +64,7 @@ Template for new versions:
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
 - `buildingplan`: fixed processing errors when using quick material filter slot '0'
 - DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
+- `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1.
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories

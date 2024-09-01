@@ -263,6 +263,8 @@ the ``Overlays`` tab.
    (``--@ module = true``) and it does not have side effects when loaded as a
    module (i.e. you check ``dfhack_flags.module`` and return before executing
    any statements if the value is ``true``)
+#. you script import `gui` module, even if it is not use it directly:
+    ``local gui = require('gui')``
 #. your code does not have syntax errors -- run
    ``:lua ~reqscript('myscriptname')`` (if a script) or
    ``:lua ~require('plugins.mypluginname')`` (if a plugin) and make sure there

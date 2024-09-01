@@ -73,7 +73,8 @@ Overlay
 The ``preserve-rooms.reserved`` overlay indicates whether a zone is disabled
 because it is being reserved for a unit that left the map and is expected to
 return. For unreserved rooms, it provides widgets to mark the zone as
-associated with a specific noble or administrative role.
+associated with a specific noble or administrative role. The list of roles is
+ordered by how valuable the rooms assigned to that role need to be.
 
 Notes
 -----

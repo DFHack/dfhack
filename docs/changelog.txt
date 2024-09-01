@@ -68,6 +68,7 @@ Template for new versions:
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories
 - `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start directly on the "Pregnancies" tab
+- `buildingplan`: only consider building materials that can be accessed by citizens/residents
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

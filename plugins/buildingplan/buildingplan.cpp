@@ -192,6 +192,7 @@ static DefaultItemFilters & get_item_filters(color_ostream &out, const BuildingT
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
+void update_walkability_groups();
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings, bool unsuspend_on_finalize);
 
@@ -678,6 +679,8 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
         filter.setMinQuality(df::item_quality::Ordinary);
         filter.setMaxQuality(df::item_quality::Artifact);
     }
+
+    update_walkability_groups(); // ensure that itemPassesScreen is accurate
 
     int count = 0;
     for (auto vector_id : vector_ids) {

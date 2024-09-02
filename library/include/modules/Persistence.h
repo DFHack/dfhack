@@ -83,10 +83,7 @@ namespace DFHack
         void set_bool(int i, bool value) {
             set_int(i, value ? 1 : 0);
         }
-        const std::string & get_str() {
-            static const std::string empty;
-            return isValid() ? val() : empty;
-        }
+        const std::string & get_str();
         void set_str(const std::string & value) {
             if (isValid())
                 val() = value;

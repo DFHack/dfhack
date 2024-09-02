@@ -134,6 +134,11 @@ int PersistentDataItem::ival(int i) const
     return data->int_values.at(i);
 }
 
+const std::string & PersistentDataItem::get_str() {
+    static const std::string empty;
+    return isValid() ? val() : empty;
+}
+
 bool PersistentDataItem::isValid() const
 {
     if (data == nullptr)

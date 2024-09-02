@@ -327,7 +327,7 @@ static void assign_nobles(color_ostream &out) {
             }
             // assign to a relevant noble that does not already have a registered zone of this type assigned
             for (auto unit : units) {
-                if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
+                if (!Units::isCitizen(unit, true))
                     continue;
                 bool found = false;
                 for (auto owned_zone : unit->owned_buildings) {
@@ -388,6 +388,10 @@ static void handle_missing_assignments(color_ostream &out,
 {
     for (auto & it = *pit; it != it_end && (next_zone_id == -1 || it->first <= next_zone_id); ++it) {
         int32_t zone_id = it->first;
+        if (noble_zones.contains(zone_id)) {
+            // let noble assignment logic handle the noble zones
+            continue;
+        }
         int32_t hfid = it->second.first;
         int32_t spouse_hfid = it->second.second;
         auto hf = df::historical_figure::find(hfid);

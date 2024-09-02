@@ -70,6 +70,7 @@ void PlannedBuilding::remove(color_ostream &out) {
 
 static const int32_t CYCLE_TICKS = 599; // twice per game day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+int32_t walkability_timestamp = -1; // world->frame_counter at last update of walkability groups
 
 static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
     int num_filters = 0;
@@ -281,6 +282,7 @@ DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
+    walkability_timestamp = -1;
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {

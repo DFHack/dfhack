@@ -50,14 +50,13 @@ struct BadFlags {
 static std::unordered_set<uint16_t> accessible_walkability_groups;
 
 void update_walkability_groups(){
-    static int32_t update_timestamp = -1;
 
     // ensure that we update at most once per tick
     auto frame_counter = df::global::world->frame_counter;
-    if (frame_counter == update_timestamp)
+    if (frame_counter == walkability_timestamp)
         return;
     else
-        update_timestamp = frame_counter;
+        walkability_timestamp = frame_counter;
 
     accessible_walkability_groups.clear();
     auto get_group = [](df::unit *unit){

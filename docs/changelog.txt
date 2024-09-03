@@ -64,11 +64,16 @@ Template for new versions:
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
 - `buildingplan`: fixed processing errors when using quick material filter slot '0'
 - DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
+- `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1.
+- `regrass`: no longer add all compatible grass types when using ``--force`` without ``--new``
+- `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories
 - `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start directly on the "Pregnancies" tab
 - `buildingplan`: only consider building materials that can be accessed by citizens/residents
+- Dreamfort: integrate with `preserve-rooms` to assign relevant rooms to nobles/adimistrators
+- Dreamfort: smooth tiles under statues and other large furniture that you can't easily smooth later
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
@@ -76,6 +81,7 @@ Template for new versions:
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
 - ``Items::createItem``: removed growth_print parameter; now determined automatically
+- ``DFHack::cuboid``: ``cuboid::clampMap`` now returns the cuboid itself (instead of boolean) to allow method chaining; call ``cuboid::isValid`` to determine success instead
 
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks

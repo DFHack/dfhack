@@ -297,7 +297,12 @@ OVERLAY_WIDGETS = {
 local function add_positions(positions, entity)
     if not entity then return end
     for _,position in ipairs(entity.positions.own) do
-        positions[position.id] = {id=position.id, code=position.code, replaced_by=position.replaced_by}
+        positions[position.id] = {
+            id=position.id,
+            code=position.code,
+            replaced_by=position.replaced_by,
+            required_value=position.required_office + position.required_bedroom + position.required_dining + position.required_tomb,
+        }
     end
 end
 
@@ -317,7 +322,7 @@ local function get_codes(positions)
         end
     end
 
-    -- add reverse links for promotion chains
+    -- add reverse links for promotion chains and record whether it has a room requirement
     for _,group in pairs(grouped) do
         for _,position in pairs(group) do
             if position.replaced_by ~= -1 then
@@ -327,19 +332,25 @@ local function get_codes(positions)
     end
 
     -- produce combined codes
-    local codes = {}
+    local diplay_codes = {}
     for id,group in pairs(grouped) do
         local group_codes = {}
         local position = group[id]
         while position do
             table.insert(group_codes, 1, position.code)
+            group_codes.required_value = math.max(group_codes.required_value or 0, position.required_value)
             position=group[position.prev]
         end
-        table.insert(codes, group_codes)
+        table.insert(diplay_codes, group_codes)
     end
-    table.sort(codes, function(a, b) return a[1] < b[1] end)
+    table.sort(diplay_codes, function(a, b)
+        if a.required_value == b.required_value then
+            return a[1] < b[1]
+        end
+        return a.required_value > b.required_value
+    end)
 
-    return codes
+    return diplay_codes
 end
 
 local function get_api_lookup_table(codes)

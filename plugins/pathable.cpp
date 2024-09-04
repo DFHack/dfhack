@@ -134,25 +134,29 @@ static void paintScreenPathable(df::coord target, bool show_hidden = false) {
     });
 }
 
-static bool get_depot_coords(unordered_set<df::coord> * depot_coords) {
+static bool get_depot_coords(color_ostream &out, unordered_set<df::coord> * depot_coords) {
     CHECK_NULL_POINTER(depot_coords);
 
     depot_coords->clear();
-    for (auto bld : world->buildings.other.TRADE_DEPOT)
+    for (auto bld : world->buildings.other.TRADE_DEPOT){
+        DEBUG(log,out).print("found depot at (%d, %d, %d)\n", bld->centerx, bld->centery, bld->z);
         depot_coords->emplace(bld->centerx, bld->centery, bld->z);
+    }
 
     return !depot_coords->empty();
 }
 
-static bool get_pathability_groups(unordered_set<uint16_t> * depot_pathability_groups,
+static bool get_pathability_groups(color_ostream &out, unordered_set<uint16_t> * depot_pathability_groups,
     const unordered_set<df::coord> & depot_coords)
 {
     CHECK_NULL_POINTER(depot_pathability_groups);
 
     for (auto pos : depot_coords) {
         auto wgroup = Maps::getWalkableGroup(pos);
-        if (wgroup)
+        if (wgroup) {
+            DEBUG(log,out).print("walkability group at (%d, %d, %d) is %d\n", pos.x, pos.y, pos.z, wgroup);
             depot_pathability_groups->emplace(wgroup);
+        }
     }
     return !depot_pathability_groups->empty();
 }
@@ -177,12 +181,12 @@ static bool get_entry_tiles(unordered_set<df::coord> * entry_tiles, const unorde
     return found;
 }
 
-static bool getDepotAccessibleByAnimals() {
+static bool getDepotAccessibleByAnimals(color_ostream &out) {
     unordered_set<df::coord> depot_coords;
-    if (!get_depot_coords(&depot_coords))
+    if (!get_depot_coords(out, &depot_coords))
         return false;
     unordered_set<uint16_t> depot_pathability_groups;
-    if (!get_pathability_groups(&depot_pathability_groups, depot_coords))
+    if (!get_pathability_groups(out, &depot_pathability_groups, depot_coords))
         return false;
     return get_entry_tiles(NULL, depot_pathability_groups);
 }
@@ -263,19 +267,26 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
 // - wagons can only move in orthogonal directions
 // - if three adjacent tiles are in the same pathability group, then they are traversible by a wagon
 // - a wagon needs a single ramp to move elevations as long as the adjacent tiles are walkable
-static bool wagon_flood(unordered_set<df::coord> * wagon_path, const df::coord & depot_pos,
+// TODO: cannot traverse doors, up stairs, or up/down stairs
+static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_path, const df::coord & depot_pos,
     const unordered_set<df::coord> & entry_tiles)
 {
-    bool found = false;
     unordered_set<df::coord> temp_wagon_path;
     FloodCtx ctx(Maps::getWalkableGroup(depot_pos), wagon_path ? *wagon_path : temp_wagon_path, entry_tiles);
 
+    if (!ctx.wgroup)
+        return false;
+
+    bool found = false;
     ctx.wagon_path.emplace(depot_pos);
     ctx.seen.emplace(depot_pos);
     ctx.search_edge.emplace(depot_pos);
     while (!ctx.search_edge.empty()) {
         df::coord pos = ctx.search_edge.top();
         ctx.search_edge.pop();
+
+        TRACE(log,out).print("checking tile: (%d, %d, %d); pathability group: %d\n", pos.x, pos.y, pos.z,
+            Maps::getWalkableGroup(pos));
 
         if (entry_tiles.contains(pos)) {
             found = true;
@@ -296,22 +307,22 @@ static bool wagon_flood(unordered_set<df::coord> * wagon_path, const df::coord &
 static unordered_set<df::coord> wagon_path;
 static unordered_set<df::coord> entry_tiles;
 
-static bool getDepotAccessibleByWagons(bool cache_scan_for_painting) {
+static bool getDepotAccessibleByWagons(color_ostream &out, bool cache_scan_for_painting) {
     if (cache_scan_for_painting) {
         entry_tiles.clear();
         wagon_path.clear();
     }
     unordered_set<df::coord> depot_coords;
-    if (!get_depot_coords(&depot_coords))
+    if (!get_depot_coords(out, &depot_coords))
         return false;
     unordered_set<uint16_t> depot_pathability_groups;
-    if (!get_pathability_groups(&depot_pathability_groups, depot_coords))
+    if (!get_pathability_groups(out, &depot_pathability_groups, depot_coords))
         return false;
     if (!get_entry_tiles(&entry_tiles, depot_pathability_groups))
         return false;
     bool found_edge = false;
     for (auto depot_pos : depot_coords) {
-        if (wagon_flood(cache_scan_for_painting ? &wagon_path : NULL, depot_pos, entry_tiles)) {
+        if (wagon_flood(out, cache_scan_for_painting ? &wagon_path : NULL, depot_pos, entry_tiles)) {
             found_edge = true;
             if (!cache_scan_for_painting)
                 break;

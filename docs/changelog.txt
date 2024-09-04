@@ -67,6 +67,7 @@ Template for new versions:
 - `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1.
 - `regrass`: no longer add all compatible grass types when using ``--force`` without ``--new``
 - `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
+- `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories

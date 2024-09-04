@@ -92,19 +92,20 @@ set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)
 # append headers to sources to make them show up in MSVC GUI
 list(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
-add_library(lua SHARED ${SRC_LIBLUA})
-target_link_libraries(lua ${LIBS})
+add_library(lua53 SHARED ${SRC_LIBLUA})
+add_library(lua ALIAS lua53)
+target_link_libraries(lua53 ${LIBS})
 
 if(MSVC)
     # need no space to prevent /FI from being stripped: https://github.com/DFHack/dfhack/issues/1455
-    target_compile_options(lua PRIVATE "/FIdfhack_llimits.h")
+    target_compile_options(lua53 PRIVATE "/FIdfhack_llimits.h")
 else()
-    target_compile_options(lua PRIVATE -include dfhack_llimits.h)
+    target_compile_options(lua53 PRIVATE -include dfhack_llimits.h)
     set_source_files_properties(src/lstring.c PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 endif()
 
-install(TARGETS lua
+install(TARGETS lua53
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
-ide_folder(lua "Depends")
+ide_folder(lua53 "Depends")

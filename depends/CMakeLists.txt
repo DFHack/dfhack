@@ -8,7 +8,7 @@ add_subdirectory(md5)
 add_subdirectory(protobuf)
 
 if(UNIX)
-    set_target_properties(lua PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
+    set_target_properties(lua53 PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion")
     set_target_properties(protoc PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
     set_target_properties(protoc-bin PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
     set_target_properties(protobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")

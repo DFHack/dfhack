@@ -3,6 +3,7 @@ name: Watch DF Steam Releases
 on:
   schedule:
   - cron: '8/10 * * * *'
+  workflow_dispatch:
 
 jobs:
   check-steam:

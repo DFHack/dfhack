@@ -108,6 +108,7 @@ ReservedWidget.ATTRS{
         'dwarfmode/Zone/Some/Tomb',
     },
     frame={w=44, h=15},
+    version=2,
 }
 
 local new_world_loaded = true
@@ -136,7 +137,8 @@ function ReservedWidget:init()
             visible=function()
                 local scr = dfhack.gui.getDFViewscreen(true)
                 return not dfhack.gui.matchFocusString('dwarfmode/UnitSelector', scr) and
-                    not dfhack.gui.matchFocusString('dwarfmode/LocationSelector', scr)
+                    not dfhack.gui.matchFocusString('dwarfmode/LocationSelector', scr) and
+                    not dfhack.gui.matchFocusString('dwarfmode/LocationDetails', scr)
             end,
             subviews={
                 widgets.Panel{

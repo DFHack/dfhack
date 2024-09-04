@@ -2181,7 +2181,7 @@ static int units_getUnitsInBox(lua_State *state) {
     int z2 = luaL_checkint(state, 6);
 
     bool ok = false;
-    if (lua_isnil(state, 7)) // Default filter
+    if (lua_gettop(state) < 7 || lua_isnil(state, 7)) // Default filter
         ok = Units::getUnitsInBox(units, x1, y1, z1, x2, y2, z2);
     else {
         luaL_checktype(state, 7, LUA_TFUNCTION);

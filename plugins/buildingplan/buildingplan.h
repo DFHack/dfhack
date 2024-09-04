@@ -17,6 +17,7 @@ typedef std::map<df::job_item_vector_id, std::map<std::string, Bucket>> Tasks;
 
 extern const std::string FILTER_CONFIG_KEY;
 extern const std::string BLD_CONFIG_KEY;
+extern int32_t walkability_timestamp;
 
 enum ConfigValues {
     CONFIG_BLOCKS = 1,

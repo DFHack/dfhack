@@ -13,6 +13,8 @@
 #include "df/unit.h"
 #include "df/world.h"
 
+#include <array>
+
 using std::string;
 using std::vector;
 using namespace DFHack;

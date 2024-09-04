@@ -204,18 +204,22 @@ struct FloodCtx {
 
 static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df::coord & prev_pos) {
     if (auto bld = Buildings::findAtTile(pos)) {
-        if (bld->getType() == df::building_type::Trap)
+        auto btype = bld->getType();
+        if (btype == df::building_type::Trap || btype == df::building_type::Door)
             return false;
     }
-
-    if (ctx.wgroup == Maps::getWalkableGroup(pos))
-        return true;
 
     auto tt = Maps::getTileType(pos);
     if (!tt)
         return false;
 
     auto shape = tileShape(*tt);
+    if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_UPDOWN)
+        return false;
+
+    if (ctx.wgroup == Maps::getWalkableGroup(pos))
+        return true;
+
     if (shape == df::tiletype_shape::RAMP_TOP ) {
         df::coord pos_below = pos + df::coord(0, 0, -1);
         if (Maps::getWalkableGroup(pos_below)) {

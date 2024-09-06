@@ -63,18 +63,18 @@ Template for new versions:
 - `exterminate`: don't kill friendly undead (unless ``--include-friendly`` is passed) when specifying ``undead`` as the target
 - `gui/settings-manager`: work details overlay no longer disappears when you click on a unit in the unit list
 - `buildingplan`: fixed processing errors when using quick material filter slot '0'
-- DFHack screens that allow keyboard cursor and camera movement while active now also allow diagonal and Z-change keyboard cursor keys
-- `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1.
+- DFHack screens that allow keyboard cursor and camera movement while focused now also allow diagonal and Z-change keyboard cursor keys
+- `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1
 - `regrass`: no longer add all compatible grass types when using ``--force`` without ``--new``
 - `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
 - `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
-- `gui/pathable`: fix incorrect calculation of wagon paths over stairs and through doors
-- Ensure DFHack state for the site is properly saved when retiring a fort
+- `gui/pathable`: fix representation of wagon paths over stairs and through doors
+- DFHack state for a site is now properly saved when retiring a fort
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories
 - `gui/family-affairs`: you can start this tool by the name ``gui/pregnancy`` to start directly on the "Pregnancies" tab
-- `buildingplan`: only consider building materials that can be accessed by citizens/residents
+- `buildingplan`: only consider building materials that can be accessed by at least one citizen/resident
 - Dreamfort: integrate with `preserve-rooms` to assign relevant rooms to nobles/adimistrators
 - Dreamfort: smooth tiles under statues and other large furniture that you can't easily smooth later
 
@@ -83,15 +83,15 @@ Template for new versions:
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
-- ``Items::createItem``: removed growth_print parameter; now determined automatically
-- ``DFHack::cuboid``: ``cuboid::clampMap`` now returns the cuboid itself (instead of boolean) to allow method chaining; call ``cuboid::isValid`` to determine success instead
+- ``Items::createItem``: removed ``growth_print`` parameter; now determined automatically
+- ``DFHack::cuboid``: ``cuboid::clampMap`` now returns the cuboid itself (instead of boolean) to allow method chaining; call ``cuboid::isValid`` to determine success
 
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks
 - ``dfhack.units.isDanger``: no longer unconditionally returns true for intelligent undead
 - Overlay widgets can now assume their ``active`` and ``visible`` functions will only execute in a context that matches their ``viewscreens`` associations
 - ``gui.simulateInput``: do not generate spurious keycode from ``_STRING`` key inputs
-- ``dfhack.items.createItem``: removed growth_print parameter to match C++ API
+- ``dfhack.items.createItem``: removed ``growth_print`` parameter to match C++ API
 
 ## Removed
 - ``quickfortress.csv``: remove old sample blueprints for "The Quick Fortress", which were unmaintained and non-functional in DF v50+. Online blueprints are available at https://docs.google.com/spreadsheets/d/1WuLYZBM6S2nt-XsPS30kpDnngpOQCuIdlw4zjrcITdY if anyone is interested in giving these blueprints some love

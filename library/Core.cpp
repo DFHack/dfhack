@@ -57,6 +57,7 @@ distribution.
 #include "df/interfacest.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_export_regionst.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
@@ -1948,15 +1949,16 @@ void Core::doUpdate(color_ostream &out)
         vs_changed = true;
     }
 
-    bool is_load_save =
+    bool is_save = strict_virtual_cast<df::viewscreen_savegamest>(screen) ||
+        strict_virtual_cast<df::viewscreen_export_regionst>(screen);
+    bool is_load_save = is_save ||
         strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
-        strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
-        strict_virtual_cast<df::viewscreen_savegamest>(screen);
+        strict_virtual_cast<df::viewscreen_loadgamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
     if ((df::global::game && df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
         (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
-        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+        (is_load_save && !d->was_load_save && is_save))
     {
         plug_mgr->doSaveData(out);
         Persistence::Internal::save(out);

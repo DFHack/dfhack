@@ -69,6 +69,7 @@ Template for new versions:
 - `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
 - `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
 - `gui/pathable`: fix incorrect calculation of wagon paths over stairs and through doors
+- Ensure DFHack state for the site is properly saved when retiring a fort
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories

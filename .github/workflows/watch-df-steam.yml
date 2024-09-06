@@ -10,6 +10,7 @@ jobs:
     if: github.repository == 'DFHack/dfhack'
     name: Check DF ${{ matrix.df_steam_branch }} branch
     runs-on: ubuntu-latest
+    concurrency: steampoll-${{ matrix.df_steam_branch }}
     strategy:
       fail-fast: false
       matrix:

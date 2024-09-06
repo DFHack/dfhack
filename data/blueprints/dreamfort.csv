@@ -89,7 +89,7 @@ orders import library/furnace,,,Automated production of basic furnace-related it
 gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future temples and guildhalls. Run when the guildhall level has been dug out."
 gui/quickfort,/services3,Yes,"Extend the dining room and hospital, and start the jail. Run when your population grows to about 20."
 gui/quickfort,/apartments2,Yes,Build and zone bedrooms. Run when the first apartment level has been dug out and you have outgrown your starter dormintory.
-gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out and you are approaching a population of 50.
+gui/quickfort,/suites2_default,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out and you are approaching a population of 50.
 gui/quickfort,/crypt2,Yes,Build a small group of tombs. Run when the crypt level has been dug out and you have outgrown your starter tomb on the farming level.
 gui/quickfort,/surface8,Yes,"Build extended trap corridors. If you have a strong military, you might not need this."
 gui/quickfort,/farming3,Yes,Add in all the doors we couldn't afford to build earlier.
@@ -2769,12 +2769,14 @@ Apartments Walkthrough:
 "#meta label(suites2_default) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build furniture, set traffic patterns, create zones, and assign them to nobles and administrators"
 traffic_suites/suites_traffic
 build_suites/suites_build
+smooth_suites/suites_smooth
 zone_suites/suites_zone
 ""
 "#meta label(suites2_no_zones) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 rooms are left unzoned so you can configure them for specific nobles.) build furniture and set traffic patterns"
 traffic_suites/suites_traffic
 build_suites/suites_build
+smooth_suites/suites_smooth
 #dig label(suites_traffic) start(18; 18; central stairs) hidden() don't path through other dwarves' rooms
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2847,6 +2849,42 @@ build_suites/suites_build
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
+#dig label(suites_smooth) start(18; 18; central stairs) hidden() smooth statue tiles
+
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`,~,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+
 #zone label(suites_zone) start(18; 18; central stairs) hidden()
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2874,7 +2912,7 @@ build_suites/suites_build
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
-,`,T{assigned_unit=outpost_liaison}(7x7),,,,,,,o{assigned_unit=outpost_liaison}(7x7),,,,,,,`,`,`,o{assigned_unit=monarch}(7x7),,,,,,,T{assigned_unit=monarch}(7x7),,,,,,,`
+,`,T{assigned_unit=monarch}(7x7),,,,,,,o{assigned_unit=outpost_liaison}(7x7),,,,,,,`,`,`,o{assigned_unit=monarch}(14x7),,,,,,,,,,,,,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`

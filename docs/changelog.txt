@@ -70,6 +70,7 @@ Template for new versions:
 - `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
 - `gui/pathable`: fix representation of wagon paths over stairs and through doors
 - DFHack state for a site is now properly saved when retiring a fort
+- `gui/teleport`: fix issue when teleporting units that are not prone, resulting in later issues with phantom "cannot build here: unit blocking tile" messages
 
 ## Misc Improvements
 - `sort`: can now search for stockpiles on the Places>Stockpile tab by name, number, or enabled item categories

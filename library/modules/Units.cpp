@@ -762,7 +762,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         // This is potentially wrong, but the game will recompute this as needed
         old_occ->bits.unit_grounded = false;
     else
-        old_occ->bits.unit = true;
+        old_occ->bits.unit = false;
 
     // If there's already somebody standing at the destination, then force the unit to lay down
     if (new_occ->bits.unit)

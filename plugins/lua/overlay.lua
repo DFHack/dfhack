@@ -383,7 +383,11 @@ local function do_trigger(args, quiet)
     do_by_names_or_numbers(args[1], function(name, db_entry)
         local widget = db_entry.widget
         if widget.overlay_trigger then
-            register_trigger_lock_screen(widget:overlay_trigger(), name)
+            register_trigger_lock_screen(
+                widget:overlay_trigger(table.unpack(args, 2)),
+                name
+            )
+
             if not quiet then
                 print(('triggered widget %s'):format(name))
             end

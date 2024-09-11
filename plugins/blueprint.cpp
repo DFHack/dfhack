@@ -41,9 +41,10 @@
 #include "df/world.h"
 
 using std::endl;
-using std::ofstream;
-using std::pair;
 using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::pair;
 using std::string;
 using std::vector;
 using namespace DFHack;
@@ -242,7 +243,7 @@ static const char * cache(const string &str) {
 }
 
 // Convenience wrapper for std::ostringstream.
-static const char * cache(std::ostringstream &str) {
+static const char * cache(ostringstream &str) {
     return cache(str.str());
 }
 
@@ -622,7 +623,7 @@ static const char * get_constructed_track_str(df::tiletype *tt,
     if (!dir.whole)
         return "~";
 
-    std::ostringstream str;
+    ostringstream str;
     str << base;
     if (dir.north) str << "N";
     if (dir.south) str << "S";
@@ -810,7 +811,7 @@ static const char * get_trap_str(df::building *b) {
     case trap_type::CageTrap:      return "Tc";
     case trap_type::TrackStop:
         {
-            std::ostringstream buf;
+            ostringstream buf;
             buf << "CS";
             if (trap->track_stop_info.track_flags.bits.use_dump) {
                 if (trap->track_stop_info.dump_x_shift == 0) {
@@ -1022,7 +1023,7 @@ static const char * add_expansion_syntax(const df::building *bld,
                                          const char *keys) {
     if (!keys)
         return "~";
-    std::ostringstream s;
+    ostringstream s;
     pair<uint32_t, uint32_t> size = get_building_size(bld);
     s << keys << "(" << size.first << "x" << size.second << ")";
     return cache(s);
@@ -1037,7 +1038,7 @@ static const char * add_label(const tile_context &ctx, const char *keys) {
     if (!keys)
         return "~";
     auto bld = ctx.b;
-    std::ostringstream s;
+    ostringstream s;
     // use building's id as the unique label
     s << keys << "/" << "bld_" << bld->id;
     return cache(s);
@@ -1124,7 +1125,7 @@ static const char * get_zone_keys(const df::building_civzonest *zone) {
             df::building_civzonest::T_gather_flags::mask_gather_fallen;
     static const df::hospital_supplies DEFAULT_HOSPITAL;
 
-    std::ostringstream keys;
+    ostringstream keys;
     const df::building_civzonest::T_zone_flags &flags = zone->zone_flags;
 
     // inverted logic for Active since it's on by default
@@ -1216,12 +1217,12 @@ static const char * get_tile_zone(const df::coord &pos,
 // surrounds the given string in quotes and replaces internal double quotes (")
 // with double double quotes ("") (as per the csv spec)
 static string csv_quote(const string &str) {
-    std::ostringstream outstr;
+    ostringstream outstr;
     outstr << "\"";
 
     size_t start = 0;
     auto end = str.find('"');
-    while (end != std::string::npos) {
+    while (end != string::npos) {
         outstr << str.substr(start, end - start);
         outstr << "\"\"";
         start = end + 1;
@@ -1254,7 +1255,7 @@ static const char * get_tile_query(const df::coord &pos,
     if (!bld_name.size() && !zone_name.size())
         return NULL;
 
-    std::ostringstream str;
+    ostringstream str;
     if (bld_name.size())
         str << "{givename name=" + csv_quote(bld_name) + "}";
     if (zone_name.size())
@@ -1286,7 +1287,7 @@ static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
         case 4: return "r+&";
     }
 
-    std::ostringstream str;
+    ostringstream str;
     str << "r{+ " << (max_dim - 3) << "}&";
     return cache(str);
 }
@@ -1348,11 +1349,11 @@ static void write_minimal(ofstream &ofile, const blueprint_options &opts,
     const string z_key = opts.depth > 0 ? "#<" : "#>";
 
     int16_t zprev = 0;
-    for (auto area : mapdata) {
+    for (auto &area : mapdata) {
         for ( ; zprev < area.first; ++zprev)
             ofile << z_key << endl;
         int16_t yprev = 0;
-        for (auto row : area.second) {
+        for (auto &row : area.second) {
             for ( ; yprev < row.first; ++yprev)
                 ofile << endl;
             size_t xprev = 0;
@@ -1398,7 +1399,7 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
 
 static string get_modeline(color_ostream &out, const blueprint_options &opts,
                            const string &mode, const string &phase) {
-    std::ostringstream modeline;
+    ostringstream modeline;
     modeline << "#" << mode << " label(" << phase << ")";
     if (opts.playback_start.x > 0) {
         modeline << " start(" << opts.playback_start.x
@@ -1415,7 +1416,7 @@ static string get_modeline(color_ostream &out, const blueprint_options &opts,
 }
 
 static bool write_blueprint(color_ostream &out,
-                            std::map<string, ofstream*> &output_files,
+                            map<string, ofstream*> &output_files,
                             const blueprint_options &opts,
                             const blueprint_processor &processor,
                             bool pretty, int32_t ordinal) {
@@ -1437,9 +1438,9 @@ static bool write_blueprint(color_ostream &out,
 }
 
 static void write_meta_blueprint(color_ostream &out,
-                                 std::map<string, ofstream*> &output_files,
+                                 map<string, ofstream*> &output_files,
                                  const blueprint_options &opts,
-                                 const std::vector<string> & meta_phases,
+                                 const vector<string> & meta_phases,
                                  int32_t ordinal) {
     string fname;
     get_filename(fname, out, opts, meta_phases.front(), ordinal);
@@ -1474,8 +1475,7 @@ static void add_processor(vector<blueprint_processor> &processors,
                                                  get_tile, init_ctx));
 }
 
-static bool do_transform(color_ostream &out,
-                         const df::coord &start, const df::coord &end,
+static bool do_transform(color_ostream &out, const cuboid &bounds,
                          blueprint_options opts, // copy so we can munge it
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
@@ -1517,35 +1517,30 @@ static bool do_transform(color_ostream &out,
         return false;
 
     const bool pretty = opts.format != "minimal";
-    const int32_t z_inc = start.z < end.z ? 1 : -1;
-    for (int32_t z = start.z; z != end.z; z += z_inc) {
-        for (int32_t y = start.y; y < end.y; y++) {
-            for (int32_t x = start.x; x < end.x; x++) {
-                df::coord pos(x, y, z);
-                tile_context ctx;
-                ctx.pretty = pretty;
-                for (blueprint_processor &processor : processors) {
-                    ctx.processor = &processor;
-                    if (processor.init_ctx)
-                        processor.init_ctx(pos, ctx);
-                    const char *tile_str = processor.get_tile(pos, ctx);
-                    if (tile_str) {
-                        // ensure our z-index is in the order we want to write
-                        auto area = processor.mapdata.emplace(abs(z - start.z),
-                                                              EMPTY_AREA);
-                        auto row = area.first->second.emplace(y - start.y,
-                                                              EMPTY_ROW);
-                        auto &tiles = row.first->second;
-                        if (row.second)
-                            tiles.resize(opts.width);
-                        tiles[x - start.x] = tile_str;
-                    }
-                }
+
+    bounds.forCoord([&](df::coord pos) {
+        tile_context ctx;
+        ctx.pretty = pretty;
+        for (blueprint_processor &processor : processors) {
+            ctx.processor = &processor;
+            if (processor.init_ctx)
+                processor.init_ctx(pos, ctx);
+            const char *tile_str = processor.get_tile(pos, ctx);
+            if (tile_str) {
+                auto area = processor.mapdata.emplace(pos.z - bounds.z_min,
+                    EMPTY_AREA);
+                auto row = area.first->second.emplace(pos.y - bounds.y_min,
+                    EMPTY_ROW);
+                auto &tiles = row.first->second;
+                if (row.second)
+                    tiles.resize(opts.width);
+                tiles[pos.x - bounds.x_min] = tile_str;
             }
         }
-    }
+        return true; // next pos
+    });
 
-    std::vector<string> meta_phases;
+    vector<string> meta_phases;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
@@ -1557,7 +1552,7 @@ static bool do_transform(color_ostream &out,
 
     bool in_meta = false;
     int32_t ordinal = 0;
-    std::map<string, ofstream*> output_files;
+    map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
@@ -1593,7 +1588,7 @@ static command_result do_blueprint(color_ostream &out,
     CoreSuspender suspend;
 
     if (parameters.size() >= 1 && parameters[0] == "gui") {
-        std::ostringstream command;
+        ostringstream command;
         command << "gui/blueprint";
         for (size_t i = 1; i < parameters.size(); ++i) {
             command << " " << parameters[i];
@@ -1619,7 +1614,7 @@ static command_result do_blueprint(color_ostream &out,
 
     // start coordinates can come from either the commandline or the map cursor
     df::coord start(options.start);
-    if (start.x == -30000) {
+    if (!start.isValid()) {
         if (!Gui::getCursorCoords(start)) {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");
@@ -1632,25 +1627,15 @@ static command_result do_blueprint(color_ostream &out,
         return CR_FAILURE;
     }
 
-    // end coords are one beyond the last processed coordinate. note that
-    // options.depth can be negative.
-    df::coord end(start.x + options.width, start.y + options.height,
-                  start.z + options.depth);
+    // options.depth can be negative, cuboid handles this
+    cuboid bounds(start.x, start.y, start.z,
+                  start.x + options.width-1,
+                  start.y + options.height-1,
+                  start.z + options.depth-1);
+    // limit the selection to the map area
+    bounds.clampMap();
 
-    // crop end coordinate to map bounds. we've already verified that start is
-    // a valid coordinate, and width, height, and depth are non-zero, so our
-    // final area is always going to be at least 1x1x1.
-    df::world::T_map &map = df::global::world->map;
-    if (end.x > map.x_count)
-        end.x = map.x_count;
-    if (end.y > map.y_count)
-        end.y = map.y_count;
-    if (end.z > map.z_count)
-        end.z = map.z_count;
-    if (end.z < -1)
-        end.z = -1;
-
-    bool ok = do_transform(out, start, end, options, files);
+    bool ok = do_transform(out, bounds, options, files);
 
     // clear caches
     cache(NULL);
@@ -1686,9 +1671,13 @@ command_result blueprint(color_ostream &out, vector<string> &parameters) {
     vector<string> files;
     command_result cr = do_blueprint(out, parameters, files);
     if (cr == CR_OK) {
-        out.print("Generated blueprint file(s):\n");
-        for (string &fname : files)
-            out.print("  %s\n", fname.c_str());
+        if (files.empty()) // Just natural walls, etc.
+            out.print("No resulting blueprint.\n");
+        else {
+            out.print("Generated blueprint file(s):\n");
+            for (string &fname : files)
+                out.print("  %s\n", fname.c_str());
+        }
     }
     return cr;
 }

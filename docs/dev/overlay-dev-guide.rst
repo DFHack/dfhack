@@ -207,7 +207,7 @@ If you need to improve performance, here are some potential options:
    and change the start offset every time you scan.
 
 2. Reduce the frequency of state updates by moving calcuations to
-   ``overlay_onupdate`` and setting the valud of the
+   ``overlay_onupdate`` and setting the value of the
    ``overlay_onupdate_max_freq_seconds`` attribute appropriately
 
 3. Move hotspots into C++ code, either in a new core library function or in a

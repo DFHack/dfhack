@@ -1517,6 +1517,7 @@ static bool do_transform(color_ostream &out, const cuboid &bounds,
         return false;
 
     const bool pretty = opts.format != "minimal";
+    df::coord min_pos(bounds.x_min, bounds.y_min, bounds.z_min);
 
     bounds.forCoord([&](df::coord pos) {
         tile_context ctx;
@@ -1527,14 +1528,13 @@ static bool do_transform(color_ostream &out, const cuboid &bounds,
                 processor.init_ctx(pos, ctx);
             const char *tile_str = processor.get_tile(pos, ctx);
             if (tile_str) {
-                auto area = processor.mapdata.emplace(pos.z - bounds.z_min,
-                    EMPTY_AREA);
-                auto row = area.first->second.emplace(pos.y - bounds.y_min,
-                    EMPTY_ROW);
+                auto rel_pos = pos - min_pos;
+                auto area = processor.mapdata.emplace(rel_pos.z, EMPTY_AREA);
+                auto row = area.first->second.emplace(rel_pos.y, EMPTY_ROW);
                 auto &tiles = row.first->second;
                 if (row.second)
                     tiles.resize(opts.width);
-                tiles[pos.x - bounds.x_min] = tile_str;
+                tiles[rel_pos.x] = tile_str;
             }
         }
         return true; // next pos

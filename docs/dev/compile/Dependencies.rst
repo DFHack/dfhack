@@ -69,7 +69,7 @@ Here are some package install commands for various distributions:
 
 * On Arch Linux::
 
-    pacman -Sy gcc cmake ccmake ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
+    pacman -Sy gcc cmake ccache ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
 
   * The ``dwarffortress`` package provides the necessary SDL packages.
   * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)

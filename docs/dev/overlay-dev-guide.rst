@@ -71,9 +71,9 @@ beyond your everyday `widgets.Widget <widget>`:
     widgets owned by the overlay framework must not be attached to that new
     screen, but the returned screen can instantiate and configure any new views
     that it wants to. See the `hotkeys` DFHack logo widget for an example.
+
     The ``overlay_trigger()`` function enables the activation of overlay widgets
     via the command line interface (CLI) or keybindings.
-
     For example, executing ``overlay trigger notes.map_notes add Kitchen``::
 
         function MyOverlayWidget:overlay_trigger(arg1, arg2)

@@ -72,6 +72,21 @@ beyond your everyday `widgets.Widget <widget>`:
     screen, but the returned screen can instantiate and configure any new views
     that it wants to. See the `hotkeys` DFHack logo widget for an example.
 
+    The ``overlay_trigger()`` function enables the activation of overlay widgets
+    via the command line interface (CLI) or keybindings.
+    For example, executing ``overlay trigger notes.map_notes add Kitchen``::
+
+        function MyOverlayWidget:overlay_trigger(arg1, arg2)
+            if arg1 == 'add' then
+                -- Add a new note to the map
+                self:addSomething(arg2)
+            elseif arg1 == 'delete' then
+                self:deleteSomething(arg2)
+            end
+        end
+
+    This allows for dynamic updates to UI overlays directly from the CLI.
+
 If the widget can take up a variable amount of space on the screen, and you want
 the widget to adjust its position according to the size of its contents, you can
 modify ``self.frame.w`` and ``self.frame.h`` at any time -- in ``init()`` or in
@@ -207,7 +222,7 @@ If you need to improve performance, here are some potential options:
    and change the start offset every time you scan.
 
 2. Reduce the frequency of state updates by moving calcuations to
-   ``overlay_onupdate`` and setting the valud of the
+   ``overlay_onupdate`` and setting the value of the
    ``overlay_onupdate_max_freq_seconds`` attribute appropriately
 
 3. Move hotspots into C++ code, either in a new core library function or in a

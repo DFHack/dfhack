@@ -358,24 +358,50 @@ static void assign_nobles(color_ostream &out) {
     }
 }
 
+static bool scrub_id_from_entries(int32_t id, int32_t key, unordered_map<int32_t, vector<int32_t>> & entries) {
+    auto it = entries.find(key);
+    if (it == entries.end())
+        return false;
+    auto & entry_ids = it->second;
+    vector_erase_at(entry_ids, linear_index(entry_ids, id));
+    if (entry_ids.empty()) {
+        entries.erase(it);
+        return true;
+    }
+    return false;
+}
+
+// clear the reservation for a zone
 static void clear_reservation(color_ostream &out, int32_t zone_id, df::building_civzonest * zone = NULL) {
     auto it = reserved_zones.find(zone_id);
     if (it == reserved_zones.end())
         return;
-    for (auto hfid : it->second) {
-        auto pending_it = pending_reassignment.find(hfid);
-        if (pending_it != pending_reassignment.end()) {
-            auto & zone_ids = pending_it->second;
-            vector_erase_at(zone_ids, linear_index(zone_ids, zone_id));
-            if (zone_ids.empty())
-                pending_reassignment.erase(pending_it);
-        }
-    }
+    for (int32_t hfid : it->second)
+        scrub_id_from_entries(zone_id, hfid, pending_reassignment);
     reserved_zones.erase(zone_id);
     if (!zone)
         zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
     if (zone)
         zone->spec_sub_flag.bits.active = true;
+}
+
+// stop reserving zones for dead units
+static void scrub_reservations(color_ostream &out) {
+    vector<int32_t> hfids_to_scrub;
+    for (auto &[hfid, zone_ids] : pending_reassignment) {
+        if (auto hf = df::historical_figure::find(hfid); hf && hf->died_year == -1)
+            continue;
+        DEBUG(cycle,out).print("removed reservation for dead or culled hfid %d\n", hfid);
+        hfids_to_scrub.push_back(hfid);
+        for (int32_t zone_id : zone_ids) {
+            if (scrub_id_from_entries(hfid, zone_id, reserved_zones)) {
+                if (auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id)))
+                    zone->spec_sub_flag.bits.active = true;
+            }
+        }
+    }
+    for (int32_t hfid : hfids_to_scrub)
+        pending_reassignment.erase(hfid);
 }
 
 // handles when units disappear from their assignments compared to the last scan
@@ -411,9 +437,9 @@ static void handle_missing_assignments(color_ostream &out,
             continue;
         // unit is off-map or is dead; if we can assign room to spouse then we don't need to reserve the room
         auto spouse_hf = df::historical_figure::find(spouse_hfid);
+        auto spouse = spouse_hf ? df::unit::find(spouse_hf->unit_id) : nullptr;
         if (spouse_hf && share_with_spouse) {
-            if (auto spouse = df::unit::find(spouse_hf->unit_id);
-                spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
+            if (spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
             {
                 DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
                     zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),
@@ -430,7 +456,7 @@ static void handle_missing_assignments(color_ostream &out,
             DF2CONSOLE(Units::getReadableName(unit)).c_str());
         pending_reassignment[hfid].push_back(zone_id);
         reserved_zones[zone_id].push_back(hfid);
-        if (share_with_spouse && spouse_hfid > -1) {
+        if (share_with_spouse && spouse) {
             DEBUG(cycle,out).print("registering spouse unit for reassignment to zone %d (%s): hfid=%d\n",
                 zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), spouse_hfid);
             pending_reassignment[spouse_hfid].push_back(zone_id);
@@ -489,6 +515,8 @@ static void do_cycle(color_ostream &out) {
         DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
             last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
             last_known_assignments_dining.size(), last_known_assignments_tomb.size());
+
+        scrub_reservations(out);
     }
 
     if (config.get_bool(CONFIG_TRACK_ROLES)) {

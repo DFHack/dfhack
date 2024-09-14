@@ -448,7 +448,7 @@ LaborRestrictionsOverlay.ATTRS{
     frame={w=57, h=15},
 }
 
-local function can_set_labors()
+function can_set_labors()
     for _,fs in ipairs(dfhack.gui.getFocusStrings(dfhack.gui.getDFViewscreen(true))) do
         if fs:endswith('WORKER_ASSIGNMENT') then
             return false

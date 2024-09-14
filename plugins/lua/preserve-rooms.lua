@@ -15,7 +15,7 @@ DEBUG = DEBUG or false
 --
 
 -- updated on world load
-local code_lookup = {}
+code_lookup = code_lookup or {}
 
 function assignToRole(code, bld)
     local group_codes = code_lookup[code:lower()]
@@ -111,7 +111,7 @@ ReservedWidget.ATTRS{
     version=2,
 }
 
-local new_world_loaded = true
+new_world_loaded = true
 
 local CONFLICTING_TOOLTIPS = utils.invert{
     df.main_hover_instruction.ZoneRepaint,
@@ -222,15 +222,19 @@ end
 local mi = df.global.game.main_interface
 
 function ReservedWidget:onInput(keys)
-    if not CONFLICTING_TOOLTIPS[mi.current_hover] and ReservedWidget.super.onInput(self, keys) then
-        return true
-    end
     if keys._MOUSE_L and
         (preserve_rooms_isReserved() or preserve_rooms_getRoleAssignment() ~= '')
     then
         if self.subviews.pause_mask:getMousePos() then return true end
         if self.subviews.add_mask:getMousePos() then return true end
     end
+    if CONFLICTING_TOOLTIPS[mi.current_hover] then
+        return false
+    end
+    if mi.entering_building_name and keys._STRING then
+        return false
+    end
+    return ReservedWidget.super.onInput(self, keys)
 end
 
 function ReservedWidget:render(dc)
@@ -276,7 +280,7 @@ local function add_options(options, choices, codes)
 end
 
 -- updated on world load
-local codes = {}
+codes = codes or {}
 
 function ReservedWidget:refresh_role_list()
     local options, choices = {{label='None', value={''}, pen=COLOR_YELLOW}}, {'None'}

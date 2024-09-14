@@ -78,9 +78,6 @@ Template for new versions:
 - `buildingplan`: only consider building materials that can be accessed by at least one citizen/resident
 - Dreamfort: integrate with `preserve-rooms` to assign relevant rooms to nobles/adimistrators
 - Dreamfort: smooth tiles under statues and other large furniture that you can't easily smooth later
-- DFHack text edit fields now delete the character at the cursor when you hit the Delete key
-- DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
-- DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``

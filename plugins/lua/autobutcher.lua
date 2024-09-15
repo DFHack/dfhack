@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.autobutcher')
 
 local argparse = require('argparse')
+local nestboxes = require('plugins.autobutcher.nestboxes')
 
 local function is_int(val)
     return val and val == math.floor(val)
@@ -45,6 +46,13 @@ local function process_races(opts, races, start_idx)
     end
 end
 
+local function reload_modules()
+    reload('plugins.autobutcher.common')
+    reload('plugins.autobutcher.nestboxesEvent')
+    reload('plugins.autobutcher.nestboxes')
+    reload('plugins.autobutcher')
+end
+
 function parse_commandline(opts, args)
     local positionals = process_args(opts, args)
 
@@ -65,6 +73,10 @@ function parse_commandline(opts, args)
         opts.fa = check_nonnegative_int(positionals[4])
         opts.ma = check_nonnegative_int(positionals[5])
         process_races(opts, positionals, 6)
+    elseif command == 'reload' then
+        reload_modules()
+    elseif string.upper(command) == 'NESTBOXES' or string.upper(command) =='NB' then
+        nestboxes.handleCommand(positionals, opts)
     else
         qerror(('unrecognized command: "%s"'):format(command))
     end

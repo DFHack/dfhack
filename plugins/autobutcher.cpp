@@ -971,6 +971,36 @@ static int autobutcher_getWatchList(lua_State *L) {
     return 1;
 }
 
+static int getMax(int first, int second) {
+    return first > second ? first : second;
+}
+// push info used by nestboxes
+static int autobutcher_getInfoForNestboxes(lua_State* L) {
+    PersistentDataItem rconfig;
+    color_ostream* out = Lua::GetOutput(L);
+
+    if (lua_isnumber(L, 1)) {
+        int raceId = lua_tointeger(L, 1);
+        lua_newtable(L);
+        int ctable = lua_gettop(L);
+        Lua::SetField(L, config.get_bool(CONFIG_IS_ENABLED), ctable, "autobutcher_enabled");
+
+        if (!out)
+            out = &Core::getInstance().getConsole();
+
+        WatchedRace* w;
+        if (watched_races.count(raceId)) {
+            w = watched_races[raceId];
+            WatchedRace* tally = checkRaceStocksTotal(*out, raceId);
+            Lua::SetField(L, w->isWatched, ctable, "watched");
+            int mac = getMax(w->fk - tally->fk_units.size(), 0) + getMax(w->mk - tally->mk_units.size(), 0) + getMax(w->fa - tally->fa_units.size(), 0) + getMax(w->ma - tally->ma_units.size(), 0);
+            Lua::SetField(L, mac, ctable, "mac");    // missing animals count for race, diff between target for child/adult female/male and current amounts, ignore amounts over target
+            delete tally;
+        }
+    }
+    return 1;
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(autowatch_isEnabled),
     DFHACK_LUA_FUNCTION(autowatch_setEnabled),
@@ -986,5 +1016,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(autobutcher_getSettings),
     DFHACK_LUA_COMMAND(autobutcher_getWatchList),
+    DFHACK_LUA_COMMAND(autobutcher_getInfoForNestboxes),
     DFHACK_LUA_END
 };

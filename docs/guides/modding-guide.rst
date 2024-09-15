@@ -241,12 +241,15 @@ Reading and writing files and other persistent state
 There are several locations and APIs that a mod might need to read or store
 data:
 
-Global state that is not world-specific should be stored in a file in the
-:file:`dfhack-config/` directory. JSON is a convenient format for this, and
-DFHack provides facilities for reading and writing JSON data. For example::
+Global state that is not world-specific should be stored in the directory
+returned by the ``scriptmanager.getModStatePath()`` function. JSON is a
+convenient format for this kind of stored state, and DFHack provides facilities
+for reading and writing JSON data. For example::
 
     local json = require('json')
-    config = config or json.open('dfhack-config/mymodname.json')
+    local scriptmanager = require('script-manager')
+    local path = scriptmanager.getModStatePath('mymodname')
+    config = config or json.open(path .. 'settings.json')
 
     -- modify state in the config.data table and persist it when it changes with
     -- config:write()
@@ -326,7 +329,7 @@ mod data and the ``json`` (or any other file I/O) API as needed. For example::
     local GLOBAL_KEY = 'mymodname'
 
     local function read_bulk_data_db()
-        local mod_path = scriptmanager.getModStatePath(GLOBAL_KEY)
+        local mod_source_path = scriptmanager.getModSourcePath(GLOBAL_KEY)
         -- read data from files in the mod directory
         return ...
     end

@@ -2100,9 +2100,10 @@ Items module
   ``df.global.game.main_interface.trade.mer``), then the value is modified by civ
   properties and any trade agreements that might be in effect.
 
-* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
+* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, no_floor)``
 
-  Creates an item, similar to the `createitem` plugin.
+  Creates an item, similar to the `createitem` plugin. Returns a list of created
+  ``df.item`` objects.
 
 * ``dfhack.items.checkMandates(item)``
 

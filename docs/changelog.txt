@@ -81,6 +81,8 @@ Template for new versions:
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
+- `modding-guide`: added examples for reading and writing various types of persistent storage
+- `modding-guide`: updated all code snippets for greater clarity
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks

@@ -67,7 +67,7 @@ Template for new versions:
 - `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1
 - `regrass`: no longer add all compatible grass types when using ``--force`` without ``--new``
 - `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
-- `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
+- `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water or magma
 - `gui/pathable`: fix representation of wagon paths over stairs and through doors
 - DFHack state for a site is now properly saved when retiring a fort
 - `gui/teleport`: fix issue when teleporting units that are not prone, resulting in later issues with phantom "cannot build here: unit blocking tile" messages

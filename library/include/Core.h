@@ -24,8 +24,6 @@ distribution.
 
 #pragma once
 
-#include "Pragma.h"
-
 #include "Console.h"
 #include "Export.h"
 #include "Hooks.h"

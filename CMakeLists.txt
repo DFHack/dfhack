@@ -94,16 +94,17 @@ if(MSVC)
     add_compile_options("/wd4267")
 
     # suppress C4251 - VC++ will warn when exporting an entire class which contains members
-    # referencing unexported compound types is unsafe. because we don't guarantee a stable API
-    # for our exports, we don't really care about this, so we choose to be lazy and continue to
-    # export entire classes instead of exporting on a method-by-method basis
+    # referencing unexported compound types as this is potentially unsafe. because we don't
+    # guarantee a stable ABI for exports, we don't really care about this, and so we choose to
+    # be lazy and continue to export entire classes instead of exporting on a method-by-method basis
     add_compile_options("/wd4251")
 
     # suppress C4068 - VC++ will warn for unknown pragmas by default. this is equivalent to gcc
-    # -Wno-unknown-pragmas. we could work around this with sufficiently complex macros
+    # -Wno-unknown-pragmas (which is enabled for gcc below).
+    # we could work around this with sufficiently complex macros
     add_compile_options("/wd4068")
 
-    # suppress C4244 - VC++ warns by default (with /Wall) about narrowing conversions that may lose data
+    # suppress C4244 - VC++ warns by default (with /W3) about narrowing conversions that may lose data
     # (such as double -> int or int32_t -> int16_t). dfhack has many of these, mostly related to Lua
     # this is equivalent to gcc -Wno_conversions which is the default as gcc -Wall doesn't enable -Wconversions
     add_compile_options("/wd4244")

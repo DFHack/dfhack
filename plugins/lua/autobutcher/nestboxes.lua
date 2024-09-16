@@ -318,7 +318,7 @@ function checkItemCreated(item_id)
             and not (race_config.full_stop and autobutcher_info.mac == 0)) -- do not check eggs if reached animal targets for race and full stop enabled
           or state.ignore_autobutcher) -- or check eggs ignoring autobutcher settings
         and race_config.watched)-- check eggs only when nestboxes is watching race
-      then 
+      then
         nestboxesEvent.handleEggs(item, race_config, state.split_stacks, autobutcher_info.mac)
       end
     end

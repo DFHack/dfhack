@@ -4177,7 +4177,7 @@ static int internal_get_persistent_data_int(lua_State* L, get_data_fn get_data) 
         lua_pushnil(L);
     }
     else {
-        const int idx = lua_tointeger(L, 2);        
+        const int idx = lua_tointeger(L, 2);
         lua_pushinteger(L, data.get_int(idx));
     }
 

@@ -27,38 +27,14 @@ distribution.
 #ifndef DFHACK_TRANQUILITY
 #define DFHACK_TRANQUILITY
 
-// This is here to keep MSVC from spamming the build output with nonsense
-// Call it public domain.
-
 #ifdef _MSC_VER
-    // don't spew nonsense
+    // don't generate warnings because we're lazy about how we do exports
     #pragma warning( disable: 4251 )
-    // don't display bogus 'deprecation' and 'unsafe' warnings.
-    // See the idiocy: http://msdn.microsoft.com/en-us/magazine/cc163794.aspx
-    #define _CRT_SECURE_NO_DEPRECATE
-    #define _SCL_SECURE_NO_DEPRECATE
-    #pragma warning( disable: 4996 )
-    // Let me demonstrate:
-    /**
-     * [peterix@peterix dfhack]$ man wcscpy_s
-     * No manual entry for wcscpy_s
-     *
-     * Proprietary extensions.
-     */
-    // disable stupid
-    #pragma warning( disable: 4800 )
-    // disable more stupid
+    // do not issue warning for unknown pragmas (equivalent to gcc -Wno-unknown-pragmas)
     #pragma warning( disable: 4068 )
-    // no signed value outside enum range bs
-    #pragma warning( disable: 4341)
-    // just shut up already.
+    // disable warnings regarding narrowing conversions (equivalent to gcc -Wno-conversion)
     #pragma warning( disable: 4244)
-    #pragma warning( disable: 4018)
-    // nonstandard extension used: enum 'df::whatever::etc' used in qualified name
-    #pragma warning( disable: 4482)
-    // nonstandard extension used: 'extern' before template explicit instantiation
-    #pragma warning( disable: 4231)
-    // ignore warnings about putting a vector index into an int
+    // disable warnings regarding narrowing conversions of size_t
     #pragma warning( disable: 4267)
 #endif
 

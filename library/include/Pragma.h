@@ -28,14 +28,6 @@ distribution.
 #define DFHACK_TRANQUILITY
 
 #ifdef _MSC_VER
-    // don't generate warnings because we're lazy about how we do exports
-    #pragma warning( disable: 4251 )
-    // do not issue warning for unknown pragmas (equivalent to gcc -Wno-unknown-pragmas)
-    #pragma warning( disable: 4068 )
-    // disable warnings regarding narrowing conversions (equivalent to gcc -Wno-conversion)
-    #pragma warning( disable: 4244)
-    // disable warnings regarding narrowing conversions of size_t
-    #pragma warning( disable: 4267)
 #endif
 
 #endif

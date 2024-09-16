@@ -371,3 +371,9 @@ workorder-recheck
 =================
 Tool to set 'Checking' status of the selected work order, allowing conditions
 to be reevaluated. Merged into `orders`.
+
+.. _nestboxes:
+
+nestboxes
+=================
+Migrated to lua and merged into autobutcher plugin

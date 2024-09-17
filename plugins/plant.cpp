@@ -195,8 +195,8 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     bool is_watery = tile_watery(pos);
     if (!options.force)
     {   // Check if plant compatible with wet/dry
-        if ((is_watery && !p_raw->flags.is_set(plant_raw_flags::WET)) ||
-            (!is_watery && !p_raw->flags.is_set(plant_raw_flags::DRY)))
+        if (is_watery && !p_raw->flags.is_set(plant_raw_flags::WET) ||
+            !is_watery && !p_raw->flags.is_set(plant_raw_flags::DRY))
         {
             out.printerr("Can't create plant: Plant type can't grow this %s water feature!\n"
                 "Override with --force\n", is_watery ? "close to" : "far from");

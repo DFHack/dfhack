@@ -28,7 +28,7 @@ local default_table = {
   watched = true, -- monitor eggs for race
   target = 4, --basic target for protected(forbidden) eggs
   ama = true, --Add Missing Animals to basic target for prottected eggs, difference between current amount of animals and target set for autobutcher, speeds up population growth in initial phase whiile limitting population explosion near end if  egg target has low value
-  full_stop = false -- stop protecting eggs once autobutcher target for live animals is reached
+  stop = true -- stop protecting eggs once autobutcher target for live animals is reached
 }
 ---------------------------------------------------------------------------------------------------
 local function getDefaultState()
@@ -140,14 +140,14 @@ local function doDisable()
   printDetails(('end doDisable'))
 end --doDisable
 ---------------------------------------------------------------------------------------------------
-local function getConfigForRace(race)
+local function getConfigForRace(race , autobutcher_watched)
   printDetails(('start getConfigForRace'))
   printDetails(('getting config for race %s '):format(race))
-  if state.config_per_race[race] == nil then
+  if state.config_per_race[race] == nil and autobutcher_watched and state.default.watched then
     state.config_per_race[race] = state.default
     persistState()
   end
-  printDetails(('end 2 getConfigForRace'))
+  printDetails(('end getConfigForRace'))
   return state.config_per_race[race]
 end --getConfigForRace
 ---------------------------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ local function validateCreatureOrRace(value)
   handleError(('could not find %s'):format(value))
 end --validateCreatureOrRace
 ---------------------------------------------------------------------------------------------------
-local function setTarget(target_race, target_count, add_missing_animals, full_stop, watch_race)
+local function setTarget(target_race, target_count, add_missing_animals, stop, watch_race)
   printDetails(('start setTarget'))
 
   if type(target_race) == 'string' then
@@ -184,7 +184,7 @@ local function setTarget(target_race, target_count, add_missing_animals, full_st
     watched = getBoolean(watch_race),
     target = tonumber(target_count),
     ama = getBoolean(add_missing_animals),
-    full_stop = getBoolean(full_stop)
+    stop = getBoolean(stop)
   }
 
   local race = validateCreatureOrRace(target_race)
@@ -193,6 +193,7 @@ local function setTarget(target_race, target_count, add_missing_animals, full_st
   elseif race == 'ALL' then
     for _, v in pairs(state.config_per_race) do
       utils.assign(v, new_config)
+      utils.assign(state.default, new_config)
     end
   elseif race >= 0 then
     utils.assign(state.config_per_race[race], new_config)
@@ -211,26 +212,30 @@ local function clearConfig()
   updateEventListener()
 end
 ---------------------------------------------------------------------------------------------------
+local function setIgnore(value)
+  state.ignore_autobutcher = getBoolean(value)
+end
+---------------------------------------------------------------------------------------------------
 local function setVerbose(value)
   state.verbose = getBoolean(value)
   nestboxesCommon.verbose = state.verbose
 end
 ---------------------------------------------------------------------------------------------------
 local function format_target_count_row(category, row)
-  return (('%s: watched %s; target %s; add missing animals %s; full stop once animal target reached %s'):format(
+  return (('%s: watched: %s; target: %s; ama: %s; stop: %s'):format(
       category,
       row.watched and 'enabled' or 'disabled',
       tostring(row.target),
       row.ama and 'enabled' or 'disabled',
-      row.full_stop and 'enabled' or 'disabled'
+      row.stop and 'enabled' or 'disabled'
     ))
 end
 ---------------------------------------------------------------------------------------------------
 local function printStatus()
-  printLocal(('Script is currently %s.'):format(state.enabled and 'enabled' or 'disabled'))
-  printLocal(('Egg stack splitting is %s'):format(state.split_stacks and 'enabled' or 'disabled'))
+  printLocal(('Status %s.'):format(state.enabled and 'enabled' or 'disabled'))
+  printLocal(('Stack splitting: %s'):format(state.split_stacks and 'enabled' or 'disabled'))
   printLocal(
-    ('Script is %s autobutcher\'s enabled status'):format(state.ignore_autobutcher and 'ignoring' or 'respecting')
+    ('%s autobutcher\'s enabled status'):format(state.ignore_autobutcher and 'Ignoring' or 'Tespecting')
   )
   printDetails(('verbose mode is %s'):format(state.verbose and 'enabled' or 'disabled'))
   printDetails(
@@ -242,7 +247,7 @@ local function printStatus()
       printLocal(format_target_count_row(df.global.world.raws.creatures.all[k].creature_id, v))
     end
   end
-  printDetails(dumpToString(state))
+  --printDetails(dumpToString(state))
 end
 ---------------------------------------------------------------------------------------------------
 local function handleOnStateChange(sc)
@@ -260,7 +265,7 @@ end --handleOnStateChange
 ---------------------------------------------------------------------------------------------------
 local function getInfoFromAutobutcher(race)
   local v_return = {
-    autobutcher_enabled = false,
+    enabled = false,
     watched = false,
     mac = 0
   }
@@ -279,29 +284,6 @@ local function getInfoFromAutobutcher(race)
   return v_return
 end --getInfoFromAutobutcher
 ---------------------------------------------------------------------------------------------------
-local function validateEggs(eggs)
-  if not eggs.egg_flags.fertile then
-    printDetails('Newly laid eggs are not fertile, do nothing')
-    return false
-  end
-
-  local should_be_nestbox = dfhack.items.getHolderBuilding(eggs)
-  if should_be_nestbox ~= nil then
-    for _, nestbox in ipairs(df.global.world.buildings.other.NEST_BOX) do
-      if nestbox == should_be_nestbox then
-        printDetails('Found nestbox, continue with egg handling')
-        return true
-      end
-    end
-    printDetails('Newly laid eggs are in building different than nestbox, we were to late')
-    return false
-  else
-    printDetails('Newly laid eggs are not in building, we were to late')
-    return false
-  end
-  return true
-end --validateEggs
----------------------------------------------------------------------------------------------------
 --<Global functions>
 ---------------------------------------------------------------------------------------------------
 -- checkItemCreated function, called from eventfful on ITEM_CREATED event
@@ -310,16 +292,21 @@ function checkItemCreated(item_id)
   if item == nil or df.item_type.EGG ~= item:getType() then
     return
   else
-    if validateEggs(item) then
+    if nestboxesEvent.validateEggs(item) then
       local autobutcher_info = getInfoFromAutobutcher(item.race)
-      local race_config = getConfigForRace(item.race)
+
+      local race_config = getConfigForRace(item.race, (autobutcher_info.watched and autobutcher_info.enabled) or state.ignore_autobutcher)
+      if race_config == nil then -- if nil new race without config and no new races are being watched
+        return
+      end
       if
-      (((autobutcher_info.watched and autobutcher_info.autobutcher_enabled and not state.ignore_autobutcher -- check eggs respecting autobutcher settings
-            and not (race_config.full_stop and autobutcher_info.mac == 0)) -- do not check eggs if reached animal targets for race and full stop enabled
+      (((autobutcher_info.watched and autobutcher_info.enabled and not state.ignore_autobutcher -- check eggs respecting autobutcher settings
+            and not (race_config.stop and autobutcher_info.mac == 0)) -- do not check eggs if reached animal targets for race and full stop enabled
           or state.ignore_autobutcher) -- or check eggs ignoring autobutcher settings
-        and race_config.watched)-- check eggs only when nestboxes is watching race
+        and race_config.watched -- check eggs only when nestboxes is watching race
+      )
       then
-        nestboxesEvent.handleEggs(item, race_config, state.split_stacks, autobutcher_info.mac)
+        nestboxesEvent.handleEggs(item, race_config.target, race_config.ama, state.split_stacks, autobutcher_info.mac)
       end
     end
   end
@@ -345,6 +332,8 @@ function handleCommand(positionals, opts)
     updateEventListener()
   elseif command == 'TARGET' or command == 'T' then
     setTarget(positionals[3], positionals[4], positionals[5], positionals[6], positionals[7])
+  elseif command == 'IGNORE' or command == 'I' then
+    setIgnore(positionals[3])
   elseif command == 'VERBOSE' or command == 'V' then
     setVerbose(positionals[3])
   elseif command == 'SPLIT_STACKS' or command == 'S' then

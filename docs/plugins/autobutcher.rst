@@ -30,6 +30,21 @@ The default targets are: 2 male kids, 4 female kids, 2 male adults, and
 4 female adults. Note that you may need to set a target above 1 to have a
 reliable breeding population due to asexuality etc.
 
+Nestboxes module extends autobutcher functionality to monitoring and protection
+of fertile eggs. It facilitates steady supplay of eggs protected for breading
+purposes while maintaining egg based food production. With default settings it
+will forbid fertile eggs in claimed nestboxes up to 4 + number of annimals
+missing to autobutcher target. This will allow for larger number of hatchilings
+in initial breadin program phase when increasing livestock.
+When population reaches intended target only base amount of eggs will be left
+for breading purpose. 
+It is possible to alter this behaviour and compleatly stop protection of eggs
+when population target is reached. 
+In case of clutch larger than needed target eggs will be split in two separate
+stacks and only one of them forbidden.
+Check for forbidding eggs is made when fertile eggs are laid for one of
+watched races.
+
 Usage
 -----
 
@@ -78,6 +93,50 @@ Usage
 ``autobutcher list_export``
     Print commands required to set the current settings in another fort.
 
+``autobutcher nestboxes enable (autobutcher nb e)``
+``autobutcher nestboxes disable  (autobutcher nb d)``
+
+    It is possible to enable/ disable autobutcher nestboxes module.
+
+``autobutcher nestboxes ignore <true/false> (autobutcher nb i <1/0>)``
+
+    By default nestboxes module respects main plugin's enabled status, 
+    autowatch and watched status for specific races.
+    It is possible to allow nestboxes module to ignore that and work
+    on it's own. In case like that missing animal count  will not be added 
+    to target of protected eggs.
+
+``autobutcher nestboxes target <race> <base_target> <ama> <stop> <watched>``
+``autobutcher nb t <race> <base_target> <ama> <stop> <watched>``
+
+    Nestboxes target command allows to change how script handles specific
+    animal race, DEFAULT settings for new races or ALL curently watched races
+    and default value for new ones. 
+    <race> parameter accepts "DEFAULT", "ALL", creature id (e.g. BIRD_TURKEY)
+    or race id (190 for Turkey)
+    <base_target> base number of fertile eggs that will be protected by 
+    frobidding them in nestboxes. Default 4.
+    <ama> true/false value, if set to true animal count missing to autobutcher
+    popualtion targets will be added to base target for protected eggs.
+    Default true.
+    <stop> if set to true module will stop protection of eggs for race as long
+    as population target is maintained. Default true.
+    <watched> If eggs laid by race should be monitored and protected. 
+    Default true.
+    If parameter is not specified already existing value will be mantained. 
+    If new race is added missing values will be taken from default settings.
+
+``autobutcher nestboxes split_stacks <true/false> (autobutcher nb s <1/0>)``
+
+    split_stacks command allows to specify how egg stacks that are only
+    partialy over target should be handled. If set to false whole stack will
+    be forbidden. If set to true only eggs below target will be forbidden,
+    remaining part of stack will be separated and left for dwarves to collect.
+
+``autobutcher nestboxes clear (autobutcher nb clear)``
+
+    Remove all settings for module and restore them to initial default values.
+
 To see a list of all races, run this command::
 
     devel/query --table df.global.world.raws.creatures.all --search ^creature_id --maxdepth 1
@@ -116,3 +175,27 @@ fortress::
     autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
     autobutcher target 5 5 6 2 PIG
     autobutcher target 0 0 0 0 new
+
+
+    autobutcher nb t BEAK_DOG 10 1 1 1
+    autobutcher nestboxes target BEAK_DOG 5 true true true
+
+Command sets base target for beak dog eggs to 5, animals missing to population tresholds will be added to base target.
+Once autobutcher population target is reached no new eggs will be forbidden as long as population is at or above target.
+
+    autobutcher nb t DEFAULT 4 1 0 0
+    autobutcher nestboxes target DEFAULT 4 true true false
+
+Command will change default settings for watching new races disabling it.
+
+    autobutcher nb t ALL 15 0 1 1
+    autobutcher nestboxes target ALL 15 false true true
+
+Command will change setting for all currently watched egg races as well as default ones.
+Target for protected eggs is set to 15, missing animals count to livestock targets is not taken into account.
+Once population target is reached eggs will no longer be protected. All current and new races will be watched.
+
+    autobutcher nestboxes split_stacks false
+    autobutcher nb s 0
+
+Disable spliting of egg stacks.

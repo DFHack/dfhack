@@ -3,38 +3,39 @@ local _ENV = mkmodule('plugins.autobutcher.nestboxesEvent')
 local nestboxesCommon = require('plugins.autobutcher.common')
 local printLocal = nestboxesCommon.printLocal
 local printDetails = nestboxesCommon.printDetails
-local dumpToString = nestboxesCommon.dumpToString
 local utils = require('utils')
 ---------------------------------------------------------------------------------------------------
---ITEM_CREATED event handling functions
-local function copyEeggFields(source_egg, target_egg)
-  printDetails('start copyEeggFields')
+local function copyEggFields(source_egg, target_egg)
+  printDetails('start copyEggFields')
   target_egg.incubation_counter = source_egg.incubation_counter
-  printDetails('incubation_counter done')
-  target_egg.egg_flags = utils.clone(source_egg.egg_flags, true)
-  target_egg.hatchling_flags1 = utils.clone(source_egg.hatchling_flags1, true)
-  target_egg.hatchling_flags2 = utils.clone(source_egg.hatchling_flags2, true)
-  target_egg.hatchling_flags3 = utils.clone(source_egg.hatchling_flags3, true)
-  target_egg.hatchling_flags4 = utils.clone(source_egg.hatchling_flags4, true)
-  printDetails('flags done')
-  target_egg.hatchling_training_level = utils.clone(source_egg.hatchling_training_level, true)
-  utils.assign(target_egg.hatchling_animal_population, source_egg.hatchling_animal_population)
-  printDetails('hatchling_animal_population done')
+  target_egg.egg_flags = utils.clone(source_egg.egg_flags)
+  target_egg.hatchling_flags1 = utils.clone(source_egg.hatchling_flags1)
+  target_egg.hatchling_flags2 = utils.clone(source_egg.hatchling_flags2)
+  target_egg.hatchling_flags3 = utils.clone(source_egg.hatchling_flags3)
+  target_egg.hatchling_flags4 = utils.clone(source_egg.hatchling_flags4)
+  target_egg.hatchling_training_level = source_egg.hatchling_training_level
   target_egg.hatchling_mother_id = source_egg.hatchling_mother_id
-  printDetails('hatchling_mother_id done')
   target_egg.mother_hf = source_egg.mother_hf
   target_egg.father_hf = source_egg.mother_hf
-  printDetails('mother_hf father_hf done')
   target_egg.mothers_caste = source_egg.mothers_caste
   target_egg.fathers_caste = source_egg.fathers_caste
-  printDetails('mothers_caste fathers_caste done')
-  target_egg.mothers_genes = source_egg.mothers_genes
-  target_egg.fathers_genes = source_egg.fathers_genes
-  printDetails('mothers_genes fathers_genes done')
+
+  local mothers_genes = df.unit_genes:new()
+  mothers_genes.appearance:assign(source_egg.mothers_genes.appearance)
+  mothers_genes.colors:assign(source_egg.mothers_genes.colors)
+
+  local fathers_genes  = df.unit_genes:new()
+  fathers_genes.appearance:assign(source_egg.fathers_genes.appearance)
+  fathers_genes.colors:assign(source_egg.fathers_genes.colors)
+
+  target_egg.mothers_genes = mothers_genes
+  target_egg.fathers_genes = fathers_genes
+  printDetails("mothers_genes fathers_genes done")
+
   target_egg.hatchling_civ_id = source_egg.hatchling_civ_id
   printDetails('hatchling_civ_id done')
-  printDetails('end copyEeggFields')
-end --copyEeggFields
+  printDetails('end copyEggFields')
+end --copyEggFields
 ---------------------------------------------------------------------------------------------------
 local function resizeEggStack(egg_stack, new_stack_size)
   printDetails('start resizeEggStack')
@@ -63,7 +64,7 @@ local function createNewEggStack(original_eggs, new_stack_count)
   local created_egg_stack = created_items[0] or created_items[1]
   printDetails(df.creature_raw.find(created_egg_stack.race).creature_id)
   printDetails('about to copy fields from orginal eggs')
-  copyEeggFields(original_eggs, created_egg_stack)
+  copyEggFields(original_eggs, created_egg_stack)
 
   printDetails('about to resize new egg stack')
   resizeEggStack(created_egg_stack, new_stack_count)
@@ -122,20 +123,43 @@ local function countForbiddenEggsForRaceInClaimedNestobxes(race)
   return eggs_count
 end --countForbiddenEggsForRaceInClaimedNestobxes
 ---------------------------------------------------------------------------------------------------
-function handleEggs(eggs, race_config, split_stacks, missing_animals_count)
+function validateEggs(eggs)
+  if not eggs.egg_flags.fertile then
+    printDetails('Newly laid eggs are not fertile, do nothing')
+    return false
+  end
+
+  local should_be_nestbox = dfhack.items.getHolderBuilding(eggs)
+  if should_be_nestbox ~= nil then
+    for _, nestbox in ipairs(df.global.world.buildings.other.NEST_BOX) do
+      if nestbox == should_be_nestbox then
+        printDetails('Found nestbox, continue with egg handling')
+        return true
+      end
+    end
+    printDetails('Newly laid eggs are in building different than nestbox, we were to late')
+    return false
+  else
+    printDetails('Newly laid eggs are not in building, we were to late')
+    return false
+  end
+  return true
+end --validateEggs
+---------------------------------------------------------------------------------------------------
+function handleEggs(eggs, base_target, add_missing_animals, split_stacks, missing_animals_count)
   printDetails(('start handleEggs'))
 
   local race = eggs.race
   printDetails(('Handling eggs for race %s'):format(race))
-  printDetails('race_config: ' .. dumpToString(race_config))
+  printDetails(('base_target: %s'):format(base_target))
+  printDetails(('add_missing_animals: %s'):format(race))
   printDetails(('split_stacks: %s'):format(tostring(split_stacks)))
   printDetails(('missing_animals_count: %s'):format(tostring(missing_animals_count)))
-  local target_eggs = race_config.target
-  local add_missing_animals = race_config.ama
+  local target_eggs = base_target
   local creature = df.creature_raw.find(eggs.race).creature_id
 
   if add_missing_animals then
-    printDetails(('adding missing animal count %s'):format(missing_animals_count))
+    printDetails(('adding missing animal count %s to target'):format(missing_animals_count))
     target_eggs = target_eggs + missing_animals_count
   end
 
@@ -143,12 +167,21 @@ function handleEggs(eggs, race_config, split_stacks, missing_animals_count)
 
   local total_count = current_eggs
   total_count = total_count + countForbiddenEggsForRaceInClaimedNestobxes(race)
+  printLocal(("total_count %s"):format(total_count));
+  printLocal(("current_eggs %s"):format(current_eggs));
+  printLocal(("target_eggs %s"):format(target_eggs));
 
-  printDetails(('Total count for %s egg(s) is %s'):format(creature, total_count))
+  printLocal(('Total count for %s egg(s) is %s'):format(creature, total_count))
+
   if total_count - current_eggs < target_eggs then
     local egg_count_to_leave_in_source_stack = current_eggs
+
     if split_stacks and total_count > target_eggs then
+      printLocal(("1 total_count %s"):format(total_count));
+      printLocal(("1 current_eggs %s"):format(current_eggs));
+      printLocal(("1 target_eggs %s"):format(target_eggs));
       egg_count_to_leave_in_source_stack = target_eggs - total_count + current_eggs
+      printLocal(("egg_count_to_leave_in_source_stack %s"):format(egg_count_to_leave_in_source_stack));
       splitEggStack(eggs, egg_count_to_leave_in_source_stack)
     end
 
@@ -162,12 +195,13 @@ function handleEggs(eggs, race_config, split_stacks, missing_animals_count)
         eggs.flags.in_job = false
       end
     end
+
     printLocal(
       ('Previously existing %s egg(s) %s is lower than maximum %s (%s base target + %s missing animals), forbidden %s egg(s) out of %s new'):format(
         creature,
         total_count - current_eggs,
         target_eggs,
-        race_config.target,
+        base_target,
         missing_animals_count,
         egg_count_to_leave_in_source_stack,
         current_eggs
@@ -179,7 +213,7 @@ function handleEggs(eggs, race_config, split_stacks, missing_animals_count)
         creature,
         total_count,
         target_eggs,
-        race_config.target,
+        base_target,
         missing_animals_count,
         current_eggs
       )

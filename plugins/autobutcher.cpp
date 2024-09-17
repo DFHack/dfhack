@@ -983,7 +983,7 @@ static int autobutcher_getInfoForNestboxes(lua_State* L) {
         int raceId = lua_tointeger(L, 1);
         lua_newtable(L);
         int ctable = lua_gettop(L);
-        Lua::SetField(L, config.get_bool(CONFIG_IS_ENABLED), ctable, "autobutcher_enabled");
+        Lua::SetField(L, config.get_bool(CONFIG_IS_ENABLED), ctable, "enabled");
 
         if (!out)
             out = &Core::getInstance().getConsole();

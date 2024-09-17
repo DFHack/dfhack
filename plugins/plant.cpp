@@ -150,7 +150,7 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
 
     auto des = Maps::getTileDesignation(pos);
     CHECK_NULL_POINTER(des);
-    if (des->bits.flow_size > (des->bits.liquid_type == tile_liquid::Magma ? 0 : 3))
+    if (des->bits.flow_size > (des->bits.liquid_type == tile_liquid::Magma ? 0U : 3U))
     {
         out.printerr("Can't create plant: Too much liquid!\n");
         return CR_FAILURE;

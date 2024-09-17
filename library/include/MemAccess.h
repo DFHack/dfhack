@@ -28,7 +28,6 @@ distribution.
 #ifndef PROCESS_H_INCLUDED
 #define PROCESS_H_INCLUDED
 
-#include "Pragma.h"
 #include "Export.h"
 #include <iostream>
 #include <cstring>

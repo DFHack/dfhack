@@ -1070,7 +1070,7 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
             }
             else if (region->rainfall > 19)
             {
-                if (tropical || (potential_tropical && wet_dry < 7))
+                if (tropical || potential_tropical && wet_dry < 7)
                     return biome_type::SAVANNA_TROPICAL;
                 else
                     return biome_type::SAVANNA_TEMPERATE;

@@ -37,9 +37,9 @@ will forbid fertile eggs in claimed nestboxes up to 4 + number of annimals
 missing to autobutcher target. This will allow for larger number of hatchilings
 in initial breadin program phase when increasing livestock.
 When population reaches intended target only base amount of eggs will be left
-for breading purpose. 
+for breading purpose.
 It is possible to alter this behaviour and compleatly stop protection of eggs
-when population target is reached. 
+when population target is reached.
 In case of clutch larger than needed target eggs will be split in two separate
 stacks and only one of them forbidden.
 Check for forbidding eggs is made when fertile eggs are laid for one of
@@ -100,10 +100,10 @@ Usage
 
 ``autobutcher nestboxes ignore <true/false> (autobutcher nb i <1/0>)``
 
-    By default nestboxes module respects main plugin's enabled status, 
+    By default nestboxes module respects main plugin's enabled status,
     autowatch and watched status for specific races.
     It is possible to allow nestboxes module to ignore that and work
-    on it's own. In case like that missing animal count  will not be added 
+    on it's own. In case like that missing animal count  will not be added
     to target of protected eggs.
 
 ``autobutcher nestboxes target <race> <base_target> <ama> <stop> <watched>``
@@ -111,19 +111,19 @@ Usage
 
     Nestboxes target command allows to change how script handles specific
     animal race, DEFAULT settings for new races or ALL curently watched races
-    and default value for new ones. 
+    and default value for new ones.
     <race> parameter accepts "DEFAULT", "ALL", creature id (e.g. BIRD_TURKEY)
     or race id (190 for Turkey)
-    <base_target> base number of fertile eggs that will be protected by 
+    <base_target> base number of fertile eggs that will be protected by
     frobidding them in nestboxes. Default 4.
     <ama> true/false value, if set to true animal count missing to autobutcher
     popualtion targets will be added to base target for protected eggs.
     Default true.
     <stop> if set to true module will stop protection of eggs for race as long
     as population target is maintained. Default true.
-    <watched> If eggs laid by race should be monitored and protected. 
+    <watched> If eggs laid by race should be monitored and protected.
     Default true.
-    If parameter is not specified already existing value will be mantained. 
+    If parameter is not specified already existing value will be mantained.
     If new race is added missing values will be taken from default settings.
 
 ``autobutcher nestboxes split_stacks <true/false> (autobutcher nb s <1/0>)``

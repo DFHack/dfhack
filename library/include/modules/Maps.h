@@ -382,6 +382,10 @@ DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 // Get the plant that owns the tile at the specified position.
 extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z);
 inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, pos.y, pos.z); }
+// Returns true if the plant is within a box defined by the specified coordinates, accounting for trees.
+DFHACK_EXPORT bool isPlantInBox(df::plant *plant, const cuboid &bounds);
+inline bool isPlantInBox(df::plant *plant, int16_t x1, int16_t y1, int16_t z1,
+    int16_t x2, int16_t y2, int16_t z2) { return isPlantInBox(plant, cuboid(x1, y1, z1, x2, y2, z2)); }
 
 // Get the biome type at the given region coordinates.
 DFHACK_EXPORT df::enums::biome_type::biome_type getBiomeTypeWithRef(int16_t region_x, int16_t region_y, int16_t region_ref_y);

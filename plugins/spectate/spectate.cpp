@@ -202,6 +202,8 @@ namespace SP {
                 }
             };
             static auto valid = [](df::unit* unit) {
+                if (!Units::isActive(unit))
+                    return false;
                 if (Units::isAnimal(unit)) {
                     return config.animals;
                 }

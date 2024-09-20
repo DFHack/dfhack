@@ -19,8 +19,6 @@
 #include "df/builtin_mats.h"
 #include "df/item_actual.h"
 #include "df/map_block.h"
-#include "df/plant.h"
-#include "df/plant_spatter.h"
 #include "df/spatter.h"
 #include "df/unit.h"
 #include "df/unit_spatter.h"
@@ -50,7 +48,6 @@ struct clean_options
     bool only = false; // Ignore blood/other when doing map, only do specified options
     bool units = false; // Clean spatter from units
     bool items = false; // Clean spatter from items
-    bool plants = false; // Clean spatter from plants
     bool zlevel = false; // Operate on entire z-levels
 
     static struct_identity _identity;
@@ -66,7 +63,6 @@ static const struct_field_info clean_options_fields[] =
     { struct_field_info::PRIMITIVE, "only",      offsetof(clean_options, only),      &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "units",     offsetof(clean_options, units),     &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "items",     offsetof(clean_options, items),     &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "plants",    offsetof(clean_options, plants),    &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "zlevel",    offsetof(clean_options, zlevel),    &df::identity_traits<bool>::identity, 0, 0 },
     { struct_field_info::END }
 };
@@ -340,33 +336,6 @@ command_result cleanunits(color_ostream &out, const cuboid &bounds)
     return CR_OK;
 }
 
-command_result cleanplants(color_ostream &out, const cuboid &bounds)
-{   // Invoked from clean(), already suspended
-    DEBUG(log, out).print("Cleaning plants...\n");
-    bool valid_cuboid = bounds.isValid(); // Skip pos check if false
-    int cleaned_plants = 0, cleaned_total = 0;
-    for (auto plant : world->plants.all)
-    {
-        TRACE(log, out).print("Considering plant <%p>\n", plant);
-        if (valid_cuboid && !Maps::isPlantInBox(plant, bounds))
-            continue;
-        TRACE(log, out).print("Selected\n");
-
-        if (!plant->contaminants.empty())
-        {
-            for (size_t j = 0; j < plant->contaminants.size(); j++)
-                delete plant->contaminants[j];
-            cleaned_plants++;
-            cleaned_total += plant->contaminants.size();
-            plant->contaminants.clear();
-            DEBUG(log, out).print("Cleaned plant <%p>\n", plant);
-        }
-    }
-    if (cleaned_total > 0)
-        out.print("Removed %d contaminants from %d plants.\n", cleaned_total, cleaned_plants);
-    return CR_OK;
-}
-
 command_result spotclean(color_ostream &out, vector<string> &parameters)
 {   // Hotkey command, already suspended
     DEBUG(log, out).print("Doing spotclean.\n");
@@ -415,9 +384,9 @@ command_result clean(color_ostream &out, vector<string> &parameters)
     bool map_target = options.mud || options.snow || options.item_spat || options.grass;
     if (!options.map)
     {
-        if (!options.units && !options.items && !options.plants)
+        if (!options.units && !options.items)
         {
-            out.printerr("Choose at least: --map, --units, --items, or --plants. Use --all for all.\n");
+            out.printerr("Choose at least: --map, --units, or --items. Use --all for all.\n");
             return CR_WRONG_USAGE;
         }
         else if (options.item_spat && !options.items)
@@ -481,8 +450,6 @@ command_result clean(color_ostream &out, vector<string> &parameters)
         cleanunits(out, bounds);
     if(options.items)
         cleanitems(out, bounds);
-    if(options.plants)
-        cleanplants(out, bounds);
     return CR_OK;
 }
 

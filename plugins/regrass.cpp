@@ -458,7 +458,7 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
         out.printerr("Invalid pos for --block (or used more than one!)\n");
         return CR_WRONG_USAGE;
     }
-    else if (!Core::getInstance().isMapLoaded()) {
+    else if (!Maps::IsValid()) {
         out.printerr("Map not loaded!\n");
         return CR_FAILURE;
     }

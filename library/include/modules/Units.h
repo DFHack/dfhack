@@ -69,8 +69,12 @@ namespace Units {
  * The Units module - allows reading all non-vermin units and their properties
  */
 
-// Unit is non-dead and on the map.
+/// Unit is non-dead and on the map (usually). Unit must also be present in world.units.active
+/// to rule out raid missions. Use Units::isInPlay instead if you aren't certain.
 DFHACK_EXPORT bool isActive(df::unit *unit);
+/// Unit is non-dead and on the map. Scans world.units.active for the unit to make certain.
+/// (This is inefficient if you're already iterating the active units vector. Use Units::isActive.)
+DFHACK_EXPORT bool isInPlay(df::unit *unit);
 // Unit is on visible map tile. Doesn't account for ambushing.
 DFHACK_EXPORT bool isVisible(df::unit *unit);
 // Unit is a non-dead (optionally sane) citizen of fort.
@@ -174,12 +178,12 @@ DFHACK_EXPORT bool isDanger(df::unit *unit);
 // Megabeasts, titans, forgotten beasts, and demons.
 DFHACK_EXPORT bool isGreatDanger(df::unit *unit);
 
-// Check if unit is inside the cuboid area.
+// Check if unit is inside the cuboid area. Note: Make sure unit is in play first, else can be inaccurate.
 DFHACK_EXPORT bool isUnitInBox(df::unit *u, const cuboid &box);
 DFHACK_EXPORT inline bool isUnitInBox(df::unit *u, int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2) { return isUnitInBox(u, cuboid(x1, y1, z1, x2, y2, z2)); }
 
-// Fill vector with units in box matching filter.
+// Fill vector with units in box matching filter. Note: Units guaranteed to be in play.
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit *> &units, const cuboid &box,
     std::function<bool(df::unit *)> filter = [](df::unit *u) { return true; });
 DFHACK_EXPORT inline bool getUnitsInBox(std::vector<df::unit *> &units, int16_t x1, int16_t y1, int16_t z1,
@@ -202,7 +206,8 @@ inline auto citizensRange(std::vector<df::unit *> &vec, bool exclude_residents =
 DFHACK_EXPORT void forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents = false, bool include_insane = false);
 DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents = false, bool include_insane = false);
 
-// Returns the true position of the unit (non-trivial in case of caged).
+/// Returns the true position of the unit (non-trivial in case of caged).
+/// Note: Make sure unit is in play first, else can be inaccurate.
 DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
 // Moves unit and any riders to the target coordinates. Sets tile occupancy flags.

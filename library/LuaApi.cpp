@@ -2531,6 +2531,20 @@ static int maps_getPlantAtTile(lua_State *L)
     return 1;
 }
 
+static int maps_isPlantInBox(lua_State *state)
+{
+    auto plant = Lua::CheckDFObject<df::plant>(state, 1);
+    int x1 = luaL_checkint(state, 2);
+    int y1 = luaL_checkint(state, 3);
+    int z1 = luaL_checkint(state, 4);
+    int x2 = luaL_checkint(state, 5);
+    int y2 = luaL_checkint(state, 6);
+    int z2 = luaL_checkint(state, 7);
+
+    lua_pushboolean(state, Maps::isPlantInBox(plant, x1, y1, z1, x2, y2, z2));
+    return 1;
+}
+
 static int maps_getBiomeType(lua_State *L)
 {
     auto pos = CheckCoordXY(L, 1, true);
@@ -2596,6 +2610,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { "getPlantAtTile", maps_getPlantAtTile },
+    { "isPlantInBox", maps_isPlantInBox },
     { "getBiomeType", maps_getBiomeType },
     { "isTileAquifer", maps_isTileAquifer },
     { "isTileHeavyAquifer", maps_isTileHeavyAquifer },

@@ -154,7 +154,7 @@ static bool clean_block(color_ostream &out, df::map_block *block, const cuboid &
                 // Only delete blev if empty
                 if (blev->isEmpty())
                 {   // Block was already empty of mud, or we just made it so
-                    DEBUG(log, out).print("Deleting mud blev at index %d\n", i);
+                    DEBUG(log, out).print("Deleting mud blev at index %u\n", i);
                     DEL_BLEV
                 }
                 continue; // Next blev
@@ -213,7 +213,7 @@ static bool clean_block(color_ostream &out, df::map_block *block, const cuboid &
             // Only delete blev if empty
             if (blev->isEmpty())
             {   // Block was already empty of grass type, or we just made it so
-                DEBUG(log, out).print("Deleting grass blev at index %d\n", i);
+                DEBUG(log, out).print("Deleting grass blev at index %u\n", i);
                 DEL_BLEV
             }
             continue; // Next blev
@@ -223,7 +223,7 @@ static bool clean_block(color_ostream &out, df::map_block *block, const cuboid &
 
         if (full_block || blev->isEmpty())
         {   // Always delete a full block, else ensure blev empty
-            DEBUG(log, out).print("Deleting blev at index %d\n", i);
+            DEBUG(log, out).print("Deleting blev at index %u\n", i);
             DEL_BLEV
         }
         // Next blev

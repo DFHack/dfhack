@@ -57,14 +57,14 @@ Template for new versions:
 - `cleaners`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 
 ## Fixes
-``tile-material.lua``: made root tiles return tree material when not using GetLayerMat.
+- ``tile-material.lua``: made root tiles return tree material when not using GetLayerMat.
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
-``Maps::isPlantInBox``: function to determine if a tree's tile is present in a cuboid.
+- ``Maps::isPlantInBox``: function to determine if a tree's tile is present in a cuboid.
 
 ## Lua
 

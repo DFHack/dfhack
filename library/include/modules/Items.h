@@ -137,7 +137,8 @@ DFHACK_EXPORT df::building *getHolderBuilding(df::item *item);
 // Get unit that holds the item or NULL.
 DFHACK_EXPORT df::unit *getHolderUnit(df::item *item);
 
-// Returns the true position of the item (non-trivial if in inventory).
+/// Returns the true position of the item (non-trivial if in inventory).
+/// Note: Make sure the item is in world.items.other.IN_PLAY first, else can be inaccurate.
 DFHACK_EXPORT df::coord getPosition(df::item *item);
 
 /// Returns the title of a codex or "tool", either as the codex title or as the title of the

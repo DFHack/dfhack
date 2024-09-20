@@ -34,8 +34,5 @@ distribution.
     #define _FILE_OFFSET_BITS 64
 #endif
 
-// one file for telling the MSVC compiler where it can shove its pointless warnings
-#include "Pragma.h"
-
 // C99 integer types
 #include <stdint.h>

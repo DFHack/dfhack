@@ -56,6 +56,9 @@ Let's go through that line by line.
 - The :file:`info.txt` file contains metadata about your mod that DF will
     display in-game. You can read more about this file in the
     `Official DF Modding Guide <https://bay12games.com/dwarves/modding_guide.html>`__.
+    It would be a good idea to give your mod a ``dfhack`` tag so players can
+    indentify it as requiring DFHack when they subscribe to it on the DF Steam
+    workshop.
 - Modifications to the game raws (potentially with
     `custom raw tokens <custom-raw-tokens>`) go in the :file:`graphics/` and
     :file:`objects/` folders. You can read more about the files that go in
@@ -88,10 +91,16 @@ in or install them from the
 :file:`data/installed_mods/` when the mod is selected as "active" for the first
 time.
 
+DFHack will discover scripts in your mod's ``scripts_modinstalled/`` directory
+and other DFHack-relevant data files (like blueprints) regardless of whether
+the mod has been marked "active" for any player world.
+
 What if I just want to distribute quickfort blueprints?
 -------------------------------------------------------
 
 For this, all you need is :file:`info.txt` and your blueprints.
+
+.. highlight:: none
 
 Your :file:`info.txt` could look something like this::
 
@@ -109,17 +118,16 @@ Your :file:`info.txt` could look something like this::
     [STEAM_TAG:quickfort]
     [STEAM_TAG:blueprints]
 
-and your blueprints, which could be .csv or .xlsx files, would go in a
+and your blueprints, which could be .csv or .xlsx files, would go in the
 ``blueprints/`` subdirectory. If you add blueprint file named
 ``blueprints/bedrooms.csv``, then it will be shown to players as
 ``drooble_blueprints/bedrooms.csv`` in `quickfort` and `gui/quickfort`. The
 "drooble_blueprints" prefix comes from the mod ID specified in ``info.txt``.
 
-What if I just want to distribute a simple script?
---------------------------------------------------
+What if I just want to distribute a simple standalone script?
+-------------------------------------------------------------
 
-If your mod is just a script with no raws modifications, things get a bit
-simpler. All you need is::
+If your mod is just a script with no raws modifications, all you need is::
 
     info.txt
     scripts_modinstalled/yourscript.lua
@@ -137,11 +145,11 @@ Create a folder for development somewhere outside your Dwarf Fortress
 installation directory (e.g. ``/path/to/mymods/``). If you work on multiple
 mods, you might want to make a subdirectory for each mod.
 
-If you have changes to the raws, you'll have to copy them into DF's
+If you have changes to the raws, you'll still have to copy them into DF's
 ``data/installed_mods/`` folder to have them take effect, but you can set
-things up so that scripts are run directly from your dev directory. This way,
-you can edit your scripts and have the changes available in the game
-immediately: no copying, no restarting.
+things up so that scripts are run directly from your dev directory. You can
+edit your scripts in your dev directory and have the changes available in the
+game immediately: no copying, no restarting.
 
 How does this magic work? Just add a line like this to your
 ``dfhack-config/script-paths.txt`` file::
@@ -156,25 +164,29 @@ versions of your mod in the DF mod folders).
 The structure of the game
 -------------------------
 
-"The game" is in the global variable `df <lua-df>`. Most of the information
-relevant to a script is found in ``df.global.world``, which contains things
-like the list of all items, whether to reindex pathfinding, et cetera. Also
-relevant to us are the various data types found in the game, e.g.
-``df.pronoun_type`` which we will be using in this guide. We'll explore more of
-the game structures below.
+"The game", that is, all the Dwarf Fortress state, is in the global variable
+`df <lua-df>`. Most of the information relevant to a script is found in
+``df.global.world``, which contains data like the lists of active items and
+units, whether to reindex pathfinding, et cetera. Also relevant to us are the
+various data types found in the game, e.g. ``df.pronoun_type`` which we will be
+using in this guide. We'll explore more of the game structures below.
 
 Your first script
 -----------------
 
 So! It's time to write your first script. This section will walk you through how
 to make a script that will get the pronoun type of the currently selected unit.
+If you're not familiar with Lua script syntax, maybe skim through some topics
+in the `manual <https://www.lua.org/manual/5.3/manual.html>`__ first.
 
-First line, we get the unit::
+.. highlight:: lua
+
+First line, we get a reference to an in-game unit::
 
     local unit = dfhack.gui.getSelectedUnit()
 
-If no unit is selected, ``unit`` will be ``nil`` and an error message will be
-printed (which can be silenced by passing ``true`` to ``getSelectedUnit``).
+If no unit is selected by the player in the DF UI, ``unit`` will be ``nil`` and
+an error message will be printed.
 
 If ``unit`` is ``nil``, we don't want the script to run anymore::
 
@@ -182,16 +194,30 @@ If ``unit`` is ``nil``, we don't want the script to run anymore::
         return
     end
 
-Now, the field ``sex`` in a unit is an integer, but each integer corresponds to
-a string value ("it", "she", or "he"). We get this value by indexing the
+Now, the field ``unit.sex`` is an integer, but each integer corresponds to a
+string value ("it", "she", or "he"). We get this value by indexing the
 bidirectional map ``df.pronoun_type``. Indexing the other way, with one of the
 strings, will yield its corresponding number. So::
 
     local pronounTypeString = df.pronoun_type[unit.sex]
     print(pronounTypeString)
 
-Simple. Save this as a Lua file in your own scripts directory and run it from
+Simple. The entire script altogether looks like this::
+
+    local unit = dfhack.gui.getSelectedUnit()
+    if not unit then
+        return
+    end
+    local pronounTypeString = df.pronoun_type[unit.sex]
+    print(pronounTypeString)
+
+Save the text as a ``.lua`` file in your own scripts directory and run it from
 `gui/launcher` when a unit is selected in the Dwarf Fortress UI.
+
+DFHack provides a vast library of functionality that make it easier to interact
+with the game state. When you start asking yourself "How do I get/do X", search
+through the `lua-api` for relevant functions and look through existing scripts
+for examples.
 
 Exploring DF state
 ------------------
@@ -209,24 +235,109 @@ script is active to view help.
 Familiarising yourself with the many structs of the game will help with ideas
 immensely, and you can always ask for help in the `right places <support>`.
 
-Reading and writing files or persistent state
----------------------------------------------
+Reading and writing files and other persistent state
+----------------------------------------------------
 
-If you need to read files from your own mod directory, or get a directory in
-which to save your global state, use the `script-manager` API to get the paths
-and the ``json`` API to write (and read, if the data is JSON)::
+There are several locations and APIs that a mod might need to read or store
+data:
+
+Global state that is not world-specific should be stored in the directory
+returned by the ``scriptmanager.getModStatePath()`` function. JSON is a
+convenient format for this kind of stored state, and DFHack provides facilities
+for reading and writing JSON data. For example::
 
     local json = require('json')
     local scriptmanager = require('script-manager')
-    local path = scriptmanager.getModStatePath('my_awesome_mod')
+    local path = scriptmanager.getModStatePath('mymodname')
     config = config or json.open(path .. 'settings.json')
 
     -- modify state in the config.data table and persist it when it changes with
     -- config:write()
 
+State that should be saved with a world or a specific fort within that world
+should use `persistent-api` API. You can attach a state change hook for new
+world loaded where you can load the state, which often includes whether the mod
+itself is enabled (if the mod can be dynamically enabled/disabled -- see the
+`script-enable-api` for more details). For example::
+
+    --@ enable=true
+    --@ module=true
+
+    local utils = require('utils')
+
+    local GLOBAL_KEY = 'mymodname'
+
+    local function get_default_state()
+        return {
+            enabled=false,
+            somevar=0,
+            somesubtable={
+                someothervar=0,
+            },
+        }
+    end
+    state = state or get_default_state()
+
+    -- implement the enabled API so DFHack can read this script's status
+    function isEnabled()
+        return state.enabled
+    end
+
+    local function persist_state()
+        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
+    end
+
+    local function do_enable()
+        -- initialization tasks, such as hooking events
+    end
+
+    local function do_disable()
+        -- cleanup tasks, such as removing event hooks
+    end
+
+    dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+        if sc == SC_MAP_UNLOADED then
+            do_disable()
+
+            -- ensure our mod doesn't run when a different
+            -- world is loaded where we are *not* active
+            dfhack.onStateChange[GLOBAL_KEY] = nil
+
+            return
+        end
+
+        if sc ~= SC_MAP_LOADED or not dfhack.world.isFortressMode() then
+            return
+        end
+
+        -- retrieve state saved in game. merge with default state so config
+        -- saved from previous versions can pick up newer defaults.
+        state = get_default_state()
+        utils.assign(state, dfhack.persistent.getSiteData(GLOBAL_KEY, state))
+        if state.enabled then
+            do_enable()
+        end
+    end
+
+Finally, you may have distributed data files with your mod that you need to
+read at runtime. Your mod directory should be treated as read-only since data
+there is not backed up. Use the `script-manager` API to get the path to your
+mod data and the ``json`` (or any other file I/O) API as needed. For example::
+
+    local scriptmanager = require('script-manager')
+
+    local GLOBAL_KEY = 'mymodname'
+
+    local function read_bulk_data_db()
+        local mod_source_path = scriptmanager.getModSourcePath(GLOBAL_KEY)
+        -- read data from files in the mod directory
+        return ...
+    end
+
+    bulk_data_db = bulk_data_db or read_bulk_data_db()
+
 If you want to store state in the savegame so that it is associated with the
-current world/fort/adventure, use the `persistent-api` API. There's a good
-example of usage in `script-enable-api` or in the fuller example later in this
+current world/fort/adventure, use the `persistent-api` API.  or in the fuller example later in this
 guide.
 
 Reacting to events
@@ -239,26 +350,26 @@ provides two libraries for this, ``repeat-util`` and `eventful <eventful-api>`.
 frames (paused or unpaused), ticks (unpaused), in-game days, months, or years.
 If you need to be aware the instant something happens, you'll need to run a
 check once a tick. Be careful not to do this gratuitously, though, since
-running callbacks too often can slow down the game!
+running callbacks too often can significantly slow down the game!
 
 ``eventful``, on the other hand, is much more performance-friendly since it will
-only call your callback when a relevant event happens, like a reaction or job
-being completed or a projectile moving.
+only call your callback when a relevant event happens, like a reaction
+occuring, a job being completed, or a projectile moving to a new tile.
 
-To get something to run once per tick, we can call
+To get something to run once every 1000 ticks, we can call
 ``repeat-util.scheduleEvery()``. First, we load the module::
 
     local repeatUtil = require('repeat-util')
 
 Both ``repeat-util`` and ``eventful`` require keys for registered callbacks. You
-should use something unique, like your mod name::
+should use something unique, like your mod id::
 
-    local modId = "callback-example-mod"
+    local GLOBAL_KEY = 'mymodname'
 
 Then, we pass the key, amount of time units between function calls, what the
 time units are, and finally the callback function itself::
 
-    repeatUtil.scheduleEvery(modId, 1, "ticks", function()
+    repeatUtil.scheduleEvery(GLOBAL_KEY, 1000, 'ticks', function()
         -- Do something like iterating over all active units and
         -- check for something interesting
         for _, unit in ipairs(df.global.world.units.active) do
@@ -275,7 +386,7 @@ Each function in the table is then called with the appropriate arguments when
 the event occurs. So, for example, to print the position of a moving (item)
 projectile::
 
-    eventful.onProjItemCheckMovement[modId] = function(projectile)
+    eventful.onProjItemCheckMovement[GLOBAL_KEY] = function(projectile)
         print(projectile.cur_pos.x, projectile.cur_pos.y,
               projectile.cur_pos.z)
     end
@@ -297,10 +408,10 @@ Custom raw tokens
 
 In this section, we are going to use `custom raw tokens <custom-raw-tokens>`
 applied to a reaction to transfer the material of a reagent to a product as a
-handle improvement (like on artifact buckets), and then we are going to see how
-you could make boots that make units go faster when worn.
+handle improvement (like on artifact buckets). As a second example, we are
+going to make boots that make units go faster when worn.
 
-First, let's define a custom crossbow with its own custom reaction. The
+First, let's define raws for a custom crossbow with its own custom reaction. The
 crossbow::
 
     [ITEM_WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE]
@@ -335,56 +446,55 @@ entity raw)::
             another custom token
         [PRODUCT:100:1:WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE:GET_MATERIAL_FROM_REAGENT:bar:NONE]
 
-So, we are going to use the ``eventful`` module to make it so that (after the
-script is run) when this crossbow is crafted, it will have two handles, each
-with the material given by the block reagents.
+So, we are going to use the ``eventful`` module to react when this crossbow is
+crafted, allowing us to inject the logic that will add the handle improvement.
 
 .. highlight:: lua
 
 First, require the modules we are going to use::
 
-    local eventful = require("plugins.eventful")
-    local customRawTokens = require("custom-raw-tokens")
+    local eventful = require('plugins.eventful')
+    local customRawTokens = require('custom-raw-tokens')
 
-Now, let's make a callback (we'll be defining the body of this function soon)::
+and attach a callback to the event::
 
-    local modId = "siege-crossbow-mod"
-    eventful.onReactionComplete[modId] = function(reaction,
-            reactionProduct, unit, inputItems, inputReagents,
-            outputItems)
+    local GLOBAL_KEY = 'mymodname'
 
+    local function reaction_handler(reaction, reactionProduct, unit,
+            inputItems, inputReagents, outputItems)
+        -- we'll be defining the body of this function below
+    end
+
+    eventful.onReactionComplete[GLOBAL_KEY] = reaction_handler
+
+Now let's look at the ``reaction_handler`` function and give it some logic.
 First, we check to see if it the reaction that just happened is relevant to this
 callback::
 
     if not customRawTokens.getToken(reaction,
-        "SIEGE_CROSSBOW_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT")
+        'SIEGE_CROSSBOW_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT')
     then
         return
     end
 
-Then, we get the product number listed. Next, for every reagent, if the reagent
-name starts with "handle" then we get the corresponding item, and...
-
-::
+Then, we check the reagents for names that start with "handle". For those
+reagents, we get the corresponding item and add a handle improvement::
 
     for i, reagent in ipairs(inputReagents) do
         if reagent.code:startswith('handle') then
             -- Found handle reagent
             local item = inputItems[i]
+            local improv = df.itemimprovement_itemspecificst:new()
+            improv.mat_type, improv.mat_index = item.mat_type, item.mat_index
+            improv.type = df.itemimprovement_specific_type.HANDLE
+            outputItems[1].improvements:insert('#', improv)
+        end
+    end
 
-...We then add a handle improvement to the listed product within our loop::
+Let's also modify the fire rate of our siege crossbow according to the custom
+token we added to the item definition in the raws::
 
-    local new = df.itemimprovement_itemspecificst:new()
-    new.mat_type, new.mat_index = item.mat_type, item.mat_index
-    new.type = df.itemimprovement_specific_type.HANDLE
-    outputItems[productNumber - 1].improvements:insert('#', new)
-
-This works well as long as you don't have multiple stacks filling up one
-reagent.
-
-Let's also make some code to modify the fire rate of our siege crossbow::
-
-    eventful.onProjItemCheckMovement[modId] = function(projectile)
+    eventful.onProjItemCheckMovement[GLOBAL_KEY] = function(projectile)
         if projectile.distance_flown > 0 then
             -- don't make this adjustment more than once
             return
@@ -402,7 +512,7 @@ Let's also make some code to modify the fire rate of our siege crossbow::
 
         local multiplier = tonumber(customRawTokens.getToken(
                 weapon.subtype,
-                "SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER")) or 1
+                'SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER')) or 1
         firer.counters.think_counter = math.floor(
                 firer.counters.think_counter * multiplier)
     end
@@ -431,30 +541,37 @@ item in the raws::
 
 .. highlight:: lua
 
-Then, let's make a ``repeat-util`` callback for once a tick::
+Then, let's define a function that will implement the logic associated with the
+boots::
 
-    repeatUtil.scheduleEvery(modId, 1, "ticks", function()
-
-Let's iterate over every active unit, and for every unit, iterate over their
-worn items to calculate how much we are going to take from their on-foot
-movement timers::
-
-    for _, unit in ipairs(df.global.world.units.active) do
-        local amount = 0
-        for _, entry in ipairs(unit.inventory) do
-            if entry.mode == df.unit_inventory_item.T_mode.Worn then
-                local reduction = customRawTokens.getToken(
-                        entry.item,
-                        'PEGASUS_BOOTS_MOD_FOOT_MOVEMENT_TIMER_REDUCTION_PER_TICK')
-                amount = amount + (tonumber(reduction) or 0)
+    local function do_pegasus()
+        for _,unit in ipairs(df.global.world.units.active) do
+            local amount = 0
+            for _,inv_entry in ipairs(unit.inventory) do
+                if inv_entry.mode == df.unit_inventory_item.T_mode.Worn then
+                    local reduction = customRawTokens.getToken(
+                            inv_entry.item,
+                            'PEGASUS_BOOTS_MOD_FOOT_MOVEMENT_TIMER_REDUCTION_PER_TICK')
+                    amount = amount + (tonumber(reduction) or 0)
+                end
+            end
+            -- Subtract amount from on-foot movement timers if not on ground
+            if not unit.flags1.on_ground then
+                dfhack.units.subtractActionTimers(unit, amount,
+                        df.unit_action_type_group.MovementFeet)
             end
         end
-        -- Subtract amount from on-foot movement timers if not on ground
-        if not unit.flags1.on_ground then
-            dfhack.units.subtractActionTimers(unit, amount,
-                    df.unit_action_type_group.MovementFeet)
-        end
     end
+
+Finally, we can schedule the callback to be run once a tick using the
+``repeat-util`` module::
+
+    repeatUtil.scheduleEvery(GLOBAL_KEY, 1, 'ticks', do_pegasus)
+
+Note that the ``do_pegasus`` function as written here is **extremely
+inefficient**. In a real mod, you would likely want to cache which units are
+equipping pegasus boots so you don't have to scan every inventory item of every
+active unit on every tick.
 
 Putting it all together
 -----------------------
@@ -462,24 +579,24 @@ Putting it all together
 Ok, you're all set up! Now, let's take a look at an example
 ``scripts_modinstalled/example-mod.lua`` file::
 
-    -- main file for example-mod
+    -- main file for the example-mod mod
 
     -- these lines indicate that the script supports the "enable"
     -- API so you can start it by running "enable example-mod" and
     -- stop it by running "disable example-mod"
-    --@module = true
-    --@enable = true
+    --@ module=true
+    --@ enable=true
 
     -- this is the help text that will appear in `help` and
     -- `gui/launcher`. see possible tags here:
-    -- https://docs.dfhack.org/en/latest/docs/Tags.html
+    -- https://docs.dfhack.org/en/stable/docs/Tags.html
     --[====[
     example-mod
     ===========
 
     Tags: fort | gameplay
 
-    Short one-sentence description ...
+    Short one-sentence description.
 
     Longer description ...
 
@@ -490,45 +607,77 @@ Ok, you're all set up! Now, let's take a look at an example
         disable example-mod
     ]====]
 
-    local repeatUtil = require('repeat-util')
     local eventful = require('plugins.eventful')
+    local repeatUtil = require('repeat-util')
+    local utils = require('utils')
 
     -- you can reference global values or functions declared in any of
-    -- your internal scripts
+    -- your internal modules
     local moduleA = reqscript('internal/example-mod/module-a')
     local moduleB = reqscript('internal/example-mod/module-b')
-    local moduleC = reqscript('internal/example-mod/module-c')
-    local moduleD = reqscript('internal/example-mod/module-d')
 
     local GLOBAL_KEY = 'example-mod'
 
     local function get_default_state()
         return {
             enabled=false,
-            -- add more default config here
+            somevar=0,
+            somesubtable={
+                someothervar=0,
+            },
         }
     end
-
     state = state or get_default_state()
 
+    -- implement the enabled API so DFHack can read this script's status
     function isEnabled()
-        -- this function is for the enabled API, the script won't show up on the
-        -- control panel without it
         return state.enabled
+    end
+
+    -- call this whenever the contents of the state table changes
+    local function persist_state()
+        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
+    end
+
+    local function do_enable()
+        -- do any initialization your internal scripts might require
+        moduleA.onEnable()
+        moduleB.onEnable()
+
+        repeatUtil.scheduleEvery(GLOBAL_KEY, 1000, 'ticks', function()
+            moduleA.cycle()
+            moduleB.cycle()
+        end)
+
+        eventful.onProjItemCheckMovement[GLOBAL_KEY] =
+            moduleB.onProjItemCheckMovement
+        eventful.onProjUnitCheckImpact[GLOBAL_KEY] =
+            moduleB.onProjUnitCheckImpact
+    end
+
+    local function do_disable()
+        -- call any shutdown functions your internal scripts might require
+        moduleA.onDisable()
+        moduleB.onDisable()
+
+        repeatUtil.cancel(GLOBAL_KEY)
+
+        eventful.onProjItemCheckMovement[GLOBAL_KEY] = nil
+        eventful.onProjUnitCheckImpact[GLOBAL_KEY] = nil
     end
 
     dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if sc == SC_MAP_UNLOADED then
-            dfhack.run_command('disable', 'example-mod')
+            do_disable()
 
-            -- ensure our mod doesn't try to enable itself when a different
+            -- ensure our mod doesn't run when a different
             -- world is loaded where we are *not* active
             dfhack.onStateChange[GLOBAL_KEY] = nil
 
             return
         end
 
-        if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        if sc ~= SC_MAP_LOADED or not dfhack.world.isFortressMode() then
             return
         end
 
@@ -536,9 +685,8 @@ Ok, you're all set up! Now, let's take a look at an example
         -- saved from previous versions can pick up newer defaults.
         state = get_default_state()
         utils.assign(state, dfhack.persistent.getSiteData(GLOBAL_KEY, state))
-
         if state.enabled then
-            dfhack.run_command('enable', 'example-mod')
+            do_enable()
         end
     end
 
@@ -555,77 +703,41 @@ Ok, you're all set up! Now, let's take a look at an example
     end
 
     if dfhack_flags.enable_state then
-        -- do any initialization your internal scripts might require
-        moduleA.onLoad()
-        moduleB.onLoad()
-
-        -- multiple functions in the same repeat callback
-        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks', function()
-            moduleA.every1Tick()
-            moduleB.every1Tick()
-        end)
-
-        -- one function per repeat callback (you can put them in the
-        -- above format if you prefer)
-        repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames',
-                                 moduleD.every100Frames)
-
-        -- multiple functions in the same eventful callback
-        eventful.onReactionComplete[modId] = function(reaction,
-                reaction_product, unit, input_items, input_reagents,
-                output_items)
-            -- pass the event's parameters to the listeners
-            moduleB.onReactionComplete(reaction, reaction_product,
-                    unit, input_items, input_reagents, output_items)
-            moduleC.onReactionComplete(reaction, reaction_product,
-                    unit, input_items, input_reagents, output_items)
-        end
-
-        -- one function per eventful callback (you can put them in the
-        -- above format if you prefer)
-        eventful.onProjItemCheckMovement[modId] = moduleD.onProjItemCheckMovement
-        eventful.onProjUnitCheckMovement[modId] = moduleD.onProjUnitCheckMovement
-
-        print('Example mod enabled')
         state.enabled = true
-        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
+        do_enable()
     else
-        -- call any shutdown functions your internal scripts might require
-        moduleA.onUnload()
-
-        repeatUtil.cancel(modId .. ' every ticks')
-        repeatUtil.cancel(modId .. ' 100 frames')
-
-        eventful.onReactionComplete[modId] = nil
-        eventful.onProjItemCheckMovement[modId] = nil
-        eventful.onProjUnitCheckMovement[modId] = nil
-
-        print('Example mod disabled')
         state.enabled = false
-        dfhack.persistent.saveSiteData(GLOBAL_KEY, state)
+        do_disable()
     end
 
-Inside ``scripts_modinstalled/internal/example-mod/module-a.lua`` you could
-have code like this::
+    persist_state()
 
-    --@ module = true
+The ``scripts_modinstalled/internal/example-mod/module-a.lua`` file could look
+something like this::
 
-    function onLoad() -- global variables are exported
-        -- do initialization here
+    --@ module=true
+
+    -- global (non-local) variables and functions are exported
+    function onEnable()
+        -- ...
+    end
+
+    function onDisable()
+        -- ...
     end
 
     -- this is a local function: local functions/variables
     -- are not accessible to other scripts.
-    local function usedByOnTick(unit)
+    local function usedByCycle(unit)
         -- ...
     end
 
-    function onTick() -- exported
-        for _,unit in ipairs(df.global.world.units.all) do
-            usedByOnTick(unit)
+    function cycle() -- exported
+        for _,unit in ipairs(df.global.world.units.active) do
+            usedByCycle(unit)
         end
     end
 
 The `reqscript <reqscript>` function reloads scripts that have changed, so you
 can modify your scripts while DF is running and just disable/enable your mod to
-load the changes into your ongoing game!
+load the changes into your running game!

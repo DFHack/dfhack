@@ -1402,7 +1402,16 @@ Units module
 
 * ``dfhack.units.isActive(unit)``
 
-  The unit is active (non-dead and on the map).
+  The unit is active (non-dead and probably on the map). Unit must also be
+  present in ``world.units.active`` to rule out raid missions. Use
+  ``dfhack.units.isInPlay`` instead if you aren't certain.
+
+* ``dfhack.units.isInPlay(unit)``
+
+  The unit is active and in play (non-dead and definitely on the map).
+  This function scans ``world.units.active`` to make sure the unit isn't
+  out on raid. If you're already iterating ``world.units.active``, just use
+  ``dfhack.units.isActive`` for efficiency.
 
 * ``dfhack.units.isVisible(unit)``
 
@@ -1608,12 +1617,14 @@ Units module
 
 * ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
 
-  Returns true if the unit is within a box defined by the
-  specified coordinates.
+  Returns true if the unit is within a box defined by the specified
+  coordinates. Make sure the unit is in play first, as this can return true
+  for a death location or where the unit left the map.
 
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
-  Returns a table of all units within the specified coordinates.
+  Returns a table of all units within the specified coordinates. Returned
+  units are guaranteed to be in play (unlike ``isUnitInBox`` above).
   If the ``filter`` argument is given, only units where ``filter(unit)``
   returns true will be included. Note that ``pos2xyz()`` cannot currently
   be used to convert coordinate objects to the arguments required by
@@ -1643,7 +1654,9 @@ Units module
 
   Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
   generally use this method instead of reading *unit.pos* directly since
-  that field can be inaccurate when the unit is caged.
+  that field can be inaccurate when the unit is caged. Make sure the unit is in
+  play first (using ``dfhack.units.isActive`` or ``dfhack.units.isInPlay``)
+  or the result can indicate a death location or where the unit left the map.
 
 * ``dfhack.units.teleport(unit, pos)``
 
@@ -2033,7 +2046,9 @@ Items module
 
   Returns the true *x,y,z* of the item, or *nil* if invalid. You should generally
   use this method instead of reading *item.pos* directly since that field only stores
-  the last position where the item was on the ground.
+  the last position where the item was on the ground. Make sure the item is present in
+  ``world.items.other.IN_PLAY`` first, otherwise the result can indicate where a unit
+  left the map with the item.
 
 * ``dfhack.items.getBookTitle(item)``
 

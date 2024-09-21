@@ -36,7 +36,6 @@ Template for new versions:
 Document caveats about unit/item position fns w/r/t raiding units.
 
 ## API
-``Units::isInPlay``: A fn that scans active unit vector to rule out units off map raiding. Use instead of ``Units::isActive`` when uncertain if unit present in ``world.units.active``.
 
 ## Lua
 

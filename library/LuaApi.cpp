@@ -1990,7 +1990,6 @@ static const luaL_Reg dfhack_textures_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isActive),
-    WRAPM(Units, isInPlay),
     WRAPM(Units, isVisible),
     WRAPM(Units, isCitizen),
     WRAPM(Units, isResident),

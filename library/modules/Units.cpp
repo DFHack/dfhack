@@ -125,12 +125,6 @@ bool Units::isActive(df::unit *unit) {
     return !unit->flags1.bits.inactive;
 }
 
-bool Units::isInPlay(df::unit *unit) {
-    CHECK_NULL_POINTER(unit);
-    return isActive(unit) &&
-        linear_index(world->units.active, &df::unit::id, unit->id) >= 0;
-}
-
 bool Units::isVisible(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
     return Maps::isTileVisible(getPosition(unit));

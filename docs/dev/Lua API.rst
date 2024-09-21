@@ -1403,15 +1403,9 @@ Units module
 * ``dfhack.units.isActive(unit)``
 
   The unit is active (non-dead and probably on the map). Unit must also be
-  present in ``world.units.active`` to rule out raid missions. Use
-  ``dfhack.units.isInPlay`` instead if you aren't certain.
-
-* ``dfhack.units.isInPlay(unit)``
-
-  The unit is active and in play (non-dead and definitely on the map).
-  This function scans ``world.units.active`` to make sure the unit isn't
-  out on raid. If you're already iterating ``world.units.active``, just use
-  ``dfhack.units.isActive`` for efficiency.
+  present in the ``world.units.active`` vector to rule out raid missions. Use
+  ``utils.linear_index`` after this function returns true if you aren't
+  certain (i.e., you aren't already iterating that vector).
 
 * ``dfhack.units.isVisible(unit)``
 
@@ -1618,13 +1612,14 @@ Units module
 * ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
 
   Returns true if the unit is within a box defined by the specified
-  coordinates. Make sure the unit is in play first, as this can return true
-  for a death location or where the unit left the map.
+  coordinates. Make sure the unit is flagged active and is present in
+  ``world.units.active`` first, as the result may indicate that the unit
+  died or left map here.
 
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates. Returned
-  units are guaranteed to be in play (unlike ``isUnitInBox`` above).
+  units are guaranteed to be active (unlike ``isUnitInBox`` above).
   If the ``filter`` argument is given, only units where ``filter(unit)``
   returns true will be included. Note that ``pos2xyz()`` cannot currently
   be used to convert coordinate objects to the arguments required by
@@ -1654,9 +1649,9 @@ Units module
 
   Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
   generally use this method instead of reading *unit.pos* directly since
-  that field can be inaccurate when the unit is caged. Make sure the unit is in
-  play first (using ``dfhack.units.isActive`` or ``dfhack.units.isInPlay``)
-  or the result can indicate a death location or where the unit left the map.
+  that field can be inaccurate when the unit is caged. Make sure the unit is
+  active (and present in ``world.units.active``) first or else the result can
+  indicate where the unit died or left the map.
 
 * ``dfhack.units.teleport(unit, pos)``
 

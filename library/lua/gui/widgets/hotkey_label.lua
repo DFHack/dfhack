@@ -1,4 +1,5 @@
 local Label = require('gui.widgets.label')
+local Label = require('gui.widgets.label')
 
 -----------------
 -- HotkeyLabel --

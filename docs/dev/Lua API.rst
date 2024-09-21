@@ -1405,7 +1405,7 @@ Units module
   The unit is active (non-dead and probably on the map). Unit must also be
   present in the ``world.units.active`` vector to rule out raid missions. Use
   ``utils.linear_index`` after this function returns true if you aren't
-  certain (i.e., you aren't already iterating that vector).
+  certain (i.e., not already iterating active units).
 
 * ``dfhack.units.isVisible(unit)``
 
@@ -1614,7 +1614,7 @@ Units module
   Returns true if the unit is within a box defined by the specified
   coordinates. Make sure the unit is flagged active and is present in
   ``world.units.active`` first, as the result may indicate that the unit
-  died or left map here.
+  died or left the map here.
 
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 

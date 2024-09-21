@@ -73,6 +73,7 @@ distribution.
 #include "df/unit_action_type_group.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
+#include "df/unit_path_goal.h"
 #include "df/unit_relationship_type.h"
 #include "df/unit_skill.h"
 #include "df/unit_soul.h"
@@ -931,6 +932,28 @@ void Units::makeown(df::unit *unit) {
     using FT = std::function<void(df::unit *)>;
     auto f = reinterpret_cast<FT *>(fp);
     (*f)(unit);
+}
+
+// functionality reverse-engineered from DF's unitst::set_goal
+void Units::setGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
+{
+    if (unit->path.dest != pos || unit->path.goal != goal)
+    {
+        unit->path.dest = pos;
+        unit->path.goal = goal;
+        unit->path.path.clear();
+    }
+
+    if (unit->flags1.bits.rider && unit->mount_type == df::rider_positions_type::STANDARD)
+    {
+        auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
+        if (mount)
+        {
+            mount->path.dest = pos;
+            mount->path.goal = goal;
+            mount->path.path.clear();
+        }
+    }
 }
 
 df::unit *Units::create(int16_t race, int16_t caste) {

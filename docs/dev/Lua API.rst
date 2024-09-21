@@ -1703,6 +1703,11 @@ Units module
   ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
   in question.
 
+* ``dfhack.units.setGoal(unit, pos, goal)``
+
+  Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
+  unit. In case of a change, also clears the unit's current path.
+
 * ``dfhack.units.create(race, caste)``
 
   Creates a new unit from scratch. The unit will be added to the

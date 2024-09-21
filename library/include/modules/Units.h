@@ -42,6 +42,7 @@ distribution.
 #include "df/physical_attribute_type.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
+#include "df/unit_path_goal.h"
 
 #include <ranges>
 
@@ -237,6 +238,9 @@ DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
 /// If needed, use isOwnCiv or another relevant predicate after invoking
 /// to determine if the makeown operation was successful.
 DFHACK_EXPORT void makeown(df::unit *unit);
+
+// Set the units target location and goal, clearing any existing goal or path
+DFHACK_EXPORT void setGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal);
 
 /// Create new unit and add to all units vector (but not active). No HF, nemesis, pos,
 /// labors, or group associations. Will have race, caste, name, soul, body, and mind.

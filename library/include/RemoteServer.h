@@ -23,7 +23,6 @@ distribution.
 */
 
 #pragma once
-#include "Pragma.h"
 #include "Export.h"
 #include "RemoteClient.h"
 #include "Core.h"

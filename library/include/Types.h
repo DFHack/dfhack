@@ -27,7 +27,6 @@ distribution.
 
 #include <algorithm>
 
-#include "Pragma.h"
 #include "Export.h"
 
 #include "DataDefs.h"

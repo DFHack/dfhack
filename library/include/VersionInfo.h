@@ -32,7 +32,6 @@ distribution.
 #include <vector>
 
 #include "Export.h"
-#include "Pragma.h"
 
 namespace DFHack
 {

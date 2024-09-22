@@ -30,7 +30,6 @@ distribution.
 
 #include "Export.h"
 #include "MiscUtils.h"
-#include "Pragma.h"
 
 namespace DFHack
 {

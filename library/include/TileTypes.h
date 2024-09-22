@@ -24,7 +24,6 @@ distribution.
 
 #pragma once
 
-#include "Pragma.h"
 #include "Export.h"
 #include "DataDefs.h"
 

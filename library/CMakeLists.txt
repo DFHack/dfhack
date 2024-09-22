@@ -69,12 +69,10 @@ set(MAIN_HEADERS
     include/Memory.h
     include/MiscUtils.h
     include/Module.h
-    include/Pragma.h
     include/MemAccess.h
     include/ModuleFactory.h
     include/PluginManager.h
     include/PluginStatics.h
-    include/Pragma.h
     include/RemoteClient.h
     include/RemoteServer.h
     include/RemoteTools.h

@@ -88,10 +88,26 @@ if(MSVC)
     # see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
     add_compile_options("/wd4503")
 
-    # suppress C4267 - VC++ complains whenever we implicitly convert an integer to
-    # a smaller type, and most of the time this is just conversion from 64 to 32 bits
-    # for things like vector sizes, which are never that big anyway.
+    # suppress C4267 - VC++ considers a narrowing conversion from size_t to a smaller
+    # integer type a warning. this is technically correct but there are so many instances
+    # of this that we don't want to fix, so....
     add_compile_options("/wd4267")
+
+    # suppress C4251 - VC++ will warn when exporting an entire class which contains members
+    # referencing unexported compound types as this is potentially unsafe. because we don't
+    # guarantee a stable ABI for exports, we don't really care about this, and so we choose to
+    # be lazy and continue to export entire classes instead of exporting on a method-by-method basis
+    add_compile_options("/wd4251")
+
+    # suppress C4068 - VC++ will warn for unknown pragmas by default. this is equivalent to gcc
+    # -Wno-unknown-pragmas (which is enabled for gcc below).
+    # we could work around this with sufficiently complex macros
+    add_compile_options("/wd4068")
+
+    # suppress C4244 - VC++ warns by default (with /W3) about narrowing conversions that may lose data
+    # (such as double -> int or int32_t -> int16_t). dfhack has many of these, mostly related to Lua
+    # this is equivalent to gcc -Wno_conversions which is the default as gcc -Wall doesn't enable -Wconversions
+    add_compile_options("/wd4244")
 
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
@@ -224,7 +240,7 @@ if(UNIX)
     # default to hidden symbols
     # ensure compatibility with older CPUs
     add_definitions(-DLINUX_BUILD)
-    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags -Wno-unknown-pragmas")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")
     if(DFHACK_BUILD_64)

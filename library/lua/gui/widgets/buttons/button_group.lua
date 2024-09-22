@@ -1,5 +1,5 @@
-local CycleHotkeyLabel = require('gui.widgets.cycle_hotkey_label')
-local Label = require('gui.widgets.label')
+local CycleHotkeyLabel = require('gui.widgets.labels.cycle_hotkey_label')
+local Label = require('gui.widgets.labels.label')
 
 -----------------
 -- ButtonGroup --

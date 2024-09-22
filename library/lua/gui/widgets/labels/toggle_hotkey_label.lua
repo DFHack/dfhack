@@ -1,4 +1,4 @@
-local CycleHotkeyLabel = require('gui.widgets.cycle_hotkey_label')
+local CycleHotkeyLabel = require('gui.widgets.labels.cycle_hotkey_label')
 
 -----------------------
 -- ToggleHotkeyLabel --

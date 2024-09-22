@@ -1,5 +1,5 @@
 local utils = require('utils')
-local Label = require('gui.widgets.label')
+local Label = require('gui.widgets.labels.label')
 
 local getval = utils.getval
 

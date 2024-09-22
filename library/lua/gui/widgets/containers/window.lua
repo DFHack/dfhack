@@ -1,5 +1,5 @@
 local gui = require('gui')
-local Panel = require('gui.widgets.panel')
+local Panel = require('gui.widgets.containers.panel')
 
 ------------
 -- Window --

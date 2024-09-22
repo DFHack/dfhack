@@ -2,8 +2,8 @@ local gui = require('gui')
 local utils = require('utils')
 local Widget = require('gui.widgets.widget')
 local Scrollbar = require('gui.widgets.scrollbar')
-local Label = require('gui.widgets.label')
-local Panel = require('gui.widgets.panel')
+local Label = require('gui.widgets.labels.label')
+local Panel = require('gui.widgets.containers.panel')
 
 local getval = utils.getval
 local to_pen = dfhack.pen.parse

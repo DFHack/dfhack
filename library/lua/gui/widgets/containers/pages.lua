@@ -1,6 +1,6 @@
 local gui = require('gui')
 local utils = require('utils')
-local Panel = require('gui.widgets.panel')
+local Panel = require('gui.widgets.containers.panel')
 
 ---@param view gui.View
 ---@param vis boolean

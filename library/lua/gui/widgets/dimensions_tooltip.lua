@@ -1,6 +1,6 @@
 local gui = require('gui')
-local ResizingPanel = require('gui.widgets.resizing_panel')
-local Panel = require('gui.widgets.panel')
+local ResizingPanel = require('gui.widgets.containers.resizing_panel')
+local Panel = require('gui.widgets.containers.panel')
 
 --------------------------------
 -- DimensionsTooltip

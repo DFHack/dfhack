@@ -1,6 +1,6 @@
 local textures = require('gui.textures')
-local Panel = require('gui.widgets.panel')
-local Label = require('gui.widgets.label')
+local Panel = require('gui.widgets.containers.panel')
+local Label = require('gui.widgets.labels.label')
 
 local to_pen = dfhack.pen.parse
 

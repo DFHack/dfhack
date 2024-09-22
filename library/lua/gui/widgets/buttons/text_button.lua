@@ -1,5 +1,5 @@
-local BannerPanel = require('gui.widgets.banner_panel')
-local HotkeyLabel = require('gui.widgets.hotkey_label')
+local BannerPanel = require('gui.widgets.containers.banner_panel')
+local HotkeyLabel = require('gui.widgets.labels.hotkey_label')
 
 ----------------
 -- TextButton --

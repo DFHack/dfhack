@@ -1,4 +1,4 @@
-local Panel = require('gui.widgets.panel')
+local Panel = require('gui.widgets.containers.panel')
 
 -----------------
 -- BannerPanel --

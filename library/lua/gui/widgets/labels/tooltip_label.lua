@@ -1,4 +1,4 @@
-local WrappedLabel = require('gui.widgets.wrapped_label')
+local WrappedLabel = require('gui.widgets.labels.wrapped_label')
 
 ------------------
 -- TooltipLabel --

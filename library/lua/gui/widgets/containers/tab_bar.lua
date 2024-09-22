@@ -1,5 +1,5 @@
 local Widget = require('gui.widgets.widget')
-local ResizingPanel = require('gui.widgets.resizing_panel')
+local ResizingPanel = require('gui.widgets.containers.resizing_panel')
 
 local to_pen = dfhack.pen.parse
 

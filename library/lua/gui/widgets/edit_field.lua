@@ -1,7 +1,7 @@
 local gui = require('gui')
 local utils = require('utils')
 local Widget = require('gui.widgets.widget')
-local HotkeyLabel = require('gui.widgets.hotkey_label')
+local HotkeyLabel = require('gui.widgets.labels.hotkey_label')
 
 local getval = utils.getval
 

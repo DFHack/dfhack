@@ -213,7 +213,7 @@ static void doMarkForSlaughter(df::unit *unit) {
     unit->flags2.bits.slaughter = 1;
 }
 
-// returns true if a should be butchered before b
+// returns true if b should be butchered before a
 static bool compareKids(df::unit *a, df::unit *b) {
     if (isHighPriority(a) != isHighPriority(b))
         return isHighPriority(b);
@@ -222,7 +222,7 @@ static bool compareKids(df::unit *a, df::unit *b) {
     return Units::getAge(a, true) > Units::getAge(b, true);
 }
 
-// returns true if a should be butchered before b
+// returns true if b should be butchered before a
 static bool compareAdults(df::unit* a, df::unit* b) {
     if (isHighPriority(a) != isHighPriority(b))
         return isHighPriority(b);

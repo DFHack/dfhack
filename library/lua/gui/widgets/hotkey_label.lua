@@ -1,4 +1,7 @@
+local utils = require('utils')
 local Label = require('gui.widgets.label')
+
+local getval = utils.getval
 
 local function is_disabled(token)
     return (token.disabled ~= nil and getval(token.disabled)) or

@@ -2,8 +2,11 @@ local gui = require('gui')
 local utils = require('utils')
 local Widget = require('gui.widgets.widget')
 local Scrollbar = require('gui.widgets.scrollbar')
+local Label = require('gui.widgets.label')
+local Panel = require('gui.widgets.panel')
 
 local getval = utils.getval
+local to_pen = dfhack.pen.parse
 
 ----------
 -- List --
@@ -92,7 +95,7 @@ function List:setChoices(choices, selected)
         else
             l.text = v.text or v.caption or v[1]
         end
-        parse_label_text(l)
+        Label.parse_label_text(l)
         self.choices[i] = l
     end
 
@@ -125,7 +128,7 @@ end
 function List:getContentWidth()
     local width = 0
     for i,v in ipairs(self.choices) do
-        render_text(v)
+        Label.render_text(v)
         local roww = v.text_width
         if v.key then
             roww = roww + 3 + #gui.getKeyDisplay(v.key)
@@ -271,7 +274,7 @@ function List:onRenderBody(dc)
             paint_icon(icon, obj)
         end
 
-        render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current, self.text_hpen, hovered)
+        Label.render_text(obj, dc, iw or 0, y, cur_pen, cur_dpen, not current, self.text_hpen, hovered)
 
         local ip = dc.width
 
@@ -337,7 +340,7 @@ function List:onInput(keys)
             if idx ~= self:getSelected() then
                 self.last_select_click_ms = now_ms
             else
-                if now_ms - self.last_select_click_ms <= DOUBLE_CLICK_MS then
+                if now_ms - self.last_select_click_ms <= Panel.DOUBLE_CLICK_MS then
                     self.last_select_click_ms = 0
                     if self:double_click() then return true end
                 else
@@ -377,7 +380,7 @@ function List:onInput(keys)
 
         local current = self.choices[self.selected]
         if current then
-            return check_text_keys(current, keys)
+            return Label.check_text_keys(current, keys)
         end
     end
 end

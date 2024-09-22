@@ -1,5 +1,6 @@
 local gui = require('gui')
 local utils = require('utils')
+local guidm = require('gui.dwarfmode')
 local Widget = require('gui.widgets.widget')
 
 local getval = utils.getval
@@ -526,5 +527,7 @@ end
 function Panel:onResizeEnd(success, new_frame)
     if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
+
+Panel.DOUBLE_CLICK_MS = DOUBLE_CLICK_MS
 
 return Panel

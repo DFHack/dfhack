@@ -32,8 +32,6 @@ SCROLL_DELAY_MS = 20
 ---@overload fun(init_table: widgets.Scrollbar.attrs.partial): self
 Scrollbar = defclass(Scrollbar, Widget)
 
-Scrollbar.STANDARDSCROLL = STANDARDSCROLL
-
 Scrollbar.ATTRS{
     on_scroll = DEFAULT_NIL,
 }
@@ -266,5 +264,9 @@ function Scrollbar:onInput(keys)
     self.last_scroll_ms = dfhack.getTickCount()
     return true
 end
+
+Scrollbar.STANDARDSCROLL = STANDARDSCROLL
+Scrollbar.SCROLL_INITIAL_DELAY_MS = SCROLL_INITIAL_DELAY_MS
+Scrollbar.SCROLL_DELAY_MS = SCROLL_DELAY_MS
 
 return Scrollbar

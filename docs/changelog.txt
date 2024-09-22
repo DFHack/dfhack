@@ -56,6 +56,8 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
+- `autobutcher`: fix regression in ordering of butcherable animals
 
 ## Misc Improvements
 

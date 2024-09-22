@@ -549,5 +549,7 @@ end
 
 Label.makeButtonLabelText = makeButtonLabelText
 Label.parse_label_text = parse_label_text
+Label.render_text = render_text
+Label.check_text_keys = check_text_keys
 
 return Label

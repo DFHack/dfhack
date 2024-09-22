@@ -1,5 +1,9 @@
 local Label = require('gui.widgets.label')
-local Label = require('gui.widgets.label')
+
+local function is_disabled(token)
+    return (token.disabled ~= nil and getval(token.disabled)) or
+           (token.enabled ~= nil and not getval(token.enabled))
+end
 
 -----------------
 -- HotkeyLabel --

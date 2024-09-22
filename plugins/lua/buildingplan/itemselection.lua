@@ -60,6 +60,12 @@ local function sort_by_quantity(a, b)
             (ad.quantity == bd.quantity and sort_by_type(a, b))
 end
 
+local function sort_by_value(a, b)
+    local ad, bd = a.data, b.data
+    return ad.value > bd.value or
+            (ad.value == bd.value and sort_by_type(a, b))
+end
+
 ItemSelection = defclass(ItemSelection, widgets.Window)
 ItemSelection.ATTRS{
     frame_title='Choose items',
@@ -151,8 +157,9 @@ function ItemSelection:init()
                     label='Sort by:',
                     options={
                         {label='Recently used', value=sort_by_recency},
-                        {label='Name', value=sort_by_name},
                         {label='Amount', value=sort_by_quantity},
+                        {label='Value', value=sort_by_value},
+                        {label='Name', value=sort_by_name},
                     },
                     on_change=self:callback('on_sort'),
                 },
@@ -270,6 +277,7 @@ function ItemSelection:get_choices(sort_fn)
                     item_subtype=item:getSubtype(),
                     quantity=1,
                     quality=item:getQuality(),
+                    value=dfhack.items.getValue(item),
                     selected=0,
                 },
             }
@@ -281,7 +289,8 @@ function ItemSelection:get_choices(sort_fn)
     for desc,choice in pairs(buckets) do
         local data = choice.data
         choice.text = {
-            {width=10, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
+            {width=8, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
+            {width=8, gap=2, text=function() return ('%d\x0F'):format(data.value) end},
             {gap=2, text=desc},
         }
         table.insert(choices, choice)

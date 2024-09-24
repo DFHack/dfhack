@@ -12,19 +12,40 @@
 #include "df/item_toolst.h"
 #include "df/item_trapcompst.h"
 #include <cmath>
+#include <modules/Random.h>
+
+
+static Random::MersenneRNG rng;
+static bool init_rng = true;
+
+static float get_random() {
+    if (init_rng) {
+        rng.init();
+        init_rng = false;
+    }
+    return static_cast <float> (rng.drandom1());
+}
 
 static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t base_material_size, float production_stack_size) {
+    const float melt_return_per_material_size = 0.3f, base_melt_recovery = 0.95f, loss_per_wear_level = 0.1f;
 
     if (item->mat_type == 0) // INORGANIC only
     {
-        const float melt_return_per_material_size = 0.3f;
+        float calculated_size;
+
         auto inorganic = df::inorganic_raw::find(item->mat_index);
         if (inorganic && inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL)){
-            return static_cast<int32_t>(std::round(static_cast<float>(base_material_size) / production_stack_size / melt_return_per_material_size));
-            // get size for melting to minimize diff between forging cost and melting return, for adamantine forging cost == base_material_size, divided by amount of items created in batch
+            calculated_size =static_cast<float>(base_material_size) / production_stack_size / melt_return_per_material_size;
+            // get size for melting, for adamantine forging cost == base_material_size, divided by amount of items created in batch
         }
-            return static_cast<int32_t>(std::round(std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f) / production_stack_size / melt_return_per_material_size));
+        else {
+            calculated_size = std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f) / production_stack_size / melt_return_per_material_size;
             // (std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f) / production_stack_size) - forging cost for non adamantine item
+        }
+        float melt_recovery = base_melt_recovery - static_cast<float>(item->wear) * loss_per_wear_level;
+        calculated_size = calculated_size * melt_recovery;
+        int32_t random_part = ((modf(calculated_size, &calculated_size) > get_random()) ? 1 : 0);
+        return  static_cast<int32_t>(calculated_size) + random_part;
     }
     return base_material_size;
 }

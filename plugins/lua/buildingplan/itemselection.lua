@@ -4,6 +4,7 @@ local gui = require('gui')
 local pens = require('plugins.buildingplan.pens')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local caravan = reqscript('internal/caravan/common')
 
 local uibs = df.global.buildreq
 local to_pen = dfhack.pen.parse
@@ -263,8 +264,10 @@ function ItemSelection:get_choices(sort_fn)
         local item = df.item.find(item_id)
         if not item then goto continue end
         local desc = get_item_description(item_id, item)
-        if buckets[desc] then
-            local bucket = buckets[desc]
+        local value = dfhack.items.getValue(item)
+        local key = desc .. "_" .. tostring(value)
+        if buckets[key] then
+            local bucket = buckets[key]
             table.insert(bucket.data.item_ids, item_id)
             bucket.data.quantity = bucket.data.quantity + 1
         else
@@ -272,26 +275,28 @@ function ItemSelection:get_choices(sort_fn)
                 search_key=make_search_key(desc),
                 icon=self:callback('get_entry_icon', item_id),
                 data={
+                    desc=desc,
                     item_ids={item_id},
                     item_type=item:getType(),
                     item_subtype=item:getSubtype(),
                     quantity=1,
                     quality=item:getQuality(),
-                    value=dfhack.items.getValue(item),
+                    value=value,
                     selected=0,
                 },
             }
-            buckets[desc] = entry
+            buckets[key] = entry
         end
         ::continue::
     end
     local choices = {}
-    for desc,choice in pairs(buckets) do
+    for key,choice in pairs(buckets) do
         local data = choice.data
+        local obfuscated_value = caravan.obfuscate_value(data.value)
         choice.text = {
             {width=8, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
-            {width=8, gap=2, text=function() return ('%d\x0F'):format(data.value) end},
-            {gap=2, text=desc},
+            {width=9, gap=2, text=function() return ('%d%s'):format(obfuscated_value, caravan.CH_MONEY) end},
+            {gap=2, text=data.desc},
         }
         table.insert(choices, choice)
     end

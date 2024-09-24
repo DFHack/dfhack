@@ -1643,7 +1643,7 @@ Units module
 
   Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
   generally use this method instead of reading *unit.pos* directly since
-  that field can be inaccurate when the unit is caged.
+  that field can be inaccurate when the unit is caged, off map, or dead.
 
 * ``dfhack.units.teleport(unit, pos)``
 

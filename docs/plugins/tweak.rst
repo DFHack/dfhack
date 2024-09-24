@@ -53,6 +53,17 @@ Commands
     Names filled waterskins, flasks, and vials according to their contents,
     the same way other containers such as barrels, bins, and cages are named.
     (:bug:`4914`)
+``material-size-for-melting``
+    Changes how item size for melting is calculated. Affects weapons, shields,
+    armor parts, tools, trap components including items made from adamantine.
+    As result base return for melting is equal to 95% of production cost.
+    Each level of wear decreases melt return by further 10%.
+    Limitation of melting return being handled by game in 0,3 bar increments is
+    solved by adding random component to material size. E.g. for cap with item
+    size 1 melting return will be equal to 0,9 bar base return with 16,(6)%
+    chance for additional 0,3 bar. As result average return for melting cap
+    will be ~0,95 bar.
+    (:bug:`6027`).
 ``named-codices``
     Displays titles for books instead of the default material description.
 ``partial-items``

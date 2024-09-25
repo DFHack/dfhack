@@ -14,15 +14,8 @@
 #include <cmath>
 #include <modules/Random.h>
 
-
 static Random::MersenneRNG rng;
-static bool init_rng = true;
-
 static float get_random() {
-    if (init_rng) {
-        rng.init();
-        init_rng = false;
-    }
     return static_cast <float> (rng.drandom1());
 }
 

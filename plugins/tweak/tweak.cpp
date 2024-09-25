@@ -75,7 +75,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
     TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
-
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_armor_hook, getMaterialSizeForMelting);
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_gloves_hook, getMaterialSizeForMelting);
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_shoes_hook, getMaterialSizeForMelting);
@@ -84,6 +83,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_weapon_hook, getMaterialSizeForMelting);
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_trapcomp_hook, getMaterialSizeForMelting);
     TWEAK_HOOK("material-size-for-melting", material_size_for_melting_tool_hook, getMaterialSizeForMelting);
+    rng.init();
 
     return CR_OK;
 }

@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `autobutcher`: added nestboxes lua script giving more control how fertile eggs should be protected, with possibility to adjust configuration per race
 
 ## Documentation
 
@@ -66,6 +67,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
+- `nestboxes`: replaced by lua script and merged into `autobutcher`
 
 # 50.14-r1
 

@@ -9,9 +9,13 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/army.h"
+#include "df/army_controller.h"
 #include "df/building_civzonest.h"
 #include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
 #include "df/histfig_hf_link.h"
+#include "df/state_profilest.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -404,6 +408,15 @@ static void scrub_reservations(color_ostream &out) {
         pending_reassignment.erase(hfid);
 }
 
+static bool was_expelled(df::historical_figure *hf) {
+    if (!hf || !hf->info || !hf->info->whereabouts)
+        return false;
+    auto army = df::army::find(hf->info->whereabouts->army_id);
+    if (!army || !army->controller)
+        return false;
+    return army->controller->goal == df::army_controller_goal_type::MOVE_TO_SITE;
+}
+
 // handles when units disappear from their assignments compared to the last scan
 static void handle_missing_assignments(color_ostream &out,
     const unordered_set<int32_t> & active_unit_ids,
@@ -421,6 +434,10 @@ static void handle_missing_assignments(color_ostream &out,
         int32_t hfid = it->second.first;
         int32_t spouse_hfid = it->second.second;
         auto hf = df::historical_figure::find(hfid);
+        if (!hf) {
+            // if the historical figure was culled, bail
+            continue;
+        }
         auto unit = df::unit::find(hf->unit_id);
         if (!unit) {
             // if unit data is completely gone, then they're not likely to come back
@@ -430,8 +447,14 @@ static void handle_missing_assignments(color_ostream &out,
             // unit is still alive on the map; assume the unassigment was intentional/expected
             continue;
         }
-        if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true))
+        if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true)) {
+            // ignore units that are not members of the fort
             continue;
+        }
+        if (was_expelled(hf)) {
+            // ignore expelled units
+            continue;
+        }
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;

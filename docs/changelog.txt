@@ -70,6 +70,26 @@ Template for new versions:
 
 ## Removed
 
+# 50.14-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
+- `autobutcher`: fix regression in ordering of butcherable animals
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 50.13-r5
 
 ## New Tools

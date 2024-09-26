@@ -17,10 +17,10 @@ using namespace DFHack;
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/flask-contents.h"
+#include "tweaks/material-size-for-melting.h"
 #include "tweaks/named-codices.h"
 #include "tweaks/partial-items.h"
 #include "tweaks/reaction-gloves.h"
-#include "tweaks/material-size-for-melting.h"
 
 class tweak_onupdate_hookst {
 public:

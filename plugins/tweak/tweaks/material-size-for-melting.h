@@ -1,18 +1,19 @@
+#include <cmath>
+
 #include "modules/Materials.h"
+#include "modules/Random.h"
 
 #include "df/inorganic_raw.h"
-#include "df/item_constructed.h"
 #include "df/item_armorst.h"
+#include "df/item_constructed.h"
 #include "df/item_glovesst.h"
 #include "df/item_helmst.h"
-#include "df/item_shoesst.h"
 #include "df/item_pantsst.h"
-#include "df/item_weaponst.h"
 #include "df/item_shieldst.h"
+#include "df/item_shoesst.h"
 #include "df/item_toolst.h"
 #include "df/item_trapcompst.h"
-#include <cmath>
-#include <modules/Random.h>
+#include "df/item_weaponst.h"
 
 static Random::MersenneRNG rng;
 static float get_random() {

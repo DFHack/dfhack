@@ -38,7 +38,7 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
         }
         float melt_recovery = base_melt_recovery - static_cast<float>(item->wear) * loss_per_wear_level;
         calculated_size = calculated_size * melt_recovery;
-        int32_t random_part = ((modf(calculated_size, &calculated_size) > get_random()) ? 1 : 0);
+        int32_t random_part = ((modff(calculated_size, &calculated_size) > get_random()) ? 1 : 0);
         return  static_cast<int32_t>(calculated_size) + random_part;
     }
     return base_material_size;

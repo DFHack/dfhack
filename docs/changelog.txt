@@ -56,6 +56,9 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Units::isActive``: return false for units off map
 
 ## Misc Improvements
 
@@ -76,9 +79,6 @@ Template for new versions:
 ## Fixes
 - `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
 - `autobutcher`: fix regression in ordering of butcherable animals
-- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
-- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
-- ``Units::isActive``: return false for units off map
 
 ## Misc Improvements
 

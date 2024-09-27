@@ -25,19 +25,22 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
 
     if (item->mat_type == 0) // INORGANIC only
     {
-        float calculated_size;
+        float calculated_size, forging_cost_per_item;
 
         auto inorganic = df::inorganic_raw::find(item->mat_index);
         if (inorganic && inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL)){
-            calculated_size =static_cast<float>(base_material_size) / production_stack_size / melt_return_per_material_size;
-            // get size for melting, for adamantine forging cost == base_material_size, divided by amount of items created in batch
+            //adamantine items
+            forging_cost_per_item = static_cast<float>(base_material_size) / production_stack_size;
+            calculated_size = forging_cost_per_item / melt_return_per_material_size;
         }
         else {
-            calculated_size = std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f) / production_stack_size / melt_return_per_material_size;
-            // (std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f) / production_stack_size) - forging cost for non adamantine item
+            // non adamantine items
+            forging_cost_per_item = std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f);
+            forging_cost_per_item /= production_stack_size;
+            calculated_size = forging_cost_per_item / melt_return_per_material_size;
         }
         float melt_recovery = base_melt_recovery - static_cast<float>(item->wear) * loss_per_wear_level;
-        calculated_size = calculated_size * melt_recovery;
+        calculated_size *= melt_recovery;
         int32_t random_part = ((modff(calculated_size, &calculated_size) > get_random()) ? 1 : 0);
         return  static_cast<int32_t>(calculated_size) + random_part;
     }

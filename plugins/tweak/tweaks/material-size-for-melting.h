@@ -31,14 +31,13 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
         if (inorganic && inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL)){
             //adamantine items
             forging_cost_per_item = static_cast<float>(base_material_size) / production_stack_size;
-            calculated_size = forging_cost_per_item / melt_return_per_material_size;
         }
         else {
             // non adamantine items
             forging_cost_per_item = std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f);
             forging_cost_per_item /= production_stack_size;
-            calculated_size = forging_cost_per_item / melt_return_per_material_size;
         }
+        calculated_size = forging_cost_per_item / melt_return_per_material_size;
         float melt_recovery = base_melt_recovery - static_cast<float>(item->wear) * loss_per_wear_level;
         calculated_size *= melt_recovery;
         int32_t random_part = ((modff(calculated_size, &calculated_size) > get_random()) ? 1 : 0);

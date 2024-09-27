@@ -988,14 +988,20 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
+    elseif keys.CUSTOM_DELETE then
+        local old = self.text
+        local del_pos = self.cursor
+        if del_pos <= #old then
+            self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1), del_pos)
+        end
+        return true
     elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
             -- handle backspace
             local del_pos = self.cursor - 1
             if del_pos > 0 then
-                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
-                             del_pos)
+                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1), del_pos)
             end
         else
             local cv = string.char(keys._STRING)
@@ -1009,23 +1015,22 @@ function EditField:onInput(keys)
     elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
         return true
-    elseif keys.CUSTOM_CTRL_B then -- back one word
+    elseif keys.CUSTOM_CTRL_LEFT then -- back one word
         local _, prev_word_end = self.text:sub(1, self.cursor-1):
                                                find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    -- commented out until we get HOME key support from DF
-    -- elseif keys.CUSTOM_CTRL_A then -- home
-    --     self:setCursor(1)
-    --     return true
+    elseif keys.CUSTOM_HOME then
+        self:setCursor(1)
+        return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
-    elseif keys.CUSTOM_CTRL_F then -- forward one word
+    elseif keys.CUSTOM_CTRL_RIGHT then -- forward one word
         local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
         self:setCursor(next_word_start)
         return true
-    elseif keys.CUSTOM_CTRL_E then -- end
+    elseif keys.CUSTOM_END then
         self:setCursor()
         return true
     elseif keys.CUSTOM_CTRL_C then

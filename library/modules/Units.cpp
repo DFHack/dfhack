@@ -935,7 +935,7 @@ void Units::makeown(df::unit *unit) {
 }
 
 // functionality reverse-engineered from DF's unitst::set_goal
-void Units::setGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
+void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 {
     if (unit->path.dest != pos || unit->path.goal != goal)
     {

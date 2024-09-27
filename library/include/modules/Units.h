@@ -240,7 +240,7 @@ DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
 DFHACK_EXPORT void makeown(df::unit *unit);
 
 // Set the units target location and goal, clearing any existing goal or path
-DFHACK_EXPORT void setGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal);
+DFHACK_EXPORT void setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal);
 
 /// Create new unit and add to all units vector (but not active). No HF, nemesis, pos,
 /// labors, or group associations. Will have race, caste, name, soul, body, and mind.

@@ -5479,9 +5479,9 @@ The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
-- Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
-- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+- Left/Right arrow: move the cursor one character to the left or right
+- Ctrl-Left/Ctrl-Right: move the cursor one word back or forward
+- Home/End: move the cursor to the beginning/end of the text
 
 The widget also supports integration with the system clipboard:
 

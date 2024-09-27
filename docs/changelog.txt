@@ -56,7 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- Compatibility with updated Classic and Itch builds
 
 ## Misc Improvements
 

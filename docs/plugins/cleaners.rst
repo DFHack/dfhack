@@ -105,8 +105,8 @@ Options
     cleans contaminants *off* of items.
 ``-g``, ``--grass``
     Remove unused (entirely depleted) grass events from map blocks. DF will
-    create a grass events for each type of grass that grows in a block, but
-    doesn't remove them if you pave over everything, or the grass got
+    create a grass event for each type of grass that grows in a block, but
+    doesn't remove them if you pave over the block or if the grass got
     depleted and entirely replaced with a different type. Could possibly
     improve FPS if you had a ton of unused grass events everywhere (a likely
     outcome of using ``regrass --new``). Requires ``--map`` option to be

@@ -78,7 +78,10 @@ Options
 ``-n``, ``--new``
     Adds all biome-compatible grass types that were not originally present in
     the map block. Allows regrass to work in blocks that never had any grass to
-    begin with. Will still fail in incompatible biomes.
+    begin with. Will still fail in incompatible biomes. This can add an excessive
+    amount of grass events to your map, so it may be desirable to run
+    ``clean --map --grass --only`` (see: `cleaners`) to clean up any unused events
+    afterwards.
 ``-f``, ``--force``
     Force a grass type on tiles with no compatible grass types. Unsets the
     ``no_grow`` flag on all tiles. The ``--new`` option takes precedence for

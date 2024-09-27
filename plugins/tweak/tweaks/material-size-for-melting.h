@@ -44,78 +44,20 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
     return base_material_size;
 }
 
-static int32_t get_material_size_for_melting(df::item_constructed* item, int32_t base_size) {
-    return get_material_size_for_melting(item, base_size, 1.0f);
-}
+#define DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(TYPE, PRODUCTION_STACK_SIZE) \
+struct material_size_for_melting_##TYPE##_hook : df::item_##TYPE##st {\
+    typedef df::item_##TYPE##st interpose_base;\
+    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {\
+        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)(),PRODUCTION_STACK_SIZE);\
+    }\
+};\
+IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_##TYPE##_hook, getMaterialSizeForMelting);
 
-struct material_size_for_melting_armor_hook : df::item_armorst {
-    typedef df::item_armorst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_armor_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_gloves_hook : df::item_glovesst {
-    typedef df::item_glovesst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)(), 2.0f);
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_gloves_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_shoes_hook : df::item_shoesst {
-    typedef df::item_shoesst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)(), 2.0f);
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_shoes_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_helm_hook : df::item_helmst {
-    typedef df::item_helmst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_helm_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_pants_hook : df::item_pantsst {
-    typedef df::item_pantsst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_pants_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_weapon_hook : df::item_weaponst {
-    typedef df::item_weaponst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_weapon_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_trapcomp_hook : df::item_trapcompst {
-    typedef df::item_trapcompst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_trapcomp_hook, getMaterialSizeForMelting);
-
-struct material_size_for_melting_tool_hook : df::item_toolst {
-    typedef df::item_toolst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(int32_t, getMaterialSizeForMelting, ()) {
-        return get_material_size_for_melting(this, INTERPOSE_NEXT(getMaterialSizeForMelting)());
-    }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(material_size_for_melting_tool_hook, getMaterialSizeForMelting);
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(armor, 1.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(gloves, 2.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(shoes, 2.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(helm, 1.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(pants, 1.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(weapon, 1.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(trapcomp, 1.0f)
+DEFINE_MATERIAL_SIZE_FOR_MELTING_TWEAK(tool, 1.0f)

@@ -19,7 +19,9 @@ This tool mitigates both issues. It records when units leave the map and
 reserves their assigned bedrooms, offices, etc. for them. The zones will be
 disabled in their absence (so other units don't steal them), and will be
 re-enabled and reassigned to them when they appear back on the map. If they die
-away from the fort, the zone will become unreserved and available for reuse.
+away from the fort, the zone will become unreserved and available for reuse. If
+they are captured and held prisoner, their room will continue to be reserved in
+their name in the (optimistic) hope of their safe return.
 
 When you click on an assignable zone, you will also now have the option to
 associate the room with a noble or administrative role. The room will be

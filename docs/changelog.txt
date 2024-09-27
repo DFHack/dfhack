@@ -52,9 +52,45 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `preserve-rooms`: manage room assignments for off-map units and noble roles. reserves rooms owned by traveling units and reinstates their ownership when they return to the site. also allows you to assign rooms to noble/administrator roles, and the rooms will be automatically assigned whenever the holder of the role changes
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.14-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
+- `autobutcher`: fix regression in ordering of butcherable animals
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.13-r5
+
+## New Tools
+- `preserve-rooms`: manage room assignments for off-map units and noble roles. reserves rooms owned by traveling units and reinstates their ownership when they return to the site. also allows you to assign rooms to noble/administrator roles, and the rooms will be automatically assigned whenever the holder of the role changes
 
 ## Fixes
 - prevent hang when buildings in zones are destroyed in the case where the buildings were not added to the zone in the same order that they were created (uncommon)
@@ -67,7 +103,7 @@ Template for new versions:
 - `strangemood`: manually-triggered Macabre moods will now correctly request up to 3 bones/remains for the primary component instead of only 1
 - `regrass`: no longer add all compatible grass types when using ``--force`` without ``--new``
 - `regrass`: ``--mud`` now converts muddy slade to grass, consistent with normal DF behavior
-- `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water
+- `gui/pathable`: fix hang when showing trade depot wagon access and a trade depot is submerged under water or magma
 - `gui/pathable`: fix representation of wagon paths over stairs and through doors
 - DFHack state for a site is now properly saved when retiring a fort
 - `gui/teleport`: fix issue when teleporting units that are not prone, resulting in later issues with phantom "cannot build here: unit blocking tile" messages
@@ -84,6 +120,8 @@ Template for new versions:
 
 ## Documentation
 - add documentation for ``dfhack.items.findType(string)`` and ``dfhack.items.findSubtype(string)``
+- `modding-guide`: added examples for reading and writing various types of persistent storage
+- `modding-guide`: updated all code snippets for greater clarity
 
 ## API
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks

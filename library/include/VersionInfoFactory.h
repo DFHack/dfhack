@@ -27,7 +27,6 @@ distribution.
 
 #include <memory>
 
-#include "Pragma.h"
 #include "Export.h"
 
 class TiXmlElement;

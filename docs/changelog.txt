@@ -69,6 +69,11 @@ Template for new versions:
 
 # 50.14-r1
 
+# Fixes
+- Compatibility with updated Classic and Itch builds
+
+# 50.14-r1
+
 ## New Tools
 
 ## New Features

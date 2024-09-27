@@ -67,7 +67,7 @@ Template for new versions:
 
 ## Removed
 
-# 50.14-r1
+# 50.14-r1.1
 
 # Fixes
 - Compatibility with updated Classic and Itch builds

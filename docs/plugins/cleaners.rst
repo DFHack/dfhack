@@ -91,12 +91,12 @@ Options
 -------
 
 ``-a``, ``--all``
-    Equivalent to ``--map --units --items --plants``.
+    Equivalent to ``--map --units --items``.
 ``-m``, ``--map``
     Clean selected map tiles. Cleans most spatter by default, but not mud,
     snow, or item spatter.
 ``-d``, ``--mud``
-    Also remove mud from map tiles.
+    Also remove mud from map tiles. Excludes mud required for farm plots.
 ``-s``, ``--snow``
     Also remove snow coverings from map tiles.
 ``-t``, ``--item``
@@ -106,7 +106,7 @@ Options
 ``-g``, ``--grass``
     Remove unused (entirely depleted) grass events from map blocks. DF will
     create a grass events for each type of grass that grows in a block, but
-    doesn't remove them if you were to pave over everything, or they got
+    doesn't remove them if you pave over everything, or the grass got
     depleted and entirely replaced with a different type. Could possibly
     improve FPS if you had a ton of unused grass events everywhere (a likely
     outcome of using ``regrass --new``). Requires ``--map`` option to be
@@ -122,7 +122,7 @@ Options
     ``--snow``, ``--item``, or ``--grass``.
 ``-u``, ``--units``
     Clean all contaminants off of units in the selected area. Not affected by
-    map options that specify spatter types (e.g., snow). They will always be
+    map options that specify spatter types (e.g., snow). Units will always be
     completely cleaned.
 ``-i``, ``--items``
     Clean all contaminants off of items in the selected area (including those

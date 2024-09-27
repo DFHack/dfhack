@@ -9,9 +9,9 @@ This command can refresh the grass (and subterranean moss) growing on your map.
 Operates on floors, stairs, and ramps. Also works underneath shrubs, saplings,
 and tree trunks. Ignores furrowed soil and wet sand (beaches).
 
-The `cleaners` tool can help remove grass if you messed up and suddenly there's
-staring eyeballs all over your fort. `gui/tiletypes` can then be used to
-change the soil back to stone.
+The `cleaners` tool can help remove grass if you messed up and suddenly there
+are staring eyeballs growing all over your fort. `gui/tiletypes` can then be used
+to change the soil back to stone.
 
 Usage
 -----

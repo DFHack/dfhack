@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
 
 ## Fixes
 
@@ -61,6 +62,8 @@ Template for new versions:
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key
 - DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
 - DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End
+- Quickfort blueprint library: ``aquifer_tap`` blueprint walkthough rewritten for clarity
+- Quickfort blueprint library: ``aquifer_tap`` blueprint now designated at priority 3 and marks the stairway tile below the tap in "blueprint" mode to prevent drips while the drainage pipe is being prepared
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 - `autobutcher`: added nestboxes lua script giving more control how fertile eggs should be protected, with possibility to adjust configuration per race
 

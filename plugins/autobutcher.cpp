@@ -993,8 +993,14 @@ static int autobutcher_getInfoForNestboxes(lua_State* L) {
             w = watched_races[raceId];
             WatchedRace* tally = checkRaceStocksTotal(*out, raceId);
             Lua::SetField(L, w->isWatched, ctable, "watched");
-            int mac = getMax(w->fk - tally->fk_units.size(), 0) + getMax(w->mk - tally->mk_units.size(), 0) + getMax(w->fa - tally->fa_units.size(), 0) + getMax(w->ma - tally->ma_units.size(), 0);
-            Lua::SetField(L, mac, ctable, "mac");    // missing animals count for race, diff between target for child/adult female/male and current amounts, ignore amounts over target
+            // missing animals count for race,
+            // diff between target for child/adult female/male and current amounts,
+            // ignore amounts over target
+            int mac = getMax(w->fk - tally->fk_units.size(), 0);
+            mac += getMax(w->mk - tally->mk_units.size(), 0);
+            mac += getMax(w->fa - tally->fa_units.size(), 0);
+            mac += getMax(w->ma - tally->ma_units.size(), 0);
+            Lua::SetField(L, mac, ctable, "mac");
             delete tally;
         }
     }

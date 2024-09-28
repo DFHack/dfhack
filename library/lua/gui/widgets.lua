@@ -23,7 +23,7 @@ ButtonGroup = require('gui.widgets.buttons.button_group')
 ToggleHotkeyLabel = require('gui.widgets.labels.toggle_hotkey_label')
 List = require('gui.widgets.list')
 FilteredList = require('gui.widgets.filtered_list')
-TabBar = require('gui.widgets.containers.tab_bar')
+TabBar = require('gui.widgets.tab_bar')
 RangeSlider = require('gui.widgets.range_slider')
 DimensionsTooltip = require('gui.widgets.dimensions_tooltip')
 

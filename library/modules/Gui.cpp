@@ -258,7 +258,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(world)
 }
 
 static bool widget_is_visible(df::widget * w) {
-    return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
+    return w && w->flag.bits.WIDGET_VISIBILITY_VISIBLE;
 }
 
 static size_t get_num_children(df::widget * w) {
@@ -700,7 +700,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/ImageCreator";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.unit_selector.visibility_flags.bits.WIDGET_VISIBILITY_ACTIVE) {
+    if (game->main_interface.unit_selector.flag.bits.WIDGET_VISIBILITY_ACTIVE) {
         newFocusString = baseFocus;
         newFocusString += "/UnitSelector/";
         newFocusString += enum_item_key(game->main_interface.unit_selector.context);

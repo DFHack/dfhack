@@ -56,10 +56,11 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
-- `autobutcher`: fix regression in ordering of butcherable animals
 
 ## Misc Improvements
+- DFHack text edit fields now delete the character at the cursor when you hit the Delete key
+- DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
+- DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End
 
 ## Documentation
 
@@ -68,6 +69,12 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 50.14-r1
+
+## Fixes
+- `preserve-rooms`: don't reserve a room for citizens that you expel from the fort
+- `autobutcher`: fix regression in ordering of butcherable animals
 
 # 50.13-r5
 

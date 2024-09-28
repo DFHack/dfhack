@@ -29,9 +29,6 @@ DimensionsTooltip = require('gui.widgets.dimensions_tooltip')
 
 Tab = TabBar.Tab
 makeButtonLabelText = Label.makeButtonLabelText
-parse_label_text = Label.parse_label_text
-render_text = Label.render_text
-check_text_keys = Label.check_text_keys
 
 DOUBLE_CLICK_MS = Panel.DOUBLE_CLICK_MS
 STANDARDSCROLL = Scrollbar.STANDARDSCROLL

@@ -1703,6 +1703,11 @@ Units module
   ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
   in question.
 
+* ``dfhack.units.setPathGoal(unit, pos, goal)``
+
+  Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
+  unit. In case of a change, also clears the unit's current path.
+
 * ``dfhack.units.create(race, caste)``
 
   Creates a new unit from scratch. The unit will be added to the
@@ -5479,9 +5484,9 @@ The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
-- Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
-- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+- Left/Right arrow: move the cursor one character to the left or right
+- Ctrl-Left/Ctrl-Right: move the cursor one word back or forward
+- Home/End: move the cursor to the beginning/end of the text
 
 The widget also supports integration with the system clipboard:
 

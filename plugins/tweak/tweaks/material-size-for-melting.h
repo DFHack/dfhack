@@ -30,7 +30,7 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
 
     if (item->mat_type != 0) // bail if not INORGANIC
         return base_material_size;
-        
+
     float forging_cost_per_item;
     if (auto inorganic = df::inorganic_raw::find(item->mat_index);
         inorganic && inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL))
@@ -42,7 +42,7 @@ static int32_t get_material_size_for_melting(df::item_constructed *item, int32_t
         forging_cost_per_item = std::max(std::floor(static_cast<float>(base_material_size) / 3.0f), 1.0f);
         forging_cost_per_item /= production_stack_size;
     }
-    
+
     float calculated_size = forging_cost_per_item / melt_return_per_material_size;
     float melt_recovery = base_melt_recovery - static_cast<float>(item->wear) * loss_per_wear_level;
     calculated_size *= melt_recovery;

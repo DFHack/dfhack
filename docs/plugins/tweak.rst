@@ -64,8 +64,8 @@ Commands
     producing an additional 0.3 of a bar. Over time, the average return for melting
     these types of caps will be ~0.95 of a bar. Calculations for melting return are
     done for items with base game production cost. Melting return might not be
-    calculated correctly for modded items or created in custom reactions not
-    respecting vanilla production costs. (:bug:`6027`)
+    calculated correctly for modded items or items created in custom reactions
+    that don't respect vanilla production costs. (:bug:`6027`)
 ``named-codices``
     Displays titles for books instead of the default material description.
 ``partial-items``

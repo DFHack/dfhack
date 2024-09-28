@@ -66,7 +66,11 @@ Template for new versions:
 
 ## API
 
+- ``DFHack::Units``: new function ``setPathGoal``
+
 ## Lua
+
+- ``dfhack.units``: new function ``setPathGoal``
 
 ## Removed
 
@@ -113,7 +117,6 @@ Template for new versions:
 - ``Units``: new ``isWildlife`` and ``isAgitated`` property checks
 - ``Items::createItem``: removed ``growth_print`` parameter; now determined automatically
 - ``DFHack::cuboid``: ``cuboid::clampMap`` now returns the cuboid itself (instead of boolean) to allow method chaining; call ``cuboid::isValid`` to determine success
-- ``DFHack::Units``: new function ``setPathGoal``
 
 ## Lua
 - ``dfhack.units``: ``isWildlife`` and ``isAgitated`` property checks

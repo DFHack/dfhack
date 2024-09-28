@@ -7,19 +7,20 @@ Here's the procedure:
 ""
 2) Dig a one-tile-wide tunnel from where you want the water to end up (e.g. your well cistern) to an area on the same z-level directly below the target light aquifer. Dig a one-tile-wide diagonal segment in this tunnel near the cistern side so water that will eventually flow through the tunnel is depressurized.
 ""
-"3) From the end of that tunnel, go down one z-level, enable damp dig mode in the dig toolbar, then dig a staircase straight up so that the top is in the lowest aquifer level (a tile with a two-drop icon). Change the top staircase tile (the down-only stairs) to a ""blueprint"" tile (default hotkey: m-L) so your miners don't dig it yet."
+"3) Pause the game. From the end of that tunnel, go down one z-level, enable damp dig mode in the dig toolbar, then designate for digging a staircase straight up so that the top is in the lowest aquifer level (a tile with a two-drop icon). If you only have one layer of aquifer, you should end the staircase one level below the aquifer so when we dig the tap, it will extend up into the aquifer level. Your tunnel should connect to the staircase one z-level above the bottom of the staircase."
 ""
-"4) From the bottom of the staircase (the z-level below where the water will flow to your cisterns), dig a straight, one-tile wide tunnel to the closest edge of the map. This is your emergency drainage tunnel. Smooth the map edge tile and carve a fortification. The water can flow through the fortification and off the map, allowing the dwarves to dig out the aquifer tap without drowning."
+"4) Apply this blueprint (gui/quickfort aquifer_tap /dig) to the z-level at the top of the staircase. The tiles will be designated in ""damp dig"" mode so your miners can dig it out without the damp tiles canceling the digging designations. This blueprint designates ramps for digging so two layers of aquifer can contribute to the water collector. It also changes the staircase tile below the tap to a ""blueprint"" tile so your miners don't dig the tap before your drainage tunnel is ready."
 ""
-5) Place a lever-controlled floodgate in the drainage tunnel and open the floodgate. Place the lever somewhere else in your fort so that it will remain dry and accessible.
+"5) You can now unpause the game. From the bottom of the staircase (the z-level below where the water will flow to your cisterns), dig a straight, one-tile wide tunnel to the closest edge of the map. This is your emergency drainage tunnel. Smooth the map edge tile and carve a fortification. The water can flow through the fortification and off the map, allowing the dwarves to dig out the aquifer tap without drowning."
 ""
-"6) If you want, haul away any boulders in the tunnels and/or smooth the tiles (e.g. mark them for dumping -- hotkey i-p -- and wait for them to be dumped). You won't be able to access any of this area once it fills up with water!"
+6) Place a lever-controlled floodgate in the drainage tunnel and open the floodgate. Place the lever somewhere else in your fort so that it will remain dry and accessible.
 ""
-"7) Apply this blueprint (gui/quickfort aquifer_tap /dig) to the z-level above the top of the staircase, inside the lowest aquifer level. The tiles will be designated in ""damp dig"" mode so your miners can dig it out without the damp tiles canceling the digging designations. This blueprint designates ramps for digging so two layers of aquifer can contribute to the water collector."
+"7) If you want, haul away any boulders in the tunnels and/or smooth the tiles (e.g. mark them for dumping -- hotkey i-p -- and wait for them to be dumped). Enable prioritize in gui/control-panel to focus dwarves on dumping tasks and make it go faster. You won't be able to access any of this area once it fills up with water!"
 ""
-"8) Dig out the tap. You can haul away any boulders and remove the ramps if you like. The water will safely flow down the staircase, through the open floodgate, down the drainage tunnel, and off the map as long as the floodgate is open."
+"8) Convert the ""blueprint"" stairway tile to a regular up/down stair dig designation to allow your miners to dig out the tap. You can haul away any boulders and remove the ramps if you like. There is no rush. The water will safely flow down the staircase, through the open floodgate, down the drainage tunnel, and off the map as long as the floodgate is open."
+"8b) Sometimes, DF gets into a bad state with mining designations and miners will refuse to dig the stairway tile. If this happens to you, enter mining mode, enable the keyboard cursor if it's not already enabled (hotkey: Alt-k), highlight the undug stair designation, and run dig-now here in gui/launcher. You might also have to do this for the down stair designation in the center of the aquifer tap. Your miners should be able to handle the rest without assistance."
 
-"9) Once everything is dug out and all dwarves are out of the waterways, close the floodgate. Your cisterns will fill with water. Since the waterway to your cisterns is depressurized, the cisterns will stay forever full, but will not flood."
+"9) Once everything is dug out and all dwarves are out of the waterways, close the floodgate. Your cisterns will fill with water. Since the waterway to your cisterns is depressurized (due to the diagonal tunnel you dug), the cisterns will stay forever full, but will not flood."
 ""
 A diagram might be useful. Here is a vertical view through the z-levels. This blueprint goes at the top:
 ""
@@ -27,32 +28,58 @@ A diagram might be useful. Here is a vertical view through the z-levels. This bl
 i
 "... <- up/down stairs, make this as tall as you need"
 i
-i <- cistern outlet level
+i <- cistern outlet level with diagonal tunnel to depressurize
 "u <- up stairs, drainage level"
 ""
 "Good luck! If done right, this method is the safest way to supply your fort with clean water."
 #dig label(dig) start(13 13 center of tap) light aquifer water collector
-
-,,,,,,,,,,,,mdr
-,,,,,,,,,,,,mdr
-,,,,,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr
-,,,,,,,,,,,,mdr
-,,,mdr,,,,,,,,,mdr,,,,,,,,,mdr
-,,,mdr,,,,,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,,,,,mdr
-,,,mdr,,,,,,,,,mdr,,,,,,,,,mdr
-,,,mdr,,,mdr,,,,,,mdr,,,,,,mdr,,,mdr
-,,,mdr,,,mdr,,,,,mdr,mdr,mdr,,,,,mdr,,,mdr
-,,,mdr,,,mdr,,,,,,mdr,,,,,,mdr,,,mdr
-,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr
-,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdj,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr
-,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr,,,mdr
-,,,mdr,,,mdr,,,,,,mdr,,,,,,mdr,,,mdr
-,,,mdr,,,mdr,,,,,mdr,mdr,mdr,,,,,mdr,,,mdr
-,,,mdr,,,mdr,,,,,,mdr,,,,,,mdr,,,mdr
-,,,mdr,,,,,,,,,mdr,,,,,,,,,mdr
-,,,mdr,,,,,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,,,,,mdr
-,,,mdr,,,,,,,,,mdr,,,,,,,,,mdr
-,,,,,,,,,,,,mdr
-,,,,,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr,mdr
-,,,,,,,,,,,,mdr
-,,,,,,,,,,,,mdr
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,,,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,,,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,mdr3,,,,,,,,,mdr3,,,,,,,,,mdr3,,,
+,,,mdr3,,,,,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,,,,,mdr3,,,
+,,,mdr3,,,,,,,,,mdr3,,,,,,,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,,mdr3,,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,mdr3,mdr3,mdr3,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,,mdr3,,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,
+,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdj3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,
+,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,,mdr3,,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,mdr3,mdr3,mdr3,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,mdr3,,,,,,mdr3,,,,,,mdr3,,,mdr3,,,
+,,,mdr3,,,,,,,,,mdr3,,,,,,,,,mdr3,,,
+,,,mdr3,,,,,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,,,,,mdr3,,,
+,,,mdr3,,,,,,,,,mdr3,,,,,,,,,mdr3,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,,,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,mdr3,,,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,,,,,,,,,,mdr3,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+#>,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,
+,,,`,,,,,,,,,`,,,,,,,,,`,,,
+,,,`,,,,,`,`,`,`,`,`,`,`,`,,,,,`,,,
+,,,`,,,,,,,,,`,,,,,,,,,`,,,
+,,,`,,,`,,,,,,`,,,,,,`,,,`,,,
+,,,`,,,`,,,,,`,`,`,,,,,`,,,`,,,
+,,,`,,,`,,,,,,`,,,,,,`,,,`,,,
+,,,`,,,`,,,`,,,`,,,`,,,`,,,`,,,
+,`,`,`,`,`,`,`,`,`,`,`,mbmdi3,`,`,`,`,`,`,`,`,`,`,`,
+,,,`,,,`,,,`,,,`,,,`,,,`,,,`,,,
+,,,`,,,`,,,,,,`,,,,,,`,,,`,,,
+,,,`,,,`,,,,,`,`,`,,,,,`,,,`,,,
+,,,`,,,`,,,,,,`,,,,,,`,,,`,,,
+,,,`,,,,,,,,,`,,,,,,,,,`,,,
+,,,`,,,,,`,`,`,`,`,`,`,`,`,,,,,`,,,
+,,,`,,,,,,,,,`,,,,,,,,,`,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,
+,,,,,,,,,,,,`,,,,,,,,,,,,

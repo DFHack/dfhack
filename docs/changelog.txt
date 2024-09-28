@@ -61,6 +61,7 @@ Template for new versions:
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key
 - DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
 - DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End
+- `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 
 ## Documentation
 

@@ -15,9 +15,6 @@
 #include "df/map_block_column.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
-#include "df/plant_root_tile.h"
-#include "df/plant_tree_info.h"
-#include "df/plant_tree_tile.h"
 #include "df/world.h"
 
 using std::string;
@@ -249,48 +246,6 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     return CR_OK;
 }
 
-static bool plant_in_cuboid(const df::plant *plant, const cuboid &bounds)
-{   // Will detect tree tiles
-    if (bounds.containsPos(plant->pos))
-        return true;
-    else if (!plant->tree_info)
-        return false;
-
-    auto &pos = plant->pos;
-    auto &t = *(plant->tree_info);
-
-    // Northwest x/y pos of tree bounds
-    int x_NW = pos.x - (t.dim_x >> 1);
-    int y_NW = pos.y - (t.dim_y >> 1);
-
-    if (!cuboid(std::max(0, x_NW), std::max(0, y_NW), std::max(0, pos.z - t.roots_depth),
-        x_NW + t.dim_x, y_NW + t.dim_y, pos.z + t.body_height - 1).clamp(bounds).isValid())
-    {   // No intersection of tree bounds with cuboid
-        return false;
-    }
-
-    int xy_size = t.dim_x * t.dim_y;
-    // Iterate tree body
-    for (int z_idx = 0; z_idx < t.body_height; z_idx++)
-        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
-            if ((t.body[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
-                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z + z_idx))
-            {
-                return true;
-            }
-
-    // Iterate tree roots
-    for (int z_idx = 0; z_idx < t.roots_depth; z_idx++)
-        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
-            if ((t.roots[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
-                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z - z_idx - 1))
-            {
-                return true;
-            }
-
-    return false;
-}
-
 command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_options &options, vector<int32_t> *filter = nullptr)
 {
     if (!bounds.isValid())
@@ -312,7 +267,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     {
         if (ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue; // Shrub
-        else if (!plant_in_cuboid(plant, bounds))
+        else if (!Maps::isPlantInBox(plant, bounds))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant->material) == options.filter_ex))
             continue; // Filtered out
@@ -459,7 +414,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
                 continue; // Not removing saplings
         }
 
-        if (!plant_in_cuboid(&plant, bounds))
+        if (!Maps::isPlantInBox(&plant, bounds))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant.material) == options.filter_ex))
             continue; // Filtered out
@@ -577,7 +532,7 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     DEBUG(log, out).print("pos_1 = (%d, %d, %d)\npos_2 = (%d, %d, %d)\n",
         pos_1.x, pos_1.y, pos_1.z, pos_2.x, pos_2.y, pos_2.z);
 
-    if (!Core::getInstance().isMapLoaded())
+    if (!Maps::IsValid())
     {
         out.printerr("Map not loaded!\n");
         return CR_FAILURE;

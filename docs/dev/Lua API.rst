@@ -2298,6 +2298,11 @@ Maps module
 
   Returns the plant struct that owns the tile at the specified position.
 
+* ``dfhack.maps.isPlantInBox(plant,x1,y1,z1,x2,y2,z2)``
+
+  Returns true if the plant is within a box defined by the specified
+  coordinates, accounting for trees.
+
 * ``dfhack.maps.getWalkableGroup(pos)``
 
   Returns the walkability group for the given tile position. A return value

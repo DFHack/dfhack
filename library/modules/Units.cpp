@@ -946,8 +946,7 @@ void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 
     if (unit->flags1.bits.rider && unit->mount_type == df::rider_positions_type::STANDARD)
     {
-        auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
-        if (mount)
+        if (auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]))
         {
             mount->path.dest = pos;
             mount->path.goal = goal;

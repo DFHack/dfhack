@@ -1703,7 +1703,7 @@ Units module
   ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
   in question.
 
-* ``dfhack.units.setGoal(unit, pos, goal)``
+* ``dfhack.units.setPathGoal(unit, pos, goal)``
 
   Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
   unit. In case of a change, also clears the unit's current path.

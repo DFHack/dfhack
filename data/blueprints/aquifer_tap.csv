@@ -24,8 +24,8 @@ Here's the procedure:
 ""
 A diagram might be useful. Here is a vertical view through the z-levels. This blueprint goes at the top:
 ""
-"j  <- down stairs, center of this blueprint"
-i
+"j <- down stairs, center of this blueprint"
+"i <- up/down stairs, initially in ""blueprint mode"" to prevent digging before drainage is ready"
 "... <- up/down stairs, make this as tall as you need"
 i
 i <- cistern outlet level with diagonal tunnel to depressurize

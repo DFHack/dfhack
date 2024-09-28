@@ -67,7 +67,11 @@ Template for new versions:
 
 ## API
 
+- ``DFHack::Units``: new function ``setPathGoal``
+
 ## Lua
+
+- ``dfhack.units``: new function ``setPathGoal``
 
 ## Removed
 

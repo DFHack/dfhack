@@ -62,7 +62,10 @@ Commands
     randomly return an amount that may be above or below the target. For example
     a metal cap with item size 1 will produce 0.9 of a bar with a 16.6% chance of
     producing an additional 0.3 of a bar. Over time, the average return for melting
-    these types of caps will be ~0.95 of a bar. (:bug:`6027`)
+    these types of caps will be ~0.95 of a bar. Calculations for melting return are
+    done for items with base game production cost. Melting return might not be
+    calculated correctly for modded items or created in custom reactions not
+    respecting vanilla production costs. (:bug:`6027`)
 ``named-codices``
     Displays titles for books instead of the default material description.
 ``partial-items``

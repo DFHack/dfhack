@@ -53,7 +53,7 @@ Commands
     Names filled waterskins, flasks, and vials according to their contents,
     the same way other containers such as barrels, bins, and cages are named.
     (:bug:`4914`)
-``material-size-for-melting``
+``realistic-melting``
     Makes amortized metal bar returns for melting uniform across all item types.
     Affects weapons, shields, armor parts, tools, and trap components. The target
     amount of metal produced by melting is 95% of the metal used for production

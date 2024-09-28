@@ -54,7 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `tweak`: ``material-size-for-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
+- `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
 
 ## Fixes
 

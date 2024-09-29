@@ -289,26 +289,24 @@ end --getInfoFromAutobutcher
 -- checkItemCreated function, called from eventfful on ITEM_CREATED event
 function checkItemCreated(item_id)
   local item = df.item.find(item_id)
-  if item == nil or df.item_type.EGG ~= item:getType() then
+  if item == nil or df.item_type.EGG ~= item:getType() or not nestboxesEvent.validateEggs(item) then
     return
-  else
-    if nestboxesEvent.validateEggs(item) then
-      local autobutcher_info = getInfoFromAutobutcher(item.race)
+  end
+  local autobutcher_info = getInfoFromAutobutcher(item.race)
 
-      local race_config = getConfigForRace(item.race, (autobutcher_info.watched and autobutcher_info.enabled) or state.ignore_autobutcher)
-      if race_config == nil then -- if nil new race without config and no new races are being watched
-        return
-      end
-      if
-      (((autobutcher_info.watched and autobutcher_info.enabled and not state.ignore_autobutcher -- check eggs respecting autobutcher settings
-            and not (race_config.stop and autobutcher_info.mac == 0)) -- do not check eggs if reached animal targets for race and full stop enabled
-          or state.ignore_autobutcher) -- or check eggs ignoring autobutcher settings
-        and race_config.watched -- check eggs only when nestboxes is watching race
-      )
-      then
-        nestboxesEvent.handleEggs(item, race_config.target, race_config.ama, state.split_stacks, autobutcher_info.mac)
-      end
-    end
+  local watched_race = (autobutcher_info.watched and autobutcher_info.enabled) or state.ignore_autobutcher
+  local race_config = getConfigForRace(item.race, watched_race)
+  if race_config == nil then -- if nil new race without config and no new races are being watched
+    return
+  end
+  if
+  (((autobutcher_info.watched and autobutcher_info.enabled and not state.ignore_autobutcher -- check eggs respecting autobutcher settings
+        and not (race_config.stop and autobutcher_info.mac == 0)) -- do not check eggs if reached animal targets for race and full stop enabled
+      or state.ignore_autobutcher) -- or check eggs ignoring autobutcher settings
+    and race_config.watched -- check eggs only when nestboxes is watching race
+  )
+  then
+    nestboxesEvent.handleEggs(item, race_config.target, race_config.ama, state.split_stacks, autobutcher_info.mac)
   end
 end --checkItemCreated
 ---------------------------------------------------------------------------------------------------

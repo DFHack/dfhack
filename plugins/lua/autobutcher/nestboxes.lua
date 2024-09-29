@@ -45,7 +45,7 @@ end --getDefaultState
 ---------------------------------------------------------------------------------------------------
 state = state or getDefaultState()
 ---------------------------------------------------------------------------------------------------
-function persistState()
+local function persistState()
   printDetails(('start persistState'))
   local state_to_persist = {}
   state_to_persist = utils.clone(state)
@@ -61,7 +61,7 @@ function persistState()
   printDetails(('end persistState'))
 end --persistState
 ---------------------------------------------------------------------------------------------------
-function readPersistentConfig(key, index)
+local function readPersistentConfig(key, index)
   if dfhack.internal.readPersistentSiteConfigInt ~= nil then
     return dfhack.internal.readPersistentSiteConfigInt(key, index)
   end

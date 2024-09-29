@@ -65,7 +65,7 @@ Template for new versions:
 - Quickfort blueprint library: ``aquifer_tap`` blueprint walkthough rewritten for clarity
 - Quickfort blueprint library: ``aquifer_tap`` blueprint now designated at priority 3 and marks the stairway tile below the tap in "blueprint" mode to prevent drips while the drainage pipe is being prepared
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
-- `autobutcher`: added nestboxes lua script giving more control how fertile eggs should be protected, with possibility to adjust configuration per race
+- `autobutcher`: added nestboxes feature giving more control how fertile eggs should be protected, with possibility to adjust configuration per race
 
 ## Documentation
 
@@ -78,7 +78,7 @@ Template for new versions:
 - ``dfhack.units``: new function ``setPathGoal``
 
 ## Removed
-- `nestboxes`: replaced by lua script and merged into `autobutcher`
+- `nestboxes`: merged into `autobutcher`
 
 # 50.14-r1
 

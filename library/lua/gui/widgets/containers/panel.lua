@@ -71,7 +71,7 @@ Panel.ATTRS {
 ---@param args widgets.Panel.initTable
 function Panel:init(args)
     if not self.drag_anchors then
-        self.drag_anchors = {title=true, frame=not self.resizable, body=true}
+        self.drag_anchors = {title=true, frame=true, body=true}
     end
     if not self.resize_anchors then
         self.resize_anchors = {t=false, l=true, r=true, b=true}

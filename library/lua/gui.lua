@@ -1127,7 +1127,7 @@ function ZScreen:onInput(keys)
         self:dismiss()
     else
         local passit = self.pass_pause and keys.D_PAUSE
-        if not passit and self.pass_mouse_clicks then
+        if not passit and self.pass_mouse_clicks and not has_mouse then
             if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
                     keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN then
                 passit = true
@@ -1164,7 +1164,7 @@ end
 
 function ZScreen:isMouseOver()
     for _,sv in ipairs(self.subviews) do
-        if sv.visible and sv:getMouseFramePos() then return true end
+        if utils.getval(sv.visible) and sv:getMouseFramePos() then return true end
     end
 end
 

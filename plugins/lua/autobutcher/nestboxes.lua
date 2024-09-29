@@ -295,25 +295,25 @@ function checkItemCreated(item_id)
 
   local autobutcher_info = getInfoFromAutobutcher(item.race)
   if not ((autobutcher_info.watched and autobutcher_info.enabled) or state.ignore_autobutcher) then
-    printDetails(('race %s not watched by autobutcher, autobutcher settings respected'):format(item.race))
+    printDetails(('Did not check eggs, race %s not watched by autobutcher, autobutcher settings respected'):format(item.race))
     return
   end
 
   local race_config = getConfigForRace(item.race)
   if race_config == nil then
-    printDetails(('race %s without config and no new races are being watched'):format(item.race))
+    printDetails(('Did not check eggs, race %s without config and no new races are being watched'):format(item.race))
     return
   end
 
-  if ((not (race_config.stop and autobutcher_info.mac == 0)
-      or state.ignore_autobutcher)
-    and race_config.watched)
-  then
-    nestboxesEvent.handleEggs(item, race_config.target, race_config.ama, state.split_stacks, autobutcher_info.mac)
-  elseif (race_config.stop and autobutcher_info.mac == 0 and not state.ignore_autobutcher) then
+  if (race_config.stop and autobutcher_info.mac == 0 and not state.ignore_autobutcher) then
     printDetails(('Did not check eggs, missing animal count for race %s is 0 and stop once animal target reached is enabled'):format(item.race))
-  elseif ( not race_config.watched) then
-    printDetails(('Race %s not watched by %s'):format(item.race, GLOBAL_KEY))
+    return
+  end
+
+  if (race_config.watched) then
+    nestboxesEvent.handleEggs(item, race_config.target, race_config.ama, state.split_stacks, autobutcher_info.mac)
+  else
+    printDetails(('Did not check eggs, race %s not watched by %s'):format(item.race, GLOBAL_KEY))
   end
 end --checkItemCreated
 ---------------------------------------------------------------------------------------------------

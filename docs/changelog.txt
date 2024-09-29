@@ -57,6 +57,9 @@ Template for new versions:
 - `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
 
 ## Fixes
+- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Units::isActive``: return false for units off map
 
 ## Misc Improvements
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key

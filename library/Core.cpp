@@ -93,6 +93,7 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
+using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -1611,7 +1612,26 @@ bool Core::InitMainThread() {
         }
         else
         {
-            fatal("Not a known DF version.\n");
+            std::stringstream msg;
+            msg << "Not a known DF version.\n"
+                   "\n"
+                   "Please make sure that you have a version\n"
+                   "of DFHack installed that matches the version\n"
+                   "of Dwarf Fortress.\n"
+                   "\n";
+            auto supported_versions = vif->getVersionInfosForCurOs();
+            if (supported_versions.size()) {
+                msg << "DF releases supported by this version of DFHack:\n\n";
+                for (auto & sv : supported_versions) {
+                    string ver = sv->getVersion();
+                    if (ver.starts_with("v0.")) {  // translate "v0.50" to the standard format: "v50"
+                        ver = "v" + ver.substr(3);
+                    }
+                    msg << "    " << ver << "\n";
+                }
+                msg << "\n";
+            }
+            fatal(msg.str());
         }
         errorstate = true;
         return false;

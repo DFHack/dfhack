@@ -29,7 +29,6 @@ distribution.
 #include <algorithm>
 #include <map>
 #include <iostream>
-using namespace std;
 
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
@@ -37,9 +36,14 @@ using namespace std;
 #include "Memory.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
-using namespace DFHack;
 
 #include <tinyxml.h>
+
+using namespace DFHack;
+using std::cerr;
+using std::endl;
+using std::string;
+using std::vector;
 
 VersionInfoFactory::VersionInfoFactory()
 {
@@ -75,6 +79,19 @@ std::shared_ptr<const VersionInfo> VersionInfoFactory::getVersionInfoByPETimesta
             return version;
     }
     return nullptr;
+}
+
+std::vector<std::shared_ptr<const VersionInfo>> VersionInfoFactory::getVersionInfosForCurOs() const {
+    static const OSType expected = VersionInfo::getCurOS();
+
+    std::vector<std::shared_ptr<const VersionInfo>> ret;
+
+    for (const auto& version : versions) {
+        if (version->getOS() == expected && version->getVersion().find("LOCAL") == std::string::npos)
+            ret.emplace_back(version);
+    }
+
+    return ret;
 }
 
 static uintptr_t to_addr(const char * cstr) {

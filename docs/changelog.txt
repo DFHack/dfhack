@@ -68,6 +68,7 @@ Template for new versions:
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 
 ## Documentation
+- Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve
 
 ## API
 

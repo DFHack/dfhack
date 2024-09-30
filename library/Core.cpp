@@ -1493,7 +1493,7 @@ Core::Core() :
     color_ostream::log_errors_to_stderr = true;
 };
 
-void Core::fatal (std::string output)
+void Core::fatal (std::string output, const char * title)
 {
     errorstate = true;
     std::stringstream out;
@@ -1510,7 +1510,9 @@ void Core::fatal (std::string output)
     fprintf(stderr, "%s\n", out.str().c_str());
     out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
+    if (!title)
+        title = "DFHack error!";
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, title, out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1613,15 +1615,16 @@ bool Core::InitMainThread() {
         else
         {
             std::stringstream msg;
-            msg << "Not a known DF version.\n"
+            msg << "Not a supported DF version.\n"
                    "\n"
-                   "Please make sure that you have a version\n"
-                   "of DFHack installed that matches the version\n"
-                   "of Dwarf Fortress.\n"
+                   "Please make sure that you have a version of DFHack installed that\n"
+                   "matches the version of Dwarf Fortress.\n"
+                   "\n"
+                   "DFHack version: " << Version::dfhack_version() << "\n"
                    "\n";
             auto supported_versions = vif->getVersionInfosForCurOs();
             if (supported_versions.size()) {
-                msg << "DF releases supported by this version of DFHack:\n\n";
+                msg << "Dwarf Fortress releases supported by this version of DFHack:\n\n";
                 for (auto & sv : supported_versions) {
                     string ver = sv->getVersion();
                     if (ver.starts_with("v0.")) {  // translate "v0.50" to the standard format: "v50"
@@ -1631,7 +1634,7 @@ bool Core::InitMainThread() {
                 }
                 msg << "\n";
             }
-            fatal(msg.str());
+            fatal(msg.str(), "DFHack version mismatch");
         }
         errorstate = true;
         return false;

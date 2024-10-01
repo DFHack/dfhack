@@ -2,24 +2,9 @@ local Widget = require('gui.widgets.widget')
 
 local to_pen = dfhack.pen.parse
 
----@enum STANDARDSCROLL
-STANDARDSCROLL = {
-    STANDARDSCROLL_UP = -1,
-    KEYBOARD_CURSOR_UP = -1,
-    STANDARDSCROLL_DOWN = 1,
-    KEYBOARD_CURSOR_DOWN = 1,
-    STANDARDSCROLL_PAGEUP = '-page',
-    KEYBOARD_CURSOR_UP_FAST = '-page',
-    STANDARDSCROLL_PAGEDOWN = '+page',
-    KEYBOARD_CURSOR_DOWN_FAST = '+page',
-}
-
 ---------------
 -- Scrollbar --
 ---------------
-
-SCROLL_INITIAL_DELAY_MS = 300
-SCROLL_DELAY_MS = 20
 
 ---@class widgets.Scrollbar.attrs: widgets.Widget.attrs
 ---@field on_scroll? fun(new_top_elem?: integer)
@@ -217,7 +202,7 @@ function Scrollbar:onRenderBody(dc)
     if self.last_scroll_ms == 0 then return end
     local now = dfhack.getTickCount()
     local delay = self.is_first_click and
-            SCROLL_INITIAL_DELAY_MS or SCROLL_DELAY_MS
+            Scrollbar.SCROLL_INITIAL_DELAY_MS or Scrollbar.SCROLL_DELAY_MS
     if now - self.last_scroll_ms >= delay then
         self.is_first_click = false
         self.on_scroll(self.scroll_spec)
@@ -265,8 +250,18 @@ function Scrollbar:onInput(keys)
     return true
 end
 
-Scrollbar.STANDARDSCROLL = STANDARDSCROLL
-Scrollbar.SCROLL_INITIAL_DELAY_MS = SCROLL_INITIAL_DELAY_MS
-Scrollbar.SCROLL_DELAY_MS = SCROLL_DELAY_MS
+---@enum STANDARDSCROLL
+Scrollbar.STANDARDSCROLL = {
+    STANDARDSCROLL_UP = -1,
+    KEYBOARD_CURSOR_UP = -1,
+    STANDARDSCROLL_DOWN = 1,
+    KEYBOARD_CURSOR_DOWN = 1,
+    STANDARDSCROLL_PAGEUP = '-page',
+    KEYBOARD_CURSOR_UP_FAST = '-page',
+    STANDARDSCROLL_PAGEDOWN = '+page',
+    KEYBOARD_CURSOR_DOWN_FAST = '+page',
+}
+Scrollbar.SCROLL_INITIAL_DELAY_MS = 300
+Scrollbar.SCROLL_DELAY_MS = 20
 
 return Scrollbar

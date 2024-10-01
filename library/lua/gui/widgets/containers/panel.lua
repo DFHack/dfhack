@@ -10,8 +10,6 @@ local to_pen = dfhack.pen.parse
 -- Panel --
 -----------
 
-DOUBLE_CLICK_MS = 500
-
 ---@class widgets.Panel.attrs: widgets.Widget.attrs
 ---@field frame_style? gui.Frame|fun(): gui.Frame
 ---@field frame_title? string
@@ -313,7 +311,7 @@ function Panel:onInput(keys)
 
     if self.resizable and y == 0 then
         local now_ms = dfhack.getTickCount()
-        if now_ms - self.last_title_click_ms <= DOUBLE_CLICK_MS then
+        if now_ms - self.last_title_click_ms <= Panel.DOUBLE_CLICK_MS then
             self.last_title_click_ms = 0
             if Panel_on_double_click(self) then return true end
         else
@@ -528,6 +526,6 @@ function Panel:onResizeEnd(success, new_frame)
     if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
 
-Panel.DOUBLE_CLICK_MS = DOUBLE_CLICK_MS
+Panel.DOUBLE_CLICK_MS = 500
 
 return Panel

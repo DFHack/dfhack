@@ -277,7 +277,7 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
-    scroll_keys = STANDARDSCROLL,
+    scroll_keys = Scrollbar.STANDARDSCROLL,
 }
 
 ---@param args widgets.Label.attrs.partial

@@ -60,7 +60,7 @@ List.ATTRS{
     on_double_click = DEFAULT_NIL,
     on_double_click2 = DEFAULT_NIL,
     row_height = 1,
-    scroll_keys = STANDARDSCROLL,
+    scroll_keys = Scrollbar.STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
 }
 

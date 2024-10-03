@@ -68,6 +68,8 @@ Template for new versions:
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 
 ## Documentation
+- Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve
+- The error message that comes up if there is a version mismatch between DF and the installed DFHack now informs you which DF versions are supported by the installed version of DFHack
 
 ## API
 

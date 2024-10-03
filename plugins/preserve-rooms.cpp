@@ -389,13 +389,15 @@ static void clear_reservation(color_ostream &out, int32_t zone_id, df::building_
         zone->spec_sub_flag.bits.active = true;
 }
 
-// stop reserving zones for dead units
+// stop reserving zones for dead units or units that are no longer in an army
 static void scrub_reservations(color_ostream &out) {
     vector<int32_t> hfids_to_scrub;
     for (auto &[hfid, zone_ids] : pending_reassignment) {
-        if (auto hf = df::historical_figure::find(hfid); hf && hf->died_year == -1)
+        auto hf = df::historical_figure::find(hfid);
+        if (hf && hf->died_year == -1 && hf->info && hf->info->whereabouts && hf->info->whereabouts->army_id > -1)
             continue;
-        DEBUG(cycle,out).print("removed reservation for dead or culled hfid %d\n", hfid);
+        DEBUG(cycle,out).print("removed reservation for dead, culled, or non-army hfid %d: %s\n", hfid,
+            hf ? DF2CONSOLE(Units::getReadableName(hf)).c_str() : "culled");
         hfids_to_scrub.push_back(hfid);
         for (int32_t zone_id : zone_ids) {
             if (scrub_id_from_entries(hfid, zone_id, reserved_zones)) {

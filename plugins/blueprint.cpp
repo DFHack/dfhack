@@ -1475,7 +1475,8 @@ static void add_processor(vector<blueprint_processor> &processors,
                                                  get_tile, init_ctx));
 }
 
-static bool do_transform(color_ostream &out, const cuboid &bounds,
+static bool do_transform(color_ostream &out,
+                         const df::coord &start, const df::coord &end,
                          blueprint_options opts, // copy so we can munge it
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
@@ -1517,28 +1518,33 @@ static bool do_transform(color_ostream &out, const cuboid &bounds,
         return false;
 
     const bool pretty = opts.format != "minimal";
-    df::coord min_pos(bounds.x_min, bounds.y_min, bounds.z_min);
-
-    bounds.forCoord([&](df::coord pos) {
-        tile_context ctx;
-        ctx.pretty = pretty;
-        for (blueprint_processor &processor : processors) {
-            ctx.processor = &processor;
-            if (processor.init_ctx)
-                processor.init_ctx(pos, ctx);
-            const char *tile_str = processor.get_tile(pos, ctx);
-            if (tile_str) {
-                auto rel_pos = pos - min_pos;
-                auto area = processor.mapdata.emplace(rel_pos.z, EMPTY_AREA);
-                auto row = area.first->second.emplace(rel_pos.y, EMPTY_ROW);
-                auto &tiles = row.first->second;
-                if (row.second)
-                    tiles.resize(opts.width);
-                tiles[rel_pos.x] = tile_str;
+    const int32_t z_inc = start.z < end.z ? 1 : -1;
+    for (int32_t z = start.z; z != end.z; z += z_inc) {
+        for (int32_t y = start.y; y < end.y; y++) {
+            for (int32_t x = start.x; x < end.x; x++) {
+                df::coord pos(x, y, z);
+                tile_context ctx;
+                ctx.pretty = pretty;
+                for (blueprint_processor &processor : processors) {
+                    ctx.processor = &processor;
+                    if (processor.init_ctx)
+                        processor.init_ctx(pos, ctx);
+                    const char *tile_str = processor.get_tile(pos, ctx);
+                    if (tile_str) {
+                        // ensure our z-index is in the order we want to write
+                        auto area = processor.mapdata.emplace(abs(z - start.z),
+                                                              EMPTY_AREA);
+                        auto row = area.first->second.emplace(y - start.y,
+                                                              EMPTY_ROW);
+                        auto &tiles = row.first->second;
+                        if (row.second)
+                            tiles.resize(opts.width);
+                        tiles[x - start.x] = tile_str;
+                    }
+                }
             }
         }
-        return true; // next pos
-    });
+    }
 
     vector<string> meta_phases;
     for (blueprint_processor &processor : processors) {
@@ -1627,15 +1633,25 @@ static command_result do_blueprint(color_ostream &out,
         return CR_FAILURE;
     }
 
-    // options.depth can be negative, cuboid handles this
-    cuboid bounds(start.x, start.y, start.z,
-                  start.x + options.width-1,
-                  start.y + options.height-1,
-                  start.z + options.depth-1);
-    // limit the selection to the map area
-    bounds.clampMap();
+    // end coords are one beyond the last processed coordinate. note that
+    // options.depth can be negative.
+    df::coord end(start.x + options.width, start.y + options.height,
+                  start.z + options.depth);
 
-    bool ok = do_transform(out, bounds, options, files);
+    // crop end coordinate to map bounds. we've already verified that start is
+    // a valid coordinate, and width, height, and depth are non-zero, so our
+    // final area is always going to be at least 1x1x1.
+    df::world::T_map &map = df::global::world->map;
+    if (end.x > map.x_count)
+        end.x = map.x_count;
+    if (end.y > map.y_count)
+        end.y = map.y_count;
+    if (end.z > map.z_count)
+        end.z = map.z_count;
+    if (end.z < -1)
+        end.z = -1;
+
+    bool ok = do_transform(out, start, end, options, files);
 
     // clear caches
     cache(NULL);

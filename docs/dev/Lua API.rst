@@ -947,7 +947,7 @@ can be omitted.
 
 * ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
 
-  Convert a language_name or only the last name part to string.
+  Convert a ``df.language_name`` (or only the last name part) to string.
 
 * ``dfhack.df2utf(string)``
 

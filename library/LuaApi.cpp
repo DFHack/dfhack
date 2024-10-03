@@ -4169,6 +4169,27 @@ static int internal_getClipboardTextCp437Multiline(lua_State *L) {
     return 1;
 }
 
+static int internal_get_persistent_data_int(lua_State* L, get_data_fn get_data) {
+    CoreSuspender suspend;
+
+    PersistentDataItem data = get_data(L);
+
+    if (!data.isValid() || !lua_isnumber(L, 2)){
+        lua_pushnil(L);
+    }
+    else {
+        const int idx = lua_tointeger(L, 2);
+        lua_pushinteger(L, data.get_int(idx));
+    }
+
+    return 1;
+}
+
+static int internal_readPersistentSiteDataInt(lua_State* L) {
+    return internal_get_persistent_data_int(L, get_site_data);
+}
+
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -4204,6 +4225,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPerfCounters", internal_getPerfCounters },
     { "getPreferredNumberFormat", internal_getPreferredNumberFormat },
     { "getClipboardTextCp437Multiline", internal_getClipboardTextCp437Multiline },
+    { "readPersistentSiteConfigInt", internal_readPersistentSiteDataInt },
     { NULL, NULL }
 };
 

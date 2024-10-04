@@ -1638,8 +1638,11 @@ static void RenderType(lua_State *state, const compound_identity *node)
 
     switch (node->type())
     {
-    case IDTYPE_STRUCT:
     case IDTYPE_UNION: // TODO: change this to union-type? what relies on this?
+        lua_pushboolean(state, true);
+        lua_setfield(state, ftable, "_union");
+        // fall through
+    case IDTYPE_STRUCT:
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");
         IndexStatics(state, ix_meta, ftable, (struct_identity*)node);

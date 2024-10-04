@@ -283,6 +283,12 @@ max-wave
 ========
 Set population cap based on parameters. Merged into `pop-control`.
 
+.. _modtools/force:
+
+modtools/force
+==============
+Merged into `force`.
+
 .. _mousequery:
 
 mousequery

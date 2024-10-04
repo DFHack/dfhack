@@ -80,6 +80,7 @@ Template for new versions:
 - ``dfhack.units``: new function ``setPathGoal``
 
 ## Removed
+- UI focus strings for squad panel flows combined into a single tree: ``dwarfmode/SquadEquipment`` -> ``dwarfmode/Squads/Equipment``, ``dwarfmode/SquadSchedule`` -> ``dwarfmode/Squads/Schedule``
 
 # 50.14-r1
 

@@ -8,7 +8,6 @@
 #include <string>
 #include <algorithm>
 #include <set>
-using namespace std;
 
 #include "Core.h"
 #include "Console.h"
@@ -18,7 +17,6 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Materials.h"
-#include "modules/MapCache.h"
 #include "DataDefs.h"
 #include "df/item.h"
 #include "df/itemdef.h"
@@ -42,8 +40,9 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-using MapExtras::Block;
-using MapExtras::MapCache;
+using std::string;
+using std::vector;
+using std::endl;
 
 DFHACK_PLUGIN("forceequip");
 REQUIRE_GLOBAL(world);
@@ -68,7 +67,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
+static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
 {
     // Step 1: Check for anti-requisite conditions
     df::unit * itemOwner = Items::getOwner(item);
@@ -401,8 +400,6 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     }
 
     // Search for item(s)
-    MapCache mc;
-
     // iterate over all items, process those where pos == pos_cursor
     int itemsEquipped = 0;
     int itemsFound = 0;
@@ -449,7 +446,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         else
         {
             itemsFound ++;                        // Track the number of items found under the cursor (for feedback purposes)
-            if (moveToInventory(mc, currentItem, targetUnit, targetBodyPart, ignore, multiEquipLimit, verbose))
+            if (moveToInventory(currentItem, targetUnit, targetBodyPart, ignore, multiEquipLimit, verbose))
             {
 //                // TODO TEMP EXPERIMENTAL - try to alter the item size in order to conform to its wearer
 //                currentItem->getRace();
@@ -468,9 +465,6 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 
     if (itemsEquipped == 0 && !verbose) { out.printerr("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
     if (itemsEquipped > 0) { out.print("%d items equipped.\n", itemsEquipped); }
-    // At this point, some changes may have been made (such as detaching items from their original position), regardless of whether any equipment changes succeeded.
-    // Therefore, we must update the map.
-    mc.WriteAll();
 
     // Note: we might expect to recalculate the unit's weight at this point, in order to account for the
     // added items.  In fact, this recalculation occurs automatically during each dwarf's "turn".

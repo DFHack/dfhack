@@ -295,7 +295,7 @@ function ItemSelection:get_choices(sort_fn)
         local obfuscated_value = caravan.obfuscate_value(data.value)
         choice.text = {
             {width=8, text=function() return ('%d/%d'):format(data.selected, data.quantity) end},
-            {width=9, gap=2, text=function() return ('%d%s'):format(obfuscated_value, caravan.CH_MONEY) end},
+            {width=9, gap=2, text=function() return ('%s%s'):format(obfuscated_value, caravan.CH_MONEY) end},
             {gap=2, text=data.desc},
         }
         table.insert(choices, choice)

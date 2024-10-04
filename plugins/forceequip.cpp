@@ -237,7 +237,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         return false;
     }
 
-    if (!Items::moveToInventory(mc, item, unit, df::unit_inventory_item::Worn, bpIndex))
+    if (!Items::moveToInventory(item, unit, df::unit_inventory_item::Worn, bpIndex))
     {
         if (verbose) { Core::printerr("\nEquipping failed - failed to retrieve item from its current location/container/inventory.  Please move it to the ground and try again.\n"); }
         return false;

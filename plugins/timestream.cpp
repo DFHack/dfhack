@@ -9,6 +9,26 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
+#include "df/activity_event_conflictst.h"
+#include "df/activity_event_conversationst.h"
+#include "df/activity_event_copy_written_contentst.h"
+#include "df/activity_event_discuss_topicst.h"
+#include "df/activity_event_make_believest.h"
+#include "df/activity_event_performancest.h"
+#include "df/activity_event_playst.h"
+#include "df/activity_event_play_with_toyst.h"
+#include "df/activity_event_ponder_topicst.h"
+#include "df/activity_event_prayerst.h"
+#include "df/activity_event_ranged_practicest.h"
+#include "df/activity_event_readst.h"
+#include "df/activity_event_skill_demonstrationst.h"
+#include "df/activity_event_socializest.h"
+#include "df/activity_event_sparringst.h"
+#include "df/activity_event_teach_topicst.h"
+#include "df/activity_event_writest.h"
+#include "df/activity_event_worshipst.h"
 #include "df/init.h"
 #include "df/unit.h"
 #include "df/world.h"
@@ -291,12 +311,264 @@ static int32_t clamp_timeskip(int32_t timeskip) {
     return clamp_coverage(timeskip);
 }
 
-static void adjust_units(int32_t timeskip) {
-    // TODO
+template <typename FT, typename T>
+static void increment_counter(T *obj, FT T::*field, int32_t timeskip) {
+    if (obj->*field <= 0)
+        return;
+    obj->*field = obj->*field + timeskip;
 }
 
-static void adjust_activities(int32_t timeskip) {
-    // TODO
+template <typename FT, typename T>
+static void decrement_counter(T *obj, FT T::*field, int32_t timeskip) {
+    if (obj->*field <= 0)
+        return;
+    // TODO: check for overflow/underflow
+    int32_t cur_val = static_cast<int32_t>(obj->*field);
+    obj->*field = static_cast<FT>(std::max(1, cur_val - timeskip));
+}
+
+static void adjust_unit_counters(df::unit * unit, int32_t timeskip) {
+    auto * c1 = &unit->counters;
+    decrement_counter(c1, &df::unit::T_counters::think_counter, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::job_counter, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::swap_counter, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::winded, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::stunned, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::unconscious, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::suffocation, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::webbed, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::soldier_mood_countdown, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::pain, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::nausea, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::dizziness, timeskip);
+    auto * c2 = &unit->counters2;
+    decrement_counter(c2, &df::unit::T_counters2::paralysis, timeskip);
+    decrement_counter(c2, &df::unit::T_counters2::numbness, timeskip);
+    decrement_counter(c2, &df::unit::T_counters2::fever, timeskip);
+    decrement_counter(c2, &df::unit::T_counters2::exhaustion, timeskip * 3);
+    increment_counter(c2, &df::unit::T_counters2::hunger_timer, timeskip);
+    increment_counter(c2, &df::unit::T_counters2::thirst_timer, timeskip);
+    auto job = unit->job.current_job;
+    if (job && job->job_type == df::job_type::Rest)
+        decrement_counter(c2, &df::unit::T_counters2::sleepiness_timer, timeskip * 200);
+    else if (job && job->job_type == df::job_type::Sleep)
+        decrement_counter(c2, &df::unit::T_counters2::sleepiness_timer, timeskip * 19);
+    else
+        increment_counter(c2, &df::unit::T_counters2::sleepiness_timer, timeskip);
+    decrement_counter(c2, &df::unit::T_counters2::stomach_content, timeskip * 5);
+    decrement_counter(c2, &df::unit::T_counters2::stomach_food, timeskip * 5);
+    decrement_counter(c2, &df::unit::T_counters2::vomit_timeout, timeskip);
+    // stored_fat wanders about based on other state; we can likely leave it alone and
+    // not materially affect gameplay
+}
+
+// need to manually adjust job completion_timer values for jobs that are controlled by unit actions
+// with a timer of 1, which are destroyed immediately after they are created. longer-lived unit
+// actions are already sufficiently handled by dfhack.units.subtractGroupActionTimers().
+// this will also decrement timers for jobs with actions that have just expired, but on average, this
+// should balance out to be correct, since we're losing time when we subtract from the action timers
+// and cap the value so it never drops below 1.
+static void adjust_job_counter(df::unit * unit, int32_t timeskip) {
+    auto job = unit->job.current_job;
+    if (!job)
+        return;
+    for (auto action : unit->actions) {
+        if (action->type == df::unit_action_type::Job || action->type == df::unit_action_type::JobRecover)
+            return;
+    }
+    decrement_counter(job, &df::job::completion_timer, timeskip);
+}
+
+// unit needs appear to be incremented on season ticks, so we don't need to worry about those
+// since the TICK_TRIGGERS check makes sure that we never skip season ticks
+static void adjust_units(color_ostream &out, int32_t timeskip) {
+    for (auto unit : world->units.active) {
+        if (!Units::isActive(unit))
+            continue;
+        decrement_counter(unit, &df::unit::pregnancy_timer, timeskip);
+        Units::subtractGroupActionTimers(out, unit, timeskip, df::unit_action_type_group::All);
+        if (!Units::isOwnGroup(unit))
+            continue;
+        adjust_unit_counters(unit, timeskip);
+        adjust_job_counter(unit, timeskip);
+    }
+}
+
+// behavior ascertained from in-game observation
+static void adjust_activities(color_ostream &out, int32_t timeskip) {
+    for (auto act : world->activities.all) {
+        for (auto ev : act->events) {
+            switch (ev->getType()) {
+                using namespace df::enums::activity_event_type;
+
+            case TrainingSession:
+                // no counters
+                break;
+
+            case CombatTraining:
+                // has organize_counter at a non-zero value, but it doesn't seem to move
+                break;
+
+            case SkillDemonstration:
+            if (auto sd_ev = virtual_cast<df::activity_event_skill_demonstrationst>(ev)) {
+                // can be negative or positive, but always counts towards 0
+                if (sd_ev->organize_counter < 0)
+                    sd_ev->organize_counter = std::min(-1, sd_ev->organize_counter + timeskip);
+                else
+                    decrement_counter(sd_ev, &df::activity_event_skill_demonstrationst::organize_counter, timeskip);
+                decrement_counter(sd_ev, &df::activity_event_skill_demonstrationst::train_countdown, timeskip);
+                break;
+            }
+
+            case IndividualSkillDrill:
+                // only counts down on season ticks, nothing to do here
+                break;
+
+            case Sparring:
+            if (auto s_ev = virtual_cast<df::activity_event_sparringst>(ev)) {
+                decrement_counter(s_ev, &df::activity_event_sparringst::countdown, timeskip * 2);
+                break;
+            }
+
+            case RangedPractice:
+            // countdown appears to never move from 0
+            if (auto rp_ev = virtual_cast<df::activity_event_ranged_practicest>(ev)) {
+                decrement_counter(rp_ev, &df::activity_event_ranged_practicest::countdown, timeskip);
+                break;
+            }
+
+            case Harassment:
+            {
+                DEBUG(cycle,out).print("activity_event_harassmentst ready for analysis\n");
+                break;
+            }
+
+            case Conversation:
+            if (auto c_ev = virtual_cast<df::activity_event_conversationst>(ev)) {
+                increment_counter(c_ev, &df::activity_event_conversationst::pause, timeskip);
+                break;
+            }
+
+            case Conflict:
+            if (auto c_ev = virtual_cast<df::activity_event_conflictst>(ev)) {
+                increment_counter(c_ev, &df::activity_event_conflictst::inactivity_timer, timeskip);
+                increment_counter(c_ev, &df::activity_event_conflictst::attack_inactivity_timer, timeskip);
+                increment_counter(c_ev, &df::activity_event_conflictst::stop_fort_fights_timer, timeskip);
+                break;
+            }
+
+            case Guard:
+                // no counters
+                break;
+
+            case Reunion:
+            {
+                DEBUG(cycle,out).print("activity_event_reunionst ready for analysis\n");
+                break;
+            }
+
+            case Prayer:
+            if (auto rp_ev = virtual_cast<df::activity_event_prayerst>(ev)) {
+                decrement_counter(rp_ev, &df::activity_event_prayerst::timer, timeskip);
+                break;
+            }
+
+            case Socialize:
+            if (auto p_ev = virtual_cast<df::activity_event_socializest>(ev)) {
+                increment_counter(p_ev, &df::activity_event_socializest::down_time_counter, timeskip);
+                break;
+            }
+
+            case Worship:
+            if (auto p_ev = virtual_cast<df::activity_event_worshipst>(ev)) {
+                increment_counter(p_ev, &df::activity_event_worshipst::down_time_counter, timeskip);
+                break;
+            }
+
+            case Performance:
+            if (auto p_ev = virtual_cast<df::activity_event_performancest>(ev)) {
+                increment_counter(p_ev, &df::activity_event_performancest::current_position, timeskip);
+                break;
+            }
+
+            case Research:
+                // no counters
+                break;
+
+            case PonderTopic:
+            if (auto pt_ev = virtual_cast<df::activity_event_ponder_topicst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_ponder_topicst::timer, timeskip);
+                break;
+            }
+
+            case DiscussTopic:
+            if (auto pt_ev = virtual_cast<df::activity_event_discuss_topicst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_discuss_topicst::timer, timeskip);
+                break;
+            }
+
+            case Read:
+            if (auto pt_ev = virtual_cast<df::activity_event_readst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_readst::timer, timeskip);
+                break;
+            }
+
+            case FillServiceOrder:
+                // no counters
+                break;
+
+            case Write:
+            if (auto pt_ev = virtual_cast<df::activity_event_writest>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_writest::timer, timeskip);
+                break;
+            }
+
+            case CopyWrittenContent:
+            if (auto pt_ev = virtual_cast<df::activity_event_copy_written_contentst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_copy_written_contentst::timer, timeskip);
+                break;
+            }
+
+            case TeachTopic:
+            if (auto pt_ev = virtual_cast<df::activity_event_teach_topicst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_teach_topicst::time_left, timeskip);
+                break;
+            }
+
+            case Play:
+            if (auto p_ev = virtual_cast<df::activity_event_playst>(ev)) {
+                increment_counter(p_ev, &df::activity_event_playst::down_time_counter, timeskip);
+                break;
+            }
+
+            case MakeBelieve:
+            if (auto pt_ev = virtual_cast<df::activity_event_make_believest>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_make_believest::time_left, timeskip);
+                break;
+            }
+
+            case PlayWithToy:
+            if (auto pt_ev = virtual_cast<df::activity_event_play_with_toyst>(ev)) {
+                decrement_counter(pt_ev, &df::activity_event_play_with_toyst::time_left, timeskip);
+                break;
+            }
+
+            case Encounter:
+            {
+                DEBUG(cycle,out).print("activity_event_encounterst ready for analysis\n");
+                break;
+            }
+
+            case StoreObject:
+            {
+                DEBUG(cycle,out).print("activity_event_store_objectst ready for analysis\n");
+                break;
+            }
+
+            // no default case so compiler complains if we miss something
+            }
+        }
+    }
 }
 
 static void do_cycle(color_ostream &out) {
@@ -338,8 +610,8 @@ static void do_cycle(color_ostream &out) {
     *cur_year_tick += timeskip;
     *cur_year_tick_advmode += timeskip * 144;
 
-    adjust_units(timeskip);
-    adjust_activities(timeskip);
+    adjust_units(out, timeskip);
+    adjust_activities(out, timeskip);
 }
 
 /////////////////////////////////////////////////////

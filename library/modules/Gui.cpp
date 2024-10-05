@@ -156,12 +156,12 @@ static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandle
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
-    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
+    static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
         &getFocusStringsHandlers, &VIEWSCREEN(screen_type)::_identity, \
         (getFocusStringsHandler)getFocusStrings_##screen_type \
     ); \
-    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
+    static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
 
 DEFINE_GET_FOCUS_STRING_HANDLER(title)
 {
@@ -717,11 +717,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString += "/PatrolRoutes";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_schedule.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSchedule";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.squad_selector.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadSelector";
@@ -766,6 +761,31 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.squad_supplies.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadSupplies";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squads.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Squads";
+        if (game->main_interface.squads.editing_squad_schedule_id >= 0) {
+            newFocusString += "/EditingSchedule";
+        } else if (game->main_interface.squad_schedule.open) {
+            newFocusString += "/Schedule";
+        } else if (game->main_interface.squad_equipment.open) {
+            newFocusString += "/Equipment";
+            if (game->main_interface.squad_equipment.customizing_equipment) {
+                newFocusString += "/Customizing";
+                if (game->main_interface.squad_equipment.cs_setting_material)
+                    newFocusString += "/Material";
+                else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
+                    newFocusString += "/Color";
+                else
+                    newFocusString += "/Default";
+            }
+            else
+                newFocusString += "/Default";
+        } else {
+            newFocusString += "/Default";
+        }
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.assign_uniform.open) {
@@ -835,22 +855,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.adventure.sleep.open) {
         focusStrings.push_back(baseFocus + "/Sleep");
     }
-    if (game->main_interface.squad_equipment.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadEquipment";
-        if (game->main_interface.squad_equipment.customizing_equipment) {
-            newFocusString += "/Customizing";
-            if (game->main_interface.squad_equipment.cs_setting_material)
-                newFocusString += "/Material";
-            else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
-                newFocusString += "/Color";
-            else
-                newFocusString += "/Default";
-        }
-        else
-            newFocusString += "/Default";
-        focusStrings.push_back(newFocusString);
-    }
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
@@ -874,15 +878,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
     add_main_interface_focus_strings(baseFocus, focusStrings);
 
-    if (!focusStrings.size()) {
+    static const string squads_default = "dwarfmode/Squads/Default";
+    if (!focusStrings.size() || (focusStrings.size() == 1 && focusStrings[0] == squads_default)) {
         focusStrings.push_back(baseFocus + "/Default");
-    }
-
-    // squads panel is not exclusive with the others
-    if (game->main_interface.squads.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/Squads";
-        focusStrings.push_back(newFocusString);
     }
 }
 

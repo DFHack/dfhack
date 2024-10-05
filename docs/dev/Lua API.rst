@@ -315,6 +315,10 @@ All types and the global object have the following features:
 
 All compound types (structs, classes, unions, and the global object) support:
 
+* ``type._union``
+
+  ``true`` if the type represents a union, otherwise ``nil``.
+
 * ``type._fields``
 
   Contains a table mapping field names to descriptions of the type's fields,

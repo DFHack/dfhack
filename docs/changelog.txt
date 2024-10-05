@@ -66,6 +66,7 @@ Template for new versions:
 - Quickfort blueprint library: ``aquifer_tap`` blueprint walkthough rewritten for clarity
 - Quickfort blueprint library: ``aquifer_tap`` blueprint now designated at priority 3 and marks the stairway tile below the tap in "blueprint" mode to prevent drips while the drainage pipe is being prepared
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
+- `buildingplan`: add value info to item selection dialog (effectively ungrouping items with different values) and add sorting by value
 
 ## Documentation
 - Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve
@@ -80,6 +81,7 @@ Template for new versions:
 - ``dfhack.units``: new function ``setPathGoal``
 
 ## Removed
+- UI focus strings for squad panel flows combined into a single tree: ``dwarfmode/SquadEquipment`` -> ``dwarfmode/Squads/Equipment``, ``dwarfmode/SquadSchedule`` -> ``dwarfmode/Squads/Schedule``
 
 # 50.14-r1
 

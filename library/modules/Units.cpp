@@ -73,6 +73,7 @@ distribution.
 #include "df/unit_action_type_group.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
+#include "df/unit_path_goal.h"
 #include "df/unit_relationship_type.h"
 #include "df/unit_skill.h"
 #include "df/unit_soul.h"
@@ -312,9 +313,9 @@ bool Units::isGay(df::unit *unit) {
     if (!unit->status.current_soul)
         return false;
 
-    auto &o_flag = unit->status.current_soul->orientation_flags;
-    return (!isFemale(unit) || !(o_flag.bits.marry_male && o_flag.bits.romance_male))
-        && (!isMale(unit) || !(o_flag.bits.marry_female && o_flag.bits.romance_female));
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return (!Units::isFemale(unit) || !(orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+           && (!Units::isMale(unit) || !(orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
 }
 
 bool Units::isNaked(df::unit *unit, bool no_items) {
@@ -762,7 +763,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         // This is potentially wrong, but the game will recompute this as needed
         old_occ->bits.unit_grounded = false;
     else
-        old_occ->bits.unit = true;
+        old_occ->bits.unit = false;
 
     // If there's already somebody standing at the destination, then force the unit to lay down
     if (new_occ->bits.unit)
@@ -931,6 +932,27 @@ void Units::makeown(df::unit *unit) {
     using FT = std::function<void(df::unit *)>;
     auto f = reinterpret_cast<FT *>(fp);
     (*f)(unit);
+}
+
+// functionality reverse-engineered from DF's unitst::set_goal
+void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
+{
+    if (unit->path.dest != pos || unit->path.goal != goal)
+    {
+        unit->path.dest = pos;
+        unit->path.goal = goal;
+        unit->path.path.clear();
+    }
+
+    if (unit->flags1.bits.rider && unit->mount_type == df::rider_positions_type::STANDARD)
+    {
+        if (auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]))
+        {
+            mount->path.dest = pos;
+            mount->path.goal = goal;
+            mount->path.path.clear();
+        }
+    }
 }
 
 df::unit *Units::create(int16_t race, int16_t caste) {
@@ -1109,7 +1131,7 @@ string Units::getReadableName(df::historical_figure *hf) {
             prof_name = "Ghostly " + prof_name;
     }
 
-    string name = Translation::TranslateName(getVisibleName(hf), false);
+    string name = Translation::TranslateName(getVisibleName(hf));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1132,7 +1154,7 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::TranslateName(getVisibleName(unit), false);
+    string name = Translation::TranslateName(getVisibleName(unit));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1654,7 +1676,7 @@ static string get_land_title(Units::NoblePosition *np)
         if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
-            return site ? " of " + Translation::TranslateName(&site->name) : "";
+            return site ? " of " + Translation::TranslateName(&site->name, true) : "";
         }
     return "";
 }

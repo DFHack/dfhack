@@ -93,6 +93,7 @@ set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)
 list(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
 add_library(lua SHARED ${SRC_LIBLUA})
+set_target_properties(lua PROPERTIES OUTPUT_NAME lua53)
 target_link_libraries(lua ${LIBS})
 
 if(MSVC)

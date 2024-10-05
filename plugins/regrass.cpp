@@ -92,7 +92,7 @@ static bool valid_tile(color_ostream &out, regrass_options options, df::map_bloc
         TRACE(log, out).print("Invalid tile: Tree\n");
         return false; // Not ground tile.
     }
-    else if (des.bits.flow_size > (des.bits.liquid_type == tile_liquid::Magma ? 0 : 3))
+    else if (des.bits.flow_size > (des.bits.liquid_type == tile_liquid::Magma ? 0U : 3U))
     {   // Under water/magma (df::plant_raw::shrub_drown_level is usually 4).
         TRACE(log, out).print("Invalid tile: Liquid\n");
         return false;

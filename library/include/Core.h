@@ -24,8 +24,6 @@ distribution.
 
 #pragma once
 
-#include "Pragma.h"
-
 #include "Console.h"
 #include "Export.h"
 #include "Hooks.h"
@@ -271,7 +269,7 @@ namespace DFHack
         void operator=(Core const&);    // Don't implement
 
         // report error to user while failing
-        void fatal (std::string output);
+        void fatal (std::string output, const char * title = NULL);
 
         // 1 = fatal failure
         bool errorstate;

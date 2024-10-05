@@ -89,7 +89,7 @@ orders import library/furnace,,,Automated production of basic furnace-related it
 gui/quickfort,/guildhall2_default,Yes,"Build library and non-denominational temple, and prepare space for future temples and guildhalls. Run when the guildhall level has been dug out."
 gui/quickfort,/services3,Yes,"Extend the dining room and hospital, and start the jail. Run when your population grows to about 20."
 gui/quickfort,/apartments2,Yes,Build and zone bedrooms. Run when the first apartment level has been dug out and you have outgrown your starter dormintory.
-gui/quickfort,/suites2,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out and you are approaching a population of 50.
+gui/quickfort,/suites2_default,Yes,Build rooms that you can zone for your nobles. Run when the suites level has been dug out and you are approaching a population of 50.
 gui/quickfort,/crypt2,Yes,Build a small group of tombs. Run when the crypt level has been dug out and you have outgrown your starter tomb on the farming level.
 gui/quickfort,/surface8,Yes,"Build extended trap corridors. If you have a strong military, you might not need this."
 gui/quickfort,/farming3,Yes,Add in all the doors we couldn't afford to build earlier.
@@ -2132,11 +2132,11 @@ build3/services_build3
 
 "#zone label(services_zones) start(18; 18) hidden() message(Don't forget to assign a doctor to the hospital!
 If you'd like to fill your wells via bucket brigade instead of routing water (e.g. with the aquifer_tap library blueprint), activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, taverrn, barracks, archery range, and pond zones"
-,,,,,,,,,,,,,"j{name=""Jail 1""}(4x5)",,,,"j{name=""Jail 2""}(4x5)",,,,"j{name=""Jail 3""}(4x5)",,,,"j{name=""Jail 4""}(4x5)",,,,"j{name=""Jail 5""}(4x5)"
-,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
-"h{location=tavern/bigpub allow=residents name=""Grand hall tavern""}(13x31)",,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,,,,,,,,,,,,j/jail1,"j/jail1{name=""Jail 1""}(4x5)",j/jail1,j/jail1,j/jail1,"j{name=""Jail 2""}(4x5)",,,,"j{name=""Jail 3""}(4x5)",,,,"j{name=""Jail 4""}(4x5)",,,,"j{name=""Jail 5""}(4x5)"
+,"b{location=tavern/bigpub name=""Rented room 1""}(1x3)","b{location=tavern/bigpub name=""Rented room 2""}(1x3)","b{location=tavern/bigpub name=""Rented room 3""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 4""}(1x3)","b{location=tavern/bigpub name=""Rented room 5""}(1x3)","b{location=tavern/bigpub name=""Rented room 6""}(1x3)",,"b{location=tavern/bigpub name=""Rented room 7""}(1x3)","b{location=tavern/bigpub name=""Rented room 8""}(1x3)","b{location=tavern/bigpub name=""Rented room 9""}(1x3)",j/jail1,j/jail1,j/jail1,j/jail1,j/jail1,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,j/jail1,j/jail1,j/jail1,j/jail1,j/jail1,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,j/jail1,j/jail1,j/jail1,j/jail1,j/jail1,`,`,`,,`,`,`,,`,`,`,,`,`,`
+"h{location=tavern/bigpub allow=residents name=""Grand hall tavern""}(13x31)",,`,,,,`,,,,`,,,j/jail1,j/jail1,j/jail1,j/jail1,,`,,,,`,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,,`,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation,o/interrogation
 ,`,`,`,`,`,`,`,`,`,`,`,,"B{name=""Marksdwarf barracks""}a{name=""Shooting gallery"" shoot_from=""south""}",Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,Ba,,`,o/interrogation,"j{name=""Drunk tank""}",j,j,j,j,o/interrogation
@@ -2360,7 +2360,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,`,`,,t,l,b,,`,`,`,,`,`,`
 ,`,h,`,,`,h,`,,`,h,`,,`,`,`,,`,`,`,,c,v,`,,`,`,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,`,f,`,,`,f,`,,`,f,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,`,,,,`,,,,`,,,,`,,,,`,,,,d,,,,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,,`
@@ -2468,7 +2468,7 @@ Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"
 
 ,b,~,b,,b,~,b,,b,~,b,,t,l,b,,t,l,b,,~,~,~,,t,l,b,,t,l,b
 ,h,~,h,,h,~,h,,h,~,h,,c,v,`,,c,v,`,,~,~,`,,c,v,`,,c,v,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,f,~,f,,f,~,f,,f,~,f,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,d,,,,d,,,,d,,,,d,,,,d,,,,~,,,,d,,,,d
 ,`,`,`,s,`,`,`,s,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,,,`
@@ -2769,12 +2769,14 @@ Apartments Walkthrough:
 "#meta label(suites2_default) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build furniture, set traffic patterns, create zones, and assign them to nobles and administrators"
 traffic_suites/suites_traffic
 build_suites/suites_build
+smooth_suites/suites_smooth
 zone_suites/suites_zone
 ""
 "#meta label(suites2_no_zones) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 rooms are left unzoned so you can configure them for specific nobles.) build furniture and set traffic patterns"
 traffic_suites/suites_traffic
 build_suites/suites_build
+smooth_suites/suites_smooth
 #dig label(suites_traffic) start(18; 18; central stairs) hidden() don't path through other dwarves' rooms
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2847,6 +2849,42 @@ build_suites/suites_build
 ,`,,,,d,,,,,,,d,,,,`,`,`,,,,d,,,,,,,d,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
+#dig label(suites_smooth) start(18; 18; central stairs) hidden() smooth statue tiles
+
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`,~,`,`,,`,`,`,s,`,`,s,`,`,`,,`,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
+,`,,`,`,s,`,`,,,`,`,s,`,`,,`,s,`,,`,`,s,`,`,,,`,`,s,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,`,`,`,`,`,,,`,`,`,`,`,,`,,`,,`,`,`,`,`,,,`,`,`,`,`,,`
+,`,,,,`,,,,,,,`,,,,`,`,`,,,,`,,,,,,,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+
 #zone label(suites_zone) start(18; 18; central stairs) hidden()
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2874,7 +2912,7 @@ build_suites/suites_build
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,,,,,,,,,,,,,,`,`,`,,,,,,,,,,,,,,,`
-,`,T{assigned_unit=outpost_liaison}(7x7),,,,,,,o{assigned_unit=outpost_liaison}(7x7),,,,,,,`,`,`,o{assigned_unit=monarch}(7x7),,,,,,,T{assigned_unit=monarch}(7x7),,,,,,,`
+,`,T{assigned_unit=monarch}(7x7),,,,,,,o{assigned_unit=outpost_liaison}(7x7),,,,,,,`,`,`,o{assigned_unit=monarch}(14x7),,,,,,,,,,,,,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,,`,`,`,`,`,,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,,`,`,`,`,`,,`
 ,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`

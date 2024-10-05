@@ -315,6 +315,10 @@ All types and the global object have the following features:
 
 All compound types (structs, classes, unions, and the global object) support:
 
+* ``type._union``
+
+  ``true`` if the type represents a union, otherwise ``nil``.
+
 * ``type._fields``
 
   Contains a table mapping field names to descriptions of the type's fields,
@@ -947,7 +951,7 @@ can be omitted.
 
 * ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
 
-  Convert a language_name or only the last name part to string.
+  Convert a ``df.language_name`` (or only the last name part) to string.
 
 * ``dfhack.df2utf(string)``
 
@@ -1703,6 +1707,11 @@ Units module
   ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
   in question.
 
+* ``dfhack.units.setPathGoal(unit, pos, goal)``
+
+  Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
+  unit. In case of a change, also clears the unit's current path.
+
 * ``dfhack.units.create(race, caste)``
 
   Creates a new unit from scratch. The unit will be added to the
@@ -2100,9 +2109,10 @@ Items module
   ``df.global.game.main_interface.trade.mer``), then the value is modified by civ
   properties and any trade agreements that might be in effect.
 
-* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
+* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, no_floor)``
 
-  Creates an item, similar to the `createitem` plugin.
+  Creates an item, similar to the `createitem` plugin. Returns a list of created
+  ``df.item`` objects.
 
 * ``dfhack.items.checkMandates(item)``
 
@@ -5478,9 +5488,9 @@ The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
-- Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
-- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+- Left/Right arrow: move the cursor one character to the left or right
+- Ctrl-Left/Ctrl-Right: move the cursor one word back or forward
+- Home/End: move the cursor to the beginning/end of the text
 
 The widget also supports integration with the system clipboard:
 

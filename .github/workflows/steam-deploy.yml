@@ -62,7 +62,7 @@ jobs:
     - depot-win64
     - depot-linux64
     runs-on: ubuntu-latest
-    concurrency: steam
+    concurrency: steamdeploy
     steps:
     - name: Download depot files
       uses: actions/download-artifact@v4

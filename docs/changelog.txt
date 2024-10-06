@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - Fix mouse clicks bleeding through DFHack windows when clicking in the space between the frame and the window content in resizable windows
+- `logistics`: don't ignore rotten items when applying stockpile logistics operations (e.g. autodump, autoclaim, etc.)
 
 ## Misc Improvements
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key

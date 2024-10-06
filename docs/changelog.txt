@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - Fix mouse clicks bleeding through DFHack windows when clicking in the space between the frame and the window content in resizable windows
+- `autobutcher`: don't run a scanning and marking cycle on the first tick of a fortress to allow for all custom configuration to be set first
 - `logistics`: don't ignore rotten items when applying stockpile logistics operations (e.g. autodump, autoclaim, etc.)
 
 ## Misc Improvements

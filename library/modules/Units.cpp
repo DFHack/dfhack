@@ -934,6 +934,17 @@ void Units::makeown(df::unit *unit) {
     (*f)(unit);
 }
 
+void Units::setAutomaticProfessions(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    auto fp = df::global::unitst_set_automatic_professions;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
+}
+
+
 // functionality reverse-engineered from DF's unitst::set_goal
 void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 {

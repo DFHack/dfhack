@@ -35,7 +35,6 @@ Template for new versions:
 ## Documentation
 
 ## API
-- ``Units::setAutomaticProfessions``: bay12-provided entry point to assign labors based on work details
 
 ## Lua
 
@@ -76,6 +75,7 @@ Template for new versions:
 ## API
 
 - ``DFHack::Units``: new function ``setPathGoal``
+- ``Units::setAutomaticProfessions``: bay12-provided entry point to assign labors based on work details
 
 ## Lua
 

@@ -29,7 +29,9 @@
 #include "df/activity_event_teach_topicst.h"
 #include "df/activity_event_writest.h"
 #include "df/activity_event_worshipst.h"
+#include "df/building_nest_boxst.h"
 #include "df/init.h"
+#include "df/item_eggst.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -571,6 +573,22 @@ static void adjust_activities(color_ostream &out, int32_t timeskip) {
     }
 }
 
+static void adjust_items(color_ostream &out, int32_t timeskip) {
+    // increment incubation counters for fertile eggs in non-forbidden nestboxes
+    for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
+        for (auto & contained_item : nb->contained_items) {
+            if (contained_item->use_mode == df::building_item_role_type::PERM) {
+                if (contained_item->item->flags.bits.forbid)
+                    break;
+                else
+                    continue;
+            }
+            if (auto *egg = virtual_cast<df::item_eggst>(contained_item->item); egg && egg->egg_flags.bits.fertile)
+                increment_counter(egg, &df::item_eggst::incubation_counter, timeskip);
+        }
+    }
+}
+
 static void do_cycle(color_ostream &out) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
@@ -612,6 +630,7 @@ static void do_cycle(color_ostream &out) {
 
     adjust_units(out, timeskip);
     adjust_activities(out, timeskip);
+    adjust_items(out, timeskip);
 }
 
 /////////////////////////////////////////////////////

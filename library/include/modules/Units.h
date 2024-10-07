@@ -239,6 +239,10 @@ DFHACK_EXPORT bool unassignTrainer(df::unit *unit);
 /// to determine if the makeown operation was successful.
 DFHACK_EXPORT void makeown(df::unit *unit);
 
+/// set appropriate labors on a unit based on current work detail settings
+/// (uses Bay12-provided algorithm)
+DFHACK_EXPORT void setAutomaticProfessions(df::unit* unit);
+
 // Set the units target location and goal, clearing any existing goal or path
 DFHACK_EXPORT void setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal);
 

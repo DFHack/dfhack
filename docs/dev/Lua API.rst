@@ -5348,9 +5348,9 @@ If the panel has already been maximized in this fashion, then it will jump to
 its minimum size. Both jumps respect the resizable edges defined by the
 ``resize_anchors`` attribute.
 
-The time duration that a double click can span default value is ``500``.
-It can be controlled via the `control-panel` or `gui/control-panel` interfaces 
-(``Mouse double click speed`` option).
+The time duration that a double click can span can be controlled via the
+`control-panel` or `gui/control-panel` interfaces (``Mouse double click speed``
+option). It defaults to 500 ms.
 
 Window class
 ------------
@@ -5555,11 +5555,11 @@ scroll multiple times, just like in a normal browser scrollbar. The speed of
 scroll events when the mouse button is held down can be controlled
 via the `control-panel` or `gui/control-panel` interfaces:
 
-1. The delay before the second scroll event use
-``Mouse initial scroll repeat delay`` option (default is 300)
+1. The delay before the second scroll event is the ``Mouse initial scroll repeat
+   delay`` setting (default is 300 ms)
 
-2. The delay between further scroll events use
-``Mouse scroll repeat delay`` option (default is 20)
+2. The delay between further scroll events is the ``Mouse scroll repeat delay`` option
+   (default is 20 ms)
 
 Label class
 -----------

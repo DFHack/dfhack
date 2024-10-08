@@ -1,5 +1,6 @@
 local gui = require('gui')
 local utils = require('utils')
+local common = require('gui.widgets.common')
 local Widget = require('gui.widgets.widget')
 local Scrollbar = require('gui.widgets.scrollbar')
 
@@ -277,7 +278,7 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
-    scroll_keys = STANDARDSCROLL,
+    scroll_keys = common.STANDARDSCROLL,
 }
 
 ---@param args widgets.Label.attrs.partial

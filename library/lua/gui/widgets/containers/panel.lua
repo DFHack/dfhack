@@ -1,6 +1,7 @@
 local gui = require('gui')
 local utils = require('utils')
 local guidm = require('gui.dwarfmode')
+local common = require('gui.widgets.common')
 local Widget = require('gui.widgets.widget')
 
 local getval = utils.getval
@@ -9,8 +10,6 @@ local to_pen = dfhack.pen.parse
 -----------
 -- Panel --
 -----------
-
-DOUBLE_CLICK_MS = 500
 
 ---@class widgets.Panel.attrs: widgets.Widget.attrs
 ---@field frame_style? gui.Frame|fun(): gui.Frame
@@ -313,7 +312,7 @@ function Panel:onInput(keys)
 
     if self.resizable and y == 0 then
         local now_ms = dfhack.getTickCount()
-        if now_ms - self.last_title_click_ms <= DOUBLE_CLICK_MS then
+        if now_ms - self.last_title_click_ms <= common.DOUBLE_CLICK_MS then
             self.last_title_click_ms = 0
             if Panel_on_double_click(self) then return true end
         else
@@ -527,7 +526,5 @@ end
 function Panel:onResizeEnd(success, new_frame)
     if self.on_resize_end then self.on_resize_end(success, new_frame) end
 end
-
-Panel.DOUBLE_CLICK_MS = DOUBLE_CLICK_MS
 
 return Panel

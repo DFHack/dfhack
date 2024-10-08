@@ -934,6 +934,17 @@ void Units::makeown(df::unit *unit) {
     (*f)(unit);
 }
 
+void Units::setAutomaticProfessions(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    auto fp = df::global::unitst_set_automatic_professions;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
+}
+
+
 // functionality reverse-engineered from DF's unitst::set_goal
 void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 {
@@ -1131,7 +1142,7 @@ string Units::getReadableName(df::historical_figure *hf) {
             prof_name = "Ghostly " + prof_name;
     }
 
-    string name = Translation::TranslateName(getVisibleName(hf), false);
+    string name = Translation::TranslateName(getVisibleName(hf));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1154,7 +1165,7 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::TranslateName(getVisibleName(unit), false);
+    string name = Translation::TranslateName(getVisibleName(unit));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1676,7 +1687,7 @@ static string get_land_title(Units::NoblePosition *np)
         if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
-            return site ? " of " + Translation::TranslateName(&site->name) : "";
+            return site ? " of " + Translation::TranslateName(&site->name, true) : "";
         }
     return "";
 }

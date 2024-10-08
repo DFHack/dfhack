@@ -7,6 +7,9 @@ autobutcher
 
 This plugin monitors how many pets you have of each gender and age and assigns
 excess livestock for slaughter. See `gui/autobutcher` for an in-game interface.
+Common configuration tweaks can be enabled in `gui/control-panel` in the
+Automation -> Autostart tab.
+
 Units are protected from being automatically butchered if they are:
 
 * Untamed
@@ -34,10 +37,7 @@ Usage
 -----
 
 ``enable autobutcher``
-    Start processing livestock according to the configuration. Note that
-    no races are watched by default. You have to add the ones you want to
-    monitor with ``autobutcher watch``, ``autobutcher target`` or
-    ``autobutcher autowatch``.
+    Start processing livestock according to the per-race targets.
 ``autobutcher [list]``
     Print status and current settings, including the watchlist. This is the
     default command if autobutcher is run without parameters.
@@ -91,8 +91,8 @@ Though not all the races listed there are tameable/butcherable.
     savegame, you can export the commands required to recreate your settings.
 
     To export, open an external terminal in the DF directory, and run
-    ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
-    new save and run ``script filename.txt`` in the DFHack terminal.
+    ``dfhack-run autobutcher list_export > autobutcher.txt``.  To import, load
+    your new save and run ``script autobutcher.txt`` in `gui/launcher`.
 
 Examples
 --------

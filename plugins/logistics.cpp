@@ -431,7 +431,7 @@ private:
         df::item_flags flags;
         #define F(x) flags.bits.x = true;
         F(garbage_collect); F(hostile); F(on_fire);
-        F(rotten); F(trader); F(in_building); F(construction);
+        F(trader); F(in_building); F(construction);
         F(artifact); F(spider_web); F(owned); F(in_job);
         #undef F
         return flags.whole;

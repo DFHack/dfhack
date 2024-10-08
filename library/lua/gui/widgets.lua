@@ -2,6 +2,8 @@
 
 local _ENV = mkmodule('gui.widgets')
 
+local common = require('gui.widgets.common')
+
 Widget = require('gui.widgets.widget')
 Divider = require('gui.widgets.divider')
 Panel = require('gui.widgets.containers.panel')
@@ -29,39 +31,30 @@ DimensionsTooltip = require('gui.widgets.dimensions_tooltip')
 
 Tab = TabBar.Tab
 makeButtonLabelText = Label.makeButtonLabelText
+STANDARDSCROLL = common.STANDARDSCROLL
 
 ---@return boolean
 function getDoubleClickMs()
-    return Panel.DOUBLE_CLICK_MS
+    return common.DOUBLE_CLICK_MS
 end
 function setDoubleClickMs(value)
-    Panel.DOUBLE_CLICK_MS = value
-end
-
----@return boolean
-function getStandardScroll()
-    return Scrollbar.STANDARDSCROLL
-end
-function setStandardScroll(value)
-    Scrollbar.STANDARDSCROLL = value
+    common.DOUBLE_CLICK_MS = value
 end
 
 ---@return boolean
 function getScrollInitialDelayMs()
-    return Scrollbar.SCROLL_INITIAL_DELAY_MS
+    return common.SCROLL_INITIAL_DELAY_MS
 end
 function setScrollInitialDelayMs(value)
-    Scrollbar.SCROLL_INITIAL_DELAY_MS = value
+    common.SCROLL_INITIAL_DELAY_MS = value
 end
 
 ---@return boolean
 function getScrollDelayMs()
-    return Scrollbar.SCROLL_DELAY_MS
+    return common.SCROLL_DELAY_MS
 end
 function setScrollDelayMs(value)
-    Scrollbar.SCROLL_DELAY_MS = value
+    common.SCROLL_DELAY_MS = value
 end
-
-
 
 return _ENV

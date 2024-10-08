@@ -1,5 +1,6 @@
 local gui = require('gui')
 local utils = require('utils')
+local common = require('gui.widgets.common')
 local Widget = require('gui.widgets.widget')
 local Scrollbar = require('gui.widgets.scrollbar')
 local Label = require('gui.widgets.labels.label')
@@ -60,7 +61,7 @@ List.ATTRS{
     on_double_click = DEFAULT_NIL,
     on_double_click2 = DEFAULT_NIL,
     row_height = 1,
-    scroll_keys = Scrollbar.STANDARDSCROLL,
+    scroll_keys = common.STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
 }
 

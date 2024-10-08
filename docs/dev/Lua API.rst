@@ -5348,15 +5348,9 @@ If the panel has already been maximized in this fashion, then it will jump to
 its minimum size. Both jumps respect the resizable edges defined by the
 ``resize_anchors`` attribute.
 
-The time duration that a double click can span can be controlled by widgets API:
-
-* ``widgets.getDoubleClickMs()``
-* ``widgets.setDoubleClickMs(value)``
-
-The default value is ``500`` and can be changed by the end
-user with a command like::
-
-  :lua require('gui.widgets').setDoubleClickMs(1000)
+The time duration that a double click can span default value is ``500``.
+It can be controlled via the `control-panel` or `gui/control-panel` interfaces 
+(``Mouse double click speed`` option).
 
 Window class
 ------------
@@ -5558,21 +5552,14 @@ while scrolling will result in faster movement.
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
 scroll multiple times, just like in a normal browser scrollbar. The speed of
-scroll events when the mouse button is held down can be controlled by two global
-getter/setter pairs:
+scroll events when the mouse button is held down can be controlled
+via the `control-panel` or `gui/control-panel` interfaces:
 
-1. The delay before the second scroll event.
-* ``widgets.getScrollInitialDelayMs()``
-* ``widgets.setScrollInitialDelayMs(value)``
+1. The delay before the second scroll event use
+``Mouse initial scroll repeat delay`` option (default is 300)
 
-2. The delay between further scroll events.
-* ``widgets.getScrollDelayMs()``
-* ``widgets.setScrollDelayMs(value)``
-
-The defaults are 300 and 20, respectively, but they can be overridden by the
-user in their :file:`dfhack-config/init/dfhack.init` file, for example::
-
-  :lua require('gui.widgets').setScrollDelayMs(100)
+2. The delay between further scroll events use
+``Mouse scroll repeat delay`` option (default is 20)
 
 Label class
 -----------

@@ -21,56 +21,57 @@ TextArea.ATTRS{
 function TextArea:init()
     self.render_start_line_y = 1
 
+    self.text_area = TextAreaContent{
+        frame={l=0,r=3,t=0},
+        text=self.init_text,
+
+        text_pen=self.text_pen,
+        ignore_keys=self.ignore_keys,
+        select_pen=self.select_pen,
+        debug=self.debug,
+        one_line_mode=self.one_line_mode,
+
+        on_text_change=function (val)
+            self:updateLayout()
+            if self.on_text_change then
+                self.on_text_change(val)
+            end
+        end,
+        on_cursor_change=self:callback('onCursorChange')
+    }
+    self.scrollbar = Scrollbar{
+        frame={r=0,t=1},
+        on_scroll=self:callback('onScrollbar'),
+        visible=not self.one_line_mode
+    }
+
     self:addviews{
-        TextAreaContent{
-            view_id='text_area',
-            frame={l=0,r=3,t=0},
-            text=self.init_text,
-
-            text_pen=self.text_pen,
-            ignore_keys=self.ignore_keys,
-            select_pen=self.select_pen,
-            debug=self.debug,
-            one_line_mode=self.one_line_mode,
-
-            on_text_change=function (val)
-                self:updateLayout()
-                if self.on_text_change then
-                    self.on_text_change(val)
-                end
-            end,
-            on_cursor_change=self:callback('onCursorChange')
-        },
-        Scrollbar{
-            view_id='scrollbar',
-            frame={r=0,t=1},
-            on_scroll=self:callback('onScrollbar'),
-            visible=not self.one_line_mode
-        }
+        self.text_area,
+        self.scrollbar,
     }
     self:setFocus(true)
 end
 
 function TextArea:getText()
-    return self.subviews.text_area.text
+    return self.text_area.text
 end
 
 function TextArea:setText(text)
-    return self.subviews.text_area:setText(text)
+    return self.text_area:setText(text)
 end
 
 function TextArea:getCursor()
-    return self.subviews.text_area.cursor
+    return self.text_area.cursor
 end
 
 function TextArea:onCursorChange(cursor)
-    local x, y = self.subviews.text_area.wrapped_text:indexToCoords(
-        self.subviews.text_area.cursor
+    local x, y = self.text_area.wrapped_text:indexToCoords(
+        self.text_area.cursor
     )
 
-    if y >= self.render_start_line_y + self.subviews.text_area.frame_body.height then
+    if y >= self.render_start_line_y + self.text_area.frame_body.height then
         self:updateScrollbar(
-            y - self.subviews.text_area.frame_body.height + 1
+            y - self.text_area.frame_body.height + 1
         )
     elseif  (y < self.render_start_line_y) then
         self:updateScrollbar(y)
@@ -82,8 +83,8 @@ function TextArea:onCursorChange(cursor)
 end
 
 function TextArea:scrollToCursor(cursor_offset)
-    if self.subviews.scrollbar.visible then
-        local _, cursor_liny_y = self.subviews.text_area.wrapped_text:indexToCoords(
+    if self.scrollbar.visible then
+        local _, cursor_liny_y = self.text_area.wrapped_text:indexToCoords(
             cursor_offset
         )
         self:updateScrollbar(cursor_liny_y)
@@ -91,7 +92,7 @@ function TextArea:scrollToCursor(cursor_offset)
 end
 
 function TextArea:setCursor(cursor_offset)
-    return self.subviews.text_area:setCursor(cursor_offset)
+    return self.text_area:setCursor(cursor_offset)
 end
 
 function TextArea:getPreferredFocusState()
@@ -101,15 +102,15 @@ end
 function TextArea:postUpdateLayout()
     self:updateScrollbar(self.render_start_line_y)
 
-    if self.subviews.text_area.cursor == nil then
+    if self.text_area.cursor == nil then
         local cursor = self.init_cursor or #self.init_text + 1
-        self.subviews.text_area:setCursor(cursor)
+        self.text_area:setCursor(cursor)
         self:scrollToCursor(cursor)
     end
 end
 
 function TextArea:onScrollbar(scroll_spec)
-    local height = self.subviews.text_area.frame_body.height
+    local height = self.text_area.frame_body.height
 
     local render_start_line = self.render_start_line_y
     if scroll_spec == 'down_large' then
@@ -128,14 +129,14 @@ function TextArea:onScrollbar(scroll_spec)
 end
 
 function TextArea:updateScrollbar(scrollbar_current_y)
-    local lines_count = #self.subviews.text_area.wrapped_text.lines
+    local lines_count = #self.text_area.wrapped_text.lines
 
     local render_start_line_y = (math.min(
-        #self.subviews.text_area.wrapped_text.lines - self.subviews.text_area.frame_body.height + 1,
+        #self.text_area.wrapped_text.lines - self.text_area.frame_body.height + 1,
         math.max(1, scrollbar_current_y)
     ))
 
-    self.subviews.scrollbar:update(
+    self.scrollbar:update(
         render_start_line_y,
         self.frame_body.height,
         lines_count
@@ -146,18 +147,18 @@ function TextArea:updateScrollbar(scrollbar_current_y)
     end
 
     self.render_start_line_y = render_start_line_y
-    self.subviews.text_area:setRenderStartLineY(self.render_start_line_y)
+    self.text_area:setRenderStartLineY(self.render_start_line_y)
 end
 
 function TextArea:renderSubviews(dc)
-    self.subviews.text_area.frame_body.y1 = self.frame_body.y1-(self.render_start_line_y - 1)
+    self.text_area.frame_body.y1 = self.frame_body.y1-(self.render_start_line_y - 1)
 
     TextArea.super.renderSubviews(self, dc)
 end
 
 function TextArea:onInput(keys)
-    if (self.subviews.scrollbar.is_dragging) then
-        return self.subviews.scrollbar:onInput(keys)
+    if (self.scrollbar.is_dragging) then
+        return self.scrollbar:onInput(keys)
     end
 
     if keys._MOUSE_L and self:getMousePos() then

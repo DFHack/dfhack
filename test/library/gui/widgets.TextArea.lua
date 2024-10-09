@@ -92,6 +92,7 @@ local function arrange_textarea(options)
                     init_text=options.text or '',
                     init_cursor=options.cursor or 1,
                     frame={l=0,r=0,t=0,b=0}
+                    -- TODO: add tests for callbacks
                     -- on_text_change=self:callback('onTextChange'),
                     -- on_cursor_change=self:callback('onCursorChange'),
                 }
@@ -100,7 +101,7 @@ local function arrange_textarea(options)
     })
 
     local window = screen.subviews.window
-    local text_area = screen.subviews.text_area
+    local text_area = screen.subviews.text_area_widget.text_area
     text_area.enable_cursor_blink = false
 
     screen:show()
@@ -2184,8 +2185,8 @@ function test.cut_and_paste_selected_text()
 end
 
 function test.scroll_long_text()
-    local text_area, screen, window = arrange_textarea({w=100, h=10})
-    local scrollbar = window.subviews.scrollbar
+    local text_area, screen, window, widget = arrange_textarea({w=100, h=10})
+    local scrollbar = widget.scrollbar
 
     local text = table.concat({
         'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',

@@ -106,7 +106,7 @@ local function arrange_textarea(options)
     screen:show()
     screen:onRender()
 
-    return text_area, screen, window
+    return text_area, screen, window, screen.subviews.text_area_widget
 end
 
 local function read_rendered_text(text_area)
@@ -2597,6 +2597,23 @@ function test.fast_rewind_reset_selection()
 
     simulate_input_keys('CUSTOM_CTRL_RIGHT')
     expect.eq(read_selected_text(text_area), '')
+
+    screen:dismiss()
+end
+
+function test.render_text_set_by_api()
+    local text_area, screen, window, widget = arrange_textarea({w=80})
+
+    local text = table.concat({
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        'Pellentesque dignissim volutpat orci, sed molestie metus elementum vel.',
+        'Donec sit amet mattis ligula, ac vestibulum lorem.',
+    }, '\n')
+
+    widget:setText(text)
+    widget:setCursor(#text + 1)
+
+    expect.eq(read_rendered_text(text_area), text .. '_')
 
     screen:dismiss()
 end

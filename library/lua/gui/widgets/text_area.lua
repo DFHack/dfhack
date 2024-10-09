@@ -55,6 +55,10 @@ function TextArea:getText()
     return self.subviews.text_area.text
 end
 
+function TextArea:setText(text)
+    return self.subviews.text_area:setText(text)
+end
+
 function TextArea:getCursor()
     return self.subviews.text_area.cursor
 end

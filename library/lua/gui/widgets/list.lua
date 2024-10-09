@@ -4,7 +4,6 @@ local common = require('gui.widgets.common')
 local Widget = require('gui.widgets.widget')
 local Scrollbar = require('gui.widgets.scrollbar')
 local Label = require('gui.widgets.labels.label')
-local Panel = require('gui.widgets.containers.panel')
 
 local getval = utils.getval
 local to_pen = dfhack.pen.parse
@@ -341,7 +340,7 @@ function List:onInput(keys)
             if idx ~= self:getSelected() then
                 self.last_select_click_ms = now_ms
             else
-                if now_ms - self.last_select_click_ms <= Panel.DOUBLE_CLICK_MS then
+                if now_ms - self.last_select_click_ms <= common.DOUBLE_CLICK_MS then
                     self.last_select_click_ms = 0
                     if self:double_click() then return true end
                 else

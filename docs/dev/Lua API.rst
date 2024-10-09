@@ -5522,33 +5522,25 @@ and typical text editor shortcuts.
 
 Attributes:
 
-* ``init_text``: 
-  The initial text content for the text area.
+* ``init_text``: The initial text content for the text area.
 
-* ``init_cursor``: 
-  The initial cursor position within the text content.
+* ``init_cursor``: The initial cursor position within the text content.
 
-* ``text_pen``: 
-  Optional pen used to draw the text.
+* ``text_pen``: Optional pen used to draw the text.
 
-* ``select_pen``: 
-  Optional pen used for text selection.
+* ``select_pen``: Optional pen used for text selection.
 
-* ``ignore_keys``: 
-  List of input keys to ignore.
+* ``ignore_keys``: List of input keys to ignore.
   Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
 
-* ``on_text_change``: 
-  Callback function called whenever the text changes.
+* ``on_text_change``: Callback function called whenever the text changes.
   The function signature should be ``on_text_change(new_text)``.
 
-* ``on_cursor_change``: 
-  Callback function called whenever the cursor position changes.
-  The function signature should be ``on_cursor_change(new_cursor_pos)``.
+* ``on_cursor_change``: Callback function called whenever the cursor
+  position changes. The function signature should be ``on_cursor_change(new_cursor_pos)``.
 
-* ``one_line_mode``: 
-  Boolean attribute that, when set to ``true``, disables multi-line
-  text features and restricts the text area to a single line.
+* ``one_line_mode``: Boolean attribute that, when set to ``true``,
+  disables multi-line text features and restricts the text area to a single line.
 
 Functions:
 

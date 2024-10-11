@@ -68,6 +68,11 @@ function TextAreaContent:postComputeFrame()
 end
 
 function TextAreaContent:recomputeLines()
+    if not self.frame_body then
+        -- called before first layout compute
+        return
+    end
+
     self.wrapped_text:update(
         self.text,
         -- something cursor '_' need to be add at the end of a line

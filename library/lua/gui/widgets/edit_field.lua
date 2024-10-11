@@ -2,8 +2,24 @@ local gui = require('gui')
 local utils = require('utils')
 local Widget = require('gui.widgets.widget')
 local HotkeyLabel = require('gui.widgets.labels.hotkey_label')
+local TextArea = require('gui.widgets.text_area')
 
 local getval = utils.getval
+
+TextFieldArea = defclass(TextFieldArea, TextArea)
+TextFieldArea.ATTRS{
+    on_char = DEFAULT_NIL,
+    modal = false,
+}
+
+function TextFieldArea:onInput(keys)
+    if self.on_char and keys._STRING and keys._STRING ~= 0 then
+        if  not self.on_char(string.char(keys._STRING), self.text) then
+            return self.modal
+        end
+    end
+    return TextFieldArea.super.onInput(self, keys)
+end
 
 ----------------
 -- Edit field --
@@ -56,14 +72,32 @@ function EditField:init()
         self:setFocus(true)
     end
 
+    self.key = 'CUSTOM_N'
+
     self.start_pos = 1
     self.cursor = #self.text + 1
 
-    self:addviews{HotkeyLabel{frame={t=0,l=0},
-                              key=self.key,
-                              key_sep=self.key_sep,
-                              label=self.label_text,
-                              on_activate=self.key and on_activate or nil}}
+    self.label = HotkeyLabel{
+        frame={t=0,l=0},
+        key=self.key,
+        key_sep=self.key_sep,
+        label=self.label_text,
+        on_activate=self.key and on_activate or nil
+    }
+    self.text_area = TextFieldArea{
+        one_line_mode=true,
+        frame={t=0,r=0},
+        text={self.text or ''},
+        text_pen=self.text_pen or COLOR_LIGHTCYAN,
+        modal=self.modal,
+        on_char=self.on_char,
+        ignore_keys={'SELECT', 'SELECT_ALL'},
+        on_text_change=self:callback('onTextAreaTextChange'),
+        on_cursor_change=function(cursor) self.cursor = cursor end
+    }
+
+    self:addviews{self.label, self.text_area}
+    self.text_area.frame.l = self.label:getTextWidth()
 end
 
 function EditField:getPreferredFocusState()
@@ -76,52 +110,31 @@ function EditField:setCursor(cursor)
         return
     end
     self.cursor = math.max(1, cursor)
+    self.text_area:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
     local old = self.text
     self.text = text
+    self.text_area:setText(text)
+
     self:setCursor(cursor)
     if self.on_change and text ~= old then
         self.on_change(self.text, old)
     end
 end
 
-function EditField:postUpdateLayout()
-    self.text_offset = self.subviews[1]:getTextWidth()
+function EditField:onTextAreaTextChange(text)
+    if self.text ~= text then
+        self.text = text
+        if self.on_change then
+            self.on_change(self.text, old)
+        end
+    end
 end
 
----@param dc gui.Painter
-function EditField:onRenderBody(dc)
-    dc:pen(self.text_pen or COLOR_LIGHTCYAN)
-
-    local cursor_char = '_'
-    if not getval(self.active) or not self.focus or gui.blink_visible(300) then
-        cursor_char = (self.cursor > #self.text) and ' ' or
-                                        self.text:sub(self.cursor, self.cursor)
-    end
-    local txt = self.text:sub(1, self.cursor - 1) .. cursor_char ..
-                                                self.text:sub(self.cursor + 1)
-    local max_width = dc.width - self.text_offset
-    self.start_pos = 1
-    if #txt > max_width then
-        -- get the substring in the vicinity of the cursor
-        max_width = max_width - 2
-        local half_width = math.floor(max_width/2)
-        local start_pos = math.max(1, self.cursor-half_width)
-        local end_pos = math.min(#txt, self.cursor+half_width-1)
-        if self.cursor + half_width > #txt then
-            start_pos = #txt - (max_width - 1)
-        end
-        if self.cursor - half_width <= 1 then
-            end_pos = max_width + 1
-        end
-        self.start_pos = start_pos > 1 and start_pos - 1 or start_pos
-        txt = ('%s%s%s'):format(start_pos == 1 and '' or string.char(27),
-                                txt:sub(start_pos, end_pos),
-                                end_pos == #txt and '' or string.char(26))
-    end
-    dc:advance(self.text_offset):string(txt)
+function EditField:setFocus(focus)
+    self.text_area:setFocus(focus)
 end
 
 function EditField:insert(text)
@@ -132,8 +145,7 @@ end
 
 function EditField:onInput(keys)
     if not self.focus then
-        -- only react to our hotkey
-        return self:inputToSubviews(keys)
+        return self.label:onInput(keys)
     end
 
     if self.ignore_keys then
@@ -164,67 +176,10 @@ function EditField:onInput(keys)
             end
         end
         return not not self.key
-    elseif keys.CUSTOM_DELETE then
-        local old = self.text
-        local del_pos = self.cursor
-        if del_pos <= #old then
-            self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1), del_pos)
-        end
+    end
+
+    if EditField.super.onInput(self, keys) then
         return true
-    elseif keys._STRING then
-        local old = self.text
-        if keys._STRING == 0 then
-            -- handle backspace
-            local del_pos = self.cursor - 1
-            if del_pos > 0 then
-                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1), del_pos)
-            end
-        else
-            local cv = string.char(keys._STRING)
-            if not self.on_char or self.on_char(cv, old) then
-                self:insert(cv)
-            elseif self.on_char then
-                return self.modal
-            end
-        end
-        return true
-    elseif keys.KEYBOARD_CURSOR_LEFT then
-        self:setCursor(self.cursor - 1)
-        return true
-    elseif keys.CUSTOM_CTRL_LEFT then -- back one word
-        local _, prev_word_end = self.text:sub(1, self.cursor-1):
-                                               find('.*[%w_%-][^%w_%-]')
-        self:setCursor(prev_word_end or 1)
-        return true
-    elseif keys.CUSTOM_HOME then
-        self:setCursor(1)
-        return true
-    elseif keys.KEYBOARD_CURSOR_RIGHT then
-        self:setCursor(self.cursor + 1)
-        return true
-    elseif keys.CUSTOM_CTRL_RIGHT then -- forward one word
-        local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
-        self:setCursor(next_word_start)
-        return true
-    elseif keys.CUSTOM_END then
-        self:setCursor()
-        return true
-    elseif keys.CUSTOM_CTRL_C then
-        dfhack.internal.setClipboardTextCp437(self.text)
-        return true
-    elseif keys.CUSTOM_CTRL_X then
-        dfhack.internal.setClipboardTextCp437(self.text)
-        self:setText('')
-        return true
-    elseif keys.CUSTOM_CTRL_V then
-        self:insert(dfhack.internal.getClipboardTextCp437())
-        return true
-    elseif keys._MOUSE_L_DOWN then
-        local mouse_x = self:getMousePos()
-        if mouse_x then
-            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
-            return true
-        end
     end
 
     -- if we're modal, then unconditionally eat all the input

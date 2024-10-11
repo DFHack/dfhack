@@ -25,7 +25,7 @@ function TextArea:init()
     self.render_start_line_y = 1
 
     self.text_area = TextAreaContent{
-        frame={l=0,r=3,t=0},
+        frame={l=0,r=self.one_line_mode and 0 or 3,t=0},
         text=self.init_text,
 
         text_pen=self.text_pen,

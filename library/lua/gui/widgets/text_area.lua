@@ -35,7 +35,10 @@ function TextArea:init()
         one_line_mode=self.one_line_mode,
 
         on_text_change=function (text, old_text)
-            self:updateLayout()
+            if self.frame_body then
+                self:updateLayout()
+            end
+
             if self.on_text_change then
                 self.on_text_change(text, old_text)
             end
@@ -85,12 +88,14 @@ function TextArea:onCursorChange(cursor, old_cursor)
         self.text_area.cursor
     )
 
-    if y >= self.render_start_line_y + self.text_area.frame_body.height then
-        self:updateScrollbar(
-            y - self.text_area.frame_body.height + 1
-        )
-    elseif  (y < self.render_start_line_y) then
-        self:updateScrollbar(y)
+    if self.text_area.frame_body then
+        if y >= self.render_start_line_y + self.text_area.frame_body.height then
+            self:updateScrollbar(
+                y - self.text_area.frame_body.height + 1
+            )
+        elseif  (y < self.render_start_line_y) then
+            self:updateScrollbar(y)
+        end
     end
 
     if self.on_cursor_change then

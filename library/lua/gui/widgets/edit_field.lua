@@ -114,12 +114,13 @@ function EditField:getPreferredFocusState()
 end
 
 function EditField:setCursor(cursor)
-    if not cursor or cursor > #self.text then
-        self.cursor = #self.text + 1
-        return
+    if not cursor then
+        cursor = #self.text + 1
     end
-    self.cursor = math.max(1, cursor)
+    self.cursor = cursor
+
     self.text_area:setCursor(cursor)
+    self.cursor = self.text_area:getCursor()
 end
 
 function EditField:setText(text, cursor)

@@ -28,7 +28,7 @@ function TextAreaContent:init()
     self.clipboard_mode = CLIPBOARD_MODE.LOCAL
     self.render_start_line_y = 1
 
-    self.cursor = nil
+    self.cursor = 1
 
     self.main_pen = dfhack.pen.parse({
         fg=self.text_pen,
@@ -483,6 +483,7 @@ function TextAreaContent:onMouseInput(keys)
     elseif keys._MOUSE_L_DOWN then
 
         local mouse_x, mouse_y = self:getMousePos()
+
         if mouse_x and mouse_y then
             if (self:getMultiLeftClick(mouse_x + 1, mouse_y + 1) > 1) then
                 return true

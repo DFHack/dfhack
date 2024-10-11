@@ -9,6 +9,9 @@ local getval = utils.getval
 TextFieldArea = defclass(TextFieldArea, TextArea)
 TextFieldArea.ATTRS{
     on_char = DEFAULT_NIL,
+    key = DEFAULT_NIL,
+    on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     modal = false,
 }
 
@@ -18,6 +21,25 @@ function TextFieldArea:onInput(keys)
             return self.modal
         end
     end
+
+    if keys.SELECT or keys.SELECT_ALL then
+        if self.key then
+            self:setFocus(false)
+        end
+        if keys.SELECT_ALL then
+            if self.on_submit2 then
+                self.on_submit2(self:getText())
+                return true
+            end
+        else
+            if self.on_submit then
+                self.on_submit(self:getText())
+                return true
+            end
+        end
+        return not not self.key
+    end
+
     return TextFieldArea.super.onInput(self, keys)
 end
 
@@ -86,13 +108,14 @@ function EditField:init()
     self.text_area = TextFieldArea{
         one_line_mode=true,
         frame={t=0,r=0},
-        text={self.text or ''},
+        init_text=self.text or '',
         text_pen=self.text_pen or COLOR_LIGHTCYAN,
         modal=self.modal,
         on_char=self.on_char,
+        key = self.key,
+        on_submit = self.on_submit,
+        on_submit2 = self.on_submit2,
         ignore_keys={
-            'SELECT',
-            'SELECT_ALL',
             'KEYBOARD_CURSOR_UP',
             'KEYBOARD_CURSOR_DOWN',
             table.unpack(self.ignore_keys)
@@ -124,6 +147,8 @@ function EditField:setCursor(cursor)
 end
 
 function EditField:setText(text, cursor)
+    text = text or ''
+
     local old = self.text
     self.text = text
     self.text_area:setText(text)
@@ -149,12 +174,14 @@ end
 
 function EditField:insert(text)
     local old = self.text
-    self:setText(old:sub(1,self.cursor-1)..text..old:sub(self.cursor),
-                 self.cursor + #text)
+    self:setText(
+        old:sub(1,self.cursor-1)..text..old:sub(self.cursor),
+        self.cursor + #text
+    )
 end
 
 function EditField:onInput(keys)
-    if not self.focus then
+    if not self.text_area.focus then
         return self.label:onInput(keys)
     end
 
@@ -162,24 +189,6 @@ function EditField:onInput(keys)
         self:setText(self.saved_text)
         self:setFocus(false)
         return true
-    end
-
-    if keys.SELECT or keys.SELECT_ALL then
-        if self.key then
-            self:setFocus(false)
-        end
-        if keys.SELECT_ALL then
-            if self.on_submit2 then
-                self.on_submit2(self.text)
-                return true
-            end
-        else
-            if self.on_submit then
-                self.on_submit(self.text)
-                return true
-            end
-        end
-        return not not self.key
     end
 
     if EditField.super.onInput(self, keys) then

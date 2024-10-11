@@ -29,11 +29,11 @@ function test.editfield_cursor()
     e:onInput{CUSTOM_HOME=true}
     expect.eq(1, e.cursor, 'cursor should be at beginning of string')
     e:onInput{CUSTOM_CTRL_RIGHT=true}
-    expect.eq(6, e.cursor, 'goto beginning of next word')
+    expect.eq(5, e.cursor, 'goto end of current word')
     e:onInput{CUSTOM_END=true}
     expect.eq(16, e.cursor, 'cursor should be at end of string')
     e:onInput{CUSTOM_CTRL_LEFT=true}
-    expect.eq(9, e.cursor, 'goto end of previous word')
+    expect.eq(10, e.cursor, 'goto beginning of current word')
 end
 
 function test.editfield_click()
@@ -41,20 +41,25 @@ function test.editfield_click()
     e:setFocus(true)
     expect.eq(5, e.cursor)
 
-    mock.patch(e, 'getMousePos', mock.func(0), function()
-            e:onInput{_MOUSE_L_DOWN=true}
-            expect.eq(1, e.cursor)
-        end)
+    local text_area_content = e.text_area.text_area
 
-    mock.patch(e, 'getMousePos', mock.func(20), function()
-            e:onInput{_MOUSE_L_DOWN=true}
-            expect.eq(5, e.cursor, 'should only seek to end of text')
-        end)
+    mock.patch(text_area_content, 'getMousePos', mock.func(0, 0), function()
+        e:onInput{_MOUSE_L_DOWN=true, _MOUSE_L=true}
+        e:onInput{_MOUSE_L_DOWN=true}
+        expect.eq(1, e.cursor)
+    end)
 
-    mock.patch(e, 'getMousePos', mock.func(2), function()
-            e:onInput{_MOUSE_L_DOWN=true}
-            expect.eq(3, e.cursor)
-        end)
+    mock.patch(text_area_content, 'getMousePos', mock.func(20, 0), function()
+        e:onInput{_MOUSE_L_DOWN=true, _MOUSE_L=true}
+        e:onInput{_MOUSE_L_DOWN=true}
+        expect.eq(5, e.cursor, 'should only seek to end of text')
+    end)
+
+    mock.patch(text_area_content, 'getMousePos', mock.func(2, 0), function()
+        e:onInput{_MOUSE_L_DOWN=true, _MOUSE_L=true}
+        e:onInput{_MOUSE_L_DOWN=true}
+        expect.eq(3, e.cursor)
+    end)
 end
 
 function test.editfield_ignore_keys()

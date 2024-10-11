@@ -2795,6 +2795,23 @@ function test.undo_redo_keyboard_changes()
     simulate_input_keys('CUSTOM_CTRL_Y')
 
     expect.eq(read_rendered_text(text_area), 'Lorem ipsum dolor sit _')
+
+    -- undo API setText
+    reset_text()
+
+    widget:clearHistory()
+    widget:setText('Random new text')
+    widget:setCursor(1)
+    expect.eq(read_rendered_text(text_area), '_andom new text')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '_')
+
+    simulate_input_keys('CUSTOM_CTRL_Y')
+
+    expect.eq(read_rendered_text(text_area), '_andom new text')
+
     screen:dismiss()
 end
 

@@ -3,6 +3,9 @@
 local Panel = require('gui.widgets.containers.panel')
 local Scrollbar = require('gui.widgets.scrollbar')
 local TextAreaContent = require('gui.widgets.text_area.text_area_content')
+local HistoryStore = require('gui.widgets.text_area.history_store')
+
+local HISTORY_ENTRY = HistoryStore.HISTORY_ENTRY
 
 TextArea = defclass(TextArea, Panel)
 
@@ -57,6 +60,12 @@ function TextArea:getText()
 end
 
 function TextArea:setText(text)
+    self.text_area.history:store(
+        HISTORY_ENTRY.OTHER,
+        self:getText(),
+        self:getCursor()
+    )
+
     return self.text_area:setText(text)
 end
 

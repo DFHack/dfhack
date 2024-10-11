@@ -4,6 +4,9 @@ local widgets = require('gui.widgets')
 
 function test.editfield_cursor()
     local e = widgets.EditField{}
+
+    -- cursor is normally set in `postUpdateLayout`, hard to test in unit tests
+    e:setCursor(1)
     e:setFocus(true)
     expect.eq(1, e.cursor, 'cursor should be after the empty string')
 
@@ -64,6 +67,8 @@ end
 
 function test.editfield_ignore_keys()
     local e = widgets.EditField{ignore_keys={'CUSTOM_B', 'CUSTOM_C'}}
+    -- cursor is normally set in `postUpdateLayout`, hard to test in unit tests
+    e:setCursor(1)
     e:setFocus(true)
 
     e:onInput{_STRING=string.byte('a'), CUSTOM_A=true}

@@ -28,7 +28,7 @@ function TextAreaContent:init()
     self.clipboard_mode = CLIPBOARD_MODE.LOCAL
     self.render_start_line_y = 1
 
-    self.cursor = 1
+    self.cursor = nil
 
     self.main_pen = dfhack.pen.parse({
         fg=self.text_pen,

@@ -5568,6 +5568,10 @@ Functions:
     This is useful for automatically scrolling when the user moves the cursor
     beyond the visible region of the text area.
 
+* ``textarea:clearHistory()``
+
+    Clear undo/redo history of the widget.
+
 Functionality:
 
 - Cursor Control: Navigate through text using arrow keys (Left, Right, Up,

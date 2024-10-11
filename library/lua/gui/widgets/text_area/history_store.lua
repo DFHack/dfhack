@@ -76,6 +76,11 @@ function HistoryStore:redo(curr_text, curr_cursor)
     return history_entry
 end
 
+function HistoryStore:clear()
+    self.past = {}
+    self.future = {}
+end
+
 HistoryStore.HISTORY_ENTRY = HISTORY_ENTRY
 
 return HistoryStore

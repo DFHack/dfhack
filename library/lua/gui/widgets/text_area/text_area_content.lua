@@ -234,7 +234,7 @@ function TextAreaContent:onRenderBody(dc)
             and gui.blink_visible(530)
         )
 
-    if (show_focus) then
+    if show_focus then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)
         dc:seek(x - 1, y - 1)
             :char('_')
@@ -403,12 +403,12 @@ function TextAreaContent:onInput(keys)
         self:copy()
         return true
     elseif keys.CUSTOM_CTRL_X then
-        self:cut()
         self.history:store(HISTORY_ENTRY.OTHER, self.text, self.cursor)
+        self:cut()
         return true
     elseif keys.CUSTOM_CTRL_V then
-        self:paste()
         self.history:store(HISTORY_ENTRY.OTHER, self.text, self.cursor)
+        self:paste()
         return true
     else
         return TextAreaContent.super.onInput(self, keys)
@@ -608,7 +608,7 @@ function TextAreaContent:onTextManipulationInput(keys)
         return true
     elseif keys.CUSTOM_CTRL_A then
         -- select all
-        self:setSelection(1, #self.text)
+        self:setSelection(#self.text + 1, 1)
         return true
     elseif keys.CUSTOM_CTRL_U then
         -- delete current line

@@ -64,6 +64,14 @@ function TextArea:getCursor()
     return self.text_area.cursor
 end
 
+function TextArea:setCursor(cursor_offset)
+    return self.text_area:setCursor(cursor_offset)
+end
+
+function TextArea:clearHistory()
+    return self.text_area.history:clear()
+end
+
 function TextArea:onCursorChange(cursor)
     local x, y = self.text_area.wrapped_text:indexToCoords(
         self.text_area.cursor
@@ -89,10 +97,6 @@ function TextArea:scrollToCursor(cursor_offset)
         )
         self:updateScrollbar(cursor_liny_y)
     end
-end
-
-function TextArea:setCursor(cursor_offset)
-    return self.text_area:setCursor(cursor_offset)
 end
 
 function TextArea:getPreferredFocusState()

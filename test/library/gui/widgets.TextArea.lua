@@ -1243,7 +1243,7 @@ function test.arrows_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -1288,7 +1288,7 @@ function test.click_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -1323,7 +1323,7 @@ function test.line_navigation_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -1356,7 +1356,7 @@ function test.jump_begin_or_end_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -2582,7 +2582,7 @@ function test.fast_rewind_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -2796,4 +2796,26 @@ function test.undo_redo_keyboard_changes()
 
     expect.eq(read_rendered_text(text_area), 'Lorem ipsum dolor sit _')
     screen:dismiss()
+end
+
+function test.clear_undo_redo_history()
+    local text_area, screen, window, widget = arrange_textarea({w=80})
+
+    local text = table.concat({
+        'Lorem ipsum dolor sit amet. ',
+    }, '\n')
+
+    text_area:setText(text)
+    text_area:setCursor(#text + 1)
+
+    simulate_input_text('A')
+    simulate_input_text(' ')
+    simulate_input_text('longer text')
+
+    expect.eq(read_rendered_text(text_area), text .. 'A longer text_')
+
+    widget:clearHistory()
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. 'A longer text_')
 end

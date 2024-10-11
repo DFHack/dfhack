@@ -2618,3 +2618,128 @@ function test.render_text_set_by_api()
 
     screen:dismiss()
 end
+
+function test.undo_keyboard_changes()
+    local text_area, screen, window, widget = arrange_textarea({w=80})
+
+    local text = table.concat({
+        'Lorem ipsum dolor sit amet. ',
+    }, '\n')
+
+    simulate_input_text(text)
+
+    simulate_input_text('A')
+
+    expect.eq(read_rendered_text(text_area), text .. 'A_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '_')
+
+    -- undo fast written text as group
+    simulate_input_text('123')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '_')
+
+    -- undo cut feature
+    simulate_input_text('123')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    simulate_input_keys('CUSTOM_CTRL_A')
+    simulate_input_keys('CUSTOM_CTRL_X')
+
+    expect.eq(read_rendered_text(text_area), '_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    -- undo paste feature
+
+    simulate_input_keys('CUSTOM_CTRL_V')
+
+    expect.eq(read_rendered_text(text_area), text .. '123' .. text .. '123_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    -- undo enter
+
+    simulate_input_keys('SELECT')
+
+    expect.eq(read_rendered_text(text_area), text .. '123\n_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    -- undo backspace
+
+    simulate_input_keys('STRING_A000')
+
+    expect.eq(read_rendered_text(text_area), text .. '12_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    -- undo line delete
+
+    simulate_input_keys('CUSTOM_CTRL_U')
+
+    expect.eq(read_rendered_text(text_area), '_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '123_')
+
+    -- undo delete rest of line
+
+    text_area:setCursor(5)
+    local expected_text = text:sub(1, 4) .. '_' .. text:sub(6, #text) .. '123'
+    expect.eq(read_rendered_text(text_area), expected_text)
+
+    simulate_input_keys('CUSTOM_CTRL_K')
+
+    expect.eq(read_rendered_text(text_area), text:sub(1, 4) .. '_')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), expected_text)
+
+    -- undo delete char
+
+    text_area:setCursor(5)
+    expect.eq(read_rendered_text(text_area), expected_text)
+
+    simulate_input_keys('CUSTOM_DELETE')
+
+    expect.eq(
+        read_rendered_text(text_area),
+        text:sub(1, 4) .. '_' .. text:sub(7, #text) .. '123'
+    )
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), expected_text)
+
+    -- undo delete last word
+
+    text_area:setText(text)
+    text_area:setCursor(#text + 1)
+
+    simulate_input_keys('CUSTOM_CTRL_W')
+    expect.eq(read_rendered_text(text_area), 'Lorem ipsum dolor sit _')
+
+    simulate_input_keys('CUSTOM_CTRL_Z')
+
+    expect.eq(read_rendered_text(text_area), text .. '_')
+
+    screen:dismiss()
+end

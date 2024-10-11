@@ -72,10 +72,9 @@ function EditField:init()
         self:setFocus(true)
     end
 
-    self.key = 'CUSTOM_N'
-
     self.start_pos = 1
     self.cursor = #self.text + 1
+    self.ignore_keys = self.ignore_keys or {}
 
     self.label = HotkeyLabel{
         frame={t=0,l=0},
@@ -91,13 +90,23 @@ function EditField:init()
         text_pen=self.text_pen or COLOR_LIGHTCYAN,
         modal=self.modal,
         on_char=self.on_char,
-        ignore_keys={'SELECT', 'SELECT_ALL'},
+        ignore_keys={
+            'SELECT',
+            'SELECT_ALL',
+            'KEYBOARD_CURSOR_UP',
+            'KEYBOARD_CURSOR_DOWN',
+            table.unpack(self.ignore_keys)
+        },
         on_text_change=self:callback('onTextAreaTextChange'),
         on_cursor_change=function(cursor) self.cursor = cursor end
     }
 
     self:addviews{self.label, self.text_area}
     self.text_area.frame.l = self.label:getTextWidth()
+
+    if self.key then
+        self.text_area:setFocus(false)
+    end
 end
 
 function EditField:getPreferredFocusState()
@@ -146,12 +155,6 @@ end
 function EditField:onInput(keys)
     if not self.focus then
         return self.label:onInput(keys)
-    end
-
-    if self.ignore_keys then
-        for _,ignore_key in ipairs(self.ignore_keys) do
-            if keys[ignore_key] then return false end
-        end
     end
 
     if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then

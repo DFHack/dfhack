@@ -457,19 +457,19 @@ function StockpilesOverlay:init()
     frame_background=gui.CLEAR_PEN,
     visible=is_expanded,
     subviews={
-	            widgets.Label{
+                widgets.Label{
                     frame={t=0, l=0, h=1},
                     auto_height=false,
                     text={'Import/Export settings:'},
                     text_pen=COLOR_DARKGREY,
-                }, 
+                },
         widgets.HotkeyLabel{
             frame={t=1, l=0},
             label='import',
             auto_width=true,
             key='CUSTOM_CTRL_I',
             on_activate=self:callback('do_import'),  -- Calls the do_import function
-        }, 
+        },
         widgets.HotkeyLabel{
             frame={t=1, l=16},
             label='export',
@@ -485,7 +485,7 @@ function StockpilesOverlay:init()
                     auto_height=false,
                     text={'Auto-designate stockpile items/animals for:'},
                     text_pen=COLOR_DARKGREY,
-                }, 
+                },
                 widgets.ToggleHotkeyLabel{
                     view_id='melt',
                     frame={t=1, l=0},
@@ -496,7 +496,7 @@ function StockpilesOverlay:init()
                             {label='Melting', value=false}},
                     initial_option=false,
                     on_change=self:callback('toggleLogisticsFeature', 'melt'),
-                }, 
+                },
                 widgets.ToggleHotkeyLabel{
                     view_id='trade',
                     frame={t=1, l=16},
@@ -507,7 +507,7 @@ function StockpilesOverlay:init()
                             {label='Trading', value=false}},
                     initial_option=false,
                     on_change=self:callback('toggleLogisticsFeature', 'trade'),
-                }, 
+                },
                 widgets.ToggleHotkeyLabel{
                     view_id='dump',
                     frame={t=2, l=0},
@@ -518,7 +518,7 @@ function StockpilesOverlay:init()
                             {label='Dumping', value=false}},
                     initial_option=false,
                     on_change=self:callback('toggleLogisticsFeature', 'dump'),
-                }, 
+                },
                 widgets.ToggleHotkeyLabel{
                     view_id='train',
                     frame={t=1, l=32},
@@ -529,7 +529,7 @@ function StockpilesOverlay:init()
                             {label='Training', value=false}},
                     initial_option=false,
                     on_change=self:callback('toggleLogisticsFeature', 'train'),
-                }, 
+                },
                 widgets.CycleHotkeyLabel{
                     view_id='forbid',
                     frame={t=2, l=16, w=16},

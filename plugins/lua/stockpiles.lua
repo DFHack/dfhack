@@ -5,6 +5,7 @@ local gui = require('gui')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
+local dialogs = require('gui.dialogs')
 
 local STOCKPILES_DIR = 'dfhack-config/stockpiles'
 local STOCKPILES_LIBRARY_DIR = 'hack/data/stockpiles'
@@ -244,55 +245,64 @@ end
 -- dialogs
 --------------------
 
-StockpilesExport = defclass(StockpilesExport, widgets.Window)
-StockpilesExport.ATTRS{frame_title='Export stockpile settings', frame={w=33, h=15}, resizable=true}
+--------------------
+-- dialogs export
+--------------------
 
-function StockpilesExport:init()
-    self:addviews{
-        widgets.EditField{
-            view_id='edit',
-            frame={t=0, l=0, r=0},
-            label_text='name: ',
-            on_char=function(ch)
-                return not ch:match(BAD_FILENAME_REGEX)
-            end,
-        }, widgets.Label{frame={t=2, l=0}, text='Include which elements?'},
-        widgets.ToggleHotkeyLabel{frame={t=4, l=0}, label='General settings', initial_option=false},
-        widgets.ToggleHotkeyLabel{
-            frame={t=5, l=0},
-            label='Container settings',
-            initial_option=false,
-        }, widgets.ToggleHotkeyLabel{frame={t=6, l=0}, label='Categories', initial_option=true},
-        widgets.ToggleHotkeyLabel{frame={t=7, l=0}, label='Subtypes', initial_option=true},
-        widgets.HotkeyLabel{
-            frame={t=10, l=0},
-            label='export',
-            key='SELECT',
-            enabled=function()
-                return #self.subviews.edit.text > 0
-            end,
-            on_activate=self:callback('on_submit'),
-        },
-    }
+function ExportOverlay()
+    dialogs.InputBox{
+        frame_title='Export Manager Stockpiles',
+        on_input=function(text)
+            -- Print debug message to verify the function is being called
+            dfhack.println("User input received: " .. text)
+
+            -- Introduce a short delay (e.g., 500 ms) to ensure stockpile is selected
+            dfhack.timeout(2, 'frames', function()
+                -- Test run the user-provided export name after the delay
+                dfhack.run_command('stockpiles', 'export', text)
+            end)
+        end
+    }:show()
 end
 
-function StockpilesExport:on_submit(text)
-    self:dismiss()
+--------------------
+-- dialogs import
+--------------------
+
+local function get_import_choices()
+    return dfhack.run_command_silent('stockpiles', 'list'):split('\n')
 end
 
-StockpilesExportScreen = defclass(StockpilesExportScreen, gui.ZScreenModal)
-StockpilesExportScreen.ATTRS{focus_path='stockpiles/export'}
-
-function StockpilesExportScreen:init()
-    self:addviews{StockpilesExport{}}
-end
-
-function StockpilesExportScreen:onDismiss()
-    export_view = nil
-end
-
-local function do_export()
-    export_view = export_view and export_view:raise() or StockpilesExportScreen{}:show()
+local function ImportOverlay()
+    local dlg
+    local function get_dlg() return dlg end
+    dlg = dialogs.ListBox{
+        frame_title='Import/Delete Stockpiles',
+        with_filter=true,
+        choices=get_import_choices(),
+        on_select=function(_, choice)
+            dfhack.timeout(2, 'frames', function()  -- Add the timeout before running the command
+                dfhack.run_command('stockpiles', 'import', choice.text)
+            end)
+        end,
+        dismiss_on_select2=false,
+        on_select2=function(_, choice)
+            if choice.text:startswith('library/') then return end
+            local fname = 'dfhack-config/stockpiles/'..choice.text..'.dfstock'
+            if not dfhack.filesystem.isfile(fname) then return end
+            dialogs.showYesNoPrompt('Delete stockpile file?',
+                'Are you sure you want to delete "' .. fname .. '"?', nil,
+                function()
+                    print('deleting ' .. fname)
+                    os.remove(fname)
+                    local list = get_dlg().subviews.list
+                    local filter = list:getFilter()
+                    list:setChoices(get_import_choices(), list:getSelected())
+                    list:setFilter(filter)
+                end)
+        end,
+        select2_hint='Delete file',
+    }:show()
 end
 
 --------------------
@@ -431,7 +441,7 @@ StockpilesOverlay.ATTRS{
     default_pos={x=5, y=44},
     default_enabled=true,
     viewscreens='dwarfmode/Stockpile/Some/Default',
-    frame={w=49, h=5},
+    frame={w=49, h=8},
 }
 
 function StockpilesOverlay:init()
@@ -442,87 +452,99 @@ function StockpilesOverlay:init()
     end
 
     local main_panel = widgets.Panel{
-        view_id='main',
-        frame_style=gui.MEDIUM_FRAME,
-        frame_background=gui.CLEAR_PEN,
-        visible=is_expanded,
-        subviews={
-            -- widgets.HotkeyLabel{
-            --     frame={t=0, l=0},
-            --     label='import settings',
-            --     auto_width=true,
-            --     key='CUSTOM_CTRL_I',
-            --     on_activate=do_import,
-            -- }, widgets.HotkeyLabel{
-            --     frame={t=1, l=0},
-            --     label='export settings',
-            --     auto_width=true,
-            --     key='CUSTOM_CTRL_E',
-            --     on_activate=do_export,
-            -- },
-            widgets.Panel{
-                frame={t=0, l=0},
-                subviews={
-                    widgets.Label{
-                        frame={t=0, l=0, h=1},
-                        auto_height=false,
-                        text={'Auto-designate stockpile items/animals for:'},
-                        text_pen=COLOR_DARKGREY,
-                    }, widgets.ToggleHotkeyLabel{
-                        view_id='melt',
-                        frame={t=1, l=0},
-                        auto_width=true,
-                        key='CUSTOM_CTRL_M',
-                        option_gap=-1,
-                        options={{label='Melting', value=true, pen=COLOR_RED},
-                                {label='Melting', value=false}},
-                        initial_option=false,
-                        on_change=self:callback('toggleLogisticsFeature', 'melt'),
-                    }, widgets.ToggleHotkeyLabel{
-                        view_id='trade',
-                        frame={t=1, l=16},
-                        auto_width=true,
-                        key='CUSTOM_CTRL_T',
-                        option_gap=-1,
-                        options={{label='Trading', value=true, pen=COLOR_YELLOW},
-                                {label='Trading', value=false}},
-                        initial_option=false,
-                        on_change=self:callback('toggleLogisticsFeature', 'trade'),
-                    }, widgets.ToggleHotkeyLabel{
-                        view_id='dump',
-                        frame={t=2, l=0},
-                        auto_width=true,
-                        key='CUSTOM_CTRL_U',
-                        option_gap=-1,
-                        options={{label='Dumping', value=true, pen=COLOR_LIGHTMAGENTA},
-                                {label='Dumping', value=false}},
-                        initial_option=false,
-                        on_change=self:callback('toggleLogisticsFeature', 'dump'),
-                    }, widgets.ToggleHotkeyLabel{
-                        view_id='train',
-                        frame={t=1, l=32},
-                        auto_width=true,
-                        key='CUSTOM_CTRL_A',
-                        option_gap=-1,
-                        options={{label='Training', value=true, pen=COLOR_LIGHTBLUE},
-                                {label='Training', value=false}},
-                        initial_option=false,
-                        on_change=self:callback('toggleLogisticsFeature', 'train'),
-                    }, widgets.CycleHotkeyLabel{
-                        view_id='forbid',
-                        frame={t=2, l=16, w=16},
-                        key='CUSTOM_CTRL_F',
-                        option_gap=-1,
-                        options={{label='Forbid', value=0},
-                                {label='Forbid', value=1, pen=COLOR_LIGHTRED},
-                                {label='Claim', value=2, pen=COLOR_LIGHTBLUE}},
-                        initial_option=0,
-                        on_change=self:callback('toggleLogisticsFeature', 'forbid'),
-                    },
+    view_id='main',
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+    visible=is_expanded,
+    subviews={
+	            widgets.Label{
+                    frame={t=0, l=0, h=1},
+                    auto_height=false,
+                    text={'Import/Export settings:'},
+                    text_pen=COLOR_DARKGREY,
+                }, 
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='import',
+            auto_width=true,
+            key='CUSTOM_CTRL_I',
+            on_activate=self:callback('do_import'),  -- Calls the do_import function
+        }, 
+        widgets.HotkeyLabel{
+            frame={t=1, l=16},
+            label='export',
+            auto_width=true,
+            key='CUSTOM_CTRL_E',
+            on_activate=self:callback('do_export'),  -- Calls the do_export function
+        },
+        widgets.Panel{
+            frame={t=2, l=0},  -- Start this panel below the import/export labels to avoid overlap
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0, h=1},
+                    auto_height=false,
+                    text={'Auto-designate stockpile items/animals for:'},
+                    text_pen=COLOR_DARKGREY,
+                }, 
+                widgets.ToggleHotkeyLabel{
+                    view_id='melt',
+                    frame={t=1, l=0},
+                    auto_width=true,
+                    key='CUSTOM_CTRL_M',
+                    option_gap=-1,
+                    options={{label='Melting', value=true, pen=COLOR_RED},
+                            {label='Melting', value=false}},
+                    initial_option=false,
+                    on_change=self:callback('toggleLogisticsFeature', 'melt'),
+                }, 
+                widgets.ToggleHotkeyLabel{
+                    view_id='trade',
+                    frame={t=1, l=16},
+                    auto_width=true,
+                    key='CUSTOM_CTRL_T',
+                    option_gap=-1,
+                    options={{label='Trading', value=true, pen=COLOR_YELLOW},
+                            {label='Trading', value=false}},
+                    initial_option=false,
+                    on_change=self:callback('toggleLogisticsFeature', 'trade'),
+                }, 
+                widgets.ToggleHotkeyLabel{
+                    view_id='dump',
+                    frame={t=2, l=0},
+                    auto_width=true,
+                    key='CUSTOM_CTRL_U',
+                    option_gap=-1,
+                    options={{label='Dumping', value=true, pen=COLOR_LIGHTMAGENTA},
+                            {label='Dumping', value=false}},
+                    initial_option=false,
+                    on_change=self:callback('toggleLogisticsFeature', 'dump'),
+                }, 
+                widgets.ToggleHotkeyLabel{
+                    view_id='train',
+                    frame={t=1, l=32},
+                    auto_width=true,
+                    key='CUSTOM_CTRL_A',
+                    option_gap=-1,
+                    options={{label='Training', value=true, pen=COLOR_LIGHTBLUE},
+                            {label='Training', value=false}},
+                    initial_option=false,
+                    on_change=self:callback('toggleLogisticsFeature', 'train'),
+                }, 
+                widgets.CycleHotkeyLabel{
+                    view_id='forbid',
+                    frame={t=2, l=16, w=16},
+                    key='CUSTOM_CTRL_F',
+                    option_gap=-1,
+                    options={{label='Forbid', value=0},
+                            {label='Forbid', value=1, pen=COLOR_LIGHTRED},
+                            {label='Claim', value=2, pen=COLOR_LIGHTBLUE}},
+                    initial_option=0,
+                    on_change=self:callback('toggleLogisticsFeature', 'forbid'),
                 },
             },
         },
-    }
+    },
+}
 
     self:addviews{
         main_panel,
@@ -559,6 +581,15 @@ function StockpilesOverlay:onRenderFrame()
         self.subviews.train:setOption(config.train == 1)
         self.cur_stockpile = sp
     end
+end
+
+function StockpilesOverlay:do_export()
+ExportOverlay()
+
+end
+
+function StockpilesOverlay:do_import()
+ImportOverlay()
 end
 
 function StockpilesOverlay:toggleLogisticsFeature(feature)

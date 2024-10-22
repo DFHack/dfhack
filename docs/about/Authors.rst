@@ -57,7 +57,7 @@ David Timm              dtimm
 Dean Golden             LightHardt
 Deon
 dhthwy                  dhthwy
-dikbut                  Tjudge1
+dikbutdagrate           Tjudge1
 Dmitrii Kurkin          Kurkin
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash

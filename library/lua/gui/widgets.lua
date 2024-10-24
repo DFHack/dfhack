@@ -28,6 +28,7 @@ FilteredList = require('gui.widgets.filtered_list')
 TabBar = require('gui.widgets.tab_bar')
 RangeSlider = require('gui.widgets.range_slider')
 DimensionsTooltip = require('gui.widgets.dimensions_tooltip')
+TextArea = require('gui.widgets.text_area')
 
 Tab = TabBar.Tab
 makeButtonLabelText = Label.makeButtonLabelText

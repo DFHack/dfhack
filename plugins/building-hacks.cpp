@@ -88,8 +88,8 @@ struct work_hook : df::building_workshopst{
             df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
             if (ref)
             {
-                info->produced = ref->unk_1;
-                info->consumed = ref->unk_2;
+                info->produced = ref->pop_id;
+                info->consumed = ref->num;
                 return true;
             }
             else
@@ -118,18 +118,18 @@ struct work_hook : df::building_workshopst{
         df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
         if (ref)
         {
-            ref->unk_1 = produced;
-            ref->unk_2 = consumed;
+            ref->pop_id = produced;
+            ref->num = consumed;
         }
         else
         {
             ref = df::allocate<df::general_ref_creaturest>();
-            ref->unk_1 = produced;
-            ref->unk_2 = consumed;
+            ref->pop_id = produced;
+            ref->num = consumed;
             general_refs.push_back(ref);
         }
     }
-    DEFINE_VMETHOD_INTERPOSE(uint32_t,getImpassableOccupancy,())
+    DEFINE_VMETHOD_INTERPOSE(df::tile_building_occ,getImpassableOccupancy,())
     {
         if(auto def = find_def())
         {
@@ -260,9 +260,9 @@ struct work_hook : df::building_workshopst{
         }
         INTERPOSE_NEXT(updateAction)();
     }
-    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (uint32_t curtick, df::building_drawbuffer *db, int16_t unk))
     {
-        INTERPOSE_NEXT(drawBuilding)(db, unk);
+        INTERPOSE_NEXT(drawBuilding)(curtick, db, unk);
 
         if (auto def = find_def())
         {

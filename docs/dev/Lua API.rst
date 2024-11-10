@@ -6194,9 +6194,16 @@ TabBar class
 ------------
 
 This widget implements a set of one or more tabs to allow navigation between groups
-of content. Tabs automatically wrap on the width of the window and will continue
-rendering on the next line(s) if all tabs cannot fit on a single line.
+of content.
 
+:wrap: If true, tabs automatically wrap on the width of the window and will
+       continue rendering on the next line(s) if all tabs cannot fit on a single line.
+       If false, tabs will be truncated and can be scrolled using ``scroll_key``
+       and ``scroll_key_back``, mouse wheel or by clicking on the scroll labels
+       that will automatically appear on the left and right sides of the tab bar
+       as needed. When clicking on a tab or using ``key`` or ``key_back`` to switch tabs,
+       the selected tab will be scrolled into view if it is not already visible.
+       Defaults to true.
 :key: Specifies a keybinding that can be used to switch to the next tab.
       Defaults to ``CUSTOM_CTRL_T``.
 :key_back: Specifies a keybinding that can be used to switch to the previous
@@ -6222,6 +6229,28 @@ rendering on the next line(s) if all tabs cannot fit on a single line.
            itself as the second. The default implementation, which will handle most
            situations, returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``,
            otherwise returns ``self.inactive_tab_pens``.
+:scroll_key: Specifies a keybinding that can be used to scroll the tabs to the right.
+             Defaults to ``CUSTOM_ALT_T``.
+:scroll_key_back: Specifies a keybinding that can be used to scroll the tabs to the left.
+                  Defaults to ``CUSTOM_ALT_Y``.
+:scroll_left_text: The text to display on the left scroll label.
+                   Defaults to "<<<".
+:scroll_right_text: The text to display on the right scroll label.
+                    Defaults to ">>>".
+:scroll_label_text_pen: The pen to use for the scroll label text.
+                        Defaults to ``Label`` default.
+:scroll_label_text_hpen: The pen to use for the scroll label text when hovered.
+                         Defaults to ``scroll_label_text_pen`` with the background
+                         and foreground colors swapped.
+:scroll_step: The number of units to scroll tabs by.
+              Defaults to 10.
+:fast_scroll_multiplier: The multiplier for fast scrolling (holding shift).
+                         Defaults to 3.
+:scroll_into_view_offset: After a selected tab is scrolled into view, this offset
+                          is added to the scroll position to ensure the tab is
+                          not flush against the edge of the tab bar, allowing
+                          some space for the user to see the next tab.
+                          Defaults to 5.
 
 Tab class
 ---------

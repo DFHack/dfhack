@@ -85,6 +85,7 @@ Template for new versions:
 ## Lua
 
 - ``dfhack.units``: new function ``setPathGoal``
+- ``widgets.TabBar``: updated to allow for horizontal scrolling of tabs when there are too many to fit in the available space
 
 ## Removed
 - UI focus strings for squad panel flows combined into a single tree: ``dwarfmode/SquadEquipment`` -> ``dwarfmode/Squads/Equipment``, ``dwarfmode/SquadSchedule`` -> ``dwarfmode/Squads/Schedule``

@@ -136,8 +136,6 @@ end
 ---@field key_back string
 ---@field wrap boolean
 ---@field scroll_step integer
----@field scroll_left_text string
----@field scroll_right_text string
 ---@field scroll_key string
 ---@field scroll_key_back string
 ---@field fast_scroll_modifier integer
@@ -166,8 +164,6 @@ TabBar.ATTRS{
     key_back='CUSTOM_CTRL_Y',
     wrap = true,
     scroll_step = 10,
-    scroll_left_text = '<<<',
-    scroll_right_text = '>>>',
     scroll_key = 'CUSTOM_ALT_T',
     scroll_key_back = 'CUSTOM_ALT_Y',
     fast_scroll_modifier = 3,
@@ -175,6 +171,9 @@ TabBar.ATTRS{
     scroll_label_text_pen = DEFAULT_NIL,
     scroll_label_text_hpen = DEFAULT_NIL,
 }
+
+local TO_THE_RIGHT = string.char(16)
+local TO_THE_LEFT = string.char(17)
 
 ---@param self widgets.TabBar
 function TabBar:init()
@@ -217,10 +216,10 @@ function TabBar:init()
       self:addviews{
         Label{
           view_id='TabBar__scroll_left',
-          frame={t=0, l=0, w=#self.scroll_left_text},
+          frame={t=0, l=0, w=1},
           text_pen=self.scroll_label_text_pen,
           text_hpen=self.scroll_label_text_hpen,
-          text=self.scroll_left_text,
+          text=TO_THE_LEFT,
           visible = false,
           on_click=function()
               self:scrollLeft()
@@ -228,10 +227,10 @@ function TabBar:init()
         },
         Label{
           view_id='TabBar__scroll_right',
-          frame={t=0, l=0, w=#self.scroll_right_text},
+          frame={t=0, l=0, w=1},
           text_pen=self.scroll_label_text_pen,
           text_hpen=self.scroll_label_text_hpen,
-          text=self.scroll_right_text,
+          text=TO_THE_RIGHT,
           visible = false,
           on_click=function()
               self:scrollRight()
@@ -256,13 +255,13 @@ function TabBar:showScrollLeft()
     self:scrollLeftElement().visible = self:leftScrollVisible()
 end
 
-function TabBar:scrollRightVisible()
+function TabBar:rightScrollVisible()
     return self.scroll_offset > self.offset_to_show_last_tab
 end
 
 function TabBar:showScrollRight()
     if self.wrap then return end
-    self:scrollRightElement().visible = self:scrollRightVisible()
+    self:scrollRightElement().visible = self:rightScrollVisible()
 end
 
 function TabBar:updateTabPanelPosition()
@@ -347,11 +346,12 @@ function TabBar:postComputeFrame(body)
     for _,tab in ipairs(self:tabsElement().subviews) do
         tab.visible = true
         if l > 0 and l + tab.frame.w > width then
-            self.scrollable = true
             if self.wrap then
                 t = t + 2
                 l = 0
                 tab_rows = tab_rows + 1
+            else
+                self.scrollable = true
             end
         end
         tab.frame.t = t
@@ -363,7 +363,7 @@ function TabBar:postComputeFrame(body)
     self.offset_to_show_last_tab = -(self.all_tabs_width - self.post_compute_width)
 
     if self.scrollable and not self.wrap then
-        self:scrollRightElement().frame.l = width - #self.scroll_right_text
+        self:scrollRightElement().frame.l = width - 1
 
         if self.last_post_compute_width ~= self.post_compute_width then
             self.scroll_offset = 0

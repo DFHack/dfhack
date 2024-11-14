@@ -321,7 +321,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             // must be followed by bodypart code (e.g. NECK)
             if(i == parameters.size()-1 || parameters[i+1].size() == 0)
             {
-                out.printerr("The bp switch must be followed by a bodypart code!\n");
+                WARN(log).print("The bp switch must be followed by a bodypart code!\n");
                 return CR_FAILURE;
             }
             targetBodyPartCode = parameters[i+1];
@@ -337,7 +337,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // Ensure that the map information is available (e.g. a game is actually in-progress)
     if (!Maps::IsValid())
     {
-        out.printerr("Map is not available!\n");
+        WARN(log).print("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -348,7 +348,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // needs a cursor
     if (!Gui::getCursorCoords(cx,cy,cz))
     {
-        out.printerr("Cursor position not found. Please enable the cursor.\n");
+        WARN(log).print("Cursor position not found. Please enable the cursor.\n");
         return CR_FAILURE;
     }
     pos_cursor = DFCoord(cx,cy,cz);
@@ -369,7 +369,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 
     if (!targetUnit)
     {
-        out.printerr("No unit found at cursor!\n");
+        WARN(log).print("No unit found at cursor!\n");
         return CR_FAILURE;
     }
 
@@ -385,13 +385,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             if (targetBodyPart->token.compare(targetBodyPartCode) == 0)
             {
                 // It is indeed a match; exit the loop (while leaving the variable populated)
-                if (verbose) { out.print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
+                if (verbose) { INFO(log).print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
                 break;
             }
             else
             {
                 // Not a match; nullify the variable (it will get re-populated on the next pass through the loop)
-                if (verbose) { out.printerr("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
+                if (verbose) { WARN(log).print("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
                 targetBodyPart = NULL;
             }
         }
@@ -399,7 +399,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (!targetBodyPart)
         {
             // Loop iteration is complete but no match was found.
-            out.printerr("The unit does not possess a bodypart of type \"%s\".  Please check the spelling or choose a different unit.\n", targetBodyPartCode.c_str());
+            WARN(log).print("The unit does not possess a bodypart of type \"%s\".  Please check the spelling or choose a different unit.\n", targetBodyPartCode.c_str());
             return CR_FAILURE;
         }
     }
@@ -437,7 +437,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             else if (currentItem->flags.bits.forbid == 1)
             {
                 // The item is forbidden; skip it
-                if (verbose) { out.printerr("Forbidden item encountered; skipping to next item.\n"); }
+                if (verbose) { WARN(log).print("Forbidden item encountered; skipping to next item.\n"); }
             }
 
         }
@@ -446,7 +446,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (currentItem->flags.bits.in_inventory == 1)
         {
             // The item is in a unit's inventory; skip it
-            if (verbose) { out.printerr("Inventory item encountered; skipping to next item.\n"); }
+            if (verbose) { WARN(log).print("Inventory item encountered; skipping to next item.\n"); }
         }
         else
         {
@@ -455,7 +455,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             {
 //                // TODO TEMP EXPERIMENTAL - try to alter the item size in order to conform to its wearer
 //                currentItem->getRace();
-//                out.print("Critter size: %d| %d | Armor size: %d", world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_1, world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_2, currentItem->getTotalDimension());
+//                INFO(log).print("Critter size: %d| %d | Armor size: %d", world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_1, world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_2, currentItem->getTotalDimension());
 
                 itemsEquipped++;                // Track the number of items successfully processed (for feedback purposes)
             }
@@ -463,13 +463,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     }
 
     if (itemsFound == 0) {
-        out.printerr("No usable items found at the cursor position.  Please choose a different location and try again.\n");
+        WARN(log).print("No usable items found at the cursor position.  Please choose a different location and try again.\n");
         return CR_OK;
     }
 
 
-    if (itemsEquipped == 0 && !verbose) { out.printerr("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
-    if (itemsEquipped > 0) { out.print("%d items equipped.\n", itemsEquipped); }
+    if (itemsEquipped == 0 && !verbose) { WARN(log).print("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
+    if (itemsEquipped > 0) { INFO(log).print("%d items equipped.\n", itemsEquipped); }
 
     // Note: we might expect to recalculate the unit's weight at this point, in order to account for the
     // added items.  In fact, this recalculation occurs automatically during each dwarf's "turn".

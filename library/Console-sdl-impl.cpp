@@ -393,7 +393,8 @@ void render_texture(
 
 int set_draw_color(SDL_Renderer*, const SDL_Color&);
 
-struct SDLThreadSpecificData {
+class SDLThreadSpecificData {
+public:
     using Texture = std::unique_ptr<SDL_Texture, decltype(sdl_console::SDL_DestroyTexture)>;
     using Renderer = std::unique_ptr<SDL_Renderer, decltype(sdl_console::SDL_DestroyRenderer)>;
     using Window = std::unique_ptr<SDL_Window, decltype(sdl_console::SDL_DestroyWindow)>;
@@ -485,7 +486,8 @@ private:
 
 static SDLThreadSpecificData sdl_tsd;
 
-struct ISlot {
+class ISlot {
+public:
     virtual ~ISlot() = default;
     virtual void invoke(SDL_Event& event) = 0;
     virtual void disconnect() = 0;
@@ -493,7 +495,8 @@ struct ISlot {
     virtual bool is_connected() = 0;
 };
 
-struct ISignal {
+class ISignal {
+public:
     virtual ~ISignal() = default;
     // todo for connect()
     virtual void disconnect(Uint32 event_type, ISlot* slot) = 0;
@@ -760,10 +763,11 @@ namespace property {
     constexpr char PROMPT_TEXT[] = "prompt.text";
 }
 
-struct Widget;
+class Widget;
 SDL_Texture* create_text_texture(Widget&, const std::u32string&, const SDL_Color&);
 
-struct TextEntry {
+class TextEntry {
+public:
     // A fragment is simply a chunk of text.
     struct Fragment {
         std::u32string_view text;
@@ -903,7 +907,7 @@ struct Glyph {
 };
 
 // XXX, TODO: cleanup.
-struct Font : public SignalEmitter {
+class Font : public SignalEmitter {
     class ScopedColor {
     public:
         ScopedColor(Font* font) : font_(font) {}
@@ -929,6 +933,8 @@ struct Font : public SignalEmitter {
         ScopedColor& operator=(const ScopedColor&) = delete;
     };
 
+// FIXME: make members private and add accessors
+public:
     SDL_Renderer* renderer_;
     SDL_Texture* texture_;
     std::vector<Glyph> glyphs;
@@ -1053,11 +1059,10 @@ struct Font : public SignalEmitter {
         return *this;
     }
 
-  //  Font(const Font&) = delete;
+    // Font(const Font&) = delete;
     Font& operator=(const Font&) = delete;
 
 private:
-
     void change_size(int delta) {
         scale_factor = (float)(char_width + delta) / orig_char_width;
 
@@ -1081,7 +1086,8 @@ private:
 
 // This stuff needs reworked, I think.
 using FontMap = std::map<std::pair<std::string, int>, Font>;
-struct FontLoader {
+class FontLoader {
+public:
     FontLoader(SDL_Renderer* renderer)
         : renderer_(renderer)
     {
@@ -1129,7 +1135,8 @@ protected:
     std::vector<SDL_Texture*> textures_;
 };
 
-struct BMPFontLoader : public FontLoader {
+class BMPFontLoader : public FontLoader {
+public:
     BMPFontLoader(SDL_Renderer* renderer)
         : FontLoader(renderer)
     {
@@ -1227,7 +1234,8 @@ class MainWindow;
  * Shared context object for a window and its children, includes
  * resources and properties required for rendering and event handling.
  */
-struct WidgetContext {
+class WidgetContext {
+public:
     SignalEmitter* global_emitter;
     Property &props;
     SDL_Window* window_handle;
@@ -1331,7 +1339,7 @@ struct WidgetContext {
 };
 
 // TODO: needs work
-struct Widget : public SignalEmitter {
+class Widget : public SignalEmitter {
 public:
     Widget* parent;
     Font* font;
@@ -1865,7 +1873,7 @@ private:
 
 };
 
-struct Button : public Widget {
+class Button : public Widget {
 public:
     Button(Widget* parent, std::u32string& label, SDL_Color color)
         : Widget(parent)
@@ -1953,7 +1961,8 @@ public:
     bool enabled { true };
 };
 
-struct Toolbar : public Widget {
+class Toolbar : public Widget {
+public:
     Toolbar(Widget* parent, SDL_Rect viewport);
     ~Toolbar() {};
     virtual void render() override;
@@ -1967,7 +1976,8 @@ struct Toolbar : public Widget {
     std::deque<std::unique_ptr<Widget>> widgets;
 };
 
-struct InputLinePipe {
+class InputLinePipe {
+public:
     InputLinePipe() = default;
 
     void make_connection(SignalEmitter& emitter)

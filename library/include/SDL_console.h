@@ -12,7 +12,7 @@ union SDL_Event;
 namespace sdl_console {
 
 struct SDLConsole_pshare;
-struct SDLConsole_impl;
+class SDLConsole_impl;
 
 class SDLConsole {
 public:

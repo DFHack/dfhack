@@ -1645,6 +1645,10 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
+    // SDL_CONSOLE FIXME
+    if(con.init(false))
+        std::cerr << "Console init(first).\n";
+
     perf_counters.reset();
 
     return true;
@@ -1688,6 +1692,18 @@ bool Core::InitSimulationThread()
         std::cerr << "Headless mode not supported on Windows" << std::endl;
 #endif
     }
+/*
+    // dump offsets to a file
+    std::ofstream dump("offsets.log");
+    if(!dump.fail())
+    {
+        //dump << vinfo->PrintOffsets();
+        dump.close();
+    }
+    */
+    // initialize data defs
+    virtual_identity::Init(this);
+
     if (is_text_mode && !is_headless)
     {
         std::cerr << "Console is not available. Use dfhack-run to send commands.\n";
@@ -1700,17 +1716,6 @@ bool Core::InitSimulationThread()
         std::cerr << "Console is running.\n";
     else
         std::cerr << "Console has failed to initialize!\n";
-/*
-    // dump offsets to a file
-    std::ofstream dump("offsets.log");
-    if(!dump.fail())
-    {
-        //dump << vinfo->PrintOffsets();
-        dump.close();
-    }
-    */
-    // initialize data defs
-    virtual_identity::Init(this);
 
     // create config directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(CONFIG_PATH))
@@ -2378,6 +2383,7 @@ int Core::Shutdown ( void )
         plug_mgr = 0;
     }
     // invalidate all modules
+    con.cleanup();
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
@@ -2459,6 +2465,7 @@ void Core::setArmokTools(const std::vector<std::string> &tool_names) {
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
     uint32_t start_ms = p->getTickCount();
+    if (getConsole().sdl_event_hook(*ev)) return true; 
     bool ret = doSdlInputEvent(ev);
     perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
     return ret;

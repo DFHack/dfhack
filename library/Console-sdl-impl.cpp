@@ -22,6 +22,7 @@
 #include <ranges>
 #include <condition_variable>
 #include <cmath>
+#include <cwctype>
 //#include <cuchar>
 
 #include "modules/DFSDL.h"
@@ -1220,7 +1221,7 @@ private:
     }
 };
 
-struct MainWindow;
+class MainWindow;
 
 /*
  * Shared context object for a window and its children, includes
@@ -2710,11 +2711,11 @@ public:
     ExternalEventQueue(const ExternalEventQueue&) = delete;
     ExternalEventQueue& operator=(const ExternalEventQueue&) = delete;
 
-    using ApiTask = std::function<void()>;
-    Queue<ApiTask> api_task;
-
 private:
     std::mutex mutex;
+public:
+    using ApiTask = std::function<void()>;
+    Queue<ApiTask> api_task;
 };
 
 void render_texture(
@@ -2733,11 +2734,12 @@ int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
 struct SDLConsole_pshare {
     Property props;
     std::weak_ptr<SDLConsole_impl> impl_weak;
-    std::thread::id render_thread_id{0};
+    //std::thread::id render_thread_id{0};
 };
 
 //static Uint32 render_frame_event_id{(Uint32)-1)};
-struct SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
+class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
+public:
     Property& props;
     SDLConsole::State& state;
     SDLConsole_pshare& pshare;
@@ -2855,7 +2857,7 @@ bool SDLConsole::init()
     if (!state.is_inactive()) return true;
     bool success = true;
     std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
-    pshare->render_thread_id = std::this_thread::get_id();
+    //pshare->render_thread_id = std::this_thread::get_id();
     try {
         impl = std::make_shared<SDLConsole_impl>(this);
         pshare->impl_weak = impl;

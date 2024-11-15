@@ -34,6 +34,8 @@ distribution.
 #include <string>
 #include <vector>
 
+union SDL_Event;
+
 namespace  DFHack
 {
     class CommandHistory
@@ -168,6 +170,9 @@ namespace  DFHack
 
         bool hide();
         bool show();
+
+        bool sdl_event_hook(SDL_Event& event);
+        void cleanup();
     private:
         Private * d;
         std::recursive_mutex * wlock;

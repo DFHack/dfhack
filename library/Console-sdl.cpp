@@ -54,12 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 #include <stdarg.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <termios.h>
 #include <csignal>
-#include <fcntl.h>
 #include <SDL_pixels.h>
 
 #include "Console.h"

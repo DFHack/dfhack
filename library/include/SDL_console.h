@@ -127,11 +127,6 @@ public:
         friend class SDLConsole_impl;
         void set_state(Value new_state) {
             current_state.store(new_state);
-            current_state.notify_all();
-        }
-        // UNUSED
-        void wait(Value expected_state) {
-            current_state.wait(expected_state);
         }
         std::atomic<Value> current_state;
     };

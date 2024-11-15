@@ -1,9 +1,8 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_error.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
+#include <SDL.h>
+#include <SDL_error.h>
+#include <SDL_events.h>
+#include <SDL_render.h>
+#include <SDL_video.h>
 #include <algorithm>
 #include <assert.h>
 #include <atomic>
@@ -22,10 +21,13 @@
 #include <vector>
 #include <ranges>
 #include <condition_variable>
-#include <csignal>
-#include <cuchar>
+#include <cmath>
+//#include <cuchar>
 
+#include "modules/DFSDL.h"
 #include "SDL_console.h"
+
+using namespace DFHack;
 
 namespace sdl_console {
 
@@ -1148,7 +1150,8 @@ struct BMPFontLoader : public FontLoader {
             return &it->second;
         }
 
-        SDL_Surface* surface = IMG_Load(path.c_str());
+        //SDL_Surface* surface = IMG_Load(path.c_str());
+        SDL_Surface* surface = DFSDL::DFIMG_Load(path.c_str());
         if (surface == nullptr) {
             return nullptr;
         }

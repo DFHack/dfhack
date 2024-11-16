@@ -95,25 +95,68 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
     CoreSuspender suspend;
     int32_t x_count_block = world->map.x_count_block;
     int32_t y_count_block = world->map.y_count_block;
-    for ( int32_t count = 0; count < howMany; count++ ) {
-        //change the size of the pointer stuff
-        int32_t z_count_block = world->map.z_count_block;
-        df::map_block**** block_index = world->map.block_index;
-        for ( int32_t a = 0; a < x_count_block; a++ ) {
-            for ( int32_t b = 0; b < y_count_block; b++ ) {
-                df::map_block** blockColumn = new df::map_block*[z_count_block+1];
-                memcpy(blockColumn, block_index[a][b], z_count_block*sizeof(df::map_block*));
-                blockColumn[z_count_block] = NULL;
-                delete[] block_index[a][b];
-                block_index[a][b] = blockColumn;
+    int32_t z_count_block = world->map.z_count_block;
+    df::map_block ****block_index = world->map.block_index;
 
-                //deal with map_block_column stuff even though it'd probably be fine
-                df::map_block_column* column = world->map.column_index[a][b];
-                if ( !column ) {
-                    out.print("%s, line %d: column is null (%d, %d).\n", __FILE__, __LINE__, a, b);
+    for (int32_t a = 0; a < x_count_block; a++) {
+        for (int32_t b = 0; b < y_count_block; b++) {
+            // Allocate a new block column and copy over data from the old
+            df::map_block **blockColumn =
+                new df::map_block *[z_count_block + howMany];
+            memcpy(blockColumn, block_index[a][b],
+                   z_count_block * sizeof(df::map_block *));
+            delete[] block_index[a][b];
+            block_index[a][b] = blockColumn;
+
+            df::map_block *last_air_block = blockColumn[z_count_block - 1];
+            for (int32_t count = 0; count < howMany; count++) {
+                df::map_block *air_block = new df::map_block();
+                std::fill(&air_block->tiletype[0][0],
+                          &air_block->tiletype[0][0] + (16 * 16),
+                          df::tiletype::OpenSpace);
+
+                // Set block positions properly (based on prior air layer)
+                air_block->map_pos = blockColumn[z_count_block - 1]->map_pos;
+                air_block->map_pos.z += 1;
+                air_block->region_pos =
+                    blockColumn[z_count_block - 1]->region_pos;
+
+                // Copy other potentially important metadata from prior air
+                // layer
+                std::memcpy(air_block->lighting, last_air_block->lighting,
+                            sizeof(air_block->lighting));
+                std::memcpy(air_block->temperature_1,
+                            last_air_block->temperature_1,
+                            sizeof(air_block->temperature_1));
+                std::memcpy(air_block->temperature_2,
+                            last_air_block->temperature_2,
+                            sizeof(air_block->temperature_2));
+                std::memcpy(air_block->region_offset,
+                            last_air_block->region_offset,
+                            sizeof(air_block->region_offset));
+
+                // Create tile designations to inform lighting and
+                // outside markers
+                df::tile_designation designation{};
+                designation.bits.light = true;
+                designation.bits.outside = true;
+                std::fill(&air_block->designation[0][0],
+                          &air_block->designation[0][0] + (16 * 16),
+                          designation);
+
+                blockColumn[z_count_block + count] = air_block;
+                world->map.map_blocks.push_back(air_block);
+
+                // deal with map_block_column stuff even though it'd probably be
+                // fine
+                df::map_block_column *column = world->map.column_index[a][b];
+                if (!column) {
+                    out.print("%s, line %d: column is null (%d, %d).\n",
+                              __FILE__, __LINE__, a, b);
                     continue;
                 }
-                df::map_block_column::T_unmined_glyphs* glyphs = new df::map_block_column::T_unmined_glyphs;
+                df::map_block_column::T_unmined_glyphs *glyphs =
+                    new df::map_block_column::T_unmined_glyphs;
                 glyphs->x[0] = 0;
                 glyphs->x[1] = 1;
                 glyphs->x[2] = 2;
@@ -129,16 +172,20 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                 column->unmined_glyphs.push_back(glyphs);
             }
         }
-        df::z_level_flags* flags = new df::z_level_flags[z_count_block+1];
-        memcpy(flags, world->map_extras.z_level_flags, z_count_block*sizeof(df::z_level_flags));
-        flags[z_count_block].whole = 0;
-        flags[z_count_block].bits.update = 1;
-        world->map.z_count_block++;
-        world->map.z_count++;
-        delete[] world->map_extras.z_level_flags;
-        world->map_extras.z_level_flags = flags;
     }
 
+    // Update global z level flags
+    df::z_level_flags *flags = new df::z_level_flags[z_count_block + howMany];
+    memcpy(flags, world->map_extras.z_level_flags,
+           z_count_block * sizeof(df::z_level_flags));
+    for (int32_t count = 0; count < howMany; count++) {
+        flags[z_count_block + count].whole = 0;
+        flags[z_count_block + count].bits.update = 1;
+    }
+    world->map.z_count_block += howMany;
+    world->map.z_count += howMany;
+    delete[] world->map_extras.z_level_flags;
+    world->map_extras.z_level_flags = flags;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)

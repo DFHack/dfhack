@@ -395,9 +395,7 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
 
 void Console::msleep (unsigned int msec)
 {
-    // FIXME: temporarily removed
-    //if (msec > 1000) sleep(msec/1000000);
-    //usleep((msec % 1000000) * 1000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }
 
 bool Console::hide()

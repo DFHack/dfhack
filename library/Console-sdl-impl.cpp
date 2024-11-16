@@ -2595,7 +2595,7 @@ public:
     std::unique_ptr<OutputPane> outpane;
     bool has_focus{false};
 
-    MainWindow(Property& props, WidgetContext& wctx)
+    MainWindow(WidgetContext& wctx)
         : Widget(wctx)
     {
         connect_global<SDL_WindowEvent>(SDL_WINDOWEVENT, [this](SDL_WindowEvent& e) {
@@ -2819,7 +2819,6 @@ struct SDLConsole_pshare {
 //static Uint32 render_frame_event_id{(Uint32)-1)};
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
 public:
-    Property& props;
     SDLConsole::State& state;
     SDLConsole_pshare& pshare;
     // For internal communication, mainly by widgets.
@@ -2830,15 +2829,12 @@ public:
     MainWindow main_window;
 
     SDLConsole_impl(SDLConsole* con)
-    : props(con->pshare->props)
-    , state(con->state)
+    : state(con->state)
     , pshare(*con->pshare)
-    , widget_context(WidgetContext::create_main_window(props, &global_emitter))
-    , main_window(props, widget_context)
+    , widget_context(WidgetContext::create_main_window(pshare.props, &global_emitter))
+    , main_window(widget_context)
     {
         input_pipe.make_connection(outpane().prompt);
-        state.set_state(SDLConsole::State::active);
-
 #if 0
         render_frame_event_id = SDL_RegisterEvents(1);
         if (render_frame_event_id == (Uint32)-1)
@@ -2880,14 +2876,14 @@ public:
     void update()
     {
         handle_events();
-        props.update_props_if_needed();
+        pshare.props.update_props_if_needed();
         render_frame();
     }
 
     void shutdown()
     {
         state.set_state(SDLConsole::State::shutdown);
-        props.reset();
+        pshare.props.reset();
         input_pipe.shutdown();
     }
 
@@ -2928,10 +2924,10 @@ SDLConsole::SDLConsole() : state()
 SDLConsole::~SDLConsole()  {}
 
 
-/**
+/*
  * SDL events and video subsystems must be initialized
  * before this function is called.
- **/
+ */
 bool SDLConsole::init()
 {
     if (!state.is_inactive()) return true;
@@ -2941,6 +2937,7 @@ bool SDLConsole::init()
     try {
         impl = std::make_shared<SDLConsole_impl>(this);
         pshare->impl_weak = impl;
+        state.set_state(SDLConsole::State::active);
         // throw std::runtime_error("test");
     } catch(std::runtime_error &e) {
         success = false;

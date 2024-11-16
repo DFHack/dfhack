@@ -12,8 +12,6 @@
 #include <map>
 #include <mutex>
 #include <queue>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string>
 #include <thread>
 #include <utility>
@@ -199,7 +197,7 @@ namespace text {
     std::string to_utf8(const std::u32string& u32_string)
     {
         char* conv = sdl_console::SDL_iconv_string("UTF-8", "UTF-32LE",
-                                                   reinterpret_cast<const char*>(u32_string.data()),
+                                                   reinterpret_cast<const char*>(u32_string.c_str()),
                                                    (u32_string.size()+1) * sizeof(char32_t));
         if (!conv)
             return "?u8?";
@@ -212,7 +210,7 @@ namespace text {
     std::u32string from_utf8(std::string u8_string)
     {
         char* conv = SDL_iconv_string("UTF-32LE", "UTF-8",
-                                      u8_string.data(),
+                                      u8_string.c_str(),
                                       u8_string.size() + 1);
         if (!conv)
             return U"?u8?";
@@ -245,44 +243,103 @@ namespace text {
         return count;
     }
 
-    std::pair<size_t, size_t> find_previous_word(const std::u32string& text, size_t pos) {
-        if (pos == 0) return {std::u32string::npos, std::u32string::npos};
-
-        pos--;
-        while (pos > 0 && std::iswspace(text[pos])) {
-            pos--;
-        }
-        size_t end = pos + 1;
-
-        while (pos > 0 && !std::iswspace(text[pos - 1])) {
-            pos--;
-        }
-
-        return {pos, end};
+    bool is_newline(char32_t ch) {
+        return ch == U'\n' || ch == U'\r';
     }
 
-    std::pair<size_t, size_t> find_next_word(const std::u32string& text, size_t pos) {
-        while (pos < text.size() && std::iswspace(text[pos])) {
-            pos++;
-        }
-        size_t start = pos;
+    bool is_wspace(char32_t ch) {
+        return ch == U' ' || ch == U'\t';
+    }
 
-        while (pos < text.size() && !std::iswspace(text[pos])) {
-            pos++;
+    std::pair<size_t, size_t> get_range(const std::u32string& text, size_t pos, std::function<bool(char32_t)> predicate) {
+        size_t start = pos;
+        while (start > 0 && predicate(text[start - 1])) {
+            start--;
         }
-        while (pos < text.size() && std::iswspace(text[pos])) {
+
+        while (pos < text.size() && predicate(text[pos])) {
             pos++;
         }
 
         return {start, pos};
     }
 
-    bool is_newline(char32_t ch) {
-        return ch == U'\n' || ch == U'\r';
+    size_t skip_wspace(const std::u32string& text, size_t pos)
+    {
+        while (pos < text.size() && is_wspace(text[pos]))
+            pos++;
+        return pos;
     }
 
-    bool is_whitespace(char32_t ch) {
-        return ch == U' ' || ch == U'\t';
+    size_t skip_wspace_reverse(const std::u32string& text, size_t pos)
+    {
+        while (pos > 0 && is_wspace(text[pos]))
+            pos--;
+        return pos;
+    }
+
+    size_t skip_graph(const std::u32string& text, size_t pos)
+    {
+        while (pos < text.size() && !is_wspace(text[pos]))
+            pos++;
+        return pos;
+    }
+
+
+    size_t skip_graph_reverse(const std::u32string& text, size_t pos)
+    {
+        while (pos > 0 && !is_wspace(text[pos]))
+            pos--;
+        return pos;
+    }
+
+    /*
+     * Finds the end of the previous word or non-space character in the text,
+     * starting from `pos`. If `pos` points to a space, it skips consecutive
+     * spaces to find the previous word. If `pos` is already at a word, it skips
+     * the current word and trailing spaces to find the next one. Returns the
+     * position of the end of the previous word or non-space character.
+     */
+    size_t prev_word_pos(const std::u32string& text, size_t pos) {
+        size_t start = pos;
+        start = skip_wspace_reverse(text, start);
+        if (start == pos) {
+            pos = skip_graph_reverse(text, pos);
+            pos = skip_wspace_reverse(text, pos);
+        } else {
+            pos = start;
+        }
+        return pos;
+    }
+
+    /*
+     * Finds the start of the next word or non-space character in the text,
+     * starting from `pos`. If `pos` points to a space, it skips consecutive
+     * spaces to find the next word. If `pos` is already at a word, it skips
+     * the current word and trailing spaces to find the next one. Returns the
+     * position of the start of the next word or non-space character.
+     */
+    size_t next_word_pos(const std::u32string& text, size_t pos) {
+        size_t start = pos;
+        start = skip_wspace(text, start);
+        if (start == pos) {
+            pos = skip_graph(text, pos);
+            pos = skip_wspace(text, pos);
+        } else {
+            pos = start;
+        }
+        return pos;
+    }
+
+    std::pair<size_t, size_t> get_wspace_range(const std::u32string& text, size_t pos) {
+        return get_range(text, pos, [](char32_t ch) { return is_wspace(ch); });
+    }
+
+    std::pair<size_t, size_t> get_word_range(const std::u32string& text, size_t pos) {
+        if (is_wspace(text[pos])) {
+            return get_wspace_range(text, pos);
+        }
+        return get_range(text, pos, [](char32_t ch) { return !is_wspace(ch); });
     }
 }
 
@@ -924,7 +981,7 @@ public:
                 }
                 start_fragment(text_idx);
                 delim_idx = -1;
-            } else if (text::is_whitespace(ch)) {
+            } else if (text::is_wspace(ch)) {
                 delim_idx = text_idx;  // last space or tab character
             }
 
@@ -1134,10 +1191,13 @@ public:
 
 private:
     void change_size(int delta) {
+        if ((char_width <= 8 && delta < 0) || (char_width >= 32 && delta > 0))
+            return;
+
         scale_factor = (float)(char_width + delta) / orig_char_width;
 
-        char_width = std::clamp(orig_char_width * scale_factor, 8.0f, 32.0f);
-        line_height = std::clamp(orig_line_height * scale_factor, 8.0f, 32.0f);
+        char_width = orig_char_width * scale_factor;
+        line_height = orig_line_height * scale_factor;
     }
 
     Font(const Font& other)
@@ -1585,19 +1645,13 @@ public:
 
         case SDLK_b:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                auto ret = text::find_previous_word(*input, (size_t)cursor);
-                if (ret.first != std::u32string::npos) {
-                    cursor = ret.first;
-                }
+                cursor = text::prev_word_pos(*input, (size_t)cursor);
             }
             break;
 
         case SDLK_f:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                auto ret = text::find_next_word(*input, (size_t)cursor);
-                if (ret.second != std::u32string::npos) {
-                    cursor = ret.second;
-                }
+                cursor = text::next_word_pos(*input, (size_t)cursor);
             }
             break;
         }
@@ -2102,6 +2156,12 @@ private:
     bool shutdown_{false};
 };
 
+struct TextSelection {
+    SDL_Point start;
+    SDL_Point end;
+    std::vector<SDL_Rect> rects;
+};
+
 class OutputPane : public Widget {
 public:
     // Use deque to hold a stable reference.
@@ -2114,10 +2174,8 @@ public:
     int scrollback;
     int num_rows { 0 };
     bool depressed { false };
-    SDL_Point mouse_motion_start { -1, -1 };
-    SDL_Point mouse_motion_end { -1, -1 };
+    TextSelection text_selection;
     ISlot* mouse_motion_slot { nullptr };
-    std::vector<SDL_Rect> selected_rects;
 
     OutputPane(Widget* parent, SDL_Rect& viewport)
         : Widget(parent, viewport)
@@ -2160,10 +2218,10 @@ public:
             //if (!geometry::in_rect(e.x, e.y, this->viewport))
             //    return;
             if (depressed) {
-                do_mouse_motion_end({ e.x, e.y });
-                selected_rects = get_highlighted_rects();
+                end_text_selection({ e.x, e.y });
+                text_selection.rects = get_selected_rects();
 
-                if (!selected_rects.empty()) {
+                if (!text_selection.rects.empty()) {
                     bool change = true;
                     emit(InternalEventType::text_selection_changed, &change);
                 }
@@ -2240,12 +2298,47 @@ public:
             return;
         }
 
-        mouse_motion_end = { -1, -1 };
-        selected_rects.clear();
-        emit(InternalEventType::text_selection_changed);
+        // TODO: cleanup text selection bidness, this is ugly.
+        if (e.clicks == 1) {
+            text_selection.end = { -1, -1 };
+            text_selection.rects.clear();
+        } else if (e.clicks == 2) {
+            SDL_Point vp = map_point_to_viewport({e.x, e.y});
+            auto frag = find_fragment_at_y(vp.y);
+            if (frag.has_value()) {
+                auto wordpos = text::get_word_range(frag.value().get().text.data(), (size_t)get_column(vp.x));
+                if (wordpos.first != std::u32string::npos) {
+                    text_selection.start.x = wordpos.first * font->char_width;
+                } else {
+                    text_selection.start.x = 0;
+                }
+                text_selection.start.y = vp.y;
+
+                if (wordpos.second != std::u32string::npos) {
+                    text_selection.end.x = (wordpos.second * font->char_width);
+                } else {
+                    text_selection.end.x = viewport.w;
+                }
+                text_selection.end.y = vp.y;
+                text_selection.rects = get_selected_rects();
+            }
+        } else if (e.clicks == 3) {
+            SDL_Point vp = map_point_to_viewport({e.x, e.y});
+            text_selection.start = {0, vp.y};
+            text_selection.end = {viewport.w, vp.y};
+            text_selection.rects = get_selected_rects();
+        }
+
         depressed = true;
-        do_mouse_motion_start({ e.x, e.y });
+        start_text_selection({ e.x, e.y });
         mouse_motion_slot->connect();
+
+        if (!text_selection.rects.empty()) {
+            bool change = true;
+            emit(InternalEventType::text_selection_changed, &change);
+        } else {
+            emit(InternalEventType::text_selection_changed);
+        }
     }
 
     void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
@@ -2263,7 +2356,7 @@ public:
         num_rows = 0;
         set_scroll_offset(0);
         scrollbar.set_content_size(1);
-        selected_rects.clear();
+        text_selection.rects.clear();
         emit(InternalEventType::text_selection_changed);
     }
 
@@ -2273,14 +2366,14 @@ public:
         scrollbar.set_content_offset(v);
     }
 
-    void do_mouse_motion_start(const SDL_Point& point)
+    void start_text_selection(const SDL_Point& point)
     {
-        mouse_motion_start = map_point_to_viewport(point);
+        text_selection.start = map_point_to_viewport(point);
     }
 
-    void do_mouse_motion_end(const SDL_Point& point)
+    void end_text_selection(const SDL_Point& point)
     {
-        mouse_motion_end = map_point_to_viewport(point);
+        text_selection.end = map_point_to_viewport(point);
     }
 
     void scroll(int y)
@@ -2405,7 +2498,11 @@ public:
     {
         for (auto& entry : entries) {
             for (auto& frag : entry.fragments()) {
+                /*
                 if (y == frag.coord.y) {
+                    return frag;
+                }*/
+                if (y >= frag.coord.y && y < frag.coord.y + font->line_height_with_spacing()) {
                     return frag;
                 }
             }
@@ -2418,7 +2515,7 @@ public:
         char32_t sep = U'\n';
         std::u32string clipboard_text;
 
-        for (const auto& rect : selected_rects) {
+        for (const auto& rect : text_selection.rects) {
             auto frag_opt = find_fragment_at_y(rect.y);
             if (!frag_opt) {
                 frag_opt = prompt.find_fragment_at_y(rect.y);
@@ -2516,14 +2613,14 @@ public:
 
     void render_highlight_selected_text()
     {
-        if (mouse_motion_end.y == -1)
+        if (text_selection.end.y == -1)
             return;
 
-        if (selected_rects.empty())
+        if (text_selection.rects.empty())
             return;
 
         set_draw_color(renderer(), colors::mediumgray);
-        for (auto& rect : selected_rects) {
+        for (auto& rect : text_selection.rects) {
 
             sdl_console::SDL_RenderFillRect(renderer(), &rect);
         }
@@ -2535,15 +2632,13 @@ public:
      * TODO:  Support highlighting while scrolling (keep highlighted state when off screen).
      */
 
-    std::vector<SDL_Rect> get_highlighted_rects()
+    std::vector<SDL_Rect> get_selected_rects()
     {
         const int char_width = font->char_width;
         const int line_height = font->line_height_with_spacing();
-        const SDL_Point& selection_start = mouse_motion_start;
-        const SDL_Point& selection_end = mouse_motion_end;
 
         // Calculate the start and end positions, snapping to line and character boundaries
-        auto [top_point, bottom_point] = std::minmax({selection_start, selection_end},
+        auto [top_point, bottom_point] = std::minmax({text_selection.start, text_selection.end},
                                             [](const SDL_Point& a, const SDL_Point& b) {
                                                 return a.y < b.y;
                                             });
@@ -2555,8 +2650,8 @@ public:
         int left;
         int right;
         if (is_single_row) {
-            left = grid::floor_boundary(std::min(selection_start.x, selection_end.x), char_width);
-            right = grid::ceil_boundary(std::max(selection_start.x, selection_end.x), char_width);
+            left = grid::floor_boundary(std::min(text_selection.start.x, text_selection.end.x), char_width);
+            right = grid::ceil_boundary(std::max(text_selection.start.x, text_selection.end.x), char_width);
         } else {
             left = grid::floor_boundary(top_point.x, char_width);
             right = grid::ceil_boundary(bottom_point.x, char_width);

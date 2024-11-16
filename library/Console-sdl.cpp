@@ -46,22 +46,17 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "df/renderer_2d.h"
-#include <VTableInterpose.h>
-#include <atomic>
 #include <cstdio>
-#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <stdarg.h>
-#include <csignal>
 #include <SDL_pixels.h>
+
+#include "df/renderer_2d.h"
+#include <VTableInterpose.h>
 
 #include "Console.h"
 #include "SDL_console.h"
 
-#include "Hooks.h"
-#include "modules/DFSDL.h"
 using namespace DFHack;
 
 using namespace sdl_console;

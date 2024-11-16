@@ -41,6 +41,7 @@ bool init(DFHack::color_ostream &out);
  */
 void cleanup();
 
+DFHACK_EXPORT void * lookup_DFSDL_Symbol(const char *name);
 DFHACK_EXPORT SDL_Surface * DFIMG_Load(const char *file);
 DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
 DFHACK_EXPORT SDL_Surface * DFSDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);

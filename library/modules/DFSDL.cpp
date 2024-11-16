@@ -111,6 +111,12 @@ void DFSDL::cleanup() {
     }
 }
 
+void * DFSDL::lookup_DFSDL_Symbol(const char *name) {
+    if (!g_sdl_handle)
+        return nullptr;
+    return LookupPlugin(g_sdl_handle, name);
+}
+
 SDL_Surface * DFSDL::DFIMG_Load(const char *file) {
     return g_IMG_Load(file);
 }

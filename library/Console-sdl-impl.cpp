@@ -33,7 +33,7 @@ using namespace DFHack;
 namespace sdl_console {
 
 // These macros to be removed.
-#define CONSOLE_SYMBOL_ADDR(sym) ::sym
+#define CONSOLE_SYMBOL_ADDR(sym) nullptr
 #define CONSOLE_DECLARE_SYMBOL(sym) decltype(sym)* sym = CONSOLE_SYMBOL_ADDR(sym)
 
 CONSOLE_DECLARE_SYMBOL(SDL_CaptureMouse);
@@ -67,7 +67,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_RenderFillRect);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderPresent);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderSetIntegerScale);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderSetViewport);
-CONSOLE_DECLARE_SYMBOL(SDL_PointInRect);
+//CONSOLE_DECLARE_SYMBOL(SDL_PointInRect); // defined in header
 CONSOLE_DECLARE_SYMBOL(SDL_SetClipboardText);
 CONSOLE_DECLARE_SYMBOL(SDL_SetColorKey);
 CONSOLE_DECLARE_SYMBOL(SDL_SetEventFilter);
@@ -82,6 +82,76 @@ CONSOLE_DECLARE_SYMBOL(SDL_StopTextInput);
 CONSOLE_DECLARE_SYMBOL(SDL_UpperBlit);
 CONSOLE_DECLARE_SYMBOL(SDL_UpdateTexture);
 CONSOLE_DECLARE_SYMBOL(SDL_QuitSubSystem);
+
+void bind_sdl_symbols()
+{
+    struct Symbol {
+        const char* name;
+        void** addr;
+    };
+
+    #define CONSOLE_ADD_SYMBOL(sym)     \
+    {                               \
+        #sym, (void**)&sdl_console::sym \
+    }
+
+    /* This list must be in parity with CONSOLE_DEFINE_SYMBOL */
+    std::vector<Symbol> symbols = {
+        CONSOLE_ADD_SYMBOL(SDL_CaptureMouse),
+        CONSOLE_ADD_SYMBOL(SDL_ConvertSurfaceFormat),
+        CONSOLE_ADD_SYMBOL(SDL_CreateRenderer),
+        CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurface),
+        CONSOLE_ADD_SYMBOL(SDL_CreateTexture),
+        CONSOLE_ADD_SYMBOL(SDL_CreateTextureFromSurface),
+        CONSOLE_ADD_SYMBOL(SDL_CreateWindow),
+        CONSOLE_ADD_SYMBOL(SDL_DestroyRenderer),
+        CONSOLE_ADD_SYMBOL(SDL_DestroyTexture),
+        CONSOLE_ADD_SYMBOL(SDL_DestroyWindow),
+        CONSOLE_ADD_SYMBOL(SDL_free),
+        CONSOLE_ADD_SYMBOL(SDL_FreeSurface),
+        CONSOLE_ADD_SYMBOL(SDL_GetClipboardText),
+        CONSOLE_ADD_SYMBOL(SDL_GetError),
+        CONSOLE_ADD_SYMBOL(SDL_GetEventFilter),
+        CONSOLE_ADD_SYMBOL(SDL_GetModState),
+        CONSOLE_ADD_SYMBOL(SDL_GetRendererOutputSize),
+        CONSOLE_ADD_SYMBOL(SDL_GetWindowFlags),
+        CONSOLE_ADD_SYMBOL(SDL_GetWindowID),
+        CONSOLE_ADD_SYMBOL(SDL_HideWindow),
+        CONSOLE_ADD_SYMBOL(SDL_iconv_string),
+        CONSOLE_ADD_SYMBOL(SDL_InitSubSystem),
+        CONSOLE_ADD_SYMBOL(SDL_MapRGB),
+        CONSOLE_ADD_SYMBOL(SDL_memset),
+        CONSOLE_ADD_SYMBOL(SDL_RenderClear),
+        CONSOLE_ADD_SYMBOL(SDL_RenderCopy),
+        CONSOLE_ADD_SYMBOL(SDL_RenderDrawRect),
+        CONSOLE_ADD_SYMBOL(SDL_RenderFillRect),
+        CONSOLE_ADD_SYMBOL(SDL_RenderPresent),
+        CONSOLE_ADD_SYMBOL(SDL_RenderSetIntegerScale),
+        CONSOLE_ADD_SYMBOL(SDL_RenderSetViewport),
+//        CONSOLE_ADD_SYMBOL(SDL_PointInRect), // defined in header
+        CONSOLE_ADD_SYMBOL(SDL_SetClipboardText),
+        CONSOLE_ADD_SYMBOL(SDL_SetColorKey),
+        CONSOLE_ADD_SYMBOL(SDL_SetEventFilter),
+        CONSOLE_ADD_SYMBOL(SDL_SetHint),
+        CONSOLE_ADD_SYMBOL(SDL_SetRenderDrawColor),
+        CONSOLE_ADD_SYMBOL(SDL_SetTextureBlendMode),
+        CONSOLE_ADD_SYMBOL(SDL_SetTextureColorMod),
+        CONSOLE_ADD_SYMBOL(SDL_SetWindowMinimumSize),
+        CONSOLE_ADD_SYMBOL(SDL_ShowWindow),
+        CONSOLE_ADD_SYMBOL(SDL_StartTextInput),
+        CONSOLE_ADD_SYMBOL(SDL_StopTextInput),
+        CONSOLE_ADD_SYMBOL(SDL_UpperBlit),
+        CONSOLE_ADD_SYMBOL(SDL_UpdateTexture),
+        CONSOLE_ADD_SYMBOL(SDL_QuitSubSystem)
+    };
+    #undef CONSOLE_ADD_SYMBOL
+
+    for (auto& sym : symbols) {
+        *sym.addr = DFSDL::lookup_DFSDL_Symbol(sym.name);
+        if (*sym.addr == nullptr)
+            throw std::runtime_error(std::string("SDLConsole: SDL symbol not found: ") + sym.name);
+    }
+}
 
 
 namespace text {
@@ -230,7 +300,7 @@ bool in_rect(int x, int y, SDL_Rect& r)
 
 bool in_rect(SDL_Point& p, SDL_Rect& r)
 {
-    return sdl_console::SDL_PointInRect(&p, &r);
+    return SDL_PointInRect(&p, &r);
 }
 
 } // geometry
@@ -376,9 +446,9 @@ enum class TextEntryType {
 namespace colors {
     // Default palette. Needs more. Needs configurable.
     const SDL_Color white = { 255, 255, 255, 255 };
-    const SDL_Color lightgray = { 211, 211, 211, 255 };
+//    const SDL_Color lightgray = { 211, 211, 211, 255 };
     const SDL_Color mediumgray = { 65, 65, 65, 255 };
-    const SDL_Color charcoal = { 54, 69, 79, 255 };
+//    const SDL_Color charcoal = { 54, 69, 79, 255 };
     const SDL_Color darkgray = { 27, 27, 27, 255 };
 
     const SDL_Color mauve = { 100,68,84, 255};
@@ -484,7 +554,7 @@ private:
     std::vector<Texture> textures_;
 };
 
-static SDLThreadSpecificData sdl_tsd;
+static thread_local SDLThreadSpecificData sdl_tsd;
 
 class ISlot {
 public:
@@ -1256,7 +1326,6 @@ public:
         if (window_id == 0) {
             throw std::runtime_error("Failed to get window ID");
         }
-
         sdl_console::SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
     }
 
@@ -1283,7 +1352,7 @@ public:
     WidgetContext& operator=(WidgetContext&& other) noexcept {
         if (this != &other) {
             global_emitter = other.global_emitter;
-         //   props = other.props;
+            props = other.props;
             window_handle = std::move(other.window_handle);
             renderer = std::move(other.renderer);
             window_id = other.window_id;
@@ -2182,7 +2251,7 @@ public:
     void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
     {
         if (depressed) {
-            SDL_CaptureMouse(SDL_FALSE);
+            sdl_console::SDL_CaptureMouse(SDL_FALSE);
             depressed = false;
             mouse_motion_slot->disconnect();
         }
@@ -2764,7 +2833,7 @@ public:
     : props(con->pshare->props)
     , state(con->state)
     , pshare(*con->pshare)
-    , widget_context(std::move(WidgetContext::create_main_window(props, &global_emitter)))
+    , widget_context(WidgetContext::create_main_window(props, &global_emitter))
     , main_window(props, widget_context)
     {
         input_pipe.make_connection(outpane().prompt);
@@ -2853,6 +2922,7 @@ SDLConsole::SDLConsole() : state()
 {
     pshare = std::make_unique<SDLConsole_pshare>();
     state.set_state(State::inactive);
+    bind_sdl_symbols();
 }
 
 SDLConsole::~SDLConsole()  {}
@@ -2981,8 +3051,8 @@ bool SDLConsole::destroy()
 {
     std::cerr << "SDLConsole: destroy() from thread: " << std::this_thread::get_id() << std::endl;
     impl.reset();
-    // NOTE: The only long living shared_ptr is get_line()
-    // which is closed when shutdown() is called.
+    // NOTE: The only other long living shared_ptr is get_line()
+    // which runs on a separate thread and is closed when shutdown() is called.
     while (!pshare->impl_weak.expired()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }

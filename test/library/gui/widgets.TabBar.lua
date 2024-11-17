@@ -533,3 +533,23 @@ function test.key_back_should_scroll_previous_tab_into_view_if_necessary_when_wr
     expect.eq(tb:get_cur_page(), 3, 'key back should select the previous tab')
     expect.gt(tb.scroll_offset, scroll_offset_before_input, 'key back should scroll the previous tab into view')
 end
+
+function test.scroll_offset_is_reset_if_width_changes()
+    local tb = setup({frame_width=10})
+
+    tb:postComputeFrame({t=0,l=0,width=100})
+
+    expect.eq(tb.scroll_offset, 0, 'scroll offset should be reset when parent frame width changes')
+
+    tb.scroll_offset = -50
+
+    tb:postComputeFrame({t=0,l=0,width=100})
+
+    expect.eq(tb.scroll_offset, -50, 'scroll offset should not be reset when parent frame width does not change')
+end
+
+function test.offset_to_show_last_tab_is_calculated_on_first_render()
+    local tb = setup({frame_width=10})
+
+    expect.lt(tb.offset_to_show_last_tab, 0, 'offset_to_show_last_tab should be calculated on first render')
+end

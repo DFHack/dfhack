@@ -334,7 +334,7 @@ function TabBar:isMouseOver()
 end
 
 function TabBar:postComputeFrame(body)
-    self.all_tabs_width = 0
+    local all_tabs_width = 0
 
     local t, l, width = 0, 0, body.width
     self.scrollable = false
@@ -357,14 +357,13 @@ function TabBar:postComputeFrame(body)
         tab.frame.t = t
         tab.frame.l = l
         l = l + tab.frame.w
-        self.all_tabs_width = self.all_tabs_width + tab.frame.w
+        all_tabs_width = all_tabs_width + tab.frame.w
     end
 
-    self.offset_to_show_last_tab = -(self.all_tabs_width - self.post_compute_width)
+    self.offset_to_show_last_tab = -(all_tabs_width - self.post_compute_width)
 
     if self.scrollable and not self.wrap then
         self:scrollRightElement().frame.l = width - 1
-
         if self.last_post_compute_width ~= self.post_compute_width then
             self.scroll_offset = 0
         end

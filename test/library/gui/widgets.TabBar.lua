@@ -511,7 +511,6 @@ function test.key_should_scroll_next_tab_into_view_if_necessary_when_wrap_is_fal
     local tb = setup({
         wrap=false,
         frame_width=10,
-        labels={'Foo', 'Bar', 'Baz', 'Qux'},
     })
 
     local scroll_offset_before_input = tb.scroll_offset
@@ -526,7 +525,6 @@ function test.key_back_should_scroll_previous_tab_into_view_if_necessary_when_wr
         selected=4,
         wrap=false,
         frame_width=10,
-        labels={'Foo', 'Bar', 'Baz', 'Qux'},
     })
 
     local scroll_offset_before_input = tb.scroll_offset

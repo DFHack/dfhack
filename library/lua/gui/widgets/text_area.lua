@@ -81,7 +81,7 @@ function TextArea:clearHistory()
     return self.text_area.history:clear()
 end
 
-function TextArea:onCursorChange(cursor)
+function TextArea:onCursorChange(cursor, old_cursor)
     local x, y = self.text_area.wrapped_text:indexToCoords(
         self.text_area.cursor
     )
@@ -95,7 +95,7 @@ function TextArea:onCursorChange(cursor)
     end
 
     if self.on_cursor_change then
-        self.on_cursor_change(cursor)
+        self.on_cursor_change(cursor, old_cursor)
     end
 end
 

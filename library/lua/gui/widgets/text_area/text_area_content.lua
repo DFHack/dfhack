@@ -80,6 +80,8 @@ function TextAreaContent:recomputeLines()
 end
 
 function TextAreaContent:setCursor(cursor_offset)
+    local old_cursor = self.cursor
+
     self.cursor = math.max(
         1,
         math.min(#self.text + 1, cursor_offset)
@@ -92,8 +94,8 @@ function TextAreaContent:setCursor(cursor_offset)
     self.sel_end = nil
     self.last_cursor_x = nil
 
-    if self.on_cursor_change then
-        self.on_cursor_change(self.cursor)
+    if self.on_cursor_change and self.cursor ~= old_cursor then
+        self.on_cursor_change(self.cursor, old_cursor)
     end
 end
 

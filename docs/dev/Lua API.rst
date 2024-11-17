@@ -5525,6 +5525,7 @@ Attributes:
 * ``init_text``: The initial text content for the text area.
 
 * ``init_cursor``: The initial cursor position within the text content.
+  If not specified, defaults to end of the text (length of ``init_text``).
 
 * ``text_pen``: Optional pen used to draw the text.
 
@@ -5536,8 +5537,8 @@ Attributes:
 * ``on_text_change``: Callback function called whenever the text changes.
   The function signature should be ``on_text_change(new_text)``.
 
-* ``on_cursor_change``: Callback function called whenever the cursor
-  position changes. The function signature should be ``on_cursor_change(new_cursor_pos)``.
+* ``on_cursor_change``: Callback function called whenever the cursor position changes.
+  Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
 
 * ``one_line_mode``: Boolean attribute that, when set to ``true``,
   disables multi-line text features and restricts the text area to a single line.

@@ -5520,34 +5520,57 @@ Subclass of Panel; implements a multi-line text field with features such as
 text wrapping, mouse control, text selection, clipboard support, history,
 and typical text editor shortcuts.
 
-Attributes:
+Cursor Behavior
+===============
+
+The cursor in the ``TextArea`` class is index-based, starting from 1,
+consistent with Lua's text indexing conventions.
+
+Each character, including new lines (``string.char(10)``),
+occupies a single index in the text content.
+
+Cursor movement and position are fully aware of line breaks,
+meaning they count as one unit in the offset.
+
+The cursor always points to the position between characters,
+with 1 being the position before the first character and
+``#text + 1`` representing the position after the last character.
+
+Cursor positions are preserved during text operations like insertion,
+deletion, or replacement. If changes affect the cursor's position,
+it will be adjusted to the nearest valid index.
+
+TextArea Attributes:
 
 * ``init_text``: The initial text content for the text area.
 
 * ``init_cursor``: The initial cursor position within the text content.
-  If not specified, defaults to end of the text (length of ``init_text``).
+    If not specified, defaults to end of the text (length of ``init_text``).
 
 * ``text_pen``: Optional pen used to draw the text.
 
 * ``select_pen``: Optional pen used for text selection.
 
 * ``ignore_keys``: List of input keys to ignore.
-  Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
+    Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
 
 * ``on_text_change``: Callback function called whenever the text changes.
-  The function signature should be ``on_text_change(new_text)``.
+    The function signature should be ``on_text_change(new_text)``.
 
 * ``on_cursor_change``: Callback function called whenever the cursor position changes.
-  Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
+    Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
 
 * ``one_line_mode``: Boolean attribute that, when set to ``true``,
-  disables multi-line text features and restricts the text area to a single line.
+    disables multi-line text features and restricts the text area to a single line.
+    If any "\n" (``string.char(10)``) are available in the text,
+    they will be removed from the text
 
-Functions:
+TextArea Functions:
 
 * ``textarea:getText()``
 
     Returns the current text content of the ``TextArea`` widget as a string.
+    "\n" characters (``string.char(10)``) should be interpreted as new lines
 
 * ``textarea:setText(text)``
 
@@ -5603,26 +5626,26 @@ Functionality:
 - Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
     text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
 - Select Word/Line: Use double click to select current word, or triple click to
-    select current line
-- Select All: Select entire text by :kbd:`Ctrl` + :kbd:`A`
+    select current line.
+- Select All: Select entire text by :kbd:`Ctrl` + :kbd:`A`.
 - Undo/Redo: Undo/Redo changes by :kbd:`Ctrl` + :kbd:`Z` / :kbd:`Ctrl` +
-    :kbd:`Y`
+    :kbd:`Y`.
 - Clipboard Operations: Perform OS clipboard cut, copy, and paste operations on
     selected text, allowing you to paste the copied content into other
     applications.
 - Copy Text: Use :kbd:`Ctrl` + :kbd:`C` to copy selected text.
     - copy selected text, if available
-    - If no text is selected it copy the entire current line, including the
-      terminating newline if present.
+    - if no text is selected it copy the entire current line, including the
+      terminating newline if present
 - Cut Text: Use :kbd:`Ctrl` + :kbd:`X` to cut selected text.
     - cut selected text, if available
-    - If no text is selected it will cut the entire current line, including the
+    - if no text is selected it will cut the entire current line, including the
       terminating newline if present
 - Paste Text: Use :kbd:`Ctrl` + :kbd:`V` to paste text from the clipboard into
     the editor.
     - replace selected text, if available
     - If no text is selected, paste text in the cursor position
-- Scrolling behaviour for long text build-in
+- Scrolling behaviour for long text build-in.
 
 Scrollbar class
 ---------------

@@ -803,7 +803,6 @@ class Property {
 public:
     template <typename T>
     void set(const std::string& key, const T& value) {
-        dirty_.store(true, std::memory_order_relaxed);
         std::scoped_lock l(m_);
         props_[key] = value;
         dirty_list_.push_back(key);
@@ -842,11 +841,8 @@ public:
         }
     }
 
-    void update_props_if_needed() {
-        if (!dirty_.load(std::memory_order_relaxed)) {
-            return;
-        }
-        dirty_.store(false, std::memory_order_relaxed);
+    void update_if_needed() {
+        if (!dirty_) return;
         std::scoped_lock l(m_);
         for (const auto& key : dirty_list_) {
             auto it = funcs_.find(key);
@@ -856,6 +852,12 @@ public:
             }
         }
         dirty_list_.clear();
+        dirty_ = false;
+    }
+
+    void set_dirty()
+    {
+        dirty_ = true;
     }
 
     // Just clear the function objects and dirty prop list
@@ -864,7 +866,6 @@ public:
     {
         funcs_.clear();
         dirty_list_.clear();
-        dirty_.store(false, std::memory_order_relaxed);
     }
 
 private:
@@ -875,7 +876,7 @@ private:
     std::unordered_map<std::string, Func> funcs_;
     std::unordered_map<std::string, Value> props_;
     std::vector<std::string> dirty_list_;
-    std::atomic<bool> dirty_;
+    bool dirty_;
     std::recursive_mutex m_;
 };
 
@@ -2163,7 +2164,7 @@ private:
 };
 
 struct TextSelection {
-    SDL_Point start;
+    SDL_Point begin;
     SDL_Point end;
     std::vector<SDL_Rect> rects;
 };
@@ -2314,11 +2315,11 @@ public:
             if (frag.has_value()) {
                 auto wordpos = text::get_word_range(frag.value().get().text.data(), (size_t)get_column(vp.x));
                 if (wordpos.first != std::u32string::npos) {
-                    text_selection.start.x = wordpos.first * font->char_width;
+                    text_selection.begin.x = wordpos.first * font->char_width;
                 } else {
-                    text_selection.start.x = 0;
+                    text_selection.begin.x = 0;
                 }
-                text_selection.start.y = vp.y;
+                text_selection.begin.y = vp.y;
 
                 if (wordpos.second != std::u32string::npos) {
                     text_selection.end.x = (wordpos.second * font->char_width);
@@ -2330,18 +2331,18 @@ public:
             }
         } else if (e.clicks == 3) {
             SDL_Point vp = map_point_to_viewport({e.x, e.y});
-            text_selection.start = {0, vp.y};
+            text_selection.begin = {0, vp.y};
             text_selection.end = {viewport.w, vp.y};
             text_selection.rects = get_selected_rects();
         }
 
         depressed = true;
-        start_text_selection({ e.x, e.y });
+        begin_text_selection({ e.x, e.y });
         mouse_motion_slot->connect();
 
         if (!text_selection.rects.empty()) {
-            bool change = true;
-            emit(InternalEventType::text_selection_changed, &change);
+            bool has = true;
+            emit(InternalEventType::text_selection_changed, &has);
         } else {
             emit(InternalEventType::text_selection_changed);
         }
@@ -2372,9 +2373,9 @@ public:
         scrollbar.scroll_to(v);
     }
 
-    void start_text_selection(const SDL_Point& point)
+    void begin_text_selection(const SDL_Point& point)
     {
-        text_selection.start = map_point_to_viewport(point);
+        text_selection.begin = map_point_to_viewport(point);
     }
 
     void end_text_selection(const SDL_Point& point)
@@ -2644,7 +2645,7 @@ public:
         const int line_height = font->line_height_with_spacing();
 
         // Calculate the start and end positions, snapping to line and character boundaries
-        auto [top_point, bottom_point] = std::minmax({text_selection.start, text_selection.end},
+        auto [top_point, bottom_point] = std::minmax({text_selection.begin, text_selection.end},
                                             [](const SDL_Point& a, const SDL_Point& b) {
                                                 return a.y < b.y;
                                             });
@@ -2656,8 +2657,8 @@ public:
         int left;
         int right;
         if (is_single_row) {
-            left = grid::floor_boundary(std::min(text_selection.start.x, text_selection.end.x), char_width);
-            right = grid::ceil_boundary(std::max(text_selection.start.x, text_selection.end.x), char_width);
+            left = grid::floor_boundary(std::min(text_selection.begin.x, text_selection.end.x), char_width);
+            right = grid::ceil_boundary(std::max(text_selection.begin.x, text_selection.end.x), char_width);
         } else {
             left = grid::floor_boundary(top_point.x, char_width);
             right = grid::ceil_boundary(bottom_point.x, char_width);
@@ -2842,12 +2843,14 @@ class ExternalEventQueue {
         friend class ExternalEventQueue;
 
     public:
-        explicit Queue(std::mutex& mutex)
-        : mutex_(mutex) {}
+        explicit Queue(std::mutex& mutex, std::atomic<bool>& dirty)
+        : mutex_(mutex), dirty_(dirty) {}
 
         void push(T event) {
             std::scoped_lock l(mutex_);
             queue_.push(std::move(event));
+            // relaxed should be fine here because of the mutex.
+            dirty_.store(true, std::memory_order_relaxed);
         }
 
         std::optional<T> batch_pop() {
@@ -2878,14 +2881,23 @@ class ExternalEventQueue {
     private:
         std::queue<T> queue_;
         std::mutex& mutex_;
+        std::atomic<bool>& dirty_;
     };
 
 public:
+    using ApiTask = std::function<void()>;
+    Queue<ApiTask> api_task;
+
     ExternalEventQueue()
-    : api_task(mutex) {}
+    : api_task(mutex, dirty_) {}
 
     void reset() {
         api_task.drain();
+    }
+
+    bool has_items()
+    {
+        return dirty_.exchange(false, std::memory_order_acquire);
     }
 
     ExternalEventQueue(const ExternalEventQueue&) = delete;
@@ -2893,9 +2905,7 @@ public:
 
 private:
     std::mutex mutex;
-public:
-    using ApiTask = std::function<void()>;
-    Queue<ApiTask> api_task;
+    std::atomic<bool> dirty_{false};
 };
 
 void render_texture(
@@ -2914,10 +2924,9 @@ int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
 struct SDLConsole_pshare {
     Property props;
     std::weak_ptr<SDLConsole_impl> impl_weak;
-    //std::thread::id render_thread_id{0};
+    std::thread::id render_thread_id;
 };
 
-//static Uint32 render_frame_event_id{(Uint32)-1)};
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
 public:
     SDLConsole::State& state;
@@ -2976,8 +2985,8 @@ public:
 
     void update()
     {
-        handle_events();
-        pshare.props.update_props_if_needed();
+        handle_tasks();
+        pshare.props.update_if_needed();
         render_frame();
     }
 
@@ -2994,9 +3003,10 @@ public:
     }
 
 private:
-    void handle_events()
+    void handle_tasks()
     {
-        {
+        // Let's not acquire the lock unless we absolutely have to.
+        if (external_event_queue.has_items()) {
             auto locker = external_event_queue.api_task.lock();
             while (auto task_opt = external_event_queue.api_task.batch_pop()) {
                 task_opt.value()();
@@ -3033,8 +3043,8 @@ bool SDLConsole::init()
 {
     if (!state.is_inactive()) return true;
     bool success = true;
-    std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
-    //pshare->render_thread_id = std::this_thread::get_id();
+    //std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
+    pshare->render_thread_id = std::this_thread::get_id();
     try {
         impl = std::make_shared<SDLConsole_impl>(this);
         pshare->impl_weak = impl;
@@ -3093,12 +3103,18 @@ SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
     pshare->props.set<int>(property::OUTPUT_SCROLLBACK, scrollback);
+    push_api_task([this] {
+        impl->pshare.props.set_dirty();
+    });
     return *this;
 }
 
 SDLConsole& SDLConsole::set_prompt(std::string text) {
     auto t = text::from_utf8(text);
     pshare->props.set<std::u32string>(property::PROMPT_TEXT, t);
+    push_api_task([this] {
+        impl->pshare.props.set_dirty();
+    });
     return *this;
 }
 
@@ -3138,7 +3154,6 @@ SDLConsole& SDLConsole::get_console()
 // Can be called from any thread.
 void SDLConsole::shutdown()
 {
-    std::cerr << "SDLConsole: shutdown() called from thread: " << std::this_thread::get_id() << std::endl;
     state.set_state(State::shutdown);
     if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
         I->shutdown();
@@ -3147,33 +3162,42 @@ void SDLConsole::shutdown()
 
 bool SDLConsole::destroy()
 {
-    std::cerr << "SDLConsole: destroy() from thread: " << std::this_thread::get_id() << std::endl;
+    if (pshare->render_thread_id != std::this_thread::get_id()) {
+        std::cerr << "SDLConsole: ATTEMPT to destroy() from wrong thread: " << std::this_thread::get_id() << std::endl;
+        return false;
+    }
+    // Kill our impl shared_ptr.
     impl.reset();
-    // NOTE: The only other long living shared_ptr is get_line()
+    // NOTE: The only other long living impl shared_ptr is get_line()
     // which runs on a separate thread and is closed when shutdown() is called.
     while (!pshare->impl_weak.expired()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    // Cleanup thread specific resources.
     sdl_tsd.clear();
+    // Back to inactive state.
     reset();
     return true;
 }
 
+// NOTE: Obtaining a shared_ptr would be wasteful here since
+// this function is called by the same thread that manages impl's lifetime.
 bool SDLConsole::sdl_event_hook(SDL_Event &e)
 {
-    if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
-        return I->sdl_event_hook(e);
-    }
+    if (impl)
+        return impl->sdl_event_hook(e);
     return false;
 }
 
+// NOTE: Obtaining a shared_ptr would be wasteful here since
+// this function is called by the same thread that manages impl's lifetime.
 void SDLConsole::update()
 {
-    if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
-        I->update();
-    }
+    if (impl)
+        impl->update();
 }
 
+// Called from other threads.
 template<typename F>
 void SDLConsole::push_api_task(F&& func)
 {

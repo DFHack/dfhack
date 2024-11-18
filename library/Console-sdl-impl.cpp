@@ -711,14 +711,14 @@ public:
 
     void disconnect(Uint32 event_type, ISlot* slot) override
     {
-        auto& disconnected_slots = disconnected_slots_[event_type];
-        auto it = std::ranges::find_if(disconnected_slots, [slot](const std::unique_ptr<ISlot>& s) {
+        auto& slots = slots_[event_type];
+        auto it = std::ranges::find_if(slots, [slot](const std::unique_ptr<ISlot>& s) {
             return s.get() == slot;
         });
 
-        if (it != disconnected_slots.end()) {
-            disconnected_slots.emplace_back(std::move(*it));
-            slots_[event_type].erase(it);
+        if (it != slots.end()) {
+            disconnected_slots_[event_type].emplace_back(std::move(*it));
+            slots.erase(it);
         }
     }
 
@@ -1833,12 +1833,16 @@ public:
 
 class Scrollbar : public Widget {
 private:
-    int page_size_;
-    int content_size_ { 0 };
-    int content_offset_ { 0 };
+    struct Thumb {
+        SDL_Rect rect{};
+    };
+
+    int page_size_; // Height of visible area.
+    int content_size_ { 0 }; // Total height of content.
+    int scroll_offset_ { 0 };
     bool depressed_ { false };
-    SDL_Rect thumb_rect_ {};
     ISlot* mouse_motion_slot_ { nullptr };
+    Thumb thumb_;
 
 public:
     Scrollbar(Widget* parent, int page_size)
@@ -1846,49 +1850,52 @@ public:
         , page_size_(page_size)
     {
         connect_global<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](SDL_MouseButtonEvent& e) {
-            this->on_SDL_MOUSEBUTTONDOWN(e);
+            on_SDL_MOUSEBUTTONDOWN(e);
         });
 
         connect_global<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](SDL_MouseButtonEvent& e) {
-            this->on_SDL_MOUSEBUTTONUP(e);
+            on_SDL_MOUSEBUTTONUP(e);
         });
 
         mouse_motion_slot_ = context.global_emitter->connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](SDL_MouseMotionEvent& e) {
             if (!depressed_)
                 return;
 
-            content_offset_ = content_offset_from_track_position(e.y);
-            set_thumb_position(e.y);
-            emit(InternalEventType::value_changed, &content_offset_);
+            scroll_offset_ = scroll_offset_from_track_position(e.y);
+            move_thumb_to(track_position_from_scroll_offset());
+            emit(InternalEventType::value_changed, &scroll_offset_);
         });
 
-        thumb_rect_ = viewport;
+        thumb_.rect = viewport;
         set_thumb_height();
     }
 
     void resize(const SDL_Rect& new_viewport) override
     {
         viewport = new_viewport;
-        thumb_rect_ = viewport;
+        thumb_.rect = viewport;
         set_thumb_height();
-        set_thumb_position(track_position_from_content_offset());
+        move_thumb_to(track_position_from_scroll_offset());
     }
 
-    void set_page_size(int size)
+    void set_page_size(size_t size)
     {
         page_size_ = size;
-    }
-
-    void set_content_size(int value)
-    {
-        content_size_ = value;
         set_thumb_height();
+        move_thumb_to(track_position_from_scroll_offset());
     }
 
-    void set_content_offset(int value)
+    void set_content_size(size_t size)
     {
-        content_offset_ = value;
-        set_thumb_position(track_position_from_content_offset());
+        content_size_ = size;
+        set_thumb_height();
+        move_thumb_to(track_position_from_scroll_offset());
+    }
+
+    void scroll_to(size_t position)
+    {
+        scroll_offset_ = position;
+        move_thumb_to(track_position_from_scroll_offset());
     }
 
     void render() override
@@ -1900,7 +1907,7 @@ public:
         set_draw_color(renderer(), colors::mauve);
 
         // FIXME: hardcoded magic
-        SDL_Rect tr{thumb_rect_.x + 4, thumb_rect_.y + 4, thumb_rect_.w - 8, thumb_rect_.h - 8};
+        SDL_Rect tr{thumb_.rect.x + 4, thumb_.rect.y + 4, thumb_.rect.w - 8, thumb_.rect.h - 8};
         SDL_RenderFillRect(renderer(), &tr);
 
         set_draw_color(renderer(), colors::darkgray);
@@ -1925,9 +1932,9 @@ private:
         }
 
         depressed_ = true;
-        set_thumb_position_from_track_click(e.y);
-        content_offset_ = content_offset_from_track_position(e.y);
-        emit(InternalEventType::value_changed, &content_offset_);
+        scroll_offset_ = scroll_offset_from_track_position(e.y);
+        move_thumb_to(track_position_from_scroll_offset());
+        emit(InternalEventType::value_changed, &scroll_offset_);
     }
 
     void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
@@ -1938,60 +1945,59 @@ private:
         }
     }
 
-    int calculate_thumb_position(int target_y, int offset)
+    int calculate_thumb_position(int target_y)
     {
-        int track_start = viewport.y;
-        int track_end = viewport.y + viewport.h;
+        int track_top = viewport.y;
+        int track_bot = viewport.y + viewport.h;
 
         // Position with offset and constrain within track limits
-        return std::clamp(target_y - offset, track_start, track_end - thumb_rect_.h);
+        return std::clamp(target_y - thumb_.rect.h, track_top, track_bot - thumb_.rect.h);
     }
 
-    void set_thumb_position(int y)
+    void move_thumb_to(int y)
     {
-        thumb_rect_.y = calculate_thumb_position(y,  thumb_rect_.h);
-    }
-
-    void set_thumb_position_from_track_click(int y)
-    {
-        // Center thumb on click
-        thumb_rect_.y = calculate_thumb_position(y, thumb_rect_.h / 2);
+        thumb_.rect.y = calculate_thumb_position(y);
     }
 
     void set_thumb_height()
     {
         if (content_size_ > 0) {
-            float thumb_ratio = (float)(page_size_) / content_size_;
-            thumb_rect_.h = std::clamp((int)std::round(thumb_ratio * viewport.h), 30, viewport.h);
+            float scroll_ratio = (float)page_size_ / content_size_;
+            int h = (int)std::round(scroll_ratio * viewport.h);
+            // 30 is minimum height.
+            thumb_.rect.h = std::clamp(h, 30, viewport.h);
         } else {
-            // set thumb to the minimum height
-            thumb_rect_.h = 30;
+            thumb_.rect.h = viewport.h;
         }
     }
 
-    int content_offset_from_track_position(int y)
+    int scroll_offset_from_track_position(int y)
     {
         int track_h = viewport.h;
-        float y_ratio = (float)y / track_h;
-        int val = static_cast<int>((1.0f - y_ratio) * content_size_);
+
+        // Track position is aligns with the middle of the thumb.
+        int thumb_mid_y = y - (thumb_.rect.h / 2);
+        thumb_mid_y = std::clamp(thumb_mid_y, viewport.y, viewport.y + track_h - thumb_.rect.h);
+
+        float pos_ratio = (float)(thumb_mid_y - viewport.y) / (track_h - thumb_.rect.h);
+        int offset = (int)((1.0f - pos_ratio) * (content_size_ - page_size_));
 
         // Ensure the scroll offset does not go beyond the valid range
-        val = std::clamp(val, 0, content_size_ - page_size_);
-        return val;
+        return std::clamp(offset, 0, content_size_ - page_size_);
     }
 
-    int track_position_from_content_offset()
+    int track_position_from_scroll_offset()
     {
         int track_h = viewport.h;
 
-        if (content_size_ <= page_size_) {
+        if (content_size_ <= page_size_ || content_size_ == 0) {
             return viewport.y;
         }
 
-        float value_ratio = (float)content_offset_ / (content_size_);
-        int y = (int)((1.0f - value_ratio) * track_h);
+        float offset_ratio = (float)scroll_offset_ / (content_size_);
+        int pos = (int)((1.0f - offset_ratio) * track_h);
 
-        return y + viewport.y;
+        return pos + viewport.y;
     }
 
 };
@@ -2363,7 +2369,7 @@ public:
     void set_scroll_offset(int v)
     {
         scroll_offset = v;
-        scrollbar.set_content_offset(v);
+        scrollbar.scroll_to(v);
     }
 
     void start_text_selection(const SDL_Point& point)

@@ -116,10 +116,9 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                           df::tiletype::OpenSpace);
 
                 // Set block positions properly (based on prior air layer)
-                air_block->map_pos = blockColumn[z_count_block - 1]->map_pos;
+                air_block->map_pos = last_air_block->map_pos;
                 air_block->map_pos.z += count + 1;
-                air_block->region_pos =
-                    blockColumn[z_count_block - 1]->region_pos;
+                air_block->region_pos = last_air_block->region_pos;
 
                 // Copy other potentially important metadata from prior air
                 // layer

@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <cstdio>
-#include <iostream>
 #include <string>
 #include <SDL_pixels.h>
 
@@ -182,9 +181,19 @@ namespace DFHack
 
         int lineedit(const std::string& prompt, std::string& output, CommandHistory & ch)
         {
-            if (!con.state.is_active()) {
-                fputs("SDLConsole is inactive\n", stderr);
-                return Console::SHUTDOWN;
+            static bool did_set_history = false;
+
+            // I don't believe these checks are necessary.
+            // unless, for some reason, fiothread is inited before the console.
+            if (con.state.is_inactive() && !con.state.is_shutdown()) {
+                return Console::RETRY;
+            }
+            // kludge. This is the only place to set it?
+            if (!did_set_history) {
+                std::vector<std::string> hist;
+                ch.getEntries(hist);
+                con.set_command_history(hist);
+                did_set_history = true;
             }
 
             if (prompt != this->prompt) {
@@ -195,19 +204,10 @@ namespace DFHack
             int ret = con.get_line(output);
             if (ret == 0)
                 return Console::RETRY;
+            else if (ret == -1)
+                return Console::SHUTDOWN;
 
-            if (ret == Console::FAILURE) {
-                fputs("SDLConsole is inactive (shutting down)\n", stderr);
-            }
             return ret;
-        }
-
-        void begin_batch()
-        {
-        }
-
-        void end_batch()
-        {
         }
 
         void flush()
@@ -243,9 +243,6 @@ namespace DFHack
         {
         }
 
-        /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
-
         int  get_columns(void)
         {
             return con.get_columns();
@@ -257,7 +254,6 @@ namespace DFHack
         }
 
         SDLConsole& con;
-        bool in_batch{false};
         std::string prompt;      // current prompt string
     };
 }
@@ -310,22 +306,21 @@ bool Console::shutdown(void)
     return true;
 }
 
+/*
+ * This should be for guarding against interleaving prints to the console.
+ * The begin_batch() and end_batch() pair does the job on its own.
+ */
 void Console::begin_batch()
 {
     wlock->lock();
-
-    if(inited.load())
-        d->begin_batch();
 }
 
 void Console::end_batch()
 {
-    if(inited.load())
-        d->end_batch();
-
     wlock->unlock();
 }
-/* XXX: Not implemented */
+
+/* Don't think we need this? */
 void Console::flush_proxy()
 {
     return;
@@ -441,6 +436,5 @@ void Console::cleanup()
     INTERPOSE_HOOK(con_render_hook,render).apply(0);
     // destroy() will change its state to inactive
     d->con.destroy();
-    std::cerr << "SDLConsole destroyed" << std::endl;
     inited.store(false);
 }

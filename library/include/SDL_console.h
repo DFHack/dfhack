@@ -5,6 +5,7 @@
 #include <memory>
 #include <atomic>
 #include <optional>
+#include <vector>
 
 struct SDL_Color;
 union SDL_Event;
@@ -87,6 +88,8 @@ public:
      * Returns the number of characters read, or -1 if the console is closing.
      */
     [[nodiscard]] int get_line(std::string& buf);
+
+    void set_command_history(std::vector<std::string>& entries);
 
     /*
      * Retrieves an instance of the console.

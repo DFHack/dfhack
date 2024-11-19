@@ -1531,7 +1531,7 @@ public:
         auto title = props.get<std::string>(property::WINDOW_MAIN_TITLE, "SDL Console");
         SDL_Rect create_rect = props.get<SDL_Rect>(property::WINDOW_MAIN_CREATE_RECT,
                                                      SDL_Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
-        auto flags = SDL_WINDOW_RESIZABLE;
+        auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
 
         SDL_Window* handle = sdl_tsd.CreateWindow(title.c_str(), create_rect.x, create_rect.y, create_rect.w, create_rect.h, flags);
         if (!handle) {
@@ -1756,6 +1756,14 @@ public:
             }
             break;
         }
+    }
+
+    void set_command_history(std::deque<std::u32string> saved_history)
+    {
+        std::swap(history, saved_history);
+        saved_history.clear();
+        input = &history.emplace_back(U"");
+        history_index = history.size() - 1;
     }
 
     void new_command()
@@ -3279,6 +3287,17 @@ int SDLConsole::get_line(std::string& buf)
         return I->input_pipe.wait_get(buf);
     }
     return -1;
+}
+
+void SDLConsole::set_command_history(std::vector<std::string>& entries)
+{
+    std::deque<std::u32string> my_entries;
+    for (auto& entry : entries) {
+        my_entries.push_front(text::from_utf8(entry));
+    }
+    push_api_task([this, my_entries = std::move(my_entries)] {
+        impl->outpane().prompt.set_command_history(my_entries);
+    });
 }
 
 SDLConsole& SDLConsole::get_console()

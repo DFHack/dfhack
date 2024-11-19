@@ -146,7 +146,7 @@ protected:
 
 private:
     void write_line_(std::string& line, std::optional<SDL_Color> color);
-    void notify_props_dirty();
+    void push_props_needs_update();
     template<typename F>
     void push_api_task(F&& func);
     std::shared_ptr<SDLConsole_impl> impl;

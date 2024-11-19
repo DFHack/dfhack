@@ -14,6 +14,7 @@
 #include <queue>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -21,6 +22,7 @@
 #include <condition_variable>
 #include <cmath>
 #include <cwctype>
+#include <set>
 //#include <cuchar>
 
 #include "modules/DFSDL.h"
@@ -252,45 +254,55 @@ namespace text {
     }
 
     std::pair<size_t, size_t> get_range(const std::u32string& text, size_t pos, std::function<bool(char32_t)> predicate) {
-        size_t start = pos;
-        while (start > 0 && predicate(text[start - 1])) {
-            start--;
+        auto it_start = text.begin() + pos;
+        auto it_end = it_start;
+
+        while (it_start != text.begin() && predicate(*(it_start - 1))) {
+            --it_start;
         }
 
-        while (pos < text.size() && predicate(text[pos])) {
-            pos++;
+        while (it_end != text.end() && predicate(*it_end)) {
+            ++it_end;
         }
+        if (it_end == text.end())
+            --it_end;
 
-        return {start, pos};
+        return {
+            (size_t)(std::distance(text.begin(), it_start)),
+            (size_t)(std::distance(text.begin(), it_end))
+        };
     }
 
-    size_t skip_wspace(const std::u32string& text, size_t pos)
-    {
-        while (pos < text.size() && is_wspace(text[pos]))
-            pos++;
-        return pos;
+    size_t skip_wspace(const std::u32string& text, size_t pos) {
+        auto it = text.begin() + pos;
+        while (it != text.end() && is_wspace(*it)) {
+            it = std::next(it);
+        }
+        return std::distance(text.begin(), it);
     }
 
-    size_t skip_wspace_reverse(const std::u32string& text, size_t pos)
-    {
-        while (pos > 0 && is_wspace(text[pos]))
-            pos--;
-        return pos;
+    size_t skip_wspace_reverse(const std::u32string& text, size_t pos) {
+        auto it = text.begin() + pos;
+        while (it != text.begin() && is_wspace(*std::prev(it))) {
+            it = std::prev(it);
+        }
+        return std::distance(text.begin(), it);
     }
 
-    size_t skip_graph(const std::u32string& text, size_t pos)
-    {
-        while (pos < text.size() && !is_wspace(text[pos]))
-            pos++;
-        return pos;
+    size_t skip_graph(const std::u32string& text, size_t pos) {
+        auto it = text.begin() + pos;
+        while (it != text.end() && !is_wspace(*it)) {
+            it = std::next(it);
+        }
+        return std::distance(text.begin(), it);
     }
 
-
-    size_t skip_graph_reverse(const std::u32string& text, size_t pos)
-    {
-        while (pos > 0 && !is_wspace(text[pos]))
-            pos--;
-        return pos;
+    size_t skip_graph_reverse(const std::u32string& text, size_t pos) {
+        auto it = text.begin() + pos;
+        while (it != text.begin() && !is_wspace(*std::prev(it))) {
+            it = std::prev(it);
+        }
+        return std::distance(text.begin(), it);
     }
 
     /*
@@ -301,6 +313,12 @@ namespace text {
      * position of the end of the previous word or non-space character.
      */
     size_t prev_word_pos(const std::u32string& text, size_t pos) {
+        if (text.empty()) {
+            return 0;
+        } else if (pos >= text.size()) {
+            pos = text.size() - 1;
+        }
+
         size_t start = pos;
         start = skip_wspace_reverse(text, start);
         if (start == pos) {
@@ -320,6 +338,12 @@ namespace text {
      * position of the start of the next word or non-space character.
      */
     size_t next_word_pos(const std::u32string& text, size_t pos) {
+        if (text.empty()) {
+            return 0;
+        } else if (pos >= text.size()) {
+            pos = text.size() - 1;
+        }
+
         size_t start = pos;
         start = skip_wspace(text, start);
         if (start == pos) {
@@ -336,7 +360,12 @@ namespace text {
     }
 
     std::pair<size_t, size_t> get_word_range(const std::u32string& text, size_t pos) {
-        if (is_wspace(text[pos])) {
+        // Bounds check here since .at() is used below
+        if (text.empty() || pos >= text.size()) {
+            return { std::u32string::npos, std::u32string::npos };
+        }
+
+        if (is_wspace(text.at(pos))) {
             return get_wspace_range(text, pos);
         }
         return get_range(text, pos, [](char32_t ch) { return !is_wspace(ch); });
@@ -362,6 +391,11 @@ bool in_rect(SDL_Point& p, SDL_Rect& r)
 
 } // geometry
 
+/*
+ * These utility functions provide basic grid-based boundary calculations.
+ * They are likely better suited for a dedicated Grid class which can
+ * simplify the logic in components like OutputPane.
+ */
 namespace grid {
 int floor_boundary(int position, int cell_size)
 {
@@ -374,7 +408,8 @@ int ceil_boundary(int position, int cell_size)
 }
 }
 
-// For testing purposes, to be removed
+// Should probably be kept for effecient mapping --
+// although char16_t should probably be used instead of char32_t.
 static const std::unordered_map<char32_t, uint8_t> unicode_to_cp437 = {
     // Control characters and symbols
     /* NULL           */ { U'\u263A', 0x01 }, { U'\u263B', 0x02 }, { U'\u2665', 0x03 },
@@ -486,7 +521,8 @@ enum class ScrollDirection {
  */
 struct InternalEventType {
     enum Type : Uint32 {
-        new_input_line = SDL_LASTEVENT + 1,
+        new_command = SDL_LASTEVENT + 1,
+        new_interrupted_command,
         clicked,
         font_size_changed,
         range_changed,
@@ -520,15 +556,28 @@ void render_texture(
 
 int set_draw_color(SDL_Renderer*, const SDL_Color&);
 
+/*
+ * Manages the lifetime of thread-specific, long-term SDL resources.
+ * This class should not be used to store temporary resources.
+ *
+ * - Long-term resources: SDL objects (e.g., textures, renderers, windows)
+ *   that persist beyond the scope of a single function or operation and are shared
+ *   across multiple parts of a thread. This class ensures they are properly tracked
+ *   and destroyed when no longer needed.
+ *
+ * - Temporary resources: SDL objects created and used entirely within the scope
+ *   of a function or operation (e.g., a texture generated to render a single frame
+ *   or a surface used for immediate computation). Such resources should be managed
+ *   directly within the components that create them and do not need to be tracked
+ *   by this class.
+ */
 class SDLThreadSpecificData {
 public:
     using Texture = std::unique_ptr<SDL_Texture, decltype(sdl_console::SDL_DestroyTexture)>;
     using Renderer = std::unique_ptr<SDL_Renderer, decltype(sdl_console::SDL_DestroyRenderer)>;
     using Window = std::unique_ptr<SDL_Window, decltype(sdl_console::SDL_DestroyWindow)>;
 
-    SDLThreadSpecificData()
-    {
-    }
+    SDLThreadSpecificData() = default;
 
     SDL_Texture* CreateTextureFromSurface(SDL_Renderer* r, SDL_Surface* s)
     {
@@ -587,6 +636,8 @@ public:
 
     ~SDLThreadSpecificData()
     {
+        // TODO: Investigate whether it is safe to destroy resources
+        // after SDL_Quit() is called.
         clear();
     }
 
@@ -612,6 +663,28 @@ private:
 };
 
 static thread_local SDLThreadSpecificData sdl_tsd;
+
+/*
+ * A lightweight implementation inspired by Qt's signals and slots, designed
+ * for integrating with SDL_Event.
+ *
+ * TODO: Consider adding a custom event type for internal events to eliminate
+ * the dependency on SDL_UserEvent.
+ *
+ * ISlot: An interface for slots, which are event handlers. A slot can:
+ *   - Be invoked with an SDL_Event.
+ *   - Be connected or disconnected from a signal.
+ *   - Check its connection status.
+ *
+ * ISignal: An interface for signals, which are event emitters. A signal can:
+ *   - Disconnect specific slots based on the event type.
+ *   - Reconnect slots to specific event types.
+ *   - Check if a slot is connected to an event type.
+ *
+ * Slot<EventType>: A templated implementation of ISlot for specific SDL event
+ * types (e.g., SDL_KeyboardEvent, SDL_MouseButtonEvent). It wraps a callable
+ * object (std::function) that is invoked when the event occurs.
+ */
 
 class ISlot {
 public:
@@ -780,12 +853,9 @@ public:
     }
 
     template<typename T>
-    static T copy_data1_from_userevent(SDL_UserEvent& e, std::optional<T> default_value = std::nullopt) {
+    static T copy_data1_from_userevent(SDL_UserEvent& e, T default_value) {
         if (e.data1 == nullptr) {
-            if (default_value) {
-                return *default_value;
-            }
-            throw std::runtime_error("data is null and no default value provided");
+            return default_value;
         }
 
         T* value = static_cast<T*>(e.data1);
@@ -798,6 +868,9 @@ private:
     std::map<Uint32, Container> disconnected_slots_;
 };
 
+/*
+ * Stores configuration for component consumption.
+ */
 class Property {
     using Value = std::variant<std::string, std::u32string, int64_t, int, SDL_Rect>;
 public:
@@ -805,7 +878,11 @@ public:
     void set(const std::string& key, const T& value) {
         std::scoped_lock l(m_);
         props_[key] = value;
-        dirty_list_.push_back(key);
+        // For the render thread when updating changes eligible properties
+        // after init() is called. needs_update_ doesn't need
+        // to be set here. Instead it is set via push_api_task() when
+        // an eligible property is changed after init().
+        dirty_props_.insert(key);
     }
 
     template <typename T>
@@ -835,29 +912,33 @@ public:
             },
             default_value
         };
-        Value value = props_.count(key) ? props_[key] : Value{default_value};
+        // Invoke the on_change callback immediately set the value
+        // stored value for this property, or if exists, set to default.
+        Value value = props_.contains(key) ? props_[key] : Value{default_value};
         if (std::holds_alternative<T>(value)) {
             fn(std::get<T>(value));
         }
     }
 
+    // For the render thread to update changes to properties.
+    // after init() is called.
     void update_if_needed() {
-        if (!dirty_) return;
+        if (!needs_update_) return;
         std::scoped_lock l(m_);
-        for (const auto& key : dirty_list_) {
+        for (const auto& key : dirty_props_) {
             auto it = funcs_.find(key);
             if (it != funcs_.end()) {
-                const Value& value = (props_.count(key) ? props_[key] : it->second.default_value);
+                const Value& value = (props_.contains(key) ? props_[key] : it->second.default_value);
                 it->second.func(value);
             }
         }
-        dirty_list_.clear();
-        dirty_ = false;
+        dirty_props_.clear();
+        needs_update_ = false;
     }
 
-    void set_dirty()
+    void set_needs_update()
     {
-        dirty_ = true;
+        needs_update_ = true;
     }
 
     // Just clear the function objects and dirty prop list
@@ -865,7 +946,8 @@ public:
     void reset()
     {
         funcs_.clear();
-        dirty_list_.clear();
+        dirty_props_.clear();
+        needs_update_ = false;
     }
 
 private:
@@ -875,20 +957,24 @@ private:
     };
     std::unordered_map<std::string, Func> funcs_;
     std::unordered_map<std::string, Value> props_;
-    std::vector<std::string> dirty_list_;
-    bool dirty_;
+    std::unordered_set<std::string> dirty_props_;
+    bool needs_update_{false};
     std::recursive_mutex m_;
 };
 
 namespace property {
+    // These must be set before SDLConsole::init()
     constexpr char WINDOW_MAIN_CREATE_RECT[] = "window.main.create.rect";
     constexpr char WINDOW_MAIN_TITLE[] = "window.main.title";
 
+    // Set any time.
     constexpr char OUTPUT_SCROLLBACK[] = "output.scrollback";
+    constexpr char PROMPT_TEXT[] = "prompt.text";
+
+    // Runtime information. Read only.
     constexpr char RT_OUTPUT_ROWS[] = "rt.output.rows";
     constexpr char RT_OUTPUT_COLUMNS[] = "rt.output.columns";
 
-    constexpr char PROMPT_TEXT[] = "prompt.text";
 }
 
 class Widget;
@@ -971,29 +1057,29 @@ public:
             ranges.emplace_back(range_start_idx, end_idx);
         };
 
-        auto start_fragment = [&](int idx) {
+        auto open_fragment = [&](int idx) {
             range_start_idx = idx + 1;
         };
 
         for (const auto& ch : text) {
             if (text::is_newline(ch)) {
                 if (text_idx > range_start_idx) {
-                    close_fragment(text_idx-1);  // Add fragment up to newline
+                    close_fragment(text_idx-1); // Up to newline
                 }
-                start_fragment(text_idx);
+                open_fragment(text_idx); // Skip new line
                 delim_idx = -1;
             } else if (text::is_wspace(ch)) {
-                delim_idx = text_idx;  // last space or tab character
+                delim_idx = text_idx; // Last space or tab character
             }
 
             if ((text_idx - range_start_idx + 1) * char_width >= viewport_width) {
                 if (delim_idx != -1) {
-                    close_fragment(delim_idx);  // Wrap at the last whitespace
-                    start_fragment(delim_idx);
+                    close_fragment(delim_idx); // Wrap at the last whitespace
+                    open_fragment(delim_idx);
                     delim_idx = -1;
                 } else {
-                    close_fragment(text_idx);  // Wrap at current character
-                    start_fragment(text_idx);
+                    close_fragment(text_idx); // Wrap at current character
+                    open_fragment(text_idx);
                 }
             }
 
@@ -1112,7 +1198,7 @@ public:
             else {
                 index = unicode_glyph_index(ch);
             }
-            Glyph& g = glyphs[index];
+            Glyph& g = glyphs.at(index);
             SDL_Rect dst = { x, y + (vertical_spacing / 2), (int)(g.rect.w * scale_factor), (int)((g.rect.h * scale_factor)) };
             x += g.rect.w * scale_factor;
             sdl_console::SDL_RenderCopy(renderer_, texture_, &g.rect, &dst);
@@ -1144,6 +1230,7 @@ public:
         emit(InternalEventType::font_size_changed);
     }
 
+    // Returns '?' if not found.
     char32_t unicode_glyph_index(const char32_t ch)
     {
         auto it = unicode_to_cp437.find(ch);
@@ -1275,9 +1362,11 @@ public:
 
     ~BMPFontLoader()
     {
+        // Long-term resources are cleaned up by SDLConsole::destroy()
+        /*
         for (auto tex : textures_) {
             sdl_tsd.DestroyTexture(tex);
-        }
+        }*/
     }
 
     Font* open(const std::string& path, int size)
@@ -1432,6 +1521,8 @@ public:
     WidgetContext(const WidgetContext&) = delete;
     WidgetContext& operator=(const WidgetContext&) = delete;
 
+    // This may belong elsewhere. A window is also a widget, and WidgetContext must be
+    // constructed before the MainWindow widget.
     static WidgetContext create_main_window(Property& props, SignalEmitter* emitter)
     {
         // Inform SDL to pass the mouse click event when switching between windows.
@@ -1637,7 +1728,7 @@ public:
             break;
 
         case SDLK_RETURN:
-            new_input_line();
+            new_command();
 
         case SDLK_HOME:
             cursor = 0;
@@ -1658,16 +1749,37 @@ public:
                 cursor = text::next_word_pos(*input, (size_t)cursor);
             }
             break;
+        case SDLK_c:
+            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+                *input += U"^C";
+                new_interrupted_command();
+            }
+            break;
         }
     }
 
-    void new_input_line()
+    void new_command()
     {
-        emit(InternalEventType::new_input_line, input);
+        emit(InternalEventType::new_command, input);
+
+        // If empty, log an empty line? But don't add it to history.
+        if (input->empty()) return;
 
         input = &history.emplace_back(U"");
         history_index = history.size() - 1;
 
+        reset_cursor();
+    }
+
+    void new_interrupted_command()
+    {
+        emit(InternalEventType::new_interrupted_command, input);
+        input->clear();
+        reset_cursor();
+    }
+
+    void reset_cursor()
+    {
         cursor = 0;
         rebuild = true;
     }
@@ -1696,7 +1808,7 @@ public:
             return;
         }
 
-        input = &history[history_index];
+        input = &history.at(history_index);
         cursor = input->length();
         rebuild = true;
     }
@@ -2115,7 +2227,7 @@ public:
 
     void make_connection(SignalEmitter& emitter)
     {
-        emitter.connect<SDL_UserEvent>(InternalEventType::new_input_line, [this](SDL_UserEvent& e) {
+        emitter.connect<SDL_UserEvent>(InternalEventType::new_command, [this](SDL_UserEvent& e) {
             auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
             push(str);
         });
@@ -2201,7 +2313,13 @@ public:
         scrollbar.set_page_size(rows());
         scrollbar.set_content_size(1);
 
-        prompt.connect<SDL_UserEvent>(InternalEventType::new_input_line, [this](SDL_UserEvent& e)
+        prompt.connect<SDL_UserEvent>(InternalEventType::new_command, [this](SDL_UserEvent& e)
+        {
+            auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
+            new_input(str);
+        });
+
+        prompt.connect<SDL_UserEvent>(InternalEventType::new_interrupted_command, [this](SDL_UserEvent& e)
         {
             auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
             new_input(str);
@@ -2227,6 +2345,7 @@ public:
         mouse_motion_slot = context.global_emitter->connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](SDL_MouseMotionEvent& e) {
             //if (!geometry::in_rect(e.x, e.y, this->viewport))
             //    return;
+            // TODO: Clean this up, make text_selection state avail to all widgets
             if (depressed) {
                 end_text_selection({ e.x, e.y });
                 text_selection.rects = get_selected_rects();
@@ -2254,7 +2373,7 @@ public:
         });
 
         scrollbar.connect<SDL_UserEvent>(InternalEventType::value_changed, [this](SDL_UserEvent& e) {
-            scroll_offset = SignalEmitter::copy_data1_from_userevent<int>(e);
+            scroll_offset = SignalEmitter::copy_data1_from_userevent<int>(e, 0);
         });
     }
 
@@ -2316,7 +2435,7 @@ public:
             SDL_Point vp = map_point_to_viewport({e.x, e.y});
             auto frag = find_fragment_at_y(vp.y);
             if (frag.has_value()) {
-                auto wordpos = text::get_word_range(frag.value().get().text.data(), (size_t)get_column(vp.x));
+                auto wordpos = text::get_word_range((*frag).get().text.data(), (size_t)get_column(vp.x));
                 if (wordpos.first != std::u32string::npos) {
                     text_selection.begin.x = wordpos.first * font->char_width;
                 } else {
@@ -2641,7 +2760,6 @@ public:
      * FIXME: This function handles regions of text shown on screen.
      * TODO:  Support highlighting while scrolling (keep highlighted state when off screen).
      */
-
     std::vector<SDL_Rect> get_selected_rects()
     {
         const int char_width = font->char_width;
@@ -2780,6 +2898,7 @@ public:
 Toolbar::Toolbar(Widget* parent, SDL_Rect viewport)
     : Widget(parent, viewport)
 {
+    // Copy so that font size changes don't propogate to the toolbar.
     font = context.font_loader.get_copy("toolbar", font);
 };
 
@@ -2840,6 +2959,17 @@ int Toolbar::compute_widgets_startx()
     return x;
 }
 
+/*
+ * Manages a centralized queue system designed for thread-safe handling
+ * of external events.
+ *
+ * Previously, this class supported two distinct queues: one for SDL events and
+ * another for API task events. However, it now only stores API tasks.
+ *
+ * A shared mutex and a dirty flag are used to facilitate synchronization and
+ * integration with a condition variable (should one be required).
+ * The dirty flag indicates whether any of the queues have items to process.
+ */
 class ExternalEventQueue {
     template <typename T>
     class Queue {
@@ -2892,7 +3022,7 @@ public:
     Queue<ApiTask> api_task;
 
     ExternalEventQueue()
-    : api_task(mutex, dirty_) {}
+    : api_task(mutex_, dirty_) {}
 
     void reset() {
         api_task.drain();
@@ -2907,7 +3037,7 @@ public:
     ExternalEventQueue& operator=(const ExternalEventQueue&) = delete;
 
 private:
-    std::mutex mutex;
+    std::mutex mutex_;
     std::atomic<bool> dirty_{false};
 };
 
@@ -2975,8 +3105,8 @@ public:
     bool sdl_event_hook(SDL_Event& e)
     {
         // NOTE: Having focus is not enough to determine handling.
-        // This window ID check is important for df to receive click-through
-        // events when moving between windows.
+        // This window ID check is important for df to update its state
+        // when moving between windows.
         if (e.type == SDL_WINDOWEVENT && e.window.windowID != main_window.context.window_id) {
             return false;
         } else if (e.type == SDL_WINDOWEVENT || main_window.has_focus) {
@@ -3106,21 +3236,21 @@ SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
     pshare->props.set<int>(property::OUTPUT_SCROLLBACK, scrollback);
-    notify_props_dirty();
+    push_props_needs_update();
     return *this;
 }
 
 SDLConsole& SDLConsole::set_prompt(std::string text) {
     auto t = text::from_utf8(text);
     pshare->props.set<std::u32string>(property::PROMPT_TEXT, t);
-    notify_props_dirty();
+    push_props_needs_update();
     return *this;
 }
 
-void SDLConsole::notify_props_dirty()
+void SDLConsole::push_props_needs_update()
 {
     push_api_task([this] {
-        impl->pshare.props.set_dirty();
+        impl->pshare.props.set_needs_update();
     });
 }
 

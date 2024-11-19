@@ -1434,6 +1434,9 @@ public:
 
     static WidgetContext create_main_window(Property& props, SignalEmitter* emitter)
     {
+        // Inform SDL to pass the mouse click event when switching between windows.
+        SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
+
         auto title = props.get<std::string>(property::WINDOW_MAIN_TITLE, "SDL Console");
         SDL_Rect create_rect = props.get<SDL_Rect>(property::WINDOW_MAIN_CREATE_RECT,
                                                      SDL_Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
@@ -3103,19 +3106,22 @@ SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
     pshare->props.set<int>(property::OUTPUT_SCROLLBACK, scrollback);
-    push_api_task([this] {
-        impl->pshare.props.set_dirty();
-    });
+    notify_props_dirty();
     return *this;
 }
 
 SDLConsole& SDLConsole::set_prompt(std::string text) {
     auto t = text::from_utf8(text);
     pshare->props.set<std::u32string>(property::PROMPT_TEXT, t);
+    notify_props_dirty();
+    return *this;
+}
+
+void SDLConsole::notify_props_dirty()
+{
     push_api_task([this] {
         impl->pshare.props.set_dirty();
     });
-    return *this;
 }
 
 void SDLConsole::show_window() {

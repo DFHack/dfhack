@@ -389,6 +389,10 @@ bool in_rect(SDL_Point& p, SDL_Rect& r)
     return SDL_PointInRect(&p, &r);
 }
 
+bool is_y_within_bounds(int y, int y_top, int height)
+{
+    return (y >= y_top && y <= y_top + height);
+}
 } // geometry
 
 /*
@@ -521,11 +525,10 @@ enum class ScrollDirection {
  */
 struct InternalEventType {
     enum Type : Uint32 {
-        new_command = SDL_LASTEVENT + 1,
-        new_interrupted_command,
+        new_command_input = SDL_LASTEVENT + 1,
+        new_input,
         clicked,
         font_size_changed,
-        range_changed,
         value_changed,
         text_selection_changed,
     };
@@ -870,6 +873,7 @@ private:
 
 /*
  * Stores configuration for component consumption.
+ * TODO: rethink how this stuff is done.
  */
 class Property {
     using Value = std::variant<std::string, std::u32string, int64_t, int, SDL_Rect>;
@@ -1531,7 +1535,8 @@ public:
         auto title = props.get<std::string>(property::WINDOW_MAIN_TITLE, "SDL Console");
         SDL_Rect create_rect = props.get<SDL_Rect>(property::WINDOW_MAIN_CREATE_RECT,
                                                      SDL_Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
-        auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
+        //auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
+        auto flags = SDL_WINDOW_RESIZABLE;
 
         SDL_Window* handle = sdl_tsd.CreateWindow(title.c_str(), create_rect.x, create_rect.y, create_rect.w, create_rect.h, flags);
         if (!handle) {
@@ -1728,7 +1733,7 @@ public:
             break;
 
         case SDLK_RETURN:
-            new_command();
+            new_command_input();
 
         case SDLK_HOME:
             cursor = 0;
@@ -1766,9 +1771,9 @@ public:
         history_index = history.size() - 1;
     }
 
-    void new_command()
+    void new_command_input()
     {
-        emit(InternalEventType::new_command, input);
+        emit(InternalEventType::new_command_input, input);
 
         // If empty, log an empty line? But don't add it to history.
         if (input->empty()) return;
@@ -1781,7 +1786,7 @@ public:
 
     void new_interrupted_command()
     {
-        emit(InternalEventType::new_interrupted_command, input);
+        emit(InternalEventType::new_input, input);
         input->clear();
         reset_cursor();
     }
@@ -1836,7 +1841,7 @@ public:
 
     void erase_input()
     {
-        if (cursor == 0 || input->length() == 0)
+        if (cursor == 0 || input->empty())
             return;
 
         if (input->length() == cursor) {
@@ -1881,17 +1886,6 @@ public:
     {
         entry.text = prompt_text + *input;
         entry.wrap_text(font->char_width, viewport.w);
-    }
-
-    std::optional<std::reference_wrapper<const TextEntry::Fragment>> find_fragment_at_y(int y)
-    {
-        for (auto& line : entry.fragments()) {
-            if (y == line.coord.y) {
-                return line;
-            }
-        }
-
-        return std::nullopt;
     }
 
     void render_cursor(int scroll_offset)
@@ -2229,13 +2223,13 @@ public:
     std::deque<std::unique_ptr<Widget>> widgets;
 };
 
-class InputLinePipe {
+class CommandPipe {
 public:
-    InputLinePipe() = default;
+    CommandPipe() = default;
 
     void make_connection(SignalEmitter& emitter)
     {
-        emitter.connect<SDL_UserEvent>(InternalEventType::new_command, [this](SDL_UserEvent& e) {
+        emitter.connect<SDL_UserEvent>(InternalEventType::new_command_input, [this](SDL_UserEvent& e) {
             auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
             push(str);
         });
@@ -2274,7 +2268,7 @@ public:
         return buf.length();
     }
 
-    ~InputLinePipe()
+    ~CommandPipe()
     {
         shutdown();
     }
@@ -2286,10 +2280,18 @@ private:
     bool shutdown_{false};
 };
 
-struct TextSelection {
-    SDL_Point begin;
-    SDL_Point end;
+class TextSelection {
+public:
+    SDL_Point begin{-1, -1};
+    SDL_Point end{-1, -1};
     std::vector<SDL_Rect> rects;
+
+    void reset()
+    {
+        begin = {-1, -1};
+        end = {-1, -1};
+        rects.clear();
+    }
 };
 
 class OutputPane : public Widget {
@@ -2319,15 +2321,15 @@ public:
         });
 
         scrollbar.set_page_size(rows());
-        scrollbar.set_content_size(1);
+        scrollbar.set_content_size(1); // account for prompt
 
-        prompt.connect<SDL_UserEvent>(InternalEventType::new_command, [this](SDL_UserEvent& e)
+        prompt.connect<SDL_UserEvent>(InternalEventType::new_command_input, [this](SDL_UserEvent& e)
         {
             auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
             new_input(str);
         });
 
-        prompt.connect<SDL_UserEvent>(InternalEventType::new_interrupted_command, [this](SDL_UserEvent& e)
+        prompt.connect<SDL_UserEvent>(InternalEventType::new_input, [this](SDL_UserEvent& e)
         {
             auto str = SignalEmitter::copy_data1_from_userevent<std::u32string>(e, U"");
             new_input(str);
@@ -2353,15 +2355,8 @@ public:
         mouse_motion_slot = context.global_emitter->connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](SDL_MouseMotionEvent& e) {
             //if (!geometry::in_rect(e.x, e.y, this->viewport))
             //    return;
-            // TODO: Clean this up, make text_selection state avail to all widgets
             if (depressed) {
                 end_text_selection({ e.x, e.y });
-                text_selection.rects = get_selected_rects();
-
-                if (!text_selection.rects.empty()) {
-                    bool change = true;
-                    emit(InternalEventType::text_selection_changed, &change);
-                }
 
                 if (e.y > this->viewport.h) {
                     scroll(-1);
@@ -2376,8 +2371,13 @@ public:
         });
 
         connect_global<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](SDL_TextInputEvent& e) {
-            scroll_offset = 0;
-            emit(InternalEventType::value_changed, &scroll_offset);
+            // When inputting into the prompt, we should keep anchored to the
+            // bottom so the prompt is visible.
+            // We also need to adjust the scrollbar range as the prompt may span
+            // multiple lines.
+            // TODO: maybe it should connect to prompt for this.
+            set_scroll_offset(0);
+            scrollbar.set_content_size(num_rows + prompt.entry.size);
         });
 
         scrollbar.connect<SDL_UserEvent>(InternalEventType::value_changed, [this](SDL_UserEvent& e) {
@@ -2437,45 +2437,29 @@ public:
 
         // TODO: cleanup text selection bidness, this is ugly.
         if (e.clicks == 1) {
-            text_selection.end = { -1, -1 };
-            text_selection.rects.clear();
+            begin_text_selection({ e.x, e.y });
         } else if (e.clicks == 2) {
             SDL_Point vp = map_point_to_viewport({e.x, e.y});
             auto frag = find_fragment_at_y(vp.y);
             if (frag.has_value()) {
-                auto wordpos = text::get_word_range((*frag).get().text.data(), (size_t)get_column(vp.x));
-                if (wordpos.first != std::u32string::npos) {
-                    text_selection.begin.x = wordpos.first * font->char_width;
-                } else {
-                    text_selection.begin.x = 0;
-                }
-                text_selection.begin.y = vp.y;
+                const std::u32string& text = frag.value().get().text.data();
+                auto wordpos = text::get_word_range(text, (size_t)get_column(vp.x));
 
-                if (wordpos.second != std::u32string::npos) {
-                    text_selection.end.x = (wordpos.second * font->char_width);
-                } else {
-                    text_selection.end.x = viewport.w;
-                }
-                text_selection.end.y = vp.y;
-                text_selection.rects = get_selected_rects();
+                auto get_x = [this](std::u32string::size_type pos, int fallback) -> int {
+                    return (pos != std::u32string::npos) ? pos * font->char_width : fallback;
+                };
+
+                begin_text_selection({get_x(wordpos.first, viewport.x), vp.y}, false);
+                end_text_selection({get_x(wordpos.second, viewport.w), vp.y}, false);
             }
         } else if (e.clicks == 3) {
-            SDL_Point vp = map_point_to_viewport({e.x, e.y});
-            text_selection.begin = {0, vp.y};
-            text_selection.end = {viewport.w, vp.y};
-            text_selection.rects = get_selected_rects();
+            // NOTE: using 0 for x doesn't work.
+            begin_text_selection({viewport.x, e.y});
+            end_text_selection({viewport.w, e.y});
         }
 
         depressed = true;
-        begin_text_selection({ e.x, e.y });
         mouse_motion_slot->connect();
-
-        if (!text_selection.rects.empty()) {
-            bool has = true;
-            emit(InternalEventType::text_selection_changed, &has);
-        } else {
-            emit(InternalEventType::text_selection_changed);
-        }
     }
 
     void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
@@ -2493,8 +2477,8 @@ public:
         num_rows = 0;
         set_scroll_offset(0);
         scrollbar.set_content_size(1);
-        text_selection.rects.clear();
-        emit(InternalEventType::text_selection_changed);
+        text_selection.reset();
+        emit_text_selection_changed();
     }
 
     void set_scroll_offset(int v)
@@ -2503,14 +2487,29 @@ public:
         scrollbar.scroll_to(v);
     }
 
-    void begin_text_selection(const SDL_Point& point)
+    void begin_text_selection(const SDL_Point& point, bool need_map = true)
     {
-        text_selection.begin = map_point_to_viewport(point);
+        text_selection.reset();
+        text_selection.begin = need_map ? map_point_to_viewport(point) : point;
+        emit_text_selection_changed();
     }
 
-    void end_text_selection(const SDL_Point& point)
+    void end_text_selection(const SDL_Point& point, bool need_map = true)
     {
-        text_selection.end = map_point_to_viewport(point);
+        text_selection.end = need_map ? map_point_to_viewport(point) : point;
+        text_selection.rects = get_selected_rects();
+        emit_text_selection_changed();
+    }
+
+    void emit_text_selection_changed()
+    {
+        static bool previous_state = false;
+        bool has_selection = !text_selection.rects.empty();
+
+        if (has_selection != previous_state) {
+            previous_state = has_selection;
+            emit(InternalEventType::text_selection_changed, &has_selection);
+        }
     }
 
     void scroll(int y)
@@ -2608,7 +2607,7 @@ public:
     {
         entry.wrap_text(font->char_width, viewport.w);
         num_rows += entry.size;
-        scrollbar.set_content_size(num_rows + 1);
+        scrollbar.set_content_size(num_rows + prompt.entry.size);
     }
 
     /*
@@ -2635,15 +2634,17 @@ public:
     {
         for (auto& entry : entries) {
             for (auto& frag : entry.fragments()) {
-                /*
-                if (y == frag.coord.y) {
-                    return frag;
-                }*/
-                if (y >= frag.coord.y && y < frag.coord.y + font->line_height_with_spacing()) {
+                if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height_with_spacing())) {
                     return frag;
                 }
             }
         }
+        for (auto& frag : prompt.entry.fragments()) {
+            if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height_with_spacing())) {
+                return frag;
+            }
+        }
+
         return std::nullopt;
     }
 
@@ -2655,9 +2656,7 @@ public:
         for (const auto& rect : text_selection.rects) {
             auto frag_opt = find_fragment_at_y(rect.y);
             if (!frag_opt) {
-                frag_opt = prompt.find_fragment_at_y(rect.y);
-                if (!frag_opt)
-                    continue;
+                continue;
             }
 
             const auto& frag = frag_opt.value().get();
@@ -2674,7 +2673,7 @@ public:
         sdl_console::SDL_SetClipboardText(text::to_utf8(clipboard_text).c_str());
     }
 
-    size_t get_column(const int x)
+    size_t get_column(int x)
     {
         return x / font->char_width;
     }
@@ -2714,7 +2713,7 @@ public:
     void render_prompt_and_output()
     {
         const int max_screen_row = rows() + scroll_offset;
-        int ypos = viewport.h;
+        int ypos = viewport.h; // Start from the bottom
         int row_counter = 0;
 
         render_entry(prompt.entry, ypos, row_counter, max_screen_row);
@@ -2750,9 +2749,6 @@ public:
 
     void render_highlight_selected_text()
     {
-        if (text_selection.end.y == -1)
-            return;
-
         if (text_selection.rects.empty())
             return;
 
@@ -2856,6 +2852,7 @@ public:
         copy.connect<SDL_UserEvent>(InternalEventType::clicked, [this](SDL_UserEvent& e) {
             outpane->copy_selected_text_to_clipboard();
         });
+
         outpane->connect<SDL_UserEvent>(InternalEventType::text_selection_changed, [&copy](SDL_UserEvent& e) {
             copy.enabled = SignalEmitter::copy_data1_from_userevent<bool>(e, false);
         });
@@ -3074,7 +3071,7 @@ public:
     SDLConsole_pshare& pshare;
     // For internal communication, mainly by widgets.
     SignalEmitter global_emitter;
-    InputLinePipe input_pipe;
+    CommandPipe command_pipe;
     ExternalEventQueue external_event_queue;
     WidgetContext widget_context;
     MainWindow main_window;
@@ -3085,7 +3082,7 @@ public:
     , widget_context(WidgetContext::create_main_window(pshare.props, &global_emitter))
     , main_window(widget_context)
     {
-        input_pipe.make_connection(outpane().prompt);
+        command_pipe.make_connection(outpane().prompt);
 #if 0
         render_frame_event_id = SDL_RegisterEvents(1);
         if (render_frame_event_id == (Uint32)-1)
@@ -3135,7 +3132,7 @@ public:
     {
         state.set_state(SDLConsole::State::shutdown);
         pshare.props.reset();
-        input_pipe.shutdown();
+        command_pipe.shutdown();
     }
 
     ~SDLConsole_impl()
@@ -3284,7 +3281,7 @@ void SDLConsole::clear()
 int SDLConsole::get_line(std::string& buf)
 {
     if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
-        return I->input_pipe.wait_get(buf);
+        return I->command_pipe.wait_get(buf);
     }
     return -1;
 }

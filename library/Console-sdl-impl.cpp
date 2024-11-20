@@ -76,6 +76,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawColor);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureBlendMode);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureColorMod);
 CONSOLE_DECLARE_SYMBOL(SDL_SetWindowMinimumSize);
+CONSOLE_DECLARE_SYMBOL(SDL_ShowCursor);
 CONSOLE_DECLARE_SYMBOL(SDL_ShowWindow);
 CONSOLE_DECLARE_SYMBOL(SDL_StartTextInput);
 CONSOLE_DECLARE_SYMBOL(SDL_StopTextInput);
@@ -137,6 +138,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_SetTextureBlendMode),
         CONSOLE_ADD_SYMBOL(SDL_SetTextureColorMod),
         CONSOLE_ADD_SYMBOL(SDL_SetWindowMinimumSize),
+        CONSOLE_ADD_SYMBOL(SDL_ShowCursor),
         CONSOLE_ADD_SYMBOL(SDL_ShowWindow),
         CONSOLE_ADD_SYMBOL(SDL_StartTextInput),
         CONSOLE_ADD_SYMBOL(SDL_StopTextInput),
@@ -1653,6 +1655,22 @@ public:
 
 class Prompt : public Widget {
 public:
+    // Holds wrapped lines from input
+    TextEntry entry;
+    // The text of the prompt itself.
+    std::u32string prompt_text;
+    // The input portion of the prompt.
+    std::u32string* input;
+    size_t cursor { 0 }; // position of cursor within an entry
+    // 1x1 texture stretched to font's single character dimensions
+    SDL_Texture* cursor_texture;
+    /*
+     * For input history.
+     * use deque to hold a stable reference.
+     */
+    std::deque<std::u32string> history;
+    int history_index;
+
     Prompt(Widget* parent)
         : Widget(parent)
     {
@@ -1678,6 +1696,7 @@ public:
         //sdl_tsd.DestroyTexture(cursor_texture);
     }
 
+    // NOTE: Only called by constructor.
     void create_cursor_texture()
     {
         cursor_texture = sdl_tsd.CreateTexture(renderer(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, 1, 1);
@@ -1745,16 +1764,18 @@ public:
 
         case SDLK_b:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                cursor = text::prev_word_pos(*input, (size_t)cursor);
+                cursor = text::prev_word_pos(*input, cursor);
             }
             break;
 
         case SDLK_f:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                cursor = text::next_word_pos(*input, (size_t)cursor);
+                cursor = text::next_word_pos(*input, cursor);
             }
             break;
         case SDLK_c:
+            // FIXME: OutputPane also listens for ctrl-c for copying text.
+            // TODO: Add state for when selecting text
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
                 *input += U"^C";
                 new_interrupted_command();
@@ -1766,9 +1787,9 @@ public:
     void set_command_history(std::deque<std::u32string> saved_history)
     {
         std::swap(history, saved_history);
-        saved_history.clear();
         input = &history.emplace_back(U"");
         history_index = history.size() - 1;
+        reset_cursor();
     }
 
     void new_command_input()
@@ -1780,8 +1801,8 @@ public:
 
         input = &history.emplace_back(U"");
         history_index = history.size() - 1;
-
         reset_cursor();
+        wrap_text();
     }
 
     void new_interrupted_command()
@@ -1789,12 +1810,12 @@ public:
         emit(InternalEventType::new_input, input);
         input->clear();
         reset_cursor();
+        wrap_text();
     }
 
     void reset_cursor()
     {
         cursor = 0;
-        rebuild = true;
     }
 
     void set_prompt_text(const std::u32string& value)
@@ -1823,7 +1844,7 @@ public:
 
         input = &history.at(history_index);
         cursor = input->length();
-        rebuild = true;
+        wrap_text();
     }
 
     void put_input_at_cursor(const std::u32string& str)
@@ -1836,7 +1857,7 @@ public:
             input->insert(cursor, str);
         }
         cursor += str.length();
-        rebuild = true;
+        wrap_text();
     }
 
     void erase_input()
@@ -1851,7 +1872,7 @@ public:
             input->erase(cursor-1, 1);
         }
         cursor -= 1;
-        rebuild = true;
+        wrap_text();
     }
 
     void move_cursor_left()
@@ -1874,14 +1895,6 @@ public:
         wrap_text();
     }
 
-    void maybe_rebuild()
-    {
-        if (rebuild) {
-            wrap_text();
-            rebuild = false;
-        }
-    }
-
     void wrap_text()
     {
         entry.text = prompt_text + *input;
@@ -1898,7 +1911,7 @@ public:
 
         // If cursor is the head, nullopt will be returned as it falls outside
         // the fragment boundary. Maybe FIXME
-        auto& line = [this, cursor_pos]()->auto& {
+        auto& line = [this, cursor_pos]() -> auto& {
             if (auto line_opt = entry.fragment_from_offset(cursor_pos)) {
                 return line_opt.value().get();
             } else {
@@ -1929,24 +1942,6 @@ public:
 
     Prompt(const Prompt&) = delete;
     Prompt& operator=(const Prompt&) = delete;
-
-    // Holds wrapped lines from input
-    TextEntry entry;
-    // The text of the prompt itself.
-    std::u32string prompt_text;
-    // The input portion of the prompt.
-    std::u32string* input;
-    // Prompt text/input/cursor was changed flag
-    bool rebuild { true };
-    size_t cursor { 0 }; // position of cursor within an entry
-    // 1x1 texture stretched to font's single character dimensions
-    SDL_Texture* cursor_texture;
-    /*
-     * For input history.
-     * use deque to hold a stable reference.
-     */
-    std::deque<std::u32string> history;
-    int history_index;
 };
 
 class Scrollbar : public Widget {
@@ -2634,7 +2629,7 @@ public:
     {
         for (auto& entry : entries) {
             for (auto& frag : entry.fragments()) {
-                if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height_with_spacing())) {
+                if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height)) {
                     return frag;
                 }
             }
@@ -2650,7 +2645,7 @@ public:
 
     void copy_selected_text_to_clipboard()
     {
-        char32_t sep = U'\n';
+        auto sep = U'\n';
         std::u32string clipboard_text;
 
         for (const auto& rect : text_selection.rects) {
@@ -2697,10 +2692,10 @@ public:
     {
         // SDL_RenderSetScale(renderer(), 1.2, 1.2);
         sdl_console::SDL_RenderSetViewport(renderer(), &viewport);
-        prompt.maybe_rebuild();
         // TODO: make sure renderer supports blending else highlighting
         // will make the text invisible.
-        render_highlight_selected_text();
+        if (!text_selection.rects.empty())
+            render_highlight_selected_text();
         // SDL_SetTextureColorMod(font->texture, 0, 128, 0);
         render_prompt_and_output();
         // SDL_SetTextureColorMod(font->texture, 255, 255, 255);
@@ -2749,9 +2744,6 @@ public:
 
     void render_highlight_selected_text()
     {
-        if (text_selection.rects.empty())
-            return;
-
         set_draw_color(renderer(), colors::mediumgray);
         for (auto& rect : text_selection.rects) {
 
@@ -2831,6 +2823,8 @@ public:
             } else if (e.event == SDL_WINDOWEVENT_FOCUS_LOST) {
                 has_focus = false;
             } else if (e.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+                // TODO: Check if cursor is disabled first.
+                SDL_ShowCursor(SDL_ENABLE);
                 has_focus = true;
             }
         });

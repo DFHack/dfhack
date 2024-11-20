@@ -25,6 +25,7 @@
 #include <set>
 //#include <cuchar>
 
+#include "SDL_pixels.h"
 #include "modules/DFSDL.h"
 #include "SDL_console.h"
 
@@ -1384,38 +1385,41 @@ public:
             return &it->second;
         }
 
-        //SDL_Surface* surface = IMG_Load(path.c_str());
         SDL_Surface* surface = DFSDL::DFIMG_Load(path.c_str());
         if (surface == nullptr) {
             return nullptr;
         }
 
-        //sdl_console::SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+        if (surface->format->format != SDL_PIXELFORMAT_ARGB8888) {
+            SDL_Surface* conv_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
+            if (!conv_surface) {
+                std::cerr << "Error converting surface format: " << SDL_GetError() << std::endl;
+                SDL_FreeSurface(surface);
+                return nullptr;
+            }
+
+            SDL_FreeSurface(surface);
+            surface = conv_surface;
+        }
+
         //  FIXME: hardcoded magenta
         Uint32 bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
         sdl_console::SDL_SetColorKey(surface, SDL_TRUE, bg_color);
 
-        std::vector<Glyph> glyphs;
-        // FIXME: magic numbers
-        glyphs = build_glyph_rects(surface->pitch, surface->h, 16, 16);
-
-        int width = surface->pitch;
+        // NOTE: Do not use surface->pitch
+        int width = surface->w;
         int height = surface->h;
 
-        SDL_Surface* conv_surface = sdl_console::SDL_CreateRGBSurface(0, surface->pitch, surface->h, 32,
-                                                                      0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-        if (!conv_surface)
-            return nullptr;
+        std::vector<Glyph> glyphs;
+        // FIXME: magic numbers
+        glyphs = build_glyph_rects(width, height, 16, 16);
 
-        sdl_console::SDL_BlitSurface(surface, NULL, conv_surface, NULL);
-        sdl_console::SDL_FreeSurface(surface);
-
-        auto texture = sdl_tsd.CreateTextureFromSurface(renderer_, conv_surface);
+        auto texture = sdl_tsd.CreateTextureFromSurface(renderer_, surface);
         if (!texture) {
             std::cerr << "SDL_CreateTextureFromSurface Error: " << sdl_console::SDL_GetError() << std::endl;
             return nullptr;
         }
-        sdl_console::SDL_FreeSurface(conv_surface);
+        sdl_console::SDL_FreeSurface(surface);
         sdl_console::SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         textures_.push_back(texture);
 
@@ -1442,12 +1446,13 @@ private:
         int total_glyphs = rows * columns;
 
         std::vector<Glyph> glyphs;
-        glyphs.reserve(rows * columns);
+        glyphs.reserve(total_glyphs);
+
         for (int i = 0; i < total_glyphs; ++i) {
-            int r = i / rows;
+            int r = i / columns;
             int c = i % columns;
             Glyph glyph;
-            glyph.rect = { tile_w * c, tile_h * r, tile_w, tile_h };
+            glyph.rect = { tile_w * c, tile_h * r, tile_w, tile_h }; // Rectangle in pixel dimensions
             glyphs.push_back(glyph);
         }
         return glyphs;

@@ -5555,7 +5555,7 @@ TextArea Attributes:
     Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
 
 * ``on_text_change``: Callback function called whenever the text changes.
-    The function signature should be ``on_text_change(new_text)``.
+    The function signature should be ``on_text_change(new_text, old_text)``.
 
 * ``on_cursor_change``: Callback function called whenever the cursor position changes.
     Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.

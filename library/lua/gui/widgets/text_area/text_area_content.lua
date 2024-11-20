@@ -189,13 +189,14 @@ function TextAreaContent:paste()
 end
 
 function TextAreaContent:setText(text)
-    local changed = self.text ~= text
+    local old_text = self.text
+
     self.text = self:normalizeText(text)
 
     self:recomputeLines()
 
-    if changed and self.on_text_change then
-        self.on_text_change(text)
+    if self.on_text_change and text ~= old_text then
+        self.on_text_change(text, old_text)
     end
 end
 

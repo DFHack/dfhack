@@ -93,8 +93,7 @@ local function arrange_textarea(options)
                     init_cursor=options.cursor or 1,
                     frame={l=0,r=0,t=0,b=0},
                     on_cursor_change=options.on_cursor_change,
-                    -- TODO: add tests for on_text_change callback
-                    -- on_text_change=options.on_text_change,
+                    on_text_change=options.on_text_change,
                 }
             }
         }
@@ -264,14 +263,7 @@ function test.wrap_text_to_available_width()
 end
 
 function test.submit_new_line()
-    local cursor, old_cursor = nil, nil
-    local text_area, screen, window = arrange_textarea({
-        w=55,
-        on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
-        end,
-    })
+    local text_area, screen, window = arrange_textarea({w=55})
 
     local text = table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -279,15 +271,10 @@ function test.submit_new_line()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
 
     simulate_input_keys('SELECT')
-    expect.eq(cursor, #text + 2)
-    expect.eq(old_cursor, #text + 1)
 
     simulate_input_keys('SELECT')
-    expect.eq(cursor, #text + 3)
-    expect.eq(old_cursor, #text + 2)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -331,15 +318,44 @@ function test.submit_new_line()
     screen:dismiss()
 end
 
-function test.keyboard_arrow_up_navigation()
-    local cursor, old_cursor = nil, nil
+function test.submit_new_line_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=55,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+    }, '\n')
+
+    simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    simulate_input_keys('SELECT')
+    expect.table_eq(cursor_change, {new=#text + 2, old=#text + 1})
+
+    expect.table_eq(text_change, {
+        new=table.concat({
+            '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+            ''
+        }, '\n'),
+        old=text
+    })
+
+    screen:dismiss()
+end
+
+function test.keyboard_arrow_up_navigation()
+    local text_area, screen, window = arrange_textarea({w=55})
 
     local text = table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -350,11 +366,8 @@ function test.keyboard_arrow_up_navigation()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
 
     simulate_input_keys('KEYBOARD_CURSOR_UP')
-    expect.eq(cursor, 284)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -445,13 +458,16 @@ function test.keyboard_arrow_up_navigation()
     screen:dismiss()
 end
 
-function test.keyboard_arrow_down_navigation()
-    local cursor, old_cursor = nil, nil
+function test.keyboard_arrow_up_navigation_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=55,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -464,8 +480,30 @@ function test.keyboard_arrow_down_navigation()
     }, '\n')
 
     simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    text_change = {old=nil, new=nil}
+    simulate_input_keys('KEYBOARD_CURSOR_UP')
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    expect.table_eq(cursor_change, {new=284, old=#text + 1})
+
+    screen:dismiss()
+end
+
+function test.keyboard_arrow_down_navigation()
+    local text_area, screen, window = arrange_textarea({w=55})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '41: Etiam id congue urna, vel aliquet mi.',
+        '45: Nam dignissim libero a interdum porttitor.',
+        '73: Proin dignissim euismod augue, laoreet porttitor est pellentesque ac.',
+    }, '\n')
+
+    simulate_input_text(text)
     text_area:setCursor(11)
-    expect.eq(cursor, 11)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem _psum dolor sit amet, consectetur adipiscing ',
@@ -480,8 +518,6 @@ function test.keyboard_arrow_down_navigation()
     }, '\n'));
 
     simulate_input_keys('KEYBOARD_CURSOR_DOWN')
-    expect.eq(cursor, 61)
-    expect.eq(old_cursor, 11)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -559,15 +595,55 @@ function test.keyboard_arrow_down_navigation()
     screen:dismiss()
 end
 
-function test.keyboard_arrow_left_navigation()
-    local cursor, old_cursor = nil, nil
+function test.keyboard_arrow_down_navigation_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=55,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '41: Etiam id congue urna, vel aliquet mi.',
+        '45: Nam dignissim libero a interdum porttitor.',
+        '73: Proin dignissim euismod augue, laoreet porttitor est pellentesque ac.',
+    }, '\n')
+
+    simulate_input_text(text)
+
+    text_area:setCursor(11)
+
+    expect.eq(read_rendered_text(text_area), table.concat({
+        '60: Lorem _psum dolor sit amet, consectetur adipiscing ',
+        'elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ',
+        'ante nibh porttitor mi, vitae rutrum eros metus nec ',
+        'libero.',
+        '41: Etiam id congue urna, vel aliquet mi.',
+        '45: Nam dignissim libero a interdum porttitor.',
+        '73: Proin dignissim euismod augue, laoreet porttitor ',
+        'est pellentesque ac.',
+    }, '\n'));
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('KEYBOARD_CURSOR_DOWN')
+
+    expect.table_eq(cursor_change, {new=61, old=11})
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.keyboard_arrow_left_navigation()
+    local text_area, screen, window = arrange_textarea({w=55})
 
     local text = table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -575,11 +651,8 @@ function test.keyboard_arrow_left_navigation()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
 
     simulate_input_keys('KEYBOARD_CURSOR_LEFT')
-    expect.eq(cursor, #text)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -592,7 +665,6 @@ function test.keyboard_arrow_left_navigation()
     for i=1,6 do
         simulate_input_keys('KEYBOARD_CURSOR_LEFT')
     end
-    expect.eq(cursor, #text - 6)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -649,13 +721,16 @@ function test.keyboard_arrow_left_navigation()
     screen:dismiss()
 end
 
-function test.keyboard_arrow_right_navigation()
-    local cursor, old_cursor = nil, nil
+function test.keyboard_arrow_left_navigation_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=55,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -665,11 +740,31 @@ function test.keyboard_arrow_right_navigation()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('KEYBOARD_CURSOR_LEFT')
+    expect.table_eq(cursor_change, {new=#text, old=#text + 1})
+    simulate_input_keys('KEYBOARD_CURSOR_LEFT')
+    expect.table_eq(cursor_change, {new=#text - 1, old=#text})
+
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.keyboard_arrow_right_navigation()
+    local text_area, screen, window = arrange_textarea({w=55})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     text_area:setCursor(1)
-    expect.eq(cursor, 1)
-    expect.eq(old_cursor, #text + 1)
 
     simulate_input_keys('KEYBOARD_CURSOR_RIGHT')
 
@@ -684,7 +779,6 @@ function test.keyboard_arrow_right_navigation()
     for i=1,53 do
         simulate_input_keys('KEYBOARD_CURSOR_RIGHT')
     end
-    expect.eq(cursor, 1 + 1 + 53)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing_',
@@ -741,13 +835,16 @@ function test.keyboard_arrow_right_navigation()
     screen:dismiss()
 end
 
-function test.handle_backspace()
-    local cursor, old_cursor = nil, nil
+function test.keyboard_arrow_right_navigation_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=55,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -757,11 +854,32 @@ function test.handle_backspace()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    text_area:setCursor(1)
+    expect.table_eq(cursor_change, {new=1, old=#text + 1})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('KEYBOARD_CURSOR_RIGHT')
+    expect.table_eq(cursor_change, {new=2, old=1})
+
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.handle_backspace()
+    local text_area, screen, window = arrange_textarea({w=55})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     simulate_input_keys('STRING_A000')
-    expect.eq(cursor, #text)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -774,7 +892,6 @@ function test.handle_backspace()
     for i=1,3 do
         simulate_input_keys('STRING_A000')
     end
-    expect.eq(cursor, #text - 3)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing ',
@@ -813,6 +930,35 @@ function test.handle_backspace()
         'egestas, ante nibh porttitor mi, vitae rutrum eros ',
         'metus nec lib',
     }, '\n'));
+
+    screen:dismiss()
+end
+
+function test.handle_backspace_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
+    local text_area, screen, window = arrange_textarea({
+        w=55,
+        on_cursor_change=function (_cursor, _old_cursor)
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
+        end,
+    })
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+    }, '\n')
+
+    simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    simulate_input_keys('STRING_A000')
+    expect.table_eq(cursor_change, {new=#text, old=#text + 1})
+
+    expect.table_eq(text_change, {new=text:sub(1, -2), old=text})
 
     screen:dismiss()
 end
@@ -890,13 +1036,16 @@ function test.handle_delete()
     screen:dismiss()
 end
 
-function test.line_end()
-    local cursor, old_cursor = nil, nil
+function test.handle_delete_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -907,12 +1056,32 @@ function test.line_end()
     }, '\n')
 
     simulate_input_text(text)
+
     text_area:setCursor(1)
-    expect.eq(cursor, 1)
+
+    cursor_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_DELETE')
+
+    expect.table_eq(cursor_change, {new=nil, old=nil})
+    expect.table_eq(text_change, {new=text:sub(2), old=text})
+
+    screen:dismiss()
+end
+
+function test.line_end()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
+    text_area:setCursor(1)
 
     simulate_input_keys('CUSTOM_END')
-    expect.eq(cursor, 61)
-    expect.eq(old_cursor, 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit._',
@@ -955,13 +1124,16 @@ function test.line_end()
     screen:dismiss()
 end
 
-function test.line_beging()
-    local cursor, old_cursor = nil, nil
+function test.line_end_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -972,11 +1144,30 @@ function test.line_beging()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
+    text_area:setCursor(1)
+    expect.table_eq(cursor_change, {new=1, old=#text + 1})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_END')
+    expect.table_eq(cursor_change, {new=61, old=1})
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.line_beging()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     simulate_input_keys('CUSTOM_HOME')
-    expect.eq(cursor, #text + 1 - 60)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -1010,13 +1201,16 @@ function test.line_beging()
     screen:dismiss()
 end
 
-function test.line_delete()
-    local cursor, old_cursor = nil, nil
+function test.line_beging_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -1027,13 +1221,31 @@ function test.line_delete()
     }, '\n')
 
     simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_HOME')
+    expect.table_eq(cursor_change, {new=#text + 1 - 60, old=#text + 1})
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.line_delete()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     text_area:setCursor(65)
-    expect.eq(cursor, 65)
 
     simulate_input_keys('CUSTOM_CTRL_U')
-    expect.eq(cursor, 62)
-    expect.eq(old_cursor, 65)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -1060,6 +1272,44 @@ function test.line_delete()
     expect.eq(read_rendered_text(text_area), table.concat({
         '_'
     }, '\n'));
+
+    screen:dismiss()
+end
+
+function test.line_delete_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
+    local text_area, screen, window = arrange_textarea({
+        w=65,
+        on_cursor_change=function (_cursor, _old_cursor)
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
+        end,
+    })
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
+
+    text_area:setCursor(65)
+    expect.table_eq(cursor_change, {new=65, old=#text + 1})
+
+    simulate_input_keys('CUSTOM_CTRL_U')
+    expect.table_eq(cursor_change, {new=62, old=65})
+
+    expect.table_eq(text_change, {
+        new=table.concat({
+            '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        }, '\n'),
+        old=text
+    })
 
     screen:dismiss()
 end
@@ -1096,13 +1346,16 @@ function test.line_delete_to_end()
     screen:dismiss()
 end
 
-function test.delete_last_word()
-    local cursor, old_cursor = nil, nil
+function test.line_delete_to_end_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -1113,11 +1366,39 @@ function test.delete_last_word()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
+
+    text_area:setCursor(70)
+
+    cursor_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_CTRL_K')
+    printall(cursor_change)
+    expect.table_eq(cursor_change, {new=nil, old=nil})
+
+    expect.table_eq(text_change, {
+        new=table.concat({
+            '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            '112: Sed',
+            '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        }, '\n'),
+        old=text
+    })
+
+    screen:dismiss()
+end
+
+function test.delete_last_word()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     simulate_input_keys('CUSTOM_CTRL_W')
-    expect.eq(cursor, #text + 1 - 5)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -1180,13 +1461,16 @@ function test.delete_last_word()
     screen:dismiss()
 end
 
-function test.jump_to_text_end()
-    local cursor, old_cursor = nil, nil
+function test.delete_last_word_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -1197,13 +1481,33 @@ function test.jump_to_text_end()
     }, '\n')
 
     simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    simulate_input_keys('CUSTOM_CTRL_W')
+    expect.table_eq(cursor_change, {new=#text + 1 - 5, old=#text + 1})
+
+    expect.table_eq(text_change, {
+        new=text:sub(1, -6),
+        old=text
+    })
+
+    screen:dismiss()
+end
+
+function test.jump_to_text_end()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     text_area:setCursor(1)
-    expect.eq(cursor, 1)
 
     simulate_input_keys('CUSTOM_CTRL_END')
-    expect.eq(cursor, #text + 1)
-    expect.eq(old_cursor, 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -1224,13 +1528,16 @@ function test.jump_to_text_end()
     screen:dismiss()
 end
 
-function test.jump_to_text_begin()
-    local cursor, old_cursor = nil, nil
+function test.jump_to_text_end_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
     local text_area, screen, window = arrange_textarea({
         w=65,
         on_cursor_change=function (_cursor, _old_cursor)
-            cursor = _cursor
-            old_cursor = _old_cursor
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
         end,
     })
 
@@ -1241,11 +1548,31 @@ function test.jump_to_text_begin()
     }, '\n')
 
     simulate_input_text(text)
-    expect.eq(cursor, #text + 1)
+
+    text_area:setCursor(1)
+    expect.table_eq(cursor_change, {new=1, old=#text + 1})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_CTRL_END')
+    expect.table_eq(cursor_change, {new=#text +1, old=1})
+    expect.table_eq(text_change, {new=nil, old=nil})
+
+    screen:dismiss()
+end
+
+function test.jump_to_text_begin()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
 
     simulate_input_keys('CUSTOM_CTRL_HOME')
-    expect.eq(cursor, 1)
-    expect.eq(old_cursor, #text + 1)
 
     expect.eq(read_rendered_text(text_area), table.concat({
         '_0: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -1262,6 +1589,37 @@ function test.jump_to_text_begin()
         'porttitor mi, vitae rutrum eros metus nec libero.',
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
     }, '\n'));
+
+    screen:dismiss()
+end
+
+function test.jump_to_text_begin_callbacks()
+    local cursor_change = {old=nil, new=nil}
+    local text_change = {old=nil, new=nil}
+    local text_area, screen, window = arrange_textarea({
+        w=65,
+        on_cursor_change=function (_cursor, _old_cursor)
+            cursor_change = {old=_old_cursor, new=_cursor}
+        end,
+        on_text_change=function (_text, _old_text)
+            text_change = {old=_old_text, new=_text}
+        end,
+    })
+
+    local text = table.concat({
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }, '\n')
+
+    simulate_input_text(text)
+    expect.table_eq(cursor_change, {new=#text + 1, old=#text})
+
+    text_change = {old=nil, new=nil}
+
+    simulate_input_keys('CUSTOM_CTRL_HOME')
+    expect.table_eq(cursor_change, {new=1, old=#text + 1})
+    expect.table_eq(text_change, {new=nil, old=nil})
 
     screen:dismiss()
 end

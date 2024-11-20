@@ -34,10 +34,10 @@ function TextArea:init()
         debug=self.debug,
         one_line_mode=self.one_line_mode,
 
-        on_text_change=function (val)
+        on_text_change=function (text, old_text)
             self:updateLayout()
             if self.on_text_change then
-                self.on_text_change(val)
+                self.on_text_change(text, old_text)
             end
         end,
         on_cursor_change=self:callback('onCursorChange')

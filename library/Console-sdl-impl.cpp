@@ -77,6 +77,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawColor);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureBlendMode);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureColorMod);
 CONSOLE_DECLARE_SYMBOL(SDL_SetWindowMinimumSize);
+CONSOLE_DECLARE_SYMBOL(SDL_SetWindowOpacity);
 CONSOLE_DECLARE_SYMBOL(SDL_ShowCursor);
 CONSOLE_DECLARE_SYMBOL(SDL_ShowWindow);
 CONSOLE_DECLARE_SYMBOL(SDL_StartTextInput);
@@ -139,6 +140,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_SetTextureBlendMode),
         CONSOLE_ADD_SYMBOL(SDL_SetTextureColorMod),
         CONSOLE_ADD_SYMBOL(SDL_SetWindowMinimumSize),
+        CONSOLE_ADD_SYMBOL(SDL_SetWindowOpacity),
         CONSOLE_ADD_SYMBOL(SDL_ShowCursor),
         CONSOLE_ADD_SYMBOL(SDL_ShowWindow),
         CONSOLE_ADD_SYMBOL(SDL_StartTextInput),
@@ -1023,9 +1025,11 @@ public:
 
     ~TextEntry() {};
 
-    TextEntry(TextEntryType type, const std::u32string& text)
+    TextEntry(TextEntryType type, const std::u32string& text, std::optional<SDL_Color>& color)
         : type(type)
-        , text(text) {};
+        , text(text)
+        , color_opt(color)
+        {};
 
     auto& add_fragment(std::u32string_view text, size_t start_offset, size_t end_offset)
     {
@@ -1390,6 +1394,7 @@ public:
             return nullptr;
         }
 
+        /* Don't think this is needed
         if (surface->format->format != SDL_PIXELFORMAT_ARGB8888) {
             SDL_Surface* conv_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
             if (!conv_surface) {
@@ -1400,11 +1405,21 @@ public:
 
             SDL_FreeSurface(surface);
             surface = conv_surface;
-        }
+        }*/
 
         //  FIXME: hardcoded magenta
+        // Make this keyed color transparent.
         Uint32 bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
         sdl_console::SDL_SetColorKey(surface, SDL_TRUE, bg_color);
+
+        // Create a surface in ARGB8888 format, and replace the keyed color
+        // with fully transparant pixels. This step completely removes the color.
+        // NOTE: Do not use surface->pitch
+        SDL_Surface* conv_surface = sdl_console::SDL_CreateRGBSurface(0, surface->w, surface->h, 32,
+                                                                      0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+        sdl_console::SDL_BlitSurface(surface, nullptr, conv_surface, nullptr);
+        sdl_console::SDL_FreeSurface(surface);
+        surface = conv_surface;
 
         // NOTE: Do not use surface->pitch
         int width = surface->w;
@@ -1500,7 +1515,7 @@ public:
     , window_handle(std::move(other.window_handle))
     , renderer(std::move(other.renderer))
     , window_id(other.window_id)
-    , font_loader(std::move(other.font_loader)) // Move BMPFontLoader
+    , font_loader(std::move(other.font_loader))
     , rect(other.rect)
     , mouse_coord(other.mouse_coord)
     {
@@ -1556,6 +1571,9 @@ public:
         if (!renderer) {
             throw std::runtime_error("Failed to create SDL renderer");
         }
+
+        // Does nothing on Wayland+opengl
+        //SDL_SetWindowOpacity(handle, 0.5f);
 
         return WidgetContext(emitter, props, handle, renderer);
     }
@@ -1906,6 +1924,9 @@ public:
         entry.wrap_text(font->char_width, viewport.w);
     }
 
+    // TODO: The cursor x,y position should be updated
+    // elsewhere, such as when the cursor position changes.
+    // instead of within its rendering function.
     void render_cursor(int scroll_offset)
     {
         if (entry.fragments().empty())
@@ -2618,8 +2639,7 @@ public:
     TextEntry& create_entry(const TextEntryType entry_type,
                             const std::u32string& text, std::optional<SDL_Color> color)
     {
-        TextEntry& entry = entries.emplace_front(entry_type, text);
-        entry.color_opt = color;
+        TextEntry& entry = entries.emplace_front(entry_type, text, color);
 
         /* When the list is too long, start chopping */
         if (num_rows > scrollback) {
@@ -2640,7 +2660,7 @@ public:
             }
         }
         for (auto& frag : prompt.entry.fragments()) {
-            if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height_with_spacing())) {
+            if (geometry::is_y_within_bounds(y, frag.coord.y, font->line_height)) {
                 return frag;
             }
         }

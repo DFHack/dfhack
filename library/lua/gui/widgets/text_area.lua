@@ -13,7 +13,7 @@ TextArea.ATTRS{
     init_text = '',
     init_cursor = DEFAULT_NIL,
     text_pen = COLOR_LIGHTCYAN,
-    ignore_keys = {'STRING_A096'},
+    ignore_keys = {},
     select_pen = COLOR_CYAN,
     on_text_change = DEFAULT_NIL,
     on_cursor_change = DEFAULT_NIL,
@@ -100,10 +100,10 @@ end
 
 function TextArea:scrollToCursor(cursor_offset)
     if self.scrollbar.visible then
-        local _, cursor_liny_y = self.text_area.wrapped_text:indexToCoords(
+        local _, cursor_line_y = self.text_area.wrapped_text:indexToCoords(
             cursor_offset
         )
-        self:updateScrollbar(cursor_liny_y)
+        self:updateScrollbar(cursor_line_y)
     end
 end
 
@@ -143,10 +143,10 @@ end
 function TextArea:updateScrollbar(scrollbar_current_y)
     local lines_count = #self.text_area.wrapped_text.lines
 
-    local render_start_line_y = (math.min(
+    local render_start_line_y = math.min(
         #self.text_area.wrapped_text.lines - self.text_area.frame_body.height + 1,
         math.max(1, scrollbar_current_y)
-    ))
+    )
 
     self.scrollbar:update(
         render_start_line_y,

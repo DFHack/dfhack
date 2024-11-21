@@ -14,7 +14,7 @@ WrappedText = defclass(WrappedText)
 
 WrappedText.ATTRS{
     text = '',
-    wrap_width = DEFAULT_NIL,
+    wrap_width = math.huge,
 }
 
 function WrappedText:init()

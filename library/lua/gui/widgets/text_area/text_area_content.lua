@@ -19,7 +19,7 @@ TextAreaContent.ATTRS{
     enable_cursor_blink = true,
     debug = false,
     one_line_mode = false,
-    history_size = 10,
+    history_size = 25,
 }
 
 function TextAreaContent:init()

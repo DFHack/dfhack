@@ -5589,14 +5589,29 @@ TextArea Functions:
 * ``textarea:scrollToCursor()``
 
     Scrolls the text area view to ensure that the current cursor position is visible.
-    This is useful for automatically scrolling when the user moves the cursor
-    beyond the visible region of the text area.
+    This happens automatically when the user interactively moves the cursor or
+    pastes text into the widget, but may need to be called when ``setCursor`` is
+    called programmatically.
 
 * ``textarea:clearHistory()``
 
     Clear undo/redo history of the widget.
 
-Functionality:
+Functionality
+-------------
+
+The TextArea widget provides a familiar and intuitive text editing experience with baseline features such as:
+
+- Text Wrapping: Automatically fits text within the display area.
+- Mouse and Keyboard Support: Standard keys like :kbd:`Home`, :kbd:`End`, :kbd:`Backspace`, and :kbd:`Delete` are supported,
+    along with gestures like double-click to select a word or triple-click to select a line.
+- Clipboard Operations: copy, cut, and paste,
+    with intuitive defaults when no text is selected.
+- Undo/Redo: :kbd:`Ctrl` + :kbd:`Z` and :kbd:`Ctrl` + :kbd:`Y` for quick changes.
+- Additional features include advanced navigation, line management,
+    and smooth scrolling for handling long text efficiently.
+
+Detailed list:
 
 - Cursor Control: Navigate through text using arrow keys (Left, Right, Up,
     and Down) for precise cursor placement.
@@ -5606,6 +5621,8 @@ Functionality:
     moving up or down, making vertical navigation more intuitive.
 - Mouse Control: Use the mouse to position the cursor within the text,
     providing an alternative to keyboard navigation.
+- Text Selection: Select text with the mouse, with support for replacing or
+    removing selected text.
 - New Lines: Easily insert new lines using the :kbd:`Enter` key, supporting
     multiline text input.
 - Text Wrapping: Text automatically wraps within the editor, ensuring lines fit
@@ -5621,8 +5638,6 @@ Functionality:
     the end of the line.
 - Delete Last Word: :kbd:`Ctrl` + :kbd:`W` removes the word immediately before
     the cursor.
-- Text Selection: Select text with the mouse, with support for replacing or
-    removing selected text.
 - Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
     text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
 - Select Word/Line: Use double click to select current word, or triple click to

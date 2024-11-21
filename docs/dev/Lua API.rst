@@ -5526,7 +5526,7 @@ Cursor Behavior
 The cursor in the ``TextArea`` class is index-based, starting from 1,
 consistent with Lua's text indexing conventions.
 
-Each character, including new lines (``string.char(10)``),
+Each character, including newlines (``string.char(10)``),
 occupies a single index in the text content.
 
 Cursor movement and position are fully aware of line breaks,
@@ -5545,11 +5545,11 @@ TextArea Attributes:
 * ``init_text``: The initial text content for the text area.
 
 * ``init_cursor``: The initial cursor position within the text content.
-    If not specified, defaults to end of the text (length of ``init_text``).
+    If not specified, defaults to end of the text (length of ``init_text`` + 1).
 
-* ``text_pen``: Optional pen used to draw the text.
+* ``text_pen``: Optional pen used to draw the text. Default is ``COLOR_LIGHTCYAN``.
 
-* ``select_pen``: Optional pen used for text selection.
+* ``select_pen``: Optional pen used for text selection. Default is ``COLOR_CYAN``.
 
 * ``ignore_keys``: List of input keys to ignore.
     Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
@@ -5560,10 +5560,10 @@ TextArea Attributes:
 * ``on_cursor_change``: Callback function called whenever the cursor position changes.
     Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
 
-* ``one_line_mode``: Boolean attribute that, when set to ``true``,
-    disables multi-line text features and restricts the text area to a single line.
-    If any "\n" (``string.char(10)``) are available in the text,
-    they will be removed from the text
+* ``one_line_mode``: If set to ``true``, disables multi-line text features.
+    In this mode the :kbd:`Enter` key is not handled by the widget
+    as if it were included in ``ignore_keys``. 
+    If multiline text (including ``\n`` chars) is pasted into the widget, newlines are removed.
 
 TextArea Functions:
 
@@ -5595,7 +5595,7 @@ TextArea Functions:
 
 * ``textarea:clearHistory()``
 
-    Clear undo/redo history of the widget.
+    Clears undo/redo history of the widget.
 
 Functionality
 -------------
@@ -5615,33 +5615,34 @@ Detailed list:
 
 - Cursor Control: Navigate through text using arrow keys (Left, Right, Up,
     and Down) for precise cursor placement.
-- Fast Rewind: Use :kbd:`Ctrl` + :kbd:`Left` and :kbd:`Ctrl` + :kbd:`Right` to
-    move the cursor one word back or forward.
-- Longest X Position Memory: The cursor remembers the longest x position when
-    moving up or down, making vertical navigation more intuitive.
 - Mouse Control: Use the mouse to position the cursor within the text,
     providing an alternative to keyboard navigation.
 - Text Selection: Select text with the mouse, with support for replacing or
     removing selected text.
+- Select Word/Line: Use double click to select current word, or triple click to
+    select current line.
+- Move By Word: Use :kbd:`Ctrl` + :kbd:`Left` and :kbd:`Ctrl` + :kbd:`Right` to
+    move the cursor one word back or forward.
+- Line Navigation: :kbd:`Home` moves the cursor to the beginning of the current
+    line, and :kbd:`End` moves it to the end.
+- Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
+    text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
+- Longest X Position Memory: The cursor remembers the longest x position when
+    moving up or down, making vertical navigation more intuitive.
 - New Lines: Easily insert new lines using the :kbd:`Enter` key, supporting
     multiline text input.
 - Text Wrapping: Text automatically wraps within the editor, ensuring lines fit
     within the display without manual adjustments.
+- Scrolling behaviour for long text build-in.
 - Backspace Support: Use the backspace key to delete characters to the left of
     the cursor.
 - Delete Character: :kbd:`Delete` deletes the character under the cursor.
-- Line Navigation: :kbd:`Home` moves the cursor to the beginning of the current
-    line, and :kbd:`End` moves it to the end.
 - Delete Current Line: :kbd:`Ctrl` + :kbd:`U` deletes the entire current line
     where the cursor is located.
 - Delete Rest of Line: :kbd:`Ctrl` + :kbd:`K` deletes text from the cursor to
     the end of the line.
 - Delete Last Word: :kbd:`Ctrl` + :kbd:`W` removes the word immediately before
     the cursor.
-- Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
-    text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
-- Select Word/Line: Use double click to select current word, or triple click to
-    select current line.
 - Select All: Select entire text by :kbd:`Ctrl` + :kbd:`A`.
 - Undo/Redo: Undo/Redo changes by :kbd:`Ctrl` + :kbd:`Z` / :kbd:`Ctrl` +
     :kbd:`Y`.
@@ -5660,7 +5661,6 @@ Detailed list:
     the editor.
     - replace selected text, if available
     - If no text is selected, paste text in the cursor position
-- Scrolling behaviour for long text build-in.
 
 Scrollbar class
 ---------------

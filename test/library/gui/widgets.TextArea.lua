@@ -3,8 +3,6 @@ local widgets = require('gui.widgets')
 
 config.target = 'core'
 
-local df_major_version = tonumber(dfhack.getCompiledDFVersion():match('%d+'))
-
 local function simulate_input_keys(...)
     local keys = {...}
     for _,key in ipairs(keys) do
@@ -2879,11 +2877,6 @@ function test.scroll_follows_cursor()
     }, '\n'))
 
     screen:dismiss()
-end
-
-if df_major_version < 51 then
-    -- temporary ignore test features that base on newest API of the DF game
-    return
 end
 
 function test.fast_rewind_words_right()

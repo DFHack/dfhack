@@ -52,7 +52,6 @@ function TextArea:init()
         self.text_area,
         self.scrollbar,
     }
-    self:setFocus(true)
 end
 
 function TextArea:getText()
@@ -109,7 +108,7 @@ function TextArea:scrollToCursor(cursor_offset)
 end
 
 function TextArea:getPreferredFocusState()
-    return self.parent_view.focus
+    return self.parent_view and self.parent_view.focus or true
 end
 
 function TextArea:postUpdateLayout()

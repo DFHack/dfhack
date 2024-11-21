@@ -12,7 +12,7 @@ TextAreaContent = defclass(TextAreaContent, Widget)
 TextAreaContent.ATTRS{
     text = '',
     text_pen = COLOR_LIGHTCYAN,
-    ignore_keys = {'STRING_A096'},
+    ignore_keys = {},
     pen_selection = COLOR_CYAN,
     on_text_change = DEFAULT_NIL,
     on_cursor_change = DEFAULT_NIL,
@@ -61,10 +61,6 @@ end
 
 function TextAreaContent:setRenderStartLineY(render_start_line_y)
     self.render_start_line_y = render_start_line_y
-end
-
-function TextAreaContent:getPreferredFocusState()
-    return true
 end
 
 function TextAreaContent:postComputeFrame()

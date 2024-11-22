@@ -1,15 +1,14 @@
 
 #include "Core.h"
-#include "Console.h"
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Export.h"
 #include "PluginManager.h"
 
 #include "modules/World.h"
+#include "modules/EventManager.h"
 
 #include "df/construction.h"
-#include "df/game_mode.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
 #include "df/world.h"
@@ -44,12 +43,19 @@ enum ConfigValues {
 
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
 
+static void constructionEventHandler(color_ostream& out, void* ptr);
+EventManager::EventHandler handler(plugin_self, constructionEventHandler,0);
+
 DFhackCExport command_result plugin_init(color_ostream &out,
                                          std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         "infiniteSky", "Automatically allocate new z-levels of sky.",
         infiniteSky));
     return CR_OK;
+}
+
+void cleanup() {
+    EventManager::unregister(EventManager::EventType::CONSTRUCTION, handler);
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -63,6 +69,13 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             .print("%s from the API; persisting\n",
                    is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+
+        if (enable) {
+            EventManager::registerListener(
+                EventManager::EventType::CONSTRUCTION, handler);
+        } else {
+            cleanup();
+        }
     } else {
         DEBUG(control, out)
             .print("%s from the API, but already %s; no action\n",
@@ -70,6 +83,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                    is_enabled ? "enabled" : "disabled");
     }
 
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
+    cleanup();
     return CR_OK;
 }
 
@@ -83,10 +101,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
 
-    // we have to copy our enabled flag into the global plugin variable, but
-    // all the other state we can directly read/modify from the persistent
-    // data structure.
-    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+
+    // Call plugin_enable to set value to ensure the event handler is properly registered
+    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
     DEBUG(control, out)
         .print("loading persisted enabled state: %s\n",
                is_enabled ? "true" : "false");
@@ -105,35 +122,13 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out,
     return CR_OK;
 }
 
-static size_t constructionSize = 0;
 void doInfiniteSky(color_ostream& out, int32_t howMany);
 
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    if ( !Core::getInstance().isMapLoaded() )
-        return CR_OK;
-    {
-        t_gamemodes mode;
-        if ( !World::ReadGameMode(mode) )
-            return CR_FAILURE;
-        if ( mode.g_mode != df::enums::game_mode::DWARF )
-            return CR_OK;
-    }
+static void constructionEventHandler(color_ostream &out, void *ptr) {
+    df::construction *constr = (df::construction *)ptr;
 
-    if ( world->event.constructions.size() == constructionSize )
-        return CR_OK;
-    int32_t zNow = world->map.z_count_block;
-    for ( size_t a = constructionSize; a < world->event.constructions.size(); a++ ) {
-        df::construction* construct = world->event.constructions[a];
-        if ( construct->pos.z+2 < zNow )
-            continue;
+    if (constr->pos.z >= world->map.z_count_block - 2)
         doInfiniteSky(out, 1);
-        zNow = world->map.z_count_block;
-        ///break;
-    }
-    constructionSize = world->event.constructions.size();
-
-    return CR_OK;
 }
 
 void doInfiniteSky(color_ostream& out, int32_t howMany) {
@@ -240,17 +235,6 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
     if (parameters.size() == 0) {
         out.print("Construction monitoring is %s.\n",
                   is_enabled ? "enabled" : "disabled");
-        return CR_OK;
-    }
-    if (parameters[0] == "enable") {
-        plugin_enable(out, true);
-        out.print("Construction monitoring enabled.\n");
-        return CR_OK;
-    }
-    if (parameters[0] == "disable") {
-        plugin_enable(out, false);
-        out.print("Construction monitoring disabled.\n");
-        constructionSize = 0;
         return CR_OK;
     }
     int32_t howMany = 0;

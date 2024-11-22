@@ -3,6 +3,7 @@
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 
 #include "modules/World.h"
@@ -228,18 +229,42 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
     world->map_extras.z_level_flags = flags;
 }
 
-command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)
-{
-    if ( parameters.size() > 1 )
+struct infinitesky_options {
+    // whether to display help
+    bool help = false;
+
+    // how many z levels to generate immediately (0 for none)
+    int32_t n = 0;
+
+    static struct_identity _identity;
+};
+static const struct_field_info infinitesky_options_fields[] = {
+    {struct_field_info::PRIMITIVE, "help", offsetof(infinitesky_options, help), &df::identity_traits<bool>::identity, 0, 0},
+    {struct_field_info::PRIMITIVE, "n", offsetof(infinitesky_options, n), &df::identity_traits<int32_t>::identity, 0, 0}
+};
+struct_identity infinitesky_options::_identity{sizeof(infinitesky_options), &df::allocator_fn<infinitesky_options>, NULL, "infinitesky_options", NULL, infinitesky_options_fields};
+
+command_result infiniteSky(color_ostream &out,
+                           std::vector<std::string> &parameters) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    infinitesky_options opts;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.infiniteSky",
+                                    "parse_commandline",
+                                    std::make_tuple(&opts, parameters)) ||
+        opts.help)
         return CR_WRONG_USAGE;
-    if (parameters.size() == 0) {
+
+    if (opts.n != 0) {
+        out.print("InfiniteSky: creating %d new z-level%s of sky.\n", opts.n,
+                  opts.n == 1 ? "" : "s");
+        doInfiniteSky(out, opts.n);
+    } else {
         out.print("Construction monitoring is %s.\n",
                   is_enabled ? "enabled" : "disabled");
-        return CR_OK;
     }
-    int32_t howMany = 0;
-    howMany = atoi(parameters[0].c_str());
-    out.print("InfiniteSky: creating %d new z-level%s of sky.\n", howMany, howMany == 1 ? "" : "s" );
-    doInfiniteSky(out, howMany);
     return CR_OK;
 }

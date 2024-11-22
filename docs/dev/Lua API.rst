@@ -5562,7 +5562,7 @@ TextArea Attributes:
 
 * ``one_line_mode``: If set to ``true``, disables multi-line text features.
     In this mode the :kbd:`Enter` key is not handled by the widget
-    as if it were included in ``ignore_keys``. 
+    as if it were included in ``ignore_keys``.
     If multiline text (including ``\n`` chars) is pasted into the widget, newlines are removed.
 
 TextArea Functions:

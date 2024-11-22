@@ -2,6 +2,7 @@
 #include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
+#include "Debug.h"
 #include "Export.h"
 #include "PluginManager.h"
 
@@ -24,43 +25,87 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("infiniteSky");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 REQUIRE_GLOBAL(world);
+
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(infiniteSky, control, DebugCategory::LINFO);
+    // for logging during creation of z-levels
+    DBG_DECLARE(infiniteSky, cycle, DebugCategory::LINFO);
+}
+
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static PersistentDataItem config;
+enum ConfigValues {
+    CONFIG_IS_ENABLED = 0,
+};
 
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
+DFhackCExport command_result plugin_init(color_ostream &out,
+                                         std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
-        "infiniteSky",
-        "Create new sky levels on request, or as needed.",
+        "infiniteSky", "Automatically allocate new z-levels of sky.",
         infiniteSky));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(control, out)
+            .print("%s from the API; persisting\n",
+                   is_enabled ? "enabled" : "disabled");
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+    } else {
+        DEBUG(control, out)
+            .print("%s from the API, but already %s; no action\n",
+                   is_enabled ? "enabled" : "disabled",
+                   is_enabled ? "enabled" : "disabled");
+    }
+
     return CR_OK;
 }
 
-/*
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_GAME_LOADED:
-        // initialize from the world just loaded
-        break;
-    case SC_GAME_UNLOADED:
-        // cleanup
-        break;
-    default:
-        break;
+DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
+    config = World::GetPersistentSiteData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(control, out)
+            .print("no config found in this save; initializing\n");
+        config = World::AddPersistentSiteData(CONFIG_KEY);
+        config.set_bool(CONFIG_IS_ENABLED, is_enabled);
+    }
+
+    // we have to copy our enabled flag into the global plugin variable, but
+    // all the other state we can directly read/modify from the persistent
+    // data structure.
+    is_enabled = config.get_bool(CONFIG_IS_ENABLED);
+    DEBUG(control, out)
+        .print("loading persisted enabled state: %s\n",
+               is_enabled ? "true" : "false");
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out,
+                                                  state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(control, out)
+                .print("world unloaded; disabling %s\n", plugin_name);
+            is_enabled = false;
+        }
     }
     return CR_OK;
 }
-*/
 
 static size_t constructionSize = 0;
-DFHACK_PLUGIN_IS_ENABLED(enabled);
 void doInfiniteSky(color_ostream& out, int32_t howMany);
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
@@ -150,8 +195,9 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                 // fine
                 df::map_block_column *column = world->map.column_index[a][b];
                 if (!column) {
-                    out.print("%s, line %d: column is null (%d, %d).\n",
-                              __FILE__, __LINE__, a, b);
+                    DEBUG(cycle, out)
+                        .print("%s, line %d: column is null (%d, %d).\n",
+                               __FILE__, __LINE__, a, b);
                     continue;
                 }
                 df::map_block_column::T_unmined_glyphs *glyphs =
@@ -187,27 +233,22 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
     world->map_extras.z_level_flags = flags;
 }
 
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    enabled = enable;
-    return CR_OK;
-}
-
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters)
 {
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
-    if ( parameters.size() == 0 ) {
-        out.print("Construction monitoring is %s.\n", enabled ? "enabled" : "disabled");
+    if (parameters.size() == 0) {
+        out.print("Construction monitoring is %s.\n",
+                  is_enabled ? "enabled" : "disabled");
         return CR_OK;
     }
     if (parameters[0] == "enable") {
-        enabled = true;
+        plugin_enable(out, true);
         out.print("Construction monitoring enabled.\n");
         return CR_OK;
     }
     if (parameters[0] == "disable") {
-        enabled = false;
+        plugin_enable(out, false);
         out.print("Construction monitoring disabled.\n");
         constructionSize = 0;
         return CR_OK;

@@ -164,7 +164,7 @@ end
 
 function TextArea:renderSubviews(dc)
     self.text_area.frame_body.y1 = self.frame_body.y1-(self.render_start_line_y - 1)
-
+    -- only visible lines of text_area will be rendered
     TextArea.super.renderSubviews(self, dc)
 end
 

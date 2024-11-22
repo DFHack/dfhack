@@ -108,7 +108,7 @@ function TextArea:scrollToCursor(cursor_offset)
 end
 
 function TextArea:getPreferredFocusState()
-    return self.parent_view and self.parent_view.focus or true
+    return true
 end
 
 function TextArea:postUpdateLayout()

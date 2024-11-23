@@ -18,9 +18,10 @@ Usage
     Enables monitoring of constructions. If you build anything in the second
     highest z-level, it will allocate one more sky level. You can build stairs
     up as high as you like!
-``infinite-sky [<n>]``
-    Raise the sky by n z-levels. If run without parameters, raises the sky by
-    one z-level.
+``infinite-sky``
+    Print current status.
+``infinite-sky <n>``
+    Raise the sky by n z-levels.
 
 .. warning::
 

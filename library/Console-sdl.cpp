@@ -60,13 +60,12 @@ using namespace DFHack;
 
 using namespace sdl_console;
 
-SDLConsole *conPtr = nullptr;
 struct con_render_hook : df::renderer_2d {
     typedef df::renderer_2d interpose_base;
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        conPtr->update();
+        SDLConsole::get_console().update();
         INTERPOSE_NEXT(render)();
     }
 };
@@ -158,16 +157,11 @@ namespace DFHack
     class Private
     {
     public:
-        Private() : con(SDLConsole::get_console()) {conPtr = &con;};
-        virtual ~Private() {}
+        Private() : con(SDLConsole::get_console()) {};
+        virtual ~Private() = default;
     private:
 
     public:
-        bool init()
-        {
-            con.set_prompt(prompt);
-            return con.init();
-        }
 
         void print(const char *data)
         {
@@ -183,9 +177,9 @@ namespace DFHack
         {
             static bool did_set_history = false;
 
-            // I don't believe these checks are necessary.
-            // unless, for some reason, fiothread is inited before the console.
-            if (con.state.is_inactive() && !con.state.is_shutdown()) {
+            // I don't believe this check is necessary.
+            // unless, somwhow, fiothread is inited before the console.
+            if (con.state.is_inactive()) {
                 return Console::RETRY;
             }
             // kludge. This is the only place to set it?
@@ -208,16 +202,6 @@ namespace DFHack
                 return Console::SHUTDOWN;
 
             return ret;
-        }
-
-        void flush()
-        {
-        }
-
-        /// Clear the console, along with its scrollback
-        void clear()
-        {
-            con.clear();
         }
         /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y)
@@ -243,24 +227,14 @@ namespace DFHack
         {
         }
 
-        int  get_columns(void)
-        {
-            return con.get_columns();
-        }
-
-        int  get_rows(void)
-        {
-            return con.get_rows();
-        }
-
-        SDLConsole& con;
+        SDLConsole &con;
         std::string prompt;      // current prompt string
     };
 }
 
 Console::Console()
 {
-    d = 0;
+    d = new Private();
     inited.store(false);
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
     wlock = new std::recursive_mutex();
@@ -277,16 +251,21 @@ Console::~Console()
 /**
  * FIXME: Two-stage init because we need to initialize on
  * the main thread, but interpose isn't available until later.
- **/
+ */
 bool Console::init(bool dont_redirect)
 {
-    if (inited.load()) {
+    static int init_stage = 0;
+
+    if (init_stage == -1)
+        return false;
+
+    if (init_stage == 1) {
         INTERPOSE_HOOK(con_render_hook,render).apply(true);
         return true;
     }
 
-    d = new Private();
-    inited.store(d->init());
+    inited.store(d->con.init());
+    init_stage = inited.load() ? 1 : -1;
 
     if (!dont_redirect)
     {
@@ -294,13 +273,12 @@ bool Console::init(bool dont_redirect)
             fputs("Failed to redirect stdout to file\n", stderr);
         }
     }
-    return inited;
+    return inited.load();
 }
 
 bool Console::shutdown(void)
 {
-    if(!inited.load())
-        return true;
+    if (!inited.load()) return true;
     d->con.shutdown();
     inited = false;
     return true;
@@ -323,14 +301,12 @@ void Console::end_batch()
 /* Don't think we need this? */
 void Console::flush_proxy()
 {
-    return;
-    std::lock_guard <std::recursive_mutex> g(*wlock);
-    if (inited)
-        d->flush();
 }
 
 void Console::add_text(color_value color, const std::string &text)
 {
+    // I don't think this lock is needed, unless to prevent
+    // interleaving prints. But we have batch for that?
     std::lock_guard <std::recursive_mutex> g(*wlock);
     if(inited.load())
         d->print_text(color, text);
@@ -340,26 +316,19 @@ void Console::add_text(color_value color, const std::string &text)
 
 int Console::get_columns(void)
 {
-    int ret = Console::FAILURE;
-    if (inited.load()) {
-        ret = d->get_columns();
-    }
-    return ret;
+    // returns Console::FAILURE if inactive
+    return d->con.get_columns();
 }
 
 int Console::get_rows(void)
 {
-    auto ret = Console::FAILURE;
-    if (inited.load()) {
-        ret = d->get_rows();
-    }
-    return ret;
+    // returns Console::FAILURE if inactive
+    return d->con.get_rows();
 }
 
 void Console::clear()
 {
-    if (inited.load())
-        d->con.clear();
+    d->con.clear();
 }
 /* XXX: Not implemented */
 void Console::gotoxy(int x, int y)
@@ -368,19 +337,16 @@ void Console::gotoxy(int x, int y)
 /* XXX: Not implemented */
 void Console::cursor(bool enable)
 {
-    if (inited.load())
-        d->cursor(enable);
+    d->cursor(enable);
 }
 
 int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
+    // Tell fiothread we are done.
     if(!inited.load())
         return Console::SHUTDOWN;
 
-    int ret = d->lineedit(prompt,output,ch);
-    if (ret == 0)
-        return Console::RETRY;
-    return ret;
+    return d->lineedit(prompt,output,ch);
 }
 
 void Console::msleep (unsigned int msec)
@@ -390,51 +356,43 @@ void Console::msleep (unsigned int msec)
 
 bool Console::hide()
 {
-    if (!inited.load())
-        return false;
     d->con.hide_window();
     return true;
 }
 
 bool Console::show()
 {
-    if(!inited.load())
-        return false;
     d->con.show_window();
     return true;
 }
 
 /*
- * cleanup() here is necessary if the console
- * failed after init, or if commanded to shutdown
- * during run time (not exiting).
+ * We should cleanup() if the console failed after init (unlikely to happen),
+ * or if commanded to shutdown during run time (but df not exiting).
+ *
+ * NOTE: We do not absolutely have to clean up here. It can be done at exit.
+ * This is for the ability to shutdown and restart the console at run time.
  */
 bool Console::sdl_event_hook(SDL_Event &e)
 {
-    if (!d) {
-        return false;
-    } else if (d->con.state.is_active()) {
-        return d->con.sdl_event_hook(e);
-    } else if (d->con.state.is_shutdown()) {
+    auto& con = d->con;
+    if (con.state.is_active()) {
+        return con.sdl_event_hook(e);
+    } else if (con.state.is_shutdown()) {
         cleanup();
     }
     return false;
 }
 
 /*
- * Called by df main thread.
- * 'd' is initialized by main thread.
- * We don't need to check the atomic 'inited' here,
- * as it'll be set to false on shutdown.
  * Cleanup must be done from the main thread.
- * NOTE: This may be achievable in the destructor instead.
+ * NOTE: may be able to do this in the destructor instead.
  */
 void Console::cleanup()
 {
-    if (!d)
-        return;
+    if (!inited.load()) return;
     INTERPOSE_HOOK(con_render_hook,render).apply(0);
-    // destroy() will change its state to inactive
+    // destroy() will change console's state to inactive
     d->con.destroy();
     inited.store(false);
 }

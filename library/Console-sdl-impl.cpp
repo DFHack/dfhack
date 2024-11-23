@@ -41,6 +41,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_CaptureMouse);
 CONSOLE_DECLARE_SYMBOL(SDL_ConvertSurfaceFormat);
 CONSOLE_DECLARE_SYMBOL(SDL_CreateRenderer);
 CONSOLE_DECLARE_SYMBOL(SDL_CreateRGBSurface);
+CONSOLE_DECLARE_SYMBOL(SDL_CreateRGBSurfaceWithFormat);
 CONSOLE_DECLARE_SYMBOL(SDL_CreateTexture);
 CONSOLE_DECLARE_SYMBOL(SDL_CreateTextureFromSurface);
 CONSOLE_DECLARE_SYMBOL(SDL_CreateWindow);
@@ -65,6 +66,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_RenderClear);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderCopy);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderDrawRect);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderFillRect);
+CONSOLE_DECLARE_SYMBOL(SDL_RenderFillRects);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderPresent);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderSetIntegerScale);
 CONSOLE_DECLARE_SYMBOL(SDL_RenderSetViewport);
@@ -88,6 +90,10 @@ CONSOLE_DECLARE_SYMBOL(SDL_QuitSubSystem);
 
 void bind_sdl_symbols()
 {
+    static bool didit = false;
+    if (didit) return;
+    didit = true;
+
     struct Symbol {
         const char* name;
         void** addr;
@@ -104,6 +110,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_ConvertSurfaceFormat),
         CONSOLE_ADD_SYMBOL(SDL_CreateRenderer),
         CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurface),
+        CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurfaceWithFormat),
         CONSOLE_ADD_SYMBOL(SDL_CreateTexture),
         CONSOLE_ADD_SYMBOL(SDL_CreateTextureFromSurface),
         CONSOLE_ADD_SYMBOL(SDL_CreateWindow),
@@ -128,6 +135,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_RenderCopy),
         CONSOLE_ADD_SYMBOL(SDL_RenderDrawRect),
         CONSOLE_ADD_SYMBOL(SDL_RenderFillRect),
+        CONSOLE_ADD_SYMBOL(SDL_RenderFillRects),
         CONSOLE_ADD_SYMBOL(SDL_RenderPresent),
         CONSOLE_ADD_SYMBOL(SDL_RenderSetIntegerScale),
         CONSOLE_ADD_SYMBOL(SDL_RenderSetViewport),
@@ -1299,6 +1307,7 @@ private:
         line_height = orig_line_height * scale_factor;
     }
 
+    // Make copying explicit via make_copy()
     Font(const Font& other)
     : renderer_(other.renderer_)
     , texture_(other.texture_)
@@ -1415,8 +1424,9 @@ public:
         // Create a surface in ARGB8888 format, and replace the keyed color
         // with fully transparant pixels. This step completely removes the color.
         // NOTE: Do not use surface->pitch
-        SDL_Surface* conv_surface = sdl_console::SDL_CreateRGBSurface(0, surface->w, surface->h, 32,
-                                                                      0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+
+        SDL_Surface* conv_surface = sdl_console::SDL_CreateRGBSurfaceWithFormat(0, surface->w, surface->h, 32,
+                                                                                SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB8888);
         sdl_console::SDL_BlitSurface(surface, nullptr, conv_surface, nullptr);
         sdl_console::SDL_FreeSurface(surface);
         surface = conv_surface;
@@ -1932,37 +1942,38 @@ public:
         if (entry.fragments().empty())
             return;
 
-        /* cursor's position */
+        // cursor's starting position
         auto cursor_pos = cursor + prompt_text.length();
+        TextEntry::Fragment *line;
 
-        // If cursor is the head, nullopt will be returned as it falls outside
-        // the fragment boundary. Maybe FIXME
-        auto& line = [this, cursor_pos]() -> auto& {
-            if (auto line_opt = entry.fragment_from_offset(cursor_pos)) {
-                return line_opt.value().get();
-            } else {
-                return entry.fragments().back();
+        // cursor is at the end
+        if (cursor_pos == entry.text.length()) {
+            // cursor is not visible.
+            if (scroll_offset > 0)
+                return;
+            line = &entry.fragments().back();
+        // else find the line containing the cursor
+        } else {
+            auto line_opt = entry.fragment_from_offset(cursor_pos);
+            if (!line_opt.has_value())
+                return; // should not happen
+
+            line = &line_opt.value().get();
+            // the very bottom of the prompt is the last entry
+            // entry_offset = entry.size-1 at bottom
+            int r = (entry.size - 1) - line->entry_offset;
+            // scroll_offset starts at 0.
+            if (scroll_offset > r) {
+                return;
             }
-        }();
-
-        int r = (entry.size - 1) - line.entry_offset;
-        // scroll_offset starts at 0.
-        if (scroll_offset > r) {
-            return;
         }
 
-        const auto lh = font->line_height_with_spacing();
-        const auto cw = font->char_width;
-        /*  full range of line + cursor */
-        int cx = (cursor_pos - line.start_offset) * cw;
-        int cy = line.coord.y;
+        auto lh = font->line_height_with_spacing();
+        auto cw = font->char_width;
+        auto cx = (cursor_pos - line->start_offset) * cw;
+        auto cy = line->coord.y;
 
-        SDL_Rect rect = { cx, cy, cw, lh };
-        /* Draw the cursor */
-        // No, not for this, but maybe used to pen text
-        // SDL_SetTextureBlendMode(cursor_texture, SDL_BLENDMODE_BLEND);
-        // SDL_SetTextureAlphaMod(cursor_texture, 0.5 * 255);
-        // SDL_SetTextureColorMod(cursor_texture, 255, 255, 255);
+        SDL_Rect rect{ (int)cx, cy, cw, lh };
         render_texture(renderer(), cursor_texture, rect);
     }
 
@@ -2770,11 +2781,16 @@ public:
     void render_highlight_selected_text()
     {
         set_draw_color(renderer(), colors::mediumgray);
+        sdl_console::SDL_RenderFillRects(renderer(), text_selection.rects.data(), text_selection.rects.size());
+        set_draw_color(renderer(), colors::darkgray);
+
+        /*
         for (auto& rect : text_selection.rects) {
 
             sdl_console::SDL_RenderFillRect(renderer(), &rect);
         }
         set_draw_color(renderer(), colors::darkgray);
+        */
     }
 
     /*
@@ -3186,7 +3202,6 @@ SDLConsole::SDLConsole() : state()
 {
     pshare = std::make_unique<SDLConsole_pshare>();
     state.set_state(State::inactive);
-    bind_sdl_symbols();
 }
 
 SDLConsole::~SDLConsole()  {}
@@ -3198,11 +3213,13 @@ SDLConsole::~SDLConsole()  {}
  */
 bool SDLConsole::init()
 {
+    if (state.is_failed()) return false;
     if (!state.is_inactive()) return true;
     bool success = true;
     //std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
     pshare->render_thread_id = std::this_thread::get_id();
     try {
+        bind_sdl_symbols();
         impl = std::make_shared<SDLConsole_impl>(this);
         pshare->impl_weak = impl;
         state.set_state(SDLConsole::State::active);
@@ -3211,8 +3228,8 @@ bool SDLConsole::init()
         success = false;
         impl.reset();
         sdl_tsd.clear();
-        state.set_state(State::shutdown);
-        std::cerr << "SDLConsole: caught exception: " << e.what();
+        state.set_state(State::failed);
+        std::cerr << "Caught exception: " << e.what();
     }
     return success;
 }
@@ -3243,12 +3260,12 @@ void SDLConsole::write_line_(std::string& line, std::optional<SDL_Color> color)
 
 int SDLConsole::get_columns()
 {
-    return pshare->props.get<int>(property::RT_OUTPUT_COLUMNS, 0);
+    return pshare->props.get<int>(property::RT_OUTPUT_COLUMNS, -1);
 }
 
 int SDLConsole::get_rows()
 {
-    return pshare->props.get<int>(property::RT_OUTPUT_ROWS, 0);
+    return pshare->props.get<int>(property::RT_OUTPUT_ROWS, -1);
 }
 
 SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
@@ -3333,10 +3350,14 @@ void SDLConsole::shutdown()
 
 bool SDLConsole::destroy()
 {
+    if (!impl)
+        return true;
+
     if (pshare->render_thread_id != std::this_thread::get_id()) {
         std::cerr << "SDLConsole: ATTEMPT to destroy() from wrong thread: " << std::this_thread::get_id() << std::endl;
         return false;
     }
+
     // Kill our impl shared_ptr.
     impl.reset();
     // NOTE: The only other long living impl shared_ptr is get_line()

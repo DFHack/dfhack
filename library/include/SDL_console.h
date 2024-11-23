@@ -7,6 +7,8 @@
 #include <optional>
 #include <vector>
 
+#include "Export.h"
+
 struct SDL_Color;
 union SDL_Event;
 
@@ -15,7 +17,7 @@ namespace sdl_console {
 struct SDLConsole_pshare;
 class SDLConsole_impl;
 
-class SDLConsole {
+class DFHACK_EXPORT SDLConsole {
 public:
     /*
      * Constructs the console window and its widgets.
@@ -114,7 +116,8 @@ public:
         enum Value {
             active,     // console is active and operational.
             inactive,   // console is inactive and can be activated.
-            shutdown    // console is shutting down.
+            shutdown,   // console is shutting down.
+            failed      // console failed. cannot be started.
         };
 
         State() : current_state(Value::inactive) {}
@@ -125,10 +128,13 @@ public:
 
         [[nodiscard]] bool is_shutdown() const { return current_state.load() == Value::shutdown; }
 
+        [[nodiscard]] bool is_failed() const { return current_state.load() == Value::failed; }
+
     protected:
         friend class SDLConsole;
         friend class SDLConsole_impl;
         void set_state(Value new_state) {
+            if (is_failed()) return;
             current_state.store(new_state);
         }
         std::atomic<Value> current_state;

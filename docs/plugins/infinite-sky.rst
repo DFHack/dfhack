@@ -1,5 +1,7 @@
-infiniteSky
-===========
+.. _infinitesky:
+
+infinite-sky
+============
 
 .. dfhack-tool::
     :summary: Automatically allocate new z-levels of sky.
@@ -12,11 +14,11 @@ at your command.
 Usage
 -----
 
-``enable infiniteSky``
+``enable infinite-sky``
     Enables monitoring of constructions. If you build anything in the second
     highest z-level, it will allocate one more sky level. You can build stairs
     up as high as you like!
-``infiniteSky [<n>]``
+``infinite-sky [<n>]``
     Raise the sky by n z-levels. If run without parameters, raises the sky by
     one z-level.
 

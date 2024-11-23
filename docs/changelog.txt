@@ -52,7 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `infiniteSky`: (reinstated) tool for automatically creating new z-levels of sky
+- `infinite-sky`: (reinstated, renamed from ``infiniteSky``) tool for automatically creating new z-levels of sky
 
 ## New Features
 - `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level

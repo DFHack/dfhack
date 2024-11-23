@@ -1,4 +1,4 @@
-local _ENV = mkmodule('plugins.infiniteSky')
+local _ENV = mkmodule('plugins.infinite-sky')
 
 local argparse = require('argparse')
 

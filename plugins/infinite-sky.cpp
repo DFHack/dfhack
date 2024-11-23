@@ -24,7 +24,7 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-DFHACK_PLUGIN("infiniteSky");
+DFHACK_PLUGIN("infinite-sky");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
@@ -50,7 +50,7 @@ EventManager::EventHandler handler(plugin_self, constructionEventHandler,0);
 DFhackCExport command_result plugin_init(color_ostream &out,
                                          std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
-        "infiniteSky", "Automatically allocate new z-levels of sky.",
+        "infinite-sky", "Automatically allocate new z-levels of sky.",
         infiniteSky));
     return CR_OK;
 }
@@ -252,14 +252,14 @@ command_result infiniteSky(color_ostream &out,
     }
 
     infinitesky_options opts;
-    if (!Lua::CallLuaModuleFunction(out, "plugins.infiniteSky",
+    if (!Lua::CallLuaModuleFunction(out, "plugins.infinite-sky",
                                     "parse_commandline",
                                     std::make_tuple(&opts, parameters)) ||
         opts.help)
         return CR_WRONG_USAGE;
 
     if (opts.n != 0) {
-        out.print("InfiniteSky: creating %d new z-level%s of sky.\n", opts.n,
+        out.print("Infinite-sky: creating %d new z-level%s of sky.\n", opts.n,
                   opts.n == 1 ? "" : "s");
         doInfiniteSky(out, opts.n);
     } else {

@@ -68,6 +68,7 @@ distribution.
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
+#include <format>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -1644,6 +1645,42 @@ bool Core::InitMainThread() {
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    if (df::global::game->command_line.original.find("--skip-size-check") == std::string::npos) {
+        auto gtbl = df::global::global_table;
+        std::stringstream msg;
+        bool gt_error = false;
+        if (!gtbl) {
+            msg << "Global symbol table missing";
+            gt_error = true;
+        }
+        else
+        {
+            static const std::map<const std::string, const size_t> sizechecks{
+                { "world", sizeof(df::world) },
+                { "game", sizeof(df::gamest) },
+            };
+
+            for (auto gte : *gtbl)
+            {
+                std::string name{ gte.name };
+                if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
+                {
+                    msg << std::format("Global '{}' size mismatch: is {}, expected {}\n", name, gte.size, sizechecks.at(name));
+                    gt_error = true;
+                }
+            }
+        }
+
+        if (gt_error)
+        {
+            msg << "DFHack cannot safely run under these conditions.\n";
+            fatal(msg.str(), "DFHack fatal error");
+            errorstate = true;
+            return false;
+        }
+    }
+
 
     perf_counters.reset();
 

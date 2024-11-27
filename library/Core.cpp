@@ -68,7 +68,6 @@ distribution.
 #include <stdio.h>
 #include <iomanip>
 #include <stdlib.h>
-#include <format>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -1666,7 +1665,7 @@ bool Core::InitMainThread() {
                 std::string name{ gte.name };
                 if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
                 {
-                    msg << std::format("Global '{}' size mismatch: is {}, expected {}\n", name, gte.size, sizechecks.at(name));
+                    msg << "Global '" << name << "' size mismatch: is " << gte.size << ", expected " << sizechecks.at(name) << "\n";
                     gt_error = true;
                 }
             }
